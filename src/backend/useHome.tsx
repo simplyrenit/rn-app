@@ -1,0 +1,47 @@
+import { useGlobalContext } from "@/context/global-context";
+import {
+  GET_POPULAR_PRODUCTS_NEAR_YOU,
+  GET_TOP_EXPERIENCE,
+  GET_TOP_PICKS,
+} from "@/lib/config";
+import axios from "axios";
+
+const useHome = () => {
+  const { authTokens, isAuthenticated } = useGlobalContext();
+
+  const access_token = authTokens?.access_token || "";
+
+  const getAuthHeaders = () => {
+    const headers = {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        "Content-Type": "application/json",
+      },
+    };
+
+    return headers;
+  };
+
+  const fetchData = async (endpoint: string, lat: number, long: number) => {
+    try {
+      const url = `${endpoint}?lat=${lat}&long=${long}`;
+      const headers = getAuthHeaders();
+      const response = await axios.get(url, headers);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching data from ${endpoint}:`, error);
+      throw error;
+    }
+  };
+
+  return {
+    fetchTopExperiences: (lat: number, long: number) =>
+      fetchData(GET_TOP_EXPERIENCE, lat, long),
+    fetchTopPicks: (lat: number, long: number) =>
+      fetchData(GET_TOP_PICKS, lat, long),
+    fetchPopularProductsNearYou: (lat: number, long: number) =>
+      fetchData(GET_POPULAR_PRODUCTS_NEAR_YOU, lat, long),
+  };
+};
+
+export default useHome;
