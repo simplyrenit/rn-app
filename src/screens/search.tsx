@@ -240,7 +240,11 @@ export default function SearchScreen() {
   };
 
   const renderBackdrop = (props: any) => (
-    <BottomSheetBackdrop {...props} disappearsOnIndex={-1} opacity={0.8} />
+    <BottomSheetBackdrop
+      {...props}
+      disappearsOnIndex={-1}
+      opacity={0.8}
+    />
   );
 
   const getSuggestions = useCallback(async (q: string) => {
@@ -282,11 +286,17 @@ export default function SearchScreen() {
           >
             <View className="w-[10%]">
               <TouchableOpacity onPress={() => navigation.goBack()}>
-                <ArrowLeftIcon color={isDark ? "white" : "black"} size={24} />
+                <ArrowLeftIcon
+                  color={isDark ? "white" : "black"}
+                  size={24}
+                />
               </TouchableOpacity>
             </View>
             <View className="w-[80%] h-full items-center">
-              <Text fontSize="text-xl" fontWeight="font-bold">
+              <Text
+                fontSize="text-xl"
+                fontWeight="font-bold"
+              >
                 Search anything
               </Text>
             </View>
@@ -299,7 +309,11 @@ export default function SearchScreen() {
               isDark ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
             }`}
           >
-            <Text fontSize="text-md" fontWeight="font-bold" className="mb-3">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+              className="mb-3"
+            >
               What?
             </Text>
             <View
@@ -324,10 +338,11 @@ export default function SearchScreen() {
               />
               <AutocompleteDropdown
                 ref={autocompleteDropdownRef}
-                // dataSet={suggestions}
                 dataSet={suggestionsList}
-                onChangeText={getSuggestions}
-                // debounce={600}
+                onChangeText={(text) => {
+                  getSuggestions(text);
+                  setSelectedItem(text); // Set selectedItem to the input text
+                }}
                 inputContainerStyle={{
                   backgroundColor: isDark ? "#0F0F0F" : "#ffffff",
                   borderRadius: 10,
@@ -341,6 +356,8 @@ export default function SearchScreen() {
                 onBlur={() => {
                   setTimeout(() => setIsFocus(false), 100);
                 }}
+                closeOnSubmit
+                onSubmit={() => setIsFocus(false)}
                 textInputProps={{
                   placeholder: `"Washing Machine"`,
                   autoCapitalize: "none",
@@ -372,7 +389,10 @@ export default function SearchScreen() {
                 renderItem={(item) => <Text className="p-5">{item.title}</Text>}
                 closeOnBlur={true}
                 ClearIconComponent={
-                  <XMarkIcon color={isDark ? "white" : "black"} size={24} />
+                  <XMarkIcon
+                    color={isDark ? "white" : "black"}
+                    size={24}
+                  />
                 }
               />
             </View>
@@ -384,7 +404,11 @@ export default function SearchScreen() {
               isDark ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
             }`}
           >
-            <Text fontSize="text-md" fontWeight="font-bold" className="mb-3">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+              className="mb-3"
+            >
               Where?
             </Text>
             <TouchableOpacity
@@ -397,7 +421,10 @@ export default function SearchScreen() {
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
                 <View className="flex flex-row items-center space-x-2 ">
-                  <MapPinIcon color={isDark ? "white" : "black"} size={24} />
+                  <MapPinIcon
+                    color={isDark ? "white" : "black"}
+                    size={24}
+                  />
                   <View className="w-3/4">
                     {selectedLocationName ? ( // Show selected location name if available
                       <Text fontSize="text-sm">
@@ -424,7 +451,11 @@ export default function SearchScreen() {
 
           {/* When? Range Picker */}
           <View className="p-5 flex-1">
-            <Text fontSize="text-md" fontWeight="font-bold" className="mb-3">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+              className="mb-3"
+            >
               When?
             </Text>
             <TouchableOpacity
@@ -437,7 +468,10 @@ export default function SearchScreen() {
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
                 <View className="flex flex-row items-center space-x-4">
-                  <CalendarIcon color={isDark ? "white" : "black"} size={24} />
+                  <CalendarIcon
+                    color={isDark ? "white" : "black"}
+                    size={24}
+                  />
                   {range.startDate && range.endDate ? (
                     <Text style={{ fontSize: 15 }}>
                       {formatDate(range.startDate)} -{" "}
@@ -486,7 +520,10 @@ export default function SearchScreen() {
                 onPress={onPress}
               >
                 <View className="flex flex-row items-center">
-                  <MagnifyingGlassIcon color="white" size={22} />
+                  <MagnifyingGlassIcon
+                    color="white"
+                    size={22}
+                  />
                   <Text
                     fontSize="text-sm"
                     fontWeight="font-bold"
@@ -587,7 +624,10 @@ export default function SearchScreen() {
                   >
                     <View className="flex flex-row h-full w-full items-center justify-between">
                       <View className="flex flex-row items-center space-x-4">
-                        <ViewfinderCircleIcon color="#635be8" size={24} />
+                        <ViewfinderCircleIcon
+                          color="#635be8"
+                          size={24}
+                        />
                         <Text
                           fontWeight="font-bold"
                           className="text-brand-blue"
