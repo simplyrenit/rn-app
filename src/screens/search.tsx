@@ -158,16 +158,15 @@ export default function SearchScreen() {
     setBottomSheetVisible(false);
   };
 
-  const isSearchDisabled =
-    !selectedItem || !selectedLocation || !range.startDate || !range.endDate;
+  const isSearchDisabled = !selectedItem || !selectedLocation;
 
   const onPress = async () => {
     const products = await searchProducts(
       selectedItem!,
       { lat: selectedLocation!.lat!, lng: selectedLocation!.lng! },
       {
-        start_date: range.startDate!.toISOString(),
-        end_date: range.endDate!.toISOString(),
+        start_date: range?.startDate?.toISOString() ?? undefined,
+        end_date: range?.endDate?.toISOString() ?? undefined,
       }
     );
     navigation.navigate("SearchResults", {

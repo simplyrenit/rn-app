@@ -11,7 +11,7 @@ export function useSearch() {
   async function searchProducts(
     item: string,
     coordinates: { lat: number; lng: number },
-    when: { start_date: string; end_date: string },
+    when: { start_date: string | undefined; end_date: string | undefined },
     filters?: {
       sort: string;
       category: string;
