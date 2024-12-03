@@ -17,6 +17,7 @@ import {
   registerForPushNotificationsAsync,
 } from "@/backend/notifications";
 import { AuthProvider } from "@/context/auth-context";
+import { QueryClient, QueryClientProvider } from "react-query";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -52,22 +53,26 @@ export default function App() {
     return null;
   }
 
+  const qc = new QueryClient();
+
   return (
-    <GlobalProvider>
-      <AuthProvider>
-        <ProductProvider>
-          <AutocompleteDropdownContextProvider>
-            <GestureHandlerRootView style={{ flex: 1 }}>
-              <BottomSheetModalProvider>
-                <Navigation />
-                {/* @ts-ignore */}
-                <Toast config={toastConfig} />
-              </BottomSheetModalProvider>
-            </GestureHandlerRootView>
-          </AutocompleteDropdownContextProvider>
-        </ProductProvider>
-      </AuthProvider>
-    </GlobalProvider>
+    <QueryClientProvider client={qc}>
+      <GlobalProvider>
+        <AuthProvider>
+          <ProductProvider>
+            <AutocompleteDropdownContextProvider>
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <BottomSheetModalProvider>
+                  <Navigation />
+                  {/* @ts-ignore */}
+                  <Toast config={toastConfig} />
+                </BottomSheetModalProvider>
+              </GestureHandlerRootView>
+            </AutocompleteDropdownContextProvider>
+          </ProductProvider>
+        </AuthProvider>
+      </GlobalProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -80,9 +85,15 @@ const toastConfig = {
         } rounded-lg p-2`}
       >
         {text2 === "success" ? (
-          <CheckIcon size={24} color="#fff" />
+          <CheckIcon
+            size={24}
+            color="#fff"
+          />
         ) : (
-          <XMarkIcon size={24} color="#fff" />
+          <XMarkIcon
+            size={24}
+            color="#fff"
+          />
         )}
       </View>
       <Text

@@ -33,6 +33,7 @@ export default function LoginWithEmail() {
   }, []);
 
   const handleSubmit = useCallback(async () => {
+    console.log("here 1");
     if (validateEmail(email)) {
       saveUser({ email });
 
@@ -50,7 +51,10 @@ export default function LoginWithEmail() {
 
         <ScrollContainer>
           <View className="flex">
-            <Text fontSize="text-2xl" fontWeight="font-bold">
+            <Text
+              fontSize="text-2xl"
+              fontWeight="font-bold"
+            >
               Welcome to Renit
             </Text>
 
@@ -81,8 +85,14 @@ export default function LoginWithEmail() {
 
             {!isValid && isTouched && (
               <View className="flex flex-row items-center mt-4 space-x-3">
-                <InformationCircleIcon size={14} color="#ef4444" />
-                <Text fontSize="text-sm" className="text-red-500">
+                <InformationCircleIcon
+                  size={14}
+                  color="#ef4444"
+                />
+                <Text
+                  fontSize="text-sm"
+                  className="text-red-500"
+                >
                   Please enter a valid email address
                 </Text>
               </View>

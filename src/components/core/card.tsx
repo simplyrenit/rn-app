@@ -9,6 +9,7 @@ import { Text } from "./text";
 import { useGlobalContext } from "@/context/global-context";
 import useSaved from "@/backend/useSaved";
 import Toast from "react-native-toast-message";
+import { useMutation, useQueryClient } from "react-query";
 
 const HEART_ICON_SIZE = 17;
 
@@ -21,7 +22,20 @@ export function Card({
   isFavorite: checked,
 }: ItemCard) {
   const [toggleLike, setToggleLike] = useState(checked);
+  const queryClient = useQueryClient();
   const { saveFavorite, deleteFavorite } = useSaved();
+
+  const saveFavoriteMutation = useMutation(saveFavorite, {
+    onSuccess: () => {
+      queryClient.invalidateQueries("favorites");
+    },
+  });
+
+  const deleteFavoriteMutation = useMutation(deleteFavorite, {
+    onSuccess: () => {
+      queryClient.invalidateQueries("favorites");
+    },
+  });
 
   const router = useTypedNavigation();
   const { theme, authTokens, isAuthenticated } = useGlobalContext();
@@ -31,6 +45,10 @@ export function Card({
   useEffect(() => {
     if (toggleLike) lottieRef.current.play();
   }, [toggleLike]);
+
+  useEffect(() => {
+    setToggleLike(checked);
+  }, [checked]);
 
   const handleLike = async () => {
     if (!isAuthenticated) {
@@ -45,9 +63,9 @@ export function Card({
 
     try {
       if (toggleLike) {
-        await deleteFavorite(id);
+        await deleteFavoriteMutation.mutateAsync(id);
       } else {
-        await saveFavorite(id);
+        await saveFavoriteMutation.mutateAsync(id);
       }
       setToggleLike(!toggleLike);
     } catch (error) {
@@ -134,7 +152,10 @@ export function Card({
           </View>
         </View>
         <View className="mt-2">
-          <Text className="mb-1" fontWeight="font-bold">
+          <Text
+            className="mb-1"
+            fontWeight="font-bold"
+          >
             {truncatedName}
           </Text>
           <Text
@@ -145,7 +166,10 @@ export function Card({
             {truncatedLocation}
           </Text>
           <View className="flex flex-row items-center">
-            <Text fontSize="text-base" fontWeight="font-bold">
+            <Text
+              fontSize="text-base"
+              fontWeight="font-bold"
+            >
               ₹{Number(price).toFixed(0)}
             </Text>
             <Text className="text-gray-500 ml-1">per day</Text>

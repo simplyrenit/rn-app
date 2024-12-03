@@ -20,6 +20,7 @@ import {
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
 import Toast from "react-native-toast-message";
+import { useMutation, useQueryClient } from "react-query";
 
 const StyledView = styled(View);
 const StyledButton = styled(TouchableOpacity);
@@ -43,6 +44,7 @@ export function ProductImage({ images, mode, name, isFavorite: iF }: Props) {
   const [isFavorite, setIsFavorite] = useState(iF ?? false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const lottieRef = useRef<Lottie>(null);
+  const queryClient = useQueryClient();
 
   const renderCarouselItem = ({ item }: { item: any }) => (
     <Image
@@ -51,6 +53,18 @@ export function ProductImage({ images, mode, name, isFavorite: iF }: Props) {
       contentFit="contain"
     />
   );
+
+  const saveFavoriteMutation = useMutation(saveFavorite, {
+    onSuccess: () => {
+      queryClient.invalidateQueries("favorites");
+    },
+  });
+
+  const deleteFavoriteMutation = useMutation(deleteFavorite, {
+    onSuccess: () => {
+      queryClient.invalidateQueries("favorites");
+    },
+  });
 
   useEffect(() => {
     if (isFavorite) lottieRef.current?.play();
@@ -69,9 +83,9 @@ export function ProductImage({ images, mode, name, isFavorite: iF }: Props) {
 
     try {
       if (isFavorite) {
-        await deleteFavorite(name!);
+        await deleteFavoriteMutation.mutateAsync(name!);
       } else {
-        await saveFavorite(name!);
+        await saveFavoriteMutation.mutateAsync(name!);
       }
       setIsFavorite(!isFavorite);
     } catch (error) {

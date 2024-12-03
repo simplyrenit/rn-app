@@ -45,6 +45,7 @@
     "moment-timezone": "^0.5.46",
     "nativewind": "^2.0.11",
     "react": "18.2.0",
+    "react-apple-signin-auth": "^1.1.0",
     "react-native": "0.74.5",
     "react-native-autocomplete-dropdown": "3.1.5",
     "react-native-calendars": "^1.1307.0",
@@ -69,7 +70,8 @@
     "react-native-star-rating-widget": "^1.9.1",
     "react-native-svg": "15.2.0",
     "react-native-svg-transformer": "^1.5.0",
-    "react-native-toast-message": "^2.2.1"
+    "react-native-toast-message": "^2.2.1",
+    "react-query": "^3.39.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

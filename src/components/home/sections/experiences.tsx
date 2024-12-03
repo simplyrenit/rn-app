@@ -101,7 +101,11 @@ export function Experiences() {
 
   return (
     <View className="mt-5">
-      <Text className="pl-5 mb-5" fontSize="text-xl" fontWeight="font-bold">
+      <Text
+        className="pl-5 mb-5"
+        fontSize="text-xl"
+        fontWeight="font-bold"
+      >
         Top experiences
       </Text>
       {loading ? (

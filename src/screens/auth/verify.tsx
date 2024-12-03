@@ -28,10 +28,12 @@ export default function VerifyEmail() {
 
   const handleSubmit = useCallback(async () => {
     if (verificationCode.length === 6) {
-      if (verificationCode !== "111111") {
-        setIsIncorrect(true);
-        return;
-      }
+      // if (verificationCode !== "111111") {
+      //   setIsIncorrect(true);
+      //   return;
+
+      // }
+      console.log("here");
       const data = await verifyOTP(email, verificationCode);
 
       if (data?.access !== null && data?.refresh !== null) {
@@ -74,7 +76,10 @@ export default function VerifyEmail() {
 
         <ScrollContainer>
           <View className="flex">
-            <Text fontSize="text-2xl" fontWeight="font-bold">
+            <Text
+              fontSize="text-2xl"
+              fontWeight="font-bold"
+            >
               Enter verification code
             </Text>
             <Text
@@ -115,15 +120,24 @@ export default function VerifyEmail() {
 
             {isIncorrect && (
               <View className="flex mt-2 flex-row items-center space-x-2">
-                <XCircleIcon size={14} color="#ef4444" />
-                <Text fontSize="text-sm" className="text-red-500">
+                <XCircleIcon
+                  size={14}
+                  color="#ef4444"
+                />
+                <Text
+                  fontSize="text-sm"
+                  className="text-red-500"
+                >
                   Wrong OTP. Try again
                 </Text>
               </View>
             )}
 
             <TouchableOpacity onPress={handleResendOTP}>
-              <Text fontWeight="font-bold" className="text-brand-blue mt-4">
+              <Text
+                fontWeight="font-bold"
+                className="text-brand-blue mt-4"
+              >
                 Resend OTP
               </Text>
             </TouchableOpacity>
@@ -138,7 +152,10 @@ export default function VerifyEmail() {
             disabled={verificationCode.length !== 6}
           >
             {loading ? (
-              <Progress.CircleSnail size={22} color="white" />
+              <Progress.CircleSnail
+                size={22}
+                color="white"
+              />
             ) : (
               "Continue"
             )}

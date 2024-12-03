@@ -139,7 +139,10 @@ export default function DetailsScreen() {
 
   return (
     <StaticContainer width={100}>
-      <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
         <View style={{ width: "100%", aspectRatio: 1 }}>
           <ProductImage
             images={product!.images}
@@ -160,16 +163,28 @@ export default function DetailsScreen() {
           }`}
         >
           <View className="flex flex-row items-center justify-between">
-            <Text fontSize="text-xl" fontWeight="font-bold">
+            <Text
+              fontSize="text-xl"
+              fontWeight="font-bold"
+            >
               {product?.title}
             </Text>
             <TouchableOpacity>
-              <ShareIcon color={isDark ? "white" : "black"} size={wp("5%")} />
+              <ShareIcon
+                color={isDark ? "white" : "black"}
+                size={wp("5%")}
+              />
             </TouchableOpacity>
           </View>
           <View className="flex flex-row items-center my-2">
-            <Stars rating={product?.average_rating!} isDark={isDark} />
-            <Text fontSize="text-sm" className="text-gray-500 ml-1">
+            <Stars
+              rating={product?.average_rating!}
+              isDark={isDark}
+            />
+            <Text
+              fontSize="text-sm"
+              className="text-gray-500 ml-1"
+            >
               ({product?.review_count})
             </Text>
           </View>
@@ -198,7 +213,10 @@ export default function DetailsScreen() {
               }}
               style={{ width: wp(5.5), height: wp(5.5) }}
             />
-            <Text fontWeight="font-bold" className="mt-2">
+            <Text
+              fontWeight="font-bold"
+              className="mt-2"
+            >
               {product?.category?.title}
             </Text>
             <Text
@@ -215,7 +233,10 @@ export default function DetailsScreen() {
               color={isDark ? "white" : "black"}
               size={wp("5.5%")}
             />
-            <Text fontWeight="font-bold" className="mt-2">
+            <Text
+              fontWeight="font-bold"
+              className="mt-2"
+            >
               ₹{Number(product?.security_deposit).toFixed(0)}
             </Text>
             <Text
@@ -233,7 +254,10 @@ export default function DetailsScreen() {
               color={isDark ? "white" : "black"}
               size={wp("5.5%")}
             />
-            <Text fontWeight="font-bold" className="mt-2">
+            <Text
+              fontWeight="font-bold"
+              className="mt-2"
+            >
               {product?.condition}
             </Text>
             <Text
@@ -253,7 +277,10 @@ export default function DetailsScreen() {
           }`}
         >
           <View className="flex flex-row items-center justify-between">
-            <Text fontWeight="font-bold" fontSize="text-xl">
+            <Text
+              fontWeight="font-bold"
+              fontSize="text-xl"
+            >
               About the product
             </Text>
           </View>
@@ -269,7 +296,10 @@ export default function DetailsScreen() {
                 </Text>
                 <View className=" mt-1">
                   {showFullText ? (
-                    <ChevronUpIcon color={isDark ? "#fff" : "#000"} size={16} />
+                    <ChevronUpIcon
+                      color={isDark ? "#fff" : "#000"}
+                      size={16}
+                    />
                   ) : (
                     <ChevronDownIcon
                       color={isDark ? "#fff" : "#000"}
@@ -288,7 +318,10 @@ export default function DetailsScreen() {
           }`}
         >
           <View className="flex flex-row items-center justify-between">
-            <Text fontWeight="font-bold" fontSize="text-xl">
+            <Text
+              fontWeight="font-bold"
+              fontSize="text-xl"
+            >
               Product's location
             </Text>
           </View>
@@ -308,7 +341,10 @@ export default function DetailsScreen() {
           }`}
         >
           <View className="flex flex-row items-center justify-between px-4">
-            <Text fontWeight="font-bold" fontSize="text-xl">
+            <Text
+              fontWeight="font-bold"
+              fontSize="text-xl"
+            >
               Product reviews
             </Text>
           </View>
@@ -321,13 +357,22 @@ export default function DetailsScreen() {
             >
               {product?.average_rating?.toFixed(1)}
             </Text>
-            <Stars rating={product?.average_rating!} isDark={isDark} />
-            <Text fontSize="text-md" className="text-gray-500 ml-1">
+            <Stars
+              rating={product?.average_rating!}
+              isDark={isDark}
+            />
+            <Text
+              fontSize="text-md"
+              className="text-gray-500 ml-1"
+            >
               ({product?.review_count})
             </Text>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
             {lessReviews.map((item, index) => (
               <View
                 key={item.user.username}
@@ -370,7 +415,10 @@ export default function DetailsScreen() {
           }`}
         >
           <View className="flex flex-row items-center justify-between">
-            <Text fontWeight="font-bold" fontSize="text-xl">
+            <Text
+              fontWeight="font-bold"
+              fontSize="text-xl"
+            >
               About the owner
             </Text>
           </View>
@@ -389,12 +437,18 @@ export default function DetailsScreen() {
         {/* Similar products */}
         <View className={` py-6 `}>
           <View className="flex flex-row items-center justify-between mb-4 px-4">
-            <Text fontWeight="font-bold" fontSize="text-xl">
+            <Text
+              fontWeight="font-bold"
+              fontSize="text-xl"
+            >
               Similar products
             </Text>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
             {similarProducts.map((item, index) => (
               <View
                 key={item.name}
@@ -424,7 +478,11 @@ export default function DetailsScreen() {
       >
         <View className="flex flex-row items-end flex-1">
           <View className="">
-            <Text fontWeight="font-bold" fontSize="text-lg" className="mr-1">
+            <Text
+              fontWeight="font-bold"
+              fontSize="text-lg"
+              className="mr-1"
+            >
               ₹{Number(product?.rate).toFixed(0)}
             </Text>
           </View>

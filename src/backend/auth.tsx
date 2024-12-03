@@ -27,6 +27,7 @@ export function useAuth() {
       const response = await axios.get<OTPResponse>(
         `${OTP}?email=${email}&otp=${otp}`
       );
+      console.log(`${OTP}?email=${email}&otp=${otp}`);
       console.log(response.data);
 
       return response.data;

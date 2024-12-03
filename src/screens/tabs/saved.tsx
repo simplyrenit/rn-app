@@ -5,8 +5,7 @@ import Skeleton from "@/components/core/skeleton";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { useGlobalContext } from "@/context/global-context";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
-import { useFocusEffect } from "@react-navigation/native";
-import React, { useLayoutEffect, useState } from "react";
+import React from "react";
 import { FlatList, View, Dimensions } from "react-native";
 import {
   heightPercentageToDP as hp,
@@ -17,25 +16,9 @@ const margin = wp(5.7);
 const { height } = Dimensions.get("window");
 
 export default function Saved() {
-  const { favorites, getFavorites } = useSaved();
+  const { favorites } = useSaved();
   const { authTokens, isAuthenticated, theme } = useGlobalContext();
-  const navigation = useTypedNavigation();
-
-  async function fetchFavorites() {
-    setLoading(true);
-    await getFavorites();
-    setLoading(false);
-  }
-
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchFavorites();
-    }, [navigation])
-  );
-
   const isDarkMode = theme === "dark";
-
-  const [loading, setLoading] = useState(false);
 
   const renderItem = ({ item }: { item: BackendProduct }) => (
     <Card
@@ -99,11 +82,15 @@ export default function Saved() {
           className="mt-4 w-full flex-1"
           style={{ paddingHorizontal: margin }}
         >
-          <Text fontSize="text-2xl" fontWeight="font-bold" className="mb-4">
+          <Text
+            fontSize="text-2xl"
+            fontWeight="font-bold"
+            className="mb-4"
+          >
             Saved
           </Text>
 
-          {loading ? (
+          {favorites.length === 0 ? (
             <FlatList
               data={[0, 1, 2, 3, 4, 5]}
               renderItem={renderSkeleton}
@@ -114,7 +101,6 @@ export default function Saved() {
                 marginBottom: hp("7%"),
               }}
               showsVerticalScrollIndicator={false}
-              // contentContainerStyle={{ paddingBottom: hp("10%") }}
             />
           ) : (
             <FlatList

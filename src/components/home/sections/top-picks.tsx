@@ -98,7 +98,11 @@ export function TopPicks() {
 
   return (
     <View className="mt-5">
-      <Text className="pl-5 mb-5" fontSize="text-xl" fontWeight="font-bold">
+      <Text
+        className="pl-5 mb-5"
+        fontSize="text-xl"
+        fontWeight="font-bold"
+      >
         Top picks to explore
       </Text>
 
@@ -159,7 +163,6 @@ export function TopPicks() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          // contentContainerStyle={{ paddingHorizontal: 16 }}
           contentContainerStyle={{
             paddingRight: itemMargin,
           }}
@@ -167,20 +170,12 @@ export function TopPicks() {
           {topPicks.map((item, index) => (
             <View
               key={item.name}
-              // style={{ marginRight: index === topPicks.length - 1 ? 16 : 12 }}
               style={{
                 width: itemWidth,
                 marginRight: index === topPicks.length - 1 ? 0 : itemMargin,
                 marginLeft: index === 0 ? wp(5.7) : 0,
               }}
             >
-              {/* <Card
-                id={`${item.id}`}
-                image={item.image}
-                title={item.title}
-                location={item.location}
-                price={item.price}
-              /> */}
               <Card
                 id={item.name}
                 image={item.cover_image ?? null}

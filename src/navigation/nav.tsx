@@ -82,20 +82,38 @@ const HomeStack = createNativeStackNavigator();
 function PostStackScreen() {
   return (
     <PostStack.Navigator screenOptions={{ headerShown: false }}>
-      <PostStack.Screen name="Post" component={PostScreen} />
+      <PostStack.Screen
+        name="Post"
+        component={PostScreen}
+      />
       <PostStack.Screen
         name="PostSubCategories"
         component={PostSubCategories}
       />
-      <PostStack.Screen name="AboutProduct" component={AboutProduct} />
-      <PostStack.Screen name="ProductImages" component={ProductImages} />
-      <PostStack.Screen name="ChooseCoverImage" component={ChooseCoverImage} />
+      <PostStack.Screen
+        name="AboutProduct"
+        component={AboutProduct}
+      />
+      <PostStack.Screen
+        name="ProductImages"
+        component={ProductImages}
+      />
+      <PostStack.Screen
+        name="ChooseCoverImage"
+        component={ChooseCoverImage}
+      />
       <PostStack.Screen
         name="ProductAvailability"
         component={ProductAvailability}
       />
-      <PostStack.Screen name="ReviewProduct" component={ReviewProduct} />
-      <PostStack.Screen name="HangTight" component={HangTight} />
+      <PostStack.Screen
+        name="ReviewProduct"
+        component={ReviewProduct}
+      />
+      <PostStack.Screen
+        name="HangTight"
+        component={HangTight}
+      />
     </PostStack.Navigator>
   );
 }
@@ -103,8 +121,14 @@ function PostStackScreen() {
 function HomeStackScreen() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
-      <HomeStack.Screen name="Home" component={HomeScreen} />
-      <HomeStack.Screen name="SearchResults" component={SearchResultsScreen} />
+      <HomeStack.Screen
+        name="Home"
+        component={HomeScreen}
+      />
+      <HomeStack.Screen
+        name="SearchResults"
+        component={SearchResultsScreen}
+      />
     </HomeStack.Navigator>
   );
 }
@@ -112,16 +136,46 @@ function HomeStackScreen() {
 function ProfileStackScreen() {
   return (
     <PostStack.Navigator screenOptions={{ headerShown: false }}>
-      <PostStack.Screen name="profile" component={ProfileScreen} />
-      <PostStack.Screen name="myProducts" component={MyProductScreen} />
-      <PostStack.Screen name="editProduct" component={EditProductScreen} />
-      <PostStack.Screen name="notification" component={NotificationScreen} />
-      <PostStack.Screen name="contactUs" component={ContactUsScreen} />
-      <PostStack.Screen name="feedback" component={FeedbackNReviewScreen} />
-      <PostStack.Screen name="whoWeAre" component={WhoWeAreScreen} />
-      <PostStack.Screen name="faq" component={FAQScreen} />
-      <PostStack.Screen name="Privacy" component={PrivacyScreen} />
-      <PostStack.Screen name="Terms" component={TermsScreen} />
+      <PostStack.Screen
+        name="profile"
+        component={ProfileScreen}
+      />
+      <PostStack.Screen
+        name="myProducts"
+        component={MyProductScreen}
+      />
+      <PostStack.Screen
+        name="editProduct"
+        component={EditProductScreen}
+      />
+      <PostStack.Screen
+        name="notification"
+        component={NotificationScreen}
+      />
+      <PostStack.Screen
+        name="contactUs"
+        component={ContactUsScreen}
+      />
+      <PostStack.Screen
+        name="feedback"
+        component={FeedbackNReviewScreen}
+      />
+      <PostStack.Screen
+        name="whoWeAre"
+        component={WhoWeAreScreen}
+      />
+      <PostStack.Screen
+        name="faq"
+        component={FAQScreen}
+      />
+      <PostStack.Screen
+        name="Privacy"
+        component={PrivacyScreen}
+      />
+      <PostStack.Screen
+        name="Terms"
+        component={TermsScreen}
+      />
       <PostStack.Screen
         name="unavailabilityForm"
         component={UnavailabilityFormScreen}
@@ -146,17 +200,26 @@ function ProfileStackScreen() {
         name="EditProductAvailability"
         component={EditProductAvailability}
       />
-      <PostStack.Screen name="EditCategory" component={EditCategory} />
+      <PostStack.Screen
+        name="EditCategory"
+        component={EditCategory}
+      />
       <PostStack.Screen
         name="EditSubCategories"
         component={EditSubCategories}
       />
-      <PostStack.Screen name="EditAboutProduct" component={EditAboutProduct} />
+      <PostStack.Screen
+        name="EditAboutProduct"
+        component={EditAboutProduct}
+      />
       <PostStack.Screen
         name="EditProductImages"
         component={EditProductImages}
       />
-      <PostStack.Screen name="EditCoverImage" component={EditCoverImage} />
+      <PostStack.Screen
+        name="EditCoverImage"
+        component={EditCoverImage}
+      />
     </PostStack.Navigator>
   );
 }
@@ -202,16 +265,36 @@ function MainTabs() {
               Icon = focused ? UserIconSolid : UserIcon;
               break;
           }
-          return Icon ? <Icon size={wp("6.5%")} color={color} /> : null;
+          return Icon ? (
+            <Icon
+              size={wp("6.5%")}
+              color={color}
+            />
+          ) : null;
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeStackScreen} />
-      <Tab.Screen name="Saved" component={SavedScreen} />
+      <Tab.Screen
+        name="Home"
+        component={HomeStackScreen}
+      />
+      <Tab.Screen
+        name="Saved"
+        component={SavedScreen}
+      />
       {/* <Tab.Screen name="Post" component={PostScreen} /> */}
-      <Tab.Screen name="Post" component={PostStackScreen} />
-      <Tab.Screen name="Chat" component={ChatScreen} />
-      <Tab.Screen name="Profile" component={ProfileStackScreen} />
+      <Tab.Screen
+        name="Post"
+        component={PostStackScreen}
+      />
+      <Tab.Screen
+        name="Chat"
+        component={ChatScreen}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileStackScreen}
+      />
     </Tab.Navigator>
   );
 }
@@ -230,31 +313,79 @@ export default function Navigation() {
         initialRouteName={hasSeenWelcome ? "MainTabs" : "Welcome"}
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="Welcome" component={OnboardingScreen} />
-        <Stack.Screen name="MainTabs" component={MainTabs} />
-        <Stack.Screen name="Email" component={EmailScreen} />
-        <Stack.Screen name="Verify" component={VerifyScreen} />
-        <Stack.Screen name="About" component={AboutScreen} />
-        <Stack.Screen name="Password" component={PasswordScreen} />
+        <Stack.Screen
+          name="Welcome"
+          component={OnboardingScreen}
+        />
+        <Stack.Screen
+          name="MainTabs"
+          component={MainTabs}
+        />
+        <Stack.Screen
+          name="Email"
+          component={EmailScreen}
+        />
+        <Stack.Screen
+          name="Verify"
+          component={VerifyScreen}
+        />
+        <Stack.Screen
+          name="About"
+          component={AboutScreen}
+        />
+        <Stack.Screen
+          name="Password"
+          component={PasswordScreen}
+        />
         <Stack.Screen
           name="ConfirmPassword"
           component={ConfirmPasswordScreen}
         />
-        <Stack.Screen name="Location" component={LocationScreen} />
-        {/* <Stack.Screen name="Privacy" component={PrivacyScreen} />
-        <Stack.Screen name="Terms" component={TermsScreen} /> */}
-        <Stack.Screen name="Search" component={SearchScreen} />
+        <Stack.Screen
+          name="Location"
+          component={LocationScreen}
+        />
+        <Stack.Screen
+          name="Privacy"
+          component={PrivacyScreen}
+        />
+        <Stack.Screen
+          name="Terms"
+          component={TermsScreen}
+        />
+        <Stack.Screen
+          name="Search"
+          component={SearchScreen}
+        />
         {/* <Stack.Screen name="SearchResults" component={SearchResultsScreen} /> */}
-        <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
-        <Stack.Screen name="ReviewsScreen" component={ReviewsScreen} />
+        <Stack.Screen
+          name="ProductDetail"
+          component={ProductDetailScreen}
+        />
+        <Stack.Screen
+          name="ReviewsScreen"
+          component={ReviewsScreen}
+        />
         <Stack.Screen
           name="OwnersReviewScreen"
           component={OwnersReviewScreen}
         />
-        <Stack.Screen name="WriteReviews" component={WriteReviewsScreen} />
-        <Stack.Screen name="UserDetail" component={UserDetailScreen} />
-        <Stack.Screen name="ChatDetails" component={ChatDetailsScreen} />
-        <Stack.Screen name="OwnersProducts" component={OwnersProductsScreen} />
+        <Stack.Screen
+          name="WriteReviews"
+          component={WriteReviewsScreen}
+        />
+        <Stack.Screen
+          name="UserDetail"
+          component={UserDetailScreen}
+        />
+        <Stack.Screen
+          name="ChatDetails"
+          component={ChatDetailsScreen}
+        />
+        <Stack.Screen
+          name="OwnersProducts"
+          component={OwnersProductsScreen}
+        />
         {/* <Stack.Screen name="myProducts" component={MyProductScreen} />
         <Stack.Screen name="editProduct" component={EditProductScreen} /> */}
         {/* <Stack.Screen name="notification" component={NotificationScreen} />
@@ -265,7 +396,10 @@ export default function Navigation() {
         {/* <Stack.Screen name="ReviewProduct" component={ReviewProduct} /> */}
 
         {/* <Stack.Screen name="PostSubCategories" component={PostSubCategories} /> */}
-        <Stack.Screen name="LocationModal" component={LocationModal} />
+        <Stack.Screen
+          name="LocationModal"
+          component={LocationModal}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -8,6 +8,11 @@ import { Dimensions, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Carousel from "react-native-reanimated-carousel";
 import { CarouselItem } from "../lib/types";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 const StyledView = styled(View);
 const StyledImage = styled(Image);
@@ -40,7 +45,9 @@ const carouselData: CarouselItem[] = [
 export default function OnboardingScreen(): JSX.Element {
   const { theme } = useGlobalContext();
   const isDarkMode = theme === "dark";
-  const [currentPage, setCurrentPage] = useState(0);
+  const currentPage = useSharedValue(0);
+
+  const AnimatedStyledView = Animated.createAnimatedComponent(StyledView);
 
   const renderItem = ({ item }: { item: CarouselItem }) => (
     <StyledView className="items-center justify-center w-full border border-transparent">
@@ -49,14 +56,46 @@ export default function OnboardingScreen(): JSX.Element {
         className="w-full h-3/4"
         contentFit="contain"
       />
-      <Text fontSize="text-2xl" fontWeight="font-bold" className="mt-4">
+      <Text
+        fontSize="text-2xl"
+        fontWeight="font-bold"
+        className="mt-4"
+      >
         {item.title}
       </Text>
-      <Text fontSize="text-base" className="text-center mt-2 px-2">
+      <Text
+        fontSize="text-base"
+        className="text-center mt-2 px-2"
+      >
         {item.description}
       </Text>
     </StyledView>
   );
+
+  const dotAnimatedStyle = (index: number) =>
+    useAnimatedStyle(() => ({
+      width: 64,
+      height: 4,
+      marginHorizontal: 4,
+      backgroundColor: withSpring(
+        currentPage.value === index
+          ? isDarkMode
+            ? "#4B46B4"
+            : "#4B46B4" // Active color for both themes
+          : isDarkMode
+          ? "#374151"
+          : "#D1D5DB", // Inactive color based on theme
+        {
+          mass: 1,
+          damping: 15,
+          stiffness: 130,
+          overshootClamping: false,
+          restDisplacementThreshold: 0.001,
+          restSpeedThreshold: 0.001,
+        }
+      ),
+      borderRadius: 2, // Adding rounded corners
+    }));
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -68,22 +107,22 @@ export default function OnboardingScreen(): JSX.Element {
             height={SCREEN_HEIGHT * 0.65}
             data={carouselData}
             renderItem={renderItem}
-            onSnapToItem={(index) => setCurrentPage(index)}
+            onSnapToItem={(index) => {
+              currentPage.value = index;
+            }}
             mode="parallax"
             modeConfig={{
               parallaxScrollingScale: 0.9,
               parallaxScrollingOffset: 50,
             }}
             autoPlay={true}
-            autoPlayInterval={5000}
+            autoPlayInterval={4000}
           />
           <StyledView className="flex-row justify-center mt-4 mb-8">
             {carouselData.map((_, index) => (
-              <StyledView
+              <AnimatedStyledView
                 key={index}
-                className={`w-16 h-1 mx-1 ${
-                  index === currentPage ? "bg-[#4B46B4]" : "bg-gray-300"
-                }`}
+                style={dotAnimatedStyle(index)}
               />
             ))}
           </StyledView>
