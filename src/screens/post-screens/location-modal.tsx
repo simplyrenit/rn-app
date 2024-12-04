@@ -312,6 +312,7 @@ const LocationModal = ({}) => {
   ) => {
     let coordinates;
     let addressToSend = null;
+    let countryToSend = null;
     if (!selectedAddress && location) {
       console.log("location");
       coordinates = {
@@ -421,10 +422,16 @@ const LocationModal = ({}) => {
               <>
                 <StaticContainer>
                   <View className="flex">
-                    <Text fontSize="text-2xl" fontWeight="font-semibold">
+                    <Text
+                      fontSize="text-2xl"
+                      fontWeight="font-semibold"
+                    >
                       Allow location
                     </Text>
-                    <Text fontSize="text-lg" className="text-gray-500">
+                    <Text
+                      fontSize="text-lg"
+                      className="text-gray-500"
+                    >
                       This allows Renit to fetch products near you
                     </Text>
                   </View>
@@ -545,7 +552,10 @@ const LocationModal = ({}) => {
                       }}
                     >
                       <View className="rounded-t-3xl">
-                        <Text fontSize="text-md" fontWeight="font-bold">
+                        <Text
+                          fontSize="text-md"
+                          fontWeight="font-bold"
+                        >
                           Your Address:
                         </Text>
                         <Text
@@ -594,7 +604,10 @@ const LocationModal = ({}) => {
                             className="flex-row justify-center"
                           >
                             {signUpLoading ? (
-                              <ActivityIndicator size="small" color={"#fff"} />
+                              <ActivityIndicator
+                                size="small"
+                                color={"#fff"}
+                              />
                             ) : (
                               "Confirm location"
                             )}
@@ -661,7 +674,10 @@ const LocationModal = ({}) => {
                         >
                           <View className="flex flex-row h-full w-full items-center justify-between">
                             <View className="flex flex-row items-center space-x-4">
-                              <ViewfinderCircleIcon color="#635be8" size={24} />
+                              <ViewfinderCircleIcon
+                                color="#635be8"
+                                size={24}
+                              />
                               <Text
                                 fontWeight="font-bold"
                                 className="text-brand-blue"
@@ -736,7 +752,10 @@ const LocationModal = ({}) => {
               </>
             ) : (
               <View className="w-[90%] mx-auto py-5">
-                <Button variant="primary" onPress={handleSubmit}>
+                <Button
+                  variant="primary"
+                  onPress={handleSubmit}
+                >
                   Provide location access
                 </Button>
               </View>

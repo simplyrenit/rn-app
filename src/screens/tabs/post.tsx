@@ -87,7 +87,10 @@ export default function Post() {
                 </View>
               </TouchableOpacity>
             </View>
-            <PostProductHeader percentage={10} heading="Choose a category" />
+            <PostProductHeader
+              percentage={10}
+              heading="Choose a category"
+            />
             <View className="w-[10%]"></View>
           </View>
 

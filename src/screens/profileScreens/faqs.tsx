@@ -26,7 +26,7 @@ const FAQScreen: React.FC<FAQProps> = () => {
   const accordionData = [
     {
       question: "How do I sign up for Renit?",
-      answer: `You sign up for Renit by visiting our website (renit.co.in) or downloading our mobile application from Google Play Store or Apple App Store. 
+      answer: `You sign up for Renit by visiting our website (renit.co.in) or downloading our mobile application from Google Play Store or Apple App Store.
 Using website: Click on the ‘Profile’ icon and then 'Sign up' at the top right corner of your screen and follow the prompts by filling in the required information to create an account using your email address.
 Using mobile application: Click on the ‘Profile’ icon at the bottom right corner and then 'Sign up' at the top of your screen and follow the prompts by filling in the required information to create an account using your email address.
 `,
@@ -37,19 +37,19 @@ Using mobile application: Click on the ‘Profile’ icon at the bottom right co
 Upload products as an owner:
 Post all your additional resources or products that are currently being kept unused, are constantly depreciating; costing you significant income generation opportunity.
 Find products you need:
-Use the search bar at the top of the homepage to search anything, anywhere, anytime. 
-You can also browse through the categories. 
+Use the search bar at the top of the homepage to search anything, anywhere, anytime.
+You can also browse through the categories.
 Use sort & filters to narrow down your search & find the most suitable products for your rental requirement; you can sort or filter search results based on price, ratings, product condition, category, proximity etc.
-Once you find a product, check its availability, read the details, and click on ‘chat with owner’ if you have any questions or want to make a rental request. 
+Once you find a product, check its availability, read the details, and click on ‘chat with owner’ if you have any questions or want to make a rental request.
 Note: Currently, Renit is a rental marketplace that directly connects the users with the product owners, so the only way to rent a product is to contact the owner directly.
 `,
     },
     {
       question: "How to upload and post products?",
       answer: `Steps to post products:
-Log in or sign up to your account and go to the 'Post' section from ‘Home Page’. 
-Provide detailed information about your product, including photos, description, rental price, availability, condition etc. Research shows that high-quality photos from multiple angles can help attract more renters. 
-Once you’ve added all the information click ‘Preview’ and ensure all the details are accurate by reviewing the entire post. 
+Log in or sign up to your account and go to the 'Post' section from ‘Home Page’.
+Provide detailed information about your product, including photos, description, rental price, availability, condition etc. Research shows that high-quality photos from multiple angles can help attract more renters.
+Once you’ve added all the information click ‘Preview’ and ensure all the details are accurate by reviewing the entire post.
 After carefully reviewing all the details, click on ‘Publish’ to post your product online and make it live.
 `,
     },
@@ -100,10 +100,16 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
-          <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+          <ArrowLeftIcon
+            size={26}
+            color={isDarkMode ? "#FFF" : "#000"}
+          />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             FAQs
           </Text>
         </View>
@@ -116,7 +122,10 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
         contentContainerStyle={{ paddingBottom: hp("5%") }}
       >
         <View>
-          <Text fontSize="text-sm" fontWeight="font-bold">
+          <Text
+            fontSize="text-sm"
+            fontWeight="font-bold"
+          >
             You've got questions, we've got answers!
           </Text>
         </View>
@@ -140,7 +149,10 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
             Have any more questions?
           </Text>
           <View className="flex-row items-center mt-1">
-            <Text fontSize="text-sm" fontWeight="font-bold">
+            <Text
+              fontSize="text-sm"
+              fontWeight="font-bold"
+            >
               Email us at
             </Text>
             <Text
@@ -148,10 +160,13 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
               fontWeight="font-bold"
               className="text-brand-blue mx-1"
             >
-              support@renit.com
+              support@simplyrenit.com
             </Text>
             <View className="mt-1">
-              <ChevronRightIcon size={20} color="#635be8" />
+              <ChevronRightIcon
+                size={20}
+                color="#635be8"
+              />
             </View>
           </View>
         </View>

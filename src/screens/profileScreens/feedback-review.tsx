@@ -5,7 +5,10 @@ import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { useState } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
-import { ArrowLeftIcon } from "react-native-heroicons/outline";
+import {
+  ArrowLeftIcon,
+  ChevronRightIcon,
+} from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import Toast from "react-native-toast-message";
@@ -44,10 +47,16 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
-          <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+          <ArrowLeftIcon
+            size={26}
+            color={isDarkMode ? "#FFF" : "#000"}
+          />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             Feedback & Review
           </Text>
         </View>
@@ -86,8 +95,40 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
           />
         </View>
       </KeyboardAwareScrollView>
+      <View className="pb-3 px-5">
+        <Text
+          fontSize="text-sm"
+          className={`${isDarkMode ? "text-[#ffffff80]" : "text-[#00000080]"}`}
+        >
+          Have any more questions?
+        </Text>
+        <View className="flex-row items-center mt-1">
+          <Text
+            fontSize="text-sm"
+            fontWeight="font-bold"
+          >
+            Email us at
+          </Text>
+          <Text
+            fontSize="text-sm"
+            fontWeight="font-bold"
+            className="text-brand-blue mx-1"
+          >
+            support@simplyrenit.com
+          </Text>
+          <View className="mt-1">
+            <ChevronRightIcon
+              size={20}
+              color="#635be8"
+            />
+          </View>
+        </View>
+      </View>
       <View className="py-2 px-5">
-        <Button disabled={!feedback.trim()} onPress={handleFeedBackPress}>
+        <Button
+          disabled={!feedback.trim()}
+          onPress={handleFeedBackPress}
+        >
           <Text
             className={`${
               !feedback.trim()

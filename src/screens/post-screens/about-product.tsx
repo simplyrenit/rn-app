@@ -216,7 +216,11 @@ export default function AboutProduct() {
   };
 
   const renderBackdrop = (props: any) => (
-    <BottomSheetBackdrop {...props} disappearsOnIndex={-1} opacity={0.8} />
+    <BottomSheetBackdrop
+      {...props}
+      disappearsOnIndex={-1}
+      opacity={0.8}
+    />
   );
 
   const handleConfirmModalLocation = (
@@ -317,24 +321,40 @@ export default function AboutProduct() {
       label: "Excellent",
       value: "excellent",
       icon: (
-        <ExcellentCondition size={20} color={`${isDark ? "white" : "black"}`} />
+        <ExcellentCondition
+          size={20}
+          color={`${isDark ? "white" : "black"}`}
+        />
       ),
     },
     {
       label: "Good",
       value: "good",
-      icon: <GoodCondition size={20} color={`${isDark ? "white" : "black"}`} />,
+      icon: (
+        <GoodCondition
+          size={20}
+          color={`${isDark ? "white" : "black"}`}
+        />
+      ),
     },
     {
       label: "Fair",
       value: "fair",
-      icon: <BadCondition size={20} color={`${isDark ? "white" : "black"}`} />,
+      icon: (
+        <BadCondition
+          size={20}
+          color={`${isDark ? "white" : "black"}`}
+        />
+      ),
     },
   ];
 
   return (
     <NonScrollableContainer>
-      <PostProductHeader heading="Tell us about your product" percentage={30} />
+      <PostProductHeader
+        heading="Tell us about your product"
+        percentage={30}
+      />
 
       <View
         className={`${Platform.OS === "ios" ? "" : "flex-1"} justify-between`}
@@ -350,7 +370,10 @@ export default function AboutProduct() {
           style={{ height: "100%" }}
         >
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Product Name
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -370,7 +393,10 @@ export default function AboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Brand Name
             </Text>
             <TextInput
@@ -387,7 +413,10 @@ export default function AboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Model Name/Number
             </Text>
             <TextInput
@@ -404,7 +433,10 @@ export default function AboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Condition
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -476,7 +508,10 @@ export default function AboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Product Description
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -501,7 +536,10 @@ export default function AboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Usage Description
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -525,7 +563,10 @@ export default function AboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Product location
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -542,7 +583,10 @@ export default function AboutProduct() {
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
                 <View className="flex flex-row items-center space-x-2 ">
-                  <MapPinIcon color={isDark ? "white" : "black"} size={24} />
+                  <MapPinIcon
+                    color={isDark ? "white" : "black"}
+                    size={24}
+                  />
                   <View className="w-3/4">
                     {selectedLocationName ? (
                       // <Text fontSize="text-md">{selectedLocationName}</Text>
@@ -576,7 +620,10 @@ export default function AboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Product Address
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -599,7 +646,10 @@ export default function AboutProduct() {
             />
           </View>
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Price Per Day
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -627,7 +677,10 @@ export default function AboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Security Deposit
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -655,7 +708,10 @@ export default function AboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Concerned person of contact
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -681,7 +737,10 @@ export default function AboutProduct() {
               >
                 <Text fontSize="text-sm">Owner</Text>
                 {contactPerson === "Owner" && (
-                  <CheckIcon size={18} color="#635BE8" />
+                  <CheckIcon
+                    size={18}
+                    color="#635BE8"
+                  />
                 )}
               </TouchableOpacity>
 
@@ -698,7 +757,10 @@ export default function AboutProduct() {
               >
                 <Text fontSize="text-sm">Other</Text>
                 {contactPerson === "Other" && (
-                  <CheckIcon size={18} color="#635BE8" />
+                  <CheckIcon
+                    size={18}
+                    color="#635BE8"
+                  />
                 )}
               </TouchableOpacity>
             </View>
@@ -706,7 +768,10 @@ export default function AboutProduct() {
             {contactPerson === "Other" && (
               <View>
                 <View className="space-y-2 mt-8">
-                  <Text fontSize="text-md" fontWeight="font-bold">
+                  <Text
+                    fontSize="text-md"
+                    fontWeight="font-bold"
+                  >
                     Name
                   </Text>
                   <TextInput
@@ -723,7 +788,10 @@ export default function AboutProduct() {
                 </View>
 
                 <View className="space-y-2 mt-8">
-                  <Text fontSize="text-md" fontWeight="font-bold">
+                  <Text
+                    fontSize="text-md"
+                    fontWeight="font-bold"
+                  >
                     Phone Number
                   </Text>
                   <View className="flex-row flex-1 gap-x-2 ">
