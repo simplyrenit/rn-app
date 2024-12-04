@@ -50,10 +50,16 @@ const MyProductScreen: React.FC = () => {
           }
           className="flex-1 items-start w-[10%]"
         >
-          <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+          <ArrowLeftIcon
+            size={26}
+            color={isDarkMode ? "#FFF" : "#000"}
+          />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             My products
           </Text>
         </View>
@@ -61,7 +67,10 @@ const MyProductScreen: React.FC = () => {
         <View className="w-[10%]"></View>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
         <View
           className={`flex-row justify-between py-4 border-b-[1px] px-5 ${
             isDarkMode ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
@@ -70,7 +79,10 @@ const MyProductScreen: React.FC = () => {
           <Text fontSize="text-sm">Share entire catalogue</Text>
 
           <TouchableOpacity>
-            <ShareIcon size={24} color={isDarkMode ? "#FFF" : "#000"} />
+            <ShareIcon
+              size={24}
+              color={isDarkMode ? "#FFF" : "#000"}
+            />
           </TouchableOpacity>
         </View>
 
@@ -79,7 +91,7 @@ const MyProductScreen: React.FC = () => {
           className="flex-row flex-wrap justify-between p-5"
           // style={{ padding: itemMargin }}
         >
-          {myProducts.map((item, index) => (
+          {myProducts?.map((item, index) => (
             <View
               key={item.name}
               style={{
