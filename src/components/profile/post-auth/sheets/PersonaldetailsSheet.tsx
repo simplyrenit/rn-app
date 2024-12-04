@@ -325,6 +325,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       try {
         await updateMyProfileImage(nameId, selectedImage);
         console.log("Profile image updated successfully!");
+        setSelectedImage(null);
+        profileImageSheetRef.current?.close();
       } catch (error) {
         console.error("Error updating profile image:", error);
       }
@@ -384,7 +386,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         isDark={isDarkMode}
       >
         <View className="flex items-center my-4">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             Personal Details
           </Text>
         </View>
@@ -404,20 +409,25 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               />
             </View>
             <View>
-              <Text fontSize="text-md" fontWeight="font-bold">
+              <Text
+                fontSize="text-md"
+                fontWeight="font-bold"
+              >
                 Profile picture
               </Text>
             </View>
           </View>
-          <TouchableOpacity onPress={openProfileImageSheet}>
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-              className="text-[#635BE8]"
-            >
-              Upload
-            </Text>
-          </TouchableOpacity>
+          {!selectedImage && (
+            <TouchableOpacity onPress={openProfileImageSheet}>
+              <Text
+                fontSize="text-md"
+                fontWeight="font-bold"
+                className="text-[#635BE8]"
+              >
+                Upload
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Full Name */}
@@ -429,13 +439,19 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             <View className="flex-row gap-3 items-center justify-center">
               <View>
                 <Text fontWeight="font-bold">Full name</Text>
-                <Text fontSize="text-base" className="pt-2">
+                <Text
+                  fontSize="text-base"
+                  className="pt-2"
+                >
                   {details.fullName}
                 </Text>
               </View>
             </View>
             <TouchableOpacity onPress={openEditNameModal}>
-              <PencilSquareIcon size={24} color="#635BE8" />
+              <PencilSquareIcon
+                size={24}
+                color="#635BE8"
+              />
             </TouchableOpacity>
           </View>
 
@@ -447,13 +463,19 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             <View className="flex-row gap-3 items-center justify-center">
               <View>
                 <Text fontWeight="font-bold">Email address</Text>
-                <Text fontSize="text-base" className="pt-2">
+                <Text
+                  fontSize="text-base"
+                  className="pt-2"
+                >
                   {details.email}
                 </Text>
               </View>
             </View>
             <TouchableOpacity onPress={openEditEmailModal}>
-              <PencilSquareIcon size={24} color="#635BE8" />
+              <PencilSquareIcon
+                size={24}
+                color="#635BE8"
+              />
             </TouchableOpacity>
           </View>
 
@@ -465,13 +487,19 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             <View className="flex-row gap-3 items-center justify-center">
               <View>
                 <Text fontWeight="font-bold">Phone number</Text>
-                <Text fontSize="text-base" className="pt-2">
+                <Text
+                  fontSize="text-base"
+                  className="pt-2"
+                >
                   {details.phone}
                 </Text>
               </View>
             </View>
             <TouchableOpacity onPress={openEditPhoneModal}>
-              <PencilSquareIcon size={24} color="#635BE8" />
+              <PencilSquareIcon
+                size={24}
+                color="#635BE8"
+              />
             </TouchableOpacity>
           </View>
 
@@ -483,13 +511,19 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             <View className="flex-row gap-3 items-center justify-center">
               <View>
                 <Text fontWeight="font-bold">Password</Text>
-                <Text fontSize="text-base" className="pt-2">
+                <Text
+                  fontSize="text-base"
+                  className="pt-2"
+                >
                   {details.password}
                 </Text>
               </View>
             </View>
             <TouchableOpacity onPress={openEditPasswordModal}>
-              <PencilSquareIcon size={24} color="#635BE8" />
+              <PencilSquareIcon
+                size={24}
+                color="#635BE8"
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -501,7 +535,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               style={[styles.saveButton, { marginTop: hp(5) }]}
             >
               {loading ? (
-                <Progress.CircleSnail color={"white"} size={22} />
+                <Progress.CircleSnail
+                  color={"white"}
+                  size={22}
+                />
               ) : (
                 <Text
                   className="text-white"
@@ -537,7 +574,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 justifyContent: "center",
               }}
             >
-              <PhotoIcon size={24} color={isDark ? "#e6e6e6" : "#292929"} />
+              <PhotoIcon
+                size={24}
+                color={isDark ? "#e6e6e6" : "#292929"}
+              />
               <Text
                 className={`${
                   isDark ? "text-white/70" : "text-black/70"
@@ -559,7 +599,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 justifyContent: "center",
               }}
             >
-              <CameraIcon size={24} color={isDark ? "#e6e6e6" : "#292929"} />
+              <CameraIcon
+                size={24}
+                color={isDark ? "#e6e6e6" : "#292929"}
+              />
               <Text
                 className={`${
                   isDark ? "text-white/70" : "text-black/70"
@@ -598,7 +641,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             className="items-center justify-center"
             style={{ left: 0, right: 0, top: 0, bottom: 0 }}
           >
-            <Text fontSize="text-xl" fontWeight="font-bold">
+            <Text
+              fontSize="text-xl"
+              fontWeight="font-bold"
+            >
               Full Name
             </Text>
           </View>
@@ -617,9 +663,15 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             onChangeText={setUpdatedName}
             placeholder="Enter your full name"
           />
-          <TouchableOpacity onPress={handleSaveName} style={styles.saveButton}>
+          <TouchableOpacity
+            onPress={handleSaveName}
+            style={styles.saveButton}
+          >
             {loading ? (
-              <Progress.CircleSnail color={"white"} size={22} />
+              <Progress.CircleSnail
+                color={"white"}
+                size={22}
+              />
             ) : (
               <Text
                 className="text-white"
@@ -658,7 +710,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             className="items-center justify-center"
             style={{ left: 0, right: 0, top: 0, bottom: 0 }}
           >
-            <Text fontSize="text-xl" fontWeight="font-bold">
+            <Text
+              fontSize="text-xl"
+              fontWeight="font-bold"
+            >
               Edit Email Address
             </Text>
           </View>
@@ -791,7 +846,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             className="items-center justify-center"
             style={{ left: 0, right: 0, top: 0, bottom: 0 }}
           >
-            <Text fontSize="text-xl" fontWeight="font-bold">
+            <Text
+              fontSize="text-xl"
+              fontWeight="font-bold"
+            >
               Edit Phone Number
             </Text>
           </View>
@@ -916,7 +974,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               <View className=" flex-row gap-x-3 ">
                 <View className="flex-1">
                   <Button variant="outline">
-                    <Text fontSize="text-sm" fontWeight="font-bold">
+                    <Text
+                      fontSize="text-sm"
+                      fontWeight="font-bold"
+                    >
                       Resend OTP
                     </Text>
                   </Button>
@@ -968,7 +1029,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             />
           </TouchableOpacity>
           <View className="items-center justify-center ">
-            <Text fontSize="text-xl" fontWeight="font-bold">
+            <Text
+              fontSize="text-xl"
+              fontWeight="font-bold"
+            >
               Edit Password
             </Text>
           </View>
@@ -977,7 +1041,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         </View>
 
         <View className="p-4 gap-4">
-          <Text fontSize="text-base" fontWeight="font-bold">
+          <Text
+            fontSize="text-base"
+            fontWeight="font-bold"
+          >
             Current Password
           </Text>
           <View
@@ -998,14 +1065,23 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
               {showPassword ? (
-                <EyeSlashIcon size={22} color={isDarkMode ? "#FFF" : "#000"} />
+                <EyeSlashIcon
+                  size={22}
+                  color={isDarkMode ? "#FFF" : "#000"}
+                />
               ) : (
-                <EyeIcon size={22} color={isDarkMode ? "#FFF" : "#000"} />
+                <EyeIcon
+                  size={22}
+                  color={isDarkMode ? "#FFF" : "#000"}
+                />
               )}
             </TouchableOpacity>
           </View>
 
-          <Text fontSize="text-base" fontWeight="font-bold">
+          <Text
+            fontSize="text-base"
+            fontWeight="font-bold"
+          >
             New Password
           </Text>
           <View
@@ -1028,9 +1104,15 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               onPress={() => setShowNewPassword(!showNewPassoword)}
             >
               {showNewPassoword ? (
-                <EyeSlashIcon size={22} color={isDarkMode ? "#FFF" : "#000"} />
+                <EyeSlashIcon
+                  size={22}
+                  color={isDarkMode ? "#FFF" : "#000"}
+                />
               ) : (
-                <EyeIcon size={22} color={isDarkMode ? "#FFF" : "#000"} />
+                <EyeIcon
+                  size={22}
+                  color={isDarkMode ? "#FFF" : "#000"}
+                />
               )}
             </TouchableOpacity>
           </View>
