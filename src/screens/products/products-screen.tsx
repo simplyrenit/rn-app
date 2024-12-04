@@ -31,6 +31,8 @@ import { ModerationBanner } from "@/components/product/moderation-banner";
 const MAX_CHARS = 150;
 
 export default function DetailsScreen() {
+  const itemWidth = wp(40);
+  const itemMargin = wp(5.7);
   const [loading, setLoading] = React.useState(true);
   const [showFullText, setShowFullText] = useState(false);
   const route = useRoute<RouteProps<"ProductDetail">>();
@@ -372,13 +374,18 @@ export default function DetailsScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingRight: itemMargin,
+            }}
           >
             {lessReviews.map((item, index) => (
               <View
                 key={item.user.username}
                 style={{
-                  marginRight: index === lessReviews.length - 1 ? 16 : 12,
-                  marginLeft: index === 0 ? 16 : 0, // First item gets left margin of 16px to match px-4
+                  width: itemWidth,
+                  marginRight:
+                    index === lessReviews.length - 1 ? 0 : itemMargin,
+                  marginLeft: index === 0 ? wp(5.7) : 0,
                 }}
               >
                 <ReviewCard
@@ -511,11 +518,11 @@ export default function DetailsScreen() {
           ) : (
             <TouchableOpacity
               onPress={handleStartChat}
-              className="bg-brand-blue flex items-center justify-center rounded-lg h-full"
+              className="bg-brand-blue flex items-center justify-center rounded-[12px] text-center h-full"
             >
               <Text
                 fontWeight="font-bold"
-                fontSize="text-md"
+                fontSize="text-sm"
                 className="text-white tracking-wide"
               >
                 Chat with owner
