@@ -34,10 +34,16 @@ export default function Privacy() {
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
-          <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+          <ArrowLeftIcon
+            size={26}
+            color={isDarkMode ? "#FFF" : "#000"}
+          />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             Privacy Policy
           </Text>
         </View>
@@ -56,53 +62,89 @@ export default function Privacy() {
           className="space-y-5 h-[100%] mx-4"
           showsVerticalScrollIndicator={false}
         >
-          <RNT style={{ fontStyle: "italic", fontWeight: "600" }}>
-            {PRIVACY_CONTENT["effectiveDate"]}
+          <RNT
+            style={{
+              fontStyle: "italic",
+              fontWeight: "600",
+              color: isDarkMode ? "white" : "black",
+            }}
+          >
+            {PRIVACY_CONTENT.effectiveDate}
           </RNT>
-          <Text className="">{PRIVACY_CONTENT["intro"]}</Text>
+          <Text className="">{PRIVACY_CONTENT.intro}</Text>
 
           <View>
             <Text fontWeight="font-bold">1. Information We Collect</Text>
-            <Text className="">{PRIVACY_CONTENT["section1.1"]}</Text>
-            <Text className="">{PRIVACY_CONTENT["section1.2"]}</Text>
+            <Text className="">
+              {PRIVACY_CONTENT.informationWeCollect.personalData}
+            </Text>
+            <Text className="">
+              {PRIVACY_CONTENT.informationWeCollect.nonPersonalInformation}
+            </Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">2. Use of Information</Text>
-            <Text className="">{PRIVACY_CONTENT["section2.1"]}</Text>
-            <Text className="">{PRIVACY_CONTENT["section2.2"]}</Text>
+            <Text className="">
+              {PRIVACY_CONTENT.useOfInformation.personalData}
+            </Text>
+            <Text className="">
+              {PRIVACY_CONTENT.useOfInformation.nonPersonalInformation}
+            </Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">3. Sharing of Information</Text>
-            <Text className="">{PRIVACY_CONTENT["section3.1"]}</Text>
-            <Text className="">{PRIVACY_CONTENT["section3.2"]}</Text>
-            <Text className="">{PRIVACY_CONTENT["section3.3"]}</Text>
+            <Text className="">
+              {PRIVACY_CONTENT.sharingOfInformation.serviceProviders}
+            </Text>
+            <Text className="">
+              {PRIVACY_CONTENT.sharingOfInformation.legalRequirements}
+            </Text>
+            <Text className="">
+              {PRIVACY_CONTENT.sharingOfInformation.affiliates}
+            </Text>
+            <Text className="">
+              {PRIVACY_CONTENT.sharingOfInformation.businessTransfers}
+            </Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">4. Data Security</Text>
-            <Text className="">{PRIVACY_CONTENT["section4"]}</Text>
+            <Text className="">{PRIVACY_CONTENT.dataSecurity}</Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">5. Your Rights</Text>
-            <Text className="">{PRIVACY_CONTENT["section5"]}</Text>
+            <Text className="">{PRIVACY_CONTENT.otherGeneralRights}</Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">6. Children's Privacy</Text>
-            <Text className="">{PRIVACY_CONTENT["section6"]}</Text>
+            <Text className="">{PRIVACY_CONTENT.childrensPrivacy}</Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">7. Changes to the Privacy Policy</Text>
-            <Text className="">{PRIVACY_CONTENT["section7"]}</Text>
+            <Text className="">{PRIVACY_CONTENT.changesToPolicy}</Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">8. Contact Us</Text>
-            <Text className="">{PRIVACY_CONTENT["section8"]}</Text>
+            <Text className="">{PRIVACY_CONTENT.contactUs}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">9. Grievance Redressal Officer</Text>
+            <Text className="">
+              Name: {PRIVACY_CONTENT.grievanceRedressalOfficer.name}
+            </Text>
+            <Text className="">
+              Email: {PRIVACY_CONTENT.grievanceRedressalOfficer.email}
+            </Text>
+            <Text className="">
+              Address: {PRIVACY_CONTENT.grievanceRedressalOfficer.address}
+            </Text>
           </View>
         </StyledScroll>
       </View>

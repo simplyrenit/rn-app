@@ -32,10 +32,16 @@ export default function Terms() {
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
-          <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+          <ArrowLeftIcon
+            size={26}
+            color={isDarkMode ? "#FFF" : "#000"}
+          />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             Terms & Conditions
           </Text>
         </View>
@@ -50,7 +56,13 @@ export default function Terms() {
       >
         {/* <StaticContainer> */}
         <StyledScroll className="space-y-5 h-[100%] mx-4">
-          <RNT style={{ fontStyle: "italic", fontWeight: "600" }}>
+          <RNT
+            style={{
+              fontStyle: "italic",
+              fontWeight: "600",
+              color: isDarkMode ? "white" : "black",
+            }}
+          >
             {TERMS_CONTENT["effectiveDate"]}
           </RNT>
           <Text className="">{TERMS_CONTENT["intro"]}</Text>
@@ -65,29 +77,31 @@ export default function Terms() {
             <Text fontWeight="font-bold">2. General Terms</Text>
             <Text className="">{TERMS_CONTENT["section2.1"]}</Text>
             <Text className="">{TERMS_CONTENT["section2.2"]}</Text>
-            <Text className="">{TERMS_CONTENT["section2.3"]}</Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">3. User Obligations</Text>
             <Text className="">{TERMS_CONTENT["section3.1"]}</Text>
             <Text className="">{TERMS_CONTENT["section3.2"]}</Text>
-            <Text className="">{TERMS_CONTENT["section3.3"]}</Text>
-            <Text className="">{TERMS_CONTENT["section3.4"]}</Text>
-            <Text className="">{TERMS_CONTENT["section3.5"]}</Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">4. User Content</Text>
             <Text className="">{TERMS_CONTENT["section4.1"]}</Text>
             <Text className="">{TERMS_CONTENT["section4.2"]}</Text>
-            <Text className="">{TERMS_CONTENT["section4.3"]}</Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">5. Prohibited Content</Text>
             <Text className="">{TERMS_CONTENT["section5.1"]}</Text>
             <Text className="">{TERMS_CONTENT["section5.2"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.3"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.4"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.5"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.6"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.7"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.8"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.9"]}</Text>
           </View>
 
           <View>
@@ -102,23 +116,28 @@ export default function Terms() {
             </Text>
             <Text className="">{TERMS_CONTENT["section7.1"]}</Text>
             <Text className="">{TERMS_CONTENT["section7.2"]}</Text>
-            <Text className="">{TERMS_CONTENT["section7.3"]}</Text>
-            <Text className="">{TERMS_CONTENT["section7.4"]}</Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">8. Indemnification</Text>
             <Text className="">{TERMS_CONTENT["section8.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section8.2"]}</Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">9. Third-Party Websites</Text>
             <Text className="">{TERMS_CONTENT["section9.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section9.2"]}</Text>
+            <Text className="">{TERMS_CONTENT["section9.3"]}</Text>
+            <Text className="">{TERMS_CONTENT["section9.4"]}</Text>
           </View>
 
           <View>
             <Text fontWeight="font-bold">10. Termination</Text>
             <Text className="">{TERMS_CONTENT["section10.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section10.2"]}</Text>
+            <Text className="">{TERMS_CONTENT["section10.3"]}</Text>
+            <Text className="">{TERMS_CONTENT["section10.4"]}</Text>
           </View>
 
           <View>
@@ -126,6 +145,32 @@ export default function Terms() {
               11. Governing Law and Jurisdiction
             </Text>
             <Text className="">{TERMS_CONTENT["section11.1"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">12. Contact Information</Text>
+            <Text className="">{TERMS_CONTENT["section12.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section12.2"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">13. Grievance Redressal</Text>
+            <Text className="">{TERMS_CONTENT["section13.1"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">14. Termination</Text>
+            <Text className="">{TERMS_CONTENT["section14.1"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">15. Contact Us</Text>
+            <Text className="">{TERMS_CONTENT["section15.1"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">16. Grievance Redressal Officer</Text>
+            <Text className="">{TERMS_CONTENT["section16.1"]}</Text>
           </View>
         </StyledScroll>
         {/* </StaticContainer> */}
