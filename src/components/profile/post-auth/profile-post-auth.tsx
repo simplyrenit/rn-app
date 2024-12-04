@@ -64,7 +64,11 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
           }`}
         >
           <View className="px-5">
-            <Text fontSize="text-base" fontWeight="font-bold" className="pb-3">
+            <Text
+              fontSize="text-base"
+              fontWeight="font-bold"
+              className="pb-3"
+            >
               Account
             </Text>
             <IconButton
@@ -85,7 +89,11 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
           }`}
         >
           <View className="px-5">
-            <Text fontSize="text-base" fontWeight="font-bold" className="pb-3">
+            <Text
+              fontSize="text-base"
+              fontWeight="font-bold"
+              className="pb-3"
+            >
               App
             </Text>
             <IconButton
@@ -110,7 +118,11 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
           }`}
         >
           <View className="px-5">
-            <Text fontSize="text-base" fontWeight="font-bold" className="pb-3">
+            <Text
+              fontSize="text-base"
+              fontWeight="font-bold"
+              className="pb-3"
+            >
               Support
             </Text>
             <IconButton
@@ -167,7 +179,11 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
         {/* <Legal */}
         <View className="py-4 mb-16">
           <View className="px-5">
-            <Text fontSize="text-base" fontWeight="font-bold" className="pb-3">
+            <Text
+              fontSize="text-base"
+              fontWeight="font-bold"
+              className="pb-3"
+            >
               Legal
             </Text>
             <IconButton
@@ -192,13 +208,16 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
           <View className="pt-5">
             <TouchableOpacity
               onPress={handleLogout}
-              className={`bg-white flex-row justify-center gap-1  items-center ${
+              className={`bg-white flex-1 flex-row items-center justify-center gap-1 ${
                 isDark
                   ? "bg-[#1A1A1A] border-[#292929]"
                   : "bg-white border-[#e6e6e6]"
               } border rounded-[12px] py-3 px-6 mx-2`}
             >
-              <ArrowRightStartOnRectangleIcon size={24} color="#E50914" />
+              <ArrowRightStartOnRectangleIcon
+                size={24}
+                color="#E50914"
+              />
               <Text
                 fontSize="text-base"
                 fontWeight="font-bold"

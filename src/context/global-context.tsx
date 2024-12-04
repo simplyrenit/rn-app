@@ -36,6 +36,7 @@ interface GlobalContextType {
   hideReportModal: () => void;
   theme: string;
   setTheme: (theme: string) => void;
+  themePreference: string;
   categories: Category[];
   fetchCategories: () => Promise<void>;
   userData: UserData | null;
@@ -254,6 +255,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     loadUserDataFromStorage,
     userDetails,
     fetchUserDetails,
+    themePreference: theme,
   };
 
   return (

@@ -21,7 +21,10 @@ export const CurrencySheet: React.FC<AppearanceSheetProps> = ({
       isDark={isDarkMode}
     >
       <View className="flex items-center my-4">
-        <Text fontSize="text-xl" fontWeight="font-bold">
+        <Text
+          fontSize="text-xl"
+          fontWeight="font-bold"
+        >
           Currency
         </Text>
       </View>
@@ -32,11 +35,18 @@ export const CurrencySheet: React.FC<AppearanceSheetProps> = ({
         >
           <View className="flex-row items-center">
             <Text>{getUnicodeFlagIcon("IN")}</Text>
-            <Text fontSize="text-md" fontWeight="font-bold" className="ml-2">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+              className="ml-2"
+            >
               Indian Rupee
             </Text>
           </View>
-          <CheckIcon size={24} color="#635BE8" />
+          <CheckIcon
+            size={24}
+            color="#635BE8"
+          />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -45,8 +55,27 @@ export const CurrencySheet: React.FC<AppearanceSheetProps> = ({
         >
           <View className="flex-row items-center">
             <Text>{getUnicodeFlagIcon("US")}</Text>
-            <Text fontSize="text-md" fontWeight="font-bold" className="ml-2">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+              className="ml-2"
+            >
               US Dollar
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className="flex-row justify-between py-3"
+          onPress={() => {}}
+        >
+          <View className="flex-row items-center">
+            <Text>{getUnicodeFlagIcon("GB")}</Text>
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+              className="ml-2"
+            >
+              GB Pound
             </Text>
           </View>
         </TouchableOpacity>
@@ -56,7 +85,7 @@ export const CurrencySheet: React.FC<AppearanceSheetProps> = ({
           onPress={() => {}}
         >
           <Text fontSize="text-base">Light Mode</Text>
-          {/* {theme === "light" && <CheckIcon size={24} color="#635BE8" />} 
+          {/* {theme === "light" && <CheckIcon size={24} color="#635BE8" />}
         </TouchableOpacity> */}
       </View>
     </CustomBottomSheetModal>
