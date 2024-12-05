@@ -23,14 +23,14 @@ export const FIREBASE_CONFIG = {
   measurementId: "G-P7DWR065WK",
 };
 
-export const DEV_MODE: string = "PROD"; // DEV or PROD
+export const DEV_MODE: string = "DEV"; // DEV or PROD
 
 export let SERVERURL = "";
 
 if (DEV_MODE === "PROD") {
   SERVERURL = "http://api.simplyrenit.com/api/";
 } else {
-  SERVERURL = "http://192.168.31.249:8000/api/";
+  SERVERURL = "http://localhost:8000/api/";
 }
 
 export const ACCESS_TOKEN =
@@ -56,6 +56,8 @@ export const POST_MY_PRODUCTS = SERVERURL + "my/products/";
 export const GENERATE_SIGNED_URLS = SERVERURL + "generate-presigned-urls/";
 
 export const GOOGLE_SIGN_IN_ENDPOINT = SERVERURL + "google-login/";
+
+export const APPLE_SIGN_IN_ENDPOINT = SERVERURL + "apple-login/";
 
 export const MY_PRODUCTS_ENDPOINT = SERVERURL + "my/products/";
 

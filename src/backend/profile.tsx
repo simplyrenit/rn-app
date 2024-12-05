@@ -22,12 +22,12 @@ export function useProfile() {
   const { getPresignedURLs, uploadToS3 } = usePost();
   const [loading, setLoading] = useState(false);
 
-  async function getMyDetails() {
+  async function getMyDetails(token?: string) {
     setLoading(true);
     try {
       const response = await axios.get<MyDetails>(MY_DETAILS_ENDPOINT, {
         headers: {
-          Authorization: `Bearer ${access_token}`,
+          Authorization: `Bearer ${token || access_token}`,
         },
       });
 

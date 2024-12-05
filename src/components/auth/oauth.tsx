@@ -6,15 +6,19 @@ import {
 } from "@react-native-google-signin/google-signin";
 import axios from "axios";
 import { useState } from "react";
-import { GOOGLE_SIGN_IN_ENDPOINT } from "@/lib/config";
+import { APPLE_SIGN_IN_ENDPOINT, GOOGLE_SIGN_IN_ENDPOINT } from "@/lib/config";
 import { useGlobalContext } from "@/context/global-context";
 import { AuthTokens, useTypedNavigation } from "@/lib/types";
 import * as AppleAuthentication from "expo-apple-authentication";
+import { useAuthContext } from "@/context/auth-context";
+import { useProfile } from "@/backend/profile";
 
 export function useOAuth() {
   const [loading, setLoading] = useState(false);
-  const { setAuthTokens } = useGlobalContext();
+  const { setAuthTokens, userDetails } = useGlobalContext();
   const router = useTypedNavigation();
+  // const { getUser, saveUser } = useAuthContext();
+  const { getMyDetails } = useProfile();
 
   const googleSignIn = async () => {
     setLoading(true);
@@ -31,7 +35,17 @@ export function useOAuth() {
 
         if (res.data.access_token !== null && res.data.refresh_token !== null) {
           setAuthTokens(res.data);
-          //   router.navigate("MainTabs");
+          const user = await getMyDetails(res.data.access_token);
+          if (
+            user?.first_name === null ||
+            user?.last_name === null ||
+            user?.first_name === "" ||
+            user?.last_name === ""
+          ) {
+            router.navigate("About");
+          } else {
+            router.navigate("MainTabs");
+          }
           return;
         }
       } else {
@@ -70,8 +84,33 @@ export function useOAuth() {
       });
 
       console.log("credential", credential);
-      // signed in
+      if (credential.identityToken) {
+        const res = await axios.post<AuthTokens>(APPLE_SIGN_IN_ENDPOINT, {
+          data: {
+            identityToken: credential.identityToken,
+          },
+        });
+
+        if (res.data.access_token !== null && res.data.refresh_token !== null) {
+          setAuthTokens(res.data);
+          const user = await getMyDetails(res.data.access_token);
+          if (
+            user?.first_name === null ||
+            user?.last_name === null ||
+            user?.first_name === "" ||
+            user?.last_name === ""
+          ) {
+            router.navigate("About");
+          } else {
+            router.navigate("MainTabs");
+          }
+          return;
+        }
+      } else {
+        console.log("sign in was cancelled by user");
+      }
     } catch (e: any) {
+      console.log("error", e);
       if (e.code === "ERR_REQUEST_CANCELED") {
         console.log("user cancelled");
       } else {
