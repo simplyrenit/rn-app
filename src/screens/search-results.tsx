@@ -14,7 +14,7 @@ import { BottomSheetView } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { styled } from "nativewind";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
@@ -60,6 +60,7 @@ export default function SearchResults() {
     range,
     selectedItem,
     products: fetchedProducts,
+    category,
   } = route.params;
   const { searchProducts } = useSearch();
   const [products, setProducts] = useState<BackendProduct[]>(fetchedProducts);
@@ -73,7 +74,7 @@ export default function SearchResults() {
 
   const [filters, setFilters] = useState({
     sort: "",
-    category: "",
+    category: category || "",
     subCategory: "",
     price: { min: "", max: "" },
     ratings: { product: 0, owner: 0 },
@@ -202,6 +203,14 @@ export default function SearchResults() {
     (category) => category.title === selectedCategory
   );
 
+  useEffect(() => {
+    if (category) {
+      handleCategorySelect(category);
+      setSelectedTab("Category");
+      handleOpenBottomSheet();
+    }
+  }, [category]);
+
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
       <View className="w-[90%] mx-auto flex-1">
@@ -222,7 +231,10 @@ export default function SearchResults() {
           </TouchableOpacity>
 
           <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">
+            <Text
+              fontSize="text-sm"
+              fontWeight="font-bold"
+            >
               {selectedItem}
             </Text>
             <View className="flex flex-row items-center space-x-2 mt-1">
@@ -257,7 +269,10 @@ export default function SearchResults() {
 
         {/* Filters and Results */}
         <View className="mx-1 mt-3 mb-3 flex flex-row items-center justify-between">
-          <Text fontSize="text-base" fontWeight="font-bold">
+          <Text
+            fontSize="text-base"
+            fontWeight="font-bold"
+          >
             {products.length} results
           </Text>
 
@@ -338,7 +353,10 @@ export default function SearchResults() {
         <StyledBottomView className="w-full px-5 py-2 flex flex-col justify-between flex-1 ">
           <View className="flex-1">
             <View className="flex items-center mb-4">
-              <Text fontSize="text-lg" fontWeight="font-bold">
+              <Text
+                fontSize="text-lg"
+                fontWeight="font-bold"
+              >
                 Refine your search
               </Text>
 
@@ -479,7 +497,10 @@ export default function SearchResults() {
         <StyledBottomView className="w-full px-5 py-2 flex flex-col justify-between h-1/2">
           <View>
             <View className="flex items-center mb-4">
-              <Text fontSize="text-lg" fontWeight="font-bold">
+              <Text
+                fontSize="text-lg"
+                fontWeight="font-bold"
+              >
                 Select a subcategory
               </Text>
             </View>
@@ -494,8 +515,14 @@ export default function SearchResults() {
                   isDark ? "border-[#292929]" : "border-[#e6e6e6]"
                 }`}
               >
-                <ChevronLeftIcon size={24} color={isDark ? "white" : "black"} />
-                <Text fontSize="text-sm" fontWeight="font-bold">
+                <ChevronLeftIcon
+                  size={24}
+                  color={isDark ? "white" : "black"}
+                />
+                <Text
+                  fontSize="text-sm"
+                  fontWeight="font-bold"
+                >
                   {filters.category}
                 </Text>
               </View>
@@ -518,13 +545,19 @@ export default function SearchResults() {
                       }}
                       style={{ width: 20, height: 20 }}
                     />
-                    <Text fontSize="text-base" className="ml-3">
+                    <Text
+                      fontSize="text-base"
+                      className="ml-3"
+                    >
                       {item.name}
                     </Text>
                   </View>
 
                   {filters.subCategory === item.name && (
-                    <CheckIcon size={24} color="#635be8" />
+                    <CheckIcon
+                      size={24}
+                      color="#635be8"
+                    />
                   )}
                 </View>
               </TouchableOpacity>

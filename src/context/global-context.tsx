@@ -153,7 +153,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
           "Content-Type": "application/json",
         },
       });
-      // console.log("Fetched categories:", response.data);
+      console.log("Fetched categories:", response.data);
       setCategories(response.data);
     } catch (error) {
       console.error("Failed to fetch categories:", error);

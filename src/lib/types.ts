@@ -205,6 +205,7 @@ export type RootStackParamList = {
     address: string;
     coords: { lat: number | undefined; lng: number | undefined };
     products: BackendProduct[];
+    category: string;
   };
   myProducts: undefined;
   editProduct: { id: string };
