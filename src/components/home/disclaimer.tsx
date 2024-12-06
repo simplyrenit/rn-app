@@ -39,7 +39,10 @@ export function Disclaimer() {
         </View>
 
         <View className="flex w-full space-y-2">
-          <Text fontSize="text-base" fontWeight="font-bold">
+          <Text
+            fontSize="text-base"
+            fontWeight="font-bold"
+          >
             Don't see what you need?
           </Text>
           <View className="mt-1 mb-2 w-[80%]">
@@ -59,10 +62,21 @@ export function Disclaimer() {
         onPress={onPress}
         className="bg-brand-blue py-3 px-4 rounded-lg flex-row items-center justify-center"
       >
-        <Text fontWeight="font-bold" className="text-white mr-1">
+        {/* <View className="flex-row items-center"> */}
+        <Text
+          fontWeight="font-bold"
+          className="text-white mr-1 -translate-y-[1px]"
+        >
           Unavailability form
         </Text>
-        <ChevronRightIcon size={16} strokeWidth={3} color="white" />
+        {/* <View className="flex-row items-center bg-red-500"> */}
+        <ChevronRightIcon
+          size={16}
+          // strokeWidth={3}
+          color="white"
+        />
+        {/* </View> */}
+        {/* </View> */}
       </TouchableOpacity>
     </View>
   );
