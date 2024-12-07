@@ -116,6 +116,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     }
   };
 
+  const today = new Date().toISOString().split("T")[0];
+
   return (
     <Modal
       visible={true}
@@ -140,6 +142,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             markingType={"custom"}
             markedDates={selectedDates}
             onDayPress={onDayPress}
+            minDate={today} // Disable all dates before today
             theme={{
               backgroundColor: isDark ? "#000" : "#fff",
               calendarBackground: isDark ? "#292929" : "#f5f5f5",
@@ -150,10 +153,13 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               selectedDayTextColor: "white",
               monthTextColor: isDark ? "#fff" : "#000",
               arrowColor: isDark ? "#fff" : "#000",
-              textDisabledColor: "#d9e1e8",
+              textDisabledColor: "#1A1A1A", // Change color of disabled dates
             }}
           />
-          <View style={styles.buttons} className="px-5">
+          <View
+            style={styles.buttons}
+            className="px-5"
+          >
             <Button
               disabled={!tempStartDate || !tempEndDate} // Disable button if no range selected
               onPress={handleConfirm}
