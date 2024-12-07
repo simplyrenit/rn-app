@@ -11,6 +11,7 @@ import {
   InformationCircleIcon,
   ChevronDownIcon,
 } from "react-native-heroicons/outline";
+import { CheckBox } from "@/components/core/checkbox";
 
 // Constants for date selections
 const DATES = Array.from({ length: 31 }, (_, i) =>
@@ -87,7 +88,7 @@ const Dropdown: React.FC<DropdownProps> = ({
 
       {isOpen && (
         <View
-          className={`absolute top-[100%] left-0 right-0 z-50 border rounded-lg mt-1 max-h-[200px] overflow-hidden ${
+          className={`absolute top-[100%] left-0 right-0 z-50 border rounded-lg mt-1 max-h-[300px] overflow-hidden ${
             isDarkMode
               ? "bg-[#0F0F0F] border-[#292929]"
               : "bg-white border-[#e6e6e6]"
@@ -300,9 +301,121 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
 );
 
 // Business Form component remains unchanged
-const BusinessForm = {
-  /* ... existing BusinessForm implementation ... */
-};
+const BusinessForm: React.FC<BusinessFormProps> = ({
+  firstName,
+  lastName,
+  businessName,
+  setFirstName,
+  setLastName,
+  setBusinessName,
+  errors,
+  isDarkMode,
+  setError,
+}) => (
+  <>
+    <View className="mt-4">
+      <Text
+        fontSize="text-sm"
+        fontWeight="font-semibold"
+        className="mb-2"
+      >
+        Business name
+      </Text>
+      <TextInput
+        value={businessName}
+        onChangeText={(text) => {
+          setBusinessName(text);
+          if (errors.businessName) {
+            setError((prev) => ({ ...prev, businessName: "" }));
+          }
+        }}
+        className={`p-4 border rounded-lg ${
+          isDarkMode
+            ? "bg-[#0F0F0F] text-white border-[#292929]"
+            : "bg-white text-black border-[#e6e6e6]"
+        }`}
+        placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
+      />
+      {errors.businessName && (
+        <View className="flex flex-row items-center mt-4 space-x-3">
+          <InformationCircleIcon
+            size={14}
+            color="#ef4444"
+          />
+          <Text className="text-red-500">{errors.businessName}</Text>
+        </View>
+      )}
+    </View>
+
+    <View className="mt-4">
+      <Text
+        fontSize="text-sm"
+        fontWeight="font-semibold"
+        className="mb-2"
+      >
+        Owner's first name
+      </Text>
+      <TextInput
+        value={firstName}
+        onChangeText={(text) => {
+          setFirstName(text);
+          if (errors.firstName) {
+            setError((prev) => ({ ...prev, firstName: "" }));
+          }
+        }}
+        className={`p-4 border rounded-lg ${
+          isDarkMode
+            ? "bg-[#0F0F0F] text-white border-[#292929]"
+            : "bg-white text-black border-[#e6e6e6]"
+        }`}
+        placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
+      />
+      {errors.firstName && (
+        <View className="flex flex-row items-center mt-4 space-x-3">
+          <InformationCircleIcon
+            size={14}
+            color="#ef4444"
+          />
+          <Text className="text-red-500">{errors.firstName}</Text>
+        </View>
+      )}
+    </View>
+
+    <View className="mt-4">
+      <Text
+        fontSize="text-sm"
+        fontWeight="font-semibold"
+        className="mb-2"
+      >
+        Owner's last name
+      </Text>
+      <TextInput
+        value={lastName}
+        onChangeText={(text) => {
+          setLastName(text);
+          if (errors.lastName) {
+            setError((prev) => ({ ...prev, lastName: "" }));
+          }
+        }}
+        className={`p-4 border rounded-lg ${
+          isDarkMode
+            ? "bg-[#0F0F0F] text-white border-[#292929]"
+            : "bg-white text-black border-[#e6e6e6]"
+        }`}
+        placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
+      />
+      {errors.lastName && (
+        <View className="flex flex-row items-center mt-4 space-x-3">
+          <InformationCircleIcon
+            size={14}
+            color="#ef4444"
+          />
+          <Text className="text-red-500">{errors.lastName}</Text>
+        </View>
+      )}
+    </View>
+  </>
+);
 
 export default function AboutYourself() {
   const router = useTypedNavigation();
@@ -326,6 +439,7 @@ export default function AboutYourself() {
     accountType: "",
   });
   const [dobError, setDobError] = useState("");
+  const [agreementChecked, setAgreementChecked] = useState(false);
 
   const { theme } = useGlobalContext();
   const isDarkMode = theme === "dark";
@@ -436,159 +550,175 @@ export default function AboutYourself() {
         <HeaderIndicator percentage={30} />
 
         <ScrollContainer>
-          <View className="flex">
-            <Text
-              fontSize="text-2xl"
-              fontWeight="font-bold"
-            >
-              Tell us about yourself
-            </Text>
-            <Text
-              fontSize="text-base"
-              className={`${
-                isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000b2]"
-              } mt-1`}
-            >
-              Spill the beans already
-            </Text>
-          </View>
-
-          <View>
-            <View className="mt-12">
+          <View className="flex-1 mb-[100px]">
+            <View className="flex">
               <Text
-                fontSize="text-sm"
+                fontSize="text-2xl"
                 fontWeight="font-bold"
-                className="mb-2"
               >
-                I am...
+                Tell us about yourself
               </Text>
-              <View className="flex-row justify-between mt-2">
-                <TouchableOpacity
-                  className={`flex-1 mr-2 p-4 rounded-xl border-2 ${
-                    accountType === "Individual"
-                      ? "border-brand-blue"
-                      : isDarkMode
-                      ? "border-[#292929]"
-                      : "border-[#e6e6e6]"
-                  } ${isDarkMode ? "bg-[#0F0F0F]" : "bg-white"}`}
-                  onPress={() => {
-                    setAccountType("Individual");
-                    if (errors.accountType) {
-                      setErrors((prevErrors) => ({
-                        ...prevErrors,
-                        accountType: "",
-                      }));
-                    }
-                  }}
-                >
-                  <View className="flex-row justify-between items-center">
-                    <Text
-                      fontSize="text-sm"
-                      className={isDarkMode ? "text-white" : "text-black"}
-                    >
-                      Individual
-                    </Text>
-                    {accountType === "Individual" && (
-                      <CheckIcon
-                        color="#635BE8"
-                        size={24}
-                      />
-                    )}
-                  </View>
-                </TouchableOpacity>
+              <Text
+                fontSize="text-base"
+                className={`${
+                  isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000b2]"
+                } mt-1`}
+              >
+                Spill the beans already
+              </Text>
+            </View>
 
-                <TouchableOpacity
-                  className={`flex-1 ml-2 p-4 rounded-xl border-2 ${
-                    accountType === "Business"
-                      ? "border-brand-blue"
-                      : isDarkMode
-                      ? "border-[#292929]"
-                      : "border-[#e6e6e6]"
-                  } ${isDarkMode ? "bg-[#0F0F0F]" : "bg-white"}`}
-                  onPress={() => {
-                    setAccountType("Business");
-                    if (errors.accountType) {
-                      setErrors((prevErrors) => ({
-                        ...prevErrors,
-                        accountType: "",
-                      }));
-                    }
-                  }}
+            <View>
+              <View className="mt-12">
+                <Text
+                  fontSize="text-sm"
+                  fontWeight="font-bold"
+                  className="mb-2"
                 >
-                  <View className="flex-row justify-between items-center">
-                    <Text
-                      fontSize="text-sm"
-                      className={isDarkMode ? "text-white" : "text-black"}
-                    >
-                      Business
-                    </Text>
-                    {accountType === "Business" && (
-                      <CheckIcon
-                        color="#635BE8"
-                        size={24}
-                      />
-                    )}
-                  </View>
-                </TouchableOpacity>
+                  I am...
+                </Text>
+                <View className="flex-row justify-between mt-2">
+                  <TouchableOpacity
+                    className={`flex-1 mr-2 p-4 rounded-xl border-2 ${
+                      accountType === "Individual"
+                        ? "border-brand-blue"
+                        : isDarkMode
+                        ? "border-[#292929]"
+                        : "border-[#e6e6e6]"
+                    } ${isDarkMode ? "bg-[#0F0F0F]" : "bg-white"}`}
+                    onPress={() => {
+                      setAccountType("Individual");
+                      if (errors.accountType) {
+                        setErrors((prevErrors) => ({
+                          ...prevErrors,
+                          accountType: "",
+                        }));
+                      }
+                    }}
+                  >
+                    <View className="flex-row justify-between items-center">
+                      <Text
+                        fontSize="text-sm"
+                        className={isDarkMode ? "text-white" : "text-black"}
+                      >
+                        Individual
+                      </Text>
+                      {accountType === "Individual" && (
+                        <CheckIcon
+                          color="#635BE8"
+                          size={24}
+                        />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    className={`flex-1 ml-2 p-4 rounded-xl border-2 ${
+                      accountType === "Business"
+                        ? "border-brand-blue"
+                        : isDarkMode
+                        ? "border-[#292929]"
+                        : "border-[#e6e6e6]"
+                    } ${isDarkMode ? "bg-[#0F0F0F]" : "bg-white"}`}
+                    onPress={() => {
+                      setAccountType("Business");
+                      if (errors.accountType) {
+                        setErrors((prevErrors) => ({
+                          ...prevErrors,
+                          accountType: "",
+                        }));
+                      }
+                    }}
+                  >
+                    <View className="flex-row justify-between items-center">
+                      <Text
+                        fontSize="text-sm"
+                        className={isDarkMode ? "text-white" : "text-black"}
+                      >
+                        Business
+                      </Text>
+                      {accountType === "Business" && (
+                        <CheckIcon
+                          color="#635BE8"
+                          size={24}
+                        />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
+
+            {errors.accountType && (
+              <View className="flex flex-row items-center mt-4 space-x-3">
+                <InformationCircleIcon
+                  size={14}
+                  color="#ef4444"
+                />
+                <Text className="text-red-500">{errors.accountType}</Text>
+              </View>
+            )}
+
+            {accountType === "Individual" && (
+              <IndividualForm
+                firstName={firstName}
+                lastName={lastName}
+                setFirstName={setFirstName}
+                setLastName={setLastName}
+                errors={errors}
+                isDarkMode={isDarkMode}
+                setError={setErrors}
+                dob={dob}
+                setDob={setDob}
+                dobError={dobError}
+                setDobError={setDobError}
+              />
+            )}
+
+            {accountType === "Business" && (
+              <BusinessForm
+                firstName={firstName}
+                lastName={lastName}
+                businessName={businessName}
+                setFirstName={setFirstName}
+                setLastName={setLastName}
+                setBusinessName={setBusinessName}
+                errors={errors}
+                isDarkMode={isDarkMode}
+                setError={setErrors}
+              />
+            )}
+
+            {errors.sameName && (
+              <View className="flex flex-row items-center mt-4 space-x-3">
+                <InformationCircleIcon
+                  size={14}
+                  color="#ef4444"
+                />
+                <Text className="text-red-500">{errors.sameName}</Text>
+              </View>
+            )}
           </View>
-
-          {errors.accountType && (
-            <View className="flex flex-row items-center mt-4 space-x-3">
-              <InformationCircleIcon
-                size={14}
-                color="#ef4444"
-              />
-              <Text className="text-red-500">{errors.accountType}</Text>
-            </View>
-          )}
-
-          {accountType === "Individual" && (
-            <IndividualForm
-              firstName={firstName}
-              lastName={lastName}
-              setFirstName={setFirstName}
-              setLastName={setLastName}
-              errors={errors}
-              isDarkMode={isDarkMode}
-              setError={setErrors}
-              dob={dob}
-              setDob={setDob}
-              dobError={dobError}
-              setDobError={setDobError}
-            />
-          )}
-
-          {accountType === "Business" && (
-            <BusinessForm
-              firstName={firstName}
-              lastName={lastName}
-              businessName={businessName}
-              setFirstName={setFirstName}
-              setLastName={setLastName}
-              setBusinessName={setBusinessName}
-              errors={errors}
-              isDarkMode={isDarkMode}
-              setError={setErrors}
-            />
-          )}
-
-          {errors.sameName && (
-            <View className="flex flex-row items-center mt-4 space-x-3">
-              <InformationCircleIcon
-                size={14}
-                color="#ef4444"
-              />
-              <Text className="text-red-500">{errors.sameName}</Text>
-            </View>
-          )}
         </ScrollContainer>
 
         <View className="py-5">
+          <View className="flex-row items-center mb-4">
+            <CheckBox
+              checked={agreementChecked}
+              onPress={() => setAgreementChecked(!agreementChecked)}
+            />
+            <Text
+              className={`ml-2 ${
+                isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000b2]"
+              }`}
+            >
+              I agree to provide accurate and verifiable information
+            </Text>
+          </View>
           <Button
             variant="primary"
             onPress={handleSubmit}
+            disabled={!agreementChecked}
           >
             Continue
           </Button>
