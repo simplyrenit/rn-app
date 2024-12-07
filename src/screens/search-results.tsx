@@ -136,8 +136,8 @@ export default function SearchResults() {
         selectedItem,
         { lat: coords.lat!, lng: coords.lng! },
         {
-          start_date: range.startDate!.toISOString(),
-          end_date: range.endDate!.toISOString(),
+          start_date: range.startDate?.toISOString() ?? undefined,
+          end_date: range.endDate?.toISOString() ?? undefined,
         },
         {
           sort: filters.sort,
