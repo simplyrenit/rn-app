@@ -12,7 +12,13 @@ import axios from "axios";
 import * as Location from "expo-location";
 import { styled } from "nativewind";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { AutocompleteDropdown } from "react-native-autocomplete-dropdown";
 import {
   GestureHandlerRootView,
