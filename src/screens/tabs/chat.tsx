@@ -7,55 +7,60 @@ import { Conversation } from "@/lib/types";
 import { useFocusEffect } from "@react-navigation/native";
 import { styled } from "nativewind";
 import React from "react";
-import { FlatList, StyleSheet, TextInput, View } from "react-native";
+import { FlatList, View } from "react-native";
+import { TextInput } from "react-native-gesture-handler";
 import { MagnifyingGlassIcon } from "react-native-heroicons/outline";
+import { StyleSheet } from "react-native";
 
 const StyledInput = styled(TextInput);
 
 export default function Chat() {
-  const [searchTerm, setSearchTerm] = React.useState("");
   const { theme, authTokens, isAuthenticated, userDetails } =
     useGlobalContext();
   const [conversations, setConversations] = React.useState<Conversation[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   const isDark = theme === "dark";
-
   const { subscribeToChats, deleteChat } = useChat();
+
+  // Add a ref to track mounted state
+  const isMounted = React.useRef(true);
+
+  React.useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useFocusEffect(
     React.useCallback(() => {
+      let isSubscribed = true;
+      let unsubscribe: (() => void) | undefined;
+
+      console.log("[Chat] Starting subscription setup");
+
       if (authTokens && isAuthenticated) {
-        const unsubscribe = subscribeToChats(
+        console.log("[Chat] Initiating subscription");
+        unsubscribe = subscribeToChats(
           userDetails?.username!,
           (chats: Conversation[]) => {
+            if (!isSubscribed) return;
+            console.log("[Chat] Received update:", chats.length, "chats");
             setConversations(chats);
+            setIsLoading(false);
           }
         );
-        return unsubscribe;
       }
-    }, [userDetails?.username, authTokens, isAuthenticated])
+
+      return () => {
+        console.log("[Chat] Effect cleanup");
+        isSubscribed = false;
+        if (unsubscribe) {
+          unsubscribe();
+        }
+      };
+    }, [authTokens, isAuthenticated, userDetails?.username])
   );
-
-  const getChatPartnerName = (conversation: Conversation) => {
-    const chatPartner = conversation.initialParticipants.find(
-      (participant) => participant.userId !== userDetails?.username
-    );
-    return chatPartner ? chatPartner.username : "Unknown";
-  };
-
-  const filteredConversations = conversations
-    .map((conversation) => ({
-      ...conversation,
-      name: getChatPartnerName(conversation),
-    }))
-    .filter((conversation) =>
-      conversation.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort(
-      (a, b) =>
-        new Date(b.lastMessageTime || 0).getTime() -
-        new Date(a.lastMessageTime || 0).getTime()
-    );
 
   if (!authTokens || !isAuthenticated) {
     return (
@@ -77,7 +82,10 @@ export default function Chat() {
   return (
     <StaticContainer width={100}>
       <View className="px-4 pb-4 mt-4 w-full">
-        <Text fontSize="text-2xl" fontWeight="font-bold">
+        <Text
+          fontSize="text-2xl"
+          fontWeight="font-bold"
+        >
           Chat
         </Text>
 
@@ -89,59 +97,62 @@ export default function Chat() {
               : "bg-white border-[#E6E6E6]"
           }`}
         >
-          <MagnifyingGlassIcon color="gray" size={24} />
+          <MagnifyingGlassIcon
+            color="gray"
+            size={24}
+          />
           <StyledInput
-            className={`ml-2 w-4/5 h-12 text-black ${
+            className={`ml-2 w-4/5 text-black ${
               isDark ? "text-white" : "text-black"
             }`}
             placeholder="Search chat"
             placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
-            autoCapitalize={"none"}
+            autoCapitalize="none"
             autoCorrect={false}
-            onChangeText={setSearchTerm}
+            onChangeText={() => {}}
             style={{ fontSize: 16 }}
           />
         </View>
 
-        {filteredConversations.length > 0 ? (
+        {isLoading ? (
+          <View className="items-center justify-center flex-1">
+            <Text>Loading chats...</Text>
+          </View>
+        ) : (
           <FlatList
-            data={filteredConversations}
-            keyExtractor={(item) => item.id!}
-            renderItem={({ item }) => {
-              return (
-                <ChatCard
-                  isRead={
-                    item.readStatus.filter(
-                      (item) => item.userId === userDetails?.username
-                    )[0].isRead || false
-                  }
-                  id={item.id!}
-                  name={item.name}
-                  lastMessage={item.lastMessage || ""}
-                  unreadCount={
-                    item.readCount.filter(
-                      (item) => item.userId === userDetails?.username
-                    )[0].count || 0
-                  }
-                  lastMessageTime={item.lastMessageTime || ""}
-                  profilePic={
-                    item.initialParticipants.find(
-                      (p) => p.userId !== userDetails?.username
-                    )?.profilePicture || ""
-                  }
-                  onDeleteChat={(id) => {
-                    deleteChat(id);
-                  }}
-                />
-              );
-            }}
+            data={conversations}
+            renderItem={({ item }) => (
+              <ChatCard
+                isRead={
+                  item.readStatus.find(
+                    (status) => status.userId === userDetails?.username
+                  )?.isRead || false
+                }
+                id={item.id}
+                name={
+                  item.initialParticipants.find(
+                    (p) => p.userId !== userDetails?.username
+                  )?.username || "Unknown"
+                }
+                lastMessage={item.lastMessage || ""}
+                unreadCount={
+                  item.readCount.find(
+                    (count) => count.userId === userDetails?.username
+                  )?.count || 0
+                }
+                lastMessageTime={item.lastMessageTime || ""}
+                profilePic={
+                  item.initialParticipants.find(
+                    (p) => p.userId !== userDetails?.username
+                  )?.profilePicture || ""
+                }
+                onDeleteChat={deleteChat}
+              />
+            )}
+            keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             style={{ height: "80%" }}
           />
-        ) : (
-          <View className="items-center justify-center">
-            <Text>No messages found</Text>
-          </View>
         )}
       </View>
     </StaticContainer>

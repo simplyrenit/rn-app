@@ -42,7 +42,11 @@ const CustomBottomSheetModal = forwardRef<
     : snapPoints;
 
   const renderBackdrop = (props: any) => (
-    <BottomSheetBackdrop {...props} disappearsOnIndex={-1} opacity={0.8} />
+    <BottomSheetBackdrop
+      {...props}
+      disappearsOnIndex={-1}
+      opacity={0.8}
+    />
   );
 
   return (
@@ -59,8 +63,8 @@ const CustomBottomSheetModal = forwardRef<
       backdropComponent={renderBackdrop}
       handleStyle={{
         borderTopWidth: 2,
-        borderLeftWidth: 2,
-        borderRightWidth: 2,
+        borderLeftWidth: 0,
+        borderRightWidth: 0,
         borderTopColor: isDark ? "#292929" : "#fff",
         borderLeftColor: isDark ? "#292929" : "#fff",
         borderRightColor: isDark ? "#292929" : "#fff",

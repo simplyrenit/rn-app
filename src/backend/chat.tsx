@@ -14,7 +14,7 @@ import {
   serverTimestamp,
   updateDoc,
   where,
-} from "firebase/firestore";
+} from "@react-native-firebase/firestore";
 import {
   registerForPushNotificationsAsync,
   updateUserPushToken,
@@ -162,8 +162,9 @@ export function useChat() {
       querySnapshot.forEach((doc) => {
         const conversation = doc.data() as Conversation;
         if (
+          conversation?.participants?.length > 0 &&
           conversation.participants.some(
-            (participant) => participant.userId === userDetails?.username
+            (participant) => participant?.userId === userDetails?.username
           )
         ) {
           conversations.push({ ...conversation, id: doc.id });
@@ -187,8 +188,9 @@ export function useChat() {
       snapshot.forEach((doc) => {
         const conversation = doc.data() as Conversation;
         if (
+          conversation?.participants?.length > 0 &&
           conversation.participants.some(
-            (participant) => participant.userId === userDetails?.username
+            (participant) => participant?.userId === userDetails?.username
           )
         ) {
           const readStatus = conversation.readStatus || [];
@@ -202,6 +204,17 @@ export function useChat() {
           });
         }
       });
+
+      chats.sort((a, b) => {
+        const timeA = a.lastMessageTime
+          ? new Date(a.lastMessageTime).getTime()
+          : 0;
+        const timeB = b.lastMessageTime
+          ? new Date(b.lastMessageTime).getTime()
+          : 0;
+        return timeB - timeA;
+      });
+
       callback(chats);
     });
 
@@ -219,7 +232,7 @@ export function useChat() {
       const conversationRef = doc(firestore, "conversations", conversationId);
 
       const conversationSnapshot = await getDoc(conversationRef);
-      if (conversationSnapshot.exists()) {
+      if (conversationSnapshot.exists) {
         const conversationData = conversationSnapshot.data() as Conversation;
 
         await updateDoc(conversationRef, {
@@ -304,7 +317,7 @@ export function useChat() {
       const conversationRef = doc(firestore, "conversations", conversationId);
       const conversationDoc = await getDoc(conversationRef);
 
-      if (conversationDoc.exists()) {
+      if (conversationDoc.exists) {
         const conversationData = conversationDoc.data() as Conversation;
 
         const updatedReadStatus = conversationData.readStatus.map((status) => {
@@ -340,7 +353,8 @@ export function useChat() {
       const chatRef = doc(firestore, "conversations", conversationId);
       const chatDoc = await getDoc(chatRef);
 
-      if (chatDoc.exists()) {
+      if (chatDoc.exists) {
+        // Changed from chatDoc.exists() to chatDoc.exists
         const chatData = chatDoc.data() as Conversation;
 
         const userReadStatus = chatData.readStatus.find(
@@ -380,7 +394,6 @@ export function useChat() {
       console.error("Error marking chat as read:", error);
     }
   }
-
   async function getParticipantDetails(
     conversationId: string
   ): Promise<UserDetails> {
@@ -450,7 +463,7 @@ export function useChat() {
       const conversationRef = doc(firestore, "conversations", conversationId);
       const conversationDoc = await getDoc(conversationRef);
 
-      if (conversationDoc.exists()) {
+      if (conversationDoc.exists) {
         const conversationData = conversationDoc.data() as Conversation;
 
         const updatedReadStatus = conversationData.readStatus.map((status) => {
@@ -597,14 +610,14 @@ export function useChat() {
       const messageRef = doc(firestore, "messages", messageId);
       const messageDoc = await getDoc(messageRef);
 
-      if (!messageDoc.exists()) {
+      if (!messageDoc.exists) {
         throw new Error("Message not found");
       }
 
       const message = messageDoc.data();
       const updatedMessage = { ...message };
 
-      if (message.type === "make_offer" && message.message.item) {
+      if (message?.type === "make_offer" && message?.message?.item) {
         updatedMessage.message.item.offerStatus = operation;
         await updateDoc(messageRef, {
           message: updatedMessage.message,

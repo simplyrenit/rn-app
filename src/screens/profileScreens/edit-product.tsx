@@ -58,18 +58,21 @@ const EditProductScreen: React.FC = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NonScrollableContainer height={height > 700 ? 105 : 100}>
-        <View
-          className="flex-row items-center justify-between px-5"
-          style={{ paddingVertical: wp("5%") }}
-        >
+        <View className="flex-row items-center justify-between px-5 py-2">
           <TouchableOpacity
             onPress={() => router.goBack()}
             className="flex-1 items-start w-[10%]"
           >
-            <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+            <ArrowLeftIcon
+              size={26}
+              color={isDarkMode ? "#FFF" : "#000"}
+            />
           </TouchableOpacity>
           <View className="items-center justify-center w-[80%]">
-            <Text fontSize="text-xl" fontWeight="font-bold">
+            <Text
+              fontSize="text-xl"
+              fontWeight="font-bold"
+            >
               Edit product
             </Text>
           </View>
@@ -77,10 +80,17 @@ const EditProductScreen: React.FC = () => {
           <View className="w-[10%]"></View>
         </View>
 
-        <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
           {product ? (
             <>
-              <View className="flex-row px-5 gap-5 py-4 border-b-[0.2px] border-gray-100">
+              <View
+                className={`flex-row px-5 gap-5 py-4 border-b-[0.2px]  ${
+                  isDarkMode ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+                }`}
+              >
                 <View className="py-4 flex-1 ">
                   <Image
                     className="rounded-[16px]"
@@ -91,14 +101,23 @@ const EditProductScreen: React.FC = () => {
 
                 <View className="py-4 justify-between flex-1">
                   <View className="gap-y-[0.5]">
-                    <Text fontSize="text-lg" fontWeight="font-bold">
+                    <Text
+                      fontSize="text-lg"
+                      fontWeight="font-bold"
+                    >
                       {product.title}
                     </Text>
-                    <Text fontSize="text-sm" className="text-gray-500">
+                    <Text
+                      fontSize="text-sm"
+                      className="text-gray-500"
+                    >
                       {product.location}
                     </Text>
                     <View className="flex-row gap-1">
-                      <Text fontSize="text-sm" fontWeight="font-bold">
+                      <Text
+                        fontSize="text-sm"
+                        fontWeight="font-bold"
+                      >
                         ₹{Number(product.rate).toFixed(0)}
                       </Text>
                       <Text className="text-gray-500">per day</Text>
@@ -113,7 +132,10 @@ const EditProductScreen: React.FC = () => {
                           : "border-[#E6E6E6] text-black bg-white"
                       }`}
                     >
-                      <TrashIcon size={20} color={"#E50914"} />
+                      <TrashIcon
+                        size={20}
+                        color={"#E50914"}
+                      />
                       <Text
                         fontSize="text-sm"
                         fontWeight="font-bold"
@@ -125,7 +147,7 @@ const EditProductScreen: React.FC = () => {
                   </View>
                 </View>
               </View>
-              <View className="p-4">
+              <View className="px-4 py-0">
                 <IconButton
                   onPress={() =>
                     navigation.navigate("EditProductAvailability", {
@@ -186,7 +208,10 @@ const EditProductScreen: React.FC = () => {
         isDark={isDarkMode}
       >
         <View className="flex items-center mb-4">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             Delete product
           </Text>
         </View>
@@ -203,14 +228,23 @@ const EditProductScreen: React.FC = () => {
 
               <View className="py-4 justify-between items-center">
                 <View>
-                  <Text fontSize="text-lg" fontWeight="font-bold">
+                  <Text
+                    fontSize="text-lg"
+                    fontWeight="font-bold"
+                  >
                     {product.title}
                   </Text>
-                  <Text fontSize="text-sm" className="text-gray-500">
+                  <Text
+                    fontSize="text-sm"
+                    className="text-gray-500"
+                  >
                     {product.location}
                   </Text>
                   <View className="flex-row items-center mt-1 space-x-1">
-                    <Text fontSize="text-base" fontWeight="font-bold">
+                    <Text
+                      fontSize="text-base"
+                      fontWeight="font-bold"
+                    >
                       ₹{Number(product.rate).toFixed(0)}
                     </Text>
                     <Text className="text-gray-500">per day</Text>
@@ -243,7 +277,10 @@ const EditProductScreen: React.FC = () => {
             className="bg-[#E50914] p-3 rounded-[12px] flex-1  flex-row items-center justify-center"
           >
             {loading ? (
-              <Progress.CircleSnail color={"white"} size={22} />
+              <Progress.CircleSnail
+                color={"white"}
+                size={22}
+              />
             ) : (
               <Text
                 fontWeight="font-bold"

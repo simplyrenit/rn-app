@@ -26,10 +26,7 @@ export default function Privacy() {
 
   return (
     <NonScrollableContainer>
-      <View
-        className="flex-row items-center justify-between px-4 "
-        style={{ paddingVertical: wp("5%") }}
-      >
+      <View className="flex-row items-center justify-between px-4 pb-2 ">
         <TouchableOpacity
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
@@ -59,7 +56,7 @@ export default function Privacy() {
       >
         {/* <StaticContainer> */}
         <StyledScroll
-          className="space-y-5 h-[100%] mx-4"
+          className="space-y-5 h-[100%] mx-4 pt-2"
           showsVerticalScrollIndicator={false}
         >
           <RNT
@@ -145,6 +142,7 @@ export default function Privacy() {
             <Text className="">
               Address: {PRIVACY_CONTENT.grievanceRedressalOfficer.address}
             </Text>
+            <Text></Text>
           </View>
         </StyledScroll>
       </View>

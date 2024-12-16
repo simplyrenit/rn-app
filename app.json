@@ -32,6 +32,12 @@
         }
       ],
       [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
+        }
+      ],
+      [
         "@react-native-google-signin/google-signin",
         {
           "iosUrlScheme": "com.googleusercontent.apps.899825999056-e571k4p5f0tni5n0cv542otq9n274l80"

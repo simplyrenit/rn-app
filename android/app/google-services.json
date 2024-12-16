@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "639298619246",
+    "project_id": "rn-api-35b38",
+    "storage_bucket": "rn-api-35b38.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639298619246:android:c2eed0f206cfce50c7237f",
+        "android_client_info": {
+          "package_name": "com.renit.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBiyxC_zrRZBsNHZY5ZdSBUdAoN6hU3L_8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

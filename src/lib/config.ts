@@ -1,6 +1,6 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { initializeApp } from "@react-native-firebase/app";
+import { getFirestore } from "@react-native-firebase/firestore";
+import { getStorage } from "@react-native-firebase/storage";
 
 export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
 
@@ -30,8 +30,10 @@ export let SERVERURL = "";
 if (DEV_MODE === "PROD") {
   SERVERURL = "http://api.simplyrenit.com/api/";
 } else {
-  SERVERURL = "http://localhost:8000/api/";
+  SERVERURL = "http://192.168.1.12:8000/api/";
 }
+
+export const SOCKET_URL = "http://192.168.1.12:8000/ws/chat/";
 
 export const ACCESS_TOKEN =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMDE1NTc4LCJpYXQiOjE3MzA1NjU5NzgsImp0aSI6IjBkMjBkYTU1Zjk0MTRkODU4NDlhMmJiNmIxYTU5ODlkIiwidXNlcl9pZCI6NX0.8It2AqCNWb57D1NE8BlS6QXcxiJu7NI4fTzCCXi-ZYg";

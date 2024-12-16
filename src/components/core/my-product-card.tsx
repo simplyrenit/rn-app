@@ -34,7 +34,10 @@ export function MyProductCard({
 
   return (
     <View className="py-2">
-      <View className="justify-center">
+      <TouchableOpacity
+        onPress={() => router.navigate("ProductDetail", { id })}
+        className="justify-center"
+      >
         <View className="rounded-xl overflow-hidden mb-4 ">
           <View
             className="item-center justify-center"
@@ -76,15 +79,24 @@ export function MyProductCard({
                   borderRadius: 8,
                 }}
               >
-                <InformationCircleIcon size={24} color="red" />
-                <Text fontWeight="font-bold" className="text-red-500 mt-3">
+                <InformationCircleIcon
+                  size={24}
+                  color="red"
+                />
+                <Text
+                  fontWeight="font-bold"
+                  className="text-red-500 mt-3"
+                >
                   Product Flagged
                 </Text>
               </View>
             )}
           </View>
           <View className="mt-2">
-            <Text fontWeight="font-bold" className="mb-1">
+            <Text
+              fontWeight="font-bold"
+              className="mb-1"
+            >
               {truncatedname}
             </Text>
             <Text
@@ -95,7 +107,10 @@ export function MyProductCard({
               {truncatedLocation}
             </Text>
             <View className="flex flex-row items-center">
-              <Text fontSize="text-base" fontWeight="font-bold">
+              <Text
+                fontSize="text-base"
+                fontWeight="font-bold"
+              >
                 ₹{Number(price).toFixed(0)}
               </Text>
               <Text
@@ -108,7 +123,7 @@ export function MyProductCard({
             </View>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
 
       <TouchableOpacity
         id={id}
@@ -123,9 +138,15 @@ export function MyProductCard({
         } flex-row justify-center items-center border rounded-2xl py-3 px-6`}
       >
         <View className="mr-2">
-          <PencilSquareIcon size={22} color={isDarkMode ? "white" : "black"} />
+          <PencilSquareIcon
+            size={22}
+            color={isDarkMode ? "white" : "black"}
+          />
         </View>
-        <Text fontSize="text-sm" fontWeight="font-bold">
+        <Text
+          fontSize="text-sm"
+          fontWeight="font-bold"
+        >
           Edit
         </Text>
       </TouchableOpacity>

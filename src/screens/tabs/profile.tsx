@@ -32,10 +32,13 @@ export default function Profile() {
 
   return (
     <StaticContainer width={100}>
-      <View className="px-5 pb-4 mt-4 w-full">
+      <View className="px-5 pb-2 mt-4 w-full">
         <View className="flex-row justify-between items-center">
           <View>
-            <Text fontWeight="font-bold" fontSize="text-2xl">
+            <Text
+              fontWeight="font-bold"
+              fontSize="text-2xl"
+            >
               My Profile
             </Text>
           </View>
@@ -45,7 +48,10 @@ export default function Profile() {
                 navigation.navigate("notification");
               }}
             >
-              <BellIcon size={24} color={isDarkMode ? "#FFF" : "#000"} />
+              <BellIcon
+                size={24}
+                color={isDarkMode ? "#FFF" : "#000"}
+              />
             </TouchableOpacity>
           )}
         </View>

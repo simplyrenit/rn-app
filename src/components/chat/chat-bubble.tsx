@@ -54,12 +54,12 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
 
   return (
     <View
-      className={`flex-row ${
-        isSent ? "justify-end" : "justify-start"
+      className={`flex-row ${isSent ? "justify-end" : "justify-start"} ${
+        type === "product_post" && "justify-center items-center translate-x-2 "
       } px-4 py-1`}
     >
       {type === "product_post" && message.item && (
-        <View className={`w-[100%] p-3 rounded-2xl`}>
+        <View className={`w-[100%] p-3 rounded-2xl `}>
           <View
             className={`border p-2 rounded-xl ${
               isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
@@ -71,7 +71,10 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                 className="w-20 h-20 rounded-lg mr-3"
               />
               <View className="space-y-2">
-                <Text fontSize="text-sm" fontWeight="font-bold">
+                <Text
+                  fontSize="text-sm"
+                  fontWeight="font-bold"
+                >
                   {message.item.name}
                 </Text>
                 <Text
@@ -82,7 +85,10 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                   {message.item.location}
                 </Text>
                 <View className="flex-row items-center space-x-1 mb-2">
-                  <Text fontSize="text-md" fontWeight="font-bold">
+                  <Text
+                    fontSize="text-md"
+                    fontWeight="font-bold"
+                  >
                     ₹{message.item.price}
                   </Text>
                   <Text
@@ -143,7 +149,10 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                 className="w-16 h-16 rounded-lg mr-3"
               />
               <View className="space-y-1">
-                <Text fontSize="text-sm" fontWeight="font-bold">
+                <Text
+                  fontSize="text-sm"
+                  fontWeight="font-bold"
+                >
                   {message.item.name}
                 </Text>
                 <Text
@@ -156,7 +165,10 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                   {message.item.location}
                 </Text>
                 <View className="flex-row items-center space-x-1 mb-2">
-                  <Text fontSize="text-md" fontWeight="font-bold">
+                  <Text
+                    fontSize="text-md"
+                    fontWeight="font-bold"
+                  >
                     ₹{message.item.price}
                   </Text>
                   <Text
@@ -177,7 +189,10 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
               }`}
             >
               <View className="flex-row items-center">
-                <CalendarIcon size={24} color={isDark ? "#fff" : "#000"} />
+                <CalendarIcon
+                  size={24}
+                  color={isDark ? "#fff" : "#000"}
+                />
                 <View className="flex-row items-center space-x-2">
                   <Text
                     fontSize="text-sm"
@@ -205,7 +220,10 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
               </View>
 
               <View className="flex-row items-center my-2">
-                <CurrencyRupeeIcon size={24} color={isDark ? "#fff" : "#000"} />
+                <CurrencyRupeeIcon
+                  size={24}
+                  color={isDark ? "#fff" : "#000"}
+                />
                 <View className="flex-row items-center space-x-2">
                   <Text
                     fontSize="text-sm"
@@ -250,7 +268,10 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                     Reject
                   </Text>
                 </Button>
-                <Button className="w-[48%]" onPress={handleAcceptOffer}>
+                <Button
+                  className="w-[48%]"
+                  onPress={handleAcceptOffer}
+                >
                   Accept
                 </Button>
               </View>

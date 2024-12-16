@@ -25,8 +25,8 @@ export default function Terms() {
   return (
     <NonScrollableContainer>
       <View
-        className="flex-row items-center justify-between px-4"
-        style={{ paddingVertical: wp("5%") }}
+        className="flex-row items-center justify-between px-4 py-2"
+        style={{ paddingTop: wp("2.5%") }}
       >
         <TouchableOpacity
           onPress={() => router.goBack()}
@@ -55,7 +55,10 @@ export default function Terms() {
         }}
       >
         {/* <StaticContainer> */}
-        <StyledScroll className="space-y-5 h-[100%] mx-4">
+        <StyledScroll
+          className="space-y-5 h-[100%] mx-4 pt-2 "
+          showsVerticalScrollIndicator={false}
+        >
           <RNT
             style={{
               fontStyle: "italic",
@@ -171,6 +174,7 @@ export default function Terms() {
           <View>
             <Text fontWeight="font-bold">16. Grievance Redressal Officer</Text>
             <Text className="">{TERMS_CONTENT["section16.1"]}</Text>
+            <Text className=""> </Text>
           </View>
         </StyledScroll>
         {/* </StaticContainer> */}

@@ -54,14 +54,20 @@ export function SearchBar() {
 
         <View className="mx-1">
           {isDark ? (
-            <DarkIcon size={24} color="#635be8" />
+            <DarkIcon
+              size={24}
+              color="#635be8"
+            />
           ) : (
-            <LightIcon size={24} color="#635be8" />
+            <LightIcon
+              size={24}
+              color="#635be8"
+            />
           )}
         </View>
         <Text
           fontSize="text-base"
-          className={` 
+          className={`
             ${theme === "dark" ? "text-white" : "text-black"}`}
         >
           Renit

@@ -27,11 +27,20 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
         className="flex-row items-center justify-between px-5 "
         style={{ paddingVertical: wp("5%") }}
       >
-        <TouchableOpacity className="w-[10%]" onPress={() => router.goBack()}>
-          <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+        <TouchableOpacity
+          className="w-[10%]"
+          onPress={() => router.goBack()}
+        >
+          <ArrowLeftIcon
+            size={26}
+            color={isDarkMode ? "#FFF" : "#000"}
+          />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             Contact Us
           </Text>
         </View>
@@ -47,8 +56,14 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
           }`}
         >
           <View className="flex-row items-center gap-2">
-            <EnvelopeOpenIcon size={24} color={isDarkMode ? "#FFF" : "#000"} />
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <EnvelopeOpenIcon
+              size={24}
+              color={isDarkMode ? "#FFF" : "#000"}
+            />
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Email us
             </Text>
           </View>
@@ -61,13 +76,19 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
                   : "bg-white border-[#e6e6e6]"
               } items-center justify-center `}
             >
-              <Text className="px-2" fontSize="text-sm" fontWeight="font-bold">
+              <Text
+                className="px-2"
+                fontSize="text-sm"
+                fontWeight="font-bold"
+                style={{ lineHeight: 18 }}
+              >
                 support@renit.co.in
               </Text>
               <ChevronRightIcon
                 size={20}
                 strokeWidth={2}
                 color={isDarkMode ? "#FFF" : "#000"}
+                style={{ marginTop: 1 }}
               />
             </TouchableOpacity>
           </View>
@@ -80,8 +101,14 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
           }`}
         >
           <View className="flex-row items-center gap-2">
-            <PhoneIcon size={24} color={isDarkMode ? "#FFF" : "#000"} />
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <PhoneIcon
+              size={24}
+              color={isDarkMode ? "#FFF" : "#000"}
+            />
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Call our customer support
             </Text>
           </View>
@@ -94,7 +121,12 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
                   : "bg-white border-[#e6e6e6]"
               } items-center justify-center`}
             >
-              <Text className="px-2" fontSize="text-sm" fontWeight="font-bold">
+              <Text
+                className="px-2"
+                fontSize="text-sm"
+                fontWeight="font-bold"
+                style={{ lineHeight: 20 }}
+              >
                 +91-7297941741
               </Text>
               <ChevronRightIcon
@@ -113,8 +145,14 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
           }`}
         >
           <View className="flex-row items-center gap-2">
-            <PencilIcon size={24} color={isDarkMode ? "#FFF" : "#000"} />
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <PencilIcon
+              size={24}
+              color={isDarkMode ? "#FFF" : "#000"}
+            />
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Leave us your feedback
             </Text>
           </View>
@@ -129,7 +167,12 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
                   : "bg-white border-[#e6e6e6]"
               } items-center justify-center`}
             >
-              <Text className="px-2" fontSize="text-sm" fontWeight="font-bold">
+              <Text
+                className="px-2"
+                fontSize="text-sm"
+                fontWeight="font-bold"
+                style={{ lineHeight: 16 }}
+              >
                 Feedback & Review
               </Text>
               <ChevronRightIcon

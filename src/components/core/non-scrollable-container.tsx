@@ -18,8 +18,8 @@ export function NonScrollableContainer({
 
   const styles = StyleSheet.create({
     container: {
-      // flex: 1,
-      height: Platform.OS === "ios" ? (height ? `${height}%` : "100%") : "100%",
+      flex: 1,
+      height: "100%",
     },
   });
 
@@ -27,6 +27,7 @@ export function NonScrollableContainer({
     <SafeAreaView
       style={{ flex: 1 }}
       className={isDarkMode ? "bg-black" : "bg-white"}
+      edges={["top", "left", "right"]}
     >
       <StatusBar style={isDarkMode ? "light" : "dark"} />
       <View

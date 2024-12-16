@@ -38,10 +38,7 @@ const MyProductScreen: React.FC = () => {
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
-      <View
-        className="flex-row items-center justify-between px-5"
-        style={{ paddingVertical: wp("5%") }}
-      >
+      <View className="flex-row items-center justify-between px-5 py-2">
         <TouchableOpacity
           onPress={() =>
             router.navigate("Profile", {
@@ -68,7 +65,7 @@ const MyProductScreen: React.FC = () => {
       </View>
 
       <ScrollView
-        className="flex-1"
+        className="flex-1 pt-2"
         contentContainerStyle={{ flexGrow: 1 }}
       >
         <View

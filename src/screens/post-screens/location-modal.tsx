@@ -647,6 +647,7 @@ const LocationModal = ({}) => {
                                 zIndex: 10,
                                 color: isDarkMode ? "#fff" : "#000",
                                 fontSize: 16,
+                                alignContent: "center",
                               },
                               row: {
                                 backgroundColor: isDarkMode

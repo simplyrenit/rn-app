@@ -67,7 +67,10 @@ const Accordion: React.FC<AccordionProps> = ({ question, answer }) => {
         onPress={toggleAccordion}
       >
         <View className=" flex-1 pr-3">
-          <Text fontSize="text-base" fontWeight="font-bold">
+          <Text
+            fontSize="text-base"
+            fontWeight="font-bold"
+          >
             {question}
           </Text>
         </View>

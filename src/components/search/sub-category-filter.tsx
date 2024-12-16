@@ -2,7 +2,7 @@ import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { CheckIcon, ChevronLeftIcon } from "react-native-heroicons/outline";
 import { Image } from "expo-image";
-import { Text } from "@/components/core";
+import { Button, Text } from "@/components/core";
 import { Subcategory } from "@/lib/types";
 
 interface SubCategoryFilterProps {
@@ -13,6 +13,7 @@ interface SubCategoryFilterProps {
   isDark: boolean;
   subcategories: Subcategory[];
   isLoading: boolean;
+  closeSheet: () => void;
 }
 
 const SubCategoryFilter: React.FC<SubCategoryFilterProps> = ({
@@ -23,6 +24,7 @@ const SubCategoryFilter: React.FC<SubCategoryFilterProps> = ({
   isDark,
   subcategories,
   isLoading,
+  closeSheet,
 }) => (
   <View>
     <TouchableOpacity onPress={onClose}>
@@ -31,8 +33,14 @@ const SubCategoryFilter: React.FC<SubCategoryFilterProps> = ({
           isDark ? "border-[#292929]" : "border-[#e6e6e6]"
         }`}
       >
-        <ChevronLeftIcon size={24} color={isDark ? "white" : "black"} />
-        <Text fontSize="text-sm" fontWeight="font-bold">
+        <ChevronLeftIcon
+          size={24}
+          color={isDark ? "white" : "black"}
+        />
+        <Text
+          fontSize="text-sm"
+          fontWeight="font-bold"
+        >
           {selectedCategory}
         </Text>
       </View>
@@ -52,17 +60,34 @@ const SubCategoryFilter: React.FC<SubCategoryFilterProps> = ({
               }}
               style={{ width: 20, height: 20 }}
             />
-            <Text fontSize="text-base" className="ml-3">
+            <Text
+              fontSize="text-base"
+              className="ml-3"
+            >
               {item.title}
             </Text>
           </View>
 
           {selectedSubCategory === item.title && (
-            <CheckIcon size={24} color="#635be8" />
+            <CheckIcon
+              size={24}
+              color="#635be8"
+            />
           )}
         </View>
       </TouchableOpacity>
     ))}
+
+    {selectedSubCategory && (
+      <View className="p-3">
+        <Button
+          onPress={closeSheet}
+          className="mt-5"
+        >
+          {isLoading ? "Loading..." : "Show products"}
+        </Button>
+      </View>
+    )}
   </View>
 );
 

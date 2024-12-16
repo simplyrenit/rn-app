@@ -28,12 +28,15 @@ export const ProductMap: React.FC<ProductMapProps> = ({
           longitudeDelta: 0.0421,
         }}
         customMapStyle={isDarkMode ? darkModeMapStyle : []}
-        scrollEnabled={false}
-        zoomEnabled={false}
+        scrollEnabled={true}
+        zoomEnabled={true}
         rotateEnabled={false}
         pitchEnabled={false}
       >
-        <Marker coordinate={{ latitude, longitude }} title="Product Location">
+        <Marker
+          coordinate={{ latitude, longitude }}
+          title="Product Location"
+        >
           <View
             style={{
               height: 30,

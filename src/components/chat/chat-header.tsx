@@ -72,7 +72,10 @@ export function ChatHeader({
           onPress={() => navigation.navigate("Chat")}
           className="flex-row items-center mr-3"
         >
-          <ArrowLeftIcon size={24} color={isDark ? "white" : "black"} />
+          <ArrowLeftIcon
+            size={24}
+            color={isDark ? "white" : "black"}
+          />
         </TouchableOpacity>
 
         <Image
@@ -80,7 +83,11 @@ export function ChatHeader({
           className="h-10 w-10 rounded-full ml-2"
           resizeMode="cover"
         />
-        <Text fontSize="text-base" fontWeight="font-bold" className="ml-3">
+        <Text
+          fontSize="text-base"
+          fontWeight="font-bold"
+          className="ml-3"
+        >
           {name}
         </Text>
       </View>
@@ -102,7 +109,10 @@ export function ChatHeader({
         visible={menuVisible}
         onRequestClose={() => setMenuVisible(false)}
       >
-        <Pressable className="flex-1" onPress={() => setMenuVisible(false)}>
+        <Pressable
+          className="flex-1"
+          onPress={() => setMenuVisible(false)}
+        >
           <View
             style={[
               styles.modalContent,
@@ -122,8 +132,14 @@ export function ChatHeader({
               }}
               className="px-4 py-2 items-center flex-row"
             >
-              <ExclamationTriangleIcon color="#ef4444" size={24} />
-              <Text fontWeight="font-bold" className="text-red-500 ml-2">
+              <ExclamationTriangleIcon
+                color="#ef4444"
+                size={24}
+              />
+              <Text
+                fontWeight="font-bold"
+                className="text-red-500 ml-2 -translate-y-0.5"
+              >
                 Block & Report
               </Text>
             </TouchableOpacity>

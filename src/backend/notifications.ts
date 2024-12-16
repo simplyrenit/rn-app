@@ -4,7 +4,12 @@ import * as TaskManager from "expo-task-manager";
 import * as BackgroundFetch from "expo-background-fetch";
 import { Platform } from "react-native";
 import { firestore } from "@/lib/config";
-import { doc, updateDoc, collection, onSnapshot } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  collection,
+  onSnapshot,
+} from "@react-native-firebase/firestore";
 
 // Task name for background fetch
 const MESSAGE_NOTIFICATION_TASK = "MESSAGE_NOTIFICATION_TASK";
@@ -148,7 +153,13 @@ export function setupNotificationListeners(
   return () => subscription.remove();
 }
 
-import { query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import {
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+} from "@react-native-firebase/firestore";
 
 export async function checkForNewMessagesOrConversations() {
   try {

@@ -15,6 +15,7 @@ export default function useOwner() {
       const response = await axios.get<Owner>(`${OWNER_DETAILS}${username}/`, {
         headers: { Authorization: `Bearer ${access_token}` },
       });
+
       return response.data;
     } catch (error: any) {
       console.log("Error fetching owner details:", error);
@@ -25,20 +26,23 @@ export default function useOwner() {
   }
 
   async function getOwnerProducts(username: string) {
-    setLoading(true);
+    console.log("Getting products for username:", username);
     try {
-      const response = await axios.get<BackendProduct[]>(
-        `${PRODUCTS_BY_OWNER}${username}/`,
-        {
-          headers: { Authorization: `Bearer ${access_token}` },
-        }
-      );
+      const response = await fetch(`${PRODUCTS_BY_OWNER}${username}/`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
 
-      return response.data;
-    } catch (error: any) {
-      console.log("Error fetching owner products:", error);
-    } finally {
-      setLoading(false);
+      console.log("Response status:", response.status);
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      return data.results || [];
+    } catch (error) {
+      console.error("Detailed error in getOwnerProducts:", error);
+      return [];
     }
   }
 

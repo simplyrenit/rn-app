@@ -23,6 +23,7 @@ interface CustomTextProps extends TextProps {
   className?: string;
   fontSize?: TailwindFontSize;
   fontWeight?: TailwindFontWeight;
+  lineHeight?: number;
 }
 
 const StyledText = styled(RNText);
@@ -50,6 +51,7 @@ export function Text({
   style,
   fontSize,
   fontWeight = "font-normal",
+  lineHeight,
   ...props
 }: CustomTextProps) {
   const { theme } = useGlobalContext();
@@ -74,6 +76,17 @@ export function Text({
         customColor ? { color: customColor } : null,
         { fontFamily },
         fontSizeValue ? { fontSize: fontSizeValue } : null,
+        {
+          lineHeight: lineHeight
+            ? lineHeight
+            : fontSize === "text-2xl"
+            ? 30
+            : fontSize === "text-xl"
+            ? 22
+            : fontSize === "text-lg"
+            ? 25
+            : 18,
+        },
       ]}
       {...props}
     />

@@ -79,10 +79,16 @@ export default function UnavailabilityCategories() {
             onPress={() => router.goBack()}
             className="flex-1 items-start w-[10%]"
           >
-            <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+            <ArrowLeftIcon
+              size={26}
+              color={isDarkMode ? "#FFF" : "#000"}
+            />
           </TouchableOpacity>
           <View className="items-center justify-center w-[80%]">
-            <Text fontSize="text-xl" fontWeight="font-bold">
+            <Text
+              fontSize="text-xl"
+              fontWeight="font-bold"
+            >
               Unavailability Form
             </Text>
           </View>
@@ -90,7 +96,10 @@ export default function UnavailabilityCategories() {
           <View className="w-[10%]"></View>
         </View>
         <View className="px-5 py-3">
-          <Text fontSize="text-base" fontWeight="font-bold">
+          <Text
+            fontSize="text-base"
+            fontWeight="font-bold"
+          >
             Choose a category
           </Text>
         </View>

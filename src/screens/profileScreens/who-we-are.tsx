@@ -21,18 +21,21 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
 
   return (
     <NonScrollableContainer>
-      <View
-        className="flex-row items-center justify-between px-5 "
-        style={{ paddingVertical: wp("5%") }}
-      >
+      <View className="flex-row items-center justify-between px-5 pb-2">
         <TouchableOpacity
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
-          <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+          <ArrowLeftIcon
+            size={26}
+            color={isDarkMode ? "#FFF" : "#000"}
+          />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             Who we are
           </Text>
         </View>
@@ -40,7 +43,7 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
         <View className="w-[10%]"></View>
       </View>
 
-      <KeyboardAwareScrollView className="px-5 py-5 flex-1">
+      <KeyboardAwareScrollView className="px-5 pb-5 pt-2 flex-1">
         <Text
           fontSize="text-base"
           fontWeight="font-bold"
@@ -49,6 +52,7 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
           What is Renit?
         </Text>
         <Text
+          lineHeight={23}
           fontSize="text-base"
           className={`leading-6 ${
             isDarkMode ? "text-[#ffffffb2]" : "text-[#000000b2]"
@@ -61,40 +65,49 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
           is our simple yet profound vision to enable everyone around the world
           to access anything; fostering a world of shared abundance.
         </Text>
-
-        <View style={{ paddingVertical: wp("8%") }} className=" ">
-          <View className="flex-row gap-2">
-            <QuestionMarkCircleIcon
-              size={24}
+      </KeyboardAwareScrollView>
+      <View
+        style={{ paddingVertical: wp("8%") }}
+        className="px-5 flex-1 justify-end py-0 "
+      >
+        <View className="flex-row gap-2 items-center">
+          <QuestionMarkCircleIcon
+            size={24}
+            color={isDarkMode ? "#FFF" : "#000"}
+          />
+          <Text
+            fontSize="text-base"
+            fontWeight="font-bold"
+          >
+            FAQs
+          </Text>
+        </View>
+        <View className="py-4">
+          <TouchableOpacity
+            onPress={() => {
+              router.navigate("faq");
+            }}
+            className={`flex-row h-12 rounded-[12px] border ${
+              isDarkMode
+                ? "bg-[#0F0F0F] border-[#292929]"
+                : "bg-white border-[#e6e6e6]"
+            } items-center justify-center`}
+          >
+            <Text
+              className="px-2"
+              fontSize="text-sm"
+              fontWeight="font-bold"
+            >
+              Check all FAQs
+            </Text>
+            <ChevronRightIcon
+              size={20}
+              strokeWidth={2}
               color={isDarkMode ? "#FFF" : "#000"}
             />
-            <Text fontSize="text-base" fontWeight="font-bold">
-              FAQs
-            </Text>
-          </View>
-          <View className="py-4">
-            <TouchableOpacity
-              onPress={() => {
-                router.navigate("faq");
-              }}
-              className={`flex-row h-12 rounded-[12px] border ${
-                isDarkMode
-                  ? "bg-[#0F0F0F] border-[#292929]"
-                  : "bg-white border-[#e6e6e6]"
-              } items-center justify-center`}
-            >
-              <Text className="px-2" fontSize="text-sm" fontWeight="font-bold">
-                Check all FAQs
-              </Text>
-              <ChevronRightIcon
-                size={20}
-                strokeWidth={2}
-                color={isDarkMode ? "#FFF" : "#000"}
-              />
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </View>
-      </KeyboardAwareScrollView>
+      </View>
     </NonScrollableContainer>
   );
 };

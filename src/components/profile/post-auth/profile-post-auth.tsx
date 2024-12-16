@@ -1,4 +1,4 @@
-import { Text } from "@/components/core";
+import { Button, Text } from "@/components/core";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -205,14 +205,14 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
           </View>
 
           {/* logout */}
-          <View className="pt-5">
+          <View className="pt-5 px-5">
             <TouchableOpacity
               onPress={handleLogout}
-              className={`bg-white flex-1 flex-row items-center justify-center gap-1 ${
+              className={`${
                 isDark
                   ? "bg-[#1A1A1A] border-[#292929]"
                   : "bg-white border-[#e6e6e6]"
-              } border rounded-[12px] py-3 px-6 mx-2`}
+              } border rounded-[12px] px-4 py-3 flex-row items-center justify-center -translate-y-0.5`}
             >
               <ArrowRightStartOnRectangleIcon
                 size={24}
@@ -221,7 +221,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               <Text
                 fontSize="text-base"
                 fontWeight="font-bold"
-                className="text-[#E50914]"
+                className="text-[#E50914] ml-2 -translate-y-0.5"
               >
                 Logout
               </Text>

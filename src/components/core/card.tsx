@@ -122,7 +122,7 @@ export function Card({
             <TouchableOpacity onPress={handleLike}>
               <HI
                 size={24}
-                color={toggleLike ? "" : "white"}
+                color={toggleLike ? "white" : "white"}
                 fill={toggleLike ? "#FF3B30" : "#1E1E1E70"}
               />
             </TouchableOpacity>
@@ -153,17 +153,21 @@ export function Card({
         </View>
         <View className="mt-2">
           <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
             className="mb-1"
             fontWeight="font-bold"
           >
-            {truncatedName}
+            {title}
           </Text>
           <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
             className={`mb-1 ${
               isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
             }`}
           >
-            {truncatedLocation}
+            {location}
           </Text>
           <View className="flex flex-row items-center">
             <Text

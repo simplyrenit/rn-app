@@ -49,7 +49,7 @@ interface TopPick {
   usage_description: string;
 }
 
-export function TopPicks() {
+export function RecentlyAdded() {
   const itemWidth = wp(40);
   const itemMargin = wp(5.7);
 
@@ -103,7 +103,7 @@ export function TopPicks() {
         fontSize="text-xl"
         fontWeight="font-bold"
       >
-        Top picks to explore
+        Recently added
       </Text>
 
       {loading ? (

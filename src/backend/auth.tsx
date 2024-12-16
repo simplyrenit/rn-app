@@ -28,11 +28,11 @@ export function useAuth() {
         `${OTP}?email=${email}&otp=${otp}`
       );
       console.log(`${OTP}?email=${email}&otp=${otp}`);
-      console.log(response.data);
+      console.log(response.data, "response.data");
 
       return response.data;
     } catch (error: any) {
-      console.error(error);
+      console.error(JSON.stringify(error));
     } finally {
       setLoading(false);
     }

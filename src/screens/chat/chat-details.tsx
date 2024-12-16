@@ -31,9 +31,10 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { ChatSkeleton } from "./chat-skeleton";
 import { useChat } from "@/backend/chat";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot } from "@react-native-firebase/firestore";
 import { firestore } from "@/lib/config";
 import useOwner from "@/backend/owner";
+import { useSocket } from "@/services/socket";
 
 const getDaysBetweenDates = (startDate: string, endDate: string): number => {
   const start = moment(startDate);
@@ -99,6 +100,9 @@ export default function ChatDetailsScreen() {
     error,
   } = useSubscribeToMessages(conversationId);
 
+  const { connect, joinRoom, leaveRoom, onNewMessage, onTyping } = useSocket();
+  const [isTyping, setIsTyping] = useState(false);
+
   async function fetchDetails() {
     const details = await getParticipantDetails(conversationId);
     const myDetails = await getMyDetails(conversationId);
@@ -127,7 +131,7 @@ export default function ChatDetailsScreen() {
     const conversationRef = doc(firestore, "conversations", conversationId);
 
     const unsubscribe = onSnapshot(conversationRef, (docSnapshot) => {
-      if (docSnapshot.exists()) {
+      if (docSnapshot.exists) {
         const conversationData = docSnapshot.data() as Conversation;
 
         setIsBlocked(conversationData.blockStatus.isBlocked);
@@ -141,6 +145,33 @@ export default function ChatDetailsScreen() {
   useEffect(() => {
     fetchDetails();
   }, []);
+
+  useEffect(() => {
+    const socket = connect(participantDetails.userId);
+
+    if (socket && conversationId) {
+      joinRoom(conversationId);
+
+      // Listen for new messages
+      onNewMessage((newMessage) => {
+        // Update messages state
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
+      });
+
+      // Listen for typing status
+      onTyping(({ userId, isTyping }) => {
+        if (userId !== userDetails?.username) {
+          setIsTyping(isTyping);
+        }
+      });
+    }
+
+    return () => {
+      if (conversationId) {
+        leaveRoom(conversationId);
+      }
+    };
+  }, [conversationId, userDetails?.username, participantDetails.userId]);
 
   const scrollToBottom = (animated = true) => {
     setTimeout(() => {
@@ -289,7 +320,11 @@ export default function ChatDetailsScreen() {
   };
 
   const renderBackdrop = (props: any) => (
-    <BottomSheetBackdrop {...props} disappearsOnIndex={-1} opacity={0.8} />
+    <BottomSheetBackdrop
+      {...props}
+      disappearsOnIndex={-1}
+      opacity={0.8}
+    />
   );
 
   const handleBlockPress = async () => {
@@ -395,6 +430,7 @@ export default function ChatDetailsScreen() {
             conversationId={conversationId}
             onMakeOfferPress={onSelectProductPress}
             isBlocked={isBlocked}
+            participantDetails={participantDetails}
           />
         </View>
       </KeyboardAwareScrollView>
@@ -406,7 +442,10 @@ export default function ChatDetailsScreen() {
       >
         <View className="w-[95%] mx-auto">
           <View className="flex items-center mb-4">
-            <Text fontSize="text-xl" fontWeight="font-bold">
+            <Text
+              fontSize="text-xl"
+              fontWeight="font-bold"
+            >
               Block & Report
             </Text>
           </View>
@@ -436,7 +475,10 @@ export default function ChatDetailsScreen() {
                   : "border-[#e6e6e6] text-black"
               } p-3 rounded-[11px] flex-1 mr-2`}
             >
-              <Text className="text-center text-black" fontWeight="font-bold">
+              <Text
+                className="text-center text-black"
+                fontWeight="font-bold"
+              >
                 Cancel
               </Text>
             </TouchableOpacity>
@@ -445,7 +487,10 @@ export default function ChatDetailsScreen() {
               className="bg-[#E50914] p-3 rounded-[11px] flex-1 ml-2"
               onPress={handleBlockPress}
             >
-              <Text fontWeight="font-bold" className="text-center text-white">
+              <Text
+                fontWeight="font-bold"
+                className="text-center text-white"
+              >
                 Block & Report
               </Text>
             </TouchableOpacity>
@@ -477,7 +522,10 @@ export default function ChatDetailsScreen() {
       >
         <View className="w-[95%] mx-auto flex-1">
           <View className=" items-center mb-4 mt-4 flex-1">
-            <Text fontWeight="font-bold" fontSize="text-xl">
+            <Text
+              fontWeight="font-bold"
+              fontSize="text-xl"
+            >
               Select a product
             </Text>
 
@@ -498,7 +546,7 @@ export default function ChatDetailsScreen() {
                 </View>
                 <View className="w-[80%] flex flex-row h-full ml-2">
                   <TextInput
-                    placeholder="Search from Tejas' products"
+                    placeholder="Search "
                     placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
                     className={`${isDark ? "text-white" : "text-black"}`}
                     value={search}
@@ -575,7 +623,10 @@ export default function ChatDetailsScreen() {
               resizeMode="cover"
             />
             <View className="w-[75%] space-y-1">
-              <Text fontSize="text-md" fontWeight="font-bold">
+              <Text
+                fontSize="text-md"
+                fontWeight="font-bold"
+              >
                 {selectedProduct?.title}
               </Text>
               <Text
@@ -586,7 +637,10 @@ export default function ChatDetailsScreen() {
               >
                 {selectedProduct?.location}
               </Text>
-              <Text fontSize="text-md" fontWeight="font-bold">
+              <Text
+                fontSize="text-md"
+                fontWeight="font-bold"
+              >
                 ₹ {Number(selectedProduct?.rate).toFixed(0)}
               </Text>
             </View>
@@ -681,7 +735,10 @@ export default function ChatDetailsScreen() {
                 resizeMode="cover"
               />
               <View className="w-[75%] space-y-1">
-                <Text fontSize="text-md" fontWeight="font-bold">
+                <Text
+                  fontSize="text-md"
+                  fontWeight="font-bold"
+                >
                   {selectedProduct?.title}
                 </Text>
                 <Text
@@ -692,14 +749,20 @@ export default function ChatDetailsScreen() {
                 >
                   {selectedProduct?.location}
                 </Text>
-                <Text fontSize="text-md" fontWeight="font-bold">
+                <Text
+                  fontSize="text-md"
+                  fontWeight="font-bold"
+                >
                   ₹ {Number(selectedProduct?.rate).toFixed(0)}
                 </Text>
               </View>
             </View>
 
             <View className="mt-8 mx-4 flex-row items-center justify-between">
-              <Text fontWeight="font-bold" fontSize="text-md">
+              <Text
+                fontWeight="font-bold"
+                fontSize="text-md"
+              >
                 Duration
               </Text>
               <TouchableOpacity
@@ -715,7 +778,10 @@ export default function ChatDetailsScreen() {
                 >
                   Edit
                 </Text> */}
-                <PencilSquareIcon size={20} color={"#635be8"} />
+                <PencilSquareIcon
+                  size={20}
+                  color={"#635be8"}
+                />
               </TouchableOpacity>
             </View>
 
@@ -731,12 +797,18 @@ export default function ChatDetailsScreen() {
                   size={24}
                   color={theme === "dark" ? "#fff" : "#000"}
                 />
-                <Text fontSize="text-md" className="ml-4">
+                <Text
+                  fontSize="text-md"
+                  className="ml-4"
+                >
                   {formatDate(new Date(selectedRange.startDate))}
                 </Text>
               </View>
               <View className="w-[20%] items-center">
-                <Text fontSize="text-base" className="text-[#C4C4C4]">
+                <Text
+                  fontSize="text-base"
+                  className="text-[#C4C4C4]"
+                >
                   --
                 </Text>
               </View>
@@ -751,7 +823,10 @@ export default function ChatDetailsScreen() {
                   size={24}
                   color={theme === "dark" ? "#fff" : "#000"}
                 />
-                <Text fontSize="text-md" className="ml-4">
+                <Text
+                  fontSize="text-md"
+                  className="ml-4"
+                >
                   {formatDate(new Date(selectedRange.endDate))}
                 </Text>
               </View>
@@ -777,7 +852,10 @@ export default function ChatDetailsScreen() {
             </View>
 
             <View className="mx-4 mt-8">
-              <Text fontSize="text-md" fontWeight="font-bold">
+              <Text
+                fontSize="text-md"
+                fontWeight="font-bold"
+              >
                 Amount
               </Text>
               <View
@@ -787,7 +865,10 @@ export default function ChatDetailsScreen() {
                     : "border-[#e6e6e6] bg-white text-black"
                 } p-3 rounded-lg w-full mt-2`}
               >
-                <Text fontSize="text-md" className="mr-2">
+                <Text
+                  fontSize="text-md"
+                  className="mr-2"
+                >
                   ₹
                 </Text>
                 <TextInput
@@ -804,7 +885,10 @@ export default function ChatDetailsScreen() {
             </View>
 
             <View className="mx-4 mt-8">
-              <Text fontSize="text-md" fontWeight="font-bold">
+              <Text
+                fontSize="text-md"
+                fontWeight="font-bold"
+              >
                 Security Deposit
               </Text>
               <View
@@ -814,7 +898,10 @@ export default function ChatDetailsScreen() {
                     : "border-[#e6e6e6] bg-white text-black"
                 } p-3 rounded-lg w-full mt-2`}
               >
-                <Text fontSize="text-md" className="mr-2">
+                <Text
+                  fontSize="text-md"
+                  className="mr-2"
+                >
                   ₹
                 </Text>
                 <TextInput
@@ -844,6 +931,14 @@ export default function ChatDetailsScreen() {
           </View>
         </KeyboardAwareScrollView>
       </CustomBottomSheetModal>
+
+      <View>
+        {isTyping && (
+          <Text className="text-gray-500 text-sm px-4 py-2">
+            {participantDetails?.username} is typing...
+          </Text>
+        )}
+      </View>
     </StaticContainer>
   );
 }

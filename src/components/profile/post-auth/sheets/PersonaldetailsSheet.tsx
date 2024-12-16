@@ -325,6 +325,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       try {
         await updateMyProfileImage(nameId, selectedImage);
         console.log("Profile image updated successfully!");
+        setDetails((prevDetails) => ({
+          ...prevDetails,
+          profilePic: selectedImage,
+        }));
         setSelectedImage(null);
         profileImageSheetRef.current?.close();
       } catch (error) {
@@ -807,7 +811,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   </Button>
                 </View>
                 <View className="flex-1">
-                  <Button onPress={handleSubmitOtp}>
+                  <Button
+                    className="border border-brand-blue111"
+                    onPress={handleSubmitOtp}
+                  >
                     <Text
                       fontSize="text-sm"
                       fontWeight="font-bold"

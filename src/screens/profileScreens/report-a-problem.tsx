@@ -37,10 +37,7 @@ const ReportAProblemScreen: React.FC = () => {
 
   return (
     <NonScrollableContainer>
-      <View
-        className="flex-row items-center justify-between px-5 "
-        style={{ paddingVertical: wp("5%") }}
-      >
+      <View className="flex-row items-center justify-between px-5 pb-2 ">
         <TouchableOpacity
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
@@ -62,7 +59,7 @@ const ReportAProblemScreen: React.FC = () => {
         <View className="w-[10%]"></View>
       </View>
 
-      <KeyboardAwareScrollView className="px-5 py-5 flex-1">
+      <KeyboardAwareScrollView className="px-5 pb-5 pt-2 flex-1">
         <Text fontSize="text-sm">
           We'd love to help you out in any issue you might be facing while using
           Renit.

@@ -6,17 +6,18 @@ import { Disclaimer } from "@/components/home/disclaimer";
 import { SearchBar } from "@/components/home/search-bar";
 import { Experiences } from "@/components/home/sections/experiences";
 import { Popular } from "@/components/home/sections/popular";
-import { TopPicks } from "@/components/home/sections/top-picks";
+import { RecentlyAdded } from "@/components/home/sections/top-picks";
 import { View, ScrollView, Alert } from "react-native";
 import { useGlobalContext } from "@/context/global-context";
 import { useAuthContext } from "@/context/auth-context";
 import { useNotifications } from "@/backend/useNotification";
 
 export default function Home() {
-  const { userData } = useGlobalContext();
+  const { userData, userDetails } = useGlobalContext();
   const { user, getUser } = useAuthContext();
   const { getNotifications } = useNotifications();
 
+  console.log(userDetails?.username, "iser");
   useEffect(() => {
     getUser();
     getNotifications();
@@ -45,8 +46,8 @@ export default function Home() {
         <Categories />
         <View className="mt-2">
           <Experiences />
-          <TopPicks />
           <Popular />
+          <RecentlyAdded />
         </View>
         <View className="px-5">
           <Disclaimer />

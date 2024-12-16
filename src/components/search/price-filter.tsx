@@ -3,6 +3,7 @@ import { useState } from "react";
 import { TextInput, View } from "react-native";
 import { Button, Text } from "../core";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { CurrencyRupeeIcon } from "react-native-heroicons/outline";
 
 export function PriceFilter({
   minPrice,
@@ -42,7 +43,7 @@ export function PriceFilter({
               isDark ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6]"
             } w-[140px] h-12 rounded-lg p-1`}
           >
-            <Text fontSize="text-base">₹</Text>
+            <CurrencyRupeeIcon color={"#635BE8"} />
             <TextInput
               placeholderTextColor={isDark ? "#ffffffB2" : "#000000B2"}
               placeholder="Min"
@@ -61,7 +62,7 @@ export function PriceFilter({
               isDark ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6]"
             } w-[140px] h-12 rounded-lg p-1`}
           >
-            <Text fontSize="text-base">₹</Text>
+            <CurrencyRupeeIcon color={"#635BE8"} />
             <TextInput
               placeholderTextColor={isDark ? "#ffffffB2" : "#000000B2"}
               placeholder="Max"
@@ -78,7 +79,10 @@ export function PriceFilter({
       </View>
       {(minPrice || maxPrice) && (
         <View className="p-3">
-          <Button onPress={closeSheet} className="mt-5">
+          <Button
+            onPress={closeSheet}
+            className="mt-5"
+          >
             {isLoading ? "Loading..." : "Show products"}
           </Button>
         </View>

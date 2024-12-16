@@ -310,7 +310,7 @@ export default function SearchScreen() {
 
           {/* What? Dropdown */}
           <View
-            className={`p-5 h-1/5 border-b ${
+            className={`p-5 border-b ${
               isDark ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
             }`}
           >
@@ -340,6 +340,9 @@ export default function SearchScreen() {
               <MagnifyingGlassIcon
                 color={isDark ? "white" : "black"}
                 size={24}
+                style={{
+                  marginTop: 2,
+                }}
               />
               <AutocompleteDropdown
                 ref={autocompleteDropdownRef}
@@ -351,8 +354,7 @@ export default function SearchScreen() {
                 inputContainerStyle={{
                   backgroundColor: isDark ? "#0F0F0F" : "#ffffff",
                   borderRadius: 10,
-                  paddingHorizontal: 8,
-                  width: "95%",
+                  width: "100%",
                 }}
                 useFilter={false}
                 onFocus={() => {
@@ -380,6 +382,8 @@ export default function SearchScreen() {
                   backgroundColor: isDark ? "#0F0F0F" : "#ffffff",
                   borderWidth: 1,
                   borderColor: isDark ? "#292929" : "#E6E6E6",
+                  width: "100%",
+                  transform: [{ translateX: -10 }],
                 }}
                 onSelectItem={(item) => {
                   if (item) {
@@ -405,7 +409,7 @@ export default function SearchScreen() {
 
           {/* Where? */}
           <View
-            className={`p-5 h-1/5 border-b ${
+            className={`p-5 border-b ${
               isDark ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
             }`}
           >

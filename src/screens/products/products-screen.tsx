@@ -56,6 +56,7 @@ export default function DetailsScreen() {
     try {
       const data = await fetchProduct(id);
       setProduct(data);
+      console.log(data.category, "icon");
       const similarProducts = await fetchSimilarProducts(id);
       const reviews = await fetchReviews(id);
       setSimilarProducts(similarProducts);
@@ -442,39 +443,41 @@ export default function DetailsScreen() {
         </View>
 
         {/* Similar products */}
-        <View className={` py-6 `}>
-          <View className="flex flex-row items-center justify-between mb-4 px-4">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-xl"
-            >
-              Similar products
-            </Text>
-          </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          >
-            {similarProducts.map((item, index) => (
-              <View
-                key={item.name}
-                style={{
-                  marginRight: index === similarProducts.length - 1 ? 16 : 16, // Last item gets 16px marginRight
-                  marginLeft: index === 0 ? 16 : 0, // First item gets 16px marginLeft to match padding
-                }}
+        {similarProducts.length > 0 && (
+          <View className={` py-6 `}>
+            <View className="flex flex-row items-center justify-between mb-4 px-4">
+              <Text
+                fontWeight="font-bold"
+                fontSize="text-xl"
               >
-                <Card
-                  id={`${item.name}`}
-                  image={item.cover_image}
-                  title={item.title}
-                  location={item.location}
-                  price={item.rate}
-                />
-              </View>
-            ))}
-          </ScrollView>
-        </View>
+                Similar products
+              </Text>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {similarProducts.map((item, index) => (
+                <View
+                  key={item.name}
+                  style={{
+                    marginRight: index === similarProducts.length - 1 ? 16 : 16, // Last item gets 16px marginRight
+                    marginLeft: index === 0 ? 16 : 0, // First item gets 16px marginLeft to match padding
+                  }}
+                >
+                  <Card
+                    id={`${item.name}`}
+                    image={item.cover_image}
+                    title={item.title}
+                    location={item.location}
+                    price={item.rate}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
       </ScrollView>
 
       {/* Footer */}
@@ -516,18 +519,16 @@ export default function DetailsScreen() {
               </Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity
-              onPress={handleStartChat}
-              className="bg-brand-blue flex items-center justify-center rounded-[12px] text-center h-full"
-            >
+            <Button onPress={handleStartChat}>
               <Text
                 fontWeight="font-bold"
-                fontSize="text-sm"
-                className="text-white tracking-wide"
+                fontSize="text-md"
+                allowFontScaling
+                className="text-white tracking-wide text-center"
               >
                 Chat with owner
               </Text>
-            </TouchableOpacity>
+            </Button>
           )}
         </View>
       </View>

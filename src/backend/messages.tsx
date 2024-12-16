@@ -4,9 +4,7 @@ import {
   where,
   onSnapshot,
   orderBy,
-  QuerySnapshot,
-  DocumentData,
-} from "firebase/firestore";
+} from "@react-native-firebase/firestore";
 import { useEffect, useState } from "react";
 import { firestore } from "@/lib/config";
 import { Message } from "@/lib/types";
@@ -31,7 +29,7 @@ export function useSubscribeToMessages(conversationId: string) {
     // Set up the subscription
     const unsubscribe = onSnapshot(
       q,
-      (querySnapshot: QuerySnapshot<DocumentData>) => {
+      (querySnapshot) => {
         const updatedMessages: Message[] = querySnapshot.docs.map(
           (doc) =>
             ({

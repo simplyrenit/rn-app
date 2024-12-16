@@ -11,8 +11,8 @@ import { CarouselItem } from "../lib/types";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
 } from "react-native-reanimated";
+import firebase from "@react-native-firebase/app";
 
 const StyledView = styled(View);
 const StyledImage = styled(Image);
@@ -45,7 +45,7 @@ const carouselData: CarouselItem[] = [
 export default function OnboardingScreen(): JSX.Element {
   const { theme } = useGlobalContext();
   const isDarkMode = theme === "dark";
-  const currentPage = useSharedValue(0);
+  const progress = useSharedValue(0);
 
   const AnimatedStyledView = Animated.createAnimatedComponent(StyledView);
 
@@ -73,42 +73,37 @@ export default function OnboardingScreen(): JSX.Element {
   );
 
   const dotAnimatedStyle = (index: number) =>
-    useAnimatedStyle(() => ({
-      width: 64,
-      height: 4,
-      marginHorizontal: 4,
-      backgroundColor: withSpring(
-        currentPage.value === index
-          ? isDarkMode
-            ? "#4B46B4"
-            : "#4B46B4" // Active color for both themes
+    useAnimatedStyle(() => {
+      const isActive = Math.round(progress.value) === index;
+
+      return {
+        width: 64,
+        height: 4,
+        marginHorizontal: 4,
+        backgroundColor: isActive
+          ? "#4B46B4"
           : isDarkMode
           ? "#374151"
-          : "#D1D5DB", // Inactive color based on theme
-        {
-          mass: 1,
-          damping: 15,
-          stiffness: 130,
-          overshootClamping: false,
-          restDisplacementThreshold: 0.001,
-          restSpeedThreshold: 0.001,
-        }
-      ),
-      borderRadius: 2, // Adding rounded corners
-    }));
+          : "#D1D5DB",
+        borderRadius: 2,
+      };
+    }, [isDarkMode]);
+
+  // Test if Firebase is connected
+  console.log("Firebase connected:", firebase.app().name);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StaticContainer width={100}>
         <StyledView className="flex-1">
-          <Carousel
+          {/* <Carousel
             loop
             width={SCREEN_WIDTH * 1}
             height={SCREEN_HEIGHT * 0.65}
             data={carouselData}
             renderItem={renderItem}
-            onSnapToItem={(index) => {
-              currentPage.value = index;
+            onProgressChange={(offsetProgress) => {
+              progress.value = offsetProgress;
             }}
             mode="parallax"
             modeConfig={{
@@ -125,7 +120,7 @@ export default function OnboardingScreen(): JSX.Element {
                 style={dotAnimatedStyle(index)}
               />
             ))}
-          </StyledView>
+          </StyledView> */}
 
           <LoginOptions isDarkMode={isDarkMode} />
           <TermsAndPolicy />

@@ -11,4 +11,21 @@
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 
+# React Native
+-keep class com.facebook.react.** { *; }
+-keep class com.facebook.hermes.** { *; }
+-keep class com.facebook.jni.** { *; }
+
+# Keep your app's package
+-keep class com.renit.app.** { *; }
+
+# Common React Native third-party libraries
+-keep class com.swmansion.** { *; }
+-keep class com.facebook.** { *; }
+-keep class com.horcrux.** { *; }
+
+# Hermes
+-keep class com.facebook.hermes.unicode.** { *; }
+-keep class com.facebook.jni.** { *; }
+
 # Add any project specific keep options here:

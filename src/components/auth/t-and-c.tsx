@@ -28,7 +28,7 @@ export function TermsAndPolicy(): JSX.Element {
               isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
             } mb-4`}
           >
-            Terms of Service
+            Terms & Conditions
           </Text>
         </TouchableOpacity>
         <Text className="text-center text-sm text-gray-500 mb-4">&</Text>

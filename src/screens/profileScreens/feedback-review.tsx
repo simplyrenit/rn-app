@@ -4,7 +4,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { useState } from "react";
-import { TextInput, TouchableOpacity, View } from "react-native";
+import { Platform, TextInput, TouchableOpacity, View } from "react-native";
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -39,10 +39,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
 
   return (
     <NonScrollableContainer>
-      <View
-        className="flex-row items-center justify-between px-5 "
-        style={{ paddingVertical: wp("5%") }}
-      >
+      <View className="flex-row items-center justify-between px-5 pb-2 ">
         <TouchableOpacity
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
@@ -64,7 +61,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
         <View className="w-[10%]"></View>
       </View>
 
-      <KeyboardAwareScrollView className="px-5 py-5 flex-1">
+      <KeyboardAwareScrollView className="px-5 pb-5 pt-2 flex-1">
         <Text fontSize="text-sm">
           Thanks for sending us your feedback and ideas to improve. We can't
           respond to all individually, but we'll pass it on to the teams who are
@@ -116,7 +113,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
           >
             support@simplyrenit.com
           </Text>
-          <View className="mt-1">
+          <View className="mt-1 ">
             <ChevronRightIcon
               size={20}
               color="#635be8"
@@ -124,7 +121,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
           </View>
         </View>
       </View>
-      <View className="py-2 px-5">
+      <View className={`px-5 py-2`}>
         <Button
           disabled={!feedback.trim()}
           onPress={handleFeedBackPress}

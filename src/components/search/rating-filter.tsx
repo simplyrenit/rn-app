@@ -3,6 +3,7 @@ import { useState } from "react";
 import { View } from "react-native";
 import StarRating from "react-native-star-rating-widget";
 import { Button, Text } from "../core";
+import { Rating } from "@kolking/react-native-rating";
 
 interface Props {
   productRating: number;
@@ -30,7 +31,11 @@ export function RatingFilter({
   return (
     <View className="flex-1">
       <View className="mt-3 w-[90%] mx-auto flex-1">
-        <Text fontSize="text-base" fontWeight="font-bold" className="mb-3">
+        <Text
+          fontSize="text-base"
+          fontWeight="font-bold"
+          className="mb-3"
+        >
           Product Review
         </Text>
         <View
@@ -38,11 +43,13 @@ export function RatingFilter({
             isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
           } w-full h-16 rounded-[16px] p-3`}
         >
-          <StarRating
-            maxStars={5}
-            starSize={24}
-            color="#635be8"
-            emptyColor={isDark ? "#292929" : "#e6e6e6"}
+          <Rating
+            variant="stars-outline"
+            fillColor="#635be8"
+            touchColor="#635be8"
+            size={20}
+            spacing={12}
+            scale={1}
             rating={rating.product}
             onChange={(newRating) => {
               setRating((prev) => ({
@@ -52,9 +59,14 @@ export function RatingFilter({
               onSelect(newRating, rating.owner);
             }}
           />
+
           <Text fontSize="text-2xl">{rating.product}</Text>
         </View>
-        <Text fontSize="text-base" fontWeight="font-bold" className="mt-8 mb-3">
+        <Text
+          fontSize="text-base"
+          fontWeight="font-bold"
+          className="mt-8 mb-3"
+        >
           Owner Review
         </Text>
         <View
@@ -62,18 +74,19 @@ export function RatingFilter({
             isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
           } w-full h-16 rounded-[16px] p-3`}
         >
-          <StarRating
-            maxStars={5}
-            starSize={24}
-            color="#635be8"
-            emptyColor={isDark ? "#292929" : "#e6e6e6"}
+          <Rating
+            variant="stars-outline"
+            fillColor="#635be8"
+            touchColor="#635be8"
+            size={20}
+            spacing={12}
+            scale={1}
             rating={rating.owner}
             onChange={(newRating) => {
               setRating((prev) => ({
                 ...prev,
                 owner: newRating,
               }));
-
               onSelect(rating.product, newRating);
             }}
           />
@@ -82,7 +95,10 @@ export function RatingFilter({
       </View>
       {Boolean(rating.product || rating.owner) && (
         <View className="p-3">
-          <Button onPress={closeSheet} className="mt-5">
+          <Button
+            onPress={closeSheet}
+            className="mt-5"
+          >
             {isLoading ? "Loading..." : "Show products"}
           </Button>
         </View>

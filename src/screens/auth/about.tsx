@@ -569,7 +569,7 @@ export default function AboutYourself() {
             </View>
 
             <View>
-              <View className="mt-12">
+              <View className="mt-4">
                 <Text
                   fontSize="text-sm"
                   fontWeight="font-bold"

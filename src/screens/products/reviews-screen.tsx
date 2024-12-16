@@ -65,11 +65,17 @@ export default function ReviewsScreen() {
       <View className="py-3 px-5 flex flex-row items-center">
         <View className="w-[10%]">
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ArrowLeftIcon color={isDark ? "white" : "black"} size={24} />
+            <ArrowLeftIcon
+              color={isDark ? "white" : "black"}
+              size={24}
+            />
           </TouchableOpacity>
         </View>
         <View className="w-[80%] h-full items-center">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             All reviews
           </Text>
         </View>
@@ -77,36 +83,50 @@ export default function ReviewsScreen() {
       </View>
 
       <ScrollView className="px-5 mt-3">
-        <Text fontSize="text-lg" fontWeight="font-bold" className="mt-2">
+        <Text
+          fontSize="text-lg"
+          fontWeight="font-bold"
+          className="mt-2"
+        >
           Product Reviews
         </Text>
         <View className="flex flex-row space-x-2 items-center mt-6">
-          <StarFilled color={isDark ? "white" : "black"} size={20} />
+          <StarFilled
+            color={isDark ? "white" : "black"}
+            size={20}
+          />
           <Text
             fontSize="text-md"
             fontWeight="font-bold"
             className={`${isDark ? "#FFFFFFB2" : "#000000B2"}`}
           >
-            {averageRating.toFixed(1)}
+            {averageRating ? averageRating.toFixed(1) : "0"}
           </Text>
           <Text
             fontSize="text-md"
             fontWeight="font-bold"
             className={`ml-2 ${isDark ? "#FFFFFFB2" : "#000000B2"}`}
           >
-            ∙ {totalReviews} reviews
+            ∙{" "}
+            {totalReviews === 0 ? "No reviews yet" : `${totalReviews} reviews`}
           </Text>
         </View>
 
         {reviewStats.map((item, index) => (
-          <View key={index} className="flex flex-row  items-center mt-2">
+          <View
+            key={index}
+            className="flex flex-row  items-center mt-2"
+          >
             <Text
               className="mr-2 w-[5%]"
               style={{ color: isDark ? "#FFFFFF80" : "#00000080" }}
             >
               {item.rating}
             </Text>
-            <StarFilled color={isDark ? "white" : "black"} size={16} />
+            <StarFilled
+              color={isDark ? "white" : "black"}
+              size={16}
+            />
             <View
               className={`flex-1 h-2 ${
                 isDark ? "bg-[#292929]" : "bg-[#e6e6e6]"
@@ -132,17 +152,28 @@ export default function ReviewsScreen() {
 
         <Button
           variant="outline"
-          className="mt-5 flex flex-row items-center justify-center h-11"
+          className="mt-5 flex flex-row items-center justify-center"
           onPress={handleWriteReview}
         >
           <View className="flex h-full flex-row items-center justify-between w-full">
-            <Text>Write a review</Text>
-            <ChevronRightIcon color={isDark ? "white" : "black"} size={20} />
+            <Text className="translate-y-0.5">Write a review</Text>
+            <View className="flex flex-row items-center justify-center translate-y-0.5">
+              <ChevronRightIcon
+                color={isDark ? "white" : "black"}
+                size={20}
+              />
+            </View>
           </View>
         </Button>
 
-        <Text fontSize="text-lg" fontWeight="font-bold" className="my-6">
-          {reviews.length} reviews
+        <Text
+          fontSize="text-lg"
+          fontWeight="font-bold"
+          className="my-6"
+        >
+          {reviews.length === 0
+            ? "No reviews yet"
+            : `${reviews.length} reviews`}
         </Text>
 
         {reviews.map((review, index) => (

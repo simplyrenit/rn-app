@@ -18,6 +18,15 @@
       "distribution": "internal",
       "ios": {
         "simulator": true
+      },
+      "android": {
+        "developmentClient": true
+      }
+    },
+    "release": {
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       }
     },
     "production": {}

@@ -186,10 +186,16 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
-          <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+          <ArrowLeftIcon
+            size={26}
+            color={isDarkMode ? "#FFF" : "#000"}
+          />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             Unavailability Form
           </Text>
         </View>
@@ -199,7 +205,10 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
 
       <KeyboardAwareScrollView className="px-5 py-5 flex-1">
         <View className="space-y-2 mb-10">
-          <Text fontSize="text-md" fontWeight="font-bold">
+          <Text
+            fontSize="text-md"
+            fontWeight="font-bold"
+          >
             What are you looking for? (Product Name)
           </Text>
           <View className="pt-3">
@@ -220,7 +229,10 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
         </View>
 
         <View className="space-y-2 mb-10">
-          <Text fontSize="text-md" fontWeight="font-bold">
+          <Text
+            fontSize="text-md"
+            fontWeight="font-bold"
+          >
             Quantity or Number of Units required
           </Text>
           <View className="pt-3">
@@ -241,7 +253,10 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
         </View>
 
         <View className=" mb-10">
-          <Text fontSize="text-md" fontWeight="font-bold">
+          <Text
+            fontSize="text-md"
+            fontWeight="font-bold"
+          >
             When do you need the product?
           </Text>
           <View className="pt-4">
@@ -281,7 +296,10 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
           </View>
         </View>
         <View className="space-y-2 mb-10">
-          <Text fontSize="text-md" fontWeight="font-bold">
+          <Text
+            fontSize="text-md"
+            fontWeight="font-bold"
+          >
             Product location
           </Text>
           <Text className={`${isDarkMode ? "text-white/70" : "text-black/70"}`}>
@@ -298,7 +316,10 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
           >
             <View className="flex flex-row h-full w-full items-center justify-between">
               <View className="flex flex-row items-center space-x-2 ">
-                <MapPinIcon color={isDarkMode ? "white" : "black"} size={24} />
+                <MapPinIcon
+                  color={isDarkMode ? "white" : "black"}
+                  size={24}
+                />
                 <View className="w-3/4">
                   {selectedLocationName ? (
                     <Text
@@ -331,7 +352,10 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
         </View>
 
         <View className="space-y-2 mb-10">
-          <Text fontSize="text-md" fontWeight="font-bold">
+          <Text
+            fontSize="text-md"
+            fontWeight="font-bold"
+          >
             Product Address
           </Text>
           <Text className={`${isDarkMode ? "text-white/70" : "text-black/70"}`}>
@@ -355,7 +379,10 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
         </View>
 
         <View className="space-y-2 mb-10">
-          <Text fontSize="text-md" fontWeight="font-bold">
+          <Text
+            fontSize="text-md"
+            fontWeight="font-bold"
+          >
             How would you like to be contacted?
           </Text>
           <View className="pt-3">
@@ -411,9 +438,12 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
           className="flex items-center justify-center"
         >
           {loading ? (
-            <Progress.CircleSnail size={22} color={"white"} />
+            <Progress.CircleSnail
+              size={22}
+              color={"white"}
+            />
           ) : (
-            <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center translate-y-0.5 justify-center space-x-2">
               <Text
                 fontWeight="font-bold"
                 className={`${
@@ -433,7 +463,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
               >
                 Submit
               </Text>
-              <View>
+              <View className="ml-2">
                 <ChevronRightIcon
                   size={16}
                   color={

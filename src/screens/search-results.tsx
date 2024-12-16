@@ -350,12 +350,13 @@ export default function SearchResults() {
         snapPoints={["75%"]}
         isDark={isDark}
       >
-        <StyledBottomView className="w-full px-5 py-2 flex flex-col justify-between flex-1 ">
-          <View className="flex-1">
-            <View className="flex items-center mb-4">
+        <StyledBottomView className="w-full py-2 flex flex-col justify-between flex-1 ">
+          <View className="flex-1 w-full ">
+            <View className="flex mb-4 w-full ">
               <Text
                 fontSize="text-lg"
                 fontWeight="font-bold"
+                className="text-center"
               >
                 Refine your search
               </Text>
@@ -363,7 +364,7 @@ export default function SearchResults() {
               <ScrollView
                 showsHorizontalScrollIndicator={false}
                 horizontal={true}
-                className="mt-3"
+                className="mt-3 "
               >
                 <View
                   style={{
@@ -373,6 +374,8 @@ export default function SearchResults() {
                     backgroundColor: isDark ? "#292929" : "#e6e6e6",
                     width: "100%",
                     zIndex: -1,
+                    left: 0,
+                    right: 0,
                   }}
                 />
                 {["Sort", "Category", "Price", "Ratings", "Condition"].map(
@@ -383,6 +386,7 @@ export default function SearchResults() {
                       style={{
                         paddingHorizontal: 10,
                         paddingVertical: 5,
+                        marginHorizontal: 5,
                       }}
                     >
                       <View
@@ -422,7 +426,7 @@ export default function SearchResults() {
                 )}
               </ScrollView>
             </View>
-            <View className="flex-1">
+            <View className="flex-1 px-5">
               {selectedTab === "Sort" && (
                 <SortFilter
                   selectedFilter={filters.sort}
@@ -455,6 +459,7 @@ export default function SearchResults() {
                     isDark={isDark}
                     subcategories={selectedCategoryData.subcategories}
                     isLoading={isLoading}
+                    closeSheet={closeSheet}
                   />
                 )}
               {selectedTab === "Price" && (
@@ -484,86 +489,6 @@ export default function SearchResults() {
                 />
               )}
             </View>
-          </View>
-        </StyledBottomView>
-      </CustomBottomSheetModal>
-
-      {/* Subcategory Bottom Sheet */}
-      <CustomBottomSheetModal
-        ref={subCategoryBottomSheetRef}
-        snapPoints={["60%", "75%"]}
-        isDark={isDark}
-      >
-        <StyledBottomView className="w-full px-5 py-2 flex flex-col justify-between h-1/2">
-          <View>
-            <View className="flex items-center mb-4">
-              <Text
-                fontSize="text-lg"
-                fontWeight="font-bold"
-              >
-                Select a subcategory
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              onPress={() => {
-                subCategoryBottomSheetRef.current?.dismiss();
-              }}
-            >
-              <View
-                className={`flex-row items-center space-x-2 border-b p-3 mb-4 ${
-                  isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-                }`}
-              >
-                <ChevronLeftIcon
-                  size={24}
-                  color={isDark ? "white" : "black"}
-                />
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-bold"
-                >
-                  {filters.category}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {SUB_CATEGORIES.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                className="p-3 mb-1"
-                onPress={() => {
-                  handleFilterSelect("subCategory", item.name);
-                  closeSubCategorySheet();
-                }}
-              >
-                <View className="flex flex-row items-center justify-between">
-                  <View className="flex flex-row items-center">
-                    <Image
-                      source={{
-                        uri: isDark ? item.darkIcon : item.lightIcon,
-                      }}
-                      style={{ width: 20, height: 20 }}
-                    />
-                    <Text
-                      fontSize="text-base"
-                      className="ml-3"
-                    >
-                      {item.name}
-                    </Text>
-                  </View>
-
-                  {filters.subCategory === item.name && (
-                    <CheckIcon
-                      size={24}
-                      color="#635be8"
-                    />
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))}
-
-            <Button onPress={closeSubCategorySheet}>Show products</Button>
           </View>
         </StyledBottomView>
       </CustomBottomSheetModal>

@@ -61,6 +61,7 @@ export default function EditAboutProduct() {
   const navigation = useTypedNavigation();
   const route = useRoute<RouteProps<"EditAboutProduct">>();
   const { data } = route.params;
+
   const { updateMyProductDetails, loading: L } = useProfile();
 
   const { theme } = useGlobalContext();
@@ -297,6 +298,14 @@ export default function EditAboutProduct() {
 
   useEffect(() => {
     getCurrentLocation(); // Fetch current location on component mount
+    {
+      fetchAddress({
+        coords: {
+          latitude: data.coordinates.lat,
+          longitude: data.coordinates.long,
+        },
+      });
+    }
   }, []);
 
   const handleSelectNearbyPlace = (place: any) => {
@@ -312,24 +321,37 @@ export default function EditAboutProduct() {
       label: "Excellent",
       value: "excellent",
       icon: (
-        <ExcellentCondition size={20} color={`${isDark ? "white" : "black"}`} />
+        <ExcellentCondition
+          size={20}
+          color={`${isDark ? "white" : "black"}`}
+        />
       ),
     },
     {
       label: "Good",
       value: "good",
-      icon: <GoodCondition size={20} color={`${isDark ? "white" : "black"}`} />,
+      icon: (
+        <GoodCondition
+          size={20}
+          color={`${isDark ? "white" : "black"}`}
+        />
+      ),
     },
     {
       label: "Fair",
       value: "fair",
-      icon: <BadCondition size={20} color={`${isDark ? "white" : "black"}`} />,
+      icon: (
+        <BadCondition
+          size={20}
+          color={`${isDark ? "white" : "black"}`}
+        />
+      ),
     },
   ];
 
   return (
     <NonScrollableContainer>
-      <View className="h-20 items-center justify-center">
+      <View className=" h-10 items-center justify-center">
         <View className="flex-row items-center justify-between">
           <View className="w-[10%]">
             <TouchableOpacity
@@ -347,7 +369,10 @@ export default function EditAboutProduct() {
           </View>
           <View className="w-[80%]">
             <View className="h-24 items-center justify-center">
-              <Text fontSize="text-lg" fontWeight="font-bold">
+              <Text
+                fontSize="text-lg"
+                fontWeight="font-bold"
+              >
                 Edit Product Details
               </Text>
             </View>
@@ -357,7 +382,9 @@ export default function EditAboutProduct() {
       </View>
 
       <View
-        className={`${Platform.OS === "ios" ? "" : "flex-1"} justify-between`}
+        className={`${
+          Platform.OS === "ios" ? "" : "flex-1"
+        } justify-between pt-2`}
         style={{
           paddingBottom: Platform.OS === "ios" ? wp("15%") : 0,
         }}
@@ -370,7 +397,10 @@ export default function EditAboutProduct() {
           style={{ height: "100%" }}
         >
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Product Name
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -390,7 +420,10 @@ export default function EditAboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Brand Name
             </Text>
             <TextInput
@@ -407,7 +440,10 @@ export default function EditAboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Model Name/Number
             </Text>
             <TextInput
@@ -424,7 +460,10 @@ export default function EditAboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Condition
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -466,8 +505,8 @@ export default function EditAboutProduct() {
               data={options}
               labelField="label"
               valueField="value"
-              value={selectedValue}
-              onChange={(item) => setSelectedValue(item.value)}
+              value={condition}
+              onChange={(item) => setCondition(item.value)}
               renderLeftIcon={() =>
                 selectedValue ? (
                   <View style={{ marginRight: 8 }}>
@@ -496,7 +535,10 @@ export default function EditAboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Product Description
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -521,7 +563,10 @@ export default function EditAboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Usage Description
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -545,7 +590,10 @@ export default function EditAboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Product location
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -562,7 +610,10 @@ export default function EditAboutProduct() {
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
                 <View className="flex flex-row items-center space-x-2 ">
-                  <MapPinIcon color={isDark ? "white" : "black"} size={24} />
+                  <MapPinIcon
+                    color={isDark ? "white" : "black"}
+                    size={24}
+                  />
                   <View className="w-3/4">
                     {selectedLocationName ? (
                       // <Text fontSize="text-md">{selectedLocationName}</Text>
@@ -596,7 +647,10 @@ export default function EditAboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Product Address
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -620,7 +674,10 @@ export default function EditAboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Price Per Day
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -648,7 +705,10 @@ export default function EditAboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Security Deposit
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -676,7 +736,10 @@ export default function EditAboutProduct() {
           </View>
 
           <View className="space-y-2 mb-10">
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text
+              fontSize="text-md"
+              fontWeight="font-bold"
+            >
               Concerned person of contact
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -702,7 +765,10 @@ export default function EditAboutProduct() {
               >
                 <Text fontSize="text-sm">Owner</Text>
                 {contactPerson === "Owner" && (
-                  <CheckIcon size={18} color="#635BE8" />
+                  <CheckIcon
+                    size={18}
+                    color="#635BE8"
+                  />
                 )}
               </TouchableOpacity>
 
@@ -719,7 +785,10 @@ export default function EditAboutProduct() {
               >
                 <Text fontSize="text-sm">Other</Text>
                 {contactPerson === "Other" && (
-                  <CheckIcon size={18} color="#635BE8" />
+                  <CheckIcon
+                    size={18}
+                    color="#635BE8"
+                  />
                 )}
               </TouchableOpacity>
             </View>
@@ -727,7 +796,10 @@ export default function EditAboutProduct() {
             {contactPerson === "Other" && (
               <View>
                 <View className="space-y-2 mt-8">
-                  <Text fontSize="text-md" fontWeight="font-bold">
+                  <Text
+                    fontSize="text-md"
+                    fontWeight="font-bold"
+                  >
                     Name
                   </Text>
                   <TextInput
@@ -744,7 +816,10 @@ export default function EditAboutProduct() {
                 </View>
 
                 <View className="space-y-2 mt-8">
-                  <Text fontSize="text-md" fontWeight="font-bold">
+                  <Text
+                    fontSize="text-md"
+                    fontWeight="font-bold"
+                  >
                     Phone Number
                   </Text>
                   <View className="flex-row flex-1 gap-x-2 ">
@@ -822,7 +897,10 @@ export default function EditAboutProduct() {
           >
             <View className="flex-row items-center justify-between">
               {L ? (
-                <Progress.CircleSnail color={"white"} size={22} />
+                <Progress.CircleSnail
+                  color={"white"}
+                  size={22}
+                />
               ) : (
                 <Text
                   fontWeight="font-bold"
@@ -905,8 +983,14 @@ export default function EditAboutProduct() {
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
                 <View className="flex flex-row items-center space-x-4">
-                  <ViewfinderCircleIcon color="#635be8" size={24} />
-                  <Text fontWeight="font-bold" className="text-brand-blue">
+                  <ViewfinderCircleIcon
+                    color="#635be8"
+                    size={24}
+                  />
+                  <Text
+                    fontWeight="font-bold"
+                    className="text-brand-blue"
+                  >
                     Use current location
                   </Text>
                 </View>

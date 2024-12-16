@@ -21,6 +21,7 @@ import {
   CalendarIcon,
   CubeIcon,
   StarIcon,
+  UserCircleIcon,
 } from "react-native-heroicons/outline";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import Toast from "react-native-toast-message";
@@ -110,11 +111,17 @@ export default function UsersDetails() {
       <View className="p-5 flex flex-row items-center">
         <View className="w-[10%]">
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ArrowLeftIcon color={isDark ? "white" : "black"} size={24} />
+            <ArrowLeftIcon
+              color={isDark ? "white" : "black"}
+              size={24}
+            />
           </TouchableOpacity>
         </View>
         <View className="w-[80%] h-full items-center">
-          <Text fontSize="text-xl" fontWeight="font-bold">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
             About the owner
           </Text>
         </View>
@@ -122,21 +129,39 @@ export default function UsersDetails() {
       </View>
 
       <View className="items-center justify-center">
-        <StyledImage
-          source={{
-            uri: owner?.image.image_url || "",
-          }}
-          className="h-24 w-24 rounded-full"
-        />
-        <Text fontSize="text-md" fontWeight="font-bold" className="mt-3">
+        {owner?.image?.image_url ? (
+          <StyledImage
+            source={{
+              uri: owner?.image?.image_url || "",
+            }}
+            className="h-24 w-24 rounded-full"
+          />
+        ) : (
+          <UserCircleIcon
+            color={"#635BE8"}
+            size={wp("14%")}
+          />
+        )}
+        <Text
+          fontSize="text-md"
+          fontWeight="font-bold"
+          className="mt-3"
+        >
           {owner?.first_name} {owner?.last_name}
         </Text>
       </View>
 
       <View className="p-5 items-center justify-evenly flex flex-row">
         <View className="items-center w-1/3">
-          <StarIcon color={isDark ? "white" : "black"} size={24} />
-          <Text fontSize="text-sm" fontWeight="font-bold" className="mt-2">
+          <StarIcon
+            color={isDark ? "white" : "black"}
+            size={24}
+          />
+          <Text
+            fontSize="text-sm"
+            fontWeight="font-bold"
+            className="mt-2"
+          >
             4.5
           </Text>
           <Text
@@ -149,8 +174,15 @@ export default function UsersDetails() {
           </Text>
         </View>
         <View className="items-center w-1/3">
-          <CubeIcon color={isDark ? "white" : "black"} size={24} />
-          <Text fontSize="text-sm" fontWeight="font-bold" className="mt-2">
+          <CubeIcon
+            color={isDark ? "white" : "black"}
+            size={24}
+          />
+          <Text
+            fontSize="text-sm"
+            fontWeight="font-bold"
+            className="mt-2"
+          >
             {products.length}
           </Text>
           <Text
@@ -163,8 +195,15 @@ export default function UsersDetails() {
           </Text>
         </View>
         <View className="items-center w-1/3">
-          <CalendarIcon color={isDark ? "white" : "black"} size={24} />
-          <Text fontSize="text-sm" fontWeight="font-bold" className="mt-2">
+          <CalendarIcon
+            color={isDark ? "white" : "black"}
+            size={24}
+          />
+          <Text
+            fontSize="text-sm"
+            fontWeight="font-bold"
+            className="mt-2"
+          >
             {new Date(owner?.date_joined!)
               .toLocaleDateString("en-US", {
                 year: "2-digit",
@@ -186,7 +225,10 @@ export default function UsersDetails() {
 
       {!isOwner && (
         <View className="px-5">
-          <Button variant="outline" onPress={handleStartChat}>
+          <Button
+            variant="outline"
+            onPress={handleStartChat}
+          >
             <Text fontWeight="font-bold">Chat with {owner?.first_name}</Text>
           </Button>
         </View>
@@ -201,7 +243,11 @@ export default function UsersDetails() {
       <View className="">
         <View className="">
           <View className="px-5">
-            <Text fontSize="text-lg" fontWeight="font-bold" className="mb-5  ">
+            <Text
+              fontSize="text-lg"
+              fontWeight="font-bold"
+              className="mb-5  "
+            >
               {products.length} products
             </Text>
           </View>
@@ -260,12 +306,19 @@ export default function UsersDetails() {
       <View className=" mb-16">
         <View className="">
           <View className="px-5">
-            <Text fontSize="text-lg" fontWeight="font-bold" className="mb-5">
+            <Text
+              fontSize="text-lg"
+              fontWeight="font-bold"
+              className="mb-5"
+            >
               {owner?.first_name}'s reviews
             </Text>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
             {ownerReviews.map((item, index) => (
               <View
                 key={item.id}

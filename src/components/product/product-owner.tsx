@@ -3,7 +3,10 @@ import { Text } from "../core";
 import { styled } from "nativewind";
 import { Image } from "expo-image";
 import { StarIcon } from "react-native-heroicons/solid";
-import { ChevronRightIcon } from "react-native-heroicons/outline";
+import {
+  ChevronRightIcon,
+  UserCircleIcon,
+} from "react-native-heroicons/outline";
 import { useTypedNavigation } from "@/lib/types";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 
@@ -34,15 +37,25 @@ export function AboutOwner({
       className="w-full mt-3 h-20 flex flex-row items-center"
     >
       <View className="">
-        <StyledImage
-          source={{ uri: profilePic }}
-          // className="h-16 w-16 rounded-full"
-          style={{ width: wp("14%"), height: wp("14%") }}
-          className="rounded-full"
-        />
+        {profilePic ? (
+          <StyledImage
+            source={{ uri: profilePic }}
+            // className="h-16 w-16 rounded-full"
+            style={{ width: wp("14%"), height: wp("14%") }}
+            className="rounded-full"
+          />
+        ) : (
+          <UserCircleIcon
+            color={"#635BE8"}
+            size={wp("14%")}
+          />
+        )}
       </View>
       <View className="flex-1 ml-2">
-        <Text fontSize="text-md" fontWeight="font-bold">
+        <Text
+          fontSize="text-md"
+          fontWeight="font-bold"
+        >
           {name}
         </Text>
         <View className="flex flex-row items-center space-x-1 mt-1">
@@ -68,7 +81,10 @@ export function AboutOwner({
         </View>
       </View>
       <View className=" h-full justify-center items-end">
-        <ChevronRightIcon color={isDark ? "white" : "black"} size={wp("5%")} />
+        <ChevronRightIcon
+          color={isDark ? "white" : "black"}
+          size={wp("5%")}
+        />
       </View>
     </TouchableOpacity>
   );

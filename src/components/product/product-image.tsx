@@ -98,70 +98,67 @@ export function ProductImage({ images, mode, name, isFavorite: iF }: Props) {
       <StyledView
         className={`h-full w-full p-6 ${isDarkMode ? "bg-black" : ""}`}
       >
-        {mode === "post" ? (
-          ""
-        ) : (
-          <StyledView className="flex flex-row items-center justify-between">
-            <StyledButton
-              style={styles.Shadow}
-              onPress={() => navigation.goBack()}
-              className={`p-3 border ${
-                isDarkMode
-                  ? "bg-[#1A1A1A] border-[#4e4e4e]"
-                  : "bg-white border-[#f5f5f5]"
-              } rounded-full`}
-            >
-              <ArrowLeftIcon
-                size={wp("5%")}
-                color={isDarkMode ? "#FFF" : "#000"}
-              />
-            </StyledButton>
+        <StyledView className="flex-1 relative items-center justify-center mt-3">
+          {mode === "post" ? (
+            ""
+          ) : (
+            <StyledView className="flex absolute top-0 left-0 z-10 w-full flex-row items-center justify-between">
+              <StyledButton
+                style={styles.Shadow}
+                onPress={() => navigation.goBack()}
+                className={`p-3
+${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
+                    rounded-full`}
+              >
+                <ArrowLeftIcon
+                  size={wp("5%")}
+                  color={isDarkMode ? "#FFF" : "#000"}
+                />
+              </StyledButton>
 
-            <StyledButton
-              style={styles.Shadow}
-              onPress={handleLike}
-              className={`p-3 border ${
-                isDarkMode
-                  ? "bg-[#1A1A1A] border-[#4e4e4e]"
-                  : "bg-white border-[#f5f5f5]"
-              } rounded-full`}
-            >
-              <HI
-                size={24}
-                color={isFavorite ? "" : "white"}
-                fill={isFavorite ? "#FF3B30" : "#1E1E1E70"}
-              />
-              {isFavorite && (
-                <View
-                  className="absolute top-2 bg-transparent left-2"
-                  style={{ width: HEART_ICON_SIZE, height: HEART_ICON_SIZE }}
-                >
-                  <Lottie
-                    ref={lottieRef}
-                    // source={require("./like.json")}
-                    source={require("../core/like.json")}
-                    style={[
-                      styles.lottie,
-                      {
-                        width: wp(8),
-                        height: wp(8),
-                      },
-                    ]}
-                    autoPlay={false}
-                    loop={false}
-                    resizeMode="cover"
-                  />
-                  <Pressable
-                    onPress={handleLike}
-                    style={styles.invisibleFloatingBTN}
-                  />
-                </View>
-              )}
-            </StyledButton>
-          </StyledView>
-        )}
-
-        <StyledView className="flex-1 items-center justify-center mt-3">
+              <StyledButton
+                style={styles.Shadow}
+                onPress={handleLike}
+                className={`p-3 rounded-full ${
+                  isDarkMode
+                    ? "bg-[#1A1A1A] border-[#4e4e4e]"
+                    : "bg-white border-[#f5f5f5]"
+                } shadow-inner`}
+              >
+                <HI
+                  size={24}
+                  color={isFavorite ? "" : "white"}
+                  fill={isFavorite ? "#FF3B30" : "#1E1E1E70"}
+                />
+                {isFavorite && (
+                  <View
+                    className="absolute top-2 bg-transparent left-2"
+                    style={{ width: HEART_ICON_SIZE, height: HEART_ICON_SIZE }}
+                  >
+                    <Lottie
+                      ref={lottieRef}
+                      // source={require("./like.json")}
+                      source={require("../core/like.json")}
+                      style={[
+                        styles.lottie,
+                        {
+                          width: wp(8),
+                          height: wp(8),
+                        },
+                      ]}
+                      autoPlay={false}
+                      loop={false}
+                      resizeMode="cover"
+                    />
+                    <Pressable
+                      onPress={handleLike}
+                      style={styles.invisibleFloatingBTN}
+                    />
+                  </View>
+                )}
+              </StyledButton>
+            </StyledView>
+          )}
           <Carousel
             style={{
               alignItems: "center",

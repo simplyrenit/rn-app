@@ -21,12 +21,10 @@ import { Platform, TextInput, TouchableOpacity, View } from "react-native";
 import CountryPicker, { DARK_THEME } from "react-native-country-picker-modal";
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 import { ScrollView } from "react-native-gesture-handler";
-import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import {
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  MagnifyingGlassIcon,
   MapPinIcon,
   PencilSquareIcon,
   PhoneIcon,

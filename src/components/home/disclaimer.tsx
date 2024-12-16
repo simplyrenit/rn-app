@@ -24,7 +24,7 @@ export function Disclaimer() {
           : "bg-[#EDEDFC] border-[#CAC8F7] "
       } rounded-xl p-4 shadow-sm mt-8 mb-24`}
     >
-      <View className="flex-row items-start mb-2">
+      <View className="flex-row items-start mb-1">
         <View
           className={`border ${
             theme === "dark"
@@ -38,7 +38,7 @@ export function Disclaimer() {
           />
         </View>
 
-        <View className="flex w-full space-y-2">
+        <View className="flex w-full space-y-1">
           <Text
             fontSize="text-base"
             fontWeight="font-bold"

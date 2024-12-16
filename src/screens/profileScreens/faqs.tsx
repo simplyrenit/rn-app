@@ -76,26 +76,23 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
     {
       question: "How do I report my issues?",
       answer:
-        "If you encounter any issues, you can report them through the 'Feedback & Review' section on our website or mobile application. You can also contact our customer support team by dropping an email at support@renit.co.in or calling at +91-7014230599 for assistance.",
+        "If you encounter any issues, you can report them through the 'Feedback & Review' section on our website or mobile application. You can also contact our customer support team by dropping an email at support@simplyrenit.com or calling at +91-7014230599 for assistance.",
     },
     {
       question: "Are you currently hiring?",
       answer:
-        "We are always looking for exceptional dreamers, doers, operators, engineers, designers & builders. If you’re interested in joining Renit, drop us an email at garvit.babel2000@gmail.com.",
+        "We are always looking for exceptional dreamers, doers, operators, engineers, designers & builders. If you’re interested in joining Renit, drop us an email at garvit@simplyrenit.com",
     },
     {
       question: "Are you looking for investments?",
       answer:
-        "Yes, achieving the longer vision of Renit requires significant risk capital with idea meritocracy driven capital allocation. If you deeply believe in Renit’s vision of ‘enabling everyone to access anything’ and would like to join Renit as a long-term partner, drop us an email at garvit.babel2000@gmail.com.",
+        "Yes, achieving the longer vision of Renit requires significant risk capital with idea meritocracy driven capital allocation. If you deeply believe in Renit’s vision of ‘enabling everyone to access anything’ and would like to join Renit as a long-term partner, drop us an email at garvit@simplyrenit.com",
     },
   ];
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
-      <View
-        className="flex-row items-center justify-between px-5 "
-        style={{ paddingVertical: wp("5%") }}
-      >
+      <View className="flex-row items-center justify-between px-5 pb-2 ">
         <TouchableOpacity
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
@@ -118,7 +115,7 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
       </View>
 
       <ScrollView
-        className="px-5 flex-1"
+        className="px-5 flex-1 pt-2"
         contentContainerStyle={{ paddingBottom: hp("5%") }}
       >
         <View>

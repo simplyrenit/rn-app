@@ -50,11 +50,17 @@ const ProfileImgContainer: React.FC<ProfileImgContainerProps> = ({
         />
         <View className="w-[85%]">
           <View className="flex flex-row items-center justify-between">
-            <Text fontSize="text-base" fontWeight="font-bold">
+            <Text
+              fontSize="text-base"
+              fontWeight="font-bold"
+            >
               {details.first_name + " " + details.last_name}
             </Text>
             <TouchableOpacity onPress={handlePersonalDetailsSheetPress}>
-              <PencilSquareIcon size={21} color="#635BE8" />
+              <PencilSquareIcon
+                size={21}
+                color="#635BE8"
+              />
             </TouchableOpacity>
           </View>
           <Text
