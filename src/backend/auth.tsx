@@ -1,6 +1,6 @@
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
-import { GOOGLE_SIGN_IN_ENDPOINT, OTP, SIGN_UP } from "@/lib/config";
+import { GOOGLE_SIGN_IN_ENDPOINT, LOGIN, OTP, SIGN_UP } from "@/lib/config";
 import { AuthTokens, OTPResponse } from "@/lib/types";
 import axios from "axios";
 import { useState } from "react";
@@ -62,6 +62,30 @@ export function useAuth() {
     return null;
   }
 
+  async function loginUser(
+    email: string,
+    password: string
+  ): Promise<AuthTokens | null> {
+    setLoading(true);
+    try {
+      const response: { data: AuthTokens } = await axios.post(LOGIN, {
+        email,
+        password,
+      });
+      setAuthTokens(response.data);
+      return response?.data;
+    } catch (error: any) {
+      if (error.response) {
+        console.error("LOGIN ERROR", error.response.data);
+      } else {
+        console.error("LOGIN ERROR", error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+    return null;
+  }
+
   // export async function signInWithGoogle(idToken: string) {
   //   try {
   //     const response = await axios.post(
@@ -76,6 +100,7 @@ export function useAuth() {
     signUpUser,
     loading,
     sendOTP,
+    loginUser,
     verifyOTP,
     // signInWithGoogle
   };

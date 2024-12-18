@@ -11,6 +11,7 @@ import { FlatList, View } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 import { MagnifyingGlassIcon } from "react-native-heroicons/outline";
 import { StyleSheet } from "react-native";
+import { firestore, app } from "@/lib/config";
 
 const StyledInput = styled(TextInput);
 
@@ -19,6 +20,7 @@ export default function Chat() {
     useGlobalContext();
   const [conversations, setConversations] = React.useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [firebaseInitialized, setFirebaseInitialized] = React.useState(false);
 
   const isDark = theme === "dark";
   const { subscribeToChats, deleteChat } = useChat();
@@ -32,12 +34,22 @@ export default function Chat() {
     };
   }, []);
 
+  React.useEffect(() => {
+    console.log("[Chat] Firestore initialized:", app);
+    if (firestore) {
+      setFirebaseInitialized(true);
+    }
+  }, [firestore]);
+
   useFocusEffect(
     React.useCallback(() => {
       let isSubscribed = true;
       let unsubscribe: (() => void) | undefined;
 
-      console.log("[Chat] Starting subscription setup");
+      if (!firebaseInitialized) {
+        console.log("[Chat] Firebase not yet initialized");
+        return;
+      }
 
       if (authTokens && isAuthenticated) {
         console.log("[Chat] Initiating subscription");
@@ -45,7 +57,7 @@ export default function Chat() {
           userDetails?.username!,
           (chats: Conversation[]) => {
             if (!isSubscribed) return;
-            console.log("[Chat] Received update:", chats.length, "chats");
+            console.log("[Chat] Received update:", chats, "chats");
             setConversations(chats);
             setIsLoading(false);
           }
@@ -59,7 +71,12 @@ export default function Chat() {
           unsubscribe();
         }
       };
-    }, [authTokens, isAuthenticated, userDetails?.username])
+    }, [
+      authTokens,
+      isAuthenticated,
+      userDetails?.username,
+      firebaseInitialized,
+    ])
   );
 
   if (!authTokens || !isAuthenticated) {

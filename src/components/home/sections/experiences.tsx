@@ -87,6 +87,7 @@ export function Experiences() {
           coordinates.lat,
           coordinates.long
         );
+        console.log(data, "data");
 
         setExperiences(data.results);
       } catch (error) {

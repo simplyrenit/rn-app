@@ -5,7 +5,11 @@ import { styled } from "nativewind";
 import { Swipeable } from "react-native-gesture-handler";
 import { useTypedNavigation } from "@/lib/types";
 import { useGlobalContext } from "@/context/global-context";
-import { TrashIcon } from "react-native-heroicons/outline";
+import {
+  DocumentIcon,
+  TrashIcon,
+  PhotoIcon,
+} from "react-native-heroicons/outline";
 
 interface Props {
   id: string;
@@ -44,7 +48,10 @@ export function ChatCard({
       className="bg-red-500 justify-center items-center w-24 rounded-lg ml-4"
       onPress={() => setModalVisible(true)}
     >
-      <TrashIcon size={24} color={"white"} />
+      <TrashIcon
+        size={24}
+        color={"white"}
+      />
     </TouchableOpacity>
   );
 
@@ -52,6 +59,13 @@ export function ChatCard({
     onDeleteChat(id);
     setModalVisible(false);
   };
+
+  let parsedMessage;
+  try {
+    parsedMessage = JSON.parse(lastMessage);
+  } catch (e) {
+    parsedMessage = lastMessage;
+  }
 
   return (
     <>
@@ -69,22 +83,64 @@ export function ChatCard({
           />
 
           <StyledView className="flex-1 ml-3">
-            <Text fontSize="text-base" fontWeight="font-bold">
+            <Text
+              fontSize="text-base"
+              fontWeight="font-bold"
+            >
               {name}
             </Text>
-            <Text
-              fontSize="text-sm"
-              className={`mt-1 ${
-                isDark ? "text-[#ffffff80]" : "text-[#00000080]"
-              }`}
-              numberOfLines={1}
-            >
-              {lastMessage}
-            </Text>
+            {typeof parsedMessage === "object" &&
+            parsedMessage.type === "image" ? (
+              <View className="flex-row items-center mt-1">
+                <PhotoIcon
+                  size={16}
+                  color={isDark ? "#ffffff80" : "#00000080"}
+                />
+                <Text
+                  fontSize="text-sm"
+                  className={`ml-1 ${
+                    isDark ? "text-[#ffffff80]" : "text-[#00000080]"
+                  }`}
+                  numberOfLines={1}
+                >
+                  Image
+                </Text>
+              </View>
+            ) : typeof parsedMessage === "object" &&
+              parsedMessage.type === "file" ? (
+              <View className="flex-row items-center mt-1">
+                <DocumentIcon
+                  size={16}
+                  color={isDark ? "#ffffff80" : "#00000080"}
+                />
+                <Text
+                  fontSize="text-sm"
+                  className={`ml-1 ${
+                    isDark ? "text-[#ffffff80]" : "text-[#00000080]"
+                  }`}
+                  numberOfLines={1}
+                >
+                  File
+                </Text>
+              </View>
+            ) : (
+              <Text
+                fontSize="text-sm"
+                className={`mt-1 ${
+                  isDark ? "text-[#ffffff80]" : "text-[#00000080]"
+                }`}
+                numberOfLines={1}
+              >
+                {lastMessage}
+              </Text>
+            )}
           </StyledView>
 
           <StyledView className="items-end mr-2">
-            <Text fontSize="text-xs" className="text-gray-400">
+            <Text
+              fontSize="text-xs"
+              className="text-gray-400"
+            >
               {(() => {
                 const messageDate = new Date(lastMessageTime);
                 const now = new Date();
@@ -134,7 +190,10 @@ export function ChatCard({
             >
               Delete Chat?
             </Text>
-            <Text fontSize="text-sm" className="text-gray-500 text-center mb-6">
+            <Text
+              fontSize="text-sm"
+              className="text-gray-500 text-center mb-6"
+            >
               Are you sure you want to delete this chat?
             </Text>
             <View className="flex-row w-full justify-between">
@@ -142,7 +201,10 @@ export function ChatCard({
                 className="bg-gray-200 py-2 px-4 rounded-lg flex-1 mr-2 items-center"
                 onPress={() => setModalVisible(false)}
               >
-                <Text fontSize="text-base" className="text-black">
+                <Text
+                  fontSize="text-base"
+                  className="text-black"
+                >
                   Cancel
                 </Text>
               </TouchableOpacity>

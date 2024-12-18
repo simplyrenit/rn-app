@@ -32,17 +32,24 @@ export default function LoginWithEmail() {
     setIsTouched(true);
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    console.log("here 1");
-    if (validateEmail(email)) {
-      saveUser({ email });
+  const handleSubmit = useCallback(
+    async (verificationType: "otp" | "password") => {
+      console.log("here 1");
+      if (validateEmail(email)) {
+        saveUser({ email });
 
-      await sendOTP(email);
-      router.navigate("Verify", { email });
-    } else {
-      setIsValid(false);
-    }
-  }, [email]);
+        if (verificationType === "otp") {
+          // await sendOTP(email);
+          router.navigate("Verify", { email, verificationType });
+        } else {
+          router.navigate("Verify", { email, verificationType });
+        }
+      } else {
+        setIsValid(false);
+      }
+    },
+    [email]
+  );
 
   return (
     <StaticContainer>
@@ -100,13 +107,20 @@ export default function LoginWithEmail() {
           </View>
         </ScrollContainer>
 
-        <View className="py-5">
+        <View className="py-5 space-y-3">
           <Button
             variant="primary"
-            onPress={handleSubmit}
+            onPress={() => handleSubmit("otp")}
             disabled={!isValid || !email}
           >
-            Continue
+            Continue with OTP
+          </Button>
+          <Button
+            variant="primary"
+            onPress={() => handleSubmit("password")}
+            disabled={!isValid || !email}
+          >
+            Continue with Password
           </Button>
         </View>
       </View>

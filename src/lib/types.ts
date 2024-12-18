@@ -169,7 +169,7 @@ export type RootStackParamList = {
   ConfirmPassword: { enteredPassword: string };
   UserDetail: { id: string };
   ChatDetails: { id: string };
-  Verify: { email: string };
+  Verify: { email: string; verificationType: "otp" | "password" };
   ProductDetail: { id: string; isFavorite?: boolean };
   ReviewsScreen: {
     reviews: BackendReview[];

@@ -18,6 +18,14 @@ import {
 } from "@/backend/notifications";
 import { AuthProvider } from "@/context/auth-context";
 import { QueryClient, QueryClientProvider } from "react-query";
+import firebase from "@react-native-firebase/app";
+import { FIREBASE_CONFIG } from "@/lib/config";
+import { testApiConnection } from "@/lib/apiTest";
+
+// Initialize Firebase
+if (!firebase.apps.length) {
+  firebase.initializeApp(FIREBASE_CONFIG);
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -47,6 +55,15 @@ export default function App() {
     };
 
     initializeNotifications();
+  }, []);
+
+  useEffect(() => {
+    const testApi = async () => {
+      const isApiWorking = await testApiConnection();
+      console.log("API working:", isApiWorking);
+    };
+
+    testApi();
   }, []);
 
   if (!loaded) {

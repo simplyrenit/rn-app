@@ -33,26 +33,45 @@ export async function registerForPushNotificationsAsync() {
       return;
     }
 
-    token = (await Notifications.getExpoPushTokenAsync()).data;
+    // Get the token with the correct project ID
+    token = (
+      await Notifications.getExpoPushTokenAsync({
+        projectId: "4694f1b4-ada3-42b1-84ab-9a7d6fe2c1cb", // Your Expo project ID from app.json
+      })
+    ).data;
+
     console.log("Notification token:", token);
   } else {
     alert("Must use physical device for Push Notifications");
   }
 
   if (Platform.OS === "android") {
-    Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.MAX,
+    Notifications.setNotificationChannelAsync("chat", {
+      name: "Chat Messages",
+      importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#FF231F7C",
+      sound: "default",
+      enableVibrate: true,
+      enableLights: true,
     });
   }
   if (Platform.OS === "ios") {
-    await Notifications.setNotificationCategoryAsync("default", [
+    await Notifications.setNotificationCategoryAsync("chat", [
       {
-        identifier: "default",
+        identifier: "reply",
+        buttonTitle: "Reply",
+        options: {
+          opensAppToForeground: true,
+          authenticationRequired: false,
+        },
+      },
+      {
+        identifier: "view",
         buttonTitle: "View",
-        options: { opensAppToForeground: true },
+        options: {
+          opensAppToForeground: true,
+        },
       },
     ]);
   }
@@ -144,13 +163,25 @@ export function setupNotificationListeners(
 ) {
   const subscription = Notifications.addNotificationResponseReceivedListener(
     (response) => {
-      const data = response.notification.request.content.data;
-      if (data.conversationId) {
+      const data = response.notification.request.content.data as any;
+      if (data?.conversationId) {
         onNotificationResponse(data.conversationId);
       }
     }
   );
-  return () => subscription.remove();
+
+  // Also add a notification received listener for when the app is in the foreground
+  const foregroundSubscription = Notifications.addNotificationReceivedListener(
+    (notification) => {
+      // Handle foreground notifications if needed
+      console.log("Received notification in foreground:", notification);
+    }
+  );
+
+  return () => {
+    subscription.remove();
+    foregroundSubscription.remove();
+  };
 }
 
 import {
@@ -196,4 +227,20 @@ export async function checkForNewMessagesOrConversations() {
     console.error("Error checking for new messages:", error);
     return null;
   }
+}
+
+// Function to handle incoming chat notifications
+export function setupChatNotifications() {
+  Notifications.setNotificationHandler({
+    handleNotification: async (notification) => {
+      const data = notification.request.content.data;
+
+      return {
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+      };
+    },
+  });
 }

@@ -221,7 +221,8 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               <Text
                 fontSize="text-base"
                 fontWeight="font-bold"
-                className="text-[#E50914] ml-2 -translate-y-0.5"
+                className="text-[#E50914] ml-2"
+                lineHeight={24}
               >
                 Logout
               </Text>

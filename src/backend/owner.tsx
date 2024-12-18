@@ -39,7 +39,7 @@ export default function useOwner() {
       const data = await response.json();
       console.log("Response data:", data);
 
-      return data.results || [];
+      return data || [];
     } catch (error) {
       console.error("Detailed error in getOwnerProducts:", error);
       return [];

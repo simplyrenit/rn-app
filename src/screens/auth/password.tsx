@@ -44,7 +44,10 @@ export default function SetPassword() {
 
         <ScrollContainer>
           <View className="flex">
-            <Text fontSize="text-2xl" fontWeight="font-bold">
+            <Text
+              fontSize="text-2xl"
+              fontWeight="font-bold"
+            >
               Set a password for your new account
             </Text>
 
@@ -83,7 +86,10 @@ export default function SetPassword() {
                     color={isDarkMode ? "#FFF" : "#000"}
                   />
                 ) : (
-                  <EyeIcon size={24} color={isDarkMode ? "#FFF" : "#000"} />
+                  <EyeIcon
+                    size={24}
+                    color={isDarkMode ? "#FFF" : "#000"}
+                  />
                 )}
               </TouchableOpacity>
             </View>
@@ -113,7 +119,10 @@ export default function SetPassword() {
                   valid: passwordValidations.hasNumber,
                 },
               ].map((item, index) => (
-                <View key={index} className="flex flex-row items-center">
+                <View
+                  key={index}
+                  className="flex flex-row items-center"
+                >
                   {item.valid ? (
                     <CheckCircleIcon
                       size={24}
@@ -145,7 +154,11 @@ export default function SetPassword() {
         </ScrollContainer>
 
         <View className="py-5">
-          <Button variant="primary" onPress={onSubmit} disabled={!allValid}>
+          <Button
+            variant="primary"
+            onPress={onSubmit}
+            disabled={!allValid}
+          >
             Continue
           </Button>
         </View>

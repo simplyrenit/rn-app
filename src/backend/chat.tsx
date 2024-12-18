@@ -18,7 +18,11 @@ import {
 import {
   registerForPushNotificationsAsync,
   updateUserPushToken,
+  setupChatNotifications,
+  setupNotificationListeners,
 } from "./notifications";
+import { useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
 
 interface BlockedRecord {
   initiator: string;
@@ -29,6 +33,26 @@ interface BlockedRecord {
 export function useChat() {
   const { isAuthenticated, authTokens, userDetails } = useGlobalContext();
   const { access_token } = authTokens || {};
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    setupChatNotifications();
+
+    // Set up notification response listener
+    const notificationListener = setupNotificationListeners(
+      (conversationId) => {
+        // Navigate to the conversation when notification is tapped
+        if (conversationId) {
+          // @ts-ignore - Type safety is handled by the navigation library
+          navigation.navigate("Chat", { conversationId });
+        }
+      }
+    );
+
+    return () => {
+      notificationListener();
+    };
+  }, []);
 
   async function startChat(
     userDetails1: UserDetails,
@@ -182,17 +206,40 @@ export function useChat() {
     userId: string,
     callback: (chats: Conversation[]) => void
   ): () => void {
+    console.log(
+      "[subscribeToChats] Initializing subscription for user:",
+      userId,
+      firestore
+    );
+
     const q = query(collection(firestore, "conversations"));
+    console.log("[subscribeToChats] Firestore query created:", q);
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log(
+        "[subscribeToChats] Snapshot received with size:",
+        snapshot.size
+      );
+
       const chats: Conversation[] = [];
       snapshot.forEach((doc) => {
         const conversation = doc.data() as Conversation;
+        console.log(
+          "[subscribeToChats] Processing conversation:",
+          conversation
+        );
+
         if (
           conversation?.participants?.length > 0 &&
           conversation.participants.some(
             (participant) => participant?.userId === userDetails?.username
           )
         ) {
+          console.log(
+            "[subscribeToChats] User is a participant in conversation:",
+            doc.id
+          );
+
           const readStatus = conversation.readStatus || [];
           const readCount = conversation.readCount || [];
 
@@ -202,6 +249,10 @@ export function useChat() {
             readStatus,
             readCount,
           });
+          console.log(
+            "[subscribeToChats] Conversation added to chats list:",
+            doc.id
+          );
         }
       });
 
@@ -214,16 +265,31 @@ export function useChat() {
           : 0;
         return timeB - timeA;
       });
+      console.log("[subscribeToChats] Chats sorted by last message time");
 
       callback(chats);
+      console.log("[subscribeToChats] Callback executed with chats:", chats);
     });
 
     registerForPushNotificationsAsync().then((token) => {
       if (token) {
+        console.log(
+          "[subscribeToChats] Push notification token received:",
+          token
+        );
         updateUserPushToken(userId, token);
+        console.log(
+          "[subscribeToChats] User push token updated for user:",
+          userId
+        );
+      } else {
+        console.log("[subscribeToChats] No push notification token received");
       }
     });
 
+    console.log(
+      "[subscribeToChats] Subscription setup complete, returning unsubscribe function"
+    );
     return unsubscribe;
   }
 

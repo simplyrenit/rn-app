@@ -9,17 +9,21 @@ import {
   View,
   Image,
   Text,
+  ActivityIndicator,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import {
   CurrencyRupeeIcon,
   PaperClipIcon,
+  XMarkIcon,
 } from "react-native-heroicons/outline";
 import { PaperAirplaneIcon } from "react-native-heroicons/solid";
 import AttachmentSheet from "@/components/chat/attachment-sheet";
 import { useSocket } from "@/services/socket";
 import { debounce } from "lodash";
+import axios from "axios";
+import { GENERATE_SIGNED_URLS } from "@/lib/config";
 
 const StyledInput = styled(TextInput);
 const StyledTO = styled(TouchableOpacity);
@@ -33,6 +37,17 @@ interface Props {
   };
 }
 
+interface PresignedResponse {
+  presigned_urls: string[];
+}
+
+interface MediaPreview {
+  uri: string;
+  name: string;
+  type: string;
+  size?: number;
+}
+
 export function ChatInput({
   onMakeOfferPress,
   isBlocked,
@@ -40,11 +55,13 @@ export function ChatInput({
   participantDetails,
 }: Props) {
   const [message, setMessage] = React.useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [selectedFile, setSelectedFile] = useState<MediaPreview | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<MediaPreview | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
-  const { theme, userDetails } = useGlobalContext();
+  const [isUploading, setIsUploading] = useState(false);
+  const { theme, userDetails, authTokens } = useGlobalContext();
   const isDarkMode = theme === "dark";
+  const { access_token } = authTokens || {};
 
   const { sendMessage } = useChat();
   const { sendMessage: socketSendMessage, emitTyping } = useSocket();
@@ -57,6 +74,86 @@ export function ChatInput({
   ).current;
 
   const attachmentSheetRef = useRef(null);
+
+  const uploadToS3 = async (
+    presignedUrl: string,
+    fileUri: string
+  ): Promise<void> => {
+    if (!authTokens) return;
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch(fileUri);
+        const blob = await response.blob();
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", presignedUrl, true);
+
+        // Set content type based on file type
+        xhr.setRequestHeader("Content-Type", blob.type);
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            console.log(`Upload progress: ${percentComplete}%`);
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            console.log("Upload successful");
+            resolve();
+          } else {
+            const errorText = xhr.responseText;
+            console.error("Upload failed with status:", xhr.status);
+            console.error("Error response:", errorText);
+            reject(new Error(`Upload failed: ${xhr.status} ${errorText}`));
+          }
+        };
+
+        xhr.onerror = () => {
+          const errorText = xhr.responseText;
+          console.error("Network error during upload");
+          console.error("Error details:", errorText);
+          reject(new Error("Network error during upload"));
+        };
+
+        console.log("Sending request to:", presignedUrl);
+        console.log("Content-Type:", blob.type);
+        console.log("Blob size:", blob.size);
+
+        xhr.send(blob);
+      } catch (error) {
+        console.error("Upload error:", error);
+        reject(error);
+      }
+    });
+  };
+
+  const getPresignedURLs = async (
+    files: { filename: string; type: string }[]
+  ) => {
+    if (!authTokens) return [];
+    try {
+      const response = await axios.post<PresignedResponse>(
+        GENERATE_SIGNED_URLS,
+        {
+          filenames: files.map((f) => f.filename),
+          file_types: files.map((f) => f.type),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return response.data.presigned_urls;
+    } catch (error) {
+      console.error("Error getting presigned URLs:", error);
+      throw error;
+    }
+  };
 
   const handleSend = () => {
     if (message.trim()) {
@@ -87,22 +184,24 @@ export function ChatInput({
   };
 
   const handleSelectDocuments = async () => {
-    const result = await DocumentPicker.getDocumentAsync({});
-    console.log(result, "result");
-    if (result.assets.length > 0) {
-      const fileUri = result.assets[0].uri;
-      const response = await fetch(fileUri);
-      const blob = await response.blob();
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64data = reader.result;
-        console.log(base64data, "base64data");
-        setSelectedFile(base64data);
+    try {
+      const result = await DocumentPicker.getDocumentAsync({});
+      if (result.assets?.[0]) {
+        const file = result.assets[0];
+        setSelectedFile({
+          uri: file.uri,
+          name: file.name.toLowerCase(),
+          type: file.mimeType || "application/octet-stream",
+          size: file.size,
+        });
         setIsPreviewVisible(true);
-      };
-      reader.readAsDataURL(blob);
+      }
+      attachmentSheetRef.current?.close();
+    } catch (error) {
+      console.error("Error picking document:", error);
+      // Optionally show an error message to the user
+      alert("Failed to select document. Please try again.");
     }
-    attachmentSheetRef.current?.close();
   };
 
   const handleSelectImagesVideos = async () => {
@@ -119,58 +218,86 @@ export function ChatInput({
       allowsMultipleSelection: false,
     });
 
-    if (!result.canceled && result.assets.length > 0) {
+    if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
-      const response = await fetch(asset.uri);
-      const blob = await response.blob();
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64data = reader.result;
-        setSelectedMedia(base64data);
-        setIsPreviewVisible(true);
-      };
-      reader.readAsDataURL(blob);
+      const filename = asset.uri.split("/").pop()?.toLowerCase() || "image.jpg";
+      setSelectedMedia({
+        uri: asset.uri,
+        name: filename,
+        type: asset.type === "video" ? "video/mp4" : "image/jpeg",
+        size: asset.fileSize,
+      });
+      setIsPreviewVisible(true);
     }
     attachmentSheetRef.current?.close();
   };
 
-  const handleSendMedia = () => {
-    if (selectedMedia) {
-      // Send media through socket
+  const handleSendMedia = async () => {
+    try {
+      setIsUploading(true);
+      const mediaToUpload = selectedMedia || selectedFile;
+
+      if (!mediaToUpload) return;
+
+      // Get pre-signed URL with explicit image/jpeg type for images
+      const presignedUrls = await getPresignedURLs([
+        {
+          filename: mediaToUpload.name
+            .split("/")
+            .pop()!
+            .replace(/^file:\/\//, "")
+            .toLowerCase(),
+          type: selectedMedia ? "image/jpeg" : mediaToUpload.type,
+        },
+      ]);
+
+      console.log(presignedUrls, "presignedUrls");
+
+      // Upload to S3
+      await uploadToS3(presignedUrls[0], mediaToUpload.uri);
+
+      // Remove query parameters from S3 URL
+      const s3Url = presignedUrls[0].split("?")[0];
+
+      // Create message content with metadata
+      const messageContent = {
+        type: selectedMedia ? "image" : "file",
+        url: s3Url,
+        filename: mediaToUpload.name,
+        content_type: selectedMedia ? "image/jpeg" : mediaToUpload.type,
+      };
+
+      // Send message
       socketSendMessage(
-        "Sent an image",
+        JSON.stringify(messageContent),
         participantDetails.userId,
         userDetails?.username!,
         {
-          data: selectedMedia,
-          filename: "image.jpg", // You might want to get the actual filename
-          content_type: "image/jpeg",
+          data: s3Url,
+          filename: mediaToUpload.name,
+          content_type: selectedMedia ? "image/jpeg" : mediaToUpload.type,
         }
       );
 
       // Also send through Firebase for persistence
-      sendMessage(selectedMedia, conversationId);
+      sendMessage(JSON.stringify(messageContent), conversationId);
+
       setSelectedMedia(null);
-      setIsPreviewVisible(false);
-    }
-    if (selectedFile) {
-      // Send file through socket
-      socketSendMessage(
-        "Sent a file",
-        participantDetails.userId,
-        userDetails?.username!,
-        {
-          data: selectedFile,
-          filename: "document.pdf", // You might want to get the actual filename
-          content_type: "application/pdf",
-        }
-      );
-
-      // Also send through Firebase for persistence
-      sendMessage(selectedFile, conversationId);
       setSelectedFile(null);
       setIsPreviewVisible(false);
+    } catch (error) {
+      console.error("Error uploading and sending media:", error);
+      alert("Failed to send media. Please try again.");
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return "";
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
   };
 
   return (
@@ -268,7 +395,11 @@ export function ChatInput({
         visible={isPreviewVisible}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setIsPreviewVisible(false)}
+        onRequestClose={() => {
+          setIsPreviewVisible(false);
+          setSelectedMedia(null);
+          setSelectedFile(null);
+        }}
       >
         <View
           style={{
@@ -280,39 +411,132 @@ export function ChatInput({
         >
           <View
             style={{
-              width: "80%",
-              backgroundColor: isDarkMode ? "#333" : "#fff",
-              padding: 20,
-              borderRadius: 10,
-              alignItems: "center",
+              width: "90%",
+              backgroundColor: isDarkMode ? "#1F1F1F" : "#fff",
+              borderRadius: 12,
+              overflow: "hidden",
             }}
           >
-            {selectedMedia ? (
-              <Image
-                source={{ uri: selectedMedia }}
-                style={{ width: 200, height: 200, marginBottom: 20 }}
-              />
-            ) : (
-              <Text
-                style={{
-                  fontSize: 18,
-                  color: isDarkMode ? "#fff" : "#000",
-                  marginBottom: 20,
-                }}
-              >
-                Document Selected
-              </Text>
-            )}
-            <TouchableOpacity
-              onPress={handleSendMedia}
+            {/* Header */}
+            <View
               style={{
-                backgroundColor: "#635BE8",
-                padding: 10,
-                borderRadius: 5,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: isDarkMode ? "#333" : "#e5e5e5",
               }}
             >
-              <Text style={{ color: "#fff" }}>Send</Text>
-            </TouchableOpacity>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: "600",
+                  color: isDarkMode ? "#fff" : "#000",
+                }}
+              >
+                Preview
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsPreviewVisible(false);
+                  setSelectedMedia(null);
+                  setSelectedFile(null);
+                }}
+              >
+                <XMarkIcon
+                  size={24}
+                  color={isDarkMode ? "#fff" : "#000"}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Content */}
+            <View style={{ padding: 16 }}>
+              {selectedMedia ? (
+                <View>
+                  <Image
+                    source={{ uri: selectedMedia.uri }}
+                    style={{
+                      width: "100%",
+                      height: 300,
+                      borderRadius: 8,
+                      backgroundColor: isDarkMode ? "#333" : "#f5f5f5",
+                    }}
+                    resizeMode="contain"
+                  />
+                  <Text
+                    style={{
+                      marginTop: 8,
+                      color: isDarkMode ? "#999" : "#666",
+                      fontSize: 14,
+                    }}
+                  >
+                    {selectedMedia.name} • {formatFileSize(selectedMedia.size)}
+                  </Text>
+                </View>
+              ) : selectedFile ? (
+                <View
+                  style={{
+                    padding: 16,
+                    backgroundColor: isDarkMode ? "#333" : "#f5f5f5",
+                    borderRadius: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: isDarkMode ? "#fff" : "#000",
+                      fontSize: 16,
+                      marginBottom: 4,
+                    }}
+                  >
+                    {selectedFile.name}
+                  </Text>
+                  <Text
+                    style={{
+                      color: isDarkMode ? "#999" : "#666",
+                      fontSize: 14,
+                    }}
+                  >
+                    {formatFileSize(selectedFile.size)}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            {/* Footer */}
+            <View
+              style={{
+                padding: 16,
+                borderTopWidth: 1,
+                borderTopColor: isDarkMode ? "#333" : "#e5e5e5",
+              }}
+            >
+              <TouchableOpacity
+                onPress={handleSendMedia}
+                disabled={isUploading}
+                style={{
+                  backgroundColor: "#635BE8",
+                  padding: 12,
+                  borderRadius: 8,
+                  alignItems: "center",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                }}
+              >
+                {isUploading ? (
+                  <ActivityIndicator
+                    color="#fff"
+                    style={{ marginRight: 8 }}
+                  />
+                ) : null}
+                <Text
+                  style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}
+                >
+                  {isUploading ? "Sending..." : "Send"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

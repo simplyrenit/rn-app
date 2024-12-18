@@ -10,14 +10,17 @@ import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  CubeIcon,
 } from "react-native-heroicons/outline";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
+import { SvgUri } from "react-native-svg";
 
 export default function PostSubCategories() {
   const route = useRoute<RouteProps<"PostSubCategories">>();
   const navigation = useTypedNavigation();
   const { theme } = useGlobalContext();
   const { saveDetails } = useProductContext();
+  const isDarkMode = theme === "dark";
 
   // Destructure the category and subcategories from route params
   const { category, subcategories } = route.params;
@@ -33,13 +36,18 @@ export default function PostSubCategories() {
       onPress={() => onPress(item)}
     >
       <View className="flex-row items-center space-x-5">
-        <Image
-          source={{
-            uri:
-              theme === "dark" ? item.dark_icon || "" : item.light_icon || "",
-          }}
-          style={{ width: 20, height: 20 }}
-        />
+        {item.dark_icon || item.light_icon ? (
+          <SvgUri
+            width={20}
+            height={20}
+            uri={theme === "dark" ? item.dark_icon : item.light_icon}
+          />
+        ) : (
+          <CubeIcon
+            color={isDarkMode ? "white" : "black"}
+            size={24}
+          />
+        )}
         <Text
           fontSize="text-base"
           className={`${theme === "dark" ? "text-white" : "text-black"}`}
@@ -62,7 +70,10 @@ export default function PostSubCategories() {
           flex: Platform.OS === "ios" ? 0 : 1,
         }}
       >
-        <PostProductHeader heading="Choose a subcategory" percentage={10} />
+        <PostProductHeader
+          heading="Choose a subcategory"
+          percentage={10}
+        />
 
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -76,7 +87,10 @@ export default function PostSubCategories() {
               color={theme === "dark" ? "white" : "black"}
             />
           </View>
-          <Text fontWeight="font-bold" className="text-md">
+          <Text
+            fontWeight="font-bold"
+            className="text-md"
+          >
             {category}
           </Text>
         </TouchableOpacity>

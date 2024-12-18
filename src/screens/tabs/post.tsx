@@ -10,8 +10,10 @@ import { FlatList, Platform, TouchableOpacity, View } from "react-native";
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
+  CubeIcon,
 } from "react-native-heroicons/outline";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { SvgUri } from "react-native-svg";
 
 export default function Post() {
   const { saveDetails } = useProductContext();
@@ -39,17 +41,18 @@ export default function Post() {
       onPress={() => onPress(item)}
     >
       <View className="flex-row items-center space-x-5">
-        <Image
-          source={{
-            uri:
-              theme === "dark"
-                ? item.dark_icon ||
-                  "https://d1xuzik8wqiepv.cloudfront.net/assets/2024/10/03/JdXQXQHo/trucktrailer.svg"
-                : item.light_icon ||
-                  "https://d1xuzik8wqiepv.cloudfront.net/assets/2024/10/04/hxvbdzSz/trucktrailer.svg",
-          }}
-          style={{ width: 20, height: 20 }}
-        />
+        {item.dark_icon || item.light_icon ? (
+          <SvgUri
+            width={20}
+            height={20}
+            uri={theme === "dark" ? item.dark_icon : item.light_icon}
+          />
+        ) : (
+          <CubeIcon
+            color={isDarkMode ? "white" : "black"}
+            size={24}
+          />
+        )}
         <Text
           fontSize="text-base"
           className={`${theme === "dark" ? "text-white" : "text-black"}`}

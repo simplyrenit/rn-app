@@ -25,6 +25,9 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  CurrencyDollarIcon,
+  CurrencyPoundIcon,
+  CurrencyRupeeIcon,
   MapPinIcon,
   PencilSquareIcon,
   PhoneIcon,
@@ -34,12 +37,14 @@ import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
+import Toast from "react-native-toast-message";
 
 import {
   BadCondition,
   ExcellentCondition,
   GoodCondition,
 } from "@/icons/conditions";
+import { MaterialIcons } from "@expo/vector-icons";
 type ConditionOption = {
   label: string;
   value: string;
@@ -76,6 +81,7 @@ export default function AboutProduct() {
   const [address, setAddress] = useState("");
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedValue, setSelectedValue] = useState<string>("");
+  const [productCountry, setProductCountry] = useState<string>("India");
 
   const [contactPerson, setContactPerson] = useState<"Owner" | "Other" | null>(
     null
@@ -194,6 +200,25 @@ export default function AboutProduct() {
     (coords: any, addressToSend: any) => {
       console.log("Received Coordinates:", coords);
       console.log("Received Address:", addressToSend);
+
+      // Extract country from address
+      const addressParts = addressToSend.split(",");
+      const country = addressParts[addressParts.length - 1].trim();
+
+      // Validate country
+      const validCountries = ["USA", "UK", "India"];
+      if (!validCountries.includes(country)) {
+        Toast.show({
+          type: "error",
+          text1: "Country not supported!",
+          text2: "We are currently only available in India, USA and UK",
+          position: "bottom",
+          text1Style: { color: "red" },
+        });
+        return;
+      }
+
+      setProductCountry(country);
       setSelectedLocation({ lat: coords.latitude, lng: coords.longitude });
       setSelectedLocationName(addressToSend);
     },
@@ -660,9 +685,31 @@ export default function AboutProduct() {
                   : "border-[#e6e6e6] text-black"
               }`}
             >
-              <Text className="mr-2">₹</Text>
+              <View className="flex items-center justify-center">
+                {productCountry === "India" && (
+                  <MaterialIcons
+                    name="currency-rupee"
+                    color={"#635BE8"}
+                    size={20}
+                  />
+                )}
+                {productCountry === "USA" && (
+                  <MaterialIcons
+                    name="attach-money"
+                    color={"#635BE8"}
+                    size={20}
+                  />
+                )}
+                {productCountry === "UK" && (
+                  <MaterialIcons
+                    name="currency-pound"
+                    color={"#635BE8"}
+                    size={20}
+                  />
+                )}
+              </View>
               <TextInput
-                placeholder={`"₹1200"`}
+                placeholder={`"1200"`}
                 keyboardType="numeric"
                 value={pricePerDay}
                 onChangeText={setPricePerDay}
@@ -691,9 +738,31 @@ export default function AboutProduct() {
                   : "border-[#e6e6e6] text-black"
               }`}
             >
-              <Text className="mr-2">₹</Text>
+              <View className="flex items-center justify-center">
+                {productCountry === "India" && (
+                  <MaterialIcons
+                    name="currency-rupee"
+                    color={"#635BE8"}
+                    size={20}
+                  />
+                )}
+                {productCountry === "USA" && (
+                  <MaterialIcons
+                    name="attach-money"
+                    color={"#635BE8"}
+                    size={20}
+                  />
+                )}
+                {productCountry === "UK" && (
+                  <MaterialIcons
+                    name="currency-pound"
+                    color={"#635BE8"}
+                    size={20}
+                  />
+                )}
+              </View>
               <TextInput
-                placeholder={`"₹2500"`}
+                placeholder={`"2500"`}
                 placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
                 keyboardType="numeric"
                 value={securityDeposit}

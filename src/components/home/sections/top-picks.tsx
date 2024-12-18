@@ -84,7 +84,6 @@ export function RecentlyAdded() {
       try {
         setLoading(true);
         const data = await fetchTopPicks(coordinates.lat, coordinates.long);
-
         setTopPicks(data.results);
       } catch (error) {
         console.error("Failed to fetch experiences:", error);

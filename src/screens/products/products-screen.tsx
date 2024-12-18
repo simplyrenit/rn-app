@@ -27,6 +27,7 @@ import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import Toast from "react-native-toast-message";
 import { ProductsSkeleton } from "./products-skeleton";
 import { ModerationBanner } from "@/components/product/moderation-banner";
+import { SvgUri } from "react-native-svg";
 
 const MAX_CHARS = 150;
 
@@ -141,7 +142,7 @@ export default function DetailsScreen() {
   const displayText = showFullText ? product?.description! : truncatedText;
 
   return (
-    <StaticContainer width={100}>
+    <View className="flex-1">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1 }}
@@ -205,16 +206,14 @@ export default function DetailsScreen() {
               color={isDark ? "white" : "black"}
               size={wp("5.5%")}
             /> */}
-            <Image
-              source={{
-                uri:
-                  theme === "dark"
-                    ? product?.category?.dark_icon ||
-                      "https://d1xuzik8wqiepv.cloudfront.net/assets/2024/10/03/JdXQXQHo/trucktrailer.svg"
-                    : product?.category?.light_icon ||
-                      "https://d1xuzik8wqiepv.cloudfront.net/assets/2024/10/04/hxvbdzSz/trucktrailer.svg",
-              }}
-              style={{ width: wp(5.5), height: wp(5.5) }}
+            <SvgUri
+              width={wp(5.5)}
+              height={wp(5.5)}
+              uri={
+                theme === "dark"
+                  ? product?.category?.dark_icon || "fallback-dark.svg"
+                  : product?.category?.light_icon || "fallback-light.svg"
+              }
             />
             <Text
               fontWeight="font-bold"
@@ -532,6 +531,6 @@ export default function DetailsScreen() {
           )}
         </View>
       </View>
-    </StaticContainer>
+    </View>
   );
 }

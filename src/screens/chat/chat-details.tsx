@@ -107,9 +107,8 @@ export default function ChatDetailsScreen() {
     const details = await getParticipantDetails(conversationId);
     const myDetails = await getMyDetails(conversationId);
     const blocked = await isChatBlocked(conversationId);
-    const products = (await getOwnerProducts(
-      userDetails?.username!
-    )) as BackendProduct[];
+    const products = await getOwnerProducts(userDetails?.username!);
+    console.log(products, "products", userDetails?.username, "userDetails");
 
     setIsBlocked(blocked.isBlocked);
     setBlockedBy(blocked.initiatedBy);
@@ -120,6 +119,9 @@ export default function ChatDetailsScreen() {
     });
 
     setOwnerProducts(products);
+    setFilteredProducts(products);
+
+    console.log(products, "products");
 
     setMyDetails({
       profilePicture: myDetails.profilePicture,
@@ -204,6 +206,7 @@ export default function ChatDetailsScreen() {
   const cleanup = () => {
     setSelectedProduct(null);
     setFilteredProducts(ownerProducts);
+
     setSearch("");
     setSelectedRange({ startDate: "", endDate: "" });
     setMakeOfferDetails({ amount: "", securityDeposit: "" });

@@ -11,9 +11,7 @@ export function Disclaimer() {
   const router = useTypedNavigation();
 
   const onPress = () => {
-    router.navigate("Profile", {
-      screen: "unavailabilityForm",
-    });
+    router.navigate("unavailabilityFormCategories");
   };
 
   return (

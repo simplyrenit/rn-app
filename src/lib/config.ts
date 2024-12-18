@@ -23,17 +23,18 @@ export const FIREBASE_CONFIG = {
   measurementId: "G-P7DWR065WK",
 };
 
-export const DEV_MODE: string = "DEV"; // DEV or PROD
+export const DEV_MODE: string = "PROD"; // DEV or PROD
 
 export let SERVERURL = "";
+export let SOCKET_URL = "";
 
 if (DEV_MODE === "PROD") {
-  SERVERURL = "http://api.simplyrenit.com/api/";
+  SERVERURL = "https://api.simplyrenit.com/api/";
+  SOCKET_URL = "wss://api.simplyrenit.com/ws/chat/";
 } else {
   SERVERURL = "http://192.168.1.12:8000/api/";
+  SOCKET_URL = "ws://192.168.1.12:8000/ws/chat/";
 }
-
-export const SOCKET_URL = "http://192.168.1.12:8000/ws/chat/";
 
 export const ACCESS_TOKEN =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMDE1NTc4LCJpYXQiOjE3MzA1NjU5NzgsImp0aSI6IjBkMjBkYTU1Zjk0MTRkODU4NDlhMmJiNmIxYTU5ODlkIiwidXNlcl9pZCI6NX0.8It2AqCNWb57D1NE8BlS6QXcxiJu7NI4fTzCCXi-ZYg";
@@ -52,6 +53,8 @@ export const GET_CATEGORIES = SERVERURL + "category/";
 export const OTP = SERVERURL + "otp/";
 
 export const SIGN_UP = SERVERURL + "signup/";
+
+export const LOGIN = SERVERURL + "login/";
 
 export const POST_MY_PRODUCTS = SERVERURL + "my/products/";
 
@@ -95,8 +98,14 @@ export const AVAILABILITY = SERVERURL + "availability/";
 
 export const WRITE_REVIEW = SERVERURL + "write-review/";
 
-const app = initializeApp(FIREBASE_CONFIG);
-const firestore = getFirestore(app);
-const storage = getStorage(app);
+let app, firestore, storage;
+
+try {
+  app = initializeApp(FIREBASE_CONFIG);
+  firestore = getFirestore(app);
+  storage = getStorage(app);
+} catch (error) {
+  console.error("Error initializing Firebase services:", error);
+}
 
 export { app, firestore, storage };
