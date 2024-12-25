@@ -23,50 +23,44 @@ export function useOAuth() {
   const googleSignIn = async () => {
     setLoading(true);
     try {
-      console.log("checking play services");
-      await GoogleSignin.hasPlayServices();
-      console.log("signing in");
-      const response = await GoogleSignin.signIn();
-      console.log("response", response);
-      if (isSuccessResponse(response)) {
-        const res = await axios.post<AuthTokens>(GOOGLE_SIGN_IN_ENDPOINT, {
-          access_token: response.data.idToken,
-        });
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
+      const userInfo = await GoogleSignin.signIn();
+      console.log("Google Sign-In Success:", userInfo);
 
-        if (res.data.access_token !== null && res.data.refresh_token !== null) {
-          setAuthTokens(res.data);
-          const user = await getMyDetails(res.data.access_token);
-          if (
-            user?.first_name === null ||
-            user?.last_name === null ||
-            user?.first_name === "" ||
-            user?.last_name === ""
-          ) {
-            router.navigate("About");
-          } else {
-            router.navigate("MainTabs");
+      if (userInfo?.idToken) {
+        try {
+          const res = await axios.post<AuthTokens>(GOOGLE_SIGN_IN_ENDPOINT, {
+            access_token: userInfo.idToken,
+          });
+
+          console.log("Backend Response:", res.data);
+
+          if (res.data.access_token && res.data.refresh_token) {
+            setAuthTokens(res.data);
+            const user = await getMyDetails(res.data.access_token);
+            if (!user?.first_name || !user?.last_name) {
+              router.navigate("About");
+            } else {
+              router.navigate("MainTabs");
+            }
+            return;
           }
-          return;
+        } catch (backendError) {
+          console.error("Backend Error:", backendError);
         }
-      } else {
-        console.log("sign in was cancelled by user");
       }
     } catch (error: any) {
-      console.log("error", error);
-      if (isErrorWithCode(error)) {
-        switch (error.code) {
-          case statusCodes.IN_PROGRESS:
-            // operation (eg. sign in) already in progress
-            break;
-          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            // Android only, play services not available or outdated
-            break;
-          default:
-          // some other error happened
-        }
+      console.error("Google Sign-In Error:", error);
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log("User cancelled the login flow");
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log("Operation in progress");
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.log("Play services not available");
       } else {
-        // an error that's not related to google sign in occurred
-        console.log("error", error);
+        console.error("Other error:", error);
       }
     } finally {
       setLoading(false);

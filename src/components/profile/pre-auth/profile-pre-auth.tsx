@@ -17,11 +17,10 @@ import PersonalDetailsSheet from "../post-auth/sheets/PersonaldetailsSheet";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 
 GoogleSignin.configure({
-  webClientId: WEB_CLIENT_ID, // client ID of type WEB for your server. Required to get the `idToken` on the user object, and for offline access.
-  scopes: ["https://www.googleapis.com/auth/drive.readonly"], // what API you want to access on behalf of the user, default is email and profile
-  offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
-  forceCodeForRefreshToken: true, // [Android] related to `serverAuthCode`, read the docs link below *.
-  iosClientId: IOS_CLIENT_ID, // [iOS] if you want to specify the client ID of type iOS (otherwise, it is taken from GoogleService-Info.plist)
+  webClientId: WEB_CLIENT_ID,
+  offlineAccess: false,
+  iosClientId: IOS_CLIENT_ID,
+  scopes: ["profile", "email"],
 });
 
 interface ProfilePreAuthProps {

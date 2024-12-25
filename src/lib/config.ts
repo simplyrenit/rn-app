@@ -5,7 +5,7 @@ import { getStorage } from "@react-native-firebase/storage";
 export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
 
 export const WEB_CLIENT_ID =
-  "899825999056-2s4ak2j246med4nosn365nlt0u3gfvc9.apps.googleusercontent.com";
+  "639298619246-sc0788sgfdc3nbonvevok8d58b53jbta.apps.googleusercontent.com";
 
 export const ANDROID_CLIENT_ID =
   "899825999056-1fbjdig0hm74912abpkaba6gcv5d4788.apps.googleusercontent.com";
