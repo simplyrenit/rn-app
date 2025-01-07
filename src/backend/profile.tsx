@@ -94,10 +94,9 @@ export function useProfile() {
       };
 
 
-      const response = await fetch(
+      const response = await axiosInstance.patch(
         `${UPDATE_MY_DETAILS_ENDPOINT}${username}/`,
         {
-          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
@@ -105,10 +104,9 @@ export function useProfile() {
         }
       );
 
-      const res = await response.json();
       await fetchUserDetails();
 
-      return res;
+      return response.data;
     } catch (error: any) {
       console.error("Error updating profile image:", error.response.data);
       throw error;
@@ -120,13 +118,9 @@ export function useProfile() {
   async function getMyProducts() {
     setLoading(true);
     try {
-      const response = await fetch(MY_PRODUCTS_ENDPOINT, {
-        method: "GET",
-      });
-      const data = await response.json();
+      const response = await axiosInstance.get(MY_PRODUCTS_ENDPOINT,);
 
-
-      return data.results;
+      return response.data.results;
     } catch (error) {
       console.error("Error getting user products:", error);
       throw error;

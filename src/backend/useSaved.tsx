@@ -37,17 +37,13 @@ const useSaved = () => {
         return null;
       }
 
-      const response = await fetch(GET_FAVORITES, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          product_name: productName,
-        }),
+      const response = await axiosInstance.post(GET_FAVORITES, {
+        product_name: productName,
+      }).catch(e => {
       });
+      const data = response?.data;
 
-      return response.json();
+      return data;
     },
     {
       onSuccess: () => {
@@ -63,9 +59,10 @@ const useSaved = () => {
       }
       try {
         const response = await fetch(GET_FAVORITES, {
-          method: "DELETE",
+          method: 'DELETE',
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${access_token}`
           },
           body: JSON.stringify({
             product_name: productName,

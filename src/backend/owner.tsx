@@ -24,14 +24,9 @@ export default function useOwner() {
 
   async function getOwnerProducts(username: string) {
     try {
-      const response = await fetch(`${PRODUCTS_BY_OWNER}${username}/`, {
-        method: "GET",
-        
-      });
+      const response = await axiosInstance.get(`${PRODUCTS_BY_OWNER}${username}/`,);
 
-      const data = await response.json();
-
-      return data || [];
+      return response.data || [];
     } catch (error) {
       console.error("Detailed error in getOwnerProducts:", error);
       return [];
