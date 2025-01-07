@@ -124,7 +124,7 @@ export const PRIVACY_CONTENT = {
   changesToPolicy: `We reserve the right to modify or update the Policy at any time. Any changes will be effective upon posting the revised Policy on our Platform. We encourage you to review the Policy periodically for any updates. Your continued use of our Platform after any modifications or updates constitutes your acceptance of the revised Policy.`,
   contactUs: `If you have any questions, concerns, or requests regarding the Policy or the handling of your information, please contact us at support@simplyrenit.com. You can also use the following Renit’s Official Social Media accounts to contact us for any questions, concerns, or requests: X (formerly Twitter): https://x.com/simplyrenit Facebook: https://www.facebook.com/simplyrenit/ Instagram: https://www.instagram.com/simplyrenit/ LinkedIn: https://in.linkedin.com/company/simplyrenit`,
   grievanceRedressalOfficer: {
-    name: "Mr. Garvit",
+    name: "Mr. Garvit Babel",
     email: "garvit@simplyrenit.com",
     address:
       "6-ga-6, Ram Singh Ki Badi, Hiran Magri, Sector-11, Udaipur, Rajasthan, Pin Code - 313001",
