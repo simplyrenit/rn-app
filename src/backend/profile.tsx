@@ -66,7 +66,7 @@ export function useProfile() {
   async function deleteMyAccount(username: string) {
     setLoading(true);
     try {
-      const response = await axiosInstance.delete(`${DELETE_MY_ACCOUNT_ENDPOINT}${username}`)
+      const response = await axiosInstance.delete(`${DELETE_MY_ACCOUNT_ENDPOINT}${username}/`)
     } catch (error) {
       console.error("Error deleting user account:", `${DELETE_MY_ACCOUNT_ENDPOINT}${username}`, error);
       throw error;
@@ -115,12 +115,11 @@ export function useProfile() {
     }
   }
 
-  async function getMyProducts() {
+  async function getMyProducts(link?: string) {
     setLoading(true);
     try {
-      const response = await axiosInstance.get(MY_PRODUCTS_ENDPOINT,);
-
-      return response.data.results;
+      const response = await axiosInstance.get(link ?? MY_PRODUCTS_ENDPOINT,);
+      return response.data;
     } catch (error) {
       console.error("Error getting user products:", error);
       throw error;

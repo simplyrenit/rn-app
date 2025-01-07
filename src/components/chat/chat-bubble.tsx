@@ -30,6 +30,7 @@ interface ChatBubbleProps {
     text?: string | undefined;
     name?: string | undefined;
     item?: {
+      id: string;
       name: string;
       image: string;
       price: string;
@@ -252,6 +253,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
     // Handle other message types (product_post, make_offer)
     return null;
   };
+
   return (
     <View
       className={`flex-row ${isSent ? "justify-end" : "justify-start"} ${type === "product_post" &&
@@ -261,7 +263,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
       {type === "product_post" && message.item && (
         <Pressable className={`p-3 rounded-2xl`} style={{ width: Dimensions.get('window').width * 0.8 }}
           onPress={() => {
-            router.navigate("ProductDetail", { id: message.item?.name })
+            router.navigate("ProductDetail", { id: message.item?.id })
           }
           }
         >
@@ -336,7 +338,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
               <Text
                 fontSize="text-sm"
                 fontWeight="font-semibold"
-                className="text-[#413C9A] mb-2 uppercase text-left"
+                className="mb-2 uppercase text-left"
               >
                 {message?.name !== userDetails?.name
                   ? "YOU RECEIVED AN OFFER!"
@@ -461,8 +463,8 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
               </View>
             </View>
 
-            {message.item.offerStatus === "pending" &&
-              message?.name !== userDetails?.name && (
+            {message.item.offerStatus === "pending" ?
+              message?.name !== userDetails?.name ? (
                 <View className="flex-row items-center justify-between mt-2 w-full">
                   <Button
                     className={`w-[48%] ${isDark
@@ -486,13 +488,15 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                     Accept
                   </Button>
                 </View>
-              )}
+              ) : <View style={{ padding: 8, alignItems: 'center' }}>
+
+                <Text>ACTION PENDING</Text></View> : null}
 
             {message.item.offerStatus === "accepted" && (
               <Text
                 fontSize="text-sm"
                 fontWeight="font-semibold"
-                className="text-[#413C9A] mt-2 uppercase text-center"
+                className="text-[#413c9a] mt-2 uppercase text-center p-2"
               >
                 {message?.name !== userDetails?.name
                   ? "YOU ACCEPTED THE OFFER"
@@ -504,7 +508,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
               <Text
                 fontSize="text-sm"
                 fontWeight="font-semibold"
-                className="text-[#413C9A] mt-2 uppercase text-center"
+                className="text-[#E50914] mt-2 uppercase text-center p-2"
               >
                 {message?.name !== userDetails?.name
                   ? "YOU REJECTED THE OFFER"
@@ -516,12 +520,12 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
       }
       {
         !!fullImage && <Modal visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
-          <View style={{ position: 'relative', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
+          <View style={{ position: 'relative', height: Dimensions.get('window').height, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
 
             <Pressable style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }} onPress={() => setFullImage(null)}>
               <MaterialIcons name="close" size={24} color="white" />
             </Pressable>
-            <View style={{ position: 'relative', height: '90%', width: '100%', backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ position: 'relative', height: '100%', width: '100%', backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }}>
 
               <Image source={{ uri: fullImage }}
                 style={{

@@ -12,8 +12,8 @@ import * as Location from "expo-location";
 import { styled } from "nativewind";
 import * as React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { Platform, TextInput, TouchableOpacity, View } from "react-native";
-import CountryPicker, { DARK_THEME } from "react-native-country-picker-modal";
+import { Platform, Pressable, TextInput, TouchableOpacity, View } from "react-native";
+import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 import { ScrollView } from "react-native-gesture-handler";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
@@ -90,7 +90,7 @@ export default function EditAboutProduct() {
   );
   const [otherName, setOtherName] = useState(data.contact_name || "");
   const [otherPhoneNumber, setOtherPhoneNumber] = useState(
-    data.contact_number || ""
+    data.contact_number?.slice(-10) || ""
   );
 
   const [selectedLocationName, setSelectedLocationName] = useState<
@@ -886,6 +886,10 @@ export default function EditAboutProduct() {
                         withCallingCode
                         withFilter
                         withCallingCodeButton
+                        renderFlagButton={({ onOpen }) => <Pressable onPress={onOpen}>
+                          <Flag countryCode={country.cca2} flagSize={16} />
+                        </Pressable>
+                        }
                         countryCode={country.cca2}
                         onSelect={(country) => {
                           setCountry({
@@ -912,11 +916,9 @@ export default function EditAboutProduct() {
                         }`}
                     >
                       <View className="pr-2 items-center justify-center">
-                        <PhoneIcon
-                          size={20}
-                          color={isDark ? "#ffffff" : "#000"}
-                          className="mt-1"
-                        />
+                        <Text>
+                          +{country.callingCode}
+                        </Text>
                       </View>
                       <View>
                         <TextInput

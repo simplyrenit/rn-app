@@ -16,7 +16,7 @@ const margin = wp(5.7);
 const { height } = Dimensions.get("window");
 
 export default function Saved() {
-  const { favorites } = useSaved();
+  const { favorites, loading } = useSaved();
   const { authTokens, isAuthenticated, theme } = useGlobalContext();
   const isDarkMode = theme === "dark";
 
@@ -90,7 +90,7 @@ export default function Saved() {
             Saved
           </Text>
 
-          {favorites.length === 0 ? (
+          {(loading) ? (
             <FlatList
               data={[0, 1, 2, 3, 4, 5]}
               renderItem={renderSkeleton}
@@ -104,6 +104,12 @@ export default function Saved() {
             />
           ) : (
             <FlatList
+              ListEmptyComponent={() => <View style={{ padding: 32, height: Dimensions.get('window').height * 0.6, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: 'rgba(165, 165, 165, 0.7)', fontSize: 18, fontWeight: '600' }}>
+                  No Saved Product
+                </Text>
+              </View>
+              }
               data={favorites}
               renderItem={renderItem}
               keyExtractor={(item) => item.name}

@@ -60,7 +60,6 @@ const EditProductScreen: React.FC = () => {
       text2: "success",
       visibilityTime: 4000,
       autoHide: true,
-      bottomOffset: 20,
     });
     navigation.navigate("myProducts");
   };

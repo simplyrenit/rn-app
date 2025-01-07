@@ -65,7 +65,6 @@ export default function WriteReviewScreen() {
         text2: "success",
         visibilityTime: 4000,
         autoHide: true,
-        bottomOffset: 20,
         onPress: () => {
           Toast.hide();
         },

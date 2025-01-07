@@ -18,6 +18,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -61,7 +62,6 @@ export default function SearchScreen() {
   const [selectedLocationName, setSelectedLocationName] = useState<
     string | null
   >(null);
-
   const [location, setLocation] = useState({
     latitude: 0,
     longitude: 0,
@@ -81,7 +81,6 @@ export default function SearchScreen() {
   const [isFocus, setIsFocus] = useState(false);
   const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
   const [suggestionsList, setSuggestionsList] = useState<any[] | null>(null);
-
   const bottomSheetRef = useRef<BottomSheet>(null);
   const googlePlacesRef = useRef<any>(null);
   const autocompleteDropdownRef = useRef<any>(null);
@@ -358,7 +357,7 @@ export default function SearchScreen() {
                   getSuggestions(text);
                   setSelectedItem(text); // Set selectedItem to the input text
                 }}
-                initialValue={selectedItem ?? undefined}
+                // initialValue={selectedItem ?? undefined}
                 inputContainerStyle={{
                   backgroundColor: isDark ? "#0F0F0F" : "#ffffff",
                   borderRadius: 10,
@@ -380,7 +379,7 @@ export default function SearchScreen() {
                   autoComplete: "off",
                   autoCorrect: false,
                   numberOfLines: 1,
-                  value: what && what === selectedItem ? what : undefined,
+                  value: what && what === selectedItem ? what : selectedItem ?? undefined,
                   placeholderTextColor: isDark ? "#FFFFFF80" : "#00000080",
                   style: {
                     color: isDark ? "#fff" : "#000",

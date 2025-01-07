@@ -27,11 +27,10 @@ export default function HangTight() {
         Toast.show({
           type: "customToast",
           position: "bottom",
-          text1: "Your product will go live & shown to others in 24 hours.",
+          text1: "Your product will go live & will be visible to others in 24 hours.",
           text2: "success",
           visibilityTime: 4000,
           autoHide: true,
-          bottomOffset: 20,
           onPress: () => {
             Toast.hide();
           },
@@ -50,7 +49,6 @@ export default function HangTight() {
           text2: "error",
           visibilityTime: 4000,
           autoHide: true,
-          bottomOffset: 20,
           onPress: () => {
             Toast.hide();
           },
@@ -66,7 +64,6 @@ export default function HangTight() {
         text2: "error",
         visibilityTime: 4000,
         autoHide: true,
-        bottomOffset: 20,
         onPress: () => {
           Toast.hide();
         },

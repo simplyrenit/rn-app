@@ -7,7 +7,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-import CountryPicker, { DARK_THEME } from "react-native-country-picker-modal";
+import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
 import {
   ArrowLeftIcon,
   CameraIcon,
@@ -24,6 +24,7 @@ import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
+import DeleteAccountModal from "./DeleteAccountModal";
 
 interface PersonalDetailsSheetProps {
   bottomSheetModalRef: React.RefObject<any>;
@@ -37,6 +38,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const { theme } = useGlobalContext();
   const { sendOTP } = useAuth();
   const isDark = theme === "dark";
+  const [deleteAccountModal, setDeleteAccountModal] = useState(false);
 
   const [details, setDetails] = useState({
     profilePic: "https://via.placeholder.com/150",
@@ -66,7 +68,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     });
     setUpdatedName(details.first_name + " " + details.last_name);
     setUpdatedEmail(details.email);
-    setUpdatedPhone(details.phone);
+    setUpdatedPhone(details.phone.slice(-10));
     setUpdatedPassword("*******");
   };
 
@@ -76,7 +78,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
   const [updatedName, setUpdatedName] = useState(details.fullName);
   const [updatedEmail, setUpdatedEmail] = useState(details.email);
-  const [updatedPhone, setUpdatedPhone] = useState(details.phone);
+  const [updatedPhone, setUpdatedPhone] = useState(details.phone.slice(-10));
   const [updatedPassword, setUpdatedPassword] = useState(details.password);
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -376,12 +378,15 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
   return (
     <>
-      <CustomBottomSheetModal
+      {deleteAccountModal && <DeleteAccountModal open={deleteAccountModal} onDelete={handleDeleteAccount} onCancel={() => {
+        setDeleteAccountModal(false);
+      }} />}
+      {!deleteAccountModal && <CustomBottomSheetModal
         ref={bottomSheetModalRef}
         snapPoints={["90%"]}
         isDark={isDarkMode}
       >
-        <Pressable style={{ position: 'absolute', bottom: 12, left: 0, right: 0, alignItems: 'center' }} onPress={handleDeleteAccount}>
+        <Pressable style={{ position: 'absolute', bottom: 12, left: 0, right: 0, alignItems: 'center', padding: 32, }} onPress={() => setDeleteAccountModal(true)}>
           <Text style={{ color: '#E50914' }}>Delete my account</Text>
         </Pressable>
         <View className="flex items-center my-4">
@@ -549,7 +554,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             </TouchableOpacity>
           )}
         </View>
-      </CustomBottomSheetModal>
+      </CustomBottomSheetModal>}
 
       {/* Profile Picture Sheet */}
       <CustomBottomSheetModal
@@ -868,6 +873,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                     {...(isDark && { theme: DARK_THEME })}
                     withFlag
                     withCallingCode
+                    renderFlagButton={({ onOpen }) => <Pressable onPress={onOpen}>
+                      <Flag countryCode={country.cca2} flagSize={16} />
+                    </Pressable>
+                    }
                     withFilter
                     withCallingCodeButton
                     countryCode={country.cca2}
@@ -895,11 +904,9 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                     }`}
                 >
                   <View className="pr-2 items-center justify-center">
-                    <PhoneIcon
-                      size={20}
-                      color={isDark ? "#ffffff" : "#000"}
-                      className="mt-1"
-                    />
+                    <Text>
+                      +{country.callingCode}
+                    </Text>
                   </View>
                   <View>
                     <TextInput
@@ -909,7 +916,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                       onChangeText={setUpdatedPhone}
                       keyboardType="number-pad"
                       placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
-                      className={`flex-1 h-12 p-3  ${isDark ? "text-white" : "text-black"
+                      className={`flex-1 h-12 p-3 pl-0  ${isDark ? "text-white" : "text-black"
                         }`}
                     />
                   </View>

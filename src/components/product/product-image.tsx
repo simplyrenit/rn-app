@@ -111,17 +111,16 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
             <StyledButton
               style={styles.Shadow}
               onPress={handleLike}
-              className={`p-2 rounded-full ${
-                isDarkMode
-                  ? "bg-[#1A1A1A] border-[#4e4e4e]"
-                  : "bg-white border-[#f5f5f5]"
-              } shadow-inner translate-y-2`}
+              className={`p-2 rounded-full ${isDarkMode
+                ? "bg-[#1A1A1A] border-[#4e4e4e]"
+                : "bg-white border-[#f5f5f5]"
+                } shadow-inner translate-y-2`}
             >
               <HI
                 size={24}
                 color={isFavorite ? "" : "white"}
                 fill={isFavorite ? "#FF3B30" : "#1E1E1E70"}
-                style={{ opacity: isFavorite ? 0 : 1,}}
+                style={{ opacity: isFavorite ? 0 : 1, }}
               />
               {isFavorite && (
                 <View
@@ -181,7 +180,7 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
         </Carousel>
       </StyledView>
       {!!fullImage && <Modal visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
-        <View style={{ position: 'relative', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
+        <View style={{ position: 'relative', height: Dimensions.get('window').height, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
 
           <Pressable style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }} onPress={() => setFullImage(null)}>
             <MaterialIcons name="close" size={24} color="white" />

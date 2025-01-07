@@ -164,6 +164,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
         ]);
 
         if (tokens) {
+          console.log('### here tokens', tokens);
           setAuthTokensState(tokens);
           axiosInstance.defaults.headers.Authorization = `Bearer ${tokens.access_token}`;
           setIsAuthenticated(true);

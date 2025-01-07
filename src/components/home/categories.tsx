@@ -52,11 +52,10 @@ export function Categories() {
       if (status !== "granted") {
         return;
       }
-
-      // let location = await Location.getCurrentPositionAsync({});
+      let location = await Location.getCurrentPositionAsync({});
       const reverseGeocode = await Location.reverseGeocodeAsync({
-        latitude: 20.5937, // location.coords.latitude,
-        longitude: 78.9629, // location.coords.longitude,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
       });
 
       if (reverseGeocode.length > 0) {

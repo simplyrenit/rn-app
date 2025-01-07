@@ -1,6 +1,7 @@
 import { useChat } from "@/backend/chat";
 import { useProduct } from "@/backend/product";
-import { Button, Card, StaticContainer, Text } from "@/components/core";
+import { Button, Card, Text } from "@/components/core";
+import { ModerationBanner } from "@/components/product/moderation-banner";
 import { ProductImage } from "@/components/product/product-image";
 import { ProductMap } from "@/components/product/product-map";
 import { AboutOwner } from "@/components/product/product-owner";
@@ -15,7 +16,7 @@ import {
 } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React, { useState } from "react";
-import { Image, ScrollView, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
 import {
   BanknotesIcon,
   ChevronDownIcon,
@@ -24,12 +25,10 @@ import {
   ShareIcon,
 } from "react-native-heroicons/outline";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { SvgUri } from "react-native-svg";
 import Toast from "react-native-toast-message";
 import { ProductsSkeleton } from "./products-skeleton";
-import { ModerationBanner } from "@/components/product/moderation-banner";
-import { SvgUri } from "react-native-svg";
-import { StatusBar } from "expo-status-bar";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const MAX_CHARS = 150;
 
@@ -49,6 +48,7 @@ export default function DetailsScreen() {
   const [reviews, setReviews] = useState<BackendReview[]>([]);
   const { id, isFavorite } = route.params;
   const { startChat } = useChat();
+  const [startingChat, setStartingChat] = useState(false);
 
   React.useEffect(() => {
     fetchProductDetails();
@@ -84,6 +84,9 @@ export default function DetailsScreen() {
   const isOwner = userDetails?.username === product?.owner?.username;
 
   const handleStartChat = async () => {
+    if (startingChat) {
+      return;
+    }
     if (!isAuthenticated) {
       Toast.show({
         type: "customToast",
@@ -93,36 +96,43 @@ export default function DetailsScreen() {
       });
       return;
     }
+    setStartingChat(true);
+    try {
 
-    const { success, content } = await startChat(
-      {
-        userId: userDetails?.username!,
-        username: userDetails?.name!,
-        profilePicture: userDetails?.image
-          ? userDetails?.image
-          : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-      },
-      {
-        userId: product?.owner?.username!,
-        username:
-          product?.owner?.first_name! + " " + product?.owner?.last_name!,
-        profilePicture: product?.owner?.image?.image_url
-          ? product?.owner?.image?.image_url
-          : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-      },
-      {
-        title: product?.title!,
-        location: product?.location!,
-        image: product?.cover_image!,
-        rate: product?.rate!,
-        type: "product",
-        text: "",
-        id: product?.name ?? '',
+      const { success, content } = await startChat(
+        {
+          userId: userDetails?.username!,
+          username: userDetails?.name!,
+          profilePicture: userDetails?.image
+            ? userDetails?.image
+            : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+        },
+        {
+          userId: product?.owner?.username!,
+          username:
+            product?.owner?.first_name! + " " + product?.owner?.last_name!,
+          profilePicture: product?.owner?.image?.image_url
+            ? product?.owner?.image?.image_url
+            : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+        },
+        {
+          title: product?.title!,
+          location: product?.location!,
+          image: product?.cover_image!,
+          rate: product?.rate!,
+          type: "product",
+          text: "",
+          id: product?.name ?? '',
+        }
+      );
+
+      if (success) {
+        navigation.navigate("ChatDetails", { id: content });
       }
-    );
+    } catch (e) {
 
-    if (success) {
-      navigation.navigate("ChatDetails", { id: content });
+    } finally {
+      setStartingChat(false);
     }
   };
 
@@ -140,8 +150,8 @@ export default function DetailsScreen() {
     MAX_CHARS
   );
   const displayText = showFullText ? product?.description! : truncatedText;
-  if(!product) {
-    return <SafeAreaView className="flex-1 p-4">
+  if (!product) {
+    return <SafeAreaView className="flex-1 p-4" style={{ backgroundColor: isDark ? '#000' : '#fff' }}>
       <Text>Product not found</Text>
     </SafeAreaView>
   }
@@ -166,15 +176,14 @@ export default function DetailsScreen() {
         )}
 
         <View
-          className={`px-4 -mt-5 py-6 border-b-[1px] ${
-            isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-          }`}
+          className={`px-4 -mt-5 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            }`}
         >
           <View className="flex flex-row items-center justify-between">
             <Text
               fontSize="text-xl"
               fontWeight="font-bold"
-              style={{ flex: 1}}
+              style={{ flex: 1 }}
             >
               {product?.title}
             </Text>
@@ -201,9 +210,8 @@ export default function DetailsScreen() {
 
         {/* Categories */}
         <View
-          className={`px-2 py-8 border-b-[1px] ${
-            isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-          } flex flex-row items-center  `}
+          className={`px-2 py-8 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            } flex flex-row items-center  `}
         >
           {/* Custom Category Icon */}
           <View className="flex items-center flex-1">
@@ -223,13 +231,13 @@ export default function DetailsScreen() {
             <Text
               fontWeight="font-bold"
               className="mt-2"
+              style={{ textAlign: 'center', flex: 1 }}
             >
               {product?.category?.title}
             </Text>
             <Text
-              className={`mt-1 font-light ${
-                isDark ? "text-white/50" : "text-black/50"
-              }`}
+              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+                }`}
             >
               Category
             </Text>
@@ -243,13 +251,14 @@ export default function DetailsScreen() {
             <Text
               fontWeight="font-bold"
               className="mt-2"
+              style={{ textAlign: 'center', flex: 1 }}
+
             >
               ₹{Number(product?.security_deposit).toFixed(0)}
             </Text>
             <Text
-              className={`mt-1 font-light ${
-                isDark ? "text-white/50" : "text-black/50"
-              }`}
+              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+                }`}
             >
               Deposit
             </Text>
@@ -264,13 +273,13 @@ export default function DetailsScreen() {
             <Text
               fontWeight="font-bold"
               className="mt-2"
+              style={{ textAlign: 'center', flex: 1 }}
             >
               {product?.condition?.[0]?.toUpperCase()}{product?.condition.slice(1)}
             </Text>
             <Text
-              className={`mt-1 font-light ${
-                isDark ? "text-white/50" : "text-black/50"
-              }`}
+              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+                }`}
             >
               Condition
             </Text>
@@ -279,9 +288,8 @@ export default function DetailsScreen() {
 
         {/* About the product */}
         <View
-          className={`px-4 py-6 border-b-[1px] ${
-            isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-          }`}
+          className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            }`}
         >
           <View className="flex flex-row items-center justify-between">
             <Text
@@ -320,9 +328,8 @@ export default function DetailsScreen() {
         </View>
 
         <View
-          className={`px-4 py-6 border-b-[1px] ${
-            isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-          }`}
+          className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            }`}
         >
           <View className="flex flex-row items-center justify-between">
             <Text
@@ -343,9 +350,8 @@ export default function DetailsScreen() {
 
         {/* Product reviews` */}
         <View
-          className={`py-6 border-b-[1px] ${
-            isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-          }`}
+          className={`py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            }`}
         >
           <View className="flex flex-row items-center justify-between px-4">
             <Text
@@ -422,9 +428,8 @@ export default function DetailsScreen() {
 
         {/* About the owner */}
         <View
-          className={`px-4 py-6 border-b-[1px] ${
-            isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-          }`}
+          className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            }`}
         >
           <View className="flex flex-row items-center justify-between">
             <Text
@@ -486,11 +491,10 @@ export default function DetailsScreen() {
 
       {/* Footer */}
       <View
-        className={`bottom-0 w-full p-4 border-t ${
-          isDark ? "bg-black border-t-[#292929]" : "bg-white border-t-[#E6E6E6]"
-        } flex-row items-center h-[10%]`}
+        className={`bottom-0 w-full p-4 border-t ${isDark ? "bg-black border-t-[#292929]" : "bg-white border-t-[#E6E6E6]"
+          } flex-row items-center h-[10%]`}
       >
-        <View className="flex flex-row items-end flex-1" style={{ alignItems: 'center'}}>
+        <View className="flex flex-row items-end flex-1" style={{ alignItems: 'center' }}>
           <View className="">
             <Text
               fontWeight="font-bold"
@@ -508,11 +512,10 @@ export default function DetailsScreen() {
           {isOwner ? (
             <TouchableOpacity
               onPress={handleEditClick}
-              className={`border-2 ${
-                isDark
-                  ? "bg-[#0F0F0F] border-[#292929]"
-                  : "border-[#e6e6e6] bg-white"
-              } flex items-center justify-center rounded-lg h-full`}
+              className={`border-2 ${isDark
+                ? "bg-[#0F0F0F] border-[#292929]"
+                : "border-[#e6e6e6] bg-white"
+                } flex items-center justify-center rounded-lg h-full`}
             >
               <Text
                 fontWeight="font-bold"
@@ -523,19 +526,22 @@ export default function DetailsScreen() {
               </Text>
             </TouchableOpacity>
           ) : (
-            <Button onPress={handleStartChat}>
-              <Text
-                fontWeight="font-bold"
-                fontSize="text-md"
-                allowFontScaling
-                className="text-white tracking-wide text-center"
-              >
-                Chat with owner
-              </Text>
+            <Button onPress={handleStartChat} >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {(startingChat) ? <ActivityIndicator color='#fff' /> : null}
+                <Text
+                  fontWeight="font-bold"
+                  fontSize="text-md"
+                  allowFontScaling
+                  className="text-white tracking-wide text-center"
+                >
+                  Chat with owner
+                </Text>
+              </View>
             </Button>
           )}
         </View>
       </View>
-    </View>
+    </View >
   );
 }

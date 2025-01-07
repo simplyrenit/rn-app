@@ -64,12 +64,12 @@ const CustomBottomSheetModal = forwardRef<
       backdropComponent={renderBackdrop}
       enableOverDrag={false}
       handleStyle={{
-        borderTopWidth: 2,
+        borderTopWidth: 1,
         borderLeftWidth: 0,
         borderRightWidth: 0,
-        borderTopColor: isDark ? "#292929" : "#fff",
-        borderLeftColor: isDark ? "#292929" : "#fff",
-        borderRightColor: isDark ? "#292929" : "#fff",
+        borderTopColor: isDark ? "#292929" : "#E6E6E6",
+        borderLeftColor: isDark ? "#292929" : "#E6E6E6",
+        borderRightColor: isDark ? "#292929" : "#E6E6E6",
         borderTopRightRadius: 12,
         borderTopLeftRadius: 12,
       }}

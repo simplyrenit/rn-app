@@ -7,7 +7,7 @@ import { Conversation } from "@/lib/types";
 import { useFocusEffect } from "@react-navigation/native";
 import { styled } from "nativewind";
 import React from "react";
-import { FlatList, View } from "react-native";
+import { Dimensions, FlatList, View } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 import { MagnifyingGlassIcon } from "react-native-heroicons/outline";
 import { StyleSheet } from "react-native";
@@ -49,7 +49,6 @@ export default function Chat() {
       if (!firebaseInitialized) {
         return;
       }
-
       if (authTokens && isAuthenticated) {
         unsubscribe = subscribeToChats(
           userDetails?.username!,
@@ -146,6 +145,12 @@ export default function Chat() {
         ) : (
           <FlatList
             data={conversations}
+            ListEmptyComponent={() => <View style={{ padding: 32, height: Dimensions.get('window').height * 0.6, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: 'rgba(165, 165, 165, 0.7)', fontSize: 18, fontWeight: '600' }}>
+                No Chats
+              </Text>
+            </View>
+            }
             renderItem={({ item }) => (
               <ChatCard
                 isRead={

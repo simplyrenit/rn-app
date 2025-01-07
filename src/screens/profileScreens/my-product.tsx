@@ -5,8 +5,8 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { useGlobalContext } from "@/context/global-context";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
 import { useFocusEffect } from "@react-navigation/native";
-import React, { useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useState } from "react";
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
 import { ArrowLeftIcon, ShareIcon } from "react-native-heroicons/outline";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { Dimensions } from "react-native";
@@ -18,22 +18,33 @@ const { height } = Dimensions.get("window");
 const MyProductScreen: React.FC = () => {
   const { theme, authTokens, isAuthenticated } = useGlobalContext();
   const [myProducts, setMyProducts] = useState<BackendProduct[]>([]);
-
+  const [nextProductLink, setNextProductLink] = useState<string | null>(null);
   const isDarkMode = theme === "dark";
   const router = useTypedNavigation();
   const { getMyProducts } = useProfile();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const fetchProducts = async () => {
+  const fetchNextProducts = useCallback(() => { }, [])
+
+  const fetchProducts = useCallback(async (link?: string) => {
+    if (isLoading) {
+      return;
+    }
+    setIsLoading(true);
     try {
-      const data = await getMyProducts();
-      setMyProducts(data);
+      const data = await getMyProducts(link);
+      setMyProducts(prev => [...prev, ...(data.results ?? [])]);
+      setNextProductLink(data.links.next);
     } catch (error) {
       console.error("Error fetching products:", error);
+    } finally {
+      setIsLoading(false)
     }
-  };
+  }, [isLoading]);
 
   useFocusEffect(
     React.useCallback(() => {
+      setMyProducts([]);
       fetchProducts();
     }, [])
   );
@@ -121,7 +132,21 @@ const MyProductScreen: React.FC = () => {
         <FlatList
           style={{ width: '100%', }}
           data={myProducts}
-          keyExtractor={(item) => item.name}
+          ListEmptyComponent={() => <View style={{ padding: 32, height: Dimensions.get('window').height * 0.6, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: 'rgba(165, 165, 165, 0.7)', fontSize: 18, fontWeight: '600' }}>
+              No products
+            </Text>
+          </View>
+          }
+          ListFooterComponent={nextProductLink ? () => isLoading ? (
+            <View>
+              <ActivityIndicator color={isDarkMode ? '#fff' : '#000'} />
+            </View>
+          ) : <View>
+            <Text>Load More</Text>
+          </View> : undefined}
+          onEndReached={nextProductLink ? () => fetchProducts(nextProductLink) : undefined}
+          keyExtractor={(item, index) => `${index}_${item.name}`}
           numColumns={2}
           columnWrapperStyle={{
             justifyContent: "space-between",
@@ -132,6 +157,7 @@ const MyProductScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           renderItem={({ item, index }) => (
             <MyProductCard
+              key={index}
               id={item.name}
               image={item.cover_image}
               title={item.title}

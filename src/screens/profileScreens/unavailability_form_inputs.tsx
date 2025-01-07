@@ -152,7 +152,6 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
         text2: "success",
         visibilityTime: 4000,
         autoHide: true,
-        bottomOffset: 20,
         onPress: () => {
           Toast.hide();
         },
@@ -165,7 +164,6 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
         text2: "error",
         visibilityTime: 4000,
         autoHide: true,
-        bottomOffset: 20,
         onPress: () => {
           Toast.hide();
         },

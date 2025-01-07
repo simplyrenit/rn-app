@@ -1,4 +1,4 @@
-import { Button, Text } from "@/components/core";
+import { Text } from "@/components/core";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";

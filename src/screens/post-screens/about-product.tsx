@@ -17,8 +17,8 @@ import * as Location from "expo-location";
 import { styled } from "nativewind";
 import * as React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { Platform, TextInput, TouchableOpacity, View } from "react-native";
-import CountryPicker, { DARK_THEME } from "react-native-country-picker-modal";
+import { Platform, Pressable, TextInput, TouchableOpacity, View } from "react-native";
+import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 import { ScrollView } from "react-native-gesture-handler";
 import {
@@ -392,7 +392,7 @@ export default function AboutProduct() {
               fontSize="text-md"
               fontWeight="font-bold"
             >
-              Product Name
+              Product name
               <Text style={{ color: '#E50914' }}>{" "}*</Text>
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
@@ -415,7 +415,7 @@ export default function AboutProduct() {
               fontSize="text-md"
               fontWeight="font-bold"
             >
-              Brand Name
+              Brand name
             </Text>
             <TextInput
               placeholder={`"Apple"`}
@@ -434,7 +434,7 @@ export default function AboutProduct() {
               fontSize="text-md"
               fontWeight="font-bold"
             >
-              Model Name/Number
+              Model name/number
             </Text>
             <TextInput
               placeholder={`"Macbook Air 2024"`}
@@ -470,12 +470,15 @@ export default function AboutProduct() {
                 borderColor: isDark ? "#292929" : "#E6E6E6",
                 paddingHorizontal: 16,
                 marginVertical: 10,
+                overflow: 'hidden'
               }}
               activeColor={isDark ? "#0F0F0F" : "#e6e6e6"}
               containerStyle={{
                 marginTop: 10,
                 backgroundColor: isDark ? "#000" : "#FFF",
                 borderRadius: 14,
+                borderColor: isDark ? "#292929" : "#E6E6E6",
+                overflow: 'hidden'
               }}
               itemTextStyle={{
                 color: isDark ? "white" : "black",
@@ -530,7 +533,7 @@ export default function AboutProduct() {
               fontSize="text-md"
               fontWeight="font-bold"
             >
-              Product Description
+              Product description
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
               Tell us more about your product: Any info that the buyer might
@@ -557,7 +560,7 @@ export default function AboutProduct() {
               fontSize="text-md"
               fontWeight="font-bold"
             >
-              Usage Description
+              Usage description
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
               Educate the buyer on how to use your product
@@ -583,7 +586,7 @@ export default function AboutProduct() {
               fontSize="text-md"
               fontWeight="font-bold"
             >
-              Product Location
+              Product location
               <Text style={{ color: '#E50914' }}>{" "}*</Text>
 
             </Text>
@@ -640,7 +643,7 @@ export default function AboutProduct() {
               fontSize="text-md"
               fontWeight="font-bold"
             >
-              Product Address
+              Product address
               <Text style={{ color: '#E50914' }}>{" "}*</Text>
 
             </Text>
@@ -667,7 +670,7 @@ export default function AboutProduct() {
               fontSize="text-md"
               fontWeight="font-bold"
             >
-              Price Per Day
+              Price per day
               <Text style={{ color: '#E50914' }}>{" "}*</Text>
 
             </Text>
@@ -720,7 +723,7 @@ export default function AboutProduct() {
               fontSize="text-md"
               fontWeight="font-bold"
             >
-              Security Deposit
+              Security deposit
               <Text style={{ color: '#E50914' }}>{" "}*</Text>
 
             </Text>
@@ -854,7 +857,7 @@ export default function AboutProduct() {
                     fontSize="text-md"
                     fontWeight="font-bold"
                   >
-                    Phone Number
+                    Phone number
                     <Text style={{ color: '#E50914' }}>{" "}*</Text>
                   </Text>
                   <View className="flex-row flex-1 gap-x-2 ">
@@ -868,6 +871,10 @@ export default function AboutProduct() {
                         {...(isDark && { theme: DARK_THEME })}
                         renderCountryFilter={(props) => <TextInput placeholder="Search country" style={{ height: 40, borderBottomWidth: 1, width: '80%', borderColor: 'rgba(0,0,0,0.5)' }} className="" {...props} />}
                         withFlag
+                        renderFlagButton={({ onOpen }) => <Pressable onPress={onOpen}>
+                          <Flag countryCode={country.cca2} flagSize={16} />
+                        </Pressable>
+                        }
                         withCallingCode
                         withFilter
                         withCallingCodeButton
@@ -880,7 +887,7 @@ export default function AboutProduct() {
                           });
                         }}
                       />
-                      <View className="ml-2 ">
+                      <View className="ml-2">
                         <ChevronDownIcon
                           size={16}
                           color={isDark ? "#ffffff" : "#000"}
@@ -891,17 +898,15 @@ export default function AboutProduct() {
 
                     <View
                       // className="flex-row items-center flex-1"
-                      className={`flex-row items-center rounded-[12px] flex-1 border px-3 h-12  ${isDark
+                      className={`flex-row items-center rounded-[12px] flex-1 border px-2 h-12  ${isDark
                         ? "border-[#292929] text-white"
                         : "border-[#e6e6e6] text-black"
                         }`}
                     >
-                      <View className="pr-2 items-center justify-center">
-                        <PhoneIcon
-                          size={20}
-                          color={isDark ? "#ffffff" : "#000"}
-                          className="mt-1"
-                        />
+                      <View className="pr-1 items-center justify-center">
+                        <Text>
+                          +{country.callingCode}
+                        </Text>
                       </View>
                       <View>
                         <TextInput
@@ -913,7 +918,7 @@ export default function AboutProduct() {
                           placeholderTextColor={
                             isDark ? "#ffffff80" : "#00000080"
                           }
-                          className={`flex-1 h-12 p-3  ${isDark ? "text-white" : "text-black"
+                          className={`flex-1 h-12 p-3 pl-1  ${isDark ? "text-white" : "text-black"
                             }`}
                         />
                       </View>

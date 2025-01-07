@@ -76,50 +76,64 @@ export function useChat() {
       return { success: false, content: "Cannot start conversation" };
     }
 
-    const initiator = userDetails1;
-
-    const conversation: Conversation = {
-      participants: [userDetails1, userDetails2],
-      initialParticipants: [userDetails1, userDetails2],
-      readStatus: [
-        {
-          userId: userDetails1.userId,
-          isRead: true,
-        },
-        {
-          userId: userDetails2.userId,
-          isRead: false,
-        },
-      ],
-      readCount: [
-        {
-          count: 0,
-          userId: userDetails1.userId,
-        },
-        {
-          count: 1,
-          userId: userDetails2.userId,
-        },
-      ],
-      blockStatus: {
-        initiatedBy: "",
-        reason: "",
-        isBlocked: false,
-      },
-      lastMessageTime: new Date().toISOString(),
-      startedBy: initiator.userId,
-      lastMessage: "Chat started",
-    };
+    let conversationDoc;
 
     try {
-      const conversationDoc = await addDoc(
-        collection(firestore, "conversations"),
-        conversation
+      const querySnapshot = await getDocs(
+        collection(firestore, "conversations")
       );
+      querySnapshot.forEach(ss => {
+        const pc = ss.data()?.initialParticipants;
+        if ((pc?.[0]?.userId === userDetails1.userId && pc?.[1]?.userId === userDetails2.userId) || (pc?.[0]?.userId === userDetails2.userId && pc?.[1]?.userId === userDetails1.userId)) {
+          conversationDoc = ss;
+        }
+      })
+      if (!conversationDoc) {
+        const conversations: Conversation[] = [];
+        const initiator = userDetails1;
+
+        const conversation: Conversation = {
+          participants: [userDetails1, userDetails2],
+          initialParticipants: [userDetails1, userDetails2],
+          readStatus: [
+            {
+              userId: userDetails1.userId,
+              isRead: true,
+            },
+            {
+              userId: userDetails2.userId,
+              isRead: false,
+            },
+          ],
+          readCount: [
+            {
+              count: 0,
+              userId: userDetails1.userId,
+            },
+            {
+              count: 1,
+              userId: userDetails2.userId,
+            },
+          ],
+          blockStatus: {
+            initiatedBy: "",
+            reason: "",
+            isBlocked: false,
+          },
+          lastMessageTime: new Date().toISOString(),
+          startedBy: initiator.userId,
+          lastMessage: "Chat started",
+        };
+
+        conversationDoc = await addDoc(
+          collection(firestore, "conversations"),
+          conversation
+        );
+      }
 
       await createInitialMessage(
         conversationDoc.id,
-        initiator.userId,
+        userDetails1?.userId,
         productDetails
       );
       return { success: true, content: conversationDoc.id };
@@ -210,19 +224,19 @@ export function useChat() {
     const q = query(collection(firestore, "conversations"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-     
+
 
       const chats: Conversation[] = [];
       snapshot.forEach((doc) => {
         const conversation = doc.data() as Conversation;
-       
+
         if (
           conversation?.participants?.length > 0 &&
           conversation.participants.some(
             (participant) => participant?.userId === userDetails?.username
           )
         ) {
-          
+
 
           const readStatus = conversation.readStatus || [];
           const readCount = conversation.readCount || [];
@@ -233,7 +247,7 @@ export function useChat() {
             readStatus,
             readCount,
           });
-          
+
         }
       });
 
@@ -252,14 +266,14 @@ export function useChat() {
 
     registerForPushNotificationsAsync().then((token) => {
       if (token) {
-       
+
         updateUserPushToken(userId, token);
-       
+
       } else {
       }
     });
 
-    
+
     return unsubscribe;
   }
 
@@ -291,11 +305,11 @@ export function useChat() {
       const querySnapshot = await getDocs(q);
       const messages: Message[] = querySnapshot.docs.map(
         (doc) =>
-          ({
-            id: doc.id,
-            ...doc.data(),
-            timestamp: doc.data().timestamp.toDate(), // Convert Firestore Timestamp to JS Date
-          } as Message)
+        ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp.toDate(), // Convert Firestore Timestamp to JS Date
+        } as Message)
       );
 
       return messages;

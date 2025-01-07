@@ -37,7 +37,6 @@ export default function EditSubCategories() {
         text2: "success",
         visibilityTime: 4000,
         autoHide: true,
-        bottomOffset: 20,
       });
       navigation.navigate("editProduct", { id: name });
     } catch (error) {

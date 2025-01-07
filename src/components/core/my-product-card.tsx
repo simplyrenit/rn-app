@@ -28,9 +28,6 @@ export function MyProductCard({
   const router = useTypedNavigation();
   const { theme } = useGlobalContext();
 
-  const truncatedname = truncateText(title ? title : "", 22);
-  const truncatedLocation = truncateText(location ? location : "", 30);
-
   const isModerated = moderationLabels?.length > 0;
 
   return (
@@ -100,8 +97,9 @@ export function MyProductCard({
             <Text
               fontWeight="font-bold"
               className="mb-1"
+              numberOfLines={1}
             >
-              {truncatedname}
+              {title}
             </Text>
             <Text
               numberOfLines={1}

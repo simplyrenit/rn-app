@@ -1,35 +1,32 @@
 import { useGlobalContext } from "@/context/global-context";
 import { GET_FAVORITES } from "@/lib/config";
-import { BackendProduct } from "@/lib/types";
-import { useQuery, useMutation, useQueryClient } from "react-query";
-import axios from "axios";
 import axiosInstance from "@/lib/networkUtils";
+import { BackendProduct } from "@/lib/types";
+import { useCallback } from "react";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 
 const useSaved = () => {
   const { authTokens, isAuthenticated } = useGlobalContext();
   const { access_token } = authTokens || {};
   const queryClient = useQueryClient();
 
-  const fetchFavorites = async (): Promise<BackendProduct[]> => {
-    if (!isAuthenticated || !access_token) {
-      return [];
-    }
-
+  const fetchFavorites = useCallback(async (): Promise<BackendProduct[]> => {
     const response = await axiosInstance.get<BackendProduct[]>(GET_FAVORITES, {
       headers: {
         "Content-Type": "application/json",
       },
     });
     return response.data.filter(item => !item?.moderation_labels?.length);
-  };
+  }, []);
 
-  const { data: favorites = [] } = useQuery(
-    ["favorites", access_token],
+  const { data: favorites = [], isLoading } = useQuery(
+    ["favorites"],
     fetchFavorites,
     {
-      enabled: isAuthenticated && !!access_token,
+      enabled: isAuthenticated && !!access_token && isAuthenticated,
     }
   );
+
 
   const saveFavoriteMutation = useMutation(
     async (productName: string) => {
@@ -87,6 +84,7 @@ const useSaved = () => {
 
   return {
     favorites,
+    loading: isLoading,
     saveFavorite: saveFavoriteMutation.mutateAsync,
     deleteFavorite: deleteFavoriteMutation.mutateAsync,
   };
