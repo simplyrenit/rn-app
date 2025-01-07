@@ -3,7 +3,7 @@ import { admin } from "./admin";
 
 export const onNewMessage = functions.firestore
   .document("messages/{messageId}")
-  .onWrite(async (change, context) => {
+  .onWrite(async (change: any, context: any) => {
     const message = change.after.data();
 
     if (!message) {
@@ -93,5 +93,4 @@ export const onNewMessage = functions.firestore
       },
     });
 
-    console.log("Notification sent successfully");
   });

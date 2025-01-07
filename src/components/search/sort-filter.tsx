@@ -36,11 +36,11 @@ export function SortFilter({
 
   return (
     <View className="flex-1">
-      <View className="mt-1 flex-1">
+      <View className="flex-1">
         {options.map((item, index) => (
           <TouchableOpacity
             key={index}
-            className="p-3"
+            className={`p-3 ${index === 0 ? 'pt-0' : ''}`}
             onPress={() => onSelect(item.value)}
           >
             <View className="flex flex-row items-center justify-between">

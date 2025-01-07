@@ -21,13 +21,12 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   handleLogout,
 }) => {
   const router = useTypedNavigation();
-  const { theme, userDetails } = useGlobalContext();
+  const { theme, userDetails, loading } = useGlobalContext();
   const isDark = theme === "dark";
   const appearanceSheetRef = useRef<BottomSheetModal>(null);
   const personalDetailsSheetRef = useRef<BottomSheetModal>(null);
   const currencySheetRef = useRef<BottomSheetModal>(null);
 
-  console.log("USER DETAILS", userDetails);
 
   const handleCurrencyModal = () => {
     currencySheetRef.current?.present();
@@ -45,9 +44,8 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
     <>
       <View className="">
         <View
-          className={`border-b-[0.2px] ${
-            isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-          }`}
+          className={`border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+            }`}
         >
           <View className="px-5">
             <ProfileImgContainer
@@ -59,9 +57,8 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
 
         {/* Account */}
         <View
-          className={`py-4 border-b-[0.2px] ${
-            isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-          }`}
+          className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+            }`}
         >
           <View className="px-5">
             <Text
@@ -84,9 +81,8 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
 
         {/* App */}
         <View
-          className={`py-4 border-b-[0.2px] ${
-            isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-          }`}
+          className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+            }`}
         >
           <View className="px-5">
             <Text
@@ -102,20 +98,19 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               text="Switch theme"
               isDarkMode={isDarkMode}
             />
-            <IconButton
+            {/* <IconButton
               onPress={handleCurrencyModal}
               leftIcon="BanknotesIcon"
               text="Currency"
               isDarkMode={isDarkMode}
-            />
+            /> */}
           </View>
         </View>
 
         {/* Support */}
         <View
-          className={`py-4 border-b-[0.2px] ${
-            isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-          }`}
+          className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+            }`}
         >
           <View className="px-5">
             <Text
@@ -208,21 +203,19 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
           <View className="pt-5 px-5">
             <TouchableOpacity
               onPress={handleLogout}
-              className={`${
-                isDark
-                  ? "bg-[#1A1A1A] border-[#292929]"
-                  : "bg-white border-[#e6e6e6]"
-              } border rounded-[12px] px-4 py-3 flex-row items-center justify-center -translate-y-0.5`}
+              className={`${isDark
+                ? "bg-[#1A1A1A] border-[#292929]"
+                : "bg-white border-[#e6e6e6]"
+                } border rounded-[12px] px-4 py-3 flex-row items-center justify-center -translate-y-0.5`}
             >
               <ArrowRightStartOnRectangleIcon
-                size={24}
+                size={26}
                 color="#E50914"
               />
               <Text
                 fontSize="text-base"
                 fontWeight="font-bold"
                 className="text-[#E50914] ml-2"
-                lineHeight={24}
               >
                 Logout
               </Text>

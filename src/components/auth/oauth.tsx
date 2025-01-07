@@ -12,6 +12,7 @@ import { AuthTokens, useTypedNavigation } from "@/lib/types";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useAuthContext } from "@/context/auth-context";
 import { useProfile } from "@/backend/profile";
+import axiosInstance from "@/lib/networkUtils";
 
 export function useOAuth() {
   const [loading, setLoading] = useState(false);
@@ -26,8 +27,8 @@ export function useOAuth() {
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
-      const userInfo = await GoogleSignin.signIn();
-      console.log("Google Sign-In Success:", userInfo);
+      const { data: userInfo } = await GoogleSignin.signIn().catch(err => {
+      });
 
       if (userInfo?.idToken) {
         try {
@@ -35,9 +36,9 @@ export function useOAuth() {
             access_token: userInfo.idToken,
           });
 
-          console.log("Backend Response:", res.data);
 
           if (res.data.access_token && res.data.refresh_token) {
+            axiosInstance.defaults.headers.Authorization = `Bearer ${res.data.access_token}`;
             setAuthTokens(res.data);
             const user = await getMyDetails(res.data.access_token);
             if (!user?.first_name || !user?.last_name) {
@@ -48,17 +49,13 @@ export function useOAuth() {
             return;
           }
         } catch (backendError) {
-          console.error("Backend Error:", backendError);
         }
       }
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log("User cancelled the login flow");
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log("Operation in progress");
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        console.log("Play services not available");
       } else {
         console.error("Other error:", error);
       }
@@ -77,15 +74,15 @@ export function useOAuth() {
         ],
       });
 
-      console.log("credential", credential);
       if (credential.identityToken) {
-        const res = await axios.post<AuthTokens>(APPLE_SIGN_IN_ENDPOINT, {
+        const res = await axiosInstance.post<AuthTokens>(APPLE_SIGN_IN_ENDPOINT, {
           data: {
             identityToken: credential.identityToken,
           },
         });
 
         if (res.data.access_token !== null && res.data.refresh_token !== null) {
+          axiosInstance.defaults.headers.Authorization = `Bearer ${res.data.access_token}`;
           setAuthTokens(res.data);
           const user = await getMyDetails(res.data.access_token);
           if (
@@ -101,15 +98,11 @@ export function useOAuth() {
           return;
         }
       } else {
-        console.log("sign in was cancelled by user");
       }
     } catch (e: any) {
-      console.log("error", e);
       if (e.code === "ERR_REQUEST_CANCELED") {
-        console.log("user cancelled");
       } else {
         // handle other errors
-        console.log("ERROR", e);
       }
     } finally {
       setLoading(false);

@@ -5,6 +5,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useGlobalContext } from "@/context/global-context";
 import moment from "moment-timezone";
+import axiosInstance from "@/lib/networkUtils";
 
 interface PresignedResponse {
   presigned_urls: string[];
@@ -80,13 +81,11 @@ export function usePost() {
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
             const percentComplete = (e.loaded / e.total) * 100;
-            console.log(`Upload progress: ${percentComplete}%`);
           }
         };
 
         xhr.onload = () => {
           if (xhr.status === 200) {
-            console.log("Upload successful");
             resolve();
           } else {
             const errorText = xhr.responseText;
@@ -104,9 +103,6 @@ export function usePost() {
         };
 
         // Log the actual request being sent
-        console.log("Sending request to:", presignedUrl);
-        console.log("Content-Type:", blob.type);
-        console.log("Blob size:", blob.size);
 
         xhr.send(blob);
       } catch (error) {
@@ -129,7 +125,7 @@ export function usePost() {
           .toLowerCase(), // ensure consistent casing
       }));
 
-      const response = await axios.post<PresignedResponse>(
+      const response = await axiosInstance.post<PresignedResponse>(
         GENERATE_SIGNED_URLS,
         {
           filenames: processedImages.map((img) => img.image),
@@ -137,7 +133,6 @@ export function usePost() {
         },
         {
           headers: {
-            Authorization: `Bearer ${access_token}`,
             "Content-Type": "application/json",
           },
         }
@@ -159,19 +154,13 @@ export function usePost() {
       const imageUrls = await getPresignedURLs(product.images);
       const coverImageUrl = await getPresignedURLs([product.coverImage]);
 
-      console.log("PRESIGNED", imageUrls);
-
-      console.log("Starting uploads...");
-
       // Upload all images to S3
       await Promise.all(
         product.images.map((img, index) => {
-          console.log(`Uploading image ${index + 1}...`);
           return uploadToS3(imageUrls[index], img.image);
         })
       );
 
-      console.log("Uploading cover image...");
       await uploadToS3(coverImageUrl[0], product.coverImage.image);
 
       const finalProductData = {
@@ -180,23 +169,16 @@ export function usePost() {
         cover_image: coverImageUrl[0].split("?")[0],
       };
 
-      console.log(
-        "All uploads complete, posting product data",
-        finalProductData
-      );
 
-      const response = await axios.post(POST_MY_PRODUCTS, finalProductData, {
+      const response = await axiosInstance.post(POST_MY_PRODUCTS, finalProductData, {
         headers: {
-          Authorization: `Bearer ${access_token}`,
           "Content-Type": "application/json",
         },
         timeout: 90000, // 1 minute 30 seconds in milliseconds
       });
 
-      console.log("RESPONSE", response.data);
       return { status: response.status, data: response.data };
     } catch (error) {
-      console.error("Error posting product:", error);
       throw error;
     } finally {
       setLoading(false);

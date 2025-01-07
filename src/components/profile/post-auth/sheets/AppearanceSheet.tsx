@@ -18,7 +18,6 @@ const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
   const { theme, themePreference, setTheme } = useGlobalContext();
 
   // Debugging: Log the current themePreference
-  console.log("Current themePreference:", themePreference);
 
   return (
     <CustomBottomSheetModal
@@ -34,12 +33,12 @@ const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
           Appearance
         </Text>
       </View>
-      <View className="p-4">
+      <View className="p-4 gap-2">
         <TouchableOpacity
-          className="flex-row justify-between pb-3"
+          className="flex-row justify-between items-center"
+          style={{ height: 36}}
           onPress={() => {
             setTheme("device");
-            console.log("Set theme to device");
           }}
         >
           <Text fontSize="text-base">Use my device settings</Text>
@@ -52,10 +51,10 @@ const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="flex-row justify-between py-3"
+          className="flex-row justify-between items-center"
+          style={{ height: 36}}
           onPress={() => {
             setTheme("dark");
-            console.log("Set theme to dark");
           }}
         >
           <Text fontSize="text-base">Dark mode</Text>
@@ -68,13 +67,13 @@ const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          className="flex-row justify-between py-3"
+          className="flex-row justify-between items-center"
+          style={{ height: 36}}
           onPress={() => {
             setTheme("light");
-            console.log("Set theme to light");
           }}
         >
-          <Text fontSize="text-base">Light Mode</Text>
+          <Text fontSize="text-base">Light mode</Text>
           {themePreference === "light" && (
             <CheckIcon
               size={24}

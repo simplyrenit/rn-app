@@ -17,7 +17,6 @@ export default function Home() {
   const { user, getUser } = useAuthContext();
   const { getNotifications } = useNotifications();
 
-  console.log(userDetails?.username, "iser");
   useEffect(() => {
     getUser();
     getNotifications();

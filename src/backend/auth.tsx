@@ -27,9 +27,6 @@ export function useAuth() {
       const response = await axios.get<OTPResponse>(
         `${OTP}?email=${email}&otp=${otp}`
       );
-      console.log(`${OTP}?email=${email}&otp=${otp}`);
-      console.log(response.data, "response.data");
-
       return response.data;
     } catch (error: any) {
       console.error(JSON.stringify(error));
@@ -48,7 +45,6 @@ export function useAuth() {
   async function signUpUser(): Promise<AuthTokens | null> {
     setLoading(true);
     try {
-      console.log("USER", user);
       const response: { data: AuthTokens } = await axios.post(SIGN_UP, user);
       setAuthTokens(response.data);
 

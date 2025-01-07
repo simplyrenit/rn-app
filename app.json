@@ -4,7 +4,7 @@
     "slug": "renit",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo.png",
+    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash-light.png",
@@ -74,8 +74,8 @@
       "package": "com.renit.app",
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#000"
       },
       "permissions": [
         "android.permission.CAMERA",

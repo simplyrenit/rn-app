@@ -1,19 +1,21 @@
 import { useGlobalContext } from "@/context/global-context";
 import React from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet, ViewStyle, StyleProp } from "react-native";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 
 interface Props {
   children: React.ReactNode;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
-export function ScrollContainer({ children }: Props) {
+export function ScrollContainer({ children, containerStyle }: Props) {
   const { theme } = useGlobalContext();
   const isDarkMode = theme === "dark";
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
+      nestedScrollEnabled
+      contentContainerStyle={[styles.container, containerStyle]}
       className={isDarkMode ? "bg-black" : "bg-white"}
     >
       {children}

@@ -34,12 +34,11 @@ export default function LoginWithEmail() {
 
   const handleSubmit = useCallback(
     async (verificationType: "otp" | "password") => {
-      console.log("here 1");
       if (validateEmail(email)) {
         saveUser({ email });
 
         if (verificationType === "otp") {
-          // await sendOTP(email);
+          await sendOTP(email);
           router.navigate("Verify", { email, verificationType });
         } else {
           router.navigate("Verify", { email, verificationType });

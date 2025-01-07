@@ -32,9 +32,9 @@ export default function EditCoverImage() {
   const route = useRoute<RouteProps<"EditCoverImage">>();
   const { theme } = useGlobalContext();
   const isDark = theme === "dark";
-  const { images, name } = route.params;
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [croppedImage, setCroppedImage] = useState<ProductImage | null>(null);
+  const { images, name, coverImage } = route.params;
+  const [selectedImage, setSelectedImage] = useState<string | null>(coverImage);
+  const [croppedImage, setCroppedImage] = useState<ProductImage | null>({ image: coverImage, file_type: "image/jpeg" });
   const scrollViewRef = useRef<ScrollView>(null);
   const [isEditing, setIsEditing] = useState(false);
   const { updateProductImages, loading } = useProfile();
@@ -92,9 +92,8 @@ export default function EditCoverImage() {
       <StyledTouchableOpacity
         key={index}
         onPress={() => selectImage(image)}
-        className={`w-40 h-40 mb-2.5 mr-3 relative rounded-lg overflow-hidden ${
-          selectedImage === image ? "border-2 border-[#435be8]" : ""
-        }`}
+        className={`w-40 h-40 mb-2.5 mr-3 relative rounded-lg overflow-hidden ${selectedImage === image ? "border-2 border-[#435be8]" : ""
+          }`}
       >
         <Image source={{ uri: image }} className="w-40 h-40" />
         {selectedImage === image && (
@@ -115,15 +114,15 @@ export default function EditCoverImage() {
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
-      <StyledView className="px-3 flex-row items-center">
+      <StyledView className="px-3 flex-row items-center py-4">
         <StyledTouchableOpacity
           onPress={() => navigation.goBack()}
           className="w-[10%]"
         >
-          <ArrowLeftIcon size={24} color={isDark ? "#ffffff" : "#000000"} />
+          <ArrowLeftIcon size={20} color={isDark ? "#ffffff" : "#000000"} />
         </StyledTouchableOpacity>
         <StyledView className="w-[80%]">
-          <View className="h-24 items-center justify-center">
+          <View className="items-center justify-center">
             <Text fontSize="text-lg" fontWeight="font-bold">
               Edit Cover Image
             </Text>
@@ -176,9 +175,8 @@ export default function EditCoverImage() {
               }}
             >
               <Text
-                className={`${
-                  isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
-                }`}
+                className={`${isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
+                  }`}
               >
                 Select an image to crop
               </Text>
@@ -210,9 +208,8 @@ export default function EditCoverImage() {
             ) : (
               <Text
                 fontWeight="font-bold"
-                className={`mr-1 ${
-                  croppedImage ? "text-white" : "text-gray-500"
-                }`}
+                className={`mr-1 ${croppedImage ? "text-white" : "text-gray-500"
+                  }`}
               >
                 Update Product
               </Text>

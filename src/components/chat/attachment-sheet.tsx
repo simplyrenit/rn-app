@@ -35,6 +35,21 @@ const AttachmentSheet: React.FC<AttachmentSheetProps> = ({
         <View className="w-full space-y-2 px-2">
           <TouchableOpacity
             className="flex-row justify-between py-3 border border-gray-300 rounded-lg w-full px-2"
+            onPress={onSelectImagesVideos}
+          >
+            <Text
+              lineHeight={20}
+              fontSize="text-md"
+            >
+              Select Images
+            </Text>
+            <PhotoIcon
+              size={20}
+              color={"#635BE8"}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="flex-row justify-between py-3 border border-gray-300 rounded-lg w-full px-2"
             onPress={onSelectDocuments}
           >
             <Text
@@ -48,21 +63,7 @@ const AttachmentSheet: React.FC<AttachmentSheetProps> = ({
               color={"#635BE8"}
             />
           </TouchableOpacity>
-          <TouchableOpacity
-            className="flex-row justify-between py-3 border border-gray-300 rounded-lg w-full px-2"
-            onPress={onSelectImagesVideos}
-          >
-            <Text
-              lineHeight={20}
-              fontSize="text-md"
-            >
-              Select Images/Videos
-            </Text>
-            <PhotoIcon
-              size={20}
-              color={"#635BE8"}
-            />
-          </TouchableOpacity>
+          
         </View>
       </View>
     </CustomBottomSheetModal>

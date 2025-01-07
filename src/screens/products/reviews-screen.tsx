@@ -62,7 +62,7 @@ export default function ReviewsScreen() {
 
   return (
     <Container>
-      <View className="py-3 px-5 flex flex-row items-center">
+      <View className="py-4 px-5 flex flex-row items-center">
         <View className="w-[10%]">
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <ArrowLeftIcon
@@ -152,7 +152,7 @@ export default function ReviewsScreen() {
 
         <Button
           variant="outline"
-          className="mt-5 flex flex-row items-center justify-center"
+          className="mt-5 flex flex-row items-center justify-center border rounded-xl"
           onPress={handleWriteReview}
         >
           <View className="flex h-full flex-row items-center justify-between w-full">

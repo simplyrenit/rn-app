@@ -3,6 +3,7 @@ import { GET_FAVORITES } from "@/lib/config";
 import { BackendProduct } from "@/lib/types";
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import axios from "axios";
+import axiosInstance from "@/lib/networkUtils";
 
 const useSaved = () => {
   const { authTokens, isAuthenticated } = useGlobalContext();
@@ -14,14 +15,12 @@ const useSaved = () => {
       return [];
     }
 
-    const response = await axios.get<BackendProduct[]>(GET_FAVORITES, {
+    const response = await axiosInstance.get<BackendProduct[]>(GET_FAVORITES, {
       headers: {
-        Authorization: `Bearer ${access_token}`,
         "Content-Type": "application/json",
       },
     });
-
-    return response.data;
+    return response.data.filter(item => !item?.moderation_labels?.length);
   };
 
   const { data: favorites = [] } = useQuery(
@@ -41,7 +40,6 @@ const useSaved = () => {
       const response = await fetch(GET_FAVORITES, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${access_token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -63,20 +61,22 @@ const useSaved = () => {
       if (!isAuthenticated || !access_token) {
         return null;
       }
+      try {
+        const response = await fetch(GET_FAVORITES, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            product_name: productName,
+          }),
+        });
 
-      const response = await fetch(GET_FAVORITES, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          product_name: productName,
-        }),
-      });
-
-      if (response.status !== 204) {
-        return response.json();
+        if (response.status !== 204) {
+          return response.json();
+        }
+      }
+      catch (e) {
       }
 
       return null;

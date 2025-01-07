@@ -12,6 +12,7 @@ import { TextInput } from "react-native-gesture-handler";
 import { MagnifyingGlassIcon } from "react-native-heroicons/outline";
 import { StyleSheet } from "react-native";
 import { firestore, app } from "@/lib/config";
+import Skeleton from "@/components/core/skeleton";
 
 const StyledInput = styled(TextInput);
 
@@ -35,7 +36,6 @@ export default function Chat() {
   }, []);
 
   React.useEffect(() => {
-    console.log("[Chat] Firestore initialized:", app);
     if (firestore) {
       setFirebaseInitialized(true);
     }
@@ -47,17 +47,14 @@ export default function Chat() {
       let unsubscribe: (() => void) | undefined;
 
       if (!firebaseInitialized) {
-        console.log("[Chat] Firebase not yet initialized");
         return;
       }
 
       if (authTokens && isAuthenticated) {
-        console.log("[Chat] Initiating subscription");
         unsubscribe = subscribeToChats(
           userDetails?.username!,
           (chats: Conversation[]) => {
             if (!isSubscribed) return;
-            console.log("[Chat] Received update:", chats, "chats");
             setConversations(chats);
             setIsLoading(false);
           }
@@ -65,7 +62,6 @@ export default function Chat() {
       }
 
       return () => {
-        console.log("[Chat] Effect cleanup");
         isSubscribed = false;
         if (unsubscribe) {
           unsubscribe();
@@ -106,35 +102,47 @@ export default function Chat() {
           Chat
         </Text>
 
-        <View
+        {isLoading ? <View className="p-4 gap-4">
+          <Skeleton height={16} width={16} />
+          <Skeleton height={16} width={'80%'} />
+        </View> : <View
           style={styles.Shadow}
-          className={`border mt-6 mb-4 flex flex-row items-center h-12 rounded-xl p-2 ${
-            isDark
-              ? "bg-[#0F0F0F] border-[#292929]"
-              : "bg-white border-[#E6E6E6]"
-          }`}
+          className={`border mt-6 mb-4 flex flex-row items-center h-12 rounded-xl p-2 ${isDark
+            ? "bg-[#0F0F0F] border-[#292929]"
+            : "bg-white border-[#E6E6E6]"
+            }`}
         >
           <MagnifyingGlassIcon
             color="gray"
             size={24}
           />
           <StyledInput
-            className={`ml-2 w-4/5 text-black ${
-              isDark ? "text-white" : "text-black"
-            }`}
+            className={`ml-2 w-4/5 text-black ${isDark ? "text-white" : "text-black"
+              }`}
             placeholder="Search chat"
             placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
             autoCapitalize="none"
             autoCorrect={false}
-            onChangeText={() => {}}
+            onChangeText={() => { }}
             style={{ fontSize: 16 }}
           />
-        </View>
+        </View>}
 
         {isLoading ? (
-          <View className="items-center justify-center flex-1">
-            <Text>Loading chats...</Text>
-          </View>
+          <FlatList
+
+            data={Array.from({ length: 5 })}
+            renderItem={({ item, index }) => (<View className="gap-2 p-3" style={{ flexDirection: 'row' }}>
+              <Skeleton height={50} width={50} borderRadius={50} />
+              <View
+                className="flex-1 gap-2"
+              >
+                <Skeleton width={'90%'} height={14} />
+                <Skeleton width={'80%'} height={12} />
+                <Skeleton width={'60%'} height={10} />
+              </View>
+            </View>)}
+          />
         ) : (
           <FlatList
             data={conversations}

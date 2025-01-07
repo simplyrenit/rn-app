@@ -20,6 +20,8 @@ import { useProfile } from "@/backend/profile";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Progress from "react-native-progress";
 import { Dimensions } from "react-native";
+import Toast from "react-native-toast-message";
+import { useGetMyDetails } from "@/services/userQueries";
 
 const { height } = Dimensions.get("window");
 
@@ -37,10 +39,9 @@ const EditProductScreen: React.FC = () => {
   };
   const [product, setProduct] = useState<BackendProduct | null>(null);
   const { getMyProductDetails, deleteMyProduct, loading } = useProfile();
-
+  const { data: userData } = useGetMyDetails()
   const getProductDetails = async () => {
     const product = await getMyProductDetails(id);
-
     setProduct(product);
   };
 
@@ -52,13 +53,22 @@ const EditProductScreen: React.FC = () => {
 
   const handleDelete = async () => {
     await deleteMyProduct(id);
+    Toast.show({
+      type: "customToast",
+      position: "bottom",
+      text1: "Your product was deleted!",
+      text2: "success",
+      visibilityTime: 4000,
+      autoHide: true,
+      bottomOffset: 20,
+    });
     navigation.navigate("myProducts");
   };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NonScrollableContainer height={height > 700 ? 105 : 100}>
-        <View className="flex-row items-center justify-between px-5 py-2">
+        <View className="flex-row items-center justify-between px-5 py-2 pt-4">
           <TouchableOpacity
             onPress={() => router.goBack()}
             className="flex-1 items-start w-[10%]"
@@ -87,11 +97,10 @@ const EditProductScreen: React.FC = () => {
           {product ? (
             <>
               <View
-                className={`flex-row px-5 gap-5 py-4 border-b-[0.2px]  ${
-                  isDarkMode ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-                }`}
+                className={`flex-row px-5 gap-5 py-4 border-b-[0.2px]  ${isDarkMode ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+                  }`}
               >
-                <View className="py-4 flex-1 ">
+                <View className="py-0 flex-1 ">
                   <Image
                     className="rounded-[16px]"
                     source={{ uri: product.cover_image }}
@@ -99,7 +108,7 @@ const EditProductScreen: React.FC = () => {
                   />
                 </View>
 
-                <View className="py-4 justify-between flex-1">
+                <View className="py-0 justify-between flex-1">
                   <View className="gap-y-[0.5]">
                     <Text
                       fontSize="text-lg"
@@ -126,11 +135,10 @@ const EditProductScreen: React.FC = () => {
                   <View>
                     <TouchableOpacity
                       onPress={openBottomSheet}
-                      className={`flex-row justify-center space-x-1 items-center border rounded-2xl h-11 ${
-                        isDarkMode
-                          ? "border-[#292929] text-white bg-[#1a1a1a]"
-                          : "border-[#E6E6E6] text-black bg-white"
-                      }`}
+                      className={`flex-row justify-center space-x-1 items-center border rounded-2xl h-11 mt-2 ${isDarkMode
+                        ? "border-[#292929] text-white bg-[#1a1a1a]"
+                        : "border-[#E6E6E6] text-black bg-white"
+                        }`}
                     >
                       <TrashIcon
                         size={20}
@@ -150,17 +158,6 @@ const EditProductScreen: React.FC = () => {
               <View className="px-4 py-0">
                 <IconButton
                   onPress={() =>
-                    navigation.navigate("EditProductAvailability", {
-                      dates_blocked: product.booked!,
-                      name: product.name,
-                    })
-                  }
-                  leftIcon="CalendarIcon"
-                  text="Availability"
-                  isDarkMode={isDarkMode}
-                />
-                <IconButton
-                  onPress={() =>
                     navigation.navigate("EditCategory", {
                       name: product.name,
                     })
@@ -172,7 +169,7 @@ const EditProductScreen: React.FC = () => {
                 <IconButton
                   onPress={() =>
                     navigation.navigate("EditAboutProduct", {
-                      data: product,
+                      data: { ...product, isOwnerContact: `${userData?.first_name} ${userData?.last_name}` === product.contact_name && userData?.phone === product.contact_number },
                     })
                   }
                   leftIcon="DocumentTextIcon"
@@ -180,14 +177,27 @@ const EditProductScreen: React.FC = () => {
                   isDarkMode={isDarkMode}
                 />
                 <IconButton
-                  onPress={() =>
+                  onPress={() => {
                     navigation.navigate("EditProductImages", {
                       images: product.images,
                       name: product.name,
+                      coverImage: product.cover_image,
                     })
+                  }
                   }
                   leftIcon="Square3Stack3DIcon"
                   text="Product Images"
+                  isDarkMode={isDarkMode}
+                />
+                <IconButton
+                  onPress={() =>
+                    navigation.navigate("EditProductAvailability", {
+                      dates_blocked: product.booked!,
+                      name: product.name,
+                    })
+                  }
+                  leftIcon="CalendarIcon"
+                  text="Unavailability"
                   isDarkMode={isDarkMode}
                 />
               </View>
@@ -257,11 +267,10 @@ const EditProductScreen: React.FC = () => {
         <View className="flex-row justify-between mt-6 gap-x-2 px-2">
           <TouchableOpacity
             onPress={() => bottomSheetRef.current?.close()}
-            className={`border rounded-[12px] flex-1 items-center justify-center p-3  ${
-              isDarkMode
-                ? "border-[#292929] text-white bg-[#1a1a1a]"
-                : "border-[#E6E6E6] text-black bg-white"
-            }`}
+            className={`border rounded-[12px] flex-1 items-center justify-center p-3  ${isDarkMode
+              ? "border-[#292929] text-white bg-[#1a1a1a]"
+              : "border-[#E6E6E6] text-black bg-white"
+              }`}
           >
             <Text
               fontWeight="font-bold"
@@ -273,7 +282,9 @@ const EditProductScreen: React.FC = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handleDelete}
+            onPress={() => {
+              handleDelete();
+            }}
             className="bg-[#E50914] p-3 rounded-[12px] flex-1  flex-row items-center justify-center"
           >
             {loading ? (

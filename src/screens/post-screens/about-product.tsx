@@ -125,15 +125,15 @@ export default function AboutProduct() {
 
   const allFieldsFilled =
     productName &&
-    brandName &&
-    modelName &&
+    // brandName &&
+    // modelName &&
     selectedValue &&
-    productDescription &&
-    usageDescription &&
+    // productDescription &&
+    // usageDescription &&
     pricePerDay &&
     securityDeposit &&
     address &&
-    // selectedLocation &&
+    selectedLocation &&
     (contactPerson === "Owner" || (otherName && otherPhoneNumber));
 
   const fetchAddress = useCallback(async (loc: Location.LocationObject) => {
@@ -198,8 +198,6 @@ export default function AboutProduct() {
 
   const handleDataFromLocation = useCallback(
     (coords: any, addressToSend: any) => {
-      console.log("Received Coordinates:", coords);
-      console.log("Received Address:", addressToSend);
 
       // Extract country from address
       const addressParts = addressToSend.split(",");
@@ -228,7 +226,6 @@ export default function AboutProduct() {
   const handleCurrentLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
-      console.log("Permission to access location was denied");
       return;
     }
 
@@ -259,7 +256,6 @@ export default function AboutProduct() {
   };
 
   const onPress = () => {
-    console.log("loc", selectedValue);
     saveDetails({
       name: productName,
       brandName: brandName,
@@ -286,7 +282,6 @@ export default function AboutProduct() {
       const { coords } = await Location.getCurrentPositionAsync();
       setLocation(coords);
     } catch (error) {
-      console.log("Error fetching location: ", error);
     }
   };
 
@@ -310,7 +305,6 @@ export default function AboutProduct() {
   const askForLocationPermission = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
-      console.log("Permission to access location was denied");
       return;
     }
     const { coords } = await Location.getCurrentPositionAsync();
@@ -377,6 +371,7 @@ export default function AboutProduct() {
       <PostProductHeader
         heading="Tell us about your product"
         percentage={30}
+        showBackArrow
       />
 
       <View
@@ -398,6 +393,7 @@ export default function AboutProduct() {
               fontWeight="font-bold"
             >
               Product Name
+              <Text style={{ color: '#E50914' }}>{" "}*</Text>
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
               Keep the name concise with relevant info
@@ -407,11 +403,10 @@ export default function AboutProduct() {
               value={productName}
               placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
               onChangeText={setProductName}
-              className={`rounded-[12px] h-12 border p-3 ${
-                isDark
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
-              }`}
+              className={`rounded-[12px] h-12 border p-3 ${isDark
+                ? "border-[#292929] text-white"
+                : "border-[#e6e6e6] text-black"
+                }`}
             />
           </View>
 
@@ -427,11 +422,10 @@ export default function AboutProduct() {
               placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
               value={brandName}
               onChangeText={setBrandName}
-              className={`rounded-[12px] h-12 border p-3 ${
-                isDark
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
-              }`}
+              className={`rounded-[12px] h-12 border p-3 ${isDark
+                ? "border-[#292929] text-white"
+                : "border-[#e6e6e6] text-black"
+                }`}
             />
           </View>
 
@@ -447,11 +441,10 @@ export default function AboutProduct() {
               value={modelName}
               placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
               onChangeText={setModelName}
-              className={`rounded-[12px] h-12 border p-3 ${
-                isDark
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
-              }`}
+              className={`rounded-[12px] h-12 border p-3 ${isDark
+                ? "border-[#292929] text-white"
+                : "border-[#e6e6e6] text-black"
+                }`}
             />
           </View>
 
@@ -461,6 +454,8 @@ export default function AboutProduct() {
               fontWeight="font-bold"
             >
               Condition
+              <Text style={{ color: '#E50914' }}>{" "}*</Text>
+
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
               Choose the condition your product is in currently
@@ -547,11 +542,10 @@ export default function AboutProduct() {
               onChangeText={setProductDescription}
               placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
               multiline
-              className={`rounded-[12px] border h-32 p-3 ${
-                isDark
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
-              }`}
+              className={`rounded-[12px] border h-32 p-3 ${isDark
+                ? "border-[#292929] text-white"
+                : "border-[#e6e6e6] text-black"
+                }`}
               style={{
                 textAlignVertical: "top", // Ensures text starts at the top
               }}
@@ -574,11 +568,10 @@ export default function AboutProduct() {
               onChangeText={setUsageDescription}
               placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
               multiline
-              className={`rounded-[12px] border h-32 p-3 ${
-                isDark
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
-              }`}
+              className={`rounded-[12px] border h-32 p-3 ${isDark
+                ? "border-[#292929] text-white"
+                : "border-[#e6e6e6] text-black"
+                }`}
               style={{
                 textAlignVertical: "top", // Ensures text starts at the top
               }}
@@ -590,18 +583,19 @@ export default function AboutProduct() {
               fontSize="text-md"
               fontWeight="font-bold"
             >
-              Product location
+              Product Location
+              <Text style={{ color: '#E50914' }}>{" "}*</Text>
+
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
               Mention the product's location
             </Text>
 
             <TouchableOpacity
-              className={`h-[50px] rounded-[12px] w-full ${
-                isDark
-                  ? "bg-[#000] border-[#292929]"
-                  : "bg-white border-[#e6e6e6]"
-              } border px-2`}
+              className={`h-[50px] rounded-[12px] w-full ${isDark
+                ? "bg-[#000] border-[#292929]"
+                : "bg-white border-[#e6e6e6]"
+                } border px-2`}
               onPress={handleOpenBottomSheet}
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
@@ -623,9 +617,8 @@ export default function AboutProduct() {
                     ) : (
                       <Text
                         fontSize="text-sm"
-                        className={`${
-                          isDark ? "text-white/70" : "text-black/70"
-                        }`}
+                        className={`${isDark ? "text-white/70" : "text-black/70"
+                          }`}
                       >
                         Select a location
                       </Text>
@@ -648,6 +641,8 @@ export default function AboutProduct() {
               fontWeight="font-bold"
             >
               Product Address
+              <Text style={{ color: '#E50914' }}>{" "}*</Text>
+
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
               Add complete address where the product is located
@@ -658,11 +653,10 @@ export default function AboutProduct() {
               onChangeText={setAddress}
               placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
               multiline
-              className={`rounded-[12px] border h-32 p-3 ${
-                isDark
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
-              }`}
+              className={`rounded-[12px] border h-32 p-3 ${isDark
+                ? "border-[#292929] text-white"
+                : "border-[#e6e6e6] text-black"
+                }`}
               style={{
                 textAlignVertical: "top", // Ensures text starts at the top
               }}
@@ -674,16 +668,17 @@ export default function AboutProduct() {
               fontWeight="font-bold"
             >
               Price Per Day
+              <Text style={{ color: '#E50914' }}>{" "}*</Text>
+
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
               Set a fair rent for the product to get maximum offers
             </Text>
             <View
-              className={`flex-row items-center rounded-[12px] border px-3 ${
-                isDark
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
-              }`}
+              className={`flex-row items-center rounded-[12px] border px-3 ${isDark
+                ? "border-[#292929] text-white"
+                : "border-[#e6e6e6] text-black"
+                }`}
             >
               <View className="flex items-center justify-center">
                 {productCountry === "India" && (
@@ -714,9 +709,8 @@ export default function AboutProduct() {
                 value={pricePerDay}
                 onChangeText={setPricePerDay}
                 placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
-                className={`flex-1 h-12 p-3 ${
-                  isDark ? "text-white" : "text-black"
-                }`}
+                className={`flex-1 h-12 p-3 ${isDark ? "text-white" : "text-black"
+                  }`}
               />
             </View>
           </View>
@@ -727,16 +721,17 @@ export default function AboutProduct() {
               fontWeight="font-bold"
             >
               Security Deposit
+              <Text style={{ color: '#E50914' }}>{" "}*</Text>
+
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
               Set a fair security deposit to rent your product
             </Text>
             <View
-              className={`flex-row items-center rounded-[12px] border px-3 ${
-                isDark
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
-              }`}
+              className={`flex-row items-center rounded-[12px] border px-3 ${isDark
+                ? "border-[#292929] text-white"
+                : "border-[#e6e6e6] text-black"
+                }`}
             >
               <View className="flex items-center justify-center">
                 {productCountry === "India" && (
@@ -767,9 +762,8 @@ export default function AboutProduct() {
                 keyboardType="numeric"
                 value={securityDeposit}
                 onChangeText={setSecurityDeposit}
-                className={`flex-1 h-12 p-3 ${
-                  isDark ? "text-white" : "text-black"
-                }`}
+                className={`flex-1 h-12 p-3 ${isDark ? "text-white" : "text-black"
+                  }`}
               />
             </View>
           </View>
@@ -780,6 +774,8 @@ export default function AboutProduct() {
               fontWeight="font-bold"
             >
               Concerned person of contact
+              <Text style={{ color: '#E50914' }}>{" "}*</Text>
+
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
               Mention who the person of contact would be in case of any
@@ -794,13 +790,12 @@ export default function AboutProduct() {
                   setOtherName("");
                   setOtherPhoneNumber("");
                 }}
-                className={`rounded-[12px] h-12 border w-[49%] p-3 flex-row items-center justify-between ${
-                  contactPerson === "Owner"
-                    ? "border-[#635BE8]"
-                    : isDark
+                className={`rounded-[12px] h-12 border w-[49%] p-3 flex-row items-center justify-between ${contactPerson === "Owner"
+                  ? "border-[#635BE8]"
+                  : isDark
                     ? "border-[#292929] text-white"
                     : "border-[#e6e6e6] text-black"
-                }`}
+                  }`}
               >
                 <Text fontSize="text-sm">Owner</Text>
                 {contactPerson === "Owner" && (
@@ -814,13 +809,12 @@ export default function AboutProduct() {
               {/* Other Option */}
               <TouchableOpacity
                 onPress={() => setContactPerson("Other")}
-                className={`rounded-[12px] h-12 border w-[49%] p-3 flex-row items-center justify-between ${
-                  contactPerson === "Other"
-                    ? "border-[#635BE8]"
-                    : isDark
+                className={`rounded-[12px] h-12 border w-[49%] p-3 flex-row items-center justify-between ${contactPerson === "Other"
+                  ? "border-[#635BE8]"
+                  : isDark
                     ? "border-[#292929] text-white"
                     : "border-[#e6e6e6] text-black"
-                }`}
+                  }`}
               >
                 <Text fontSize="text-sm">Other</Text>
                 {contactPerson === "Other" && (
@@ -840,17 +834,18 @@ export default function AboutProduct() {
                     fontWeight="font-bold"
                   >
                     Name
+                    <Text style={{ color: '#E50914' }}>{" "}*</Text>
+
                   </Text>
                   <TextInput
                     placeholder="Enter name"
                     value={otherName}
                     onChangeText={setOtherName}
                     placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
-                    className={`rounded-[12px] h-12 border p-3 ${
-                      isDark
-                        ? "border-[#292929] text-white"
-                        : "border-[#e6e6e6] text-black"
-                    }`}
+                    className={`rounded-[12px] h-12 border p-3 ${isDark
+                      ? "border-[#292929] text-white"
+                      : "border-[#e6e6e6] text-black"
+                      }`}
                   />
                 </View>
 
@@ -860,17 +855,18 @@ export default function AboutProduct() {
                     fontWeight="font-bold"
                   >
                     Phone Number
+                    <Text style={{ color: '#E50914' }}>{" "}*</Text>
                   </Text>
                   <View className="flex-row flex-1 gap-x-2 ">
                     <View
-                      className={` rounded-[12px] flex-[0.5] border h-12  flex-row items-center justify-center ${
-                        isDark
-                          ? "border-[#292929] text-white"
-                          : "border-[#e6e6e6] text-black"
-                      }`}
+                      className={` rounded-[12px] flex-[0.5] border h-12  flex-row items-center justify-center ${isDark
+                        ? "border-[#292929] text-white"
+                        : "border-[#e6e6e6] text-black"
+                        }`}
                     >
                       <CountryPicker
                         {...(isDark && { theme: DARK_THEME })}
+                        renderCountryFilter={(props) => <TextInput placeholder="Search country" style={{ height: 40, borderBottomWidth: 1, width: '80%', borderColor: 'rgba(0,0,0,0.5)' }} className="" {...props} />}
                         withFlag
                         withCallingCode
                         withFilter
@@ -895,11 +891,10 @@ export default function AboutProduct() {
 
                     <View
                       // className="flex-row items-center flex-1"
-                      className={`flex-row items-center rounded-[12px] flex-1 border px-3 h-12  ${
-                        isDark
-                          ? "border-[#292929] text-white"
-                          : "border-[#e6e6e6] text-black"
-                      }`}
+                      className={`flex-row items-center rounded-[12px] flex-1 border px-3 h-12  ${isDark
+                        ? "border-[#292929] text-white"
+                        : "border-[#e6e6e6] text-black"
+                        }`}
                     >
                       <View className="pr-2 items-center justify-center">
                         <PhoneIcon
@@ -918,9 +913,8 @@ export default function AboutProduct() {
                           placeholderTextColor={
                             isDark ? "#ffffff80" : "#00000080"
                           }
-                          className={`flex-1 h-12 p-3  ${
-                            isDark ? "text-white" : "text-black"
-                          }`}
+                          className={`flex-1 h-12 p-3  ${isDark ? "text-white" : "text-black"
+                            }`}
                         />
                       </View>
                     </View>
@@ -937,18 +931,15 @@ export default function AboutProduct() {
             <View className="flex-row items-center justify-between">
               <Text
                 fontWeight="font-bold"
-                className={`${
-                  allFieldsFilled ? "text-white" : "text-gray-500"
-                }`}
+                className={`${allFieldsFilled ? "text-white" : "text-gray-500"
+                  }`}
               >
                 Next
               </Text>
-              <View className="mt-1">
-                <ChevronRightIcon
-                  size={16}
-                  color={allFieldsFilled ? "#ffffff" : "#888888"}
-                />
-              </View>
+              <ChevronRightIcon
+                size={16}
+                color={allFieldsFilled ? "#ffffff" : "#888888"}
+              />
             </View>
           </Button>
         </ScrollView>

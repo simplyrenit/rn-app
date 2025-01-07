@@ -1,6 +1,7 @@
 import { useGlobalContext } from "@/context/global-context";
 import {
   AVAILABILITY,
+  DELETE_MY_ACCOUNT_ENDPOINT,
   MY_DETAILS_ENDPOINT,
   MY_PRODUCT_DETAILS_ENDPOINT,
   MY_PRODUCTS_ENDPOINT,
@@ -15,21 +16,24 @@ import {
 import axios from "axios";
 import { usePost } from "./post";
 import { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import axiosInstance from "@/lib/networkUtils";
 
 export function useProfile() {
-  const { authTokens, fetchUserDetails } = useGlobalContext();
+  const { authTokens, fetchUserDetails, logout } = useGlobalContext();
   const { access_token } = authTokens || {};
   const { getPresignedURLs, uploadToS3 } = usePost();
   const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
   async function getMyDetails(token?: string) {
     setLoading(true);
     try {
-      const response = await axios.get<MyDetails>(MY_DETAILS_ENDPOINT, {
+      const response = await axiosInstance.get<MyDetails>(MY_DETAILS_ENDPOINT, token ? {
         headers: {
-          Authorization: `Bearer ${token || access_token}`,
+          Authorization: `Bearer ${token}`,
         },
-      });
+      } : undefined);
 
       return response.data;
     } catch (error) {
@@ -43,14 +47,9 @@ export function useProfile() {
   async function updateMyDetails(username: string, data: Partial<MyDetails>) {
     setLoading(true);
     try {
-      const response = await axios.patch<MyDetails>(
+      const response = await axiosInstance.patch<MyDetails>(
         `${UPDATE_MY_DETAILS_ENDPOINT}${username}/`,
         data,
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        }
       );
 
       await fetchUserDetails();
@@ -61,6 +60,23 @@ export function useProfile() {
       throw error;
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function deleteMyAccount(username: string) {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.delete(`${DELETE_MY_ACCOUNT_ENDPOINT}${username}`)
+    } catch (error) {
+      console.error("Error deleting user account:", `${DELETE_MY_ACCOUNT_ENDPOINT}${username}`, error);
+      throw error;
+    } finally {
+      setLoading(false);
+      await logout();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Welcome" }],
+      });
     }
   }
 
@@ -77,14 +93,12 @@ export function useProfile() {
         image: { name: username, image_url: imageUrls[0].split("?")[0] },
       };
 
-      console.log(JSON.stringify(body));
 
       const response = await fetch(
         `${UPDATE_MY_DETAILS_ENDPOINT}${username}/`,
         {
           method: "PATCH",
           headers: {
-            Authorization: `Bearer ${access_token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(body),
@@ -108,13 +122,9 @@ export function useProfile() {
     try {
       const response = await fetch(MY_PRODUCTS_ENDPOINT, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
       });
       const data = await response.json();
 
-      console.log("MY PRODUCTSS", data);
 
       return data.results;
     } catch (error) {
@@ -128,13 +138,8 @@ export function useProfile() {
   async function getMyProductDetails(name: string) {
     setLoading(true);
     try {
-      const response = await axios.get<BackendProduct>(
-        `${MY_PRODUCT_DETAILS_ENDPOINT}${name}/`,
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        }
+      const response = await axiosInstance.get<BackendProduct>(
+        `${MY_PRODUCT_DETAILS_ENDPOINT}${name}/`
       );
 
       return response.data;
@@ -152,19 +157,11 @@ export function useProfile() {
   ) {
     setLoading(true);
 
-    console.log(data);
-
     try {
-      const response = await axios.patch<BackendProduct>(
+      const response = await axiosInstance.patch<BackendProduct>(
         `${MY_PRODUCT_DETAILS_ENDPOINT}${name}/`,
         data,
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        }
       );
-      console.log("UPDATE MY PRODUCT DETAILS", response.data);
       return response.data;
     } catch (error: any) {
       console.error("Error updating product details:", error.response.data);
@@ -188,7 +185,6 @@ export function useProfile() {
 
       await Promise.all(
         data.images.map((img, index) => {
-          console.log(`Uploading image ${index + 1}...`);
           return uploadToS3(imageUrls[index], img.image);
         })
       );
@@ -205,16 +201,10 @@ export function useProfile() {
         cover_image: coverImageUrl[0].split("?")[0],
       };
 
-      console.log("BODY", body);
 
-      const response = await axios.patch<BackendProduct>(
+      const response = await axiosInstance.patch<BackendProduct>(
         `${MY_PRODUCT_DETAILS_ENDPOINT}${name}/`,
         body,
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        }
       );
 
       return response;
@@ -245,13 +235,8 @@ export function useProfile() {
   async function deleteMyProduct(name: string) {
     setLoading(true);
     try {
-      const response = await axios.delete(
+      const response = await axiosInstance.delete(
         `${MY_PRODUCT_DETAILS_ENDPOINT}${name}/`,
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        }
       );
 
       return response.data;
@@ -266,17 +251,11 @@ export function useProfile() {
   async function reportAProblem(message: string) {
     setLoading(true);
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         REPORT_PROBLEM_ENDPOINT,
         {
           comment: message,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-            "Content-Type": "application/json",
-          },
-        }
       );
 
       return response.data;
@@ -291,17 +270,11 @@ export function useProfile() {
   async function giveFeedback(message: string) {
     setLoading(true);
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         REPORT_PROBLEM_ENDPOINT,
         {
           comment: message,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-            "Content-Type": "application/json",
-          },
-        }
       );
 
       return response.data;
@@ -316,11 +289,7 @@ export function useProfile() {
   async function submitUnavailabilityForm(data: UnavailabilityFormData) {
     setLoading(true);
     try {
-      const response = await axios.post(AVAILABILITY, data, {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
-      });
+      const response = await axiosInstance.post(AVAILABILITY, data);
 
       return { status: response.status, data: response.data };
     } catch (error) {
@@ -345,6 +314,7 @@ export function useProfile() {
     updateMyDetails,
     loading,
     submitUnavailabilityForm,
+    deleteMyAccount,
   };
 }
 

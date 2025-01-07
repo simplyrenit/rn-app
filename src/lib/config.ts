@@ -5,7 +5,7 @@ import { getStorage } from "@react-native-firebase/storage";
 export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
 
 export const WEB_CLIENT_ID =
-  "639298619246-sc0788sgfdc3nbonvevok8d58b53jbta.apps.googleusercontent.com";
+  "899825999056-rir4k4ci4jaeaikdftuah8l55u3mio89.apps.googleusercontent.com";
 
 export const ANDROID_CLIENT_ID =
   "899825999056-1fbjdig0hm74912abpkaba6gcv5d4788.apps.googleusercontent.com";
@@ -74,6 +74,8 @@ export const MY_DETAILS_ENDPOINT = SERVERURL + "users/me/";
 
 export const UPDATE_MY_DETAILS_ENDPOINT = SERVERURL + "users/";
 
+export const DELETE_MY_ACCOUNT_ENDPOINT = SERVERURL + "users/";
+
 export const NOTIFICATIONS_ENDPOINT = SERVERURL + "notification/";
 
 export const ALL_PRODUCTS = SERVERURL + "product-title/";
@@ -97,6 +99,8 @@ export const OWNER_REVIEWS = SERVERURL + "owner-ratings/reviews/";
 export const AVAILABILITY = SERVERURL + "availability/";
 
 export const WRITE_REVIEW = SERVERURL + "write-review/";
+
+export const GET_REFRESH_TOKEN = SERVERURL + 'token/refresh/';
 
 let app, firestore, storage;
 

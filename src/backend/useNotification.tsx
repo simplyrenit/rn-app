@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useGlobalContext } from "../context/global-context";
 import { NOTIFICATIONS_ENDPOINT } from "../lib/config";
+import axiosInstance from "@/lib/networkUtils";
 
 interface NotificationResponse {
   results: Notification[];
@@ -15,13 +16,8 @@ export function useNotifications() {
   async function getNotifications() {
     if (!access_token) return; // Perform function only if access_token is not null
     try {
-      const response = await axios.get<NotificationResponse>(
+      const response = await axiosInstance.get<NotificationResponse>(
         NOTIFICATIONS_ENDPOINT,
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        }
       );
 
       setNotifications(response.data.results);
@@ -41,11 +37,6 @@ export function useNotifications() {
             .patch(
               `${NOTIFICATIONS_ENDPOINT}${notification.id}/`,
               { is_read: true },
-              {
-                headers: {
-                  Authorization: `Bearer ${access_token}`,
-                },
-              }
             )
             .then((response) => response.data)
         )

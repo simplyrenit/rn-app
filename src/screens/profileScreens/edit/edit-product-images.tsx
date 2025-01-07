@@ -35,7 +35,7 @@ export default function EditProductImages() {
   const navigation = useTypedNavigation();
   const route = useRoute<RouteProps<"EditProductImages">>();
 
-  const { images, name } = route.params;
+  const { images, name, coverImage } = route.params;
 
   const { theme } = useGlobalContext();
   const isDark = theme === "dark";
@@ -52,6 +52,7 @@ export default function EditProductImages() {
     navigation.navigate("EditCoverImage", {
       images: selectedImages.map((img) => img.image),
       name: name,
+      coverImage,
     });
   };
 
@@ -107,6 +108,7 @@ export default function EditProductImages() {
   const removeImage = (index: number) => {
     setSelectedImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
+
 
   const allFieldsFilled = selectedImages.length > 0;
 
@@ -172,15 +174,15 @@ export default function EditProductImages() {
 
   return (
     <NonScrollableContainer>
-      <View className="px-3 flex-row items-center">
+      <View className="px-3 flex-row items-center py-4">
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           className="w-[10%]"
         >
-          <ArrowLeftIcon size={24} color={isDark ? "#ffffff" : "#000000"} />
+          <ArrowLeftIcon size={20} color={isDark ? "#ffffff" : "#000000"} />
         </TouchableOpacity>
         <View className="w-[80%]">
-          <View className="h-24 items-center justify-center">
+          <View className=" items-center justify-center">
             <Text fontSize="text-lg" fontWeight="font-bold">
               Edit Product Images
             </Text>
@@ -218,18 +220,15 @@ export default function EditProductImages() {
             <View className="flex-row items-center justify-between">
               <Text
                 fontWeight="font-bold"
-                className={`${
-                  allFieldsFilled ? "text-white" : "text-gray-500"
-                }`}
+                className={`${allFieldsFilled ? "text-white" : "text-gray-500"
+                  }`}
               >
                 Next
               </Text>
-              <View className="mt-1">
-                <ChevronRightIcon
-                  size={16}
-                  color={allFieldsFilled ? "#ffffff" : "#888888"}
-                />
-              </View>
+              <ChevronRightIcon
+                size={16}
+                color={allFieldsFilled ? "#ffffff" : "#888888"}
+              />
             </View>
           </Button>
         </View>
@@ -257,9 +256,8 @@ export default function EditProductImages() {
             >
               <PhotoIcon size={24} color={isDark ? "#e6e6e6" : "#292929"} />
               <Text
-                className={`${
-                  isDark ? "text-white/70" : "text-black/70"
-                } text-center`}
+                className={`${isDark ? "text-white/70" : "text-black/70"
+                  } text-center`}
               >
                 Choose from gallery
               </Text>
@@ -279,9 +277,8 @@ export default function EditProductImages() {
             >
               <CameraIcon size={24} color={isDark ? "#e6e6e6" : "#292929"} />
               <Text
-                className={`${
-                  isDark ? "text-white/70" : "text-black/70"
-                } text-center`}
+                className={`${isDark ? "text-white/70" : "text-black/70"
+                  } text-center`}
               >
                 Take a photo
               </Text>

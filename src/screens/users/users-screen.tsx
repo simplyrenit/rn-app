@@ -95,7 +95,6 @@ export default function UsersDetails() {
         text: "Hello, I am interested in your products!",
       }
     );
-    console.log("Chat started");
 
     if (success) {
       navigation.navigate("ChatDetails", { id: content });
@@ -105,6 +104,7 @@ export default function UsersDetails() {
   React.useEffect(() => {
     fetchOwnerDetails();
   }, [id]);
+
 
   return (
     <Container>
@@ -166,9 +166,8 @@ export default function UsersDetails() {
           </Text>
           <Text
             fontSize="text-sm"
-            className={`mt-1 text-black/50 ${
-              isDark ? "text-white/50" : "text-black/50"
-            }`}
+            className={`mt-1 text-black/50 ${isDark ? "text-white/50" : "text-black/50"
+              }`}
           >
             Rating
           </Text>
@@ -187,9 +186,8 @@ export default function UsersDetails() {
           </Text>
           <Text
             fontSize="text-sm"
-            className={`mt-1 text-black/50 ${
-              isDark ? "text-white/50" : "text-black/50"
-            }`}
+            className={`mt-1 text-black/50 ${isDark ? "text-white/50" : "text-black/50"
+              }`}
           >
             Products
           </Text>
@@ -214,9 +212,8 @@ export default function UsersDetails() {
           </Text>
           <Text
             fontSize="text-sm"
-            className={`mt-1 text-black/50 ${
-              isDark ? "text-white/50" : "text-black/50"
-            }`}
+            className={`mt-1 text-black/50 ${isDark ? "text-white/50" : "text-black/50"
+              }`}
           >
             User since
           </Text>
@@ -228,6 +225,7 @@ export default function UsersDetails() {
           <Button
             variant="outline"
             onPress={handleStartChat}
+            className="border rounded-xl"
           >
             <Text fontWeight="font-bold">Chat with {owner?.first_name}</Text>
           </Button>
@@ -235,9 +233,8 @@ export default function UsersDetails() {
       )}
 
       <View
-        className={`my-5 border-b-[1px] ${
-          isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-        }`}
+        className={`my-5 border-b-[0.5px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+          }`}
       ></View>
 
       <View className="">
@@ -279,10 +276,10 @@ export default function UsersDetails() {
           </ScrollView>
         </View>
 
-        <View className="px-5">
+        {products.length > 2 && <View className="px-5">
           <Button
             variant="outline"
-            className="mt-4"
+            className="mt-4 border rounded-xl"
             onPress={() =>
               navigation.navigate("OwnersProducts", {
                 products: products,
@@ -292,15 +289,14 @@ export default function UsersDetails() {
           >
             <Text fontWeight="font-bold">View all products</Text>
           </Button>
-        </View>
+        </View>}
       </View>
 
       {/* <View className="border-b-[1px] border-[#292929] my-5"></View> */}
 
       <View
-        className={`my-5 border-b-[1px] ${
-          isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-        }`}
+        className={`my-5 border-b-[0.5px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+          }`}
       ></View>
 
       <View className=" mb-16">
@@ -314,6 +310,11 @@ export default function UsersDetails() {
               {owner?.first_name}'s reviews
             </Text>
           </View>
+          {!ownerReviews.length && (
+            <Text fontSize="text-sm"
+              className={`mt-0 ml-6 text-black/50 ${isDark ? "text-white/50" : "text-black/50"
+                }`}>No reviews yet</Text>
+          )}
 
           <ScrollView
             horizontal
@@ -343,7 +344,7 @@ export default function UsersDetails() {
           </ScrollView>
         </View>
 
-        <View className="px-5">
+        {ownerReviews.length > 1 ? <View className="px-5">
           <Button
             onPress={() =>
               navigation.navigate("OwnersReviewScreen", {
@@ -352,11 +353,11 @@ export default function UsersDetails() {
               })
             }
             variant="outline"
-            className="mt-4"
+            className="mt-4 border rounded-xl"
           >
             <Text fontWeight="font-bold">View all reviews</Text>
           </Button>
-        </View>
+        </View> : null}
       </View>
     </Container>
   );

@@ -28,6 +28,8 @@ import Toast from "react-native-toast-message";
 import { ProductsSkeleton } from "./products-skeleton";
 import { ModerationBanner } from "@/components/product/moderation-banner";
 import { SvgUri } from "react-native-svg";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const MAX_CHARS = 150;
 
@@ -57,14 +59,12 @@ export default function DetailsScreen() {
     try {
       const data = await fetchProduct(id);
       setProduct(data);
-      console.log(data.category, "icon");
       const similarProducts = await fetchSimilarProducts(id);
       const reviews = await fetchReviews(id);
       setSimilarProducts(similarProducts);
       setReviews(reviews);
       setIsModerated(data?.moderation_labels?.length > 0);
     } catch (error: any) {
-      console.log("Error fetching product details:", error);
     } finally {
       setLoading(false);
     }
@@ -77,7 +77,7 @@ export default function DetailsScreen() {
   const handleEditClick = () => {
     navigation.navigate("Profile", {
       screen: "editProduct",
-      params: { id: product!.name },
+      params: { id: product?.name },
     });
   };
 
@@ -117,9 +117,9 @@ export default function DetailsScreen() {
         rate: product?.rate!,
         type: "product",
         text: "",
+        id: product?.name ?? '',
       }
     );
-    console.log("Chat started");
 
     if (success) {
       navigation.navigate("ChatDetails", { id: content });
@@ -129,10 +129,10 @@ export default function DetailsScreen() {
   const lessReviews = reviews.slice(0, 4);
 
   const truncateAtNearestSpace = (text: string, maxLength: number) => {
-    if (text.length <= maxLength) return text;
-    const truncated = text.slice(0, maxLength);
-    const lastSpaceIndex = truncated.lastIndexOf(" ");
-    return truncated.slice(0, lastSpaceIndex) + "...";
+    if (text?.length <= maxLength) return text;
+    const truncated = text?.slice(0, maxLength);
+    const lastSpaceIndex = truncated?.lastIndexOf(" ");
+    return truncated?.slice(0, lastSpaceIndex) + "...";
   };
 
   const truncatedText = truncateAtNearestSpace(
@@ -140,14 +140,18 @@ export default function DetailsScreen() {
     MAX_CHARS
   );
   const displayText = showFullText ? product?.description! : truncatedText;
-
+  if(!product) {
+    return <SafeAreaView className="flex-1 p-4">
+      <Text>Product not found</Text>
+    </SafeAreaView>
+  }
   return (
     <View className="flex-1">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{ flexGrow: 1, backgroundColor: isDark ? '#000' : '#fff' }}
       >
-        <View style={{ width: "100%", aspectRatio: 1 }}>
+        <View style={{ width: "100%", aspectRatio: 1, }}>
           <ProductImage
             images={product!.images}
             name={id}
@@ -170,6 +174,7 @@ export default function DetailsScreen() {
             <Text
               fontSize="text-xl"
               fontWeight="font-bold"
+              style={{ flex: 1}}
             >
               {product?.title}
             </Text>
@@ -230,7 +235,7 @@ export default function DetailsScreen() {
             </Text>
           </View>
 
-          <View className="flex items-center flex-1">
+          <View className="flex items-center flex-1" >
             <BanknotesIcon
               color={isDark ? "white" : "black"}
               size={wp("5.5%")}
@@ -260,7 +265,7 @@ export default function DetailsScreen() {
               fontWeight="font-bold"
               className="mt-2"
             >
-              {product?.condition}
+              {product?.condition?.[0]?.toUpperCase()}{product?.condition.slice(1)}
             </Text>
             <Text
               className={`mt-1 font-light ${
@@ -408,7 +413,7 @@ export default function DetailsScreen() {
                 })
               }
               variant="outline"
-              className="mt-4"
+              className="mt-4 border rounded-xl"
             >
               <Text fontWeight="font-bold">View all reviews</Text>
             </Button>
@@ -485,7 +490,7 @@ export default function DetailsScreen() {
           isDark ? "bg-black border-t-[#292929]" : "bg-white border-t-[#E6E6E6]"
         } flex-row items-center h-[10%]`}
       >
-        <View className="flex flex-row items-end flex-1">
+        <View className="flex flex-row items-end flex-1" style={{ alignItems: 'center'}}>
           <View className="">
             <Text
               fontWeight="font-bold"

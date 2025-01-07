@@ -21,7 +21,7 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
 
   return (
     <NonScrollableContainer>
-      <View className="flex-row items-center justify-between px-5 pb-2">
+      <View className="flex-row items-center justify-between px-5 pb-2 pt-2">
         <TouchableOpacity
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
@@ -58,7 +58,7 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
             isDarkMode ? "text-[#ffffffb2]" : "text-[#000000b2]"
           }`}
         >
-          Renit is a community that enables individuals and organizations to get
+          Renit is a community that enables everyone to get
           access to anything by providing everyone with the most seamless rental
           marketplace. A place where anyone can 'rent out' thier belongings to
           others or 'rent in' anything they need. What really drives us at Renit

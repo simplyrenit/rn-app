@@ -104,7 +104,6 @@ export default function LocationScreen() {
         formattedAddress = reverseGeocode[0].formattedAddress || "";
         // }
 
-        console.log(formattedAddress);
 
         if (!formattedAddress) {
           const fallbackParts = [name, street, city, region, country].filter(
@@ -247,7 +246,6 @@ export default function LocationScreen() {
       const { coords } = await Location.getCurrentPositionAsync();
       setLocation2(coords);
     } catch (error) {
-      console.log("Error fetching location: ", error);
     }
   };
 
@@ -324,7 +322,6 @@ export default function LocationScreen() {
     }
     const response = await signUpUser();
     setAuthTokens(response);
-    console.log("SignUP-response", response);
     if (response) {
       navigation.navigate("MainTabs");
     }
@@ -627,11 +624,11 @@ export default function LocationScreen() {
                             ? "border-[#292929] bg-[#0F0F0F]"
                             : "border-[#e6e6e6] bg-white"
                         }`}
+                        style={{ alignItems: 'center'}}
                       >
                         <MagnifyingGlassIcon
                           color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
                           size={24}
-                          style={{ marginTop: hp(1.1) }}
                         />
                         <GooglePlacesAutocomplete
                           ref={googlePlacesRef}
@@ -645,7 +642,7 @@ export default function LocationScreen() {
                           disableScroll={true}
                           styles={{
                             textInput: {
-                              height: 40,
+                              height: '100%',
                               backgroundColor: isDarkMode ? "#0F0F0F" : "#fff",
                               borderRadius: 12,
                               // paddingHorizontal: 8,

@@ -22,7 +22,6 @@ export default function UnavailabilityCategories() {
   const isDarkMode = theme === "dark";
 
   useEffect(() => {
-    console.log("Categories---: ", categories);
   }, [categories]);
 
   const onPress = (cat: Category) => {

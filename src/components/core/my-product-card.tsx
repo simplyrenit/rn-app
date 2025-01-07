@@ -23,6 +23,7 @@ export function MyProductCard({
   id,
   isDarkMode,
   moderationLabels = [],
+  width, alignItems
 }: ItemCard) {
   const router = useTypedNavigation();
   const { theme } = useGlobalContext();
@@ -33,10 +34,11 @@ export function MyProductCard({
   const isModerated = moderationLabels?.length > 0;
 
   return (
-    <View className="py-2">
+    <View className="py-2" style={{ width, alignItems }}>
       <TouchableOpacity
         onPress={() => router.navigate("ProductDetail", { id })}
         className="justify-center"
+        style={{ marginBottom: -8 }}
       >
         <View className="rounded-xl overflow-hidden mb-4 ">
           <View
@@ -92,7 +94,9 @@ export function MyProductCard({
               </View>
             )}
           </View>
-          <View className="mt-2">
+          <View className="mt-2 w-full" style={{
+            width: wp("41.5%") > 163 ? 163 : wp("41.5%"),
+          }}>
             <Text
               fontWeight="font-bold"
               className="mb-1"
@@ -100,13 +104,13 @@ export function MyProductCard({
               {truncatedname}
             </Text>
             <Text
-              className={`mb-1 ${
-                isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
-              }`}
+              numberOfLines={1}
+              className={`mb-0 ${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                }`}
             >
-              {truncatedLocation}
+              {location}
             </Text>
-            <View className="flex flex-row items-center">
+            <View className="flex flex-row items-center mt-1">
               <Text
                 fontSize="text-base"
                 fontWeight="font-bold"
@@ -114,9 +118,8 @@ export function MyProductCard({
                 ₹{Number(price).toFixed(0)}
               </Text>
               <Text
-                className={`ml-1 ${
-                  isDarkMode ? "text-[#FFFFFF80]" : "text-[#00000080]"
-                }`}
+                className={`ml-1 ${isDarkMode ? "text-[#FFFFFF80]" : "text-[#00000080]"
+                  }`}
               >
                 per day
               </Text>
@@ -131,11 +134,10 @@ export function MyProductCard({
         style={{
           width: wp("41.5%") > 163 ? 163 : wp("41.5%"),
         }}
-        className={`${
-          theme === "dark"
-            ? "bg-[#1A1A1A] border-[#292929]"
-            : "bg-white border-[#e6e6e6]"
-        } flex-row justify-center items-center border rounded-2xl py-3 px-6`}
+        className={`${theme === "dark"
+          ? "bg-[#1A1A1A] border-[#292929]"
+          : "bg-white border-[#e6e6e6]"
+          } flex-row justify-center items-center border rounded-2xl py-3 px-6`}
       >
         <View className="mr-2">
           <PencilSquareIcon

@@ -4,6 +4,7 @@ import {
   GET_TOP_EXPERIENCE,
   GET_TOP_PICKS,
 } from "@/lib/config";
+import axiosInstance from "@/lib/networkUtils";
 import axios from "axios";
 
 const useHome = () => {
@@ -14,7 +15,6 @@ const useHome = () => {
   const getAuthHeaders = () => {
     const headers = {
       headers: {
-        Authorization: `Bearer ${access_token}`,
         "Content-Type": "application/json",
       },
     };
@@ -26,8 +26,8 @@ const useHome = () => {
     try {
       const url = `${endpoint}?lat=${lat}&long=${long}`;
       const headers = getAuthHeaders();
-      const response = await axios.get(url, headers);
-      return response.data;
+      const response = await axiosInstance.get(url, headers);
+      return { ...response.data, results: response.data.results.filter(data => !data?.moderation_labels?.length) };
     } catch (error) {
       console.error(`Error fetching data from ${endpoint}:`, error);
       throw error;
@@ -38,9 +38,9 @@ const useHome = () => {
     fetchTopExperiences: (lat: number, long: number) =>
       fetchData(GET_TOP_EXPERIENCE, lat, long),
     fetchTopPicks: (lat: number, long: number) =>
-      fetchData(GET_TOP_PICKS, lat, long),
+      fetchData(GET_TOP_EXPERIENCE, lat, long),
     fetchPopularProductsNearYou: (lat: number, long: number) =>
-      fetchData(GET_POPULAR_PRODUCTS_NEAR_YOU, lat, long),
+      fetchData(GET_TOP_EXPERIENCE, lat, long),
   };
 };
 

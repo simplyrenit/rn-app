@@ -43,7 +43,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const getUser = async () => {
     try {
       const userData = await AsyncStorage.getItem("user");
-      console.log("User data retrieved from AsyncStorage", userData);
       if (userData) {
         setUser(JSON.parse(userData));
       }

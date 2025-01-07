@@ -6,7 +6,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import CountryPicker, { DARK_THEME } from "react-native-country-picker-modal";
 import {
   ArrowLeftIcon,
@@ -47,7 +47,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   });
   const [nameId, setNameId] = useState("");
 
-  const { getMyDetails, updateMyProfileImage, updateMyDetails, loading } =
+  const { getMyDetails, updateMyProfileImage, updateMyDetails, loading, deleteMyAccount } =
     useProfile();
 
   const fetchDetails = async () => {
@@ -136,7 +136,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
       setDetails((prevDetails) => ({ ...prevDetails, fullName: updatedName }));
 
-      console.log("Name updated successfully!");
       editNameModalRef.current?.close();
     } catch (error) {
       console.error("Error saving name:", error);
@@ -162,7 +161,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       }));
       editPasswordModalRef.current?.close();
     } else {
-      console.log("Password does not meet the requirements.");
     }
   };
 
@@ -176,7 +174,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const handleSendOtp = async () => {
     if (updatedEmail) {
       setIsOtpSent(true);
-      console.log("OTP sent to:", updatedEmail);
       // await sendOTP(updatedEmail);
     }
   };
@@ -184,7 +181,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const handleSendOtpToMobile = () => {
     if (updatedPhone) {
       setIsMobileOtpSent(true);
-      console.log("OTP sent to:", updatedPhone);
     }
   };
 
@@ -223,7 +219,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         // Close the modal and reset OTP state
         editEmailModalRef.current?.close();
         setIsOtpSent(false);
-        console.log("Verified and email updated to:", updatedEmail);
       } catch (error) {
         console.error("Error updating email:", error);
         alert("Failed to update email. Please try again.");
@@ -265,10 +260,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
         editPhoneModalRef.current?.close();
         setIsMobileOtpSent(false);
-        console.log(
-          "Verified and phone updated to:",
-          "+" + country.callingCode + "-" + updatedPhone
-        );
       } catch (error) {
         console.error("Error updating phone number:", error);
       }
@@ -320,11 +311,9 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     },
   });
   const handleProfileUpdate = async () => {
-    console.log(selectedImage);
     if (selectedImage) {
       try {
         await updateMyProfileImage(nameId, selectedImage);
-        console.log("Profile image updated successfully!");
         setDetails((prevDetails) => ({
           ...prevDetails,
           profilePic: selectedImage,
@@ -335,7 +324,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         console.error("Error updating profile image:", error);
       }
     } else {
-      console.log("Please select an image before updating your profile.");
     }
   };
 
@@ -382,6 +370,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     profileImageSheetRef.current?.close();
   };
 
+  const handleDeleteAccount = () => {
+    deleteMyAccount(nameId);
+  }
+
   return (
     <>
       <CustomBottomSheetModal
@@ -389,6 +381,9 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         snapPoints={["90%"]}
         isDark={isDarkMode}
       >
+        <Pressable style={{ position: 'absolute', bottom: 12, left: 0, right: 0, alignItems: 'center' }} onPress={handleDeleteAccount}>
+          <Text style={{ color: '#E50914' }}>Delete my account</Text>
+        </Pressable>
         <View className="flex items-center my-4">
           <Text
             fontSize="text-xl"
@@ -400,9 +395,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
         <View
           style={{ paddingVertical: wp("5%") }}
-          className={`flex-row justify-between items-center border-b-[1px] ${
-            isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-          } p-4`}
+          className={`flex-row justify-between items-center border-b-[1px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+            } p-4`}
         >
           <View className="flex-row gap-3 items-center justify-center">
             <View>
@@ -583,9 +577,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 color={isDark ? "#e6e6e6" : "#292929"}
               />
               <Text
-                className={`${
-                  isDark ? "text-white/70" : "text-black/70"
-                } text-center`}
+                className={`${isDark ? "text-white/70" : "text-black/70"
+                  } text-center`}
               >
                 Choose from gallery
               </Text>
@@ -608,9 +601,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 color={isDark ? "#e6e6e6" : "#292929"}
               />
               <Text
-                className={`${
-                  isDark ? "text-white/70" : "text-black/70"
-                } text-center`}
+                className={`${isDark ? "text-white/70" : "text-black/70"
+                  } text-center`}
               >
                 Take a photo
               </Text>
@@ -657,11 +649,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         </View>
         <View className="p-4 gap-4">
           <TextInput
-            className={`rounded-[12px] border p-3 ${
-              isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
-            }`}
+            className={`rounded-[12px] border p-3 ${isDark
+              ? "border-[#292929] text-white"
+              : "border-[#e6e6e6] text-black"
+              }`}
             placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
             value={updatedName}
             onChangeText={setUpdatedName}
@@ -729,11 +720,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           {!isOtpSent ? (
             <>
               <TextInput
-                className={`rounded-lg border p-3 ${
-                  isDark
-                    ? "border-[#292929] text-white"
-                    : "border-[#e6e6e6] text-black"
-                }`}
+                className={`rounded-lg border p-3 ${isDark
+                  ? "border-[#292929] text-white"
+                  : "border-[#e6e6e6] text-black"
+                  }`}
                 placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
                 value={updatedEmail}
                 onChangeText={setUpdatedEmail}
@@ -804,7 +794,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                     <Text
                       fontSize="text-sm"
                       fontWeight="font-bold"
-                      // className="text-white"
+                    // className="text-white"
                     >
                       Resend OTP
                     </Text>
@@ -869,11 +859,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             <>
               <View className="flex-row gap-x-2 ">
                 <View
-                  className={` rounded-[12px] flex-[0.5] border h-12  flex-row items-center justify-center ${
-                    isDark
-                      ? "border-[#292929] text-white"
-                      : "border-[#e6e6e6] text-black"
-                  }`}
+                  className={` rounded-[12px] flex-[0.5] border h-12  flex-row items-center justify-center ${isDark
+                    ? "border-[#292929] text-white"
+                    : "border-[#e6e6e6] text-black"
+                    }`}
                 >
                   <CountryPicker
                     {...(isDark && { theme: DARK_THEME })}
@@ -900,11 +889,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </View>
 
                 <View
-                  className={`flex-row items-center rounded-[12px] flex-1 border px-3 h-12 ${
-                    isDark
-                      ? "border-[#292929] text-white"
-                      : "border-[#e6e6e6] text-black"
-                  }`}
+                  className={`flex-row items-center rounded-[12px] flex-1 border px-3 h-12 ${isDark
+                    ? "border-[#292929] text-white"
+                    : "border-[#e6e6e6] text-black"
+                    }`}
                 >
                   <View className="pr-2 items-center justify-center">
                     <PhoneIcon
@@ -921,9 +909,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                       onChangeText={setUpdatedPhone}
                       keyboardType="number-pad"
                       placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
-                      className={`flex-1 h-12 p-3  ${
-                        isDark ? "text-white" : "text-black"
-                      }`}
+                      className={`flex-1 h-12 p-3  ${isDark ? "text-white" : "text-black"
+                        }`}
                     />
                   </View>
                 </View>
@@ -1055,11 +1042,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             Current Password
           </Text>
           <View
-            className={`flex flex-row items-center border mt-2 rounded-lg p-2 h-12  ${
-              isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
-            }`}
+            className={`flex flex-row items-center border mt-2 rounded-lg p-2 h-12  ${isDark
+              ? "border-[#292929] text-white"
+              : "border-[#e6e6e6] text-black"
+              }`}
           >
             <TextInput
               className="flex-1"
@@ -1092,11 +1078,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             New Password
           </Text>
           <View
-            className={`flex flex-row items-center border mt-2 rounded-lg p-2 h-12  ${
-              isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
-            }`}
+            className={`flex flex-row items-center border mt-2 rounded-lg p-2 h-12  ${isDark
+              ? "border-[#292929] text-white"
+              : "border-[#e6e6e6] text-black"
+              }`}
           >
             <TextInput
               className="flex-1"

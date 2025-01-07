@@ -64,7 +64,6 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
   ];
 
   useEffect(() => {
-    console.log("----------", user);
   }, []);
 
   const formatDate = (date: Date | undefined) => {
@@ -96,8 +95,6 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
 
   const handleDataFromLocation = useCallback(
     (coords: any, addressToSend: any) => {
-      console.log("Received Coordinates:", coords);
-      console.log("Received Address:", addressToSend);
       setSelectedLocation({ lat: coords.latitude, lng: coords.longitude });
       setSelectedLocationName(addressToSend);
     },

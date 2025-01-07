@@ -1,29 +1,30 @@
 import { useChat } from "@/backend/chat";
+import AttachmentSheet from "@/components/chat/attachment-sheet";
 import { useGlobalContext } from "@/context/global-context";
+import { PercentageIcon } from "@/icons/percent-outline";
+import { GENERATE_SIGNED_URLS } from "@/lib/config";
+import axiosInstance from "@/lib/networkUtils";
+import { useSocket } from "@/services/socket";
+import axios from "axios";
+import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
+import { debounce } from "lodash";
 import { styled } from "nativewind";
 import React, { useRef, useState } from "react";
 import {
+  ActivityIndicator,
+  Image,
   Modal,
+  Text,
   TextInput,
   TouchableOpacity,
   View,
-  Image,
-  Text,
-  ActivityIndicator,
 } from "react-native";
-import * as DocumentPicker from "expo-document-picker";
-import * as ImagePicker from "expo-image-picker";
 import {
-  CurrencyRupeeIcon,
   PaperClipIcon,
-  XMarkIcon,
+  XMarkIcon
 } from "react-native-heroicons/outline";
-import { PaperAirplaneIcon } from "react-native-heroicons/solid";
-import AttachmentSheet from "@/components/chat/attachment-sheet";
-import { useSocket } from "@/services/socket";
-import { debounce } from "lodash";
-import axios from "axios";
-import { GENERATE_SIGNED_URLS } from "@/lib/config";
+import { PaperAirplaneIcon, } from "react-native-heroicons/solid";
 
 const StyledInput = styled(TextInput);
 const StyledTO = styled(TouchableOpacity);
@@ -94,13 +95,11 @@ export function ChatInput({
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
             const percentComplete = (e.loaded / e.total) * 100;
-            console.log(`Upload progress: ${percentComplete}%`);
           }
         };
 
         xhr.onload = () => {
           if (xhr.status === 200) {
-            console.log("Upload successful");
             resolve();
           } else {
             const errorText = xhr.responseText;
@@ -117,10 +116,6 @@ export function ChatInput({
           reject(new Error("Network error during upload"));
         };
 
-        console.log("Sending request to:", presignedUrl);
-        console.log("Content-Type:", blob.type);
-        console.log("Blob size:", blob.size);
-
         xhr.send(blob);
       } catch (error) {
         console.error("Upload error:", error);
@@ -134,7 +129,7 @@ export function ChatInput({
   ) => {
     if (!authTokens) return [];
     try {
-      const response = await axios.post<PresignedResponse>(
+      const response = await axiosInstance.post<PresignedResponse>(
         GENERATE_SIGNED_URLS,
         {
           filenames: files.map((f) => f.filename),
@@ -142,7 +137,6 @@ export function ChatInput({
         },
         {
           headers: {
-            Authorization: `Bearer ${access_token}`,
             "Content-Type": "application/json",
           },
         }
@@ -251,7 +245,6 @@ export function ChatInput({
         },
       ]);
 
-      console.log(presignedUrls, "presignedUrls");
 
       // Upload to S3
       await uploadToS3(presignedUrls[0], mediaToUpload.uri);
@@ -302,23 +295,20 @@ export function ChatInput({
 
   return (
     <View
-      className={`flex-row items-center px-4 py-2 ${
-        isDarkMode ? "bg-black" : "bg-white"
-      } justify-evenly`}
+      className={`flex-row items-center px-4 py-2 ${isDarkMode ? "bg-black" : "bg-white"
+        } justify-evenly`}
     >
       {/* Input */}
       <View
-        className={`border p-1 ${
-          isDarkMode
-            ? "bg-[#0F0F0F] border-[#292929]"
-            : "bg-white border-[#e6e6e6]"
-        } flex flex-row items-center flex-1 rounded-full`}
+        className={`border p-1 ${isDarkMode
+          ? "bg-[#0F0F0F] border-[#292929]"
+          : "bg-white border-[#e6e6e6]"
+          } flex flex-row items-center flex-1 rounded-full`}
         style={{ minHeight: 44 }}
       >
         <StyledInput
-          className={`flex-1 ${
-            isDarkMode ? "bg-[#0F0F0F] text-white " : "bg-white text-black "
-          } rounded-full px-4`}
+          className={`flex-1 ${isDarkMode ? "bg-[#0F0F0F] text-white " : "bg-white text-black "
+            } rounded-full px-4`}
           placeholder="Type something..."
           value={message}
           multiline
@@ -353,9 +343,7 @@ export function ChatInput({
           className="mx-2"
           disabled={isBlocked}
         >
-          <CurrencyRupeeIcon
-            size={20}
-            color={isDarkMode ? "#FFFFFF80" : "#00000080"}
+          <PercentageIcon size={20} color={isDarkMode ? "#FFFFFF80" : "#00000080"}
           />
         </TouchableOpacity>
       </View>
@@ -363,9 +351,8 @@ export function ChatInput({
       {/* Send */}
       <View className="">
         <StyledTO
-          className={`ml-2 p-3 ${
-            isBlocked || !message.trim() ? "bg-transparent" : "bg-[#635BE8]"
-          } rounded-full`}
+          className={`ml-2 p-3 ${isBlocked || !message.trim() ? "bg-transparent" : "bg-[#635BE8]"
+            } rounded-full`}
           disabled={isBlocked || !message.trim()}
           onPress={handleSend}
         >
@@ -375,8 +362,8 @@ export function ChatInput({
               !isBlocked && message.trim()
                 ? "white"
                 : isDarkMode
-                ? "#FFFFFF80"
-                : "#00000080"
+                  ? "#FFFFFF80"
+                  : "#00000080"
             }
           />
         </StyledTO>

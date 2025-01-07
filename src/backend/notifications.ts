@@ -40,7 +40,6 @@ export async function registerForPushNotificationsAsync() {
       })
     ).data;
 
-    console.log("Notification token:", token);
   } else {
     alert("Must use physical device for Push Notifications");
   }
@@ -88,9 +87,7 @@ export async function updateUserPushToken(userId: string, pushToken: string) {
       lastTokenUpdate: new Date().toISOString(),
       platform: Platform.OS,
     });
-    console.log("Push token updated successfully");
   } catch (error) {
-    console.error("Error updating push token:", error);
   }
 }
 
@@ -174,7 +171,6 @@ export function setupNotificationListeners(
   const foregroundSubscription = Notifications.addNotificationReceivedListener(
     (notification) => {
       // Handle foreground notifications if needed
-      console.log("Received notification in foreground:", notification);
     }
   );
 

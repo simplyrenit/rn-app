@@ -12,6 +12,7 @@ import { XCircleIcon } from "react-native-heroicons/outline";
 import OTPTextView from "react-native-otp-textinput";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import * as Progress from "react-native-progress";
+import axiosInstance from "@/lib/networkUtils";
 
 export default function VerifyEmail() {
   const [verificationCode, setVerificationCode] = useState("");
@@ -28,12 +29,12 @@ export default function VerifyEmail() {
   const { verifyOTP, sendOTP, loading, loginUser } = useAuth();
 
   const handleSubmit = useCallback(async () => {
+    setIsIncorrect(false);
     if (verificationType === "otp") {
       if (verificationCode.length === 6) {
-        console.log("verificationCode", verificationCode);
         const data = await verifyOTP(email, verificationCode);
-
         if (data?.access !== null && data?.refresh !== null) {
+          axiosInstance.defaults.headers.Authorization = `Bearer ${data.access}`;
           setAuthTokens({
             access_token: data.access,
             refresh_token: data.refresh,
@@ -50,25 +51,27 @@ export default function VerifyEmail() {
       }
     } else {
       // Handle password verification
-      const data = await loginUser(email, password);
+      const data = await loginUser(email, password).catch(e => { });
       if (
         data?.access_token !== null &&
         data?.refresh_token !== null &&
         data !== null
       ) {
+        axiosInstance.defaults.headers.Authorization = `Bearer ${data.access_token}`;
         setAuthTokens({
           access_token: data.access_token,
           refresh_token: data.refresh_token,
         });
         router.navigate("MainTabs");
         return;
+      } else {
+        setIsIncorrect(true);
       }
     }
   }, [verificationCode, password, verificationType]);
 
   const handleResendOTP = useCallback(async () => {
-    // await sendOTP(email);
-    console.log("Resending OTP");
+    await sendOTP(email);
   }, []);
 
   const styles = StyleSheet.create({
@@ -101,9 +104,8 @@ export default function VerifyEmail() {
             </Text>
             <Text
               fontSize="text-md"
-              className={`${
-                theme === "dark" ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
-              }`}
+              className={`${theme === "dark" ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                }`}
             >
               {verificationType === "otp"
                 ? `We've sent a 6 digit verification code to ${email}`
@@ -180,11 +182,10 @@ export default function VerifyEmail() {
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
-                  className={`border mt-2 rounded-lg ${
-                    theme === "dark"
+                  className={`border mt-2 rounded-lg ${theme === "dark"
                       ? "text-white bg-[#292929] border-[#292929]"
                       : "text-black bg-white border-[#e6e6e6]"
-                  } p-2 h-12`}
+                    } p-2 h-12`}
                 />
 
                 {isIncorrect && (

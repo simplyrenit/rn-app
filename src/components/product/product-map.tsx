@@ -32,6 +32,7 @@ export const ProductMap: React.FC<ProductMapProps> = ({
         zoomEnabled={true}
         rotateEnabled={false}
         pitchEnabled={false}
+        maxZoomLevel={15}
       >
         <Marker
           coordinate={{ latitude, longitude }}

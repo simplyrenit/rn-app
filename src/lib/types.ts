@@ -3,7 +3,7 @@ import {
   RouteProp,
   useNavigation,
 } from "@react-navigation/native";
-import { ImageSourcePropType } from "react-native";
+import { DimensionValue, FlexAlignType, ImageSourcePropType } from "react-native";
 
 export interface OTPResponse {
   access: string | null;
@@ -38,6 +38,8 @@ export interface ItemCard {
   isFavorite?: boolean;
   isDarkMode?: boolean;
   moderationLabels?: string[];
+  width?: DimensionValue;
+  alignItems?: FlexAlignType;
 }
 
 export interface ReviewData {
@@ -198,14 +200,14 @@ export type RootStackParamList = {
   Location: undefined;
   Privacy: undefined;
   Terms: undefined;
-  Search: undefined;
+  Search: { what?: string }|undefined;
   SearchResults: {
     selectedItem: string;
     range: { startDate: Date | undefined; endDate: Date | undefined };
     address: string;
     coords: { lat: number | undefined; lng: number | undefined };
     products: BackendProduct[];
-    category: string;
+    category?: string;
   };
   myProducts: undefined;
   editProduct: { id: string };
@@ -226,8 +228,8 @@ export type RootStackParamList = {
     name: string;
   };
   EditAboutProduct: { data: BackendProduct };
-  EditProductImages: { images: string[]; name: string };
-  EditCoverImage: { images: string[]; name: string };
+  EditProductImages: { images: string[]; name: string, coverImage: string; };
+  EditCoverImage: { images: string[]; name: string, coverImage: string, };
   OwnersReviewScreen: {
     owner: Owner;
     reviews: OwnerReview[];
@@ -332,6 +334,7 @@ export interface Message {
       location: string;
       securityDeposit?: string;
       offerStatus?: "accepted" | "rejected" | "pending";
+      id: string;
     };
   };
 }
@@ -396,6 +399,7 @@ export interface BackendProduct {
     end_date: string;
   }[];
   products_listed?: number;
+  isOwnerContact?: boolean;
   distance?: string;
   owner?: {
     username: string;

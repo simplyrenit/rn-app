@@ -20,6 +20,8 @@ export function Card({
   price,
   id,
   isFavorite: checked,
+  width,
+  alignItems
 }: ItemCard) {
   const [toggleLike, setToggleLike] = useState(checked);
   const queryClient = useQueryClient();
@@ -88,6 +90,7 @@ export function Card({
       onPress={() =>
         router.navigate("ProductDetail", { id, isFavorite: toggleLike })
       }
+      style={{ width, alignItems }}
     >
       <View
         style={{

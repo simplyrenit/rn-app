@@ -118,21 +118,6 @@ function PostStackScreen() {
   );
 }
 
-function HomeStackScreen() {
-  return (
-    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
-      <HomeStack.Screen
-        name="Home"
-        component={HomeScreen}
-      />
-      <HomeStack.Screen
-        name="SearchResults"
-        component={SearchResultsScreen}
-      />
-    </HomeStack.Navigator>
-  );
-}
-
 function ProfileStackScreen() {
   return (
     <PostStack.Navigator screenOptions={{ headerShown: false }}>
@@ -237,6 +222,8 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: isDarkMode ? "#000" : "white",
           height: Platform.OS === "ios" ? hp("12.75%") : hp("8%"), //110
+          borderTopColor: isDarkMode ? '#1A1A1A' : '#E6E6E6',
+          borderTopWidth: 1,
         },
         tabBarIconStyle: {
           marginTop: 5,
@@ -247,7 +234,6 @@ function MainTabs() {
         },
         tabBarIcon: ({ focused, color, size }) => {
           let Icon;
-
           switch (route.name) {
             case "Home":
               Icon = focused ? HomeIconSolid : HomeIcon;
@@ -267,7 +253,7 @@ function MainTabs() {
           }
           return Icon ? (
             <Icon
-              size={wp("6.5%")}
+              size={wp(route.name === 'Saved' ? '7%' : route.name === 'Home' && focused ? '8%' : "6.5%")}
               color={color}
             />
           ) : null;
@@ -276,7 +262,7 @@ function MainTabs() {
     >
       <Tab.Screen
         name="Home"
-        component={HomeStackScreen}
+        component={HomeScreen}
       />
       <Tab.Screen
         name="Saved"
@@ -285,7 +271,7 @@ function MainTabs() {
       {/* <Tab.Screen name="Post" component={PostScreen} /> */}
       <Tab.Screen
         name="Post"
-        component={PostStackScreen}
+        component={PostScreen}
       />
       <Tab.Screen
         name="Chat"
@@ -293,7 +279,7 @@ function MainTabs() {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileStackScreen}
+        component={ProfileScreen}
       />
     </Tab.Navigator>
   );
@@ -301,17 +287,16 @@ function MainTabs() {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function Navigation() {
-  const { loading, hasSeenWelcome } = useGlobalContext();
-
-  if (loading) {
+  const { loading, hasSeenWelcome, theme, isAuthenticated } = useGlobalContext();
+  if (loading || isAuthenticated === undefined) {
     return null;
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer >
       <Stack.Navigator
-        initialRouteName={hasSeenWelcome ? "MainTabs" : "Welcome"}
-        screenOptions={{ headerShown: false }}
+        initialRouteName={isAuthenticated || hasSeenWelcome ? "MainTabs" : "Welcome"}
+        screenOptions={{ headerShown: false, navigationBarColor: theme === 'dark' ? '#000' : '#fff' }}
       >
         <Stack.Screen
           name="Welcome"
@@ -320,6 +305,10 @@ export default function Navigation() {
         <Stack.Screen
           name="MainTabs"
           component={MainTabs}
+        />
+        <Stack.Screen
+          name="SearchResults"
+          component={SearchResultsScreen}
         />
         <Stack.Screen
           name="Email"
@@ -386,19 +375,117 @@ export default function Navigation() {
           name="OwnersProducts"
           component={OwnersProductsScreen}
         />
-        {/* <Stack.Screen name="myProducts" component={MyProductScreen} />
-        <Stack.Screen name="editProduct" component={EditProductScreen} /> */}
-        {/* <Stack.Screen name="notification" component={NotificationScreen} />
-        <Stack.Screen name="contactUs" component={ContactUsScreen} />
-        <Stack.Screen name="feedback" component={FeedbackNReviewScreen} />
-        <Stack.Screen name="whoWeAre" component={WhoWeAreScreen} />
-        <Stack.Screen name="faq" component={FAQScreen} /> */}
-        {/* <Stack.Screen name="ReviewProduct" component={ReviewProduct} /> */}
-
-        {/* <Stack.Screen name="PostSubCategories" component={PostSubCategories} /> */}
         <Stack.Screen
           name="LocationModal"
           component={LocationModal}
+        />
+        <Stack.Screen
+          name="Post"
+          component={PostScreen}
+        />
+        <Stack.Screen
+          name="PostSubCategories"
+          component={PostSubCategories}
+        />
+        <Stack.Screen
+          name="AboutProduct"
+          component={AboutProduct}
+        />
+        <Stack.Screen
+          name="ProductImages"
+          component={ProductImages}
+        />
+        <Stack.Screen
+          name="ChooseCoverImage"
+          component={ChooseCoverImage}
+        />
+        <Stack.Screen
+          name="ProductAvailability"
+          component={ProductAvailability}
+        />
+        <Stack.Screen
+          name="ReviewProduct"
+          component={ReviewProduct}
+        />
+        <Stack.Screen
+          name="HangTight"
+          component={HangTight}
+        />
+        <Stack.Screen
+          name="profile"
+          component={ProfileScreen}
+        />
+        <Stack.Screen
+          name="myProducts"
+          component={MyProductScreen}
+        />
+        <Stack.Screen
+          name="editProduct"
+          component={EditProductScreen}
+        />
+        <Stack.Screen
+          name="notification"
+          component={NotificationScreen}
+        />
+        <Stack.Screen
+          name="contactUs"
+          component={ContactUsScreen}
+        />
+        <Stack.Screen
+          name="feedback"
+          component={FeedbackNReviewScreen}
+        />
+        <Stack.Screen
+          name="whoWeAre"
+          component={WhoWeAreScreen}
+        />
+        <Stack.Screen
+          name="faq"
+          component={FAQScreen}
+        />
+        <Stack.Screen
+          name="unavailabilityForm"
+          component={UnavailabilityFormScreen}
+        />
+        <Stack.Screen
+          name="unavailabilityFormCategories"
+          component={UnavailabilityCategories}
+        />
+        <Stack.Screen
+          name="UnavailabilitySubCat"
+          component={UnavailabilitySubCatScreen}
+        />
+        <Stack.Screen
+          name="unavailabilityFormInputs"
+          component={UnavailabilityFormInputs}
+        />
+        <Stack.Screen
+          name="ReportAProblem"
+          component={ReportAProblemScreen}
+        />
+        <Stack.Screen
+          name="EditProductAvailability"
+          component={EditProductAvailability}
+        />
+        <Stack.Screen
+          name="EditCategory"
+          component={EditCategory}
+        />
+        <Stack.Screen
+          name="EditSubCategories"
+          component={EditSubCategories}
+        />
+        <Stack.Screen
+          name="EditAboutProduct"
+          component={EditAboutProduct}
+        />
+        <Stack.Screen
+          name="EditProductImages"
+          component={EditProductImages}
+        />
+        <Stack.Screen
+          name="EditCoverImage"
+          component={EditCoverImage}
         />
       </Stack.Navigator>
     </NavigationContainer>

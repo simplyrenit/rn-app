@@ -153,7 +153,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               selectedDayTextColor: "white",
               monthTextColor: isDark ? "#fff" : "#000",
               arrowColor: isDark ? "#fff" : "#000",
-              textDisabledColor: "#1A1A1A", // Change color of disabled dates
+              textDisabledColor: "gray", // Change color of disabled dates
             }}
           />
           <View

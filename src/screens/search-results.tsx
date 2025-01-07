@@ -11,11 +11,11 @@ import { useGlobalContext } from "@/context/global-context";
 import { SUB_CATEGORIES } from "@/lib/categories";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetView } from "@gorhom/bottom-sheet";
-import { useRoute } from "@react-navigation/native";
+import { StackActions, useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { styled } from "nativewind";
 import React, { useRef, useState, useEffect } from "react";
-import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import {
@@ -26,6 +26,7 @@ import {
 } from "react-native-heroicons/outline";
 import { useSearch } from "@/backend/search";
 import { Dimensions } from "react-native";
+import { Disclaimer } from "@/components/home/disclaimer";
 
 const { height } = Dimensions.get("window");
 
@@ -64,9 +65,6 @@ export default function SearchResults() {
   } = route.params;
   const { searchProducts } = useSearch();
   const [products, setProducts] = useState<BackendProduct[]>(fetchedProducts);
-
-  const formattedAddress =
-    address.length > 20 ? address.substring(0, 18) + "..." : address;
 
   const handleOpenBottomSheet = () => {
     bottomSheetRef.current?.present();
@@ -150,7 +148,7 @@ export default function SearchResults() {
           condition: filters.condition,
         }
       );
-      setProducts(filteredProducts);
+      setProducts(filteredProducts.filter(prod => !prod?.moderation_labels?.length));
     } catch (error) {
       console.error(error);
     } finally {
@@ -207,7 +205,7 @@ export default function SearchResults() {
     if (category) {
       handleCategorySelect(category);
       setSelectedTab("Category");
-      handleOpenBottomSheet();
+      // handleOpenBottomSheet();
     }
   }, [category]);
 
@@ -215,30 +213,38 @@ export default function SearchResults() {
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
       <View className="w-[90%] mx-auto flex-1">
         {/* Header */}
-        <View
+        <Pressable
+          onPress={() => {
+            navigation.dispatch(
+              StackActions.replace('Search', { what: selectedItem, where: address })
+            );
+          }}
           style={styles.Shadow}
-          className={`border h-[64px] w-[90%] ${
-            isDark
-              ? "border-[#292929] bg-[#0F0F0F]"
-              : "border-[#E6E6E6] bg-white"
-          } flex flex-row items-center w-full my-2 rounded-[16px] p-4 space-x-3`}
+          className={`border h-[64px] w-[90%] ${isDark
+            ? "border-[#292929] bg-[#0F0F0F]"
+            : "border-[#E6E6E6] bg-white"
+            } flex flex-row items-center w-full my-2 rounded-[16px] p-4 space-x-3`}
         >
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => {
+            navigation.goBack()
+          }}>
             <ArrowLeftIcon
               color={isDark ? "#FFFFFF80" : "#00000080"}
               size={24}
             />
           </TouchableOpacity>
 
-          <View>
+          <View style={{ flex: 1 }}>
             <Text
               fontSize="text-sm"
               fontWeight="font-bold"
+              style={{ width: '100%' }}
+              numberOfLines={1}
             >
-              {selectedItem}
+              {selectedItem || 'No product selected'}
             </Text>
-            <View className="flex flex-row items-center space-x-2 mt-1">
-              <Text
+            <View className="flex flex-row items-center space-x-2 mt-1 w-full" >
+              {!!range.startDate || !!range.endDate ? <Text
                 fontSize="text-sm"
                 style={{
                   color: isDark ? "#FFFFFF80" : "#00000080",
@@ -246,29 +252,38 @@ export default function SearchResults() {
               >
                 {formatDate(range.startDate)} - {formatDate(range.endDate)}
               </Text>
-              <Text
-                fontSize="text-sm"
-                className="mb-1"
-                style={{
-                  color: isDark ? "#FFFFFF80" : "#00000080",
-                }}
-              >
+                : <Text
+                  fontSize="text-sm"
+                  style={{
+                    color: isDark ? "#FFFFFF80" : "#00000080",
+                  }}
+                >
+                  No dates
+                </Text>}<Text
+                  fontSize="text-sm"
+                  className="mb-1"
+                  style={{
+                    color: isDark ? "#FFFFFF80" : "#00000080",
+                  }}
+                >
                 •
               </Text>
               <Text
                 fontSize="text-sm"
                 style={{
                   color: isDark ? "#FFFFFF80" : "#00000080",
+                  flex: 1,
                 }}
+                numberOfLines={1}
               >
-                {formattedAddress}
+                {address || 'No location'}
               </Text>
             </View>
           </View>
-        </View>
+        </Pressable>
 
         {/* Filters and Results */}
-        <View className="mx-1 mt-3 mb-3 flex flex-row items-center justify-between">
+        <View className="mx-1 mt-1 mb-2 flex flex-row items-center justify-between">
           <Text
             fontSize="text-base"
             fontWeight="font-bold"
@@ -282,9 +297,8 @@ export default function SearchResults() {
                 <Text
                   fontSize="text-sm"
                   fontWeight="font-bold"
-                  className={`underline ${
-                    isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
-                  }`}
+                  className={`underline ${isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                    }`}
                 >
                   Clear Filters
                 </Text>
@@ -293,11 +307,10 @@ export default function SearchResults() {
 
             <TouchableOpacity
               onPress={handleOpenBottomSheet}
-              className={`relative rounded-full p-2 border ${
-                isDark
-                  ? "border-[#292929] bg-[#0F0F0F]"
-                  : "border-[#E6E6E6] bg-white"
-              }`}
+              className={`relative rounded-full p-2 border ${isDark
+                ? "border-[#292929] bg-[#0F0F0F]"
+                : "border-[#E6E6E6] bg-white"
+                }`}
             >
               <AdjustmentsVerticalIcon
                 color={isDark ? "#FFFFFF80" : "#00000080"}
@@ -323,25 +336,32 @@ export default function SearchResults() {
         {/* Products Grid */}
 
         <FlatList
+          style={{ width: '100%', }}
           data={products}
           keyExtractor={(item) => item.name}
           numColumns={2}
           columnWrapperStyle={{
             justifyContent: "space-between",
-            marginTop: 25,
+            marginTop: 8,
+            gap: 12,
           }}
-          contentContainerStyle={{ paddingBottom: hp("10%") }}
+          contentContainerStyle={{ paddingBottom: hp("10%"), justifyContent: 'flex-start', alignItems: 'center', width: '100%', }}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <Card
               id={item.name}
               image={item.cover_image}
               title={item.title}
               location={item.location}
               price={item.rate}
+              width='48.5%'
+              alignItems={index % 2 ? 'flex-start' : 'flex-end'}
             />
           )}
         />
+        {products.length === 0 ? (
+          <Disclaimer mb={24} />
+        ) : null}
       </View>
 
       {/* Main Bottom Sheet */}
@@ -349,10 +369,11 @@ export default function SearchResults() {
         ref={bottomSheetRef}
         snapPoints={["75%"]}
         isDark={isDark}
+        scrollView={false}
       >
         <StyledBottomView className="w-full py-2 flex flex-col justify-between flex-1 ">
           <View className="flex-1 w-full ">
-            <View className="flex mb-4 w-full ">
+            <View className="flex w-full " style={{ marginBottom: selectedTab === 'Category' && !showSubCategory ? 0 : 12 }}>
               <Text
                 fontSize="text-lg"
                 fontWeight="font-bold"
@@ -397,13 +418,12 @@ export default function SearchResults() {
                       >
                         <Text
                           fontWeight="font-bold"
-                          className={`${
-                            selectedTab === tab
-                              ? ""
-                              : isDark
+                          className={`${selectedTab === tab
+                            ? ""
+                            : isDark
                               ? "text-[#FFFFFF80]"
                               : "text-[#00000080]"
-                          }`}
+                            }`}
                         >
                           {tab}
                         </Text>
@@ -426,7 +446,7 @@ export default function SearchResults() {
                 )}
               </ScrollView>
             </View>
-            <View className="flex-1 px-5">
+            <View className="flex-1 px-1">
               {selectedTab === "Sort" && (
                 <SortFilter
                   selectedFilter={filters.sort}

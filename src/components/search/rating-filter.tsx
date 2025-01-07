@@ -3,7 +3,7 @@ import { useState } from "react";
 import { View } from "react-native";
 import StarRating from "react-native-star-rating-widget";
 import { Button, Text } from "../core";
-import { Rating } from "@kolking/react-native-rating";
+import { Rating } from "react-native-ratings";
 
 interface Props {
   productRating: number;
@@ -30,7 +30,7 @@ export function RatingFilter({
 
   return (
     <View className="flex-1">
-      <View className="mt-3 w-[90%] mx-auto flex-1">
+      <View className="mt-0 w-[90%] mx-auto flex-1">
         <Text
           fontSize="text-base"
           fontWeight="font-bold"
@@ -44,19 +44,19 @@ export function RatingFilter({
           } w-full h-16 rounded-[16px] p-3`}
         >
           <Rating
-            variant="stars-outline"
-            fillColor="#635be8"
-            touchColor="#635be8"
-            size={20}
-            spacing={12}
-            scale={1}
-            rating={rating.product}
-            onChange={(newRating) => {
+            ratingCount={5}
+            type="custom"
+            fractions={1}
+            jumpValue={0.5}
+            ratingColor="#635be8"
+            startingValue={rating.product}
+            imageSize={24}
+            onFinishRating={(newRating: number) => {
               setRating((prev) => ({
                 ...prev,
                 product: newRating,
               }));
-              onSelect(newRating, rating.owner);
+              onSelect(rating.product, newRating);
             }}
           />
 
@@ -75,14 +75,16 @@ export function RatingFilter({
           } w-full h-16 rounded-[16px] p-3`}
         >
           <Rating
-            variant="stars-outline"
-            fillColor="#635be8"
-            touchColor="#635be8"
-            size={20}
-            spacing={12}
-            scale={1}
-            rating={rating.owner}
-            onChange={(newRating) => {
+            ratingCount={5}
+            type="custom"
+            fractions={1}
+            jumpValue={0.5}
+            // ratingImage={require("../../../assets/star.png")}
+            ratingColor="#635be8"
+            style={{ gap: 10}}
+            startingValue={rating.owner}
+            imageSize={24}
+            onFinishRating={(newRating: number) => {
               setRating((prev) => ({
                 ...prev,
                 owner: newRating,

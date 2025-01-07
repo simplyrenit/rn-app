@@ -4,6 +4,7 @@ import { TouchableOpacity, View, ScrollView } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/outline";
 import { Text } from "../core";
 import { Category } from "@/lib/types";
+import { FlatList } from "react-native-gesture-handler";
 
 interface CategoryFilterProps {
   categories: Category[];
@@ -22,33 +23,28 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
   isDark,
   isLoading,
 }) => (
-  <View className="mt-1 flex-1">
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ marginBottom: 30 }}
-    >
-      {categories.map((item, index) => (
-        <TouchableOpacity
-          key={index}
-          className="p-3 mb-1"
-          onPress={() => onSelect(item.title)}
-        >
-          <View className="flex flex-row items-center justify-between">
-            <View className="flex flex-row items-center">
-              <Image
-                source={{
-                  uri: isDark ? item.dark_icon || "" : item.light_icon || "",
-                }}
-                style={{ width: 20, height: 20 }}
-              />
-              <Text fontSize="text-base" className="ml-3">
-                {item.title}
-              </Text>
-            </View>
-            <ChevronRightIcon size={18} color={isDark ? "white" : "black"} />
+  <View className="flex-1 px-1">
+    <FlatList showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 30, paddingTop: 12 }}
+      data={categories} renderItem={({ item, index }) => (<TouchableOpacity
+        key={index}
+        className={`p-3 px-1 mb-1 ${index === 0 ? 'pt-0' : ''}`}
+        onPress={() => onSelect(item.title)}
+      >
+        <View className="flex flex-row items-center justify-between">
+          <View className="flex flex-row items-center">
+            <Image
+              source={{
+                uri: isDark ? item.dark_icon || "" : item.light_icon || "",
+              }}
+              style={{ width: 20, height: 20 }}
+            />
+            <Text fontSize="text-base" className="ml-3">
+              {item.title}
+            </Text>
           </View>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
+          <ChevronRightIcon size={18} color={isDark ? "white" : "black"} />
+        </View>
+      </TouchableOpacity>)} />
   </View>
 );

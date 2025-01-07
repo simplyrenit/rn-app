@@ -7,12 +7,13 @@ interface CustomBottomSheetModalProps {
   snapPoints?: string[] | number[];
   isDark: boolean;
   children: React.ReactNode;
+  scrollView?: boolean;
 }
 
 const CustomBottomSheetModal = forwardRef<
   BottomSheetModal,
   CustomBottomSheetModalProps
->(({ snapPoints = ["30%", "50%", "70%"], children, isDark }, ref) => {
+>(({ snapPoints = ["30%", "50%", "70%"], children, isDark, scrollView = true }, ref) => {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
@@ -37,8 +38,8 @@ const CustomBottomSheetModal = forwardRef<
 
   const adjustedSnapPoints = isKeyboardVisible
     ? snapPoints.map((point) =>
-        typeof point === "string" ? "90%" : point * 0.9
-      )
+      typeof point === "string" ? "90%" : point * 0.9
+    )
     : snapPoints;
 
   const renderBackdrop = (props: any) => (
@@ -61,6 +62,7 @@ const CustomBottomSheetModal = forwardRef<
       ref={ref}
       snapPoints={adjustedSnapPoints}
       backdropComponent={renderBackdrop}
+      enableOverDrag={false}
       handleStyle={{
         borderTopWidth: 2,
         borderLeftWidth: 0,
@@ -72,7 +74,7 @@ const CustomBottomSheetModal = forwardRef<
         borderTopLeftRadius: 12,
       }}
     >
-      <ScrollView
+      {scrollView ? <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.contentContainer}
         // enableOnAndroid={true}
@@ -81,7 +83,7 @@ const CustomBottomSheetModal = forwardRef<
         nestedScrollEnabled={true}
       >
         {children}
-      </ScrollView>
+      </ScrollView> : children}
     </BottomSheetModal>
   );
 });

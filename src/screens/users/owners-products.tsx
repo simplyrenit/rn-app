@@ -4,9 +4,9 @@ import { useGlobalContext } from "@/context/global-context";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React from "react";
-import { Dimensions, ScrollView, TouchableOpacity, View } from "react-native";
+import { Dimensions, FlatList, ScrollView, TouchableOpacity, View } from "react-native";
 import { ArrowLeftIcon, ShareIcon } from "react-native-heroicons/outline";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { heightPercentageToDP as hp, widthPercentageToDP as wp } from "react-native-responsive-screen";
 
 const { height } = Dimensions.get("window");
 
@@ -42,40 +42,39 @@ const OwnersProductsScreen: React.FC = () => {
 
       <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>
         <View
-          className={`flex-row justify-between py-4 border-b-[1px] px-5 ${
-            isDarkMode ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-          }`}
+          className={`flex-row justify-between py-4 border-b-[1px] px-5 ${isDarkMode ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            }`}
         >
           <Text fontSize="text-sm">Share entire catalogue</Text>
 
           <TouchableOpacity>
             <ShareIcon size={24} color={isDarkMode ? "#FFF" : "#000"} />
           </TouchableOpacity>
-        </View>
-
-        {/* Products */}
-        <View
-          className="flex-row flex-wrap justify-between p-5"
-          // style={{ padding: itemMargin }}
-        >
-          {products.map((item, index) => (
-            <View
-              key={item.name}
-              style={{
-                marginBottom: 12,
-              }}
-            >
-              <Card
-                id={item.name}
-                image={item.cover_image}
-                title={item.title}
-                location={item.location}
-                price={item.rate}
-                isDarkMode={isDarkMode}
-              />
-            </View>
-          ))}
-        </View>
+        </View>{/* Products */}
+        <FlatList
+          style={{ width: '100%', }}
+          data={products}
+          keyExtractor={(item) => item.name}
+          numColumns={2}
+          columnWrapperStyle={{
+            justifyContent: "space-between",
+            marginTop: 8,
+            gap: 12,
+          }}
+          contentContainerStyle={{ paddingBottom: hp("10%"), justifyContent: 'flex-start', alignItems: 'center', width: '100%', }}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item, index }) => (
+            <Card
+              id={item.name}
+              image={item.cover_image}
+              title={item.title}
+              location={item.location}
+              price={item.rate}
+              width='48.5%'
+              alignItems={index % 2 ? 'flex-start' : 'flex-end'}
+            />
+          )}
+        />
       </ScrollView>
     </NonScrollableContainer>
   );

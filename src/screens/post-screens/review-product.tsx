@@ -21,6 +21,7 @@ import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { Dimensions } from "react-native";
 import useOwner from "@/backend/owner";
 import { useEffect, useState } from "react";
+import { SvgUri } from "react-native-svg";
 
 const { height } = Dimensions.get("window");
 
@@ -53,6 +54,8 @@ export default function ReviewProduct() {
     setOwnerProducts(products);
   };
 
+  const productCategoryIcon = product.category?.[isDark ? "dark_icon" : "light_icon"];
+
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
       <View className="px-4 flex-row items-center">
@@ -77,48 +80,42 @@ export default function ReviewProduct() {
       >
         <View style={{ width: "100%", aspectRatio: 1 }}>
           <ProductImage
-            images={product.images.map((img) => img.image)}
+            images={product.images?.map((img) => img.image)}
             mode="post"
           />
         </View>
 
         <View
-          className={`px-4 py-6 border-b ${
-            isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-          }`}
+          className={`px-4 py-6 border-b ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            }`}
         >
           <View className="flex flex-row items-center justify-between">
             <Text fontSize="text-xl" fontWeight="font-bold">
               {product.name}
             </Text>
-            <TouchableOpacity>
-              <ShareIcon color={isDark ? "white" : "black"} size={wp("5%")} />
-            </TouchableOpacity>
           </View>
         </View>
 
         <View
-          className={`px-8 w-full py-8 border-b ${
-            isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-          } flex flex-row items-center justify-between`}
+          className={`px-8 w-full py-8 border-b ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            } flex flex-row items-center justify-between`}
         >
           {/* Custom Category Icon */}
           <View className="flex items-center">
-            <Image
+            {productCategoryIcon?.slice(-3)?.toLowerCase() === 'svg' ? <SvgUri uri={productCategoryIcon} height={30} width={30} /> : <Image
               source={{
                 uri: isDark
                   ? product.category.darkIcon
                   : product.category.lightIcon,
               }}
               className="w-5 h-5"
-            />
+            />}
             <Text fontWeight="font-bold" className="mt-2">
               {product.category.title}
             </Text>
             <Text
-              className={`mt-1 font-light ${
-                isDark ? "text-white/50" : "text-black/50"
-              }`}
+              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+                }`}
             >
               Category
             </Text>
@@ -133,9 +130,8 @@ export default function ReviewProduct() {
               ₹{product.securityDeposit}
             </Text>
             <Text
-              className={`mt-1 font-light ${
-                isDark ? "text-white/50" : "text-black/50"
-              }`}
+              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+                }`}
             >
               Deposit
             </Text>
@@ -153,12 +149,11 @@ export default function ReviewProduct() {
               color={isDark ? "white" : "black"}
             />
             <Text fontWeight="font-bold" className="mt-2">
-              {product.condition}
+              {product?.condition?.[0]?.toUpperCase()}{product?.condition?.slice(1)?.toLowerCase()}
             </Text>
             <Text
-              className={`mt-1 font-light ${
-                isDark ? "text-white/50" : "text-black/50"
-              }`}
+              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+                }`}
             >
               Condition
             </Text>
@@ -166,9 +161,8 @@ export default function ReviewProduct() {
         </View>
 
         <View
-          className={`px-4 py-6 border-b ${
-            isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-          }`}
+          className={`px-4 py-6 border-b ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            }`}
         >
           <View className="flex flex-row items-center justify-between">
             <Text fontWeight="font-bold" fontSize="text-xl">
@@ -179,9 +173,8 @@ export default function ReviewProduct() {
         </View>
 
         <View
-          className={`px-4 py-6 border-b ${
-            isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-          }`}
+          className={`px-4 py-6 border-b ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            }`}
         >
           <View className="flex flex-row items-center justify-between">
             <Text fontWeight="font-bold" fontSize="text-xl">
@@ -197,7 +190,7 @@ export default function ReviewProduct() {
           </View>
         </View>
 
-        <View
+        {/* <View
           className={`px-4 py-6 border-b ${
             isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
           }`}
@@ -217,19 +210,18 @@ export default function ReviewProduct() {
               isDark={isDark}
             />
           </View>
-        </View>
+        </View> */}
       </ScrollView>
 
       <View
-        className={` w-full px-4  border-t ${
-          isDark ? "bg-black border-t-[#292929]" : "bg-white border-t-[#E6E6E6]"
-        } flex-row justify-between items-center h-[10%]`}
+        className={` w-full px-4  border-t ${isDark ? "bg-black border-t-[#292929]" : "bg-white border-t-[#E6E6E6]"
+          } flex-row justify-between items-center h-[10%]`}
       >
-        <View className="flex flex-row items-end w-1/2">
+        <View className="flex flex-row items-end w-1/2" style={{ flexWrap: "wrap" }}>
           <Text fontWeight="font-bold" fontSize="text-xl" className="mr-1">
             ₹{product.pricePerDay}
           </Text>
-          <Text fontSize="text-md">per day</Text>
+          <Text fontSize="text-md" className="my-1">per day</Text>
         </View>
         <TouchableOpacity
           onPress={handlePostProduct}

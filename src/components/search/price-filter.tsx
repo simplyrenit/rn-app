@@ -35,21 +35,19 @@ export function PriceFilter({
   };
 
   return (
-    <View className="flex-1">
-      <View className="mt-1  flex-1">
-        <View className="flex flex-row items-center justify-evenly">
+    <View className="flex-1 mt-2">
+      <View className="flex-1 px-4">
+        <View className="flex flex-row items-center justify-between">
           <View
-            className={`flex flex-row items-center border ${
-              isDark ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6]"
-            } w-[140px] h-12 rounded-lg p-1`}
+            className={`flex flex-row items-center border ${isDark ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6]"
+              } w-[140px] h-12 rounded-xl p-1`}
           >
-            <CurrencyRupeeIcon color={"#635BE8"} />
+            {/* <CurrencyRupeeIcon color={"#635BE8"} /> */}
             <TextInput
               placeholderTextColor={isDark ? "#ffffffB2" : "#000000B2"}
-              placeholder="Min"
-              className={`p-2 h-full w-3/4 ${
-                isDark ? "text-white" : "text-black"
-              }`}
+              placeholder="Min price"
+              className={`p-2 h-full w-3/4 ${isDark ? "text-white" : "text-black"
+                }`}
               keyboardType="number-pad"
               style={{ fontSize: wp(4.15) }}
               value={min}
@@ -58,17 +56,15 @@ export function PriceFilter({
           </View>
           <Text fontSize="text-base">-</Text>
           <View
-            className={`flex flex-row items-center border ${
-              isDark ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6]"
-            } w-[140px] h-12 rounded-lg p-1`}
+            className={`flex flex-row items-center border ${isDark ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6]"
+              } w-[140px] h-12 rounded-xl p-1`}
           >
-            <CurrencyRupeeIcon color={"#635BE8"} />
+            {/* <CurrencyRupeeIcon color={"#635BE8"} /> */}
             <TextInput
               placeholderTextColor={isDark ? "#ffffffB2" : "#000000B2"}
-              placeholder="Max"
-              className={`p-2 h-full w-3/4 ${
-                isDark ? "text-white" : "text-black"
-              }`}
+              placeholder="Max price"
+              className={`p-2 h-full w-3/4 ${isDark ? "text-white" : "text-black"
+                }`}
               keyboardType="number-pad"
               style={{ fontSize: wp(4.15) }}
               value={max}

@@ -91,7 +91,6 @@ export function Popular() {
 
         setPopular(data.results);
       } catch (error) {
-        console.error("Failed to fetch experiences:", error);
       } finally {
         setLoading(false);
       }

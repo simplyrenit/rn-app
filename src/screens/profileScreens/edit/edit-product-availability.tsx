@@ -1,8 +1,10 @@
+import { useProfile } from "@/backend/profile";
 import { Button, StaticContainer, Text } from "@/components/core";
 import { PostProductHeader } from "@/components/post/header";
 import { useGlobalContext } from "@/context/global-context";
 import { useProductContext } from "@/context/product-context";
-import { useTypedNavigation } from "@/lib/types";
+import { RouteProps, useTypedNavigation } from "@/lib/types";
+import { useRoute } from "@react-navigation/native";
 import moment from "moment";
 import { styled } from "nativewind";
 import React, { useState } from "react";
@@ -13,6 +15,7 @@ import {
   ChevronRightIcon,
   XMarkIcon,
 } from "react-native-heroicons/outline";
+import Toast from "react-native-toast-message";
 
 const StyledView = styled(View);
 const StyledTouchableOpacity = styled(TouchableOpacity);
@@ -22,15 +25,47 @@ export default function ProductAvailability() {
     startDate: string;
     endDate: string;
   } | null>(null);
+  const route = useRoute<RouteProps<"EditProductAvailability">>();
+  const { name, dates_blocked } = route.params;
   const [unavailableDates, setUnavailableDates] = useState<
     { startDate: string; endDate: string }[]
-  >([]);
-  const [markedDates, setMarkedDates] = useState({});
+  >(dates_blocked.map((date) => ({
+    startDate: date.start_date,
+    endDate: date.end_date,
+  })));
+  const [markedDates, setMarkedDates] = useState(dates_blocked.reduce((acc, curr) => {
+    let newAcc = { ...acc };
+    const currStart = moment(curr.start_date);
+    const currEnd = moment(curr.end_date);
+    let currentDate = moment(curr.start_date);
+    while (currentDate.isSameOrBefore(currEnd)) {
+      newAcc = {
+        ...newAcc, [currentDate.format('YYYY-MM-DD')]: {
+          startingDay: currStart.isSame(currentDate),
+          endingDay: currEnd.isSame(currentDate),
+          color:
+            currentDate.isSame(currStart) || currentDate.isSame(currEnd)
+              ? "#C80808"
+              : "#C808081A",
+          textColor:
+            currentDate.isSame(currStart) || currentDate.isSame(currEnd)
+              ? "white"
+              : "#C80808",
+        }
+      }
+      currentDate = currentDate.add(1, "day");
+
+    }
+    return newAcc;
+  }, {}));
   const navigation = useTypedNavigation();
+
   const { theme } = useGlobalContext();
   const isDark = theme === "dark";
   const { saveDetails } = useProductContext();
   const router = useTypedNavigation();
+  const { updateMyProductDetails, loading } = useProfile();
+
 
   const minDate = moment().format("YYYY-MM-DD");
 
@@ -164,12 +199,12 @@ export default function ProductAvailability() {
           endingDay: currentDate.isSame(range.endDate),
           color:
             currentDate.isSame(range.startDate) ||
-            currentDate.isSame(range.endDate)
+              currentDate.isSame(range.endDate)
               ? "#C80808"
               : "#C808081A",
           textColor:
             currentDate.isSame(range.startDate) ||
-            currentDate.isSame(range.endDate)
+              currentDate.isSame(range.endDate)
               ? "white"
               : "#C80808",
         };
@@ -179,26 +214,46 @@ export default function ProductAvailability() {
     setMarkedDates(newMarked);
   };
 
-  const onPress = () => {
+  const onPress = async () => {
     const formattedUnavailableDates = unavailableDates.map((range) => ({
       startDate: moment(range.startDate).format("YYYY-MM-DD"),
       endDate: moment(range.endDate).format("YYYY-MM-DD"),
     }));
 
     saveDetails({ productAvailability: formattedUnavailableDates });
-    navigation.navigate("ReviewProduct");
+    try {
+      const response = await updateMyProductDetails(name, {
+        booked: formattedUnavailableDates.map((range) => ({
+          start_date: range.startDate,
+          end_date: range.endDate,
+        })),
+      });
+
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Your product was updated!",
+        text2: "success",
+        visibilityTime: 4000,
+        autoHide: true,
+        bottomOffset: 20,
+      });
+      navigation.navigate("editProduct", { id: name });
+    } catch (error) {
+      console.error("Failed to update product details:", error);
+    }
   };
 
   return (
     <StaticContainer width={100}>
-      <View className="px-3 flex-row items-center">
-        <View className="flex-row items-center justify-between px-5 py-2">
+      <View className="px-3 flex-row items-center pt-2">
+        <View className="flex-row items-center justify-between px-5 pl-1 py-2">
           <TouchableOpacity
             onPress={() => router.goBack()}
-            className="flex-1 items-start w-[10%]"
+            className="flex-1 items-start"
           >
             <ArrowLeftIcon
-              size={26}
+              size={20}
               color={isDark ? "#FFF" : "#000"}
             />
           </TouchableOpacity>
@@ -207,7 +262,7 @@ export default function ProductAvailability() {
               fontSize="text-xl"
               fontWeight="font-bold"
             >
-              Edit product
+              Edit Unavailability
             </Text>
           </View>
 
@@ -216,7 +271,7 @@ export default function ProductAvailability() {
         <View className="w-[10%]" />
       </View>
 
-      <StyledView className="px-4 flex-1 justify-between">
+      <StyledView className="px-4 flex-1 pt-4 justify-between">
         <View className="h-[90%]">
           <Calendar
             minDate={minDate}
@@ -271,12 +326,12 @@ export default function ProductAvailability() {
                         color: marked
                           ? marked.textColor
                           : state === "disabled"
-                          ? isDark
-                            ? "#292929"
-                            : "#d9e1e8"
-                          : isDark
-                          ? "#fff"
-                          : "#000",
+                            ? isDark
+                              ? "#292929"
+                              : "#d9e1e8"
+                            : isDark
+                              ? "#fff"
+                              : "#000",
                       }}
                     >
                       {date.day}
@@ -339,35 +394,35 @@ export default function ProductAvailability() {
           </StyledView>
         </View>
 
-        <View className="h-[10%] flex-row items-center justify-between">
+        <View className="h-[10%] flex-row items-center justify-between gap-4">
           <Button
             variant="outline"
             onPress={confirmDateRange}
             disabled={!selectedRange}
-            className="w-[49%]"
+            className="w-[49%] border rounded-xl"
+            style={{ borderColor: '#e8e8e8' }}
           >
             <Text fontWeight="font-bold">Add date log</Text>
           </Button>
 
           <Button
-            disabled={unavailableDates.length === 0}
-            className="items-center flex flex-1 flex-row justify-center "
+            className="items-center flex flex-1 flex-row justify-center w-[49%]"
             onPress={onPress}
             variant="primary"
           >
             <Text
               fontWeight="font-bold"
-              className={`${
-                unavailableDates.length === 0 ? "text-gray-500" : "text-white"
-              } `}
+              numberOfLines={1}
+              className={`flex-1 ${"text-white"
+                } `}
               lineHeight={22}
             >
-              Update Availability
+              Update
             </Text>
-            <View className="mt-1 translate-y-1">
+            <View className="mt-[0.5] translate-y-1">
               <ChevronRightIcon
                 size={16}
-                color={unavailableDates.length === 0 ? "#888888" : "#ffffff"}
+                color={"#ffffff"}
               />
             </View>
           </Button>

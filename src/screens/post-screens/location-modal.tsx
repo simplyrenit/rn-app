@@ -112,7 +112,6 @@ const LocationModal = ({}) => {
         formattedAddress = reverseGeocode[0].formattedAddress || "";
         // }
 
-        console.log(formattedAddress);
 
         if (!formattedAddress) {
           const fallbackParts = [name, street, city, region, country].filter(
@@ -255,7 +254,6 @@ const LocationModal = ({}) => {
       const { coords } = await Location.getCurrentPositionAsync();
       setLocation2(coords);
     } catch (error) {
-      console.log("Error fetching location: ", error);
     }
   };
 
@@ -314,14 +312,12 @@ const LocationModal = ({}) => {
     let addressToSend = null;
     let countryToSend = null;
     if (!selectedAddress && location) {
-      console.log("location");
       coordinates = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       };
       addressToSend = address;
     } else if (selectedLocation) {
-      console.log("selectedLocation");
       coordinates = {
         latitude: selectedLocation.latitude,
         longitude: selectedLocation.longitude,
@@ -620,6 +616,7 @@ const LocationModal = ({}) => {
                               ? "border-[#292929] bg-[#0F0F0F]"
                               : "border-[#e6e6e6] bg-white"
                           }`}
+                          style={{ alignItems: 'flex-start'}}
                         >
                           <MagnifyingGlassIcon
                             color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
@@ -638,7 +635,7 @@ const LocationModal = ({}) => {
                             disableScroll={true}
                             styles={{
                               textInput: {
-                                height: 40,
+                                height: '100%',
                                 backgroundColor: isDarkMode
                                   ? "#0F0F0F"
                                   : "#fff",

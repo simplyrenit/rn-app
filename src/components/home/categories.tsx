@@ -8,12 +8,13 @@ import {
   StyleSheet,
 } from "react-native";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { CATEGORIES } from "@/lib/categories";
+import { CAT_DETAILS, CATEGORIES } from "@/lib/categories";
 import { CategoryItem } from "../../lib/types";
 import { Text } from "../core";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import * as Location from "expo-location";
+import { SvgUri } from "react-native-svg";
 
 export function Categories() {
   const navigation = useTypedNavigation();
@@ -49,14 +50,13 @@ export function Categories() {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        console.log("Permission to access location was denied");
         return;
       }
 
-      let location = await Location.getCurrentPositionAsync({});
+      // let location = await Location.getCurrentPositionAsync({});
       const reverseGeocode = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
+        latitude: 20.5937, // location.coords.latitude,
+        longitude: 78.9629, // location.coords.longitude,
       });
 
       if (reverseGeocode.length > 0) {
@@ -95,8 +95,8 @@ export function Categories() {
         return {
           address: formattedAddress,
           coordinates: {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
+            latitude: 24.6333644, //location.coords.latitude,
+            longitude: 84.9469837, // location.coords.longitude,
           },
         };
       }
@@ -124,48 +124,50 @@ export function Categories() {
             marginLeft: pairIndex === 0 ? wp(1.5) : 0,
           }}
         >
-          {pair.map((category, index) => (
-            <TouchableOpacity
-              key={index}
-              style={{ marginBottom: 5 }}
-              onPress={async () => {
-                const locationData = await getFormattedAddress();
-                navigation.navigate("SearchResults", {
-                  category: category.name,
-                  address: locationData?.address ?? "",
-                  coords: locationData?.coordinates
-                    ? {
+          {pair.map((category, index) => {
+            return (
+              <TouchableOpacity
+                key={index}
+                style={{ marginBottom: 5 }}
+                onPress={async () => {
+                  const locationData = await getFormattedAddress();
+                  navigation.navigate("SearchResults", {
+                    category: category.name,
+                    address: locationData?.address ?? "",
+                    coords: locationData?.coordinates
+                      ? {
                         lat: locationData.coordinates.latitude,
                         lng: locationData.coordinates.longitude,
                       }
-                    : { lat: undefined, lng: undefined },
-                  range: { startDate: undefined, endDate: undefined },
-                  products: [],
-                  selectedItem: category.name,
-                });
-              }}
-            >
-              <View className="items-center mb-3">
-                <View className="w-24 h-20 rounded-full overflow-hidden items-center justify-center">
-                  <Image
-                    source={category.image}
-                    className={`${
-                      index === 1 ? "w-[75%] h-[85%]" : "w-[80%] h-[90%]"
-                    }`}
-                    resizeMode="contain"
-                    style={styles.shadow}
-                  />
+                      : { lat: undefined, lng: undefined },
+                    range: { startDate: undefined, endDate: undefined },
+                    products: [],
+                    selectedItem: category.name,
+                  });
+                }}
+              >
+                <View className="items-center mb-3">
+                  <View className="w-24 h-20 rounded-full overflow-hidden items-center justify-center" >
+                    <Image
+                      source={category.image}
+                      className={`${index === 1 ? "w-[75%] h-[80%]" : "w-[80%] h-[85%]"
+                        }`}
+                      resizeMode="contain"
+                      style={styles.shadow}
+                    />
+                  </View>
+                  <Text
+                    fontSize="text-xs"
+                    className="text-center"
+                    fontWeight="font-bold"
+                    // style={{ marginTop: index === 0 ? -8 : 0}}
+                  >
+                    {category.name}
+                  </Text>
                 </View>
-                <Text
-                  fontSize="text-xs"
-                  className="text-center"
-                  fontWeight="font-bold"
-                >
-                  {category.name}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            )
+          })}
         </View>
       ))}
     </ScrollView>

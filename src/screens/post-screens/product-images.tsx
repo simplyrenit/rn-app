@@ -206,18 +206,15 @@ export default function ProductImages() {
             <View className="flex-row items-center justify-between">
               <Text
                 fontWeight="font-bold"
-                className={`${
-                  allFieldsFilled ? "text-white" : "text-gray-500"
-                }`}
+                className={`${allFieldsFilled ? "text-white" : "text-gray-500"
+                  }`}
               >
                 Next
               </Text>
-              <View className="mt-1">
-                <ChevronRightIcon
-                  size={16}
-                  color={allFieldsFilled ? "#ffffff" : "#888888"}
-                />
-              </View>
+              <ChevronRightIcon
+                size={16}
+                color={allFieldsFilled ? "#ffffff" : "#888888"}
+              />
             </View>
           </Button>
         </View>
@@ -245,9 +242,8 @@ export default function ProductImages() {
             >
               <PhotoIcon size={24} color={isDark ? "#e6e6e6" : "#292929"} />
               <Text
-                className={`${
-                  isDark ? "text-white/70" : "text-black/70"
-                } text-center`}
+                className={`${isDark ? "text-white/70" : "text-black/70"
+                  } text-center`}
               >
                 Choose from gallery
               </Text>
@@ -267,9 +263,8 @@ export default function ProductImages() {
             >
               <CameraIcon size={24} color={isDark ? "#e6e6e6" : "#292929"} />
               <Text
-                className={`${
-                  isDark ? "text-white/70" : "text-black/70"
-                } text-center`}
+                className={`${isDark ? "text-white/70" : "text-black/70"
+                  } text-center`}
               >
                 Take a photo
               </Text>

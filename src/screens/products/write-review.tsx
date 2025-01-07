@@ -55,11 +55,9 @@ export default function WriteReviewScreen() {
       ownerRating: rating.owner,
       condition: selectedValue,
     };
-    console.log(reviewData);
 
     try {
       const response = await writeAReview(reviewData);
-      console.log(response);
       Toast.show({
         type: "customToast",
         position: "bottom",
@@ -74,7 +72,6 @@ export default function WriteReviewScreen() {
       });
       navigation.goBack();
     } catch (error: any) {
-      console.log("Error writing a review:", error);
     }
   };
   const options: ConditionOption[] = [

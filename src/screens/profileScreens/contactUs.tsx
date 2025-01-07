@@ -24,8 +24,8 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
   return (
     <NonScrollableContainer>
       <View
-        className="flex-row items-center justify-between px-5 "
-        style={{ paddingVertical: wp("5%") }}
+        className="flex-row items-center justify-between px-5 pt-2 "
+        // style={{ paddingVertical: wp("5%") }}
       >
         <TouchableOpacity
           className="w-[10%]"
@@ -51,7 +51,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
       <ScrollView className="">
         <View
           style={{ paddingVertical: wp("8%") }}
-          className={`px-5 border-b ${
+          className={`px-5 border-b-[0.2px] ${
             isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
           }`}
         >
@@ -69,7 +69,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
           </View>
           <View className="py-4">
             <TouchableOpacity
-              onPress={() => Linking.openURL("mailto:support@renit.co.in")}
+              onPress={() => Linking.openURL("mailto:support@simplyrenit.com")}
               className={`flex-row h-12 rounded-[12px] border ${
                 isDarkMode
                   ? "bg-[#0F0F0F] border-[#292929]"
@@ -82,7 +82,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
                 fontWeight="font-bold"
                 style={{ lineHeight: 18 }}
               >
-                support@renit.co.in
+                support@simplyrenit.com
               </Text>
               <ChevronRightIcon
                 size={20}
@@ -96,7 +96,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
 
         <View
           style={{ paddingVertical: wp("8%") }}
-          className={`px-5 border-b ${
+          className={`px-5 border-b-[0.2px] ${
             isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
           }`}
         >
@@ -140,7 +140,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
 
         <View
           style={{ paddingVertical: wp("8%") }}
-          className={`px-5 border-b ${
+          className={`px-5 border-b-[0.2px] ${
             isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
           }`}
         >
@@ -173,7 +173,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
                 fontWeight="font-bold"
                 style={{ lineHeight: 16 }}
               >
-                Feedback & Review
+                Feedback & review
               </Text>
               <ChevronRightIcon
                 size={20}

@@ -23,11 +23,13 @@ interface ChatHeaderProps {
   profilePic: string;
   onReportPress: () => void;
   isBlocked: boolean;
+  id: string;
 }
 
 export function ChatHeader({
   name,
   profilePic,
+  id,
   onReportPress,
   isBlocked,
 }: ChatHeaderProps) {
@@ -62,9 +64,8 @@ export function ChatHeader({
 
   return (
     <View
-      className={`flex-row items-center justify-between px-4 py-2 border-b ${
-        isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-      }`}
+      className={`flex-row items-center justify-between px-4 py-2 border-b ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+        }`}
       onLayout={handleLayout}
     >
       <View className="flex-row items-center relative">
@@ -78,18 +79,22 @@ export function ChatHeader({
           />
         </TouchableOpacity>
 
-        <Image
-          source={{ uri: profilePic }}
-          className="h-10 w-10 rounded-full ml-2"
-          resizeMode="cover"
-        />
-        <Text
-          fontSize="text-base"
-          fontWeight="font-bold"
-          className="ml-3"
+        <Pressable style={{ flexDirection: 'row' }} className="items-center" onPress={() => navigation.navigate("UserDetail", { id })}
         >
-          {name}
-        </Text>
+
+          <Image
+            source={{ uri: profilePic }}
+            className="h-10 w-10 rounded-full ml-2"
+            resizeMode="cover"
+          />
+          <Text
+            fontSize="text-base"
+            fontWeight="font-bold"
+            className="ml-3"
+          >
+            {name}
+          </Text>
+        </Pressable>
       </View>
 
       <TouchableOpacity
@@ -119,11 +124,10 @@ export function ChatHeader({
               styles.shadow,
               { top: modalPosition.top, right: modalPosition.right },
             ]}
-            className={`border ${
-              isDark
-                ? "bg-[#0F0F0F] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
-            } rounded-lg p-2`}
+            className={`border ${isDark
+              ? "bg-[#0F0F0F] border-[#292929]"
+              : "bg-white border-[#e6e6e6]"
+              } rounded-lg p-2`}
           >
             <TouchableOpacity
               onPress={() => {

@@ -46,11 +46,9 @@ class SocketService {
       });
 
       this.socket.on("connect", () => {
-        console.log("Socket connected to room:", roomName);
       });
 
       this.socket.on("disconnect", () => {
-        console.log("Socket disconnected");
       });
 
       this.socket.on("error", (error) => {

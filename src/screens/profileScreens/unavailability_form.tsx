@@ -126,7 +126,6 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
   const handleCurrentLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
-      console.log("Permission to access location was denied");
       return;
     }
 
@@ -141,7 +140,6 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
       const { coords } = await Location.getCurrentPositionAsync();
       setLocation(coords);
     } catch (error) {
-      console.log("Error fetching location: ", error);
     }
   };
 
@@ -165,7 +163,6 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
   const askForLocationPermission = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
-      console.log("Permission to access location was denied");
       return;
     }
     const { coords } = await Location.getCurrentPositionAsync();
@@ -332,11 +329,11 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
                   ? "border-[#292929] bg-[#0F0F0F]"
                   : "border-[#e6e6e6] bg-white"
               }`}
+              style={{ alignItems: 'center' }}
             >
               <MagnifyingGlassIcon
                 color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
                 size={24}
-                style={{ marginTop: hp(1.1) }}
               />
               <GooglePlacesAutocomplete
                 ref={googlePlacesRef}
@@ -356,7 +353,8 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
                 enablePoweredByContainer={false}
                 styles={{
                   textInput: {
-                    height: 40,
+                    height: '100%',
+                    marginTop: -8,
                     backgroundColor: isDarkMode ? "#0F0F0F" : "#fff",
                     borderRadius: 12,
                     paddingHorizontal: 8,

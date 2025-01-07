@@ -35,10 +35,10 @@ export default function EditSubCategories() {
         position: "bottom",
         text1: "Your product was updated!",
         text2: "success",
+        visibilityTime: 4000,
+        autoHide: true,
+        bottomOffset: 20,
       });
-
-      console.log("Product details updated:", response);
-
       navigation.navigate("editProduct", { id: name });
     } catch (error) {
       console.error("Failed to update product details:", error);
@@ -87,9 +87,8 @@ export default function EditSubCategories() {
 
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          className={`flex-row items-center py-4 border-b px-5  ${
-            theme === "dark" ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
-          }`}
+          className={`flex-row items-center py-4 border-b px-5  ${theme === "dark" ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
+            }`}
         >
           <View className="mt-1 pr-1 ">
             <ChevronLeftIcon

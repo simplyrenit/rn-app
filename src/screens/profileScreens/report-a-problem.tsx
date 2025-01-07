@@ -37,7 +37,7 @@ const ReportAProblemScreen: React.FC = () => {
 
   return (
     <NonScrollableContainer>
-      <View className="flex-row items-center justify-between px-5 pb-2 ">
+      <View className="flex-row items-center justify-between px-5 pb-2 pt-2 ">
         <TouchableOpacity
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
@@ -112,7 +112,7 @@ const ReportAProblemScreen: React.FC = () => {
           </Text>
           <View className="mt-1">
             <ChevronRightIcon
-              size={20}
+              size={14}
               color="#635be8"
             />
           </View>

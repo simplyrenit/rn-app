@@ -16,12 +16,12 @@ import { CurrencySheet } from "../post-auth/sheets/currency-sheet";
 import PersonalDetailsSheet from "../post-auth/sheets/PersonaldetailsSheet";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 
-GoogleSignin.configure({
-  webClientId: WEB_CLIENT_ID,
-  offlineAccess: false,
-  iosClientId: IOS_CLIENT_ID,
-  scopes: ["profile", "email"],
-});
+// GoogleSignin.configure({
+//   webClientId: WEB_CLIENT_ID,
+//   offlineAccess: false,
+//   iosClientId: IOS_CLIENT_ID,
+//   scopes: ["profile", "email"],
+// });
 
 interface ProfilePreAuthProps {
   isDarkMode: boolean;
@@ -56,11 +56,10 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
         <StyledView className=" gap-3 justify-center py-5">
           <Button
             onPress={googleSignIn}
-            className={`flex-row justify-center gap-1 items-center ${
-              isDark
-                ? "bg-[#1A1A1A] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
-            } border rounded-lg py-3 px-6 mx-2`}
+            className={`flex-row justify-center gap-1 items-center ${isDark
+              ? "bg-[#1A1A1A] border-[#292929]"
+              : "bg-white border-[#e6e6e6]"
+              } border rounded-lg py-3 px-6 mx-2`}
           >
             {loading ? (
               <Progress.CircleSnail
@@ -90,11 +89,10 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
           {Platform.OS === "ios" && (
             <Button
               onPress={appleSignIn}
-              className={`flex-row justify-center gap-1 items-center ${
-                isDark
-                  ? "bg-[#1A1A1A] border-[#292929]"
-                  : "bg-white border-[#e6e6e6]"
-              } border rounded-lg py-3 px-6 mx-2`}
+              className={`flex-row justify-center gap-1 items-center ${isDark
+                ? "bg-[#1A1A1A] border-[#292929]"
+                : "bg-white border-[#e6e6e6]"
+                } border rounded-lg py-3 px-6 mx-2`}
             >
               {loading ? (
                 <Progress.CircleSnail
@@ -128,11 +126,10 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
 
           <Button
             onPress={() => router.navigate("Email")}
-            className={`flex-row justify-center gap-1 items-center ${
-              isDark
-                ? "bg-[#1A1A1A] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
-            } border rounded-lg py-3 px-6 mx-2`}
+            className={`flex-row justify-center gap-1 items-center ${isDark
+              ? "bg-[#1A1A1A] border-[#292929]"
+              : "bg-white border-[#e6e6e6]"
+              } border rounded-lg py-3 px-6 mx-2`}
           >
             <View>
               <StyledImage
@@ -154,150 +151,170 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
         </StyledView>
         {/* App */}
         {router.getState().routes[router.getState().index].name ===
-          "profile" && (
-          <>
-            <View
-              className={`py-4 border-b-[0.2px] ${
-                isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-              }`}
-            >
-              <View className="px-5">
-                <Text
-                  fontSize="text-base"
-                  fontWeight="font-bold"
-                  className="pb-3"
-                >
-                  App
-                </Text>
-                <IconButton
-                  onPress={handleAppeareanceModal}
-                  leftIcon="DevicePhoneMobileIcon"
-                  text="Switch theme"
-                  isDarkMode={isDarkMode}
-                />
-                <IconButton
+          "Profile" && (
+            <>
+              <View
+                className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+                  }`}
+              >
+                <View className="px-5">
+                  <Text
+                    fontSize="text-base"
+                    fontWeight="font-bold"
+                    className="pb-3"
+                  >
+                    Account
+                  </Text>
+                  <IconButton
+                    onPress={() => {
+                      router.navigate("myProducts");
+                    }}
+                    leftIcon="CubeIcon"
+                    text="My products"
+                    isDarkMode={isDarkMode}
+                  />
+                </View>
+              </View>
+              <View
+                className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+                  }`}
+              >
+                <View className="px-5">
+                  <Text
+                    fontSize="text-base"
+                    fontWeight="font-bold"
+                    className="pb-3"
+                  >
+                    App
+                  </Text>
+                  <IconButton
+                    onPress={handleAppeareanceModal}
+                    leftIcon="DevicePhoneMobileIcon"
+                    text="Switch theme"
+                    isDarkMode={isDarkMode}
+                  />
+                  {/* <IconButton
                   onPress={handleCurrencyModal}
                   leftIcon="BanknotesIcon"
                   text="Currency"
                   isDarkMode={isDarkMode}
-                />
+                /> */}
+                </View>
               </View>
-            </View>
 
-            {/* Support */}
-            <View
-              className={`py-4 border-b-[0.2px] ${
-                isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-              }`}
-            >
-              <View className="px-5">
-                <Text
-                  fontSize="text-base"
-                  fontWeight="font-bold"
-                  className="pb-3"
-                >
-                  Support
-                </Text>
-                <IconButton
-                  onPress={() => {
-                    router.navigate("faq");
-                  }}
-                  leftIcon="QuestionMarkCircleIcon"
-                  text="FAQs"
-                  isDarkMode={isDarkMode}
-                />
-                <IconButton
-                  onPress={() => {
-                    router.navigate("ReportAProblem");
-                  }}
-                  leftIcon="FlagIcon"
-                  text="Report a problem"
-                  isDarkMode={isDarkMode}
-                />
-                <IconButton
-                  onPress={() => {
-                    router.navigate("feedback");
-                  }}
-                  leftIcon="BriefcaseIcon"
-                  text="Feedback & review"
-                  isDarkMode={isDarkMode}
-                />
-                <IconButton
-                  onPress={() => {
-                    router.navigate("contactUs");
-                  }}
-                  leftIcon="EnvelopeIcon"
-                  text="Contact us"
-                  isDarkMode={isDarkMode}
-                />
-                <IconButton
-                  onPress={() => {
-                    router.navigate("whoWeAre");
-                  }}
-                  leftIcon="UsersIcon"
-                  text="Who we are"
-                  isDarkMode={isDarkMode}
-                />
-                <IconButton
-                  onPress={() => {
-                    if (!isAuthenticated) {
-                      router.navigate("Welcome"); // or whatever your login route name is
-                    } else {
-                      router.navigate("unavailabilityFormCategories");
-                    }
-                  }}
-                  leftIcon="DocumentIcon"
-                  text="Unavailability form"
-                  isDarkMode={isDarkMode}
-                />
+              {/* Support */}
+              <View
+                className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+                  }`}
+              >
+                <View className="px-5">
+                  <Text
+                    fontSize="text-base"
+                    fontWeight="font-bold"
+                    className="pb-3"
+                  >
+                    Support
+                  </Text>
+                  <IconButton
+                    onPress={() => {
+                      router.navigate("faq");
+                    }}
+                    leftIcon="QuestionMarkCircleIcon"
+                    text="FAQs"
+                    isDarkMode={isDarkMode}
+                  />
+                  <IconButton
+                    onPress={() => {
+                      router.navigate("ReportAProblem");
+                    }}
+                    leftIcon="FlagIcon"
+                    text="Report a problem"
+                    isDarkMode={isDarkMode}
+                  />
+                  <IconButton
+                    onPress={() => {
+                      router.navigate("feedback");
+                    }}
+                    leftIcon="BriefcaseIcon"
+                    text="Feedback & review"
+                    isDarkMode={isDarkMode}
+                  />
+                  <IconButton
+                    onPress={() => {
+                      router.navigate("contactUs");
+                    }}
+                    leftIcon="EnvelopeIcon"
+                    text="Contact us"
+                    isDarkMode={isDarkMode}
+                  />
+                  <IconButton
+                    onPress={() => {
+                      router.navigate("whoWeAre");
+                    }}
+                    leftIcon="UsersIcon"
+                    text="Who we are"
+                    isDarkMode={isDarkMode}
+                  />
+                  <IconButton
+                    onPress={() => {
+                      if (!isAuthenticated) {
+                        router.navigate("Welcome"); // or whatever your login route name is
+                      } else {
+                        router.navigate("unavailabilityFormCategories");
+                      }
+                    }}
+                    leftIcon="DocumentIcon"
+                    text="Unavailability form"
+                    isDarkMode={isDarkMode}
+                  />
+                </View>
               </View>
-            </View>
 
-            {/* <Legal */}
-            <View className="py-4 mb-16">
-              <View className="px-5">
-                <Text
-                  fontSize="text-base"
-                  fontWeight="font-bold"
-                  className="pb-3"
-                >
-                  Legal
-                </Text>
-                <IconButton
-                  onPress={() => {
-                    router.navigate("Terms");
-                  }}
-                  leftIcon="DocumentTextIcon"
-                  text="Terms & conditions"
-                  isDarkMode={isDarkMode}
-                />
-                <IconButton
-                  onPress={() => {
-                    router.navigate("Privacy");
-                  }}
-                  leftIcon="ClipboardDocumentIcon"
-                  text="Privacy policy"
-                  isDarkMode={isDarkMode}
-                />
+              {/* <Legal */}
+              <View className="py-4 mb-16">
+                <View className="px-5">
+                  <Text
+                    fontSize="text-base"
+                    fontWeight="font-bold"
+                    className="pb-3"
+                  >
+                    Legal
+                  </Text>
+                  <IconButton
+                    onPress={() => {
+                      router.navigate("Terms");
+                    }}
+                    leftIcon="DocumentTextIcon"
+                    text="Terms & conditions"
+                    isDarkMode={isDarkMode}
+                  />
+                  <IconButton
+                    onPress={() => {
+                      router.navigate("Privacy");
+                    }}
+                    leftIcon="ClipboardDocumentIcon"
+                    text="Privacy policy"
+                    isDarkMode={isDarkMode}
+                  />
+                </View>
               </View>
-            </View>
 
-            <CurrencySheet
-              bottomSheetModalRef={currencySheetRef}
-              isDarkMode={isDarkMode}
-            />
+              <CurrencySheet
+                bottomSheetModalRef={currencySheetRef}
+                isDarkMode={isDarkMode}
+              />
 
-            <AppearanceSheet
-              bottomSheetModalRef={appearanceSheetRef}
-              isDarkMode={isDarkMode}
-            />
+              <AppearanceSheet
+                bottomSheetModalRef={appearanceSheetRef}
+                isDarkMode={isDarkMode}
+              />
 
-            <PersonalDetailsSheet
-              bottomSheetModalRef={personalDetailsSheetRef}
-              isDarkMode={isDarkMode}
-            />
-          </>
-        )}
+              <PersonalDetailsSheet
+                bottomSheetModalRef={personalDetailsSheetRef}
+                isDarkMode={isDarkMode}
+              />
+            </>
+          )}
       </View>
     </>
   );

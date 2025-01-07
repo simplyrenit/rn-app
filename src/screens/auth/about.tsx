@@ -4,8 +4,8 @@ import { ScrollContainer } from "@/components/core/scroll-container";
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
-import React, { useCallback, useState } from "react";
-import { ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { Modal, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 import {
   CheckIcon,
   InformationCircleIcon,
@@ -56,24 +56,23 @@ const Dropdown: React.FC<DropdownProps> = ({
 
   return (
     <View
-      className={`relative ${
-        placeholder === "Date"
-          ? "w-[100px]"
-          : placeholder === "Month"
+      className={`relative ${placeholder === "Date"
+        ? "w-[100px]"
+        : placeholder === "Month"
           ? "w-[120px]"
           : "w-[100px]"
-      }`}
+        }`}
+      style={{ zIndex: 123 }}
     >
       <TouchableOpacity
         onPress={() => {
           setIsOpen(!isOpen);
-          setDobError("");
+          // setDobError("");
         }}
-        className={`p-4 border rounded-lg ${
-          isDarkMode
-            ? "bg-[#0F0F0F] border-[#292929]"
-            : "bg-white border-[#e6e6e6]"
-        }`}
+        className={`p-3 border rounded-xl ${isDarkMode
+          ? "bg-[#0F0F0F] border-[#292929]"
+          : "bg-white border-[#e6e6e6]"
+          }`}
       >
         <View className="flex-row justify-between items-center">
           <Text className={isDarkMode ? "text-white" : "text-black"}>
@@ -87,34 +86,43 @@ const Dropdown: React.FC<DropdownProps> = ({
       </TouchableOpacity>
 
       {isOpen && (
-        <View
-          className={`absolute top-[100%] left-0 right-0 z-50 border rounded-lg mt-1 max-h-[300px] overflow-hidden ${
-            isDarkMode
-              ? "bg-[#0F0F0F] border-[#292929]"
-              : "bg-white border-[#e6e6e6]"
-          }`}
-        >
-          <ScrollView className="mb-[100px]">
-            {options.map((option) => (
-              <TouchableOpacity
-                key={option}
-                onPress={() => {
-                  onSelect(option);
-                  setIsOpen(false);
-                }}
-                className={`p-4 border-b ${
-                  isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
-                } ${value === option ? "bg-brand-blue/10" : ""}`}
-              >
-                <Text className={isDarkMode ? "text-white" : "text-black"}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-    </View>
+        <Modal visible={isOpen} transparent onDismiss={() => setIsOpen(false)} onRequestClose={() => setIsOpen(false)}>
+          <View style={{ height: '100%', width: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50 }} /* onTouchEnd={() => setIsOpen(false)} */>
+
+            <View style={{ backgroundColor: isDarkMode ? "#121212" : "#fff", width: '100%' }}>
+
+              <ScrollView className="mb-[100px]" showsVerticalScrollIndicator={false} nestedScrollEnabled style={{ height: '100%' }} contentContainerStyle={{ paddingTop: 48 }}>
+                {options.map((option, index) => (
+                  <TouchableOpacity
+                    key={option}
+                    onPress={() => {
+                      onSelect(option);
+                      setIsOpen(false);
+                    }}
+                    style={{
+                      borderWidth: 1,
+                      borderBottomWidth: index < options.length - 1 ? 0 : 1,
+                      borderTopLeftRadius: index === 0 ? 8 : 0,
+                      borderTopRightRadius: index === 0 ? 8 : 0,
+                      borderColor: isDarkMode ? "#292929" : "#e6e6e6",
+                      borderBottomRightRadius: index === options.length - 1 ? 8 : 0,
+                      borderBottomLeftRadius: index === options.length - 1 ? 8 : 0,
+                    }}
+                    className={`p-4 border-b ${isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
+                      } ${value === option ? "bg-brand-blue/10" : ""}`}
+                  >
+                    <Text className={isDarkMode ? "text-white" : "text-black"}>
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      )
+      }
+    </View >
   );
 };
 
@@ -193,11 +201,10 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
             setError((prev) => ({ ...prev, firstName: "" }));
           }
         }}
-        className={`p-4 border rounded-lg ${
-          isDarkMode
-            ? "bg-[#0F0F0F] text-white border-[#292929]"
-            : "bg-white text-black border-[#e6e6e6]"
-        }`}
+        className={`p-2 border rounded-xl ${isDarkMode
+          ? "bg-[#0F0F0F] text-white border-[#292929]"
+          : "bg-white text-black border-[#e6e6e6]"
+          }`}
         placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
       />
       {errors.firstName && (
@@ -227,11 +234,10 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
             setError((prev) => ({ ...prev, lastName: "" }));
           }
         }}
-        className={`p-4 border rounded-lg ${
-          isDarkMode
-            ? "bg-[#0F0F0F] text-white border-[#292929]"
-            : "bg-white text-black border-[#e6e6e6]"
-        }`}
+        className={`p-2 border rounded-xl ${isDarkMode
+          ? "bg-[#0F0F0F] text-white border-[#292929]"
+          : "bg-white text-black border-[#e6e6e6]"
+          }`}
         placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
       />
       {errors.lastName && (
@@ -253,7 +259,7 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
       >
         Date of birth
       </Text>
-      <View className=" flex-1 flex-row justify-between">
+      <View className=" flex-1 flex-row justify-between pb-2">
         <Dropdown
           value={dob.date}
           placeholder="Date"
@@ -274,13 +280,13 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
           value={dob.year}
           placeholder="Year"
           options={YEARS}
-          onSelect={(value) => setDob((prev) => ({ ...prev, year: value }))}
+          onSelect={(value) => { setDob((prev) => ({ ...prev, year: value })) }}
           isDarkMode={isDarkMode}
           setDobError={setDobError}
         />
       </View>
       {dobError && (
-        <View className="flex flex-row items-center mt-4 mr-2 space-x-3">
+        <View className="flex flex-row items-center mt-2 mr-2 space-x-3" style={{ bottom: 0, left: 0, right: 0 }}>
           <InformationCircleIcon
             size={14}
             color={dobError.includes("not allowed") ? "#ef4444" : "#f59e0b"}
@@ -319,7 +325,7 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
         fontWeight="font-semibold"
         className="mb-2"
       >
-        Business name
+        Legal name of the business
       </Text>
       <TextInput
         value={businessName}
@@ -329,11 +335,10 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             setError((prev) => ({ ...prev, businessName: "" }));
           }
         }}
-        className={`p-4 border rounded-lg ${
-          isDarkMode
-            ? "bg-[#0F0F0F] text-white border-[#292929]"
-            : "bg-white text-black border-[#e6e6e6]"
-        }`}
+        className={`p-2 border rounded-xl ${isDarkMode
+          ? "bg-[#0F0F0F] text-white border-[#292929]"
+          : "bg-white text-black border-[#e6e6e6]"
+          }`}
         placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
       />
       {errors.businessName && (
@@ -363,11 +368,10 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             setError((prev) => ({ ...prev, firstName: "" }));
           }
         }}
-        className={`p-4 border rounded-lg ${
-          isDarkMode
-            ? "bg-[#0F0F0F] text-white border-[#292929]"
-            : "bg-white text-black border-[#e6e6e6]"
-        }`}
+        className={`p-2 border rounded-xl ${isDarkMode
+          ? "bg-[#0F0F0F] text-white border-[#292929]"
+          : "bg-white text-black border-[#e6e6e6]"
+          }`}
         placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
       />
       {errors.firstName && (
@@ -397,11 +401,10 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             setError((prev) => ({ ...prev, lastName: "" }));
           }
         }}
-        className={`p-4 border rounded-lg ${
-          isDarkMode
-            ? "bg-[#0F0F0F] text-white border-[#292929]"
-            : "bg-white text-black border-[#e6e6e6]"
-        }`}
+        className={`p-2 border rounded-xl ${isDarkMode
+          ? "bg-[#0F0F0F] text-white border-[#292929]"
+          : "bg-white text-black border-[#e6e6e6]"
+          }`}
         placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
       />
       {errors.lastName && (
@@ -526,14 +529,26 @@ export default function AboutYourself() {
     return isValid;
   }, [accountType, firstName, lastName, businessName, dob, calculateAge]);
 
+  useEffect(() => {
+    if (accountType === 'Individual') {
+      const age = calculateAge(dob);
+      if (age !== null) {
+        if (age < 13) {
+          setDobError("Users below 13 years are not allowed to use this app.");
+        } else if (age < 18) {
+          setDobError(
+            "Warning: Users between 13-18 years need parental guidance to use this app."
+          );
+          // Don't set isValid to false here as it's just a warning
+        } else {
+          setDobError("");
+        }
+      }
+    }
+  }, [dob])
+
   const handleSubmit = useCallback(() => {
     if (validateForm()) {
-      console.log("Submitting form:", {
-        accountType,
-        ...(accountType === "Individual"
-          ? { firstName, lastName }
-          : { firstName, lastName, businessName }),
-      });
 
       saveUser({
         first_name: firstName,
@@ -560,9 +575,8 @@ export default function AboutYourself() {
               </Text>
               <Text
                 fontSize="text-base"
-                className={`${
-                  isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000b2]"
-                } mt-1`}
+                className={`${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000b2]"
+                  } mt-1`}
               >
                 Spill the beans already
               </Text>
@@ -579,13 +593,12 @@ export default function AboutYourself() {
                 </Text>
                 <View className="flex-row justify-between mt-2">
                   <TouchableOpacity
-                    className={`flex-1 mr-2 p-4 rounded-xl border-2 ${
-                      accountType === "Individual"
-                        ? "border-brand-blue"
-                        : isDarkMode
+                    className={`flex-1 mr-2 p-3 rounded-xl border ${accountType === "Individual"
+                      ? "border-brand-blue"
+                      : isDarkMode
                         ? "border-[#292929]"
                         : "border-[#e6e6e6]"
-                    } ${isDarkMode ? "bg-[#0F0F0F]" : "bg-white"}`}
+                      } ${isDarkMode ? "bg-[#0F0F0F]" : "bg-white"}`}
                     onPress={() => {
                       setAccountType("Individual");
                       if (errors.accountType) {
@@ -596,7 +609,7 @@ export default function AboutYourself() {
                       }
                     }}
                   >
-                    <View className="flex-row justify-between items-center">
+                    <View className="flex-row flex-1 justify-between items-center">
                       <Text
                         fontSize="text-sm"
                         className={isDarkMode ? "text-white" : "text-black"}
@@ -613,13 +626,12 @@ export default function AboutYourself() {
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    className={`flex-1 ml-2 p-4 rounded-xl border-2 ${
-                      accountType === "Business"
-                        ? "border-brand-blue"
-                        : isDarkMode
+                    className={`flex-1 ml-2 p-3 rounded-xl border justify-center ${accountType === "Business"
+                      ? "border-brand-blue"
+                      : isDarkMode
                         ? "border-[#292929]"
                         : "border-[#e6e6e6]"
-                    } ${isDarkMode ? "bg-[#0F0F0F]" : "bg-white"}`}
+                      } ${isDarkMode ? "bg-[#0F0F0F]" : "bg-white"}`}
                     onPress={() => {
                       setAccountType("Business");
                       if (errors.accountType) {
@@ -708,9 +720,8 @@ export default function AboutYourself() {
               onPress={() => setAgreementChecked(!agreementChecked)}
             />
             <Text
-              className={`ml-2 ${
-                isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000b2]"
-              }`}
+              className={`ml-2 ${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000b2]"
+                }`}
             >
               I agree to provide accurate and verifiable information
             </Text>

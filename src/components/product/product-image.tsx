@@ -7,6 +7,7 @@ import { styled } from "nativewind";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
+  Modal,
   Pressable,
   StyleSheet,
   TouchableOpacity,
@@ -20,6 +21,7 @@ import {
 } from "react-native-responsive-screen";
 import Toast from "react-native-toast-message";
 import { useMutation, useQueryClient } from "react-query";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const StyledView = styled(View);
 const StyledButton = styled(TouchableOpacity);
@@ -44,6 +46,8 @@ export function ProductImage({ images, mode, name, isFavorite: iF }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const lottieRef = useRef<Lottie>(null);
   const queryClient = useQueryClient();
+  const [fullImage, setFullImage] = useState<string | null>(null)
+
 
   const saveFavoriteMutation = useMutation(saveFavorite, {
     onSuccess: () => {
@@ -85,7 +89,7 @@ export function ProductImage({ images, mode, name, isFavorite: iF }: Props) {
   };
 
   return (
-    <StyledView className={`h-full w-full p-6 ${isDarkMode ? "bg-black" : ""}`}>
+    <StyledView className={`h-full w-full p-6 px-4 ${isDarkMode ? "bg-black" : ""}`}>
       <StyledView className="flex-1 relative items-center justify-center mt-3">
         {mode === "post" ? (
           ""
@@ -99,7 +103,7 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
                     rounded-full translate-y-2`}
             >
               <ArrowLeftIcon
-                size={wp("5%")}
+                size={17}
                 color={isDarkMode ? "#FFF" : "#000"}
               />
             </StyledButton>
@@ -107,7 +111,7 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
             <StyledButton
               style={styles.Shadow}
               onPress={handleLike}
-              className={`p-3 rounded-full ${
+              className={`p-2 rounded-full ${
                 isDarkMode
                   ? "bg-[#1A1A1A] border-[#4e4e4e]"
                   : "bg-white border-[#f5f5f5]"
@@ -117,6 +121,7 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
                 size={24}
                 color={isFavorite ? "" : "white"}
                 fill={isFavorite ? "#FF3B30" : "#1E1E1E70"}
+                style={{ opacity: isFavorite ? 0 : 1,}}
               />
               {isFavorite && (
                 <View
@@ -130,8 +135,8 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
                     style={[
                       styles.lottie,
                       {
-                        width: wp(8),
-                        height: wp(8),
+                        width: 24,
+                        height: 24,
                       },
                     ]}
                     autoPlay={false}
@@ -162,19 +167,37 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
           )}
         >
           {images.map((image, index) => (
-            <View
+            <Pressable
               key={index}
               style={{ flex: 1 }}
+              onPress={() => setFullImage(image)}
             >
               <Image
                 source={image}
-                style={{ width: "100%", height: "100%" }}
-                contentFit="fill"
+                style={{ width: "100%", height: "100%", resizeMode: 'stretch' }}
               />
-            </View>
+            </Pressable>
           ))}
         </Carousel>
       </StyledView>
+      {!!fullImage && <Modal visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
+        <View style={{ position: 'relative', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
+
+          <Pressable style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }} onPress={() => setFullImage(null)}>
+            <MaterialIcons name="close" size={24} color="white" />
+          </Pressable>
+          <View style={{ position: 'relative', height: '100%', width: '100%', backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }}>
+
+            <Image source={{ uri: fullImage }}
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: 12,
+              }}
+              resizeMode="contain" />
+          </View>
+        </View>
+      </Modal>}
     </StyledView>
   );
 }

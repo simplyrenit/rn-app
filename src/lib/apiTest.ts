@@ -6,7 +6,6 @@ export const testApiConnection = async () => {
 
   try {
     // Check server connectivity using categories endpoint
-    console.log("Checking server availability...");
     const isServerAvailable = await checkServerConnection();
     if (!isServerAvailable) {
       console.error("❌ Server is not responding");
@@ -15,12 +14,9 @@ export const testApiConnection = async () => {
     console.log("✅ Server is responding");
 
     // Test categories endpoint with retry logic
-    console.log("Testing categories endpoint with retry...");
     try {
       const categories = await fetchWithRetry(GET_CATEGORIES);
-      console.log("✅ Categories endpoint working, received:", categories);
     } catch (error) {
-      console.error("❌ Categories endpoint failed:", error);
       return false;
     }
 

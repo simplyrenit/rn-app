@@ -45,25 +45,29 @@ export default function OnboardingScreen(): JSX.Element {
   const { theme } = useGlobalContext();
   const isDarkMode = theme === "dark";
   const progress = useSharedValue(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const AnimatedStyledView = Animated.createAnimatedComponent(StyledView);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StaticContainer width={100}>
-        <StyledView className="flex-1">
+        <StyledView className="flex-1" style={{ height: SCREEN_HEIGHT*0.6 }}>
           <Carousel
             loop
             autoplay
+            containerStyle={{ height: SCREEN_HEIGHT * 0.75 }}
+            showsDots={false}
             autoplayInterval={3000}
             renderPrev={() => <></>}
             renderNext={() => <></>}
             renderDot={() => (
-              <View className="w-2 h-2 bg-gray-300 rounded-lg mx-0.5 -translate-y-8" />
+              <View className="w-2 h-2 mt-5 bg-gray-300 rounded-lg mx-0.5 -translate-y-8" />
             )}
             renderActiveDot={() => (
-              <View className="w-2 h-2 bg-brand-blue rounded-lg mx-0.5 -translate-y-8" />
+              <View className="w-2 h-2 mt-5 bg-brand-blue rounded-lg mx-0.5 -translate-y-8" />
             )}
+            onIndexChanged={(params) => setCurrentIndex(params.index)}
           >
             {carouselData.map((item, index) => (
               <StyledView
@@ -72,7 +76,8 @@ export default function OnboardingScreen(): JSX.Element {
               >
                 <StyledImage
                   source={isDarkMode ? item.darkImage : item.lightImage}
-                  className="w-full h-3/4"
+                  className="w-full"
+                  style={{ height: SCREEN_HEIGHT * 0.5 }}
                   contentFit="contain"
                 />
                 <Text
@@ -91,10 +96,16 @@ export default function OnboardingScreen(): JSX.Element {
               </StyledView>
             ))}
           </Carousel>
+        </StyledView>
+          <View className="flex-row justify-center items-center mt-2">
+            {carouselData.map((data, index) => (
+              index === currentIndex ? <View key={index} className="w-2 h-2 mt-5 bg-brand-blue rounded-lg mx-0.5 -translate-y-8" />
+                : <View key={index} className="w-2 h-2 mt-5 bg-gray-300 rounded-lg mx-0.5 -translate-y-8" />
+            ))}
+          </View>
 
           <LoginOptions isDarkMode={isDarkMode} />
           <TermsAndPolicy />
-        </StyledView>
       </StaticContainer>
     </GestureHandlerRootView>
   );

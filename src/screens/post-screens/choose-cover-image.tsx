@@ -62,9 +62,8 @@ export default function ChooseCoverImage() {
       <StyledTouchableOpacity
         key={index}
         onPress={() => selectImage(image)}
-        className={`w-40 h-40 mb-2.5 mr-3 relative rounded-lg overflow-hidden ${
-          selectedImage === image ? "border-2 border-[#435be8]" : ""
-        }`}
+        className={`w-40 h-40 mb-2.5 mr-3 relative rounded-lg overflow-hidden ${selectedImage === image ? "border-2 border-[#435be8]" : ""
+          }`}
       >
         <Image source={{ uri: image }} className="w-40 h-40" />
         {selectedImage === image && (
@@ -97,12 +96,13 @@ export default function ChooseCoverImage() {
         </StyledView>
         <StyledView className="w-[10%]" />
       </StyledView>
-      <ScrollView ref={scrollViewRef} className="px-3  flex-1">
+      <ScrollView ref={scrollViewRef} className="px-0  flex-1">
         <ScrollView
           horizontal
           contentContainerStyle={{
             flexDirection: "row",
             justifyContent: "space-between",
+            paddingHorizontal: 12
           }}
         >
           {renderImages()}
@@ -121,10 +121,10 @@ export default function ChooseCoverImage() {
           />
         )}
 
-        <Text fontSize="text-md" fontWeight="font-bold" className="mt-3">
+        <Text fontSize="text-md" fontWeight="font-bold" className="mt-5 mx-4">
           Crop Image
         </Text>
-        <StyledView className="mt-5">
+        <StyledView className="mt-5 mx-4">
           {croppedImage ? (
             <>
               <Image
@@ -142,9 +142,8 @@ export default function ChooseCoverImage() {
               }}
             >
               <Text
-                className={`${
-                  isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
-                }`}
+                className={`${isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
+                  }`}
               >
                 Select an image to crop
               </Text>
@@ -173,18 +172,15 @@ export default function ChooseCoverImage() {
           <View className="flex-row items-center justify-between">
             <Text
               fontWeight="font-bold"
-              className={`mr-1 ${
-                croppedImage ? "text-white" : "text-gray-500"
-              }`}
+              className={`mr-1 ${croppedImage ? "text-white" : "text-gray-500"
+                }`}
             >
               Next
             </Text>
-            <View className="mt-1">
-              <ChevronRightIcon
-                size={16}
-                color={croppedImage ? "#ffffff" : "#888888"}
-              />
-            </View>
+            <ChevronRightIcon
+              size={16}
+              color={croppedImage ? "#ffffff" : "#888888"}
+            />
           </View>
         </Button>
       </View>

@@ -4,6 +4,7 @@ import {
   GET_REVIEWS,
   SIMILAR_PRODUCTS,
 } from "@/lib/config";
+import axiosInstance from "@/lib/networkUtils";
 import { BackendProduct, BackendReview } from "@/lib/types";
 import axios from "axios";
 import { useState } from "react";
@@ -24,11 +25,10 @@ export function useProduct() {
   const fetchProduct = async (id: string) => {
     setLoading(true);
     try {
-      const response = await axios.get<BackendProduct>(
+      const response = await axiosInstance.get<BackendProduct>(
         `${GET_PRODUCT_DETAILS}${id}/`,
         {
           headers: {
-            Authorization: `Bearer ${access_token}`,
             "Content-Type": "application/json",
           },
         }
@@ -46,7 +46,7 @@ export function useProduct() {
   const fetchSimilarProducts = async (name: string) => {
     setLoading(true);
     try {
-      const response = await axios.get<SimilarProducts>(
+      const response = await axiosInstance.get<SimilarProducts>(
         `${SIMILAR_PRODUCTS}?product_name=${name}`
       );
 
@@ -62,11 +62,10 @@ export function useProduct() {
   const fetchReviews = async (name: string) => {
     setLoading(true);
     try {
-      const response = await axios.get<ReviewResponse>(
+      const response = await axiosInstance.get<ReviewResponse>(
         `${GET_REVIEWS}?product_name=${name}`,
         {
           headers: {
-            Authorization: `Bearer ${access_token}`,
             "Content-Type": "application/json",
           },
         }

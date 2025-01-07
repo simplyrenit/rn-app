@@ -64,6 +64,7 @@ export function useChat() {
       rate: string;
       type: string;
       text: string;
+      id: string;
     }
   ): Promise<{ success: boolean; content: string }> {
     const isBlocked = await checkIfUsersAreBlocked(
@@ -72,7 +73,6 @@ export function useChat() {
     );
 
     if (isBlocked) {
-      console.log("cant start conversation");
       return { success: false, content: "Cannot start conversation" };
     }
 
@@ -116,7 +116,6 @@ export function useChat() {
         collection(firestore, "conversations"),
         conversation
       );
-      console.log("Conversation started successfully");
 
       await createInitialMessage(
         conversationDoc.id,
@@ -140,6 +139,7 @@ export function useChat() {
       rate: string;
       type: string;
       text: string;
+      id: string;
     }
   ): Promise<void> {
     let message: Message;
@@ -155,6 +155,7 @@ export function useChat() {
             image: product.image,
             price: product.rate,
             location: product.location,
+            id: product.id,
           },
         },
       };
@@ -170,7 +171,6 @@ export function useChat() {
 
     try {
       await addDoc(collection(firestore, "messages"), message);
-      console.log("Initial product_post message created successfully");
     } catch (error) {
       console.error("Error creating initial message:", error);
     }
@@ -206,39 +206,23 @@ export function useChat() {
     userId: string,
     callback: (chats: Conversation[]) => void
   ): () => void {
-    console.log(
-      "[subscribeToChats] Initializing subscription for user:",
-      userId,
-      firestore
-    );
 
     const q = query(collection(firestore, "conversations"));
-    console.log("[subscribeToChats] Firestore query created:", q);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      console.log(
-        "[subscribeToChats] Snapshot received with size:",
-        snapshot.size
-      );
+     
 
       const chats: Conversation[] = [];
       snapshot.forEach((doc) => {
         const conversation = doc.data() as Conversation;
-        console.log(
-          "[subscribeToChats] Processing conversation:",
-          conversation
-        );
-
+       
         if (
           conversation?.participants?.length > 0 &&
           conversation.participants.some(
             (participant) => participant?.userId === userDetails?.username
           )
         ) {
-          console.log(
-            "[subscribeToChats] User is a participant in conversation:",
-            doc.id
-          );
+          
 
           const readStatus = conversation.readStatus || [];
           const readCount = conversation.readCount || [];
@@ -249,10 +233,7 @@ export function useChat() {
             readStatus,
             readCount,
           });
-          console.log(
-            "[subscribeToChats] Conversation added to chats list:",
-            doc.id
-          );
+          
         }
       });
 
@@ -265,31 +246,20 @@ export function useChat() {
           : 0;
         return timeB - timeA;
       });
-      console.log("[subscribeToChats] Chats sorted by last message time");
 
       callback(chats);
-      console.log("[subscribeToChats] Callback executed with chats:", chats);
     });
 
     registerForPushNotificationsAsync().then((token) => {
       if (token) {
-        console.log(
-          "[subscribeToChats] Push notification token received:",
-          token
-        );
+       
         updateUserPushToken(userId, token);
-        console.log(
-          "[subscribeToChats] User push token updated for user:",
-          userId
-        );
+       
       } else {
-        console.log("[subscribeToChats] No push notification token received");
       }
     });
 
-    console.log(
-      "[subscribeToChats] Subscription setup complete, returning unsubscribe function"
-    );
+    
     return unsubscribe;
   }
 
@@ -307,12 +277,9 @@ export function useChat() {
           ), // Remove from participants
         });
 
-        console.log("Chat deleted successfully");
       } else {
-        console.error("No such conversation exists!");
       }
     } catch (error) {
-      console.error("Error deleting chat:", error);
     }
   }
 
@@ -331,10 +298,8 @@ export function useChat() {
           } as Message)
       );
 
-      console.log("Messages retrieved successfully");
       return messages;
     } catch (error) {
-      console.error("Error fetching messages:", error);
       return [];
     }
   }
@@ -408,9 +373,7 @@ export function useChat() {
         });
       }
 
-      console.log("Message sent successfully");
     } catch (error) {
-      console.error("Error sending message:", error);
     }
   }
 
@@ -554,9 +517,7 @@ export function useChat() {
         });
       }
 
-      console.log("Message sent successfully");
     } catch (error) {
-      console.error("Error sending message:", error);
     }
   }
 

@@ -11,6 +11,7 @@ import {
   GET_CATEGORIES,
   MY_DETAILS_ENDPOINT,
 } from "@/lib/config";
+import axiosInstance from "@/lib/networkUtils";
 import { AuthTokens, Category } from "@/lib/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
@@ -27,7 +28,7 @@ interface GlobalContextType {
   authTokens: AuthTokens | null;
   setAuthTokens: (tokens: AuthTokens | null) => void;
   loading: boolean;
-  isAuthenticated: boolean;
+  isAuthenticated: boolean | undefined;
   hasSeenWelcome: boolean;
   setHasSeenWelcome: (value: boolean) => void;
   logout: () => Promise<void>;
@@ -70,7 +71,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [authTokens, setAuthTokensState] = useState<AuthTokens | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<undefined | boolean>(undefined);
   const [hasSeenWelcome, setHasSeenWelcomeState] = useState(false);
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const systemColorScheme = useColorScheme();
@@ -103,11 +104,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   async function getMyDetails() {
     try {
-      const response = await axios.get<MyDetails>(MY_DETAILS_ENDPOINT, {
-        headers: {
-          Authorization: `Bearer ${authTokens?.access_token}`,
-        },
-      });
+      const response = await axiosInstance.get<MyDetails>(MY_DETAILS_ENDPOINT);
 
       return response.data;
     } catch (error) {
@@ -123,7 +120,6 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   const saveUserDataToStorage = async () => {
     try {
       await AsyncStorage.setItem("authToken", JSON.stringify(userData));
-      console.log("User data saved to AsyncStorage");
     } catch (error) {
       console.error("Failed to save data", error);
     }
@@ -147,13 +143,12 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await axios.get(GET_CATEGORIES, {
+      const response = await axiosInstance.get(GET_CATEGORIES, {
         headers: {
           Authorization: `Bearer ${ACCESS_TOKEN}`,
           "Content-Type": "application/json",
         },
       });
-      console.log("Fetched categories:", response.data);
       setCategories(response.data);
     } catch (error) {
       console.error("Failed to fetch categories:", error);
@@ -170,11 +165,11 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (tokens) {
           setAuthTokensState(tokens);
+          axiosInstance.defaults.headers.Authorization = `Bearer ${tokens.access_token}`;
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
         }
-
         setHasSeenWelcomeState(seenWelcome);
       } catch (error) {
         console.error("Error initializing app:", error);
@@ -223,7 +218,6 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
       const data = await AsyncStorage.getItem("authToken");
       if (data) {
         setUserData(JSON.parse(data));
-        console.log("User data loaded from AsyncStorage", JSON.parse(data));
       }
     } catch (error) {
       console.error("Failed to load data", error);

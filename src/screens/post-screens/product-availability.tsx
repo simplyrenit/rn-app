@@ -215,12 +215,12 @@ export default function ProductAvailability() {
           endingDay: currentDate.isSame(range.endDate),
           color:
             currentDate.isSame(range.startDate) ||
-            currentDate.isSame(range.endDate)
+              currentDate.isSame(range.endDate)
               ? "#C80808"
               : "#C808081A",
           textColor:
             currentDate.isSame(range.startDate) ||
-            currentDate.isSame(range.endDate)
+              currentDate.isSame(range.endDate)
               ? "white"
               : "#C80808",
         };
@@ -249,7 +249,7 @@ export default function ProductAvailability() {
         </TouchableOpacity>
         <View className="w-[80%]">
           <PostProductHeader
-            heading="Product Availability"
+            heading="Product Unavailability"
             percentage={70}
           />
         </View>
@@ -311,12 +311,12 @@ export default function ProductAvailability() {
                         color: marked
                           ? marked.textColor
                           : state === "disabled"
-                          ? isDark
-                            ? "#292929"
-                            : "#d9e1e8"
-                          : isDark
-                          ? "#fff"
-                          : "#000",
+                            ? isDark
+                              ? "#292929"
+                              : "#d9e1e8"
+                            : isDark
+                              ? "#fff"
+                              : "#000",
                       }}
                     >
                       {date.day}
@@ -388,29 +388,27 @@ export default function ProductAvailability() {
             variant="outline"
             onPress={confirmDateRange}
             disabled={!selectedRange}
-            className="w-[49%]"
+            className="w-[49%] border rounded-xl"
           >
             <Text fontWeight="font-bold">Add date log</Text>
           </Button>
 
           <Button
-            disabled={unavailableDates.length === 0}
             className="items-center justify-between w-[49%]"
             onPress={onPress}
           >
             <View className="flex-row items-center justify-between">
               <Text
                 fontWeight="font-bold"
-                className={`${
-                  unavailableDates.length === 0 ? "text-gray-500" : "text-white"
-                }`}
+                className={`${ "text-white"
+                  }`}
               >
                 Next
               </Text>
-              <View className="mt-1">
+              <View className="mt-[0.5px]">
                 <ChevronRightIcon
                   size={16}
-                  color={unavailableDates.length === 0 ? "#888888" : "#ffffff"}
+                  color={ "#ffffff"}
                 />
               </View>
             </View>

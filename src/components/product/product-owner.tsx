@@ -34,7 +34,7 @@ export function AboutOwner({
   return (
     <TouchableOpacity
       onPress={() => navigation.navigate("UserDetail", { id })}
-      className="w-full mt-3 h-20 flex flex-row items-center"
+      className="w-full mt-0 h-20 flex flex-row items-center"
     >
       <View className="">
         {profilePic ? (

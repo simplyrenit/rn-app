@@ -1,19 +1,19 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
-import { ACCESS_TOKEN, DEV_MODE, GET_CATEGORIES } from "./config";
+import { ACCESS_TOKEN, DEV_MODE, GET_CATEGORIES, GET_REFRESH_TOKEN } from "./config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuthTokens, setAuthTokens } from "./auth-fns";
 
 // Create axios instance with interceptors for debugging
 const axiosInstance = axios.create({
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${ACCESS_TOKEN}`,
   },
 });
 
 // Add request interceptor for debugging
 axiosInstance.interceptors.request.use(
   (config) => {
-    console.log("Making request to:", config.url);
     return config;
   },
   (error) => {
@@ -22,23 +22,34 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Add response interceptor for debugging
 axiosInstance.interceptors.response.use(
   (response) => {
-    console.log(`Response received from ${response.config.url}`);
     return response;
   },
-  (error) => {
-    if (error.response) {
-      console.error("Server Error:", {
-        status: error.response.status,
-        data: error.response.data,
-      });
-    } else if (error.request) {
-      console.error("Network Error:", error.message);
-    } else {
-      console.error("Error:", error.message);
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response && error.response.status === 401 && originalRequest?.headers?.Authorization?.includes('Bearer ') && !originalRequest._retry) {
+    try {
+      const tokens = await getAuthTokens();
+        const response = await axios.post(GET_REFRESH_TOKEN, {
+          refresh: tokens?.refresh_token,
+        });
+
+        const newTokens = response.data;
+
+        await setAuthTokens(newTokens);
+
+        originalRequest.headers.Authorization = `Bearer ${newTokens.access_token}`;
+        axiosInstance.defaults.headers.Authorization = `Bearer ${newTokens.access_token}`;
+        originalRequest._retry = true;
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        // Handle refresh token error, e.g., log out the user
+        // Clear tokens from storage
+        // Redirect or handle user session expiration
+      }
     }
+
     return Promise.reject(error);
   }
 );
@@ -54,7 +65,6 @@ export const fetchWithRetry = async (url: string, config: RetryConfig = {}) => {
   for (let i = 0; i < retries; i++) {
     try {
       if (i > 0) {
-        console.log(`Retry attempt ${i + 1} of ${retries}`);
       }
 
       const response = await axiosInstance({
@@ -90,12 +100,11 @@ export const fetchWithRetry = async (url: string, config: RetryConfig = {}) => {
 // Helper function to check server availability
 export const checkServerConnection = async () => {
   try {
-    console.log("Testing connection to:", GET_CATEGORIES);
     const response = await axiosInstance.get(GET_CATEGORIES);
-    console.log("Server check successful");
     return true;
   } catch (error) {
-    console.error("Server check failed:", error.message);
     return false;
   }
 };
+
+export default axiosInstance;

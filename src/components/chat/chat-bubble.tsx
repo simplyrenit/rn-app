@@ -5,6 +5,9 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
+  Pressable,
+  Modal,
+  Dimensions,
 } from "react-native";
 import { View } from "react-native";
 import { useGlobalContext } from "@/context/global-context";
@@ -17,8 +20,10 @@ import { useChat } from "@/backend/chat";
 import { useState } from "react";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import * as IntentLauncher from 'expo-intent-launcher';
 import Toast from "react-native-toast-message";
-import { MaterialIcons } from "@expo/vector-icons";
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useTypedNavigation } from "@/lib/types";
 
 interface ChatBubbleProps {
   message: {
@@ -62,6 +67,8 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
   const isDark = theme === "dark";
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [fullImage, setFullImage] = useState<string | null>(null)
+  const router = useTypedNavigation();
 
   const { offerOperations } = useChat();
 
@@ -72,20 +79,20 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
   const handleRejectOffer = async () => {
     await offerOperations(id, "rejected");
   };
-  console.log(message?.name, userDetails?.name);
+
+
   const renderMessageContent = () => {
     if (type === "text") {
       try {
         // Try to parse the message as JSON (for attachments)
         const messageContent: MessageContent = JSON.parse(message.text || "");
 
-        console.log(messageContent);
-
         if (messageContent.type === "image") {
           return (
-            <View
+            <Pressable
               style={{ position: "relative" }}
               className="p-1"
+              onPress={() => setFullImage(messageContent.url)}
             >
               <View
                 style={{
@@ -120,7 +127,6 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                   onError={(e) => {
                     setImageError(true);
                     setImageLoading(false);
-                    console.log(e.nativeEvent.error, "error");
                   }}
                 />
                 {imageError && (
@@ -132,12 +138,12 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                   </Text>
                 )}
               </View>
-            </View>
+            </Pressable>
           );
         } else if (messageContent.type === "file") {
           return (
             <TouchableOpacity
-              className="p-1"
+              className="p-1 w-full"
               onPress={async () => {
                 try {
                   const fileUri =
@@ -192,19 +198,24 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                   backgroundColor: isDark ? "#333" : "#f5f5f5",
                   padding: 8,
                   borderRadius: 12,
+                  width: '100%',
+                  flex: 1,
                 }}
               >
                 <DocumentIcon
                   size={24}
                   color={isDark ? "#fff" : "#000"}
                 />
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-medium"
-                  className={`ml-2 ${isDark ? "text-white" : "text-black"} `}
-                >
-                  {messageContent.filename}
-                </Text>
+                <View className="w-[85%]">
+
+                  <Text
+                    fontSize="text-sm"
+                    fontWeight="font-medium"
+                    className={`ml-2 w-full ${isDark ? "text-white" : "text-black"} `}
+                  >
+                    {messageContent.filename}
+                  </Text>
+                </View>
               </View>
             </TouchableOpacity>
           );
@@ -212,13 +223,28 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
       } catch {
         // If parsing fails, it's a regular text message
         return (
-          <Text
-            fontSize="text-sm"
-            fontWeight="font-bold"
-            className={`${isSent ? "text-white" : "text-black"} p-3`}
-          >
-            {message.text}
-          </Text>
+          <Pressable onPress={() => {
+            try {
+              if (message.text) {
+
+                Linking.openURL(message.text)
+              }
+            } catch (e) {
+
+            }
+          }}>
+            <Text
+              fontSize="text-sm"
+              fontWeight="font-bold"
+              className={`${isSent ? "text-white" : "text-black"} p-3`}
+              style={{
+                textDecorationLine: message.text?.startsWith('https://') ? 'underline' : undefined
+              }}
+              selectable
+            >
+              {message.text}
+            </Text>
+          </Pressable>
         );
       }
     }
@@ -226,27 +252,29 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
     // Handle other message types (product_post, make_offer)
     return null;
   };
-
   return (
     <View
-      className={`flex-row ${isSent ? "justify-end" : "justify-start"} ${
-        type === "product_post" &&
+      className={`flex-row ${isSent ? "justify-end" : "justify-start"} ${type === "product_post" &&
         `${isSent ? "translate-x-2" : "-translate-x-3"}`
-      } px-4 py-1`}
+        } px-4 py-1`}
     >
       {type === "product_post" && message.item && (
-        <View className={`w-[80%] p-3 rounded-2xl `}>
+        <Pressable className={`p-3 rounded-2xl`} style={{ width: Dimensions.get('window').width * 0.8 }}
+          onPress={() => {
+            router.navigate("ProductDetail", { id: message.item?.name })
+          }
+          }
+        >
           <View
-            className={`border p-2 rounded-xl ${
-              isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
-            }`}
+            className={`border p-2 rounded-xl ${isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
+              }`}
           >
-            <View className={`flex-row items-center px-2 space-x-2 `}>
+            <View className={`flex-row items-center px-0 space-x-2 `}>
               <Image
                 source={{ uri: message.item.image }}
                 className="w-20 h-20 rounded-lg mr-3"
               />
-              <View className="space-y-2">
+              <View className="space-y-2 flex-1">
                 <Text
                   fontSize="text-sm"
                   fontWeight="font-bold"
@@ -257,6 +285,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                   fontSize="text-sm"
                   fontWeight="font-medium"
                   className="text-gray-500"
+                  numberOfLines={1}
                 >
                   {message.item.location}
                 </Text>
@@ -269,9 +298,8 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                   </Text>
                   <Text
                     fontSize="text-sm"
-                    className={`${
-                      isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
-                    }`}
+                    className={`${isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
+                      }`}
                   >
                     per day
                   </Text>
@@ -279,214 +307,234 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
               </View>
             </View>
           </View>
-        </View>
-      )}
+        </Pressable>
+      )
+      }
 
-      {type === "text" && (
-        <View
-          className={`max-w-[80%] rounded-2xl ${
-            isSent ? "bg-brand-blue" : "bg-[#e6e6e6]"
-          }`}
-        >
-          {renderMessageContent()}
-        </View>
-      )}
-
-      {type === "make_offer" && message.item && (
-        <View
-          className={`border p-3 rounded-xl ${
-            isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
-          }`}
-        >
+      {
+        type === "text" && (
           <View
-            className={`border-b ${
-              isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-            } p-1 rounded-lg `}
+            className={`max-w-[80%] rounded-2xl ${isSent ? "bg-brand-blue" : "bg-[#e6e6e6]"
+              }`}
           >
-            <Text
-              fontSize="text-sm"
-              fontWeight="font-semibold"
-              className="text-[#413C9A] mb-2 uppercase text-left"
+            {renderMessageContent()}
+          </View>
+        )
+      }
+
+      {
+        type === "make_offer" && message.item && (
+          <View
+            className={`border p-3 rounded-xl ${isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
+              }`}
+            style={{ width: Dimensions.get('window').width * 0.8 }}
+          >
+            <View
+              className={`flex-1 w-full border-b ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+                } p-1 rounded-lg `}
             >
-              {message?.name !== userDetails?.name
-                ? "YOU RECEIVED AN OFFER!"
-                : `YOU MADE AN OFFER!`}
-            </Text>
-          </View>
+              <Text
+                fontSize="text-sm"
+                fontWeight="font-semibold"
+                className="text-[#413C9A] mb-2 uppercase text-left"
+              >
+                {message?.name !== userDetails?.name
+                  ? "YOU RECEIVED AN OFFER!"
+                  : `YOU MADE AN OFFER!`}
+              </Text>
+            </View>
 
-          <View className={`flex-row items-center my-2 px-4 `}>
-            <Image
-              source={{ uri: message.item.image }}
-              className="w-16 h-16 rounded-lg mr-3"
-            />
-            <View className="space-y-1 max-w-[50%]">
-              <Text
-                fontSize="text-sm"
-                fontWeight="font-bold"
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {message.item.name}
-              </Text>
-              <Text
-                fontSize="text-sm"
-                fontWeight="font-medium"
-                className={`${
-                  isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
-                }`}
-              >
-                {message.item.location}
-              </Text>
-              <View className="flex-row items-center space-x-1 mb-2">
+            <View className={`flex-row items-center my-2 px-4 w-full `}>
+              <Image
+                source={{ uri: message.item.image }}
+                className="w-16 h-16 rounded-lg mr-3"
+              />
+              <View className="space-y-1 flex-1">
                 <Text
-                  fontSize="text-md"
+                  fontSize="text-sm"
                   fontWeight="font-bold"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
                 >
-                  ₹{message.item.price}
+                  {message.item.name}
                 </Text>
                 <Text
+                  numberOfLines={1}
                   fontSize="text-sm"
-                  className={`${
-                    isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
-                  }`}
+                  fontWeight="font-medium"
+                  className={`${isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                    }`}
                 >
-                  per day
+                  {message.item.location}
                 </Text>
-              </View>
-            </View>
-          </View>
-
-          <View
-            className={`justify-between items-center mt-1 border-t  ${
-              isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-            } ${
-              message.name === userDetails?.name ||
-              message?.item?.offerStatus !== "pending"
-                ? "border-b py-2"
-                : "py-0.5"
-            }`}
-          >
-            <View className="flex-row items-center">
-              <CalendarIcon
-                size={24}
-                color={isDark ? "#fff" : "#000"}
-              />
-              <View className="flex-row items-center space-x-2">
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-normal"
-                  className="ml-1"
-                >
-                  {message.item.duration} days
-                </Text>
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-normal"
-                  className="ml-1"
-                >
-                  •
-                </Text>
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-normal"
-                  className="ml-1"
-                >
-                  {formatDate(new Date(message.item.startDate))} -{" "}
-                  {formatDate(new Date(message.item.endDate))}
-                </Text>
+                <View className="flex-row items-center space-x-1 mb-2">
+                  <Text
+                    fontSize="text-md"
+                    fontWeight="font-bold"
+                  >
+                    ₹{message.item.price}
+                  </Text>
+                  <Text
+                    fontSize="text-sm"
+                    className={`${isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
+                      }`}
+                  >
+                    per day
+                  </Text>
+                </View>
               </View>
             </View>
 
-            <View className="flex-row items-center my-2">
-              <MaterialIcons
-                name="currency-rupee"
-                size={20}
-                color={isDark ? "#fff" : "#000"}
-              />
-              <View className="flex-row items-center space-x-2">
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-normal"
-                  className="ml-1"
-                >
-                  {message.item.price} p/d
-                </Text>
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-normal"
-                  className="ml-1"
-                >
-                  •
-                </Text>
+            <View
+              className={`justify-between items-center mt-1 border-t  ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+                } ${message.name === userDetails?.name ||
+                  message?.item?.offerStatus !== "pending"
+                  ? "border-b py-2"
+                  : "py-0.5"
+                }`}
+            >
+              <View className="flex-row items-center">
+                <CalendarIcon
+                  size={24}
+                  color={isDark ? "#fff" : "#000"}
+                />
+                <View className="flex-row items-center space-x-2">
+                  <Text
+                    fontSize="text-sm"
+                    fontWeight="font-normal"
+                    className="ml-1"
+                  >
+                    {message.item.duration} days
+                  </Text>
+                  <Text
+                    fontSize="text-sm"
+                    fontWeight="font-normal"
+                    className="ml-1"
+                  >
+                    •
+                  </Text>
+                  <Text
+                    fontSize="text-sm"
+                    fontWeight="font-normal"
+                    className="ml-1"
+                  >
+                    {formatDate(new Date(message.item.startDate))} -{" "}
+                    {formatDate(new Date(message.item.endDate))}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="flex-row items-center my-2">
                 <MaterialIcons
                   name="currency-rupee"
                   size={20}
                   color={isDark ? "#fff" : "#000"}
                 />
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-normal"
-                  className="ml-1"
-                >
-                  {message.item.securityDeposit} deposit
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {message.item.offerStatus === "pending" &&
-            message?.name !== userDetails?.name && (
-              <View className="flex-row items-center justify-between mt-2 w-full">
-                <Button
-                  className={`w-[48%] ${
-                    isDark
-                      ? "bg-[#1A1A1A] border-[#292929]"
-                      : "bg-white border-[#e6e6e6]"
-                  } border rounded-[12px]`}
-                  onPress={handleRejectOffer}
-                >
+                <View className="flex-row items-center space-x-2">
                   <Text
                     fontSize="text-sm"
-                    fontWeight="font-bold"
-                    className="text-[#E50914]"
+                    fontWeight="font-normal"
+                    className="ml-1"
                   >
-                    Reject
+                    {message.item.price} p/d
                   </Text>
-                </Button>
-                <Button
-                  className="w-[48%]"
-                  onPress={handleAcceptOffer}
-                >
-                  Accept
-                </Button>
+                  <Text
+                    fontSize="text-sm"
+                    fontWeight="font-normal"
+                    className="ml-1"
+                  >
+                    •
+                  </Text>
+                  <MaterialIcons
+                    name="currency-rupee"
+                    size={20}
+                    color={isDark ? "#fff" : "#000"}
+                  />
+                  <Text
+                    fontSize="text-sm"
+                    fontWeight="font-normal"
+                    className="ml-1"
+                  >
+                    {message.item.securityDeposit} deposit
+                  </Text>
+                </View>
               </View>
+            </View>
+
+            {message.item.offerStatus === "pending" &&
+              message?.name !== userDetails?.name && (
+                <View className="flex-row items-center justify-between mt-2 w-full">
+                  <Button
+                    className={`w-[48%] ${isDark
+                      ? "bg-[#1A1A1A] border-[#292929]"
+                      : "bg-white border-[#e6e6e6]"
+                      } border rounded-[12px]`}
+                    onPress={handleRejectOffer}
+                  >
+                    <Text
+                      fontSize="text-sm"
+                      fontWeight="font-bold"
+                      className="text-[#E50914]"
+                    >
+                      Reject
+                    </Text>
+                  </Button>
+                  <Button
+                    className="w-[48%]"
+                    onPress={handleAcceptOffer}
+                  >
+                    Accept
+                  </Button>
+                </View>
+              )}
+
+            {message.item.offerStatus === "accepted" && (
+              <Text
+                fontSize="text-sm"
+                fontWeight="font-semibold"
+                className="text-[#413C9A] mt-2 uppercase text-center"
+              >
+                {message?.name !== userDetails?.name
+                  ? "YOU ACCEPTED THE OFFER"
+                  : `YOUR OFFER WAS ACCEPTED`}
+              </Text>
             )}
 
-          {message.item.offerStatus === "accepted" && (
-            <Text
-              fontSize="text-sm"
-              fontWeight="font-semibold"
-              className="text-[#413C9A] mt-2 uppercase text-center"
-            >
-              {message?.name !== userDetails?.name
-                ? "YOU ACCEPTED THE OFFER"
-                : `YOUR OFFER WAS ACCEPTED`}
-            </Text>
-          )}
+            {message.item.offerStatus === "rejected" && (
+              <Text
+                fontSize="text-sm"
+                fontWeight="font-semibold"
+                className="text-[#413C9A] mt-2 uppercase text-center"
+              >
+                {message?.name !== userDetails?.name
+                  ? "YOU REJECTED THE OFFER"
+                  : `YOUR OFFER WAS REJECTED`}
+              </Text>
+            )}
+          </View>
+        )
+      }
+      {
+        !!fullImage && <Modal visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
+          <View style={{ position: 'relative', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
 
-          {message.item.offerStatus === "rejected" && (
-            <Text
-              fontSize="text-sm"
-              fontWeight="font-semibold"
-              className="text-[#413C9A] mt-2 uppercase text-center"
-            >
-              {message?.name !== userDetails?.name
-                ? "YOU REJECTED THE OFFER"
-                : `YOUR OFFER WAS REJECTED`}
-            </Text>
-          )}
-        </View>
-      )}
-    </View>
+            <Pressable style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }} onPress={() => setFullImage(null)}>
+              <MaterialIcons name="close" size={24} color="white" />
+            </Pressable>
+            <View style={{ position: 'relative', height: '90%', width: '100%', backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }}>
+
+              <Image source={{ uri: fullImage }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: 12,
+                }}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
+        </Modal>
+      }
+    </View >
   );
 }

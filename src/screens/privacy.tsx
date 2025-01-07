@@ -26,7 +26,7 @@ export default function Privacy() {
 
   return (
     <NonScrollableContainer>
-      <View className="flex-row items-center justify-between px-4 pb-2 ">
+      <View className="flex-row items-center justify-between px-4 pb-2 mt-2 ">
         <TouchableOpacity
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"

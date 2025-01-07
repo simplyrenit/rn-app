@@ -21,30 +21,44 @@ export default function HangTight() {
   const [isPosting, setIsPosting] = useState(true);
 
   const handlePostProduct = async () => {
-    const { status, data } = await postProduct();
-    if (status === 201) {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Your product is now live",
-        text2: "success",
-        visibilityTime: 4000,
-        autoHide: true,
-        bottomOffset: 20,
-        onPress: () => {
-          Toast.hide();
-        },
-      });
-      clearDetails();
+    try {
+      const { status, data } = await postProduct();
+      if (status === 201) {
+        Toast.show({
+          type: "customToast",
+          position: "bottom",
+          text1: "Your product will go live & shown to others in 24 hours.",
+          text2: "success",
+          visibilityTime: 4000,
+          autoHide: true,
+          bottomOffset: 20,
+          onPress: () => {
+            Toast.hide();
+          },
+        });
+        clearDetails();
 
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Post" }],
-      });
-      navigation.navigate("Profile", {
-        screen: "myProducts",
-      });
-    } else {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainTabs', params: { screenName: 'Profile' } }, { name: "myProducts" }],
+        });
+      } else {
+        Toast.show({
+          type: "customToast",
+          position: "bottom",
+          text1: "There was an error posting your product",
+          text2: "error",
+          visibilityTime: 4000,
+          autoHide: true,
+          bottomOffset: 20,
+          onPress: () => {
+            Toast.hide();
+          },
+        });
+        navigation.goBack()
+      }
+      setIsPosting(false);
+    } catch (e) {
       Toast.show({
         type: "customToast",
         position: "bottom",
@@ -57,8 +71,10 @@ export default function HangTight() {
           Toast.hide();
         },
       });
+      navigation.goBack();
+    } finally {
+      setIsPosting(false);
     }
-    setIsPosting(false);
   };
 
   useEffect(() => {
@@ -84,9 +100,8 @@ export default function HangTight() {
 
         <Text
           fontSize="text-md"
-          className={`mt-3 text-center ${
-            isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
-          }`}
+          className={`mt-3 text-center ${isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+            }`}
         >
           This may take a few minutes...
         </Text>

@@ -1,5 +1,6 @@
 import { useGlobalContext } from "@/context/global-context";
 import { SEARCH_PRODUCTS } from "@/lib/config";
+import axiosInstance from "@/lib/networkUtils";
 import { BackendProduct } from "@/lib/types";
 import axios from "axios";
 import moment from "moment-timezone";
@@ -48,13 +49,9 @@ export function useSearch() {
         if (filters.condition) url += `&condition=${filters.condition}`;
       }
 
-      const response = await axios.get<BackendProduct[]>(url, {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
-      });
+      const response = await axiosInstance.get<BackendProduct[]>(url);
 
-      return response.data || [];
+      return (response.data || []).filter(prod => !prod.moderation_labels?.length);
     } catch (error) {
       console.error("Error searching products:", error);
       throw error;

@@ -107,8 +107,8 @@ export default function ChatDetailsScreen() {
     const details = await getParticipantDetails(conversationId);
     const myDetails = await getMyDetails(conversationId);
     const blocked = await isChatBlocked(conversationId);
-    const products = await getOwnerProducts(userDetails?.username!);
-    console.log(products, "products", userDetails?.username, "userDetails");
+    const products = await getOwnerProducts(details.userId);
+    
 
     setIsBlocked(blocked.isBlocked);
     setBlockedBy(blocked.initiatedBy);
@@ -120,8 +120,6 @@ export default function ChatDetailsScreen() {
 
     setOwnerProducts(products);
     setFilteredProducts(products);
-
-    console.log(products, "products");
 
     setMyDetails({
       profilePicture: myDetails.profilePicture,
@@ -242,7 +240,6 @@ export default function ChatDetailsScreen() {
   };
 
   const onDateSelect = () => {
-    console.log("Selected range:", selectedRange);
     makeOfferBottomSheetRef.current?.present();
   };
 
@@ -354,6 +351,7 @@ export default function ChatDetailsScreen() {
           name={participantDetails.username}
           profilePic={participantDetails.profilePicture}
           onReportPress={handleReportPress}
+          id={participantDetails.userId}
           isBlocked={isBlocked}
         />
 
@@ -440,7 +438,7 @@ export default function ChatDetailsScreen() {
 
       <CustomBottomSheetModal
         ref={bottomSheetRef}
-        snapPoints={["60%"]}
+        // snapPoints={["60%"]}
         isDark={isDark}
       >
         <View className="w-[95%] mx-auto">
@@ -469,7 +467,7 @@ export default function ChatDetailsScreen() {
             placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
           />
 
-          <View className="flex-row justify-between mt-6">
+          <View className="flex-row justify-between mt-6 mb-0">
             <TouchableOpacity
               onPress={() => bottomSheetRef.current?.close()}
               className={`bg-white border ${

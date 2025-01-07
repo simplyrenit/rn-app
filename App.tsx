@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, LogBox, StyleSheet, View } from "react-native";
 import { GlobalProvider } from "@/context/global-context";
 import { ProductProvider } from "@/context/product-context";
 import Navigation from "@/navigation/nav";
@@ -19,13 +19,23 @@ import {
 import { AuthProvider } from "@/context/auth-context";
 import { QueryClient, QueryClientProvider } from "react-query";
 import firebase from "@react-native-firebase/app";
-import { FIREBASE_CONFIG } from "@/lib/config";
+import { FIREBASE_CONFIG, WEB_CLIENT_ID } from "@/lib/config";
 import { testApiConnection } from "@/lib/apiTest";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 // Initialize Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(FIREBASE_CONFIG);
 }
+
+
+GoogleSignin.configure({
+  webClientId: WEB_CLIENT_ID, // client ID of type WEB for your server. Required to get the `idToken` on the user object, and for offline access.
+  // scopes: ["https://www.googleapis.com/auth/drive.readonly"], // what API you want to access on behalf of the user, default is email and profile
+  offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
+  // forceCodeForRefreshToken: true, // [Android] related to `serverAuthCode`, read the docs link below *.
+  // iosClientId: IOS_CLIENT_ID, // [iOS] if you want to specify the client ID of type iOS (otherwise, it is taken from GoogleService-Info.plist)
+});
 
 SplashScreen.preventAutoHideAsync();
 
@@ -97,9 +107,8 @@ const toastConfig = {
   customToast: ({ text1, text2 }: { text1: string; text2?: string }) => (
     <View style={styles.customToast}>
       <View
-        className={`${
-          text2 === "success" ? "bg-brand-blue" : "bg-red-500"
-        } rounded-lg p-2`}
+        className={`${text2 === "success" ? "bg-brand-blue" : "bg-red-500"
+          } rounded-lg p-2`}
       >
         {text2 === "success" ? (
           <CheckIcon
@@ -148,3 +157,5 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 });
+
+LogBox.ignoreAllLogs();
