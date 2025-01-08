@@ -20,7 +20,6 @@ import { useChat } from "@/backend/chat";
 import { useState } from "react";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import * as IntentLauncher from 'expo-intent-launcher';
 import Toast from "react-native-toast-message";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTypedNavigation } from "@/lib/types";
