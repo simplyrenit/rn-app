@@ -28,18 +28,14 @@ axiosInstance.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    console.log('###', error.response.status, originalRequest?.headers?.Authorization, error.response && error.response.status === 401 && originalRequest?.headers?.Authorization?.includes('Bearer ') && !originalRequest._retry)
     if (error.response && error.response.status === 401 && originalRequest?.headers?.Authorization?.includes('Bearer ') && !originalRequest._retry) {
     try {
-      console.log('### getting new token');
       const tokens = await getAuthTokens();
-      console.log('### existing', tokens);
         const response = await axios.post(GET_REFRESH_TOKEN, {
           refresh: tokens?.refresh_token,
         });
 
         const newTokens = response.data;
-        console.log('### newtokens', newTokens);
 
         await setAuthTokens({
           access_token: newTokens.access,

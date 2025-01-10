@@ -227,7 +227,7 @@ export function useChat() {
 
 
       const chats: Conversation[] = [];
-      snapshot.forEach((doc) => {
+      snapshot?.forEach((doc) => {
         const conversation = doc.data() as Conversation;
 
         if (

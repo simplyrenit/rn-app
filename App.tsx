@@ -19,7 +19,7 @@ import {
 import { AuthProvider } from "@/context/auth-context";
 import { QueryClient, QueryClientProvider } from "react-query";
 import firebase from "@react-native-firebase/app";
-import { FIREBASE_CONFIG, WEB_CLIENT_ID } from "@/lib/config";
+import { FIREBASE_CONFIG, firestore, WEB_CLIENT_ID } from "@/lib/config";
 import { testApiConnection } from "@/lib/apiTest";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
