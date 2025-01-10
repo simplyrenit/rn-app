@@ -16,7 +16,7 @@ import {
 } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React, { useState } from "react";
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Dimensions, ScrollView, TouchableOpacity, View } from "react-native";
 import {
   BanknotesIcon,
   ChevronDownIcon,
@@ -32,9 +32,10 @@ import { ProductsSkeleton } from "./products-skeleton";
 
 const MAX_CHARS = 150;
 
+const itemWidth = Dimensions.get('window').width * 0.9;
+const itemMargin = wp(5.7);
+
 export default function DetailsScreen() {
-  const itemWidth = wp(40);
-  const itemMargin = wp(5.7);
   const [loading, setLoading] = React.useState(true);
   const [showFullText, setShowFullText] = useState(false);
   const route = useRoute<RouteProps<"ProductDetail">>();
@@ -384,7 +385,9 @@ export default function DetailsScreen() {
 
           <ScrollView
             horizontal
+            nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
+            style={{ width: '100%'}}
             contentContainerStyle={{
               paddingRight: itemMargin,
             }}
@@ -403,7 +406,7 @@ export default function DetailsScreen() {
                   reviewText={item.comment}
                   reviewerName={`${item.user.first_name} ${item.user.last_name}`}
                   reviewDate={item.created_at}
-                  reviewerImage={item.user.image}
+                  reviewerImage={item.user?.image?.image_url}
                 />
               </View>
             ))}

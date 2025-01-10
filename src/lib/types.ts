@@ -96,7 +96,10 @@ export interface BackendReview {
   user: {
     username: string;
     email: string;
-    image: string;
+    image: {
+      name: string;
+      image_url: string;
+    };
     first_name: string;
     last_name: string;
   };
