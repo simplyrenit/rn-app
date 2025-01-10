@@ -183,7 +183,7 @@ export default function ReviewsScreen() {
             reviewText={review.comment}
             reviewerName={`${review.user.first_name} ${review.user.last_name}`}
             reviewDate={review.created_at}
-            reviewerImage={review.user.image}
+            reviewerImage={review.user.image?.image_url}
           />
         ))}
       </ScrollView>
