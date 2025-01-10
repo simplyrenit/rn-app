@@ -1,3 +1,4 @@
+#import <Firebase.h>
 #import "AppDelegate.h"
 // @generated begin react-native-maps-import - expo prebuild (DO NOT MODIFY) sync-f2f83125c99c0d74b42a2612947510c4e08c423a
 #if __has_include(<GoogleMaps/GoogleMaps.h>)
@@ -22,6 +23,7 @@
   // You can add your custom initial props in the dictionary below.
   // They will be passed down to the ViewController used by React Native.
   self.initialProps = @{};
+  [FIRApp configure];
 
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
 }
