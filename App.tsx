@@ -19,7 +19,7 @@ import {
 import { AuthProvider } from "@/context/auth-context";
 import { QueryClient, QueryClientProvider } from "react-query";
 import firebase from "@react-native-firebase/app";
-import { FIREBASE_CONFIG, firestore, WEB_CLIENT_ID } from "@/lib/config";
+import { FIREBASE_CONFIG, firestore, IOS_CLIENT_ID, WEB_CLIENT_ID } from "@/lib/config";
 import { testApiConnection } from "@/lib/apiTest";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
@@ -30,6 +30,7 @@ if (!firebase.apps.length) {
 
 
 GoogleSignin.configure({
+  iosClientId: IOS_CLIENT_ID,
   webClientId: WEB_CLIENT_ID, // client ID of type WEB for your server. Required to get the `idToken` on the user object, and for offline access.
   // scopes: ["https://www.googleapis.com/auth/drive.readonly"], // what API you want to access on behalf of the user, default is email and profile
   offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER

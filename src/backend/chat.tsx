@@ -23,6 +23,7 @@ import {
 } from "./notifications";
 import { useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
+import { Platform } from "react-native";
 
 interface BlockedRecord {
   initiator: string;
@@ -71,13 +72,11 @@ export function useChat() {
       userDetails1.userId,
       userDetails2.userId
     );
-
     if (isBlocked) {
       return { success: false, content: "Cannot start conversation" };
     }
 
     let conversationDoc;
-
     try {
       const querySnapshot = await getDocs(
         collection(firestore, "conversations")
@@ -182,9 +181,12 @@ export function useChat() {
         message: { text: product.text },
       };
     }
-
     try {
-      await addDoc(collection(firestore, "messages"), message);
+      if (Platform.OS === 'ios') {
+        addDoc(collection(firestore, "messages"), message);
+      } else {
+        await addDoc(collection(firestore, "messages"), message);
+      }
     } catch (error) {
       console.error("Error creating initial message:", error);
     }

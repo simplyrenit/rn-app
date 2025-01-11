@@ -1,5 +1,5 @@
 import { initializeApp, ReactNativeFirebase } from "@react-native-firebase/app";
-import { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
+import firestoreApp, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
 import { FirebaseStorageTypes, getStorage } from "@react-native-firebase/storage";
 
 export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
@@ -103,7 +103,9 @@ export const WRITE_REVIEW = SERVERURL + "write-review/";
 export const GET_REFRESH_TOKEN = SERVERURL + 'token/refresh/';
 
 let app: ReactNativeFirebase.FirebaseApp, firestore: FirebaseFirestoreTypes.Module, storage: FirebaseStorageTypes.Module;
-
+if (__DEV__) {
+  firestoreApp().useEmulator('localhost', 8080);
+}
 try {
   app = initializeApp(FIREBASE_CONFIG);
   firestore = getFirestore(app);

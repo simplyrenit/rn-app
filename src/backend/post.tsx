@@ -169,7 +169,6 @@ export function usePost() {
         cover_image: coverImageUrl[0].split("?")[0],
       };
 
-
       const response = await axiosInstance.post(POST_MY_PRODUCTS, finalProductData, {
         headers: {
           "Content-Type": "application/json",

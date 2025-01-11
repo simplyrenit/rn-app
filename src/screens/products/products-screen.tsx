@@ -99,7 +99,6 @@ export default function DetailsScreen() {
     }
     setStartingChat(true);
     try {
-
       const { success, content } = await startChat(
         {
           userId: userDetails?.username!,
@@ -131,7 +130,6 @@ export default function DetailsScreen() {
         navigation.navigate("ChatDetails", { id: content });
       }
     } catch (e) {
-
     } finally {
       setStartingChat(false);
     }
@@ -157,394 +155,396 @@ export default function DetailsScreen() {
     </SafeAreaView>
   }
   return (
-    <View className="flex-1">
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ flexGrow: 1, backgroundColor: isDark ? '#000' : '#fff' }}
-      >
-        <View style={{ width: "100%", aspectRatio: 1, }}>
-          <ProductImage
-            images={product!.images}
-            name={id}
-            isFavorite={isFavorite}
-          />
-        </View>
-
-        {isOwner && isModerated && (
-          <View className="px-4">
-            <ModerationBanner moderationLabels={product?.moderation_labels!} />
-          </View>
-        )}
-
-        <View
-          className={`px-4 -mt-5 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            }`}
+    <SafeAreaView className="flex-1">
+      <View className="flex-1">
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1, backgroundColor: isDark ? '#000' : '#fff' }}
         >
-          <View className="flex flex-row items-center justify-between">
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
-              style={{ flex: 1 }}
-            >
-              {product?.title}
-            </Text>
-            <TouchableOpacity>
-              <ShareIcon
-                color={isDark ? "white" : "black"}
-                size={wp("5%")}
-              />
-            </TouchableOpacity>
-          </View>
-          <View className="flex flex-row items-center my-2">
-            <Stars
-              rating={product?.average_rating!}
-              isDark={isDark}
+          <View style={{ width: "100%", aspectRatio: 1, }}>
+            <ProductImage
+              images={product!.images}
+              name={id}
+              isFavorite={isFavorite}
             />
-            <Text
-              fontSize="text-sm"
-              className="text-gray-500 ml-1"
-            >
-              ({product?.review_count})
-            </Text>
           </View>
-        </View>
 
-        {/* Categories */}
-        <View
-          className={`px-2 py-8 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            } flex flex-row items-center  `}
-        >
-          {/* Custom Category Icon */}
-          <View className="flex items-center flex-1">
-            {/* <BookOpenIcon
+          {isOwner && isModerated && (
+            <View className="px-4">
+              <ModerationBanner moderationLabels={product?.moderation_labels!} />
+            </View>
+          )}
+
+          <View
+            className={`px-4 -mt-5 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+              }`}
+          >
+            <View className="flex flex-row items-center justify-between">
+              <Text
+                fontSize="text-xl"
+                fontWeight="font-bold"
+                style={{ flex: 1 }}
+              >
+                {product?.title}
+              </Text>
+              <TouchableOpacity>
+                <ShareIcon
+                  color={isDark ? "white" : "black"}
+                  size={wp("5%")}
+                />
+              </TouchableOpacity>
+            </View>
+            <View className="flex flex-row items-center my-2">
+              <Stars
+                rating={product?.average_rating!}
+                isDark={isDark}
+              />
+              <Text
+                fontSize="text-sm"
+                className="text-gray-500 ml-1"
+              >
+                ({product?.review_count})
+              </Text>
+            </View>
+          </View>
+
+          {/* Categories */}
+          <View
+            className={`px-2 py-8 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+              } flex flex-row items-center  `}
+          >
+            {/* Custom Category Icon */}
+            <View className="flex items-center flex-1">
+              {/* <BookOpenIcon
               color={isDark ? "white" : "black"}
               size={wp("5.5%")}
             /> */}
-            <SvgUri
-              width={wp(5.5)}
-              height={wp(5.5)}
-              uri={
-                theme === "dark"
-                  ? product?.category?.dark_icon || "fallback-dark.svg"
-                  : product?.category?.light_icon || "fallback-light.svg"
-              }
-            />
-            <Text
-              fontWeight="font-bold"
-              className="mt-2"
-              style={{ textAlign: 'center', flex: 1 }}
-            >
-              {product?.category?.title}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
-                }`}
-            >
-              Category
-            </Text>
-          </View>
-
-          <View className="flex items-center flex-1" >
-            <BanknotesIcon
-              color={isDark ? "white" : "black"}
-              size={wp("5.5%")}
-            />
-            <Text
-              fontWeight="font-bold"
-              className="mt-2"
-              style={{ textAlign: 'center', flex: 1 }}
-
-            >
-              ₹{Number(product?.security_deposit).toFixed(0)}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
-                }`}
-            >
-              Deposit
-            </Text>
-          </View>
-
-          {/* Custom Icon */}
-          <View className="flex items-center flex-1">
-            <LightBulbIcon
-              color={isDark ? "white" : "black"}
-              size={wp("5.5%")}
-            />
-            <Text
-              fontWeight="font-bold"
-              className="mt-2"
-              style={{ textAlign: 'center', flex: 1 }}
-            >
-              {product?.condition?.[0]?.toUpperCase()}{product?.condition.slice(1)}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
-                }`}
-            >
-              Condition
-            </Text>
-          </View>
-        </View>
-
-        {/* About the product */}
-        <View
-          className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            }`}
-        >
-          <View className="flex flex-row items-center justify-between">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-xl"
-            >
-              About the product
-            </Text>
-          </View>
-          <Text className="mt-2">{displayText}</Text>
-          {product?.description.length! > MAX_CHARS && (
-            <TouchableOpacity onPress={() => setShowFullText(!showFullText)}>
-              <View className="flex flex-row items-center  mt-2 space-x-2">
-                <Text
-                  fontWeight="font-bold"
-                  className={isDark ? "text-white" : "text-black"}
-                >
-                  {showFullText ? "Show less" : "Show more"}
-                </Text>
-                <View className=" mt-1">
-                  {showFullText ? (
-                    <ChevronUpIcon
-                      color={isDark ? "#fff" : "#000"}
-                      size={16}
-                    />
-                  ) : (
-                    <ChevronDownIcon
-                      color={isDark ? "#fff" : "#000"}
-                      size={16}
-                    />
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <View
-          className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            }`}
-        >
-          <View className="flex flex-row items-center justify-between">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-xl"
-            >
-              Product's location
-            </Text>
-          </View>
-          <View className="mt-2">
-            <ProductMap
-              latitude={product?.coordinates?.lat!}
-              longitude={product?.coordinates?.long!}
-              isDarkMode={isDark}
-            />
-          </View>
-        </View>
-
-        {/* Product reviews` */}
-        <View
-          className={`py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            }`}
-        >
-          <View className="flex flex-row items-center justify-between px-4">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-xl"
-            >
-              Product reviews
-            </Text>
-          </View>
-
-          <View className="flex flex-row items-center mt-1 mb-4 px-4">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-lg"
-              className={`mr-3 ${isDark ? "text-white/70" : "text-black/70"}`}
-            >
-              {product?.average_rating?.toFixed(1)}
-            </Text>
-            <Stars
-              rating={product?.average_rating!}
-              isDark={isDark}
-            />
-            <Text
-              fontSize="text-md"
-              className="text-gray-500 ml-1"
-            >
-              ({product?.review_count})
-            </Text>
-          </View>
-
-          <ScrollView
-            horizontal
-            nestedScrollEnabled
-            showsHorizontalScrollIndicator={false}
-            style={{ width: '100%'}}
-            contentContainerStyle={{
-              paddingRight: itemMargin,
-            }}
-          >
-            {lessReviews.map((item, index) => (
-              <View
-                key={item.user.username}
-                style={{
-                  width: itemWidth,
-                  marginRight:
-                    index === lessReviews.length - 1 ? 0 : itemMargin,
-                  marginLeft: index === 0 ? wp(5.7) : 0,
-                }}
+              <SvgUri
+                width={wp(5.5)}
+                height={wp(5.5)}
+                uri={
+                  theme === "dark"
+                    ? product?.category?.dark_icon || "fallback-dark.svg"
+                    : product?.category?.light_icon || "fallback-light.svg"
+                }
+              />
+              <Text
+                fontWeight="font-bold"
+                className="mt-2"
+                style={{ textAlign: 'center', flex: 1 }}
               >
-                <ReviewCard
-                  reviewText={item.comment}
-                  reviewerName={`${item.user.first_name} ${item.user.last_name}`}
-                  reviewDate={item.created_at}
-                  reviewerImage={item.user?.image?.image_url}
-                />
-              </View>
-            ))}
-          </ScrollView>
+                {product?.category?.title}
+              </Text>
+              <Text
+                className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+                  }`}
+              >
+                Category
+              </Text>
+            </View>
 
-          <View className="px-4">
-            <Button
-              onPress={() =>
-                navigation.navigate("ReviewsScreen", {
-                  reviews,
-                  product: product!,
-                  owner: product!.owner!,
-                })
-              }
-              variant="outline"
-              className="mt-4 border rounded-xl"
-            >
-              <Text fontWeight="font-bold">View all reviews</Text>
-            </Button>
-          </View>
-        </View>
+            <View className="flex items-center flex-1" >
+              <BanknotesIcon
+                color={isDark ? "white" : "black"}
+                size={wp("5.5%")}
+              />
+              <Text
+                fontWeight="font-bold"
+                className="mt-2"
+                style={{ textAlign: 'center', flex: 1 }}
 
-        {/* About the owner */}
-        <View
-          className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            }`}
-        >
-          <View className="flex flex-row items-center justify-between">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-xl"
-            >
-              About the owner
-            </Text>
-          </View>
-          <View className="flex flex-row items-center ">
-            <AboutOwner
-              id={product?.owner?.username!}
-              name={`${product?.owner?.first_name} ${product?.owner?.last_name}`}
-              profilePic={product?.owner?.image?.image_url || ""}
-              rating={product?.owner?.average_rating!}
-              products={product?.owner?.number_of_products || 0}
-              isDark={isDark}
-            />
-          </View>
-        </View>
+              >
+                ₹{Number(product?.security_deposit).toFixed(0)}
+              </Text>
+              <Text
+                className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+                  }`}
+              >
+                Deposit
+              </Text>
+            </View>
 
-        {/* Similar products */}
-        {similarProducts.length > 0 && (
-          <View className={` py-6 `}>
-            <View className="flex flex-row items-center justify-between mb-4 px-4">
+            {/* Custom Icon */}
+            <View className="flex items-center flex-1">
+              <LightBulbIcon
+                color={isDark ? "white" : "black"}
+                size={wp("5.5%")}
+              />
+              <Text
+                fontWeight="font-bold"
+                className="mt-2"
+                style={{ textAlign: 'center', flex: 1 }}
+              >
+                {product?.condition?.[0]?.toUpperCase()}{product?.condition.slice(1)}
+              </Text>
+              <Text
+                className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+                  }`}
+              >
+                Condition
+              </Text>
+            </View>
+          </View>
+
+          {/* About the product */}
+          <View
+            className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+              }`}
+          >
+            <View className="flex flex-row items-center justify-between">
               <Text
                 fontWeight="font-bold"
                 fontSize="text-xl"
               >
-                Similar products
+                About the product
+              </Text>
+            </View>
+            <Text className="mt-2">{displayText}</Text>
+            {product?.description.length! > MAX_CHARS && (
+              <TouchableOpacity onPress={() => setShowFullText(!showFullText)}>
+                <View className="flex flex-row items-center  mt-2 space-x-2">
+                  <Text
+                    fontWeight="font-bold"
+                    className={isDark ? "text-white" : "text-black"}
+                  >
+                    {showFullText ? "Show less" : "Show more"}
+                  </Text>
+                  <View className=" mt-1">
+                    {showFullText ? (
+                      <ChevronUpIcon
+                        color={isDark ? "#fff" : "#000"}
+                        size={16}
+                      />
+                    ) : (
+                      <ChevronDownIcon
+                        color={isDark ? "#fff" : "#000"}
+                        size={16}
+                      />
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View
+            className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+              }`}
+          >
+            <View className="flex flex-row items-center justify-between">
+              <Text
+                fontWeight="font-bold"
+                fontSize="text-xl"
+              >
+                Product's location
+              </Text>
+            </View>
+            <View className="mt-2">
+              <ProductMap
+                latitude={product?.coordinates?.lat!}
+                longitude={product?.coordinates?.long!}
+                isDarkMode={isDark}
+              />
+            </View>
+          </View>
+
+          {/* Product reviews` */}
+          <View
+            className={`py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+              }`}
+          >
+            <View className="flex flex-row items-center justify-between px-4">
+              <Text
+                fontWeight="font-bold"
+                fontSize="text-xl"
+              >
+                Product reviews
+              </Text>
+            </View>
+
+            <View className="flex flex-row items-center mt-1 mb-4 px-4">
+              <Text
+                fontWeight="font-bold"
+                fontSize="text-lg"
+                className={`mr-3 ${isDark ? "text-white/70" : "text-black/70"}`}
+              >
+                {product?.average_rating?.toFixed(1)}
+              </Text>
+              <Stars
+                rating={product?.average_rating!}
+                isDark={isDark}
+              />
+              <Text
+                fontSize="text-md"
+                className="text-gray-500 ml-1"
+              >
+                ({product?.review_count})
               </Text>
             </View>
 
             <ScrollView
               horizontal
+              nestedScrollEnabled
               showsHorizontalScrollIndicator={false}
+              style={{ width: '100%' }}
+              contentContainerStyle={{
+                paddingRight: itemMargin,
+              }}
             >
-              {similarProducts.map((item, index) => (
+              {lessReviews.map((item, index) => (
                 <View
-                  key={item.name}
+                  key={item.user.username}
                   style={{
-                    marginRight: index === similarProducts.length - 1 ? 16 : 16, // Last item gets 16px marginRight
-                    marginLeft: index === 0 ? 16 : 0, // First item gets 16px marginLeft to match padding
+                    width: itemWidth,
+                    marginRight:
+                      index === lessReviews.length - 1 ? 0 : itemMargin,
+                    marginLeft: index === 0 ? wp(5.7) : 0,
                   }}
                 >
-                  <Card
-                    id={`${item.name}`}
-                    image={item.cover_image}
-                    title={item.title}
-                    location={item.location}
-                    price={item.rate}
+                  <ReviewCard
+                    reviewText={item.comment}
+                    reviewerName={`${item.user.first_name} ${item.user.last_name}`}
+                    reviewDate={item.created_at}
+                    reviewerImage={item.user?.image?.image_url}
                   />
                 </View>
               ))}
             </ScrollView>
-          </View>
-        )}
-      </ScrollView>
 
-      {/* Footer */}
-      <View
-        className={`bottom-0 w-full p-4 border-t ${isDark ? "bg-black border-t-[#292929]" : "bg-white border-t-[#E6E6E6]"
-          } flex-row items-center h-[10%]`}
-      >
-        <View className="flex flex-row items-end flex-1" style={{ alignItems: 'center' }}>
-          <View className="">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-lg"
-              className="mr-1"
-            >
-              ₹{Number(product?.rate).toFixed(0)}
-            </Text>
+            <View className="px-4">
+              <Button
+                onPress={() =>
+                  navigation.navigate("ReviewsScreen", {
+                    reviews,
+                    product: product!,
+                    owner: product!.owner!,
+                  })
+                }
+                variant="outline"
+                className="mt-4 border rounded-xl"
+              >
+                <Text fontWeight="font-bold">View all reviews</Text>
+              </Button>
+            </View>
           </View>
-          <View>
-            <Text fontSize="text-md">per day</Text>
-          </View>
-        </View>
-        <View className="flex-1">
-          {isOwner ? (
-            <TouchableOpacity
-              onPress={handleEditClick}
-              className={`border-2 ${isDark
-                ? "bg-[#0F0F0F] border-[#292929]"
-                : "border-[#e6e6e6] bg-white"
-                } flex items-center justify-center rounded-lg h-full`}
-            >
+
+          {/* About the owner */}
+          <View
+            className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+              }`}
+          >
+            <View className="flex flex-row items-center justify-between">
               <Text
                 fontWeight="font-bold"
-                fontSize="text-md"
-                className="tracking-wide"
+                fontSize="text-xl"
               >
-                Edit product
+                About the owner
               </Text>
-            </TouchableOpacity>
-          ) : (
-            <Button onPress={handleStartChat} >
-              <View style={{ flexDirection: 'row', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-                {(startingChat) ? <ActivityIndicator color='#fff' /> : null}
+            </View>
+            <View className="flex flex-row items-center ">
+              <AboutOwner
+                id={product?.owner?.username!}
+                name={`${product?.owner?.first_name} ${product?.owner?.last_name}`}
+                profilePic={product?.owner?.image?.image_url || ""}
+                rating={product?.owner?.average_rating!}
+                products={product?.owner?.number_of_products || 0}
+                isDark={isDark}
+              />
+            </View>
+          </View>
+
+          {/* Similar products */}
+          {similarProducts.length > 0 && (
+            <View className={` py-6 `}>
+              <View className="flex flex-row items-center justify-between mb-4 px-4">
+                <Text
+                  fontWeight="font-bold"
+                  fontSize="text-xl"
+                >
+                  Similar products
+                </Text>
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              >
+                {similarProducts.map((item, index) => (
+                  <View
+                    key={item.name}
+                    style={{
+                      marginRight: index === similarProducts.length - 1 ? 16 : 16, // Last item gets 16px marginRight
+                      marginLeft: index === 0 ? 16 : 0, // First item gets 16px marginLeft to match padding
+                    }}
+                  >
+                    <Card
+                      id={`${item.name}`}
+                      image={item.cover_image}
+                      title={item.title}
+                      location={item.location}
+                      price={item.rate}
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </ScrollView>
+
+        {/* Footer */}
+        <View
+          className={`bottom-0 w-full p-4 border-t ${isDark ? "bg-black border-t-[#292929]" : "bg-white border-t-[#E6E6E6]"
+            } flex-row items-center h-[10%]`}
+        >
+          <View className="flex flex-row items-end flex-1" style={{ alignItems: 'center' }}>
+            <View className="">
+              <Text
+                fontWeight="font-bold"
+                fontSize="text-lg"
+                className="mr-1"
+              >
+                ₹{Number(product?.rate).toFixed(0)}
+              </Text>
+            </View>
+            <View>
+              <Text fontSize="text-md">per day</Text>
+            </View>
+          </View>
+          <View className="flex-1">
+            {isOwner ? (
+              <TouchableOpacity
+                onPress={handleEditClick}
+                className={`border-2 ${isDark
+                  ? "bg-[#0F0F0F] border-[#292929]"
+                  : "border-[#e6e6e6] bg-white"
+                  } flex items-center justify-center rounded-lg h-full`}
+              >
                 <Text
                   fontWeight="font-bold"
                   fontSize="text-md"
-                  allowFontScaling
-                  className="text-white text-center"
+                  className="tracking-wide"
                 >
-                  Chat with owner
+                  Edit product
                 </Text>
-              </View>
-            </Button>
-          )}
+              </TouchableOpacity>
+            ) : (
+              <Button onPress={handleStartChat} >
+                <View style={{ flexDirection: 'row', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                  {(startingChat) ? <ActivityIndicator color='#fff' /> : null}
+                  <Text
+                    fontWeight="font-bold"
+                    fontSize="text-md"
+                    allowFontScaling
+                    className="text-white text-center"
+                  >
+                    Chat with owner
+                  </Text>
+                </View>
+              </Button>
+            )}
+          </View>
         </View>
       </View>
-    </View >
+    </SafeAreaView>
   );
 }
