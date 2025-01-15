@@ -603,8 +603,8 @@ export default function SearchScreen() {
                       enablePoweredByContainer={false}
                       styles={{
                         textInput: {
-                          height: '100%',
-                          backgroundColor: isDark ? "#0F0F0F" : "#fff",
+                          height: Platform.OS === 'ios' ? 45: '100%',
+                          backgroundColor: isDark ? "#0F0F0F" : "#red",
                           borderRadius: 12,
                           paddingHorizontal: 8,
                           zIndex: 10,

@@ -542,23 +542,33 @@ export function useChat() {
     user2: string
   ): Promise<boolean> {
     const blockedRef = collection(firestore, "blocked");
-    const q1 = query(
-      blockedRef,
-      where("initiator", "==", user1),
-      where("blocked_user", "==", user2)
-    );
-    const q2 = query(
-      blockedRef,
-      where("initiator", "==", user2),
-      where("blocked_user", "==", user1)
-    );
-
-    const [snapshot1, snapshot2] = await Promise.all([
-      getDocs(q1),
-      getDocs(q2),
+    // const q1 = query(
+    //   blockedRef,
+    //   where("initiator", "==", user1),
+    //   where("blocked_user", "==", user2)
+    // );
+    // const q2 = query(
+    //   blockedRef,
+    //   where("initiator", "==", user2),
+    //   where("blocked_user", "==", user1)
+    // );
+    console.log('### here 556');
+    const [snapshot1, snapshot2] = await Promise.allSettled([
+      getDocs(query(
+        blockedRef,
+        where("initiator", "==", user1),
+        where("blocked_user", "==", user2)
+      )),
+      getDocs(query(
+        blockedRef,
+        where("initiator", "==", user2),
+        where("blocked_user", "==", user1)
+      )),
     ]);
-
-    return !snapshot1.empty || !snapshot2.empty;
+    if ((snapshot1.status === 'fulfilled' && !snapshot1.value.empty) || (snapshot2.status === 'fulfilled' && !snapshot2.value.empty)) {
+      return true;
+    }
+    return false;
   }
 
   async function blockUser(

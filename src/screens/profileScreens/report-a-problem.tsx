@@ -118,7 +118,7 @@ const ReportAProblemScreen: React.FC = () => {
           </View>
         </View>
       </View>
-      <View className="py-2 px-5">
+      <View className="py-2 px-5 pb-5">
         <Button
           disabled={!feedback.trim()}
           onPress={handleReportPress}

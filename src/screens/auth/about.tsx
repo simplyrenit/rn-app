@@ -729,7 +729,7 @@ export default function AboutYourself() {
           <Button
             variant="primary"
             onPress={handleSubmit}
-            disabled={!agreementChecked}
+            disabled={!agreementChecked || dobError.includes("not allowed")}
           >
             Continue
           </Button>
