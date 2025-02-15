@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "639298619246",
+    "firebase_url": "https://rn-api-35b38-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "rn-api-35b38",
     "storage_bucket": "rn-api-35b38.firebasestorage.app"
   },
@@ -14,7 +15,15 @@
       },
       "oauth_client": [
         {
-          "client_id": "639298619246-sc0788sgfdc3nbonvevok8d58b53jbta.apps.googleusercontent.com",
+          "client_id": "639298619246-op24vh183eekdjnsbc5suu0f1gfnijnl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.renit.app",
+            "certificate_hash": "76033b2c76477393701644ec461e95b12962c33f"
+          }
+        },
+        {
+          "client_id": "639298619246-u6f9epn934ehcfg41j1j902evdagotu5.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -29,6 +38,13 @@
             {
               "client_id": "639298619246-sc0788sgfdc3nbonvevok8d58b53jbta.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "639298619246-tf2dfar33gejemb1k08fgqp5omuctsds.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.renit.app"
+              }
             }
           ]
         }

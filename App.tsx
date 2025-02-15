@@ -18,15 +18,31 @@ import {
 } from "@/backend/notifications";
 import { AuthProvider } from "@/context/auth-context";
 import { QueryClient, QueryClientProvider } from "react-query";
-import firebase from "@react-native-firebase/app";
-import { FIREBASE_CONFIG, WEB_CLIENT_ID } from "@/lib/config";
+// import firebase from "@react-native-firebase/app";
+import { FIREBASE_CONFIG, WEB_CLIENT_ID, IOS_CLIENT_ID } from "@/lib/config";
 import { testApiConnection } from "@/lib/apiTest";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 // Initialize Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(FIREBASE_CONFIG);
-}
+// if (!firebase.apps.length) {
+//   firebase.initializeApp(FIREBASE_CONFIG);
+// }
+
+// import { initializeApp, getApps } from "firebase/app";
+// import { getAuth } from "firebase/auth";
+
+// const firebaseConfig = {
+//   apiKey: "YOUR_API_KEY",
+//   authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+//   projectId: "YOUR_PROJECT_ID",
+//   storageBucket: "YOUR_PROJECT_ID.appspot.com",
+//   messagingSenderId: "YOUR_SENDER_ID",
+//   appId: "YOUR_APP_ID",
+//   measurementId: "YOUR_MEASUREMENT_ID"
+// };
+
+// // Ensure Firebase is not re-initialized multiple times
+// const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 
 
 GoogleSignin.configure({
@@ -34,12 +50,14 @@ GoogleSignin.configure({
   // scopes: ["https://www.googleapis.com/auth/drive.readonly"], // what API you want to access on behalf of the user, default is email and profile
   offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
   // forceCodeForRefreshToken: true, // [Android] related to `serverAuthCode`, read the docs link below *.
-  // iosClientId: IOS_CLIENT_ID, // [iOS] if you want to specify the client ID of type iOS (otherwise, it is taken from GoogleService-Info.plist)
+  iosClientId: IOS_CLIENT_ID, // [iOS] if you want to specify the client ID of type iOS (otherwise, it is taken from GoogleService-Info.plist)
 });
 
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
+  <Text>Hi This is Vishwas dummy text</Text>
+
   const [loaded, error] = useFonts({
     "PlusJakartaSans-Regular": require("./assets/fonts/PlusJakartaSans-Regular.ttf"),
     "PlusJakartaSans-Light": require("./assets/fonts/PlusJakartaSans-Light.ttf"),

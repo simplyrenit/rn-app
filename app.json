@@ -72,7 +72,6 @@
     },
     "android": {
       "package": "com.renit.app",
-      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#000"
@@ -90,7 +89,7 @@
           "apiKey": "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA"
         }
       },
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": ".android/app/google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
