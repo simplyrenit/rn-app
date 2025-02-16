@@ -14,10 +14,22 @@ const firebaseConfig = {
     measurementId: "G-P7DWR065WK"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 
-// Export Firebase services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export default app;
+let app, firestore, storage;
+
+// Initialize Firebase
+try {
+    app = initializeApp(firebaseConfig);
+    firestore = getFirestore(app);
+    storage = getStorage(app);
+    auth = getAuth(app);
+} catch (error) {
+    console.error("Error initializing Firebase services:", error);
+}
+  
+export { app, firestore, storage };
+
+// // Export Firebase services
+// export const auth = getAuth(app);
+// export const db = getFirestore(app);
+// export default app;

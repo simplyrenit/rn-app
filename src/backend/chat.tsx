@@ -1,4 +1,5 @@
 import { useGlobalContext } from "@/context/global-context";
+// import { firestore } from "@/lib/config";
 import { firestore } from "@/lib/config";
 import { Conversation, Message, UserDetails } from "@/lib/types";
 import {
@@ -71,7 +72,8 @@ export function useChat() {
       userDetails1.userId,
       userDetails2.userId
     );
-
+    
+    console.log("firestore configuration started");
     if (isBlocked) {
       return { success: false, content: "Cannot start conversation" };
     }
@@ -79,6 +81,7 @@ export function useChat() {
     let conversationDoc;
 
     try {
+      console.log("firestore configuration started");
       const querySnapshot = await getDocs(
         collection(firestore, "conversations")
       );
@@ -137,6 +140,7 @@ export function useChat() {
         productDetails
       );
       return { success: true, content: conversationDoc.id };
+
     } catch (error) {
       console.error("Error starting conversation:", error);
       throw error;
