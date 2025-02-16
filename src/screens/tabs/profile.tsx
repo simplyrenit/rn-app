@@ -94,14 +94,11 @@ export default function Profile() {
             }
         }
       >
-        {authTokens && isAuthenticated ? (
-          <ProfilePostAuth
-            isDarkMode={isDarkMode}
-            handleLogout={handleLogout}
-          />
-        ) : (
-          <ProfilePreAuth isDarkMode={isDarkMode} />
-        )}
+         <ProfilePostAuth
+                    isDarkMode={isDarkMode}
+                    handleLogout={handleLogout}
+                  />
+
       </ScrollView>}
     </StaticContainer>
   );

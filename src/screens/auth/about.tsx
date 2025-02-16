@@ -201,7 +201,7 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
             setError((prev) => ({ ...prev, firstName: "" }));
           }
         }}
-        className={`p-2 border rounded-xl ${isDarkMode
+        className={`p-3 border rounded-[12px] h-12 ${isDarkMode
           ? "bg-[#0F0F0F] text-white border-[#292929]"
           : "bg-white text-black border-[#e6e6e6]"
           }`}
@@ -234,10 +234,11 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
             setError((prev) => ({ ...prev, lastName: "" }));
           }
         }}
-        className={`p-2 border rounded-xl ${isDarkMode
-          ? "bg-[#0F0F0F] text-white border-[#292929]"
-          : "bg-white text-black border-[#e6e6e6]"
-          }`}
+         className={`p-3 border rounded-[12px] h-12 ${isDarkMode
+                  ? "bg-[#0F0F0F] text-white border-[#292929]"
+                  : "bg-white text-black border-[#e6e6e6]"
+                  }`}
+
         placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
       />
       {errors.lastName && (
@@ -265,6 +266,7 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
           placeholder="Date"
           options={DATES}
           onSelect={(value) => setDob((prev) => ({ ...prev, date: value }))}
+           className={`p-3 border rounded-[12px] h-12 `}
           isDarkMode={isDarkMode}
           setDobError={setDobError}
         />
@@ -273,6 +275,7 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
           placeholder="Month"
           options={MONTHS}
           onSelect={(value) => setDob((prev) => ({ ...prev, month: value }))}
+           className={`p-3 border rounded-[12px] h-12 `}
           isDarkMode={isDarkMode}
           setDobError={setDobError}
         />
@@ -281,6 +284,7 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
           placeholder="Year"
           options={YEARS}
           onSelect={(value) => { setDob((prev) => ({ ...prev, year: value })) }}
+           className={`p-3 border rounded-[12px] h-12 `}
           isDarkMode={isDarkMode}
           setDobError={setDobError}
         />
@@ -335,10 +339,11 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             setError((prev) => ({ ...prev, businessName: "" }));
           }
         }}
-        className={`p-2 border rounded-xl ${isDarkMode
-          ? "bg-[#0F0F0F] text-white border-[#292929]"
-          : "bg-white text-black border-[#e6e6e6]"
-          }`}
+         className={`p-3 border rounded-[12px] h-12 ${isDarkMode
+                          ? "bg-[#0F0F0F] text-white border-[#292929]"
+                          : "bg-white text-black border-[#e6e6e6]"
+                          }`}
+
         placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
       />
       {errors.businessName && (
@@ -368,10 +373,10 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             setError((prev) => ({ ...prev, firstName: "" }));
           }
         }}
-        className={`p-2 border rounded-xl ${isDarkMode
-          ? "bg-[#0F0F0F] text-white border-[#292929]"
-          : "bg-white text-black border-[#e6e6e6]"
-          }`}
+        className={`p-3 border rounded-[12px] h-12 ${isDarkMode
+                         ? "bg-[#0F0F0F] text-white border-[#292929]"
+                         : "bg-white text-black border-[#e6e6e6]"
+                         }`}
         placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
       />
       {errors.firstName && (
@@ -401,10 +406,10 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             setError((prev) => ({ ...prev, lastName: "" }));
           }
         }}
-        className={`p-2 border rounded-xl ${isDarkMode
-          ? "bg-[#0F0F0F] text-white border-[#292929]"
-          : "bg-white text-black border-[#e6e6e6]"
-          }`}
+         className={`p-3 border rounded-[12px] h-12 ${isDarkMode
+                          ? "bg-[#0F0F0F] text-white border-[#292929]"
+                          : "bg-white text-black border-[#e6e6e6]"
+                          }`}
         placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
       />
       {errors.lastName && (
@@ -593,7 +598,7 @@ export default function AboutYourself() {
                 </Text>
                 <View className="flex-row justify-between mt-2">
                   <TouchableOpacity
-                    className={`flex-1 mr-2 p-3 rounded-xl border ${accountType === "Individual"
+                    className={`flex-1 mr-2 p-3 rounded-[12px] h-12 border ${accountType === "Individual"
                       ? "border-brand-blue"
                       : isDarkMode
                         ? "border-[#292929]"
@@ -626,7 +631,7 @@ export default function AboutYourself() {
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    className={`flex-1 ml-2 p-3 rounded-xl border justify-center ${accountType === "Business"
+                    className={`flex-1 ml-2 p-3 rounded-[12px] h-12 border justify-center ${accountType === "Business"
                       ? "border-brand-blue"
                       : isDarkMode
                         ? "border-[#292929]"

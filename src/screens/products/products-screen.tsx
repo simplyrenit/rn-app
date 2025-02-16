@@ -85,9 +85,8 @@ export default function DetailsScreen() {
   const isOwner = userDetails?.username === product?.owner?.username;
 
   const handleStartChat = async () => {
-    if (startingChat) {
-      return;
-    }
+    if (startingChat) return;
+
     if (!isAuthenticated) {
       Toast.show({
         type: "customToast",
@@ -97,45 +96,45 @@ export default function DetailsScreen() {
       });
       return;
     }
+
     setStartingChat(true);
     try {
+      const sender = {
+        userId: userDetails?.username ?? "", // Avoid `!`, provide default values
+        username: userDetails?.name ?? "Unknown User",
+        profilePicture: userDetails?.image ||
+          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+      };
 
-      const { success, content } = await startChat(
-        {
-          userId: userDetails?.username!,
-          username: userDetails?.name!,
-          profilePicture: userDetails?.image
-            ? userDetails?.image
-            : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-        },
-        {
-          userId: product?.owner?.username!,
-          username:
-            product?.owner?.first_name! + " " + product?.owner?.last_name!,
-          profilePicture: product?.owner?.image?.image_url
-            ? product?.owner?.image?.image_url
-            : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-        },
-        {
-          title: product?.title!,
-          location: product?.location!,
-          image: product?.cover_image!,
-          rate: product?.rate!,
-          type: "product",
-          text: "",
-          id: product?.name ?? '',
-        }
-      );
+      const receiver = {
+        userId: product?.owner?.username ?? "",
+        username: `${product?.owner?.first_name ?? ""} ${product?.owner?.last_name ?? ""}`.trim(),
+        profilePicture: product?.owner?.image?.image_url ||
+          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+      };
+
+      const chatData = {
+        title: product?.title ?? "No Title",
+        location: product?.location ?? "Unknown",
+        image: product?.cover_image ?? "",
+        rate: product?.rate ?? 0,
+        type: "product",
+        text: "",
+        id: product?.name ?? "",
+      };
+
+      const { success, content } = await startChat(sender, receiver, chatData);
 
       if (success) {
         navigation.navigate("ChatDetails", { id: content });
       }
     } catch (e) {
-
+      console.error("Error starting chat:", e);
     } finally {
       setStartingChat(false);
     }
   };
+
 
   const lessReviews = reviews.slice(0, 4);
 

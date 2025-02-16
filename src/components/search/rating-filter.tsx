@@ -43,22 +43,20 @@ export function RatingFilter({
             isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
           } w-full h-16 rounded-[16px] p-3`}
         >
-          <Rating
-            ratingCount={5}
-            type="custom"
-            fractions={1}
-            jumpValue={0.5}
-            ratingColor="#635be8"
-            startingValue={rating.product}
-            imageSize={24}
-            onFinishRating={(newRating: number) => {
-              setRating((prev) => ({
-                ...prev,
-                product: newRating,
-              }));
-              onSelect(rating.product, newRating);
-            }}
-          />
+            <StarRating
+                          maxStars={5}
+                          starSize={24}
+                          color="#635be8"
+                          emptyColor={isDark ? "#292929" : "#e6e6e6"}
+                          rating={rating.product}
+                          onChange={(newRating) => {
+                            setRating((prev) => ({
+                              ...prev,
+                              product: newRating,
+                            }));
+                            onSelect(newRating, rating.owner);
+                          }}
+                        />
 
           <Text fontSize="text-2xl">{rating.product}</Text>
         </View>
@@ -74,24 +72,20 @@ export function RatingFilter({
             isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
           } w-full h-16 rounded-[16px] p-3`}
         >
-          <Rating
-            ratingCount={5}
-            type="custom"
-            fractions={1}
-            jumpValue={0.5}
-            // ratingImage={require("../../../assets/star.png")}
-            ratingColor="#635be8"
-            style={{ gap: 10}}
-            startingValue={rating.owner}
-            imageSize={24}
-            onFinishRating={(newRating: number) => {
-              setRating((prev) => ({
-                ...prev,
-                owner: newRating,
-              }));
-              onSelect(rating.product, newRating);
-            }}
-          />
+            <StarRating
+                          maxStars={5}
+                          starSize={24}
+                          color="#635be8"
+                          emptyColor={isDark ? "#292929" : "#e6e6e6"}
+                          rating={rating.owner}
+                          onChange={(newRating) => {
+                            setRating((prev) => ({
+                              ...prev,
+                              owner: newRating,
+                            }));
+                            onSelect(newRating, rating.owner);
+                          }}
+                        />
           <Text fontSize="text-2xl">{rating.owner}</Text>
         </View>
       </View>

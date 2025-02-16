@@ -28,8 +28,10 @@ axiosInstance.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    console.log('###', error.response.status, originalRequest?.headers?.Authorization, error.response && error.response.status === 401 && originalRequest?.headers?.Authorization?.includes('Bearer ') && !originalRequest._retry)
-    if (error.response && error.response.status === 401 && originalRequest?.headers?.Authorization?.includes('Bearer ') && !originalRequest._retry) {
+    console.log('####', error.response.status, originalRequest?.headers?.Authorization, error.response && error.response.status === 401 && originalRequest?.headers?.Authorization?.includes('Bearer ') && !originalRequest._retry)
+    /*if (error.response && error.response.status === 401
+        && originalRequest?.headers?.Authorization?.includes('Bearer ')
+        && !originalRequest._retry) {
     try {
       console.log('### getting new token');
       const tokens = await getAuthTokens();
@@ -51,12 +53,26 @@ axiosInstance.interceptors.response.use(
         originalRequest._retry = true;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
+          setAuthTokens(false);
+          throw refreshError;
+
         // Handle refresh token error, e.g., log out the user
         // Clear tokens from storage
         // Redirect or handle user session expiration
       }
-    }
+    }*/
+    if (
+          error.response?.status === 401 &&
+          originalRequest &&
+          !originalRequest._retry
+        ) {
+          originalRequest._retry = true; // Prevent infinite loop
+          console.log("401 Unauthorized, logging out...");
 
+          // Ensure this updates the global authentication state
+          logout();
+          return Promise.reject(error);
+        }
     return Promise.reject(error);
   }
 );
