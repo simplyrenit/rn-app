@@ -1,6 +1,7 @@
 import { initializeApp, ReactNativeFirebase } from "@react-native-firebase/app";
 import firestoreApp, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
 import { FirebaseStorageTypes, getStorage } from "@react-native-firebase/storage";
+import { databaseURL } from "firebase-functions/params";
 
 export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
 
@@ -21,6 +22,7 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: "639298619246",
   appId: "1:639298619246:web:bebe42342d569785c7237f",
   measurementId: "G-P7DWR065WK",
+  databaseURL: "https://rn-api-35b38-default-rtdb.asia-southeast1.firebasedatabase.app/",
 };
 
 export const DEV_MODE: string = "PROD"; // DEV or PROD
@@ -104,7 +106,7 @@ export const GET_REFRESH_TOKEN = SERVERURL + 'token/refresh/';
 
 let app: ReactNativeFirebase.FirebaseApp, firestore: FirebaseFirestoreTypes.Module, storage: FirebaseStorageTypes.Module;
 if (__DEV__) {
-  firestoreApp().useEmulator('localhost', 8080);
+  // firestoreApp().useEmulator('localhost', 8080);
 }
 try {
   app = initializeApp(FIREBASE_CONFIG);

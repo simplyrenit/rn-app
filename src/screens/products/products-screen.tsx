@@ -97,6 +97,7 @@ export default function DetailsScreen() {
       });
       return;
     }
+    console.log("Firestore check 1");
     setStartingChat(true);
     try {
       const { success, content } = await startChat(

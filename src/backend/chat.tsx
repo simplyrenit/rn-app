@@ -1,5 +1,6 @@
 import { useGlobalContext } from "@/context/global-context";
-import { firestore } from "@/lib/config";
+import { firestore as importedFirestore, FIREBASE_CONFIG } from "@/lib/config";
+import { initializeApp } from "@react-native-firebase/app";
 import { Conversation, Message, UserDetails } from "@/lib/types";
 import {
   addDoc,
@@ -8,6 +9,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  getFirestore,
   onSnapshot,
   orderBy,
   query,
@@ -24,6 +26,9 @@ import {
 import { useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { Platform } from "react-native";
+import { connectStorageEmulator } from "@react-native-firebase/storage";
+
+let firestore = importedFirestore;
 
 interface BlockedRecord {
   initiator: string;
@@ -68,16 +73,30 @@ export function useChat() {
       id: string;
     }
   ): Promise<{ success: boolean; content: string }> {
-    const isBlocked = await checkIfUsersAreBlocked(
-      userDetails1.userId,
-      userDetails2.userId
-    );
-    if (isBlocked) {
-      return { success: false, content: "Cannot start conversation" };
-    }
+    // const isBlocked = await checkIfUsersAreBlocked(
+    //   userDetails1.userId,
+    //   userDetails2.userId
+    // );
+    console.log("Firestore check 2");
 
+    // if (isBlocked) {
+    //   return { success: false, content: "Cannot start conversation" };
+    // }
+
+    if(!firestore){
+      console.log("Firestore not initialzied");
+      // Initialize Firebase
+      let app = initializeApp(FIREBASE_CONFIG);
+      console.log("app", app);
+      firestore = getFirestore(app);      
+      console.log("firestore", firestore);  
+    }
+    else{
+      console.log("Firestore initialzied");
+    }
     let conversationDoc;
     try {
+      console.log("firestore check");
       const querySnapshot = await getDocs(
         collection(firestore, "conversations")
       );
