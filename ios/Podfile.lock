@@ -1382,7 +1382,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - ExpoAdapterGoogleSignIn (13.1.0):
+  - ExpoAdapterGoogleSignIn (13.2.0):
     - ExpoModulesCore
     - GoogleSignIn (~> 7.1)
     - React-Core
@@ -1411,7 +1411,7 @@ PODS:
     - EXImageLoader
     - ExpoModulesCore
     - SDWebImageWebPCoder
-  - ExpoImagePicker (15.1.0):
+  - ExpoImagePicker (15.0.7):
     - ExpoModulesCore
   - ExpoKeepAwake (13.0.2):
     - ExpoModulesCore
@@ -2926,7 +2926,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNGoogleSignin (13.1.0):
+  - RNGoogleSignin (13.2.0):
     - GoogleSignIn (~> 7.1)
     - React-Core
   - RNReanimated (3.10.1):
@@ -3348,7 +3348,7 @@ SPEC CHECKSUMS:
   expo-dev-launcher: f58f89fedd75f253811e9d667ee1d55a3ffc490f
   expo-dev-menu: 65c50c838ef948aa8843a85708d0d13ce796a9d2
   expo-dev-menu-interface: 5c6b79875bf0ab1251ea9962f60968fe39ed2637
-  ExpoAdapterGoogleSignIn: 6393c1ad521f880f6e467bca40baf1e5dcaea4a3
+  ExpoAdapterGoogleSignIn: f5ca2b67502442629d99dbe202b6ae821d77c75d
   ExpoAppleAuthentication: 8a661b6f4936affafd830f983ac22463c936dad5
   ExpoAsset: 286fee7ba711ce66bf20b315e68106b13b8629fc
   ExpoBackgroundFetch: 2988b27bc95f322e856dbd44060b6951fdfe8950
@@ -3358,7 +3358,7 @@ SPEC CHECKSUMS:
   ExpoFont: 38dddf823e32740c2a9f37c926a33aeca736b5c4
   ExpoImage: 8fe3bbd2cae98bc004efec6fc4387837c9d30e10
   ExpoImageManipulator: eb92d3ac4bad0fe96258f17273b9e295e87447be
-  ExpoImagePicker: 7038c1740853c170002c491de63f9f9780c8139b
+  ExpoImagePicker: 517a47896adf5d55d0a1c159e5d1e312af12e57c
   ExpoKeepAwake: dd02e65d49f1cfd9194640028ae2857e536eb1c9
   ExpoModulesCore: c11bcbf466b123a92eb66ab2ae9e0eaef61b7e97
   ExpoSharing: 5e6b6cbc0c232084b79ffa7243459f7dcdc5b1cb
@@ -3453,7 +3453,7 @@ SPEC CHECKSUMS:
   RNFBFirestore: d6ae265b21549935317338d24cfb9ebc8b54a194
   RNFBStorage: 689015987f58977cc4455de7c4b78f22a7ae7ea1
   RNGestureHandler: 5d95b0a3cffed8325ed0c181f4f411c1dcd49317
-  RNGoogleSignin: ba93c1137f8d5cebdd39b04f493fd212ddf5ecd6
+  RNGoogleSignin: b8760528f2a7cbe157ecfdcc13bdb7d2745c9389
   RNReanimated: f6c3a3aa35de5a312c01b9256a61f23eed660b34
   RNScreens: 5b35d863db10f9be81da4e8f4e08096ee7644f8c
   RNSVG: 63ef964b8397204ff70b78de6c93858320816671
