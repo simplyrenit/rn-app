@@ -67,6 +67,7 @@ export function usePost() {
     if (!authTokens) return;
     return new Promise(async (resolve, reject) => {
       try {
+        console.log('upload to s3');
         const response = await fetch(imageUri);
         const blob = await response.blob();
 
@@ -85,7 +86,9 @@ export function usePost() {
         };
 
         xhr.onload = () => {
+          console.log(xhr.status);
           if (xhr.status === 200) {
+            console.log('upload success')
             resolve();
           } else {
             const errorText = xhr.responseText;
@@ -148,6 +151,7 @@ export function usePost() {
   const postProduct = async () => {
     setLoading(true);
     try {
+      console.log("post product");
       if (!authTokens) return { status: 401, data: null };
       const transformedProduct = transformProduct(product);
 
@@ -161,14 +165,17 @@ export function usePost() {
         })
       );
 
+      console.log('imageUrl is uploaded');
       await uploadToS3(coverImageUrl[0], product.coverImage.image);
 
+      console.log('cover image is uploaded');
       const finalProductData = {
         ...transformedProduct,
         images: imageUrls.map((url) => url.split("?")[0]),
         cover_image: coverImageUrl[0].split("?")[0],
       };
-
+      console.log("POST_MY_PRODUCTS", POST_MY_PRODUCTS);
+      console.log("finalProductData", finalProductData);
       const response = await axiosInstance.post(POST_MY_PRODUCTS, finalProductData, {
         headers: {
           "Content-Type": "application/json",
@@ -176,6 +183,8 @@ export function usePost() {
         timeout: 90000, // 1 minute 30 seconds in milliseconds
       });
 
+      console.log('status', response.status);
+      console.log('data', response.data)
       return { status: response.status, data: response.data };
     } catch (error) {
       throw error;

@@ -32,6 +32,7 @@ export let SOCKET_URL = "";
 
 if (DEV_MODE === "PROD") {
   SERVERURL = "https://api.simplyrenit.com/api/";
+  // SERVERURL = "http://192.168.1.12:8000/api/";
   SOCKET_URL = "wss://api.simplyrenit.com/ws/chat/";
 } else {
   SERVERURL = "http://192.168.1.12:8000/api/";

@@ -358,15 +358,22 @@ export default function ChatDetailsScreen() {
 
         <ScrollView
           ref={scrollViewRef}
-          contentContainerStyle={{
-            flexGrow: 1,
-          }}
+            contentContainerStyle={{
+                flexGrow: 1,
+                justifyContent: 'flex-end',
+              }}
           keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() => scrollToBottom(false)}
-          onLayout={() => scrollToBottom(false)}
           showsVerticalScrollIndicator={false}
+          onContentSizeChange={(contentWidth, contentHeight) => {
+            requestAnimationFrame(() => {
+              scrollViewRef.current?.scrollTo({
+                y: contentHeight,
+                animated: false,
+              });
+            });
+          }}
         >
-          {m.map((message) => (
+          {m?.map((message) => (
             <ChatBubble
               id={message.id || ""}
               key={message.id}
