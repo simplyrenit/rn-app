@@ -2,6 +2,7 @@
 
 # dependencies
 node_modules/
+*.pbxproj
 
 # Expo
 .expo/
@@ -16,6 +17,11 @@ assets/*.png
 *.p12
 *.key
 *.mobileprovision
+
+#ios 
+ios/Renit/Info.plist
+ios/Podfile.lock
+package-lock.json
 
 # Metro
 .metro-health-check*
@@ -42,3 +48,6 @@ yarn-error.*
 .expo
 dist/
 web-build/
+
+
+
