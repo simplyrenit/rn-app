@@ -316,6 +316,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     if (selectedImage) {
       try {
         await updateMyProfileImage(nameId, selectedImage);
+        console.log(selectedImage,'test')
         setDetails((prevDetails) => ({
           ...prevDetails,
           profilePic: selectedImage,
@@ -326,6 +327,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         console.error("Error updating profile image:", error);
       }
     } else {
+      console.log("test")
     }
   };
 

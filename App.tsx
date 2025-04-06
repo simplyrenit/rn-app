@@ -22,10 +22,41 @@ import firebase from "@react-native-firebase/app";
 import { FIREBASE_CONFIG, firestore, IOS_CLIENT_ID, WEB_CLIENT_ID } from "@/lib/config";
 import { testApiConnection } from "@/lib/apiTest";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import messaging from '@react-native-firebase/messaging';
 
 // Initialize Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(FIREBASE_CONFIG);
+}
+
+import { PermissionsAndroid, Platform } from 'react-native';
+
+async function requestNotificationPermission() {
+  if (Platform.OS === 'android') {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+    );
+
+    if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('Notification permission denied');
+      return false;
+    }
+
+    console.log('Notification permission granted');
+  }
+
+  const fcmAuthStatus = await messaging().requestPermission();
+  const enabled =
+    fcmAuthStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+    fcmAuthStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+  if (!enabled) {
+    console.log('FCM permission not granted');
+    return false;
+  }
+
+  console.log('FCM permission granted test',Platform.OS);
+  return true;
 }
 
 
@@ -62,10 +93,26 @@ export default function App() {
   useEffect(() => {
     const initializeNotifications = async () => {
       await setupNotifications();
-      await registerForPushNotificationsAsync();
+     const token =  await registerForPushNotificationsAsync();
+     console.log(token,'test')
     };
 
     initializeNotifications();
+  }, []);
+
+
+  useEffect(() => {
+    const init = async () => {
+      await messaging().requestPermission();
+      const token = await messaging().getToken();
+      console.log('FCM Token:', token);
+      // Save this token to your server if needed
+    };
+    init();
+  }, []);
+
+  useEffect(() => {
+    requestNotificationPermission();
   }, []);
 
   useEffect(() => {

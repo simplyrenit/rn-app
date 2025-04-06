@@ -1,6 +1,6 @@
 import { useGlobalContext } from "@/context/global-context";
 import { firestore as importedFirestore, FIREBASE_CONFIG } from "@/lib/config";
-import { initializeApp } from "@react-native-firebase/app";
+import { getApps, initializeApp } from "@react-native-firebase/app";
 import { Conversation, Message, UserDetails } from "@/lib/types";
 import {
   addDoc,
@@ -83,7 +83,7 @@ export function useChat() {
     //   return { success: false, content: "Cannot start conversation" };
     // }
 
-    if(!firestore){
+    if(!firestore && getApps().length === 0){
       console.log("Firestore not initialzied");
       // Initialize Firebase
       let app = initializeApp(FIREBASE_CONFIG);

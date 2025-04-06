@@ -177,6 +177,7 @@ export default function SearchScreen() {
   const onPress = async () => {
     try {
       setProductsLoading(true);
+      console.log(selectedLocation!.lat!,selectedLocation!.lng!,'test')
       const products = await searchProducts(
         selectedItem!,
         { lat: selectedLocation!.lat!, lng: selectedLocation!.lng! },

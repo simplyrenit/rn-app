@@ -15,7 +15,7 @@ import {
   useTypedNavigation,
 } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Dimensions, ScrollView, TouchableOpacity, View } from "react-native";
 import {
   BanknotesIcon,
@@ -50,16 +50,40 @@ export default function DetailsScreen() {
   const { id, isFavorite } = route.params;
   const { startChat } = useChat();
   const [startingChat, setStartingChat] = useState(false);
+  const [combinedTxt,setCombinedTxt] = useState('')
 
   React.useEffect(() => {
     fetchProductDetails();
   }, [id]);
+
+  function buildProductInfo({
+    description,
+    title,
+    model_name,
+    usage_description,
+  }: {
+    description?: string;
+    title?: string;
+    model_name?: string;
+    usage_description?: string;
+  }): string {
+    const parts: string[] = [];
+    if (description) parts.push(description);
+    if (title) parts.push("BrandName: " + title);
+    if (model_name) parts.push("ModelName: " + model_name);
+    if (usage_description) parts.push("UsageDescription: " + usage_description);
+    return parts.join("\n\n");
+  }
+  
 
   async function fetchProductDetails() {
     setLoading(true);
     try {
       const data = await fetchProduct(id);
       setProduct(data);
+      console.log(data)
+      const res = buildProductInfo(data)
+      setCombinedTxt(res)
       const similarProducts = await fetchSimilarProducts(id);
       const reviews = await fetchReviews(id);
       setSimilarProducts(similarProducts);
@@ -146,10 +170,10 @@ export default function DetailsScreen() {
   };
 
   const truncatedText = truncateAtNearestSpace(
-    product?.description!,
+    combinedTxt!,
     MAX_CHARS
   );
-  const displayText = showFullText ? product?.description! : truncatedText;
+  const displayText = showFullText ? combinedTxt! : truncatedText;
   if (!product) {
     return <SafeAreaView className="flex-1 p-4" style={{ backgroundColor: isDark ? '#000' : '#fff' }}>
       <Text>Product not found</Text>

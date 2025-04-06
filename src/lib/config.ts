@@ -1,4 +1,4 @@
-import { initializeApp, ReactNativeFirebase } from "@react-native-firebase/app";
+import { getApps, initializeApp, ReactNativeFirebase } from "@react-native-firebase/app";
 import firestoreApp, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
 import { FirebaseStorageTypes, getStorage } from "@react-native-firebase/storage";
 import { databaseURL } from "firebase-functions/params";
@@ -110,7 +110,10 @@ if (__DEV__) {
   // firestoreApp().useEmulator('localhost', 8080);
 }
 try {
+  let app;
+  if(getApps().length === 0){
   app = initializeApp(FIREBASE_CONFIG);
+  }
   firestore = getFirestore(app);
   storage = getStorage(app);
 } catch (error) {
