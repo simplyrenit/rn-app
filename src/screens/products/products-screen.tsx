@@ -554,7 +554,7 @@ export default function DetailsScreen() {
               </TouchableOpacity>
             ) : (
               <Button onPress={handleStartChat} >
-                <View style={{ flexDirection: 'row', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ flexDirection: 'row',gap:8, height: '100%', alignItems: 'center', justifyContent: 'center' }}>
                   {(startingChat) ? <ActivityIndicator color='#fff' /> : null}
                   <Text
                     fontWeight="font-bold"

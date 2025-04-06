@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   TouchableOpacity,
@@ -34,6 +34,8 @@ export function Categories() {
 
   const categoryPairs: CategoryItem[][] = splitIntoPairs(CATEGORIES);
   const { searchProducts } = useSearch();
+
+  const [locationData,setFormattedAddressState] = useState<{ address: string; coordinates: { latitude: number; longitude: number; }; }>()
 
   const styles = StyleSheet.create({
     shadow: {
@@ -107,6 +109,16 @@ export function Categories() {
     }
   };
 
+
+  const handleFormatAddress = async()=>{
+    const locationData = await getFormattedAddress();
+    setFormattedAddressState(locationData)
+  }
+
+  useEffect(()=>{
+     handleFormatAddress()
+  },[])
+
   return (
     <ScrollView
       horizontal
@@ -131,7 +143,6 @@ export function Categories() {
                 key={index}
                 style={{ marginBottom: 5 }}
                 onPress={async () => {
-                  const locationData = await getFormattedAddress();
                   const products = await searchProducts(
                     category?.name,
                     { lat: locationData?.coordinates?.latitude as number, lng: locationData?.coordinates.longitude as number },
@@ -140,6 +151,7 @@ export function Categories() {
                       end_date:  undefined,
                     }
                   );
+                  console.log(products,'test')
                   navigation.navigate("SearchResults", {
                     category: category.name,
                     address: locationData?.address ?? "",

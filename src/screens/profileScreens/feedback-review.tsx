@@ -4,7 +4,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { useState } from "react";
-import { Platform, TextInput, TouchableOpacity, View } from "react-native";
+import { Platform, SafeAreaView, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -38,7 +38,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
   };
 
   return (
-    <NonScrollableContainer>
+    <SafeAreaView className="flex-1 justify-between">
       <View className="flex-row items-center justify-between px-5 pb-2 pt-2">
         <TouchableOpacity
           onPress={() => router.goBack()}
@@ -60,15 +60,15 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
 
         <View className="w-[10%]"></View>
       </View>
-
-      <KeyboardAwareScrollView className="px-5 pb-5 pt-2 flex-1">
+      
+      <KeyboardAwareScrollView className="px-5 pb-5 pt-2 ">
         <Text fontSize="text-sm">
           Thanks for sending us your feedback and ideas to improve. We can't
           respond to all individually, but we'll pass it on to the teams who are
           working to help make Renit better for everyone.
         </Text>
 
-        <View className="py-3">
+        <ScrollView className="py-3">
           <TextInput
             style={{
               textAlignVertical: "top",
@@ -90,8 +90,9 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
             value={feedback}
             onChangeText={setFeedback}
           />
-        </View>
+        </ScrollView>
       </KeyboardAwareScrollView>
+      <View>
       <View className="pb-3 px-5">
         <Text
           fontSize="text-sm"
@@ -121,7 +122,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
           </View>
         </View>
       </View>
-      <View className={`px-5 py-2`}>
+      <View className="py-5 px-5">
         <Button
           disabled={!feedback.trim()}
           onPress={handleFeedBackPress}
@@ -141,7 +142,8 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
           </Text>
         </Button>
       </View>
-    </NonScrollableContainer>
+      </View>
+    </SafeAreaView>
   );
 };
 
