@@ -19,8 +19,8 @@ export function PostProductHeader({ percentage, heading, showBackArrow = false }
   return (
     <View style={{ flexDirection: 'row', position: 'relative' }}>
       {showBackArrow ? <TouchableOpacity
-        style={{ position: 'absolute', top: 0, bottom: 0, left: 16, }}
-        onPress={() => { navigation.goBack() }}
+        style={{ position: 'absolute', top: 0, bottom: 0, left: 16, size: 18}}
+        onPress={() => navigation.goBack()}
         className="flex-row items-center"
       >
         <ArrowLeftIcon

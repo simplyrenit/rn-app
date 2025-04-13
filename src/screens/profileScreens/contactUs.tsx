@@ -32,7 +32,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
           onPress={() => router.goBack()}
         >
           <ArrowLeftIcon
-            size={26}
+            size={20}
             color={isDarkMode ? "#FFF" : "#000"}
           />
         </TouchableOpacity>

@@ -66,7 +66,6 @@ export default function SearchResults() {
   const { searchProducts } = useSearch();
   const [products, setProducts] = useState<BackendProduct[]>(fetchedProducts);
 
-
   const handleOpenBottomSheet = () => {
     bottomSheetRef.current?.present();
   };
@@ -99,7 +98,6 @@ export default function SearchResults() {
     filterType: keyof typeof filters,
     value: string | null
   ) => {
-    console.log(filterType,value,'mi')
     setFilters((prevFilters) => ({
       ...prevFilters,
       [filterType]: prevFilters[filterType] === value ? null : value,
@@ -116,7 +114,6 @@ export default function SearchResults() {
   };
 
   const handlePriceSelect = (min: string, max: string) => {
-    console.log(min,max,'pix')
     setFilters((prevFilters) => ({
       ...prevFilters,
       price: { min, max },
@@ -151,15 +148,6 @@ export default function SearchResults() {
           condition: filters.condition,
         }
       );
-      if(filters.sort === 'high-to-low'){
-        let productsToSet = filteredProducts.filter(prod => !prod?.moderation_labels?.length);
-        productsToSet = productsToSet?.sort((a, b) => b?.rate - a?.rate);
-        setProducts(productsToSet)
-      }else if(filters.sort === 'low-to-high'){
-        let productsToSet = filteredProducts.filter(prod => !prod?.moderation_labels?.length);
-        productsToSet = productsToSet?.sort((a, b) => a?.rate - b?.rate);
-        setProducts(productsToSet)
-      }else
       setProducts(filteredProducts.filter(prod => !prod?.moderation_labels?.length));
     } catch (error) {
       console.error(error);
@@ -242,7 +230,7 @@ export default function SearchResults() {
           }}>
             <ArrowLeftIcon
               color={isDark ? "#FFFFFF80" : "#00000080"}
-              size={24}
+              size={18}
             />
           </TouchableOpacity>
 

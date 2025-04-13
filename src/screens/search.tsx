@@ -177,7 +177,6 @@ export default function SearchScreen() {
   const onPress = async () => {
     try {
       setProductsLoading(true);
-      console.log(selectedLocation!.lat!,selectedLocation!.lng!,'test')
       const products = await searchProducts(
         selectedItem!,
         { lat: selectedLocation!.lat!, lng: selectedLocation!.lng! },
@@ -301,7 +300,7 @@ export default function SearchScreen() {
               <TouchableOpacity onPress={() => navigation.goBack()}>
                 <ArrowLeftIcon
                   color={isDark ? "white" : "black"}
-                  size={24}
+                  size={18}
                 />
               </TouchableOpacity>
             </View>
@@ -604,8 +603,8 @@ export default function SearchScreen() {
                       enablePoweredByContainer={false}
                       styles={{
                         textInput: {
-                          height: Platform.OS === 'ios' ? 45: '100%',
-                          backgroundColor: isDark ? "#0F0F0F" : "#red",
+                          height: '100%',
+                          backgroundColor: isDark ? "#0F0F0F" : "#fff",
                           borderRadius: 12,
                           paddingHorizontal: 8,
                           zIndex: 10,

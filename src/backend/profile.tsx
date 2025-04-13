@@ -15,18 +15,23 @@ import {
 } from "@/lib/types";
 import axios from "axios";
 import { usePost } from "./post";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import axiosInstance from "@/lib/networkUtils";
 
 export function useProfile() {
-  const { authTokens, fetchUserDetails, logout } = useGlobalContext();
+
+  const { authTokens, fetchUserDetails, logout, isAuthenticated } = useGlobalContext();
   const { access_token } = authTokens || {};
   const { getPresignedURLs, uploadToS3 } = usePost();
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
   async function getMyDetails(token?: string) {
+      if (!token && !access_token) {
+          console.error("No access token available, skipping request.");
+          return;
+        }
     setLoading(true);
     try {
       const response = await axiosInstance.get<MyDetails>(MY_DETAILS_ENDPOINT, token ? {
@@ -37,7 +42,14 @@ export function useProfile() {
 
       return response.data;
     } catch (error) {
-      console.error("Error getting user details:", error);
+      console.error("Error getting user details -- backend profile:", error);
+     console.log("isAuthenticated", isAuthenticated);
+     setIsAuthenticated(false);
+     logout();
+     useEffect(() => {
+       console.log("isAuthenticated updated:", isAuthenticated);
+     }, [isAuthenticated]);
+     console.log("isAuthenticated second", isAuthenticated);
       throw error;
     } finally {
       setLoading(false);

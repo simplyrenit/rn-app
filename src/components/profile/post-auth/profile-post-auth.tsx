@@ -10,7 +10,6 @@ import ProfileImgContainer from "./profile-img";
 import AppearanceSheet from "./sheets/AppearanceSheet";
 import { CurrencySheet } from "./sheets/currency-sheet";
 import PersonalDetailsSheet from "./sheets/PersonaldetailsSheet";
-
 interface ProfilePostAuthProps {
   isDarkMode: boolean;
   handleLogout: () => void;
@@ -26,7 +25,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   const appearanceSheetRef = useRef<BottomSheetModal>(null);
   const personalDetailsSheetRef = useRef<BottomSheetModal>(null);
   const currencySheetRef = useRef<BottomSheetModal>(null);
-
+   const { isAuthenticated } = useGlobalContext();
 
   const handleCurrencyModal = () => {
     currencySheetRef.current?.present();
@@ -51,6 +50,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
             <ProfileImgContainer
               isDarkMode={isDarkMode}
               handlePersonalDetailsSheetPress={handlePersonalDetailsSheetPress}
+              isAuthenticated
             />
           </View>
         </View>
@@ -201,25 +201,27 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
 
           {/* logout */}
           <View className="pt-5 px-5">
-            <TouchableOpacity
-              onPress={handleLogout}
-              className={`${isDark
-                ? "bg-[#1A1A1A] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
-                } border rounded-[12px] px-4 py-3 flex-row items-center justify-center -translate-y-0.5`}
-            >
-              <ArrowRightStartOnRectangleIcon
-                size={26}
-                color="#E50914"
-              />
-              <Text
-                fontSize="text-base"
-                fontWeight="font-bold"
-                className="text-[#E50914] ml-2"
+            {isAuthenticated && (
+              <TouchableOpacity
+                onPress={handleLogout}
+                className={`${isDark
+                  ? "bg-[#1A1A1A] border-[#292929]"
+                  : "bg-white border-[#e6e6e6]"
+                  } border rounded-[12px] px-4 py-3 flex-row items-center justify-center -translate-y-0.5`}
               >
-                Logout
-              </Text>
-            </TouchableOpacity>
+                <ArrowRightStartOnRectangleIcon
+                  size={26}
+                  color="#E50914"
+                />
+                <Text
+                  fontSize="text-base"
+                  fontWeight="font-bold"
+                  className="text-[#E50914] ml-2"
+                >
+                  Logout
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 

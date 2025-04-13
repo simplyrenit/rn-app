@@ -48,6 +48,7 @@ export default function WriteReviewScreen() {
 
   const handleSubmit = async () => {
     const reviewData = {
+        productId: product.id,
       productName: product.name,
       productReview,
       ownerReview,
@@ -99,11 +100,15 @@ export default function WriteReviewScreen() {
         <View className="py-3 px-5 flex flex-row items-center">
           <View className="w-[10%]">
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <ArrowLeftIcon color={isDark ? "white" : "black"} size={24} />
+              <ArrowLeftIcon color={isDark ? "white" : "black"} size={18} />
             </TouchableOpacity>
           </View>
+
           <View className="w-[80%] h-full items-center">
-            <Text fontSize="text-xl" fontWeight="font-bold">
+            <Text className={`rounded-[12px] h-12 border p-3 ${isDark
+                                            ? "border-[#292929] text-white"
+                                            : "border-[#e6e6e6] text-black"
+                                            }`}>
               Write a review
             </Text>
           </View>

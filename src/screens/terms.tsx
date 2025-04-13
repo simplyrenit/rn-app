@@ -11,67 +11,174 @@ import {
   TouchableOpacity,
   View,
   Platform,
-  SafeAreaView,
-  StyleSheet,
-  Pressable
 } from "react-native";
 import { ArrowLeftIcon } from "react-native-heroicons/outline";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { WebView } from 'react-native-webview';
-import { isIOS } from "@/utils/checks";
 
 const StyledScroll = styled(ScrollView);
 
 export default function Terms() {
   const { theme } = useGlobalContext();
   const isDarkMode = theme === "dark";
-  const navigator = useNavigation();
-
-  const goBack = () => {
-    if (navigator?.canGoBack()) {
-      navigator?.goBack();
-    }
-    else if(navigator) {
-      navigator?.navigate?.('HOME');
-    }
-  };
-
-
+  const router = useNavigation();
 
   return (
-<SafeAreaView style={styles.container}>
-<Pressable
-        onPress={goBack}
-        style={styles.pressable}
+    <NonScrollableContainer>
+      <View
+        className="flex-row items-center justify-between px-4 py-2 mt-2"
+        style={{ paddingTop: wp("2.5%") }}
       >
-        <ArrowLeftIcon
-            size={24}
-            color={isDarkMode ? "white" : "black"}
+        <TouchableOpacity
+          onPress={() => router.goBack()}
+          className="flex-1 items-start w-[10%]"
+        >
+          <ArrowLeftIcon
+            size={20}
+            color={isDarkMode ? "#FFF" : "#000"}
           />
-      </Pressable>
-  <WebView
-    source={{ uri: 'https://renit.notion.site/Renit-Terms-Conditions-1c5a74a67e958089881ddc16717ca58b' }}
-    originWhitelist={['*']}
-    startInLoadingState
-    style={{ flex: 1 }}
-    javaScriptEnabled={true}
-  />
-</SafeAreaView>
+        </TouchableOpacity>
+        <View className="items-center justify-center w-[80%]">
+          <Text
+            fontSize="text-xl"
+            fontWeight="font-bold"
+          >
+            Terms & Conditions
+          </Text>
+        </View>
+        <View className="w-[10%]"></View>
+      </View>
+
+      <View
+        className={`${Platform.OS === "ios" ? "" : "flex-1"} justify-between`}
+        style={{
+          paddingBottom: Platform.OS === "ios" ? wp("10%") : 0,
+        }}
+      >
+        {/* <StaticContainer> */}
+        <StyledScroll
+          className="space-y-5 h-[100%] mx-4 pt-2 "
+          showsVerticalScrollIndicator={false}
+        >
+          <RNT
+            style={{
+              fontStyle: "italic",
+              fontWeight: "600",
+              color: isDarkMode ? "white" : "black",
+            }}
+          >
+            {TERMS_CONTENT["effectiveDate"]}
+          </RNT>
+          <Text className="">{TERMS_CONTENT["intro"]}</Text>
+
+          <View>
+            <Text fontWeight="font-bold">1. Acceptance of Terms</Text>
+            <Text className="">{TERMS_CONTENT["section1.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section1.2"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">2. General Terms</Text>
+            <Text className="">{TERMS_CONTENT["section2.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section2.2"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">3. User Obligations</Text>
+            <Text className="">{TERMS_CONTENT["section3.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section3.2"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">4. User Content</Text>
+            <Text className="">{TERMS_CONTENT["section4.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section4.2"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">5. Prohibited Content</Text>
+            <Text className="">{TERMS_CONTENT["section5.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.2"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.3"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.4"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.5"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.6"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.7"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.8"]}</Text>
+            <Text className="">{TERMS_CONTENT["section5.9"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">6. Intellectual Property Rights</Text>
+            <Text className="">{TERMS_CONTENT["section6.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section6.2"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">
+              7. Disclaimer of Warranty and Limitation of Liability
+            </Text>
+            <Text className="">{TERMS_CONTENT["section7.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section7.2"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">8. Indemnification</Text>
+            <Text className="">{TERMS_CONTENT["section8.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section8.2"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">9. Third-Party Websites</Text>
+            <Text className="">{TERMS_CONTENT["section9.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section9.2"]}</Text>
+            <Text className="">{TERMS_CONTENT["section9.3"]}</Text>
+            <Text className="">{TERMS_CONTENT["section9.4"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">10. Termination</Text>
+            <Text className="">{TERMS_CONTENT["section10.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section10.2"]}</Text>
+            <Text className="">{TERMS_CONTENT["section10.3"]}</Text>
+            <Text className="">{TERMS_CONTENT["section10.4"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">
+              11. Governing Law and Jurisdiction
+            </Text>
+            <Text className="">{TERMS_CONTENT["section11.1"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">12. Contact Information</Text>
+            <Text className="">{TERMS_CONTENT["section12.1"]}</Text>
+            <Text className="">{TERMS_CONTENT["section12.2"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">13. Grievance Redressal</Text>
+            <Text className="">{TERMS_CONTENT["section13.1"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">14. Termination</Text>
+            <Text className="">{TERMS_CONTENT["section14.1"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">15. Contact Us</Text>
+            <Text className="">{TERMS_CONTENT["section15.1"]}</Text>
+          </View>
+
+          <View>
+            <Text fontWeight="font-bold">16. Grievance Redressal Officer</Text>
+            <Text className="">{TERMS_CONTENT["section16.1"]}</Text>
+            <Text className=""> </Text>
+          </View>
+        </StyledScroll>
+        {/* </StaticContainer> */}
+      </View>
+    </NonScrollableContainer>
   );
 }
-
-
-const styles = StyleSheet.create({
-  container:{
-    flex: 1,
-    backgroundColor: '#FFFFFF'
-  },
-  pressable:{
-    padding:8,
-    position: 'absolute',
-    marginTop: isIOS()? 106 : 36,
-    zIndex:1,
-    backgroundColor:'transparent',
-    marginLeft: 16
-  },
-})

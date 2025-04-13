@@ -66,7 +66,7 @@ const IconButton: React.FC<IconButtonProps> = ({
       <View className="flex-row gap-3 items-center justify-center">
         <View className="items-center justify-center">
           {LeftIconComponent && (
-            <LeftIconComponent size={24} color={isDarkMode ? "#fff" : "#000"} />
+            <LeftIconComponent size={18} color={isDarkMode ? "#fff" : "#000"} />
           )}
         </View>
         <View>

@@ -2,7 +2,6 @@ import { useGlobalContext } from "@/context/global-context";
 import { styled } from "nativewind";
 import React from "react";
 import {
-  Platform,
   TouchableOpacity as RNButton,
   TouchableOpacityProps,
 } from "react-native";
@@ -58,17 +57,18 @@ export function Button({
   return (
     <StyledButton
       className={`p-3 rounded-lg ${variantClasses} ${className}`}
-      style={[{ justifyContent: 'center', alignItems: 'center' }, style]}
+      style={style}
       disabled={disabled}
       {...props}
     >
-      {Platform.OS === 'ios' && typeof children !== 'string' ? children : <Text
+      <Text
         fontWeight="font-bold"
-        className={`text-center ${variantClasses.includes("text-") ? variantClasses : "text-white"
-          }`}
+        className={`text-center ${
+          variantClasses.includes("text-") ? variantClasses : "text-white"
+        }`}
       >
         {children}
-      </Text>}
+      </Text>
     </StyledButton>
   );
 }
