@@ -1,6 +1,8 @@
+import { getApps, initializeApp, ReactNativeFirebase } from "@react-native-firebase/app";
 import { initializeApp } from "@react-native-firebase/app";
-import { getFirestore } from "@react-native-firebase/firestore";
-import { getStorage } from "@react-native-firebase/storage";
+import firestoreApp, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";	import { getFirestore } from "@react-native-firebase/firestore";
+import { FirebaseStorageTypes, getStorage } from "@react-native-firebase/storage";	import { getStorage } from "@react-native-firebase/storage";
+import { databaseURL } from "firebase-functions/params";
 
 export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
 
@@ -21,6 +23,7 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: "639298619246",
   appId: "1:639298619246:web:bebe42342d569785c7237f",
   measurementId: "G-P7DWR065WK",
+  databaseURL: "https://rn-api-35b38-default-rtdb.asia-southeast1.firebasedatabase.app/",
 };
 
 export const DEV_MODE: string = "PROD"; // DEV or PROD
@@ -102,10 +105,13 @@ export const WRITE_REVIEW = SERVERURL + "write-review/";
 
 export const GET_REFRESH_TOKEN = SERVERURL + 'token/refresh/';
 
-let app, firestore, storage;
+let app: ReactNativeFirebase.FirebaseApp, firestore: FirebaseFirestoreTypes.Module, storage: FirebaseStorageTypes.Module;
 
 try {
-  app = initializeApp(FIREBASE_CONFIG);
+  let app;
+  if(getApps().length === 0){
+    app = initializeApp(FIREBASE_CONFIG);
+  }
   firestore = getFirestore(app);
   storage = getStorage(app);
 } catch (error) {

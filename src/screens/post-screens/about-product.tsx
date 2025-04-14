@@ -384,6 +384,7 @@ export default function AboutProduct() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             padding: 16,
+            paddingBottom: Platform.OS === 'ios' ? 60 : undefined
           }}
           style={{ height: "100%" }}
         >

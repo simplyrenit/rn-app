@@ -6,7 +6,7 @@ import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { XCircleIcon } from "react-native-heroicons/outline";
 import OTPTextView from "react-native-otp-textinput";
@@ -18,6 +18,7 @@ export default function VerifyEmail() {
   const [verificationCode, setVerificationCode] = useState("");
   const [password, setPassword] = useState("");
   const [isIncorrect, setIsIncorrect] = useState(false);
+  const otpRef = useRef(null);
   const { theme, setAuthTokens } = useGlobalContext();
 
   const route = useRoute<RouteProps<"Verify">>();
@@ -72,6 +73,8 @@ export default function VerifyEmail() {
 
   const handleResendOTP = useCallback(async () => {
     await sendOTP(email);
+    setVerificationCode("");
+    otpRef.current?.clear();
   }, []);
 
   const styles = StyleSheet.create({
@@ -124,6 +127,7 @@ export default function VerifyEmail() {
 
                 <View className="w-[70%]">
                   <OTPTextView
+                    ref={otpRef}
                     containerStyle={styles.textInputContainer}
                     textInputStyle={styles.roundedTextInput}
                     // @ts-ignore

@@ -10,6 +10,7 @@ import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import moment from "moment";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Platform } from "react-native";
 import {
   Image,
   StyleSheet,
@@ -359,13 +360,22 @@ export default function ChatDetailsScreen() {
           ref={scrollViewRef}
           contentContainerStyle={{
             flexGrow: 1,
+            justifyContent: 'flex-end',
           }}
           keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() => scrollToBottom(false)}
-          onLayout={() => scrollToBottom(false)}
+          // onContentSizeChange={() => scrollToBottom(false)}
+          // onLayout={() => scrollToBottom(false)}
           showsVerticalScrollIndicator={false}
+          onContentSizeChange={(contentWidth, contentHeight) => {	
+            requestAnimationFrame(() => {	
+              scrollViewRef.current?.scrollTo({	
+                y: contentHeight,	
+                animated: false,	
+              });	
+            });	
+          }}
         >
-          {m.map((message) => (
+          {m?.map((message) => (
             <ChatBubble
               id={message.id || ""}
               key={message.id}
@@ -438,7 +448,7 @@ export default function ChatDetailsScreen() {
 
       <CustomBottomSheetModal
         ref={bottomSheetRef}
-        // snapPoints={["60%"]}
+        snapPoints={Platform.OS === 'ios' ? ["60%"] : undefined}
         isDark={isDark}
       >
         <View className="w-[95%] mx-auto">
@@ -499,27 +509,32 @@ export default function ChatDetailsScreen() {
         </View>
       </CustomBottomSheetModal>
 
-     <BottomSheetModal className="rounded-xl"
+     <BottomSheetModal 
+    //  className="rounded-xl"
        backgroundStyle={{
          backgroundColor: isDark ? "black" : "white",
-         borderTopLeftRadius: 26,
-         borderTopRightRadius: 26,
+        //  borderTopLeftRadius: 26,
+        //  borderTopRightRadius: 26,
          //overflow: "hidden", // Ensures proper rounded edges
        }}
        handleIndicatorStyle={{
          backgroundColor: isDark ? "#fff" : "#000",
          width: 50,
          borderRadius: 50,
-
+         padding: 2,
        }}
        ref={selectProductBottomSheetRef}
        snapPoints={["90%"]}
        backdropComponent={renderBackdrop}
        handleStyle={{
-         borderTopWidth: 16,
-         borderTopColor: "#000",
-         borderTopLeftRadius: 26,
-         borderTopRightRadius: 26,
+         borderTopWidth: 2,
+         borderLeftWidth: 2,
+         borderRightWidth: 2,
+         borderTopColor: isDark ? "#292929" : "#fff",
+         borderLeftColor: isDark ? "#292929" : "#fff",
+         borderRightColor: isDark ? "#292929" : "#fff",
+         borderTopLeftRadius: 50,
+         borderTopRightRadius: 50,
 //          shadowColor: "#A9A9A9", // Grey shadow
 //            shadowOffset: { width: 10, height: 12 },
 //             // elevation: 5, // Adds depth effect
@@ -533,7 +548,7 @@ export default function ChatDetailsScreen() {
            <Text
              fontWeight="font-bold"
              fontSize="text-xl"
-             fontColor="black"
+            //  fontColor="black"
            >
              Select a Product
            </Text>
@@ -588,6 +603,9 @@ export default function ChatDetailsScreen() {
                  </TouchableOpacity>
                ))}
              </ScrollView>
+              {/* <Button disabled={!selectedProduct} onPress={onProductSelect}>
+                Next	
+              </Button> */}
            </View>
          </View>
        </View>
@@ -790,7 +808,7 @@ export default function ChatDetailsScreen() {
               </TouchableOpacity>
             </View>
 
-            <View className="mt-4 mx-4 h-12 flex-row items-center justify-between">
+            <View className="mt-4 mx-4 flex-row items-center justify-between">
               <View
                 className={`p-3 h-12 rounded-[12px] border flex-row w-[40%] items-center ${
                   isDark
@@ -820,7 +838,7 @@ export default function ChatDetailsScreen() {
                 </Text>
               </View>
               <View
-                className={`p-3 rounded-[12px] border h-12 flex-row w-[40%] items-center ${
+                className={`p-3 rounded-[12px] border flex-row w-[40%] items-center ${
                   isDark
                     ? "bg-[#0F0F0F] border-[#292929]"
                     : "bg-white border-[#e6e6e6]"
@@ -871,7 +889,7 @@ export default function ChatDetailsScreen() {
                   isDark
                     ? "border-[#292929] bg-[#0F0F0F] text-white"
                     : "border-[#e6e6e6] bg-white text-black"
-                } p-3 rounded-[12px] w-full h-12 mt-2`}
+                } p-3 rounded-lg w-full mt-2`}
               >
                 <Text
                   fontSize="text-md"
@@ -907,7 +925,7 @@ export default function ChatDetailsScreen() {
                   isDark
                     ? "border-[#292929] bg-[#0F0F0F] text-white"
                     : "border-[#e6e6e6] bg-white text-black"
-                } p-3 rounded-[12px] w-full h-12 mt-2`}
+                } p-3 rounded-lg w-full mt-2`}
               >
                 <Text
                   fontSize="text-md"

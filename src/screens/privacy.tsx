@@ -1,29 +1,81 @@
-import { StaticContainer, Text } from "@/components/core";
+import { Container, StaticContainer, Text } from "@/components/core";
+import { useNavigation } from "@react-navigation/native";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
+import { TERMS_CONTENT } from "@/lib/content";
 import { PRIVACY_CONTENT } from "@/lib/content";
 import { useNavigation } from "@react-navigation/native";
 
 import { styled } from "nativewind";
 import {
   ScrollView,
+  Text as RNT,
   TouchableOpacity,
   View,
-  Text as RNT,
   Platform,
+  SafeAreaView,	
+  StyleSheet,	
+  Pressable
 } from "react-native";
 import { ArrowLeftIcon } from "react-native-heroicons/outline";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { WebView } from 'react-native-webview';	
+import { isIOS } from "@/utils/checks";
 
 const StyledScroll = styled(ScrollView);
 
-export default function Privacy() {
+export default function Terms() {
   const { theme } = useGlobalContext();
 
   const isDarkMode = theme === "dark";
+  const navigator = useNavigation();
+  const goBack = () => {
+    if (navigator?.canGoBack()) {	
+      navigator?.goBack();	
+    }	
+    else if(navigator) {	
+      navigator?.navigate?.('HOME');	
+    }	
+  };
 
+  return (
+    <SafeAreaView style={styles.container}>
+    <Pressable
+        onPress={goBack}
+        style={styles.pressable}
+    >
+      <ArrowLeftIcon size = {24}
+      color={isDarkMode ? "white" : "black"}
+      />
+    </Pressable>
+    <WebView
+ source={{ uri: 'https://renit.notion.site/Renit-Privacy-Policy-1c5a74a67e958030b8ebf9aaa0f1da33?pvs=4' }}
+ originWhitelist={['*']}
+ startInLoadingState
+ style={{ flex: 1 }}
+ javaScriptEnabled={true}
+/>
+</SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1, 
+    backgroundColor: '#ffffff'
+  },
+  pressable: {
+    padding: 8,
+    position: 'absolute',
+    marginTop: isIOS()? 106 : 36,
+    zIndex:1,
+    backgroundColor:'transparent',
+    marginLeft: 16
+  }
+})
+
+  /*
   const router = useNavigation();
-
   return (
     <NonScrollableContainer>
       <View className="flex-row items-center justify-between px-4 pb-2 mt-2 ">
@@ -54,7 +106,7 @@ export default function Privacy() {
           paddingBottom: Platform.OS === "ios" ? wp("10%") : 0,
         }}
       >
-        {/* <StaticContainer> */}
+        // { <StaticContainer> }
         <StyledScroll
           className="space-y-5 h-[100%] mx-4 pt-2"
           showsVerticalScrollIndicator={false}
@@ -148,4 +200,5 @@ export default function Privacy() {
       </View>
     </NonScrollableContainer>
   );
+  */
 }

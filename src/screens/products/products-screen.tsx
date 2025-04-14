@@ -17,7 +17,7 @@ import {
   useTypedNavigation,
 } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Dimensions, ScrollView, TouchableOpacity, View } from "react-native";
 import {
   BanknotesIcon,
@@ -52,16 +52,39 @@ export default function DetailsScreen() {
   const { id, isFavorite } = route.params;
   const { startChat } = useChat();
   const [startingChat, setStartingChat] = useState(false);
+  const [combinedTxt,setCombinedTxt] = useState('')
 
   React.useEffect(() => {
     fetchProductDetails();
   }, [id]);
+
+  function buildProductInfo({	
+    description,	
+    title,	
+    model_name,	
+    usage_description,	
+  }: {	
+    description?: string;	
+    title?: string;	
+    model_name?: string;	
+    usage_description?: string;	
+  }): string {	
+    const parts: string[] = [];	
+    if (description) parts.push(description);	
+    if (title) parts.push("BrandName: " + title);	
+    if (model_name) parts.push("ModelName: " + model_name);	
+    if (usage_description) parts.push("UsageDescription: " + usage_description);	
+    return parts.join("\n\n");	
+  }
 
   async function fetchProductDetails() {
     setLoading(true);
     try {
       const data = await fetchProduct(id);
       setProduct(data);
+      console.log(data)
+      const res = buildProductInfo(data)
+      setCombinedTxt(res)
       const similarProducts = await fetchSimilarProducts(id);
       const reviews = await fetchReviews(id);
       setSimilarProducts(similarProducts);
@@ -91,42 +114,38 @@ export default function DetailsScreen() {
 
     if (!isAuthenticated) {
      navigation.navigate("OnboardingScreen");
-//       Toast.show({
-//         type: "customToast",
-//         position: "bottom",
-//         text1: "Sign in to Renit to message owners",
-//         text2: "error",
-//       });
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Sign in to Renit to message owners",
+        text2: "error",
+      });
       return;
     }
 
     setStartingChat(true);
     try {
-      const sender = {
-        userId: userDetails?.username ?? "", // Avoid `!`, provide default values
-        username: userDetails?.name ?? "Unknown User",
+      const {success, content} = await startChat({
+        userId: userDetails?.username!,
+        username: userDetails?.name!,
         profilePicture: userDetails?.image ||
-          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-      };
-
-      const receiver = {
-        userId: product?.owner?.username ?? "",
-        username: `${product?.owner?.first_name ?? ""} ${product?.owner?.last_name ?? ""}`.trim(),
-        profilePicture: product?.owner?.image?.image_url ||
-          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-      };
-
-      const chatData = {
-        title: product?.title ?? "No Title",
-        location: product?.location ?? "Unknown",
-        image: product?.cover_image ?? "",
-        rate: product?.rate ?? 0,
+        "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+      },
+      {
+        userId: product?.owner?.username!,
+        username: product?.owner?.first_name! + " " + product?.owner?.last_name!,
+        profilePicture: product?.owner?.image?.image_url ? product?.owner?.image?.image_url : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+      },
+      {
+        title: product?.title!,
+        location: product?.location!,
+        image: product?.cover_image!,	
+        rate: product?.rate!,
         type: "product",
         text: "",
-        id: product?.name ?? "",
-      };
-
-      const { success, content } = await startChat(sender, receiver, chatData);
+        id: product?.name ?? '',
+      }
+      );
 
       if (success) {
         navigation.navigate("ChatDetails", { id: content });
@@ -149,10 +168,10 @@ export default function DetailsScreen() {
   };
 
   const truncatedText = truncateAtNearestSpace(
-    product?.description!,
+    combinedTxt!,
     MAX_CHARS
   );
-  const displayText = showFullText ? product?.description! : truncatedText;
+  const displayText = showFullText ? combinedTxt! : truncatedText;
   if (!product) {
     return <SafeAreaView className="flex-1 p-4" style={{ backgroundColor: isDark ? '#000' : '#fff' }}>
       <Text>Product not found</Text>

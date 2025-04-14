@@ -8,6 +8,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   TouchableOpacity,
@@ -89,8 +90,10 @@ export function ProductImage({ images, mode, name, isFavorite: iF }: Props) {
   };
 
   return (
-    <StyledView className={`h-full w-full p-6 px-4 ${isDarkMode ? "bg-black" : ""}`}>
-      <StyledView className="flex-1 relative items-center justify-center mt-3">
+    <StyledView className={`h-full w-full p-6 px-4 ${isDarkMode ? "bg-black" : ""}`}
+      style ={{paddingVertical: Platform.OS === 'ios' ? 0: undefined}}>
+      <StyledView className="flex-1 relative items-center justify-center mt-3"
+      style = {{marginTop: Platform.OS === 'ios' ? 0: undefined}}>
         {mode === "post" ? (
           ""
         ) : (
@@ -182,7 +185,10 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
       {!!fullImage && <Modal visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
         <View style={{ position: 'relative', height: Dimensions.get('window').height, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
 
-          <Pressable style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }} onPress={() => setFullImage(null)}>
+          <Pressable style={{ 
+            position: "absolute",
+            top: Platform.OS === 'ios' ? 60 : 10,
+            right: 10, zIndex: 1 }} onPress={() => setFullImage(null)}>
             <MaterialIcons name="close" size={24} color="white" />
           </Pressable>
           <View style={{ position: 'relative', height: '100%', width: '100%', backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }}>

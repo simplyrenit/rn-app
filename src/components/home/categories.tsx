@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   TouchableOpacity,
@@ -15,6 +15,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import * as Location from "expo-location";
 import { SvgUri } from "react-native-svg";
+import { useSearch } from "@/backend/search";
 
 export function Categories() {
   const navigation = useTypedNavigation();
@@ -32,6 +33,9 @@ export function Categories() {
   const isDark = theme === "dark";
 
   const categoryPairs: CategoryItem[][] = splitIntoPairs(CATEGORIES);
+  const { searchProducts } = useSearch();
+
+  const [locationData,setFormattedAddressState] = useState<{ address: string; coordinates: { latitude: number; longitude: number; }; }>()
 
   const styles = StyleSheet.create({
     shadow: {
@@ -105,13 +109,22 @@ export function Categories() {
     }
   };
 
+  const handleFormatAddress = async()=>{
+    const locationData = await getFormattedAddress();	
+    setFormattedAddressState(locationData)	
+  }	
+
+  useEffect(()=>{	
+     handleFormatAddress()	
+  },[])
+
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ paddingRight: itemMargin }}
     >
-      {categoryPairs.map((pair, pairIndex) => (
+      {categoryPairs?.map((pair, pairIndex) => (
         <View
           key={pairIndex}
           style={{
@@ -123,13 +136,21 @@ export function Categories() {
             marginLeft: pairIndex === 0 ? wp(1.5) : 0,
           }}
         >
-          {pair.map((category, index) => {
+          {pair?.map((category, index) => {
             return (
               <TouchableOpacity
                 key={index}
                 style={{ marginBottom: 5 }}
                 onPress={async () => {
-                  const locationData = await getFormattedAddress();
+                  const products = await searchProducts(category?.name,	
+                    { lat: locationData?.coordinates?.latitude as number, 
+                      lng: locationData?.coordinates.longitude as number },	
+                    {	
+                      start_date:  undefined,	
+                      end_date:  undefined,	
+                    }	
+                  );	
+                  console.log(products,'test')
                   navigation.navigate("SearchResults", {
                     category: category.name,
                     address: locationData?.address ?? "",
@@ -140,7 +161,7 @@ export function Categories() {
                       }
                       : { lat: undefined, lng: undefined },
                     range: { startDate: undefined, endDate: undefined },
-                    products: [],
+                    products: products ?? [],
                     selectedItem: category.name,
                   });
                 }}

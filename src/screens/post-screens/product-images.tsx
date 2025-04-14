@@ -14,7 +14,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { styled } from "nativewind";
 import React, { useRef, useState } from "react";
-import { FlatList, TouchableOpacity, View } from "react-native";
+import { FlatList, Platform, TouchableOpacity, View } from "react-native";
 import {
   ArrowLeftIcon,
   CameraIcon,
@@ -197,7 +197,7 @@ export default function ProductImages() {
             />
           )}
         </View>
-        <View className="py-2 ">
+        <View className="py-2 " style={{paddingBottom: Platform.OS === 'ios' ? 30 : undefined}}>
           <Button
             className="w-full items-center justify-between"
             disabled={!allFieldsFilled}
