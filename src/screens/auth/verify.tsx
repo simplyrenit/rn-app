@@ -51,6 +51,7 @@ export default function VerifyEmail() {
         }
       }
     } else {
+      // Handle password verification
       const data = await loginUser(email, password).catch(e => { });
       if (
         data?.access_token !== null &&
@@ -106,7 +107,8 @@ export default function VerifyEmail() {
             </Text>
             <Text
               fontSize="text-md"
-              className={`${theme === "dark" ? "text-[#FFFFFFB2]" : "text-[#000000B2]"}`}
+              className={`${theme === "dark" ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                }`}
             >
               {verificationType === "otp"
                 ? `We've sent a 6 digit verification code to ${email}`

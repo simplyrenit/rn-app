@@ -27,7 +27,7 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
           className="flex-1 items-start w-[10%]"
         >
           <ArrowLeftIcon
-            size={26}
+            size={20}
             color={isDarkMode ? "#FFF" : "#000"}
           />
         </TouchableOpacity>

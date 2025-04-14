@@ -10,7 +10,7 @@ import EmailScreen from "../screens/auth/email";
 import LocationScreen from "../screens/auth/location";
 import PasswordScreen from "../screens/auth/password";
 import VerifyScreen from "../screens/auth/verify";
-
+import ReviewDetails from "@/screens/products/review-details";
 import { useGlobalContext } from "@/context/global-context";
 import ChatDetailsScreen from "@/screens/chat/chat-details";
 import PrivacyScreen from "../screens/privacy";
@@ -487,6 +487,12 @@ export default function Navigation() {
           name="EditCoverImage"
           component={EditCoverImage}
         />
+        <Stack.Screen name="ReviewDetails"
+        component={ReviewDetails}
+         />
+           <Stack.Screen name="OnboardingScreen"
+           component={OnboardingScreen} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

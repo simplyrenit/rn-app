@@ -114,13 +114,14 @@ export default function LoginWithEmail() {
           >
             Continue with OTP
           </Button>
-          {/* <Button
+          {/*<Button
             variant="primary"
             onPress={() => handleSubmit("password")}
             disabled={!isValid || !email}
           >
             Continue with Password
-          </Button> */}
+          </Button>
+          */}
         </View>
       </View>
     </StaticContainer>

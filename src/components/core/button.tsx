@@ -62,10 +62,11 @@ export function Button({
       disabled={disabled}
       {...props}
     >
-      {Platform.OS === 'ios' && typeof children !== 'string' ? children : <Text
+      {Platform.OS === 'ios' && typeof children !== 'string' ? children :  <Text
         fontWeight="font-bold"
-        className={`text-center ${variantClasses.includes("text-") ? variantClasses : "text-white"
-          }`}
+        className={`text-center ${
+          variantClasses.includes("text-") ? variantClasses : "text-white"
+        }`}
       >
         {children}
       </Text>}

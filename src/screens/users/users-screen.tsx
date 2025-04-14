@@ -113,7 +113,7 @@ export default function UsersDetails() {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <ArrowLeftIcon
               color={isDark ? "white" : "black"}
-              size={24}
+              size={18}
             />
           </TouchableOpacity>
         </View>

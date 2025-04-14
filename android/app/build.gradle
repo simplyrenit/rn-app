@@ -200,6 +200,7 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+    
     implementation 'com.google.firebase:firebase-messaging:21.13.0'
 }
 

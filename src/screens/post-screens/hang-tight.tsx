@@ -24,7 +24,7 @@ export default function HangTight() {
     try {
       const { status, data } = await postProduct();
       console.log("status", status);
-      if (status === 200 || status === 201) {
+      if (status === 201 || status === 201) {
         Toast.show({
           type: "customToast",
           position: "bottom",
@@ -58,7 +58,6 @@ export default function HangTight() {
       }
       setIsPosting(false);
     } catch (e) {
-      console.log("error", e);
       Toast.show({
         type: "customToast",
         position: "bottom",

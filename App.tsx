@@ -30,34 +30,33 @@ if (!firebase.apps.length) {
 }
 
 import { PermissionsAndroid, Platform } from 'react-native';
+async function requestNotificationPermission() {	
+  if (Platform.OS === 'android') {	
+    const granted = await PermissionsAndroid.request(	
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS	
+    );	
 
-async function requestNotificationPermission() {
-  if (Platform.OS === 'android') {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
-    );
+    if (granted !== PermissionsAndroid.RESULTS.GRANTED) {	
+      console.log('Notification permission denied');	
+      return false;	
+    }	
 
-    if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-      console.log('Notification permission denied');
-      return false;
-    }
+    console.log('Notification permission granted');	
+  }	
 
-    console.log('Notification permission granted');
-  }
+  const fcmAuthStatus = await messaging().requestPermission();	
+  const enabled =	
+    fcmAuthStatus === messaging.AuthorizationStatus.AUTHORIZED ||	
+    fcmAuthStatus === messaging.AuthorizationStatus.PROVISIONAL;	
 
-  const fcmAuthStatus = await messaging().requestPermission();
-  const enabled =
-    fcmAuthStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-    fcmAuthStatus === messaging.AuthorizationStatus.PROVISIONAL;
+  if (!enabled) {	
+    console.log('FCM permission not granted');	
+    return false;	
+  }	
 
-  if (!enabled) {
-    console.log('FCM permission not granted');
-    return false;
-  }
-
-  console.log('FCM permission granted test',Platform.OS);
-  return true;
-}
+  console.log('FCM permission granted test',Platform.OS);	
+  return true;	
+}	
 
 
 GoogleSignin.configure({
@@ -93,26 +92,25 @@ export default function App() {
   useEffect(() => {
     const initializeNotifications = async () => {
       await setupNotifications();
-     const token =  await registerForPushNotificationsAsync();
-     console.log(token,'test')
+      await registerForPushNotificationsAsync();
+      const token =  await registerForPushNotificationsAsync();
     };
 
     initializeNotifications();
   }, []);
 
-
   useEffect(() => {
-    const init = async () => {
-      await messaging().requestPermission();
-      const token = await messaging().getToken();
-      console.log('FCM Token:', token);
-      // Save this token to your server if needed
-    };
-    init();
-  }, []);
+    const init = async () => {	
+      await messaging().requestPermission();	
+      const token = await messaging().getToken();	
+      console.log('FCM Token:', token);	
+      // Save this token to your server if needed	
+    };	
+    init();	
+  }, []);	
 
-  useEffect(() => {
-    requestNotificationPermission();
+  useEffect(() => {	
+    requestNotificationPermission();	
   }, []);
 
   useEffect(() => {

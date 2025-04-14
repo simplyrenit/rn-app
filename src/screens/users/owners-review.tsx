@@ -21,7 +21,7 @@ export default function OwnersReviewScreen() {
       <View className="py-3 px-5 flex flex-row items-center">
         <View className="w-[10%]">
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ArrowLeftIcon color={isDark ? "white" : "black"} size={24} />
+            <ArrowLeftIcon color={isDark ? "white" : "black"} size={18} />
           </TouchableOpacity>
         </View>
         <View className="w-[80%] h-full items-center">

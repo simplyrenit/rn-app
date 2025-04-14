@@ -1,6 +1,7 @@
 import { getApps, initializeApp, ReactNativeFirebase } from "@react-native-firebase/app";
-import firestoreApp, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
-import { FirebaseStorageTypes, getStorage } from "@react-native-firebase/storage";
+import { initializeApp } from "@react-native-firebase/app";
+import firestoreApp, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";	import { getFirestore } from "@react-native-firebase/firestore";
+import { FirebaseStorageTypes, getStorage } from "@react-native-firebase/storage";	import { getStorage } from "@react-native-firebase/storage";
 import { databaseURL } from "firebase-functions/params";
 
 export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
@@ -32,7 +33,6 @@ export let SOCKET_URL = "";
 
 if (DEV_MODE === "PROD") {
   SERVERURL = "https://api.simplyrenit.com/api/";
-  // SERVERURL = "http://192.168.1.12:8000/api/";
   SOCKET_URL = "wss://api.simplyrenit.com/ws/chat/";
 } else {
   SERVERURL = "http://192.168.1.12:8000/api/";
@@ -106,13 +106,11 @@ export const WRITE_REVIEW = SERVERURL + "write-review/";
 export const GET_REFRESH_TOKEN = SERVERURL + 'token/refresh/';
 
 let app: ReactNativeFirebase.FirebaseApp, firestore: FirebaseFirestoreTypes.Module, storage: FirebaseStorageTypes.Module;
-if (__DEV__) {
-  // firestoreApp().useEmulator('localhost', 8080);
-}
+
 try {
   let app;
   if(getApps().length === 0){
-  app = initializeApp(FIREBASE_CONFIG);
+    app = initializeApp(FIREBASE_CONFIG);
   }
   firestore = getFirestore(app);
   storage = getStorage(app);

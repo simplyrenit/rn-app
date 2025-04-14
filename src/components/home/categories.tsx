@@ -109,14 +109,13 @@ export function Categories() {
     }
   };
 
-
   const handleFormatAddress = async()=>{
-    const locationData = await getFormattedAddress();
-    setFormattedAddressState(locationData)
-  }
+    const locationData = await getFormattedAddress();	
+    setFormattedAddressState(locationData)	
+  }	
 
-  useEffect(()=>{
-     handleFormatAddress()
+  useEffect(()=>{	
+     handleFormatAddress()	
   },[])
 
   return (
@@ -143,14 +142,14 @@ export function Categories() {
                 key={index}
                 style={{ marginBottom: 5 }}
                 onPress={async () => {
-                  const products = await searchProducts(
-                    category?.name,
-                    { lat: locationData?.coordinates?.latitude as number, lng: locationData?.coordinates.longitude as number },
-                    {
-                      start_date:  undefined,
-                      end_date:  undefined,
-                    }
-                  );
+                  const products = await searchProducts(category?.name,	
+                    { lat: locationData?.coordinates?.latitude as number, 
+                      lng: locationData?.coordinates.longitude as number },	
+                    {	
+                      start_date:  undefined,	
+                      end_date:  undefined,	
+                    }	
+                  );	
                   console.log(products,'test')
                   navigation.navigate("SearchResults", {
                     category: category.name,

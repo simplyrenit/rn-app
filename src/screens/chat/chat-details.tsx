@@ -10,9 +10,9 @@ import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import moment from "moment";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Platform } from "react-native";
 import {
   Image,
-  Platform,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -109,7 +109,7 @@ export default function ChatDetailsScreen() {
     const myDetails = await getMyDetails(conversationId);
     const blocked = await isChatBlocked(conversationId);
     const products = await getOwnerProducts(details.userId);
-
+    
 
     setIsBlocked(blocked.isBlocked);
     setBlockedBy(blocked.initiatedBy);
@@ -358,19 +358,21 @@ export default function ChatDetailsScreen() {
 
         <ScrollView
           ref={scrollViewRef}
-            contentContainerStyle={{
-                flexGrow: 1,
-                justifyContent: 'flex-end',
-              }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'flex-end',
+          }}
           keyboardShouldPersistTaps="handled"
+          // onContentSizeChange={() => scrollToBottom(false)}
+          // onLayout={() => scrollToBottom(false)}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={(contentWidth, contentHeight) => {
-            requestAnimationFrame(() => {
-              scrollViewRef.current?.scrollTo({
-                y: contentHeight,
-                animated: false,
-              });
-            });
+          onContentSizeChange={(contentWidth, contentHeight) => {	
+            requestAnimationFrame(() => {	
+              scrollViewRef.current?.scrollTo({	
+                y: contentHeight,	
+                animated: false,	
+              });	
+            });	
           }}
         >
           {m?.map((message) => (
@@ -393,16 +395,18 @@ export default function ChatDetailsScreen() {
                 <Text
                   fontSize="text-sm"
                   fontWeight="font-semibold"
-                  className={`uppercase ${isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
-                    }`}
+                  className={`uppercase ${
+                    isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                  }`}
                 >
                   {participantDetails.username} Blocked
                 </Text>
                 <Text
                   fontSize="text-sm"
                   fontWeight="font-bold"
-                  className={`uppercase ${isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
-                    }`}
+                  className={`uppercase ${
+                    isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                  }`}
                 >
                   -
                 </Text>
@@ -421,8 +425,9 @@ export default function ChatDetailsScreen() {
                 <Text
                   fontSize="text-sm"
                   fontWeight="font-semibold"
-                  className={`uppercase ${isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
-                    }`}
+                  className={`uppercase ${
+                    isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                  }`}
                 >
                   This conversation cannot be continued
                 </Text>
@@ -464,20 +469,22 @@ export default function ChatDetailsScreen() {
             style={{
               textAlignVertical: "top",
             }}
-            className={`h-52 w-full mt-4 border ${isDark
+            className={`h-52 w-full mt-4 border ${
+              isDark
                 ? "border-[#292929] text-white"
                 : "border-[#e6e6e6] text-black"
-              } rounded-xl p-3 text-base`}
+            } rounded-xl p-3 text-base`}
             placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
           />
 
           <View className="flex-row justify-between mt-6 mb-0">
             <TouchableOpacity
               onPress={() => bottomSheetRef.current?.close()}
-              className={`bg-white border ${isDark
+              className={`bg-white border ${
+                isDark
                   ? "border-[#292929] text-white"
                   : "border-[#e6e6e6] text-black"
-                } p-3 rounded-[11px] flex-1 mr-2`}
+              } p-3 rounded-[11px] flex-1 mr-2`}
             >
               <Text
                 className="text-center text-black"
@@ -502,95 +509,108 @@ export default function ChatDetailsScreen() {
         </View>
       </CustomBottomSheetModal>
 
-      <BottomSheetModal
-        backgroundStyle={{ backgroundColor: isDark ? "black" : "white" }}
-        handleIndicatorStyle={{
-          backgroundColor: isDark ? "#fff" : "#000",
-          width: 50,
-          borderRadius: 50,
-          padding: 2,
-        }}
-        ref={selectProductBottomSheetRef}
-        snapPoints={["90%"]}
-        backdropComponent={renderBackdrop}
-        handleStyle={{
-          borderTopWidth: 2,
-          borderLeftWidth: 2,
-          borderRightWidth: 2,
-          borderTopColor: isDark ? "#292929" : "#fff",
-          borderLeftColor: isDark ? "#292929" : "#fff",
-          borderRightColor: isDark ? "#292929" : "#fff",
-          borderTopRightRadius: 50,
-          borderTopLeftRadius: 50,
-        }}
-      >
-        <View className="w-[95%] mx-auto flex-1">
-          <View className=" items-center mb-4 mt-4 flex-1">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-xl"
-            >
-              Select a product
-            </Text>
+     <BottomSheetModal 
+    //  className="rounded-xl"
+       backgroundStyle={{
+         backgroundColor: isDark ? "black" : "white",
+        //  borderTopLeftRadius: 26,
+        //  borderTopRightRadius: 26,
+         //overflow: "hidden", // Ensures proper rounded edges
+       }}
+       handleIndicatorStyle={{
+         backgroundColor: isDark ? "#fff" : "#000",
+         width: 50,
+         borderRadius: 50,
+         padding: 2,
+       }}
+       ref={selectProductBottomSheetRef}
+       snapPoints={["90%"]}
+       backdropComponent={renderBackdrop}
+       handleStyle={{
+         borderTopWidth: 2,
+         borderLeftWidth: 2,
+         borderRightWidth: 2,
+         borderTopColor: isDark ? "#292929" : "#fff",
+         borderLeftColor: isDark ? "#292929" : "#fff",
+         borderRightColor: isDark ? "#292929" : "#fff",
+         borderTopLeftRadius: 50,
+         borderTopRightRadius: 50,
+//          shadowColor: "#A9A9A9", // Grey shadow
+//            shadowOffset: { width: 10, height: 12 },
+//             // elevation: 5, // Adds depth effect
+//              shadowOpacity: 0.5, // Shadow visibility
+//                shadowRadius: 4, // Shadow blur effect
 
-            <View className="w-full flex-1">
-              <View
-                className={`flex-row border items-center shadow-lg ${theme === "dark"
-                    ? "bg-[#0F0F0F] border-[#292929]"
-                    : "bg-white border-[#E6E6E6]"
-                  } rounded-xl p-2 mt-4 w-[90%] self-center mb-3 h-12`}
-                style={styles.Shadow}
-              >
-                <View className="w-[10%] h-full items-center justify-center">
-                  <MagnifyingGlassIcon
-                    size={24}
-                    color={theme === "dark" ? "#ffffff70" : "#00000070"}
-                  />
-                </View>
-                <View className="w-[80%] flex flex-row h-full ml-2">
-                  <TextInput
-                    placeholder="Search "
-                    placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
-                    className={`${isDark ? "text-white" : "text-black"}`}
-                    value={search}
-                    onChangeText={onSearchChange}
-                  />
-                </View>
-              </View>
+       }}
+     >
+       <View className="w-[95%] flex-1 rounded-lg p-4 shadow-md">
+         <View className="items-center mb-4 mt-4 flex-1">
+           <Text
+             fontWeight="font-bold"
+             fontSize="text-xl"
+            //  fontColor="black"
+           >
+             Select a Product
+           </Text>
 
-              <ScrollView
-                // style={{ height: 300 }}
-                className="w-[90%] self-center flex-1 "
-                showsVerticalScrollIndicator={false}
-              >
-                {filteredProducts.map((product, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    className="flex-row justify-between items-center py-4"
-                    onPress={() => onProductSelect(product)}
-                  >
-                    <View className="flex-row items-center">
-                      <Image
-                        source={{ uri: product.cover_image }}
-                        style={{ width: 50, height: 50, borderRadius: 8 }}
-                      />
-                      <Text className="ml-4">{product.title}</Text>
-                    </View>
-                    <ChevronRightIcon
-                      size={18}
-                      color={theme === "dark" ? "#ffffff70" : "#00000070"}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+           <View className="w-full flex-1">
+             <View
+               className={`flex-row border items-center shadow-lg ${
+                 theme === "dark"
+                   ? "bg-[#0F0F0F] border-[#292929]"
+                   : "bg-white border-[#E6E6E6]"
+               } rounded-xl p-2 mt-4 w-[90%] self-center mb-3 h-12`}
+               style={styles.Shadow}
+             >
+               <View className="w-[10%] h-full items-center justify-center">
+                 <MagnifyingGlassIcon
+                   size={24}
+                   color={theme === "dark" ? "#ffffff70" : "#00000070"}
+                 />
+               </View>
+               <View className="w-[80%] flex flex-row h-full ml-2">
+                 <TextInput
+                   placeholder="Search "
+                   placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+                   className={`${isDark ? "text-white" : "text-black"}`}
+                   value={search}
+                   onChangeText={onSearchChange}
+                 />
+               </View>
+             </View>
 
+             <ScrollView
+               className="w-[90%] self-center flex-1"
+               showsVerticalScrollIndicator={false}
+             >
+               {filteredProducts.map((product, index) => (
+                 <TouchableOpacity
+                   key={index}
+                   className="flex-row justify-between items-center py-4"
+                   onPress={() => onProductSelect(product)}
+                 >
+                   <View className="flex-row items-center">
+                     <Image
+                       source={{ uri: product.cover_image }}
+                       style={{ width: 50, height: 50, borderRadius: 8 }}
+                     />
+                     <Text className="ml-4">{product.title}</Text>
+                   </View>
+                   <ChevronRightIcon
+                     size={18}
+                     color={theme === "dark" ? "#ffffff70" : "#00000070"}
+                   />
+                 </TouchableOpacity>
+               ))}
+             </ScrollView>
               {/* <Button disabled={!selectedProduct} onPress={onProductSelect}>
-                Next
+                Next	
               </Button> */}
-            </View>
-          </View>
-        </View>
-      </BottomSheetModal>
+           </View>
+         </View>
+       </View>
+     </BottomSheetModal>
+
 
       <CustomBottomSheetModal
         ref={checkAvailabilityBottomSheetRef}
@@ -634,8 +654,9 @@ export default function ChatDetailsScreen() {
               </Text>
               <Text
                 fontSize="text-md"
-                className={`${isDark ? "text-[#ffffffB2]" : "text-[#000000B2]"
-                  }`}
+                className={`${
+                  isDark ? "text-[#ffffffB2]" : "text-[#000000B2]"
+                }`}
               >
                 {selectedProduct?.location}
               </Text>
@@ -745,8 +766,9 @@ export default function ChatDetailsScreen() {
                 </Text>
                 <Text
                   fontSize="text-md"
-                  className={`${isDark ? "text-[#ffffffB2]" : "text-[#000000B2]"
-                    }`}
+                  className={`${
+                    isDark ? "text-[#ffffffB2]" : "text-[#000000B2]"
+                  }`}
                 >
                   {selectedProduct?.location}
                 </Text>
@@ -788,17 +810,20 @@ export default function ChatDetailsScreen() {
 
             <View className="mt-4 mx-4 flex-row items-center justify-between">
               <View
-                className={`p-3 rounded-lg border flex-row w-[40%] items-center ${isDark
+                className={`p-3 h-12 rounded-[12px] border flex-row w-[40%] items-center ${
+                  isDark
                     ? "bg-[#0F0F0F] border-[#292929]"
                     : "bg-white border-[#e6e6e6]"
-                  }`}
+                }`}
               >
                 <CalendarIcon
                   size={24}
                   color={theme === "dark" ? "#fff" : "#000"}
                 />
                 <Text
-                  fontSize="text-md"
+                fontSize="text-md"
+
+
                   className="ml-4"
                 >
                   {formatDate(new Date(selectedRange.startDate))}
@@ -813,10 +838,11 @@ export default function ChatDetailsScreen() {
                 </Text>
               </View>
               <View
-                className={`p-3 rounded-lg border flex-row w-[40%] items-center ${isDark
+                className={`p-3 rounded-[12px] border flex-row w-[40%] items-center ${
+                  isDark
                     ? "bg-[#0F0F0F] border-[#292929]"
                     : "bg-white border-[#e6e6e6]"
-                  }`}
+                }`}
               >
                 <CalendarIcon
                   size={24}
@@ -837,8 +863,9 @@ export default function ChatDetailsScreen() {
               />
               <Text
                 fontSize="text-md"
-                className={`ml-2 ${isDark ? "text-[#ffffffB2]" : "text-[#000000B2]"
-                  }`}
+                className={`ml-2 ${
+                  isDark ? "text-[#ffffffB2]" : "text-[#000000B2]"
+                }`}
               >
                 Booking for{" "}
                 {getDaysBetweenDates(
@@ -856,11 +883,13 @@ export default function ChatDetailsScreen() {
               >
                 Amount
               </Text>
+
               <View
-                className={`flex-row items-center border ${isDark
+                className={`flex-row items-center border ${
+                  isDark
                     ? "border-[#292929] bg-[#0F0F0F] text-white"
                     : "border-[#e6e6e6] bg-white text-black"
-                  } p-3 rounded-lg w-full mt-2`}
+                } p-3 rounded-lg w-full mt-2`}
               >
                 <Text
                   fontSize="text-md"
@@ -872,10 +901,14 @@ export default function ChatDetailsScreen() {
                   keyboardType="number-pad"
                   placeholder={`"900"`}
                   placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+
                   value={makeOfferDetails.amount}
                   onChangeText={(value) => handleTextChange("amount", value)}
-                  className={`${isDark ? "text-white" : "text-black"
-                    } rounded-lg w-full`}
+                  className={`${
+                                      isDark ? "text-white" : "text-black"
+                                    } rounded-lg w-full`}
+
+
                 />
               </View>
             </View>
@@ -888,10 +921,11 @@ export default function ChatDetailsScreen() {
                 Security Deposit
               </Text>
               <View
-                className={`flex-row items-center border ${isDark
+                className={`flex-row items-center border ${
+                  isDark
                     ? "border-[#292929] bg-[#0F0F0F] text-white"
                     : "border-[#e6e6e6] bg-white text-black"
-                  } p-3 rounded-lg w-full mt-2`}
+                } p-3 rounded-lg w-full mt-2`}
               >
                 <Text
                   fontSize="text-md"
@@ -907,8 +941,9 @@ export default function ChatDetailsScreen() {
                   onChangeText={(value) =>
                     handleTextChange("securityDeposit", value)
                   }
-                  className={`${isDark ? "text-white" : "text-black"
-                    } rounded-lg w-full`}
+                  className={`${
+                    isDark ? "text-white" : "text-black"
+                  } rounded-lg w-full`}
                 />
               </View>
             </View>

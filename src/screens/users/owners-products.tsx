@@ -29,7 +29,7 @@ const OwnersProductsScreen: React.FC = () => {
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
-          <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+          <ArrowLeftIcon size={20} color={isDarkMode ? "#FFF" : "#000"} />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
           <Text fontSize="text-xl" fontWeight="font-bold">
