@@ -50,4 +50,5 @@ dist/
 web-build/
 
 
-
+.idea/
+yarn.lock
