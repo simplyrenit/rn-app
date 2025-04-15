@@ -1,7 +1,6 @@
 import { getApps, initializeApp, ReactNativeFirebase } from "@react-native-firebase/app";
-import { initializeApp } from "@react-native-firebase/app";
-import firestoreApp, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";	import { getFirestore } from "@react-native-firebase/firestore";
-import { FirebaseStorageTypes, getStorage } from "@react-native-firebase/storage";	import { getStorage } from "@react-native-firebase/storage";
+import firestoreApp, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";	
+import { FirebaseStorageTypes, getStorage } from "@react-native-firebase/storage";	
 import { databaseURL } from "firebase-functions/params";
 
 export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";

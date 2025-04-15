@@ -1,5 +1,4 @@
 import { Container, StaticContainer, Text } from "@/components/core";
-import { useNavigation } from "@react-navigation/native";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { TERMS_CONTENT } from "@/lib/content";
@@ -201,4 +200,3 @@ const styles = StyleSheet.create({
     </NonScrollableContainer>
   );
   */
-}
