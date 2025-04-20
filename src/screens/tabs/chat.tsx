@@ -22,6 +22,7 @@ export default function Chat() {
   const [conversations, setConversations] = React.useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [firebaseInitialized, setFirebaseInitialized] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   const isDark = theme === "dark";
   const { subscribeToChats, deleteChat } = useChat();
@@ -74,6 +75,13 @@ export default function Chat() {
     ])
   );
 
+  const filteredConversations = conversations.filter((item) => {
+    const name = item.initialParticipants.find(
+      (p) => p.userId !== userDetails?.username
+    )?.username || "";
+    return name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   if (!authTokens || !isAuthenticated) {
     return (
       <StaticContainer width={100}>
@@ -111,10 +119,12 @@ export default function Chat() {
             : "bg-white border-[#E6E6E6]"
             }`}
         >
+          <View className="w-[10%] h-full items-center justify-center">
           <MagnifyingGlassIcon
             color="gray"
             size={24}
           />
+          </View>
           <StyledInput
             className={`ml-2 w-4/5 text-black ${isDark ? "text-white" : "text-black"
               }`}
@@ -122,7 +132,7 @@ export default function Chat() {
             placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
             autoCapitalize="none"
             autoCorrect={false}
-            onChangeText={() => { }}
+            onChangeText={(text) => setSearchQuery(text)}
             style={{ fontSize: 16 }}
           />
         </View>}
@@ -144,7 +154,7 @@ export default function Chat() {
           />
         ) : (
           <FlatList
-            data={conversations}
+            data={filteredConversations}
             ListEmptyComponent={() => <View style={{ padding: 32, height: Dimensions.get('window').height * 0.6, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: 'rgba(165, 165, 165, 0.7)', fontSize: 18, fontWeight: '600' }}>
                 No Chats

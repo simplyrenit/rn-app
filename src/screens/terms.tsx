@@ -36,24 +36,30 @@ export default function Terms() {
     }
   };
 
+
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Pressable
-        onPress = {goBack} style={styles.pressable}>
-           <ArrowLeftIcon
-            size={20}
+<SafeAreaView style={styles.container}>
+<Pressable
+        onPress={goBack}
+        style={styles.pressable}
+      >
+        <ArrowLeftIcon
+            size={24}
             color={isDarkMode ? "white" : "black"}
-            />
-        </Pressable>
-        <WebView source = {{ uri: 'https://renit.notion.site/Renit-Terms-Conditions-1c5a74a67e958089881ddc16717ca58b' }}
+          />
+      </Pressable>
+  <WebView
+    source={{ uri: 'https://renit.notion.site/Renit-Terms-Conditions-1c5a74a67e958089881ddc16717ca58b' }}
     originWhitelist={['*']}
     startInLoadingState
     style={{ flex: 1 }}
     javaScriptEnabled={true}
   />
-  </SafeAreaView>
+</SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container:{

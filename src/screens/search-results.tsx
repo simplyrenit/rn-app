@@ -148,7 +148,19 @@ export default function SearchResults() {
           condition: filters.condition,
         }
       );
-      setProducts(filteredProducts.filter(prod => !prod?.moderation_labels?.length));
+      if(filters.sort === 'high-to-low'){
+        let productsToSet = filteredProducts.filter(prod => !prod?.moderation_labels?.length);
+        productsToSet = productsToSet?.sort((a, b) => b?.rate - a?.rate);
+        setProducts(productsToSet)
+      }
+      else if(filters.sort === 'low-to-high'){
+        let productsToSet = filteredProducts.filter(prod => !prod?.moderation_labels?.length);
+        productsToSet = productsToSet?.sort((a, b) => a?.rate - b?.rate);
+        setProducts(productsToSet)
+      }
+      else{
+        setProducts(filteredProducts.filter(prod => !prod?.moderation_labels?.length));
+      }
     } catch (error) {
       console.error(error);
     } finally {
