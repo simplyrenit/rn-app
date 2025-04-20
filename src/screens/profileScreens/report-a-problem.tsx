@@ -43,7 +43,7 @@ const ReportAProblemScreen: React.FC = () => {
           className="flex-1 items-start w-[10%]"
         >
           <ArrowLeftIcon
-            size={26}
+            size={20}
             color={isDarkMode ? "#FFF" : "#000"}
           />
         </TouchableOpacity>
@@ -118,7 +118,7 @@ const ReportAProblemScreen: React.FC = () => {
           </View>
         </View>
       </View>
-      <View className="py-2 px-5 pb-5">
+      <View className="py-2 px-5">
         <Button
           disabled={!feedback.trim()}
           onPress={handleReportPress}

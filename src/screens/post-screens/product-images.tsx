@@ -14,7 +14,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { styled } from "nativewind";
 import React, { useRef, useState } from "react";
-import { FlatList, Platform, TouchableOpacity, View } from "react-native";
+import { FlatList, TouchableOpacity, View } from "react-native";
 import {
   ArrowLeftIcon,
   CameraIcon,
@@ -169,7 +169,7 @@ export default function ProductImages() {
           onPress={() => navigation.goBack()}
           className="w-[10%]"
         >
-          <ArrowLeftIcon size={24} color={isDark ? "#ffffff" : "#000000"} />
+          <ArrowLeftIcon size={18} color={isDark ? "#ffffff" : "#000000"} />
         </TouchableOpacity>
         <View className="w-[80%]">
           <PostProductHeader heading="Show us how it looks" percentage={50} />
@@ -193,14 +193,11 @@ export default function ProductImages() {
               numColumns={2}
               columnWrapperStyle={{
                 justifyContent: "space-between",
-
               }}
             />
           )}
         </View>
-        <View className="py-2 " style={{
-          paddingBottom: Platform.OS === 'ios' ? 30 : undefined
-        }}>
+        <View className="py-2 ">
           <Button
             className="w-full items-center justify-between"
             disabled={!allFieldsFilled}

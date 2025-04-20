@@ -1,6 +1,5 @@
 import { useGlobalContext } from "@/context/global-context";
-import { firestore as importedFirestore, FIREBASE_CONFIG } from "@/lib/config";
-import { getApps, initializeApp } from "@react-native-firebase/app";
+import { firestore } from "@/lib/config";
 import { Conversation, Message, UserDetails } from "@/lib/types";
 import {
   addDoc,
@@ -9,7 +8,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  getFirestore,
   onSnapshot,
   orderBy,
   query,
@@ -25,10 +23,6 @@ import {
 } from "./notifications";
 import { useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { Platform } from "react-native";
-import { connectStorageEmulator } from "@react-native-firebase/storage";
-
-let firestore = importedFirestore;
 
 interface BlockedRecord {
   initiator: string;
@@ -73,30 +67,18 @@ export function useChat() {
       id: string;
     }
   ): Promise<{ success: boolean; content: string }> {
-    // const isBlocked = await checkIfUsersAreBlocked(
-    //   userDetails1.userId,
-    //   userDetails2.userId
-    // );
-    console.log("Firestore check 2");
+    const isBlocked = await checkIfUsersAreBlocked(
+      userDetails1.userId,
+      userDetails2.userId
+    );
 
-    // if (isBlocked) {
-    //   return { success: false, content: "Cannot start conversation" };
-    // }
+    if (isBlocked) {
+      return { success: false, content: "Cannot start conversation" };
+    }
 
-    if(!firestore && getApps().length === 0){
-      console.log("Firestore not initialzied");
-      // Initialize Firebase
-      let app = initializeApp(FIREBASE_CONFIG);
-      console.log("app", app);
-      firestore = getFirestore(app);      
-      console.log("firestore", firestore);  
-    }
-    else{
-      console.log("Firestore initialzied");
-    }
     let conversationDoc;
+
     try {
-      console.log("firestore check");
       const querySnapshot = await getDocs(
         collection(firestore, "conversations")
       );
@@ -200,12 +182,9 @@ export function useChat() {
         message: { text: product.text },
       };
     }
+
     try {
-      if (Platform.OS === 'ios') {
-        addDoc(collection(firestore, "messages"), message);
-      } else {
-        await addDoc(collection(firestore, "messages"), message);
-      }
+      await addDoc(collection(firestore, "messages"), message);
     } catch (error) {
       console.error("Error creating initial message:", error);
     }
@@ -248,7 +227,7 @@ export function useChat() {
 
 
       const chats: Conversation[] = [];
-      snapshot?.forEach((doc) => {
+      snapshot.forEach((doc) => {
         const conversation = doc.data() as Conversation;
 
         if (
@@ -561,33 +540,23 @@ export function useChat() {
     user2: string
   ): Promise<boolean> {
     const blockedRef = collection(firestore, "blocked");
-    // const q1 = query(
-    //   blockedRef,
-    //   where("initiator", "==", user1),
-    //   where("blocked_user", "==", user2)
-    // );
-    // const q2 = query(
-    //   blockedRef,
-    //   where("initiator", "==", user2),
-    //   where("blocked_user", "==", user1)
-    // );
-    console.log('### here 556');
-    const [snapshot1, snapshot2] = await Promise.allSettled([
-      getDocs(query(
-        blockedRef,
-        where("initiator", "==", user1),
-        where("blocked_user", "==", user2)
-      )),
-      getDocs(query(
-        blockedRef,
-        where("initiator", "==", user2),
-        where("blocked_user", "==", user1)
-      )),
+    const q1 = query(
+      blockedRef,
+      where("initiator", "==", user1),
+      where("blocked_user", "==", user2)
+    );
+    const q2 = query(
+      blockedRef,
+      where("initiator", "==", user2),
+      where("blocked_user", "==", user1)
+    );
+
+    const [snapshot1, snapshot2] = await Promise.all([
+      getDocs(q1),
+      getDocs(q2),
     ]);
-    if ((snapshot1.status === 'fulfilled' && !snapshot1.value.empty) || (snapshot2.status === 'fulfilled' && !snapshot2.value.empty)) {
-      return true;
-    }
-    return false;
+
+    return !snapshot1.empty || !snapshot2.empty;
   }
 
   async function blockUser(

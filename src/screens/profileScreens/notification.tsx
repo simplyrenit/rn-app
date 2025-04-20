@@ -34,7 +34,7 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
         style={{ paddingVertical: wp("5%") }}
       >
         <TouchableOpacity className="w-[10%]" onPress={() => router.goBack()}>
-          <ArrowLeftIcon size={24} color={isDarkMode ? "#FFF" : "#000"} />
+          <ArrowLeftIcon size={18} color={isDarkMode ? "#FFF" : "#000"} />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
           <Text fontSize="text-xl" fontWeight="font-bold">

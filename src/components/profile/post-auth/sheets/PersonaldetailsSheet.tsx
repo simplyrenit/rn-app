@@ -52,25 +52,30 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const { getMyDetails, updateMyProfileImage, updateMyDetails, loading, deleteMyAccount } =
     useProfile();
 
-  const fetchDetails = async () => {
-    const details = await getMyDetails();
-    // setDetails(details);
-
-    setNameId(details.username);
+const fetchDetails = async () => {
+  try {
+    const userDetails = await getMyDetails(); // Optionally pass a token here if needed.
+    console.log(userDetails);
+    if (!userDetails) return;
+    setNameId(userDetails.username);
     setDetails({
-      profilePic: details.image
-        ? details.image.image_url
+      profilePic: userDetails.image
+        ? userDetails.image.image_url
         : "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Default_pfp.svg/2048px-Default_pfp.svg.png",
-      fullName: details.first_name + " " + details.last_name,
-      email: details.email,
-      phone: details.phone,
+      fullName: userDetails.first_name + " " + userDetails.last_name,
+      email: userDetails.email,
+      phone: userDetails.phone,
       password: "*******",
     });
-    setUpdatedName(details.first_name + " " + details.last_name);
-    setUpdatedEmail(details.email);
-    setUpdatedPhone(details.phone.slice(-10));
+     console.log(userDetails);
+    setUpdatedName(userDetails.first_name + " " + userDetails.last_name);
+    setUpdatedEmail(userDetails.email);
+    setUpdatedPhone(userDetails.phone.slice(-10));
     setUpdatedPassword("*******");
-  };
+  } catch (error) {
+    console.error("Failed to fetch user details:", error);
+  }
+};
 
   useEffect(() => {
     fetchDetails();
@@ -316,7 +321,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     if (selectedImage) {
       try {
         await updateMyProfileImage(nameId, selectedImage);
-        console.log(selectedImage,'test')
         setDetails((prevDetails) => ({
           ...prevDetails,
           profilePic: selectedImage,
@@ -327,7 +331,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         console.error("Error updating profile image:", error);
       }
     } else {
-      console.log("test")
     }
   };
 
@@ -460,6 +463,55 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             </TouchableOpacity>
           </View>
 
+          {/* Phone Number */}
+                    <View
+                      style={{ paddingVertical: wp("5%") }}
+                      className="flex-row justify-between items-center "
+                    >
+                      <View className="flex-row gap-3 items-center justify-center">
+                        <View>
+                          <Text fontWeight="font-bold">Phone number</Text>
+                          <Text
+                            fontSize="text-base"
+                            className="pt-2"
+                          >
+                            {details.phone}
+                          </Text>
+                        </View>
+                      </View>
+                      <TouchableOpacity onPress={openEditPhoneModal}>
+                        <PencilSquareIcon
+                          size={24}
+                          color="#635BE8"
+                        />
+                      </TouchableOpacity>
+                    </View>
+
+                {/* Password */}
+                          <View
+                            style={{ paddingVertical: wp("5%") }}
+                            className="flex-row justify-between items-center "
+                          >
+                            <View className="flex-row gap-3 items-center justify-center">
+                              <View>
+                                <Text fontWeight="font-bold">Password</Text>
+                                <Text
+                                  fontSize="text-base"
+                                  className="pt-2"
+                                >
+                                  {details.password}
+                                </Text>
+                              </View>
+                            </View>
+                            <TouchableOpacity onPress={openEditPasswordModal}>
+                              <PencilSquareIcon
+                                size={24}
+                                color="#635BE8"
+                              />
+                            </TouchableOpacity>
+                          </View>
+
+
           {/* Email Address */}
           <View
             style={{ paddingVertical: wp("5%") }}
@@ -478,60 +530,16 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             </View>
             <TouchableOpacity onPress={openEditEmailModal}>
               <PencilSquareIcon
-                size={24}
+                size={0}
                 color="#635BE8"
               />
             </TouchableOpacity>
           </View>
 
-          {/* Phone Number */}
-          <View
-            style={{ paddingVertical: wp("5%") }}
-            className="flex-row justify-between items-center "
-          >
-            <View className="flex-row gap-3 items-center justify-center">
-              <View>
-                <Text fontWeight="font-bold">Phone number</Text>
-                <Text
-                  fontSize="text-base"
-                  className="pt-2"
-                >
-                  {details.phone}
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity onPress={openEditPhoneModal}>
-              <PencilSquareIcon
-                size={24}
-                color="#635BE8"
-              />
-            </TouchableOpacity>
-          </View>
+</View>
 
-          {/* Password */}
-          <View
-            style={{ paddingVertical: wp("5%") }}
-            className="flex-row justify-between items-center "
-          >
-            <View className="flex-row gap-3 items-center justify-center">
-              <View>
-                <Text fontWeight="font-bold">Password</Text>
-                <Text
-                  fontSize="text-base"
-                  className="pt-2"
-                >
-                  {details.password}
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity onPress={openEditPasswordModal}>
-              <PencilSquareIcon
-                size={24}
-                color="#635BE8"
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+
+
 
         <View className="px-5">
           {selectedImage && (
@@ -635,7 +643,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             }}
           >
             <ArrowLeftIcon
-              size={26}
+              size={20}
               color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
             />
           </TouchableOpacity>
@@ -704,7 +712,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             }}
           >
             <ArrowLeftIcon
-              size={26}
+              size={20}
               color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
             />
           </TouchableOpacity>
@@ -842,7 +850,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             onPress={() => editPhoneModalRef.current?.close()}
           >
             <ArrowLeftIcon
-              size={26}
+              size={20}
               color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
             />
           </TouchableOpacity>
@@ -1027,7 +1035,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             onPress={() => editPasswordModalRef.current?.close()}
           >
             <ArrowLeftIcon
-              size={26}
+              size={20}
               color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
             />
           </TouchableOpacity>

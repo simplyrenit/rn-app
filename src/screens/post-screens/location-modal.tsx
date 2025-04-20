@@ -396,8 +396,7 @@ const LocationModal = ({}) => {
                 }}
                 className="w-[10%]"
               >
-                <ArrowLeftIcon
-                  size={wp("7.5%")}
+                <ArrowLeftIcon size={18}
                   color={isDarkMode ? "#FFF" : "#000"}
                 />
               </TouchableOpacity>
