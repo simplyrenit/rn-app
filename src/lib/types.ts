@@ -211,6 +211,7 @@ export type RootStackParamList = {
     coords: { lat: number | undefined; lng: number | undefined };
     products: BackendProduct[];
     category?: string;
+    from_cat ?: boolean;
   };
   myProducts: undefined;
   editProduct: { id: string };

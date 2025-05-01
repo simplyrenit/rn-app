@@ -35,7 +35,10 @@ export function Categories() {
   const categoryPairs: CategoryItem[][] = splitIntoPairs(CATEGORIES);
   const { searchProducts } = useSearch();
 
-  const [locationData,setFormattedAddressState] = useState<{ address: string; coordinates: { latitude: number; longitude: number; }; }>()
+  const [locationData, setFormattedAddressState] = useState<{
+    address: string;
+    coordinates: { latitude: number; longitude: number };
+  }>();
 
   const styles = StyleSheet.create({
     shadow: {
@@ -142,36 +145,44 @@ export function Categories() {
                 key={index}
                 style={{ marginBottom: 5 }}
                 onPress={async () => {
-                  const products = await searchProducts(category?.name,	
-                    { lat: locationData?.coordinates?.latitude as number, 
-                      lng: locationData?.coordinates.longitude as number },	
-                    {	
-                      start_date:  undefined,	
-                      end_date:  undefined,	
-                    }	
-                  );	
-                  console.log(products,'test')
+                 
+                  // console.log(products,'test')
+                  // navigation.navigate("SearchResults", {
+                  //   category: category.name,
+                  //   address: locationData?.address ?? "",
+                  //   coords: locationData?.coordinates
+                  //     ? {
+                  //       lat: locationData.coordinates.latitude,
+                  //       lng: locationData.coordinates.longitude,
+                  //     }
+                  //     : { lat: undefined, lng: undefined },
+                  //   range: { startDate: undefined, endDate: undefined },
+                  //   products: products ?? [],
+                  //   selectedItem: category.name,
+                  // });
                   navigation.navigate("SearchResults", {
                     category: category.name,
                     address: locationData?.address ?? "",
-                    coords: locationData?.coordinates
-                      ? {
-                        lat: locationData.coordinates.latitude,
-                        lng: locationData.coordinates.longitude,
-                      }
-                      : { lat: undefined, lng: undefined },
+                    coords: {
+                      lat: locationData?.coordinates?.latitude,
+                      lng: locationData?.coordinates?.longitude,
+                    },
                     range: { startDate: undefined, endDate: undefined },
-                    products: products ?? [],
+                    products: [],
                     selectedItem: category.name,
+                    from_cat : true
                   });
+
+            
                 }}
               >
                 <View className="items-center mb-3">
-                  <View className="w-24 h-20 rounded-full overflow-hidden items-center justify-center" >
+                  <View className="w-24 h-20 rounded-full overflow-hidden items-center justify-center">
                     <Image
                       source={category.image}
-                      className={`${index === 1 ? "w-[75%] h-[80%]" : "w-[80%] h-[85%]"
-                        }`}
+                      className={`${
+                        index === 1 ? "w-[75%] h-[80%]" : "w-[80%] h-[85%]"
+                      }`}
                       resizeMode="contain"
                       style={styles.shadow}
                     />
@@ -186,7 +197,7 @@ export function Categories() {
                   </Text>
                 </View>
               </TouchableOpacity>
-            )
+            );
           })}
         </View>
       ))}

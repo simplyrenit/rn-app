@@ -62,6 +62,7 @@ export default function SearchResults() {
     selectedItem,
     products: fetchedProducts,
     category,
+    from_cat
   } = route.params;
   const { searchProducts } = useSearch();
   const [products, setProducts] = useState<BackendProduct[]>(fetchedProducts);
@@ -78,6 +79,28 @@ export default function SearchResults() {
     ratings: { product: 0, owner: 0 },
     condition: "",
   });
+
+  const handleProdResp = async()=>{
+    try {
+      const products = await searchProducts(category as string,
+                 { lat: coords?.lat as number,
+                   lng: coords?.lng as number },
+                 {
+                   start_date:  undefined,
+                   end_date:  undefined,
+                 }
+               );
+               setProducts(products)
+  } catch (error) {
+    console.log(error)
+  }
+  }
+
+  useEffect(() => {
+    if(from_cat){
+      handleProdResp()
+    }
+  }, [from_cat])
 
   const isFilterActive = () => {
     const { sort, category, subCategory, price, ratings, condition } = filters;
