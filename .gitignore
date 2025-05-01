@@ -1,0 +1,56 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+*.pbxproj
+
+# Expo
+.expo/
+dist/
+web-build/
+assets/*.png
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+#ios 
+ios/Renit/Info.plist
+ios/Podfile.lock
+package-lock.json
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+%ProgramData%/Microsoft/Windows/UUS/State/_active.uusver
+
+
+# Expo
+.expo
+dist/
+web-build/
+
+
+.idea/*
+yarn.lock
+ios/Renit/Info.plist
+ios/Renit/PrivacyInfo.xcprivacy
