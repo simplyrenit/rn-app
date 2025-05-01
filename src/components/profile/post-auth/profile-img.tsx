@@ -272,7 +272,7 @@ return (
                             >
                               {details.first_name + " " + details.last_name}
                             </Text>}
-                            {loading ? <Skeleton height={10} width={10} borderRadius={8} /> : <TouchableOpacity onPress={handlePersonalDetailsSheetPress}>
+                            {loading ? <Skeleton height={10} width={10} borderRadius={8} /> : <TouchableOpacity onPress={() => handlePersonalDetailsSheetPress?.(details)}>
                               <PencilSquareIcon
                                 size={21}
                                 color="#635BE8"

@@ -29,11 +29,13 @@ import DeleteAccountModal from "./DeleteAccountModal";
 interface PersonalDetailsSheetProps {
   bottomSheetModalRef: React.RefObject<any>;
   isDarkMode: boolean;
+  data : any;
 }
 
 const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   bottomSheetModalRef,
   isDarkMode,
+  data
 }) => {
   const { theme } = useGlobalContext();
   const { sendOTP } = useAuth();
@@ -41,11 +43,11 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const [deleteAccountModal, setDeleteAccountModal] = useState(false);
 
   const [details, setDetails] = useState({
-    profilePic: "https://via.placeholder.com/150",
-    fullName: "Garvit Babel",
-    email: "garvit.babel200@gmail.com",
-    phone: "9999999999",
-    password: "*******",
+    profilePic: data?.image ?? "https://via.placeholder.com/150",
+    fullName : data?.first_name ? data?.first_name + data?.last_name : "Garvit Babel",
+    email: data?.email ?? "garvit.babel200@gmail.com",
+    phone: data?.phone ?? "",
+    password:  "*******",
   });
   const [nameId, setNameId] = useState("");
 
