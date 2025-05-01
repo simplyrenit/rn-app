@@ -112,14 +112,14 @@ export function Categories() {
     }
   };
 
-  const handleFormatAddress = async () => {
-    const locationData = await getFormattedAddress();
-    setFormattedAddressState(locationData);
-  };
+  const handleFormatAddress = async()=>{
+    const locationData = await getFormattedAddress();	
+    setFormattedAddressState(locationData)	
+  }	
 
-  useEffect(() => {
-    handleFormatAddress();
-  }, []);
+  useEffect(()=>{	
+     handleFormatAddress()	
+  },[])
 
   return (
     <ScrollView

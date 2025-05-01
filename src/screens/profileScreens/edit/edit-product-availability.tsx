@@ -269,9 +269,6 @@ export default function ProductAvailability() {
       endDate: moment(range.endDate).format("YYYY-MM-DD"),
     }));
 
-    console.log(formattedUnavailableDates,'maxi')
-
-
     saveDetails({ productAvailability: formattedUnavailableDates });
     try {
       const response = await updateMyProductDetails(name, {
@@ -280,8 +277,6 @@ export default function ProductAvailability() {
           end_date: range.endDate,
         })),
       });
-
-      console.log(JSON.stringify(response),'test')
 
       Toast.show({
         type: "customToast",

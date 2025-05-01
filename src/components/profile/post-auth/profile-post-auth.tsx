@@ -37,7 +37,6 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   };
 
   const handlePersonalDetailsSheetPress = (data) => {
-    console.log(data,'lu')
     setPersonalData(data)
     personalDetailsSheetRef.current?.present();
   };
