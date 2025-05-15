@@ -44,7 +44,6 @@ export function useProfile() {
       return response.data;
     } catch (error) {
       console.error("Error getting user details -- backend profile:", error);
-     console.log("isAuthenticated", isAuthenticated);
      setIsAuthenticated?.(false);
      logout();
      useEffect(() => {

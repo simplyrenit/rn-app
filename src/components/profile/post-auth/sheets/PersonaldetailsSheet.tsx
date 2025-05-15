@@ -58,7 +58,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 const fetchDetails = async () => {
   try {
     const userDetails = await getMyDetails(); // Optionally pass a token here if needed.
-    console.log(userDetails,'test');
     if (!userDetails) return;
     setNameId(userDetails.username);
     setDetails({
