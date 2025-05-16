@@ -25,6 +25,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   const appearanceSheetRef = useRef<BottomSheetModal>(null);
   const personalDetailsSheetRef = useRef<BottomSheetModal>(null);
   const [personalData, setPersonalData] = useState<any>(null);
+  const personalDataRef = useRef(null)
   const currencySheetRef = useRef<BottomSheetModal>(null);
    const { isAuthenticated } = useGlobalContext();
 
@@ -35,6 +36,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   const handleAppeareanceModal = () => {
     appearanceSheetRef.current?.present();
   };
+  
 
   const handlePersonalDetailsSheetPress = (data) => {
     setPersonalData(data)

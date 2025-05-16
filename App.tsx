@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, LogBox, StyleSheet, View } from "react-native";
 import { GlobalProvider } from "@/context/global-context";
 import { ProductProvider } from "@/context/product-context";
@@ -79,6 +79,10 @@ export default function App() {
     "PlusJakartaSans-Bold": require("./assets/fonts/PlusJakartaSans-Bold.ttf"),
   });
 
+  const [fcmToken,setFCMToken] = useState('')
+
+  // const 
+
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -103,7 +107,8 @@ export default function App() {
     const init = async () => {	
       await messaging().requestPermission();	
       const token = await messaging().getToken();	
-      console.log('FCM Token:', token);	
+      console.log('FCM Token:', token,);	
+      setFCMToken(token)
       // Save this token to your server if needed	
     };	
     init();	
@@ -136,7 +141,7 @@ export default function App() {
             <AutocompleteDropdownContextProvider>
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <BottomSheetModalProvider>
-                  <Navigation />
+                  <Navigation fcmToken={fcmToken} />
                   {/* @ts-ignore */}
                   <Toast config={toastConfig} />
                 </BottomSheetModalProvider>

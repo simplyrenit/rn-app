@@ -4,7 +4,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { useState } from "react";
-import { Platform, SafeAreaView, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import { Platform,  ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -12,6 +12,8 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import Toast from "react-native-toast-message";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 interface FeedbackNReviewProps {}
 
@@ -38,7 +40,8 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 justify-between">
+    <NonScrollableContainer
+    >
       <View className="flex-row items-center justify-between px-5 pb-2 pt-2">
         <TouchableOpacity
           onPress={() => router.goBack()}
@@ -143,7 +146,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
         </Button>
       </View>
       </View>
-    </SafeAreaView>
+    </NonScrollableContainer>
   );
 };
 

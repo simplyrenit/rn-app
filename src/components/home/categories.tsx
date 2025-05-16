@@ -16,6 +16,8 @@ import { useTypedNavigation } from "@/lib/types";
 import * as Location from "expo-location";
 import { SvgUri } from "react-native-svg";
 import { useSearch } from "@/backend/search";
+import Toast from "react-native-toast-message";
+import { useFocusEffect } from "@react-navigation/native";
 
 export function Categories() {
   const navigation = useTypedNavigation();
@@ -57,6 +59,11 @@ export function Categories() {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
+        Toast.show({
+          type: "error",
+          text1: "Please provide your location",
+          position: "bottom",
+        });
         return;
       }
       let location = await Location.getCurrentPositionAsync({});
@@ -107,7 +114,7 @@ export function Categories() {
         };
       }
     } catch (error) {
-      console.error(error);
+      console.log(error);
       return null;
     }
   };
@@ -117,9 +124,9 @@ export function Categories() {
     setFormattedAddressState(locationData)	
   }	
 
-  useEffect(()=>{	
+  useFocusEffect(()=>{	
      handleFormatAddress()	
-  },[])
+  })
 
   return (
     <ScrollView

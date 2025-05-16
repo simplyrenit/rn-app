@@ -61,7 +61,7 @@ const router = useTypedNavigation();
   useFocusEffect(
     useCallback(() => {
       fetchDetails();
-    }, [handlePersonalDetailsSheetPress])
+    }, [handlePersonalDetailsSheetPress,isAuthenticated])
   );
      const showUnauthenticatedUI = !isAuthenticated || details === null;
 //   return (

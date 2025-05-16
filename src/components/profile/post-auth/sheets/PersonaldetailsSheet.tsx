@@ -25,6 +25,7 @@ import {
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
 import DeleteAccountModal from "./DeleteAccountModal";
+import { useFocusEffect } from "@react-navigation/native";
 
 interface PersonalDetailsSheetProps {
   bottomSheetModalRef: React.RefObject<any>;
@@ -57,7 +58,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 const fetchDetails = async () => {
   try {
     const userDetails = await getMyDetails(); // Optionally pass a token here if needed.
-    console.log(userDetails);
     if (!userDetails) return;
     setNameId(userDetails.username);
     setDetails({
@@ -81,7 +81,7 @@ const fetchDetails = async () => {
 
   useEffect(() => {
     fetchDetails();
-  }, []);
+  },[data]);
 
   const [updatedName, setUpdatedName] = useState(details.fullName);
   const [updatedEmail, setUpdatedEmail] = useState(details.email);

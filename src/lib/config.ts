@@ -80,6 +80,9 @@ export const DELETE_MY_ACCOUNT_ENDPOINT = SERVERURL + "users/";
 
 export const NOTIFICATIONS_ENDPOINT = SERVERURL + "notification/";
 
+export const NOTIFICATIONS_PUSH_TOKEN_ENDPOINT = SERVERURL + "notification/push-token";
+
+
 export const ALL_PRODUCTS = SERVERURL + "product-title/";
 
 export const SEARCH_PRODUCTS = SERVERURL + "search/";

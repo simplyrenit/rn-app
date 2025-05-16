@@ -36,15 +36,15 @@ export function useProfile() {
     try {
       const response = await axiosInstance.get<MyDetails>(MY_DETAILS_ENDPOINT, token ? {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token ?? access_token}`,
         },
       } : undefined);
+
 
       return response.data;
     } catch (error) {
       console.error("Error getting user details -- backend profile:", error);
-     console.log("isAuthenticated", isAuthenticated);
-     setIsAuthenticated(false);
+     setIsAuthenticated?.(false);
      logout();
      useEffect(() => {
        console.log("isAuthenticated updated:", isAuthenticated);
