@@ -89,7 +89,7 @@ const ReportAProblemScreen: React.FC = () => {
           />
         </View>
       </KeyboardAwareScrollView>
-      <View className="pb-3 px-5">
+      <View className="pb-4 px-5">
         <Text
           fontSize="text-sm"
           className={`${isDarkMode ? "text-[#ffffff80]" : "text-[#00000080]"}`}
@@ -118,7 +118,7 @@ const ReportAProblemScreen: React.FC = () => {
           </View>
         </View>
       </View>
-      <View className="py-4 px-5">
+      <View className="pt-4 pb-10 px-5">
         <Button
           disabled={!feedback.trim()}
           onPress={handleReportPress}

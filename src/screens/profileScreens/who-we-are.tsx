@@ -68,7 +68,7 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
       </KeyboardAwareScrollView>
       <View
         style={{ paddingVertical: wp("8%") }}
-        className="px-5 flex-1 justify-end py-0 "
+        className="pb-4 px-5 flex-1 justify-end py-0 "
       >
         <View className="flex-row gap-2 items-center">
           <QuestionMarkCircleIcon
@@ -82,7 +82,8 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
             FAQs
           </Text>
         </View>
-        <View className="py-4">
+        {/* <View className="py-4"> */}
+        <View className="pt-4 pb-10 px-5">
           <TouchableOpacity
             onPress={() => {
               router.navigate("faq");

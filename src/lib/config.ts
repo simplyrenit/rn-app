@@ -30,13 +30,13 @@ export const DEV_MODE: string = "PROD"; // DEV or PROD
 export let SERVERURL = "";
 export let SOCKET_URL = "";
 
-if (DEV_MODE === "PROD") {
+// if (DEV_MODE === "PROD") {
   SERVERURL = "https://api.simplyrenit.com/api/";
   SOCKET_URL = "wss://api.simplyrenit.com/ws/chat/";
-} else {
-  SERVERURL = "http://192.168.1.12:8000/api/";
-  SOCKET_URL = "ws://192.168.1.12:8000/ws/chat/";
-}
+// } else {
+//   SERVERURL = "http://192.168.1.12:8000/api/";
+//   SOCKET_URL = "ws://192.168.1.12:8000/ws/chat/";
+// }
 
 export const ACCESS_TOKEN =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMDE1NTc4LCJpYXQiOjE3MzA1NjU5NzgsImp0aSI6IjBkMjBkYTU1Zjk0MTRkODU4NDlhMmJiNmIxYTU5ODlkIiwidXNlcl9pZCI6NX0.8It2AqCNWb57D1NE8BlS6QXcxiJu7NI4fTzCCXi-ZYg";

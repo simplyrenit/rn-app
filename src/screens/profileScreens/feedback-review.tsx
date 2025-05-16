@@ -96,7 +96,8 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
         </ScrollView>
       </KeyboardAwareScrollView>
       <View>
-      <View className="pb-3 px-5">
+      {/* <View className="pb-3 px-5"> */}
+      <View className="pb-4 px-5">
         <Text
           fontSize="text-sm"
           className={`${isDarkMode ? "text-[#ffffff80]" : "text-[#00000080]"}`}
@@ -125,7 +126,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
           </View>
         </View>
       </View>
-      <View className="py-5 px-5">
+      <View className="pt-4 pb-10 px-5">
         <Button
           disabled={!feedback.trim()}
           onPress={handleFeedBackPress}

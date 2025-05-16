@@ -417,7 +417,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
           </View>
         </View>
       </KeyboardAwareScrollView>
-      <View className="py-2 px-5">
+      <View className="pb-10 px-5">
         <Button
           disabled={
             !formData.productName ||

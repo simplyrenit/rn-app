@@ -41,7 +41,7 @@ export function useNotifications() {
         return response.data.results;
       } catch (error) {
         console.error("Error sending fcm token to:", error);
-        throw error;
+        // throw error;
       }
     }
 
