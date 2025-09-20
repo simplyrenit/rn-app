@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Alert, LogBox, StyleSheet, View } from "react-native";
 import { GlobalProvider } from "@/context/global-context";
 import { ProductProvider } from "@/context/product-context";
@@ -19,48 +19,17 @@ import {
 import { AuthProvider } from "@/context/auth-context";
 import { QueryClient, QueryClientProvider } from "react-query";
 import firebase from "@react-native-firebase/app";
-import { FIREBASE_CONFIG, firestore, IOS_CLIENT_ID, WEB_CLIENT_ID } from "@/lib/config";
+import { FIREBASE_CONFIG, WEB_CLIENT_ID } from "@/lib/config";
 import { testApiConnection } from "@/lib/apiTest";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import messaging from '@react-native-firebase/messaging';
 
 // Initialize Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(FIREBASE_CONFIG);
 }
 
-import { PermissionsAndroid, Platform } from 'react-native';
-async function requestNotificationPermission() {	
-  if (Platform.OS === 'android') {	
-    const granted = await PermissionsAndroid.request(	
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS	
-    );	
-
-    if (granted !== PermissionsAndroid.RESULTS.GRANTED) {	
-      console.log('Notification permission denied');	
-      return false;	
-    }	
-
-    console.log('Notification permission granted');	
-  }	
-
-  const fcmAuthStatus = await messaging().requestPermission();	
-  const enabled =	
-    fcmAuthStatus === messaging.AuthorizationStatus.AUTHORIZED ||	
-    fcmAuthStatus === messaging.AuthorizationStatus.PROVISIONAL;	
-
-  if (!enabled) {	
-    console.log('FCM permission not granted');	
-    return false;	
-  }	
-
-  console.log('FCM permission granted test',Platform.OS);	
-  return true;	
-}	
-
 
 GoogleSignin.configure({
-  iosClientId: IOS_CLIENT_ID,
   webClientId: WEB_CLIENT_ID, // client ID of type WEB for your server. Required to get the `idToken` on the user object, and for offline access.
   // scopes: ["https://www.googleapis.com/auth/drive.readonly"], // what API you want to access on behalf of the user, default is email and profile
   offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
@@ -79,10 +48,6 @@ export default function App() {
     "PlusJakartaSans-Bold": require("./assets/fonts/PlusJakartaSans-Bold.ttf"),
   });
 
-  const [fcmToken,setFCMToken] = useState('')
-
-  // const 
-
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -97,25 +62,9 @@ export default function App() {
     const initializeNotifications = async () => {
       await setupNotifications();
       await registerForPushNotificationsAsync();
-      const token =  await registerForPushNotificationsAsync();
     };
 
     initializeNotifications();
-  }, []);
-
-  useEffect(() => {
-    const init = async () => {	
-      await messaging().requestPermission();	
-      const token = await messaging().getToken();	
-      console.log('FCM Token:', token,);	
-      setFCMToken(token)
-      // Save this token to your server if needed	
-    };	
-    init();	
-  }, []);	
-
-  useEffect(() => {	
-    requestNotificationPermission();	
   }, []);
 
   useEffect(() => {
@@ -141,7 +90,7 @@ export default function App() {
             <AutocompleteDropdownContextProvider>
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <BottomSheetModalProvider>
-                  <Navigation fcmToken={fcmToken} />
+                  <Navigation />
                   {/* @ts-ignore */}
                   <Toast config={toastConfig} />
                 </BottomSheetModalProvider>

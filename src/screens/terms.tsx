@@ -18,7 +18,7 @@ import {
 import { ArrowLeftIcon } from "react-native-heroicons/outline";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { WebView } from 'react-native-webview';
-import { isIOS } from "@/utils/checks";
+// import { isIOS } from "@/utils/checks";
 
 const StyledScroll = styled(ScrollView);
 
@@ -43,8 +43,8 @@ export default function Terms() {
 <Pressable
         onPress={goBack}
         style={styles.pressable}
-      >
-        <ArrowLeftIcon
+        >
+          <ArrowLeftIcon
             size={24}
             color={isDarkMode ? "white" : "black"}
           />

@@ -10,7 +10,6 @@ import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import moment from "moment";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
 import {
   Image,
   StyleSheet,
@@ -448,7 +447,7 @@ export default function ChatDetailsScreen() {
 
       <CustomBottomSheetModal
         ref={bottomSheetRef}
-        snapPoints={Platform.OS === 'ios' ? ["60%"] : undefined}
+        // snapPoints={["60%"]}
         isDark={isDark}
       >
         <View className="w-[95%] mx-auto">
@@ -603,9 +602,6 @@ export default function ChatDetailsScreen() {
                  </TouchableOpacity>
                ))}
              </ScrollView>
-              {/* <Button disabled={!selectedProduct} onPress={onProductSelect}>
-                Next	
-              </Button> */}
            </View>
          </View>
        </View>

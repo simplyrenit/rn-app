@@ -4,7 +4,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { useState } from "react";
-import { Platform,  ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import { TextInput, TouchableOpacity, View, ScrollView } from "react-native";
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -63,7 +63,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
 
         <View className="w-[10%]"></View>
       </View>
-      
+
       <KeyboardAwareScrollView className="px-5 pb-5 pt-2 ">
         <Text fontSize="text-sm">
           Thanks for sending us your feedback and ideas to improve. We can't

@@ -1,4 +1,4 @@
-import { Container, StaticContainer, Text } from "@/components/core";
+import { StaticContainer, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { TERMS_CONTENT } from "@/lib/content";
@@ -11,7 +11,7 @@ import {
   Text as RNT,
   TouchableOpacity,
   View,
-  Platform,
+    Platform,
   SafeAreaView,	
   StyleSheet,	
   Pressable
@@ -19,7 +19,7 @@ import {
 import { ArrowLeftIcon } from "react-native-heroicons/outline";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { WebView } from 'react-native-webview';	
-import { isIOS } from "@/utils/checks";
+// import { isIOS } from "@/utils/checks";
 
 const StyledScroll = styled(ScrollView);
 
@@ -75,6 +75,7 @@ const styles = StyleSheet.create({
 
   /*
   const router = useNavigation();
+
   return (
     <NonScrollableContainer>
       <View className="flex-row items-center justify-between px-4 pb-2 mt-2 ">

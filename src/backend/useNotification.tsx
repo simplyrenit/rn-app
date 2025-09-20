@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useGlobalContext } from "../context/global-context";
-import { NOTIFICATIONS_ENDPOINT, NOTIFICATIONS_PUSH_TOKEN_ENDPOINT } from "../lib/config";
+import { NOTIFICATIONS_ENDPOINT } from "../lib/config";
 import axiosInstance from "@/lib/networkUtils";
 
 interface NotificationResponse {
@@ -28,23 +28,6 @@ export function useNotifications() {
     }
   }
 
-
-  
-    async function useSubmitFCMToken(fcmToken : string) {
-      if (!access_token) return; // Perform function only if access_token is not null
-      try {
-        const response = await axiosInstance.post<NotificationResponse>(
-          NOTIFICATIONS_PUSH_TOKEN_ENDPOINT,
-          {push_token : fcmToken}
-        );
-  
-        return response.data.results;
-      } catch (error) {
-        console.error("Error sending fcm token to:", error);
-        // throw error;
-      }
-    }
-
   async function markAllAsRead() {
     if (!access_token) return; // Perform function only if access_token is not null
     try {
@@ -66,7 +49,7 @@ export function useNotifications() {
     }
   }
 
-  return { notifications, getNotifications, markAllAsRead,useSubmitFCMToken };
+  return { notifications, getNotifications, markAllAsRead };
 }
 
 export interface Notification {

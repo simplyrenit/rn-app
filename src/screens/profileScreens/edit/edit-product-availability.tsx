@@ -118,110 +118,72 @@ export default function ProductAvailability() {
     }
   };
 
-   const confirmDateRange = () => {
-       if (!selectedRange) return
-    
-       const newRange = {
-         startDate: selectedRange.startDate,
-         endDate: selectedRange.endDate || selectedRange.startDate,
-       }
-    
-       const updatedRanges = [...unavailableDates, newRange]
-       console.log(updatedRanges,'m')
-       setUnavailableDates(updatedRanges)
-    
-       const newMarked = updatedRanges.reduce((acc, range) => {
-         let currentDate = moment(range.startDate)
-         const endDate = range.endDate
-         while (currentDate.isSameOrBefore(endDate)) {
-           const dateString = currentDate.format("YYYY-MM-DD")
-           acc[dateString] = {
-             startingDay: currentDate.isSame(range.startDate),
-             endingDay: currentDate.isSame(endDate),
-             color:
-               currentDate.isSame(range.startDate) || currentDate.isSame(endDate)
-                 ? "#C80808"
-                 : "#C808081A",
-             textColor:
-               currentDate.isSame(range.startDate) || currentDate.isSame(endDate)
-                 ? "white"
-                 : "#C80808",
-           }
-           currentDate = currentDate.add(1, "day")
-         }
-         return acc
-       }, {})
-    
-       setMarkedDates(newMarked)
-       setSelectedRange(null)
-     }
+  const confirmDateRange = () => {
+    if (!selectedRange) return;
 
-  // const confirmDateRange = () => {
-  //   if (!selectedRange) return;
+    const newStart = moment(selectedRange.startDate);
+    const newEnd = moment(selectedRange.endDate || selectedRange.startDate);
+    let overlappingRanges: number[] = [];
+    let mergedStart = newStart;
+    let mergedEnd = newEnd;
 
-  //   const newStart = moment(selectedRange.startDate);
-  //   const newEnd = moment(selectedRange.endDate || selectedRange.startDate);
-  //   let overlappingRanges: number[] = [];
-  //   let mergedStart = newStart;
-  //   let mergedEnd = newEnd;
+    unavailableDates.forEach((range, index) => {
+      const rangeStart = moment(range.startDate);
+      const rangeEnd = moment(range.endDate || range.startDate);
 
-  //   unavailableDates.forEach((range, index) => {
-  //     const rangeStart = moment(range.startDate);
-  //     const rangeEnd = moment(range.endDate || range.startDate);
+      if (
+        newStart.isBetween(rangeStart, rangeEnd, "day", "[]") ||
+        newEnd.isBetween(rangeStart, rangeEnd, "day", "[]") ||
+        rangeStart.isBetween(newStart, newEnd, "day", "[]") ||
+        rangeEnd.isBetween(newStart, newEnd, "day", "[]")
+      ) {
+        overlappingRanges.push(index);
+        mergedStart = moment.min(mergedStart, rangeStart);
+        mergedEnd = moment.max(mergedEnd, rangeEnd);
+      }
+    });
 
-  //     if (
-  //       newStart.isBetween(rangeStart, rangeEnd, "day", "[]") ||
-  //       newEnd.isBetween(rangeStart, rangeEnd, "day", "[]") ||
-  //       rangeStart.isBetween(newStart, newEnd, "day", "[]") ||
-  //       rangeEnd.isBetween(newStart, newEnd, "day", "[]")
-  //     ) {
-  //       overlappingRanges.push(index);
-  //       mergedStart = moment.min(mergedStart, rangeStart);
-  //       mergedEnd = moment.max(mergedEnd, rangeEnd);
-  //     }
-  //   });
+    if (overlappingRanges.length > 0) {
+      const updatedRanges = unavailableDates.filter(
+        (_, index) => !overlappingRanges.includes(index)
+      );
 
-  //   if (overlappingRanges.length > 0) {
-  //     const updatedRanges = unavailableDates.filter(
-  //       (_, index) => !overlappingRanges.includes(index)
-  //     );
+      const mergedRange = {
+        startDate: mergedStart.format("YYYY-MM-DD"),
+        endDate: mergedEnd.format("YYYY-MM-DD"),
+      };
 
-  //     const mergedRange = {
-  //       startDate: mergedStart.format("YYYY-MM-DD"),
-  //       endDate: mergedEnd.format("YYYY-MM-DD"),
-  //     };
+      setUnavailableDates([...updatedRanges, mergedRange]);
+    } else {
+      setUnavailableDates([...unavailableDates, selectedRange]);
+    }
 
-  //     setUnavailableDates([...updatedRanges, mergedRange]);
-  //   } else {
-  //     setUnavailableDates([...unavailableDates, selectedRange]);
-  //   }
+    setSelectedRange(null);
 
-  //   setSelectedRange(null);
-
-  //   let newMarked = {};
-  //   const updatedRanges = [...unavailableDates, selectedRange];
-  //   updatedRanges.forEach((range) => {
-  //     let currentDate = moment(range.startDate);
-  //     const endDate = range.endDate || range.startDate;
-  //     while (currentDate.isSameOrBefore(endDate)) {
-  //       const dateString = currentDate.format("YYYY-MM-DD");
-  //       newMarked[dateString] = {
-  //         startingDay: currentDate.isSame(range.startDate),
-  //         endingDay: currentDate.isSame(endDate),
-  //         color:
-  //           currentDate.isSame(range.startDate) || currentDate.isSame(endDate)
-  //             ? "#C80808"
-  //             : "#C808081A",
-  //         textColor:
-  //           currentDate.isSame(range.startDate) || currentDate.isSame(endDate)
-  //             ? "white"
-  //             : "#C80808",
-  //       };
-  //       currentDate = currentDate.add(1, "day");
-  //     }
-  //   });
-  //   setMarkedDates(newMarked);
-  // };
+    let newMarked = {};
+    const updatedRanges = [...unavailableDates, selectedRange];
+    updatedRanges.forEach((range) => {
+      let currentDate = moment(range.startDate);
+      const endDate = range.endDate || range.startDate;
+      while (currentDate.isSameOrBefore(endDate)) {
+        const dateString = currentDate.format("YYYY-MM-DD");
+        newMarked[dateString] = {
+          startingDay: currentDate.isSame(range.startDate),
+          endingDay: currentDate.isSame(endDate),
+          color:
+            currentDate.isSame(range.startDate) || currentDate.isSame(endDate)
+              ? "#C80808"
+              : "#C808081A",
+          textColor:
+            currentDate.isSame(range.startDate) || currentDate.isSame(endDate)
+              ? "white"
+              : "#C80808",
+        };
+        currentDate = currentDate.add(1, "day");
+      }
+    });
+    setMarkedDates(newMarked);
+  };
 
   const removeRange = (index: number) => {
     const updatedRanges = unavailableDates.filter((_, i) => i !== index);
@@ -253,18 +215,7 @@ export default function ProductAvailability() {
   };
 
   const onPress = async () => {
-
-    if (!selectedRange) return;
-
-      const newRange = {
-        startDate: selectedRange?.startDate,
-        endDate: selectedRange?.endDate || selectedRange?.startDate,
-      }
-   
-      const updatedRanges = [...unavailableDates, newRange]
-
-
-    const formattedUnavailableDates = updatedRanges.map((range) => ({
+    const formattedUnavailableDates = unavailableDates.map((range) => ({
       startDate: moment(range.startDate).format("YYYY-MM-DD"),
       endDate: moment(range.endDate).format("YYYY-MM-DD"),
     }));

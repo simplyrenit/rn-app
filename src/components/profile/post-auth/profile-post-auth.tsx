@@ -2,7 +2,7 @@ import { Text } from "@/components/core";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { ArrowRightStartOnRectangleIcon } from "react-native-heroicons/outline";
 import IconButton from "./profile-icon-button";
@@ -24,8 +24,6 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   const isDark = theme === "dark";
   const appearanceSheetRef = useRef<BottomSheetModal>(null);
   const personalDetailsSheetRef = useRef<BottomSheetModal>(null);
-  const [personalData, setPersonalData] = useState<any>(null);
-  const personalDataRef = useRef(null)
   const currencySheetRef = useRef<BottomSheetModal>(null);
    const { isAuthenticated } = useGlobalContext();
 
@@ -36,10 +34,8 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   const handleAppeareanceModal = () => {
     appearanceSheetRef.current?.present();
   };
-  
 
-  const handlePersonalDetailsSheetPress = (data) => {
-    setPersonalData(data)
+  const handlePersonalDetailsSheetPress = () => {
     personalDetailsSheetRef.current?.present();
   };
 
@@ -242,7 +238,6 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
         <PersonalDetailsSheet
           bottomSheetModalRef={personalDetailsSheetRef}
           isDarkMode={isDarkMode}
-          data={personalData}
         />
       </View>
     </>

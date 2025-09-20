@@ -1,7 +1,6 @@
-import { getApps, initializeApp, ReactNativeFirebase } from "@react-native-firebase/app";
-import firestoreApp, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";	
-import { FirebaseStorageTypes, getStorage } from "@react-native-firebase/storage";	
-import { databaseURL } from "firebase-functions/params";
+import { initializeApp } from "@react-native-firebase/app";
+import { getFirestore } from "@react-native-firebase/firestore";
+import { getStorage } from "@react-native-firebase/storage";
 
 export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
 
@@ -22,7 +21,6 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: "639298619246",
   appId: "1:639298619246:web:bebe42342d569785c7237f",
   measurementId: "G-P7DWR065WK",
-  databaseURL: "https://rn-api-35b38-default-rtdb.asia-southeast1.firebasedatabase.app/",
 };
 
 export const DEV_MODE: string = "PROD"; // DEV or PROD
@@ -30,13 +28,13 @@ export const DEV_MODE: string = "PROD"; // DEV or PROD
 export let SERVERURL = "";
 export let SOCKET_URL = "";
 
-// if (DEV_MODE === "PROD") {
+if (DEV_MODE === "PROD") {
   SERVERURL = "https://api.simplyrenit.com/api/";
   SOCKET_URL = "wss://api.simplyrenit.com/ws/chat/";
-// } else {
-//   SERVERURL = "http://192.168.1.12:8000/api/";
-//   SOCKET_URL = "ws://192.168.1.12:8000/ws/chat/";
-// }
+} else {
+  SERVERURL = "http://192.168.1.12:8000/api/";
+  SOCKET_URL = "ws://192.168.1.12:8000/ws/chat/";
+}
 
 export const ACCESS_TOKEN =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMDE1NTc4LCJpYXQiOjE3MzA1NjU5NzgsImp0aSI6IjBkMjBkYTU1Zjk0MTRkODU4NDlhMmJiNmIxYTU5ODlkIiwidXNlcl9pZCI6NX0.8It2AqCNWb57D1NE8BlS6QXcxiJu7NI4fTzCCXi-ZYg";
@@ -80,9 +78,6 @@ export const DELETE_MY_ACCOUNT_ENDPOINT = SERVERURL + "users/";
 
 export const NOTIFICATIONS_ENDPOINT = SERVERURL + "notification/";
 
-export const NOTIFICATIONS_PUSH_TOKEN_ENDPOINT = SERVERURL + "notification/push-token";
-
-
 export const ALL_PRODUCTS = SERVERURL + "product-title/";
 
 export const SEARCH_PRODUCTS = SERVERURL + "search/";
@@ -107,13 +102,10 @@ export const WRITE_REVIEW = SERVERURL + "write-review/";
 
 export const GET_REFRESH_TOKEN = SERVERURL + 'token/refresh/';
 
-let app: ReactNativeFirebase.FirebaseApp, firestore: FirebaseFirestoreTypes.Module, storage: FirebaseStorageTypes.Module;
+let app, firestore, storage;
 
 try {
-  let app;
-  if(getApps().length === 0){
-    app = initializeApp(FIREBASE_CONFIG);
-  }
+  app = initializeApp(FIREBASE_CONFIG);
   firestore = getFirestore(app);
   storage = getStorage(app);
 } catch (error) {

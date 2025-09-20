@@ -62,6 +62,7 @@ export function useProduct() {
   const fetchReviews = async (name: string) => {
     setLoading(true);
     try {
+        console.log('→ GET', `${GET_REVIEWS}?product_name=${name}`)
       const response = await axiosInstance.get<ReviewResponse>(
         `${GET_REVIEWS}?product_name=${name}`,
         {
@@ -70,7 +71,8 @@ export function useProduct() {
           },
         }
       );
-
+         console.log('value of name', name)
+         console.log('← reviews:', response.data.results)
       return response.data.results;
     } catch (error) {
       console.error("Error fetching reviews:", error);

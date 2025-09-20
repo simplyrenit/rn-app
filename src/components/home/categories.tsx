@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   ScrollView,
   TouchableOpacity,
@@ -114,7 +114,7 @@ export function Categories() {
         };
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return null;
     }
   };
@@ -152,7 +152,7 @@ export function Categories() {
                 key={index}
                 style={{ marginBottom: 5 }}
                 onPress={async () => {
-                 
+                  
                   // console.log(products,'test')
                   // navigation.navigate("SearchResults", {
                   //   category: category.name,
@@ -189,7 +189,7 @@ export function Categories() {
                       source={category.image}
                       className={`${
                         index === 1 ? "w-[75%] h-[80%]" : "w-[80%] h-[85%]"
-                      }`}
+                        }`}
                       resizeMode="contain"
                       style={styles.shadow}
                     />

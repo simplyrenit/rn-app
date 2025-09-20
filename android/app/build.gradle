@@ -200,8 +200,6 @@ dependencies {
     } else {
         implementation jscFlavor
     }
-    
-    implementation 'com.google.firebase:firebase-messaging:21.13.0'
 }
 
 if (rnVersion < versionToNumber(0, 75, 0)) {

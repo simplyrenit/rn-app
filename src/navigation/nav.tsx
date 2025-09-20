@@ -74,7 +74,6 @@ import HangTight from "@/screens/post-screens/hang-tight";
 import LocationModal from "@/screens/post-screens/location-modal";
 import OwnersProductsScreen from "@/screens/users/owners-products";
 import UnavailabilitySubCatScreen from "@/screens/profileScreens/unavailability_subCat";
-import { useNotifications } from "@/backend/useNotification";
 
 const Tab = createBottomTabNavigator();
 const PostStack = createNativeStackNavigator();
@@ -287,25 +286,11 @@ function MainTabs() {
 }
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export default function Navigation({fcmToken} : {fcmToken : string}) {
+export default function Navigation() {
   const { loading, hasSeenWelcome, theme, isAuthenticated } = useGlobalContext();
   if (loading || isAuthenticated === undefined) {
     return null;
   }
-  const previousTokenRef = useRef<string|null>(null)
-  const {useSubmitFCMToken} = useNotifications()
-
-  const handleSendFcmToken = async(token : string) => {
-    console.log(token)
-     const res = useSubmitFCMToken(token)
-  }
-
-  useEffect(() =>{
-    if (isAuthenticated && fcmToken && previousTokenRef.current !== fcmToken){
-       handleSendFcmToken(fcmToken)
-       previousTokenRef.current = fcmToken
-     }
-  },[isAuthenticated,fcmToken])
 
   return (
     <NavigationContainer >

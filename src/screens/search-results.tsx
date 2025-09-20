@@ -182,7 +182,7 @@ export default function SearchResults() {
         setProducts(productsToSet)
       }
       else{
-        setProducts(filteredProducts.filter(prod => !prod?.moderation_labels?.length));
+      setProducts(filteredProducts.filter(prod => !prod?.moderation_labels?.length));
       }
     } catch (error) {
       console.error(error);

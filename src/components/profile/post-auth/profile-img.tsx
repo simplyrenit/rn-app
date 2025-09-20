@@ -61,7 +61,7 @@ const router = useTypedNavigation();
   useFocusEffect(
     useCallback(() => {
       fetchDetails();
-    }, [handlePersonalDetailsSheetPress,isAuthenticated])
+    }, [handlePersonalDetailsSheetPress])
   );
      const showUnauthenticatedUI = !isAuthenticated || details === null;
 //   return (
@@ -272,7 +272,7 @@ return (
                             >
                               {details.first_name + " " + details.last_name}
                             </Text>}
-                            {loading ? <Skeleton height={10} width={10} borderRadius={8} /> : <TouchableOpacity onPress={() => handlePersonalDetailsSheetPress?.(details)}>
+                            {loading ? <Skeleton height={10} width={10} borderRadius={8} /> : <TouchableOpacity onPress={handlePersonalDetailsSheetPress}>
                               <PencilSquareIcon
                                 size={21}
                                 color="#635BE8"
