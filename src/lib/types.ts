@@ -20,7 +20,12 @@ export interface CategoryItem {
 export interface AuthTokens {
   access_token: string;
   refresh_token: string;
+  account_type?: AccountType;
+  merchant_approval_status?: MerchantApprovalStatus;
 }
+
+export type AccountType = "user" | "merchant";
+export type MerchantApprovalStatus = "pending" | "approved" | "rejected" | null;
 
 export interface CarouselItem {
   title: string;
@@ -349,10 +354,11 @@ export interface AuthUser {
   phone?: string;
   country?: string;
   email_verified: boolean;
-  emailVerified?: boolean;
   phone_verified?: boolean;
   image?: string;
   business_name?: string;
+  account_type?: AccountType;
+  merchant_approval_status?: MerchantApprovalStatus;
   password: string;
   date_of_birth?: string;
   coordinates: {

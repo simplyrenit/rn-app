@@ -10,13 +10,12 @@ import { APPLE_SIGN_IN_ENDPOINT, GOOGLE_SIGN_IN_ENDPOINT } from "@/lib/config";
 import { useGlobalContext } from "@/context/global-context";
 import { AuthTokens, useTypedNavigation } from "@/lib/types";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { useAuthContext } from "@/context/auth-context";
 import { useProfile } from "@/backend/profile";
 import axiosInstance from "@/lib/networkUtils";
 
 export function useOAuth() {
   const [loading, setLoading] = useState(false);
-  const { setAuthTokens, userDetails } = useGlobalContext();
+  const { setAuthTokens } = useGlobalContext();
   const router = useTypedNavigation();
   // const { getUser, saveUser } = useAuthContext();
   const { getMyDetails } = useProfile();

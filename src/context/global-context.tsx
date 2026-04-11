@@ -12,7 +12,12 @@ import {
   MY_DETAILS_ENDPOINT,
 } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
-import { AuthTokens, Category } from "@/lib/types";
+import {
+  AccountType,
+  AuthTokens,
+  Category,
+  MerchantApprovalStatus,
+} from "@/lib/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import React, {
@@ -62,6 +67,9 @@ interface UserDetails {
   email: string;
   phone: string;
   image: string;
+  business_name: string | null;
+  account_type: AccountType;
+  merchant_approval_status: MerchantApprovalStatus;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -95,6 +103,9 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
           email: details.email,
           phone: details.phone || "",
           image: details.image?.image_url || "",
+          business_name: details.business_name,
+          account_type: details.account_type,
+          merchant_approval_status: details.merchant_approval_status,
         });
       } catch (error) {
         console.error("Failed to fetch user details:", error);

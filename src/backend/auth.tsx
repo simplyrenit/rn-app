@@ -48,6 +48,7 @@ export function useAuth() {
     setLoading(true);
     try {
       const mergedUser = { ...(user ?? {}), ...(overrides ?? {}) };
+      const accountType = mergedUser.account_type ?? "user";
       const signupPayload = {
         email: mergedUser.email,
         first_name: mergedUser.first_name,
@@ -55,11 +56,12 @@ export function useAuth() {
         password: mergedUser.password,
         phone: mergedUser.phone,
         country: mergedUser.country,
-        business_name: mergedUser.business_name,
+        account_type: accountType,
+        business_name:
+          accountType === "merchant" ? mergedUser.business_name : undefined,
         coordinates: mergedUser.coordinates,
         date_of_birth: mergedUser.date_of_birth,
-        email_verified:
-          mergedUser.email_verified ?? mergedUser.emailVerified ?? undefined,
+        email_verified: mergedUser.email_verified,
       };
       const payload = Object.fromEntries(
         Object.entries(signupPayload).filter(

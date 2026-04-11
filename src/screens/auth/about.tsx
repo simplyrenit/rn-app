@@ -7,7 +7,6 @@ import { useTypedNavigation } from "@/lib/types";
 import React, { useCallback, useEffect, useState } from "react";
 import { Modal, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 import {
-  CheckIcon,
   InformationCircleIcon,
   ChevronDownIcon,
 } from "react-native-heroicons/outline";
@@ -144,7 +143,6 @@ interface ErrorState {
   ownerName: string;
   businessName: string;
   sameName: string;
-  accountType: string;
 }
 
 interface IndividualFormProps {
@@ -422,9 +420,7 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
 
 export default function AboutYourself() {
   const router = useTypedNavigation();
-  const [accountType, setAccountType] = useState<
-    "Individual" | "Business" | null
-  >(null);
+  const [isMerchant, setIsMerchant] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -439,7 +435,6 @@ export default function AboutYourself() {
     ownerName: "",
     businessName: "",
     sameName: "",
-    accountType: "",
   });
   const [dobError, setDobError] = useState("");
   const [agreementChecked, setAgreementChecked] = useState(false);
@@ -481,34 +476,29 @@ export default function AboutYourself() {
       ownerName: "",
       businessName: "",
       sameName: "",
-      accountType: "",
     };
 
-    if (accountType === null) {
-      newErrors.accountType =
-        "Please tell us if you're an Individual or a Business";
+    if (firstName.trim() === "") {
+      newErrors.firstName = "First name is required";
+      isValid = false;
+    }
+    if (lastName.trim() === "") {
+      newErrors.lastName = "Last name is required";
       isValid = false;
     }
 
-    if (accountType === "Individual" || accountType === "Business") {
-      if (firstName.trim() === "") {
-        newErrors.firstName = "First name is required";
-        isValid = false;
-      }
-      if (lastName.trim() === "") {
-        newErrors.lastName = "Last name is required";
-        isValid = false;
-      }
-    }
-
-    if (accountType === "Business") {
+    if (isMerchant) {
       if (businessName.trim() === "") {
         newErrors.businessName = "Business name is required";
         isValid = false;
       }
     }
 
-    if (accountType === "Individual") {
+    if (!isMerchant) {
+      if (!dob.date || !dob.month || !dob.year) {
+        setDobError("Date of birth is required.");
+        isValid = false;
+      }
       const age = calculateAge(dob);
       if (age !== null) {
         if (age < 13) {
@@ -527,10 +517,10 @@ export default function AboutYourself() {
 
     setErrors(newErrors);
     return isValid;
-  }, [accountType, firstName, lastName, businessName, dob, calculateAge]);
+  }, [isMerchant, firstName, lastName, businessName, dob, calculateAge]);
 
   useEffect(() => {
-    if (accountType === 'Individual') {
+    if (!isMerchant) {
       const age = calculateAge(dob);
       if (age !== null) {
         if (age < 13) {
@@ -544,14 +534,16 @@ export default function AboutYourself() {
           setDobError("");
         }
       }
+    } else {
+      setDobError("");
     }
-  }, [dob])
+  }, [dob, isMerchant, calculateAge]);
 
   const handleSubmit = useCallback(() => {
     if (validateForm()) {
       const monthIndex = MONTHS.indexOf(dob.month);
       const formattedDob =
-        accountType === "Individual" &&
+        !isMerchant &&
         dob.year &&
         dob.date &&
         monthIndex >= 0
@@ -563,12 +555,13 @@ export default function AboutYourself() {
       saveUser({
         first_name: firstName,
         last_name: lastName,
-        ...(businessName.trim() !== "" && { business_name: businessName }),
-        ...(formattedDob && { date_of_birth: formattedDob }),
+        account_type: isMerchant ? "merchant" : "user",
+        business_name: isMerchant ? businessName.trim() : "",
+        date_of_birth: !isMerchant ? formattedDob || "" : "",
       });
       router.navigate("Password");
     }
-  }, [accountType, dob, firstName, lastName, businessName, validateForm]);
+  }, [isMerchant, dob, firstName, lastName, businessName, validateForm, saveUser, router]);
 
   return (
     <StaticContainer>
@@ -600,89 +593,38 @@ export default function AboutYourself() {
                   fontWeight="font-bold"
                   className="mb-2"
                 >
-                  I am...
+                  Account type
                 </Text>
-                <View className="flex-row justify-between mt-2">
-                  <TouchableOpacity
-                    className={`flex-1 mr-2 p-3 rounded-xl border ${accountType === "Individual"
-                      ? "border-brand-blue"
-                      : isDarkMode
-                        ? "border-[#292929]"
-                        : "border-[#e6e6e6]"
-                      } ${isDarkMode ? "bg-[#0F0F0F]" : "bg-white"}`}
-                    onPress={() => {
-                      setAccountType("Individual");
-                      if (errors.accountType) {
-                        setErrors((prevErrors) => ({
-                          ...prevErrors,
-                          accountType: "",
-                        }));
-                      }
-                    }}
+                <View
+                  className={`mt-2 p-3 rounded-xl border flex-row items-center justify-between ${
+                    isDarkMode
+                      ? "bg-[#0F0F0F] border-[#292929]"
+                      : "bg-white border-[#e6e6e6]"
+                  }`}
+                >
+                  <Text
+                    fontSize="text-sm"
+                    className={isDarkMode ? "text-white" : "text-black"}
                   >
-                    <View className="flex-row flex-1 justify-between items-center">
-                      <Text
-                        fontSize="text-sm"
-                        className={isDarkMode ? "text-white" : "text-black"}
-                      >
-                        Individual
-                      </Text>
-                      {accountType === "Individual" && (
-                        <CheckIcon
-                          color="#635BE8"
-                          size={24}
-                        />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    className={`flex-1 ml-2 p-3 rounded-xl border justify-center ${accountType === "Business"
-                      ? "border-brand-blue"
-                      : isDarkMode
-                        ? "border-[#292929]"
-                        : "border-[#e6e6e6]"
-                      } ${isDarkMode ? "bg-[#0F0F0F]" : "bg-white"}`}
+                    Are you a merchant?
+                  </Text>
+                  <CheckBox
+                    checked={isMerchant}
                     onPress={() => {
-                      setAccountType("Business");
-                      if (errors.accountType) {
-                        setErrors((prevErrors) => ({
-                          ...prevErrors,
-                          accountType: "",
-                        }));
-                      }
+                      setIsMerchant((prev) => !prev);
+                      setDobError("");
                     }}
-                  >
-                    <View className="flex-row justify-between items-center">
-                      <Text
-                        fontSize="text-sm"
-                        className={isDarkMode ? "text-white" : "text-black"}
-                      >
-                        Business
-                      </Text>
-                      {accountType === "Business" && (
-                        <CheckIcon
-                          color="#635BE8"
-                          size={24}
-                        />
-                      )}
-                    </View>
-                  </TouchableOpacity>
+                  />
                 </View>
+                <Text
+                  className={`mt-2 ${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"}`}
+                >
+                  Merchant accounts require admin approval before posting listings.
+                </Text>
               </View>
             </View>
 
-            {errors.accountType && (
-              <View className="flex flex-row items-center mt-4 space-x-3">
-                <InformationCircleIcon
-                  size={14}
-                  color="#ef4444"
-                />
-                <Text className="text-red-500">{errors.accountType}</Text>
-              </View>
-            )}
-
-            {accountType === "Individual" && (
+            {!isMerchant && (
               <IndividualForm
                 firstName={firstName}
                 lastName={lastName}
@@ -698,7 +640,7 @@ export default function AboutYourself() {
               />
             )}
 
-            {accountType === "Business" && (
+            {isMerchant && (
               <BusinessForm
                 firstName={firstName}
                 lastName={lastName}

@@ -5,11 +5,14 @@ import {
   MY_DETAILS_ENDPOINT,
   MY_PRODUCT_DETAILS_ENDPOINT,
   MY_PRODUCTS_ENDPOINT,
+  REQUEST_MERCHANT_REVIEW_ENDPOINT,
   REPORT_PROBLEM_ENDPOINT,
   UPDATE_MY_DETAILS_ENDPOINT,
 } from "@/lib/config";
 import {
+  AccountType,
   BackendProduct,
+  MerchantApprovalStatus,
   ProductImage,
   UnavailabilityFormData,
 } from "@/lib/types";
@@ -57,6 +60,22 @@ export function useProfile() {
       return response.data;
     } catch (error) {
       console.error("Error updating user details:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function requestMerchantReview() {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.post<MyDetails>(
+        REQUEST_MERCHANT_REVIEW_ENDPOINT
+      );
+      await fetchUserDetails();
+      return response.data;
+    } catch (error) {
+      console.error("Error requesting merchant review:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -305,6 +324,7 @@ export function useProfile() {
     updateMyProfileImage,
     getMyDetails,
     updateMyDetails,
+    requestMerchantReview,
     loading,
     submitUnavailabilityForm,
     deleteMyAccount,
@@ -369,7 +389,9 @@ export interface MyDetails {
     };
     is_default: boolean;
   };
-  business_name: string;
+  business_name: string | null;
+  account_type: AccountType;
+  merchant_approval_status: MerchantApprovalStatus;
   coordinates: {
     lat: number;
     long: number;

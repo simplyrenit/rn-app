@@ -1,4 +1,5 @@
-import { Text } from "@/components/core";
+import { Button, Text } from "@/components/core";
+import { useProfile } from "@/backend/profile";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import Skeleton from "@/components/core/skeleton";
 import { PostProductHeader } from "@/components/post/header";
@@ -7,20 +8,25 @@ import { useGlobalContext } from "@/context/global-context";
 import { useProductContext } from "@/context/product-context";
 import { Category, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
+import { useState } from "react";
 import { FlatList, Platform, TouchableOpacity, View } from "react-native";
 import {
-  ArrowLeftIcon,
   ChevronRightIcon,
   CubeIcon,
 } from "react-native-heroicons/outline";
-import { heightPercentageToDP, heightPercentageToDP as hp, widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { heightPercentageToDP as hp, widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { SvgUri } from "react-native-svg";
 
 export default function Post() {
   const { saveDetails } = useProductContext();
-  const { theme, categories, authTokens, isAuthenticated } = useGlobalContext();
+  const { theme, categories, authTokens, isAuthenticated, userDetails } = useGlobalContext();
+  const { requestMerchantReview, loading: profileActionLoading } = useProfile();
   const navigation = useTypedNavigation();
   const isDarkMode = theme === "dark";
+  const [requestReviewError, setRequestReviewError] = useState<string | null>(null);
+  const merchantNeedsApproval =
+    userDetails?.account_type === "merchant" &&
+    userDetails?.merchant_approval_status !== "approved";
 
   const onPress = (cat: Category) => {
     const category = {
@@ -75,85 +81,138 @@ export default function Post() {
     </TouchableOpacity>
   );
 
+  const handleRequestReviewAgain = async () => {
+    try {
+      setRequestReviewError(null);
+      await requestMerchantReview();
+    } catch (error: any) {
+      setRequestReviewError(
+        error?.response?.data?.error ||
+          "Unable to request review right now. Please try again."
+      );
+    }
+  };
+
   return (
     <NonScrollableContainer>
       {authTokens && isAuthenticated ? (
-        <View
-          style={{
-            paddingBottom: Platform.OS === "ios" ? hp("7") : hp("0%"),
-            flex: Platform.OS === "ios" ? 0 : 1,
-          }}
-        >
-          <View className="flex-row items-center justify-between">
-            {
-              categories.length ?
-                <PostProductHeader
-                  percentage={10}
-                  heading="Choose a category"
-                  showBackArrow={false}
-                /> :
-                <View className="mt-2 gap-2 align-center" style={{ alignItems: 'center' }}>
-                  <Skeleton
-                    style={{
-                      width: wp(30),
-                      borderRadius: 8,
-                      marginTop: 5,
-                      height: 10,
-                    }}
-                  />
-                  <Skeleton style={{
-                    width: wp(5),
-                    borderRadius: 8,
-                    height: 4,
-                  }} />
-                </View>
-            }
-            <View className="w-[10%]"></View>
+        merchantNeedsApproval ? (
+          <View className="flex-1 px-5 pt-6">
+            <View
+              className={`rounded-2xl border p-4 ${
+                isDarkMode ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6] bg-white"
+              }`}
+            >
+              <Text fontWeight="font-bold" fontSize="text-lg">
+                Merchant approval required
+              </Text>
+              <Text
+                className={`mt-2 ${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"}`}
+              >
+                Your merchant account is {userDetails?.merchant_approval_status}.
+                You can post listings once approval is complete.
+              </Text>
+              {userDetails?.merchant_approval_status === "rejected" && (
+                <>
+                  <Text
+                    className={`mt-2 ${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"}`}
+                  >
+                    Your merchant request was rejected. You can request review again.
+                  </Text>
+                  <Button
+                    className="mt-3"
+                    onPress={handleRequestReviewAgain}
+                    disabled={profileActionLoading}
+                  >
+                    {profileActionLoading
+                      ? "Requesting review..."
+                      : "Request review again"}
+                  </Button>
+                  {requestReviewError && (
+                    <Text className="mt-2 text-red-500">{requestReviewError}</Text>
+                  )}
+                </>
+              )}
+            </View>
           </View>
+        ) : (
+          <View
+            style={{
+              paddingBottom: Platform.OS === "ios" ? hp("7") : hp("0%"),
+              flex: Platform.OS === "ios" ? 0 : 1,
+            }}
+          >
+            <View className="flex-row items-center justify-between">
+              {
+                categories.length ?
+                  <PostProductHeader
+                    percentage={10}
+                    heading="Choose a category"
+                    showBackArrow={false}
+                  /> :
+                  <View className="mt-2 gap-2 align-center" style={{ alignItems: 'center' }}>
+                    <Skeleton
+                      style={{
+                        width: wp(30),
+                        borderRadius: 8,
+                        marginTop: 5,
+                        height: 10,
+                      }}
+                    />
+                    <Skeleton style={{
+                      width: wp(5),
+                      borderRadius: 8,
+                      height: 4,
+                    }} />
+                  </View>
+              }
+              <View className="w-[10%]"></View>
+            </View>
 
-          {categories.length ?
+            {categories.length ?
 
-            <FlatList
-              data={categories}
-              renderItem={renderItem}
-              keyExtractor={(item) => item.title}
-              contentContainerStyle={{
-                paddingHorizontal: 24,
-              }}
-              showsVerticalScrollIndicator={false}
-            /> : <FlatList
+              <FlatList
+                data={categories}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.title}
+                contentContainerStyle={{
+                  paddingHorizontal: 24,
+                }}
+                showsVerticalScrollIndicator={false}
+              /> : <FlatList
 
-              data={Array.from({ length: 12 })}
-              renderItem={({ item, index }) => (
-                <View className="p-6 flex-row gap-4">
-                  <Skeleton style={{
-                    width: 16,
-                    borderRadius: 8,
-                    height: 10,
-                  }} />
-
-                  <Skeleton style={{
-                    flex: 1,
-                    borderRadius: 8,
-                    height: 10,
-                  }} />
-                  <View>
-                    <View style={{ height: 12 }} />
+                data={Array.from({ length: 12 })}
+                renderItem={({ item, index }) => (
+                  <View className="p-6 flex-row gap-4">
                     <Skeleton style={{
                       width: 16,
                       borderRadius: 8,
-                      height: 6,
-                      marginLeft: 24,
-                      alignSelf: 'flex-end',
-                      marginTop: 8,
+                      height: 10,
                     }} />
-                  </View>
 
-                </View>
-              )}
-            />
-          }
-        </View>
+                    <Skeleton style={{
+                      flex: 1,
+                      borderRadius: 8,
+                      height: 10,
+                    }} />
+                    <View>
+                      <View style={{ height: 12 }} />
+                      <Skeleton style={{
+                        width: 16,
+                        borderRadius: 8,
+                        height: 6,
+                        marginLeft: 24,
+                        alignSelf: 'flex-end',
+                        marginTop: 8,
+                      }} />
+                    </View>
+
+                  </View>
+                )}
+              />
+            }
+          </View>
+        )
       ) : (
         <ProfilePreAuth isDarkMode={isDarkMode} />
       )}

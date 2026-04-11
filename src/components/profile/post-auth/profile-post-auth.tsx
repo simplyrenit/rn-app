@@ -1,8 +1,9 @@
-import { Text } from "@/components/core";
+import { Button, Text } from "@/components/core";
+import { useProfile } from "@/backend/profile";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { ArrowRightStartOnRectangleIcon } from "react-native-heroicons/outline";
 import IconButton from "./profile-icon-button";
@@ -21,8 +22,12 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   handleLogout,
 }) => {
   const router = useTypedNavigation();
-  const { theme, userDetails, loading } = useGlobalContext();
+  const { theme, userDetails } = useGlobalContext();
+  const { requestMerchantReview, loading: profileActionLoading } = useProfile();
   const isDark = theme === "dark";
+  const isMerchant = userDetails?.account_type === "merchant";
+  const merchantStatus = userDetails?.merchant_approval_status;
+  const [requestReviewError, setRequestReviewError] = useState<string | null>(null);
   const appearanceSheetRef = useRef<BottomSheetModal>(null);
   const personalDetailsSheetRef = useRef<BottomSheetModal>(null);
   const currencySheetRef = useRef<BottomSheetModal>(null);
@@ -40,6 +45,18 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
     personalDetailsSheetRef.current?.present();
   };
 
+  const handleRequestReviewAgain = async () => {
+    try {
+      setRequestReviewError(null);
+      await requestMerchantReview();
+    } catch (error: any) {
+      setRequestReviewError(
+        error?.response?.data?.error ||
+          "Unable to request review right now. Please try again."
+      );
+    }
+  };
+
   return (
     <>
       <View className="">
@@ -52,6 +69,40 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               isDarkMode={isDarkMode}
               handlePersonalDetailsSheetPress={handlePersonalDetailsSheetPress}
             />
+            {isMerchant && (
+              <View
+                className={`mb-4 rounded-xl border px-3 py-2 ${
+                  isDark ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6] bg-white"
+                }`}
+              >
+                <Text fontWeight="font-semibold">
+                  Merchant status: {merchantStatus}
+                </Text>
+                {merchantStatus !== "approved" && (
+                  <Text
+                    className={`mt-1 ${isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"}`}
+                  >
+                    Listings will be enabled after merchant approval.
+                  </Text>
+                )}
+                {merchantStatus === "rejected" && (
+                  <>
+                    <Button
+                      className="mt-3"
+                      onPress={handleRequestReviewAgain}
+                      disabled={profileActionLoading}
+                    >
+                      {profileActionLoading
+                        ? "Requesting review..."
+                        : "Request review again"}
+                    </Button>
+                    {requestReviewError && (
+                      <Text className="mt-2 text-red-500">{requestReviewError}</Text>
+                    )}
+                  </>
+                )}
+              </View>
+            )}
           </View>
         </View>
 
