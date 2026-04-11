@@ -43,7 +43,7 @@ export default function VerifyEmail() {
           return;
         }
         if (data?.is_verified) {
-          saveUser({ emailVerified: true });
+          saveUser({ email_verified: true });
           router.navigate("About");
         } else {
           setIsIncorrect(true);
@@ -51,7 +51,7 @@ export default function VerifyEmail() {
       }
     } else {
       // Handle password verification
-      const data = await loginUser(email, password).catch(e => { });
+      const data = await loginUser(email, password);
       if (
         data?.access_token !== null &&
         data?.refresh_token !== null &&

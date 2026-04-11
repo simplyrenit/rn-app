@@ -549,15 +549,26 @@ export default function AboutYourself() {
 
   const handleSubmit = useCallback(() => {
     if (validateForm()) {
+      const monthIndex = MONTHS.indexOf(dob.month);
+      const formattedDob =
+        accountType === "Individual" &&
+        dob.year &&
+        dob.date &&
+        monthIndex >= 0
+          ? `${dob.year}-${String(monthIndex + 1).padStart(2, "0")}-${
+              dob.date
+            }`
+          : undefined;
 
       saveUser({
         first_name: firstName,
         last_name: lastName,
         ...(businessName.trim() !== "" && { business_name: businessName }),
+        ...(formattedDob && { date_of_birth: formattedDob }),
       });
       router.navigate("Password");
     }
-  }, [accountType, firstName, lastName, businessName, validateForm]);
+  }, [accountType, dob, firstName, lastName, businessName, validateForm]);
 
   return (
     <StaticContainer>

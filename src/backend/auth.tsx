@@ -1,7 +1,7 @@
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
-import { GOOGLE_SIGN_IN_ENDPOINT, LOGIN, OTP, SIGN_UP } from "@/lib/config";
-import { AuthTokens, OTPResponse } from "@/lib/types";
+import { LOGIN, OTP, SIGN_UP } from "@/lib/config";
+import { AuthTokens, AuthUser, OTPResponse } from "@/lib/types";
 import axios from "axios";
 import { useState } from "react";
 
@@ -13,7 +13,7 @@ export function useAuth() {
   async function sendOTP(email: string) {
     setLoading(true);
     try {
-      const response = await axios.post(`${OTP}?email=${email}`, { email });
+      await axios.post(OTP, { email });
     } catch (error: any) {
       console.error(error);
     } finally {
@@ -42,15 +42,41 @@ export function useAuth() {
     };
   }
 
-  async function signUpUser(): Promise<AuthTokens | null> {
+  async function signUpUser(
+    overrides?: Partial<AuthUser>
+  ): Promise<AuthTokens | null> {
     setLoading(true);
     try {
-      const response: { data: AuthTokens } = await axios.post(SIGN_UP, user);
+      const mergedUser = { ...(user ?? {}), ...(overrides ?? {}) };
+      const signupPayload = {
+        email: mergedUser.email,
+        first_name: mergedUser.first_name,
+        last_name: mergedUser.last_name,
+        password: mergedUser.password,
+        phone: mergedUser.phone,
+        country: mergedUser.country,
+        business_name: mergedUser.business_name,
+        coordinates: mergedUser.coordinates,
+        date_of_birth: mergedUser.date_of_birth,
+        email_verified:
+          mergedUser.email_verified ?? mergedUser.emailVerified ?? undefined,
+      };
+      const payload = Object.fromEntries(
+        Object.entries(signupPayload).filter(
+          ([, value]) => value !== undefined && value !== null && value !== ""
+        )
+      );
+
+      const response: { data: AuthTokens } = await axios.post(SIGN_UP, payload);
       setAuthTokens(response.data);
 
       return response.data;
     } catch (error: any) {
-      console.error("SIGN UP ERROR", error.response.data);
+      if (error.response) {
+        console.error("SIGN UP ERROR", error.response.data);
+      } else {
+        console.error("SIGN UP ERROR", error.message);
+      }
     } finally {
       setLoading(false);
     }

@@ -47,7 +47,7 @@ import { useAuth } from "@/backend/auth";
 const StyledImage = styled(Image);
 
 export default function LocationScreen() {
-  const { theme, setAuthTokens } = useGlobalContext();
+  const { theme } = useGlobalContext();
   const { signUpUser, loading: signUpLoading } = useAuth();
   const navigation = useTypedNavigation();
 
@@ -300,28 +300,40 @@ export default function LocationScreen() {
     selectedAddress: string | null,
     selectedLocation: { latitude: number; longitude: number } | null
   ) => {
-    if (!selectedAddress) {
-      saveUser({
-        coordinates: {
-          type: "Point",
-          coordinates: [location?.coords.latitude, location?.coords.longitude],
-        },
-      });
-    } else {
-      if (selectedLocation) {
-        saveUser({
-          coordinates: {
+    const coordinatesPayload =
+      selectedLocation
+        ? {
             type: "Point",
             coordinates: [
-              selectedLocation.latitude,
               selectedLocation.longitude,
-            ],
-          },
-        });
-      }
+              selectedLocation.latitude,
+            ] as [number, number],
+          }
+        : location?.coords
+        ? {
+            type: "Point",
+            coordinates: [
+              location.coords.longitude,
+              location.coords.latitude,
+            ] as [number, number],
+          }
+        : undefined;
+
+    if (!coordinatesPayload) {
+      Alert.alert(
+        "Location required",
+        "Please select your location to complete onboarding."
+      );
+      return;
     }
-    const response = await signUpUser();
-    setAuthTokens(response);
+
+    await saveUser({
+      coordinates: coordinatesPayload,
+    });
+
+    const response = await signUpUser({
+      coordinates: coordinatesPayload,
+    });
     if (response) {
       navigation.navigate("MainTabs");
     }

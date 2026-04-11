@@ -349,10 +349,12 @@ export interface AuthUser {
   phone?: string;
   country?: string;
   email_verified: boolean;
+  emailVerified?: boolean;
   phone_verified?: boolean;
   image?: string;
   business_name?: string;
   password: string;
+  date_of_birth?: string;
   coordinates: {
     type: string;
     coordinates: [number, number];
