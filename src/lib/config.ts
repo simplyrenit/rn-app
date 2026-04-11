@@ -23,7 +23,7 @@ export const FIREBASE_CONFIG = {
   measurementId: "G-P7DWR065WK",
 };
 
-export const DEV_MODE: string = "PROD"; // DEV or PROD
+export const DEV_MODE: string = "DEV"; // DEV or PROD
 
 export let SERVERURL = "";
 export let SOCKET_URL = "";
@@ -32,8 +32,8 @@ if (DEV_MODE === "PROD") {
   SERVERURL = "https://api.simplyrenit.com/api/";
   SOCKET_URL = "wss://api.simplyrenit.com/ws/chat/";
 } else {
-  SERVERURL = "http://192.168.1.12:8000/api/";
-  SOCKET_URL = "ws://192.168.1.12:8000/ws/chat/";
+  SERVERURL = "http://192.168.1.22:8000/api/";
+  SOCKET_URL = "ws://192.168.1.22:8000/ws/chat/";
 }
 
 export const ACCESS_TOKEN =

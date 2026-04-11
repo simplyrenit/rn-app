@@ -16,7 +16,7 @@ import {
 } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React, { useState } from "react";
-import { ActivityIndicator, Dimensions, ScrollView, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Dimensions, Image, ScrollView, TouchableOpacity, View } from "react-native";
 import {
   BanknotesIcon,
   ChevronDownIcon,
@@ -220,15 +220,29 @@ export default function DetailsScreen() {
               color={isDark ? "white" : "black"}
               size={wp("5.5%")}
             /> */}
-            <SvgUri
-              width={wp(5.5)}
-              height={wp(5.5)}
-              uri={
-                theme === "dark"
-                  ? product?.category?.dark_icon || "fallback-dark.svg"
-                  : product?.category?.light_icon || "fallback-light.svg"
-              }
-            />
+            {(theme === "dark"
+              ? product?.category?.dark_icon
+              : product?.category?.light_icon
+            )?.slice(-3)?.toLowerCase() === 'svg' ? (
+              <SvgUri
+                width={wp(5.5)}
+                height={wp(5.5)}
+                uri={
+                  theme === "dark"
+                    ? product?.category?.dark_icon || ""
+                    : product?.category?.light_icon || ""
+                }
+              />
+            ) : (
+              <Image
+                source={{
+                  uri: theme === "dark"
+                    ? product?.category?.dark_icon
+                    : product?.category?.light_icon
+                }}
+                style={{ width: wp(5.5), height: wp(5.5) }}
+              />
+            )}
             <Text
               fontWeight="font-bold"
               className="mt-2"

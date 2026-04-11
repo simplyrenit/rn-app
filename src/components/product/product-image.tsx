@@ -165,7 +165,7 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
             <View className="w-2 h-2 bg-white rounded-lg mx-0.5  " />
           )}
         >
-          {images.map((image, index) => (
+          {(images || []).map((image, index) => (
             <Pressable
               key={index}
               style={{ flex: 1 }}

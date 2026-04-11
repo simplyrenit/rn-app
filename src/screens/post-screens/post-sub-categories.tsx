@@ -37,11 +37,18 @@ export default function PostSubCategories() {
     >
       <View className="flex-row items-center space-x-5">
         {item.dark_icon || item.light_icon ? (
-          <SvgUri
-            width={20}
-            height={20}
-            uri={theme === "dark" ? item.dark_icon : item.light_icon}
-          />
+          (theme === "dark" ? item.dark_icon : item.light_icon)?.slice(-3)?.toLowerCase() === 'svg' ? (
+            <SvgUri
+              width={20}
+              height={20}
+              uri={theme === "dark" ? item.dark_icon : item.light_icon}
+            />
+          ) : (
+            <Image
+              source={{ uri: theme === "dark" ? item.dark_icon : item.light_icon }}
+              style={{ width: 20, height: 20 }}
+            />
+          )
         ) : (
           <CubeIcon
             color={isDarkMode ? "white" : "black"}

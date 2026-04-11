@@ -38,9 +38,9 @@ const useHome = () => {
     fetchTopExperiences: (lat: number, long: number) =>
       fetchData(GET_TOP_EXPERIENCE, lat, long),
     fetchTopPicks: (lat: number, long: number) =>
-      fetchData(GET_TOP_EXPERIENCE, lat, long),
+      fetchData(GET_TOP_PICKS, lat, long),
     fetchPopularProductsNearYou: (lat: number, long: number) =>
-      fetchData(GET_TOP_EXPERIENCE, lat, long),
+      fetchData(GET_POPULAR_PRODUCTS_NEAR_YOU, lat, long),
   };
 };
 
