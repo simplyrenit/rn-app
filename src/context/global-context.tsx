@@ -7,7 +7,6 @@ import {
   setHasSeenWelcome as sH,
 } from "@/lib/auth-fns";
 import {
-  ACCESS_TOKEN,
   GET_CATEGORIES,
   MY_DETAILS_ENDPOINT,
 } from "@/lib/config";
@@ -154,12 +153,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await axiosInstance.get(GET_CATEGORIES, {
-        headers: {
-          Authorization: `Bearer ${ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axiosInstance.get(GET_CATEGORIES);
       setCategories(response.data);
     } catch (error) {
       console.error("Failed to fetch categories:", error);
@@ -175,7 +169,6 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
         ]);
 
         if (tokens) {
-          console.log('### here tokens', tokens);
           setAuthTokensState(tokens);
           axiosInstance.defaults.headers.Authorization = `Bearer ${tokens.access_token}`;
           setIsAuthenticated(true);

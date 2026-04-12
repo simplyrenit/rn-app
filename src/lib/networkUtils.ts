@@ -1,9 +1,8 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
-import { ACCESS_TOKEN, DEV_MODE, GET_CATEGORIES, GET_REFRESH_TOKEN } from "./config";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GET_CATEGORIES, GET_REFRESH_TOKEN } from "./config";
 import { getAuthTokens, setAuthTokens } from "./auth-fns";
 
-// Create axios instance with interceptors for debugging
+// Create axios instance with shared timeout/header defaults.
 const axiosInstance = axios.create({
   timeout: 30000,
   headers: {
@@ -11,7 +10,6 @@ const axiosInstance = axios.create({
   },
 });
 
-// Add request interceptor for debugging
 axiosInstance.interceptors.request.use(
   (config) => {
     return config;
@@ -34,22 +32,22 @@ axiosInstance.interceptors.response.use(
       status === 401 &&
       authHeader?.includes("Bearer ") &&
       !originalRequest?._retry;
-    console.log('###', status, authHeader, canRetryWithRefresh);
     if (canRetryWithRefresh) {
-    try {
-      console.log('### getting new token');
-      const tokens = await getAuthTokens();
-      console.log('### existing', tokens);
+      try {
+        const tokens = await getAuthTokens();
+        if (!tokens?.refresh_token) {
+          return Promise.reject(error);
+        }
+
         const response = await axios.post(GET_REFRESH_TOKEN, {
-          refresh: tokens?.refresh_token,
+          refresh: tokens.refresh_token,
         });
 
         const newTokens = response.data;
-        console.log('### newtokens', newTokens);
 
         await setAuthTokens({
           access_token: newTokens.access,
-          refresh_token: tokens?.refresh_token!,
+          refresh_token: tokens.refresh_token,
         });
 
         if (originalRequest?.headers) {

@@ -1,19 +1,9 @@
 {
   "build": {
-    "preview": {
-      "android": {
-        "buildType": "apk"
-      }
-    },
-    "preview2": {
-      "android": {
-        "gradleCommand": ":app:assembleRelease"
-      }
-    },
-    "preview3": {
-      "distribution": "internal"
-    },
     "development": {
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "DEV"
+      },
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
@@ -21,18 +11,26 @@
       },
       "android": {
         "developmentClient": true
-      }
+      },
+      "channel": "development"
+    },
+    "qa": {
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "QA"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "qa"
     },
     "release": {
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "PROD"
+      },
       "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease"
-      }
-    },
-    "production": {
-      "android": {
-        "buildType": "app-bundle"
-      }
+        "buildType": "apk"
+      },
+      "channel": "release"
     }
   }
 }

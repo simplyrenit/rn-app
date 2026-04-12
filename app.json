@@ -50,7 +50,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "4694f1b4-ada3-42b1-84ab-9a7d6fe2c1cb"
+        "projectId": "d9ee200a-0c82-4db8-bb21-95c3b225ba4a"
       }
     },
     "ios": {
@@ -75,7 +75,7 @@
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#000"
+        "backgroundColor": "#000000"
       },
       "permissions": [
         "android.permission.CAMERA",
@@ -95,6 +95,11 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "renit"
+    "scheme": "renit",
+    "owner": "yashtejwani00",
+    "runtimeVersion": "1.0.2",
+    "updates": {
+      "url": "https://u.expo.dev/d9ee200a-0c82-4db8-bb21-95c3b225ba4a"
+    }
   }
 }

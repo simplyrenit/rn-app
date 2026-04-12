@@ -23,21 +23,40 @@ export const FIREBASE_CONFIG = {
   measurementId: "G-P7DWR065WK",
 };
 
-export const DEV_MODE: string = "DEV"; // DEV or PROD
+type AppEnv = "DEV" | "QA" | "PROD";
+type RuntimeConfig = {
+  apiBaseUrl: string;
+  wsBaseUrl: string;
+};
 
-export let SERVERURL = "";
-export let SOCKET_URL = "";
+const RUNTIME_CONFIGS: Record<AppEnv, RuntimeConfig> = {
+  DEV: {
+    apiBaseUrl: "http://192.168.1.22:8000/api/",
+    wsBaseUrl: "ws://192.168.1.22:8000/ws/chat/",
+  },
+  QA: {
+    apiBaseUrl: "https://rennit.toratora.site/api/",
+    wsBaseUrl: "wss://rennit.toratora.site/ws/chat/",
+  },
+  PROD: {
+    apiBaseUrl: "https://api.simplyrenit.com/api/",
+    wsBaseUrl: "wss://api.simplyrenit.com/ws/chat/",
+  },
+};
 
-if (DEV_MODE === "PROD") {
-  SERVERURL = "https://api.simplyrenit.com/api/";
-  SOCKET_URL = "wss://api.simplyrenit.com/ws/chat/";
-} else {
-  SERVERURL = "http://192.168.1.22:8000/api/";
-  SOCKET_URL = "ws://192.168.1.22:8000/ws/chat/";
-}
+// Release builds should never default to a local LAN URL.
+const FALLBACK_ENV: AppEnv = __DEV__ ? "QA" : "PROD";
+const APP_ENV_FROM_ENV = (
+  ((process.env as Record<string, string | undefined>)["EXPO_PUBLIC_APP_ENV"] || "")
+).toUpperCase();
+export const DEV_MODE: AppEnv =
+  APP_ENV_FROM_ENV === "DEV" || APP_ENV_FROM_ENV === "QA" || APP_ENV_FROM_ENV === "PROD"
+    ? (APP_ENV_FROM_ENV as AppEnv)
+    : FALLBACK_ENV;
 
-export const ACCESS_TOKEN =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyMDE1NTc4LCJpYXQiOjE3MzA1NjU5NzgsImp0aSI6IjBkMjBkYTU1Zjk0MTRkODU4NDlhMmJiNmIxYTU5ODlkIiwidXNlcl9pZCI6NX0.8It2AqCNWb57D1NE8BlS6QXcxiJu7NI4fTzCCXi-ZYg";
+const runtimeConfig = RUNTIME_CONFIGS[DEV_MODE];
+export const SERVERURL = runtimeConfig.apiBaseUrl;
+export const SOCKET_URL = runtimeConfig.wsBaseUrl;
 
 export const GET_TOP_EXPERIENCE = SERVERURL + "top-experiences/";
 
