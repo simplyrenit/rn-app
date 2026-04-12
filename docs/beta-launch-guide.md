@@ -206,17 +206,15 @@ Without CloudFront, use the S3 domain directly:
 
 ## 5. App Configuration
 
-### 5.1 Update API URLs
+### 5.1 Update Runtime Environment Mapping
 
-In `src/lib/config.ts`, set `DEV_MODE` to `"PROD"` and verify the production URLs:
+In `src/lib/config.ts`, URL selection is env-driven (no manual `DEV_MODE` toggle).
 
-```typescript
-export const DEV_MODE: string = "PROD";
+Set env via EAS profile variable `EXPO_PUBLIC_APP_ENV`:
 
-// These should already be set:
-// SERVERURL = "https://api.simplyrenit.com/api/"
-// SOCKET_URL = "wss://api.simplyrenit.com/ws/chat/"
-```
+- `DEV` -> LAN backend (local debugging)
+- `QA` -> `https://rennit.toratora.site/api/`
+- `PROD` -> `https://api.simplyrenit.com/api/`
 
 ### 5.2 Update `app.json` / `app.config.js`
 
@@ -227,13 +225,18 @@ Verify the following fields are set correctly:
   "expo": {
     "name": "Renit",
     "slug": "renit",
-    "version": "1.0.0",
+    "version": "1.0.2",
+    "owner": "yashtejwani00",
+    "runtimeVersion": "1.0.2",
+    "updates": {
+      "url": "https://u.expo.dev/d9ee200a-0c82-4db8-bb21-95c3b225ba4a"
+    },
     "ios": {
-      "bundleIdentifier": "com.simplyrenit.app",
+      "bundleIdentifier": "com.renit.app",
       "buildNumber": "1"
     },
     "android": {
-      "package": "com.simplyrenit.app",
+      "package": "com.renit.app",
       "versionCode": 1,
       "googleServicesFile": "./google-services.json"
     }
@@ -249,22 +252,33 @@ eas login
 eas build:configure
 ```
 
-This generates `eas.json`. Ensure it has a `preview` profile:
+This generates `eas.json`. Ensure profiles/channels are aligned with your release tracks:
 
 ```json
 {
   "build": {
-    "preview": {
+    "development": {
+      "developmentClient": true,
       "distribution": "internal",
-      "android": {
-        "buildType": "apk"
-      },
-      "ios": {
-        "simulator": false
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "DEV"
       }
     },
-    "production": {
-      "autoIncrement": true
+    "qa": {
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "QA"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "release": {
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "PROD"
+      },
+      "android": {
+        "buildType": "apk"
+      }
     }
   }
 }
@@ -283,7 +297,7 @@ eas secret:create --name GOOGLE_MAP_API_KEY --value "<your-key>"
 ### 6.1 Android Build (APK for direct sharing)
 
 ```bash
-eas build --platform android --profile preview
+eas build --platform android --profile qa
 ```
 
 This produces an APK file you can download and share directly.
@@ -291,7 +305,7 @@ This produces an APK file you can download and share directly.
 ### 6.2 iOS Build (for TestFlight)
 
 ```bash
-eas build --platform ios --profile preview
+eas build --platform ios --profile release
 ```
 
 ### 6.3 Submit iOS Build to TestFlight
@@ -310,7 +324,7 @@ eas submit --platform ios
 
 **Option B: Google Play Internal Testing**
 1. Go to Google Play Console > Internal Testing
-2. Upload the AAB (use `production` profile instead of `preview`)
+2. Upload the AAB (configure `release` profile with `buildType: app-bundle` when preparing Play upload)
 3. Add tester email addresses
 4. Share the opt-in link with testers
 
@@ -379,9 +393,9 @@ Monitor tunnel health and traffic at https://one.dash.cloudflare.com.
 
 ### App
 
-- [ ] `DEV_MODE` set to `"PROD"` in `config.ts`
+- [ ] `EXPO_PUBLIC_APP_ENV` mapping verified in `config.ts` for DEV/QA/PROD
 - [ ] `app.json` has correct bundle identifiers and version
-- [ ] `eas.json` configured with preview and production profiles
+- [ ] `eas.json` configured with development/qa/release profiles
 - [ ] Google Services file (`google-services.json`) present for Android
 - [ ] Push notifications configured (FCM + APNs)
 - [ ] Android APK built and tested

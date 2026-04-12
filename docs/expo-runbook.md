@@ -1,37 +1,41 @@
 # Expo Build + OTA Runbook
 
-This document is the single reference for how Expo/EAS is configured in this repo and how to release updates.
+Single reference for current Expo/EAS setup in this repo.
 
 ---
 
 ## 1. Current Strategy
 
-We use a **build once, update many times** model:
+We use a build-once/update-many flow for testers:
 
-1. Build and install one Android tester APK.
-2. Push JS/config changes using `eas update` (no new APK each time).
-3. Rebuild APK only when native/runtime changes are introduced.
+1. Build and install one QA APK.
+2. Push JS/config changes with `eas update` (no new APK every time).
+3. Rebuild only when native/runtime changes are made.
 
-Current backend endpoints used by app runtime:
+Runtime API/WS config is selected by `EXPO_PUBLIC_APP_ENV` in `src/lib/config.ts`.
 
-- API: `https://rennit.toratora.site/api/`
-- WebSocket: `wss://rennit.toratora.site/ws/chat/`
+| Env | API base URL | WS base URL | Typical usage |
+|---|---|---|---|
+| `DEV` | `http://192.168.1.22:8000/api/` | `ws://192.168.1.22:8000/ws/chat/` | local LAN debugging |
+| `QA` | `https://rennit.toratora.site/api/` | `wss://rennit.toratora.site/ws/chat/` | internal QA testing |
+| `PROD` | `https://api.simplyrenit.com/api/` | `wss://api.simplyrenit.com/ws/chat/` | production release |
 
 ---
 
 ## 2. Release Architecture (ASCII)
 
 ```text
-                   (one-time install)
-Developer ──eas build (preview APK)──> EAS Build ──> APK link ──> QA installs app
-    │
-    │ (frequent JS/config changes)
-    └──eas update (preview branch)──> EAS Update channel=preview
-                                        │
-                                        └── App launch checks for update
-                                            (runtimeVersion must match)
-                                            └── downloads OTA bundle
-                                                └── applies on next reload/restart
+                    (one-time install per runtime)
+Developer -- eas build --profile qa --> EAS Build --> APK link --> QA installs app
+   |
+   | (frequent JS/config updates)
+   +-- npm run update:qa -- --message "..." --> branch=qa, channel=qa
+   |                                             |
+   |                                             +--> app checks update on launch
+   |                                                  downloads bundle
+   |                                                  applies on next restart
+   |
+   +-- npm run update:release -- --message "..." --> branch=release, channel=release
 ```
 
 ```text
@@ -48,17 +52,14 @@ else
 
 | File | Purpose |
 |---|---|
-| `app.json` | Expo app config, owner, `runtimeVersion`, and `updates.url`. |
-| `eas.json` | EAS build profiles (`preview`, `production`, etc.), channels, and profile env vars. |
-| `package.json` | Short commands for OTA update publishing (`update:preview`, `update:production`). |
-| `src/lib/config.ts` | App runtime API + WS base URLs (currently toratora for all envs). |
-| `android/app/src/main/AndroidManifest.xml` | Android expo-updates metadata (`EXPO_UPDATE_URL`, launch policy, runtime ref). |
-| `ios/Renit/Supporting/Expo.plist` | iOS expo-updates settings (`EXUpdatesURL`, `EXUpdatesRuntimeVersion`). |
-| `android/app/src/main/res/xml/network_security_config.xml` | Android network domain trust config. |
-| `ios/Renit/Info.plist` | iOS ATS exception domain entries. |
-| `src/screens/profileScreens/network-diagnostics.tsx` | In-app diagnostics for active URLs + REST/WS health tests. |
-| `src/components/profile/post-auth/profile-post-auth.tsx` | Profile menu entry to open diagnostics screen. |
-| `src/navigation/nav.tsx` | Route registration for `NetworkDiagnostics`. |
+| `app.json` | Expo config (`owner`, `runtimeVersion`, `updates.url`, app metadata). |
+| `eas.json` | Build profiles/channels: `development`, `qa`, `release`. |
+| `package.json` | OTA/build scripts: `update:development`, `update:qa`, `build:qa`, `update:release`. |
+| `src/lib/config.ts` | Single source of truth for DEV/QA/PROD API + WS runtime config. |
+| `ios/Renit/Supporting/Expo.plist` | iOS expo-updates (`EXUpdatesURL`, `EXUpdatesRuntimeVersion`, enabled flag). |
+| `ios/Renit/Info.plist` | iOS runtime app settings and ATS config. |
+| `android/app/src/main/res/xml/network_security_config.xml` | Android network security trust config. |
+| `src/screens/profileScreens/network-diagnostics.tsx` | In-app diagnostics (current env/URLs + REST/WS checks). |
 
 ---
 
@@ -69,50 +70,65 @@ else
 | Expo project ID | `d9ee200a-0c82-4db8-bb21-95c3b225ba4a` |
 | Update URL | `https://u.expo.dev/d9ee200a-0c82-4db8-bb21-95c3b225ba4a` |
 | Runtime version | `1.0.2` |
-| Preview channel | `preview` |
-| Preview Android output | `apk` |
-| `EXPO_PUBLIC_APP_ENV` (preview profile) | `QA` |
-| `EXPO_PUBLIC_API_BASE_URL` | `https://rennit.toratora.site/api/` |
-| `EXPO_PUBLIC_WS_BASE_URL` | `wss://rennit.toratora.site/ws/chat/` |
+| Build profiles | `development`, `qa`, `release` |
+| Update branches/channels | `development`, `qa`, `release` |
+| Fallback env in debug (`__DEV__`) | `QA` |
+| Fallback env in release build | `PROD` |
+| iOS update check | `EXUpdatesCheckOnLaunch=ALWAYS` |
 
 ---
 
 ## 5. Command Runbook
 
-### 5.1 Auth / sanity
+### 5.1 Auth check
 
 ```bash
 npx eas-cli whoami
 ```
 
-### 5.2 Build new QA APK (one-time install or native changes)
+### 5.2 Build QA APK (tester install / native change)
 
 ```bash
-npx eas-cli build --platform android --profile preview
+npm run build:qa
 ```
 
-### 5.3 Publish OTA update to QA testers (no APK rebuild)
+Equivalent:
 
 ```bash
-npm run update:preview -- --message "your update message"
+npx eas-cli build --platform android --profile qa
 ```
 
-Equivalent raw command:
+### 5.3 Publish OTA update for QA
 
 ```bash
-EXPO_PUBLIC_APP_ENV=QA \
-EXPO_PUBLIC_API_BASE_URL=https://rennit.toratora.site/api/ \
-EXPO_PUBLIC_WS_BASE_URL=wss://rennit.toratora.site/ws/chat/ \
-npx eas-cli update --branch preview --message "your update message"
+npm run update:qa -- --message "your update message"
 ```
 
-### 5.4 Publish OTA update to production branch
+Equivalent:
 
 ```bash
-npm run update:production -- --message "your update message"
+EXPO_PUBLIC_APP_ENV=QA npx eas-cli update --branch qa --message "your update message"
 ```
 
-### 5.5 Check build status / fetch artifact
+### 5.4 Publish OTA update for release
+
+```bash
+npm run update:release -- --message "your update message"
+```
+
+Equivalent:
+
+```bash
+EXPO_PUBLIC_APP_ENV=PROD npx eas-cli update --branch release --message "your update message"
+```
+
+### 5.5 Optional dev-client OTA updates
+
+```bash
+npm run update:development -- --message "your update message"
+```
+
+### 5.6 Check build status / artifact
 
 ```bash
 npx eas-cli build:list --platform android --limit 5 --json
@@ -123,36 +139,34 @@ npx eas-cli build:view <build-id> --json
 
 ## 6. Build vs Update Decision Table
 
-| Change type | OTA update only? | New APK build needed? |
+| Change type | OTA only | New build needed |
 |---|---:|---:|
-| JS/TS logic, UI, API paths in JS config | Yes | No |
-| Feature flags/env values read in JS bundle | Yes | No |
-| Expo config/plugin/native Android/iOS files | No | Yes |
+| JS/TS logic, UI, request paths in JS config | Yes | No |
+| `src/lib/config.ts` URL changes only | Yes | No |
+| `app.json`, `eas.json`, native iOS/Android file changes | No | Yes |
 | `runtimeVersion` change | No | Yes |
-| Native module add/remove, SDK-level native changes | No | Yes |
+| Add/remove native modules or plugins | No | Yes |
 
-Rule: if unsure and native touched, do a new build.
-
----
-
-## 7. How QA Should Pull an OTA Update
-
-1. Keep the tester app installed (preview build).
-2. Fully close app.
-3. Reopen app on internet.
-4. Launch again if needed to ensure the new bundle is applied.
-
-Because updates check is `ALWAYS` with wait `0`, the app checks each launch but applies downloaded update on restart/reload.
+Rule: if native files changed, build again.
 
 ---
 
-## 8. Diagnostics Workflow (QA)
+## 7. QA Update Pull Steps
 
-Open in app:
+1. Keep QA build installed.
+2. Close app fully.
+3. Reopen app with internet.
+4. Restart once more if needed to apply downloaded bundle.
+
+---
+
+## 8. Diagnostics Workflow
+
+Open:
 
 `Profile -> Network diagnostics`
 
-Capture and share:
+Collect and share:
 
 - `APP_ENV`
 - `SERVERURL`
@@ -160,17 +174,12 @@ Capture and share:
 - `Test REST` result
 - `Test WS` result
 
-Use this to separate:
-
-- wrong runtime config vs
-- REST connectivity issue vs
-- WebSocket-only issue.
+Use this to separate config mismatch vs REST reachability vs WS issues.
 
 ---
 
-## 9. Important Operational Notes
+## 9. Operational Notes
 
-- EAS build/update uploads from the **local machine workspace at command time**, not automatically from GitHub.
-- Keep `runtimeVersion` aligned with native app release cycle. OTA updates are runtime-version scoped.
-- If testers are on very old build runtime, publish will succeed but update will not apply to that installed app.
-
+- EAS build/update uploads from local workspace at command time (not automatically from GitHub).
+- `DEV` URLs use LAN IP and work only when tester and backend are reachable on that network.
+- OTA updates are runtime-version scoped; older runtime installs do not receive mismatched updates.
