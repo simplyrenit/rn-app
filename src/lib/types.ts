@@ -227,6 +227,7 @@ export type RootStackParamList = {
     subcategory: string;
   };
   unavailabilityFormCategories: undefined;
+  NetworkDiagnostics: undefined;
   UnavailabilitySubCat: { category: string; subcategories?: Subcategory[] };
   EditProductAvailability: { dates_blocked: BlockedDates[]; name: string };
   EditCategory: { name: string };

@@ -28,8 +28,14 @@ axiosInstance.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    console.log('###', error.response.status, originalRequest?.headers?.Authorization, error.response && error.response.status === 401 && originalRequest?.headers?.Authorization?.includes('Bearer ') && !originalRequest._retry)
-    if (error.response && error.response.status === 401 && originalRequest?.headers?.Authorization?.includes('Bearer ') && !originalRequest._retry) {
+    const status = error?.response?.status;
+    const authHeader = originalRequest?.headers?.Authorization;
+    const canRetryWithRefresh =
+      status === 401 &&
+      authHeader?.includes("Bearer ") &&
+      !originalRequest?._retry;
+    console.log('###', status, authHeader, canRetryWithRefresh);
+    if (canRetryWithRefresh) {
     try {
       console.log('### getting new token');
       const tokens = await getAuthTokens();
@@ -46,10 +52,14 @@ axiosInstance.interceptors.response.use(
           refresh_token: tokens?.refresh_token!,
         });
 
-        originalRequest.headers.Authorization = `Bearer ${newTokens.access}`;
+        if (originalRequest?.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newTokens.access}`;
+        }
         axiosInstance.defaults.headers.Authorization = `Bearer ${newTokens.access}`;
-        originalRequest._retry = true;
-        return axiosInstance(originalRequest);
+        if (originalRequest) {
+          originalRequest._retry = true;
+          return axiosInstance(originalRequest);
+        }
       } catch (refreshError) {
         // Handle refresh token error, e.g., log out the user
         // Clear tokens from storage

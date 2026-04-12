@@ -69,6 +69,7 @@ import EditCategory from "@/screens/profileScreens/edit/edit-category";
 import EditAboutProduct from "@/screens/profileScreens/edit/edit-about-product";
 import EditCoverImage from "@/screens/profileScreens/edit/edit-cover-image";
 import ReportAProblemScreen from "@/screens/profileScreens/report-a-problem";
+import NetworkDiagnosticsScreen from "@/screens/profileScreens/network-diagnostics";
 import OwnersReviewScreen from "@/screens/users/owners-review";
 import HangTight from "@/screens/post-screens/hang-tight";
 import LocationModal from "@/screens/post-screens/location-modal";
@@ -180,6 +181,10 @@ function ProfileStackScreen() {
       <PostStack.Screen
         name="ReportAProblem"
         component={ReportAProblemScreen}
+      />
+      <PostStack.Screen
+        name="NetworkDiagnostics"
+        component={NetworkDiagnosticsScreen}
       />
       <PostStack.Screen
         name="EditProductAvailability"
@@ -462,6 +467,10 @@ export default function Navigation() {
         <Stack.Screen
           name="ReportAProblem"
           component={ReportAProblemScreen}
+        />
+        <Stack.Screen
+          name="NetworkDiagnostics"
+          component={NetworkDiagnosticsScreen}
         />
         <Stack.Screen
           name="EditProductAvailability"

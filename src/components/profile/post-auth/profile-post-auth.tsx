@@ -189,6 +189,14 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
             />
             <IconButton
               onPress={() => {
+                router.navigate("NetworkDiagnostics");
+              }}
+              leftIcon="Square3Stack3DIcon"
+              text="Network diagnostics"
+              isDarkMode={isDarkMode}
+            />
+            <IconButton
+              onPress={() => {
                 router.navigate("feedback");
               }}
               leftIcon="BriefcaseIcon"

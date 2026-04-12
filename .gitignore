@@ -36,3 +36,5 @@ yarn-error.*
 
 %ProgramData%/Microsoft/Windows/UUS/State/_active.uusver
 
+# IDE (Android Studio / IntelliJ)
+.idea/
