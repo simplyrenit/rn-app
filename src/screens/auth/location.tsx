@@ -42,7 +42,7 @@ import {
   ViewfinderCircleIcon,
 } from "react-native-heroicons/outline";
 import { useAuthContext } from "@/context/auth-context";
-import { useAuth } from "@/backend/auth";
+import { SignUpError, useAuth } from "@/backend/auth";
 
 const StyledImage = styled(Image);
 
@@ -331,11 +331,28 @@ export default function LocationScreen() {
       coordinates: coordinatesPayload,
     });
 
-    const response = await signUpUser({
-      coordinates: coordinatesPayload,
-    });
-    if (response) {
-      navigation.navigate("MainTabs");
+    try {
+      const response = await signUpUser({
+        coordinates: coordinatesPayload,
+      });
+      if (response) {
+        navigation.navigate("MainTabs");
+      }
+    } catch (error: any) {
+      const signUpError = error as SignUpError;
+      if (signUpError.code === "otp_verification_required") {
+        Alert.alert(
+          "Verification required",
+          "Please verify your email OTP before completing signup.",
+          [{ text: "Go to verification", onPress: () => navigation.navigate("Email") }]
+        );
+        return;
+      }
+
+      Alert.alert(
+        "Signup failed",
+        signUpError.message || "Unable to complete signup right now."
+      );
     }
   };
 

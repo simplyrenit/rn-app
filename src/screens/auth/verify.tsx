@@ -1,4 +1,4 @@
-import { useAuth } from "@/backend/auth";
+import { SignUpError, useAuth } from "@/backend/auth";
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
 import { Button, StaticContainer, Text } from "@/components/core";
 import { ScrollContainer } from "@/components/core/scroll-container";
@@ -18,6 +18,7 @@ export default function VerifyEmail() {
   const [verificationCode, setVerificationCode] = useState("");
   const [password, setPassword] = useState("");
   const [isIncorrect, setIsIncorrect] = useState(false);
+  const [otpResendError, setOtpResendError] = useState("");
   const { theme, setAuthTokens } = useGlobalContext();
 
   const route = useRoute<RouteProps<"Verify">>();
@@ -68,11 +69,29 @@ export default function VerifyEmail() {
         setIsIncorrect(true);
       }
     }
-  }, [verificationCode, password, verificationType]);
+  }, [
+    verificationCode,
+    password,
+    verificationType,
+    verifyOTP,
+    email,
+    setAuthTokens,
+    router,
+    saveUser,
+    loginUser,
+  ]);
 
   const handleResendOTP = useCallback(async () => {
-    await sendOTP(email);
-  }, []);
+    setOtpResendError("");
+    try {
+      await sendOTP(email);
+    } catch (error: any) {
+      const otpError = error as SignUpError;
+      setOtpResendError(
+        otpError.message || "Unable to resend OTP right now. Please try again."
+      );
+    }
+  }, [email, sendOTP]);
 
   const styles = StyleSheet.create({
     textInputContainer: {
@@ -164,6 +183,21 @@ export default function VerifyEmail() {
                     Resend OTP
                   </Text>
                 </TouchableOpacity>
+
+                {!!otpResendError && (
+                  <View className="flex mt-2 flex-row items-center space-x-2">
+                    <XCircleIcon
+                      size={14}
+                      color="#ef4444"
+                    />
+                    <Text
+                      fontSize="text-sm"
+                      className="text-red-500"
+                    >
+                      {otpResendError}
+                    </Text>
+                  </View>
+                )}
               </>
             ) : (
               <>

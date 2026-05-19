@@ -1,4 +1,4 @@
-import { useAuth } from "@/backend/auth";
+import { SignUpError, useAuth } from "@/backend/auth";
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
 import { Button, StaticContainer, Text } from "@/components/core";
 import { ScrollContainer } from "@/components/core/scroll-container";
@@ -20,6 +20,7 @@ export default function LoginWithEmail() {
   const [email, setEmail] = useState("");
   const [isValid, setIsValid] = useState(true);
   const [isTouched, setIsTouched] = useState(false);
+  const [otpSendError, setOtpSendError] = useState("");
 
   const { saveUser } = useAuthContext();
   const { sendOTP } = useAuth();
@@ -30,15 +31,25 @@ export default function LoginWithEmail() {
     setEmail(text);
     setIsValid(validateEmail(text));
     setIsTouched(true);
+    setOtpSendError("");
   }, []);
 
   const handleSubmit = useCallback(
     async (verificationType: "otp" | "password") => {
       if (validateEmail(email)) {
+        setOtpSendError("");
         saveUser({ email });
 
         if (verificationType === "otp") {
-          await sendOTP(email);
+          try {
+            await sendOTP(email);
+          } catch (error: any) {
+            const otpError = error as SignUpError;
+            setOtpSendError(
+              otpError.message || "Unable to send OTP right now. Please try again."
+            );
+            return;
+          }
           router.navigate("Verify", { email, verificationType });
         } else {
           router.navigate("Verify", { email, verificationType });
@@ -47,7 +58,7 @@ export default function LoginWithEmail() {
         setIsValid(false);
       }
     },
-    [email]
+    [email, router, saveUser, sendOTP]
   );
 
   return (
@@ -100,6 +111,21 @@ export default function LoginWithEmail() {
                   className="text-red-500"
                 >
                   Please enter a valid email address
+                </Text>
+              </View>
+            )}
+
+            {!!otpSendError && (
+              <View className="flex flex-row items-center mt-4 space-x-3">
+                <InformationCircleIcon
+                  size={14}
+                  color="#ef4444"
+                />
+                <Text
+                  fontSize="text-sm"
+                  className="text-red-500"
+                >
+                  {otpSendError}
                 </Text>
               </View>
             )}

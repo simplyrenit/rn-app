@@ -5,17 +5,50 @@ import { AuthTokens, AuthUser, OTPResponse } from "@/lib/types";
 import axios from "axios";
 import { useState } from "react";
 
+export interface SignUpError {
+  status?: number;
+  code?: string;
+  message: string;
+}
+
+export interface OTPResponseMessage {
+  message: string;
+}
+
 export function useAuth() {
   const [loading, setLoading] = useState(false);
   const { user } = useAuthContext();
   const { setAuthTokens } = useGlobalContext();
 
-  async function sendOTP(email: string) {
+  const toRequestError = (error: any, fallbackMessage: string): SignUpError => {
+    if (error?.response) {
+      return {
+        status: error.response.status,
+        code: error.response.data?.code,
+        message:
+          error.response.data?.error ||
+          error.response.data?.message ||
+          fallbackMessage,
+      };
+    }
+
+    return {
+      message: error?.message || fallbackMessage,
+    };
+  };
+
+  async function sendOTP(email: string): Promise<OTPResponseMessage> {
     setLoading(true);
     try {
-      await axios.post(OTP, { email });
+      const response = await axios.post<OTPResponseMessage>(OTP, { email });
+      return response.data;
     } catch (error: any) {
-      console.error(error);
+      const otpError = toRequestError(
+        error,
+        "Unable to send OTP right now. Please try again."
+      );
+      console.error("SEND OTP ERROR", otpError);
+      throw otpError;
     } finally {
       setLoading(false);
     }
@@ -44,7 +77,7 @@ export function useAuth() {
 
   async function signUpUser(
     overrides?: Partial<AuthUser>
-  ): Promise<AuthTokens | null> {
+  ): Promise<AuthTokens> {
     setLoading(true);
     try {
       const mergedUser = { ...(user ?? {}), ...(overrides ?? {}) };
@@ -74,16 +107,12 @@ export function useAuth() {
 
       return response.data;
     } catch (error: any) {
-      if (error.response) {
-        console.error("SIGN UP ERROR", error.response.data);
-      } else {
-        console.error("SIGN UP ERROR", error.message);
-      }
+      const signUpError = toRequestError(error, "Unable to complete signup.");
+      console.error("SIGN UP ERROR", signUpError);
+      throw signUpError;
     } finally {
       setLoading(false);
     }
-
-    return null;
   }
 
   async function loginUser(
