@@ -29,13 +29,11 @@ import { Button, StaticContainer, Text } from "@/components/core";
 import AddressChoiceModal from "@/components/modals/AddressChoiceModalProps";
 import { useGlobalContext } from "@/context/global-context";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
-import BottomSheet from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import {
-  FlatList,
   GestureHandlerRootView,
-  ScrollView,
 } from "react-native-gesture-handler";
 import { NearbyPlace, RouteProps, useTypedNavigation } from "@/lib/types";
 import axios from "axios";
@@ -52,6 +50,9 @@ const StyledImage = styled(Image);
 import { Modal, View, StyleSheet } from "react-native";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useRoute } from "@react-navigation/native";
+
+const LOCATION_LOG_PREFIX = "[post/location-modal]";
+const LOCATION_FETCH_TIMEOUT_MS = 12000;
 
 const LocationModal = ({}) => {
   const route = useRoute<RouteProps<"LocationModal">>();
@@ -71,13 +72,63 @@ const LocationModal = ({}) => {
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [location2, setLocation2] = useState({
-    latitude: 0,
-    longitude: 0,
-  });
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const getLocationErrorMessage = useCallback(() => {
+    if (Platform.OS === "android") {
+      return "Current location is unavailable. Make sure that location services are enabled or set a mock location in the emulator.";
+    }
+
+    return "Current location is unavailable. Make sure that location services are enabled.";
+  }, []);
+
+  const resolveCurrentLocation = useCallback(async () => {
+    console.log(`${LOCATION_LOG_PREFIX} resolving current location`);
+
+    try {
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+      console.log(`${LOCATION_LOG_PREFIX} location services status`, {
+        servicesEnabled,
+      });
+
+      if (!servicesEnabled) {
+        throw new Error(getLocationErrorMessage());
+      }
+
+      const lastKnownLocation = await Location.getLastKnownPositionAsync();
+      console.log(`${LOCATION_LOG_PREFIX} last known location lookup`, {
+        hasLastKnownLocation: Boolean(lastKnownLocation),
+      });
+
+      if (lastKnownLocation) {
+        return lastKnownLocation;
+      }
+
+      const liveLocation = (await Promise.race([
+        Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Location request timed out")),
+            LOCATION_FETCH_TIMEOUT_MS
+          )
+        ),
+      ])) as Location.LocationObject;
+
+      console.log(`${LOCATION_LOG_PREFIX} live location resolved`, {
+        latitude: liveLocation.coords.latitude,
+        longitude: liveLocation.coords.longitude,
+      });
+
+      return liveLocation;
+    } catch (error) {
+      console.error(`${LOCATION_LOG_PREFIX} failed to resolve current location`, error);
+      throw new Error(getLocationErrorMessage());
+    }
+  }, [getLocationErrorMessage]);
 
   const fetchAddress = useCallback(async (loc: Location.LocationObject) => {
     try {
@@ -132,32 +183,38 @@ const LocationModal = ({}) => {
   }, []);
 
   const requestLocationPermission = useCallback(async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      console.log(`${LOCATION_LOG_PREFIX} permission request result`, { status });
 
-    if (status !== "granted") {
-      setHasPermission(false);
-      Alert.alert(
-        "Permission Denied",
-        "Location access is required to continue. Please enable it in your device settings.",
-        [
-          { text: "OK", onPress: () => console.log("OK Pressed") },
-          {
-            text: "Open Settings",
-            onPress: () =>
-              Platform.OS === "ios"
-                ? Linking.openURL("app-settings:")
-                : Linking.openSettings(),
-          },
-        ]
-      );
-      return;
+      if (status !== "granted") {
+        setHasPermission(false);
+        Alert.alert(
+          "Permission Denied",
+          "Location access is required to continue. Please enable it in your device settings.",
+          [
+            { text: "OK", onPress: () => console.log("OK Pressed") },
+            {
+              text: "Open Settings",
+              onPress: () =>
+                Platform.OS === "ios"
+                  ? Linking.openURL("app-settings:")
+                  : Linking.openSettings(),
+            },
+          ]
+        );
+        return;
+      }
+
+      setHasPermission(true);
+      const nextLocation = await resolveCurrentLocation();
+      setLocation(nextLocation);
+      fetchAddress(nextLocation);
+    } catch (error) {
+      console.error(`${LOCATION_LOG_PREFIX} failed to request location permission`, error);
+      Alert.alert("Unable to fetch location", getLocationErrorMessage());
     }
-
-    setHasPermission(true);
-    let location = await Location.getCurrentPositionAsync({});
-    setLocation(location);
-    fetchAddress(location);
-  }, [fetchAddress]);
+  }, [fetchAddress, getLocationErrorMessage, resolveCurrentLocation]);
 
   const fetchSelectedAddress = useCallback(
     async (latitude: number, longitude: number) => {
@@ -221,23 +278,32 @@ const LocationModal = ({}) => {
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.getForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setHasPermission(false);
-        if (Platform.OS === "ios") {
-          requestLocationPermission();
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        console.log(`${LOCATION_LOG_PREFIX} existing permission status`, {
+          status,
+        });
+
+        if (status !== "granted") {
+          setHasPermission(false);
+          if (Platform.OS === "ios") {
+            await requestLocationPermission();
+          }
+        } else {
+          setHasPermission(true);
+          const nextLocation = await resolveCurrentLocation();
+          setLocation(nextLocation);
+          fetchAddress(nextLocation);
         }
-      } else {
-        setHasPermission(true);
-        let location = await Location.getCurrentPositionAsync({});
-        setLocation(location);
-        fetchAddress(location);
+      } catch (error) {
+        console.error(`${LOCATION_LOG_PREFIX} failed during initial location bootstrap`, error);
+        setHasPermission(false);
       }
     })();
-  }, [requestLocationPermission, fetchAddress]);
+  }, [requestLocationPermission, fetchAddress, resolveCurrentLocation]);
 
   const handleSubmit = useCallback(() => {
-    requestLocationPermission();
+    void requestLocationPermission();
   }, [requestLocationPermission]);
 
   const handleMapPress = useCallback(
@@ -251,9 +317,10 @@ const LocationModal = ({}) => {
 
   const getCurrentLocation = async () => {
     try {
-      const { coords } = await Location.getCurrentPositionAsync();
-      setLocation2(coords);
+      const currentLocation = await resolveCurrentLocation();
+      setLocation(currentLocation);
     } catch (error) {
+      console.error(`${LOCATION_LOG_PREFIX} failed to refresh current location`, error);
     }
   };
 
@@ -262,7 +329,7 @@ const LocationModal = ({}) => {
 
     setLoading(true);
 
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location2.latitude},${location2.longitude}&radius=1500&type=restaurant&key=${GOOGLE_MAP_API_KEY}`;
+    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.coords.latitude},${location.coords.longitude}&radius=1500&type=restaurant&key=${GOOGLE_MAP_API_KEY}`;
 
     try {
       const response = await axios.get(url);
@@ -276,13 +343,9 @@ const LocationModal = ({}) => {
 
   useEffect(() => {
     if (location) {
-      fetchNearbyPlaces();
+      void fetchNearbyPlaces();
     }
   }, [location]);
-
-  useEffect(() => {
-    getCurrentLocation(); // Fetch current location on component mount
-  }, []);
 
   const handleSelectNearbyPlace = (place: any) => {
     setSelectedLocation({
@@ -356,8 +419,10 @@ const LocationModal = ({}) => {
   };
 
   const handleCurrentLocation = () => {
+    console.log(`${LOCATION_LOG_PREFIX} use current location pressed`);
     setSelectedAddress(null);
     setSelectedLocation(null);
+    void getCurrentLocation();
   };
 
   useEffect(() => {
@@ -538,13 +603,11 @@ const LocationModal = ({}) => {
                     keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
                     style={{ flex: 1 }}
                   >
-                    <ScrollView
-                      nestedScrollEnabled={true}
-                      keyboardShouldPersistTaps="handled"
-                      contentContainerStyle={{
+                    <View
+                      style={{
                         paddingVertical: wp("5%"),
                         paddingHorizontal: wp("5%"),
-                        flexGrow: 1,
+                        flex: 1,
                       }}
                     >
                       <View className="rounded-t-3xl">
@@ -616,7 +679,7 @@ const LocationModal = ({}) => {
                               ? "border-[#292929] bg-[#0F0F0F]"
                               : "border-[#e6e6e6] bg-white"
                           }`}
-                          style={{ alignItems: 'flex-start'}}
+                          style={{ alignItems: "flex-start" }}
                         >
                           <MagnifyingGlassIcon
                             color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
@@ -635,12 +698,11 @@ const LocationModal = ({}) => {
                             disableScroll={true}
                             styles={{
                               textInput: {
-                                height: '100%',
+                                height: "100%",
                                 backgroundColor: isDarkMode
                                   ? "#0F0F0F"
                                   : "#fff",
                                 borderRadius: 12,
-                                // paddingHorizontal: 8,
                                 zIndex: 10,
                                 color: isDarkMode ? "#fff" : "#000",
                                 fontSize: 16,
@@ -685,66 +747,38 @@ const LocationModal = ({}) => {
                             </View>
                           </View>
                         </TouchableOpacity>
-
-                        <ScrollView
-                          style={{ maxHeight: 450 }}
-                          nestedScrollEnabled={true}
-                        >
-                          {loading ? (
-                            <Text className="mt-3">
-                              Loading nearby places...
-                            </Text>
-                          ) : (
-                            <>
-                              {/* <FlatList
-                              scrollEnabled={false}
-                              data={nearbyPlaces}
-                              keyExtractor={(item) => item.place_id}
-                              renderItem={({ item }) => (
-                                <TouchableOpacity
-                                  onPress={() => handleSelectNearbyPlace(item)}
-                                  className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${
-                                    isDarkMode
-                                      ? "border-[#292929]"
-                                      : "border-[#e6e6e6]"
-                                  }`}
-                                >
-                                  <MapPinIcon
-                                    color={isDarkMode ? "white" : "black"}
-                                    size={20}
-                                  />
-                                  <Text fontSize="text-sm">{item.name}</Text>
-                                </TouchableOpacity>
-                              )}
-                            /> */}
-                              {nearbyPlaces.map((item) => (
-                                <TouchableOpacity
-                                  key={item.place_id}
-                                  onPress={() => handleSelectNearbyPlace(item)}
-                                  className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${
-                                    isDarkMode
-                                      ? "border-[#292929]"
-                                      : "border-[#e6e6e6]"
-                                  }`}
-                                >
-                                  <MapPinIcon
-                                    color={isDarkMode ? "white" : "black"}
-                                    size={20}
-                                  />
-                                  <Text fontSize="text-sm">{item.name}</Text>
-                                </TouchableOpacity>
-                              ))}
-                            </>
-                          )}
-                        </ScrollView>
-
-                        {/* <AddressChoiceModal
-                        isVisible={isModalVisible}
-                        onClose={() => setModalVisible(false)}
-                        onConfirm={confirmAddressChoice}
-                      /> */}
                       </View>
-                    </ScrollView>
+
+                      {loading ? (
+                        <Text className="mt-3">
+                          Loading nearby places...
+                        </Text>
+                      ) : (
+                        <BottomSheetFlatList
+                          data={nearbyPlaces}
+                          keyExtractor={(item) => item.place_id}
+                          style={{ maxHeight: 450 }}
+                          contentContainerStyle={{ paddingBottom: wp("5%") }}
+                          keyboardShouldPersistTaps="handled"
+                          renderItem={({ item }) => (
+                            <TouchableOpacity
+                              onPress={() => handleSelectNearbyPlace(item)}
+                              className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${
+                                isDarkMode
+                                  ? "border-[#292929]"
+                                  : "border-[#e6e6e6]"
+                              }`}
+                            >
+                              <MapPinIcon
+                                color={isDarkMode ? "white" : "black"}
+                                size={20}
+                              />
+                              <Text fontSize="text-sm">{item.name}</Text>
+                            </TouchableOpacity>
+                          )}
+                        />
+                      )}
+                    </View>
                   </KeyboardAvoidingView>
                 </BottomSheet>
               </>

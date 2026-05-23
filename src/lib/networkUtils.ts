@@ -2,6 +2,81 @@ import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { GET_CATEGORIES, GET_REFRESH_TOKEN } from "./config";
 import { getAuthTokens, setAuthTokens } from "./auth-fns";
 
+const NETWORK_LOG_PREFIX = "[network]";
+let requestCounter = 0;
+
+type RequestMetadata = {
+  requestId: number;
+  startedAt: number;
+};
+
+interface NetworkRequestConfig extends AxiosRequestConfig {
+  _retry?: boolean;
+  metadata?: RequestMetadata;
+}
+
+const REDACTED_KEYS = new Set([
+  "password",
+  "current_password",
+  "new_password",
+  "access_token",
+  "refresh_token",
+  "refresh",
+  "authorization",
+  "token",
+  "id_token",
+  "identityToken",
+]);
+
+const sanitizeValue = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeValue(item));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, nestedValue]) => [
+        key,
+        REDACTED_KEYS.has(key) ? "[REDACTED]" : sanitizeValue(nestedValue),
+      ])
+    );
+  }
+
+  return value;
+};
+
+const buildRequestUrl = (config: AxiosRequestConfig): string => {
+  const baseUrl = config.baseURL ?? "";
+  const requestUrl = config.url ?? "";
+
+  if (requestUrl.startsWith("http://") || requestUrl.startsWith("https://")) {
+    return requestUrl;
+  }
+
+  return `${baseUrl}${requestUrl}`;
+};
+
+const getDurationMs = (config?: NetworkRequestConfig): number | undefined => {
+  if (!config?.metadata?.startedAt) {
+    return undefined;
+  }
+
+  return Date.now() - config.metadata.startedAt;
+};
+
+const getAuthAttached = (config?: AxiosRequestConfig): boolean => {
+  const headers = config?.headers as
+    | Record<string, unknown>
+    | undefined;
+
+  const authorizationHeader =
+    headers?.Authorization ?? headers?.authorization;
+
+  return typeof authorizationHeader === "string"
+    ? authorizationHeader.includes("Bearer ")
+    : false;
+};
+
 // Create axios instance with shared timeout/header defaults.
 const axiosInstance = axios.create({
   timeout: 30000,
@@ -12,28 +87,74 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
+    const networkConfig = config as NetworkRequestConfig;
+    networkConfig.metadata = {
+      requestId: ++requestCounter,
+      startedAt: Date.now(),
+    };
+
+    console.log(`${NETWORK_LOG_PREFIX} request`, {
+      requestId: networkConfig.metadata.requestId,
+      method: (networkConfig.method || "GET").toUpperCase(),
+      url: buildRequestUrl(networkConfig),
+      hasAuth: getAuthAttached(networkConfig),
+      params: sanitizeValue(networkConfig.params),
+      data: sanitizeValue(networkConfig.data),
+      timeout: networkConfig.timeout,
+    });
+
     return config;
   },
   (error) => {
-    console.error("Request Error:", error.message);
+    console.error(`${NETWORK_LOG_PREFIX} request setup failed`, {
+      message: error.message,
+    });
     return Promise.reject(error);
   }
 );
 
 axiosInstance.interceptors.response.use(
   (response) => {
+    const networkConfig = response.config as NetworkRequestConfig;
+    console.log(`${NETWORK_LOG_PREFIX} response`, {
+      requestId: networkConfig.metadata?.requestId,
+      method: (networkConfig.method || "GET").toUpperCase(),
+      url: buildRequestUrl(networkConfig),
+      status: response.status,
+      durationMs: getDurationMs(networkConfig),
+      hasAuth: getAuthAttached(networkConfig),
+      data: sanitizeValue(response.data),
+    });
+
     return response;
   },
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as NetworkRequestConfig | undefined;
     const status = error?.response?.status;
     const authHeader = originalRequest?.headers?.Authorization;
     const canRetryWithRefresh =
       status === 401 &&
       authHeader?.includes("Bearer ") &&
       !originalRequest?._retry;
+
+    console.error(`${NETWORK_LOG_PREFIX} response failed`, {
+      requestId: originalRequest?.metadata?.requestId,
+      method: (originalRequest?.method || "GET").toUpperCase(),
+      url: originalRequest ? buildRequestUrl(originalRequest) : undefined,
+      status,
+      durationMs: getDurationMs(originalRequest),
+      hasAuth: getAuthAttached(originalRequest),
+      message: error.message,
+      responseData: sanitizeValue(error?.response?.data),
+    });
+
     if (canRetryWithRefresh) {
       try {
+        console.warn(`${NETWORK_LOG_PREFIX} attempting token refresh`, {
+          requestId: originalRequest?.metadata?.requestId,
+          failedStatus: status,
+          url: originalRequest ? buildRequestUrl(originalRequest) : undefined,
+        });
         const tokens = await getAuthTokens();
         if (!tokens?.refresh_token) {
           return Promise.reject(error);
@@ -50,6 +171,10 @@ axiosInstance.interceptors.response.use(
           refresh_token: tokens.refresh_token,
         });
 
+        console.log(`${NETWORK_LOG_PREFIX} token refresh succeeded`, {
+          requestId: originalRequest?.metadata?.requestId,
+        });
+
         if (originalRequest?.headers) {
           originalRequest.headers.Authorization = `Bearer ${newTokens.access}`;
         }
@@ -59,9 +184,21 @@ axiosInstance.interceptors.response.use(
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
-        // Handle refresh token error, e.g., log out the user
-        // Clear tokens from storage
-        // Redirect or handle user session expiration
+        console.error(`${NETWORK_LOG_PREFIX} token refresh failed`, {
+          requestId: originalRequest?.metadata?.requestId,
+          message:
+            refreshError instanceof AxiosError
+              ? refreshError.message
+              : "Unknown refresh error",
+          status:
+            refreshError instanceof AxiosError
+              ? refreshError.response?.status
+              : undefined,
+          responseData:
+            refreshError instanceof AxiosError
+              ? sanitizeValue(refreshError.response?.data)
+              : undefined,
+        });
       }
     }
 

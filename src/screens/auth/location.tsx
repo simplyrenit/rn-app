@@ -30,10 +30,9 @@ import { Button, StaticContainer, Text } from "@/components/core";
 import AddressChoiceModal from "@/components/modals/AddressChoiceModalProps";
 import { useGlobalContext } from "@/context/global-context";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
-import BottomSheet from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-import { FlatList, ScrollView } from "react-native-gesture-handler";
 import { NearbyPlace, useTypedNavigation } from "@/lib/types";
 import axios from "axios";
 import {
@@ -45,6 +44,8 @@ import { useAuthContext } from "@/context/auth-context";
 import { SignUpError, useAuth } from "@/backend/auth";
 
 const StyledImage = styled(Image);
+const LOCATION_FETCH_TIMEOUT_MS = 12000;
+const LOCATION_LOG_PREFIX = "[auth/location]";
 
 export default function LocationScreen() {
   const { theme } = useGlobalContext();
@@ -52,7 +53,7 @@ export default function LocationScreen() {
   const navigation = useTypedNavigation();
 
   const isDarkMode = theme === "dark";
-  const { saveUser, user } = useAuthContext();
+  const { saveUser } = useAuthContext();
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [location, setLocation] = useState<Location.LocationObject | null>(
@@ -63,16 +64,21 @@ export default function LocationScreen() {
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [location2, setLocation2] = useState({
-    latitude: 0,
-    longitude: 0,
-  });
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const fetchAddress = useCallback(async (loc: Location.LocationObject) => {
     try {
+      console.log(
+        `${LOCATION_LOG_PREFIX} reverse geocoding current location`,
+        {
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        }
+      );
       const reverseGeocode = await Location.reverseGeocodeAsync({
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
@@ -113,9 +119,15 @@ export default function LocationScreen() {
         }
 
         setAddress(formattedAddress);
+        console.log(`${LOCATION_LOG_PREFIX} resolved current address`, {
+          formattedAddress,
+        });
         // console.log("Formatted Address:", formattedAddress);
       } else {
         setAddress("Address not found");
+        console.warn(
+          `${LOCATION_LOG_PREFIX} reverse geocode returned no results for current location`
+        );
       }
     } catch (error) {
       console.error("Failed to fetch address:", error);
@@ -123,37 +135,156 @@ export default function LocationScreen() {
     }
   }, []);
 
-  const requestLocationPermission = useCallback(async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-
-    if (status !== "granted") {
-      setHasPermission(false);
-      Alert.alert(
-        "Permission Denied",
-        "Location access is required to continue. Please enable it in your device settings.",
-        [
-          { text: "OK", onPress: () => console.log("OK Pressed") },
-          {
-            text: "Open Settings",
-            onPress: () =>
-              Platform.OS === "ios"
-                ? Linking.openURL("app-settings:")
-                : Linking.openSettings(),
-          },
-        ]
-      );
+  const openLocationSettings = useCallback(() => {
+    if (Platform.OS === "ios") {
+      Linking.openURL("app-settings:");
       return;
     }
 
-    setHasPermission(true);
-    let location = await Location.getCurrentPositionAsync({});
-    setLocation(location);
-    fetchAddress(location);
-  }, [fetchAddress]);
+    Linking.openSettings();
+  }, []);
+
+  const buildLocationUnavailableMessage = useCallback(() => {
+    if (Platform.OS === "android") {
+      return "We couldn't fetch your current location. If you're using an emulator, set a mock location in Android Studio and try again.";
+    }
+
+    return "We couldn't fetch your current location. Please try again.";
+  }, []);
+
+  const resolveCurrentLocation = useCallback(async () => {
+    console.log(`${LOCATION_LOG_PREFIX} resolving current location`);
+    setIsFetchingLocation(true);
+    setLocationError(null);
+
+    try {
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+      console.log(`${LOCATION_LOG_PREFIX} location services status`, {
+        servicesEnabled,
+      });
+
+      if (!servicesEnabled) {
+        setLocation(null);
+        setLocationError(
+          "Location services are turned off. Please enable them and try again."
+        );
+        Alert.alert(
+          "Turn on location services",
+          "Location services are turned off on this device. Please enable them and try again."
+        );
+        return;
+      }
+
+      const lastKnownLocation = await Location.getLastKnownPositionAsync();
+      console.log(`${LOCATION_LOG_PREFIX} last known location lookup`, {
+        hasLastKnownLocation: Boolean(lastKnownLocation),
+      });
+
+      if (lastKnownLocation) {
+        setLocation(lastKnownLocation);
+        console.log(`${LOCATION_LOG_PREFIX} using last known location`, {
+          latitude: lastKnownLocation.coords.latitude,
+          longitude: lastKnownLocation.coords.longitude,
+        });
+        fetchAddress(lastKnownLocation);
+        return;
+      }
+
+      console.log(`${LOCATION_LOG_PREFIX} requesting live current position`, {
+        accuracy: "balanced",
+        timeoutMs: LOCATION_FETCH_TIMEOUT_MS,
+      });
+      const currentLocation = (await Promise.race([
+        Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Location request timed out")),
+            LOCATION_FETCH_TIMEOUT_MS
+          )
+        ),
+      ])) as Location.LocationObject;
+
+      setLocation(currentLocation);
+      console.log(`${LOCATION_LOG_PREFIX} resolved live current position`, {
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
+      });
+      fetchAddress(currentLocation);
+    } catch (error) {
+      console.error("Failed to get current location:", error);
+      setLocation(null);
+      const errorMessage = buildLocationUnavailableMessage();
+      setLocationError(errorMessage);
+      Alert.alert(
+        "Unable to fetch location",
+        errorMessage
+      );
+    } finally {
+      setIsFetchingLocation(false);
+    }
+  }, [buildLocationUnavailableMessage, fetchAddress]);
+
+  const requestLocationPermission = useCallback(async () => {
+    console.log(`${LOCATION_LOG_PREFIX} requesting foreground location permission`);
+    setLocationError(null);
+
+    try {
+      const permissionResponse =
+        await Location.requestForegroundPermissionsAsync();
+      console.log(`${LOCATION_LOG_PREFIX} permission response`, {
+        status: permissionResponse.status,
+        canAskAgain: permissionResponse.canAskAgain,
+        granted: permissionResponse.granted,
+      });
+
+      if (permissionResponse.status !== "granted") {
+        setHasPermission(false);
+        setLocation(null);
+        setLocationError(
+          permissionResponse.canAskAgain
+            ? "Location access was denied."
+            : "Location access is blocked. Please enable it in settings."
+        );
+        Alert.alert(
+          "Permission Denied",
+          permissionResponse.canAskAgain
+            ? "Location access is required to continue. Please allow it to continue."
+            : "Location access is blocked for this app. Please enable it in your device settings.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Open Settings",
+              onPress: openLocationSettings,
+            },
+          ]
+        );
+        return;
+      }
+
+      setHasPermission(true);
+      await resolveCurrentLocation();
+    } catch (error) {
+      console.error("Failed to request location permission:", error);
+      setHasPermission(false);
+      setLocationError(
+        "We couldn't request location access. Please try again."
+      );
+      Alert.alert(
+        "Location error",
+        "We couldn't request location access. Please try again."
+      );
+    }
+  }, [openLocationSettings, resolveCurrentLocation]);
 
   const fetchSelectedAddress = useCallback(
     async (latitude: number, longitude: number) => {
       try {
+        console.log(`${LOCATION_LOG_PREFIX} reverse geocoding selected location`, {
+          latitude,
+          longitude,
+        });
         const reverseGeocode = await Location.reverseGeocodeAsync({
           latitude,
           longitude,
@@ -199,12 +330,18 @@ export default function LocationScreen() {
           }
 
           setSelectedAddress(formattedAddress);
+          console.log(`${LOCATION_LOG_PREFIX} resolved selected address`, {
+            formattedAddress,
+          });
           // console.log("Formatted Address:", formattedAddress);
         } else {
           setSelectedAddress("Address not found");
+          console.warn(
+            `${LOCATION_LOG_PREFIX} reverse geocode returned no results for selected location`
+          );
         }
       } catch (error) {
-        console.error("Failed to fetch address:", error);
+      console.error("Failed to fetch address:", error);
         setSelectedAddress("Unable to retrieve address");
       }
     },
@@ -213,52 +350,75 @@ export default function LocationScreen() {
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.getForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setHasPermission(false);
-        if (Platform.OS === "ios") {
-          requestLocationPermission();
+      try {
+        console.log(`${LOCATION_LOG_PREFIX} checking existing foreground permission`);
+        const permissionResponse =
+          await Location.getForegroundPermissionsAsync();
+        console.log(`${LOCATION_LOG_PREFIX} existing permission response`, {
+          status: permissionResponse.status,
+          canAskAgain: permissionResponse.canAskAgain,
+          granted: permissionResponse.granted,
+        });
+
+        if (permissionResponse.status !== "granted") {
+          setHasPermission(false);
+          return;
         }
-      } else {
+
         setHasPermission(true);
-        let location = await Location.getCurrentPositionAsync({});
-        setLocation(location);
-        fetchAddress(location);
+        await resolveCurrentLocation();
+      } catch (error) {
+        console.error("Failed to check location permission:", error);
+        setHasPermission(false);
+        setLocationError(
+          "We couldn't check location permission. Please try again."
+        );
       }
     })();
-  }, [requestLocationPermission, fetchAddress]);
+  }, [resolveCurrentLocation]);
 
-  const handleSubmit = useCallback(() => {
-    requestLocationPermission();
-  }, [requestLocationPermission]);
+  const handleSubmit = useCallback(async () => {
+    console.log(`${LOCATION_LOG_PREFIX} primary CTA pressed`, {
+      hasPermission,
+    });
+    if (hasPermission) {
+      await resolveCurrentLocation();
+      return;
+    }
+
+    await requestLocationPermission();
+  }, [hasPermission, requestLocationPermission, resolveCurrentLocation]);
 
   const handleMapPress = useCallback(
     (event: any) => {
       const { latitude, longitude } = event.nativeEvent.coordinate;
+      console.log(`${LOCATION_LOG_PREFIX} map pressed`, {
+        latitude,
+        longitude,
+      });
       setSelectedLocation({ latitude, longitude });
       fetchSelectedAddress(latitude, longitude);
     },
     [fetchSelectedAddress]
   );
 
-  const getCurrentLocation = async () => {
-    try {
-      const { coords } = await Location.getCurrentPositionAsync();
-      setLocation2(coords);
-    } catch (error) {
-    }
-  };
-
   const fetchNearbyPlaces = async () => {
     if (!location) return;
 
     setLoading(true);
+    console.log(`${LOCATION_LOG_PREFIX} fetching nearby places`, {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    });
 
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location2.latitude},${location2.longitude}&radius=1500&type=restaurant&key=${GOOGLE_MAP_API_KEY}`;
+    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.coords.latitude},${location.coords.longitude}&radius=1500&type=restaurant&key=${GOOGLE_MAP_API_KEY}`;
 
     try {
       const response = await axios.get(url);
       setNearbyPlaces(response.data.results); // Save nearby places
+      console.log(`${LOCATION_LOG_PREFIX} nearby places fetched`, {
+        count: response.data.results?.length ?? 0,
+      });
     } catch (error) {
       console.error("Error fetching nearby places: ", error);
     } finally {
@@ -272,11 +432,13 @@ export default function LocationScreen() {
     }
   }, [location]);
 
-  useEffect(() => {
-    getCurrentLocation(); // Fetch current location on component mount
-  }, []);
-
   const handleSelectNearbyPlace = (place: any) => {
+    console.log(`${LOCATION_LOG_PREFIX} nearby place selected`, {
+      placeId: place.place_id,
+      name: place.name,
+      latitude: place.geometry.location.lat,
+      longitude: place.geometry.location.lng,
+    });
     setSelectedLocation({
       latitude: place.geometry.location.lat,
       longitude: place.geometry.location.lng,
@@ -320,6 +482,9 @@ export default function LocationScreen() {
         : undefined;
 
     if (!coordinatesPayload) {
+      console.warn(`${LOCATION_LOG_PREFIX} confirm location blocked`, {
+        reason: "missing_coordinates",
+      });
       Alert.alert(
         "Location required",
         "Please select your location to complete onboarding."
@@ -330,12 +495,19 @@ export default function LocationScreen() {
     await saveUser({
       coordinates: coordinatesPayload,
     });
+    console.log(`${LOCATION_LOG_PREFIX} submitting onboarding with location`, {
+      coordinatesPayload,
+      selectedAddress,
+    });
 
     try {
       const response = await signUpUser({
         coordinates: coordinatesPayload,
       });
       if (response) {
+        console.log(
+          `${LOCATION_LOG_PREFIX} signup completed successfully with location`
+        );
         navigation.navigate("MainTabs");
       }
     } catch (error: any) {
@@ -356,6 +528,34 @@ export default function LocationScreen() {
     }
   };
 
+  const handleSkipLocation = useCallback(async () => {
+    console.log(`${LOCATION_LOG_PREFIX} skipping location during onboarding`);
+    try {
+      const response = await signUpUser();
+      if (response) {
+        console.log(
+          `${LOCATION_LOG_PREFIX} signup completed successfully without location`
+        );
+        navigation.navigate("MainTabs");
+      }
+    } catch (error: any) {
+      const signUpError = error as SignUpError;
+      if (signUpError.code === "otp_verification_required") {
+        Alert.alert(
+          "Verification required",
+          "Please verify your email OTP before completing signup.",
+          [{ text: "Go to verification", onPress: () => navigation.navigate("Email") }]
+        );
+        return;
+      }
+
+      Alert.alert(
+        "Signup failed",
+        signUpError.message || "Unable to complete signup right now."
+      );
+    }
+  }, [navigation, signUpUser]);
+
   const bottomSheetRef = useRef<BottomSheet>(null);
   const googlePlacesRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
@@ -367,6 +567,11 @@ export default function LocationScreen() {
   const handlePlaceSelected = (data: any, details: any) => {
     const lat = details.geometry.location.lat;
     const lng = details.geometry.location.lng;
+    console.log(`${LOCATION_LOG_PREFIX} place autocomplete selected`, {
+      description: data?.description,
+      latitude: lat,
+      longitude: lng,
+    });
     setSelectedLocation({ latitude: lat, longitude: lng });
     setSelectedAddress(details.formatted_address);
     mapRef.current?.animateToRegion(
@@ -382,9 +587,11 @@ export default function LocationScreen() {
     bottomSheetRef.current?.snapToIndex(0);
   };
 
-  const handleCurrentLocation = () => {
+  const handleCurrentLocation = async () => {
+    console.log(`${LOCATION_LOG_PREFIX} use current location pressed`);
     setSelectedAddress(null);
     setSelectedLocation(null);
+    await resolveCurrentLocation();
   };
 
   useEffect(() => {
@@ -544,13 +751,11 @@ export default function LocationScreen() {
                   keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
                   style={{ flex: 1 }}
                 >
-                  <ScrollView
-                    nestedScrollEnabled={true}
-                    keyboardShouldPersistTaps="handled"
-                    contentContainerStyle={{
+                  <View
+                    style={{
                       paddingVertical: wp("5%"),
                       paddingHorizontal: wp("5%"),
-                      flexGrow: 1,
+                      flex: 1,
                     }}
                   >
                     <View className="rounded-t-3xl">
@@ -653,7 +858,7 @@ export default function LocationScreen() {
                             ? "border-[#292929] bg-[#0F0F0F]"
                             : "border-[#e6e6e6] bg-white"
                         }`}
-                        style={{ alignItems: 'center'}}
+                        style={{ alignItems: "center" }}
                       >
                         <MagnifyingGlassIcon
                           color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
@@ -671,10 +876,9 @@ export default function LocationScreen() {
                           disableScroll={true}
                           styles={{
                             textInput: {
-                              height: '100%',
+                              height: "100%",
                               backgroundColor: isDarkMode ? "#0F0F0F" : "#fff",
                               borderRadius: 12,
-                              // paddingHorizontal: 8,
                               zIndex: 10,
                               color: isDarkMode ? "#fff" : "#000",
                               fontSize: 16,
@@ -717,73 +921,132 @@ export default function LocationScreen() {
                         </View>
                       </TouchableOpacity>
 
-                      <ScrollView
-                        style={{ maxHeight: 450 }}
-                        nestedScrollEnabled={true}
-                      >
-                        {loading ? (
-                          <Text className="mt-3">Loading nearby places...</Text>
-                        ) : (
-                          <>
-                            {/* <FlatList
-                              scrollEnabled={false}
-                              data={nearbyPlaces}
-                              keyExtractor={(item) => item.place_id}
-                              renderItem={({ item }) => (
-                                <TouchableOpacity
-                                  onPress={() => handleSelectNearbyPlace(item)}
-                                  className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${
-                                    isDarkMode
-                                      ? "border-[#292929]"
-                                      : "border-[#e6e6e6]"
-                                  }`}
-                                >
-                                  <MapPinIcon
-                                    color={isDarkMode ? "white" : "black"}
-                                    size={20}
-                                  />
-                                  <Text fontSize="text-sm">{item.name}</Text>
-                                </TouchableOpacity>
-                              )}
-                            /> */}
-                            {nearbyPlaces.map((item) => (
-                              <TouchableOpacity
-                                key={item.place_id}
-                                onPress={() => handleSelectNearbyPlace(item)}
-                                className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${
-                                  isDarkMode
-                                    ? "border-[#292929]"
-                                    : "border-[#e6e6e6]"
-                                }`}
-                              >
-                                <MapPinIcon
-                                  color={isDarkMode ? "white" : "black"}
-                                  size={20}
-                                />
-                                <Text fontSize="text-sm">{item.name}</Text>
-                              </TouchableOpacity>
-                            ))}
-                          </>
-                        )}
-                      </ScrollView>
-
                       {/* <AddressChoiceModal
                         isVisible={isModalVisible}
                         onClose={() => setModalVisible(false)}
                         onConfirm={confirmAddressChoice}
                       /> */}
                     </View>
-                  </ScrollView>
+
+                    {loading ? (
+                      <Text className="mt-3">Loading nearby places...</Text>
+                    ) : (
+                      <BottomSheetFlatList
+                        data={nearbyPlaces}
+                        keyExtractor={(item) => item.place_id}
+                        style={{ maxHeight: 450 }}
+                        contentContainerStyle={{ paddingBottom: wp("5%") }}
+                        keyboardShouldPersistTaps="handled"
+                        renderItem={({ item }) => (
+                          <TouchableOpacity
+                            onPress={() => handleSelectNearbyPlace(item)}
+                            className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${
+                              isDarkMode
+                                ? "border-[#292929]"
+                                : "border-[#e6e6e6]"
+                            }`}
+                          >
+                            <MapPinIcon
+                              color={isDarkMode ? "white" : "black"}
+                              size={20}
+                            />
+                            <Text fontSize="text-sm">{item.name}</Text>
+                          </TouchableOpacity>
+                        )}
+                      />
+                    )}
+                  </View>
                 </KeyboardAvoidingView>
               </BottomSheet>
             </>
+          ) : hasPermission ? (
+            <View className="w-[90%] mx-auto flex-1 items-center justify-center py-5">
+              {isFetchingLocation ? (
+                <>
+                  <ActivityIndicator
+                    size="large"
+                    color="#635BE8"
+                  />
+                  <Text
+                    fontSize="text-lg"
+                    className="mt-4 text-center"
+                  >
+                    Fetching your current location...
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text
+                    fontSize="text-2xl"
+                    fontWeight="font-semibold"
+                    className="text-center"
+                  >
+                    We need your current location
+                  </Text>
+                  <Text
+                    fontSize="text-lg"
+                    className="mt-2 text-center text-gray-500"
+                  >
+                    {locationError ||
+                      "Location access is granted, but we couldn't fetch your current location yet."}
+                  </Text>
+                  <Button
+                    variant="primary"
+                    onPress={handleSubmit}
+                    className="mt-6 w-full"
+                    disabled={isFetchingLocation}
+                  >
+                    Try again
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onPress={handleSkipLocation}
+                    className="mt-3 w-full"
+                    disabled={signUpLoading}
+                  >
+                    {signUpLoading ? (
+                      <ActivityIndicator
+                        size="small"
+                        color={isDarkMode ? "#fff" : "#000"}
+                      />
+                    ) : (
+                      "Skip for now"
+                    )}
+                  </Button>
+                </>
+              )}
+            </View>
           ) : (
             <View className="w-[90%] mx-auto py-5">
+              {locationError ? (
+                <Text
+                  fontSize="text-sm"
+                  className="mb-3 text-center text-red-500"
+                >
+                  {locationError}
+                </Text>
+              ) : null}
               <Button
                 variant="primary"
                 onPress={handleSubmit}
+                disabled={isFetchingLocation}
               >
                 Provide location access
+              </Button>
+              <Button
+                variant="outline"
+                onPress={handleSkipLocation}
+                className="mt-3"
+                disabled={signUpLoading}
+              >
+                {signUpLoading ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={isDarkMode ? "#fff" : "#000"}
+                  />
+                ) : (
+                  "Skip for now"
+                )}
               </Button>
             </View>
           )}

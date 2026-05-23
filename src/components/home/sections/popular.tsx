@@ -8,6 +8,8 @@ import { ScrollView, View } from "react-native";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import * as Location from "expo-location";
 
+const LOCATION_LOG_PREFIX = "[home/popular]";
+
 interface Category {
   title: string;
   parent?: {
@@ -67,17 +69,24 @@ export function Popular() {
 
   useEffect(() => {
     const getLocation = async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === "granted") {
-        let location = await Location.getCurrentPositionAsync({});
-        setCoordinates({
-          lat: location.coords.latitude,
-          long: location.coords.longitude,
-        });
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const location = await Location.getCurrentPositionAsync({});
+          setCoordinates({
+            lat: location.coords.latitude,
+            long: location.coords.longitude,
+          });
+        }
+      } catch (error) {
+        console.warn(
+          `${LOCATION_LOG_PREFIX} failed to resolve current location, using default coordinates`,
+          error
+        );
       }
     };
 
-    getLocation();
+    void getLocation();
   }, []);
 
   useEffect(() => {

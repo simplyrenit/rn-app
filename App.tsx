@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Alert, LogBox, StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { GlobalProvider } from "@/context/global-context";
 import { ProductProvider } from "@/context/product-context";
 import Navigation from "@/navigation/nav";
@@ -18,15 +18,9 @@ import {
 } from "@/backend/notifications";
 import { AuthProvider } from "@/context/auth-context";
 import { QueryClient, QueryClientProvider } from "react-query";
-import firebase from "@react-native-firebase/app";
-import { FIREBASE_CONFIG, WEB_CLIENT_ID } from "@/lib/config";
+import { WEB_CLIENT_ID } from "@/lib/config";
 import { testApiConnection } from "@/lib/apiTest";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-
-// Initialize Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(FIREBASE_CONFIG);
-}
 
 
 GoogleSignin.configure({
@@ -157,5 +151,3 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 });
-
-LogBox.ignoreAllLogs();

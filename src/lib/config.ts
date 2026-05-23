@@ -1,4 +1,4 @@
-import { initializeApp } from "@react-native-firebase/app";
+import { getApp } from "@react-native-firebase/app";
 import { getFirestore } from "@react-native-firebase/firestore";
 import { getStorage } from "@react-native-firebase/storage";
 
@@ -31,8 +31,8 @@ type RuntimeConfig = {
 
 const RUNTIME_CONFIGS: Record<AppEnv, RuntimeConfig> = {
   DEV: {
-    apiBaseUrl: "http://192.168.1.22:8000/api/",
-    wsBaseUrl: "ws://192.168.1.22:8000/ws/chat/",
+    apiBaseUrl: "http://10.0.2.2:8000/api/",
+    wsBaseUrl: "ws://10.0.2.2:8000/ws/chat/",
   },
   QA: {
     apiBaseUrl: "https://rennit.toratora.site/api/",
@@ -126,7 +126,7 @@ export const GET_REFRESH_TOKEN = SERVERURL + 'token/refresh/';
 let app, firestore, storage;
 
 try {
-  app = initializeApp(FIREBASE_CONFIG);
+  app = getApp();
   firestore = getFirestore(app);
   storage = getStorage(app);
 } catch (error) {

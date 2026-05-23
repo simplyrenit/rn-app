@@ -192,9 +192,11 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
       await sA(tokens);
 
       setAuthTokensState(tokens);
+      axiosInstance.defaults.headers.Authorization = `Bearer ${tokens.access_token}`;
       setIsAuthenticated(true);
     } else {
       await removeAuthTokens();
+      delete axiosInstance.defaults.headers.Authorization;
       setAuthTokensState(null);
       setIsAuthenticated(false);
     }

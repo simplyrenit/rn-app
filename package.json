@@ -8,10 +8,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "update:development": "EXPO_PUBLIC_APP_ENV=DEV npx eas-cli update --branch development",
-    "update:qa": "EXPO_PUBLIC_APP_ENV=QA npx eas-cli update --branch qa",
-    "build:qa": "npx eas-cli build --platform android --profile qa",
-    "update:release": "EXPO_PUBLIC_APP_ENV=PROD npx eas-cli update --branch release"
+    "build:qa": "npx eas-cli build --platform android --profile qa"
   },
   "jest": {
     "preset": "jest-expo"
@@ -86,8 +83,7 @@
     "react-native-svg-uri": "^1.2.3",
     "react-native-toast-message": "^2.2.1",
     "react-query": "^3.39.3",
-    "socket.io-client": "^4.8.1",
-    "expo-updates": "~0.25.28"
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

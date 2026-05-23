@@ -96,10 +96,6 @@
       "favicon": "./assets/favicon.png"
     },
     "scheme": "renit",
-    "owner": "yashtejwani00",
-    "runtimeVersion": "1.0.2",
-    "updates": {
-      "url": "https://u.expo.dev/d9ee200a-0c82-4db8-bb21-95c3b225ba4a"
-    }
+    "owner": "yashtejwani00"
   }
 }
