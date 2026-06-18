@@ -178,9 +178,9 @@ Exit criteria:
 
 - [x] Verify favorites fetch
 - [x] Verify saving a product
-- [ ] Verify unsaving a product
+- [x] Verify unsaving a product
 - [x] Verify saved tab reflects latest state
-- [ ] Verify behavior for guest vs authenticated users
+- [x] Verify behavior for guest vs authenticated users
 
 Exit criteria:
 
@@ -331,10 +331,11 @@ While working each item:
 - [x] Chat bubble tap no longer throws `Possible unhandled promise rejection` for plain text messages; only valid links remain tappable
 - [x] Product detail renders core product information correctly on physical Android, including deposit vs daily-rate separation
 - [x] Owner detail review uncovered and fixed a hardcoded owner rating on `UserDetail`
-- [x] Favorites flow verified for authenticated users from product detail to Saved tab: save POST succeeds and Saved reflects the new item immediately
-- [x] Root cause of Android unsave failure identified: `DELETE /favorites/` with JSON body fails at the native transport layer in the local-device path even though the backend accepts it
-- [x] Favorites delete now retries with an `application/x-www-form-urlencoded` fallback body for Android/local-device compatibility
+- [x] Favorites flow now passes on physical Android for both authenticated and guest behavior: fetch, save, unsave, and Saved-tab empty state all behave consistently
+- [x] Root cause of Android unsave failure fixed end to end: mobile now sends a body-less `DELETE` with `product_name` as a query param, and the backend accepts that contract
+- [x] Backend favorites delete response corrected from an invalid body-plus-`204` response to a normal `200` success payload so Android no longer misclassifies successful deletes as network failures
 - [x] Home discovery category taps no longer send hardcoded coordinates into `SearchResults`
 - [x] Home discovery now shares one optional-location resolver instead of prompting repeatedly from each section
 - [x] Home tab no longer shows a blocking location-permission alert just by mounting
-- [ ] Final unsave-from-Saved and category-search retests should be rerun on the physical device after the latest location/favorites fixes
+- [x] Final unsave-from-Saved retest passed on the physical device after the latest favorites fixes
+- [ ] Category-search retest should be rerun on the physical device after the latest location/discovery fixes

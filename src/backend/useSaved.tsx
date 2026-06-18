@@ -2,7 +2,6 @@ import { useGlobalContext } from "@/context/global-context";
 import { GET_FAVORITES } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { BackendProduct } from "@/lib/types";
-import { AxiosError } from "axios";
 import { useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 
@@ -12,39 +11,6 @@ const useSaved = () => {
   const { authTokens, isAuthenticated } = useGlobalContext();
   const { access_token } = authTokens || {};
   const queryClient = useQueryClient();
-
-  const deleteFavoriteWithFetchFallback = useCallback(
-    async (productName: string) => {
-      const formBody = `product_name=${encodeURIComponent(productName)}`;
-
-      const response = await fetch(GET_FAVORITES, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Bearer ${access_token}`,
-        },
-        body: formBody,
-      });
-
-      if (!response.ok && response.status !== 204) {
-        let errorMessage = `Favorite delete failed with status ${response.status}`;
-
-        try {
-          const errorPayload = await response.json();
-          if (errorPayload?.error || errorPayload?.detail) {
-            errorMessage = errorPayload.error || errorPayload.detail;
-          }
-        } catch {
-          // Ignore JSON parse failures and use the status-derived message.
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      return null;
-    },
-    [access_token]
-  );
 
   const fetchFavorites = useCallback(async (): Promise<BackendProduct[]> => {
     if (!isAuthenticated || !access_token) {
@@ -92,35 +58,13 @@ const useSaved = () => {
         return null;
       }
 
-      try {
-        const response = await axiosInstance.request({
-          method: "DELETE",
-          url: GET_FAVORITES,
-          data: {
-            product_name: productName,
-          },
-        });
+      const response = await axiosInstance.delete(GET_FAVORITES, {
+        params: {
+          product_name: productName,
+        },
+      });
 
-        return response.data ?? null;
-      } catch (error) {
-        const isTransportFailure =
-          error instanceof AxiosError &&
-          !error.response &&
-          error.message === "Network Error";
-
-        if (!isTransportFailure) {
-          throw error;
-        }
-
-        console.warn(
-          "[favorites] axios delete failed on native client, retrying with fetch",
-          {
-            productName,
-          }
-        );
-
-        return deleteFavoriteWithFetchFallback(productName);
-      }
+      return response.data ?? null;
     },
     {
       onSuccess: () => {
