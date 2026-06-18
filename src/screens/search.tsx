@@ -50,18 +50,15 @@ interface Coordinates {
 
 export default function SearchScreen() {
   const navigation = useTypedNavigation();
-  const { theme, authTokens } = useGlobalContext();
-  const { access_token } = authTokens || {};
+  const { theme } = useGlobalContext();
   const isDark = theme === "dark";
   const route = useRoute<RouteProps<"Search">>();
-  const {
-    what
-  } = (route?.params ?? {});
+  const { what, where, coords } = route?.params ?? {};
 
   const [selectedItem, setSelectedItem] = useState<string | null>(what ?? null);
-  const [selectedLocationName, setSelectedLocationName] = useState<
-    string | null
-  >(null);
+  const [selectedLocationName, setSelectedLocationName] = useState<string | null>(
+    where ?? null
+  );
   const [location, setLocation] = useState({
     latitude: 0,
     longitude: 0,
@@ -71,8 +68,14 @@ export default function SearchScreen() {
   const [loading, setLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
 
-  const [selectedLocation, setSelectedLocation] =
-    useState<Coordinates | null>();
+  const [selectedLocation, setSelectedLocation] = useState<Coordinates | null>(
+    coords
+      ? {
+          lat: coords.lat,
+          lng: coords.lng,
+        }
+      : null
+  );
   const [range, setRange] = useState({
     startDate: undefined as Date | undefined,
     endDate: undefined as Date | undefined,
@@ -244,6 +247,45 @@ export default function SearchScreen() {
   useEffect(() => {
     getCurrentLocation(); // Fetch current location on component mount
   }, []);
+
+  useEffect(() => {
+    setSelectedItem(what ?? null);
+    setSelectedLocationName(where ?? null);
+    setSelectedLocation(
+      coords
+        ? {
+            lat: coords.lat,
+            lng: coords.lng,
+          }
+        : null
+    );
+  }, [coords, what, where]);
+
+  useEffect(() => {
+    const hydrateRouteLocation = async () => {
+      if (!where || coords || selectedLocation) {
+        return;
+      }
+
+      try {
+        const geocoded = await Location.geocodeAsync(where);
+        const firstMatch = geocoded[0];
+
+        if (!firstMatch) {
+          return;
+        }
+
+        setSelectedLocation({
+          lat: firstMatch.latitude,
+          lng: firstMatch.longitude,
+        });
+      } catch (error) {
+        console.error("Error geocoding route location:", error);
+      }
+    };
+
+    void hydrateRouteLocation();
+  }, [coords, selectedLocation, where]);
 
   const { searchProducts } = useSearch();
 

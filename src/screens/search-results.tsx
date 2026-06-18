@@ -32,6 +32,15 @@ const { height } = Dimensions.get("window");
 
 const StyledBottomView = styled(BottomSheetView);
 
+const createDefaultFilters = (category = "") => ({
+  sort: "",
+  category,
+  subCategory: "",
+  price: { min: "", max: "" },
+  ratings: { product: 0, owner: 0 },
+  condition: "",
+});
+
 const formatDate = (date: Date | undefined) => {
   if (!date) return "";
   const options: Intl.DateTimeFormatOptions = {
@@ -65,19 +74,15 @@ export default function SearchResults() {
   } = route.params;
   const { searchProducts } = useSearch();
   const [products, setProducts] = useState<BackendProduct[]>(fetchedProducts);
+  const didBootstrapSearchRef = useRef(false);
 
   const handleOpenBottomSheet = () => {
     bottomSheetRef.current?.present();
   };
 
-  const [filters, setFilters] = useState({
-    sort: "",
-    category: category || "",
-    subCategory: "",
-    price: { min: "", max: "" },
-    ratings: { product: 0, owner: 0 },
-    condition: "",
-  });
+  const [filters, setFilters] = useState(() =>
+    createDefaultFilters(category || "")
+  );
 
   const isFilterActive = () => {
     const { sort, category, subCategory, price, ratings, condition } = filters;
@@ -127,7 +132,14 @@ export default function SearchResults() {
     }));
   };
 
-  const applyFilterAndSearch = async () => {
+  const applyFilterAndSearch = async (
+    nextFilters: typeof filters = filters
+  ) => {
+    if (coords.lat == null || coords.lng == null) {
+      setProducts([]);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const filteredProducts = await searchProducts(
@@ -138,14 +150,14 @@ export default function SearchResults() {
           end_date: range.endDate?.toISOString() ?? undefined,
         },
         {
-          sort: filters.sort,
-          category: filters.category,
-          subcategory: filters.subCategory,
-          min_price: filters.price.min,
-          max_price: filters.price.max,
-          product_rating: filters.ratings.product,
-          owner_rating: filters.ratings.owner,
-          condition: filters.condition,
+          sort: nextFilters.sort,
+          category: nextFilters.category,
+          subcategory: nextFilters.subCategory,
+          min_price: nextFilters.price.min,
+          max_price: nextFilters.price.max,
+          product_rating: nextFilters.ratings.product,
+          owner_rating: nextFilters.ratings.owner,
+          condition: nextFilters.condition,
         }
       );
       setProducts(filteredProducts.filter(prod => !prod?.moderation_labels?.length));
@@ -157,15 +169,11 @@ export default function SearchResults() {
   };
 
   const clearFiltersAndSearch = async () => {
-    setFilters({
-      sort: "",
-      category: "",
-      subCategory: "",
-      price: { min: "", max: "" },
-      ratings: { product: 0, owner: 0 },
-      condition: "",
-    });
-    await applyFilterAndSearch();
+    const resetFilters = createDefaultFilters();
+    setSelectedCategory(null);
+    setShowSubCategory(false);
+    setFilters(resetFilters);
+    await applyFilterAndSearch(resetFilters);
   };
 
   const closeSheet = async () => {
@@ -203,11 +211,21 @@ export default function SearchResults() {
 
   useEffect(() => {
     if (category) {
-      handleCategorySelect(category);
+      setSelectedCategory(category);
       setSelectedTab("Category");
-      // handleOpenBottomSheet();
     }
   }, [category]);
+
+  useEffect(() => {
+    if (didBootstrapSearchRef.current || fetchedProducts.length > 0) {
+      return;
+    }
+
+    didBootstrapSearchRef.current = true;
+    void applyFilterAndSearch(
+      createDefaultFilters(category || "")
+    );
+  }, [category, fetchedProducts.length]);
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
@@ -216,7 +234,14 @@ export default function SearchResults() {
         <Pressable
           onPress={() => {
             navigation.dispatch(
-              StackActions.replace('Search', { what: selectedItem, where: address })
+              StackActions.replace("Search", {
+                what: selectedItem,
+                where: address,
+                coords: {
+                  lat: coords?.lat,
+                  lng: coords?.lng,
+                },
+              })
             );
           }}
           style={styles.Shadow}

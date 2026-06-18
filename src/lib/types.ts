@@ -208,7 +208,13 @@ export type RootStackParamList = {
   Location: undefined;
   Privacy: undefined;
   Terms: undefined;
-  Search: { what?: string }|undefined;
+  Search:
+    | {
+        what?: string;
+        where?: string;
+        coords?: { lat?: number; lng?: number };
+      }
+    | undefined;
   SearchResults: {
     selectedItem: string;
     range: { startDate: Date | undefined; endDate: Date | undefined };

@@ -164,11 +164,11 @@ Exit criteria:
 
 ### 7. Search and results flow
 
-- [ ] Verify search screen rendering
-- [ ] Verify category + location-based search
-- [ ] Verify manual place selection and current location
-- [ ] Verify search results page content and navigation
-- [ ] Verify empty search results state
+- [x] Verify search screen rendering
+- [x] Verify category + location-based search
+- [x] Verify manual place selection and current location
+- [x] Verify search results page content and navigation
+- [x] Verify empty search results state
 
 Exit criteria:
 
@@ -338,4 +338,5 @@ While working each item:
 - [x] Home discovery now shares one optional-location resolver instead of prompting repeatedly from each section
 - [x] Home tab no longer shows a blocking location-permission alert just by mounting
 - [x] Final unsave-from-Saved retest passed on the physical device after the latest favorites fixes
-- [ ] Category-search retest should be rerun on the physical device after the latest location/discovery fixes
+- [x] Search flow fixes landed and passed retest on the physical Android device: category searches no longer send `Invalid date`, empty category results now bootstrap correctly, and refining a search preserves `what`, `where`, and coordinates
+- [x] Backend search no longer crashes when NLTK `wordnet` data is absent, and `nearest` sorting now orders by actual proximity
