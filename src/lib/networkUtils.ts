@@ -28,6 +28,32 @@ const REDACTED_KEYS = new Set([
   "identityToken",
 ]);
 
+const summarizeArray = (value: unknown[]) => {
+  const firstItem = value[0];
+
+  return {
+    type: "array",
+    length: value.length,
+    sampleKeys:
+      firstItem && typeof firstItem === "object" && !Array.isArray(firstItem)
+        ? Object.keys(firstItem as Record<string, unknown>).slice(0, 8)
+        : undefined,
+  };
+};
+
+const summarizeObject = (value: Record<string, unknown>) => {
+  const keys = Object.keys(value);
+
+  return {
+    type: "object",
+    keys: keys.slice(0, 10),
+    totalKeys: keys.length,
+    totalResults:
+      typeof value.total_results === "number" ? value.total_results : undefined,
+    resultCount: Array.isArray(value.results) ? value.results.length : undefined,
+  };
+};
+
 const sanitizeValue = (value: unknown): unknown => {
   if (Array.isArray(value)) {
     return value.map((item) => sanitizeValue(item));
@@ -43,6 +69,20 @@ const sanitizeValue = (value: unknown): unknown => {
   }
 
   return value;
+};
+
+const summarizeValue = (value: unknown): unknown => {
+  const sanitizedValue = sanitizeValue(value);
+
+  if (Array.isArray(sanitizedValue)) {
+    return summarizeArray(sanitizedValue);
+  }
+
+  if (sanitizedValue && typeof sanitizedValue === "object") {
+    return summarizeObject(sanitizedValue as Record<string, unknown>);
+  }
+
+  return sanitizedValue;
 };
 
 const buildRequestUrl = (config: AxiosRequestConfig): string => {
@@ -98,8 +138,8 @@ axiosInstance.interceptors.request.use(
       method: (networkConfig.method || "GET").toUpperCase(),
       url: buildRequestUrl(networkConfig),
       hasAuth: getAuthAttached(networkConfig),
-      params: sanitizeValue(networkConfig.params),
-      data: sanitizeValue(networkConfig.data),
+      params: summarizeValue(networkConfig.params),
+      data: summarizeValue(networkConfig.data),
       timeout: networkConfig.timeout,
     });
 
@@ -123,7 +163,7 @@ axiosInstance.interceptors.response.use(
       status: response.status,
       durationMs: getDurationMs(networkConfig),
       hasAuth: getAuthAttached(networkConfig),
-      data: sanitizeValue(response.data),
+      data: summarizeValue(response.data),
     });
 
     return response;
