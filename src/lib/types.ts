@@ -294,6 +294,7 @@ export interface BlockStatus {
 
 export interface Owner {
   addresses: string[];
+  average_rating?: number;
   business_name: string;
   coordinates: {
     lat: number;

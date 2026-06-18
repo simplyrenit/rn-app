@@ -100,10 +100,10 @@ Exit criteria:
 
 ### 2. Guest entry and welcome flow
 
-- [ ] Verify welcome screen renders correctly
+- [x] Verify welcome screen renders correctly
 - [ ] Verify `Google`, `Apple` (where applicable), `Email`, and `Skip` entry points
-- [ ] Verify guest navigation after `Skip`
-- [ ] Verify guest limitations are understandable and non-breaking
+- [x] Verify guest navigation after `Skip`
+- [x] Verify guest limitations are understandable and non-breaking
 
 Exit criteria:
 
@@ -176,10 +176,10 @@ Exit criteria:
 
 ### 8. Saved / favorites flow
 
-- [ ] Verify favorites fetch
-- [ ] Verify saving a product
+- [x] Verify favorites fetch
+- [x] Verify saving a product
 - [ ] Verify unsaving a product
-- [ ] Verify saved tab reflects latest state
+- [x] Verify saved tab reflects latest state
 - [ ] Verify behavior for guest vs authenticated users
 
 Exit criteria:
@@ -188,9 +188,9 @@ Exit criteria:
 
 ### 9. Product detail and owner trust flow
 
-- [ ] Verify product detail screen renders complete product data
+- [x] Verify product detail screen renders complete product data
 - [ ] Verify image gallery and cover image behavior
-- [ ] Verify pricing, availability, description, and location sections
+- [x] Verify pricing, availability, description, and location sections
 - [ ] Verify navigation to owner profile, owner products, and owner reviews
 - [ ] Verify review writing entry points
 
@@ -200,9 +200,9 @@ Exit criteria:
 
 ### 10. Chat list and chat detail flow
 
-- [ ] Verify conversation list loads
-- [ ] Verify navigation into `ChatDetails`
-- [ ] Verify message history rendering
+- [x] Verify conversation list loads
+- [x] Verify navigation into `ChatDetails`
+- [x] Verify message history rendering
 - [ ] Verify send message flow
 - [ ] Verify typing/read-state behavior if available
 - [ ] Verify block/unblock/report paths
@@ -322,4 +322,19 @@ While working each item:
 - [x] Initial code crawl completed
 - [x] Core route families identified: auth, discovery, saved, post, chat, profile, merchant gating
 - [x] Flow 1 complete: environment and boot stability
-- [ ] Flow 2 in progress: guest entry and welcome flow
+- [ ] Flow 2 in progress: auth entry-point validation still pending
+- [x] Guest-mode guard fixes landed for `users/me`, favorites, and notifications
+- [x] Guest tab sweep on physical Android completed without app-originated `401` or unhandled promise noise
+- [x] Email entry handoff opens cleanly on Android without runtime errors
+- [x] Authenticated renter sweep verified saved list, profile bootstrap, post category entry, and chat list/detail navigation on physical Android
+- [x] Chat detail warning `Attempt to set local data for view with unknown tag: -1` fixed by removing direct native input mutation in `ChatInput`
+- [x] Chat bubble tap no longer throws `Possible unhandled promise rejection` for plain text messages; only valid links remain tappable
+- [x] Product detail renders core product information correctly on physical Android, including deposit vs daily-rate separation
+- [x] Owner detail review uncovered and fixed a hardcoded owner rating on `UserDetail`
+- [x] Favorites flow verified for authenticated users from product detail to Saved tab: save POST succeeds and Saved reflects the new item immediately
+- [x] Root cause of Android unsave failure identified: `DELETE /favorites/` with JSON body fails at the native transport layer in the local-device path even though the backend accepts it
+- [x] Favorites delete now retries with an `application/x-www-form-urlencoded` fallback body for Android/local-device compatibility
+- [x] Home discovery category taps no longer send hardcoded coordinates into `SearchResults`
+- [x] Home discovery now shares one optional-location resolver instead of prompting repeatedly from each section
+- [x] Home tab no longer shows a blocking location-permission alert just by mounting
+- [ ] Final unsave-from-Saved and category-search retests should be rerun on the physical device after the latest location/favorites fixes

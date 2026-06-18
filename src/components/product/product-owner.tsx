@@ -36,26 +36,19 @@ export function AboutOwner({
       onPress={() => navigation.navigate("UserDetail", { id })}
       className="w-full mt-0 h-20 flex flex-row items-center"
     >
-      <View className="">
+      <View>
         {profilePic ? (
           <StyledImage
             source={{ uri: profilePic }}
-            // className="h-16 w-16 rounded-full"
             style={{ width: wp("14%"), height: wp("14%") }}
             className="rounded-full"
           />
         ) : (
-          <UserCircleIcon
-            color={"#635BE8"}
-            size={wp("14%")}
-          />
+          <UserCircleIcon color="#635BE8" size={wp("14%")} />
         )}
       </View>
       <View className="flex-1 ml-2">
-        <Text
-          fontSize="text-md"
-          fontWeight="font-bold"
-        >
+        <Text fontSize="text-md" fontWeight="font-bold">
           {name}
         </Text>
         <View className="flex flex-row items-center space-x-1 mt-1">
@@ -71,7 +64,7 @@ export function AboutOwner({
           <Text
             className={`${isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"}`}
           >
-            ∙
+            •
           </Text>
           <Text
             className={`${isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"}`}
@@ -80,7 +73,7 @@ export function AboutOwner({
           </Text>
         </View>
       </View>
-      <View className=" h-full justify-center items-end">
+      <View className="h-full justify-center items-end">
         <ChevronRightIcon
           color={isDark ? "white" : "black"}
           size={wp("5%")}

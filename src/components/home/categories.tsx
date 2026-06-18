@@ -4,17 +4,15 @@ import {
   TouchableOpacity,
   View,
   Image,
-  Platform,
   StyleSheet,
 } from "react-native";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { CAT_DETAILS, CATEGORIES } from "@/lib/categories";
+import { CATEGORIES } from "@/lib/categories";
 import { CategoryItem } from "../../lib/types";
 import { Text } from "../core";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
-import * as Location from "expo-location";
-import { SvgUri } from "react-native-svg";
+import { getDiscoveryLocationData } from "@/lib/location";
 
 export function Categories() {
   const navigation = useTypedNavigation();
@@ -46,65 +44,6 @@ export function Categories() {
     },
   });
 
-  const getFormattedAddress = async () => {
-    try {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        return;
-      }
-      let location = await Location.getCurrentPositionAsync({});
-      const reverseGeocode = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-
-      if (reverseGeocode.length > 0) {
-        const {
-          name,
-          street,
-          streetNumber,
-          district,
-          city,
-          region,
-          postalCode,
-          country,
-        } = reverseGeocode[0];
-
-        let formattedAddress = "";
-
-        if (Platform.OS === "ios") {
-          const addressLine1 = [streetNumber, street].filter(Boolean).join(" ");
-          const addressLine2 = [district, city].filter(Boolean).join(", ");
-          const addressLine3 = [region, postalCode].filter(Boolean).join(" ");
-
-          formattedAddress = [addressLine1, addressLine2, addressLine3]
-            .filter(Boolean)
-            .join(", ");
-        } else {
-          formattedAddress = reverseGeocode[0].formattedAddress || "";
-        }
-
-        if (!formattedAddress) {
-          const fallbackParts = [name, street, city, region, country].filter(
-            Boolean
-          );
-          formattedAddress = fallbackParts.join(", ");
-        }
-
-        return {
-          address: formattedAddress,
-          coordinates: {
-            latitude: 24.6333644, //location.coords.latitude,
-            longitude: 84.9469837, // location.coords.longitude,
-          },
-        };
-      }
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
-  };
-
   return (
     <ScrollView
       horizontal
@@ -129,15 +68,15 @@ export function Categories() {
                 key={index}
                 style={{ marginBottom: 5 }}
                 onPress={async () => {
-                  const locationData = await getFormattedAddress();
+                  const locationData = await getDiscoveryLocationData();
                   navigation.navigate("SearchResults", {
                     category: category.name,
                     address: locationData?.address ?? "",
                     coords: locationData?.coordinates
                       ? {
-                        lat: locationData.coordinates.latitude,
-                        lng: locationData.coordinates.longitude,
-                      }
+                          lat: locationData.coordinates.lat,
+                          lng: locationData.coordinates.long,
+                        }
                       : { lat: undefined, lng: undefined },
                     range: { startDate: undefined, endDate: undefined },
                     products: [],

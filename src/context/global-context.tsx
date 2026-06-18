@@ -90,25 +90,28 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     fetchUserDetails();
-  }, [isAuthenticated]);
+  }, [authTokens?.access_token, isAuthenticated]);
 
   const fetchUserDetails = async () => {
-    if (isAuthenticated) {
-      try {
-        const details = await getMyDetails();
-        setUserDetails({
-          username: details.username,
-          name: `${details.first_name} ${details.last_name}`,
-          email: details.email,
-          phone: details.phone || "",
-          image: details.image?.image_url || "",
-          business_name: details.business_name,
-          account_type: details.account_type,
-          merchant_approval_status: details.merchant_approval_status,
-        });
-      } catch (error) {
-        console.error("Failed to fetch user details:", error);
-      }
+    if (!isAuthenticated || !authTokens?.access_token) {
+      setUserDetails(null);
+      return;
+    }
+
+    try {
+      const details = await getMyDetails();
+      setUserDetails({
+        username: details.username,
+        name: `${details.first_name} ${details.last_name}`,
+        email: details.email,
+        phone: details.phone || "",
+        image: details.image?.image_url || "",
+        business_name: details.business_name,
+        account_type: details.account_type,
+        merchant_approval_status: details.merchant_approval_status,
+      });
+    } catch (error) {
+      console.error("Failed to fetch user details:", error);
     }
   };
 
@@ -171,6 +174,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
           axiosInstance.defaults.headers.Authorization = `Bearer ${tokens.access_token}`;
           setIsAuthenticated(true);
         } else {
+          delete axiosInstance.defaults.headers.Authorization;
           setIsAuthenticated(false);
         }
         setHasSeenWelcomeState(seenWelcome);
@@ -207,6 +211,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = useCallback(async () => {
     await removeAuthTokens();
+    delete axiosInstance.defaults.headers.Authorization;
     setAuthTokensState(null);
     setIsAuthenticated(false);
     setHasSeenWelcome(false);

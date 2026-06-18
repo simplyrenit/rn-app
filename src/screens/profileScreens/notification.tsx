@@ -21,9 +21,16 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
   const { notifications, getNotifications, markAllAsRead } = useNotifications();
 
   useEffect(() => {
-    getNotifications();
-    markAllAsRead();
-  }, []);
+    const bootstrapNotifications = async () => {
+      const fetchedNotifications = await getNotifications();
+
+      if (fetchedNotifications.length > 0) {
+        await markAllAsRead(fetchedNotifications);
+      }
+    };
+
+    void bootstrapNotifications();
+  }, [getNotifications, markAllAsRead]);
 
   return (
     <NonScrollableContainer>

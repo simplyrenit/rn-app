@@ -105,6 +105,19 @@ export default function UsersDetails() {
     fetchOwnerDetails();
   }, [id]);
 
+  const ownerRating = owner?.average_rating ?? 0;
+  const joinedDateLabel = owner?.date_joined
+    ? new Date(owner.date_joined)
+        .toLocaleDateString("en-US", {
+          year: "2-digit",
+          month: "short",
+          day: "2-digit",
+        })
+        .replace(/(\d{2})$/, " '$1")
+    : "-";
+  const productLabel = `${products.length} ${
+    products.length === 1 ? "product" : "products"
+  }`;
 
   return (
     <Container>
@@ -162,7 +175,7 @@ export default function UsersDetails() {
             fontWeight="font-bold"
             className="mt-2"
           >
-            4.5
+            {ownerRating.toFixed(1)}
           </Text>
           <Text
             fontSize="text-sm"
@@ -202,13 +215,7 @@ export default function UsersDetails() {
             fontWeight="font-bold"
             className="mt-2"
           >
-            {new Date(owner?.date_joined!)
-              .toLocaleDateString("en-US", {
-                year: "2-digit",
-                month: "short",
-                day: "2-digit",
-              })
-              .replace(/(\d{2})$/, " '$1")}
+            {joinedDateLabel}
           </Text>
           <Text
             fontSize="text-sm"
@@ -245,7 +252,7 @@ export default function UsersDetails() {
               fontWeight="font-bold"
               className="mb-5  "
             >
-              {products.length} products
+              {productLabel}
             </Text>
           </View>
 

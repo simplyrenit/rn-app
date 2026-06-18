@@ -56,6 +56,7 @@ export function ChatInput({
   participantDetails,
 }: Props) {
   const [message, setMessage] = React.useState("");
+  const [inputHeight, setInputHeight] = useState(44);
   const [selectedFile, setSelectedFile] = useState<MediaPreview | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<MediaPreview | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
@@ -73,6 +74,12 @@ export function ChatInput({
       emitTyping(conversationId, isTyping);
     }, 300)
   ).current;
+
+  React.useEffect(() => {
+    if (!message) {
+      setInputHeight(44);
+    }
+  }, [message]);
 
   const attachmentSheetRef = useRef(null);
 
@@ -150,16 +157,18 @@ export function ChatInput({
   };
 
   const handleSend = () => {
-    if (message.trim()) {
+    const trimmedMessage = message.trim();
+
+    if (trimmedMessage) {
       // Send message through socket
       socketSendMessage(
-        message.trim(),
+        trimmedMessage,
         participantDetails.userId,
         userDetails?.username!
       );
 
       // Also send through Firebase for persistence
-      sendMessage(message, conversationId);
+      sendMessage(trimmedMessage, conversationId);
 
       setMessage("");
       debouncedEmitTyping(false);
@@ -316,14 +325,15 @@ export function ChatInput({
           onChangeText={handleMessageChange}
           style={{
             textAlignVertical: "center",
-            minHeight: 44,
+            height: inputHeight,
             maxHeight: 100,
           }}
           editable={!isBlocked}
           onContentSizeChange={(event) => {
             const { height } = event.nativeEvent.contentSize;
-            event.target.setNativeProps({
-              height: Math.min(Math.max(40, height), 50),
+            setInputHeight((currentHeight) => {
+              const nextHeight = Math.min(Math.max(44, height), 100);
+              return currentHeight === nextHeight ? currentHeight : nextHeight;
             });
           }}
         />

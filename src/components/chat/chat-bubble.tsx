@@ -62,6 +62,8 @@ interface MessageContent {
   content_type: string;
 }
 
+const isHttpUrl = (value?: string) => /^https?:\/\//i.test(value?.trim() || "");
+
 export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
   const { theme, userDetails } = useGlobalContext();
   const isDark = theme === "dark";
@@ -222,27 +224,46 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
         }
       } catch {
         // If parsing fails, it's a regular text message
+        const text = message.text || "";
+        const isLinkMessage = isHttpUrl(text);
+
+        if (!isLinkMessage) {
+          return (
+            <Text
+              fontSize="text-sm"
+              fontWeight="font-bold"
+              className={`${isSent ? "text-white" : "text-black"} p-3`}
+              selectable
+            >
+              {text}
+            </Text>
+          );
+        }
+
         return (
-          <Pressable onPress={() => {
-            try {
-              if (message.text) {
-
-                Linking.openURL(message.text)
+          <Pressable
+            onPress={async () => {
+              try {
+                await Linking.openURL(text.trim());
+              } catch {
+                Toast.show({
+                  type: "error",
+                  text1: "Unable to open this link",
+                  position: "bottom",
+                });
               }
-            } catch (e) {
-
-            }
-          }}>
+            }}
+          >
             <Text
               fontSize="text-sm"
               fontWeight="font-bold"
               className={`${isSent ? "text-white" : "text-black"} p-3`}
               style={{
-                textDecorationLine: message.text?.startsWith('https://') ? 'underline' : undefined
+                textDecorationLine: "underline",
               }}
               selectable
             >
-              {message.text}
+              {text}
             </Text>
           </Pressable>
         );

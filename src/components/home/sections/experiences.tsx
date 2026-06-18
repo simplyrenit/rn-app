@@ -6,9 +6,10 @@ import { useGlobalContext } from "@/context/global-context";
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import * as Location from "expo-location";
-
-const LOCATION_LOG_PREFIX = "[home/experiences]";
+import {
+  DEFAULT_DISCOVERY_COORDINATES,
+  getDiscoveryCoordinates,
+} from "@/lib/location";
 
 interface Category {
   title: string;
@@ -61,27 +62,16 @@ export function Experiences() {
   const { favorites } = useSaved();
   const { isAuthenticated } = useGlobalContext();
 
-  const [coordinates, setCoordinates] = useState<Coordinates>({
-    lat: 19,
-    long: 72,
-  });
+  const [coordinates, setCoordinates] = useState<Coordinates>(
+    DEFAULT_DISCOVERY_COORDINATES
+  );
 
   useEffect(() => {
     const getLocation = async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === "granted") {
-          const location = await Location.getCurrentPositionAsync({});
-          setCoordinates({
-            lat: location.coords.latitude,
-            long: location.coords.longitude,
-          });
-        }
-      } catch (error) {
-        console.warn(
-          `${LOCATION_LOG_PREFIX} failed to resolve current location, using default coordinates`,
-          error
-        );
+      const location = await getDiscoveryCoordinates();
+
+      if (location) {
+        setCoordinates(location);
       }
     };
 

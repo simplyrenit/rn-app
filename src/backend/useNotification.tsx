@@ -1,5 +1,4 @@
-import axios from "axios";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useGlobalContext } from "../context/global-context";
 import { NOTIFICATIONS_ENDPOINT } from "../lib/config";
 import axiosInstance from "@/lib/networkUtils";
@@ -9,12 +8,16 @@ interface NotificationResponse {
 }
 
 export function useNotifications() {
-  const { authTokens } = useGlobalContext();
+  const { authTokens, isAuthenticated } = useGlobalContext();
   const { access_token } = authTokens || {};
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  async function getNotifications() {
-    if (!access_token) return; // Perform function only if access_token is not null
+  const getNotifications = useCallback(async () => {
+    if (!isAuthenticated || !access_token) {
+      setNotifications([]);
+      return [];
+    }
+
     try {
       const response = await axiosInstance.get<NotificationResponse>(
         NOTIFICATIONS_ENDPOINT,
@@ -24,20 +27,23 @@ export function useNotifications() {
       return response.data.results;
     } catch (error) {
       console.error("Error fetching notifications:", error);
-      throw error;
+      setNotifications([]);
+      return [];
     }
-  }
+  }, [access_token, isAuthenticated]);
 
-  async function markAllAsRead() {
-    if (!access_token) return; // Perform function only if access_token is not null
+  const markAllAsRead = useCallback(async (items: Notification[]) => {
+    if (!isAuthenticated || !access_token || items.length === 0) {
+      return;
+    }
+
     try {
       const updatedNotifications = await Promise.all(
-        notifications.map((notification) =>
-          axios
-            .patch(
-              `${NOTIFICATIONS_ENDPOINT}${notification.id}/`,
-              { is_read: true },
-            )
+        items.map((notification) =>
+          axiosInstance
+            .patch(`${NOTIFICATIONS_ENDPOINT}${notification.id}/`, {
+              is_read: true,
+            })
             .then((response) => response.data)
         )
       );
@@ -45,9 +51,9 @@ export function useNotifications() {
       setNotifications(updatedNotifications);
     } catch (error) {
       console.error("Error marking notifications as read:", error);
-      throw error;
+      return;
     }
-  }
+  }, [access_token, isAuthenticated]);
 
   return { notifications, getNotifications, markAllAsRead };
 }
