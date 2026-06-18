@@ -103,6 +103,7 @@ export default function AboutProduct() {
   const [details, setDetails] = useState({
     name: "",
     phone: "",
+    coordinates: null as { lat: number; long: number } | null,
   });
 
   const [country, setCountry] = useState<any>({
@@ -117,11 +118,13 @@ export default function AboutProduct() {
     setDetails({
       name: details.first_name + " " + details.last_name,
       phone: details.phone,
+      coordinates: details.coordinates ?? null,
     });
   };
 
   const bottomSheetRef = React.useRef<BottomSheetModal>(null);
   const googlePlacesRef = React.useRef<any>(null);
+  const isLocationOptionalInDev = __DEV__;
 
   const allFieldsFilled =
     productName &&
@@ -132,8 +135,8 @@ export default function AboutProduct() {
     // usageDescription &&
     pricePerDay &&
     securityDeposit &&
-    address &&
-    selectedLocation &&
+    (isLocationOptionalInDev || address) &&
+    (isLocationOptionalInDev || selectedLocation) &&
     (contactPerson === "Owner" || (otherName && otherPhoneNumber));
 
   const fetchAddress = useCallback(async (loc: Location.LocationObject) => {
@@ -197,14 +200,27 @@ export default function AboutProduct() {
   };
 
   const handleDataFromLocation = useCallback(
-    (coords: any, addressToSend: any) => {
+    (
+      coords: { latitude: number; longitude: number } | null,
+      addressToSend: string | null
+    ) => {
+      if (!coords) {
+        setSelectedLocation(null);
+        setSelectedLocationName(null);
+        return;
+      }
 
-      // Extract country from address
+      setSelectedLocation({ lat: coords.latitude, lng: coords.longitude });
+      setSelectedLocationName(addressToSend);
+
+      if (!addressToSend) {
+        return;
+      }
+
       const addressParts = addressToSend.split(",");
       const country = addressParts[addressParts.length - 1].trim();
-
-      // Validate country
       const validCountries = ["USA", "UK", "India"];
+
       if (!validCountries.includes(country)) {
         Toast.show({
           type: "error",
@@ -217,8 +233,6 @@ export default function AboutProduct() {
       }
 
       setProductCountry(country);
-      setSelectedLocation({ lat: coords.latitude, lng: coords.longitude });
-      setSelectedLocationName(addressToSend);
     },
     []
   );
@@ -256,6 +270,14 @@ export default function AboutProduct() {
   };
 
   const onPress = () => {
+    const fallbackLocation =
+      selectedLocation ??
+      (location.latitude && location.longitude
+        ? { lat: location.latitude, lng: location.longitude }
+        : details.coordinates
+        ? { lat: details.coordinates.lat, lng: details.coordinates.long }
+        : null);
+
     saveDetails({
       name: productName,
       brandName: brandName,
@@ -264,7 +286,10 @@ export default function AboutProduct() {
       condition: selectedValue,
       productDescription: productDescription,
       usageDescription: usageDescription,
-      location: { lat: selectedLocation?.lat, long: selectedLocation?.lng },
+      location: {
+        lat: fallbackLocation?.lat ?? 0,
+        long: fallbackLocation?.lng ?? 0,
+      },
       pricePerDay: pricePerDay,
       securityDeposit: securityDeposit,
       personOfContact: {
@@ -272,7 +297,7 @@ export default function AboutProduct() {
         phoneNumber:
           contactPerson === "Owner" ? details.phone : otherPhoneNumber,
       },
-      address: address,
+      address: address.trim() || selectedLocationName || "",
     });
     navigation.navigate("ProductImages");
   };

@@ -94,7 +94,16 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
   };
 
   const handleDataFromLocation = useCallback(
-    (coords: any, addressToSend: any) => {
+    (
+      coords: { latitude: number; longitude: number } | null,
+      addressToSend: string | null
+    ) => {
+      if (!coords) {
+        setSelectedLocation(null);
+        setSelectedLocationName(null);
+        return;
+      }
+
       setSelectedLocation({ lat: coords.latitude, lng: coords.longitude });
       setSelectedLocationName(addressToSend);
     },

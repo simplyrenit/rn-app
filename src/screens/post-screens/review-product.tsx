@@ -40,6 +40,8 @@ export default function ReviewProduct() {
   const [ownerProducts, setOwnerProducts] = useState<BackendProduct[]>([]);
 
   const isDark = theme === "dark";
+  const hasProductLocation =
+    product.location.lat !== 0 || product.location.long !== 0;
 
   const handlePostProduct = () => {
     navigation.navigate("HangTight");
@@ -181,13 +183,21 @@ export default function ReviewProduct() {
               Product's location
             </Text>
           </View>
-          <View className="mt-2">
-            <ProductMap
-              latitude={product.location.lat}
-              longitude={product.location.long}
-              isDarkMode={isDark}
-            />
-          </View>
+          {hasProductLocation ? (
+            <View className="mt-2">
+              <ProductMap
+                latitude={product.location.lat}
+                longitude={product.location.long}
+                isDarkMode={isDark}
+              />
+            </View>
+          ) : (
+            <Text
+              className={`mt-2 ${isDark ? "text-white/50" : "text-black/50"}`}
+            >
+              Location was skipped for this draft.
+            </Text>
+          )}
         </View>
 
         {/* <View

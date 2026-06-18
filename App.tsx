@@ -12,14 +12,9 @@ import { CheckIcon, XMarkIcon } from "react-native-heroicons/outline";
 import Toast from "react-native-toast-message";
 import { Text } from "@/components/core";
 import "react-native-get-random-values";
-import {
-  setupNotifications,
-  registerForPushNotificationsAsync,
-} from "@/backend/notifications";
 import { AuthProvider } from "@/context/auth-context";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { WEB_CLIENT_ID } from "@/lib/config";
-import { testApiConnection } from "@/lib/apiTest";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 
@@ -51,24 +46,6 @@ export default function App() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
-
-  useEffect(() => {
-    const initializeNotifications = async () => {
-      await setupNotifications();
-      await registerForPushNotificationsAsync();
-    };
-
-    initializeNotifications();
-  }, []);
-
-  useEffect(() => {
-    const testApi = async () => {
-      const isApiWorking = await testApiConnection();
-      console.log("API working:", isApiWorking);
-    };
-
-    testApi();
-  }, []);
 
   if (!loaded) {
     return null;

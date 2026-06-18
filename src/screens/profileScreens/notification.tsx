@@ -48,12 +48,21 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
         {notifications.map((notification) => (
           <View key={notification.id} className="p-4 flex-row gap-2">
             <View>
-              <Image
-                source={{ uri: notification.user.image }}
-                className="rounded-full"
-                contentFit="cover"
-                style={{ height: wp("15%"), width: wp("15%") }}
-              />
+              {notification.user.image ? (
+                <Image
+                  source={{ uri: notification.user.image }}
+                  className="rounded-full"
+                  contentFit="cover"
+                  style={{ height: wp("15%"), width: wp("15%") }}
+                />
+              ) : (
+                <View
+                  className={`rounded-full ${
+                    isDarkMode ? "bg-[#1A1A1A]" : "bg-[#F1F1F1]"
+                  }`}
+                  style={{ height: wp("15%"), width: wp("15%") }}
+                />
+              )}
             </View>
             <View className="w-[80%]">
               <View className="flex-row flex-wrap gap-1">

@@ -198,9 +198,21 @@ export default function EditAboutProduct() {
   };
 
   const handleDataFromLocation = useCallback(
-    (coords: any, addressToSend: any) => {
+    (
+      coords: { latitude: number; longitude: number } | null,
+      addressToSend: string | null
+    ) => {
+      if (!coords) {
+        return;
+      }
+
       setSelectedLocation({ lat: coords.latitude, lng: coords.longitude });
       setSelectedLocationName(addressToSend);
+
+      if (!addressToSend) {
+        return;
+      }
+
       const addressParts = addressToSend.split(",");
 
       const country = addressParts[addressParts.length - 1].trim();

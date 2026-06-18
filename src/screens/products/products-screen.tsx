@@ -150,6 +150,12 @@ export default function DetailsScreen() {
     product?.description!,
     MAX_CHARS
   );
+  const categoryIconUri =
+    theme === "dark"
+      ? product?.category?.dark_icon
+      : product?.category?.light_icon;
+  const categoryIconIsSvg =
+    categoryIconUri?.slice(-3)?.toLowerCase() === "svg";
   const displayText = showFullText ? product?.description! : truncatedText;
   if (!product) {
     return <SafeAreaView className="flex-1 p-4" style={{ backgroundColor: isDark ? '#000' : '#fff' }}>
@@ -220,27 +226,27 @@ export default function DetailsScreen() {
               color={isDark ? "white" : "black"}
               size={wp("5.5%")}
             /> */}
-            {(theme === "dark"
-              ? product?.category?.dark_icon
-              : product?.category?.light_icon
-            )?.slice(-3)?.toLowerCase() === 'svg' ? (
+            {categoryIconUri ? (
+              categoryIconIsSvg ? (
               <SvgUri
                 width={wp(5.5)}
                 height={wp(5.5)}
-                uri={
-                  theme === "dark"
-                    ? product?.category?.dark_icon || ""
-                    : product?.category?.light_icon || ""
-                }
+                uri={categoryIconUri}
               />
             ) : (
               <Image
-                source={{
-                  uri: theme === "dark"
-                    ? product?.category?.dark_icon
-                    : product?.category?.light_icon
-                }}
+                source={{ uri: categoryIconUri }}
                 style={{ width: wp(5.5), height: wp(5.5) }}
+              />
+              )
+            ) : (
+              <View
+                style={{
+                  width: wp(5.5),
+                  height: wp(5.5),
+                  borderRadius: wp(2.75),
+                  backgroundColor: isDark ? "#292929" : "#E6E6E6",
+                }}
               />
             )}
             <Text

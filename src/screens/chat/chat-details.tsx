@@ -5,6 +5,7 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { Button, StaticContainer, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
+import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
 import { BackendProduct, Conversation, RouteProps } from "@/lib/types";
 import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
@@ -31,8 +32,6 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { ChatSkeleton } from "./chat-skeleton";
 import { useChat } from "@/backend/chat";
-import { doc, onSnapshot } from "@react-native-firebase/firestore";
-import { firestore } from "@/lib/config";
 import useOwner from "@/backend/owner";
 import { useSocket } from "@/services/socket";
 
@@ -49,6 +48,18 @@ const formatDate = (date: Date | undefined) => {
     day: "numeric",
   };
   return date.toLocaleDateString("en-US", options);
+};
+
+const documentExists = (
+  snapshot: { exists?: boolean | (() => boolean) } | null | undefined
+) => {
+  if (!snapshot) {
+    return false;
+  }
+
+  return typeof snapshot.exists === "function"
+    ? snapshot.exists()
+    : Boolean(snapshot.exists);
 };
 
 export default function ChatDetailsScreen() {
@@ -100,8 +111,10 @@ export default function ChatDetailsScreen() {
     error,
   } = useSubscribeToMessages(conversationId);
 
-  const { connect, joinRoom, leaveRoom, onNewMessage, onTyping } = useSocket();
+  const { connect, joinRoom, leaveRoom, onTyping } = useSocket();
   const [isTyping, setIsTyping] = useState(false);
+  const getImageSource = (uri?: string | null) =>
+    uri ? { uri } : undefined;
 
   async function fetchDetails() {
     const details = await getParticipantDetails(conversationId);
@@ -128,10 +141,16 @@ export default function ChatDetailsScreen() {
   }
 
   useEffect(() => {
+    const firestore = getFirestoreDb();
+    if (!firestore) {
+      return;
+    }
+
+    const { doc, onSnapshot } = getFirestoreModule();
     const conversationRef = doc(firestore, "conversations", conversationId);
 
-    const unsubscribe = onSnapshot(conversationRef, (docSnapshot) => {
-      if (docSnapshot.exists) {
+    const unsubscribe = onSnapshot(conversationRef, (docSnapshot: any) => {
+      if (documentExists(docSnapshot)) {
         const conversationData = docSnapshot.data() as Conversation;
 
         setIsBlocked(conversationData.blockStatus.isBlocked);
@@ -147,16 +166,14 @@ export default function ChatDetailsScreen() {
   }, []);
 
   useEffect(() => {
+    if (!participantDetails.userId || !conversationId) {
+      return;
+    }
+
     const socket = connect(participantDetails.userId);
 
-    if (socket && conversationId) {
+    if (socket) {
       joinRoom(conversationId);
-
-      // Listen for new messages
-      onNewMessage((newMessage) => {
-        // Update messages state
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
-      });
 
       // Listen for typing status
       onTyping(({ userId, isTyping }) => {
@@ -167,9 +184,7 @@ export default function ChatDetailsScreen() {
     }
 
     return () => {
-      if (conversationId) {
-        leaveRoom(conversationId);
-      }
+      leaveRoom(conversationId);
     };
   }, [conversationId, userDetails?.username, participantDetails.userId]);
 
@@ -569,7 +584,7 @@ export default function ChatDetailsScreen() {
                   >
                     <View className="flex-row items-center">
                       <Image
-                        source={{ uri: product.cover_image }}
+                        source={getImageSource(product.cover_image)}
                         style={{ width: 50, height: 50, borderRadius: 8 }}
                       />
                       <Text className="ml-4">{product.title}</Text>
@@ -619,7 +634,7 @@ export default function ChatDetailsScreen() {
           <View className="flex-row items-center justify-between mx-4 mt-3">
             <Image
               className="w-[20%]"
-              source={{ uri: selectedProduct?.cover_image }}
+              source={getImageSource(selectedProduct?.cover_image)}
               style={{ width: wp(20), height: wp(20), borderRadius: 8 }}
               resizeMode="cover"
             />
@@ -731,7 +746,7 @@ export default function ChatDetailsScreen() {
             <View className="flex-row items-center justify-between mx-4 mt-3">
               <Image
                 className="w-[20%]"
-                source={{ uri: selectedProduct?.cover_image }}
+                source={getImageSource(selectedProduct?.cover_image)}
                 style={{ width: wp(20), height: wp(20), borderRadius: 8 }}
                 resizeMode="cover"
               />

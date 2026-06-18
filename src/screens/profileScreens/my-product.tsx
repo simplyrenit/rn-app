@@ -6,7 +6,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 import { ArrowLeftIcon, ShareIcon } from "react-native-heroicons/outline";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { Dimensions } from "react-native";
@@ -110,67 +110,63 @@ const MyProductScreen: React.FC = () => {
         <View className="w-[10%]"></View>
       </View>
 
-      <ScrollView
-        className="flex-1 pt-2"
-        contentContainerStyle={{ flexGrow: 1 }}
-      >
-        <View
-          className={`flex-row justify-between py-4 border-b-[1px] px-5 ${isDarkMode ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            }`}
-        >
-          <Text fontSize="text-sm">Share entire catalogue</Text>
+      <FlatList
+        style={{ width: "100%" }}
+        data={myProducts}
+        ListHeaderComponent={(
+          <View
+            className={`flex-row justify-between py-4 border-b-[1px] px-5 ${isDarkMode ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+              }`}
+          >
+            <Text fontSize="text-sm">Share entire catalogue</Text>
 
-          <TouchableOpacity>
-            <ShareIcon
-              size={24}
-              color={isDarkMode ? "#FFF" : "#000"}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Products */}
-        <FlatList
-          style={{ width: '100%', }}
-          data={myProducts}
-          ListEmptyComponent={() => <View style={{ padding: 32, height: Dimensions.get('window').height * 0.6, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: 'rgba(165, 165, 165, 0.7)', fontSize: 18, fontWeight: '600' }}>
-              No products
-            </Text>
+            <TouchableOpacity>
+              <ShareIcon
+                size={24}
+                color={isDarkMode ? "#FFF" : "#000"}
+              />
+            </TouchableOpacity>
           </View>
-          }
-          ListFooterComponent={nextProductLink ? () => isLoading ? (
-            <View>
-              <ActivityIndicator color={isDarkMode ? '#fff' : '#000'} />
-            </View>
-          ) : <View>
-            <Text>Load More</Text>
-          </View> : undefined}
-          onEndReached={nextProductLink ? () => fetchProducts(nextProductLink) : undefined}
-          keyExtractor={(item, index) => `${index}_${item.name}`}
-          numColumns={2}
-          columnWrapperStyle={{
-            justifyContent: "space-between",
-            marginTop: 8,
-            gap: 16,
-          }}
-          contentContainerStyle={{ paddingBottom: hp("10%"), justifyContent: 'flex-start', alignItems: 'center', width: '100%', }}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item, index }) => (
-            <MyProductCard
-              key={index}
-              id={item.name}
-              image={item.cover_image}
-              title={item.title}
-              location={item.location}
-              price={item.rate}
-              isDarkMode={isDarkMode}
-              moderationLabels={item.moderation_labels}
-              width='48.5%'
-              alignItems={index % 2 ? 'flex-start' : 'flex-end'}
-            />
-          )}
-        />
-        {/* <View
+        )}
+        ListEmptyComponent={() => <View style={{ padding: 32, height: Dimensions.get('window').height * 0.6, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: 'rgba(165, 165, 165, 0.7)', fontSize: 18, fontWeight: '600' }}>
+            No products
+          </Text>
+        </View>
+        }
+        ListFooterComponent={nextProductLink ? () => isLoading ? (
+          <View>
+            <ActivityIndicator color={isDarkMode ? '#fff' : '#000'} />
+          </View>
+        ) : <View>
+          <Text>Load More</Text>
+        </View> : undefined}
+        onEndReached={nextProductLink ? () => fetchProducts(nextProductLink) : undefined}
+        keyExtractor={(item, index) => `${index}_${item.name}`}
+        numColumns={2}
+        columnWrapperStyle={{
+          justifyContent: "space-between",
+          marginTop: 8,
+          gap: 16,
+        }}
+        contentContainerStyle={{ paddingBottom: hp("10%"), justifyContent: 'flex-start', alignItems: 'center', width: '100%' }}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item, index }) => (
+          <MyProductCard
+            key={index}
+            id={item.name}
+            image={item.cover_image}
+            title={item.title}
+            location={item.location}
+            price={item.rate}
+            isDarkMode={isDarkMode}
+            moderationLabels={item.moderation_labels}
+            width='48.5%'
+            alignItems={index % 2 ? 'flex-start' : 'flex-end'}
+          />
+        )}
+      />
+      {/* <View
           className="flex-row flex-wrap justify-between p-5"
         // style={{ padding: itemMargin }}
         >
@@ -193,7 +189,6 @@ const MyProductScreen: React.FC = () => {
             </View>
           ))}
         </View> */}
-      </ScrollView>
     </NonScrollableContainer>
   );
 };

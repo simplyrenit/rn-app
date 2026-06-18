@@ -15,6 +15,7 @@ import {
   ArrowLeftIcon,
   EllipsisHorizontalCircleIcon,
   ExclamationTriangleIcon,
+  UserCircleIcon,
 } from "react-native-heroicons/outline";
 import { Text } from "../core";
 
@@ -82,11 +83,19 @@ export function ChatHeader({
         <Pressable style={{ flexDirection: 'row' }} className="items-center" onPress={() => navigation.navigate("UserDetail", { id })}
         >
 
-          <Image
-            source={{ uri: profilePic }}
-            className="h-10 w-10 rounded-full ml-2"
-            resizeMode="cover"
-          />
+          {profilePic ? (
+            <Image
+              source={{ uri: profilePic }}
+              className="h-10 w-10 rounded-full ml-2"
+              resizeMode="cover"
+            />
+          ) : (
+            <UserCircleIcon
+              size={40}
+              color={"#635BE8"}
+              style={{ marginLeft: 8 }}
+            />
+          )}
           <Text
             fontSize="text-base"
             fontWeight="font-bold"

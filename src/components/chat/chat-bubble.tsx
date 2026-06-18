@@ -262,7 +262,9 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
       {type === "product_post" && message.item && (
         <Pressable className={`p-3 rounded-2xl`} style={{ width: Dimensions.get('window').width * 0.8 }}
           onPress={() => {
-            router.navigate("ProductDetail", { id: message.item?.id })
+            if (message.item?.id) {
+              router.navigate("ProductDetail", { id: message.item.id });
+            }
           }
           }
         >

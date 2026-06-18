@@ -1,12 +1,5 @@
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  orderBy,
-} from "@react-native-firebase/firestore";
 import { useEffect, useState } from "react";
-import { firestore } from "@/lib/config";
+import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
 import { Message } from "@/lib/types";
 
 export function useSubscribeToMessages(conversationId: string) {
@@ -17,6 +10,16 @@ export function useSubscribeToMessages(conversationId: string) {
   useEffect(() => {
     setLoading(true);
     setError(null);
+
+    const firestore = getFirestoreDb();
+    if (!firestore) {
+      setError("Chat is unavailable right now.");
+      setLoading(false);
+      return;
+    }
+
+    const { collection, query, where, onSnapshot, orderBy } =
+      getFirestoreModule();
 
     // Create the query
     const messagesRef = collection(firestore, "messages");

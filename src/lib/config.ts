@@ -1,6 +1,4 @@
-import { getApp } from "@react-native-firebase/app";
-import { getFirestore } from "@react-native-firebase/firestore";
-import { getStorage } from "@react-native-firebase/storage";
+import { Platform } from "react-native";
 
 export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
 
@@ -29,10 +27,32 @@ type RuntimeConfig = {
   wsBaseUrl: string;
 };
 
+const normalizeHost = (value: string) =>
+  value
+    .trim()
+    .replace(/^https?:\/\//, "")
+    .replace(/^wss?:\/\//, "")
+    .replace(/\/+$/, "");
+
+const getDefaultLocalApiHost = () => {
+  if (Platform.OS === "android") {
+    return "127.0.0.1:8000";
+  }
+
+  return "127.0.0.1:8000";
+};
+
+const LOCAL_API_HOST = normalizeHost(
+  process.env.EXPO_PUBLIC_LOCAL_API_HOST || getDefaultLocalApiHost()
+);
+const USE_LOCAL_API =
+  (process.env.EXPO_PUBLIC_USE_LOCAL_API || "").toLowerCase() === "true" ||
+  (__DEV__ && !process.env.EXPO_PUBLIC_USE_REMOTE_API);
+
 const RUNTIME_CONFIGS: Record<AppEnv, RuntimeConfig> = {
   DEV: {
-    apiBaseUrl: "http://10.0.2.2:8000/api/",
-    wsBaseUrl: "ws://10.0.2.2:8000/ws/chat/",
+    apiBaseUrl: `http://${LOCAL_API_HOST}/api/`,
+    wsBaseUrl: `ws://${LOCAL_API_HOST}/ws/chat/`,
   },
   QA: {
     apiBaseUrl: "https://rennit.toratora.site/api/",
@@ -44,15 +64,29 @@ const RUNTIME_CONFIGS: Record<AppEnv, RuntimeConfig> = {
   },
 };
 
-// Release builds should never default to a local LAN URL.
-const FALLBACK_ENV: AppEnv = __DEV__ ? "QA" : "PROD";
-const APP_ENV_FROM_ENV = (
-  ((process.env as Record<string, string | undefined>)["EXPO_PUBLIC_APP_ENV"] || "")
-).toUpperCase();
-export const DEV_MODE: AppEnv =
-  APP_ENV_FROM_ENV === "DEV" || APP_ENV_FROM_ENV === "QA" || APP_ENV_FROM_ENV === "PROD"
-    ? (APP_ENV_FROM_ENV as AppEnv)
-    : FALLBACK_ENV;
+const REMOTE_FALLBACK_ENV: AppEnv = "PROD";
+const APP_ENV_FROM_ENV = (process.env.EXPO_PUBLIC_APP_ENV || "").toUpperCase();
+
+const resolveAppEnv = (): AppEnv => {
+  if (
+    APP_ENV_FROM_ENV === "DEV" ||
+    APP_ENV_FROM_ENV === "QA" ||
+    APP_ENV_FROM_ENV === "PROD"
+  ) {
+    if (APP_ENV_FROM_ENV === "DEV" && !USE_LOCAL_API) {
+      console.warn(
+        `[config] EXPO_PUBLIC_APP_ENV=DEV without EXPO_PUBLIC_USE_LOCAL_API=true. Falling back to ${REMOTE_FALLBACK_ENV}.`
+      );
+      return REMOTE_FALLBACK_ENV;
+    }
+
+    return APP_ENV_FROM_ENV as AppEnv;
+  }
+
+  return __DEV__ ? "DEV" : REMOTE_FALLBACK_ENV;
+};
+
+export const DEV_MODE: AppEnv = resolveAppEnv();
 
 const runtimeConfig = RUNTIME_CONFIGS[DEV_MODE];
 export const SERVERURL = runtimeConfig.apiBaseUrl;
@@ -121,16 +155,4 @@ export const AVAILABILITY = SERVERURL + "availability/";
 
 export const WRITE_REVIEW = SERVERURL + "write-review/";
 
-export const GET_REFRESH_TOKEN = SERVERURL + 'token/refresh/';
-
-let app, firestore, storage;
-
-try {
-  app = getApp();
-  firestore = getFirestore(app);
-  storage = getStorage(app);
-} catch (error) {
-  console.error("Error initializing Firebase services:", error);
-}
-
-export { app, firestore, storage };
+export const GET_REFRESH_TOKEN = SERVERURL + "token/refresh/";

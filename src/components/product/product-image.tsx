@@ -193,7 +193,7 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
                 height: "100%",
                 borderRadius: 12,
               }}
-              resizeMode="contain" />
+              contentFit="contain" />
           </View>
         </View>
       </Modal>}

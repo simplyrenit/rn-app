@@ -1,4 +1,4 @@
-import { MyDetails } from "@/backend/profile";
+import { fetchMyDetailsRequest } from "@/lib/my-details";
 import {
   getAuthTokens,
   getHasSeenWelcome,
@@ -114,9 +114,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   async function getMyDetails() {
     try {
-      const response = await axiosInstance.get<MyDetails>(MY_DETAILS_ENDPOINT);
-
-      return response.data;
+      return await fetchMyDetailsRequest();
     } catch (error) {
       console.error("Error getting user details:", error);
       throw error;

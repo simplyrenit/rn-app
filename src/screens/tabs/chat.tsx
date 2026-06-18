@@ -11,7 +11,6 @@ import { Dimensions, FlatList, View } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 import { MagnifyingGlassIcon } from "react-native-heroicons/outline";
 import { StyleSheet } from "react-native";
-import { firestore, app } from "@/lib/config";
 import Skeleton from "@/components/core/skeleton";
 
 const StyledInput = styled(TextInput);
@@ -21,7 +20,6 @@ export default function Chat() {
     useGlobalContext();
   const [conversations, setConversations] = React.useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [firebaseInitialized, setFirebaseInitialized] = React.useState(false);
 
   const isDark = theme === "dark";
   const { subscribeToChats, deleteChat } = useChat();
@@ -35,20 +33,11 @@ export default function Chat() {
     };
   }, []);
 
-  React.useEffect(() => {
-    if (firestore) {
-      setFirebaseInitialized(true);
-    }
-  }, [firestore]);
-
   useFocusEffect(
     React.useCallback(() => {
       let isSubscribed = true;
       let unsubscribe: (() => void) | undefined;
 
-      if (!firebaseInitialized) {
-        return;
-      }
       if (authTokens && isAuthenticated) {
         unsubscribe = subscribeToChats(
           userDetails?.username!,
@@ -70,7 +59,6 @@ export default function Chat() {
       authTokens,
       isAuthenticated,
       userDetails?.username,
-      firebaseInitialized,
     ])
   );
 
@@ -152,34 +140,36 @@ export default function Chat() {
             </View>
             }
             renderItem={({ item }) => (
-              <ChatCard
-                isRead={
-                  item.readStatus.find(
-                    (status) => status.userId === userDetails?.username
-                  )?.isRead || false
-                }
-                id={item.id}
-                name={
-                  item.initialParticipants.find(
-                    (p) => p.userId !== userDetails?.username
-                  )?.username || "Unknown"
-                }
-                lastMessage={item.lastMessage || ""}
-                unreadCount={
-                  item.readCount.find(
-                    (count) => count.userId === userDetails?.username
-                  )?.count || 0
-                }
-                lastMessageTime={item.lastMessageTime || ""}
-                profilePic={
-                  item.initialParticipants.find(
-                    (p) => p.userId !== userDetails?.username
-                  )?.profilePicture || ""
-                }
-                onDeleteChat={deleteChat}
-              />
+              item.id ? (
+                <ChatCard
+                  isRead={
+                    item.readStatus.find(
+                      (status) => status.userId === userDetails?.username
+                    )?.isRead || false
+                  }
+                  id={item.id}
+                  name={
+                    item.initialParticipants.find(
+                      (p) => p.userId !== userDetails?.username
+                    )?.username || "Unknown"
+                  }
+                  lastMessage={item.lastMessage || ""}
+                  unreadCount={
+                    item.readCount.find(
+                      (count) => count.userId === userDetails?.username
+                    )?.count || 0
+                  }
+                  lastMessageTime={item.lastMessageTime || ""}
+                  profilePic={
+                    item.initialParticipants.find(
+                      (p) => p.userId !== userDetails?.username
+                    )?.profilePicture || ""
+                  }
+                  onDeleteChat={deleteChat}
+                />
+              ) : null
             )}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => item.id ?? `conversation-${index}`}
             showsVerticalScrollIndicator={false}
             style={{ height: "80%" }}
           />

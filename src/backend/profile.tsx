@@ -21,6 +21,10 @@ import { usePost } from "./post";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import axiosInstance from "@/lib/networkUtils";
+import {
+  fetchMyDetailsRequest,
+  MyDetailsResponse,
+} from "@/lib/my-details";
 
 export function useProfile() {
   const { authTokens, fetchUserDetails, logout } = useGlobalContext();
@@ -32,13 +36,7 @@ export function useProfile() {
   async function getMyDetails(token?: string) {
     setLoading(true);
     try {
-      const response = await axiosInstance.get<MyDetails>(MY_DETAILS_ENDPOINT, token ? {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      } : undefined);
-
-      return response.data;
+      return await fetchMyDetailsRequest(token);
     } catch (error) {
       console.error("Error getting user details:", error);
       throw error;
@@ -363,40 +361,4 @@ interface MyProduct {
   cover_image: string;
 }
 
-export interface MyDetails {
-  username: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  phone: string;
-  country: string;
-  image: {
-    image_url: string;
-    name: string;
-  };
-  addresses: {
-    address: string;
-    address_line_1: string;
-    address_line_2: string;
-    city: string;
-    state: string;
-    postal_code: string;
-    country: string;
-    address_type: string;
-    coordinates: {
-      lat: number;
-      long: number;
-    };
-    is_default: boolean;
-  };
-  business_name: string | null;
-  account_type: AccountType;
-  merchant_approval_status: MerchantApprovalStatus;
-  coordinates: {
-    lat: number;
-    long: number;
-  };
-  timezone: string;
-  email_verified: boolean;
-  phone_verified: boolean;
-}
+export type MyDetails = MyDetailsResponse;

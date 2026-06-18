@@ -53,6 +53,12 @@ import { useRoute } from "@react-navigation/native";
 
 const LOCATION_LOG_PREFIX = "[post/location-modal]";
 const LOCATION_FETCH_TIMEOUT_MS = 12000;
+const DEFAULT_MAP_REGION = {
+  latitude: 19,
+  longitude: 72,
+  latitudeDelta: 0.0922,
+  longitudeDelta: 0.0421,
+};
 
 const LocationModal = ({}) => {
   const route = useRoute<RouteProps<"LocationModal">>();
@@ -75,60 +81,25 @@ const LocationModal = ({}) => {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  const openLocationSettings = useCallback(() => {
+    if (Platform.OS === "ios") {
+      Linking.openURL("app-settings:");
+      return;
+    }
+
+    Linking.openSettings();
+  }, []);
 
   const getLocationErrorMessage = useCallback(() => {
     if (Platform.OS === "android") {
-      return "Current location is unavailable. Make sure that location services are enabled or set a mock location in the emulator.";
+      return "We couldn't fetch your current location. If you're using an emulator, set a mock location in Android Studio and try again.";
     }
 
-    return "Current location is unavailable. Make sure that location services are enabled.";
+    return "We couldn't fetch your current location. Please try again.";
   }, []);
-
-  const resolveCurrentLocation = useCallback(async () => {
-    console.log(`${LOCATION_LOG_PREFIX} resolving current location`);
-
-    try {
-      const servicesEnabled = await Location.hasServicesEnabledAsync();
-      console.log(`${LOCATION_LOG_PREFIX} location services status`, {
-        servicesEnabled,
-      });
-
-      if (!servicesEnabled) {
-        throw new Error(getLocationErrorMessage());
-      }
-
-      const lastKnownLocation = await Location.getLastKnownPositionAsync();
-      console.log(`${LOCATION_LOG_PREFIX} last known location lookup`, {
-        hasLastKnownLocation: Boolean(lastKnownLocation),
-      });
-
-      if (lastKnownLocation) {
-        return lastKnownLocation;
-      }
-
-      const liveLocation = (await Promise.race([
-        Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        }),
-        new Promise<never>((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Location request timed out")),
-            LOCATION_FETCH_TIMEOUT_MS
-          )
-        ),
-      ])) as Location.LocationObject;
-
-      console.log(`${LOCATION_LOG_PREFIX} live location resolved`, {
-        latitude: liveLocation.coords.latitude,
-        longitude: liveLocation.coords.longitude,
-      });
-
-      return liveLocation;
-    } catch (error) {
-      console.error(`${LOCATION_LOG_PREFIX} failed to resolve current location`, error);
-      throw new Error(getLocationErrorMessage());
-    }
-  }, [getLocationErrorMessage]);
 
   const fetchAddress = useCallback(async (loc: Location.LocationObject) => {
     try {
@@ -182,6 +153,71 @@ const LocationModal = ({}) => {
     }
   }, []);
 
+  const resolveCurrentLocation = useCallback(async () => {
+    console.log(`${LOCATION_LOG_PREFIX} resolving current location`);
+    setIsFetchingLocation(true);
+    setLocationError(null);
+
+    try {
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+      console.log(`${LOCATION_LOG_PREFIX} location services status`, {
+        servicesEnabled,
+      });
+
+      if (!servicesEnabled) {
+        setLocation(null);
+        setAddress(null);
+        setLocationError(
+          "Location services are turned off. Please enable them and try again."
+        );
+        return null;
+      }
+
+      const lastKnownLocation = await Location.getLastKnownPositionAsync();
+      console.log(`${LOCATION_LOG_PREFIX} last known location lookup`, {
+        hasLastKnownLocation: Boolean(lastKnownLocation),
+      });
+
+      if (lastKnownLocation) {
+        setLocation(lastKnownLocation);
+        void fetchAddress(lastKnownLocation);
+        return lastKnownLocation;
+      }
+
+      const liveLocation = (await Promise.race([
+        Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Location request timed out")),
+            LOCATION_FETCH_TIMEOUT_MS
+          )
+        ),
+      ])) as Location.LocationObject;
+
+      console.log(`${LOCATION_LOG_PREFIX} live location resolved`, {
+        latitude: liveLocation.coords.latitude,
+        longitude: liveLocation.coords.longitude,
+      });
+
+      setLocation(liveLocation);
+      void fetchAddress(liveLocation);
+      return liveLocation;
+    } catch (error) {
+      console.error(
+        `${LOCATION_LOG_PREFIX} failed to resolve current location`,
+        error
+      );
+      setLocation(null);
+      setAddress(null);
+      setLocationError(getLocationErrorMessage());
+      return null;
+    } finally {
+      setIsFetchingLocation(false);
+    }
+  }, [fetchAddress, getLocationErrorMessage]);
+
   const requestLocationPermission = useCallback(async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -189,17 +225,17 @@ const LocationModal = ({}) => {
 
       if (status !== "granted") {
         setHasPermission(false);
+        setLocation(null);
+        setAddress(null);
+        setLocationError("Location access is required to continue.");
         Alert.alert(
           "Permission Denied",
           "Location access is required to continue. Please enable it in your device settings.",
           [
-            { text: "OK", onPress: () => console.log("OK Pressed") },
+            { text: "Cancel", style: "cancel" },
             {
               text: "Open Settings",
-              onPress: () =>
-                Platform.OS === "ios"
-                  ? Linking.openURL("app-settings:")
-                  : Linking.openSettings(),
+              onPress: openLocationSettings,
             },
           ]
         );
@@ -207,14 +243,24 @@ const LocationModal = ({}) => {
       }
 
       setHasPermission(true);
-      const nextLocation = await resolveCurrentLocation();
-      setLocation(nextLocation);
-      fetchAddress(nextLocation);
+      await resolveCurrentLocation();
     } catch (error) {
-      console.error(`${LOCATION_LOG_PREFIX} failed to request location permission`, error);
-      Alert.alert("Unable to fetch location", getLocationErrorMessage());
+      console.error(
+        `${LOCATION_LOG_PREFIX} failed to request location permission`,
+        error
+      );
+      setHasPermission(false);
+      setLocation(null);
+      setAddress(null);
+      setLocationError(
+        "We couldn't request location access. Please try again."
+      );
+      Alert.alert(
+        "Location error",
+        "We couldn't request location access. Please try again."
+      );
     }
-  }, [fetchAddress, getLocationErrorMessage, resolveCurrentLocation]);
+  }, [openLocationSettings, resolveCurrentLocation]);
 
   const fetchSelectedAddress = useCallback(
     async (latitude: number, longitude: number) => {
@@ -291,12 +337,13 @@ const LocationModal = ({}) => {
           }
         } else {
           setHasPermission(true);
-          const nextLocation = await resolveCurrentLocation();
-          setLocation(nextLocation);
-          fetchAddress(nextLocation);
+          await resolveCurrentLocation();
         }
       } catch (error) {
-        console.error(`${LOCATION_LOG_PREFIX} failed during initial location bootstrap`, error);
+        console.error(
+          `${LOCATION_LOG_PREFIX} failed during initial location bootstrap`,
+          error
+        );
         setHasPermission(false);
       }
     })();
@@ -317,10 +364,12 @@ const LocationModal = ({}) => {
 
   const getCurrentLocation = async () => {
     try {
-      const currentLocation = await resolveCurrentLocation();
-      setLocation(currentLocation);
+      await resolveCurrentLocation();
     } catch (error) {
-      console.error(`${LOCATION_LOG_PREFIX} failed to refresh current location`, error);
+      console.error(
+        `${LOCATION_LOG_PREFIX} failed to refresh current location`,
+        error
+      );
     }
   };
 
@@ -371,27 +420,33 @@ const LocationModal = ({}) => {
     selectedAddress: string | null,
     selectedLocation: { latitude: number; longitude: number } | null
   ) => {
-    let coordinates;
-    let addressToSend = null;
-    let countryToSend = null;
-    if (!selectedAddress && location) {
-      coordinates = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
-      addressToSend = address;
-    } else if (selectedLocation) {
+    let coordinates = null;
+    let addressToSend = selectedLocation ? selectedAddress : address;
+
+    if (selectedLocation) {
       coordinates = {
         latitude: selectedLocation.latitude,
         longitude: selectedLocation.longitude,
       };
-      addressToSend = selectedAddress;
+    } else if (location) {
+      coordinates = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
     }
+
     if (coordinates && route.params?.onGoBack) {
       route.params.onGoBack(coordinates, addressToSend);
       navigation.goBack();
     }
   };
+
+  const handleSkipLocation = useCallback(() => {
+    if (route.params?.onGoBack) {
+      route.params.onGoBack(null, null);
+    }
+    navigation.goBack();
+  }, [navigation, route.params]);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const googlePlacesRef = useRef<any>(null);
@@ -424,6 +479,36 @@ const LocationModal = ({}) => {
     setSelectedLocation(null);
     void getCurrentLocation();
   };
+
+  const mapRegion = useMemo(() => {
+    if (selectedLocation) {
+      return {
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        latitudeDelta: DEFAULT_MAP_REGION.latitudeDelta,
+        longitudeDelta: DEFAULT_MAP_REGION.longitudeDelta,
+      };
+    }
+
+    if (location) {
+      return {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: DEFAULT_MAP_REGION.latitudeDelta,
+        longitudeDelta: DEFAULT_MAP_REGION.longitudeDelta,
+      };
+    }
+
+    return DEFAULT_MAP_REGION;
+  }, [location, selectedLocation]);
+
+  const canConfirmLocation = Boolean(location || selectedLocation);
+
+  useEffect(() => {
+    if (location && !selectedLocation) {
+      mapRef.current?.animateToRegion(mapRegion, 1000);
+    }
+  }, [location, mapRegion, selectedLocation]);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -509,7 +594,7 @@ const LocationModal = ({}) => {
               </>
             )}
 
-            {hasPermission && location ? (
+            {hasPermission ? (
               <>
                 {/* <NonScrollableContainer> */}
                 <MapView
@@ -519,44 +604,41 @@ const LocationModal = ({}) => {
                     PROVIDER_GOOGLE
                   }
                   style={{ flex: 1 }}
-                  initialRegion={{
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude,
-                    latitudeDelta: 0.0922,
-                    longitudeDelta: 0.0421,
-                  }}
+                  initialRegion={mapRegion}
                   customMapStyle={isDarkMode ? darkModeMapStyle : []}
                   onPress={handleMapPress}
                 >
-                  <Marker
-                    coordinate={{
-                      latitude: location.coords.latitude,
-                      longitude: location.coords.longitude,
-                    }}
-                    title="You are here"
-                  >
-                    <View
-                      style={{
-                        height: 30,
-                        width: 30,
-                        borderRadius: 15,
-                        backgroundColor: "#635BE8",
-                        borderColor: isDarkMode ? "#000" : "#fff",
-                        borderWidth: 5,
-                        justifyContent: "center",
-                        alignItems: "center",
+                  {location && (
+                    <Marker
+                      coordinate={{
+                        latitude: location.coords.latitude,
+                        longitude: location.coords.longitude,
                       }}
+                      title="You are here"
                     >
                       <View
                         style={{
-                          height: 15,
-                          width: 15,
-                          borderRadius: 7.5,
+                          height: 30,
+                          width: 30,
+                          borderRadius: 15,
                           backgroundColor: "#635BE8",
+                          borderColor: isDarkMode ? "#000" : "#fff",
+                          borderWidth: 5,
+                          justifyContent: "center",
+                          alignItems: "center",
                         }}
-                      />
-                    </View>
-                  </Marker>
+                      >
+                        <View
+                          style={{
+                            height: 15,
+                            width: 15,
+                            borderRadius: 7.5,
+                            backgroundColor: "#635BE8",
+                          }}
+                        />
+                      </View>
+                    </Marker>
+                  )}
 
                   {selectedLocation && (
                     <Marker
@@ -611,6 +693,23 @@ const LocationModal = ({}) => {
                       }}
                     >
                       <View className="rounded-t-3xl">
+                        {locationError && (
+                          <View
+                            className={`rounded-xl px-3 py-3 mb-4 ${
+                              isDarkMode ? "bg-[#171717]" : "bg-[#F5F5F5]"
+                            }`}
+                          >
+                            <Text
+                              fontSize="text-sm"
+                              className={
+                                isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                              }
+                            >
+                              {locationError}
+                            </Text>
+                          </View>
+                        )}
+
                         <Text
                           fontSize="text-md"
                           fontWeight="font-bold"
@@ -623,7 +722,11 @@ const LocationModal = ({}) => {
                             isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
                           }`}
                         >
-                          {address ? address : "Fetching address..."}
+                          {address
+                            ? address
+                            : isFetchingLocation
+                            ? "Fetching address..."
+                            : "Search for an address or tap on the map to choose one."}
                         </Text>
 
                         {selectedLocation && (
@@ -653,6 +756,11 @@ const LocationModal = ({}) => {
                         <View className="py-3 mt-2">
                           <Button
                             variant="primary"
+                            disabled={
+                              !canConfirmLocation ||
+                              signUpLoading ||
+                              isFetchingLocation
+                            }
                             onPress={() => {
                               handleConfirmLocation(
                                 location,
@@ -662,7 +770,7 @@ const LocationModal = ({}) => {
                             }}
                             className="flex-row justify-center"
                           >
-                            {signUpLoading ? (
+                            {signUpLoading || isFetchingLocation ? (
                               <ActivityIndicator
                                 size="small"
                                 color={"#fff"}
@@ -672,6 +780,20 @@ const LocationModal = ({}) => {
                             )}
                           </Button>
                         </View>
+
+                        <TouchableOpacity
+                          className="items-center py-2"
+                          onPress={handleSkipLocation}
+                        >
+                          <Text
+                            fontSize="text-sm"
+                            className={`${
+                              isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                            }`}
+                          >
+                            Skip for now
+                          </Text>
+                        </TouchableOpacity>
 
                         <View
                           className={`flex-row pl-3 min-h-11 rounded-[12px] border ${
@@ -742,7 +864,9 @@ const LocationModal = ({}) => {
                                 fontWeight="font-bold"
                                 className="text-brand-blue"
                               >
-                                Use current location
+                                {isFetchingLocation
+                                  ? "Fetching current location..."
+                                  : "Use current location"}
                               </Text>
                             </View>
                           </View>

@@ -3,13 +3,7 @@ import * as Device from "expo-device";
 import * as TaskManager from "expo-task-manager";
 import * as BackgroundFetch from "expo-background-fetch";
 import { Platform } from "react-native";
-import { firestore } from "@/lib/config";
-import {
-  doc,
-  updateDoc,
-  collection,
-  onSnapshot,
-} from "@react-native-firebase/firestore";
+import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
 
 // Task name for background fetch
 const MESSAGE_NOTIFICATION_TASK = "MESSAGE_NOTIFICATION_TASK";
@@ -62,7 +56,7 @@ export async function registerForPushNotificationsAsync() {
         buttonTitle: "Reply",
         options: {
           opensAppToForeground: true,
-          authenticationRequired: false,
+          isAuthenticationRequired: false,
         },
       },
       {
@@ -81,6 +75,12 @@ export async function registerForPushNotificationsAsync() {
 // Function to save the push token to Firestore
 export async function updateUserPushToken(userId: string, pushToken: string) {
   try {
+    const firestore = getFirestoreDb();
+    if (!firestore) {
+      return;
+    }
+
+    const { doc, updateDoc } = getFirestoreModule();
     const userRef = doc(firestore, "users", userId);
     await updateDoc(userRef, {
       pushToken,
@@ -104,9 +104,15 @@ export function setupNotifications() {
 
 // Listen for new messages in Firestore
 export function listenForNewMessages(userId: string) {
+  const firestore = getFirestoreDb();
+  if (!firestore) {
+    return () => undefined;
+  }
+
+  const { collection, onSnapshot } = getFirestoreModule();
   const messagesRef = collection(firestore, `users/${userId}/messages`);
-  return onSnapshot(messagesRef, (snapshot) => {
-    snapshot.docChanges().forEach((change) => {
+  return onSnapshot(messagesRef, (snapshot: any) => {
+    snapshot.docChanges().forEach((change: any) => {
       if (change.type === "added") {
         const newMessage = change.doc.data();
         Notifications.scheduleNotificationAsync({
@@ -180,16 +186,15 @@ export function setupNotificationListeners(
   };
 }
 
-import {
-  query,
-  where,
-  orderBy,
-  limit,
-  getDocs,
-} from "@react-native-firebase/firestore";
-
 export async function checkForNewMessagesOrConversations() {
   try {
+    const firestore = getFirestoreDb();
+    if (!firestore) {
+      return null;
+    }
+
+    const { collection, query, where, orderBy, limit, getDocs } =
+      getFirestoreModule();
     // Assuming user ID and last checked timestamp are available
     const userId = `${Platform.OS}`; // Replace with actual user ID
     const lastReadTimestamp = new Date(); // This should be set to the last time you checked for messages

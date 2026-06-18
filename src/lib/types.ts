@@ -243,7 +243,12 @@ export type RootStackParamList = {
     owner: Owner;
     reviews: OwnerReview[];
   };
-  LocationModal: { onGoBack: (coordinates: any, addressToSend: any) => void };
+  LocationModal: {
+    onGoBack: (
+      coordinates: { latitude: number; longitude: number } | null,
+      addressToSend: string | null
+    ) => void;
+  };
   HangTight: undefined;
   [key: string]: object | undefined;
 };
@@ -343,7 +348,7 @@ export interface Message {
       location: string;
       securityDeposit?: string;
       offerStatus?: "accepted" | "rejected" | "pending";
-      id: string;
+      id?: string;
     };
   };
 }

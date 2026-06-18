@@ -1,26 +1,6 @@
 import { useGlobalContext } from "@/context/global-context";
-import { firestore } from "@/lib/config";
+import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
 import { Conversation, Message, UserDetails } from "@/lib/types";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-} from "@react-native-firebase/firestore";
-import {
-  registerForPushNotificationsAsync,
-  updateUserPushToken,
-  setupChatNotifications,
-  setupNotificationListeners,
-} from "./notifications";
 import { useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 
@@ -30,12 +10,43 @@ interface BlockedRecord {
   timestamp: any;
 }
 
+const requireFirestore = () => {
+  const firestore = getFirestoreDb();
+  if (!firestore) {
+    throw new Error("Firebase Firestore is unavailable.");
+  }
+
+  return firestore;
+};
+
+const getNotificationHelpers = () =>
+  require("./notifications") as typeof import("./notifications");
+
+const documentExists = (
+  snapshot: { exists?: boolean | (() => boolean) } | null | undefined
+) => {
+  if (!snapshot) {
+    return false;
+  }
+
+  return typeof snapshot.exists === "function"
+    ? snapshot.exists()
+    : Boolean(snapshot.exists);
+};
+
 export function useChat() {
   const { isAuthenticated, authTokens, userDetails } = useGlobalContext();
   const { access_token } = authTokens || {};
   const navigation = useNavigation();
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    const { setupChatNotifications, setupNotificationListeners } =
+      getNotificationHelpers();
+
     setupChatNotifications();
 
     // Set up notification response listener
@@ -52,7 +63,7 @@ export function useChat() {
     return () => {
       notificationListener();
     };
-  }, []);
+  }, [isAuthenticated, navigation]);
 
   async function startChat(
     userDetails1: UserDetails,
@@ -64,9 +75,11 @@ export function useChat() {
       rate: string;
       type: string;
       text: string;
-      id: string;
+      id?: string;
     }
   ): Promise<{ success: boolean; content: string }> {
+    const firestore = requireFirestore();
+    const { getDocs, collection, addDoc } = getFirestoreModule();
     const isBlocked = await checkIfUsersAreBlocked(
       userDetails1.userId,
       userDetails2.userId
@@ -82,7 +95,7 @@ export function useChat() {
       const querySnapshot = await getDocs(
         collection(firestore, "conversations")
       );
-      querySnapshot.forEach(ss => {
+      querySnapshot.forEach((ss: any) => {
         const pc = ss.data()?.initialParticipants;
         if ((pc?.[0]?.userId === userDetails1.userId && pc?.[1]?.userId === userDetails2.userId) || (pc?.[0]?.userId === userDetails2.userId && pc?.[1]?.userId === userDetails1.userId)) {
           conversationDoc = ss;
@@ -153,9 +166,11 @@ export function useChat() {
       rate: string;
       type: string;
       text: string;
-      id: string;
+      id?: string;
     }
   ): Promise<void> {
+    const firestore = requireFirestore();
+    const { addDoc, collection } = getFirestoreModule();
     let message: Message;
     if (product.type === "product") {
       message = {
@@ -191,13 +206,15 @@ export function useChat() {
   }
 
   async function getChats(): Promise<Conversation[]> {
+    const firestore = requireFirestore();
+    const { getDocs, collection } = getFirestoreModule();
     try {
       const querySnapshot = await getDocs(
         collection(firestore, "conversations")
       );
       const conversations: Conversation[] = [];
 
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach((doc: any) => {
         const conversation = doc.data() as Conversation;
         if (
           conversation?.participants?.length > 0 &&
@@ -220,14 +237,18 @@ export function useChat() {
     userId: string,
     callback: (chats: Conversation[]) => void
   ): () => void {
+    const firestore = requireFirestore();
+    const { query, collection, onSnapshot } = getFirestoreModule();
+    const { registerForPushNotificationsAsync, updateUserPushToken } =
+      getNotificationHelpers();
 
     const q = query(collection(firestore, "conversations"));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, (snapshot: any) => {
 
 
       const chats: Conversation[] = [];
-      snapshot.forEach((doc) => {
+      snapshot.forEach((doc: any) => {
         const conversation = doc.data() as Conversation;
 
         if (
@@ -278,11 +299,13 @@ export function useChat() {
   }
 
   async function deleteChat(conversationId: string): Promise<void> {
+    const firestore = requireFirestore();
+    const { doc, getDoc, updateDoc } = getFirestoreModule();
     try {
       const conversationRef = doc(firestore, "conversations", conversationId);
 
       const conversationSnapshot = await getDoc(conversationRef);
-      if (conversationSnapshot.exists) {
+      if (documentExists(conversationSnapshot)) {
         const conversationData = conversationSnapshot.data() as Conversation;
 
         await updateDoc(conversationRef, {
@@ -298,13 +321,15 @@ export function useChat() {
   }
 
   async function getMessages(conversationId: string): Promise<Message[]> {
+    const firestore = requireFirestore();
+    const { collection, query, where, getDocs } = getFirestoreModule();
     const messagesRef = collection(firestore, "messages");
     const q = query(messagesRef, where("conversationId", "==", conversationId));
 
     try {
       const querySnapshot = await getDocs(q);
       const messages: Message[] = querySnapshot.docs.map(
-        (doc) =>
+        (doc: any) =>
         ({
           id: doc.id,
           ...doc.data(),
@@ -322,14 +347,17 @@ export function useChat() {
     conversationId: string,
     callback: (messages: Message[]) => void
   ): () => void {
+    const firestore = requireFirestore();
+    const { query, collection, where, orderBy, onSnapshot } =
+      getFirestoreModule();
     const q = query(
       collection(firestore, "messages"),
       where("conversationId", "==", conversationId),
       orderBy("timestamp", "asc")
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const messages: Message[] = snapshot.docs.map((doc) => ({
+    const unsubscribe = onSnapshot(q, (snapshot: any) => {
+      const messages: Message[] = snapshot.docs.map((doc: any) => ({
         id: doc.id,
         ...doc.data(),
         timestamp: doc.data().timestamp.toDate(), // Ensure timestamp is a Date object
@@ -345,6 +373,9 @@ export function useChat() {
     text: string,
     conversationId: string
   ): Promise<void> {
+    const firestore = requireFirestore();
+    const { addDoc, collection, doc, getDoc, updateDoc } =
+      getFirestoreModule();
     const timestamp = new Date();
     const object: Message = {
       conversationId: conversationId,
@@ -362,7 +393,7 @@ export function useChat() {
       const conversationRef = doc(firestore, "conversations", conversationId);
       const conversationDoc = await getDoc(conversationRef);
 
-      if (conversationDoc.exists) {
+      if (documentExists(conversationDoc)) {
         const conversationData = conversationDoc.data() as Conversation;
 
         const updatedReadStatus = conversationData.readStatus.map((status) => {
@@ -392,12 +423,13 @@ export function useChat() {
   }
 
   async function readChat(conversationId: string): Promise<void> {
+    const firestore = requireFirestore();
+    const { doc, getDoc, updateDoc } = getFirestoreModule();
     try {
       const chatRef = doc(firestore, "conversations", conversationId);
       const chatDoc = await getDoc(chatRef);
 
-      if (chatDoc.exists) {
-        // Changed from chatDoc.exists() to chatDoc.exists
+      if (documentExists(chatDoc)) {
         const chatData = chatDoc.data() as Conversation;
 
         const userReadStatus = chatData.readStatus.find(
@@ -440,8 +472,13 @@ export function useChat() {
   async function getParticipantDetails(
     conversationId: string
   ): Promise<UserDetails> {
+    const firestore = requireFirestore();
+    const { doc, getDoc } = getFirestoreModule();
     const conversationRef = doc(firestore, "conversations", conversationId);
     const conversationDoc = await getDoc(conversationRef);
+    if (!documentExists(conversationDoc)) {
+      throw new Error("Conversation not found");
+    }
     const conversation = conversationDoc.data() as Conversation;
 
     const otherParticipant = conversation.initialParticipants.find(
@@ -456,8 +493,13 @@ export function useChat() {
   }
 
   async function getMyDetails(conversationId: string): Promise<UserDetails> {
+    const firestore = requireFirestore();
+    const { doc, getDoc } = getFirestoreModule();
     const conversationRef = doc(firestore, "conversations", conversationId);
     const conversationDoc = await getDoc(conversationRef);
+    if (!documentExists(conversationDoc)) {
+      throw new Error("Conversation not found");
+    }
     const conversation = conversationDoc.data() as Conversation;
 
     const myDetails: any = conversation.participants.find(
@@ -488,6 +530,9 @@ export function useChat() {
       name: string;
     }
   ): Promise<void> {
+    const firestore = requireFirestore();
+    const { addDoc, collection, doc, getDoc, updateDoc } =
+      getFirestoreModule();
     const timestamp = new Date();
 
     const object: Message = {
@@ -506,7 +551,7 @@ export function useChat() {
       const conversationRef = doc(firestore, "conversations", conversationId);
       const conversationDoc = await getDoc(conversationRef);
 
-      if (conversationDoc.exists) {
+      if (documentExists(conversationDoc)) {
         const conversationData = conversationDoc.data() as Conversation;
 
         const updatedReadStatus = conversationData.readStatus.map((status) => {
@@ -539,6 +584,8 @@ export function useChat() {
     user1: string,
     user2: string
   ): Promise<boolean> {
+    const firestore = requireFirestore();
+    const { collection, query, where, getDocs } = getFirestoreModule();
     const blockedRef = collection(firestore, "blocked");
     const q1 = query(
       blockedRef,
@@ -564,6 +611,9 @@ export function useChat() {
     reason: string,
     conversationId: string
   ): Promise<void> {
+    const firestore = requireFirestore();
+    const { serverTimestamp, addDoc, collection, doc, updateDoc } =
+      getFirestoreModule();
     try {
       // Create record in blocked collection
       const blockedRecord: BlockedRecord = {
@@ -590,10 +640,16 @@ export function useChat() {
   }
 
   async function unblockUser(conversationId: string): Promise<void> {
+    const firestore = requireFirestore();
+    const { doc, getDoc, collection, query, where, getDocs, deleteDoc, updateDoc } =
+      getFirestoreModule();
     try {
       // Get the blocked user's ID from the conversation
       const conversationRef = doc(firestore, "conversations", conversationId);
       const conversationDoc = await getDoc(conversationRef);
+      if (!documentExists(conversationDoc)) {
+        throw new Error("Conversation not found");
+      }
       const conversation = conversationDoc.data() as Conversation;
 
       if (conversation.blockStatus.initiatedBy !== userDetails?.username) {
@@ -617,7 +673,9 @@ export function useChat() {
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        await Promise.all(querySnapshot.docs.map((doc) => deleteDoc(doc.ref)));
+        await Promise.all(
+          querySnapshot.docs.map((doc: any) => deleteDoc(doc.ref))
+        );
       }
 
       // Update conversation as before
@@ -634,8 +692,13 @@ export function useChat() {
     isBlocked: boolean;
     initiatedBy: string;
   }> {
+    const firestore = requireFirestore();
+    const { doc, getDoc } = getFirestoreModule();
     const conversationRef = doc(firestore, "conversations", conversationId);
     const conversationDoc = await getDoc(conversationRef);
+    if (!documentExists(conversationDoc)) {
+      throw new Error("Conversation not found");
+    }
     const conversation = conversationDoc.data() as Conversation;
     return {
       isBlocked: conversation.blockStatus.isBlocked,
@@ -647,11 +710,13 @@ export function useChat() {
     messageId: string,
     operation: "accepted" | "rejected"
   ): Promise<void> {
+    const firestore = requireFirestore();
+    const { doc, getDoc, updateDoc } = getFirestoreModule();
     try {
       const messageRef = doc(firestore, "messages", messageId);
       const messageDoc = await getDoc(messageRef);
 
-      if (!messageDoc.exists) {
+      if (!documentExists(messageDoc)) {
         throw new Error("Message not found");
       }
 

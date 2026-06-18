@@ -111,11 +111,15 @@ export default function WriteReviewScreen() {
         </View>
 
         <View className="px-5 pb-2 mt-4 flex flex-row items-center space-x-3">
-          <Image
-            source={{ uri: product.cover_image || "" }}
-            className="w-1/4 aspect-square rounded-xl"
-            contentFit="cover"
-          />
+          {product.cover_image ? (
+            <Image
+              source={{ uri: product.cover_image }}
+              className="w-1/4 aspect-square rounded-xl"
+              contentFit="cover"
+            />
+          ) : (
+            <View className="w-1/4 aspect-square rounded-xl bg-[#E6E6E6]" />
+          )}
           <View>
             <Text fontSize="text-sm" fontWeight="font-bold" className="mb-1">
               {product.title.slice(0, 20)}...

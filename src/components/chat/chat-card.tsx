@@ -9,6 +9,7 @@ import {
   DocumentIcon,
   TrashIcon,
   PhotoIcon,
+  UserCircleIcon,
 } from "react-native-heroicons/outline";
 
 interface Props {
@@ -76,11 +77,18 @@ export function ChatCard({
             isDark ? "bg-black" : "bg-white"
           } rounded-lg`}
         >
-          <Image
-            source={{ uri: profilePic }}
-            className="h-12 w-12 rounded-full"
-            resizeMode="cover"
-          />
+          {profilePic ? (
+            <Image
+              source={{ uri: profilePic }}
+              className="h-12 w-12 rounded-full"
+              resizeMode="cover"
+            />
+          ) : (
+            <UserCircleIcon
+              size={48}
+              color={"#635BE8"}
+            />
+          )}
 
           <StyledView className="flex-1 ml-3">
             <Text
