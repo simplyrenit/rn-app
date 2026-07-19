@@ -189,10 +189,10 @@ Exit criteria:
 ### 9. Product detail and owner trust flow
 
 - [x] Verify product detail screen renders complete product data
-- [ ] Verify image gallery and cover image behavior
+- [x] Verify image gallery and cover image behavior
 - [x] Verify pricing, availability, description, and location sections
-- [ ] Verify navigation to owner profile, owner products, and owner reviews
-- [ ] Verify review writing entry points
+- [x] Verify navigation to owner profile, owner products, and owner reviews
+- [ ] Verify review writing entry points (guest guard passes; authenticated owner self-review retest is pending)
 
 Exit criteria:
 
@@ -340,3 +340,19 @@ While working each item:
 - [x] Final unsave-from-Saved retest passed on the physical device after the latest favorites fixes
 - [x] Search flow fixes landed and passed retest on the physical Android device: category searches no longer send `Invalid date`, empty category results now bootstrap correctly, and refining a search preserves `what`, `where`, and coordinates
 - [x] Backend search no longer crashes when NLTK `wordnet` data is absent, and `nearest` sorting now orders by actual proximity
+- [x] Flow 9 guest retest: image gallery, product content, product reviews, owner profile, owner catalogue, and owner empty-review state pass on physical Android
+- [x] Flow 9 P2 fixed: product-detail content now respects the Android top safe area while scrolling
+- [x] Flow 9 P2 fixed: signed-out owner profiles now use a deliberately public, contact-free owner-details response instead of calling the authenticated `users/{username}` endpoint
+- [x] Flow 16 P2 fixed: the guest Profile screen no longer mounts the authenticated personal-details sheet and triggers a needless `users/me` 401 request
+- [ ] Flow 9 authenticated owner self-review guard remains queued until the test-account OTP can be retrieved and verified
+
+## QA Findings Queue
+
+- [ ] P1 candidate for Flow 10: local API logs report that Firestore is disabled because `FIREBASE_SECRETS_PATH` is not configured. Validate the impact on message sending before classifying or fixing it.
+- [ ] P3 data-quality issue: local discovery data includes obviously synthetic/malformed listing names and image content. Keep test fixtures from being confused with production-ready catalogue data during final readiness review.
+
+## Production Readiness Confidence
+
+**Current confidence: 15% — not ready for production.**
+
+The environment, guest discovery/search/favorites, and substantial product-detail/owner-trust coverage have passed on a physical Android device. Critical evidence is still missing for authenticated onboarding and session persistence, posting and inventory, actual chat sending, review submission, merchant gating, account management, support, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
