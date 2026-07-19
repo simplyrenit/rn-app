@@ -200,6 +200,7 @@ Exit criteria:
 
 ### 10. Chat list and chat detail flow
 
+- [x] Verify guest Chat tab has a clear sign-in gate
 - [x] Verify conversation list loads
 - [x] Verify navigation into `ChatDetails`
 - [x] Verify message history rendering
@@ -346,10 +347,11 @@ While working each item:
 - [x] Flow 16 P2 fixed: the guest Profile screen no longer mounts the authenticated personal-details sheet and triggers a needless `users/me` 401 request
 - [ ] Flow 9 authenticated owner self-review guard remains queued until the test-account OTP can be retrieved and verified
 - [x] Flow 6 complete: fresh Android retest verified categories, discovery sections, zero-result rendering, and category-result navigation with clean Renit logs
+- [x] Flow 10 guest retest: Chat shows its sign-in gate on Android without a crash or app-originated error
 
 ## QA Findings Queue
 
-- [ ] P1 candidate for Flow 10: local API logs report that Firestore is disabled because `FIREBASE_SECRETS_PATH` is not configured. Validate the impact on message sending before classifying or fixing it.
+- [ ] P1 candidate for Flow 10: local API logs report that Firestore is disabled because `FIREBASE_SECRETS_PATH` is not configured. Authenticate a test user and validate the actual send/receive path before classifying or fixing it.
 - [ ] P3 data-quality issue: local discovery data includes obviously synthetic/malformed listing names and image content. Keep test fixtures from being confused with production-ready catalogue data during final readiness review.
 
 ## Production Readiness Confidence
