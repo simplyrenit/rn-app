@@ -121,8 +121,12 @@ export default function ProductAvailability() {
   const confirmDateRange = () => {
     if (!selectedRange) return;
 
-    const newStart = moment(selectedRange.startDate);
-    const newEnd = moment(selectedRange.endDate || selectedRange.startDate);
+    const rangeToAdd = {
+      startDate: selectedRange.startDate,
+      endDate: selectedRange.endDate || selectedRange.startDate,
+    };
+    const newStart = moment(rangeToAdd.startDate);
+    const newEnd = moment(rangeToAdd.endDate);
     let overlappingRanges: number[] = [];
     let mergedStart = newStart;
     let mergedEnd = newEnd;
@@ -155,13 +159,13 @@ export default function ProductAvailability() {
 
       setUnavailableDates([...updatedRanges, mergedRange]);
     } else {
-      setUnavailableDates([...unavailableDates, selectedRange]);
+      setUnavailableDates([...unavailableDates, rangeToAdd]);
     }
 
     setSelectedRange(null);
 
     let newMarked = {};
-    const updatedRanges = [...unavailableDates, selectedRange];
+    const updatedRanges = [...unavailableDates, rangeToAdd];
     updatedRanges.forEach((range) => {
       let currentDate = moment(range.startDate);
       const endDate = range.endDate || range.startDate;
@@ -223,7 +227,7 @@ export default function ProductAvailability() {
     saveDetails({ productAvailability: formattedUnavailableDates });
     try {
       const response = await updateMyProductDetails(name, {
-        booked: formattedUnavailableDates.map((range) => ({
+        blocked_dates: formattedUnavailableDates.map((range) => ({
           start_date: range.startDate,
           end_date: range.endDate,
         })),

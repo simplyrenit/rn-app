@@ -254,9 +254,10 @@ Exit criteria:
 
 - [x] Verify `My products` list
 - [x] Verify product details for owned items
-- [ ] Verify edit category/sub-category/about/images/cover/availability
+- [ ] Verify edit category/sub-category/about/images/cover
+- [x] Verify edit availability
 - [x] Verify update persistence for product details
-- [ ] Verify unavailability category/form flows
+- [x] Verify unavailability date-form flow
 
 Exit criteria:
 
@@ -369,15 +370,18 @@ While working each item:
 - [x] P2 fixed: backend startup reported pending schema changes for product, feedback, and review moderation-label fields. Added and applied the three generated migrations; the migration-drift check is clean and the affected backend test suite passes (10 tests).
 - [x] P2 fixed: when both stored access and refresh tokens are invalid, Android now clears the session instead of leaving a stale authenticated shell and Profile error. A physical retest returned to Welcome/sign-in without recurring authenticated request failures.
 - [x] Flow 14 partial retest: category and subcategory selection now persists from the physical Android edit flow (`PATCH 200`) and returns to the edit hub. The backend avoids unnecessary image recompression/moderation when an edit changes only category data, preventing unrelated seller edits from being blocked by image-storage failures.
+- [x] P1 fixed: seller unavailability edits previously sent the unsupported `booked` field; valid one-day date-only values were also discarded by the API, and updates referenced an undefined user. The client now sends `blocked_dates`, normalizes one-day ranges, and the API accepts and persists date-only same-day bookings for the authenticated owner.
+- [x] Flow 14 partial retest: on physical Android, selecting Jul 20 as a one-day unavailability range displays one unavailable day, Update returns to the edit hub, the local API stores the same-day booking, and reopening the screen reads the range back.
 
 ## QA Findings Queue
 
 - [ ] P1 candidate for Flow 10: the local API process reports that server-side Firestore is disabled because `FIREBASE_SECRETS_PATH` is not configured. The client-side authenticated send and persistence path passes, but validate a second-user receive and push-delivery path before clearing this risk.
+- [ ] P1 infrastructure candidate: this QA host's Windows Time service is unsynchronized and uses the local CMOS clock. AWS rejects S3 writes with `RequestTimeTooSkewed`, blocking the physical product-image edit path. Require NTP/time-service health in the deployment runbook and retest image updates on a synchronized host.
 - [ ] P3 data-quality issue: local discovery data includes obviously synthetic/malformed listing names and image content. Keep test fixtures from being confused with production-ready catalogue data during final readiness review.
 - [ ] P3 content issue: the FAQ sign-up answer points to `renit.co.in`, while current app/support links use the SimplyRenit domain. Confirm the intended public site and update the copy.
 
 ## Production Readiness Confidence
 
-**Current confidence: 49% — not ready for production.**
+**Current confidence: 51% — not ready for production.**
 
-Tested and passing: environment/boot (Flow 1), authenticated OTP verification and session persistence plus invalid-session recovery (partial Flow 3), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), authenticated outbound chat send and persistence (partial Flow 10), full listing creation including gallery selection, native crop, image upload, publish, and owned-listing readback (Flow 12), owned-listing edit navigation plus Product Details and category/subcategory update/readback (partial Flow 14), backend moderation-label migration integrity, and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidate 1 (server-side Firestore configuration and second-user delivery), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for complete authenticated onboarding, remaining seller image and inventory paths, a second-user chat receive/push confirmation, review submission by a non-owner, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
+Tested and passing: environment/boot (Flow 1), authenticated OTP verification and session persistence plus invalid-session recovery (partial Flow 3), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), authenticated outbound chat send and persistence (partial Flow 10), full listing creation including gallery selection, native crop, image upload, publish, and owned-listing readback (Flow 12), owned-listing edit navigation plus Product Details, category/subcategory, and single-day unavailability update/readback (partial Flow 14), backend moderation-label migration integrity, and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidates 2 (server-side Firestore configuration/second-user delivery and time synchronization for S3), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for complete authenticated onboarding, remaining seller image and inventory paths, a second-user chat receive/push confirmation, review submission by a non-owner, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
