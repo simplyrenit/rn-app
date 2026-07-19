@@ -4,6 +4,8 @@ import * as TaskManager from "expo-task-manager";
 import * as BackgroundFetch from "expo-background-fetch";
 import { Platform } from "react-native";
 import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
+import axiosInstance from "@/lib/networkUtils";
+import { REGISTER_PUSH_TOKEN_ENDPOINT } from "@/lib/config";
 
 // Task name for background fetch
 const MESSAGE_NOTIFICATION_TASK = "MESSAGE_NOTIFICATION_TASK";
@@ -72,8 +74,15 @@ export async function registerForPushNotificationsAsync() {
   return token;
 }
 
-// Function to save the push token to Firestore
+// Keep both chat transports supplied with the current Expo token.
 export async function updateUserPushToken(userId: string, pushToken: string) {
+  try {
+    await axiosInstance.post(REGISTER_PUSH_TOKEN_ENDPOINT, {
+      expo_push_token: pushToken,
+    });
+  } catch (error) {
+  }
+
   try {
     const firestore = getFirestoreDb();
     if (!firestore) {

@@ -132,6 +132,7 @@ export const UPDATE_MY_DETAILS_ENDPOINT = SERVERURL + "users/";
 export const DELETE_MY_ACCOUNT_ENDPOINT = SERVERURL + "users/";
 
 export const NOTIFICATIONS_ENDPOINT = SERVERURL + "notification/";
+export const REGISTER_PUSH_TOKEN_ENDPOINT = SERVERURL + "register-push-token/";
 
 export const ALL_PRODUCTS = SERVERURL + "product-title/";
 
