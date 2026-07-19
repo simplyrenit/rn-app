@@ -250,10 +250,7 @@ export type RootStackParamList = {
     reviews: OwnerReview[];
   };
   LocationModal: {
-    onGoBack: (
-      coordinates: { latitude: number; longitude: number } | null,
-      addressToSend: string | null
-    ) => void;
+    requestId: string;
   };
   HangTight: undefined;
   [key: string]: object | undefined;

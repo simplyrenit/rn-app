@@ -226,9 +226,9 @@ Exit criteria:
 
 ### 12. Post listing happy path
 
-- [ ] Verify category selection
-- [ ] Verify sub-category selection
-- [ ] Verify about-product form
+- [x] Verify category selection
+- [x] Verify sub-category selection
+- [x] Verify about-product form and location selection handoff
 - [ ] Verify image selection and cover image step
 - [ ] Verify product availability step
 - [ ] Verify review screen
@@ -358,10 +358,13 @@ While working each item:
 - [x] Flow 17 guest support retest: Report a problem and Feedback & Review render, keep empty submissions disabled, and return to Profile through Android Back
 - [x] Flow 4 guest retest: Post tab shows the sign-in gate without app-originated errors
 - [x] Flow 3 partial retest: the authorized test mailbox received the OTP, Android verification succeeded, authenticated APIs returned 200, and the session survived a cold app relaunch
+- [x] Flow 12 partial retest: authenticated Android navigation passes category, subcategory, product detail fields, condition selection, live location selection, and return of the confirmed address to the listing form
+- [x] P2 fixed: LocationModal now passes a serializable request ID through React Navigation and returns the chosen location through the existing callback; Android retest confirmed the selected address returns without the prior non-serializable-navigation warning
 
 ## QA Findings Queue
 
 - [ ] P1 candidate for Flow 10: the local API process reports that server-side Firestore is disabled because `FIREBASE_SECRETS_PATH` is not configured. The client-side authenticated send and persistence path passes, but validate a second-user receive and push-delivery path before clearing this risk.
+- [ ] P2 Flow 12: closing the live LocationModal map after confirming a location emits `NativeViewHierarchyManager` / `IllegalViewOperationException` for a removed view tag. The selected address still reaches the form, but resolve this Android-native runtime error before release.
 - [ ] P3 data-quality issue: local discovery data includes obviously synthetic/malformed listing names and image content. Keep test fixtures from being confused with production-ready catalogue data during final readiness review.
 - [ ] P3 content issue: the FAQ sign-up answer points to `renit.co.in`, while current app/support links use the SimplyRenit domain. Confirm the intended public site and update the copy.
 
@@ -369,4 +372,4 @@ While working each item:
 
 **Current confidence: 26% — not ready for production.**
 
-Tested and passing: environment/boot (Flow 1), authenticated OTP verification and session persistence (partial Flow 3), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), authenticated outbound chat send and persistence (partial Flow 10), and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidate 1 (server-side Firestore configuration and second-user delivery), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for complete authenticated onboarding, posting and inventory, a second-user chat receive/push confirmation, review submission by a non-owner, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
+Tested and passing: environment/boot (Flow 1), authenticated OTP verification and session persistence (partial Flow 3), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), authenticated outbound chat send and persistence (partial Flow 10), partial product posting through live location selection (Flow 12), and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidate 1 (server-side Firestore configuration and second-user delivery), P2 1 (Android LocationModal map-close runtime error), P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for complete authenticated onboarding, listing image/upload/publish and inventory paths, a second-user chat receive/push confirmation, review submission by a non-owner, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.

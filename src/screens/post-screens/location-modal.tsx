@@ -31,6 +31,10 @@ import { useGlobalContext } from "@/context/global-context";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
+import {
+  cancelLocationRequest,
+  resolveLocationRequest,
+} from "@/lib/location-request";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import {
   GestureHandlerRootView,
@@ -435,18 +439,21 @@ const LocationModal = ({}) => {
       };
     }
 
-    if (coordinates && route.params?.onGoBack) {
-      route.params.onGoBack(coordinates, addressToSend);
+    if (coordinates) {
+      resolveLocationRequest(route.params?.requestId, coordinates, addressToSend);
       navigation.goBack();
     }
   };
 
   const handleSkipLocation = useCallback(() => {
-    if (route.params?.onGoBack) {
-      route.params.onGoBack(null, null);
-    }
+    resolveLocationRequest(route.params?.requestId, null, null);
     navigation.goBack();
   }, [navigation, route.params]);
+
+  useEffect(
+    () => () => cancelLocationRequest(route.params?.requestId),
+    [route.params?.requestId]
+  );
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const googlePlacesRef = useRef<any>(null);

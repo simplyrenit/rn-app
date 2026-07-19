@@ -1,6 +1,7 @@
 import { Button, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
+import { createLocationRequest } from "@/lib/location-request";
 import {
   RouteProps,
   UnavailabilityFormData,
@@ -88,8 +89,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
 
   const handleOpenBottomSheet = () => {
     router.navigate("LocationModal", {
-      onGoBack: (coordinates, addressToSend) =>
-        handleDataFromLocation(coordinates, addressToSend),
+      requestId: createLocationRequest(handleDataFromLocation),
     });
   };
 

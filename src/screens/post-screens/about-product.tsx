@@ -6,6 +6,7 @@ import { PostProductHeader } from "@/components/post/header";
 import { useGlobalContext } from "@/context/global-context";
 import { useProductContext } from "@/context/product-context";
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
+import { createLocationRequest } from "@/lib/location-request";
 import { NearbyPlace, useTypedNavigation } from "@/lib/types";
 import {
   BottomSheetBackdrop,
@@ -192,10 +193,8 @@ export default function AboutProduct() {
   }, []);
 
   const handleOpenBottomSheet = () => {
-    // setBottomSheetVisible(true);
     navigation.navigate("LocationModal", {
-      onGoBack: (coordinates, addressToSend) =>
-        handleDataFromLocation(coordinates, addressToSend),
+      requestId: createLocationRequest(handleDataFromLocation),
     });
   };
 

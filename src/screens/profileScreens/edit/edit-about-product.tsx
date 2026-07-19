@@ -4,6 +4,7 @@ import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal"
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
+import { createLocationRequest } from "@/lib/location-request";
 import { NearbyPlace, RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
@@ -190,10 +191,8 @@ export default function EditAboutProduct() {
   }, []);
 
   const handleOpenBottomSheet = () => {
-    // setBottomSheetVisible(true);
     navigation.navigate("LocationModal", {
-      onGoBack: (coordinates, addressToSend) =>
-        handleDataFromLocation(coordinates, addressToSend),
+      requestId: createLocationRequest(handleDataFromLocation),
     });
   };
 
