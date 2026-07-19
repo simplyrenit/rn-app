@@ -3,8 +3,8 @@ import { admin } from "./admin";
 
 export const onNewMessage = functions.firestore
   .document("messages/{messageId}")
-  .onWrite(async (change: any, context: any) => {
-    const message = change.after.data();
+  .onCreate(async (snapshot: any) => {
+    const message = snapshot.data();
 
     if (!message) {
       console.error("No message data found");
@@ -49,48 +49,37 @@ export const onNewMessage = functions.firestore
       return;
     }
 
-    // Send the notification
-    await admin.messaging().send({
-      token: recipientToken,
-      notification: {
+    const response = await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: recipientToken,
         title: `Message from ${
           conversation?.participants.find((p: any) => p.userId === message.from)
             ?.username || "User"
         }`,
         body:
-          message.type === "text" ? message.message.text : "New offer received",
+          message.type === "text" ? message.message?.text : "New offer received",
+        data: {
+          conversationId: message.conversationId,
+          messageType: message.type,
+          senderId: message.from,
+          type: "chat",
+        },
         sound: "default",
-        badge: "1",
-      },
-      data: {
-        conversationId: message.conversationId,
-        messageType: message.type,
-        senderId: message.from,
-        type: "chat",
-        channelId: "chat", // For Android
-        category: "chat", // For iOS
-        click_action: "FLUTTER_NOTIFICATION_CLICK",
-      },
-      android: {
         priority: "high",
-        notification: {
-          channelId: "chat",
-          priority: "high",
-          defaultSound: true,
-          defaultVibrateTimings: true,
-        },
-      },
-      apns: {
-        payload: {
-          aps: {
-            category: "chat",
-            sound: "default",
-            threadId: message.conversationId,
-            mutableContent: true,
-            contentAvailable: true,
-          },
-        },
-      },
+        channelId: "chat",
+      }),
     });
 
+    if (!response.ok) {
+      throw new Error(`Expo push request failed: ${response.status}`);
+    }
+
+    const ticket = (await response.json()) as {
+      data?: Array<{ status?: string; message?: string }>;
+    };
+    if (ticket.data?.[0]?.status === "error") {
+      throw new Error(`Expo push rejected: ${ticket.data[0].message}`);
+    }
   });
