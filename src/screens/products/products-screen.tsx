@@ -76,10 +76,8 @@ export default function DetailsScreen() {
   }
 
   const handleEditClick = () => {
-    navigation.navigate("Profile", {
-      screen: "editProduct",
-      params: { id: product?.name },
-    });
+    if (!product?.name) return;
+    navigation.navigate("editProduct", { id: product.name });
   };
 
   const isOwner = userDetails?.username === product?.owner?.username;

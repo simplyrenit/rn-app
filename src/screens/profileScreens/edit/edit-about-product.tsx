@@ -122,15 +122,16 @@ export default function EditAboutProduct() {
   const googlePlacesRef = React.useRef<any>(null);
 
   const allFieldsFilled =
-    productName &&
+    productName.trim() &&
     // brandName &&
     // modelName &&
-    condition &&
-    // productDescription &&
+    condition !== "Select Condition" &&
+    productDescription.trim() &&
     // usageDescription &&
     pricePerDay &&
     securityDeposit &&
-    // selectedLocation &&
+    address.trim() &&
+    (selectedLocation || (location.latitude !== 0 && location.longitude !== 0)) &&
     (contactPerson === "Owner" || (otherName && otherPhoneNumber));
 
 
