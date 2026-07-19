@@ -1,5 +1,8 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  createNavigationContainerRef,
+  NavigationContainer,
+} from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 
@@ -37,7 +40,7 @@ import FeedbackNReviewScreen from "@/screens/profileScreens/feedback-review";
 import MyProductScreen from "@/screens/profileScreens/my-product";
 import NotificationScreen from "@/screens/profileScreens/notification";
 import WhoWeAreScreen from "@/screens/profileScreens/who-we-are";
-import { Platform } from "react-native";
+import { BackHandler, Platform } from "react-native";
 import {
   ChatBubbleLeftIcon,
   HeartIcon,
@@ -79,6 +82,7 @@ import UnavailabilitySubCatScreen from "@/screens/profileScreens/unavailability_
 const Tab = createBottomTabNavigator();
 const PostStack = createNativeStackNavigator();
 const HomeStack = createNativeStackNavigator();
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 function PostStackScreen() {
   return (
@@ -293,12 +297,25 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function Navigation() {
   const { loading, hasSeenWelcome, theme, isAuthenticated } = useGlobalContext();
+
+  React.useEffect(() => {
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (navigationRef.isReady() && navigationRef.canGoBack()) {
+        navigationRef.goBack();
+        return true;
+      }
+      return false;
+    });
+
+    return () => subscription.remove();
+  }, []);
+
   if (loading || isAuthenticated === undefined) {
     return null;
   }
 
   return (
-    <NavigationContainer >
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         initialRouteName={isAuthenticated || hasSeenWelcome ? "MainTabs" : "Welcome"}
         screenOptions={{ headerShown: false, navigationBarColor: theme === 'dark' ? '#000' : '#fff' }}

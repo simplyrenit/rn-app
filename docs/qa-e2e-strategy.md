@@ -287,7 +287,7 @@ Exit criteria:
 
 ### 17. Support and diagnostics flow
 
-- [ ] Verify FAQs
+- [x] Verify FAQs and Android Back navigation
 - [ ] Verify feedback & review
 - [ ] Verify contact us
 - [ ] Verify report a problem
@@ -348,14 +348,17 @@ While working each item:
 - [ ] Flow 9 authenticated owner self-review guard remains queued until the test-account OTP can be retrieved and verified
 - [x] Flow 6 complete: fresh Android retest verified categories, discovery sections, zero-result rendering, and category-result navigation with clean Renit logs
 - [x] Flow 10 guest retest: Chat shows its sign-in gate on Android without a crash or app-originated error
+- [x] Flow 17 FAQ retest: FAQ content and accordion expansion render on Android; Android Back now returns to Profile instead of leaving Renit
+- [x] P2 fixed: a root Android hardware-back bridge now returns to the current React Navigation stack when possible; retested on FAQ and product detail
 
 ## QA Findings Queue
 
 - [ ] P1 candidate for Flow 10: local API logs report that Firestore is disabled because `FIREBASE_SECRETS_PATH` is not configured. Authenticate a test user and validate the actual send/receive path before classifying or fixing it.
 - [ ] P3 data-quality issue: local discovery data includes obviously synthetic/malformed listing names and image content. Keep test fixtures from being confused with production-ready catalogue data during final readiness review.
+- [ ] P3 content issue: the FAQ sign-up answer points to `renit.co.in`, while current app/support links use the SimplyRenit domain. Confirm the intended public site and update the copy.
 
 ## Production Readiness Confidence
 
-**Current confidence: 18% — not ready for production.**
+**Current confidence: 19% — not ready for production.**
 
-The environment, guest discovery/search/favorites, and substantial product-detail/owner-trust coverage have passed on a physical Android device. Critical evidence is still missing for authenticated onboarding and session persistence, posting and inventory, actual chat sending, review submission, merchant gating, account management, support, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
+Tested and passing: environment/boot (Flow 1), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), guest product-detail and owner trust paths (partial Flow 9), guest Chat gate (partial Flow 10), and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidate 1 (Firestore-dependent chat send path), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for authenticated onboarding and session persistence, posting and inventory, actual chat sending, review submission, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
