@@ -205,7 +205,7 @@ Exit criteria:
 - [x] Verify conversation list loads
 - [x] Verify navigation into `ChatDetails`
 - [x] Verify message history rendering
-- [ ] Verify send message flow
+- [x] Verify send message flow (authenticated Android send, composer reset, cold-relaunch conversation-list persistence, and detail-screen history pass)
 - [ ] Verify typing/read-state behavior if available
 - [ ] Verify block/unblock/report paths
 
@@ -351,6 +351,8 @@ While working each item:
 - [x] Flow 9 complete: authenticated owner retest shows the self-review guard in the reviews screen; no review CTA is exposed for the owner's own listing
 - [x] Flow 6 complete: fresh Android retest verified categories, discovery sections, zero-result rendering, and category-result navigation with clean Renit logs
 - [x] Flow 10 guest retest: Chat shows its sign-in gate on Android without a crash or app-originated error
+- [x] Flow 10 partial authenticated retest: sent a labelled QA message, confirmed it in ChatDetails and after a cold relaunch in the conversation list; message history remained available
+- [x] Flow 10 P2 fixed: notification-token registration now creates or merges the Firestore user document instead of failing when the document does not exist; retested after a cold relaunch with no recurrence of the prior Firestore `NOT_FOUND` write
 - [x] Flow 17 FAQ retest: FAQ content and accordion expansion render on Android; Android Back now returns to Profile instead of leaving Renit
 - [x] P2 fixed: a root Android hardware-back bridge now returns to the current React Navigation stack when possible; retested on FAQ and product detail
 - [x] Flow 17 guest support retest: Report a problem and Feedback & Review render, keep empty submissions disabled, and return to Profile through Android Back
@@ -359,12 +361,12 @@ While working each item:
 
 ## QA Findings Queue
 
-- [ ] P1 candidate for Flow 10: local API logs report that Firestore is disabled because `FIREBASE_SECRETS_PATH` is not configured. Authenticate a test user and validate the actual send/receive path before classifying or fixing it.
+- [ ] P1 candidate for Flow 10: the local API process reports that server-side Firestore is disabled because `FIREBASE_SECRETS_PATH` is not configured. The client-side authenticated send and persistence path passes, but validate a second-user receive and push-delivery path before clearing this risk.
 - [ ] P3 data-quality issue: local discovery data includes obviously synthetic/malformed listing names and image content. Keep test fixtures from being confused with production-ready catalogue data during final readiness review.
 - [ ] P3 content issue: the FAQ sign-up answer points to `renit.co.in`, while current app/support links use the SimplyRenit domain. Confirm the intended public site and update the copy.
 
 ## Production Readiness Confidence
 
-**Current confidence: 23% — not ready for production.**
+**Current confidence: 26% — not ready for production.**
 
-Tested and passing: environment/boot (Flow 1), authenticated OTP verification and session persistence (partial Flow 3), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), guest Chat gate (partial Flow 10), and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidate 1 (Firestore-dependent chat send path), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for complete authenticated onboarding, posting and inventory, actual chat sending, review submission by a non-owner, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
+Tested and passing: environment/boot (Flow 1), authenticated OTP verification and session persistence (partial Flow 3), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), authenticated outbound chat send and persistence (partial Flow 10), and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidate 1 (server-side Firestore configuration and second-user delivery), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for complete authenticated onboarding, posting and inventory, a second-user chat receive/push confirmation, review submission by a non-owner, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.

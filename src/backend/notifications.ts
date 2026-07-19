@@ -80,13 +80,17 @@ export async function updateUserPushToken(userId: string, pushToken: string) {
       return;
     }
 
-    const { doc, updateDoc } = getFirestoreModule();
+    const { doc, setDoc } = getFirestoreModule();
     const userRef = doc(firestore, "users", userId);
-    await updateDoc(userRef, {
-      pushToken,
-      lastTokenUpdate: new Date().toISOString(),
-      platform: Platform.OS,
-    });
+    await setDoc(
+      userRef,
+      {
+        pushToken,
+        lastTokenUpdate: new Date().toISOString(),
+        platform: Platform.OS,
+      },
+      { merge: true }
+    );
   } catch (error) {
   }
 }
