@@ -117,12 +117,8 @@ export function useProfile() {
 
       const response = await axiosInstance.patch(
         `${UPDATE_MY_DETAILS_ENDPOINT}${username}/`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        }
+        body,
+        { headers: { "Content-Type": "application/json" } }
       );
 
       await fetchUserDetails();
