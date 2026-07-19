@@ -4,11 +4,9 @@ import { useGlobalContext } from "@/context/global-context";
 import { PercentageIcon } from "@/icons/percent-outline";
 import { GENERATE_SIGNED_URLS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
-import { useSocket } from "@/services/socket";
 import axios from "axios";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-import { debounce } from "lodash";
 import { styled } from "nativewind";
 import React, { useRef, useState } from "react";
 import {
@@ -33,9 +31,6 @@ interface Props {
   onMakeOfferPress: () => void;
   isBlocked: boolean;
   conversationId: string;
-  participantDetails: {
-    userId: string;
-  };
 }
 
 interface PresignedResponse {
@@ -53,7 +48,6 @@ export function ChatInput({
   onMakeOfferPress,
   isBlocked,
   conversationId,
-  participantDetails,
 }: Props) {
   const [message, setMessage] = React.useState("");
   const [inputHeight, setInputHeight] = useState(44);
@@ -61,19 +55,10 @@ export function ChatInput({
   const [selectedMedia, setSelectedMedia] = useState<MediaPreview | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const { theme, userDetails, authTokens } = useGlobalContext();
+  const { theme, authTokens } = useGlobalContext();
   const isDarkMode = theme === "dark";
-  const { access_token } = authTokens || {};
 
   const { sendMessage } = useChat();
-  const { sendMessage: socketSendMessage, emitTyping } = useSocket();
-
-  // Create a debounced version of emitTyping
-  const debouncedEmitTyping = useRef(
-    debounce((isTyping: boolean) => {
-      emitTyping(conversationId, isTyping);
-    }, 300)
-  ).current;
 
   React.useEffect(() => {
     if (!message) {
@@ -81,7 +66,7 @@ export function ChatInput({
     }
   }, [message]);
 
-  const attachmentSheetRef = useRef(null);
+  const attachmentSheetRef = useRef<any>(null);
 
   const uploadToS3 = async (
     presignedUrl: string,
@@ -156,29 +141,20 @@ export function ChatInput({
     }
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const trimmedMessage = message.trim();
 
     if (trimmedMessage) {
-      // Send message through socket
-      socketSendMessage(
-        trimmedMessage,
-        participantDetails.userId,
-        userDetails?.username!
-      );
-
-      // Also send through Firebase for persistence
-      sendMessage(trimmedMessage, conversationId);
-
-      setMessage("");
-      debouncedEmitTyping(false);
+      try {
+        await sendMessage(trimmedMessage, conversationId);
+        setMessage("");
+      } catch {
+        alert("Failed to send message. Please try again.");
+      }
     }
   };
 
-  const handleMessageChange = (text: string) => {
-    setMessage(text);
-    debouncedEmitTyping(text.length > 0);
-  };
+  const handleMessageChange = (text: string) => setMessage(text);
 
   const handleOpenAttachmentSheet = () => {
     if (attachmentSheetRef.current) {
@@ -269,20 +245,7 @@ export function ChatInput({
         content_type: selectedMedia ? "image/jpeg" : mediaToUpload.type,
       };
 
-      // Send message
-      socketSendMessage(
-        JSON.stringify(messageContent),
-        participantDetails.userId,
-        userDetails?.username!,
-        {
-          data: s3Url,
-          filename: mediaToUpload.name,
-          content_type: selectedMedia ? "image/jpeg" : mediaToUpload.type,
-        }
-      );
-
-      // Also send through Firebase for persistence
-      sendMessage(JSON.stringify(messageContent), conversationId);
+      await sendMessage(JSON.stringify(messageContent), conversationId);
 
       setSelectedMedia(null);
       setSelectedFile(null);

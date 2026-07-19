@@ -317,6 +317,8 @@ export function useChat() {
       } else {
       }
     } catch (error) {
+      console.error("Error sending chat message:", error);
+      throw error;
     }
   }
 

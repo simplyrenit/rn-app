@@ -33,7 +33,6 @@ import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { ChatSkeleton } from "./chat-skeleton";
 import { useChat } from "@/backend/chat";
 import useOwner from "@/backend/owner";
-import { useSocket } from "@/services/socket";
 
 const getDaysBetweenDates = (startDate: string, endDate: string): number => {
   const start = moment(startDate);
@@ -111,8 +110,6 @@ export default function ChatDetailsScreen() {
     error,
   } = useSubscribeToMessages(conversationId);
 
-  const { connect, joinRoom, leaveRoom, onTyping } = useSocket();
-  const [isTyping, setIsTyping] = useState(false);
   const getImageSource = (uri?: string | null) =>
     uri ? { uri } : undefined;
 
@@ -164,29 +161,6 @@ export default function ChatDetailsScreen() {
   useEffect(() => {
     fetchDetails();
   }, []);
-
-  useEffect(() => {
-    if (!participantDetails.userId || !conversationId) {
-      return;
-    }
-
-    const socket = connect(participantDetails.userId);
-
-    if (socket) {
-      joinRoom(conversationId);
-
-      // Listen for typing status
-      onTyping(({ userId, isTyping }) => {
-        if (userId !== userDetails?.username) {
-          setIsTyping(isTyping);
-        }
-      });
-    }
-
-    return () => {
-      leaveRoom(conversationId);
-    };
-  }, [conversationId, userDetails?.username, participantDetails.userId]);
 
   const scrollToBottom = (animated = true) => {
     setTimeout(() => {
@@ -446,7 +420,6 @@ export default function ChatDetailsScreen() {
             conversationId={conversationId}
             onMakeOfferPress={onSelectProductPress}
             isBlocked={isBlocked}
-            participantDetails={participantDetails}
           />
         </View>
       </KeyboardAwareScrollView>
@@ -948,13 +921,6 @@ export default function ChatDetailsScreen() {
         </KeyboardAwareScrollView>
       </CustomBottomSheetModal>
 
-      <View>
-        {isTyping && (
-          <Text className="text-gray-500 text-sm px-4 py-2">
-            {participantDetails?.username} is typing...
-          </Text>
-        )}
-      </View>
     </StaticContainer>
   );
 }
