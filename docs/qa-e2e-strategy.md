@@ -288,9 +288,11 @@ Exit criteria:
 ### 17. Support and diagnostics flow
 
 - [x] Verify FAQs and Android Back navigation
-- [ ] Verify feedback & review
+- [x] Verify feedback & review screen and empty-form validation
+- [ ] Verify feedback & review submission (not sent during guest UI retest)
 - [ ] Verify contact us
-- [ ] Verify report a problem
+- [x] Verify report a problem screen and empty-form validation
+- [ ] Verify report-a-problem submission (not sent during guest UI retest)
 - [ ] Verify network diagnostics screen
 
 Exit criteria:
@@ -350,6 +352,7 @@ While working each item:
 - [x] Flow 10 guest retest: Chat shows its sign-in gate on Android without a crash or app-originated error
 - [x] Flow 17 FAQ retest: FAQ content and accordion expansion render on Android; Android Back now returns to Profile instead of leaving Renit
 - [x] P2 fixed: a root Android hardware-back bridge now returns to the current React Navigation stack when possible; retested on FAQ and product detail
+- [x] Flow 17 guest support retest: Report a problem and Feedback & Review render, keep empty submissions disabled, and return to Profile through Android Back
 
 ## QA Findings Queue
 
