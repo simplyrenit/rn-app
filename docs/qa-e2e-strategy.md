@@ -421,7 +421,7 @@ While working each item:
 - [ ] P1 Flow 10: offline chat push is blocked by Expo/FCM project configuration. A real physical-device smoke test used the registered QA Expo token and reached Expo, which returned `PushTicketError: Unable to retrieve the FCM server key for the recipient's app`. Local Android and app configuration identify the required Firebase project as `rn-api-35b38`; the accessible Firebase Console account (`yashtejwani00@gmail.com`) does not have that project, and no usable FCM credential is present in either repository. Obtain project-owner access, configure Expo's Android FCM credential for this project, deploy the function if it remains the delivery path, then repeat sender-to-offline-recipient delivery.
 - [ ] P3 data-quality issue: local discovery data includes obviously synthetic/malformed listing names and image content. Keep test fixtures from being confused with production-ready catalogue data during final readiness review.
 - [x] P3 fixed: the FAQ sign-up answer now points to `simplyrenit.com`, matching the current app and support links. Physical Android FAQ retest passed.
-- [ ] P3 infrastructure health: this QA host's Windows Time service currently reports unsynchronized despite `time.windows.com` as its source. Two current physical S3 image workflows (new-listing upload and edit-image replacement) succeeded, so this is not a demonstrated functional blocker; include NTP health in deployment readiness checks.
+- [x] P3 resolved: the QA host Windows Time service now reports `Leap Indicator: 0`, a successful sync at 2026-07-20 02:50:42, and `time.windows.com` as source. The earlier unsynchronized state is no longer present; current listing image workflows remain passing.
 
 ## Production Readiness Confidence
 
