@@ -12,6 +12,7 @@ import React, {
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
@@ -352,6 +353,20 @@ const LocationModal = ({}) => {
       }
     })();
   }, [requestLocationPermission, fetchAddress, resolveCurrentLocation]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState !== "active") return;
+
+      void (async () => {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        setHasPermission(status === "granted");
+        if (status === "granted") await resolveCurrentLocation();
+      })();
+    });
+
+    return () => subscription.remove();
+  }, [resolveCurrentLocation]);
 
   const handleSubmit = useCallback(() => {
     void requestLocationPermission();
