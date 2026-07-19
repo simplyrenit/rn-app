@@ -57,9 +57,9 @@ export function useAuth() {
   async function verifyOTP(email: string, otp: string): Promise<OTPResponse> {
     setLoading(true);
     try {
-      const response = await axios.get<OTPResponse>(
-        `${OTP}?email=${email}&otp=${otp}`
-      );
+      const response = await axios.get<OTPResponse>(OTP, {
+        params: { email, otp },
+      });
       return response.data;
     } catch (error: any) {
       console.error(JSON.stringify(error));

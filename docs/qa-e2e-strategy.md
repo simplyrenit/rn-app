@@ -114,8 +114,8 @@ Exit criteria:
 
 - [x] Verify email submission and OTP-delivery handoff
 - [x] Verify OTP / verification flow (retrieved from the authorized test-mailbox Chrome profile and verified on Android)
-- [ ] Verify password and confirm password flow
-- [ ] Verify signup completion for renter/owner account
+- [x] Verify password and confirm password flow
+- [x] Verify signup completion for renter/owner account
 - [x] Verify login persistence after app relaunch
 - [x] Verify logout returns cleanly to welcome
 
@@ -139,7 +139,7 @@ Exit criteria:
 
 ### 5. Location permission and fallback flow
 
-- [ ] Verify onboarding location flow with permission granted
+- [x] Verify onboarding location flow with permission granted
 - [ ] Verify onboarding location flow with permission denied
 - [ ] Verify `Skip for now` behavior
 - [ ] Verify location fallback does not block app usage in supported cases
@@ -370,6 +370,8 @@ While working each item:
 - [x] P2 fixed: backend startup reported pending schema changes for product, feedback, and review moderation-label fields. Added and applied the three generated migrations; the migration-drift check is clean and the affected backend test suite passes (10 tests).
 - [x] P2 fixed: when both stored access and refresh tokens are invalid, Android now clears the session instead of leaving a stale authenticated shell and Profile error. A physical retest returned to Welcome/sign-in without recurring authenticated request failures.
 - [x] Flow 3 partial retest: Logout from Profile returned cleanly to Welcome on physical Android; the same authorized test account then completed the email OTP flow back to Home.
+- [x] P1 fixed: OTP verification built the query string manually, so valid email addresses containing `+` were decoded as spaces and returned `401`. The client now passes email and code as Axios query parameters; a physical Android alias-email retest received `200` and advanced to onboarding.
+- [x] Flow 3 complete for standard email registration: a unique alias of an authorized test mailbox completed OTP verification, profile form validation, password confirmation, location confirmation, `POST /api/signup/` (`201`), and authenticated Home. The persisted account has a verified email, usable password, and coordinates.
 - [x] Flow 14 partial retest: category and subcategory selection now persists from the physical Android edit flow (`PATCH 200`) and returns to the edit hub. The backend avoids unnecessary image recompression/moderation when an edit changes only category data, preventing unrelated seller edits from being blocked by image-storage failures.
 - [x] P1 fixed: seller unavailability edits previously sent the unsupported `booked` field; valid one-day date-only values were also discarded by the API, and updates referenced an undefined user. The client now sends `blocked_dates`, normalizes one-day ranges, and the API accepts and persists date-only same-day bookings for the authenticated owner.
 - [x] Flow 14 partial retest: on physical Android, selecting Jul 20 as a one-day unavailability range displays one unavailable day, Update returns to the edit hub, the local API stores the same-day booking, and reopening the screen reads the range back.
@@ -383,6 +385,6 @@ While working each item:
 
 ## Production Readiness Confidence
 
-**Current confidence: 51% — not ready for production.**
+**Current confidence: 54% — not ready for production.**
 
-Tested and passing: environment/boot (Flow 1), authenticated OTP verification and session persistence plus invalid-session recovery (partial Flow 3), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), authenticated outbound chat send and persistence (partial Flow 10), full listing creation including gallery selection, native crop, image upload, publish, and owned-listing readback (Flow 12), owned-listing edit navigation plus Product Details, category/subcategory, and single-day unavailability update/readback (partial Flow 14), backend moderation-label migration integrity, and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidates 2 (server-side Firestore configuration/second-user delivery and time synchronization for S3), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for complete authenticated onboarding, remaining seller image and inventory paths, a second-user chat receive/push confirmation, review submission by a non-owner, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
+Tested and passing: environment/boot (Flow 1), standard email signup plus OTP/password/logout/session recovery and location-confirmation onboarding (Flow 3 and partial Flow 5), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), authenticated outbound chat send and persistence (partial Flow 10), full listing creation including gallery selection, native crop, image upload, publish, and owned-listing readback (Flow 12), owned-listing edit navigation plus Product Details, category/subcategory, and single-day unavailability update/readback (partial Flow 14), backend moderation-label migration integrity, and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidates 2 (server-side Firestore configuration/second-user delivery and time synchronization for S3), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for location-denied/skip cases, merchant gating, remaining seller image and inventory paths, a second-user chat receive/push confirmation, review submission by a non-owner, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
