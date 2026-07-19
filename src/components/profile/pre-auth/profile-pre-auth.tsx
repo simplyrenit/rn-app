@@ -13,7 +13,6 @@ import { ArrowRightStartOnRectangleIcon } from "react-native-heroicons/outline";
 import IconButton from "../post-auth/profile-icon-button";
 import AppearanceSheet from "../post-auth/sheets/AppearanceSheet";
 import { CurrencySheet } from "../post-auth/sheets/currency-sheet";
-import PersonalDetailsSheet from "../post-auth/sheets/PersonaldetailsSheet";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 
 // GoogleSignin.configure({
@@ -36,7 +35,6 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
   const { googleSignIn, loading, appleSignIn } = useOAuth();
   const isDark = theme === "dark";
   const appearanceSheetRef = useRef<BottomSheetModal>(null);
-  const personalDetailsSheetRef = useRef<BottomSheetModal>(null);
   const currencySheetRef = useRef<BottomSheetModal>(null);
 
   const handleCurrencyModal = () => {
@@ -309,10 +307,6 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
                 isDarkMode={isDarkMode}
               />
 
-              <PersonalDetailsSheet
-                bottomSheetModalRef={personalDetailsSheetRef}
-                isDarkMode={isDarkMode}
-              />
             </>
           )}
       </View>
