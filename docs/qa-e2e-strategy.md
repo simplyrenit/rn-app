@@ -304,7 +304,7 @@ Exit criteria:
 
 ### 18. Regression sweep
 
-- [ ] Re-run critical renter path: launch -> browse -> detail -> save -> chat
+- [x] Re-run critical renter path: launch -> browse -> detail -> save -> chat
 - [ ] Re-run critical seller path: launch -> post -> publish/edit
 - [ ] Re-run merchant gating path
 - [ ] Re-run profile/account basics
@@ -412,6 +412,7 @@ While working each item:
 - [x] Flow 13 validation retest: pasted non-numeric price input is stripped and the Android edit form keeps Update Product disabled while a required rate is invalid. Both post and edit forms require a trimmed title/description, a positive price, and a non-negative deposit. The API independently rejects a negative rate with `400`.
 - [x] P2 fixed: listing galleries were unbounded. Both Android image pickers now allow at most five images, hide Add at the cap, and the API rejects a six-image create or update request before image moderation. A physical edit retest started with two images, selected only three more from the images-only picker, rejected a fourth selection, and returned a five-image grid without an Add control.
 - [x] Flow 13 location-optional retest: selecting `Skip for now` from the post location modal returns safely to the form. Form validation now accepts its existing persisted-profile-coordinate fallback (while still requiring a real location when no fallback exists), so local device testing is not blocked downstream.
+- [x] Flow 18 renter regression: fresh physical Android session on the authorized renter account opened `QA_E2E_Laptop_20260719` from Home, rendered its detail, saved it, showed it in Saved, and entered the owner chat with an enabled composer. The current local-stack requests for this path returned `200` with no app-originated error.
 
 ## QA Findings Queue
 
