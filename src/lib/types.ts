@@ -246,7 +246,7 @@ export type RootStackParamList = {
   EditProductImages: { images: string[]; name: string, coverImage: string; };
   EditCoverImage: { images: string[]; name: string, coverImage: string, };
   OwnersReviewScreen: {
-    owner: Owner;
+    owner: PublicOwner;
     reviews: OwnerReview[];
   };
   LocationModal: {
