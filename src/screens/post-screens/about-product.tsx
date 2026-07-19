@@ -63,6 +63,11 @@ const conditions = [
   { label: "Good", value: "Good" },
 ];
 
+const isPositiveAmount = (value: string) =>
+  /^\d+(\.\d{1,2})?$/.test(value) && Number(value) > 0;
+const isNonNegativeAmount = (value: string) =>
+  /^\d+(\.\d{1,2})?$/.test(value) && Number(value) >= 0;
+
 const StyledBottomView = styled(BottomSheetView);
 
 export default function AboutProduct() {
@@ -126,14 +131,14 @@ export default function AboutProduct() {
   const bottomSheetRef = React.useRef<BottomSheetModal>(null);
   const googlePlacesRef = React.useRef<any>(null);
   const allFieldsFilled =
-    productName &&
+    productName.trim() &&
     // brandName &&
     // modelName &&
     selectedValue &&
     productDescription.trim() &&
     // usageDescription &&
-    pricePerDay &&
-    securityDeposit &&
+    isPositiveAmount(pricePerDay) &&
+    isNonNegativeAmount(securityDeposit) &&
     address.trim() &&
     selectedLocation &&
     (contactPerson === "Owner" || (otherName && otherPhoneNumber));
@@ -732,7 +737,7 @@ export default function AboutProduct() {
                 placeholder={`"1200"`}
                 keyboardType="numeric"
                 value={pricePerDay}
-                onChangeText={setPricePerDay}
+                onChangeText={(value) => setPricePerDay(value.replace(/[^\d.]/g, ""))}
                 placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
                 className={`flex-1 h-12 p-3 ${isDark ? "text-white" : "text-black"
                   }`}
@@ -786,7 +791,7 @@ export default function AboutProduct() {
                 placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
                 keyboardType="numeric"
                 value={securityDeposit}
-                onChangeText={setSecurityDeposit}
+                onChangeText={(value) => setSecurityDeposit(value.replace(/[^\d.]/g, ""))}
                 className={`flex-1 h-12 p-3 ${isDark ? "text-white" : "text-black"
                   }`}
               />

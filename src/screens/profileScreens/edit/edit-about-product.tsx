@@ -57,6 +57,11 @@ const conditions = [
   { label: "Good", value: "Good" },
 ];
 
+const isPositiveAmount = (value: string) =>
+  /^\d+(\.\d{1,2})?$/.test(value) && Number(value) > 0;
+const isNonNegativeAmount = (value: string) =>
+  /^\d+(\.\d{1,2})?$/.test(value) && Number(value) >= 0;
+
 const StyledBottomView = styled(BottomSheetView);
 
 export default function EditAboutProduct() {
@@ -128,8 +133,8 @@ export default function EditAboutProduct() {
     condition !== "Select Condition" &&
     productDescription.trim() &&
     // usageDescription &&
-    pricePerDay &&
-    securityDeposit &&
+    isPositiveAmount(pricePerDay) &&
+    isNonNegativeAmount(securityDeposit) &&
     address.trim() &&
     (selectedLocation || (location.latitude !== 0 && location.longitude !== 0)) &&
     (contactPerson === "Owner" || (otherName && otherPhoneNumber));
@@ -742,7 +747,7 @@ export default function EditAboutProduct() {
                 placeholder={`"₹1200"`}
                 keyboardType="numeric"
                 value={pricePerDay}
-                onChangeText={setPricePerDay}
+                onChangeText={(value) => setPricePerDay(value.replace(/[^\d.]/g, ""))}
                 placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
                 className={`flex-1 h-12 p-3 ${isDark ? "text-white" : "text-black"
                   }`}
@@ -793,7 +798,7 @@ export default function EditAboutProduct() {
                 placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
                 keyboardType="numeric"
                 value={securityDeposit}
-                onChangeText={setSecurityDeposit}
+                onChangeText={(value) => setSecurityDeposit(value.replace(/[^\d.]/g, ""))}
                 className={`flex-1 h-12 p-3 ${isDark ? "text-white" : "text-black"
                   }`}
               />
