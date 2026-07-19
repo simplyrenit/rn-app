@@ -117,7 +117,7 @@ Exit criteria:
 - [ ] Verify password and confirm password flow
 - [ ] Verify signup completion for renter/owner account
 - [x] Verify login persistence after app relaunch
-- [ ] Verify logout returns cleanly to welcome
+- [x] Verify logout returns cleanly to welcome
 
 Exit criteria:
 
@@ -369,6 +369,7 @@ While working each item:
 - [x] Flow 14 partial retest: Product Details accepted a changed test description, issued `PATCH 200`, returned to the edit hub, and fetched the changed description again from the API. The submit action now also requires the API-required description, address, and valid coordinates before it enables.
 - [x] P2 fixed: backend startup reported pending schema changes for product, feedback, and review moderation-label fields. Added and applied the three generated migrations; the migration-drift check is clean and the affected backend test suite passes (10 tests).
 - [x] P2 fixed: when both stored access and refresh tokens are invalid, Android now clears the session instead of leaving a stale authenticated shell and Profile error. A physical retest returned to Welcome/sign-in without recurring authenticated request failures.
+- [x] Flow 3 partial retest: Logout from Profile returned cleanly to Welcome on physical Android; the same authorized test account then completed the email OTP flow back to Home.
 - [x] Flow 14 partial retest: category and subcategory selection now persists from the physical Android edit flow (`PATCH 200`) and returns to the edit hub. The backend avoids unnecessary image recompression/moderation when an edit changes only category data, preventing unrelated seller edits from being blocked by image-storage failures.
 - [x] P1 fixed: seller unavailability edits previously sent the unsupported `booked` field; valid one-day date-only values were also discarded by the API, and updates referenced an undefined user. The client now sends `blocked_dates`, normalizes one-day ranges, and the API accepts and persists date-only same-day bookings for the authenticated owner.
 - [x] Flow 14 partial retest: on physical Android, selecting Jul 20 as a one-day unavailability range displays one unavailable day, Update returns to the edit hub, the local API stores the same-day booking, and reopening the screen reads the range back.
