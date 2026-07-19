@@ -113,10 +113,10 @@ Exit criteria:
 ### 3. Email signup and login flow
 
 - [x] Verify email submission and OTP-delivery handoff
-- [ ] Verify OTP / verification flow (test mailbox profile is not exposed to Chrome)
+- [x] Verify OTP / verification flow (retrieved from the authorized test-mailbox Chrome profile and verified on Android)
 - [ ] Verify password and confirm password flow
 - [ ] Verify signup completion for renter/owner account
-- [ ] Verify login persistence after app relaunch
+- [x] Verify login persistence after app relaunch
 - [ ] Verify logout returns cleanly to welcome
 
 Exit criteria:
@@ -193,7 +193,7 @@ Exit criteria:
 - [x] Verify image gallery and cover image behavior
 - [x] Verify pricing, availability, description, and location sections
 - [x] Verify navigation to owner profile, owner products, and owner reviews
-- [ ] Verify review writing entry points (guest guard passes; authenticated owner self-review retest is pending)
+- [x] Verify review writing entry points (guest guard and authenticated owner self-review guard pass)
 
 Exit criteria:
 
@@ -348,14 +348,14 @@ While working each item:
 - [x] Flow 9 P2 fixed: product-detail content now respects the Android top safe area while scrolling
 - [x] Flow 9 P2 fixed: signed-out owner profiles now use a deliberately public, contact-free owner-details response instead of calling the authenticated `users/{username}` endpoint
 - [x] Flow 16 P2 fixed: the guest Profile screen no longer mounts the authenticated personal-details sheet and triggers a needless `users/me` 401 request
-- [ ] Flow 9 authenticated owner self-review guard remains queued until the test-account OTP can be retrieved and verified
+- [x] Flow 9 complete: authenticated owner retest shows the self-review guard in the reviews screen; no review CTA is exposed for the owner's own listing
 - [x] Flow 6 complete: fresh Android retest verified categories, discovery sections, zero-result rendering, and category-result navigation with clean Renit logs
 - [x] Flow 10 guest retest: Chat shows its sign-in gate on Android without a crash or app-originated error
 - [x] Flow 17 FAQ retest: FAQ content and accordion expansion render on Android; Android Back now returns to Profile instead of leaving Renit
 - [x] P2 fixed: a root Android hardware-back bridge now returns to the current React Navigation stack when possible; retested on FAQ and product detail
 - [x] Flow 17 guest support retest: Report a problem and Feedback & Review render, keep empty submissions disabled, and return to Profile through Android Back
 - [x] Flow 4 guest retest: Post tab shows the sign-in gate without app-originated errors
-- [x] Flow 3 retest: `yashtejwani00@gmail.com` reaches the six-digit OTP screen on Android and local API logs confirm delivery
+- [x] Flow 3 partial retest: the authorized test mailbox received the OTP, Android verification succeeded, authenticated APIs returned 200, and the session survived a cold app relaunch
 
 ## QA Findings Queue
 
@@ -365,6 +365,6 @@ While working each item:
 
 ## Production Readiness Confidence
 
-**Current confidence: 19% — not ready for production.**
+**Current confidence: 23% — not ready for production.**
 
-Tested and passing: environment/boot (Flow 1), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), guest product-detail and owner trust paths (partial Flow 9), guest Chat gate (partial Flow 10), and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidate 1 (Firestore-dependent chat send path), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for authenticated onboarding and session persistence, posting and inventory, actual chat sending, review submission, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
+Tested and passing: environment/boot (Flow 1), authenticated OTP verification and session persistence (partial Flow 3), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), guest Chat gate (partial Flow 10), and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidate 1 (Firestore-dependent chat send path), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for complete authenticated onboarding, posting and inventory, actual chat sending, review submission by a non-owner, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
