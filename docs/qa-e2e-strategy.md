@@ -403,9 +403,8 @@ While working each item:
 
 ## QA Findings Queue
 
-- [ ] P1 Flow 10: offline chat push is fixed in the Firebase Function source but still requires Cloud Functions deployment and a physical recipient-device delivery retest. The app registers Expo push tokens; the function now sends them to Expo instead of incorrectly passing them to FCM.
+- [ ] P1 Flow 10: offline chat push is blocked by Expo/FCM project configuration. A real physical-device smoke test used the registered QA Expo token and reached Expo, which returned `PushTicketError: Unable to retrieve the FCM server key for the recipient's app`. Configure the Android FCM server key for the Expo project, deploy the function if it remains the delivery path, then repeat sender-to-offline-recipient delivery.
 - [ ] P1 infrastructure candidate: this QA host's Windows Time service is unsynchronized and uses the local CMOS clock. AWS rejects S3 writes with `RequestTimeTooSkewed`, blocking the physical product-image edit path. Require NTP/time-service health in the deployment runbook and retest image updates on a synchronized host.
-- [ ] P2 legacy-chat finding: the unused Django WebSocket notification service hard-codes a device FCM token. The mobile app uses Firestore directly, but remove or replace this path with user-scoped delivery before enabling server-side WebSocket chat.
 - [ ] P2 location recovery: retest the foreground permission refresh after returning from Android Settings; then confirm a seller can select a location without restarting the app.
 - [ ] P3 data-quality issue: local discovery data includes obviously synthetic/malformed listing names and image content. Keep test fixtures from being confused with production-ready catalogue data during final readiness review.
 - [ ] P3 content issue: the FAQ sign-up answer points to `renit.co.in`, while current app/support links use the SimplyRenit domain. Confirm the intended public site and update the copy.
