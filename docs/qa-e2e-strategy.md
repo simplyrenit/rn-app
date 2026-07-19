@@ -266,10 +266,10 @@ Exit criteria:
 
 ### 15. Reviews flow
 
-- [ ] Verify product reviews list
-- [ ] Verify write review form
+- [x] Verify product reviews list
+- [x] Verify write review form
 - [ ] Verify owner reviews screen
-- [ ] Verify rating validation and submission behavior
+- [x] Verify rating validation and submission behavior
 
 Exit criteria:
 
@@ -375,6 +375,8 @@ While working each item:
 - [x] Flow 3 complete for standard email registration: a unique alias of an authorized test mailbox completed OTP verification, profile form validation, password confirmation, location confirmation, `POST /api/signup/` (`201`), and authenticated Home. The persisted account has a verified email, usable password, and coordinates.
 - [x] P1 fixed: chat attempted to use Socket.IO against an endpoint that exposes neither Socket.IO nor a compatible transport, producing repeated `/socket.io/` `404`s. Chat now uses its existing Firestore persistence/subscription path and reports failed sends instead of silently clearing them.
 - [x] Flow 10 partial retest: a newly registered renter sent a message to an existing owner about a listing; the message persisted and cleared the composer. After owner sign-in, the Chat list showed the renter, message preview, unread count, and message body; opening the conversation completed the read transition.
+- [x] P2 fixed: after a successful review submission (`POST /api/write-review/` `200`), All reviews kept rendering the stale route-supplied list and said "No reviews yet." The screen now reloads review statistics and product reviews whenever it gains focus.
+- [x] Flow 15 partial retest: a non-owner renter selected condition, entered product and owner reviews, rated both four stars, and submitted. The API persisted both records; Android returned to All reviews, which refreshed to show a 4.0 average, one review, and the submitted product-review text.
 - [x] Flow 14 partial retest: category and subcategory selection now persists from the physical Android edit flow (`PATCH 200`) and returns to the edit hub. The backend avoids unnecessary image recompression/moderation when an edit changes only category data, preventing unrelated seller edits from being blocked by image-storage failures.
 - [x] P1 fixed: seller unavailability edits previously sent the unsupported `booked` field; valid one-day date-only values were also discarded by the API, and updates referenced an undefined user. The client now sends `blocked_dates`, normalizes one-day ranges, and the API accepts and persists date-only same-day bookings for the authenticated owner.
 - [x] Flow 14 partial retest: on physical Android, selecting Jul 20 as a one-day unavailability range displays one unavailable day, Update returns to the edit hub, the local API stores the same-day booking, and reopening the screen reads the range back.
@@ -388,6 +390,6 @@ While working each item:
 
 ## Production Readiness Confidence
 
-**Current confidence: 56% — not ready for production.**
+**Current confidence: 58% — not ready for production.**
 
-Tested and passing: environment/boot (Flow 1), standard email signup plus OTP/password/logout/session recovery and location-confirmation onboarding (Flow 3 and partial Flow 5), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), two-user chat send, persistence, recipient receive, and read-state transition (partial Flow 10), full listing creation including gallery selection, native crop, image upload, publish, and owned-listing readback (Flow 12), owned-listing edit navigation plus Product Details, category/subcategory, and single-day unavailability update/readback (partial Flow 14), backend moderation-label migration integrity, and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidates 2 (server-side Firestore push configuration and time synchronization for S3), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for location-denied/skip cases, merchant gating, remaining seller image and inventory paths, chat push delivery, review submission by a non-owner, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
+Tested and passing: environment/boot (Flow 1), standard email signup plus OTP/password/logout/session recovery and location-confirmation onboarding (Flow 3 and partial Flow 5), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including non-owner product-review submission/readback (partial Flow 9 and Flow 15), two-user chat send, persistence, recipient receive, and read-state transition (partial Flow 10), full listing creation including gallery selection, native crop, image upload, publish, and owned-listing readback (Flow 12), owned-listing edit navigation plus Product Details, category/subcategory, and single-day unavailability update/readback (partial Flow 14), backend moderation-label migration integrity, and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidates 2 (server-side Firestore push configuration and time synchronization for S3), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for location-denied/skip cases, merchant gating, remaining seller image and inventory paths, chat push delivery, owner-review visibility, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.

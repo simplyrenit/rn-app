@@ -1,10 +1,11 @@
 import useReviews from "@/backend/reviews";
+import { useProduct } from "@/backend/product";
 import { Button, Container, Text } from "@/components/core";
 import { ReviewCard } from "@/components/product/review-card";
 import { useGlobalContext } from "@/context/global-context";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
-import { useRoute } from "@react-navigation/native";
-import React, { useState, useEffect } from "react";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import {
   ArrowLeftIcon,
@@ -23,20 +24,25 @@ export default function ReviewsScreen() {
   const navigation = useTypedNavigation();
   const { owner, product, reviews } = route.params;
   const [reviewStats, setReviewStats] = useState<ReviewData[]>([]);
+  const [currentReviews, setCurrentReviews] = useState(reviews);
   const { getReviewStats } = useReviews();
+  const { fetchReviews } = useProduct();
   const { theme, isAuthenticated, userDetails } = useGlobalContext();
   const isOwner = userDetails?.username === owner?.username;
 
-  useEffect(() => {
-    fetchReviewStats();
-  }, []);
-
-  const fetchReviewStats = async () => {
-    const data = await getReviewStats(product.name);
-    if (data) {
-      setReviewStats(data);
-    }
-  };
+  useFocusEffect(
+    useCallback(() => {
+      const refreshReviews = async () => {
+        const [stats, latestReviews] = await Promise.all([
+          getReviewStats(product.name),
+          fetchReviews(product.name),
+        ]);
+        if (stats) setReviewStats(stats);
+        setCurrentReviews(latestReviews || []);
+      };
+      refreshReviews();
+    }, [product.name])
+  );
 
   const handleWriteReview = () => {
     if (!isAuthenticated) {
@@ -190,12 +196,12 @@ export default function ReviewsScreen() {
           fontWeight="font-bold"
           className="my-6"
         >
-          {reviews.length === 0
+          {currentReviews.length === 0
             ? "No reviews yet"
-            : `${reviews.length} reviews`}
+            : `${currentReviews.length} reviews`}
         </Text>
 
-        {reviews.map((review, index) => (
+        {currentReviews.map((review, index) => (
           <ReviewCard
             size={100}
             key={index}
