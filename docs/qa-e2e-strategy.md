@@ -241,7 +241,7 @@ Exit criteria:
 
 ### 13. Post listing validations and edge cases
 
-- [ ] Verify required field validation
+- [x] Verify required field validation
 - [ ] Verify location-optional path used for local testing
 - [ ] Verify image count/type edge cases
 - [ ] Verify invalid price/description/title handling
@@ -397,6 +397,7 @@ While working each item:
 - [x] Flow 4 partial retest: a fresh physical Android email signup selected merchant onboarding, displayed and validated the legal-business-name and owner fields, completed password and location setup, and persisted `account_type=merchant`, the entered `business_name`, and `pending` approval status in the local API. The same organically created account is blocked in Post with the expected pending-approval message.
 - [x] Flow 4 complete: the same disposable local QA merchant was transitioned to rejected, displayed the rejection reason and `Request review again` action on physical Android, and changed back to `pending` after the action; the local API persisted that transition.
 - [x] Flow 5 partial retest: Search opened its location picker, `Use current location` populated the resolved address, enabled search, and returned two physical-device results for `Laptop`.
+- [x] Flow 13 partial retest: an approved local QA merchant reached the about-product form with every required field blank; after scrolling to the action, `Next` remained disabled and did not allow an incomplete listing to advance.
 
 ## QA Findings Queue
 
@@ -409,6 +410,6 @@ While working each item:
 
 ## Production Readiness Confidence
 
-**Current confidence: 75% — not ready for production.**
+**Current confidence: 76% — not ready for production.**
 
 Tested and passing: environment/boot (Flow 1), current-bundle Email entry, password sign-in, Skip, guest Post sign-in gate, and Google OAuth account-selection return (Flow 2), standard email signup plus OTP/password/logout/session recovery and both location-confirmation and denied-permission/Skip onboarding (Flows 3 and 5), full merchant onboarding, business-name persistence, pending/rejected gating, and review re-request recovery (Flow 4), home discovery (Flow 6), search including current-location resolution (Flow 7), favorites (Flow 8), product-detail and owner trust paths including complete non-owner product and owner-review submission/readback (Flow 9 and Flow 15), two-user chat send, persistence, recipient receive, and read-state transition (partial Flow 10), full listing creation including gallery selection, native crop, image upload, publish, and owned-listing readback (Flow 12), owned-listing edit navigation plus Product Details, category/subcategory, and single-day unavailability update/readback (partial Flow 14), authenticated profile, notifications entry, logout, persisted personal-details edits, and disposable-account deletion (partial Flow 16), authenticated feedback/problem-report submission, contact details, and REST diagnostics (partial Flow 17), backend moderation-label migration integrity, and FAQ/navigation. Offline-chat push now has a compiling source fix but no deployment/device proof. Open findings: P0 0, P1 2 (offline-chat push deployment/retest and time synchronization for S3), P2 2 (legacy hard-coded WebSocket push token and Android Settings-return location recovery), P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for approved-merchant publish, remaining seller image paths, chat push delivery, profile-image updates, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
