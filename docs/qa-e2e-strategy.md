@@ -126,6 +126,7 @@ Exit criteria:
 
 ### 4. Account type and merchant onboarding flow
 
+- [x] Verify guest Post tab has a clear sign-in gate
 - [ ] Verify account type selection in onboarding
 - [ ] Verify merchant-specific fields such as `business_name`
 - [ ] Verify merchant user with non-approved status is blocked from posting
@@ -353,6 +354,7 @@ While working each item:
 - [x] Flow 17 FAQ retest: FAQ content and accordion expansion render on Android; Android Back now returns to Profile instead of leaving Renit
 - [x] P2 fixed: a root Android hardware-back bridge now returns to the current React Navigation stack when possible; retested on FAQ and product detail
 - [x] Flow 17 guest support retest: Report a problem and Feedback & Review render, keep empty submissions disabled, and return to Profile through Android Back
+- [x] Flow 4 guest retest: Post tab shows the sign-in gate without app-originated errors
 
 ## QA Findings Queue
 
