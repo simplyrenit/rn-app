@@ -277,11 +277,11 @@ Exit criteria:
 
 ### 16. Profile and account management flow
 
-- [ ] Verify profile screen for authenticated user
+- [x] Verify profile screen for authenticated user
 - [ ] Verify personal details edit
 - [ ] Verify profile image update
-- [ ] Verify notifications screen
-- [ ] Verify logout
+- [x] Verify notifications screen
+- [x] Verify logout
 - [ ] Verify delete account flow if safe in test environment
 
 Exit criteria:
@@ -292,10 +292,10 @@ Exit criteria:
 
 - [x] Verify FAQs and Android Back navigation
 - [x] Verify feedback & review screen and empty-form validation
-- [ ] Verify feedback & review submission (not sent during guest UI retest)
+- [x] Verify feedback & review submission
 - [ ] Verify contact us
 - [x] Verify report a problem screen and empty-form validation
-- [ ] Verify report-a-problem submission (not sent during guest UI retest)
+- [x] Verify report-a-problem submission
 - [ ] Verify network diagnostics screen
 
 Exit criteria:
@@ -385,6 +385,8 @@ While working each item:
 - [x] P1 fixed: the Welcome carousel was constrained by its parent to 60% of the screen but its own scroll view was forced to 75%, leaving an invisible touch target over the sign-in controls. Giving the carousel matching explicit dimensions restores Email navigation on physical Android.
 - [x] Current-bundle guest retest: Skip reaches guest Home, guest Post presents its sign-in gate, and its Email action reaches the Email screen.
 - [x] Current-bundle Google retest: guest Post opened the native account chooser, selected the authorized test account, and returned to the app's authenticated category-selection state without an OAuth or navigation error.
+- [x] Flow 16 partial retest: authenticated Profile displayed the test account and merchant state; Notifications opened; Logout returned to Welcome and current-bundle Skip then restored guest Home.
+- [x] Flow 17 partial retest: authenticated feedback and report submissions both returned to Profile and created their respective QA-labelled `Feedback` records through `POST /api/platform-feedback/`.
 - [x] QA harness recovery: the Expo config now points `android.googleServicesFile` at the tracked `android/app/google-services.json`; `expo config` resolves it cleanly and a fresh Android debug build installed on the physical device.
 
 ## QA Findings Queue
@@ -397,6 +399,6 @@ While working each item:
 
 ## Production Readiness Confidence
 
-**Current confidence: 64% — not ready for production.**
+**Current confidence: 66% — not ready for production.**
 
-Tested and passing: environment/boot (Flow 1), current-bundle Email entry, password sign-in, Skip, guest Post sign-in gate, and Google OAuth account-selection return (Flow 2), standard email signup plus OTP/password/logout/session recovery and location-confirmation onboarding (Flow 3 and partial Flow 5), merchant re-review API transition plus fresh-device pending-state UI readback (Flow 4), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including complete non-owner product and owner-review submission/readback (Flow 9 and Flow 15), two-user chat send, persistence, recipient receive, and read-state transition (partial Flow 10), full listing creation including gallery selection, native crop, image upload, publish, and owned-listing readback (Flow 12), owned-listing edit navigation plus Product Details, category/subcategory, and single-day unavailability update/readback (partial Flow 14), backend moderation-label migration integrity, and FAQ/navigation (partial Flow 17). Offline-chat push now has a compiling source fix but no deployment/device proof. Open findings: P0 0, P1 2 (offline-chat push deployment/retest and time synchronization for S3), P2 1 (legacy hard-coded WebSocket push token), P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for location-denied/skip cases, merchant onboarding and approved-merchant posting, remaining seller image and inventory paths, chat push delivery, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
+Tested and passing: environment/boot (Flow 1), current-bundle Email entry, password sign-in, Skip, guest Post sign-in gate, and Google OAuth account-selection return (Flow 2), standard email signup plus OTP/password/logout/session recovery and location-confirmation onboarding (Flow 3 and partial Flow 5), merchant re-review API transition plus fresh-device pending-state UI readback (Flow 4), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including complete non-owner product and owner-review submission/readback (Flow 9 and Flow 15), two-user chat send, persistence, recipient receive, and read-state transition (partial Flow 10), full listing creation including gallery selection, native crop, image upload, publish, and owned-listing readback (Flow 12), owned-listing edit navigation plus Product Details, category/subcategory, and single-day unavailability update/readback (partial Flow 14), authenticated profile, notifications entry, and logout (partial Flow 16), authenticated feedback and problem-report submission/readback (partial Flow 17), backend moderation-label migration integrity, and FAQ/navigation. Offline-chat push now has a compiling source fix but no deployment/device proof. Open findings: P0 0, P1 2 (offline-chat push deployment/retest and time synchronization for S3), P2 1 (legacy hard-coded WebSocket push token), P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for location-denied/skip cases, merchant onboarding and approved-merchant posting, remaining seller image and inventory paths, chat push delivery, personal-details and profile-image updates, contact-us and diagnostics paths, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
