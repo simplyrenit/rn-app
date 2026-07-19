@@ -56,7 +56,8 @@ export default function OnboardingScreen(): JSX.Element {
           <Carousel
             loop
             autoplay
-            containerStyle={{ height: SCREEN_HEIGHT * 0.75 }}
+            height={SCREEN_HEIGHT * 0.6}
+            width={SCREEN_WIDTH}
             showsDots={false}
             autoplayInterval={3000}
             renderPrev={() => <></>}
