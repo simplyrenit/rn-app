@@ -245,7 +245,7 @@ Exit criteria:
 - [ ] Verify location-optional path used for local testing
 - [ ] Verify image count/type edge cases
 - [ ] Verify invalid price/description/title handling
-- [ ] Verify navigation backward/forward preserves form state
+- [x] Verify navigation backward/forward preserves form state
 
 Exit criteria:
 
@@ -398,6 +398,7 @@ While working each item:
 - [x] Flow 4 complete: the same disposable local QA merchant was transitioned to rejected, displayed the rejection reason and `Request review again` action on physical Android, and changed back to `pending` after the action; the local API persisted that transition.
 - [x] Flow 5 partial retest: Search opened its location picker, `Use current location` populated the resolved address, enabled search, and returned two physical-device results for `Laptop`.
 - [x] Flow 13 partial retest: an approved local QA merchant reached the about-product form with every required field blank; after scrolling to the action, `Next` remained disabled and did not allow an incomplete listing to advance.
+- [x] Flow 13 state retest: a physical Android merchant completed the valid about-product form, advanced to Product Images, then returned. The title, condition, description, address, price, deposit, and Owner option all persisted, and `Next` remained enabled.
 - [x] P2 fixed: legacy WebSocket chat no longer sends offline messages to a hard-coded FCM token. The app now registers its Expo token with an authenticated API endpoint while retaining Firestore registration, and the backend resolves the intended recipient's stored Expo token. Django route and authenticated registration checks pass; physical offline delivery remains an open P1 until deployment and recipient-device proof.
 - [x] Chat push registration retest: after a local API restart, the physical Android QA account signed in with password, opened Chat, and stored one real Expo token through the new authenticated registration endpoint.
 
