@@ -26,6 +26,10 @@ import {
   MyDetailsResponse,
 } from "@/lib/my-details";
 
+type ProductUpdateData = Partial<Omit<BackendProduct, "category">> & {
+  category?: { parent: string; title: string };
+};
+
 export function useProfile() {
   const { authTokens, fetchUserDetails, logout } = useGlobalContext();
   const { access_token } = authTokens || {};
@@ -163,7 +167,7 @@ export function useProfile() {
 
   async function updateMyProductDetails(
     name: string,
-    data: Partial<BackendProduct>
+    data: ProductUpdateData
   ) {
     setLoading(true);
 
@@ -228,7 +232,7 @@ export function useProfile() {
 
   async function updateProductDetails(
     name: string,
-    data: Partial<BackendProduct>
+    data: ProductUpdateData
   ) {
     setLoading(true);
     try {

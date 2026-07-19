@@ -25,7 +25,7 @@ export default function EditSubCategories() {
     try {
       const response = await updateMyProductDetails(name, {
         category: {
-          parent: category as unknown as { title: string },
+          parent: category,
           title: subcategory.title,
         },
       });
