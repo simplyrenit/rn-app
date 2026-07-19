@@ -129,8 +129,8 @@ Exit criteria:
 - [x] Verify guest Post tab has a clear sign-in gate
 - [ ] Verify account type selection in onboarding
 - [ ] Verify merchant-specific fields such as `business_name`
-- [ ] Verify merchant user with non-approved status is blocked from posting
-- [ ] Verify merchant approval messaging in `Post` tab and `Profile`
+- [x] Verify merchant user with non-approved status is blocked from posting
+- [x] Verify merchant approval messaging in `Post` tab and `Profile`
 - [ ] Verify `Request review again` behavior for rejected merchants
 
 Exit criteria:
@@ -391,6 +391,6 @@ While working each item:
 
 ## Production Readiness Confidence
 
-**Current confidence: 59% — not ready for production.**
+**Current confidence: 60% — not ready for production.**
 
 Tested and passing: environment/boot (Flow 1), standard email signup plus OTP/password/logout/session recovery and location-confirmation onboarding (Flow 3 and partial Flow 5), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including complete non-owner product and owner-review submission/readback (Flow 9 and Flow 15), two-user chat send, persistence, recipient receive, and read-state transition (partial Flow 10), full listing creation including gallery selection, native crop, image upload, publish, and owned-listing readback (Flow 12), owned-listing edit navigation plus Product Details, category/subcategory, and single-day unavailability update/readback (partial Flow 14), backend moderation-label migration integrity, and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidates 2 (server-side Firestore push configuration and time synchronization for S3), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for location-denied/skip cases, merchant gating, remaining seller image and inventory paths, chat push delivery, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
