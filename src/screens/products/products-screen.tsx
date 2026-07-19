@@ -14,8 +14,8 @@ import {
   RouteProps,
   useTypedNavigation,
 } from "@/lib/types";
-import { useRoute } from "@react-navigation/native";
-import React, { useState } from "react";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
 import { ActivityIndicator, Dimensions, Image, ScrollView, TouchableOpacity, View } from "react-native";
 import {
   BanknotesIcon,
@@ -51,9 +51,11 @@ export default function DetailsScreen() {
   const { startChat } = useChat();
   const [startingChat, setStartingChat] = useState(false);
 
-  React.useEffect(() => {
-    fetchProductDetails();
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchProductDetails();
+    }, [id])
+  );
 
   async function fetchProductDetails() {
     setLoading(true);
