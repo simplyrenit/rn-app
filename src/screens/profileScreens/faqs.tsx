@@ -26,7 +26,7 @@ const FAQScreen: React.FC<FAQProps> = () => {
   const accordionData = [
     {
       question: "How do I sign up for Renit?",
-      answer: `You sign up for Renit by visiting our website (renit.co.in) or downloading our mobile application from Google Play Store or Apple App Store.
+      answer: `You sign up for Renit by visiting our website (simplyrenit.com) or downloading our mobile application from Google Play Store or Apple App Store.
 Using website: Click on the ‘Profile’ icon and then 'Sign up' at the top right corner of your screen and follow the prompts by filling in the required information to create an account using your email address.
 Using mobile application: Click on the ‘Profile’ icon at the bottom right corner and then 'Sign up' at the top of your screen and follow the prompts by filling in the required information to create an account using your email address.
 `,
