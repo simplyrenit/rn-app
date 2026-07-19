@@ -152,11 +152,11 @@ Exit criteria:
 
 ### 6. Home discovery flow
 
-- [ ] Verify home tab loads categories and discovery sections
-- [ ] Verify top experiences / top rated / popular products sections
-- [ ] Verify loading, empty, and error states
-- [ ] Verify category taps route correctly
-- [ ] Verify no repeated fetch loops or noisy errors in logs
+- [x] Verify home tab loads categories and discovery sections
+- [x] Verify top experiences / top rated / popular products sections
+- [x] Verify loading, empty, and error states
+- [x] Verify category taps route correctly
+- [x] Verify no repeated fetch loops or noisy errors in logs
 
 Exit criteria:
 
@@ -345,6 +345,7 @@ While working each item:
 - [x] Flow 9 P2 fixed: signed-out owner profiles now use a deliberately public, contact-free owner-details response instead of calling the authenticated `users/{username}` endpoint
 - [x] Flow 16 P2 fixed: the guest Profile screen no longer mounts the authenticated personal-details sheet and triggers a needless `users/me` 401 request
 - [ ] Flow 9 authenticated owner self-review guard remains queued until the test-account OTP can be retrieved and verified
+- [x] Flow 6 complete: fresh Android retest verified categories, discovery sections, zero-result rendering, and category-result navigation with clean Renit logs
 
 ## QA Findings Queue
 
@@ -353,6 +354,6 @@ While working each item:
 
 ## Production Readiness Confidence
 
-**Current confidence: 15% — not ready for production.**
+**Current confidence: 18% — not ready for production.**
 
 The environment, guest discovery/search/favorites, and substantial product-detail/owner-trust coverage have passed on a physical Android device. Critical evidence is still missing for authenticated onboarding and session persistence, posting and inventory, actual chat sending, review submission, merchant gating, account management, support, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
