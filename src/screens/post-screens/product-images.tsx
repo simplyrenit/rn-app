@@ -41,6 +41,10 @@ export default function ProductImages() {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const onPress = () => {
+    if (selectedImages.length === 0) {
+      return;
+    }
+
     saveDetails({ images: selectedImages });
     navigation.navigate("ChooseCoverImage", {
       images: selectedImages.map((img) => img.image),
@@ -61,8 +65,9 @@ export default function ProductImages() {
       allowsMultipleSelection: true,
     });
 
-    if (!result.canceled && result.assets.length > 0) {
-      const newImages = result.assets.map((asset) => ({
+    const assets = result.assets ?? [];
+    if (!result.canceled && assets.length > 0) {
+      const newImages = assets.map((asset) => ({
         image: asset.uri,
         file_type: asset.type || "image/jpeg",
       }));
@@ -83,12 +88,13 @@ export default function ProductImages() {
       quality: 1,
     });
 
-    if (!result.canceled && result.assets.length > 0) {
+    const assets = result.assets ?? [];
+    if (!result.canceled && assets.length > 0) {
       setSelectedImages((prevImages) => [
         ...prevImages,
         {
-          image: result.assets[0].uri,
-          file_type: result.assets[0].type || "image/jpeg",
+          image: assets[0].uri,
+          file_type: assets[0].type || "image/jpeg",
         },
       ]);
     }

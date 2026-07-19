@@ -125,19 +125,17 @@ export default function AboutProduct() {
 
   const bottomSheetRef = React.useRef<BottomSheetModal>(null);
   const googlePlacesRef = React.useRef<any>(null);
-  const isLocationOptionalInDev = __DEV__;
-
   const allFieldsFilled =
     productName &&
     // brandName &&
     // modelName &&
     selectedValue &&
-    // productDescription &&
+    productDescription.trim() &&
     // usageDescription &&
     pricePerDay &&
     securityDeposit &&
-    (isLocationOptionalInDev || address) &&
-    (isLocationOptionalInDev || selectedLocation) &&
+    address.trim() &&
+    selectedLocation &&
     (contactPerson === "Owner" || (otherName && otherPhoneNumber));
 
   const fetchAddress = useCallback(async (loc: Location.LocationObject) => {

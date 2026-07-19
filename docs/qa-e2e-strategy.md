@@ -149,7 +149,7 @@ Exit criteria:
 Exit criteria:
 
 - location-dependent flows degrade gracefully
-- optional-location dev/testing path does not break publish flow
+- post-form validation matches the API-required description and location fields in every build mode
 
 ### 6. Home discovery flow
 
@@ -229,10 +229,10 @@ Exit criteria:
 - [x] Verify category selection
 - [x] Verify sub-category selection
 - [x] Verify about-product form and location selection handoff
-- [ ] Verify image selection and cover image step
-- [ ] Verify product availability step
-- [ ] Verify review screen
-- [ ] Verify publish action and `HangTight` or success state
+- [x] Verify image selection and cover image step
+- [x] Verify product availability step
+- [x] Verify review screen
+- [x] Verify publish action and `HangTight` or success state
 
 Exit criteria:
 
@@ -361,6 +361,8 @@ While working each item:
 - [x] Flow 12 partial retest: authenticated Android navigation passes category, subcategory, product detail fields, condition selection, live location selection, and return of the confirmed address to the listing form
 - [x] P2 fixed: LocationModal now passes a serializable request ID through React Navigation and returns the chosen location through the existing callback; Android retest confirmed the selected address returns without the prior non-serializable-navigation warning
 - [x] P2 fixed: replaced the animated LocationModal bottom sheet with an equivalent static, scrollable control panel; Android Back and confirmed-location returns now complete without the prior `NativeViewHierarchyManager` / `IllegalViewOperationException`
+- [x] Flow 12 complete: a physical Android retest selected a gallery image, completed native cover cropping, skipped optional unavailability dates, reviewed the listing, uploaded image and cover assets, created the listing (`201`), and read it back from My products and its owned product detail page
+- [x] P1 fixed: post-form validation no longer allows the development build to bypass the API-required description, address, and location fields. The previously reproducible `400` rejection is now prevented in the UI; a complete valid post succeeds end to end.
 
 ## QA Findings Queue
 
@@ -370,6 +372,6 @@ While working each item:
 
 ## Production Readiness Confidence
 
-**Current confidence: 28% — not ready for production.**
+**Current confidence: 40% — not ready for production.**
 
-Tested and passing: environment/boot (Flow 1), authenticated OTP verification and session persistence (partial Flow 3), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), authenticated outbound chat send and persistence (partial Flow 10), partial product posting through live location selection (Flow 12), and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidate 1 (server-side Firestore configuration and second-user delivery), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for complete authenticated onboarding, listing image/upload/publish and inventory paths, a second-user chat receive/push confirmation, review submission by a non-owner, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
+Tested and passing: environment/boot (Flow 1), authenticated OTP verification and session persistence (partial Flow 3), home discovery (Flow 6), search (Flow 7), favorites (Flow 8), product-detail and owner trust paths including the authenticated self-review guard (Flow 9), authenticated outbound chat send and persistence (partial Flow 10), full listing creation including gallery selection, native crop, image upload, publish, and owned-listing readback (Flow 12), and FAQ/navigation (partial Flow 17). Open findings: P0 0, P1 candidate 1 (server-side Firestore configuration and second-user delivery), P2 0, P3 2 (test catalogue quality and FAQ website copy). Critical evidence is still missing for complete authenticated onboarding, seller edit/inventory paths, a second-user chat receive/push confirmation, review submission by a non-owner, merchant gating, account management, the remaining support forms, and the full regression sweep. Confidence may rise only after each flow meets its exit criteria with device and log evidence; unresolved P0/P1/P2 findings keep production readiness below 100%.
