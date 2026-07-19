@@ -140,7 +140,9 @@ export default function AboutProduct() {
     isPositiveAmount(pricePerDay) &&
     isNonNegativeAmount(securityDeposit) &&
     address.trim() &&
-    selectedLocation &&
+    (selectedLocation ||
+      (location.latitude !== 0 && location.longitude !== 0) ||
+      details.coordinates) &&
     (contactPerson === "Owner" || (otherName && otherPhoneNumber));
 
   const fetchAddress = useCallback(async (loc: Location.LocationObject) => {

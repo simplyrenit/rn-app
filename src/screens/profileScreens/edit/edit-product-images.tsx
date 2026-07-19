@@ -30,6 +30,7 @@ import {
 } from "react-native-responsive-screen";
 
 const StyledBottomView = styled(BottomSheetView);
+const MAX_IMAGES = 5;
 
 export default function EditProductImages() {
   const navigation = useTypedNavigation();
@@ -68,6 +69,7 @@ export default function EditProductImages() {
       allowsEditing: false,
       quality: 1,
       allowsMultipleSelection: true,
+      selectionLimit: MAX_IMAGES - selectedImages.length,
     });
 
     if (!result.canceled && result.assets.length > 0) {
@@ -75,7 +77,9 @@ export default function EditProductImages() {
         image: asset.uri,
         file_type: asset.type || "image/jpeg",
       }));
-      setSelectedImages((prevImages) => [...prevImages, ...newImages]);
+      setSelectedImages((prevImages) =>
+        [...prevImages, ...newImages].slice(0, MAX_IMAGES)
+      );
     }
     bottomSheetRef.current?.close();
   };
@@ -93,13 +97,15 @@ export default function EditProductImages() {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      setSelectedImages((prevImages) => [
-        ...prevImages,
-        {
-          image: result.assets[0].uri,
-          file_type: result.assets[0].type || "image/jpeg",
-        },
-      ]);
+      setSelectedImages((prevImages) =>
+        [
+          ...prevImages,
+          {
+            image: result.assets[0].uri,
+            file_type: result.assets[0].type || "image/jpeg",
+          },
+        ].slice(0, MAX_IMAGES)
+      );
     }
     // setBottomSheetVisible(false);
     bottomSheetRef.current?.close();
@@ -197,7 +203,10 @@ export default function EditProductImages() {
             renderAddButton(true)
           ) : (
             <FlatList
-              data={[...selectedImages, "add_button"]}
+              data={[
+                ...selectedImages,
+                ...(selectedImages.length < MAX_IMAGES ? ["add_button"] : []),
+              ]}
               renderItem={({ item, index }) =>
                 item === "add_button"
                   ? renderAddButton()
