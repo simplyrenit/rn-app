@@ -163,7 +163,11 @@ export default function DetailsScreen() {
     </SafeAreaView>
   }
   return (
-    <View className="flex-1">
+    <SafeAreaView
+      className="flex-1"
+      edges={["top"]}
+      style={{ backgroundColor: isDark ? "#000" : "#fff" }}
+    >
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1, backgroundColor: isDark ? '#000' : '#fff' }}
@@ -565,6 +569,6 @@ export default function DetailsScreen() {
           )}
         </View>
       </View>
-    </View >
+    </SafeAreaView>
   );
 }

@@ -8,7 +8,7 @@ import { ProductMap } from "@/components/product/product-map";
 import { AboutOwner } from "@/components/product/product-owner";
 import { useGlobalContext } from "@/context/global-context";
 import { useProductContext } from "@/context/product-context";
-import { BackendProduct, Owner, useTypedNavigation } from "@/lib/types";
+import { BackendProduct, PublicOwner, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import {
@@ -36,7 +36,7 @@ export default function ReviewProduct() {
     fetchMyDetails();
   }, []);
 
-  const [ownerDetails, setOwnerDetails] = useState<Owner | null>(null);
+  const [ownerDetails, setOwnerDetails] = useState<PublicOwner | null>(null);
   const [ownerProducts, setOwnerProducts] = useState<BackendProduct[]>([]);
 
   const isDark = theme === "dark";

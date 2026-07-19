@@ -173,7 +173,8 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
             >
               <Image
                 source={image}
-                style={{ width: "100%", height: "100%", resizeMode: 'stretch' }}
+                style={{ width: "100%", height: "100%" }}
+                contentFit="fill"
               />
             </Pressable>
           ))}

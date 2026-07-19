@@ -6,8 +6,8 @@ import { ReviewCard } from "@/components/product/review-card";
 import { useGlobalContext } from "@/context/global-context";
 import {
   BackendProduct,
-  Owner,
   OwnerReview,
+  PublicOwner,
   RouteProps,
   useTypedNavigation,
 } from "@/lib/types";
@@ -41,7 +41,7 @@ export default function UsersDetails() {
   const { getReviews } = useReviews();
   const { theme } = useGlobalContext();
   const [products, setProducts] = useState<BackendProduct[]>([]);
-  const [owner, setOwner] = useState<Owner | null>(null);
+  const [owner, setOwner] = useState<PublicOwner | null>(null);
   const [ownerReviews, setOwnerReviews] = useState<OwnerReview[]>([]);
 
   const isDark = theme === "dark";

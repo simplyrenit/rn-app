@@ -139,7 +139,7 @@ export const SEARCH_PRODUCTS = SERVERURL + "search/";
 
 export const GET_PRODUCT_DETAILS = SERVERURL + "products/";
 
-export const OWNER_DETAILS = SERVERURL + "users/";
+export const OWNER_DETAILS = SERVERURL + "owner-details/";
 
 export const REVIEW_STATS = SERVERURL + "product-review-stats/";
 

@@ -24,7 +24,8 @@ export default function ReviewsScreen() {
   const { owner, product, reviews } = route.params;
   const [reviewStats, setReviewStats] = useState<ReviewData[]>([]);
   const { getReviewStats } = useReviews();
-  const { theme, isAuthenticated } = useGlobalContext();
+  const { theme, isAuthenticated, userDetails } = useGlobalContext();
+  const isOwner = userDetails?.username === owner?.username;
 
   useEffect(() => {
     fetchReviewStats();
@@ -43,6 +44,15 @@ export default function ReviewsScreen() {
         type: "customToast",
         position: "bottom",
         text1: "Sign in to write a review",
+        text2: "error",
+      });
+      return;
+    }
+    if (isOwner) {
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "You can't review your own listing",
         text2: "error",
       });
       return;
@@ -150,21 +160,30 @@ export default function ReviewsScreen() {
           </View>
         ))}
 
-        <Button
-          variant="outline"
-          className="mt-5 flex flex-row items-center justify-center border rounded-xl"
-          onPress={handleWriteReview}
-        >
-          <View className="flex h-full flex-row items-center justify-between w-full">
-            <Text className="translate-y-0.5">Write a review</Text>
-            <View className="flex flex-row items-center justify-center translate-y-0.5">
-              <ChevronRightIcon
-                color={isDark ? "white" : "black"}
-                size={20}
-              />
+        {isOwner ? (
+          <Text
+            className="mt-5"
+            style={{ color: isDark ? "#FFFFFF80" : "#00000080" }}
+          >
+            You can't review your own listing.
+          </Text>
+        ) : (
+          <Button
+            variant="outline"
+            className="mt-5 flex flex-row items-center justify-center border rounded-xl"
+            onPress={handleWriteReview}
+          >
+            <View className="flex h-full flex-row items-center justify-between w-full">
+              <Text className="translate-y-0.5">Write a review</Text>
+              <View className="flex flex-row items-center justify-center translate-y-0.5">
+                <ChevronRightIcon
+                  color={isDark ? "white" : "black"}
+                  size={20}
+                />
+              </View>
             </View>
-          </View>
-        </Button>
+          </Button>
+        )}
 
         <Text
           fontSize="text-lg"

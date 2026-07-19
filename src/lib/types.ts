@@ -319,6 +319,18 @@ export interface Owner {
   date_joined: string;
 }
 
+export interface PublicOwner {
+  username: string;
+  first_name: string;
+  last_name: string;
+  image: {
+    image_url: string;
+    name: string;
+  } | null;
+  average_rating?: number;
+  date_joined: string;
+}
+
 export interface Conversation {
   id?: string;
   participants: UserDetails[];

@@ -35,18 +35,29 @@ export default function WriteReviewScreen() {
 
   const [selectedValue, setSelectedValue] = useState<string>("good");
 
-  const { theme } = useGlobalContext();
+  const { theme, userDetails } = useGlobalContext();
   const isDark = theme === "dark";
+  const isOwner = userDetails?.username === owner?.username;
 
   const onSelect = (productRating: number, ownerRating: number) => {
     setRating({ product: productRating, owner: ownerRating });
   };
 
-  const reviewValid = Boolean(
+  const reviewValid = !isOwner && Boolean(
     productReview && ownerReview && rating.product && rating.owner
   );
 
   const handleSubmit = async () => {
+    if (isOwner) {
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "You can't review your own listing",
+        text2: "error",
+      });
+      return;
+    }
+
     const reviewData = {
       productName: product.name,
       productReview,
