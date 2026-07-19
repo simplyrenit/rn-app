@@ -88,6 +88,17 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [userData, setUserData] = useState<UserData | null>(null);
 
+  const logout = useCallback(async () => {
+    await removeAuthTokens();
+    delete axiosInstance.defaults.headers.Authorization;
+    setAuthTokensState(null);
+    setIsAuthenticated(false);
+    setHasSeenWelcome(false);
+    await AsyncStorage.removeItem("userData");
+    setUserData(null);
+    setUserDetails(null);
+  }, []);
+
   useEffect(() => {
     fetchUserDetails();
   }, [authTokens?.access_token, isAuthenticated]);
@@ -111,6 +122,10 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
         merchant_approval_status: details.merchant_approval_status,
       });
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        await logout();
+        return;
+      }
       console.error("Failed to fetch user details:", error);
     }
   };
@@ -207,17 +222,6 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   const setHasSeenWelcome = useCallback(async (value: boolean) => {
     await sH(value);
     setHasSeenWelcomeState(value);
-  }, []);
-
-  const logout = useCallback(async () => {
-    await removeAuthTokens();
-    delete axiosInstance.defaults.headers.Authorization;
-    setAuthTokensState(null);
-    setIsAuthenticated(false);
-    setHasSeenWelcome(false);
-    await AsyncStorage.removeItem("userData");
-    setUserData(null);
-    setUserDetails(null);
   }, []);
 
   const showReportModal = () => setIsReportModalVisible(true);
