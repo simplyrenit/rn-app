@@ -12,6 +12,7 @@ import React, {
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Keyboard,
   KeyboardAvoidingView,
   Linking,
@@ -29,7 +30,6 @@ import { Button, StaticContainer, Text } from "@/components/core";
 import AddressChoiceModal from "@/components/modals/AddressChoiceModalProps";
 import { useGlobalContext } from "@/context/global-context";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
-import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
 import {
   cancelLocationRequest,
@@ -416,7 +416,6 @@ const LocationModal = ({}) => {
       1000
     );
     Keyboard.dismiss();
-    bottomSheetRef.current?.snapToIndex(0);
   };
 
   const handleConfirmLocation = async (
@@ -455,12 +454,8 @@ const LocationModal = ({}) => {
     [route.params?.requestId]
   );
 
-  const bottomSheetRef = useRef<BottomSheet>(null);
   const googlePlacesRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
-
-  const initialSnapPoints = useMemo(() => ["40%", "60%", "90%"], []);
-  const [snapPoints, setSnapPoints] = useState(initialSnapPoints);
 
   const handlePlaceSelected = (data: any, details: any) => {
     const lat = details.geometry.location.lat;
@@ -477,7 +472,6 @@ const LocationModal = ({}) => {
       1000
     );
     Keyboard.dismiss();
-    bottomSheetRef.current?.snapToIndex(0);
   };
 
   const handleCurrentLocation = () => {
@@ -517,26 +511,6 @@ const LocationModal = ({}) => {
     }
   }, [location, mapRegion, selectedLocation]);
 
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      "keyboardDidShow",
-      () => {
-        bottomSheetRef.current?.snapToIndex(2);
-      }
-    );
-
-    const keyboardDidHideListener = Keyboard.addListener(
-      "keyboardDidHide",
-      () => {
-        bottomSheetRef.current?.snapToIndex(0);
-      }
-    );
-
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
-  }, []);
   return (
     <SafeAreaView
       className={`flex-1 ${isDarkMode ? "bg-[#0C0C0C]" : "bg-white"}`}
@@ -549,6 +523,7 @@ const LocationModal = ({}) => {
             <View className="flex flex-row items-center py-4">
               <TouchableOpacity
                 onPress={() => {
+                  cancelLocationRequest(route.params?.requestId);
                   navigation.goBack();
                 }}
                 className="w-[10%]"
@@ -664,27 +639,12 @@ const LocationModal = ({}) => {
                   className="rounded-t-3xl"
                 ></View>
 
-                {/* Bottom sheet */}
-                <BottomSheet
-                  ref={bottomSheetRef}
-                  snapPoints={snapPoints}
-                  enablePanDownToClose={false}
-                  index={0}
-                  enableHandlePanningGesture={true}
-                  enableContentPanningGesture={true}
-                  backgroundStyle={{
+                <View
+                  style={{
                     backgroundColor: isDarkMode ? "black" : "white",
-                  }}
-                  handleIndicatorStyle={{ backgroundColor: "#292929" }}
-                  handleStyle={{
                     borderTopWidth: 2,
-                    borderLeftWidth: 2,
-                    borderRightWidth: 2,
-                    borderTopColor: isDarkMode ? "#292929" : "#fff",
-                    borderLeftColor: isDarkMode ? "#292929" : "#fff",
-                    borderRightColor: isDarkMode ? "#292929" : "#fff",
-                    borderTopRightRadius: 12,
-                    borderTopLeftRadius: 12,
+                    borderColor: isDarkMode ? "#292929" : "#fff",
+                    height: "55%",
                   }}
                 >
                   <KeyboardAvoidingView
@@ -885,7 +845,7 @@ const LocationModal = ({}) => {
                           Loading nearby places...
                         </Text>
                       ) : (
-                        <BottomSheetFlatList
+                        <FlatList
                           data={nearbyPlaces}
                           keyExtractor={(item) => item.place_id}
                           style={{ maxHeight: 450 }}
@@ -911,7 +871,7 @@ const LocationModal = ({}) => {
                       )}
                     </View>
                   </KeyboardAvoidingView>
-                </BottomSheet>
+                </View>
               </>
             ) : (
               <View className="w-[90%] mx-auto py-5">
