@@ -112,8 +112,8 @@ Exit criteria:
 
 ### 3. Email signup and login flow
 
-- [ ] Verify email submission
-- [ ] Verify OTP / verification flow
+- [x] Verify email submission and OTP-delivery handoff
+- [ ] Verify OTP / verification flow (test mailbox profile is not exposed to Chrome)
 - [ ] Verify password and confirm password flow
 - [ ] Verify signup completion for renter/owner account
 - [ ] Verify login persistence after app relaunch
@@ -355,6 +355,7 @@ While working each item:
 - [x] P2 fixed: a root Android hardware-back bridge now returns to the current React Navigation stack when possible; retested on FAQ and product detail
 - [x] Flow 17 guest support retest: Report a problem and Feedback & Review render, keep empty submissions disabled, and return to Profile through Android Back
 - [x] Flow 4 guest retest: Post tab shows the sign-in gate without app-originated errors
+- [x] Flow 3 retest: `yashtejwani00@gmail.com` reaches the six-digit OTP screen on Android and local API logs confirm delivery
 
 ## QA Findings Queue
 
