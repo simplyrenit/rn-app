@@ -2,6 +2,7 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import * as TaskManager from "expo-task-manager";
 import * as BackgroundFetch from "expo-background-fetch";
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
 import axiosInstance from "@/lib/networkUtils";
@@ -29,10 +30,17 @@ export async function registerForPushNotificationsAsync() {
       return;
     }
 
-    // Get the token with the correct project ID
+    const projectId =
+      Constants.easConfig?.projectId ??
+      Constants.expoConfig?.extra?.eas?.projectId;
+
+    if (!projectId) {
+      throw new Error("Missing EAS project ID for push notifications");
+    }
+
     token = (
       await Notifications.getExpoPushTokenAsync({
-        projectId: "4694f1b4-ada3-42b1-84ab-9a7d6fe2c1cb", // Your Expo project ID from app.json
+        projectId,
       })
     ).data;
 

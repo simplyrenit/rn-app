@@ -11,16 +11,6 @@ export const ANDROID_CLIENT_ID =
 export const IOS_CLIENT_ID =
   "899825999056-e571k4p5f0tni5n0cv542otq9n274l80.apps.googleusercontent.com";
 
-export const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAtrkbSaWrU4w4rTTSunaj25opQO8sDD_c",
-  authDomain: "rn-api-35b38.firebaseapp.com",
-  projectId: "rn-api-35b38",
-  storageBucket: "rn-api-35b38.appspot.com",
-  messagingSenderId: "639298619246",
-  appId: "1:639298619246:web:bebe42342d569785c7237f",
-  measurementId: "G-P7DWR065WK",
-};
-
 type AppEnv = "DEV" | "QA" | "PROD";
 type RuntimeConfig = {
   apiBaseUrl: string;

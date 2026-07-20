@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "639298619246",
-    "project_id": "rn-api-35b38",
-    "storage_bucket": "rn-api-35b38.firebasestorage.app"
+    "project_number": "687993856182",
+    "project_id": "renit-production",
+    "storage_bucket": "renit-production.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:639298619246:android:c2eed0f206cfce50c7237f",
+        "mobilesdk_app_id": "1:687993856182:android:f96693526030495de08617",
         "android_client_info": {
           "package_name": "com.renit.app"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "639298619246-sc0788sgfdc3nbonvevok8d58b53jbta.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBiyxC_zrRZBsNHZY5ZdSBUdAoN6hU3L_8"
+          "current_key": "AIzaSyBd9k4pOCxi5y8Tv3useRRwXOz8BBg7yKA"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "639298619246-sc0788sgfdc3nbonvevok8d58b53jbta.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+        "other_platform_oauth_client": []
         }
       }
     }

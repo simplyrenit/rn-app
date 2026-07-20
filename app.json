@@ -43,14 +43,16 @@
           "iosUrlScheme": "com.googleusercontent.apps.899825999056-e571k4p5f0tni5n0cv542otq9n274l80"
         }
       ],
-      ["expo-apple-authentication"]
+      [
+        "expo-apple-authentication"
+      ]
     ],
     "extra": {
       "router": {
         "origin": false
       },
       "eas": {
-        "projectId": "d9ee200a-0c82-4db8-bb21-95c3b225ba4a"
+        "projectId": "aa537585-4f64-4e9b-aed9-9e6d51735dc6"
       }
     },
     "ios": {
@@ -96,6 +98,6 @@
       "favicon": "./assets/favicon.png"
     },
     "scheme": "renit",
-    "owner": "yashtejwani00"
+    "owner": "simply-renit"
   }
 }
