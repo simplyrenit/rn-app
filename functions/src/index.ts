@@ -1,10 +1,32 @@
-import * as functions from "firebase-functions";
+import { cloudEvent, type CloudEvent } from "@google-cloud/functions-framework";
 import { admin } from "./admin";
 
-export const onNewMessage = functions.firestore
-  .document("messages/{messageId}")
-  .onCreate(async (snapshot: any) => {
-    const message = snapshot.data();
+type FirestoreEventData = {
+  value?: { name?: string };
+};
+
+function getDocumentPath(event: { subject?: string; data?: FirestoreEventData }) {
+  const resource = event.data?.value?.name ?? event.subject;
+  if (!resource) {
+    return null;
+  }
+
+  const path = resource.includes("/documents/")
+    ? resource.split("/documents/")[1]
+    : resource.replace(/^documents\//, "");
+
+  return path?.startsWith("messages/") ? path : null;
+}
+
+cloudEvent<FirestoreEventData>("onNewMessage", async (event: CloudEvent<FirestoreEventData>) => {
+    const documentPath = getDocumentPath(event);
+    if (!documentPath) {
+      console.error("Unable to identify the created message document");
+      return;
+    }
+
+    const messageSnapshot = await admin.firestore().doc(documentPath).get();
+    const message = messageSnapshot.data();
 
     if (!message) {
       console.error("No message data found");
@@ -82,4 +104,8 @@ export const onNewMessage = functions.firestore
     if (ticket.data?.[0]?.status === "error") {
       throw new Error(`Expo push rejected: ${ticket.data[0].message}`);
     }
+
+    console.info("Expo push ticket accepted", {
+      conversationId: message.conversationId,
+    });
   });

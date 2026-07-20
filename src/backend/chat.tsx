@@ -245,7 +245,10 @@ export function useChat() {
     const q = query(collection(firestore, "conversations"));
 
     const unsubscribe = onSnapshot(q, (snapshot: any) => {
-
+      if (!snapshot) {
+        callback([]);
+        return;
+      }
 
       const chats: Conversation[] = [];
       snapshot.forEach((doc: any) => {
@@ -283,6 +286,9 @@ export function useChat() {
       });
 
       callback(chats);
+    }, (error: unknown) => {
+      console.error("Unable to load chats:", error);
+      callback([]);
     });
 
     registerForPushNotificationsAsync().then((token) => {
