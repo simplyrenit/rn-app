@@ -99,7 +99,7 @@ cloudEvent<FirestoreEventData>("onNewMessage", async (event: CloudEvent<Firestor
     }
 
     const ticket = (await response.json()) as {
-      data?: Array<{ status?: string; message?: string }>;
+      data?: Array<{ id?: string; status?: string; message?: string }>;
     };
     if (ticket.data?.[0]?.status === "error") {
       throw new Error(`Expo push rejected: ${ticket.data[0].message}`);
@@ -107,5 +107,6 @@ cloudEvent<FirestoreEventData>("onNewMessage", async (event: CloudEvent<Firestor
 
     console.info("Expo push ticket accepted", {
       conversationId: message.conversationId,
+      ticketId: ticket.data?.[0]?.id,
     });
   });
