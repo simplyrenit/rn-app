@@ -1,8 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SERVERURL } from "./config";
+import { DEV_MODE, SERVERURL } from "./config";
 import { AuthTokens } from "./types";
 
 const AUTH_TOKENS_KEY = `renitTokens:${SERVERURL}`;
+const LEGACY_AUTH_TOKENS_KEY = "renitTokens";
 
 export const setAuthTokens = async (tokens: AuthTokens) => {
   try {
@@ -15,7 +16,20 @@ export const setAuthTokens = async (tokens: AuthTokens) => {
 export const getAuthTokens = async (): Promise<AuthTokens | null> => {
   try {
     const tokens = await AsyncStorage.getItem(AUTH_TOKENS_KEY);
-    return tokens ? JSON.parse(tokens) : null;
+    if (tokens) {
+      return JSON.parse(tokens);
+    }
+
+    if (!__DEV__ && DEV_MODE === "PROD") {
+      const legacyTokens = await AsyncStorage.getItem(LEGACY_AUTH_TOKENS_KEY);
+      if (legacyTokens) {
+        await AsyncStorage.setItem(AUTH_TOKENS_KEY, legacyTokens);
+        await AsyncStorage.removeItem(LEGACY_AUTH_TOKENS_KEY);
+        return JSON.parse(legacyTokens);
+      }
+    }
+
+    return null;
   } catch (error) {
     console.error("Error getting auth tokens:", error);
     return null;
@@ -25,6 +39,7 @@ export const getAuthTokens = async (): Promise<AuthTokens | null> => {
 export const removeAuthTokens = async () => {
   try {
     await AsyncStorage.removeItem(AUTH_TOKENS_KEY);
+    await AsyncStorage.removeItem(LEGACY_AUTH_TOKENS_KEY);
   } catch (error) {
     console.error("Error removing auth tokens:", error);
   }

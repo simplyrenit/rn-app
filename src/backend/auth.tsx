@@ -128,9 +128,7 @@ export function useAuth() {
       setAuthTokens(response.data);
       return response?.data;
     } catch (error: any) {
-      if (error.response) {
-        console.error("LOGIN ERROR", error.response.data);
-      } else {
+      if (!error.response || error.response.status >= 500) {
         console.error("LOGIN ERROR", error.message);
       }
     } finally {
