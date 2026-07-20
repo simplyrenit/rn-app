@@ -17,6 +17,8 @@ type RuntimeConfig = {
   wsBaseUrl: string;
 };
 
+const expoEnv = process.env as Record<string, string | undefined>;
+
 const normalizeHost = (value: string) =>
   value
     .trim()
@@ -26,18 +28,24 @@ const normalizeHost = (value: string) =>
 
 const getDefaultLocalApiHost = () => {
   if (Platform.OS === "android") {
-    return "127.0.0.1:8000";
+    return "10.0.2.2:8000";
   }
 
   return "127.0.0.1:8000";
 };
 
 const LOCAL_API_HOST = normalizeHost(
-  process.env.EXPO_PUBLIC_LOCAL_API_HOST || getDefaultLocalApiHost()
+  expoEnv.EXPO_PUBLIC_LOCAL_API_HOST || getDefaultLocalApiHost()
 );
 const USE_LOCAL_API =
-  (process.env.EXPO_PUBLIC_USE_LOCAL_API || "").toLowerCase() === "true" ||
-  (__DEV__ && !process.env.EXPO_PUBLIC_USE_REMOTE_API);
+  (expoEnv.EXPO_PUBLIC_USE_LOCAL_API || "").toLowerCase() === "true" ||
+  (__DEV__ && !expoEnv.EXPO_PUBLIC_USE_REMOTE_API);
+const QA_API_HOST = normalizeHost(
+  expoEnv.EXPO_PUBLIC_QA_API_HOST || "qa-api.simplyrenit.com"
+);
+const PROD_API_HOST = normalizeHost(
+  expoEnv.EXPO_PUBLIC_PROD_API_HOST || "api.simplyrenit.com"
+);
 
 const RUNTIME_CONFIGS: Record<AppEnv, RuntimeConfig> = {
   DEV: {
@@ -45,17 +53,17 @@ const RUNTIME_CONFIGS: Record<AppEnv, RuntimeConfig> = {
     wsBaseUrl: `ws://${LOCAL_API_HOST}/ws/chat/`,
   },
   QA: {
-    apiBaseUrl: "https://rennit.toratora.site/api/",
-    wsBaseUrl: "wss://rennit.toratora.site/ws/chat/",
+    apiBaseUrl: `https://${QA_API_HOST}/api/`,
+    wsBaseUrl: `wss://${QA_API_HOST}/ws/chat/`,
   },
   PROD: {
-    apiBaseUrl: "https://api.simplyrenit.com/api/",
-    wsBaseUrl: "wss://api.simplyrenit.com/ws/chat/",
+    apiBaseUrl: `https://${PROD_API_HOST}/api/`,
+    wsBaseUrl: `wss://${PROD_API_HOST}/ws/chat/`,
   },
 };
 
 const REMOTE_FALLBACK_ENV: AppEnv = "PROD";
-const APP_ENV_FROM_ENV = (process.env.EXPO_PUBLIC_APP_ENV || "").toUpperCase();
+const APP_ENV_FROM_ENV = (expoEnv.EXPO_PUBLIC_APP_ENV || "").toUpperCase();
 
 const resolveAppEnv = (): AppEnv => {
   if (
