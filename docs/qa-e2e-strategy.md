@@ -101,7 +101,7 @@ Exit criteria:
 ### 2. Guest entry and welcome flow
 
 - [x] Verify welcome screen renders correctly
-- [ ] Verify `Google`, `Apple` (where applicable), `Email`, and `Skip` entry points
+- [x] Verify `Google`, `Apple` (where applicable), `Email`, and `Skip` entry points (current Android: Email opens both OTP/password choices, Google chooser can be cancelled without leaving Welcome, and Skip reaches Home; Apple is iOS-only)
 - [x] Verify guest navigation after `Skip`
 - [x] Verify guest limitations are understandable and non-breaking
 
@@ -427,6 +427,7 @@ While working each item:
 - [x] P2 QA harness: a fresh secondary Metro server on port 8082 loaded and ran Home plus Chat on the USB-connected physical device. The reliable procedure is `adb reverse tcp:8082 tcp:8082`, then select the Development Build's discovered `http://localhost:8082` server; manually constructed LAN/URL launches can time out even though the reverse route is reachable. Restarting the ADB server clears reverse mappings, so reapply both Metro and local-API mappings before interpreting a device network failure. No app-originated error occurred in the Home or Chat smoke.
 - [x] P2 Home discovery: Top Experiences used a malformed hard-coded product-ID list, making its curated query impossible to match and forcing a random fallback. It now ranks active, merchant-visible, admin-approved listings by rating, review count, and recency. The distance serializer also safely handles legacy listings without coordinates. Focused backend tests pass; a temporarily approved local QA fixture appeared in Top experiences, Popular near you, and Recently added on physical Android, then was restored to its original state after the retest.
 - [x] P3 fixed: the public Top Experiences fallback now returns only admin-approved, merchant-visible listings. A backend regression test and cold physical-Android Home retest confirm unapproved fixtures such as `Bsknsk` and `Hhdsj` no longer reach discovery.
+- [x] P2 fixed: cancelling Android Google account selection incorrectly navigated to guest Home because the Welcome handler always navigated after `googleSignIn` returned. Navigation now remains owned by the successful OAuth path. A physical Android retest verified Email entry, Google chooser cancellation back to Welcome, and Skip to guest Home without a crash.
 - [ ] P1 launch-catalogue readiness: the live public web and API are reachable, but production `top-experiences` and `popular-products-in-area` both return zero listings. Real renters therefore cannot complete browse, detail, chat, or offer flows in production. Load and approve genuine customer listings in production, then repeat Home, Search, product-detail, chat, and offer checks using those records. Do not satisfy this gate with QA fixtures.
 - [x] P3 fixed: the FAQ sign-up answer now points to `simplyrenit.com`, matching the current app and support links. Physical Android FAQ retest passed.
 - [x] P3 resolved: the QA host Windows Time service now reports `Leap Indicator: 0`, a successful sync at 2026-07-20 02:50:42, and `time.windows.com` as source. The earlier unsynchronized state is no longer present; current listing image workflows remain passing.

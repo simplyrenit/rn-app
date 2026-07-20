@@ -47,7 +47,6 @@ export function LoginOptions({ isDarkMode }: LoginOptionsProps): JSX.Element {
         <StyledTouchableOpacity
           onPress={async () => {
             await googleSignIn();
-            router.navigate("MainTabs");
           }}
           className={`w-1/4 items-center border rounded-lg py-3 px-6 mx-2 ${
             isDark

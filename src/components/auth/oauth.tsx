@@ -26,8 +26,11 @@ export function useOAuth() {
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
-      const { data: userInfo } = await GoogleSignin.signIn().catch(err => {
-      });
+      const response = await GoogleSignin.signIn();
+      if (!isSuccessResponse(response)) {
+        return;
+      }
+      const userInfo = response.data;
 
       if (userInfo?.idToken) {
         try {
