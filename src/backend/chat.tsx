@@ -55,7 +55,7 @@ export function useChat() {
         // Navigate to the conversation when notification is tapped
         if (conversationId) {
           // @ts-ignore - Type safety is handled by the navigation library
-          navigation.navigate("Chat", { conversationId });
+          navigation.navigate("ChatDetails", { id: conversationId });
         }
       }
     );
