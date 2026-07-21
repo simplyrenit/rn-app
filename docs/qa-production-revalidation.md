@@ -101,11 +101,12 @@ account's in-progress `Macbook Air` title, brand, and model draft. No fields
 were changed. Authentication state was correctly replaced, but the in-memory
 `ProductContext` was not reset on the normal Profile logout path.
 
-Frontend commit `5dfe4a6 fix post draft leakage on logout` clears the draft
-before logout. The current original draft has been deliberately preserved, so
-the physical logout/login retest is pending an explicit decision to discard or
-save that draft. Until that retest passes, cross-account post isolation is not
-verified.
+Frontend commit `5f09064 fix reset post drafts on session logout` clears the
+draft whenever the shared authentication state becomes logged out, covering
+all logout callers. The current original draft has been deliberately
+preserved, so the physical logout/login retest is pending an explicit decision
+to discard or save that draft. Until that retest passes, cross-account post
+isolation is not verified.
 
 ## Current release confidence: 55%
 
