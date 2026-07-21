@@ -96,6 +96,17 @@ records). Its focused backend regression suite passed: 8 tests including the
 ownership assertion and existing listing-ownership coverage. The rebuilt QA
 API returned 200 after the test.
 
+### P3 — Review rating validation emitted framework warnings
+
+The backend review model and serializer passed float bounds to Django REST
+Framework decimal fields. Normal tests passed but emitted warnings; a strict
+warning run converted the review trust-boundary request into an error.
+
+Backend commit `c74f8c5 fix review decimal validation warnings` uses Decimal
+bounds consistently. The focused three-test review suite passes with REST
+Framework decimal warnings treated as errors, and the rebuilt QA backend's full
+44-test suite passes.
+
 ### P2 — Recoverable 401 responses raised development error overlays
 
 The API client logged a normal expired-token refresh and unauthenticated
