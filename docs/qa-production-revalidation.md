@@ -83,6 +83,23 @@ QA service account, then deploy the existing Gen-2 Firestore-created trigger
 and repeat an offline recipient-device notification/tap test. No production
 cloud resource was inspected or changed.
 
+### P0 — Firebase chat data has no user-level access control
+
+`firestore.rules` currently grants unrestricted reads and writes to every
+document. The mobile client does not sign in to Firebase, so this is the only
+way its Firestore chat works today. It means any actor using the app's Firebase
+configuration can read or alter conversations, messages, blocks, and push-token
+documents. It is not acceptable for a customer release.
+
+The minimum correct remediation is Firebase custom-token authentication using
+the Django-authenticated user's stable ID, followed by participant-scoped
+Firestore rules. QA's existing ADC credential can read Firestore but cannot
+sign a custom token: direct IAM signing was rejected for missing
+`iam.serviceAccounts.signBlob` on the QA Firebase admin service account. This
+must be resolved with a narrowly scoped IAM Token Creator grant or a dedicated
+runtime service identity before implementation and device retest can proceed.
+No production rules or data were changed.
+
 ### P1 — Listing image moderation assigned derived files to a nonexistent user
 
 Creating a QA listing with media exposed an integrity failure in backend image
@@ -134,11 +151,12 @@ preserved, so the physical logout/login retest is pending an explicit decision
 to discard or save that draft. Until that retest passes, cross-account post
 isolation is not verified.
 
-## Current release confidence: 50%
+## Current release confidence: 30%
 
-Current evidence supports 10/10 environment, 11/15 authentication,
-12/15 discovery/detail, 10/20 chat, 2/20 listing, 4/10 profile/support, and
-1/10 UX/resilience. This is deliberately not production approval: push
+Current evidence supports 8/10 environment, 8/15 authentication,
+12/15 discovery/detail, 0/20 chat, 2/20 listing, 4/10 profile/support, and
+0/10 UX/resilience. This is deliberately not production approval: the open
+Firebase security P0 must be resolved before any customer chat can ship; push
 delivery on a second device, block/report behavior, a full app-driven listing
 with image upload/edit/delete, support submission, cross-user permissions,
 offline/recovery behavior, visual regression with representative fixtures,
