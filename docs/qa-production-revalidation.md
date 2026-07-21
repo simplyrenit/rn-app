@@ -94,12 +94,26 @@ retested. The app still attempts protected profile/notification requests before
 an unauthenticated user signs in; those calls are handled but remain a
 resilience follow-up because they generate app-level 401 logs.
 
-## Current release confidence: 60%
+### P1 — Post drafts leaked across account logout/login on one device
+
+While signed in as the isolated QA peer, entering Post showed the previous
+account's in-progress `Macbook Air` title, brand, and model draft. No fields
+were changed. Authentication state was correctly replaced, but the in-memory
+`ProductContext` was not reset on the normal Profile logout path.
+
+Frontend commit `5dfe4a6 fix post draft leakage on logout` clears the draft
+before logout. The current original draft has been deliberately preserved, so
+the physical logout/login retest is pending an explicit decision to discard or
+save that draft. Until that retest passes, cross-account post isolation is not
+verified.
+
+## Current release confidence: 55%
 
 Current evidence supports 10/10 environment, 11/15 authentication,
-12/15 discovery/detail, 15/20 chat, 4/20 listing, 4/10 profile/support, and
-4/10 UX/resilience. This is deliberately not production approval: push
+12/15 discovery/detail, 15/20 chat, 2/20 listing, 4/10 profile/support, and
+3/10 UX/resilience. This is deliberately not production approval: push
 delivery on a second device, block/report behavior, a full app-driven listing
 with image upload/edit/delete, support submission, cross-user permissions,
 offline/recovery behavior, visual regression with representative fixtures,
-and a distributable release-package test are still unverified.
+and a distributable release-package test are still unverified. The current
+cross-account draft-isolation fix also requires physical-device retest.
