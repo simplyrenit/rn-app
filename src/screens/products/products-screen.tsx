@@ -175,6 +175,7 @@ export default function DetailsScreen() {
         <View style={{ width: "100%", aspectRatio: 1, }}>
           <ProductImage
             images={product!.images}
+            coverImage={product!.cover_image}
             name={id}
             isFavorite={isFavorite}
           />
@@ -225,7 +226,7 @@ export default function DetailsScreen() {
             } flex flex-row items-center  `}
         >
           {/* Custom Category Icon */}
-          <View className="flex items-center flex-1">
+          <View className="flex items-center flex-1" style={{ minWidth: 0 }}>
             {/* <BookOpenIcon
               color={isDark ? "white" : "black"}
               size={wp("5.5%")}
@@ -256,7 +257,8 @@ export default function DetailsScreen() {
             <Text
               fontWeight="font-bold"
               className="mt-2"
-              style={{ textAlign: 'center', flex: 1 }}
+              numberOfLines={2}
+              style={{ textAlign: 'center' }}
             >
               {product?.category?.title}
             </Text>
@@ -268,7 +270,7 @@ export default function DetailsScreen() {
             </Text>
           </View>
 
-          <View className="flex items-center flex-1" >
+          <View className="flex items-center flex-1" style={{ minWidth: 0 }}>
             <BanknotesIcon
               color={isDark ? "white" : "black"}
               size={wp("5.5%")}
@@ -276,7 +278,8 @@ export default function DetailsScreen() {
             <Text
               fontWeight="font-bold"
               className="mt-2"
-              style={{ textAlign: 'center', flex: 1 }}
+              numberOfLines={2}
+              style={{ textAlign: 'center' }}
 
             >
               ₹{Number(product?.security_deposit).toFixed(0)}
@@ -290,7 +293,7 @@ export default function DetailsScreen() {
           </View>
 
           {/* Custom Icon */}
-          <View className="flex items-center flex-1">
+          <View className="flex items-center flex-1" style={{ minWidth: 0 }}>
             <LightBulbIcon
               color={isDark ? "white" : "black"}
               size={wp("5.5%")}
@@ -298,7 +301,8 @@ export default function DetailsScreen() {
             <Text
               fontWeight="font-bold"
               className="mt-2"
-              style={{ textAlign: 'center', flex: 1 }}
+              numberOfLines={2}
+              style={{ textAlign: 'center' }}
             >
               {product?.condition?.[0]?.toUpperCase()}{product?.condition.slice(1)}
             </Text>

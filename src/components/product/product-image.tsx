@@ -27,7 +27,8 @@ const StyledView = styled(View);
 const StyledButton = styled(TouchableOpacity);
 
 interface Props {
-  images: any[];
+  images?: string[];
+  coverImage?: string | null;
   mode?: string;
   name?: string;
   isFavorite?: boolean;
@@ -37,7 +38,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 // const HEART_ICON_SIZE = 24;
 const HEART_ICON_SIZE = 17;
 
-export function ProductImage({ images, mode, name, isFavorite: iF }: Props) {
+export function ProductImage({ images, coverImage, mode, name, isFavorite: iF }: Props) {
   const { theme, authTokens, isAuthenticated } = useGlobalContext();
   const { saveFavorite, deleteFavorite } = useSaved();
   const isDarkMode = theme === "dark";
@@ -47,6 +48,9 @@ export function ProductImage({ images, mode, name, isFavorite: iF }: Props) {
   const lottieRef = useRef<Lottie>(null);
   const queryClient = useQueryClient();
   const [fullImage, setFullImage] = useState<string | null>(null)
+  const galleryImages = Array.from(
+    new Set([coverImage, ...(images ?? [])].filter(Boolean))
+  ) as string[];
 
 
   const saveFavoriteMutation = useMutation(saveFavorite, {
@@ -165,14 +169,14 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
             <View className="w-2 h-2 bg-white rounded-lg mx-0.5  " />
           )}
         >
-          {(images || []).map((image, index) => (
+          {galleryImages.map((image) => (
             <Pressable
-              key={index}
+              key={image}
               style={{ flex: 1 }}
               onPress={() => setFullImage(image)}
             >
               <Image
-                source={image}
+                source={{ uri: image }}
                 style={{ width: "100%", height: "100%" }}
                 contentFit="fill"
               />
