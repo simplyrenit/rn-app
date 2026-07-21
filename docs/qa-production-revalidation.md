@@ -100,14 +100,20 @@ must be resolved with a narrowly scoped IAM Token Creator grant or a dedicated
 runtime service identity before implementation and device retest can proceed.
 No production rules or data were changed.
 
-Backend commit `da3c137 add authenticated Firebase token endpoint` provides
-the first required component: `POST /api/chat/firebase-token/` is JWT-protected,
-uses the stable `user-<Django primary key>` UID, and returns a generic 503
-instead of exposing signing failures. Its focused three-case test passed in a
-fresh, one-off QA-configured image; the running QA API was not restarted. The
-endpoint cannot be integrated or deployed until the QA token-creator grant is
-available, and existing conversation data/client queries must then be migrated
-to participant-scoped rules before the permissive rule can be removed.
+Backend commits `da3c137 add authenticated Firebase token endpoint` and
+`5b71016 expose stable Firebase user identifiers` provide the first required
+components: `POST /api/chat/firebase-token/` is JWT-protected, uses the stable
+`user-<Django primary key>` UID, and returns a generic 503 instead of exposing
+signing failures. Existing user, owner, and product-owner payloads now expose
+the same read-only `firebase_uid`. A fresh QA-configured image passed the full
+48-test backend suite, then the QA API was rebuilt and restarted. The public
+endpoint returned 401 without credentials and the API/category health check
+returned 200 after the brief expected restart window.
+
+The endpoint cannot issue a token until the QA token-creator grant is
+available. The mobile client and existing conversation data must then be
+migrated to participant-scoped queries/rules before the permissive rule can be
+removed.
 
 ### P1 — Listing image moderation assigned derived files to a nonexistent user
 
