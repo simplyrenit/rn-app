@@ -38,3 +38,9 @@ yarn-error.*
 
 # IDE (Android Studio / IntelliJ)
 .idea/
+
+# Local QA captures and device state (keep app assets under assets/ versioned)
+/*.png
+/*.xml
+/*.db
+*.swp
