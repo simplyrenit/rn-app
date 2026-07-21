@@ -3,7 +3,6 @@ import Skeleton from "@/components/core/skeleton";
 import ProfilePostAuth from "@/components/profile/post-auth/profile-post-auth";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { useGlobalContext } from "@/context/global-context";
-import { useProductContext } from "@/context/product-context";
 import { RootStackParamList } from "@/lib/types";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -17,14 +16,12 @@ type ProfileScreenNavigationProp = NativeStackNavigationProp<
 
 export default function Profile() {
   const { logout, authTokens, isAuthenticated, theme, loading } = useGlobalContext();
-  const { clearDetails } = useProductContext();
 
   const isDarkMode = theme === "dark";
   const navigation = useNavigation<ProfileScreenNavigationProp>();
 
 
   const handleLogout = async () => {
-    clearDetails();
     await logout();
 
     navigation.reset({

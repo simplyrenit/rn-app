@@ -1,5 +1,6 @@
+import { useGlobalContext } from "@/context/global-context";
 import { Product } from "@/lib/types";
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 interface ProductContextType {
   product: Product;
@@ -13,12 +14,13 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [product, setProduct] = useState<Product | null>(null);
+  const { isAuthenticated } = useGlobalContext();
 
   const saveDetails = (product: any) => {
     setProduct((prev) => ({ ...prev, ...product }));
   };
 
-  const clearDetails = () => {
+  const clearDetails = useCallback(() => {
     setProduct({
       category: {
         darkIcon: "",
@@ -53,7 +55,13 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
       address: "",
       blockedDates: [],
     });
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated === false) {
+      clearDetails();
+    }
+  }, [clearDetails, isAuthenticated]);
 
   const value = {
     product: product!,
