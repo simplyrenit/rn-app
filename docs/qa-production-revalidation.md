@@ -68,6 +68,21 @@ text message were visible, then the recipient signed in on the same device,
 received the conversation, and saw the exact message. The device log was
 clean of Firestore permission/index errors for the successful retry.
 
+### P1 — QA chat push trigger is not deployed
+
+Firebase-backed chat relies on the Gen-2 `onNewMessage` Firestore trigger in
+`functions/src/index.ts` to submit Expo push notifications. QA had no Cloud
+Functions API enabled and no deployed function. The function source now builds
+locally after installing its ignored dependencies; the QA-only Cloud Functions,
+Eventarc, Cloud Run, Artifact Registry, and Cloud Build APIs were enabled.
+
+Deployment to `renit-uat` is blocked by IAM only: the active build account
+lacks `iam.serviceAccounts.actAs` on the QA default compute service account.
+Grant that account the narrow `roles/iam.serviceAccountUser` role on this one
+QA service account, then deploy the existing Gen-2 Firestore-created trigger
+and repeat an offline recipient-device notification/tap test. No production
+cloud resource was inspected or changed.
+
 ### P1 — Listing image moderation assigned derived files to a nonexistent user
 
 Creating a QA listing with media exposed an integrity failure in backend image
@@ -108,11 +123,11 @@ preserved, so the physical logout/login retest is pending an explicit decision
 to discard or save that draft. Until that retest passes, cross-account post
 isolation is not verified.
 
-## Current release confidence: 55%
+## Current release confidence: 50%
 
 Current evidence supports 10/10 environment, 11/15 authentication,
-12/15 discovery/detail, 15/20 chat, 2/20 listing, 4/10 profile/support, and
-3/10 UX/resilience. This is deliberately not production approval: push
+12/15 discovery/detail, 10/20 chat, 2/20 listing, 4/10 profile/support, and
+1/10 UX/resilience. This is deliberately not production approval: push
 delivery on a second device, block/report behavior, a full app-driven listing
 with image upload/edit/delete, support submission, cross-user permissions,
 offline/recovery behavior, visual regression with representative fixtures,
