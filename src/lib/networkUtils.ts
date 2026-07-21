@@ -177,20 +177,9 @@ axiosInstance.interceptors.response.use(
       authHeader?.includes("Bearer ") &&
       !originalRequest?._retry;
 
-    console.error(`${NETWORK_LOG_PREFIX} response failed`, {
-      requestId: originalRequest?.metadata?.requestId,
-      method: (originalRequest?.method || "GET").toUpperCase(),
-      url: originalRequest ? buildRequestUrl(originalRequest) : undefined,
-      status,
-      durationMs: getDurationMs(originalRequest),
-      hasAuth: getAuthAttached(originalRequest),
-      message: error.message,
-      responseData: sanitizeValue(error?.response?.data),
-    });
-
     if (canRetryWithRefresh) {
       try {
-        console.warn(`${NETWORK_LOG_PREFIX} attempting token refresh`, {
+        console.log(`${NETWORK_LOG_PREFIX} attempting token refresh`, {
           requestId: originalRequest?.metadata?.requestId,
           failedStatus: status,
           url: originalRequest ? buildRequestUrl(originalRequest) : undefined,
@@ -241,6 +230,20 @@ axiosInstance.interceptors.response.use(
         });
       }
     }
+
+    const logFailure = status === 401 && !getAuthAttached(originalRequest)
+      ? console.log
+      : console.error;
+    logFailure(`${NETWORK_LOG_PREFIX} response failed`, {
+      requestId: originalRequest?.metadata?.requestId,
+      method: (originalRequest?.method || "GET").toUpperCase(),
+      url: originalRequest ? buildRequestUrl(originalRequest) : undefined,
+      status,
+      durationMs: getDurationMs(originalRequest),
+      hasAuth: getAuthAttached(originalRequest),
+      message: error.message,
+      responseData: sanitizeValue(error?.response?.data),
+    });
 
     return Promise.reject(error);
   }
