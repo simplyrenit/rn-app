@@ -815,6 +815,17 @@ disposable listing, its two QA bucket objects, and its user were deleted after
 verification. This is a fresh create-and-media check; listing edits and
 multi-image limit behavior remain separate coverage.
 
+### Current guest protected-tab regression — physical pass
+
+After the disposable listing account was removed, a force-stop/cold launch of
+the installed standalone QA APK treated the stale credentials as guest state.
+Guest Chat displayed its sign-in gate, and Guest Post displayed the same gate;
+the Post attempt made no protected listing or presign request. The expected
+stale-session `users/me` 401 responses produced no React Native or Android
+error-level record. This independently reconfirms the customer-facing guest
+fallback but does not add confidence beyond the existing session and
+protected-request coverage.
+
 ## Current independent confidence: 74%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
