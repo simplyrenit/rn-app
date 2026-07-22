@@ -307,11 +307,25 @@ conversation then unblocked successfully, the composer became enabled again,
 and the retry log contained no Firestore permission error. Block and unblock
 are now covered; report persistence remains unverified.
 
-## Current release confidence: 62%
+### P2 — Server-invalidated session produced customer-visible startup errors
+
+After the disposable QA account was removed, a cold start initially rendered
+Home while its now-invalid tokens triggered Firebase, notification, and stale
+chat requests. The customer saw raw Axios/Firebase 401 toasts before the app
+eventually cleared the session.
+
+Frontend commit `2c55bfc fix invalid session bootstrap` validates `/users/me/`
+before marking a stored session authenticated or starting Firebase work. A 401
+now clears local and Firebase state without logging it as an app error. The
+physical cold-start retest of the deleted QA session opened the Welcome screen
+directly, with no Firebase, notification, or Firestore error in the app log.
+This P2 is closed.
+
+## Current release confidence: 63%
 
 Current evidence supports 9/10 environment, 13/15 authentication/session,
 13/15 discovery/detail, 15/20 chat, 4/20 listing/media, 5/10
-profile/support, and 3/10 UX/resilience. This is not production approval.
+profile/support, and 4/10 UX/resilience. This is not production approval.
 The remaining release risks include background push delivery on a second
 device, full listing creation with image upload/S3/edit/delete, support and
 merchant edge paths, offline/slow-network recovery, representative media
