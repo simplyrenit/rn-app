@@ -4,6 +4,8 @@ import {
   getFirestoreDb,
   getFirestoreModule,
 } from "@/lib/firebase";
+import { USER_REPORT_ENDPOINT } from "@/lib/config";
+import axiosInstance from "@/lib/networkUtils";
 import { Conversation, Message, UserDetails } from "@/lib/types";
 import { useEffect } from "react";
 
@@ -662,6 +664,13 @@ export function useChat() {
     }
   }
 
+  async function reportUser(userId: string, reason: string): Promise<void> {
+    await axiosInstance.post(
+      `${USER_REPORT_ENDPOINT}${encodeURIComponent(userId)}/report/`,
+      { reason }
+    );
+  }
+
   async function unblockUser(conversationId: string): Promise<void> {
     await requireChatAuth();
     const firestore = requireFirestore();
@@ -784,6 +793,7 @@ export function useChat() {
     makeOffer,
     getMyDetails,
     blockUser,
+    reportUser,
     unblockUser,
     isBlocked,
     offerOperations,

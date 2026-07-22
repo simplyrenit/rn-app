@@ -34,6 +34,7 @@ import {
 } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import Toast from "react-native-toast-message";
 import { ChatSkeleton } from "./chat-skeleton";
 import { useChat } from "@/backend/chat";
 import useOwner from "@/backend/owner";
@@ -97,6 +98,7 @@ export default function ChatDetailsScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const [blockReason, setBlockReason] = useState("");
   const [blockedBy, setBlockedBy] = useState("");
+  const blockAndReportInFlight = useRef(false);
 
   const {
     readChat,
@@ -104,6 +106,7 @@ export default function ChatDetailsScreen() {
     makeOffer,
     getMyDetails,
     blockUser,
+    reportUser,
     unblockUser,
     isBlocked: isChatBlocked,
   } = useChat();
@@ -330,10 +333,41 @@ export default function ChatDetailsScreen() {
   );
 
   const handleBlockPress = async () => {
-    await blockUser(participantDetails.userId, blockReason, conversationId);
-    setIsBlocked(true);
-    setBlockReason("");
-    bottomSheetRef.current?.close();
+    const reason = blockReason.trim();
+    if (!reason) {
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Add a reason to report this user",
+        text2: "error",
+      });
+      return;
+    }
+    if (blockAndReportInFlight.current) return;
+
+    blockAndReportInFlight.current = true;
+    try {
+      await reportUser(participantDetails.userId, reason);
+      await blockUser(participantDetails.userId, reason, conversationId);
+      setIsBlocked(true);
+      setBlockReason("");
+      bottomSheetRef.current?.close();
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "User blocked and report sent",
+        text2: "success",
+      });
+    } catch {
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Couldn't block and report this user",
+        text2: "error",
+      });
+    } finally {
+      blockAndReportInFlight.current = false;
+    }
   };
 
   const handleUnblockPress = async () => {

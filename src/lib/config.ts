@@ -144,6 +144,7 @@ export const REQUEST_MERCHANT_REVIEW_ENDPOINT =
   SERVERURL + "users/me/request-merchant-review/";
 
 export const UPDATE_MY_DETAILS_ENDPOINT = SERVERURL + "users/";
+export const USER_REPORT_ENDPOINT = SERVERURL + "users/";
 
 export const DELETE_MY_ACCOUNT_ENDPOINT = SERVERURL + "users/";
 

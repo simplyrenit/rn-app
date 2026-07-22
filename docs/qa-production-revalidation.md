@@ -866,7 +866,37 @@ message with that value, alongside the initial product card. The initial
 failed ADB taps were traced to keyboard-dismissal coordinate drift rather than
 the enabled app control. The complete fixture was deleted after verification.
 
-## Current independent confidence: 78%
+### P1 — Block & Report claimed completion without retaining the report
+
+The prior implementation recorded only the Firestore block. It accepted a
+reason in the customer UI but neither persisted that reason nor created a
+moderation-visible report in QA. A physical current-QA reproduction confirmed
+the misleading success state: the customer was blocked, while the QA database
+contained zero report records.
+
+`POST /api/users/<username>/report/` now validates a non-empty reason, rejects
+self-reporting, persists one `UserReport` per reporter/target pair, and
+retains the existing `reported_users` relationship for compatibility. The
+Android flow sends the durable report before applying the Firestore block; a
+report failure therefore leaves the user unblocked and presents a retryable
+error rather than falsely claiming success. Backend tests cover validation,
+persistence, and repeat reporting; `user.tests` passed (28 tests), frontend
+type-checking passed, and QA migration `user.0012_userreport` was applied.
+
+On Android `34962d85`, a forced-bundle standalone QA APK was archive-checked
+for the fixed bundle before installation, then cold-started. A disposable
+renter opened the real QA listing chat, unblocked the owner, opened Block &
+Report, entered `QA safety report reason`, and confirmed. The app showed
+`User blocked and report sent`, disabled the conversation, and Android and
+React Native error-level logs were empty. QA contained exactly one report with
+that exact reason and the matching legacy block relationship. After unblocking
+and repeating the real UI flow with `Updated QA safety reason`, QA still had
+exactly one report and its stored reason was updated. This validates the
+customer flow, persistence, and duplicate prevention on the deployed QA API
+and installed QA APK. The disposable QA fixture remains pending removal until
+the QA chat-document cleanup is also verified.
+
+## Current independent confidence: 80%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -891,7 +921,9 @@ create/crop/upload/post/listing retrieval cycle increases listing/media
 confidence by two points. The physical owned-listing single-day availability
 save/readback increases listing/edit confidence by one point. The physical
 two-user current-build creation/receipt/read cycle increases chat confidence
-by two points.
+by two points. The physical current-build Block & Report persistence and
+duplicate-prevention cycle closes a P1 moderation-integrity gap and increases
+chat/account-safety confidence by two points.
 
 ## Superseded historical confidence: 80%
 
