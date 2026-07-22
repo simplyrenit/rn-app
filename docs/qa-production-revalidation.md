@@ -627,6 +627,17 @@ kill on this Android build clear the system notification card, so a true
 cold-process tap remains an environment-specific follow-up rather than a
 claimed pass.
 
+### P3 — stale disposable QA listing appeared in guest discovery
+
+An independent guest cold-start on physical Android `34962d85` showed the
+old `QA E2E Chat Listing 20260722` fixture in Home. Its owner was the
+disposable `qa-e2e-peer-20260722@qa.invalid` account, but its listing had
+remained active after the earlier chat cleanup. The exact QA listing (database
+id `4`) was archived through the existing model method; no customer or
+production data was changed. The active-discovery query then excluded it, and
+a force-stop/cold-start of the standalone QA APK confirmed it no longer
+appeared. Android and React Native error-level logs were empty.
+
 ## Current independent confidence: 60%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
