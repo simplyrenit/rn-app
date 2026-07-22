@@ -444,11 +444,11 @@ Cloudflare, all QA Compose services were healthy, and the QA Firebase project
 was selected locally. The app reached the password screen without a startup
 exception.
 
-The independently evidenced confidence is **21%**: build/tunnel/API, guest
-discovery, offline recovery, and the QA media-moderation permission are
-verified, but authenticated device flows, chat/push, listing lifecycle,
-profile/support, and release-package distribution still need reproduction on
-this exact build.
+The independently evidenced confidence is **25%**: build/tunnel/API, guest
+discovery and product detail, offline recovery, and the QA media-moderation
+permission are verified, but authenticated device flows, chat/push, listing
+lifecycle, profile/support, and release-package distribution still need
+reproduction on this exact build.
 
 ### P3 — Welcome carousel used an incorrect contraction
 
@@ -488,6 +488,19 @@ Their shared home fetcher now returns an empty result only for no-response
 transport failures; HTTP errors still use the existing error path. The rebuilt
 QA APK reached a usable Home screen offline with no error/exception/fatal log,
 then completed an online QA cold start cleanly. This P2 is closed.
+
+### P2 — Product-detail owner card reported the wrong product count
+
+The physical Lenovo detail page said its owner had `0 products`, while the
+owner profile and current product response both reported `2`. The backend
+already returns `products_listed` and `avg_rating` at product level; the
+client incorrectly read nonexistent nested owner fields and fell back to zero.
+
+The card now uses those existing product fields. TypeScript passed, the
+rebuilt APK rendered `2 products` on the same physical owner card, and the
+related product, review, owner-profile, and guest chat/review gates had no
+app-originated error. All available QA covers are uploaded UI screenshots, so
+this validates media rendering but not representative product-photo quality.
 
 ## Superseded historical confidence: 80%
 

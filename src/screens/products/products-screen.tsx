@@ -483,8 +483,8 @@ export default function DetailsScreen() {
               id={product?.owner?.username!}
               name={`${product?.owner?.first_name} ${product?.owner?.last_name}`}
               profilePic={product?.owner?.image?.image_url || ""}
-              rating={product?.owner?.average_rating!}
-              products={product?.owner?.number_of_products || 0}
+              rating={product?.avg_rating ?? 0}
+              products={product?.products_listed ?? 0}
               isDark={isDark}
             />
           </View>

@@ -440,6 +440,7 @@ export interface BackendProduct {
     end_date: string;
   }[];
   products_listed?: number;
+  avg_rating?: number;
   isOwnerContact?: boolean;
   distance?: string;
   owner?: {
@@ -460,8 +461,8 @@ export interface BackendProduct {
       lat: number;
       long: number;
     };
-    average_rating: number;
-    number_of_products: number;
+    average_rating?: number;
+    number_of_products?: number;
   };
 }
 
