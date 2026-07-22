@@ -717,7 +717,24 @@ contains this fix before the physical checks above. This is a build-process
 risk to retain in release validation, not evidence of a customer-facing
 failure.
 
-## Current independent confidence: 67%
+### P2 — offline support submission produced an error log and no retry feedback
+
+With Wi-Fi and mobile data deliberately disabled on physical Android, guest
+Report a problem submitted a request that failed immediately. The form kept
+the customer's text, but the shared profile client logged the expected Axios
+network failure as an error and the installed stale bundle had no visible
+retry feedback. The profile client now suppresses only Axios failures with no
+HTTP response; HTTP failures remain logged. Both support screens use the
+existing `customToast` error variant.
+
+`tsc --noEmit` passed. The QA APK was rebuilt with a forced JavaScript-bundle
+task, and both the generated APK and the installed device APK were inspected
+for the new retry copy. Repeating the same offline device flow displayed
+`Couldn't send your report`, kept the draft text, and produced no React Native
+or Android error-level record. Wi-Fi and mobile data were restored at the end
+of each test.
+
+## Current independent confidence: 68%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -731,7 +748,9 @@ and remaining authenticated/session edge cases are not yet signed off. The
 guest protected-request and duplicate-chat-card regressions are closed. The
 media fallback fix and its two physical failure paths increase confidence by a
 further two points. The guest support-form implementation and both physical
-anonymous submission checks increase it by a further two points.
+anonymous submission checks increase it by a further two points. The
+independently reproduced offline support failure and recovery increase it by
+one point.
 
 ## Superseded historical confidence: 80%
 

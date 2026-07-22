@@ -279,7 +279,9 @@ export function useProfile() {
 
       return response.data;
     } catch (error) {
-      console.error("Error reporting problem:", error);
+      if (!(axios.isAxiosError(error) && !error.response)) {
+        console.error("Error reporting problem:", error);
+      }
       throw error;
     } finally {
       setLoading(false);
@@ -298,7 +300,9 @@ export function useProfile() {
 
       return response.data;
     } catch (error) {
-      console.error("Error giving feedback:", error);
+      if (!(axios.isAxiosError(error) && !error.response)) {
+        console.error("Error giving feedback:", error);
+      }
       throw error;
     } finally {
       setLoading(false);
