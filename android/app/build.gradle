@@ -145,6 +145,11 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             crunchPngs (findProperty('android.enablePngCrunchInReleaseBuilds')?.toBoolean() ?: true)
         }
+        qa {
+            initWith release
+            applicationIdSuffix ".qa"
+            matchingFallbacks = ["release"]
+        }
     }
     packagingOptions {
         jniLibs {

@@ -21,7 +21,8 @@
         "EXPO_PUBLIC_QA_API_HOST": "qa-api.simplyrenit.com"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleQa"
       },
       "channel": "qa"
     },
