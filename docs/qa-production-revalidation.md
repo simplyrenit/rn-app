@@ -732,7 +732,9 @@ task, and both the generated APK and the installed device APK were inspected
 for the new retry copy. Repeating the same offline device flow displayed
 `Couldn't send your report`, kept the draft text, and produced no React Native
 or Android error-level record. Wi-Fi and mobile data were restored at the end
-of each test.
+of each test. The sibling Feedback & Review screen was then repeated under the
+same network interruption; it kept its draft, displayed `Couldn't send your
+feedback`, and likewise produced no error-level record.
 
 ## Current independent confidence: 68%
 
