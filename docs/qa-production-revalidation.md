@@ -255,21 +255,47 @@ were changed. Authentication state was correctly replaced, but the in-memory
 
 Frontend commit `5f09064 fix reset post drafts on session logout` clears the
 draft whenever the shared authentication state becomes logged out, covering
-all logout callers. The current original draft has been deliberately
-preserved, so the physical logout/login retest is pending an explicit decision
-to discard or save that draft. Until that retest passes, cross-account post
-isolation is not verified.
+all logout callers. After the original draft was explicitly discarded, the
+physical device logged out and signed in as a distinct controlled QA merchant.
+Post then started at category selection; category and subcategory selection
+reached a new empty About screen, and its required-field `Next` control was
+disabled. Android accessibility reports the form's static `Macbook Air`
+examples as text, but source inspection confirmed they are placeholders, not
+restored customer data. This cross-account isolation retest passes.
 
-## Current release confidence: 50%
+### P1 — Starting a chat failed silently despite valid Firebase authentication
 
-Current evidence supports 9/10 environment, 12/15 authentication,
-13/15 discovery/detail, 8/20 chat, 3/20 listing, 4/10 profile/support, and
-1/10 UX/resilience. This is deliberately not production approval: the
-formerly open Firebase data-exposure P0 is technically resolved, but all
-app-driven chat flows and push delivery on a second device remain unverified.
-A full app-driven listing with image upload/edit/delete, support submission,
-cross-user permissions, offline/recovery behavior, visual regression with
-representative fixtures, and a distributable release-package test also remain
-open. The current cross-account draft-isolation fix requires a physical-device
-logout/login retest once the preserved draft is intentionally saved or
-discarded.
+The physical buyer could open a QA product but tapping `Chat with owner` left
+the screen unchanged. Device logs showed Firestore denying the blocked-user
+lookup: the query filtered by `initiatorUid` and `blockedUserUid`, but the
+participant-scoped QA rule can only authorize reads whose query constrains the
+current Firebase UID in `participantIds`. The product screen also swallowed
+the failure, so a customer received no explanation.
+
+Frontend commit `e5cdc6f fix authorized chat startup and feedback` queries
+only the caller's authorized blocked records and filters the two-user pair
+locally. It also logs and displays a recoverable error toast if chat startup
+does fail. `tsc --noEmit` passed before the device retest.
+
+Physical retest used two disposable QA accounts and a disposable QA listing:
+
+- buyer opened the listing, started a conversation, and sent a text message;
+- owner signed in on the same physical device, saw the exact message and an
+  unread count, then opened the conversation and replied;
+- buyer signed in again and saw the exact reply and its unread count.
+
+The successful sequence emitted no Firestore permission or index errors.
+Both disposable accounts/listing and their chat records must be removed after
+the remaining chat regression work. This P1 is closed for conversation
+creation, delivery, receipt, and unread state. Background push delivery,
+block/unblock/report, offer state, and notification-tap behavior remain open.
+
+## Current release confidence: 61%
+
+Current evidence supports 9/10 environment, 13/15 authentication/session,
+13/15 discovery/detail, 14/20 chat, 4/20 listing/media, 5/10
+profile/support, and 3/10 UX/resilience. This is not production approval.
+The remaining release risks include background push delivery on a second
+device, full listing creation with image upload/S3/edit/delete, support and
+merchant edge paths, offline/slow-network recovery, representative media
+visual regression, and a distributable release-package test.
