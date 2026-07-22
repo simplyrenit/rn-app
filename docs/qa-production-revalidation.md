@@ -667,6 +667,16 @@ deleted after the checks. The ADB automation did not dispatch the composer
 send control while the keyboard was open, so this cycle does not claim a fresh
 typed-message send.
 
+### P2 — failed chat writes were silently reported as success
+
+The shared `sendMessage` function caught Firestore write/update failures and
+returned normally. Its text and media callers already display a failure alert,
+but could never reach it. The shared function now rethrows the original error.
+`tsc --noEmit` passed and the rebuilt standalone QA APK cold-started cleanly
+on the physical device. A forced write-failure alert remains explicitly
+untested: this device's ADB automation cannot activate the composer send
+button while the keyboard is visible.
+
 ## Current independent confidence: 63%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,

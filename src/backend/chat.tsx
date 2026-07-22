@@ -421,6 +421,7 @@ export function useChat() {
       }
 
     } catch (error) {
+      throw error;
     }
   }
 
