@@ -66,12 +66,38 @@ calendars. The calendars also used obsolete theme keys that the installed
 calendar library does not recognize.
 
 The affected call sites now use their real nullable/type boundaries, both
-calendar themes use the supported nested stylesheet shape, and navigation has
-the missing route parameters. `tsc --noEmit` now passes with zero errors, and
-the active QA Metro server produced an Android development bundle successfully
-after the change. The package has no Jest test files, so this static check and
-bundle transform are the available automated frontend evidence; physical UI
-coverage remains required.
+calendar themes retain the calendar library's runtime header override key, and
+navigation has the missing route parameters. A code review caught that the
+library's declaration omits that legacy key even though its renderer consumes
+it; an earlier static-only change incorrectly nested the key and would have
+silently removed the header separator. The physical Edit Unavailability screen
+now visibly renders the separator. `tsc --noEmit` passes with zero errors and
+the active QA Metro server produces an Android development bundle. The package
+has no Jest test files, so physical UI coverage remains required.
+
+### P1 — Stale Django session showed Firebase authentication error on Home
+
+The first physical QA cold start on the verified port-8082 bundle showed the
+customer-visible toast `Unable to authenticate Firebase` while the app's
+ordinary requests refreshed the stored expired Django access token. Firebase
+custom-token exchange had used raw Axios, so it bypassed the shared 401 refresh
+interceptor and failed before the refreshed token was available.
+
+Firebase custom-token exchange now uses the shared refresh-aware API client and
+stores the current persisted access token after a successful exchange. After a
+force-stop/cold start on port 8082, Home showed no Firebase error toast and
+Chat rendered its normal authenticated `No Chats` state with no Firebase or
+Firestore permission/index error. A controlled stale-token replay is still
+required before this P1 can be closed fully.
+
+### P2 — Post and Review used different category-icon data shapes
+
+Post saved category icons with API snake-case fields while Review read
+camel-case product-context fields. This could make configured category icons
+disappear on Review. Post now normalizes the category once at selection.
+Physical QA category and subcategory screens render their current cube fallback
+without clipping or errors; the current fixture has no configured category
+icon, so icon-enabled Review coverage remains open.
 
 ### P1 — QA chat denied by Firestore rules
 
@@ -231,11 +257,11 @@ preserved, so the physical logout/login retest is pending an explicit decision
 to discard or save that draft. Until that retest passes, cross-account post
 isolation is not verified.
 
-## Current release confidence: 47%
+## Current release confidence: 48%
 
 Current evidence supports 9/10 environment, 11/15 authentication,
-13/15 discovery/detail, 6/20 chat, 2/20 listing, 4/10 profile/support, and
-2/10 UX/resilience. This is deliberately not production approval: the
+13/15 discovery/detail, 7/20 chat, 3/20 listing, 4/10 profile/support, and
+1/10 UX/resilience. This is deliberately not production approval: the
 formerly open Firebase data-exposure P0 is technically resolved, but all
 app-driven chat flows and push delivery on a second device remain unverified.
 A full app-driven listing with image upload/edit/delete, support submission,

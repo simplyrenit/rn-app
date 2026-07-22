@@ -1,5 +1,6 @@
-import axios from "axios";
+import { getAuthTokens } from "./auth-fns";
 import { FIREBASE_TOKEN_ENDPOINT } from "./config";
+import axiosInstance from "./networkUtils";
 
 let cachedApp: any | null | undefined;
 let cachedFirestore: any | null | undefined;
@@ -92,14 +93,14 @@ export const authenticateFirebase = async (accessToken: string) => {
 
   if (!firebaseSignIn) {
     firebaseSignIn = (async () => {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         FIREBASE_TOKEN_ENDPOINT,
         undefined,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       const { signInWithCustomToken } = require("@react-native-firebase/auth");
       await signInWithCustomToken(auth, response.data.token);
-      firebaseAccessToken = accessToken;
+      firebaseAccessToken = (await getAuthTokens())?.access_token ?? accessToken;
     })().finally(() => {
       firebaseSignIn = null;
     });

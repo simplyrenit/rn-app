@@ -31,9 +31,9 @@ export default function Post() {
   const onPress = (cat: Category) => {
     const category = {
       title: cat.title,
-      dark_icon: cat.dark_icon,
-      light_icon: cat.light_icon,
-      subcategories: cat.subcategories,
+      name: cat.title,
+      darkIcon: cat.dark_icon || "",
+      lightIcon: cat.light_icon || "",
     };
     saveDetails({ category });
     navigation.navigate("PostSubCategories", {

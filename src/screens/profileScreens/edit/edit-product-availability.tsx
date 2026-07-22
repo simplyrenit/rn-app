@@ -248,6 +248,28 @@ export default function ProductAvailability() {
     }
   };
 
+  const calendarTheme = {
+    backgroundColor: isDark ? "#000" : "#fff",
+    calendarBackground: isDark ? "#000" : "#fff",
+    textSectionTitleColor: isDark ? "#fff" : "#000",
+    dayTextColor: isDark ? "#fff" : "#000",
+    todayTextColor: "#635BE8",
+    selectedDayBackgroundColor: "red",
+    selectedDayTextColor: "white",
+    monthTextColor: "#828282",
+    arrowColor: isDark ? "#fff" : "#000",
+    textDisabledColor: "#d9e1e8",
+    "stylesheet.calendar.header": {
+      header: {
+        borderBottomWidth: 1,
+        borderBottomColor: isDark ? "#292929" : "#E6E6E6",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        paddingVertical: 6,
+      },
+    },
+  };
+
   return (
     <StaticContainer width={100}>
       <View className="px-3 flex-row items-center pt-2">
@@ -288,29 +310,7 @@ export default function ProductAvailability() {
             markedDates={markedDates}
             onDayPress={handleDayPress}
             enableSwipeMonths={true}
-            theme={{
-              backgroundColor: isDark ? "#000" : "#fff",
-              calendarBackground: isDark ? "#000" : "#fff",
-              textSectionTitleColor: isDark ? "#fff" : "#000",
-              dayTextColor: isDark ? "#fff" : "#000",
-              todayTextColor: "#635BE8",
-              selectedDayBackgroundColor: "red",
-              selectedDayTextColor: "white",
-              monthTextColor: "#828282",
-              arrowColor: isDark ? "#fff" : "#000",
-              textDisabledColor: "#d9e1e8",
-              stylesheet: {
-                calendar: {
-                  header: {
-                    borderBottomWidth: 1,
-                    borderBottomColor: isDark ? "#292929" : "#E6E6E6",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    paddingVertical: 6,
-                  },
-                },
-              },
-            }}
+            theme={calendarTheme}
             dayComponent={({ date, state }) => {
               if (!date) return null;
               const marked = markedDates[date.dateString];
