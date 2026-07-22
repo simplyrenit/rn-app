@@ -1,6 +1,6 @@
 import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
-import React, { forwardRef, useEffect, useState } from "react";
-import { Keyboard, StyleSheet } from "react-native";
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { BackHandler, Keyboard, StyleSheet } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 
 interface CustomBottomSheetModalProps {
@@ -15,6 +15,10 @@ const CustomBottomSheetModal = forwardRef<
   CustomBottomSheetModalProps
 >(({ snapPoints = ["30%", "50%", "70%"], children, isDark, scrollView = true }, ref) => {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const modalRef = useRef<BottomSheetModal>(null);
+
+  useImperativeHandle(ref, () => modalRef.current as BottomSheetModal);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -35,6 +39,19 @@ const CustomBottomSheetModal = forwardRef<
       keyboardDidHideListener.remove();
     };
   }, []);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (!isOpen) {
+        return false;
+      }
+
+      modalRef.current?.dismiss();
+      return true;
+    });
+
+    return () => subscription.remove();
+  }, [isOpen]);
 
   const adjustedSnapPoints = isKeyboardVisible
     ? snapPoints.map((point) =>
@@ -59,9 +76,10 @@ const CustomBottomSheetModal = forwardRef<
         borderRadius: 50,
         padding: 2,
       }}
-      ref={ref}
+      ref={modalRef}
       snapPoints={adjustedSnapPoints}
       backdropComponent={renderBackdrop}
+      onChange={(index) => setIsOpen(index >= 0)}
       enableOverDrag={false}
       handleStyle={{
         borderTopWidth: 1,

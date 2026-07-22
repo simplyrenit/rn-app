@@ -351,11 +351,41 @@ This is a pass for the one-image publish/upload/crop/cover, availability
 update, and deletion path. Image count limits, upload failure recovery, and
 representative fixture-media visual quality are still open.
 
-## Current release confidence: 75%
+### P2 — Android Back left an open profile sheet over a changed tab
+
+On physical Android, opening Personal Details from Profile and pressing the
+system Back button navigated the underlying tab to Home while leaving the
+Personal Details sheet visible. A customer could recover by dragging the sheet
+down, but the Back behavior was inconsistent and misleading.
+
+`CustomBottomSheetModal` now consumes Android Back only while that sheet is
+open and dismisses the active sheet. This shared correction also covers the
+other screens that use the same wrapper. `tsc --noEmit` passed. Physical
+retest opened Personal Details, pressed Android Back, and returned to the
+unchanged Profile screen with the sheet dismissed. This P2 is closed.
+
+### Profile image upload and persistence — physical QA pass
+
+An isolated password-based QA user signed in through the physical email and
+password UI, opened Profile, selected Upload, chose a gallery image, completed
+the native crop action, and pressed Update Profile Picture. The QA Metro log
+recorded successful presigned-upload, profile PATCH, and refreshed
+`/users/me/` requests. The image relationship and file owner were persisted in
+QA, and the public media URL returned HTTP 200. Returning to Profile rendered
+the updated avatar. The test image was a white UI screenshot, so its thumbnail
+is intentionally visually sparse; this was confirmed as image content rather
+than a layout failure.
+
+The QA user, image database records, device photo, and QA S3 object were
+removed after the test. A force-stop/cold start then received the expected
+deleted-user 401, cleared the session, and showed the unauthenticated Home
+screen without a customer-facing error or Firebase/Firestore failure.
+
+## Current release confidence: 78%
 
 Current evidence supports 9/10 environment, 13/15 authentication/session,
-13/15 discovery/detail, 15/20 chat, 15/20 listing/media, 5/10
-profile/support, and 5/10 UX/resilience. This is not production approval.
+13/15 discovery/detail, 15/20 chat, 15/20 listing/media, 7/10
+profile/support, and 6/10 UX/resilience. This is not production approval.
 The remaining release risks include background push delivery on a second
 device, listing image-count and failure paths, support and merchant edge
 paths, offline/slow-network recovery, representative media visual regression,
