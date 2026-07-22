@@ -49,7 +49,9 @@ export function useProfile() {
     try {
       return await fetchMyDetailsRequest(token);
     } catch (error) {
-      console.error("Error getting user details:", error);
+      if (!(axios.isAxiosError(error) && !error.response)) {
+        console.error("Error getting user details:", error);
+      }
       throw error;
     } finally {
       setLoading(false);

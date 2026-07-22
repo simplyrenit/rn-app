@@ -576,15 +576,33 @@ boundary. After rebuilding the QA web container, the same physical Android
 flow returned 200, device logs were clean, and the cropped QA-only image
 persisted on Profile after a cold restart.
 
-## Current independent confidence: 50%
+### P2 — Authenticated offline startup logged handled transport failures as errors
+
+With Wi-Fi disabled on physical Android `34962d85`, a cold start of the
+authenticated standalone QA APK rendered Home but logged duplicate raw Axios
+errors while fetching the signed-in user's details and notifications. The
+network client already classified no-response transport failures as
+informational; three callers did not follow that contract.
+
+The affected profile, global user-details, and notification callers now leave
+their existing HTTP-error and 401 handling intact while treating no-response
+Axios failures as the expected offline state. `tsc --noEmit` passed and a
+fresh standalone QA APK was installed. A Wi-Fi-off force-stop/cold start
+rendered the usable cached Home shell with empty discovery sections and zero
+React Native or Android error-level records; Wi-Fi was restored, and Profile
+then loaded with the authenticated avatar and no error-level record. This P2
+is closed.
+
+## Current independent confidence: 53%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
 the complete create/update/delete listing lifecycle on this exact APK, in
 addition to guest and discovery flows. It also covers merchant profile-image
-upload and cold-reload persistence. It remains far from production approval:
-two-device push delivery, representative product-media quality and failure
-paths, and remaining authenticated/session edge cases are not yet signed off.
+upload, cold-reload persistence, and an authenticated offline/reconnect
+cycle. It remains far from production approval: two-device push delivery,
+representative product-media quality and failure paths, and remaining
+authenticated/session edge cases are not yet signed off.
 
 ## Superseded historical confidence: 80%
 

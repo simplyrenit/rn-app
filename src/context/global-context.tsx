@@ -134,7 +134,9 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
         await logout();
         return;
       }
-      console.error("Failed to fetch user details:", error);
+      if (!(axios.isAxiosError(error) && !error.response)) {
+        console.error("Failed to fetch user details:", error);
+      }
     }
   };
 
@@ -142,7 +144,10 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       return await fetchMyDetailsRequest();
     } catch (error) {
-      if (!(axios.isAxiosError(error) && error.response?.status === 401)) {
+      if (
+        !(axios.isAxiosError(error) &&
+          (error.response?.status === 401 || !error.response))
+      ) {
         console.error("Error getting user details:", error);
       }
       throw error;

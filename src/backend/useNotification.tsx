@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { useGlobalContext } from "../context/global-context";
 import { NOTIFICATIONS_ENDPOINT } from "../lib/config";
 import axiosInstance from "@/lib/networkUtils";
+import axios from "axios";
 
 interface NotificationResponse {
   results: Notification[];
@@ -26,7 +27,9 @@ export function useNotifications() {
       setNotifications(response.data.results);
       return response.data.results;
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      if (!(axios.isAxiosError(error) && !error.response)) {
+        console.error("Error fetching notifications:", error);
+      }
       setNotifications([]);
       return [];
     }
