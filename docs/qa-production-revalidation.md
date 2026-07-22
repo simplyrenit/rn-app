@@ -19,6 +19,11 @@ Firebase-project, and earlier-device evidence.
   from the QA web container. No email was sent during this configuration check.
 - A cold device start completed authenticated category, profile, favorites,
   notification, and discovery requests without a React Native error.
+- Current public QA API regression: the three listing media URLs returned HTTP
+  200; Top Experiences, Top Rated, and Popular-in-Area each returned results
+  for valid Mumbai coordinates; malformed coordinates returned the expected
+  structured HTTP 400 response. This is API evidence only, not visual-device
+  sign-off.
 
 ## Verified defects and outcomes
 
@@ -210,10 +215,10 @@ preserved, so the physical logout/login retest is pending an explicit decision
 to discard or save that draft. Until that retest passes, cross-account post
 isolation is not verified.
 
-## Current release confidence: 45%
+## Current release confidence: 46%
 
 Current evidence supports 9/10 environment, 11/15 authentication,
-12/15 discovery/detail, 6/20 chat, 2/20 listing, 4/10 profile/support, and
+13/15 discovery/detail, 6/20 chat, 2/20 listing, 4/10 profile/support, and
 1/10 UX/resilience. This is deliberately not production approval: the
 formerly open Firebase data-exposure P0 is technically resolved, but all
 app-driven chat flows and push delivery on a second device remain unverified.
