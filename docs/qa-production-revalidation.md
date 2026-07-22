@@ -396,10 +396,19 @@ Wi-Fi-off cold-start retest stayed usable on onboarding with no error,
 exception, red overlay, or customer-facing failure text; Wi-Fi was restored
 after the test. This P2 is closed.
 
-## Current release confidence: 79%
+### Support report and feedback — physical QA pass
+
+A disposable password-based QA account signed in through the physical Android
+email/password UI and submitted both Profile → Report a problem and Profile →
+Feedback & review. Each form enabled its action only after text entry, returned
+to Profile without an app error, and created the expected authenticated QA
+`Feedback` record. The two records and disposable account were then deleted;
+a cold start of the deleted session had no customer-facing failure.
+
+## Current release confidence: 80%
 
 Current evidence supports 9/10 environment, 13/15 authentication/session,
-13/15 discovery/detail, 15/20 chat, 15/20 listing/media, 7/10
+13/15 discovery/detail, 15/20 chat, 15/20 listing/media, 8/10
 profile/support, and 7/10 UX/resilience. This is not production approval.
 The remaining release risks include background push delivery on a second
 device, listing image-count and failure paths, support and merchant edge
