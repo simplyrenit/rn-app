@@ -1,12 +1,19 @@
 import { useGlobalContext } from "@/context/global-context";
-import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
+import {
+  authenticateFirebase,
+  getFirestoreDb,
+  getFirestoreModule,
+} from "@/lib/firebase";
 import { Conversation, Message, UserDetails } from "@/lib/types";
 import { useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 
 interface BlockedRecord {
   initiator: string;
+  initiatorUid: string;
   blocked_user: string;
+  blockedUserUid: string;
+  participantIds: string[];
   timestamp: any;
 }
 
@@ -39,10 +46,22 @@ export function useChat() {
   const { access_token } = authTokens || {};
   const navigation = useNavigation();
 
+  async function requireChatAuth() {
+    if (!access_token) {
+      throw new Error("Sign in to use chat.");
+    }
+
+    await authenticateFirebase(access_token);
+  }
+
   useEffect(() => {
     if (!isAuthenticated) {
       return;
     }
+
+    requireChatAuth().catch((error) =>
+      console.warn("Unable to authenticate chat:", error)
+    );
 
     const { setupChatNotifications, setupNotificationListeners } =
       getNotificationHelpers();
@@ -78,11 +97,12 @@ export function useChat() {
       id?: string;
     }
   ): Promise<{ success: boolean; content: string }> {
+    await requireChatAuth();
     const firestore = requireFirestore();
-    const { getDocs, collection, addDoc } = getFirestoreModule();
+    const { getDocs, collection, addDoc, query, where } = getFirestoreModule();
     const isBlocked = await checkIfUsersAreBlocked(
-      userDetails1.userId,
-      userDetails2.userId
+      userDetails1,
+      userDetails2
     );
 
     if (isBlocked) {
@@ -93,7 +113,10 @@ export function useChat() {
 
     try {
       const querySnapshot = await getDocs(
-        collection(firestore, "conversations")
+        query(
+          collection(firestore, "conversations"),
+          where("participantIds", "array-contains", userDetails1.firebaseUid)
+        )
       );
       querySnapshot.forEach((ss: any) => {
         const pc = ss.data()?.initialParticipants;
@@ -108,6 +131,7 @@ export function useChat() {
         const conversation: Conversation = {
           participants: [userDetails1, userDetails2],
           initialParticipants: [userDetails1, userDetails2],
+          participantIds: [userDetails1.firebaseUid, userDetails2.firebaseUid],
           readStatus: [
             {
               userId: userDetails1.userId,
@@ -146,7 +170,7 @@ export function useChat() {
 
       await createInitialMessage(
         conversationDoc.id,
-        userDetails1?.userId,
+        userDetails1,
         productDetails
       );
       return { success: true, content: conversationDoc.id };
@@ -158,7 +182,7 @@ export function useChat() {
 
   async function createInitialMessage(
     conversationId: string,
-    senderId: string,
+    sender: UserDetails,
     product: {
       title: string;
       location: string;
@@ -175,7 +199,8 @@ export function useChat() {
     if (product.type === "product") {
       message = {
         conversationId: conversationId,
-        from: senderId,
+        from: sender.userId,
+        senderUid: sender.firebaseUid,
         type: "product_post",
         timestamp: new Date(),
         message: {
@@ -191,7 +216,8 @@ export function useChat() {
     } else {
       message = {
         conversationId: conversationId,
-        from: senderId,
+        from: sender.userId,
+        senderUid: sender.firebaseUid,
         type: "text",
         timestamp: new Date(),
         message: { text: product.text },
@@ -206,22 +232,21 @@ export function useChat() {
   }
 
   async function getChats(): Promise<Conversation[]> {
+    await requireChatAuth();
     const firestore = requireFirestore();
-    const { getDocs, collection } = getFirestoreModule();
+    const { getDocs, collection, query, where } = getFirestoreModule();
     try {
       const querySnapshot = await getDocs(
-        collection(firestore, "conversations")
+        query(
+          collection(firestore, "conversations"),
+          where("participantIds", "array-contains", userDetails?.firebase_uid)
+        )
       );
       const conversations: Conversation[] = [];
 
       querySnapshot.forEach((doc: any) => {
         const conversation = doc.data() as Conversation;
-        if (
-          conversation?.participants?.length > 0 &&
-          conversation.participants.some(
-            (participant) => participant?.userId === userDetails?.username
-          )
-        ) {
+        if (!conversation.hiddenBy?.[userDetails?.firebase_uid || ""]) {
           conversations.push({ ...conversation, id: doc.id });
         }
       });
@@ -233,78 +258,62 @@ export function useChat() {
     }
   }
 
-  function subscribeToChats(
-    userId: string,
-    callback: (chats: Conversation[]) => void
-  ): () => void {
+  function subscribeToChats(callback: (chats: Conversation[]) => void): () => void {
     const firestore = requireFirestore();
-    const { query, collection, onSnapshot } = getFirestoreModule();
+    const { query, collection, onSnapshot, where } = getFirestoreModule();
     const { registerForPushNotificationsAsync, updateUserPushToken } =
       getNotificationHelpers();
+    let unsubscribe = () => {};
 
-    const q = query(collection(firestore, "conversations"));
+    requireChatAuth()
+      .then(() => {
+        const q = query(
+          collection(firestore, "conversations"),
+          where("participantIds", "array-contains", userDetails?.firebase_uid)
+        );
+        unsubscribe = onSnapshot(
+          q,
+          (snapshot: any) => {
+            const chats = snapshot.docs
+              .map((doc: any) => ({
+                ...doc.data(),
+                id: doc.id,
+                readStatus: doc.data().readStatus || [],
+                readCount: doc.data().readCount || [],
+              }))
+              .filter(
+                (conversation: Conversation) =>
+                  !conversation.hiddenBy?.[userDetails?.firebase_uid || ""]
+              )
+              .sort(
+                (a: Conversation, b: Conversation) =>
+                  new Date(b.lastMessageTime || 0).getTime() -
+                  new Date(a.lastMessageTime || 0).getTime()
+              );
+            callback(chats);
+          },
+          (error: unknown) => {
+            console.error("Unable to load chats:", error);
+            callback([]);
+          }
+        );
 
-    const unsubscribe = onSnapshot(q, (snapshot: any) => {
-      if (!snapshot) {
+        registerForPushNotificationsAsync().then((token) => {
+          if (token && userDetails?.firebase_uid) {
+            updateUserPushToken(userDetails.firebase_uid, token);
+          }
+        });
+      })
+      .catch((error) => {
+        console.error("Unable to authenticate chat:", error);
         callback([]);
-        return;
-      }
-
-      const chats: Conversation[] = [];
-      snapshot.forEach((doc: any) => {
-        const conversation = doc.data() as Conversation;
-
-        if (
-          conversation?.participants?.length > 0 &&
-          conversation.participants.some(
-            (participant) => participant?.userId === userDetails?.username
-          )
-        ) {
-
-
-          const readStatus = conversation.readStatus || [];
-          const readCount = conversation.readCount || [];
-
-          chats.push({
-            ...conversation,
-            id: doc.id,
-            readStatus,
-            readCount,
-          });
-
-        }
       });
 
-      chats.sort((a, b) => {
-        const timeA = a.lastMessageTime
-          ? new Date(a.lastMessageTime).getTime()
-          : 0;
-        const timeB = b.lastMessageTime
-          ? new Date(b.lastMessageTime).getTime()
-          : 0;
-        return timeB - timeA;
-      });
-
-      callback(chats);
-    }, (error: unknown) => {
-      console.error("Unable to load chats:", error);
-      callback([]);
-    });
-
-    registerForPushNotificationsAsync().then((token) => {
-      if (token) {
-
-        updateUserPushToken(userId, token);
-
-      } else {
-      }
-    });
-
-
-    return unsubscribe;
+    return () => unsubscribe();
   }
 
   async function deleteChat(conversationId: string): Promise<void> {
+    await requireChatAuth();
     const firestore = requireFirestore();
     const { doc, getDoc, updateDoc } = getFirestoreModule();
     try {
@@ -315,9 +324,10 @@ export function useChat() {
         const conversationData = conversationSnapshot.data() as Conversation;
 
         await updateDoc(conversationRef, {
-          participants: conversationData.participants.filter(
-            (p) => p.userId !== userDetails?.username
-          ), // Remove from participants
+          hiddenBy: {
+            ...conversationData.hiddenBy,
+            [userDetails?.firebase_uid || ""]: true,
+          },
         });
 
       } else {
@@ -329,6 +339,7 @@ export function useChat() {
   }
 
   async function getMessages(conversationId: string): Promise<Message[]> {
+    await requireChatAuth();
     const firestore = requireFirestore();
     const { collection, query, where, getDocs } = getFirestoreModule();
     const messagesRef = collection(firestore, "messages");
@@ -358,29 +369,33 @@ export function useChat() {
     const firestore = requireFirestore();
     const { query, collection, where, orderBy, onSnapshot } =
       getFirestoreModule();
-    const q = query(
-      collection(firestore, "messages"),
-      where("conversationId", "==", conversationId),
-      orderBy("timestamp", "asc")
-    );
+    let unsubscribe = () => {};
 
-    const unsubscribe = onSnapshot(q, (snapshot: any) => {
-      const messages: Message[] = snapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data(),
-        timestamp: doc.data().timestamp.toDate(), // Ensure timestamp is a Date object
-      })) as Message[];
+    requireChatAuth().then(() => {
+      const q = query(
+        collection(firestore, "messages"),
+        where("conversationId", "==", conversationId),
+        orderBy("timestamp", "asc")
+      );
+      unsubscribe = onSnapshot(q, (snapshot: any) => {
+        const messages: Message[] = snapshot.docs.map((doc: any) => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp.toDate(),
+        })) as Message[];
 
-      callback(messages);
+        callback(messages);
+      });
     });
 
-    return unsubscribe;
+    return () => unsubscribe();
   }
 
   async function sendMessage(
     text: string,
     conversationId: string
   ): Promise<void> {
+    await requireChatAuth();
     const firestore = requireFirestore();
     const { addDoc, collection, doc, getDoc, updateDoc } =
       getFirestoreModule();
@@ -388,6 +403,7 @@ export function useChat() {
     const object: Message = {
       conversationId: conversationId,
       from: userDetails?.username!,
+      senderUid: userDetails?.firebase_uid!,
       timestamp,
       type: "text",
       message: {
@@ -431,6 +447,7 @@ export function useChat() {
   }
 
   async function readChat(conversationId: string): Promise<void> {
+    await requireChatAuth();
     const firestore = requireFirestore();
     const { doc, getDoc, updateDoc } = getFirestoreModule();
     try {
@@ -480,6 +497,7 @@ export function useChat() {
   async function getParticipantDetails(
     conversationId: string
   ): Promise<UserDetails> {
+    await requireChatAuth();
     const firestore = requireFirestore();
     const { doc, getDoc } = getFirestoreModule();
     const conversationRef = doc(firestore, "conversations", conversationId);
@@ -501,6 +519,7 @@ export function useChat() {
   }
 
   async function getMyDetails(conversationId: string): Promise<UserDetails> {
+    await requireChatAuth();
     const firestore = requireFirestore();
     const { doc, getDoc } = getFirestoreModule();
     const conversationRef = doc(firestore, "conversations", conversationId);
@@ -538,6 +557,7 @@ export function useChat() {
       name: string;
     }
   ): Promise<void> {
+    await requireChatAuth();
     const firestore = requireFirestore();
     const { addDoc, collection, doc, getDoc, updateDoc } =
       getFirestoreModule();
@@ -546,6 +566,7 @@ export function useChat() {
     const object: Message = {
       conversationId: conversationId,
       from: userDetails?.username!,
+      senderUid: userDetails?.firebase_uid!,
       timestamp,
       type: "make_offer",
       message: {
@@ -589,21 +610,22 @@ export function useChat() {
   }
 
   async function checkIfUsersAreBlocked(
-    user1: string,
-    user2: string
+    user1: UserDetails,
+    user2: UserDetails
   ): Promise<boolean> {
+    await requireChatAuth();
     const firestore = requireFirestore();
     const { collection, query, where, getDocs } = getFirestoreModule();
     const blockedRef = collection(firestore, "blocked");
     const q1 = query(
       blockedRef,
-      where("initiator", "==", user1),
-      where("blocked_user", "==", user2)
+      where("initiatorUid", "==", user1.firebaseUid),
+      where("blockedUserUid", "==", user2.firebaseUid)
     );
     const q2 = query(
       blockedRef,
-      where("initiator", "==", user2),
-      where("blocked_user", "==", user1)
+      where("initiatorUid", "==", user2.firebaseUid),
+      where("blockedUserUid", "==", user1.firebaseUid)
     );
 
     const [snapshot1, snapshot2] = await Promise.all([
@@ -619,22 +641,35 @@ export function useChat() {
     reason: string,
     conversationId: string
   ): Promise<void> {
+    await requireChatAuth();
     const firestore = requireFirestore();
-    const { serverTimestamp, addDoc, collection, doc, updateDoc } =
+    const { serverTimestamp, addDoc, collection, doc, getDoc, updateDoc } =
       getFirestoreModule();
     try {
+      const conversationRef = doc(firestore, "conversations", conversationId);
+      const conversationSnapshot = await getDoc(conversationRef);
+      const conversation = conversationSnapshot.data() as Conversation;
+      const blockedParticipant = conversation.initialParticipants.find(
+        (participant) => participant.userId === userId
+      );
+      if (!blockedParticipant) {
+        throw new Error("Blocked user not found");
+      }
+
       // Create record in blocked collection
       const blockedRecord: BlockedRecord = {
         initiator: userDetails?.username!,
+        initiatorUid: userDetails?.firebase_uid!,
         blocked_user: userId,
+        blockedUserUid: blockedParticipant.firebaseUid,
+        participantIds: [userDetails?.firebase_uid!, blockedParticipant.firebaseUid],
         timestamp: serverTimestamp(),
       };
 
       await addDoc(collection(firestore, "blocked"), blockedRecord);
 
       // Update conversation as before
-      const conversationsRef = doc(firestore, "conversations", conversationId);
-      await updateDoc(conversationsRef, {
+      await updateDoc(conversationRef, {
         blockStatus: {
           initiatedBy: userDetails?.username!,
           isBlocked: true,
@@ -648,6 +683,7 @@ export function useChat() {
   }
 
   async function unblockUser(conversationId: string): Promise<void> {
+    await requireChatAuth();
     const firestore = requireFirestore();
     const { doc, getDoc, collection, query, where, getDocs, deleteDoc, updateDoc } =
       getFirestoreModule();
@@ -664,18 +700,18 @@ export function useChat() {
         throw new Error("Only the blocker can unblock the user");
       }
 
-      const blockedUserId = conversation.initialParticipants.find(
+      const blockedUser = conversation.initialParticipants.find(
         (p) => p.userId !== userDetails?.username
-      )?.userId;
+      );
 
-      if (!blockedUserId) throw new Error("Blocked user not found");
+      if (!blockedUser) throw new Error("Blocked user not found");
 
       // Remove record from blocked collection
       const blockedRef = collection(firestore, "blocked");
       const q = query(
         blockedRef,
-        where("initiator", "==", userDetails?.username),
-        where("blocked_user", "==", blockedUserId)
+        where("initiatorUid", "==", userDetails?.firebase_uid),
+        where("blockedUserUid", "==", blockedUser.firebaseUid)
       );
 
       const querySnapshot = await getDocs(q);
@@ -700,6 +736,7 @@ export function useChat() {
     isBlocked: boolean;
     initiatedBy: string;
   }> {
+    await requireChatAuth();
     const firestore = requireFirestore();
     const { doc, getDoc } = getFirestoreModule();
     const conversationRef = doc(firestore, "conversations", conversationId);
@@ -718,6 +755,7 @@ export function useChat() {
     messageId: string,
     operation: "accepted" | "rejected"
   ): Promise<void> {
+    await requireChatAuth();
     const firestore = requireFirestore();
     const { doc, getDoc, updateDoc } = getFirestoreModule();
     try {

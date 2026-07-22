@@ -61,7 +61,7 @@ cloudEvent<FirestoreEventData>("onNewMessage", async (event: CloudEvent<Firestor
     const userDoc = await admin
       .firestore()
       .collection("users")
-      .doc(recipient.userId)
+      .doc(recipient.firebaseUid)
       .get();
 
     const recipientToken = userDoc.data()?.pushToken;

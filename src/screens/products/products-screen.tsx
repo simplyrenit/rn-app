@@ -103,6 +103,7 @@ export default function DetailsScreen() {
       const { success, content } = await startChat(
         {
           userId: userDetails?.username!,
+          firebaseUid: userDetails?.firebase_uid!,
           username: userDetails?.name!,
           profilePicture: userDetails?.image
             ? userDetails?.image
@@ -110,6 +111,7 @@ export default function DetailsScreen() {
         },
         {
           userId: product?.owner?.username!,
+          firebaseUid: product?.owner?.firebase_uid!,
           username:
             product?.owner?.first_name! + " " + product?.owner?.last_name!,
           profilePicture: product?.owner?.image?.image_url

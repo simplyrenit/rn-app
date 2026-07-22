@@ -83,7 +83,7 @@ export async function registerForPushNotificationsAsync() {
 }
 
 // Keep both chat transports supplied with the current Expo token.
-export async function updateUserPushToken(userId: string, pushToken: string) {
+export async function updateUserPushToken(firebaseUid: string, pushToken: string) {
   try {
     await axiosInstance.post(REGISTER_PUSH_TOKEN_ENDPOINT, {
       expo_push_token: pushToken,
@@ -98,7 +98,7 @@ export async function updateUserPushToken(userId: string, pushToken: string) {
     }
 
     const { doc, setDoc } = getFirestoreModule();
-    const userRef = doc(firestore, "users", userId);
+    const userRef = doc(firestore, "users", firebaseUid);
     await setDoc(
       userRef,
       {

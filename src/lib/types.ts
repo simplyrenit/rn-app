@@ -275,6 +275,7 @@ export interface Category {
 
 export interface UserDetails {
   userId: string;
+  firebaseUid: string;
   username: string;
   profilePicture: string;
 }
@@ -318,6 +319,7 @@ export interface Owner {
 
 export interface PublicOwner {
   username: string;
+  firebase_uid: string;
   first_name: string;
   last_name: string;
   image: {
@@ -330,6 +332,7 @@ export interface PublicOwner {
 
 export interface Conversation {
   id?: string;
+  participantIds: string[];
   participants: UserDetails[];
   initialParticipants: UserDetails[];
   readStatus: ReadStatus[];
@@ -338,12 +341,14 @@ export interface Conversation {
   startedBy: string;
   lastMessage?: string;
   lastMessageTime?: string;
+  hiddenBy?: Record<string, boolean>;
 }
 
 export interface Message {
   id?: string;
   conversationId: string;
   from: string;
+  senderUid: string;
   type:
     | "make_offer"
     | "text"
@@ -436,6 +441,7 @@ export interface BackendProduct {
   distance?: string;
   owner?: {
     username: string;
+    firebase_uid: string;
     email: string;
     first_name: string;
     last_name: string;

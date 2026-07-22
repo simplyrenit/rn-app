@@ -5,7 +5,11 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { Button, StaticContainer, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
-import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
+import {
+  authenticateFirebase,
+  getFirestoreDb,
+  getFirestoreModule,
+} from "@/lib/firebase";
 import { BackendProduct, Conversation, RouteProps } from "@/lib/types";
 import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
@@ -65,7 +69,7 @@ export default function ChatDetailsScreen() {
   const router = useRoute<RouteProps<"ChatDetails">>();
   const { id: conversationId } = router.params;
   const bottomSheetRef = useRef<any>(null);
-  const { theme, userDetails } = useGlobalContext();
+  const { theme, userDetails, authTokens } = useGlobalContext();
   const isDark = theme === "dark";
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<BackendProduct | null>(
@@ -139,24 +143,33 @@ export default function ChatDetailsScreen() {
 
   useEffect(() => {
     const firestore = getFirestoreDb();
-    if (!firestore) {
+    const accessToken = authTokens?.access_token;
+    if (!firestore || !accessToken) {
       return;
     }
 
-    const { doc, onSnapshot } = getFirestoreModule();
-    const conversationRef = doc(firestore, "conversations", conversationId);
+    let unsubscribe = () => {};
+    let active = true;
 
-    const unsubscribe = onSnapshot(conversationRef, (docSnapshot: any) => {
-      if (documentExists(docSnapshot)) {
-        const conversationData = docSnapshot.data() as Conversation;
+    authenticateFirebase(accessToken)
+      .then(() => {
+        const { doc, onSnapshot } = getFirestoreModule();
+        const conversationRef = doc(firestore, "conversations", conversationId);
+        unsubscribe = onSnapshot(conversationRef, (docSnapshot: any) => {
+          if (active && documentExists(docSnapshot)) {
+            const conversationData = docSnapshot.data() as Conversation;
+            setIsBlocked(conversationData.blockStatus.isBlocked);
+            setBlockedBy(conversationData.blockStatus.initiatedBy);
+          }
+        });
+      })
+      .catch((error) => console.warn("Unable to subscribe to chat:", error));
 
-        setIsBlocked(conversationData.blockStatus.isBlocked);
-        setBlockedBy(conversationData.blockStatus.initiatedBy);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [conversationId]);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [authTokens?.access_token, conversationId]);
 
   useEffect(() => {
     fetchDetails();

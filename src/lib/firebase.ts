@@ -1,6 +1,11 @@
+import axios from "axios";
+import { FIREBASE_TOKEN_ENDPOINT } from "./config";
+
 let cachedApp: any | null | undefined;
 let cachedFirestore: any | null | undefined;
 let cachedStorage: any | null | undefined;
+let firebaseSignIn: Promise<void> | null = null;
+let firebaseAccessToken: string | null = null;
 
 export const getFirebaseApp = () => {
   if (cachedApp !== undefined) {
@@ -64,3 +69,52 @@ export const getStorageService = () => {
 
 export const getFirestoreModule = () =>
   require("@react-native-firebase/firestore");
+
+const getFirebaseAuth = () => {
+  const app = getFirebaseApp();
+  if (!app) {
+    return null;
+  }
+
+  const { getAuth } = require("@react-native-firebase/auth");
+  return getAuth(app);
+};
+
+export const authenticateFirebase = async (accessToken: string) => {
+  const auth = getFirebaseAuth();
+  if (!auth) {
+    throw new Error("Firebase authentication is unavailable.");
+  }
+
+  if (firebaseAccessToken === accessToken && auth.currentUser) {
+    return;
+  }
+
+  if (!firebaseSignIn) {
+    firebaseSignIn = (async () => {
+      const response = await axios.post(
+        FIREBASE_TOKEN_ENDPOINT,
+        undefined,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const { signInWithCustomToken } = require("@react-native-firebase/auth");
+      await signInWithCustomToken(auth, response.data.token);
+      firebaseAccessToken = accessToken;
+    })().finally(() => {
+      firebaseSignIn = null;
+    });
+  }
+
+  return firebaseSignIn;
+};
+
+export const signOutFirebase = async () => {
+  const auth = getFirebaseAuth();
+  firebaseAccessToken = null;
+  if (!auth?.currentUser) {
+    return;
+  }
+
+  const { signOut } = require("@react-native-firebase/auth");
+  await signOut(auth);
+};

@@ -74,6 +74,7 @@ export default function UsersDetails() {
     const { success, content } = await startChat(
       {
         userId: userDetails?.username!,
+        firebaseUid: userDetails?.firebase_uid!,
         username: userDetails?.name!,
         profilePicture: userDetails?.image
           ? userDetails?.image
@@ -81,6 +82,7 @@ export default function UsersDetails() {
       },
       {
         userId: owner?.username!,
+        firebaseUid: owner?.firebase_uid!,
         username: owner?.first_name! + " " + owner?.last_name!,
         profilePicture: owner?.image?.image_url
           ? owner?.image?.image_url

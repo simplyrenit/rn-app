@@ -41,7 +41,7 @@ const USE_LOCAL_API =
   (expoEnv.EXPO_PUBLIC_USE_LOCAL_API || "").toLowerCase() === "true" ||
   (__DEV__ && !expoEnv.EXPO_PUBLIC_USE_REMOTE_API);
 const QA_API_HOST = normalizeHost(
-  expoEnv.EXPO_PUBLIC_QA_API_HOST || "qa-api.simplyrenit.com"
+  expoEnv.EXPO_PUBLIC_QA_API_HOST || "qa-api.toratora.site"
 );
 const PROD_API_HOST = normalizeHost(
   expoEnv.EXPO_PUBLIC_PROD_API_HOST || "api.simplyrenit.com"
@@ -131,6 +131,7 @@ export const DELETE_MY_ACCOUNT_ENDPOINT = SERVERURL + "users/";
 
 export const NOTIFICATIONS_ENDPOINT = SERVERURL + "notification/";
 export const REGISTER_PUSH_TOKEN_ENDPOINT = SERVERURL + "register-push-token/";
+export const FIREBASE_TOKEN_ENDPOINT = SERVERURL + "chat/firebase-token/";
 
 export const ALL_PRODUCTS = SERVERURL + "product-title/";
 

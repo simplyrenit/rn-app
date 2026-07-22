@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
-import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
+import { useGlobalContext } from "@/context/global-context";
+import {
+  authenticateFirebase,
+  getFirestoreDb,
+  getFirestoreModule,
+} from "@/lib/firebase";
 import { Message } from "@/lib/types";
 
 export function useSubscribeToMessages(conversationId: string) {
+  const { authTokens } = useGlobalContext();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -11,50 +17,61 @@ export function useSubscribeToMessages(conversationId: string) {
     setLoading(true);
     setError(null);
 
+    const accessToken = authTokens?.access_token;
     const firestore = getFirestoreDb();
-    if (!firestore) {
+    if (!firestore || !accessToken) {
       setError("Chat is unavailable right now.");
       setLoading(false);
       return;
     }
 
-    const { collection, query, where, onSnapshot, orderBy } =
-      getFirestoreModule();
+    let unsubscribe = () => {};
+    let active = true;
 
-    // Create the query
-    const messagesRef = collection(firestore, "messages");
-    const q = query(
-      messagesRef,
-      where("conversationId", "==", conversationId),
-      orderBy("timestamp", "asc") // Add this to sort messages by timestamp
-    );
-
-    // Set up the subscription
-    const unsubscribe = onSnapshot(
-      q,
-      (querySnapshot) => {
-        const updatedMessages: Message[] = querySnapshot.docs.map(
-          (doc) =>
-            ({
-              id: doc.id,
-              ...doc.data(),
-              timestamp: doc.data().timestamp.toDate(), // Convert Firestore Timestamp to JS Date
-            } as Message)
+    authenticateFirebase(accessToken)
+      .then(() => {
+        const { collection, query, where, onSnapshot, orderBy } =
+          getFirestoreModule();
+        const q = query(
+          collection(firestore, "messages"),
+          where("conversationId", "==", conversationId),
+          orderBy("timestamp", "asc")
         );
 
-        setMessages(updatedMessages);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error subscribing to messages:", error);
-        setError(error.message);
-        setLoading(false);
-      }
-    );
+        unsubscribe = onSnapshot(
+          q,
+          (querySnapshot: any) => {
+            const updatedMessages: Message[] = querySnapshot.docs.map(
+              (doc: any) => ({
+                id: doc.id,
+                ...doc.data(),
+                timestamp: doc.data().timestamp.toDate(),
+              })) as Message[];
+            if (active) {
+              setMessages(updatedMessages);
+              setLoading(false);
+            }
+          },
+          (subscriptionError: Error) => {
+            if (active) {
+              setError(subscriptionError.message);
+              setLoading(false);
+            }
+          }
+        );
+      })
+      .catch((authenticationError: Error) => {
+        if (active) {
+          setError(authenticationError.message);
+          setLoading(false);
+        }
+      });
 
-    // Clean up subscription on unmount
-    return () => unsubscribe();
-  }, [conversationId]);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [authTokens?.access_token, conversationId]);
 
   return { messages, loading, error };
 }

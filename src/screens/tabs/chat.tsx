@@ -39,14 +39,11 @@ export default function Chat() {
       let unsubscribe: (() => void) | undefined;
 
       if (authTokens && isAuthenticated) {
-        unsubscribe = subscribeToChats(
-          userDetails?.username!,
-          (chats: Conversation[]) => {
-            if (!isSubscribed) return;
-            setConversations(chats);
-            setIsLoading(false);
-          }
-        );
+        unsubscribe = subscribeToChats((chats: Conversation[]) => {
+          if (!isSubscribed) return;
+          setConversations(chats);
+          setIsLoading(false);
+        });
       }
 
       return () => {
@@ -58,7 +55,7 @@ export default function Chat() {
     }, [
       authTokens,
       isAuthenticated,
-      userDetails?.username,
+      userDetails?.firebase_uid,
     ])
   );
 

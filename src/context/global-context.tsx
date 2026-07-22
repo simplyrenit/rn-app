@@ -10,6 +10,7 @@ import {
   GET_CATEGORIES,
   MY_DETAILS_ENDPOINT,
 } from "@/lib/config";
+import { authenticateFirebase, signOutFirebase } from "@/lib/firebase";
 import axiosInstance from "@/lib/networkUtils";
 import {
   AccountType,
@@ -62,6 +63,7 @@ interface UserData {
 
 interface UserDetails {
   username: string;
+  firebase_uid: string;
   name: string;
   email: string;
   phone: string;
@@ -89,6 +91,11 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   const [userData, setUserData] = useState<UserData | null>(null);
 
   const logout = useCallback(async () => {
+    try {
+      await signOutFirebase();
+    } catch (error) {
+      console.warn("Unable to sign out of Firebase:", error);
+    }
     await removeAuthTokens();
     delete axiosInstance.defaults.headers.Authorization;
     setAuthTokensState(null);
@@ -113,6 +120,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
       const details = await getMyDetails();
       setUserDetails({
         username: details.username,
+        firebase_uid: details.firebase_uid,
         name: `${details.first_name} ${details.last_name}`,
         email: details.email,
         phone: details.phone || "",
@@ -188,6 +196,9 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
           setAuthTokensState(tokens);
           axiosInstance.defaults.headers.Authorization = `Bearer ${tokens.access_token}`;
           setIsAuthenticated(true);
+          authenticateFirebase(tokens.access_token).catch((error) =>
+            console.warn("Unable to authenticate Firebase:", error)
+          );
         } else {
           delete axiosInstance.defaults.headers.Authorization;
           setIsAuthenticated(false);
@@ -211,7 +222,15 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
       setAuthTokensState(tokens);
       axiosInstance.defaults.headers.Authorization = `Bearer ${tokens.access_token}`;
       setIsAuthenticated(true);
+      authenticateFirebase(tokens.access_token).catch((error) =>
+        console.warn("Unable to authenticate Firebase:", error)
+      );
     } else {
+      try {
+        await signOutFirebase();
+      } catch (error) {
+        console.warn("Unable to sign out of Firebase:", error);
+      }
       await removeAuthTokens();
       delete axiosInstance.defaults.headers.Authorization;
       setAuthTokensState(null);
