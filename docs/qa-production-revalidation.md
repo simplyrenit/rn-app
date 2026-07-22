@@ -381,11 +381,26 @@ removed after the test. A force-stop/cold start then received the expected
 deleted-user 401, cleared the session, and showed the unauthenticated Home
 screen without a customer-facing error or Firebase/Firestore failure.
 
-## Current release confidence: 78%
+### P2 — Offline cold start surfaced a raw Axios category error
+
+With Wi-Fi disabled on physical Android `34962d85`, a guest cold start reached
+onboarding but emitted `Failed to fetch categories: AxiosError: Network Error`
+as a development-client error. The category fetch is optional at this point;
+the failure should leave categories empty until connectivity returns, not look
+like an application crash.
+
+The category caller now treats a no-response Axios error as offline and the
+shared network logger records no-response transport failures informationally.
+HTTP failures continue to log as errors. `tsc --noEmit` passed. The physical
+Wi-Fi-off cold-start retest stayed usable on onboarding with no error,
+exception, red overlay, or customer-facing failure text; Wi-Fi was restored
+after the test. This P2 is closed.
+
+## Current release confidence: 79%
 
 Current evidence supports 9/10 environment, 13/15 authentication/session,
 13/15 discovery/detail, 15/20 chat, 15/20 listing/media, 7/10
-profile/support, and 6/10 UX/resilience. This is not production approval.
+profile/support, and 7/10 UX/resilience. This is not production approval.
 The remaining release risks include background push delivery on a second
 device, listing image-count and failure paths, support and merchant edge
 paths, offline/slow-network recovery, representative media visual regression,

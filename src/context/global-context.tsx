@@ -182,6 +182,10 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
       const response = await axiosInstance.get(GET_CATEGORIES);
       setCategories(response.data);
     } catch (error) {
+      if (axios.isAxiosError(error) && !error.response) {
+        console.log("Categories unavailable while offline");
+        return;
+      }
       console.error("Failed to fetch categories:", error);
     }
   }, []);

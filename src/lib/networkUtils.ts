@@ -231,10 +231,9 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // 401s are handled by the caller or the refresh flow; logging them as
-    // errors makes an expected expired/invalid session look like an app fault
-    // in the development client.
-    const logFailure = status === 401 ? console.log : console.error;
+    // 401s and transport failures are handled by callers; logging either as
+    // errors makes expected offline/session recovery look like an app fault.
+    const logFailure = status === 401 || !status ? console.log : console.error;
     logFailure(`${NETWORK_LOG_PREFIX} response failed`, {
       requestId: originalRequest?.metadata?.requestId,
       method: (originalRequest?.method || "GET").toUpperCase(),
