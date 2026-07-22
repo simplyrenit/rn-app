@@ -2,6 +2,11 @@
 
 Step-by-step guide to launch Renit for beta users using Cloudflare Tunnel for the backend and EAS for app distribution.
 
+> The shared QA deployment is `https://qa-api.toratora.site`; use the backend
+> repository's `docs/ubuntu-qa-deployment.md` for its current runbook.
+> Production hostname examples below are planning examples, not QA
+> configuration.
+
 ---
 
 ## Table of Contents
@@ -213,7 +218,7 @@ In `src/lib/config.ts`, URL selection is env-driven (no manual `DEV_MODE` toggle
 Set env via EAS profile variable `EXPO_PUBLIC_APP_ENV`:
 
 - `DEV` -> LAN backend (local debugging)
-- `QA` -> `https://qa-api.simplyrenit.com/api/`
+- `QA` -> `https://qa-api.toratora.site/api/`
 - `PROD` -> `https://api.simplyrenit.com/api/`
 
 ### 5.2 Update `app.json` / `app.config.js`
