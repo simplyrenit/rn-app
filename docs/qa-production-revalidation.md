@@ -838,7 +838,25 @@ the app displayed `The product will be unavailable for 1 days` and the same
 single-day range. Android and React Native error-level logs were empty. The
 fixture listing, booking, and owner were deleted after verification.
 
-## Current independent confidence: 75%
+### Current QA two-user chat receipt/read regression — physical pass
+
+Two new disposable password-authenticated QA users and one temporary
+admin-approved QA listing were used only for this physical retest. The renter
+opened the current Home discovery card, entered Product Detail, and started a
+chat with its owner. Chat Details opened with the exact initial product card,
+no React Native or Android error-level record, and Firestore contained exactly
+one matching conversation and its one initial message. The renter then used
+the real Profile logout control; the owner signed in on the same Android
+device and opened Chat. The owner saw the renter, `Chat started`, and unread
+badge `1`; opening the conversation rendered the same product card. Firestore
+then recorded both participants as read with both read counts at zero.
+
+The conversation/message, Firebase user documents, listing, and both QA users
+were deleted after the check. This independently covers current app chat
+creation, cross-user receipt, unread badge, read transition, and logout/login
+handoff. Fresh typed-message send and block/report remain separate coverage.
+
+## Current independent confidence: 77%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -861,7 +879,9 @@ FCM/Expo credential inspection plus fresh physical background delivery
 increase environment and chat confidence by two points. The physical
 create/crop/upload/post/listing retrieval cycle increases listing/media
 confidence by two points. The physical owned-listing single-day availability
-save/readback increases listing/edit confidence by one point.
+save/readback increases listing/edit confidence by one point. The physical
+two-user current-build creation/receipt/read cycle increases chat confidence
+by two points.
 
 ## Superseded historical confidence: 80%
 
