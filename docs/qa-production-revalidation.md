@@ -405,6 +405,22 @@ to Profile without an app error, and created the expected authenticated QA
 `Feedback` record. The two records and disposable account were then deleted;
 a cold start of the deleted session had no customer-facing failure.
 
+### P1 — A new-listing one-day unavailability could publish an invalid end date
+
+Selecting one day in the new-listing calendar stored an empty `endDate` in the
+mobile draft. The UI displayed it as one day, but the post transformer formatted
+that empty value as a date, which could submit an invalid timestamp.
+
+The calendar now normalizes a single-day range to equal start and end dates;
+the posting boundary also falls back to the start date for any older in-memory
+draft. On physical Android `34962d85`, a disposable approved QA merchant
+completed Post → gallery selection → native crop → cover selection → one-day
+unavailability (July 25, 2026) → Review → Post product. The calendar displayed
+`Jul 25, 2026 - Jul 25, 2026`; the listing published and appeared in My
+Products with no app-originated error. QA persistence recorded one booking
+whose start and end were both that day. The fixture was deleted through the
+physical My Products delete flow, which returned to `No products`.
+
 ## Current release confidence: 80%
 
 Current evidence supports 9/10 environment, 13/15 authentication/session,

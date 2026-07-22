@@ -127,8 +127,12 @@ export default function ProductAvailability() {
   const confirmDateRange = () => {
     if (!selectedRange) return;
 
-    const newStart = moment(selectedRange.startDate);
-    const newEnd = moment(selectedRange.endDate || selectedRange.startDate);
+    const rangeToAdd = {
+      ...selectedRange,
+      endDate: selectedRange.endDate || selectedRange.startDate,
+    };
+    const newStart = moment(rangeToAdd.startDate);
+    const newEnd = moment(rangeToAdd.endDate);
     let overlappingRanges: number[] = [];
     let mergedStart = newStart;
     let mergedEnd = newEnd;
@@ -167,7 +171,7 @@ export default function ProductAvailability() {
       setUnavailableDates([...updatedRanges, mergedRange]);
     } else {
       // No overlap, add as new range
-      setUnavailableDates([...unavailableDates, selectedRange]);
+      setUnavailableDates([...unavailableDates, rangeToAdd]);
     }
 
     // Reset selected range and recalculate marked dates
@@ -175,7 +179,7 @@ export default function ProductAvailability() {
 
     // Recalculate marked dates
     const newMarked: MarkedDates = {};
-    const updatedRanges = [...unavailableDates, selectedRange];
+    const updatedRanges = [...unavailableDates, rangeToAdd];
     updatedRanges.forEach((range) => {
       let currentDate = moment(range.startDate);
       const endDate = range.endDate || range.startDate;

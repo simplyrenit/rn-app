@@ -45,7 +45,7 @@ const transformProduct = (product: Product) => {
       start_date: moment(range.startDate)
         .tz("Asia/Kolkata")
         .format("YYYY-MM-DDTHH:mm:ssZ"),
-      end_date: moment(range.endDate)
+      end_date: moment(range.endDate || range.startDate)
         .tz("Asia/Kolkata")
         .format("YYYY-MM-DDTHH:mm:ssZ"),
     })),
