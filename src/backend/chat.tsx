@@ -144,13 +144,13 @@ export function useChat() {
           collection(firestore, "conversations"),
           conversation
         );
+        await createInitialMessage(
+          conversationDoc.id,
+          userDetails1,
+          productDetails
+        );
       }
 
-      await createInitialMessage(
-        conversationDoc.id,
-        userDetails1,
-        productDetails
-      );
       return { success: true, content: conversationDoc.id };
     } catch (error) {
       console.error("Error starting conversation:", error);

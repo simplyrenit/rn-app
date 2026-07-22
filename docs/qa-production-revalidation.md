@@ -649,7 +649,25 @@ standalone QA APK was force-stopped, launched, and taken through the same
 guest path. It rendered the sign-in screen with no React Native or Android
 error-level log.
 
-## Current independent confidence: 61%
+### P2 — reopening a chat duplicated its initial product card
+
+`startChat` always added the product-card message after locating or creating a
+conversation. Returning to the same listing and starting its existing chat
+therefore duplicated the introductory card. The write now occurs only in the
+new-conversation branch, shared by both product and user chat entry points.
+
+Physical QA retest used two newly created, password-authenticated disposable
+accounts and a disposable Mumbai listing. The renter started the chat; the
+owner then received its unread conversation and opened the matching product
+card without Firebase or Android errors. A separate fresh pair repeated the
+same start action twice: Firestore contained exactly one conversation and one
+initial message after both opens. All four accounts, both listings, matching
+Firestore conversations/messages, and test device-token documents were
+deleted after the checks. The ADB automation did not dispatch the composer
+send control while the keyboard was open, so this cycle does not claim a fresh
+typed-message send.
+
+## Current independent confidence: 63%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -660,8 +678,8 @@ cycle. It now includes actual background push delivery and warm-process
 notification routing. It remains far from production approval: cold-process
 notification routing, representative product-media quality and failure paths,
 and remaining authenticated/session edge cases are not yet signed off. The
-guest protected-request regression is closed; the one-point increase reflects
-that narrow, physical-device retest only.
+guest protected-request and duplicate-chat-card regressions are closed; the
+two-point increase reflects the focused physical-device chat retest only.
 
 ## Superseded historical confidence: 80%
 
