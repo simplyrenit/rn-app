@@ -3,7 +3,7 @@ import { Button, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Platform, TextInput, TouchableOpacity, View } from "react-native";
 import {
   ArrowLeftIcon,
@@ -22,8 +22,12 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
   const router = useTypedNavigation();
 
   const [feedback, setFeedback] = useState<string>("");
+  const submitting = useRef(false);
 
   const handleFeedBackPress = async () => {
+    if (submitting.current) return;
+
+    submitting.current = true;
     try {
       await giveFeedback(feedback.trim());
       setFeedback("");
@@ -41,6 +45,8 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
         text1: "Couldn't send your feedback",
         text2: "error",
       });
+    } finally {
+      submitting.current = false;
     }
   };
 
@@ -130,7 +136,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
       </View>
       <View className={`px-5 py-2`}>
         <Button
-          disabled={!feedback.trim()}
+          disabled={!feedback.trim() || submitting.current}
           onPress={handleFeedBackPress}
         >
           <Text

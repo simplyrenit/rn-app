@@ -736,7 +736,21 @@ of each test. The sibling Feedback & Review screen was then repeated under the
 same network interruption; it kept its draft, displayed `Couldn't send your
 feedback`, and likewise produced no error-level record.
 
-## Current independent confidence: 68%
+### P2 — double-tapping support submission created duplicate feedback
+
+Two immediate taps of the enabled Feedback & Review submit control sent two
+identical `201 Created` requests and created two anonymous feedback records.
+Each form now has a synchronous per-screen submission ref, which rejects a
+second tap before React has a chance to rerender, and keeps the existing
+button disabled throughout the request.
+
+`tsc --noEmit` passed. A fresh forced-bundle QA APK was installed after its
+archive integrity check. On physical Android `34962d85`, two immediate submit
+taps created exactly one labelled QA feedback record, returned to Profile, and
+produced no React Native or Android error-level record. The two pre-fix and
+one post-fix test records were deleted after verification.
+
+## Current independent confidence: 69%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -752,7 +766,8 @@ media fallback fix and its two physical failure paths increase confidence by a
 further two points. The guest support-form implementation and both physical
 anonymous submission checks increase it by a further two points. The
 independently reproduced offline support failure and recovery increase it by
-one point.
+one point. The reproduced duplicate-tap support flow and physical regression
+increase it by one point.
 
 ## Superseded historical confidence: 80%
 

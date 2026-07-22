@@ -3,7 +3,7 @@ import { Button, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
 import {
   ArrowLeftIcon,
@@ -20,8 +20,12 @@ const ReportAProblemScreen: React.FC = () => {
   const router = useTypedNavigation();
 
   const [feedback, setFeedback] = useState<string>("");
+  const submitting = useRef(false);
 
   const handleReportPress = async () => {
+    if (submitting.current) return;
+
+    submitting.current = true;
     try {
       await reportAProblem(feedback.trim());
       setFeedback("");
@@ -39,6 +43,8 @@ const ReportAProblemScreen: React.FC = () => {
         text1: "Couldn't send your report",
         text2: "error",
       });
+    } finally {
+      submitting.current = false;
     }
   };
 
@@ -127,7 +133,7 @@ const ReportAProblemScreen: React.FC = () => {
       </View>
       <View className="py-2 px-5">
         <Button
-          disabled={!feedback.trim()}
+          disabled={!feedback.trim() || submitting.current}
           onPress={handleReportPress}
         >
           <Text
