@@ -284,11 +284,13 @@ Physical retest used two disposable QA accounts and a disposable QA listing:
   unread count, then opened the conversation and replied;
 - buyer signed in again and saw the exact reply and its unread count.
 
-The successful sequence emitted no Firestore permission or index errors.
-Both disposable accounts/listing and their chat records must be removed after
-the remaining chat regression work. This P1 is closed for conversation
-creation, delivery, receipt, and unread state. Background push delivery,
-offer state, report persistence, and notification-tap behavior remain open.
+The successful sequence emitted no Firestore permission or index errors. After
+the chat safety retest, the two disposable accounts, their QA-only listing,
+one conversation, three messages, and any matching block record were deleted;
+a scoped verification confirmed none remained. This P1 is closed for
+conversation creation, delivery, receipt, and unread state. Background push
+delivery, offer state, report persistence, and notification-tap behavior
+remain open.
 
 ### P1 — Unblock used an unauthorized Firestore query
 
