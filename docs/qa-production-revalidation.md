@@ -762,7 +762,20 @@ taps created exactly one labelled QA feedback record, returned to Profile, and
 produced no React Native or Android error-level record. The two pre-fix and
 one post-fix test records were deleted after verification.
 
-## Current independent confidence: 69%
+### Current QA auth regression — deleted-account session recovery
+
+A disposable QA user completed the real Android password-login flow on the
+installed QA APK: `POST /api/login/` and `GET /api/users/me/` both returned
+200 with no app error. The user was then deleted only from QA. On the next
+cold start the stored access token received `401`, the stateless refresh
+endpoint returned 200, and the subsequent user-details request again returned
+401. Renit demoted to a usable guest Home without a React Native or Android
+error-level record. A second cold start made no `users/me`, refresh, or My
+Products request, confirming that the stale session was cleared rather than
+leaving a hidden authenticated shell. The QA user and matching Firebase user
+document were removed after the test.
+
+## Current independent confidence: 70%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -779,7 +792,8 @@ further two points. The guest support-form implementation and both physical
 anonymous submission checks increase it by a further two points. The
 independently reproduced offline support failure and recovery increase it by
 one point. The reproduced duplicate-tap support flow and physical regression
-increase it by one point.
+increase it by one point. The current-release deleted-account recovery test
+increases authentication/session confidence by one point.
 
 ## Superseded historical confidence: 80%
 
