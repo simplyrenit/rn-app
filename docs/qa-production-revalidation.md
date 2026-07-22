@@ -37,6 +37,21 @@ healthy and produced an Android development bundle. The bundle contains
 place, but the phone has not yet been launched into this server so the
 preserved in-memory post draft remains intact.
 
+### P2 — QA web container used stale ADC quota metadata
+
+The QA web container had started before its mounted Application Default
+Credentials were assigned the `renit-uat` quota project. Firebase calls still
+worked in the observed paths, but Google authentication emitted a quota-project
+warning that could turn into a customer-visible failure under quota or API
+enforcement.
+
+The QA web service was recreated without rebuilding code or changing data. The
+public category check returned HTTP 200 after the restart and its fresh logs
+contain no quota-project warning. The `onNewMessage` function is `ACTIVE` and
+has zero Cloud Run runtime errors in the preceding 24 hours; the five earlier
+Cloud Functions error-severity records were failed deployment audit attempts,
+not message-processing errors.
+
 ### P1 — QA chat denied by Firestore rules
 
 The Android Chat screen returned `firestore/permission-denied` for both the
@@ -195,11 +210,11 @@ preserved, so the physical logout/login retest is pending an explicit decision
 to discard or save that draft. Until that retest passes, cross-account post
 isolation is not verified.
 
-## Current release confidence: 44%
+## Current release confidence: 45%
 
 Current evidence supports 9/10 environment, 11/15 authentication,
 12/15 discovery/detail, 6/20 chat, 2/20 listing, 4/10 profile/support, and
-0/10 UX/resilience. This is deliberately not production approval: the
+1/10 UX/resilience. This is deliberately not production approval: the
 formerly open Firebase data-exposure P0 is technically resolved, but all
 app-driven chat flows and push delivery on a second device remain unverified.
 A full app-driven listing with image upload/edit/delete, support submission,
