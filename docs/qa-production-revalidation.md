@@ -691,7 +691,33 @@ changed to a QA 404 URL; the placeholder appeared after the failed load with
 no React Native or Android error-level log. The QA-only listing and owner were
 deleted immediately after the retest.
 
-## Current independent confidence: 65%
+### P2 — guest support forms could not complete despite being offered before sign-in
+
+Both unauthenticated Profile flows — `Report a problem` and `Feedback &
+review` — were reachable before sign-in, but their shared API required a JWT.
+The UI also treated a response as successful only when it contained a user;
+anonymous feedback correctly returns `user: null`. The model deliberately
+allows a null user, so the API now permits anonymous submissions while still
+associating signed-in submissions with the requester. The app now accepts any
+successful response and shows a retry toast if the request fails.
+
+The isolated Django test creates anonymous feedback and passed against the QA
+container image. That image was deployed only to the QA service and its public
+health check passed. On physical Android `34962d85`, as a guest, each form
+submitted through the installed standalone QA APK, returned `201 Created`,
+returned to Profile, displayed `Your feedback has been sent`, and produced no
+React Native or Android error-level log. All four labelled anonymous QA
+feedback records were deleted immediately after the checks.
+
+The first incremental APK assembly reused an old JavaScript bundle even after
+installing successfully. The verification procedure now inspects the bundle
+inside the generated APK and the installed device APK; a forced
+`createBundleQaJsAndAssets` rebuild produced and installed the bundle that
+contains this fix before the physical checks above. This is a build-process
+risk to retain in release validation, not evidence of a customer-facing
+failure.
+
+## Current independent confidence: 67%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -702,10 +728,10 @@ cycle. It now includes actual background push delivery and warm-process
 notification routing. It remains far from production approval: cold-process
 notification routing, representative product-media quality and failure paths,
 and remaining authenticated/session edge cases are not yet signed off. The
-guest protected-request and duplicate-chat-card regressions are closed; the
-two-point increase reflects the focused physical-device chat retest only. The
+guest protected-request and duplicate-chat-card regressions are closed. The
 media fallback fix and its two physical failure paths increase confidence by a
-further two points.
+further two points. The guest support-form implementation and both physical
+anonymous submission checks increase it by a further two points.
 
 ## Superseded historical confidence: 80%
 

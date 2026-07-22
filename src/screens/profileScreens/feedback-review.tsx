@@ -24,8 +24,8 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
   const [feedback, setFeedback] = useState<string>("");
 
   const handleFeedBackPress = async () => {
-    const res = await giveFeedback(feedback.trim());
-    if (res.user) {
+    try {
+      await giveFeedback(feedback.trim());
       setFeedback("");
       Toast.show({
         type: "customToast",
@@ -34,6 +34,13 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
         text2: "success",
       });
       router.goBack();
+    } catch {
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Couldn't send your feedback",
+        text2: "error",
+      });
     }
   };
 

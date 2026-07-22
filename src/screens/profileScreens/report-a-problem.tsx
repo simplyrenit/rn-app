@@ -22,8 +22,8 @@ const ReportAProblemScreen: React.FC = () => {
   const [feedback, setFeedback] = useState<string>("");
 
   const handleReportPress = async () => {
-    const res = await reportAProblem(feedback.trim());
-    if (res.user) {
+    try {
+      await reportAProblem(feedback.trim());
       setFeedback("");
       Toast.show({
         type: "customToast",
@@ -32,6 +32,13 @@ const ReportAProblemScreen: React.FC = () => {
         text2: "success",
       });
       router.goBack();
+    } catch {
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Couldn't send your report",
+        text2: "error",
+      });
     }
   };
 
