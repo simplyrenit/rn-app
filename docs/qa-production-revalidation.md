@@ -826,7 +826,19 @@ error-level record. This independently reconfirms the customer-facing guest
 fallback but does not add confidence beyond the existing session and
 protected-request coverage.
 
-## Current independent confidence: 74%
+### Current QA single-day availability edit — physical pass
+
+A QA-only owned listing was seeded only to enter the physical edit flow. The
+password-authenticated owner opened My Products, Edit, and Unavailability;
+selected one current/future calendar day; added the date log; and pressed
+Update. QA returned `PATCH /api/my/products/<name>/` `200`. The stored booking
+has identical `2026-07-23` start and end dates and belongs to the listing
+owner, rather than an empty or invalid end date. Reopening Unavailability in
+the app displayed `The product will be unavailable for 1 days` and the same
+single-day range. Android and React Native error-level logs were empty. The
+fixture listing, booking, and owner were deleted after verification.
+
+## Current independent confidence: 75%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -848,7 +860,8 @@ increases authentication/session confidence by one point. The current QA
 FCM/Expo credential inspection plus fresh physical background delivery
 increase environment and chat confidence by two points. The physical
 create/crop/upload/post/listing retrieval cycle increases listing/media
-confidence by two points.
+confidence by two points. The physical owned-listing single-day availability
+save/readback increases listing/edit confidence by one point.
 
 ## Superseded historical confidence: 80%
 
