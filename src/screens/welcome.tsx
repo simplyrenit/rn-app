@@ -35,7 +35,7 @@ const carouselData: CarouselItem[] = [
   {
     title: "Rent Anytime",
     description:
-      "The chat feature let's you talk to the owner for all things product!",
+      "The chat feature lets you talk to the owner for all things product!",
     lightImage: require("../../assets/auth/rent-anytime-light.png"),
     darkImage: require("../../assets/auth/rent-anytime-dark.png"),
   },

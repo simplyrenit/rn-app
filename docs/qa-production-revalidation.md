@@ -449,6 +449,13 @@ QA media-moderation permission are verified, but authenticated device flows,
 discovery, chat/push, listing lifecycle, profile/support, resilience, and
 release-package distribution still need reproduction on this exact build.
 
+### P3 — Welcome carousel used an incorrect contraction
+
+The physical QA cold-start screen said “The chat feature let's you”. The
+string now correctly says “lets you”. TypeScript passed, a fresh isolated QA
+APK was installed on Android `34962d85`, and the corrected text rendered on a
+cold start with no app-originated error.
+
 ## Superseded historical confidence: 80%
 
 Current evidence supports 9/10 environment, 13/15 authentication/session,
