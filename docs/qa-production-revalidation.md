@@ -421,7 +421,35 @@ Products with no app-originated error. QA persistence recorded one booking
 whose start and end were both that day. The fixture was deleted through the
 physical My Products delete flow, which returned to `No products`.
 
-## Current release confidence: 80%
+### P1 — QA image moderation was denied after every listing publish
+
+The running QA web container logged `AccessDenied` for
+`rekognition:DetectModerationLabels` after listing creation. Publishing still
+returned `201`, but customer-upload moderation was not actually enforced.
+
+The dedicated QA AWS identity now has the least-privilege
+`rekognition:DetectModerationLabels` action in addition to its existing
+QA-bucket-only S3 policy. IAM policy simulation returned `allowed`, and the
+running QA web container successfully called Rekognition against a QA image
+using its configured bucket and credentials. A fresh physical listing publish
+is still required to close this flow end to end.
+
+## 2026-07-22 independent release-candidate baseline
+
+This baseline intentionally does not inherit the earlier checklist score. The
+physical phone has the standalone `com.renit.app.qa` build installed and in
+the foreground; it is distinct from the development client and its bundle
+contains `qa-api.toratora.site`. The public endpoint returned HTTP 200 through
+Cloudflare, all QA Compose services were healthy, and the QA Firebase project
+was selected locally. The app reached the password screen without a startup
+exception.
+
+The independently evidenced confidence is **20%**: build/tunnel/API and the
+QA media-moderation permission are verified, but authenticated device flows,
+discovery, chat/push, listing lifecycle, profile/support, resilience, and
+release-package distribution still need reproduction on this exact build.
+
+## Superseded historical confidence: 80%
 
 Current evidence supports 9/10 environment, 13/15 authentication/session,
 13/15 discovery/detail, 15/20 chat, 15/20 listing/media, 8/10
