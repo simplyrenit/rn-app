@@ -110,6 +110,8 @@ export default function ProductAvailability() {
   // };
 
   const handleDayPress = (day: any) => {
+    if (moment(day.dateString).isBefore(minDate, "day")) return;
+
     if (!selectedRange) {
       const newRange = { startDate: day.dateString, endDate: "" };
       setSelectedRange(newRange);
@@ -302,7 +304,10 @@ export default function ProductAvailability() {
               const marked = markedDates[date.dateString];
 
               return (
-                <TouchableOpacity onPress={() => handleDayPress(date)}>
+              <TouchableOpacity
+                disabled={state === "disabled"}
+                onPress={() => handleDayPress(date)}
+              >
                   <View
                     style={{
                       width: 36,

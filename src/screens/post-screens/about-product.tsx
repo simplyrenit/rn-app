@@ -563,6 +563,7 @@ export default function AboutProduct() {
               fontWeight="font-bold"
             >
               Product description
+              <Text style={{ color: '#E50914' }}>{" "}*</Text>
             </Text>
             <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
               Tell us more about your product: Any info that the buyer might

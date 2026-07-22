@@ -534,14 +534,43 @@ left Confirm location available. Android logs contained no app-originated
 error, Places failure, or billing warning. No listing was submitted and no
 precise device address was published.
 
-## Current independent confidence: 32%
+### Listing/media lifecycle — physical QA pass
+
+On the standalone QA APK, an approved QA merchant completed Post → category
+and details → generic address search → Android photo picker → native crop →
+cover selection → review → publish. The test used a deliberately generated
+QA-only image, never device-gallery content. The review and My Products card
+both rendered the cropped cover correctly. QA returned `201 Created` for the
+listing, a valid two-day availability update returned `200 OK` and persisted
+after reopening the editor, and delete returned `204 No Content` followed by
+the empty My Products state. Device logs had no app-originated error.
+
+### P2 — required product description lacked a required-field cue
+
+The listing form rejected an empty product description, but unlike its other
+mandatory fields its label had no required marker. This made an apparently
+complete form leave Next disabled. The label now uses the same red asterisk
+as the other required fields. A rebuilt standalone QA APK physically rendered
+`Product description *` while preserving the existing validation.
+
+### P2 — calendar allowed past unavailability dates through its custom day UI
+
+Although the calendar declared a minimum date, its custom day renderer still
+made disabled historical days pressable. A customer could select a past day
+and add it to a listing availability range. Both new-listing and edit
+calendars now disable historical touches and retain an in-handler date guard.
+On physical Android, tapping a past day left it disabled and left Add date log
+disabled; no draft range was created and no app-originated error appeared.
+
+## Current independent confidence: 45%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
-real chat message send, push-token registration, and generic address search,
-in addition to the previously verified guest and discovery flows. It is still
-far from production approval: two-device push delivery, the complete listing
-and media lifecycle on this exact APK, representative product media, and the
-remaining authenticated edge cases are not yet signed off.
+real chat message send, push-token registration, generic address search, and
+the complete create/update/delete listing lifecycle on this exact APK, in
+addition to guest and discovery flows. It remains far from production
+approval: two-device push delivery, representative product-media quality and
+failure paths, and remaining authenticated/session edge cases are not yet
+signed off.
 
 ## Superseded historical confidence: 80%
 
