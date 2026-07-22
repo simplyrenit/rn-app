@@ -638,7 +638,18 @@ production data was changed. The active-discovery query then excluded it, and
 a force-stop/cold-start of the standalone QA APK confirmed it no longer
 appeared. Android and React Native error-level logs were empty.
 
-## Current independent confidence: 60%
+### P2 — guest My Products made protected requests behind the sign-in UI
+
+As a guest, opening Profile → My products rendered the expected sign-in screen
+but its focus hook still called the protected My Products endpoint. QA returned
+two 401 responses, both logged as errors and therefore capable of producing a
+development error overlay. The screen now returns before fetching unless the
+shared authentication state is present. `tsc --noEmit` passed; a fresh
+standalone QA APK was force-stopped, launched, and taken through the same
+guest path. It rendered the sign-in screen with no React Native or Android
+error-level log.
+
+## Current independent confidence: 61%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -648,7 +659,9 @@ upload, cold-reload persistence, and an authenticated offline/reconnect
 cycle. It now includes actual background push delivery and warm-process
 notification routing. It remains far from production approval: cold-process
 notification routing, representative product-media quality and failure paths,
-and remaining authenticated/session edge cases are not yet signed off.
+and remaining authenticated/session edge cases are not yet signed off. The
+guest protected-request regression is closed; the one-point increase reflects
+that narrow, physical-device retest only.
 
 ## Superseded historical confidence: 80%
 

@@ -27,7 +27,7 @@ const MyProductScreen: React.FC = () => {
   const fetchNextProducts = useCallback(() => { }, [])
 
   const fetchProducts = useCallback(async (link?: string) => {
-    if (isLoading) {
+    if (!isAuthenticated || isLoading) {
       return;
     }
     setIsLoading(true);
@@ -44,9 +44,12 @@ const MyProductScreen: React.FC = () => {
 
   useFocusEffect(
     React.useCallback(() => {
+      if (!isAuthenticated) {
+        return;
+      }
       setMyProducts([]);
       fetchProducts();
-    }, [])
+    }, [isAuthenticated])
   );
 
   if (!authTokens || !isAuthenticated) {
