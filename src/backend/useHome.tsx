@@ -35,6 +35,10 @@ const useHome = () => {
         ),
       };
     } catch (error) {
+      if (axios.isAxiosError(error) && !error.response) {
+        return { results: [] };
+      }
+
       console.error(`Error fetching data from ${endpoint}:`, error);
       throw error;
     }

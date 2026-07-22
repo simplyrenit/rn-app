@@ -1,6 +1,7 @@
 const app = require("./app.json");
 
-const isQa = process.env.EXPO_PUBLIC_APP_ENV === "QA";
+const appEnv = (process.env.EXPO_PUBLIC_APP_ENV || "PROD").toUpperCase();
+const isQa = appEnv === "QA";
 
 module.exports = {
   ...app,
@@ -17,6 +18,7 @@ module.exports = {
           },
           extra: {
             ...app.expo.extra,
+            appEnv,
             eas: {
               ...app.expo.extra.eas,
               projectId: "fc02cb6a-f30c-48e7-9762-e6f6d29cbfa9",

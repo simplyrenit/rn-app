@@ -1,4 +1,6 @@
 import { Platform } from "react-native";
+import Constants from "expo-constants";
+import * as Application from "expo-application";
 
 export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
 
@@ -63,7 +65,15 @@ const RUNTIME_CONFIGS: Record<AppEnv, RuntimeConfig> = {
 };
 
 const REMOTE_FALLBACK_ENV: AppEnv = "PROD";
-const APP_ENV_FROM_ENV = (expoEnv.EXPO_PUBLIC_APP_ENV || "").toUpperCase();
+const APP_ENV_FROM_CONFIG =
+  (Constants.expoConfig?.extra?.appEnv as string | undefined) || "";
+const APP_ENV_FROM_NATIVE =
+  Platform.OS === "android" && Application.applicationId === "com.renit.app.qa"
+    ? "QA"
+    : "";
+const APP_ENV_FROM_ENV = (
+  expoEnv.EXPO_PUBLIC_APP_ENV || APP_ENV_FROM_CONFIG || APP_ENV_FROM_NATIVE
+).toUpperCase();
 
 const resolveAppEnv = (): AppEnv => {
   if (

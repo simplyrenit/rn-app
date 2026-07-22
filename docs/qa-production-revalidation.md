@@ -444,10 +444,11 @@ Cloudflare, all QA Compose services were healthy, and the QA Firebase project
 was selected locally. The app reached the password screen without a startup
 exception.
 
-The independently evidenced confidence is **20%**: build/tunnel/API and the
-QA media-moderation permission are verified, but authenticated device flows,
-discovery, chat/push, listing lifecycle, profile/support, resilience, and
-release-package distribution still need reproduction on this exact build.
+The independently evidenced confidence is **21%**: build/tunnel/API, guest
+discovery, offline recovery, and the QA media-moderation permission are
+verified, but authenticated device flows, chat/push, listing lifecycle,
+profile/support, and release-package distribution still need reproduction on
+this exact build.
 
 ### P3 — Welcome carousel used an incorrect contraction
 
@@ -464,6 +465,29 @@ without an app-originated error. Electronics opened a stable `0 results`
 search state. Saved, Post, Chat, and Profile each rendered their sign-in gate;
 the public FAQ screen and Android Back navigation also rendered cleanly. This
 is guest-only coverage and does not prove authenticated or data-bearing flows.
+
+### P0 — Isolated QA APK could silently use the production API
+
+The first `com.renit.app.qa` APK was native-isolated but its direct Gradle
+bundle did not reliably inline `EXPO_PUBLIC_APP_ENV`; `config.ts` fell back to
+production. An offline cold-start log exposed discovery requests targeting the
+production host. The test was unauthenticated and offline, so no production
+write or customer data change occurred.
+
+The shared runtime resolver now identifies the installed QA Android
+application ID as QA, with the Expo config value retained as an additional
+fallback. A physical rebuilt APK made only QA-host requests during an offline
+cold start; a following online cold start returned four QA API responses with
+no app-originated error. This P0 is closed.
+
+### P2 — Offline Home logged optional discovery failures as errors
+
+Top Experiences, Popular Near You, and Recently Added each rethrew transport
+failures and logged an error even though Home could safely show empty sections.
+Their shared home fetcher now returns an empty result only for no-response
+transport failures; HTTP errors still use the existing error path. The rebuilt
+QA APK reached a usable Home screen offline with no error/exception/fatal log,
+then completed an online QA cold start cleanly. This P2 is closed.
 
 ## Superseded historical confidence: 80%
 
