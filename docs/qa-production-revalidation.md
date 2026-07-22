@@ -677,7 +677,21 @@ on the physical device. A forced write-failure alert remains explicitly
 untested: this device's ADB automation cannot activate the composer send
 button while the keyboard is visible.
 
-## Current independent confidence: 63%
+### P2 — Product Detail showed a blank hero for missing or failed media
+
+The product-image carousel rendered no child when both `cover_image` and
+`images` were empty, leaving a large blank region above the product title. It
+also had no recovery path when its only remote image failed. Product Detail now
+uses a neutral built-in photo placeholder when the gallery is empty; an image
+load failure removes that URL from the gallery and reaches the same state.
+
+On the fresh standalone QA APK, a disposable listing with no media visibly
+rendered the placeholder rather than the blank hero. Its cover URL was then
+changed to a QA 404 URL; the placeholder appeared after the failed load with
+no React Native or Android error-level log. The QA-only listing and owner were
+deleted immediately after the retest.
+
+## Current independent confidence: 65%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -689,7 +703,9 @@ notification routing. It remains far from production approval: cold-process
 notification routing, representative product-media quality and failure paths,
 and remaining authenticated/session edge cases are not yet signed off. The
 guest protected-request and duplicate-chat-card regressions are closed; the
-two-point increase reflects the focused physical-device chat retest only.
+two-point increase reflects the focused physical-device chat retest only. The
+media fallback fix and its two physical failure paths increase confidence by a
+further two points.
 
 ## Superseded historical confidence: 80%
 

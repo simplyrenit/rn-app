@@ -13,7 +13,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { ArrowLeftIcon, HeartIcon as HI } from "react-native-heroicons/outline";
+import {
+  ArrowLeftIcon,
+  HeartIcon as HI,
+  PhotoIcon,
+} from "react-native-heroicons/outline";
 import Carousel from "pinar";
 import {
   heightPercentageToDP as hp,
@@ -45,12 +49,14 @@ export function ProductImage({ images, coverImage, mode, name, isFavorite: iF }:
   const navigation = useNavigation();
   const [isFavorite, setIsFavorite] = useState(iF ?? false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [failedImages, setFailedImages] = useState<string[]>([]);
   const lottieRef = useRef<Lottie>(null);
   const queryClient = useQueryClient();
   const [fullImage, setFullImage] = useState<string | null>(null)
   const galleryImages = Array.from(
     new Set([coverImage, ...(images ?? [])].filter(Boolean))
-  ) as string[];
+  )
+    .filter((image) => !failedImages.includes(image as string)) as string[];
 
 
   const saveFavoriteMutation = useMutation(saveFavorite, {
@@ -155,34 +161,49 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
             </StyledButton>
           </StyledView>
         )}
-        <Carousel
-          style={{
-            height: SCREEN_WIDTH - hp("10%"),
-            width: SCREEN_WIDTH + wp("10%"),
-          }}
-          renderPrev={() => <></>}
-          renderNext={() => <></>}
-          renderDot={() => (
-            <View className="w-2 h-2 bg-gray-100 opacity-20 rounded-lg mx-0.5 " />
-          )}
-          renderActiveDot={() => (
-            <View className="w-2 h-2 bg-white rounded-lg mx-0.5  " />
-          )}
-        >
-          {galleryImages.map((image) => (
-            <Pressable
-              key={image}
-              style={{ flex: 1 }}
-              onPress={() => setFullImage(image)}
-            >
-              <Image
-                source={{ uri: image }}
-                style={{ width: "100%", height: "100%" }}
-                contentFit="fill"
-              />
-            </Pressable>
-          ))}
-        </Carousel>
+        {galleryImages.length ? (
+          <Carousel
+            style={{
+              height: SCREEN_WIDTH - hp("10%"),
+              width: SCREEN_WIDTH + wp("10%"),
+            }}
+            renderPrev={() => <></>}
+            renderNext={() => <></>}
+            renderDot={() => (
+              <View className="w-2 h-2 bg-gray-100 opacity-20 rounded-lg mx-0.5 " />
+            )}
+            renderActiveDot={() => (
+              <View className="w-2 h-2 bg-white rounded-lg mx-0.5  " />
+            )}
+          >
+            {galleryImages.map((image) => (
+              <Pressable
+                key={image}
+                style={{ flex: 1 }}
+                onPress={() => setFullImage(image)}
+              >
+                <Image
+                  source={{ uri: image }}
+                  style={{ width: "100%", height: "100%" }}
+                  contentFit="fill"
+                  onError={() =>
+                    setFailedImages((current) =>
+                      current.includes(image) ? current : [...current, image]
+                    )
+                  }
+                />
+              </Pressable>
+            ))}
+          </Carousel>
+        ) : (
+          <View
+            className={`h-full w-full items-center justify-center rounded-xl ${
+              isDarkMode ? "bg-[#1A1A1A]" : "bg-[#F5F5F5]"
+            }`}
+          >
+            <PhotoIcon size={52} color={isDarkMode ? "#FFFFFF80" : "#00000040"} />
+          </View>
+        )}
       </StyledView>
       {!!fullImage && <Modal visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
         <View style={{ position: 'relative', height: Dimensions.get('window').height, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
