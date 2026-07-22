@@ -15,6 +15,8 @@ Firebase-project, and earlier-device evidence.
 - QA API, coordinate-based discovery endpoints, S3 bucket access, SMTP
   configuration, Docker services, and the Cloudflare HTTP/2 tunnel were
   reachable.
+- The configured OTP SMTP provider completed a TLS authentication handshake
+  from the QA web container. No email was sent during this configuration check.
 - A cold device start completed authenticated category, profile, favorites,
   notification, and discovery requests without a React Native error.
 
@@ -122,6 +124,12 @@ rebuilt and restarted. The public
 endpoint returned 401 without credentials and the API/category health check
 returned 200 after the brief expected restart window.
 
+A disposable QA user and JWT then called that endpoint through
+`https://qa-api.toratora.site`; it returned a valid custom token with HTTP 200.
+The temporary user was deleted immediately after the check. This proves the
+public tunnel, JWT guard, runtime signer, and endpoint wiring together without
+using a customer account.
+
 The mobile client now exchanges the Django-authenticated custom token before
 any chat operation, and clears Firebase authentication on logout. Existing QA
 conversation, message, and block documents were backfilled with Firebase UID
@@ -187,9 +195,9 @@ preserved, so the physical logout/login retest is pending an explicit decision
 to discard or save that draft. Until that retest passes, cross-account post
 isolation is not verified.
 
-## Current release confidence: 43%
+## Current release confidence: 44%
 
-Current evidence supports 9/10 environment, 10/15 authentication,
+Current evidence supports 9/10 environment, 11/15 authentication,
 12/15 discovery/detail, 6/20 chat, 2/20 listing, 4/10 profile/support, and
 0/10 UX/resilience. This is deliberately not production approval: the
 formerly open Firebase data-exposure P0 is technically resolved, but all
