@@ -593,16 +593,51 @@ React Native or Android error-level records; Wi-Fi was restored, and Profile
 then loaded with the authenticated avatar and no error-level record. This P2
 is closed.
 
-## Current independent confidence: 53%
+### P1 — Chat Details crashed in the standalone QA APK
+
+Opening Chat Details from the physical Chat tab crashed the standalone QA APK
+with `TypeError: undefined is not a function` in Reanimated's UI microtask
+runtime. The same crash also prevented a notification tap from reaching the
+conversation. A controlled Gradle clean rebuilt all native artifacts but did
+not change the result; the runtime libraries were being initialized only by
+downstream imports.
+
+The application entry point now loads Gesture Handler first and Reanimated
+immediately after it. A fresh standalone APK rebuilt successfully. On physical
+Android, the exact QA conversation opened manually with its header, message,
+and enabled composer visible; the process remained alive and the error-level
+log was clean. This P1 is closed.
+
+### P1 — Background chat push and notification tap — physical QA pass
+
+The active QA merchant's Firebase user document contained a registered Android
+Expo token and the high-importance `chat` notification channel was enabled.
+A clearly labelled, disposable QA Firestore conversation and messages were
+created through the QA backend's scoped Firebase credential while the app was
+in the background. QA's `onNewMessage` Gen-2 Function recorded accepted Expo
+push tickets, Android displayed the message notification, and tapping it
+opened the matching Chat Details conversation with the expected messages and
+composer. React Native and Android error-level logs were clean. All four test
+messages and the conversation were then deleted.
+
+The response listener was moved from the lazily mounted Chat tab to the
+authenticated root navigator, so a notification can route even when Chat has
+not yet been opened in the current session. Explicit force-stop and process
+kill on this Android build clear the system notification card, so a true
+cold-process tap remains an environment-specific follow-up rather than a
+claimed pass.
+
+## Current independent confidence: 60%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
 the complete create/update/delete listing lifecycle on this exact APK, in
 addition to guest and discovery flows. It also covers merchant profile-image
 upload, cold-reload persistence, and an authenticated offline/reconnect
-cycle. It remains far from production approval: two-device push delivery,
-representative product-media quality and failure paths, and remaining
-authenticated/session edge cases are not yet signed off.
+cycle. It now includes actual background push delivery and warm-process
+notification routing. It remains far from production approval: cold-process
+notification routing, representative product-media quality and failure paths,
+and remaining authenticated/session edge cases are not yet signed off.
 
 ## Superseded historical confidence: 80%
 

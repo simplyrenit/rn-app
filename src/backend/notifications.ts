@@ -185,14 +185,18 @@ export async function registerBackgroundFetchAsync() {
 export function setupNotificationListeners(
   onNotificationResponse: (conversationId: string) => void
 ) {
-  const subscription = Notifications.addNotificationResponseReceivedListener(
-    (response) => {
-      const data = response.notification.request.content.data as any;
-      if (data?.conversationId) {
-        onNotificationResponse(data.conversationId);
-      }
+  const handleResponse = (response: Notifications.NotificationResponse | null) => {
+    const data = response?.notification.request.content.data as any;
+    if (data?.conversationId) {
+      onNotificationResponse(data.conversationId);
     }
+  };
+
+  const subscription = Notifications.addNotificationResponseReceivedListener(
+    handleResponse
   );
+
+  void Notifications.getLastNotificationResponseAsync().then(handleResponse);
 
   // Also add a notification received listener for when the app is in the foreground
   const foregroundSubscription = Notifications.addNotificationReceivedListener(

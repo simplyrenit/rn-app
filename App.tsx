@@ -1,3 +1,5 @@
+import "react-native-gesture-handler";
+import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { GlobalProvider } from "@/context/global-context";

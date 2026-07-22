@@ -6,7 +6,6 @@ import {
 } from "@/lib/firebase";
 import { Conversation, Message, UserDetails } from "@/lib/types";
 import { useEffect } from "react";
-import { useNavigation } from "@react-navigation/native";
 
 interface BlockedRecord {
   initiator: string;
@@ -44,7 +43,6 @@ const documentExists = (
 export function useChat() {
   const { isAuthenticated, authTokens, userDetails } = useGlobalContext();
   const { access_token } = authTokens || {};
-  const navigation = useNavigation();
 
   async function requireChatAuth() {
     if (!access_token) {
@@ -62,27 +60,7 @@ export function useChat() {
     requireChatAuth().catch((error) =>
       console.warn("Unable to authenticate chat:", error)
     );
-
-    const { setupChatNotifications, setupNotificationListeners } =
-      getNotificationHelpers();
-
-    setupChatNotifications();
-
-    // Set up notification response listener
-    const notificationListener = setupNotificationListeners(
-      (conversationId) => {
-        // Navigate to the conversation when notification is tapped
-        if (conversationId) {
-          // @ts-ignore - Type safety is handled by the navigation library
-          navigation.navigate("ChatDetails", { id: conversationId });
-        }
-      }
-    );
-
-    return () => {
-      notificationListener();
-    };
-  }, [isAuthenticated, navigation]);
+  }, [isAuthenticated, access_token]);
 
   async function startChat(
     userDetails1: UserDetails,

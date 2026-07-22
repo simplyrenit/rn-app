@@ -33,6 +33,10 @@ import UserDetailScreen from "../screens/users/users-screen";
 import { HomeIcon, HomeIconSolid } from "@/icons/home";
 import { PostIcon, PostIconSolid } from "@/icons/post";
 import { RootStackParamList } from "@/lib/types";
+import {
+  setupChatNotifications,
+  setupNotificationListeners,
+} from "@/backend/notifications";
 import ContactUsScreen from "@/screens/profileScreens/contactUs";
 import EditProductScreen from "@/screens/profileScreens/edit-product";
 import FAQScreen from "@/screens/profileScreens/faqs";
@@ -297,6 +301,19 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function Navigation() {
   const { loading, hasSeenWelcome, theme, isAuthenticated } = useGlobalContext();
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    setupChatNotifications();
+    return setupNotificationListeners((conversationId) => {
+      if (navigationRef.isReady()) {
+        navigationRef.navigate("ChatDetails", { id: conversationId });
+      }
+    });
+  }, [isAuthenticated]);
 
   React.useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
