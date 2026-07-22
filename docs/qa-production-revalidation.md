@@ -893,8 +893,9 @@ that exact reason and the matching legacy block relationship. After unblocking
 and repeating the real UI flow with `Updated QA safety reason`, QA still had
 exactly one report and its stored reason was updated. This validates the
 customer flow, persistence, and duplicate prevention on the deployed QA API
-and installed QA APK. The disposable QA fixture remains pending removal until
-the QA chat-document cleanup is also verified.
+and installed QA APK. The disposable QA fixture was then removed: its one
+Firestore conversation, one message, one block record, relational report,
+listing, and two QA users were deleted.
 
 ## Current independent confidence: 80%
 
