@@ -562,15 +562,29 @@ calendars now disable historical touches and retain an in-handler date guard.
 On physical Android, tapping a past day left it disabled and left Add date log
 disabled; no draft range was created and no app-originated error appeared.
 
-## Current independent confidence: 45%
+### P1 — merchant profile-image updates failed after successful image upload
+
+An approved legacy QA merchant with an empty business name could select and
+crop a profile image, but the final authenticated profile PATCH returned 400:
+`Business name is required for merchant accounts.` The image upload had
+already completed, leaving the visible profile unchanged after a cold reload.
+
+The backend now applies merchant-name validation to creates, full updates, and
+PATCHes that change merchant identity; it does not reject unrelated PATCHes on
+an existing legacy record. The regression test covers that shared serializer
+boundary. After rebuilding the QA web container, the same physical Android
+flow returned 200, device logs were clean, and the cropped QA-only image
+persisted on Profile after a cold restart.
+
+## Current independent confidence: 50%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
 the complete create/update/delete listing lifecycle on this exact APK, in
-addition to guest and discovery flows. It remains far from production
-approval: two-device push delivery, representative product-media quality and
-failure paths, and remaining authenticated/session edge cases are not yet
-signed off.
+addition to guest and discovery flows. It also covers merchant profile-image
+upload and cold-reload persistence. It remains far from production approval:
+two-device push delivery, representative product-media quality and failure
+paths, and remaining authenticated/session edge cases are not yet signed off.
 
 ## Superseded historical confidence: 80%
 
