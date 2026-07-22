@@ -707,19 +707,29 @@ export function useChat() {
 
       if (!blockedUser) throw new Error("Blocked user not found");
 
-      // Remove record from blocked collection
+      // Read only the caller's authorized block records, then locate this
+      // conversation's pair. The Firestore rule cannot authorize a query that
+      // filters solely by the two UID fields.
       const blockedRef = collection(firestore, "blocked");
       const q = query(
         blockedRef,
-        where("initiatorUid", "==", userDetails?.firebase_uid),
-        where("blockedUserUid", "==", blockedUser.firebaseUid)
+        where("participantIds", "array-contains", userDetails?.firebase_uid)
       );
 
       const querySnapshot = await getDocs(q);
+      const matchingRecords = querySnapshot.docs.filter((blockedDocument: any) => {
+        const blocked = blockedDocument.data() as BlockedRecord;
+        return (
+          blocked.initiatorUid === userDetails?.firebase_uid &&
+          blocked.blockedUserUid === blockedUser.firebaseUid
+        );
+      });
 
-      if (!querySnapshot.empty) {
+      if (matchingRecords.length > 0) {
         await Promise.all(
-          querySnapshot.docs.map((doc: any) => deleteDoc(doc.ref))
+          matchingRecords.map((blockedDocument: any) =>
+            deleteDoc(blockedDocument.ref)
+          )
         );
       }
 
