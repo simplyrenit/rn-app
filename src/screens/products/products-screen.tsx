@@ -132,8 +132,14 @@ export default function DetailsScreen() {
       if (success) {
         navigation.navigate("ChatDetails", { id: content });
       }
-    } catch (e) {
-
+    } catch (error) {
+      console.error("Unable to start chat:", error);
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Unable to start chat. Please try again.",
+        text2: "error",
+      });
     } finally {
       setStartingChat(false);
     }

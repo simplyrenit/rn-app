@@ -617,23 +617,24 @@ export function useChat() {
     const firestore = requireFirestore();
     const { collection, query, where, getDocs } = getFirestoreModule();
     const blockedRef = collection(firestore, "blocked");
-    const q1 = query(
-      blockedRef,
-      where("initiatorUid", "==", user1.firebaseUid),
-      where("blockedUserUid", "==", user2.firebaseUid)
-    );
-    const q2 = query(
-      blockedRef,
-      where("initiatorUid", "==", user2.firebaseUid),
-      where("blockedUserUid", "==", user1.firebaseUid)
+    // Firestore rules allow a user to read only records that name them as a
+    // participant. Query that authorized set first, then identify this pair.
+    const snapshot = await getDocs(
+      query(
+        blockedRef,
+        where("participantIds", "array-contains", user1.firebaseUid)
+      )
     );
 
-    const [snapshot1, snapshot2] = await Promise.all([
-      getDocs(q1),
-      getDocs(q2),
-    ]);
-
-    return !snapshot1.empty || !snapshot2.empty;
+    return snapshot.docs.some((blockedDocument: any) => {
+      const blocked = blockedDocument.data() as BlockedRecord;
+      return (
+        (blocked.initiatorUid === user1.firebaseUid &&
+          blocked.blockedUserUid === user2.firebaseUid) ||
+        (blocked.initiatorUid === user2.firebaseUid &&
+          blocked.blockedUserUid === user1.firebaseUid)
+      );
+    });
   }
 
   async function blockUser(
