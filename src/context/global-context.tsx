@@ -142,7 +142,9 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       return await fetchMyDetailsRequest();
     } catch (error) {
-      console.error("Error getting user details:", error);
+      if (!(axios.isAxiosError(error) && error.response?.status === 401)) {
+        console.error("Error getting user details:", error);
+      }
       throw error;
     }
   }
@@ -193,12 +195,35 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
         ]);
 
         if (tokens) {
-          setAuthTokensState(tokens);
           axiosInstance.defaults.headers.Authorization = `Bearer ${tokens.access_token}`;
-          setIsAuthenticated(true);
-          authenticateFirebase(tokens.access_token).catch((error) =>
-            console.warn("Unable to authenticate Firebase:", error)
-          );
+          try {
+            const details = await getMyDetails();
+            const currentTokens = (await getAuthTokens()) ?? tokens;
+            setAuthTokensState(currentTokens);
+            axiosInstance.defaults.headers.Authorization = `Bearer ${currentTokens.access_token}`;
+            setUserDetails({
+              username: details.username,
+              firebase_uid: details.firebase_uid,
+              name: `${details.first_name} ${details.last_name}`,
+              email: details.email,
+              phone: details.phone || "",
+              image: details.image?.image_url || "",
+              business_name: details.business_name,
+              account_type: details.account_type,
+              merchant_approval_status: details.merchant_approval_status,
+            });
+            setIsAuthenticated(true);
+            authenticateFirebase(currentTokens.access_token).catch((error) =>
+              console.warn("Unable to authenticate Firebase:", error)
+            );
+          } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 401) {
+              await logout();
+            } else {
+              setAuthTokensState(tokens);
+              setIsAuthenticated(true);
+            }
+          }
         } else {
           delete axiosInstance.defaults.headers.Authorization;
           setIsAuthenticated(false);
