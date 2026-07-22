@@ -796,7 +796,26 @@ backend push error. This validates the current QA credential chain and
 background delivery. It does not claim cold-process notification-tap routing:
 this device clears the card after a force-stop.
 
-## Current independent confidence: 72%
+### Current QA listing/media create regression — physical pass
+
+On physical Android `34962d85`, a new disposable password-authenticated QA
+account completed the entire current standalone-QA listing flow: category and
+subcategory selection; product details; runtime location and gallery grants;
+current-location selection; gallery-image selection; native crop and save;
+availability; review; and submission. The explicit `Select an image to crop`
+state was verified as the expected pre-selection prompt, rather than a blank
+image defect. After selecting its thumbnail and completing the crop editor,
+the review page rendered the media and supplied details.
+
+The QA backend recorded two successful presigned-URL requests and
+`POST /api/my/products/` returned `201 Created`. My Products immediately
+listed the submitted `QAUpload20260723` item, and its CloudFront cover returned
+HTTP 200. Android and React Native error-level logs were empty. The exact
+disposable listing, its two QA bucket objects, and its user were deleted after
+verification. This is a fresh create-and-media check; listing edits and
+multi-image limit behavior remain separate coverage.
+
+## Current independent confidence: 74%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -816,7 +835,9 @@ one point. The reproduced duplicate-tap support flow and physical regression
 increase it by one point. The current-release deleted-account recovery test
 increases authentication/session confidence by one point. The current QA
 FCM/Expo credential inspection plus fresh physical background delivery
-increase environment and chat confidence by two points.
+increase environment and chat confidence by two points. The physical
+create/crop/upload/post/listing retrieval cycle increases listing/media
+confidence by two points.
 
 ## Superseded historical confidence: 80%
 
