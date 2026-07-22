@@ -691,6 +691,18 @@ changed to a QA 404 URL; the placeholder appeared after the failed load with
 no React Native or Android error-level log. The QA-only listing and owner were
 deleted immediately after the retest.
 
+### P3 — representative QA discovery content is visually unsuitable
+
+On a fresh guest cold start, the current Top experiences card for the active
+QA listing `Lenovo` rendered a screenshot of the native crop screen as its
+cover, including the text `Crop Image` and `Select an image to crop`. Its
+description is also the test copy `Nhi bataunga`. The API identifies this as
+the active, approved listing with database id `2`; an additional ownerless
+legacy `Lenovo` listing (id `1`) is also active. This is QA data rather than a
+client rendering failure. Neither listing was changed because its owner and
+intended replacement media need explicit approval. It remains a visible
+release-data blocker despite the code-side missing/broken-media fallback pass.
+
 ### P2 — guest support forms could not complete despite being offered before sign-in
 
 Both unauthenticated Profile flows — `Report a problem` and `Feedback &
