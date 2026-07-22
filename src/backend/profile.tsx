@@ -14,12 +14,14 @@ import {
   BackendProduct,
   MerchantApprovalStatus,
   ProductImage,
+  RootStackParamList,
   UnavailabilityFormData,
 } from "@/lib/types";
 import axios from "axios";
 import { usePost } from "./post";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import axiosInstance from "@/lib/networkUtils";
 import {
   fetchMyDetailsRequest,
@@ -30,12 +32,17 @@ type ProductUpdateData = Partial<Omit<BackendProduct, "category">> & {
   category?: { parent: string; title: string };
 };
 
+type ProfileNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Welcome"
+>;
+
 export function useProfile() {
   const { authTokens, fetchUserDetails, logout } = useGlobalContext();
   const { access_token } = authTokens || {};
   const { getPresignedURLs, uploadToS3 } = usePost();
   const [loading, setLoading] = useState(false);
-  const navigation = useNavigation();
+  const navigation = useNavigation<ProfileNavigationProp>();
 
   async function getMyDetails(token?: string) {
     setLoading(true);

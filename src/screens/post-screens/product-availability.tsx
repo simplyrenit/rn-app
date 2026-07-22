@@ -8,6 +8,7 @@ import { styled } from "nativewind";
 import React, { useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
+import type { MarkedDates } from "react-native-calendars/src/types";
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -25,7 +26,7 @@ export default function ProductAvailability() {
   const [unavailableDates, setUnavailableDates] = useState<
     { startDate: string; endDate: string }[]
   >([]);
-  const [markedDates, setMarkedDates] = useState({});
+  const [markedDates, setMarkedDates] = useState<MarkedDates>({});
   const navigation = useTypedNavigation();
   const { theme } = useGlobalContext();
   const isDark = theme === "dark";
@@ -59,7 +60,7 @@ export default function ProductAvailability() {
   // };
 
   const markSelectedDates = (start: string, end: string | null = null) => {
-    let marked = {};
+    const marked: MarkedDates = {};
     let currentDate = moment(start);
 
     if (!end) {
@@ -173,7 +174,7 @@ export default function ProductAvailability() {
     setSelectedRange(null);
 
     // Recalculate marked dates
-    let newMarked = {};
+    const newMarked: MarkedDates = {};
     const updatedRanges = [...unavailableDates, selectedRange];
     updatedRanges.forEach((range) => {
       let currentDate = moment(range.startDate);
@@ -280,18 +281,20 @@ export default function ProductAvailability() {
               monthTextColor: "#828282",
               arrowColor: isDark ? "#fff" : "#000",
               textDisabledColor: "#d9e1e8",
-              "stylesheet.calendar.header": {
-                header: {
-                  borderBottomWidth: 1,
-                  borderBottomColor: isDark ? "#292929" : "#E6E6E6",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  paddingVertical: 6,
+              stylesheet: {
+                calendar: {
+                  header: {
+                    borderBottomWidth: 1,
+                    borderBottomColor: isDark ? "#292929" : "#E6E6E6",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    paddingVertical: 6,
+                  },
                 },
               },
             }}
-            dayComponent={({ date, state }: { date: any; state: string }) => {
-              // @ts-ignore
+            dayComponent={({ date, state }) => {
+              if (!date) return null;
               const marked = markedDates[date.dateString];
 
               return (

@@ -10,6 +10,7 @@ import { styled } from "nativewind";
 import React, { useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
+import type { MarkedDates } from "react-native-calendars/src/types";
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -33,7 +34,7 @@ export default function ProductAvailability() {
     startDate: date.start_date,
     endDate: date.end_date,
   })));
-  const [markedDates, setMarkedDates] = useState(dates_blocked.reduce((acc, curr) => {
+  const [markedDates, setMarkedDates] = useState<MarkedDates>(dates_blocked.reduce<MarkedDates>((acc, curr) => {
     let newAcc = { ...acc };
     const currStart = moment(curr.start_date);
     const currEnd = moment(curr.end_date);
@@ -70,7 +71,7 @@ export default function ProductAvailability() {
   const minDate = moment().format("YYYY-MM-DD");
 
   const markSelectedDates = (start: string, end: string | null = null) => {
-    let marked = {};
+    const marked: MarkedDates = {};
     let currentDate = moment(start);
 
     if (!end) {
@@ -164,7 +165,7 @@ export default function ProductAvailability() {
 
     setSelectedRange(null);
 
-    let newMarked = {};
+    const newMarked: MarkedDates = {};
     const updatedRanges = [...unavailableDates, rangeToAdd];
     updatedRanges.forEach((range) => {
       let currentDate = moment(range.startDate);
@@ -193,7 +194,7 @@ export default function ProductAvailability() {
     const updatedRanges = unavailableDates.filter((_, i) => i !== index);
     setUnavailableDates(updatedRanges);
 
-    let newMarked = {};
+    const newMarked: MarkedDates = {};
     updatedRanges.forEach((range) => {
       let currentDate = moment(range.startDate);
       while (currentDate.isSameOrBefore(range.endDate)) {
@@ -298,18 +299,20 @@ export default function ProductAvailability() {
               monthTextColor: "#828282",
               arrowColor: isDark ? "#fff" : "#000",
               textDisabledColor: "#d9e1e8",
-              "stylesheet.calendar.header": {
-                header: {
-                  borderBottomWidth: 1,
-                  borderBottomColor: isDark ? "#292929" : "#E6E6E6",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  paddingVertical: 6,
+              stylesheet: {
+                calendar: {
+                  header: {
+                    borderBottomWidth: 1,
+                    borderBottomColor: isDark ? "#292929" : "#E6E6E6",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    paddingVertical: 6,
+                  },
                 },
               },
             }}
-            dayComponent={({ date, state }: { date: any; state: string }) => {
-              // @ts-ignore
+            dayComponent={({ date, state }) => {
+              if (!date) return null;
               const marked = markedDates[date.dateString];
 
               return (

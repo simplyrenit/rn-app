@@ -30,22 +30,24 @@ export default function PostSubCategories() {
     navigation.navigate("AboutProduct");
   };
 
-  const renderItem = ({ item }: { item: Subcategory }) => (
-    <TouchableOpacity
+  const renderItem = ({ item }: { item: Subcategory }) => {
+    const icon = theme === "dark" ? item.dark_icon : item.light_icon;
+
+    return <TouchableOpacity
       className="flex-row justify-between items-center py-4"
       onPress={() => onPress(item)}
     >
       <View className="flex-row items-center space-x-5">
-        {item.dark_icon || item.light_icon ? (
-          (theme === "dark" ? item.dark_icon : item.light_icon)?.slice(-3)?.toLowerCase() === 'svg' ? (
+        {icon ? (
+          icon.slice(-3).toLowerCase() === 'svg' ? (
             <SvgUri
               width={20}
               height={20}
-              uri={theme === "dark" ? item.dark_icon : item.light_icon}
+              uri={icon}
             />
           ) : (
             <Image
-              source={{ uri: theme === "dark" ? item.dark_icon : item.light_icon }}
+              source={{ uri: icon }}
               style={{ width: 20, height: 20 }}
             />
           )
@@ -66,8 +68,8 @@ export default function PostSubCategories() {
         size={20}
         color={theme === "dark" ? "white" : "black"}
       />
-    </TouchableOpacity>
-  );
+    </TouchableOpacity>;
+  };
 
   return (
     <NonScrollableContainer>

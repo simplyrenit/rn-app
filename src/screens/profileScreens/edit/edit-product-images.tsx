@@ -96,13 +96,14 @@ export default function EditProductImages() {
       quality: 1,
     });
 
-    if (!result.canceled && result.assets.length > 0) {
+    if (!result.canceled && result.assets?.length) {
+      const [asset] = result.assets;
       setSelectedImages((prevImages) =>
         [
           ...prevImages,
           {
-            image: result.assets[0].uri,
-            file_type: result.assets[0].type || "image/jpeg",
+            image: asset.uri,
+            file_type: asset.type || "image/jpeg",
           },
         ].slice(0, MAX_IMAGES)
       );

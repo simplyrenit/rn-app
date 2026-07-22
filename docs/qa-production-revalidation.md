@@ -57,6 +57,22 @@ has zero Cloud Run runtime errors in the preceding 24 hours; the five earlier
 Cloud Functions error-severity records were failed deployment audit attempts,
 not message-processing errors.
 
+### P2 — Frontend static release check had 20 TypeScript errors
+
+The current frontend branch did not pass `tsc --noEmit`. The errors covered
+nullable category/image sources, nullable camera results, typed navigation
+parameters, Home moderation data, edit-location input, and both availability
+calendars. The calendars also used obsolete theme keys that the installed
+calendar library does not recognize.
+
+The affected call sites now use their real nullable/type boundaries, both
+calendar themes use the supported nested stylesheet shape, and navigation has
+the missing route parameters. `tsc --noEmit` now passes with zero errors, and
+the active QA Metro server produced an Android development bundle successfully
+after the change. The package has no Jest test files, so this static check and
+bundle transform are the available automated frontend evidence; physical UI
+coverage remains required.
+
 ### P1 — QA chat denied by Firestore rules
 
 The Android Chat screen returned `firestore/permission-denied` for both the
@@ -215,11 +231,11 @@ preserved, so the physical logout/login retest is pending an explicit decision
 to discard or save that draft. Until that retest passes, cross-account post
 isolation is not verified.
 
-## Current release confidence: 46%
+## Current release confidence: 47%
 
 Current evidence supports 9/10 environment, 11/15 authentication,
 13/15 discovery/detail, 6/20 chat, 2/20 listing, 4/10 profile/support, and
-1/10 UX/resilience. This is deliberately not production approval: the
+2/10 UX/resilience. This is deliberately not production approval: the
 formerly open Firebase data-exposure P0 is technically resolved, but all
 app-driven chat flows and push delivery on a second device remain unverified.
 A full app-driven listing with image upload/edit/delete, support submission,

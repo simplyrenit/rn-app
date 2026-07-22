@@ -56,7 +56,7 @@ export default function ReviewProduct() {
     setOwnerProducts(products);
   };
 
-  const productCategoryIcon = product.category?.[isDark ? "dark_icon" : "light_icon"];
+  const productCategoryIcon = product.category[isDark ? "darkIcon" : "lightIcon"];
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>

@@ -140,7 +140,9 @@ export default function EditAboutProduct() {
     (contactPerson === "Owner" || (otherName && otherPhoneNumber));
 
 
-  const fetchAddress = useCallback(async (loc: Location.LocationObject) => {
+  const fetchAddress = useCallback(async (loc: {
+    coords: Pick<Location.LocationObjectCoords, "latitude" | "longitude">;
+  }) => {
     try {
       const reverseGeocode = await Location.reverseGeocodeAsync({
         latitude: loc.coords.latitude,

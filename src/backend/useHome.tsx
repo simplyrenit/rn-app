@@ -27,7 +27,13 @@ const useHome = () => {
       const url = `${endpoint}?lat=${lat}&long=${long}`;
       const headers = getAuthHeaders();
       const response = await axiosInstance.get(url, headers);
-      return { ...response.data, results: response.data.results.filter(data => !data?.moderation_labels?.length) };
+      return {
+        ...response.data,
+        results: response.data.results.filter(
+          (data: { moderation_labels?: unknown[] }) =>
+            !data.moderation_labels?.length
+        ),
+      };
     } catch (error) {
       console.error(`Error fetching data from ${endpoint}:`, error);
       throw error;

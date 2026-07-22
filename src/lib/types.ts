@@ -201,7 +201,9 @@ export type RootStackParamList = {
     };
   };
   Welcome: undefined;
-  MainTabs: undefined;
+  MainTabs: {
+    screen?: "Home" | "Saved" | "Post" | "Chat" | "Profile";
+  } | undefined;
   Email: undefined;
   About: undefined;
   Password: undefined;
@@ -253,6 +255,7 @@ export type RootStackParamList = {
     requestId: string;
   };
   HangTight: undefined;
+  OwnersProducts: { products: BackendProduct[]; name: string };
   [key: string]: object | undefined;
 };
 
