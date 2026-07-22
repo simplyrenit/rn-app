@@ -16,6 +16,7 @@
       "channel": "development"
     },
     "qa": {
+      "environment": "preview",
       "env": {
         "EXPO_PUBLIC_APP_ENV": "QA",
         "EXPO_PUBLIC_QA_API_HOST": "qa-api.simplyrenit.com"

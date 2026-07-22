@@ -2,7 +2,7 @@ import { Platform } from "react-native";
 import Constants from "expo-constants";
 import * as Application from "expo-application";
 
-export const GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
+const DEFAULT_GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
 
 export const WEB_CLIENT_ID =
   "899825999056-rir4k4ci4jaeaikdftuah8l55u3mio89.apps.googleusercontent.com";
@@ -95,6 +95,14 @@ const resolveAppEnv = (): AppEnv => {
 };
 
 export const DEV_MODE: AppEnv = resolveAppEnv();
+
+const QA_GOOGLE_MAP_API_KEY =
+  (Constants.expoConfig?.extra?.googleMapApiKey as string | undefined) ||
+  expoEnv.EXPO_PUBLIC_QA_GOOGLE_MAP_API_KEY ||
+  "";
+
+export const GOOGLE_MAP_API_KEY =
+  DEV_MODE === "QA" ? QA_GOOGLE_MAP_API_KEY : DEFAULT_GOOGLE_MAP_API_KEY;
 
 const runtimeConfig = RUNTIME_CONFIGS[DEV_MODE];
 export const SERVERURL = runtimeConfig.apiBaseUrl;

@@ -502,6 +502,38 @@ related product, review, owner-profile, and guest chat/review gates had no
 app-originated error. All available QA covers are uploaded UI screenshots, so
 this validates media rendering but not representative product-photo quality.
 
+### P1 — QA address search used a key from the wrong Google project
+
+The isolated QA APK made Places autocomplete requests with a hard-coded key
+that does not belong to any project accessible to the QA operator. Google
+rejected it with `REQUEST_DENIED` and a billing message, even though
+`renit-uat` billing is enabled. The UAT Firebase-generated keys are restricted
+to Firebase APIs and cannot serve Places requests.
+
+The Places API is now enabled only on `renit-uat`. A dedicated QA key is
+restricted to that API and stored as a sensitive EAS `preview` environment
+variable; no key value is committed. The QA runtime reads that value only for
+the QA application, while the existing non-QA key is unchanged. A direct
+Places request returned `OK` with predictions, TypeScript passed, and a fresh
+isolated APK contained the QA runtime value. On physical Android, typing a
+generic city produced selectable city-level suggestions and selecting one
+updated the location picker without an app-originated error.
+
+The dropdown is still hidden behind Android's keyboard while typing; dismissing
+the keyboard reveals the valid results. This is a separate open P2 usability
+defect, not a Maps configuration failure. No listing was submitted during this
+test and no precise device address was published.
+
+## Current independent confidence: 30%
+
+The authenticated standalone-QA pass now covers password sign-in, profile,
+real chat message send, push-token registration, and generic address search,
+in addition to the previously verified guest and discovery flows. It is still
+far from production approval: two-device push delivery, the complete listing
+and media lifecycle on this exact APK, Android autocomplete visibility,
+representative product media, and the remaining authenticated edge cases are
+not yet signed off.
+
 ## Superseded historical confidence: 80%
 
 Current evidence supports 9/10 environment, 13/15 authentication/session,
