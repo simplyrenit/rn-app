@@ -20,6 +20,21 @@ Firebase-project, and earlier-device evidence.
 
 ## Verified defects and outcomes
 
+### P2 — QA Metro could not build an Android bundle on this host
+
+Starting the QA development client bundle on this Linux host exhausted the
+system's file-watcher limit while Metro recursively watched generated Android
+build directories inside native dependencies. Metro then exited with `ENOSPC`,
+leaving a stale or unavailable development-client runtime.
+
+`metro.config.js` now excludes generated Android build output from Metro's
+resolver watch set. With the repository's Node 20 prerequisite supplied by a
+checksum-verified temporary runtime, the QA Metro server on port 8082 remained
+healthy and produced an Android development bundle. The bundle contains
+`qa-api.toratora.site` and no production API URL. The USB reverse route is in
+place, but the phone has not yet been launched into this server so the
+preserved in-memory post draft remains intact.
+
 ### P1 — QA chat denied by Firestore rules
 
 The Android Chat screen returned `firestore/permission-denied` for both the
@@ -172,9 +187,9 @@ preserved, so the physical logout/login retest is pending an explicit decision
 to discard or save that draft. Until that retest passes, cross-account post
 isolation is not verified.
 
-## Current release confidence: 40%
+## Current release confidence: 43%
 
-Current evidence supports 8/10 environment, 10/15 authentication,
+Current evidence supports 9/10 environment, 10/15 authentication,
 12/15 discovery/detail, 6/20 chat, 2/20 listing, 4/10 profile/support, and
 0/10 UX/resilience. This is deliberately not production approval: the
 formerly open Firebase data-exposure P0 is technically resolved, but all
