@@ -288,12 +288,27 @@ The successful sequence emitted no Firestore permission or index errors.
 Both disposable accounts/listing and their chat records must be removed after
 the remaining chat regression work. This P1 is closed for conversation
 creation, delivery, receipt, and unread state. Background push delivery,
-block/unblock/report, offer state, and notification-tap behavior remain open.
+offer state, report persistence, and notification-tap behavior remain open.
 
-## Current release confidence: 61%
+### P1 — Unblock used an unauthorized Firestore query
+
+The same physical QA conversation was then blocked with a controlled reason.
+The UI correctly disabled the composer and exposed `Unblock`, but tapping it
+returned a raw `firestore/permission-denied` error. Its unblock lookup had the
+same unsafe query shape as the chat-start lookup: it filtered only the two UID
+fields rather than constraining the caller's `participantIds`.
+
+Frontend commit `3d270a7 fix authorized chat unblock` reads the caller's
+authorized block records, selects the matching pair locally, and deletes only
+that record. `tsc --noEmit` passed. On the physical device the exact blocked
+conversation then unblocked successfully, the composer became enabled again,
+and the retry log contained no Firestore permission error. Block and unblock
+are now covered; report persistence remains unverified.
+
+## Current release confidence: 62%
 
 Current evidence supports 9/10 environment, 13/15 authentication/session,
-13/15 discovery/detail, 14/20 chat, 4/20 listing/media, 5/10
+13/15 discovery/detail, 15/20 chat, 4/20 listing/media, 5/10
 profile/support, and 3/10 UX/resilience. This is not production approval.
 The remaining release risks include background push delivery on a second
 device, full listing creation with image upload/S3/edit/delete, support and
