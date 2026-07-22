@@ -68,7 +68,7 @@ text message were visible, then the recipient signed in on the same device,
 received the conversation, and saw the exact message. The device log was
 clean of Firestore permission/index errors for the successful retry.
 
-### P1 — QA chat push trigger is not deployed
+### P1 — QA chat push trigger was not deployed
 
 Firebase-backed chat relies on the Gen-2 `onNewMessage` Firestore trigger in
 `functions/src/index.ts` to submit Expo push notifications. QA had no Cloud
@@ -76,29 +76,25 @@ Functions API enabled and no deployed function. The function source now builds
 locally after installing its ignored dependencies; the QA-only Cloud Functions,
 Eventarc, Cloud Run, Artifact Registry, and Cloud Build APIs were enabled.
 
-Deployment to `renit-uat` is blocked by IAM only: the active build account
-lacks `iam.serviceAccounts.actAs` on the QA default compute service account.
-Grant that account the narrow `roles/iam.serviceAccountUser` role on this one
-QA service account, then deploy the existing Gen-2 Firestore-created trigger
-and repeat an offline recipient-device notification/tap test. No production
-cloud resource was inspected or changed.
+The scoped QA IAM prerequisites were granted and the trigger was deployed to
+`renit-uat`; its Cloud Function state is `ACTIVE`. The source now resolves the
+recipient's Firebase UID before looking up the device token, matching the
+participant-scoped data model. Delivery is still not verified: it needs a
+second authenticated QA device (or a deliberately offline recipient) and a
+notification tap test. No production cloud resource was changed.
 
-### P0 — Firebase chat data has no user-level access control
+### P0 — Firebase chat data had no user-level access control
 
-`firestore.rules` currently grants unrestricted reads and writes to every
-document. The mobile client does not sign in to Firebase, so this is the only
-way its Firestore chat works today. It means any actor using the app's Firebase
-configuration can read or alter conversations, messages, blocks, and push-token
-documents. It is not acceptable for a customer release.
+The old QA rules granted unrestricted reads and writes to every document. That
+was not acceptable for a customer release and is no longer deployed.
 
-The minimum correct remediation is Firebase custom-token authentication using
-the Django-authenticated user's stable ID, followed by participant-scoped
-Firestore rules. QA's existing ADC credential can read Firestore but cannot
-sign a custom token: direct IAM signing was rejected for missing
-`iam.serviceAccounts.signBlob` on the QA Firebase admin service account. This
-must be resolved with a narrowly scoped IAM Token Creator grant or a dedicated
-runtime service identity before implementation and device retest can proceed.
-No production rules or data were changed.
+The remediation uses Firebase custom-token authentication tied to the
+Django-authenticated user's stable `user-<primary-key>` UID and
+participant-scoped Firestore rules. QA's runtime signer has only the required
+QA-scoped ability to sign custom tokens; no service-account key was created.
+Firebase Authentication was initialized for `renit-uat` after the API was
+enabled, and an issued custom token successfully exchanged for a Firebase ID
+token. No production rules or data were changed.
 
 Backend commits `da3c137 add authenticated Firebase token endpoint` and
 `5b71016 expose stable Firebase user identifiers` provide the first required
@@ -110,10 +106,19 @@ the same read-only `firebase_uid`. A fresh QA-configured image passed the full
 endpoint returned 401 without credentials and the API/category health check
 returned 200 after the brief expected restart window.
 
-The endpoint cannot issue a token until the QA token-creator grant is
-available. The mobile client and existing conversation data must then be
-migrated to participant-scoped queries/rules before the permissive rule can be
-removed.
+The mobile client now exchanges the Django-authenticated custom token before
+any chat operation, and clears Firebase authentication on logout. Existing QA
+conversation, message, and block documents were backfilled with Firebase UID
+fields before the secure rules were deployed. A controlled QA rules test used
+two participant identities and one outsider: both participants could read the
+fixture, a participant could create a message, and the outsider was denied
+conversation reads and message listing. The temporary fixture was removed.
+
+This resolves the data-exposure P0 at the infrastructure/rules level. It is
+not yet a release pass: a physical-device retest must prove the real app can
+obtain its authenticated token, create/join a conversation, send/read a
+message, update allowed read state, and perform block/report behavior without
+regressing the participant boundary.
 
 ### P1 — Listing image moderation assigned derived files to a nonexistent user
 
@@ -166,14 +171,16 @@ preserved, so the physical logout/login retest is pending an explicit decision
 to discard or save that draft. Until that retest passes, cross-account post
 isolation is not verified.
 
-## Current release confidence: 30%
+## Current release confidence: 40%
 
-Current evidence supports 8/10 environment, 8/15 authentication,
-12/15 discovery/detail, 0/20 chat, 2/20 listing, 4/10 profile/support, and
-0/10 UX/resilience. This is deliberately not production approval: the open
-Firebase security P0 must be resolved before any customer chat can ship; push
-delivery on a second device, block/report behavior, a full app-driven listing
-with image upload/edit/delete, support submission, cross-user permissions,
-offline/recovery behavior, visual regression with representative fixtures,
-and a distributable release-package test are still unverified. The current
-cross-account draft-isolation fix also requires physical-device retest.
+Current evidence supports 8/10 environment, 10/15 authentication,
+12/15 discovery/detail, 6/20 chat, 2/20 listing, 4/10 profile/support, and
+0/10 UX/resilience. This is deliberately not production approval: the
+formerly open Firebase data-exposure P0 is technically resolved, but all
+app-driven chat flows and push delivery on a second device remain unverified.
+A full app-driven listing with image upload/edit/delete, support submission,
+cross-user permissions, offline/recovery behavior, visual regression with
+representative fixtures, and a distributable release-package test also remain
+open. The current cross-account draft-isolation fix requires a physical-device
+logout/login retest once the preserved draft is intentionally saved or
+discarded.
