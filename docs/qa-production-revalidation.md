@@ -456,6 +456,15 @@ string now correctly says “lets you”. TypeScript passed, a fresh isolated QA
 APK was installed on Android `34962d85`, and the corrected text rendered on a
 cold start with no app-originated error.
 
+### Guest QA smoke — physical release-candidate pass
+
+On the isolated QA APK, Skip displayed the Android location prompt. Choosing
+`Don't allow` reached Home with categories and empty discovery sections,
+without an app-originated error. Electronics opened a stable `0 results`
+search state. Saved, Post, Chat, and Profile each rendered their sign-in gate;
+the public FAQ screen and Android Back navigation also rendered cleanly. This
+is guest-only coverage and does not prove authenticated or data-bearing flows.
+
 ## Superseded historical confidence: 80%
 
 Current evidence supports 9/10 environment, 13/15 authentication/session,
