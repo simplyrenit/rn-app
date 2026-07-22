@@ -87,8 +87,11 @@ Firebase custom-token exchange now uses the shared refresh-aware API client and
 stores the current persisted access token after a successful exchange. After a
 force-stop/cold start on port 8082, Home showed no Firebase error toast and
 Chat rendered its normal authenticated `No Chats` state with no Firebase or
-Firestore permission/index error. A controlled stale-token replay is still
-required before this P1 can be closed fully.
+Firestore permission/index error. The exact stale-token replay was then run on
+the physical QA device by replacing only the QA access token in its private
+environment-scoped store while preserving the refresh token. A cold start
+replaced the intentionally stale value, kept the user signed in, showed no
+Firebase toast, and Chat again rendered normally. This P1 is closed.
 
 ### P2 — Post and Review used different category-icon data shapes
 
@@ -257,10 +260,10 @@ preserved, so the physical logout/login retest is pending an explicit decision
 to discard or save that draft. Until that retest passes, cross-account post
 isolation is not verified.
 
-## Current release confidence: 48%
+## Current release confidence: 50%
 
-Current evidence supports 9/10 environment, 11/15 authentication,
-13/15 discovery/detail, 7/20 chat, 3/20 listing, 4/10 profile/support, and
+Current evidence supports 9/10 environment, 12/15 authentication,
+13/15 discovery/detail, 8/20 chat, 3/20 listing, 4/10 profile/support, and
 1/10 UX/resilience. This is deliberately not production approval: the
 formerly open Firebase data-exposure P0 is technically resolved, but all
 app-driven chat flows and push delivery on a second device remain unverified.
