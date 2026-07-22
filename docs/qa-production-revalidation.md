@@ -897,7 +897,20 @@ and installed QA APK. The disposable QA fixture was then removed: its one
 Firestore conversation, one message, one block record, relational report,
 listing, and two QA users were deleted.
 
-## Current independent confidence: 80%
+### Current QA listing gallery-cap regression — physical pass
+
+On Android `34962d85`, a new approved QA merchant completed the real current
+standalone-QA post flow through category, subcategory, required details,
+condition, location confirmation, address, price, deposit, contact choice,
+and the gallery screen. Android's system picker accepted five selected photos;
+a sixth tap left the picker at `5 photos or videos selected`. After Done, the
+app rendered exactly five removable thumbnails, exposed no Add control, and
+enabled Next. Android and React Native error-level logs were empty. The
+merchant was deleted before a listing was submitted, so no product, upload,
+or customer-visible QA inventory was created; a cold launch recovered cleanly
+to Guest Home.
+
+## Current independent confidence: 81%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -924,7 +937,9 @@ save/readback increases listing/edit confidence by one point. The physical
 two-user current-build creation/receipt/read cycle increases chat confidence
 by two points. The physical current-build Block & Report persistence and
 duplicate-prevention cycle closes a P1 moderation-integrity gap and increases
-chat/account-safety confidence by two points.
+chat/account-safety confidence by two points. The current physical five-image
+gallery-cap and sixth-selection rejection increase listing/media confidence by
+one point.
 
 ## Superseded historical confidence: 80%
 
