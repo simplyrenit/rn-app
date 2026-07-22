@@ -856,7 +856,17 @@ were deleted after the check. This independently covers current app chat
 creation, cross-user receipt, unread badge, read transition, and logout/login
 handoff. Fresh typed-message send and block/report remain separate coverage.
 
-## Current independent confidence: 77%
+### Current QA typed chat-message regression — physical pass
+
+A second isolated renter/owner/listing fixture was used to exercise the actual
+Android composer. The renter entered the labelled text `QAtyped20260723`,
+pressed the enabled send affordance, and the composer reset to its placeholder
+without an app error. Firestore then contained exactly one additional text
+message with that value, alongside the initial product card. The initial
+failed ADB taps were traced to keyboard-dismissal coordinate drift rather than
+the enabled app control. The complete fixture was deleted after verification.
+
+## Current independent confidence: 78%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
