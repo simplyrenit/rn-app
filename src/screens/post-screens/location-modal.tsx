@@ -692,6 +692,59 @@ const LocationModal = ({}) => {
                           </View>
                         )}
 
+                        <View
+                          className={`flex-row pl-3 min-h-11 rounded-[12px] border mb-4 ${
+                            isDarkMode
+                              ? "border-[#292929] bg-[#0F0F0F]"
+                              : "border-[#e6e6e6] bg-white"
+                          }`}
+                          style={{ alignItems: "flex-start" }}
+                        >
+                          <MagnifyingGlassIcon
+                            color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
+                            size={24}
+                            style={{ marginTop: hp(1.1) }}
+                          />
+                          <GooglePlacesAutocomplete
+                            ref={googlePlacesRef}
+                            placeholder="Search area or street name"
+                            query={{ key: GOOGLE_MAP_API_KEY }}
+                            fetchDetails={true}
+                            onPress={handlePlaceSelected}
+                            onFail={(error) => console.log(error)}
+                            onNotFound={() => console.log("no results")}
+                            enablePoweredByContainer={false}
+                            styles={{
+                              textInput: {
+                                height: "100%",
+                                backgroundColor: isDarkMode
+                                  ? "#0F0F0F"
+                                  : "#fff",
+                                borderRadius: 12,
+                                zIndex: 10,
+                                color: isDarkMode ? "#fff" : "#000",
+                                fontSize: 16,
+                                alignContent: "center",
+                              },
+                              listView: { maxHeight: hp(24) },
+                              row: {
+                                backgroundColor: isDarkMode
+                                  ? "#0F0F0F"
+                                  : "#FFF",
+                              },
+                              description: {
+                                color: isDarkMode ? "#fff" : "#000",
+                              },
+                              separator: { backgroundColor: "#292929" },
+                            }}
+                            textInputProps={{
+                              placeholderTextColor: isDarkMode
+                                ? "#FFFFFFB2"
+                                : "#000000B2",
+                            }}
+                          />
+                        </View>
+
                         <Text
                           fontSize="text-md"
                           fontWeight="font-bold"
@@ -776,59 +829,6 @@ const LocationModal = ({}) => {
                             Skip for now
                           </Text>
                         </TouchableOpacity>
-
-                        <View
-                          className={`flex-row pl-3 min-h-11 rounded-[12px] border ${
-                            isDarkMode
-                              ? "border-[#292929] bg-[#0F0F0F]"
-                              : "border-[#e6e6e6] bg-white"
-                          }`}
-                          style={{ alignItems: "flex-start" }}
-                        >
-                          <MagnifyingGlassIcon
-                            color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
-                            size={24}
-                            style={{ marginTop: hp(1.1) }}
-                          />
-                          <GooglePlacesAutocomplete
-                            ref={googlePlacesRef}
-                            placeholder="Search area or street name"
-                            query={{ key: GOOGLE_MAP_API_KEY }}
-                            fetchDetails={true}
-                            onPress={handlePlaceSelected}
-                            onFail={(error) => console.log(error)}
-                            onNotFound={() => console.log("no results")}
-                            enablePoweredByContainer={false}
-                            disableScroll={true}
-                            styles={{
-                              textInput: {
-                                height: "100%",
-                                backgroundColor: isDarkMode
-                                  ? "#0F0F0F"
-                                  : "#fff",
-                                borderRadius: 12,
-                                zIndex: 10,
-                                color: isDarkMode ? "#fff" : "#000",
-                                fontSize: 16,
-                                alignContent: "center",
-                              },
-                              row: {
-                                backgroundColor: isDarkMode
-                                  ? "#0F0F0F"
-                                  : "#FFF",
-                              },
-                              description: {
-                                color: isDarkMode ? "#fff" : "#000",
-                              },
-                              separator: { backgroundColor: "#292929" },
-                            }}
-                            textInputProps={{
-                              placeholderTextColor: isDarkMode
-                                ? "#FFFFFFB2"
-                                : "#000000B2",
-                            }}
-                          />
-                        </View>
 
                         <TouchableOpacity
                           className={`h-[48px] rounded-[12px] w-full border-b ${

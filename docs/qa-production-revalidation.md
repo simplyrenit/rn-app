@@ -519,20 +519,29 @@ isolated APK contained the QA runtime value. On physical Android, typing a
 generic city produced selectable city-level suggestions and selecting one
 updated the location picker without an app-originated error.
 
-The dropdown is still hidden behind Android's keyboard while typing; dismissing
-the keyboard reveals the valid results. This is a separate open P2 usability
-defect, not a Maps configuration failure. No listing was submitted during this
-test and no precise device address was published.
+### P2 — Android autocomplete results were hidden by the keyboard
 
-## Current independent confidence: 30%
+The picker placed its autocomplete field below the current-address and action
+content. Android correctly resized the window for the keyboard, but there was
+no remaining vertical space for the result list; a user had to dismiss the
+keyboard before choosing a valid suggestion.
+
+The existing search control now appears first in the picker panel and its
+result list has a bounded height with normal scrolling. On physical Android,
+typing a generic city showed multiple suggestions above the still-open
+keyboard; selecting the first one immediately set the selected address and
+left Confirm location available. Android logs contained no app-originated
+error, Places failure, or billing warning. No listing was submitted and no
+precise device address was published.
+
+## Current independent confidence: 32%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, and generic address search,
 in addition to the previously verified guest and discovery flows. It is still
 far from production approval: two-device push delivery, the complete listing
-and media lifecycle on this exact APK, Android autocomplete visibility,
-representative product media, and the remaining authenticated edge cases are
-not yet signed off.
+and media lifecycle on this exact APK, representative product media, and the
+remaining authenticated edge cases are not yet signed off.
 
 ## Superseded historical confidence: 80%
 
