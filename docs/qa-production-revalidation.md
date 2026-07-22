@@ -775,7 +775,28 @@ Products request, confirming that the stale session was cleared rather than
 leaving a hidden authenticated shell. The QA user and matching Firebase user
 document were removed after the test.
 
-## Current independent confidence: 70%
+### Current QA push credential and delivery regression — physical pass
+
+The current QA Android application identifier (`com.renit.app.qa`) is present
+in the QA Firebase `google-services.json`; its sender/project is
+`renit-uat`. The separate QA Expo project (`renit-qa-app`) was independently
+checked through the authenticated EAS credentials view: its FCM v1 credential
+uses `renit-uat` and the QA push service account. Google Cloud confirms that
+account is enabled and has the Firebase Cloud Messaging Admin role, the FCM
+API is enabled, service-account key creation is no longer blocked by the
+project policy, and ADC now uses `renit-uat` as its quota project.
+
+On physical Android `34962d85`, a newly authenticated disposable QA account
+opened Chat, granted Android notification permission, and registered exactly
+one Expo push token with `POST /api/register-push-token/` returning 200. With
+Renit backgrounded, a labelled QA send received an Expo `ok` ticket and
+appeared in Android's notification shade as `Renit QA — Push delivery
+validation`. The backend's own notification helper then completed without a
+backend push error. This validates the current QA credential chain and
+background delivery. It does not claim cold-process notification-tap routing:
+this device clears the card after a force-stop.
+
+## Current independent confidence: 72%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -793,7 +814,9 @@ anonymous submission checks increase it by a further two points. The
 independently reproduced offline support failure and recovery increase it by
 one point. The reproduced duplicate-tap support flow and physical regression
 increase it by one point. The current-release deleted-account recovery test
-increases authentication/session confidence by one point.
+increases authentication/session confidence by one point. The current QA
+FCM/Expo credential inspection plus fresh physical background delivery
+increase environment and chat confidence by two points.
 
 ## Superseded historical confidence: 80%
 
