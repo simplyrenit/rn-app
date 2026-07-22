@@ -101,8 +101,9 @@ Backend commits `da3c137 add authenticated Firebase token endpoint` and
 components: `POST /api/chat/firebase-token/` is JWT-protected, uses the stable
 `user-<Django primary key>` UID, and returns a generic 503 instead of exposing
 signing failures. Existing user, owner, and product-owner payloads now expose
-the same read-only `firebase_uid`. A fresh QA-configured image passed the full
-48-test backend suite, then the QA API was rebuilt and restarted. The public
+the same read-only `firebase_uid`. The current backend branch passes all 49
+tests with Django's preserved disposable test database, then the QA API was
+rebuilt and restarted. The public
 endpoint returned 401 without credentials and the API/category health check
 returned 200 after the brief expected restart window.
 
