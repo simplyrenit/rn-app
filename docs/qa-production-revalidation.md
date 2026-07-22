@@ -321,12 +321,42 @@ physical cold-start retest of the deleted QA session opened the Welcome screen
 directly, with no Firebase, notification, or Firestore error in the app log.
 This P2 is closed.
 
-## Current release confidence: 63%
+The cleanup repetition found that the final, expected 401 from a deleted
+account was still emitted as a development-client error by the shared network
+logger, even though the UI safely returned to onboarding. This QA-cycle change
+logs handled 401 responses as informational; non-401 network failures remain
+errors. `tsc --noEmit` passed, and a force-stop/cold start of that same deleted
+QA account rendered onboarding with no fresh React Native, Firebase, Firestore,
+or network error record. This closes the remaining invalid-session
+observability gap.
+
+### P1 — Full physical listing, media, availability, and deletion lifecycle
+
+A fresh approved, disposable QA merchant completed the following flow on
+physical Android `34962d85`: Post, Electronics, Drone, required About fields
+and location, gallery-image selection, native crop/save, cover-image choice,
+Review, and Post product. The active QA Metro log recorded two successful
+presigned-media requests and `POST /api/my/products/` with HTTP 201. The My
+Products screen rendered the new title and its image.
+
+The published public QA listing returned its cover and one image, and both
+media URLs returned HTTP 200. In Edit Unavailability, selecting a July date
+and Update returned HTTP 200; a subsequent backend read confirmed the blocked
+date persisted. Deleting through the physical UI returned My Products to its
+`No products` state, and a scoped backend check confirmed the product was
+gone. The disposable user and the device-local test image were then deleted;
+follow-up checks confirmed neither the user, product, nor photo remained.
+
+This is a pass for the one-image publish/upload/crop/cover, availability
+update, and deletion path. Image count limits, upload failure recovery, and
+representative fixture-media visual quality are still open.
+
+## Current release confidence: 75%
 
 Current evidence supports 9/10 environment, 13/15 authentication/session,
-13/15 discovery/detail, 15/20 chat, 4/20 listing/media, 5/10
-profile/support, and 4/10 UX/resilience. This is not production approval.
+13/15 discovery/detail, 15/20 chat, 15/20 listing/media, 5/10
+profile/support, and 5/10 UX/resilience. This is not production approval.
 The remaining release risks include background push delivery on a second
-device, full listing creation with image upload/S3/edit/delete, support and
-merchant edge paths, offline/slow-network recovery, representative media
-visual regression, and a distributable release-package test.
+device, listing image-count and failure paths, support and merchant edge
+paths, offline/slow-network recovery, representative media visual regression,
+and a distributable release-package test.

@@ -231,9 +231,10 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    const logFailure = status === 401 && !getAuthAttached(originalRequest)
-      ? console.log
-      : console.error;
+    // 401s are handled by the caller or the refresh flow; logging them as
+    // errors makes an expected expired/invalid session look like an app fault
+    // in the development client.
+    const logFailure = status === 401 ? console.log : console.error;
     logFailure(`${NETWORK_LOG_PREFIX} response failed`, {
       requestId: originalRequest?.metadata?.requestId,
       method: (originalRequest?.method || "GET").toUpperCase(),
