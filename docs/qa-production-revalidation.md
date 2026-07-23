@@ -1053,22 +1053,22 @@ evidence: `/tmp/renit_oauth_conflict_20260724_001900/03_google_chooser.png`,
 `10_after_logout.png`, `04_after_build_auth.log`, and
 `10_after_logout.log`.
 
-## Current Metro QA confidence: 86% — not release-ready
+## Current QA confidence: 88% — not release-ready
 
 This section supersedes the older percentage above for the current
-`exp-yash` QA Metro cycle on physical Android `34962d85` against
+`exp-yash` QA Metro and QA APK cycle on physical Android `34962d85` against
 `https://qa-api.toratora.site`.
 
 | Area | Evidence-backed confidence |
 | --- | ---: |
-| Environment | 8/10 |
+| Environment | 9/10 |
 | Auth/session | 14/15 |
 | Discovery/detail/images | 15/15 |
 | Chat/push/isolation | 15/20 |
 | Listing/media/availability | 18/20 |
 | Profile/support/merchant | 9/10 |
-| UX/resilience/logs | 7/10 |
-| **Total** | **86/100** |
+| UX/resilience/logs | 8/10 |
+| **Total** | **88/100** |
 
 Current physical evidence covers cold boot/resume, Google account selection,
 the `build@simplyrenit.com` selected-account login/profile/logout regression,
@@ -1113,20 +1113,24 @@ or stuck spinner occurred. Evidence:
 `06_cold_launch.png`, `07_authenticated_profile.png`, and
 `10_final_storage_redacted.txt`.
 
-QA Firebase App Check is now active in the Metro dev client. The QA-only App
-Check and Play Integrity APIs were enabled, the `com.renit.app` QA Firebase
-app received its debug-signing SHA-256, and the physical device's generated QA
-debug token was registered without being stored in this repository or test
-artifacts. The app uses that debug provider only in `__DEV__`; release builds
-use Play Integrity. On the rebuilt current Metro client, OAuth, authenticated
-Home/Profile, Chat, and Logout completed with zero App Check,
-`LocalRequestInterceptor`, React Native, overlay, crash, or spinner markers.
-Sanitized evidence:
-`/tmp/renit_appcheck_debugreg_20260723_232943/05_postreg_sanitized.log`,
-`07_postreg_sanitized.log`, and `09_postreg_sanitized.log`.
+QA Firebase App Check is now active in the Metro dev client and the standalone
+QA APK. The QA-only App Check and Play Integrity APIs are enabled. The provider
+uses debug attestation for DEV and QA runtimes; a production runtime still uses
+Play Integrity. The current QA APK (`com.renit.app.qa` v1.0.2/code 3,
+SHA-256 `827a2e487cb494c2f6057d352608eff39b6ab4bbbcccbcff4b7c36d9d1cce98b`)
+was installed on `34962d85`. Its device-specific QA debug token was registered
+with the QA Firebase app through the QA-only API; it was never retained in the
+repository or evidence. The initial launch's two expected 403s were only used
+to obtain that token. After a cold relaunch, guest Home, listing detail/image,
+Google OAuth, authenticated Home/Profile/chat token, and logout passed with 46
+QA HTTP 200 responses and zero App Check, `LocalRequestInterceptor`,
+placeholder-token, attestation, React Native warning/error, overlay, crash,
+spinner, or missing-image markers. Sanitized evidence:
+`/tmp/renit_qa_appcheck_closure_20260724_002300/02_home_after_register.log`,
+`03_listing_detail.log`, `07_authenticated_home.log`, `09_chat.log`,
+`11_after_logout.log`, and `apk_sha256.txt`.
 
-Release blockers: the current QA APK/package has not been refreshed and
-verified; notification delivery/tap routing has not been reproduced with a
-second inactive recipient device; and successful-code OTP and
+Release blockers: notification delivery/tap routing has not been reproduced
+with a second inactive recipient device; successful-code OTP and
 malformed-response paths need current evidence. Do not claim release approval
 while any blocker remains.
