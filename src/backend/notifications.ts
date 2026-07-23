@@ -11,6 +11,10 @@ import { REGISTER_PUSH_TOKEN_ENDPOINT } from "@/lib/config";
 // Task name for background fetch
 const MESSAGE_NOTIFICATION_TASK = "MESSAGE_NOTIFICATION_TASK";
 
+// Renit registers tokens with its authenticated API; Expo's persisted
+// auto-registration retries while offline before app code can handle it.
+void Notifications.setAutoServerRegistrationEnabledAsync(false);
+
 // Function to register for push notifications
 export async function registerForPushNotificationsAsync() {
   let token;
@@ -38,11 +42,17 @@ export async function registerForPushNotificationsAsync() {
       throw new Error("Missing EAS project ID for push notifications");
     }
 
-    token = (
-      await Notifications.getExpoPushTokenAsync({
-        projectId,
-      })
-    ).data;
+    try {
+      await fetch("https://exp.host");
+      token = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId,
+          baseUrl: "https://exp.host/--/api/v2/",
+        })
+      ).data;
+    } catch {
+      return;
+    }
 
   } else {
     alert("Must use physical device for Push Notifications");

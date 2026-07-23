@@ -221,8 +221,7 @@ export default function SearchScreen() {
     try {
       const response = await axios.get(url);
       setNearbyPlaces(response.data.results);
-    } catch (error) {
-      console.error("Error fetching nearby places: ", error);
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -323,8 +322,7 @@ export default function SearchScreen() {
         title: item,
       }));
       setSuggestionsList(suggestions);
-    } catch (error) {
-      console.error("Error fetching suggestions:", error);
+    } catch {
       setSuggestionsList([]);
     } finally {
       setLoading(false);
