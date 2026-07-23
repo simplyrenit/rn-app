@@ -22,6 +22,7 @@ interface Props {
   onSelect: (option: string) => void;
   closeSheet: () => void;
   isLoading: boolean;
+  hasLocation: boolean;
 }
 
 export function SortFilter({
@@ -29,6 +30,7 @@ export function SortFilter({
   onSelect,
   closeSheet,
   isLoading,
+  hasLocation,
 }: Props) {
   const { theme } = useGlobalContext();
 
@@ -37,25 +39,27 @@ export function SortFilter({
   return (
     <View className="flex-1">
       <View className="flex-1">
-        {options.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            className={`p-3 ${index === 0 ? 'pt-0' : ''}`}
-            onPress={() => onSelect(item.value)}
-          >
-            <View className="flex flex-row items-center justify-between">
-              <View className="flex flex-row items-center">
-                <item.icon color={isDark ? "white" : "black"} size={20} />
-                <Text fontSize="text-base" className="ml-3">
-                  {item.option}
-                </Text>
+        {options
+          .filter((item) => hasLocation || item.value !== "nearest")
+          .map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              className={`p-3 ${index === 0 ? 'pt-0' : ''}`}
+              onPress={() => onSelect(item.value)}
+            >
+              <View className="flex flex-row items-center justify-between">
+                <View className="flex flex-row items-center">
+                  <item.icon color={isDark ? "white" : "black"} size={20} />
+                  <Text fontSize="text-base" className="ml-3">
+                    {item.option}
+                  </Text>
+                </View>
+                {selectedFilter === item.value && (
+                  <CheckIcon size={20} color="#635be8" />
+                )}
               </View>
-              {selectedFilter === item.value && (
-                <CheckIcon size={20} color="#635be8" />
-              )}
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          ))}
       </View>
       {selectedFilter && (
         <View className="p-3">

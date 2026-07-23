@@ -475,6 +475,7 @@ export default function SearchResults() {
                   onSelect={(option) => handleFilterSelect("sort", option)}
                   closeSheet={closeSheet}
                   isLoading={isLoading}
+                  hasLocation={coords.lat != null && coords.lng != null}
                 />
               )}
               {selectedTab === "Category" && !showSubCategory && (
