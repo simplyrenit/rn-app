@@ -1009,3 +1009,21 @@ This confirms the JavaScript/native crop-modal behavior through Metro. The
 installed `com.renit.app.qa` APK predates this fix, so QA-package confirmation
 is still required. Existing QA fixture covers are screenshots, so they are not
 valid visual-media quality evidence.
+
+### P2 — logout surfaced a stale chat-authentication error
+
+On physical Android `34962d85` in the QA Metro runtime, logging out of an
+authenticated account returned to onboarding but displayed `Unable to
+authenticate chat: Error: Sign in to use chat.`. `useChat` could render once
+with `isAuthenticated` still true after the token state had been cleared, then
+start a failing Firebase authentication attempt.
+
+The shared startup effect now requires both authentication state and an access
+token, and ignores an attempt that completes after the hook has been cleaned
+up. `tsc --noEmit` passed. A disposable password-authenticated QA renter
+logged in through the real Android UI, opened the existing QA owner listing,
+created the initial product-card chat, and sent `Metro_logout_regression_retest`.
+After Profile → Logout, onboarding showed with no chat-auth popup and no
+Android or React Native error-level log. The disposable renter, Firebase auth
+user, conversation, and message were deleted; a scoped check found zero
+remaining records.

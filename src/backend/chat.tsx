@@ -55,13 +55,20 @@ export function useChat() {
   }
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !access_token) {
       return;
     }
 
-    requireChatAuth().catch((error) =>
-      console.warn("Unable to authenticate chat:", error)
-    );
+    let active = true;
+    authenticateFirebase(access_token).catch((error) => {
+      if (active) {
+        console.warn("Unable to authenticate chat:", error);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
   }, [isAuthenticated, access_token]);
 
   async function startChat(
