@@ -1028,7 +1028,7 @@ Android or React Native error-level log. The disposable renter, Firebase auth
 user, conversation, and message were deleted; a scoped check found zero
 remaining records.
 
-## Current Metro QA confidence: 84% — not release-ready
+## Current Metro QA confidence: 85% — not release-ready
 
 This section supersedes the older percentage above for the current
 `exp-yash` QA Metro cycle on physical Android `34962d85` against
@@ -1037,13 +1037,13 @@ This section supersedes the older percentage above for the current
 | Area | Evidence-backed confidence |
 | --- | ---: |
 | Environment | 8/10 |
-| Auth/session | 13/15 |
+| Auth/session | 14/15 |
 | Discovery/detail/images | 15/15 |
 | Chat/push/isolation | 15/20 |
 | Listing/media/availability | 18/20 |
 | Profile/support/merchant | 9/10 |
 | UX/resilience/logs | 6/10 |
-| **Total** | **84/100** |
+| **Total** | **85/100** |
 
 Current physical evidence covers cold boot/resume, Google account selection,
 selected-account session persistence and logout, location denial recovery,
@@ -1075,8 +1075,21 @@ spinner, or authentication. Evidence:
 One additional disposable OTP send was required for the post-fix regression;
 no account was created or changed.
 
+Stale access-token recovery now has current device evidence. After normal QA
+OAuth sign-in, only the app-private access token was replaced with a redacted
+invalid placeholder while the refresh token was preserved. A cold launch made
+one protected request that received 401, performed one successful refresh,
+retried with HTTP 200, and remained authenticated through Profile. The
+placeholder was replaced locally, and normal Logout removed the token row and
+returned to guest onboarding. No React Native error/warning, LogBox, overlay,
+or stuck spinner occurred. Evidence:
+`/tmp/renit_stale_recovery_20260723_225303/11_refresh_summary_redacted.log`,
+`06_cold_launch.png`, `07_authenticated_profile.png`, and
+`10_final_storage_redacted.txt`.
+
 Release blockers: the current QA APK/package has not been refreshed and
 verified; notification delivery/tap routing has not been reproduced with a
-second inactive recipient device; successful-code OTP, stale-token, and
-malformed-response paths need current evidence. Do not claim release approval
-while any blocker remains.
+second inactive recipient device; successful-code OTP and malformed-response
+paths need current evidence; and QA Firebase emits `No AppCheckProvider
+installed` placeholder-token warnings during authenticated flows. Do not claim
+release approval while any blocker remains.
