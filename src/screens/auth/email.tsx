@@ -147,6 +147,9 @@ export default function LoginWithEmail() {
           >
             Continue with Password
           </Button>
+          <Button variant="outline" onPress={() => router.navigate("Phone")}>
+            Continue with Mobile OTP
+          </Button>
         </View>
       </View>
     </StaticContainer>

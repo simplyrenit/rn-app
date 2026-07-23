@@ -12,6 +12,13 @@ export interface OTPResponse {
   message: string;
 }
 
+export interface PhoneVerificationResponse {
+  onboarding_required?: boolean;
+  phone?: string;
+  access_token?: string;
+  refresh_token?: string;
+}
+
 export interface CategoryItem {
   name: string;
   image: ImageSourcePropType;
@@ -179,7 +186,12 @@ export type RootStackParamList = {
   ConfirmPassword: { enteredPassword: string };
   UserDetail: { id: string };
   ChatDetails: { id: string };
-  Verify: { email: string; verificationType: "otp" | "password" };
+  Verify: {
+    email?: string;
+    phone?: string;
+    verificationType: "otp" | "password" | "phone";
+  };
+  Phone: undefined;
   ProductDetail: { id: string; isFavorite?: boolean };
   ReviewsScreen: {
     reviews: BackendReview[];

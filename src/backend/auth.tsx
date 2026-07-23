@@ -1,9 +1,21 @@
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
-import { LOGIN, OTP, SIGN_UP } from "@/lib/config";
-import { AuthTokens, AuthUser, OTPResponse } from "@/lib/types";
+import { LOGIN, OTP, PHONE_LOGIN, SIGN_UP } from "@/lib/config";
+import {
+  AuthTokens,
+  AuthUser,
+  OTPResponse,
+  PhoneVerificationResponse,
+} from "@/lib/types";
 import axios from "axios";
 import { useState } from "react";
+
+let phoneConfirmation: any | null = null;
+
+const getFirebaseAuth = () => {
+  const { getAuth } = require("@react-native-firebase/auth");
+  return getAuth();
+};
 
 export interface SignUpError {
   status?: number;
@@ -65,6 +77,49 @@ export function useAuth() {
       throw toRequestError(
         error,
         "Unable to verify OTP right now. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function sendPhoneOTP(phone: string) {
+    setLoading(true);
+    try {
+      const auth = getFirebaseAuth();
+      if (auth.currentUser) {
+        await auth.signOut();
+      }
+      phoneConfirmation = await auth.signInWithPhoneNumber(phone);
+    } catch (error: any) {
+      throw toRequestError(
+        error,
+        "Unable to send a verification code right now. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verifyPhoneOTP(
+    otp: string
+  ): Promise<PhoneVerificationResponse> {
+    setLoading(true);
+    try {
+      if (!phoneConfirmation) {
+        throw new Error("Request a new verification code and try again.");
+      }
+      const credential = await phoneConfirmation.confirm(otp);
+      phoneConfirmation = null;
+      const idToken = await credential.user.getIdToken();
+      const response = await axios.post<PhoneVerificationResponse>(PHONE_LOGIN, {
+        id_token: idToken,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw toRequestError(
+        error,
+        "Unable to verify the code right now. Please try again."
       );
     } finally {
       setLoading(false);
@@ -149,6 +204,8 @@ export function useAuth() {
     sendOTP,
     loginUser,
     verifyOTP,
+    sendPhoneOTP,
+    verifyPhoneOTP,
     // signInWithGoogle
   };
 }

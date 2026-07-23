@@ -12,6 +12,7 @@ import ConfirmPasswordScreen from "../screens/auth/confirm-password";
 import EmailScreen from "../screens/auth/email";
 import LocationScreen from "../screens/auth/location";
 import PasswordScreen from "../screens/auth/password";
+import PhoneScreen from "../screens/auth/phone";
 import VerifyScreen from "../screens/auth/verify";
 
 import { useGlobalContext } from "@/context/global-context";
@@ -352,6 +353,10 @@ export default function Navigation() {
         <Stack.Screen
           name="Email"
           component={EmailScreen}
+        />
+        <Stack.Screen
+          name="Phone"
+          component={PhoneScreen}
         />
         <Stack.Screen
           name="Verify"

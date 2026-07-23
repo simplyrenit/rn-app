@@ -127,6 +127,8 @@ export const SIGN_UP = SERVERURL + "signup/";
 
 export const LOGIN = SERVERURL + "login/";
 
+export const PHONE_LOGIN = SERVERURL + "phone-login/";
+
 export const POST_MY_PRODUCTS = SERVERURL + "my/products/";
 
 export const GENERATE_SIGNED_URLS = SERVERURL + "generate-presigned-urls/";

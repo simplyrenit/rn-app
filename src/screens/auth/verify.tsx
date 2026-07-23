@@ -23,20 +23,52 @@ export default function VerifyEmail() {
   const { theme, setAuthTokens } = useGlobalContext();
 
   const route = useRoute<RouteProps<"Verify">>();
-  const { email, verificationType } = route.params;
+  const { email, phone, verificationType } = route.params;
+  const isCodeVerification = verificationType !== "password";
 
   const router = useTypedNavigation();
 
   const { saveUser } = useAuthContext();
-  const { verifyOTP, sendOTP, loading, loginUser } = useAuth();
+  const {
+    verifyOTP,
+    sendOTP,
+    verifyPhoneOTP,
+    sendPhoneOTP,
+    loading,
+    loginUser,
+  } = useAuth();
 
   const handleSubmit = useCallback(async () => {
     setIsIncorrect(false);
     setOtpVerifyError("");
-    if (verificationType === "otp") {
+    if (isCodeVerification) {
       if (verificationCode.length === 6) {
         try {
-          const data = await verifyOTP(email, verificationCode);
+          if (verificationType === "phone") {
+            const data = await verifyPhoneOTP(verificationCode);
+            if (data.access_token && data.refresh_token) {
+              axiosInstance.defaults.headers.Authorization = `Bearer ${data.access_token}`;
+              setAuthTokens({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token,
+              });
+              router.navigate("MainTabs");
+              return;
+            }
+            if (data.onboarding_required) {
+              saveUser({
+                email: "",
+                phone: data.phone || phone || "",
+                phone_verified: true,
+              });
+              router.navigate("About");
+              return;
+            }
+            setIsIncorrect(true);
+            return;
+          }
+
+          const data = await verifyOTP(email!, verificationCode);
           if (data?.access !== null && data?.refresh !== null) {
             axiosInstance.defaults.headers.Authorization = `Bearer ${data.access}`;
             setAuthTokens({
@@ -65,7 +97,7 @@ export default function VerifyEmail() {
       }
     } else {
       // Handle password verification
-      const data = await loginUser(email, password);
+      const data = await loginUser(email!, password);
       if (
         data?.access_token !== null &&
         data?.refresh_token !== null &&
@@ -86,8 +118,11 @@ export default function VerifyEmail() {
     verificationCode,
     password,
     verificationType,
+    isCodeVerification,
     verifyOTP,
+    verifyPhoneOTP,
     email,
+    phone,
     setAuthTokens,
     router,
     saveUser,
@@ -97,14 +132,18 @@ export default function VerifyEmail() {
   const handleResendOTP = useCallback(async () => {
     setOtpResendError("");
     try {
-      await sendOTP(email);
+      if (verificationType === "phone") {
+        await sendPhoneOTP(phone!);
+      } else {
+        await sendOTP(email!);
+      }
     } catch (error: any) {
       const otpError = error as SignUpError;
       setOtpResendError(
         otpError.message || "Unable to resend OTP right now. Please try again."
       );
     }
-  }, [email, sendOTP]);
+  }, [email, phone, sendOTP, sendPhoneOTP, verificationType]);
 
   const styles = StyleSheet.create({
     textInputContainer: {
@@ -130,7 +169,7 @@ export default function VerifyEmail() {
               fontSize="text-2xl"
               fontWeight="font-bold"
             >
-              {verificationType === "otp"
+              {isCodeVerification
                 ? "Enter verification code"
                 : "Enter password"}
             </Text>
@@ -139,12 +178,12 @@ export default function VerifyEmail() {
               className={`${theme === "dark" ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
                 }`}
             >
-              {verificationType === "otp"
-                ? `We've sent a 6 digit verification code to ${email}`
+              {isCodeVerification
+                ? `We've sent a 6 digit verification code to ${phone || email}`
                 : "Enter your password to continue"}
             </Text>
 
-            {verificationType === "otp" ? (
+            {isCodeVerification ? (
               <>
                 <Text
                   fontSize="text-sm"
@@ -275,7 +314,7 @@ export default function VerifyEmail() {
             className="flex-row items-center justify-center"
             onPress={handleSubmit}
             disabled={
-              verificationType === "otp"
+              isCodeVerification
                 ? verificationCode.length !== 6
                 : !password
             }
