@@ -44,12 +44,8 @@ export function useOAuth() {
           if (res.data.access_token && res.data.refresh_token) {
             axiosInstance.defaults.headers.Authorization = `Bearer ${res.data.access_token}`;
             setAuthTokens(res.data);
-            const user = await getMyDetails(res.data.access_token);
-            if (!user?.first_name || !user?.last_name) {
-              router.navigate("About");
-            } else {
-              router.navigate("MainTabs");
-            }
+            await getMyDetails(res.data.access_token);
+            router.navigate("MainTabs");
             return;
           }
         } catch (backendError) {
@@ -88,17 +84,8 @@ export function useOAuth() {
         if (res.data.access_token !== null && res.data.refresh_token !== null) {
           axiosInstance.defaults.headers.Authorization = `Bearer ${res.data.access_token}`;
           setAuthTokens(res.data);
-          const user = await getMyDetails(res.data.access_token);
-          if (
-            user?.first_name === null ||
-            user?.last_name === null ||
-            user?.first_name === "" ||
-            user?.last_name === ""
-          ) {
-            router.navigate("About");
-          } else {
-            router.navigate("MainTabs");
-          }
+          await getMyDetails(res.data.access_token);
+          router.navigate("MainTabs");
           return;
         }
       } else {
