@@ -1028,7 +1028,7 @@ Android or React Native error-level log. The disposable renter, Firebase auth
 user, conversation, and message were deleted; a scoped check found zero
 remaining records.
 
-## Current Metro QA confidence: 85% — not release-ready
+## Current Metro QA confidence: 86% — not release-ready
 
 This section supersedes the older percentage above for the current
 `exp-yash` QA Metro cycle on physical Android `34962d85` against
@@ -1042,8 +1042,8 @@ This section supersedes the older percentage above for the current
 | Chat/push/isolation | 15/20 |
 | Listing/media/availability | 18/20 |
 | Profile/support/merchant | 9/10 |
-| UX/resilience/logs | 6/10 |
-| **Total** | **85/100** |
+| UX/resilience/logs | 7/10 |
+| **Total** | **86/100** |
 
 Current physical evidence covers cold boot/resume, Google account selection,
 selected-account session persistence and logout, location denial recovery,
@@ -1087,9 +1087,20 @@ or stuck spinner occurred. Evidence:
 `06_cold_launch.png`, `07_authenticated_profile.png`, and
 `10_final_storage_redacted.txt`.
 
+QA Firebase App Check is now active in the Metro dev client. The QA-only App
+Check and Play Integrity APIs were enabled, the `com.renit.app` QA Firebase
+app received its debug-signing SHA-256, and the physical device's generated QA
+debug token was registered without being stored in this repository or test
+artifacts. The app uses that debug provider only in `__DEV__`; release builds
+use Play Integrity. On the rebuilt current Metro client, OAuth, authenticated
+Home/Profile, Chat, and Logout completed with zero App Check,
+`LocalRequestInterceptor`, React Native, overlay, crash, or spinner markers.
+Sanitized evidence:
+`/tmp/renit_appcheck_debugreg_20260723_232943/05_postreg_sanitized.log`,
+`07_postreg_sanitized.log`, and `09_postreg_sanitized.log`.
+
 Release blockers: the current QA APK/package has not been refreshed and
 verified; notification delivery/tap routing has not been reproduced with a
-second inactive recipient device; successful-code OTP and malformed-response
-paths need current evidence; and QA Firebase emits `No AppCheckProvider
-installed` placeholder-token warnings during authenticated flows. Do not claim
-release approval while any blocker remains.
+second inactive recipient device; and successful-code OTP and
+malformed-response paths need current evidence. Do not claim release approval
+while any blocker remains.
