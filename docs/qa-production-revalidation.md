@@ -1028,6 +1028,31 @@ Android or React Native error-level log. The disposable renter, Firebase auth
 user, conversation, and message were deleted; a scoped check found zero
 remaining records.
 
+### P1 — OAuth sign-in could enter the OTP-only signup flow
+
+The reported `build@simplyrenit.com` Google sign-in failure was traced to the
+shared OAuth handler, not the QA API: after Google had authenticated the
+existing account, the client used blank profile-name fields to send it to the
+OTP-only About/Password/Location signup flow. That flow correctly rejected the
+already-existing account. The precise pre-fix interaction was user-reported;
+an independent physical reproduction could not begin because the prior Metro
+server had stopped, so this is recorded rather than presented as fresh
+pre-fix device evidence.
+
+Google and Apple OAuth now retain the successful profile request and go
+directly to `MainTabs`; neither can enter the OTP-only route. `tsc --noEmit`
+passed. On physical Android `34962d85`, the current QA Metro bundle showed the
+Google chooser with `build@simplyrenit.com`; selecting it reached authenticated
+Home and Profile directly. QA `/api/users/me/`, Firebase chat-token,
+favorites, notifications, and discovery requests returned 200. About,
+Password, Location, the account-exists error, React Native warning/error,
+overlay, spinner, crash, and App Check markers were absent. A normal logout
+restored guest onboarding without changing profile or server data. Sanitized
+evidence: `/tmp/renit_oauth_conflict_20260724_001900/03_google_chooser.png`,
+`04_after_build_auth.png`, `05_authenticated_profile.png`,
+`10_after_logout.png`, `04_after_build_auth.log`, and
+`10_after_logout.log`.
+
 ## Current Metro QA confidence: 86% — not release-ready
 
 This section supersedes the older percentage above for the current
@@ -1046,7 +1071,8 @@ This section supersedes the older percentage above for the current
 | **Total** | **86/100** |
 
 Current physical evidence covers cold boot/resume, Google account selection,
-selected-account session persistence and logout, location denial recovery,
+the `build@simplyrenit.com` selected-account login/profile/logout regression,
+location denial recovery,
 guest discovery/search/detail/gallery, two-user receipt/read/block/report/
 unblock, controlled create/crop/upload/publish/readback with duplicate-publish
 protection and one-day availability, Profile/Support/Diagnostics, and clean
