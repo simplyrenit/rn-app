@@ -26,6 +26,7 @@ export function useOAuth() {
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
+      await GoogleSignin.signOut();
       const response = await GoogleSignin.signIn();
       if (!isSuccessResponse(response)) {
         return;
