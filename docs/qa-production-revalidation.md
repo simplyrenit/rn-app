@@ -1028,7 +1028,7 @@ Android or React Native error-level log. The disposable renter, Firebase auth
 user, conversation, and message were deleted; a scoped check found zero
 remaining records.
 
-## Current Metro QA confidence: 81% — not release-ready
+## Current Metro QA confidence: 83% — not release-ready
 
 This section supersedes the older percentage above for the current
 `exp-yash` QA Metro cycle on physical Android `34962d85` against
@@ -1042,8 +1042,8 @@ This section supersedes the older percentage above for the current
 | Chat/push/isolation | 15/20 |
 | Listing/media/availability | 18/20 |
 | Profile/support/merchant | 9/10 |
-| UX/resilience/logs | 4/10 |
-| **Total** | **81/100** |
+| UX/resilience/logs | 6/10 |
+| **Total** | **83/100** |
 
 Current physical evidence covers cold boot/resume, Google account selection,
 selected-account session persistence and logout, location denial recovery,
@@ -1054,9 +1054,18 @@ post-logout guest requests. Current controlled QA data retained for cleanup:
 listing `PROgt2Q6rN0Rxy49XQfIvxstA` and conversation
 `k3bdVEILivaqvdHTndPx`.
 
+The offline regression is now closed on the same physical device and current
+QA Metro bundle (`com.renit.app` only): after an online launch cleared Expo's
+legacy persisted auto-registration setting, a force-stopped offline launch
+kept Home and Search usable with zero Expo push-token warning/banner, React
+Native error, or Android exception. Restoring Wi-Fi/mobile data and cold
+relaunching recovered Home and Search with QA HTTP 200 responses. Evidence:
+`/tmp/renit_migration_online_20260723.log`,
+`/tmp/renit_migration_offline_home_20260723.log`,
+`/tmp/renit_migration_offline_search_20260723.log`, and
+`/tmp/renit_migration_recovery_20260723.log`.
+
 Release blockers: the current QA APK/package has not been refreshed and
 verified; notification delivery/tap routing has not been reproduced with a
 second inactive recipient device; OTP/stale-token and malformed-response paths
-need current evidence; and offline guest mode currently emits an Expo
-push-token warning (its fix is pending physical retest). Do not claim release
-approval while any blocker remains.
+need current evidence. Do not claim release approval while any blocker remains.
