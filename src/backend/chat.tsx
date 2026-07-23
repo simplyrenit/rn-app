@@ -220,13 +220,16 @@ export function useChat() {
 
   async function getChats(): Promise<Conversation[]> {
     await requireChatAuth();
+    if (!userDetails?.firebase_uid) {
+      return [];
+    }
     const firestore = requireFirestore();
     const { getDocs, collection, query, where } = getFirestoreModule();
     try {
       const querySnapshot = await getDocs(
         query(
           collection(firestore, "conversations"),
-          where("participantIds", "array-contains", userDetails?.firebase_uid)
+          where("participantIds", "array-contains", userDetails.firebase_uid)
         )
       );
       const conversations: Conversation[] = [];
@@ -246,6 +249,12 @@ export function useChat() {
   }
 
   function subscribeToChats(callback: (chats: Conversation[]) => void): () => void {
+    if (!userDetails?.firebase_uid) {
+      callback([]);
+      return () => {};
+    }
+
+    const firebaseUid = userDetails.firebase_uid;
     const firestore = requireFirestore();
     const { query, collection, onSnapshot, where } = getFirestoreModule();
     const { registerForPushNotificationsAsync, updateUserPushToken } =
@@ -256,7 +265,7 @@ export function useChat() {
       .then(() => {
         const q = query(
           collection(firestore, "conversations"),
-          where("participantIds", "array-contains", userDetails?.firebase_uid)
+          where("participantIds", "array-contains", firebaseUid)
         );
         unsubscribe = onSnapshot(
           q,
@@ -270,7 +279,7 @@ export function useChat() {
               }))
               .filter(
                 (conversation: Conversation) =>
-                  !conversation.hiddenBy?.[userDetails?.firebase_uid || ""]
+                  !conversation.hiddenBy?.[firebaseUid]
               )
               .sort(
                 (a: Conversation, b: Conversation) =>
@@ -286,8 +295,8 @@ export function useChat() {
         );
 
         registerForPushNotificationsAsync().then((token) => {
-          if (token && userDetails?.firebase_uid) {
-            updateUserPushToken(userDetails.firebase_uid, token);
+          if (token) {
+            updateUserPushToken(firebaseUid, token);
           }
         });
       })
