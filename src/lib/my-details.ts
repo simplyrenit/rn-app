@@ -45,6 +45,14 @@ export interface MyDetailsResponse {
 
 let myDetailsRequest: Promise<MyDetailsResponse> | null = null;
 let myDetailsRequestKey: string | null = null;
+let myDetailsAbortController: AbortController | null = null;
+
+export function cancelMyDetailsRequest() {
+  myDetailsAbortController?.abort();
+  myDetailsRequest = null;
+  myDetailsRequestKey = null;
+  myDetailsAbortController = null;
+}
 
 export async function fetchMyDetailsRequest(token?: string) {
   const requestKey = token ?? "__default__";
@@ -53,7 +61,9 @@ export async function fetchMyDetailsRequest(token?: string) {
     return myDetailsRequest;
   }
 
+  const controller = new AbortController();
   myDetailsRequestKey = requestKey;
+  myDetailsAbortController = controller;
   myDetailsRequest = axiosInstance
     .get<MyDetailsResponse>(
       MY_DETAILS_ENDPOINT,
@@ -62,14 +72,16 @@ export async function fetchMyDetailsRequest(token?: string) {
             headers: {
               Authorization: `Bearer ${token}`,
             },
+            signal: controller.signal,
           }
-        : undefined
+        : { signal: controller.signal }
     )
     .then((response) => response.data)
     .finally(() => {
-      if (myDetailsRequestKey === requestKey) {
+      if (myDetailsAbortController === controller) {
         myDetailsRequest = null;
         myDetailsRequestKey = null;
+        myDetailsAbortController = null;
       }
     });
 

@@ -1,4 +1,4 @@
-import { fetchMyDetailsRequest } from "@/lib/my-details";
+import { cancelMyDetailsRequest, fetchMyDetailsRequest } from "@/lib/my-details";
 import {
   getAuthTokens,
   getHasSeenWelcome,
@@ -91,6 +91,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   const [userData, setUserData] = useState<UserData | null>(null);
 
   const logout = useCallback(async () => {
+    cancelMyDetailsRequest();
     try {
       await signOutFirebase();
     } catch (error) {
@@ -260,6 +261,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
         console.warn("Unable to authenticate Firebase:", error)
       );
     } else {
+      cancelMyDetailsRequest();
       try {
         await signOutFirebase();
       } catch (error) {
