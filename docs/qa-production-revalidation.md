@@ -1027,3 +1027,36 @@ After Profile → Logout, onboarding showed with no chat-auth popup and no
 Android or React Native error-level log. The disposable renter, Firebase auth
 user, conversation, and message were deleted; a scoped check found zero
 remaining records.
+
+## Current Metro QA confidence: 81% — not release-ready
+
+This section supersedes the older percentage above for the current
+`exp-yash` QA Metro cycle on physical Android `34962d85` against
+`https://qa-api.toratora.site`.
+
+| Area | Evidence-backed confidence |
+| --- | ---: |
+| Environment | 8/10 |
+| Auth/session | 12/15 |
+| Discovery/detail/images | 15/15 |
+| Chat/push/isolation | 15/20 |
+| Listing/media/availability | 18/20 |
+| Profile/support/merchant | 9/10 |
+| UX/resilience/logs | 4/10 |
+| **Total** | **81/100** |
+
+Current physical evidence covers cold boot/resume, Google account selection,
+selected-account session persistence and logout, location denial recovery,
+guest discovery/search/detail/gallery, two-user receipt/read/block/report/
+unblock, controlled create/crop/upload/publish/readback with duplicate-publish
+protection and one-day availability, Profile/Support/Diagnostics, and clean
+post-logout guest requests. Current controlled QA data retained for cleanup:
+listing `PROgt2Q6rN0Rxy49XQfIvxstA` and conversation
+`k3bdVEILivaqvdHTndPx`.
+
+Release blockers: the current QA APK/package has not been refreshed and
+verified; notification delivery/tap routing has not been reproduced with a
+second inactive recipient device; OTP/stale-token and malformed-response paths
+need current evidence; and offline guest mode currently emits an Expo
+push-token warning (its fix is pending physical retest). Do not claim release
+approval while any blocker remains.
