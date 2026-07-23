@@ -1080,6 +1080,20 @@ post-logout guest requests. Current controlled QA data retained for cleanup:
 listing `PROgt2Q6rN0Rxy49XQfIvxstA` and conversation
 `k3bdVEILivaqvdHTndPx`.
 
+The Search location requirement is closed on the current QA release
+candidate. The app now requires a nonblank `What?` value, labels `Where?` as
+optional, and omits coordinates when no location is selected. QA API commit
+`efa1930` accepts that title-only request and returns active visible listings
+without distance ordering; its focused regression test passed in a disposable
+database. On physical Android `34962d85` in the QA Metro client, empty `What?`
+left Search disabled; `Lenovo` with no location reached one result in a single
+tap with QA HTTP 200, no permission prompt, spinner, error, or mutation.
+No-location Sort correctly omits `Nearest`; Price Low to High re-search
+remained stable. Evidence:
+`/tmp/renit_optional_location_search_20260724_011846/04_search_empty.png`,
+`07_query_lenovo_keyboard.png`, `10_results_settled.png`, `11_filters.png`,
+`14_results_price_settled.png`, and `14_results_price.log`.
+
 The offline regression is now closed on the same physical device and current
 QA Metro bundle (`com.renit.app` only): after an online launch cleared Expo's
 legacy persisted auto-registration setting, a force-stopped offline launch
