@@ -18,6 +18,7 @@ export default function VerifyEmail() {
   const [verificationCode, setVerificationCode] = useState("");
   const [password, setPassword] = useState("");
   const [isIncorrect, setIsIncorrect] = useState(false);
+  const [otpVerifyError, setOtpVerifyError] = useState("");
   const [otpResendError, setOtpResendError] = useState("");
   const { theme, setAuthTokens } = useGlobalContext();
 
@@ -31,23 +32,35 @@ export default function VerifyEmail() {
 
   const handleSubmit = useCallback(async () => {
     setIsIncorrect(false);
+    setOtpVerifyError("");
     if (verificationType === "otp") {
       if (verificationCode.length === 6) {
-        const data = await verifyOTP(email, verificationCode);
-        if (data?.access !== null && data?.refresh !== null) {
-          axiosInstance.defaults.headers.Authorization = `Bearer ${data.access}`;
-          setAuthTokens({
-            access_token: data.access,
-            refresh_token: data.refresh,
-          });
-          router.navigate("MainTabs");
-          return;
-        }
-        if (data?.is_verified) {
-          saveUser({ email_verified: true });
-          router.navigate("About");
-        } else {
-          setIsIncorrect(true);
+        try {
+          const data = await verifyOTP(email, verificationCode);
+          if (data?.access !== null && data?.refresh !== null) {
+            axiosInstance.defaults.headers.Authorization = `Bearer ${data.access}`;
+            setAuthTokens({
+              access_token: data.access,
+              refresh_token: data.refresh,
+            });
+            router.navigate("MainTabs");
+            return;
+          }
+          if (data?.is_verified) {
+            saveUser({ email_verified: true });
+            router.navigate("About");
+          } else {
+            setIsIncorrect(true);
+          }
+        } catch (error: any) {
+          const otpError = error as SignUpError;
+          if (otpError.status === 401) {
+            setIsIncorrect(true);
+          } else {
+            setOtpVerifyError(
+              otpError.message || "Unable to verify OTP right now. Please try again."
+            );
+          }
         }
       }
     } else {
@@ -171,6 +184,21 @@ export default function VerifyEmail() {
                       className="text-red-500"
                     >
                       Wrong OTP. Try again
+                    </Text>
+                  </View>
+                )}
+
+                {!!otpVerifyError && (
+                  <View className="flex mt-2 flex-row items-center space-x-2">
+                    <XCircleIcon
+                      size={14}
+                      color="#ef4444"
+                    />
+                    <Text
+                      fontSize="text-sm"
+                      className="text-red-500"
+                    >
+                      {otpVerifyError}
                     </Text>
                   </View>
                 )}

@@ -62,17 +62,13 @@ export function useAuth() {
       });
       return response.data;
     } catch (error: any) {
-      console.error(JSON.stringify(error));
+      throw toRequestError(
+        error,
+        "Unable to verify OTP right now. Please try again."
+      );
     } finally {
       setLoading(false);
     }
-
-    return {
-      access: null,
-      refresh: null,
-      is_verified: false,
-      message: "",
-    };
   }
 
   async function signUpUser(
