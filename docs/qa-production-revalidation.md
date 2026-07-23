@@ -1115,6 +1115,19 @@ spinner, or authentication. Evidence:
 One additional disposable OTP send was required for the post-fix regression;
 no account was created or changed.
 
+Mobile OTP is implemented but not yet counted as a passing release check. QA
+Firebase Phone Auth is enabled only for `renit-uat`, restricted to India, and
+the Metro dev-client SHA-1 is registered. The app now sends the Firebase ID
+token to QA API commit `d70a4bc`, which accepts only verified phone-provider
+tokens; its focused five-test suite and app typecheck passed. On Android
+`34962d85`, the phone entry screen rejected a non-E.164 number inline and the
+Firebase QA test number reached the code screen after the SHA registration.
+The device disconnected before the code could be submitted; no account,
+onboarding, SMS recipient, or server data was created. Do not count this as
+successful-code OTP evidence or increase confidence. Evidence:
+`/tmp/renit_phone_otp_20260724_015953/11_malformed_validation.png`,
+`20_retry_code_wait.png`, `20_retry_code.log`, and `21_retry_code_filled.png`.
+
 Stale access-token recovery now has current device evidence. After normal QA
 OAuth sign-in, only the app-private access token was replaced with a redacted
 invalid placeholder while the refresh token was preserved. A cold launch made
