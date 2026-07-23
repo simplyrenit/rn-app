@@ -4,9 +4,6 @@ import * as Application from "expo-application";
 
 const DEFAULT_GOOGLE_MAP_API_KEY = "AIzaSyC6iyQ9FoahX6rfZhXUvMQGTtXxEH_zgGA";
 
-export const WEB_CLIENT_ID =
-  "899825999056-rir4k4ci4jaeaikdftuah8l55u3mio89.apps.googleusercontent.com";
-
 export const ANDROID_CLIENT_ID =
   "899825999056-1fbjdig0hm74912abpkaba6gcv5d4788.apps.googleusercontent.com";
 
@@ -95,6 +92,11 @@ const resolveAppEnv = (): AppEnv => {
 };
 
 export const DEV_MODE: AppEnv = resolveAppEnv();
+
+export const WEB_CLIENT_ID =
+  DEV_MODE === "QA"
+    ? ""
+    : "899825999056-rir4k4ci4jaeaikdftuah8l55u3mio89.apps.googleusercontent.com";
 
 const QA_GOOGLE_MAP_API_KEY =
   (Constants.expoConfig?.extra?.googleMapApiKey as string | undefined) ||

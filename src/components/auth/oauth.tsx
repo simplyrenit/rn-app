@@ -31,11 +31,12 @@ export function useOAuth() {
         return;
       }
       const userInfo = response.data;
+      const googleToken = userInfo?.idToken || (await GoogleSignin.getTokens()).accessToken;
 
-      if (userInfo?.idToken) {
+      if (googleToken) {
         try {
           const res = await axios.post<AuthTokens>(GOOGLE_SIGN_IN_ENDPOINT, {
-            access_token: userInfo.idToken,
+            access_token: googleToken,
           });
 
 
