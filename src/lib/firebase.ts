@@ -1,5 +1,5 @@
 import { getAuthTokens } from "./auth-fns";
-import { FIREBASE_TOKEN_ENDPOINT } from "./config";
+import { DEV_MODE, FIREBASE_TOKEN_ENDPOINT } from "./config";
 import axiosInstance from "./networkUtils";
 import appCheck from "@react-native-firebase/app-check";
 
@@ -14,7 +14,9 @@ const initializeAppCheck = () => {
   if (!appCheckInitialization) {
     const provider = appCheck().newReactNativeFirebaseAppCheckProvider();
     provider.configure({
-      android: { provider: __DEV__ ? "debug" : "playIntegrity" },
+      android: {
+        provider: __DEV__ || DEV_MODE === "QA" ? "debug" : "playIntegrity",
+      },
     });
     appCheckInitialization = appCheck().initializeAppCheck({
       provider,
