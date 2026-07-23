@@ -939,7 +939,17 @@ a force-stop/cold start rendered a usable empty Home. After both connections
 were restored, another force-stop/cold start repopulated QA discovery. Android
 and React Native error-level logs were empty for both runs.
 
-## Current independent confidence: 83%
+### Current QA password login and merchant gate regression — physical pass
+
+A disposable pending QA merchant completed the real Email → Password login
+flow on Android `34962d85`. Profile rendered the account email, `Merchant
+status: pending`, and the explanatory listing restriction. The Post tab then
+rendered `Merchant approval required` rather than admitting the account into
+listing creation. Logout returned to onboarding without an error; after a
+cold start the app remained guest. The QA user and its Firebase user document
+were deleted immediately after the check.
+
+## Current independent confidence: 84%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -972,6 +982,8 @@ one point. The coordinate-less product-detail P0 was independently reproduced
 and physically closed on the rebuilt standalone QA APK, increasing discovery,
 detail, and resilience confidence by one point. The current standalone guest
 offline/online recovery and guest trust-gate pass increase resilience
+confidence by one point. The current physical password-login, merchant-gate,
+logout, and clean-guest-restart cycle increases authentication and profile
 confidence by one point.
 
 ## Superseded historical confidence: 80%
