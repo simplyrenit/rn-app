@@ -83,6 +83,7 @@ export default function SearchScreen() {
   const [open, setOpen] = useState(false);
   const [isFocus, setIsFocus] = useState(false);
   const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [suggestionsList, setSuggestionsList] = useState<any[] | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const googlePlacesRef = useRef<any>(null);
@@ -165,8 +166,10 @@ export default function SearchScreen() {
   };
 
   const handleCurrentLocation = async () => {
+    setLocationError(null);
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
+      setLocationError("Location access is denied. Search for an area or street instead.");
       return;
     }
 
@@ -668,6 +671,12 @@ export default function SearchScreen() {
                       }}
                     />
                   </View>
+
+                  {locationError && (
+                    <Text className="mt-3 text-sm text-gray-500">
+                      {locationError}
+                    </Text>
+                  )}
 
                   <TouchableOpacity
                     className={`h-[48px] rounded-[12px] w-full border-b ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
