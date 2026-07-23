@@ -143,6 +143,7 @@ export default function EditCoverImage() {
 
         {isEditing && selectedImage && (
           <ImageEditor
+            isVisible={isEditing}
             imageUri={selectedImage}
             // @ts-ignore
             onCropComplete={onCropComplete}

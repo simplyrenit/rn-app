@@ -995,3 +995,17 @@ The remaining release risks include background push delivery on a second
 device, listing image-count and failure paths, support and merchant edge
 paths, offline/slow-network recovery, representative media visual regression,
 and a distributable release-package test.
+
+## Current QA media crop regression — Metro physical pass
+
+On physical Android `34962d85`, the QA Metro runtime against
+`https://qa-api.toratora.site` opened an owned listing's **Edit Product
+Images → Edit Cover Image** flow. Selecting a gallery asset opened the native
+crop modal with Cancel and Crop actions; Cancel returned to the editor without
+a React Native or Android error. The create-listing screen received the same
+required `isVisible={isEditing}` prop.
+
+This confirms the JavaScript/native crop-modal behavior through Metro. The
+installed `com.renit.app.qa` APK predates this fix, so QA-package confirmation
+is still required. Existing QA fixture covers are screenshots, so they are not
+valid visual-media quality evidence.
