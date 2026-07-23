@@ -1028,7 +1028,7 @@ Android or React Native error-level log. The disposable renter, Firebase auth
 user, conversation, and message were deleted; a scoped check found zero
 remaining records.
 
-## Current Metro QA confidence: 83% — not release-ready
+## Current Metro QA confidence: 84% — not release-ready
 
 This section supersedes the older percentage above for the current
 `exp-yash` QA Metro cycle on physical Android `34962d85` against
@@ -1037,13 +1037,13 @@ This section supersedes the older percentage above for the current
 | Area | Evidence-backed confidence |
 | --- | ---: |
 | Environment | 8/10 |
-| Auth/session | 12/15 |
+| Auth/session | 13/15 |
 | Discovery/detail/images | 15/15 |
 | Chat/push/isolation | 15/20 |
 | Listing/media/availability | 18/20 |
 | Profile/support/merchant | 9/10 |
 | UX/resilience/logs | 6/10 |
-| **Total** | **83/100** |
+| **Total** | **84/100** |
 
 Current physical evidence covers cold boot/resume, Google account selection,
 selected-account session persistence and logout, location denial recovery,
@@ -1065,7 +1065,18 @@ relaunching recovered Home and Search with QA HTTP 200 responses. Evidence:
 `/tmp/renit_migration_offline_search_20260723.log`, and
 `/tmp/renit_migration_recovery_20260723.log`.
 
+The current guest OTP error path is also verified. A disposable invalid-domain
+QA address reached the verification screen; six zeroes received the QA 401
+invalid-code response and displayed only `Wrong OTP. Try again`, with no
+React Native error/warning, LogBox, developer overlay, exception, stuck
+spinner, or authentication. Evidence:
+`/tmp/renit_otp_fix_20260723_224743/07_invalid_submit.png` and
+`/tmp/renit_otp_fix_20260723_224743/07_filtered_app_errors.log` (empty).
+One additional disposable OTP send was required for the post-fix regression;
+no account was created or changed.
+
 Release blockers: the current QA APK/package has not been refreshed and
 verified; notification delivery/tap routing has not been reproduced with a
-second inactive recipient device; OTP/stale-token and malformed-response paths
-need current evidence. Do not claim release approval while any blocker remains.
+second inactive recipient device; successful-code OTP, stale-token, and
+malformed-response paths need current evidence. Do not claim release approval
+while any blocker remains.
