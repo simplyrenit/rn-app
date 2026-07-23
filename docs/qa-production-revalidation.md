@@ -910,7 +910,27 @@ merchant was deleted before a listing was submitted, so no product, upload,
 or customer-visible QA inventory was created; a cold launch recovered cleanly
 to Guest Home.
 
-## Current independent confidence: 81%
+### P0 — Coordinate-less listing crashed Product Detail
+
+An active QA listing with no saved coordinates opened from Home and crashed the
+old standalone APK in native `react-native-maps` (`NoSuchKeyException:
+longitude`). Its simultaneous similar-products request also returned HTTP 500
+because the backend attempted a geospatial distance query with a null point.
+
+`ProductMap` now renders `Location unavailable` instead of constructing a map
+without finite coordinates. Similar-products retains category matching but
+skips only the distance filter when the source listing has no location. The
+new isolated Django regression test passed, `tsc --noEmit` passed, the QA web
+service was rebuilt/deployed, and the live endpoint returned HTTP 200 for the
+coordinate-less fixture. A forced-bundle arm64 QA APK was archive-verified for
+both this guard and `qa-api.toratora.site`, then installed on Android
+`34962d85`. The actual owner listing opened, rendered the unavailable-location
+state, and showed `You can't review your own listing.` from All reviews with
+no React Native or Android error-level log. Its disposable user, listing, and
+Firebase user document were deleted; a final cold launch returned cleanly to
+guest onboarding.
+
+## Current independent confidence: 82%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -939,7 +959,9 @@ by two points. The physical current-build Block & Report persistence and
 duplicate-prevention cycle closes a P1 moderation-integrity gap and increases
 chat/account-safety confidence by two points. The current physical five-image
 gallery-cap and sixth-selection rejection increase listing/media confidence by
-one point.
+one point. The coordinate-less product-detail P0 was independently reproduced
+and physically closed on the rebuilt standalone QA APK, increasing discovery,
+detail, and resilience confidence by one point.
 
 ## Superseded historical confidence: 80%
 

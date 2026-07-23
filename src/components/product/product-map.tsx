@@ -1,11 +1,12 @@
 import React from "react";
-import { View, Platform } from "react-native";
+import { View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
+import { Text } from "@/components/core";
 
 interface ProductMapProps {
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   isDarkMode: boolean;
 }
 
@@ -14,6 +15,29 @@ export const ProductMap: React.FC<ProductMapProps> = ({
   longitude,
   isDarkMode,
 }) => {
+  if (
+    typeof latitude !== "number" ||
+    typeof longitude !== "number" ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude)
+  ) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          height: 200,
+          borderRadius: 20,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text className={isDarkMode ? "text-white/50" : "text-black/50"}>
+          Location unavailable
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View
       style={{ flex: 1, height: 200, overflow: "hidden", borderRadius: 20 }}
