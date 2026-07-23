@@ -1,12 +1,29 @@
 import { getAuthTokens } from "./auth-fns";
 import { FIREBASE_TOKEN_ENDPOINT } from "./config";
 import axiosInstance from "./networkUtils";
+import appCheck from "@react-native-firebase/app-check";
 
 let cachedApp: any | null | undefined;
 let cachedFirestore: any | null | undefined;
 let cachedStorage: any | null | undefined;
 let firebaseSignIn: Promise<void> | null = null;
 let firebaseAccessToken: string | null = null;
+let appCheckInitialization: Promise<void> | null = null;
+
+const initializeAppCheck = () => {
+  if (!appCheckInitialization) {
+    const provider = appCheck().newReactNativeFirebaseAppCheckProvider();
+    provider.configure({
+      android: { provider: __DEV__ ? "debug" : "playIntegrity" },
+    });
+    appCheckInitialization = appCheck().initializeAppCheck({
+      provider,
+      isTokenAutoRefreshEnabled: true,
+    });
+  }
+
+  return appCheckInitialization;
+};
 
 export const getFirebaseApp = () => {
   if (cachedApp !== undefined) {
@@ -82,6 +99,7 @@ const getFirebaseAuth = () => {
 };
 
 export const authenticateFirebase = async (accessToken: string) => {
+  await initializeAppCheck();
   const auth = getFirebaseAuth();
   if (!auth) {
     throw new Error("Firebase authentication is unavailable.");
