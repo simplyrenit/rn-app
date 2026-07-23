@@ -6,7 +6,7 @@ import moment from "moment-timezone";
 export function useSearch() {
   async function searchProducts(
     item: string,
-    coordinates: { lat: number; lng: number },
+    coordinates: { lat: number; lng: number } | undefined,
     when: { start_date: string | undefined; end_date: string | undefined },
     filters?: {
       sort: string;
@@ -20,11 +20,11 @@ export function useSearch() {
     }
   ): Promise<BackendProduct[]> {
     try {
-      const params: Record<string, string | number> = {
-        lat: coordinates.lat,
-        long: coordinates.lng,
-        title: item ?? "",
-      };
+      const params: Record<string, string | number> = { title: item ?? "" };
+      if (coordinates) {
+        params.lat = coordinates.lat;
+        params.long = coordinates.lng;
+      }
 
       if (when.start_date) {
         params.start_date = moment(when.start_date)

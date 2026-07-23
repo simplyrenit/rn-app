@@ -135,16 +135,13 @@ export default function SearchResults() {
   const applyFilterAndSearch = async (
     nextFilters: typeof filters = filters
   ) => {
-    if (coords.lat == null || coords.lng == null) {
-      setProducts([]);
-      return;
-    }
-
     setIsLoading(true);
     try {
       const filteredProducts = await searchProducts(
         selectedItem,
-        { lat: coords.lat!, lng: coords.lng! },
+        coords.lat != null && coords.lng != null
+          ? { lat: coords.lat, lng: coords.lng }
+          : undefined,
         {
           start_date: range.startDate?.toISOString() ?? undefined,
           end_date: range.endDate?.toISOString() ?? undefined,

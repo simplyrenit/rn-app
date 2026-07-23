@@ -178,14 +178,16 @@ export default function SearchScreen() {
     setBottomSheetVisible(false);
   };
 
-  const isSearchDisabled = /* !selectedItem || */ !selectedLocation;
+  const isSearchDisabled = !selectedItem?.trim();
 
   const onPress = async () => {
     try {
       setProductsLoading(true);
       const products = await searchProducts(
         selectedItem!,
-        { lat: selectedLocation!.lat!, lng: selectedLocation!.lng! },
+        selectedLocation?.lat != null && selectedLocation.lng != null
+          ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
+          : undefined,
         {
           start_date: range?.startDate?.toISOString() ?? undefined,
           end_date: range?.endDate?.toISOString() ?? undefined,
@@ -193,7 +195,7 @@ export default function SearchScreen() {
       );
       navigation.navigate("SearchResults", {
         selectedItem: selectedItem!,
-        address: selectedLocationName!,
+        address: selectedLocationName ?? "",
         coords: { lat: selectedLocation?.lat, lng: selectedLocation?.lng },
         range,
         products,
@@ -491,7 +493,7 @@ export default function SearchScreen() {
                       </Text>
                     ) : (
                       <Text style={{ color: "gray", fontSize: 15 }}>
-                        {"  "}Select a location
+                        {"  "}Select a location (optional)
                       </Text>
                     )}
                   </View>
