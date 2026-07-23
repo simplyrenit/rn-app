@@ -930,7 +930,16 @@ no React Native or Android error-level log. Its disposable user, listing, and
 Firebase user document were deleted; a final cold launch returned cleanly to
 guest onboarding.
 
-## Current independent confidence: 82%
+### Current standalone QA guest resilience regression — physical pass
+
+On the forced-bundle QA APK installed on Android `34962d85`, guest chat and
+review actions remained on their current screens and showed their sign-in
+guidance without an app-originated error. With Wi-Fi and mobile data disabled,
+a force-stop/cold start rendered a usable empty Home. After both connections
+were restored, another force-stop/cold start repopulated QA discovery. Android
+and React Native error-level logs were empty for both runs.
+
+## Current independent confidence: 83%
 
 The authenticated standalone-QA pass now covers password sign-in, profile,
 real chat message send, push-token registration, generic address search, and
@@ -961,7 +970,9 @@ chat/account-safety confidence by two points. The current physical five-image
 gallery-cap and sixth-selection rejection increase listing/media confidence by
 one point. The coordinate-less product-detail P0 was independently reproduced
 and physically closed on the rebuilt standalone QA APK, increasing discovery,
-detail, and resilience confidence by one point.
+detail, and resilience confidence by one point. The current standalone guest
+offline/online recovery and guest trust-gate pass increase resilience
+confidence by one point.
 
 ## Superseded historical confidence: 80%
 
