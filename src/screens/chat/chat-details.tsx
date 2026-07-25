@@ -378,6 +378,7 @@ export default function ChatDetailsScreen() {
   return (
     <StaticContainer width={100}>
       <KeyboardAwareScrollView
+        keyboardShouldPersistTaps="always"
         contentContainerStyle={{
           justifyContent: "space-between",
           height: "100%",
