@@ -56,11 +56,13 @@ export default function HangTight() {
         navigation.goBack()
       }
       setIsPosting(false);
-    } catch (e) {
+    } catch (e: any) {
+      const validationError = e.response?.data?.images?.[0];
+      console.error("Product post failed:", e.response?.data ?? e.message);
       Toast.show({
         type: "customToast",
         position: "bottom",
-        text1: "There was an error posting your product",
+        text1: validationError ?? "There was an error posting your product",
         text2: "error",
         visibilityTime: 4000,
         autoHide: true,
