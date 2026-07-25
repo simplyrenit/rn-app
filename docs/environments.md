@@ -7,7 +7,7 @@ secrets.
 | Environment | API | Intended use |
 | --- | --- | --- |
 | Dev | Local backend | Developer emulator or device testing |
-| QA | `https://qa-api.simplyrenit.com` | Internal QA builds and manual regression testing |
+| QA | `https://qa-api.toratora.site` | Internal QA builds and manual regression testing |
 | Prod | `https://api.simplyrenit.com` | Customer release builds |
 
 ## Run a local Dev build
