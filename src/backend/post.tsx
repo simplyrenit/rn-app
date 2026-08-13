@@ -65,51 +65,28 @@ export function usePost() {
     imageUri: string
   ): Promise<void> => {
     if (!authTokens) return;
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await fetch(imageUri);
-        const blob = await response.blob();
+    const imageResponse = await fetch(imageUri);
+    if (!imageResponse.ok) {
+      throw new Error(`Unable to read the selected image: ${imageResponse.status}`);
+    }
 
-        const xhr = new XMLHttpRequest();
-        xhr.open("PUT", presignedUrl, true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
 
-        // Only set these specific headers
-        xhr.setRequestHeader("Content-Type", "image/jpeg");
-        // Don't set any other headers to avoid signature mismatch
+    try {
+      const uploadResponse = await fetch(presignedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "image/jpeg" },
+        body: await imageResponse.blob(),
+        signal: controller.signal,
+      });
 
-        // Add detailed error logging
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const percentComplete = (e.loaded / e.total) * 100;
-          }
-        };
-
-        xhr.onload = () => {
-          if (xhr.status === 200) {
-            resolve();
-          } else {
-            const errorText = xhr.responseText;
-            console.error("Upload failed with status:", xhr.status);
-            console.error("Error response:", errorText);
-            reject(new Error(`Upload failed: ${xhr.status} ${errorText}`));
-          }
-        };
-
-        xhr.onerror = () => {
-          const errorText = xhr.responseText;
-          console.error("Network error during upload");
-          console.error("Error details:", errorText);
-          reject(new Error("Network error during upload"));
-        };
-
-        // Log the actual request being sent
-
-        xhr.send(blob);
-      } catch (error) {
-        console.error("Upload error:", error);
-        reject(error);
+      if (!uploadResponse.ok) {
+        throw new Error(`Image upload failed: ${uploadResponse.status}`);
       }
-    });
+    } finally {
+      clearTimeout(timeoutId);
+    }
   };
 
   const getPresignedURLs = async (images: ProductImage[]) => {
