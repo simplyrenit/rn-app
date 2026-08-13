@@ -1,0 +1,20 @@
+{
+  "name": "renit-local",
+  "interface": {
+    "displayName": "Renit Local"
+  },
+  "plugins": [
+    {
+      "name": "renit-agentic-dev",
+      "source": {
+        "source": "local",
+        "path": "./plugins/renit-agentic-dev"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    }
+  ]
+}

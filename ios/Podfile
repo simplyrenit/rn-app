@@ -34,6 +34,9 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
+$RNFirebaseAsStaticFramework = true
+use_frameworks! :linkage => :static
+
 target 'Renit' do
   use_expo_modules!
 # @generated begin react-native-maps - expo prebuild (DO NOT MODIFY) sync-e9cc66c360abe50bc66d89fffb3c55b034d7d369
@@ -70,6 +73,7 @@ target 'Renit' do
         end
       end
     end
+
   end
 
   post_integrate do |installer|
@@ -78,5 +82,6 @@ target 'Renit' do
     rescue => e
       Pod::UI.warn e
     end
+
   end
 end

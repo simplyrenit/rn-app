@@ -20,10 +20,6 @@ module.exports = {
             ...app.expo.extra,
             appEnv,
             googleMapApiKey: process.env.EXPO_PUBLIC_QA_GOOGLE_MAP_API_KEY,
-            eas: {
-              ...app.expo.extra.eas,
-              projectId: "fc02cb6a-f30c-48e7-9762-e6f6d29cbfa9",
-            },
           },
         }
       : {}),

@@ -60,6 +60,7 @@ For an Android Studio emulator, use `10.0.2.2:8000` instead. See [local developm
 
 ```bash
 npm start                 # Expo/Metro server
+npm run start:qa          # QA-configured Metro server for a development client
 npm run android           # native Android development build
 npm run ios               # native iOS development build (macOS only)
 npm run web               # Expo web server (limited native-module support)
@@ -71,5 +72,6 @@ npm run build:qa          # EAS Android QA APK
 
 - [Environment guide](docs/environments.md)
 - [Local development](docs/local-development.md)
+- [Run QA on a connected iPhone](docs/local-development.md#run-qa-on-a-connected-iphone)
 - [Beta launch guide](docs/beta-launch-guide.md)
 - [QA strategy](docs/qa-e2e-strategy.md)

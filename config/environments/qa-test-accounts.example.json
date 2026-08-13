@@ -1,0 +1,10 @@
+{
+  "user_one": {
+    "email": "qa-user-one@example.invalid",
+    "password": "replace-in-local-file"
+  },
+  "user_two": {
+    "email": "qa-user-two@example.invalid",
+    "password": "replace-in-local-file"
+  }
+}

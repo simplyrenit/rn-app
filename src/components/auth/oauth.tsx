@@ -6,7 +6,10 @@ import {
 } from "@react-native-google-signin/google-signin";
 import axios from "axios";
 import { useState } from "react";
-import { APPLE_SIGN_IN_ENDPOINT, GOOGLE_SIGN_IN_ENDPOINT } from "@/lib/config";
+import {
+  APPLE_SIGN_IN_ENDPOINT,
+  GOOGLE_SIGN_IN_ENDPOINT,
+} from "@/lib/config";
 import { useGlobalContext } from "@/context/global-context";
 import { AuthTokens, useTypedNavigation } from "@/lib/types";
 import * as AppleAuthentication from "expo-apple-authentication";

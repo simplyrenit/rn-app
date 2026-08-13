@@ -19,11 +19,20 @@
       "environment": "preview",
       "env": {
         "EXPO_PUBLIC_APP_ENV": "QA",
-        "EXPO_PUBLIC_QA_API_HOST": "qa-api.simplyrenit.com"
+        "EXPO_PUBLIC_QA_API_HOST": "qa-api.toratora.site"
       },
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleQa"
+      },
+      "channel": "qa"
+    },
+    "testflight-qa": {
+      "environment": "preview",
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "QA",
+        "EXPO_PUBLIC_QA_API_HOST": "qa-api.toratora.site"
       },
       "channel": "qa"
     },

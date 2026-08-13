@@ -7,7 +7,7 @@ secrets.
 | Environment | API | Intended use |
 | --- | --- | --- |
 | Dev | Local backend | Developer emulator or device testing |
-| QA | `https://qa-api.simplyrenit.com` | Internal QA builds and manual regression testing |
+| QA | `https://qa-api.toratora.site` | Internal QA builds and manual regression testing |
 | Prod | `https://api.simplyrenit.com` | Customer release builds |
 
 ## Run a local Dev build
@@ -34,7 +34,7 @@ development client against it:
 
 ```powershell
 Copy-Item config/environments/qa.env.example config/environments/qa.env
-node --env-file=config/environments/qa.env ./node_modules/expo/bin/cli start --clear
+npm run start:qa -- --clear --lan
 ```
 
 Create an installable QA APK with the environment locked into the build:
@@ -52,6 +52,6 @@ Do not point a QA build at production by changing its runtime environment.
 npx eas-cli build --platform android --profile release
 ```
 
-The EAS profiles in `eas.json` are the source of truth for cloud builds.
-The files in `config/environments/` make the same settings reproducible for
-local Metro sessions. Restart Metro after changing any environment file.
+The files in `config/environments/` are the source of truth for local Metro
+sessions. Restart Metro after changing any environment file. Validate that the
+QA host in `eas.json` matches this file before creating a cloud QA build.

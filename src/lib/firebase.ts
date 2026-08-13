@@ -17,6 +17,12 @@ const initializeAppCheck = () => {
       android: {
         provider: __DEV__ || DEV_MODE === "QA" ? "debug" : "playIntegrity",
       },
+      apple: {
+        provider:
+          __DEV__ || DEV_MODE === "QA"
+            ? "debug"
+            : "appAttestWithDeviceCheckFallback",
+      },
     });
     appCheckInitialization = appCheck().initializeAppCheck({
       provider,

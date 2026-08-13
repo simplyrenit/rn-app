@@ -1,0 +1,18 @@
+{
+  "name": "renit-agentic-dev",
+  "version": "0.1.0",
+  "description": "QA-only delivery, device QA, and release-preflight workflows for Renit.",
+  "author": {
+    "name": "Renit"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Renit Agentic Dev",
+    "shortDescription": "QA-only workflows for Renit development.",
+    "longDescription": "Coordinates scoped delivery, independent review, QA device testing, and read-only release readiness for the Renit mobile app.",
+    "developerName": "Renit",
+    "category": "Development",
+    "capabilities": ["Write", "Review"],
+    "defaultPrompt": "Use Renit Agentic Dev to deliver and verify a scoped QA-backed mobile change."
+  }
+}

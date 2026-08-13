@@ -16,11 +16,12 @@ import { Text } from "@/components/core";
 import "react-native-get-random-values";
 import { AuthProvider } from "@/context/auth-context";
 import { QueryClient, QueryClientProvider } from "react-query";
-import { WEB_CLIENT_ID } from "@/lib/config";
+import { IOS_CLIENT_ID, WEB_CLIENT_ID } from "@/lib/config";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 
 GoogleSignin.configure({
+  iosClientId: IOS_CLIENT_ID,
   ...(WEB_CLIENT_ID && {
     webClientId: WEB_CLIENT_ID,
     offlineAccess: true,

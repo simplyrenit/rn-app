@@ -7,11 +7,16 @@
 
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTLinkingManager.h>
+#import <FirebaseCore/FirebaseCore.h>
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+  if ([FIRApp defaultApp] == nil) {
+    [FIRApp configure];
+  }
+
 // @generated begin react-native-maps-init - expo prebuild (DO NOT MODIFY) sync-00d36386ae810992e3ce1b72aeb9f139e645a1a1
 #if __has_include(<GoogleMaps/GoogleMaps.h>)
   [GMSServices provideAPIKey:@"AIzaSyBmpnoIzbZLb0kCsIk5HcKnYfWc7dZUM-w"];

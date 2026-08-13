@@ -88,7 +88,9 @@ const resolveAppEnv = (): AppEnv => {
     return APP_ENV_FROM_ENV as AppEnv;
   }
 
-  return __DEV__ ? "DEV" : REMOTE_FALLBACK_ENV;
+  // Local backend sessions are opt-in. Device development defaults to QA so a
+  // Debug build cannot accidentally target a backend that is not running here.
+  return __DEV__ ? "QA" : REMOTE_FALLBACK_ENV;
 };
 
 export const DEV_MODE: AppEnv = resolveAppEnv();
