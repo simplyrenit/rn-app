@@ -1,18 +1,22 @@
 {
   "name": "renit-agentic-dev",
-  "version": "0.1.0",
-  "description": "QA-only delivery, device QA, and release-preflight workflows for Renit.",
+  "version": "0.1.0+codex.20260814060144",
+  "description": "QA-only delivery, review, device QA, push diagnostics, and local TestFlight workflows for Renit.",
   "author": {
     "name": "Renit"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Renit Agentic Dev",
-    "shortDescription": "QA-only workflows for Renit development.",
-    "longDescription": "Coordinates scoped delivery, independent review, QA device testing, and read-only release readiness for the Renit mobile app.",
+    "shortDescription": "QA development through local TestFlight release.",
+    "longDescription": "Coordinates scoped delivery, independent review, QA device testing, push diagnosis, release readiness, and explicitly approved local TestFlight uploads for the Renit mobile app.",
     "developerName": "Renit",
     "category": "Development",
-    "capabilities": ["Write", "Review"],
-    "defaultPrompt": "Use Renit Agentic Dev to deliver and verify a scoped QA-backed mobile change."
+    "capabilities": [
+      "Write",
+      "Review",
+      "Interactive"
+    ],
+    "defaultPrompt": "Use Renit Agentic Dev to deliver, verify, or prepare a QA-backed mobile release."
   }
 }

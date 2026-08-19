@@ -14,17 +14,27 @@ done
 qa_env="config/environments/qa.env.example"
 credentials="config/environments/qa-test-accounts.local.json"
 
-if ! test -f "$qa_env" || ! grep -qx 'EXPO_PUBLIC_APP_ENV=QA' "$qa_env"; then
-  echo "BLOCKED: $qa_env must explicitly select QA."
+if ! test -f "$qa_env" || ! grep -qx 'EXPO_PUBLIC_APP_ENV=QA' "$qa_env" || ! grep -qx 'EXPO_PUBLIC_QA_API_HOST=qa-api.toratora.site' "$qa_env"; then
+  echo "BLOCKED: $qa_env must select QA and qa-api.toratora.site."
   exit 1
 fi
 
-for required_path in app.config.js eas.json package-lock.json; do
+for required_path in app.config.js eas.json package-lock.json ios/Renit.xcworkspace/contents.xcworkspacedata ios/Renit/GoogleService-Info.plist ios/Renit/Renit.entitlements; do
   if ! test -f "$required_path"; then
     echo "BLOCKED: required project file '$required_path' is missing."
     exit 1
   fi
 done
+
+if ! node -e 'const eas = require("./eas.json"); for (const profileName of ["qa", "testflight-qa"]) { const env = eas.build?.[profileName]?.env; if (env?.EXPO_PUBLIC_APP_ENV !== "QA" || env.EXPO_PUBLIC_QA_API_HOST !== "qa-api.toratora.site") process.exit(1); }'; then
+  echo "BLOCKED: eas.json must contain QA and testflight-qa profiles for qa-api.toratora.site."
+  exit 1
+fi
+
+if ! grep -q '<key>aps-environment</key>' ios/Renit/Renit.entitlements; then
+  echo "BLOCKED: iOS push entitlement is missing from ios/Renit/Renit.entitlements."
+  exit 1
+fi
 
 if ! test -f "$credentials"; then
   echo "BLOCKED: create $credentials from config/environments/qa-test-accounts.example.json."
