@@ -1,4 +1,5 @@
 import { useChat } from "@/backend/chat";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { ChatCard } from "@/components/chat/chat-card";
 import { StaticContainer, Text } from "@/components/core";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
@@ -16,6 +17,7 @@ import Skeleton from "@/components/core/skeleton";
 const StyledInput = styled(TextInput);
 
 export default function Chat() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { theme, authTokens, isAuthenticated, userDetails } =
     useGlobalContext();
   const [conversations, setConversations] = React.useState<Conversation[]>([]);
@@ -130,6 +132,9 @@ export default function Chat() {
         ) : (
           <FlatList
             data={conversations}
+            // Measured tab bar height, so the last conversation is not hidden
+            // behind the bar. Differs between iOS and Android.
+            contentContainerStyle={{ paddingBottom: tabBarHeight }}
             ListEmptyComponent={() => <View style={{ padding: 32, height: Dimensions.get('window').height * 0.6, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: 'rgba(165, 165, 165, 0.7)', fontSize: 18, fontWeight: '600' }}>
                 No Chats

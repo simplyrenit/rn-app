@@ -1,4 +1,5 @@
 import useSaved from "@/backend/useSaved";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Card, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import Skeleton from "@/components/core/skeleton";
@@ -16,6 +17,7 @@ const margin = wp(5.7);
 const { height } = Dimensions.get("window");
 
 export default function Saved() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { favorites, loading } = useSaved();
   const { authTokens, isAuthenticated, theme } = useGlobalContext();
   const isDarkMode = theme === "dark";
@@ -116,7 +118,9 @@ export default function Saved() {
               numColumns={2}
               columnWrapperStyle={{ justifyContent: "space-between" }}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: hp("10%") }}
+              // Measured rather than a fixed percentage: hp("10%") was less
+              // than the iOS tab bar height, so the last row stayed clipped.
+              contentContainerStyle={{ paddingBottom: tabBarHeight }}
             />
           )}
         </View>

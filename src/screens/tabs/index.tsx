@@ -7,6 +7,7 @@ import { Experiences } from "@/components/home/sections/experiences";
 import { Popular } from "@/components/home/sections/popular";
 import { RecentlyAdded } from "@/components/home/sections/top-picks";
 import { View, ScrollView } from "react-native";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useGlobalContext } from "@/context/global-context";
 import { useAuthContext } from "@/context/auth-context";
 import { useNotifications } from "@/backend/useNotification";
@@ -28,10 +29,18 @@ export default function Home() {
     void getNotifications();
   }, [isAuthenticated]);
 
+  const tabBarHeight = useBottomTabBarHeight();
+
   return (
     <StaticContainer width={100}>
       <SearchBar />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        // Without this the last section renders behind the tab bar. The height
+        // is measured rather than hardcoded because the bar is a different
+        // height on iOS and Android and includes the safe-area inset.
+        contentContainerStyle={{ paddingBottom: tabBarHeight }}
+      >
         <Categories />
         <View className="mt-2">
           <Experiences />
