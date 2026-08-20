@@ -188,6 +188,18 @@ Chat contains no `KeyboardAvoidingView` at all; the message input clears the
 keyboard because `chat-details.tsx` is built on `StaticContainer` and inherits
 the `useKeyboardInset` fix from round 2.
 
+### Dead back button in chat detail — FIXED
+`src/components/chat/chat-header.tsx` called `navigation.navigate("Chat")`.
+Navigating to a **tab** only focuses that tab; it does not pop the tab's stack,
+which still had the detail screen on top — so the arrow fired and nothing
+appeared to happen. Now `canGoBack() ? goBack() : navigate("Chat")`, keeping
+the fallback for arriving via a push notification with nothing to pop.
+Verified: returns to the chat list.
+
+Swept for the same shape elsewhere — this was the only back control using
+`navigate()` to a tab. The three other non-`goBack` handlers are sheet-close
+callbacks and are correct.
+
 ## Follow-up, deliberately not changed
 
 About a dozen bare `alert()` calls remain (permission denials, send failures)

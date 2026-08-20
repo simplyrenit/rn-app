@@ -71,7 +71,19 @@ export function ChatHeader({
     >
       <View className="flex-row items-center relative">
         <TouchableOpacity
-          onPress={() => navigation.navigate("Chat")}
+          // goBack() pops this screen. navigate("Chat") only focuses the Chat
+          // tab, which still had this detail screen on top of its stack, so the
+          // back arrow fired and nothing appeared to happen. The fallback
+          // covers arriving here directly from a push notification, where
+          // there is nothing to pop.
+          onPress={() =>
+            navigation.canGoBack()
+              ? navigation.goBack()
+              : navigation.navigate("Chat")
+          }
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Back to chats"
           className="flex-row items-center mr-3"
         >
           <ArrowLeftIcon
