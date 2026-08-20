@@ -1,3 +1,4 @@
+import Toast from "react-native-toast-message";
 import { useAuth } from "@/backend/auth";
 import { useProfile } from "@/backend/profile";
 import { Button, Text } from "@/components/core";
@@ -223,7 +224,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         setIsOtpSent(false);
       } catch (error) {
         console.error("Error updating email:", error);
-        alert("Failed to update email. Please try again.");
+        Toast.show({
+          type: "customToast",
+          position: "bottom",
+          text1: "Could not update your email. Please try again.",
+          text2: "error",
+        });
       }
     }
   };
@@ -333,7 +339,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const pickImageFromGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      alert("Sorry, we need media library permissions to make this work!");
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Photo library access is needed to choose an image",
+        text2: "error",
+      });
       return;
     }
 
@@ -355,7 +366,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      alert("Sorry, we need camera permissions to make this work!");
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Camera access is needed to take a photo",
+        text2: "error",
+      });
       return;
     }
 

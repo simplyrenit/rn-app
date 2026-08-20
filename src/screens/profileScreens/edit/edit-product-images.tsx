@@ -1,3 +1,4 @@
+import Toast from "react-native-toast-message";
 import { Button, StaticContainer, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -60,7 +61,12 @@ export default function EditProductImages() {
   const pickImageFromGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      alert("Sorry, we need media library permissions to make this work!");
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Photo library access is needed to choose an image",
+        text2: "error",
+      });
       return;
     }
 
@@ -87,7 +93,12 @@ export default function EditProductImages() {
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      alert("Sorry, we need camera permissions to make this work!");
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Camera access is needed to take a photo",
+        text2: "error",
+      });
       return;
     }
 

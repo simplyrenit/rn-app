@@ -1,3 +1,4 @@
+import Toast from "react-native-toast-message";
 import { useChat } from "@/backend/chat";
 import AttachmentSheet from "@/components/chat/attachment-sheet";
 import { useGlobalContext } from "@/context/global-context";
@@ -149,7 +150,12 @@ export function ChatInput({
         await sendMessage(trimmedMessage, conversationId);
         setMessage("");
       } catch {
-        alert("Failed to send message. Please try again.");
+        Toast.show({
+          type: "customToast",
+          position: "bottom",
+          text1: "Could not send that message. Please try again.",
+          text2: "error",
+        });
       }
     }
   };
@@ -179,14 +185,24 @@ export function ChatInput({
     } catch (error) {
       console.error("Error picking document:", error);
       // Optionally show an error message to the user
-      alert("Failed to select document. Please try again.");
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Could not attach that file. Please try again.",
+        text2: "error",
+      });
     }
   };
 
   const handleSelectImagesVideos = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      alert("Sorry, we need media library permissions to make this work!");
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Photo library access is needed to choose an image",
+        text2: "error",
+      });
       return;
     }
 
@@ -252,7 +268,12 @@ export function ChatInput({
       setIsPreviewVisible(false);
     } catch (error) {
       console.error("Error uploading and sending media:", error);
-      alert("Failed to send media. Please try again.");
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Could not send that attachment. Please try again.",
+        text2: "error",
+      });
     } finally {
       setIsUploading(false);
     }
