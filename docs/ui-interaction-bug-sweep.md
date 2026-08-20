@@ -253,9 +253,50 @@ bug** — it is a horizontal ScrollView and the partial item is a standard scrol
 peek. Likewise the vertical gap on auth screens is the intended
 content-top/actions-bottom layout, not a defect.
 
+## Round 5
+
+### Keyboard covered the submit button on NonScrollableContainer — FIXED
+Write-a-review pins its submit to the bottom, and the keyboard covered it plus
+the star rating — the form could be typed into but not completed. Same fix as
+StaticContainer, with two deliberate differences: the safe-area inset is NOT
+subtracted (this SafeAreaView excludes the "bottom" edge, so reserves nothing
+there), and `height: "100%"` was dropped from the container because a
+percentage height resolves against the parent and ignores the padding. Covers
+32 more screens. Verified on device.
+
+Between this and StaticContainer, all 7 auth screens are now covered — they
+all use StaticContainer, which was verified on the search screen.
+
+### Backend test suite — now runs, and passes
+Previously unverifiable (no Docker or Django on the Mac). It runs on the QA
+server:
+
+```
+docker exec rn-api-web-1 sh -lc "cd /app/src && python manage.py test product review --noinput"
+```
+
+`--noinput` is required, otherwise a leftover `test_rn_api_qa` database makes
+Django prompt and fail with EOFError. It only ever touches the `test_` database.
+
+Two failures surfaced, both stale tests rather than code defects:
+
+- `test_my_products_list_hides_unapproved_listings` asserted the behaviour
+  deliberately reversed this session. Renamed and inverted, plus a companion
+  test that the list still excludes other owners' listings.
+- `FavoritesVisibilityTests.setUp` created fixtures without `admin_approved`,
+  which defaults to False. Once `8c42957` made favourites filter on approval,
+  even the "visible" products were excluded. **That commit has been shipping a
+  failing test for a month** — it added `admin_approved` to the tests it wrote
+  but not to this pre-existing setUp.
+
+22 tests pass after the fix.
+
 ## Known open issues (found, not yet fixed)
 
-1. The post-listing form still has no keyboard handling of its own; it is
-   reachable by scrolling but the action bar is not lifted.
-2. Not yet walked: remaining post steps (images, availability, submit), edit
-   product flow, reviews / write review.
+1. A full listing submission was not driven end to end. The interaction layer
+   of that form is tested and fixed, but the submit/validation path is not:
+   the image step needs a photo library, and a fresh simulator has none
+   (`xcrun simctl addmedia` would unblock it).
+2. Write-review submission was deliberately not exercised. It would
+   permanently alter another owner's rating — unlabelled QA data, with no way
+   to remove a review from the app.
