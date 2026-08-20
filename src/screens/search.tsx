@@ -720,7 +720,7 @@ export default function SearchScreen() {
                     {loading ? (
                       <Text className="mt-3">Loading nearby places...</Text>
                     ) : (
-                      <ScrollView>
+                      <ScrollView keyboardShouldPersistTaps="handled">
                         {nearbyPlaces.map((item) => (
                           <TouchableOpacity
                             key={item.place_id}

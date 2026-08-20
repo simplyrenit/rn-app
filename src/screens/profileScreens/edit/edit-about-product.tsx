@@ -427,6 +427,7 @@ export default function EditAboutProduct() {
         }}
       >
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             padding: 16,
@@ -1067,7 +1068,7 @@ export default function EditAboutProduct() {
               {loading ? (
                 <Text className="mt-3">Loading nearby places...</Text>
               ) : (
-                <ScrollView>
+                <ScrollView keyboardShouldPersistTaps="handled">
                   {nearbyPlaces.map((item) => (
                     <TouchableOpacity
                       key={item.place_id}

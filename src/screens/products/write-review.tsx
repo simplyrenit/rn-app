@@ -157,7 +157,7 @@ export default function WriteReviewScreen() {
           </View>
         </View>
 
-        <ScrollView>
+        <ScrollView keyboardShouldPersistTaps="handled">
           <View className="px-5 mt-4">
             <Text fontSize="text-md" fontWeight="font-bold" className="mb-1">
               How was the product's condition?

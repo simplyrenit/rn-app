@@ -20,6 +20,10 @@ export function Container({ children }: Props) {
     >
       <StatusBar style={isDarkMode ? "light" : "dark"} />
       <ScrollView
+        // Without this, the first tap while a keyboard is open is swallowed to
+        // dismiss it and never reaches the button underneath, so every submit
+        // needs two taps.
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.container}
         className={isDarkMode ? "bg-[#000]" : "bg-white"}
       >
