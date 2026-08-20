@@ -208,9 +208,6 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
       {!!fullImage && <Modal visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
         <View style={{ position: 'relative', height: Dimensions.get('window').height, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
 
-          <Pressable style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }} onPress={() => setFullImage(null)}>
-            <MaterialIcons name="close" size={24} color="white" />
-          </Pressable>
           <View style={{ position: 'relative', height: '100%', width: '100%', backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }}>
 
             <Image source={{ uri: fullImage }}
@@ -221,6 +218,18 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
               }}
               contentFit="contain" />
           </View>
+          {/* Rendered after the image, not just given a zIndex. This sits over a
+              full-screen sibling, and relying on zIndex alone to receive touches
+              is unreliable on Android; sibling order works on both platforms. */}
+          <Pressable
+            style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }}
+            onPress={() => setFullImage(null)}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel="Close image"
+          >
+            <MaterialIcons name="close" size={24} color="white" />
+          </Pressable>
         </View>
       </Modal>}
     </StyledView>

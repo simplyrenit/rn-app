@@ -132,6 +132,38 @@ which is layout-independent and always works.
 Screens likely sharing this shape: any using `StaticContainer` with a pinned
 bottom action bar plus a text field.
 
+## Round 2 — fixed and verified on device
+
+### Keyboard covering the bottom action bar — FIXED
+`src/lib/use-keyboard-inset.ts` reports how much of the screen the keyboard
+covers, and `StaticContainer` pads by that amount minus the safe-area inset
+(SafeAreaView has already reserved that space). Verified on the search screen:
+"Clear all" and "Search" now sit above the keyboard where they were previously
+hidden behind it entirely. Covers the 27 screens built on `StaticContainer`.
+
+**Android parity:** the hook returns 0 on Android by design. `MainActivity`
+declares `windowSoftInputMode="adjustResize"`, so the OS already shrinks the
+window; padding there too would double-compensate and push content off screen.
+This is why the earlier `KeyboardAvoidingView behavior="padding"` approach was
+both ineffective on iOS and the wrong shape for Android.
+
+### Dead back button across the post flow — FIXED
+`src/components/post/header.tsx` rendered its absolutely-positioned back
+`TouchableOpacity` *before* a full-width `flex-1` sibling. Later siblings paint
+on top in React Native, so the heading covered the arrow and swallowed every
+tap. Verified: three taps did nothing before, navigation works after.
+
+Fixed by sibling **ordering**, not `zIndex`/`elevation`, so behaviour is
+identical on both platforms. Repairs the back arrow on all 10 screens using
+this header: the whole post flow plus the edit-product flows.
+
+Also added `hitSlop` and accessibility labels.
+
+### Fullscreen image close button — HARDENED
+`src/components/product/product-image.tsx` had the same shape but with
+`zIndex: 1` carrying it. That works on iOS; zIndex-based touch handling on
+Android is unreliable. Reordered so it does not depend on zIndex at all.
+
 ## Known open issues (found, not yet fixed)
 
 1. Home category row clipped mid-word with no scroll affordance.
