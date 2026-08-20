@@ -164,6 +164,7 @@ const MyProductScreen: React.FC = () => {
             price={item.rate}
             isDarkMode={isDarkMode}
             moderationLabels={item.moderation_labels}
+            adminApproved={item.admin_approved}
             width='48.5%'
             alignItems={index % 2 ? 'flex-start' : 'flex-end'}
           />

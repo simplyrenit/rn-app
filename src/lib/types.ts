@@ -50,6 +50,7 @@ export interface ItemCard {
   isFavorite?: boolean;
   isDarkMode?: boolean;
   moderationLabels?: string[];
+  adminApproved?: boolean | null;
   width?: DimensionValue;
   alignItems?: FlexAlignType;
 }
@@ -428,6 +429,8 @@ export interface BackendProduct {
     dark_icon?: string | null;
   };
   moderation_labels: string[];
+  // Only returned on the owner-facing endpoint; public catalogue responses omit it.
+  admin_approved?: boolean | null;
   condition: string;
   rate: string;
   currency: string;

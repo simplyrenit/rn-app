@@ -23,12 +23,16 @@ export function MyProductCard({
   id,
   isDarkMode,
   moderationLabels = [],
+  adminApproved,
   width, alignItems
 }: ItemCard) {
   const router = useTypedNavigation();
   const { theme } = useGlobalContext();
 
   const isModerated = moderationLabels?.length > 0;
+  // A listing is pending until an admin approves it. A flagged listing already
+  // shows its own overlay, so the pending badge would only duplicate it.
+  const isPendingApproval = !isModerated && adminApproved !== true;
 
   return (
     <View className="py-2" style={{ width, alignItems }}>
@@ -87,6 +91,23 @@ export function MyProductCard({
                   className="text-red-500 mt-3"
                 >
                   Product Flagged
+                </Text>
+              </View>
+            )}
+            {isPendingApproval && (
+              <View
+                style={{
+                  position: "absolute",
+                  top: 8,
+                  left: 8,
+                  backgroundColor: "rgba(0, 0, 0, 0.75)",
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 6,
+                }}
+              >
+                <Text fontSize="text-xs" fontWeight="font-bold" className="text-white">
+                  Pending approval
                 </Text>
               </View>
             )}
