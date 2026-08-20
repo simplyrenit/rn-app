@@ -213,16 +213,40 @@ back works throughout; the image remove-X works (image removed, add-tile
 expands, submit correctly disables with no images). Nothing was persisted —
 no save was tapped, and the listing was re-checked intact afterwards.
 
-## Follow-up, deliberately not changed
+## Round 4 — fixed and verified
 
-About a dozen bare `alert()` calls remain (permission denials, send failures)
-in `product-images.tsx`, `edit-product-images.tsx`, `chat-input.tsx`, and
-`PersonaldetailsSheet.tsx`. These are legitimate user-facing errors, so they
-are not broken — but the app already ships a Toast system
-(`react-native-toast-message`, `customToast`) used elsewhere, and blocking
-native alerts are inconsistent with it. Converting them is a UX decision
-(toasts auto-dismiss; a failed send may warrant a modal), so it is left as a
-deliberate follow-up rather than churned here.
+### Blocking alerts replaced with the app toast — FIXED
+All eleven bare `alert()` calls now use the existing
+`react-native-toast-message` `customToast`, and the wording drops the
+developer voice ("Sorry, we need media library permissions to make this
+work!" -> "Photo library access is needed to choose an image").
+
+### Rating distribution rendered solid black with zero reviews — FIXED
+`reviews-screen.tsx` computed the bar width as
+`(item.count / totalReviews) * 100`. With no reviews that is `0/0` = NaN, the
+width string became `"NaN%"`, React Native discarded it, and the filled bar
+inherited its track's full width — so every row read as 100%. The average
+rating was NaN for the same reason. Both are guarded now.
+
+The screen also rendered a **0-star row**: the API returns buckets "0".."5"
+though star ratings are 1-5. The client now ignores the 0 bucket rather than
+changing the API contract.
+
+### A listing was similar to itself — FIXED (backend, deployed)
+`SimilarProductList` never excluded the product being viewed, so it appeared
+in its own "Similar products" row. Verified live: now returns `[]`.
+
+### Owner listing count leaked pending listings — FIXED (backend, deployed)
+"About the owner" showed "3 products" where only 1 was publicly visible.
+`get_products_listed` used a bare `Product.objects.filter(owner=...)` with no
+active or approval filter, on a **public** serializer — inflating the number
+and disclosing that the owner has pending or archived listings, the same leak
+the approval filtering was meant to close. Verified live: now 1.
+
+The visibility helpers moved to `product/utils.py` so serializers can share
+them without importing views.
+
+## Follow-up, deliberately not changed
 
 The home category row cutting off "Fas…"/"Mu…" was investigated and is **not a
 bug** — it is a horizontal ScrollView and the partial item is a standard scroll

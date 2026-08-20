@@ -72,10 +72,14 @@ export default function ReviewsScreen() {
 
   const isDark = theme === "dark";
 
-  const totalReviews = reviewStats.reduce((sum, item) => sum + item.count, 0);
-  const averageRating =
-    reviewStats.reduce((sum, item) => sum + item.rating * item.count, 0) /
-    totalReviews;
+  // Star ratings run 1-5. The API also returns a "0" bucket, which only ever
+  // catches a rating of exactly 0 and rendered a meaningless "0 star" row.
+  const ratingBuckets = reviewStats.filter((item) => item.rating > 0);
+  const totalReviews = ratingBuckets.reduce((sum, item) => sum + item.count, 0);
+  const averageRating = totalReviews
+    ? ratingBuckets.reduce((sum, item) => sum + item.rating * item.count, 0) /
+      totalReviews
+    : 0;
 
   return (
     <Container>
@@ -129,7 +133,7 @@ export default function ReviewsScreen() {
           </Text>
         </View>
 
-        {reviewStats.map((item, index) => (
+        {ratingBuckets.map((item, index) => (
           <View
             key={index}
             className="flex flex-row  items-center mt-2"
@@ -153,7 +157,9 @@ export default function ReviewsScreen() {
               <View
                 className={`h-full ${isDark ? "bg-white" : "bg-black"}`}
                 style={{
-                  width: `${(item.count / totalReviews) * 100}%`,
+                  width: totalReviews
+                    ? `${(item.count / totalReviews) * 100}%`
+                    : 0,
                   borderRadius: 9999,
                 }}
               />
