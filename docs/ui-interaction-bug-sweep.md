@@ -164,8 +164,49 @@ Also added `hitSlop` and accessibility labels.
 `zIndex: 1` carrying it. That works on iOS; zIndex-based touch handling on
 Android is unreliable. Reordered so it does not depend on zIndex at all.
 
+## Round 3 — fixed and verified on device
+
+### Tab bar clipping the bottom of tab screens — FIXED
+Home and Chat set no bottom padding, so their last content sat behind the tab
+bar; on Home the "Don't see what you need?" card was cut mid-sentence and its
+button unreachable. Saved padded a fixed `hp("10%")`, less than the iOS bar's
+`hp("12.75%")`, so it clipped too. All three now use
+`useBottomTabBarHeight()` — measured, because the bar differs between iOS and
+Android and includes the safe-area inset. Verified on Home.
+
+### Blocking dev alert over the Chat tab — FIXED
+`src/backend/notifications.ts` raised `alert("Must use physical device for Push
+Notifications")`, a developer diagnostic rendered as a **blocking modal** over
+the UI. Worse, the sibling branch raised `alert("Failed to get push token…")`
+on a **real device** whenever a user simply declined notification permission —
+interrupting them with developer wording for a legitimate choice. Both are now
+`console.warn`, which does not surface at all in production builds. Affects
+Android identically.
+
+### Chat detail keyboard — verified working
+Chat contains no `KeyboardAvoidingView` at all; the message input clears the
+keyboard because `chat-details.tsx` is built on `StaticContainer` and inherits
+the `useKeyboardInset` fix from round 2.
+
+## Follow-up, deliberately not changed
+
+About a dozen bare `alert()` calls remain (permission denials, send failures)
+in `product-images.tsx`, `edit-product-images.tsx`, `chat-input.tsx`, and
+`PersonaldetailsSheet.tsx`. These are legitimate user-facing errors, so they
+are not broken — but the app already ships a Toast system
+(`react-native-toast-message`, `customToast`) used elsewhere, and blocking
+native alerts are inconsistent with it. Converting them is a UX decision
+(toasts auto-dismiss; a failed send may warrant a modal), so it is left as a
+deliberate follow-up rather than churned here.
+
+The home category row cutting off "Fas…"/"Mu…" was investigated and is **not a
+bug** — it is a horizontal ScrollView and the partial item is a standard scroll
+peek. Likewise the vertical gap on auth screens is the intended
+content-top/actions-bottom layout, not a defect.
+
 ## Known open issues (found, not yet fixed)
 
-1. Home category row clipped mid-word with no scroll affordance.
-2. "Don't see what you need?" banner clipped by the tab bar.
-3. Large empty vertical gap on auth screens between field and buttons.
+1. The post-listing form still has no keyboard handling of its own; it is
+   reachable by scrolling but the action bar is not lifted.
+2. Not yet walked: remaining post steps (images, availability, submit), edit
+   product flow, reviews / write review.

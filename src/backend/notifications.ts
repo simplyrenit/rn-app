@@ -30,7 +30,9 @@ export async function registerForPushNotificationsAsync() {
     }
 
     if (finalStatus !== "granted") {
-      alert("Failed to get push token for push notification!");
+      // Declining notifications is a legitimate choice, not an error worth
+      // interrupting the user with. The app works fine without push.
+      console.warn("Push notifications permission was not granted");
       return;
     }
 
@@ -55,7 +57,9 @@ export async function registerForPushNotificationsAsync() {
     }
 
   } else {
-    alert("Must use physical device for Push Notifications");
+    // Simulators and emulators cannot register for push. This is a developer
+    // diagnostic, so it must not surface as a blocking alert over the UI.
+    console.warn("Push notifications require a physical device");
   }
 
   if (Platform.OS === "android") {
