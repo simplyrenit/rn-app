@@ -1,4 +1,3 @@
-import { useSearch } from "@/backend/search";
 import { StaticContainer, Text } from "@/components/core";
 import DateRangePicker from "@/components/core/date-range-picker";
 import { useGlobalContext } from "@/context/global-context";
@@ -15,7 +14,6 @@ import * as Location from "expo-location";
 import { styled } from "nativewind";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -43,6 +41,10 @@ import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 
 const StyledBottomView = styled(BottomSheetView);
 
+// Title suggestions used to fire one request per keystroke, which made the
+// search field feel laggy on a real connection.
+const SUGGESTION_DEBOUNCE_MS = 300;
+
 interface Coordinates {
   lat: number | undefined;
   lng: number | undefined;
@@ -66,7 +68,6 @@ export default function SearchScreen() {
 
   const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
   const [loading, setLoading] = useState(false);
-  const [productsLoading, setProductsLoading] = useState(false);
 
   const [selectedLocation, setSelectedLocation] = useState<Coordinates | null>(
     coords
@@ -89,6 +90,9 @@ export default function SearchScreen() {
   const googlePlacesRef = useRef<any>(null);
   const autocompleteDropdownRef = useRef<any>(null);
   const dropdownController = useRef<any>(null);
+  const suggestionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suggestionRequestRef = useRef(0);
+  const hasGooglePlacesApiKey = GOOGLE_MAP_API_KEY.trim().length > 0;
 
   const formatDate = (date: Date | undefined) => {
     if (!date) return "";
@@ -180,29 +184,16 @@ export default function SearchScreen() {
 
   const isSearchDisabled = !selectedItem?.trim();
 
-  const onPress = async () => {
-    try {
-      setProductsLoading(true);
-      const products = await searchProducts(
-        selectedItem!,
-        selectedLocation?.lat != null && selectedLocation.lng != null
-          ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
-          : undefined,
-        {
-          start_date: range?.startDate?.toISOString() ?? undefined,
-          end_date: range?.endDate?.toISOString() ?? undefined,
-        }
-      );
-      navigation.navigate("SearchResults", {
-        selectedItem: selectedItem!,
-        address: selectedLocationName ?? "",
-        coords: { lat: selectedLocation?.lat, lng: selectedLocation?.lng },
-        range,
-        products,
-      });
-    } catch (e) { } finally {
-      setProductsLoading(false)
-    }
+  const onPress = () => {
+    // SearchResults runs its own search when it opens without products, so the
+    // tap navigates straight away instead of blocking on the network request.
+    navigation.navigate("SearchResults", {
+      selectedItem: selectedItem!,
+      address: selectedLocationName ?? "",
+      coords: { lat: selectedLocation?.lat, lng: selectedLocation?.lng },
+      range,
+      products: [],
+    });
   };
 
   const getCurrentLocation = async () => {
@@ -214,7 +205,7 @@ export default function SearchScreen() {
   };
 
   const fetchNearbyPlaces = async () => {
-    if (!location) return;
+    if (!location.latitude || !location.longitude) return;
 
     setLoading(true);
 
@@ -229,24 +220,11 @@ export default function SearchScreen() {
     }
   };
 
-  const askForLocationPermission = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      console.log("Permission to access location was denied");
-      return;
-    }
-    const { coords } = await Location.getCurrentPositionAsync();
-    setLocation(coords);
-  };
-
   useEffect(() => {
-    if (location) {
+    if (location.latitude && location.longitude) {
       fetchNearbyPlaces();
-    } else {
-      // ask the user for permission to access location
-      askForLocationPermission();
     }
-  }, [location]);
+  }, [location.latitude, location.longitude]);
 
   useEffect(() => {
     getCurrentLocation(); // Fetch current location on component mount
@@ -291,8 +269,6 @@ export default function SearchScreen() {
     void hydrateRouteLocation();
   }, [coords, selectedLocation, where]);
 
-  const { searchProducts } = useSearch();
-
   const handleSelectNearbyPlace = (place: any) => {
     setSelectedLocationName(place.name);
     setSelectedLocation({
@@ -310,14 +286,15 @@ export default function SearchScreen() {
     />
   );
 
-  const getSuggestions = useCallback(async (q: string) => {
-    if (typeof q !== "string" || q.length < 2) {
-      setSuggestionsList([]);
-      return;
-    }
+  const fetchSuggestions = useCallback(async (q: string) => {
+    const requestId = ++suggestionRequestRef.current;
     setLoading(true);
     try {
-      const response = await axiosInstance.get(`${ALL_PRODUCTS}?title=${q}`);
+      const response = await axiosInstance.get(ALL_PRODUCTS, {
+        params: { title: q },
+      });
+      // Ignore responses that a newer keystroke has already superseded.
+      if (requestId !== suggestionRequestRef.current) return;
       const { products } = response.data;
       const suggestions = products.map((item: string, index: number) => ({
         id: index,
@@ -325,11 +302,41 @@ export default function SearchScreen() {
       }));
       setSuggestionsList(suggestions);
     } catch {
-      setSuggestionsList([]);
+      if (requestId === suggestionRequestRef.current) setSuggestionsList([]);
     } finally {
-      setLoading(false);
+      if (requestId === suggestionRequestRef.current) setLoading(false);
     }
   }, []);
+
+  const getSuggestions = useCallback(
+    (q: string) => {
+      if (suggestionTimerRef.current) {
+        clearTimeout(suggestionTimerRef.current);
+        suggestionTimerRef.current = null;
+      }
+
+      if (typeof q !== "string" || q.trim().length < 2) {
+        // Invalidate anything in flight so a late response cannot repopulate
+        // the dropdown after the field was cleared.
+        suggestionRequestRef.current += 1;
+        setSuggestionsList([]);
+        setLoading(false);
+        return;
+      }
+
+      suggestionTimerRef.current = setTimeout(() => {
+        void fetchSuggestions(q.trim());
+      }, SUGGESTION_DEBOUNCE_MS);
+    },
+    [fetchSuggestions]
+  );
+
+  useEffect(
+    () => () => {
+      if (suggestionTimerRef.current) clearTimeout(suggestionTimerRef.current);
+    },
+    []
+  );
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -570,16 +577,13 @@ export default function SearchScreen() {
 
             <View className="">
               <TouchableOpacity
-                disabled={isSearchDisabled || productsLoading}
+                disabled={isSearchDisabled}
                 className={`${isSearchDisabled ? "bg-[#635be875]" : "bg-brand-blue"
                   } py-4 px-4 rounded-[12px] h-[44px] items-center justify-center items-center align-center`}
                 onPress={onPress}
               >
                 <View className="flex flex-row items-center">
-                  {productsLoading ? <ActivityIndicator color='#fff' size={22} /> : <MagnifyingGlassIcon
-                    color="white"
-                    size={22}
-                  />}
+                  <MagnifyingGlassIcon color="white" size={22} />
                   <Text
                     fontSize="text-sm"
                     fontWeight="font-bold"
@@ -630,46 +634,59 @@ export default function SearchScreen() {
                       size={24}
                       style={{ marginTop: hp(1.1) }}
                     />
-                    <GooglePlacesAutocomplete
-                      ref={googlePlacesRef}
-                      placeholder="Search area or street name"
-                      query={{ key: GOOGLE_MAP_API_KEY }}
-                      fetchDetails={true}
-                      onPress={(data, details = null) => {
-                        setSelectedLocationName(data.description);
-                        setSelectedLocation({
-                          lat: details?.geometry.location.lat,
-                          lng: details?.geometry.location.lng,
-                        });
-                        bottomSheetRef.current?.close();
-                      }}
-                      onFail={(error) => console.log(error)}
-                      onNotFound={() => console.log("no results")}
-                      enablePoweredByContainer={false}
-                      styles={{
-                        textInput: {
-                          height: '100%',
-                          backgroundColor: isDark ? "#0F0F0F" : "#fff",
-                          borderRadius: 12,
-                          paddingHorizontal: 8,
-                          zIndex: 10,
-                          color: isDark ? "#fff" : "#000",
-                          fontSize: 16,
-                        },
-                        row: {
-                          backgroundColor: isDark ? "#0F0F0F" : "#FFF",
-                        },
-                        description: {
-                          color: isDark ? "#fff" : "#000",
-                        },
-                        separator: { backgroundColor: "#292929" },
-                      }}
-                      textInputProps={{
-                        placeholderTextColor: isDark
-                          ? "#FFFFFFB2"
-                          : "#000000B2",
-                      }}
-                    />
+                    {hasGooglePlacesApiKey ? (
+                      <GooglePlacesAutocomplete
+                        ref={googlePlacesRef}
+                        placeholder="Search area or street name"
+                        query={{ key: GOOGLE_MAP_API_KEY, language: "en" }}
+                        debounce={300}
+                        minLength={2}
+                        fetchDetails={true}
+                        onPress={(data, details = null) => {
+                          setSelectedLocationName(data.description);
+                          setSelectedLocation({
+                            lat: details?.geometry.location.lat,
+                            lng: details?.geometry.location.lng,
+                          });
+                          bottomSheetRef.current?.close();
+                        }}
+                        onFail={(error) => {
+                          console.warn("Google Places autocomplete failed:", error);
+                          setLocationError(
+                            "Unable to load place suggestions. Please try again."
+                          );
+                        }}
+                        onNotFound={() => setLocationError("No places found.")}
+                        enablePoweredByContainer={false}
+                        styles={{
+                          textInput: {
+                            height: '100%',
+                            backgroundColor: isDark ? "#0F0F0F" : "#fff",
+                            borderRadius: 12,
+                            paddingHorizontal: 8,
+                            zIndex: 10,
+                            color: isDark ? "#fff" : "#000",
+                            fontSize: 16,
+                          },
+                          row: {
+                            backgroundColor: isDark ? "#0F0F0F" : "#FFF",
+                          },
+                          description: {
+                            color: isDark ? "#fff" : "#000",
+                          },
+                          separator: { backgroundColor: "#292929" },
+                        }}
+                        textInputProps={{
+                          placeholderTextColor: isDark
+                            ? "#FFFFFFB2"
+                            : "#000000B2",
+                        }}
+                      />
+                    ) : (
+                      <Text className="flex-1 self-center px-2 text-sm text-gray-500">
+                        Place search is unavailable in this QA build.
+                      </Text>
+                    )}
                   </View>
 
                   {locationError && (

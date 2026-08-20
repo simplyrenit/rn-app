@@ -29,44 +29,52 @@ export function Button({
 
   const isDarkMode = theme === "dark";
 
-  const getVariantClasses = (): string => {
+  // Container and label styling are kept apart on purpose. They used to share
+  // one class string, so the label inherited the container's background and an
+  // outline button in light mode rendered white text on a white background.
+  const getVariantStyles = (): { container: string; label: string } => {
     if (disabled) {
+      // A muted fill rather than the page background, so a disabled button
+      // still reads as a button instead of loose text.
       return isDarkMode
-        ? "bg-[#0F0F0F] text-gray-300"
-        : "bg-white text-[#292929]";
+        ? { container: "bg-[#292929]", label: "text-[#FFFFFF80]" }
+        : { container: "bg-[#E6E6E6]", label: "text-[#00000080]" };
     }
 
     switch (variant) {
       case "primary":
-        return "bg-brand-blue";
+        return { container: "bg-brand-blue", label: "text-white" };
       case "outline":
         return isDarkMode
-          ? "bg-[#0F0F0F] border-2 border-[#292929]"
-          : "border-2 border-[#e6e6e6] bg-white";
+          ? {
+              container: "bg-[#0F0F0F] border-2 border-[#292929]",
+              label: "text-white",
+            }
+          : {
+              container: "border-2 border-[#e6e6e6] bg-white",
+              label: "text-[#292929]",
+            };
       case "warning":
-        return "bg-red-500";
+        return { container: "bg-red-500", label: "text-white" };
       case "ghost":
-        return isDarkMode ? "bg-transparent" : "bg-transparent text-black";
+        return isDarkMode
+          ? { container: "bg-transparent", label: "text-white" }
+          : { container: "bg-transparent", label: "text-black" };
       default:
-        return "bg-brand-blue";
+        return { container: "bg-brand-blue", label: "text-white" };
     }
   };
 
-  const variantClasses = getVariantClasses();
+  const { container, label } = getVariantStyles();
 
   return (
     <StyledButton
-      className={`p-3 rounded-lg ${variantClasses} ${className}`}
+      className={`p-3 rounded-lg ${container} ${className}`}
       style={style}
       disabled={disabled}
       {...props}
     >
-      <Text
-        fontWeight="font-bold"
-        className={`text-center ${
-          variantClasses.includes("text-") ? variantClasses : "text-white"
-        }`}
-      >
+      <Text fontWeight="font-bold" className={`text-center ${label}`}>
         {children}
       </Text>
     </StyledButton>

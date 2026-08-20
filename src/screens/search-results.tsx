@@ -15,7 +15,7 @@ import { StackActions, useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { styled } from "nativewind";
 import React, { useRef, useState, useEffect } from "react";
-import { FlatList, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import {
@@ -58,7 +58,9 @@ export default function SearchResults() {
   const isDark = theme === "dark";
   const bottomSheetRef = useRef<any>(null);
   const subCategoryBottomSheetRef = useRef<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(
+    () => (route.params?.products?.length ?? 0) === 0
+  );
 
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(
     null
@@ -310,7 +312,9 @@ export default function SearchResults() {
             fontSize="text-base"
             fontWeight="font-bold"
           >
-            {products.length} results
+            {isLoading && products.length === 0
+              ? "Searching…"
+              : `${products.length} ${products.length === 1 ? "result" : "results"}`}
           </Text>
 
           <View className="flex flex-row items-center space-x-3">
@@ -381,7 +385,12 @@ export default function SearchResults() {
             />
           )}
         />
-        {products.length === 0 ? (
+        {isLoading && products.length === 0 ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#635BE8" />
+          </View>
+        ) : null}
+        {!isLoading && products.length === 0 ? (
           <Disclaimer mb={24} />
         ) : null}
       </View>

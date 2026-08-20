@@ -10,7 +10,7 @@ let firebaseSignIn: Promise<void> | null = null;
 let firebaseAccessToken: string | null = null;
 let appCheckInitialization: Promise<void> | null = null;
 
-const initializeAppCheck = () => {
+export const initializeAppCheck = () => {
   if (!appCheckInitialization) {
     const provider = appCheck().newReactNativeFirebaseAppCheckProvider();
     provider.configure({
@@ -24,10 +24,17 @@ const initializeAppCheck = () => {
             : "appAttestWithDeviceCheckFallback",
       },
     });
-    appCheckInitialization = appCheck().initializeAppCheck({
-      provider,
-      isTokenAutoRefreshEnabled: true,
-    });
+    appCheckInitialization = appCheck()
+      .initializeAppCheck({
+        provider,
+        isTokenAutoRefreshEnabled: true,
+      })
+      .catch((error: any) => {
+        // Clear the cached promise so a transient failure does not leave every
+        // later caller stuck with the same rejection for the app's lifetime.
+        appCheckInitialization = null;
+        throw error;
+      });
   }
 
   return appCheckInitialization;

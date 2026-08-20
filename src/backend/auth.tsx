@@ -1,6 +1,7 @@
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
 import { LOGIN, OTP, PHONE_LOGIN, SIGN_UP } from "@/lib/config";
+import { initializeAppCheck } from "@/lib/firebase";
 import {
   AuthTokens,
   AuthUser,
@@ -86,6 +87,16 @@ export function useAuth() {
   async function sendPhoneOTP(phone: string) {
     setLoading(true);
     try {
+      // Phone sign-in happens before the user has an access token, so it never
+      // passes through authenticateFirebase() — the only other place App Check
+      // gets initialized. Without a token here Firebase rejects the OTP send.
+      // A failure to initialize must not block the attempt, though: sending the
+      // code may still succeed where App Check is not enforced.
+      try {
+        await initializeAppCheck();
+      } catch (appCheckError) {
+        console.warn("App Check initialization failed before OTP send", appCheckError);
+      }
       const auth = getFirebaseAuth();
       if (auth.currentUser) {
         await auth.signOut();
