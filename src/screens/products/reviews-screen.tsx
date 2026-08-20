@@ -1,3 +1,4 @@
+import { pluralize } from "@/lib/pluralize";
 import useReviews from "@/backend/reviews";
 import { useProduct } from "@/backend/product";
 import { Button, Container, Text } from "@/components/core";
@@ -124,7 +125,7 @@ export default function ReviewsScreen() {
             className={`ml-2 ${isDark ? "#FFFFFFB2" : "#000000B2"}`}
           >
             ∙{" "}
-            {totalReviews === 0 ? "No reviews yet" : `${totalReviews} reviews`}
+            {totalReviews === 0 ? "No reviews yet" : pluralize(totalReviews, "review")}
           </Text>
         </View>
 
@@ -198,7 +199,7 @@ export default function ReviewsScreen() {
         >
           {currentReviews.length === 0
             ? "No reviews yet"
-            : `${currentReviews.length} reviews`}
+            : pluralize(currentReviews.length, "review")}
         </Text>
 
         {currentReviews.map((review, index) => (

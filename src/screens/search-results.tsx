@@ -1,3 +1,4 @@
+import { pluralize } from "@/lib/pluralize";
 import { Card, Button, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -314,7 +315,7 @@ export default function SearchResults() {
           >
             {isLoading && products.length === 0
               ? "Searching…"
-              : `${products.length} ${products.length === 1 ? "result" : "results"}`}
+              : pluralize(products.length, "result")}
           </Text>
 
           <View className="flex flex-row items-center space-x-3">

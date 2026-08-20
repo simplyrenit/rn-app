@@ -200,6 +200,19 @@ Swept for the same shape elsewhere — this was the only back control using
 `navigate()` to a tab. The three other non-`goBack` handlers are sheet-close
 callbacks and are correct.
 
+### Count pluralization — FIXED
+"The product will be unavailable for **1 days**", "1 results", "1 reviews".
+A shared `src/lib/pluralize.ts` now formats every count, replacing the
+hardcoded plural suffixes in both availability screens, both review counts,
+the owner review count, the chat offer duration, and the search result count
+(which had an inline ternary). Verified: reads "1 day".
+
+### Edit-product flow — walked, no interaction bugs
+Category / Product Details / Product Images / Unavailability all reachable;
+back works throughout; the image remove-X works (image removed, add-tile
+expands, submit correctly disables with no images). Nothing was persisted —
+no save was tapped, and the listing was re-checked intact afterwards.
+
 ## Follow-up, deliberately not changed
 
 About a dozen bare `alert()` calls remain (permission denials, send failures)

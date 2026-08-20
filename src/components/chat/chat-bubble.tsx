@@ -1,3 +1,4 @@
+import { pluralize } from "@/lib/pluralize";
 import { Button, Text } from "@/components/core";
 import {
   Image,
@@ -428,7 +429,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                     fontWeight="font-normal"
                     className="ml-1"
                   >
-                    {message.item.duration} days
+                    {pluralize(Number(message.item.duration), "day")}
                   </Text>
                   <Text
                     fontSize="text-sm"

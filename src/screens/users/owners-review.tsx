@@ -1,3 +1,4 @@
+import { pluralize } from "@/lib/pluralize";
 import { Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { ReviewCard } from "@/components/product/review-card";
@@ -34,7 +35,7 @@ export default function OwnersReviewScreen() {
 
       <ScrollView className="px-5 mt-3">
         <Text fontSize="text-lg" fontWeight="font-bold" className="my-6">
-          {reviews.length} reviews
+          {pluralize(reviews.length, "review")}
         </Text>
 
         {reviews.map((review, index) => (

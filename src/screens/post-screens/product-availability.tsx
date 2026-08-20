@@ -1,3 +1,4 @@
+import { pluralize } from "@/lib/pluralize";
 import { Button, StaticContainer, Text } from "@/components/core";
 import { PostProductHeader } from "@/components/post/header";
 import { useGlobalContext } from "@/context/global-context";
@@ -346,17 +347,19 @@ export default function ProductAvailability() {
                 fontSize="text-base"
               >
                 The product will be unavailable for{" "}
-                {unavailableDates.reduce(
-                  (acc, range) =>
-                    acc +
-                    moment(range.endDate).diff(
-                      moment(range.startDate),
-                      "days"
-                    ) +
-                    1,
-                  0
-                )}{" "}
-                days
+                {pluralize(
+                  unavailableDates.reduce(
+                    (acc, range) =>
+                      acc +
+                      moment(range.endDate).diff(
+                        moment(range.startDate),
+                        "days"
+                      ) +
+                      1,
+                    0
+                  ),
+                  "day"
+                )}
               </Text>
             ) : (
               <Text
