@@ -65,14 +65,42 @@ Legend: [ ] not visited · [x] pass · [!] bug found
 - [ ] Saved tab (guest)
 - [ ] Category browse
 
-### Authenticated — BLOCKED
-Needs Yash to sign in on the simulator; I don't type passwords.
-- [ ] Profile tab
-- [ ] My listings (+ verify new "Pending approval" badge renders)
-- [ ] Post listing flow (multi-step, heaviest form flow)
+### Authenticated (Yash signed in 2026-08-20)
+- [x] Profile tab — pass; back button works
+- [x] My listings — pass. "Pending approval" badge **verified**: both pending
+      listings badged, the approved one not. `my/products/` returns 3 where it
+      previously hid the pending ones.
+- [x] Post flow: category → subcategory → about-product — pass
+- [x] about-product form — **persistTaps fix verified on device**: with the
+      keyboard open, the form scrolls without dismissing it, and a *single* tap
+      on "Select Condition" opens the dropdown. Before the fix that tap was
+      consumed dismissing the keyboard.
+- [ ] Post flow: remaining steps (images, availability, review & submit)
 - [ ] Chat list + chat detail
 - [ ] Edit product flow
 - [ ] Reviews / write review
+- [ ] Saved tab (authenticated)
+
+Note: the post form still has no `KeyboardAvoidingView`, so the keyboard covers
+the lower half of the form and the Next button. It is now *reachable* by
+scrolling with the keyboard open, which it was not before, but the same
+underlying gap as the search screen remains.
+
+## Testing gotchas
+
+- The simulator uses the Mac's keyboard by default, so **no software keyboard
+  appears and this entire bug class is invisible**. Enable it with
+  `defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false`
+  and relaunch Simulator.app.
+- The simulator's text injection mangles uppercase and symbols: typing
+  `AGENT_QA_20260820 Laptop` produced `aent-qa-20260820 laptop`. This is the
+  harness, **not** the app — `about-product.tsx:435` uses a bare
+  `onChangeText={setProductName}` with no transform. Use lowercase
+  alphanumeric strings when testing input, and verify against source before
+  reporting an input-mangling bug.
+- React Navigation restores the previous screen across app restarts, so tap
+  coordinates from a prior session may land on the wrong control. Navigate
+  deliberately after each relaunch.
 
 ## Lane A follow-up: keyboard COVERS the action bar (separate bug, unfixed)
 
