@@ -24,6 +24,7 @@ import {
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
 import Toast from "react-native-toast-message";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQueryClient } from "react-query";
 import { MaterialIcons } from "@expo/vector-icons";
 
@@ -47,6 +48,7 @@ export function ProductImage({ images, coverImage, mode, name, isFavorite: iF }:
   const { saveFavorite, deleteFavorite } = useSaved();
   const isDarkMode = theme === "dark";
   const navigation = useNavigation();
+  const safeAreaInsets = useSafeAreaInsets();
   const [isFavorite, setIsFavorite] = useState(iF ?? false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [failedImages, setFailedImages] = useState<string[]>([]);
@@ -222,7 +224,16 @@ ${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
               full-screen sibling, and relying on zIndex alone to receive touches
               is unreliable on Android; sibling order works on both platforms. */}
           <Pressable
-            style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }}
+            // A flat top: 10 put this under the status bar and the notch, where
+            // it was cramped against the clock and did not reliably take a tap.
+            // The modal covers the whole screen, so the inset has to be added
+            // here; it is 0 on devices without one, which keeps Android as it was.
+            style={{
+              position: "absolute",
+              top: safeAreaInsets.top + 10,
+              right: safeAreaInsets.right + 10,
+              zIndex: 1,
+            }}
             onPress={() => setFullImage(null)}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             accessibilityRole="button"

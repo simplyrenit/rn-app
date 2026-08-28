@@ -291,6 +291,85 @@ Two failures surfaced, both stale tests rather than code defects:
 
 22 tests pass after the fix.
 
+## Round 6 - launch, session and layout
+
+Run on an iPhone 17 simulator (iOS 26.3) against QA, signed out. The QA
+session from the previous round had expired, which is how the session bug
+below surfaced.
+
+### App.tsx: three defects at startup
+- `if (error) throw error` for a failed font load, thrown from inside a
+  useEffect. Nothing above it is an error boundary, so a font fetch failure
+  was an unrecoverable crash. Returning null instead is no better: `loaded`
+  stays false forever on error, leaving a blank screen under a splash that
+  never hides. Fonts now degrade to the system font.
+- `SplashScreen.preventAutoHideAsync()` and `hideAsync()` were unhandled
+  promises. The first rejects routinely in the dev client ("no native splash
+  screen registered for given view controller") and was the LogBox warning
+  visible on every launch.
+- `new QueryClient()` was called in the render body, so every re-render of App
+  handed QueryClientProvider a new client and dropped the whole query cache.
+  Latent today (App only re-renders while fonts load) but it turns any future
+  state in App into silent cache loss.
+
+### An expired session left the app stuck "signed in"
+When the server rejects a refresh token the interceptor logged and rejected
+but never cleared the stored tokens. Cold start happened to recover, because
+`initialize()` catches the 401 from getMyDetails and calls logout(). A session
+expiring *during* use did not: the app still looked signed in while every
+authenticated request failed, with no route back to the sign-in screen.
+
+The interceptor now reports expiry to the global context, which logs out and
+says why. Deliberately narrow: only a 401/403 on the refresh call counts, so a
+timeout, a dropped connection or a 5xx cannot turn a network blip into a
+forced logout. A one-shot guard keeps a burst of parallel 401s to one logout.
+
+### The search field's X button cleared nothing
+react-native-autocomplete-dropdown spreads `textInputProps` *after* its own
+`value`, so `selectedItem` controls the input; but its `onClearPress` only
+resets internal state and never calls `onChangeText`. Tapping X blurred the
+field (which looked like the keyboard swallowing the tap) and left the text.
+Wiring `onClear` clears the app's state and the suggestion list.
+
+### Product cards did not fill their column
+The card image was `width: wp("41.5%") > 163 ? 163 : wp("41.5%")` with an
+uncapped `height: wp("44.5%")` - two independent absolute numbers, one capped,
+inside a card whose width is a percentage of the screen. Above ~393pt the
+image stopped growing and the tile left a dead strip.
+
+Underneath that, both the search results and owner product grids set
+`alignItems: 'center'` on `contentContainerStyle`, which makes each row
+shrink-wrap instead of filling the list, so the cards' "48.5%" resolved
+against a collapsed row. That is why the tiles looked lopsided rather than
+merely narrow. With rows filling again the alternating per-card
+flex-start/flex-end is inert and was removed.
+
+### Full-screen image close button sat under the status bar
+`top: 10` inside a full-screen Modal puts the X in the status bar / notch
+region on a notched iPhone. It did not take a tap there, so the viewer could
+only be dismissed with the hardware back gesture. It now offsets by the safe
+area inset (0 where there is none, so Android is unchanged).
+
+### Legal copy named the wrong domain
+Terms and Privacy both described the company website as "simplyenit.com".
+Every other reference in the app is simplyrenit.com.
+
+### Checked and found working (not bugs)
+- The welcome carousel autoplays correctly; two samples that both landed on
+  page 1 were coincidence, not a stalled carousel.
+- Terms, Privacy, Skip and the email sign-in button all work. Earlier misses
+  were my tap coordinates landing in margins, not dead controls.
+- "Continue with Mobile OTP" renders as dark text on white - the original
+  invisible-button bug from round 1, confirmed fixed on device.
+- Place suggestions load and respond quickly; the reported "map search not
+  showing recommendations" does not reproduce.
+- Search is deliberately disabled until a "What?" term is entered, and is
+  dimmed to show it.
+- "1 result" - the pluralize fix, confirmed on device.
+- A product-title search for "lap" returning nothing is correct: the QA
+  dataset holds two approved products, "Lenovo" and "Garvit Babel", and the
+  endpoint matches on title substrings.
+
 ## Known open issues (found, not yet fixed)
 
 1. A full listing submission was not driven end to end. The interaction layer
