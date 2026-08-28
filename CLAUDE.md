@@ -2,6 +2,59 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Agentic Development Contract
+
+### Environment and data boundaries
+
+- Use the QA backend for all development, build, and device-QA work. Do not start, configure, or fall back to a local backend unless the user explicitly asks.
+- Set `EXPO_PUBLIC_APP_ENV=QA` and use the tracked QA environment template. Do not point QA work at production.
+- QA credentials belong only in `config/environments/qa-test-accounts.local.json`. Never print, stage, commit, or upload that file.
+- Create, modify, or delete only QA fixtures labelled `AGENT_QA_<run-id>`. Clean up those fixtures when the tested flow permits; never mutate unlabelled QA data.
+
+### Roles and orchestration
+
+The main thread owns user communication, scope decisions, and the final result. It coordinates work in this order: delivery, quality gate, device QA, release preflight, then (only after a fresh human approval) local TestFlight release operation.
+
+| Role | Runs as | Responsibility |
+| --- | --- | --- |
+| Main orchestrator | main thread | Scope work, dispatch skills/agents, reconcile handoffs, and communicate with the user. |
+| Delivery | `renit-feature-delivery` | Trace ownership, implement the smallest correct change, and verify it. |
+| Quality gate | `renit-quality-gate` | Independently review the scoped diff and verification evidence; read-only unless asked to fix. |
+| Device QA | `android-tester` subagent (Android) / main thread (iPhone) | Run QA-only device validation and collect evidence. |
+| Local TestFlight release operator | `renit-local-testflight-release` | Create a QA-only local Xcode archive and perform explicitly approved App Store Connect/TestFlight actions. |
+
+- Run the quality gate in a separate subagent so the review is independent of the thread that wrote the change.
+- The quality gate must identify findings before proposing a fix and must not expand the delivery scope.
+- The release preflight is read-only. It never runs an EAS build, publishes an update, submits a store build, or changes credentials.
+- The local TestFlight release operator is the only role that may archive or upload. It never uses EAS for this workflow and requires a passing release preflight plus action-time human approval.
+
+### Skill routing
+
+- Use `renit-dev-bootstrap` before local QA work. It owns QA runtime, native workspace, and iPhone readiness checks.
+- Use `renit-quality-gate` after delivery and before device QA. It is independent and read-only.
+- Use `renit-push-diagnostics` for a QA push failure. It traces the full entitlement-to-device delivery chain before delivery changes code.
+- Use `renit-release-preflight` before every store/TestFlight request. It is read-only.
+- Use `renit-local-testflight-release` only after preflight and explicit approval to archive or upload a QA build.
+
+### Required handoff
+
+Every delegated role returns:
+
+```text
+Scope:
+Files changed or reviewed:
+QA environment and device:
+Commands run and result:
+Evidence:
+Known limitations:
+Decision needed from main thread:
+```
+
+### Human approval gates
+
+- Ask before trusting or importing an Apple developer certificate, completing OAuth, accepting iOS permission prompts, using biometrics or payments, changing signing, accessing credentials, creating an Xcode archive, uploading to App Store Connect, declaring export compliance, assigning a tester group, submitting Beta App Review, creating an EAS build, or releasing to production.
+- iPhone v1 supports Xcode/devicectl build, install, launch, and log collection. It does not promise autonomous interaction with system prompts or external sign-in screens.
+
 ## Project Overview
 
 **Renit** is a React Native rental marketplace app built with Expo SDK 51. Users can list products for rent, browse nearby listings, message owners, and leave reviews.
@@ -50,7 +103,7 @@ No linter is configured.
 
 **Styling**: NativeWind v2 (Tailwind CSS for React Native). Custom brand color: `brand-blue` (#635BE8) defined in `tailwind.config.js`.
 
-**API Server Modes**: `DEV_MODE` in `lib/config.ts` toggles between production (`api.simplyrenit.com`) and local dev (`192.168.1.12:8000`) servers.
+**API Server Modes**: `src/lib/config.ts` resolves Dev, QA, and Prod from `EXPO_PUBLIC_*` values and Expo configuration (exported as `DEV_MODE`). Agentic workflows use QA only.
 
 ### Tech Stack
 
