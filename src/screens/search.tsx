@@ -451,6 +451,15 @@ export default function SearchScreen() {
                     setSelectedItem(item.title!);
                   }
                 }}
+                // The X button cleared nothing without this. The library spreads
+                // textInputProps *after* its own `value`, so `selectedItem` here
+                // controls the input, but its onClearPress only resets internal
+                // state and never calls onChangeText. Clearing app state is
+                // therefore ours to do.
+                onClear={() => {
+                  setSelectedItem("");
+                  getSuggestions("");
+                }}
                 suggestionsListMaxHeight={250}
                 containerStyle={{
                   flexGrow: 1,

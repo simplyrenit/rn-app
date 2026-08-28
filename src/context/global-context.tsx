@@ -11,7 +11,10 @@ import {
   MY_DETAILS_ENDPOINT,
 } from "@/lib/config";
 import { authenticateFirebase, signOutFirebase } from "@/lib/firebase";
-import axiosInstance from "@/lib/networkUtils";
+import axiosInstance, {
+  resetSessionExpiryNotice,
+  setSessionExpiredHandler,
+} from "@/lib/networkUtils";
 import {
   AccountType,
   AuthTokens,
@@ -28,6 +31,7 @@ import React, {
   useState,
 } from "react";
 import { useColorScheme } from "react-native";
+import Toast from "react-native-toast-message";
 
 interface GlobalContextType {
   authTokens: AuthTokens | null;
@@ -106,6 +110,24 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     setUserData(null);
     setUserDetails(null);
   }, []);
+
+  // The axios interceptor cannot reach this context, so hand it the logout it
+  // should run when the server rejects a refresh token. Without this the stale
+  // tokens stayed in storage: the app still looked signed in while every
+  // authenticated request failed, with no way back to the sign-in screen.
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      Toast.show({
+        type: "customToast",
+        position: "bottom",
+        text1: "Your session expired. Please sign in again.",
+        text2: "error",
+      });
+      void logout();
+    });
+
+    return () => setSessionExpiredHandler(null);
+  }, [logout]);
 
   useEffect(() => {
     fetchUserDetails();
@@ -253,6 +275,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   const setAuthTokens = useCallback(async (tokens: AuthTokens | null) => {
     if (tokens) {
       await sA(tokens);
+      resetSessionExpiryNotice();
 
       setAuthTokensState(tokens);
       axiosInstance.defaults.headers.Authorization = `Bearer ${tokens.access_token}`;

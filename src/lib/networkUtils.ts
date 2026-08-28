@@ -5,6 +5,24 @@ import { getAuthTokens, setAuthTokens } from "./auth-fns";
 const NETWORK_LOG_PREFIX = "[network]";
 let requestCounter = 0;
 
+// When the server explicitly rejects a refresh token the session is over, but
+// this module cannot import the global context (that context imports this
+// module), so the provider registers a callback here instead.
+type SessionExpiredHandler = () => void;
+let onSessionExpired: SessionExpiredHandler | null = null;
+// Several requests usually fail together when a session expires. Without this
+// guard each one would fire its own logout and its own "signed out" toast.
+let sessionExpiryNotified = false;
+
+export const setSessionExpiredHandler = (handler: SessionExpiredHandler | null) => {
+  onSessionExpired = handler;
+};
+
+// Called after a successful sign-in so the next expiry is reported again.
+export const resetSessionExpiryNotice = () => {
+  sessionExpiryNotified = false;
+};
+
 type RequestMetadata = {
   requestId: number;
   startedAt: number;
@@ -213,21 +231,34 @@ axiosInstance.interceptors.response.use(
           return axiosInstance(originalRequest);
         }
       } catch (refreshError) {
+        const refreshStatus =
+          refreshError instanceof AxiosError
+            ? refreshError.response?.status
+            : undefined;
+
         console.error(`${NETWORK_LOG_PREFIX} token refresh failed`, {
           requestId: originalRequest?.metadata?.requestId,
           message:
             refreshError instanceof AxiosError
               ? refreshError.message
               : "Unknown refresh error",
-          status:
-            refreshError instanceof AxiosError
-              ? refreshError.response?.status
-              : undefined,
+          status: refreshStatus,
           responseData:
             refreshError instanceof AxiosError
               ? sanitizeValue(refreshError.response?.data)
               : undefined,
         });
+
+        // Only a 401/403 means the refresh token itself was rejected and the
+        // session is genuinely over. A timeout, a dropped connection or a 5xx
+        // says nothing about the token, and signing the user out on those would
+        // turn a passing network blip into a forced logout.
+        const sessionIsOver = refreshStatus === 401 || refreshStatus === 403;
+
+        if (sessionIsOver && !sessionExpiryNotified) {
+          sessionExpiryNotified = true;
+          onSessionExpired?.();
+        }
       }
     }
 

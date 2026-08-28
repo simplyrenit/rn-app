@@ -31,7 +31,15 @@ GoogleSignin.configure({
   // iosClientId: IOS_CLIENT_ID, // [iOS] if you want to specify the client ID of type iOS (otherwise, it is taken from GoogleService-Info.plist)
 });
 
-SplashScreen.preventAutoHideAsync();
+// Rejects when no native splash is registered for the current view controller,
+// which happens routinely in the dev client. There is nothing to prevent in that
+// case, so swallow it rather than leaving an unhandled rejection at module scope.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+// Created once, at module scope. This used to be built in the render body, which
+// handed QueryClientProvider a brand new client on every re-render of App and
+// discarded the entire query cache with it.
+const queryClient = new QueryClient();
 
 export default function App() {
   const [loaded, error] = useFonts({
@@ -42,24 +50,34 @@ export default function App() {
     "PlusJakartaSans-Bold": require("./assets/fonts/PlusJakartaSans-Bold.ttf"),
   });
 
+  // A font that fails to load must not take the whole app down. This used to
+  // `throw error` from an effect, which no error boundary above it can catch, so
+  // a font fetch failure was an unrecoverable crash. Returning null instead is no
+  // better: `loaded` stays false forever on error, leaving a blank screen with
+  // the splash still up. Treat an error as "ready" and fall back to system fonts.
+  const ready = loaded || !!error;
+
   useEffect(() => {
-    if (error) throw error;
+    if (error) {
+      console.warn(
+        "Custom fonts failed to load; falling back to system fonts",
+        error
+      );
+    }
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    if (ready) {
+      SplashScreen.hideAsync().catch(() => {});
     }
-  }, [loaded]);
+  }, [ready]);
 
-  if (!loaded) {
+  if (!ready) {
     return null;
   }
 
-  const qc = new QueryClient();
-
   return (
-    <QueryClientProvider client={qc}>
+    <QueryClientProvider client={queryClient}>
       <GlobalProvider>
         <AuthProvider>
           <ProductProvider>
