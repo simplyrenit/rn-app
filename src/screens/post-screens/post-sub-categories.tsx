@@ -73,12 +73,7 @@ export default function PostSubCategories() {
 
   return (
     <NonScrollableContainer>
-      <View
-        style={{
-          paddingBottom: Platform.OS === "ios" ? hp("14%") : hp("0%"),
-          flex: Platform.OS === "ios" ? 0 : 1,
-        }}
-      >
+      <View style={{ flex: 1 }}>
         <PostProductHeader
           heading="Choose a subcategory"
           percentage={10}
@@ -110,6 +105,10 @@ export default function PostSubCategories() {
           keyExtractor={(item) => item.title}
           contentContainerStyle={{
             paddingHorizontal: 24,
+            // Clear the floating bottom tab bar so the last subcategory is
+            // fully visible and scrollable. iOS only: Android's tab bar does
+            // not overlap the list.
+            paddingBottom: Platform.OS === "ios" ? hp("14%") : 0,
           }}
           showsVerticalScrollIndicator={false}
         />

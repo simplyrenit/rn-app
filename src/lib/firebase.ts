@@ -1,7 +1,6 @@
 import { getAuthTokens } from "./auth-fns";
 import { DEV_MODE, FIREBASE_TOKEN_ENDPOINT } from "./config";
 import axiosInstance from "./networkUtils";
-import appCheck from "@react-native-firebase/app-check";
 
 let cachedApp: any | null | undefined;
 let cachedFirestore: any | null | undefined;
@@ -12,7 +11,15 @@ let appCheckInitialization: Promise<void> | null = null;
 
 export const initializeAppCheck = () => {
   if (!appCheckInitialization) {
-    const provider = appCheck().newReactNativeFirebaseAppCheckProvider();
+    // Modular App Check API. `ReactNativeFirebaseAppCheckProvider` is exported at
+    // runtime from the package root but is still missing from the modular type
+    // defs, so this mirrors the lazy `require` style used elsewhere in this file.
+    const {
+      initializeAppCheck: initializeFirebaseAppCheck,
+      ReactNativeFirebaseAppCheckProvider,
+    } = require("@react-native-firebase/app-check");
+
+    const provider = new ReactNativeFirebaseAppCheckProvider();
     provider.configure({
       android: {
         provider: __DEV__ || DEV_MODE === "QA" ? "debug" : "playIntegrity",
@@ -24,17 +31,19 @@ export const initializeAppCheck = () => {
             : "appAttestWithDeviceCheckFallback",
       },
     });
-    appCheckInitialization = appCheck()
-      .initializeAppCheck({
+
+    appCheckInitialization = initializeFirebaseAppCheck(
+      getFirebaseApp() ?? undefined,
+      {
         provider,
         isTokenAutoRefreshEnabled: true,
-      })
-      .catch((error: any) => {
-        // Clear the cached promise so a transient failure does not leave every
-        // later caller stuck with the same rejection for the app's lifetime.
-        appCheckInitialization = null;
-        throw error;
-      });
+      }
+    ).catch((error: any) => {
+      // Clear the cached promise so a transient failure does not leave every
+      // later caller stuck with the same rejection for the app's lifetime.
+      appCheckInitialization = null;
+      throw error;
+    });
   }
 
   return appCheckInitialization;

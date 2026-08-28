@@ -88,6 +88,7 @@ const LocationModal = ({}) => {
   const [loading, setLoading] = useState(false);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   const openLocationSettings = useCallback(() => {
     if (Platform.OS === "ios") {
@@ -367,6 +368,26 @@ const LocationModal = ({}) => {
 
     return () => subscription.remove();
   }, [resolveCurrentLocation]);
+
+  // Grow the address sheet while the keyboard is up so the Google Places
+  // suggestion list isn't hidden behind it. iOS relies on the KeyboardAvoidingView
+  // + this taller sheet; Android already gets a resized window (adjustResize).
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, () =>
+      setKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(hideEvent, () =>
+      setKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const handleSubmit = useCallback(() => {
     void requestLocationPermission();
@@ -659,12 +680,12 @@ const LocationModal = ({}) => {
                     backgroundColor: isDarkMode ? "black" : "white",
                     borderTopWidth: 2,
                     borderColor: isDarkMode ? "#292929" : "#fff",
-                    height: "55%",
+                    height: keyboardVisible ? "92%" : "55%",
                   }}
                 >
                   <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : undefined}
-                    keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+                    keyboardVerticalOffset={0}
                     style={{ flex: 1 }}
                   >
                     <View

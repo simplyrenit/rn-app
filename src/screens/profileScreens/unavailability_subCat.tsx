@@ -61,12 +61,7 @@ export default function UnavailabilitySubCatScreen() {
 
   return (
     <NonScrollableContainer>
-      <View
-        style={{
-          paddingBottom: Platform.OS === "ios" ? hp("14%") : hp("0%"),
-          flex: Platform.OS === "ios" ? 0 : 1,
-        }}
-      >
+      <View style={{ flex: 1 }}>
         <View
           className="flex-row items-center justify-between px-5 "
           style={{ paddingVertical: wp("5%") }}
@@ -117,6 +112,10 @@ export default function UnavailabilitySubCatScreen() {
           keyExtractor={(item) => item.title}
           contentContainerStyle={{
             paddingHorizontal: 24,
+            // Clear the floating bottom tab bar so the last row is fully
+            // visible and scrollable. iOS only: Android's tab bar does not
+            // overlap the list.
+            paddingBottom: Platform.OS === "ios" ? hp("14%") : 0,
           }}
           showsVerticalScrollIndicator={false}
         />
