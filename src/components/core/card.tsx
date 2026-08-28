@@ -75,14 +75,18 @@ export function Card({
     }
   };
 
-  const truncateText = (text: string, maxWidth: number) => {
-    const maxChars = Math.floor(maxWidth / 10); // Assuming average character width
-    return text.length > maxChars ? text.slice(0, maxChars) + "..." : text;
-  };
+  // Only used when a call site does not pass an explicit width. Grid callers
+  // pass one (e.g. "48.5%"); the horizontal rows on Home do not.
+  const fallbackCardWidth = wp("41.5%") > 163 ? 163 : wp("41.5%");
 
-  const cardWidth = wp("41.5%") > 163 ? 163 : wp("41.5%");
-  const truncatedName = truncateText(title || "Loading...", cardWidth);
-  const truncatedLocation = truncateText(location || "Loading...", cardWidth);
+  // The tile keeps the proportion the fixed 41.5%/44.5% sizes used to give it,
+  // but expressed as a ratio so it follows the card instead of being computed
+  // from the screen independently of it.
+  const imageStyle = {
+    width: "100%",
+    aspectRatio: 41.5 / 44.5,
+    borderRadius: 8,
+  } as const;
 
   return (
     <TouchableOpacity
@@ -90,11 +94,15 @@ export function Card({
       onPress={() =>
         router.navigate("ProductDetail", { id, isFavorite: toggleLike })
       }
-      style={{ width, alignItems }}
+      style={{ width: width ?? fallbackCardWidth, alignItems }}
     >
       <View
         style={{
-          width: cardWidth,
+          // Fill the card. This was pinned to a hard 163pt cap while the card
+          // itself is a percentage of screen width, so on any screen wider than
+          // ~393pt the image stopped growing and left a dead strip that the
+          // alignItems flex-start/flex-end hack pushed to one side.
+          width: "100%",
           borderRadius: 8,
         }}
         className="mb-4 mr-1"
@@ -102,23 +110,12 @@ export function Card({
         <View className="relative">
           {image ? (
             <Image
-              style={{
-                width: wp("41.5%") > 163 ? 163 : wp("41.5%"),
-                height: wp("44.5%"),
-                borderRadius: 8,
-              }}
+              style={imageStyle}
               source={{ uri: image }}
               contentFit="cover"
             />
           ) : (
-            <View
-              style={{
-                width: wp("41.5%") > 163 ? 163 : wp("41.5%"),
-                height: wp("44.5%"),
-                borderRadius: 8,
-                backgroundColor: "#f0f0f0",
-              }}
-            />
+            <View style={[imageStyle, { backgroundColor: "#f0f0f0" }]} />
           )}
 
           <View className="flex flex-row absolute top-1 items-center justify-end right-1 p-2 rounded-full">

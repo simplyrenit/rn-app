@@ -372,7 +372,11 @@ export default function SearchResults() {
             marginTop: 8,
             gap: 12,
           }}
-          contentContainerStyle={{ paddingBottom: hp("10%"), justifyContent: 'flex-start', alignItems: 'center', width: '100%', }}
+          // No alignItems here: centring the content container makes each row
+          // shrink-wrap its children instead of filling the list, so the cards'
+          // "48.5%" resolved against a collapsed row and came out tiny.
+          // columnWrapperStyle's space-between does the real work.
+          contentContainerStyle={{ paddingBottom: hp("10%") }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item, index }) => (
             <Card
@@ -382,7 +386,6 @@ export default function SearchResults() {
               location={item.location}
               price={item.rate}
               width='48.5%'
-              alignItems={index % 2 ? 'flex-start' : 'flex-end'}
             />
           )}
         />
