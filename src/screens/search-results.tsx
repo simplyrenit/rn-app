@@ -1,5 +1,5 @@
 import { pluralize } from "@/lib/pluralize";
-import { Card, Button, Text } from "@/components/core";
+import { Button, Card, EmptyState, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { CategoryFilter } from "@/components/search/category-filter";
@@ -28,10 +28,52 @@ import {
 import { useSearch } from "@/backend/search";
 import { Dimensions } from "react-native";
 import { Disclaimer } from "@/components/home/disclaimer";
+import { SCREEN_GUTTER, colors, ink } from "@/lib/design-tokens";
 
 const { height } = Dimensions.get("window");
 
 const StyledBottomView = styled(BottomSheetView);
+
+/**
+ * How tall the filter sheet needs to be for the tab on screen. It used to be a
+ * flat 75% for every tab: the Price tab showed two 44pt fields above roughly
+ * 1,180pt of empty white, and Sort showed four rows above 1,080pt.
+ */
+function sheetHeightForTab(tab: string, showSubCategory: boolean) {
+  switch (tab) {
+    case "Price":
+      return "38%";
+    case "Ratings":
+      return "48%";
+    case "Condition":
+      return "44%";
+    case "Sort":
+      return "52%";
+    case "Category":
+      return showSubCategory ? "70%" : "62%";
+    default:
+      return "60%";
+  }
+}
+
+/** Marks a tab whose filter is currently set, so active filters are findable. */
+function tabHasValue(tab: string, filters: any) {
+  switch (tab) {
+    case "Sort":
+      return Boolean(filters?.sort);
+    case "Category":
+      return Boolean(filters?.category || filters?.subCategory);
+    case "Price":
+      return Boolean(filters?.price?.min || filters?.price?.max);
+    case "Ratings":
+      return Boolean(filters?.ratings?.product || filters?.ratings?.owner);
+    case "Condition":
+      return Boolean(filters?.condition);
+    default:
+      return false;
+  }
+}
+
 
 const createDefaultFilters = (category = "") => ({
   sort: "",
@@ -192,7 +234,7 @@ export default function SearchResults() {
 
   const styles = StyleSheet.create({
     Shadow: {
-      shadowColor: isDark ? "#00000014" : "#00000080",
+      shadowColor: isDark ? ink.line(false) : ink.dim(false),
       shadowOffset: {
         width: 0,
         height: 3.5,
@@ -246,15 +288,15 @@ export default function SearchResults() {
           }}
           style={styles.Shadow}
           className={`border h-[64px] w-[90%] ${isDark
-            ? "border-[#292929] bg-[#0F0F0F]"
-            : "border-[#E6E6E6] bg-white"
-            } flex flex-row items-center w-full my-2 rounded-[16px] p-4 space-x-3`}
+            ? "border-line-dark bg-surface-dark"
+            : "border-line-light bg-surface-light"
+            } flex flex-row items-center w-full my-2 rounded-group p-4 space-x-3`}
         >
           <TouchableOpacity onPress={() => {
             navigation.goBack()
           }}>
             <ArrowLeftIcon
-              color={isDark ? "#FFFFFF80" : "#00000080"}
+              color={ink.dim(isDark)}
               size={24}
             />
           </TouchableOpacity>
@@ -266,13 +308,13 @@ export default function SearchResults() {
               style={{ width: '100%' }}
               numberOfLines={1}
             >
-              {selectedItem || 'No product selected'}
+              {selectedItem || "Everything on Renit"}
             </Text>
             <View className="flex flex-row items-center space-x-2 mt-1 w-full" >
               {!!range.startDate || !!range.endDate ? <Text
                 fontSize="text-sm"
                 style={{
-                  color: isDark ? "#FFFFFF80" : "#00000080",
+                  color: ink.dim(isDark),
                 }}
               >
                 {formatDate(range.startDate)} - {formatDate(range.endDate)}
@@ -280,15 +322,15 @@ export default function SearchResults() {
                 : <Text
                   fontSize="text-sm"
                   style={{
-                    color: isDark ? "#FFFFFF80" : "#00000080",
+                    color: ink.dim(isDark),
                   }}
                 >
-                  No dates
+                  Any dates
                 </Text>}<Text
                   fontSize="text-sm"
                   className="mb-1"
                   style={{
-                    color: isDark ? "#FFFFFF80" : "#00000080",
+                    color: ink.dim(isDark),
                   }}
                 >
                 •
@@ -296,12 +338,12 @@ export default function SearchResults() {
               <Text
                 fontSize="text-sm"
                 style={{
-                  color: isDark ? "#FFFFFF80" : "#00000080",
+                  color: ink.dim(isDark),
                   flex: 1,
                 }}
                 numberOfLines={1}
               >
-                {address || 'No location'}
+                {address || "Anywhere"}
               </Text>
             </View>
           </View>
@@ -324,7 +366,7 @@ export default function SearchResults() {
                 <Text
                   fontSize="text-sm"
                   fontWeight="font-bold"
-                  className={`underline ${isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                  className={`underline ${isDark ? "text-muted-dark" : "text-muted-light"
                     }`}
                 >
                   Clear Filters
@@ -334,13 +376,16 @@ export default function SearchResults() {
 
             <TouchableOpacity
               onPress={handleOpenBottomSheet}
+              accessibilityRole="button"
+              accessibilityLabel="Filters"
+              accessibilityHint="Refine these results by price, dates and location"
               className={`relative rounded-full p-2 border ${isDark
-                ? "border-[#292929] bg-[#0F0F0F]"
-                : "border-[#E6E6E6] bg-white"
+                ? "border-line-dark bg-surface-dark"
+                : "border-line-light bg-surface-light"
                 }`}
             >
               <AdjustmentsVerticalIcon
-                color={isDark ? "#FFFFFF80" : "#00000080"}
+                color={ink.dim(isDark)}
                 size={20}
               />
               {isFilterActive() && (
@@ -352,7 +397,7 @@ export default function SearchResults() {
                     width: 8,
                     height: 8,
                     borderRadius: 4,
-                    backgroundColor: "#413C9A",
+                    backgroundColor: colors.dark.brand,
                   }}
                 />
               )}
@@ -363,12 +408,18 @@ export default function SearchResults() {
         {/* Products Grid */}
 
         <FlatList
-          style={{ width: '100%', }}
+          style={{ width: "100%" }}
           data={products}
           keyExtractor={(item) => item.name}
+          // Always the two-up grid. Special-casing a single result to full width
+          // gave the app a third product-card layout: the same object rendered
+          // as a 158pt tile on Home, a half-column tile on the owner profile,
+          // and a ~390pt full-bleed slab here, so one search result filled the
+          // entire screen. A lone tile in a two-column row is the correct and
+          // expected shape.
           numColumns={2}
           columnWrapperStyle={{
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
             marginTop: 8,
             gap: 12,
           }}
@@ -385,24 +436,40 @@ export default function SearchResults() {
               title={item.title}
               location={item.location}
               price={item.rate}
-              width='48.5%'
+              width="48.5%"
             />
           )}
         />
         {isLoading && products.length === 0 ? (
           <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#635BE8" />
+            <ActivityIndicator size="large" color={colors.dark.brand} />
           </View>
         ) : null}
         {!isLoading && products.length === 0 ? (
-          <Disclaimer mb={24} />
+          <>
+            <EmptyState
+              compact
+              title="No matches"
+              body={
+                isFilterActive()
+                  ? "Try widening your dates, price or location."
+                  : "Try a broader word, or browse a category from Home."
+              }
+              actionLabel={isFilterActive() ? "Clear filters" : undefined}
+              onAction={isFilterActive() ? clearFiltersAndSearch : undefined}
+            />
+            <Disclaimer mb={24} />
+          </>
         ) : null}
       </View>
 
       {/* Main Bottom Sheet */}
+      {/* The sheet was pinned at 75% whatever it contained, so the Price tab
+          showed two fields above roughly 1,180pt of empty white. Each tab now
+          asks for the height it actually needs. */}
       <CustomBottomSheetModal
         ref={bottomSheetRef}
-        snapPoints={["75%"]}
+        snapPoints={[sheetHeightForTab(selectedTab, showSubCategory)]}
         isDark={isDark}
         scrollView={false}
       >
@@ -410,11 +477,12 @@ export default function SearchResults() {
           <View className="flex-1 w-full ">
             <View className="flex w-full " style={{ marginBottom: selectedTab === 'Category' && !showSubCategory ? 0 : 12 }}>
               <Text
-                fontSize="text-lg"
-                fontWeight="font-bold"
+                accessibilityRole="header"
+                fontSize="text-md"
+                fontWeight="font-semibold"
                 className="text-center"
               >
-                Refine your search
+                Filters
               </Text>
 
               <ScrollView
@@ -427,7 +495,7 @@ export default function SearchResults() {
                     position: "absolute",
                     bottom: 0,
                     height: 2,
-                    backgroundColor: isDark ? "#292929" : "#e6e6e6",
+                    backgroundColor: ink.line(isDark),
                     width: "100%",
                     zIndex: -1,
                     left: 0,
@@ -452,15 +520,12 @@ export default function SearchResults() {
                         }}
                       >
                         <Text
-                          fontWeight="font-bold"
-                          className={`${selectedTab === tab
-                            ? ""
-                            : isDark
-                              ? "text-[#FFFFFF80]"
-                              : "text-[#00000080]"
-                            }`}
+                          fontSize="text-sm"
+                          fontWeight={selectedTab === tab ? "font-semibold" : "font-medium"}
+                          tone={selectedTab === tab ? "default" : "body"}
                         >
                           {tab}
+                          {tabHasValue(tab, filters) ? " •" : ""}
                         </Text>
                         {/* Border for the selected tab */}
                         {selectedTab === tab && (
@@ -471,7 +536,7 @@ export default function SearchResults() {
                               left: 0,
                               right: 0,
                               height: 2,
-                              backgroundColor: "#635be8",
+                              backgroundColor: colors.dark.brand,
                             }}
                           />
                         )}
@@ -544,6 +609,41 @@ export default function SearchResults() {
                   isLoading={isLoading}
                 />
               )}
+            </View>
+          </View>
+
+          {/* One persistent footer. Each tab used to render its own "Show
+              products" button, and only once something had been selected — so
+              a sheet you had just opened had no action at all, and there was
+              never a way to clear a filter you had set. */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+              paddingHorizontal: SCREEN_GUTTER,
+              paddingTop: 12,
+              borderTopWidth: 1,
+              borderTopColor: ink.line(isDark),
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Button
+                variant="ghost"
+                disabled={!isFilterActive()}
+                onPress={clearFiltersAndSearch}
+              >
+                Reset
+              </Button>
+            </View>
+            <View style={{ flex: 1.4 }}>
+              <Button loading={isLoading} onPress={closeSheet}>
+                {isLoading
+                  ? "Loading"
+                  : `Show ${products.length} ${
+                      products.length === 1 ? "result" : "results"
+                    }`}
+              </Button>
             </View>
           </View>
         </StyledBottomView>

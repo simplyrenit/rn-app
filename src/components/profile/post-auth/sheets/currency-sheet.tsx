@@ -4,6 +4,7 @@ import getUnicodeFlagIcon from "country-flag-icons/unicode";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { CheckIcon } from "react-native-heroicons/solid";
+import { colors } from "@/lib/design-tokens";
 
 interface AppearanceSheetProps {
   bottomSheetModalRef: React.RefObject<any>;
@@ -45,7 +46,7 @@ export const CurrencySheet: React.FC<AppearanceSheetProps> = ({
           </View>
           <CheckIcon
             size={24}
-            color="#635BE8"
+            color={colors.dark.brand}
           />
         </TouchableOpacity>
 
@@ -85,7 +86,7 @@ export const CurrencySheet: React.FC<AppearanceSheetProps> = ({
           onPress={() => {}}
         >
           <Text fontSize="text-base">Light Mode</Text>
-          {/* {theme === "light" && <CheckIcon size={24} color="#635BE8" />}
+          {/* {theme === "light" && <CheckIcon size={24} color={colors.dark.brand} />}
         </TouchableOpacity> */}
       </View>
     </CustomBottomSheetModal>

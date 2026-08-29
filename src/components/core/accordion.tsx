@@ -1,10 +1,10 @@
-import { useGlobalContext } from "@/context/global-context";
+import { radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import React, { useState } from "react";
 import {
   LayoutAnimation,
   Platform,
   Pressable,
-  StyleSheet,
   UIManager,
   View,
 } from "react-native";
@@ -31,9 +31,7 @@ if (
 
 const Accordion: React.FC<AccordionProps> = ({ question, answer }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { theme } = useGlobalContext();
-
-  const isDarkMode = theme === "dark";
+  const { color, shadow } = useTheme();
 
   const rotation = useSharedValue(0);
 
@@ -55,15 +53,33 @@ const Accordion: React.FC<AccordionProps> = ({ question, answer }) => {
 
   return (
     <View
-      className="rounded-2xl border-[1px] my-2"
-      style={[isDarkMode ? styles.darkContainer : styles.lightContainer]}
+      style={[
+        {
+          borderRadius: radius.group,
+          borderWidth: 1,
+          marginVertical: 8,
+          backgroundColor: color.surface,
+          borderColor: color.line,
+          overflow: "hidden",
+        },
+        shadow,
+      ]}
     >
       <Pressable
-        className={`flex-row justify-between items-center p-3  ${
-          isOpen
-            ? `border-b border-b-[${isDarkMode ? "#292929" : "#e6e6e6"}]`
-            : ""
-        }`}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: isOpen }}
+        accessibilityLabel={question}
+        // The divider used to be an interpolated arbitrary class, which
+        // NativeWind cannot resolve at build time, so it silently never drew.
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: 14,
+          minHeight: 56,
+          borderBottomWidth: isOpen ? 1 : 0,
+          borderBottomColor: color.line,
+        }}
         onPress={toggleAccordion}
       >
         <View className=" flex-1 pr-3">
@@ -76,42 +92,21 @@ const Accordion: React.FC<AccordionProps> = ({ question, answer }) => {
         </View>
         <Animated.View style={animatedIconStyle}>
           {isOpen ? (
-            <MinusIcon
-              size={20}
-              color={isDarkMode ? "#FFFFFF80" : "#00000080"}
-            />
+            <MinusIcon size={20} color={color.textBody} />
           ) : (
-            <PlusIcon
-              size={20}
-              color={isDarkMode ? "#FFFFFF80" : "#00000080"}
-            />
+            <PlusIcon size={20} color={color.textBody} />
           )}
         </Animated.View>
       </Pressable>
       {isOpen && (
-        <View className="p-3">
-          <Text fontSize="text-sm">{answer}</Text>
+        <View style={{ padding: 14 }}>
+          <Text fontSize="text-md" tone="body">
+            {answer}
+          </Text>
         </View>
       )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  darkContainer: {
-    backgroundColor: "#0F0F0F",
-    borderColor: "#444",
-  },
-  lightContainer: {
-    backgroundColor: "#fff",
-    borderColor: "#ddd",
-  },
-  darkText: {
-    color: "#fff",
-  },
-  lightText: {
-    color: "#000",
-  },
-});
 
 export default Accordion;

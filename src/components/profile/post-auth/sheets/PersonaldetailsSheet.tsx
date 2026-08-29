@@ -1,4 +1,4 @@
-import Toast from "react-native-toast-message";
+
 import { useAuth } from "@/backend/auth";
 import { useProfile } from "@/backend/profile";
 import { Button, Text } from "@/components/core";
@@ -7,7 +7,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
 import {
   ArrowLeftIcon,
@@ -20,12 +20,13 @@ import {
   PhotoIcon,
 } from "react-native-heroicons/outline";
 import OTPTextView from "react-native-otp-textinput";
-import * as Progress from "react-native-progress";
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
 import DeleteAccountModal from "./DeleteAccountModal";
+import { ink, colors, radius, fontSize } from "@/lib/design-tokens";
+import { toast } from "@/lib/toast";
 
 interface PersonalDetailsSheetProps {
   bottomSheetModalRef: React.RefObject<any>;
@@ -224,12 +225,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         setIsOtpSent(false);
       } catch (error) {
         console.error("Error updating email:", error);
-        Toast.show({
-          type: "customToast",
-          position: "bottom",
-          text1: "Could not update your email. Please try again.",
-          text2: "error",
-        });
+        toast.error("Could not update your email. Please try again.");
       }
     }
   };
@@ -276,45 +272,45 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
   const styles = StyleSheet.create({
     emailInput: {
-      backgroundColor: theme === "dark" ? "#333" : "#fff",
-      color: theme === "dark" ? "#fff" : "#000",
+      backgroundColor: ink.surfaceRaised(theme === "dark"),
+      color: ink.text(isDark),
       padding: wp("3%"),
       borderWidth: 1,
-      borderRadius: 10,
+      borderRadius: radius.input,
       marginVertical: wp("4%"),
-      borderColor: theme === "dark" ? "#555" : "#ccc",
+      borderColor: ink.inputLine(theme === "dark"),
     },
     otpInputContainer: {
       marginHorizontal: -5,
     },
     otpInput: {
-      backgroundColor: theme === "dark" ? "#0F0F0F" : "#FFF",
-      borderRadius: 10,
+      backgroundColor: ink.surface(isDark),
+      borderRadius: radius.input,
       borderWidth: 3,
-      color: theme === "dark" ? "white" : "black",
+      color: ink.text(isDark),
     },
     input: {
-      fontSize: wp("4%"),
-      borderColor: "#292929",
+      fontSize: fontSize.md,
+      borderColor: ink.line(true),
       borderWidth: 1,
       padding: wp("2.5%"),
       marginVertical: wp("3%"),
-      borderRadius: 15,
+      borderRadius: radius.group,
     },
     saveButton: {
-      backgroundColor: "#635BE8",
+      backgroundColor: colors.dark.brand,
       padding: wp("3.5%"),
       alignItems: "center",
-      borderRadius: 12,
+      borderRadius: radius.card,
     },
     textInputContainer: {
       marginHorizontal: -5,
     },
     roundedTextInput: {
-      backgroundColor: theme === "dark" ? "#0F0F0F" : "#FFF",
-      borderRadius: 10,
+      backgroundColor: ink.surface(isDark),
+      borderRadius: radius.input,
       borderWidth: 3,
-      color: theme === "dark" ? "white" : "black",
+      color: ink.text(isDark),
       width: wp(12.5),
     },
   });
@@ -339,12 +335,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const pickImageFromGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Photo library access is needed to choose an image",
-        text2: "error",
-      });
+      toast.error("Photo library access is needed to choose an image");
       return;
     }
 
@@ -366,12 +357,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Camera access is needed to take a photo",
-        text2: "error",
-      });
+      toast.error("Camera access is needed to take a photo");
       return;
     }
 
@@ -403,7 +389,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         isDark={isDarkMode}
       >
         <Pressable style={{ position: 'absolute', bottom: 12, left: 0, right: 0, alignItems: 'center', padding: 32, }} onPress={() => setDeleteAccountModal(true)}>
-          <Text style={{ color: '#E50914' }}>Delete my account</Text>
+          <Text style={{ color: ink.danger(isDark) }}>Delete my account</Text>
         </Pressable>
         <View className="flex items-center my-4">
           <Text
@@ -416,10 +402,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
         <View
           style={{ paddingVertical: wp("5%") }}
-          className={`flex-row justify-between items-center border-b-[1px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+          className={`flex-row justify-between items-center border-b-[1px] ${isDark ? "border-input-line-dark" : "border-input-line-light"
             } p-4`}
         >
-          <View className="flex-row gap-3 items-center justify-center">
+          <View className="flex-row space-x-3 items-center justify-center">
             <View>
               <Image
                 source={{ uri: selectedImage || details.profilePic }}
@@ -441,7 +427,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               <Text
                 fontSize="text-md"
                 fontWeight="font-bold"
-                className="text-[#635BE8]"
+                className="text-brand"
               >
                 Upload
               </Text>
@@ -455,7 +441,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             style={{ paddingVertical: wp("5%") }}
             className="flex-row justify-between items-center "
           >
-            <View className="flex-row gap-3 items-center justify-center">
+            <View className="flex-row space-x-3 items-center justify-center">
               <View>
                 <Text fontWeight="font-bold">Full name</Text>
                 <Text
@@ -466,10 +452,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity onPress={openEditNameModal}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Edit" onPress={openEditNameModal}>
               <PencilSquareIcon
                 size={24}
-                color="#635BE8"
+                color={colors.dark.brand}
               />
             </TouchableOpacity>
           </View>
@@ -479,7 +465,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             style={{ paddingVertical: wp("5%") }}
             className="flex-row justify-between items-center "
           >
-            <View className="flex-row gap-3 items-center justify-center">
+            <View className="flex-row space-x-3 items-center justify-center">
               <View>
                 <Text fontWeight="font-bold">Email address</Text>
                 <Text
@@ -490,10 +476,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity onPress={openEditEmailModal}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Edit" onPress={openEditEmailModal}>
               <PencilSquareIcon
                 size={24}
-                color="#635BE8"
+                color={colors.dark.brand}
               />
             </TouchableOpacity>
           </View>
@@ -503,7 +489,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             style={{ paddingVertical: wp("5%") }}
             className="flex-row justify-between items-center "
           >
-            <View className="flex-row gap-3 items-center justify-center">
+            <View className="flex-row space-x-3 items-center justify-center">
               <View>
                 <Text fontWeight="font-bold">Phone number</Text>
                 <Text
@@ -514,10 +500,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity onPress={openEditPhoneModal}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Edit" onPress={openEditPhoneModal}>
               <PencilSquareIcon
                 size={24}
-                color="#635BE8"
+                color={colors.dark.brand}
               />
             </TouchableOpacity>
           </View>
@@ -527,7 +513,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             style={{ paddingVertical: wp("5%") }}
             className="flex-row justify-between items-center "
           >
-            <View className="flex-row gap-3 items-center justify-center">
+            <View className="flex-row space-x-3 items-center justify-center">
               <View>
                 <Text fontWeight="font-bold">Password</Text>
                 <Text
@@ -538,26 +524,23 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity onPress={openEditPasswordModal}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Edit" onPress={openEditPasswordModal}>
               <PencilSquareIcon
                 size={24}
-                color="#635BE8"
+                color={colors.dark.brand}
               />
             </TouchableOpacity>
           </View>
         </View>
 
-        <View className="px-5">
+        <View className="px-gutter">
           {selectedImage && (
             <TouchableOpacity
               onPress={handleProfileUpdate}
               style={[styles.saveButton, { marginTop: hp(5) }]}
             >
               {loading ? (
-                <Progress.CircleSnail
-                  color={"white"}
-                  size={22}
-                />
+                <ActivityIndicator size="small" color="white" />
               ) : (
                 <Text
                   className="text-white"
@@ -578,27 +561,27 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         ref={profileImageSheetRef}
         isDark={isDark}
       >
-        <View className="w-full px-5 py-2 flex flex-col justify-start flex-1">
-          <View className="py-4 flex-row items-center justify-between gap-x-5">
+        <View className="w-full px-gutter py-2 flex flex-col justify-start flex-1">
+          <View className="py-4 flex-row items-center justify-between space-x-5">
             <TouchableOpacity
               onPress={pickImageFromGallery}
               className=" flex-1 space-y-4"
               style={{
                 borderStyle: "dashed",
-                borderColor: "#C4C4C4",
+                borderColor: ink.line(false),
                 borderWidth: 1,
                 height: hp("20%"),
-                borderRadius: 10,
+                borderRadius: radius.input,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
               <PhotoIcon
                 size={24}
-                color={isDark ? "#e6e6e6" : "#292929"}
+                color={isDark ? ink.line(false) : ink.line(true)}
               />
               <Text
-                className={`${isDark ? "text-white/70" : "text-black/70"
+                className={`${isDark ? "text-muted-dark" : "text-muted-light"
                   } text-center`}
               >
                 Choose from gallery
@@ -609,20 +592,20 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               className="space-y-4 flex-1"
               style={{
                 borderStyle: "dashed",
-                borderColor: "#C4C4C4",
+                borderColor: ink.line(false),
                 borderWidth: 1,
                 height: hp("20%"),
-                borderRadius: 10,
+                borderRadius: radius.input,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
               <CameraIcon
                 size={24}
-                color={isDark ? "#e6e6e6" : "#292929"}
+                color={isDark ? ink.line(false) : ink.line(true)}
               />
               <Text
-                className={`${isDark ? "text-white/70" : "text-black/70"
+                className={`${isDark ? "text-muted-dark" : "text-muted-light"
                   } text-center`}
               >
                 Take a photo
@@ -642,7 +625,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           className="flex-row items-center justify-between px-6"
           style={{ paddingVertical: wp("5%") }}
         >
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
             onPress={() => {
               editNameModalRef.current?.close();
@@ -650,7 +633,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           >
             <ArrowLeftIcon
               size={26}
-              color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
+              color={ink.body(isDarkMode)}
             />
           </TouchableOpacity>
 
@@ -668,13 +651,13 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
           <View></View>
         </View>
-        <View className="p-4 gap-4">
+        <View className="p-4 space-y-4">
           <TextInput
-            className={`rounded-[12px] border p-3 ${isDark
-              ? "border-[#292929] text-white"
-              : "border-[#e6e6e6] text-black"
+            className={`rounded-card border p-3 ${isDark
+              ? "border-input-line-dark text-white"
+              : "border-input-line-light text-black"
               }`}
-            placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+            placeholderTextColor={ink.dim(isDark)}
             value={updatedName}
             onChangeText={setUpdatedName}
             placeholder="Enter your full name"
@@ -684,10 +667,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             style={styles.saveButton}
           >
             {loading ? (
-              <Progress.CircleSnail
-                color={"white"}
-                size={22}
-              />
+              <ActivityIndicator size="small" color="white" />
             ) : (
               <Text
                 className="text-white"
@@ -711,7 +691,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           className="flex-row items-center justify-between relative px-6"
           style={{ paddingVertical: wp("5%") }}
         >
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
             onPress={() => {
               editEmailModalRef.current?.close();
@@ -719,7 +699,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           >
             <ArrowLeftIcon
               size={26}
-              color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
+              color={ink.body(isDarkMode)}
             />
           </TouchableOpacity>
           <View
@@ -737,21 +717,23 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           <View></View>
         </View>
 
-        <View className="p-4 gap-4">
+        <View className="p-4 space-y-4">
           {!isOtpSent ? (
             <>
               <TextInput
-                className={`rounded-lg border p-3 ${isDark
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
+                className={`rounded-button border p-3 ${isDark
+                  ? "border-input-line-dark text-white"
+                  : "border-input-line-light text-black"
                   }`}
-                placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+                placeholderTextColor={ink.dim(isDark)}
                 value={updatedEmail}
                 onChangeText={setUpdatedEmail}
                 editable={!loading}
                 autoCapitalize="none"
                 autoComplete="email"
+                textContentType="emailAddress"
                 autoCorrect={false}
+                accessibilityLabel="New email address"
                 placeholder="Enter your new email"
                 keyboardType="email-address"
               />
@@ -785,12 +767,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   // @ts-ignore
                   placeholder="*"
                   placeholderTextColor={
-                    theme === "dark" ? "#ffffff80" : "#00000080"
+                    ink.dim(isDark)
                   }
                   inputCount={6}
                   inputCellLength={1}
-                  tintColor="#635BE8"
-                  offTintColor={theme === "dark" ? "#292929" : "#e6e6e6"}
+                  tintColor={colors.dark.brand}
+                  offTintColor={ink.line(isDark)}
                   keyboardType="number-pad"
                   autoFocus
                   handleTextChange={setVerificationCode}
@@ -799,17 +781,16 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
               {isIncorrect && (
                 <View className="flex mt-2 flex-row items-center space-x-2">
-                  <Text
+                  <Text tone="danger"
                     fontSize="text-sm"
                     fontWeight="font-bold"
-                    className="text-red-500"
                   >
                     Wrong OTP. Try again
                   </Text>
                 </View>
               )}
 
-              <View className=" flex-row gap-x-3 ">
+              <View className=" flex-row space-x-3 ">
                 <View className="flex-1">
                   <Button variant="outline">
                     <Text
@@ -822,10 +803,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   </Button>
                 </View>
                 <View className="flex-1">
-                  <Button
-                    className="border border-brand-blue111"
-                    onPress={handleSubmitOtp}
-                  >
+                  <Button onPress={handleSubmitOtp}>
                     <Text
                       fontSize="text-sm"
                       fontWeight="font-bold"
@@ -851,13 +829,13 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           className="flex-row items-center justify-between px-6"
           style={{ paddingVertical: wp("5%") }}
         >
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
             onPress={() => editPhoneModalRef.current?.close()}
           >
             <ArrowLeftIcon
               size={26}
-              color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
+              color={ink.body(isDarkMode)}
             />
           </TouchableOpacity>
           <View
@@ -875,14 +853,14 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           <View></View>
         </View>
 
-        <View className="p-4 gap-4  flex-1">
+        <View className="p-4 space-x-4  flex-1">
           {!isMobileOtpSent ? (
             <>
-              <View className="flex-row gap-x-2 ">
+              <View className="flex-row space-x-2 ">
                 <View
-                  className={` rounded-[12px] flex-[0.5] border h-12  flex-row items-center justify-center ${isDark
-                    ? "border-[#292929] text-white"
-                    : "border-[#e6e6e6] text-black"
+                  className={` rounded-card flex-[0.5] border h-12  flex-row items-center justify-center ${isDark
+                    ? "border-input-line-dark text-white"
+                    : "border-input-line-light text-black"
                     }`}
                 >
                   <CountryPicker
@@ -907,16 +885,16 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   <View className="ml-2 ">
                     <ChevronDownIcon
                       size={16}
-                      color={isDark ? "#ffffff" : "#000"}
+                      color={ink.text(isDark)}
                       className="mt-1"
                     />
                   </View>
                 </View>
 
                 <View
-                  className={`flex-row items-center rounded-[12px] flex-1 border px-3 h-12 ${isDark
-                    ? "border-[#292929] text-white"
-                    : "border-[#e6e6e6] text-black"
+                  className={`flex-row items-center rounded-card flex-1 border px-3 h-12 ${isDark
+                    ? "border-input-line-dark text-white"
+                    : "border-input-line-light text-black"
                     }`}
                 >
                   <View className="pr-2 items-center justify-center">
@@ -931,7 +909,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                       value={updatedPhone}
                       onChangeText={setUpdatedPhone}
                       keyboardType="number-pad"
-                      placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+                      placeholderTextColor={ink.dim(isDark)}
                       className={`flex-1 h-12 p-3 pl-0  ${isDark ? "text-white" : "text-black"
                         }`}
                     />
@@ -964,12 +942,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   // @ts-ignore
                   placeholder="*"
                   placeholderTextColor={
-                    theme === "dark" ? "#ffffff80" : "#00000080"
+                    ink.dim(isDark)
                   }
                   inputCount={6}
                   inputCellLength={1}
-                  tintColor="#635BE8"
-                  offTintColor={theme === "dark" ? "#292929" : "#e6e6e6"}
+                  tintColor={colors.dark.brand}
+                  offTintColor={ink.line(isDark)}
                   keyboardType="number-pad"
                   autoFocus
                   handleTextChange={setMobileOtpVerificationCode}
@@ -978,17 +956,16 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
               {isIncorrect && (
                 <View className="flex mt-2 flex-row items-center space-x-2">
-                  <Text
+                  <Text tone="danger"
                     fontSize="text-sm"
                     fontWeight="font-bold"
-                    className="text-red-500"
                   >
                     Wrong OTP. Try again
                   </Text>
                 </View>
               )}
 
-              <View className=" flex-row gap-x-3 ">
+              <View className=" flex-row space-x-3 ">
                 <View className="flex-1">
                   <Button variant="outline">
                     <Text
@@ -1036,13 +1013,13 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           className="flex-row items-center justify-between px-6"
           style={{ paddingVertical: wp("5%") }}
         >
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
             onPress={() => editPasswordModalRef.current?.close()}
           >
             <ArrowLeftIcon
               size={26}
-              color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
+              color={ink.body(isDarkMode)}
             />
           </TouchableOpacity>
           <View className="items-center justify-center ">
@@ -1057,7 +1034,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           <View></View>
         </View>
 
-        <View className="p-4 gap-4">
+        <View className="p-4 space-x-4">
           <Text
             fontSize="text-base"
             fontWeight="font-bold"
@@ -1065,9 +1042,9 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             Current Password
           </Text>
           <View
-            className={`flex flex-row items-center border mt-2 rounded-lg p-2 h-12  ${isDark
-              ? "border-[#292929] text-white"
-              : "border-[#e6e6e6] text-black"
+            className={`flex flex-row items-center border mt-2 rounded-button p-2 h-12  ${isDark
+              ? "border-input-line-dark text-white"
+              : "border-input-line-light text-black"
               }`}
           >
             <TextInput
@@ -1075,20 +1052,25 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               secureTextEntry={!showPassword}
               value={updatedPassword}
               onChangeText={setUpdatedPassword}
+              textContentType="password"
+              autoComplete="current-password"
+              autoCapitalize="none"
+              autoCorrect={false}
+              accessibilityLabel="Current password"
               placeholder="Enter your current password"
-              placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
-              style={{ color: isDarkMode ? "#FFF" : "#000" }}
+              placeholderTextColor={ink.dim(isDark)}
+              style={{ color: ink.text(isDarkMode) }}
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Show or hide password" onPress={() => setShowPassword(!showPassword)}>
               {showPassword ? (
                 <EyeSlashIcon
                   size={22}
-                  color={isDarkMode ? "#FFF" : "#000"}
+                  color={ink.text(isDarkMode)}
                 />
               ) : (
                 <EyeIcon
                   size={22}
-                  color={isDarkMode ? "#FFF" : "#000"}
+                  color={ink.text(isDarkMode)}
                 />
               )}
             </TouchableOpacity>
@@ -1101,9 +1083,9 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             New Password
           </Text>
           <View
-            className={`flex flex-row items-center border mt-2 rounded-lg p-2 h-12  ${isDark
-              ? "border-[#292929] text-white"
-              : "border-[#e6e6e6] text-black"
+            className={`flex flex-row items-center border mt-2 rounded-button p-2 h-12  ${isDark
+              ? "border-input-line-dark text-white"
+              : "border-input-line-light text-black"
               }`}
           >
             <TextInput
@@ -1111,22 +1093,27 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               secureTextEntry={!showNewPassoword}
               value={newPassword}
               onChangeText={handleNewPasswordChange}
+              textContentType="newPassword"
+              autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect={false}
+              accessibilityLabel="New password"
               placeholder="Enter your new password"
-              style={{ color: isDarkMode ? "#fff" : "#000" }}
-              placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+              style={{ color: ink.text(isDarkMode) }}
+              placeholderTextColor={ink.dim(isDark)}
             />
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Show or hide password"
               onPress={() => setShowNewPassword(!showNewPassoword)}
             >
               {showNewPassoword ? (
                 <EyeSlashIcon
                   size={22}
-                  color={isDarkMode ? "#FFF" : "#000"}
+                  color={ink.text(isDarkMode)}
                 />
               ) : (
                 <EyeIcon
                   size={22}
-                  color={isDarkMode ? "#FFF" : "#000"}
+                  color={ink.text(isDarkMode)}
                 />
               )}
             </TouchableOpacity>
@@ -1138,7 +1125,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               <Text
                 fontSize="text-xs"
                 fontWeight="font-bold"
-                style={{ color: "red" }}
+                style={{ color: ink.danger(isDark) }}
               >
                 Your password must include:
               </Text>
@@ -1147,7 +1134,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   key={index}
                   fontSize="text-xs"
                   fontWeight="font-bold"
-                  style={{ color: "red" }}
+                  style={{ color: ink.danger(isDark) }}
                 >
                   {error}
                 </Text>
@@ -1159,10 +1146,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             <TouchableOpacity
               onPress={handleSavePassword}
               style={{
-                backgroundColor: "#635BE8",
+                backgroundColor: colors.dark.brand,
                 padding: wp("3.5%"),
                 alignItems: "center",
-                borderRadius: 12,
+                borderRadius: radius.card,
               }}
             >
               <Text

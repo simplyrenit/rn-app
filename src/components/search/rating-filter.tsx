@@ -4,6 +4,7 @@ import { View } from "react-native";
 import StarRating from "react-native-star-rating-widget";
 import { Button, Text } from "../core";
 import { Rating } from "react-native-ratings";
+import { colors } from "@/lib/design-tokens";
 
 interface Props {
   productRating: number;
@@ -40,15 +41,15 @@ export function RatingFilter({
         </Text>
         <View
           className={`flex flex-row items-center justify-between border ${
-            isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
-          } w-full h-16 rounded-[16px] p-3`}
+            isDark ? "bg-canvas-dark border-line-dark" : "bg-surface-light border-line-light"
+          } w-full h-16 rounded-group p-3`}
         >
           <Rating
             ratingCount={5}
             type="custom"
             fractions={1}
             jumpValue={0.5}
-            ratingColor="#635be8"
+            ratingColor={colors.dark.brand}
             startingValue={rating.product}
             imageSize={24}
             onFinishRating={(newRating: number) => {
@@ -71,8 +72,8 @@ export function RatingFilter({
         </Text>
         <View
           className={`flex flex-row items-center justify-between border ${
-            isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
-          } w-full h-16 rounded-[16px] p-3`}
+            isDark ? "bg-canvas-dark border-line-dark" : "bg-surface-light border-line-light"
+          } w-full h-16 rounded-group p-3`}
         >
           <Rating
             ratingCount={5}
@@ -80,7 +81,7 @@ export function RatingFilter({
             fractions={1}
             jumpValue={0.5}
             // ratingImage={require("../../../assets/star.png")}
-            ratingColor="#635be8"
+            ratingColor={colors.dark.brand}
             style={{ gap: 10}}
             startingValue={rating.owner}
             imageSize={24}
@@ -95,16 +96,6 @@ export function RatingFilter({
           <Text fontSize="text-2xl">{rating.owner}</Text>
         </View>
       </View>
-      {Boolean(rating.product || rating.owner) && (
-        <View className="p-3">
-          <Button
-            onPress={closeSheet}
-            className="mt-5"
-          >
-            {isLoading ? "Loading..." : "Show products"}
-          </Button>
-        </View>
-      )}
     </View>
   );
 }

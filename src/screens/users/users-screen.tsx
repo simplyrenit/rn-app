@@ -1,7 +1,7 @@
 import { useChat } from "@/backend/chat";
 import useOwner from "@/backend/owner";
 import useReviews from "@/backend/reviews";
-import { Button, Card, Container, Text } from "@/components/core";
+import { Avatar, Button, Card, Container, Text } from "@/components/core";
 import { ReviewCard } from "@/components/product/review-card";
 import { useGlobalContext } from "@/context/global-context";
 import {
@@ -22,9 +22,14 @@ import {
   CubeIcon,
   StarIcon,
   UserCircleIcon,
+  Squares2X2Icon,
 } from "react-native-heroicons/outline";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import Toast from "react-native-toast-message";
+
+import { toast } from "@/lib/toast";
+import { ink } from "@/lib/design-tokens";
+import { describeRating } from "@/lib/rating";
+import { useTheme } from "@/lib/theme";
 
 const StyledImage = styled(Image);
 
@@ -62,12 +67,7 @@ export default function UsersDetails() {
 
   const handleStartChat = async () => {
     if (!isAuthenticated) {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Sign in to Renit to message owners",
-        text2: "error",
-      });
+      toast.error("Sign in to Renit to message owners");
       return;
     }
 
@@ -78,7 +78,7 @@ export default function UsersDetails() {
         username: userDetails?.name!,
         profilePicture: userDetails?.image
           ? userDetails?.image
-          : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+          : "",
       },
       {
         userId: owner?.username!,
@@ -86,7 +86,7 @@ export default function UsersDetails() {
         username: owner?.first_name! + " " + owner?.last_name!,
         profilePicture: owner?.image?.image_url
           ? owner?.image?.image_url
-          : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+          : "",
       },
       {
         title: "",
@@ -107,16 +107,18 @@ export default function UsersDetails() {
     fetchOwnerDetails();
   }, [id]);
 
+  const { color } = useTheme();
   const ownerRating = owner?.average_rating ?? 0;
+  const ratingDisplay = describeRating(ownerRating);
+  // Was "Jul 22, '26" — an apostrophe year and day-level precision on a
+  // "member since" fact, in en-US on a rupee marketplace. The month and year
+  // are the only part anyone reads.
   const joinedDateLabel = owner?.date_joined
-    ? new Date(owner.date_joined)
-        .toLocaleDateString("en-US", {
-          year: "2-digit",
-          month: "short",
-          day: "2-digit",
-        })
-        .replace(/(\d{2})$/, " '$1")
-    : "-";
+    ? new Date(owner.date_joined).toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "short",
+      })
+    : "—";
   const productLabel = `${products.length} ${
     products.length === 1 ? "product" : "products"
   }`;
@@ -125,9 +127,9 @@ export default function UsersDetails() {
     <Container>
       <View className="p-5 flex flex-row items-center">
         <View className="w-[10%]">
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back" onPress={() => navigation.goBack()}>
             <ArrowLeftIcon
-              color={isDark ? "white" : "black"}
+              color={ink.text(isDark)}
               size={24}
             />
           </TouchableOpacity>
@@ -144,19 +146,11 @@ export default function UsersDetails() {
       </View>
 
       <View className="items-center justify-center">
-        {owner?.image?.image_url ? (
-          <StyledImage
-            source={{
-              uri: owner?.image?.image_url || "",
-            }}
-            className="h-24 w-24 rounded-full"
-          />
-        ) : (
-          <UserCircleIcon
-            color={"#635BE8"}
-            size={wp("14%")}
-          />
-        )}
+        <Avatar
+          uri={owner?.image?.image_url}
+          name={`${owner?.first_name ?? ""} ${owner?.last_name ?? ""}`.trim()}
+          size={96}
+        />
         <Text
           fontSize="text-md"
           fontWeight="font-bold"
@@ -168,87 +162,55 @@ export default function UsersDetails() {
 
       <View className="p-5 items-center justify-evenly flex flex-row">
         <View className="items-center w-1/3">
+          {/* "0.0" under the word "Rating" told every unrated host they were
+              scored zero out of five. A host with no reviews is New. */}
           <StarIcon
-            color={isDark ? "white" : "black"}
-            size={24}
+            color={ratingDisplay.rated ? color.warning : color.textDim}
+            size={22}
           />
-          <Text
-            fontSize="text-sm"
-            fontWeight="font-bold"
-            className="mt-2"
-          >
-            {ownerRating.toFixed(1)}
+          <Text fontSize="text-md" fontWeight="font-bold" className="mt-2">
+            {ratingDisplay.label}
           </Text>
-          <Text
-            fontSize="text-sm"
-            className={`mt-1 text-black/50 ${isDark ? "text-white/50" : "text-black/50"
-              }`}
-          >
-            Rating
+          <Text fontSize="text-xs" tone="body" className="mt-1">
+            {ratingDisplay.rated ? "Rating" : "Host"}
           </Text>
         </View>
         <View className="items-center w-1/3">
-          <CubeIcon
-            color={isDark ? "white" : "black"}
-            size={24}
-          />
-          <Text
-            fontSize="text-sm"
-            fontWeight="font-bold"
-            className="mt-2"
-          >
+          <Squares2X2Icon color={color.textBody} size={22} />
+          <Text fontSize="text-md" fontWeight="font-bold" className="mt-2">
             {products.length}
           </Text>
-          <Text
-            fontSize="text-sm"
-            className={`mt-1 text-black/50 ${isDark ? "text-white/50" : "text-black/50"
-              }`}
-          >
-            Products
+          <Text fontSize="text-xs" tone="body" className="mt-1">
+            {products.length === 1 ? "Listing" : "Listings"}
           </Text>
         </View>
         <View className="items-center w-1/3">
-          <CalendarIcon
-            color={isDark ? "white" : "black"}
-            size={24}
-          />
-          <Text
-            fontSize="text-sm"
-            fontWeight="font-bold"
-            className="mt-2"
-          >
+          <CalendarIcon color={color.textBody} size={22} />
+          <Text fontSize="text-md" fontWeight="font-bold" className="mt-2">
             {joinedDateLabel}
           </Text>
-          <Text
-            fontSize="text-sm"
-            className={`mt-1 text-black/50 ${isDark ? "text-white/50" : "text-black/50"
-              }`}
-          >
-            User since
+          <Text fontSize="text-xs" tone="body" className="mt-1">
+            Member since
           </Text>
         </View>
       </View>
 
       {!isOwner && (
-        <View className="px-5">
-          <Button
-            variant="outline"
-            onPress={handleStartChat}
-            className="border rounded-xl"
-          >
-            <Text fontWeight="font-bold">Chat with {owner?.first_name}</Text>
+        <View className="px-gutter">
+          <Button onPress={handleStartChat}>
+            {`Message ${owner?.first_name ?? "the owner"}`}
           </Button>
         </View>
       )}
 
       <View
-        className={`my-5 border-b-[0.5px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+        className={`my-5 border-b-[0.5px] ${isDark ? "border-b-line-dark" : "border-b-line-light"
           }`}
       ></View>
 
       <View className="">
         <View className="">
-          <View className="px-5">
+          <View className="px-gutter">
             <Text
               fontSize="text-lg"
               fontWeight="font-bold"
@@ -285,10 +247,10 @@ export default function UsersDetails() {
           </ScrollView>
         </View>
 
-        {products.length > 2 && <View className="px-5">
+        {products.length > 2 && <View className="px-gutter">
           <Button
             variant="outline"
-            className="mt-4 border rounded-xl"
+            className="mt-4 border rounded-card"
             onPress={() =>
               navigation.navigate("OwnersProducts", {
                 products: products,
@@ -301,16 +263,16 @@ export default function UsersDetails() {
         </View>}
       </View>
 
-      {/* <View className="border-b-[1px] border-[#292929] my-5"></View> */}
+      {/* <View className="border-b-[1px] border-line-dark my-5"></View> */}
 
       <View
-        className={`my-5 border-b-[0.5px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+        className={`my-5 border-b-[0.5px] ${isDark ? "border-b-line-dark" : "border-b-line-light"
           }`}
       ></View>
 
       <View className=" mb-16">
         <View className="">
-          <View className="px-5">
+          <View className="px-gutter">
             <Text
               fontSize="text-lg"
               fontWeight="font-bold"
@@ -321,7 +283,7 @@ export default function UsersDetails() {
           </View>
           {!ownerReviews.length && (
             <Text fontSize="text-sm"
-              className={`mt-0 ml-6 text-black/50 ${isDark ? "text-white/50" : "text-black/50"
+              className={`mt-0 ml-6 text-subtle-light ${isDark ? "text-subtle-dark" : "text-subtle-light"
                 }`}>No reviews yet</Text>
           )}
 
@@ -353,7 +315,7 @@ export default function UsersDetails() {
           </ScrollView>
         </View>
 
-        {ownerReviews.length > 1 ? <View className="px-5">
+        {ownerReviews.length > 1 ? <View className="px-gutter">
           <Button
             onPress={() =>
               navigation.navigate("OwnersReviewScreen", {
@@ -362,7 +324,7 @@ export default function UsersDetails() {
               })
             }
             variant="outline"
-            className="mt-4 border rounded-xl"
+            className="mt-4 border rounded-card"
           >
             <Text fontWeight="font-bold">View all reviews</Text>
           </Button>

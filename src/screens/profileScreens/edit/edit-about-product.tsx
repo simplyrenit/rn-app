@@ -13,7 +13,7 @@ import * as Location from "expo-location";
 import { styled } from "nativewind";
 import * as React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { Platform, Pressable, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, TextInput, TouchableOpacity, View } from "react-native";
 import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 import { ScrollView } from "react-native-gesture-handler";
@@ -28,22 +28,26 @@ import {
   PhoneIcon,
   ViewfinderCircleIcon,
 } from "react-native-heroicons/outline";
-import * as Progress from "react-native-progress";
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
-import Toast from "react-native-toast-message";
+
 import {
   BadCondition,
   ExcellentCondition,
   GoodCondition,
 } from "@/icons/conditions";
 import { MaterialIcons } from "@expo/vector-icons";
+import { RequiredMark } from "@/components/core/field";
+import { ink, colors, radius } from "@/lib/design-tokens";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import { toast } from "@/lib/toast";
 type ConditionOption = {
   label: string;
   value: string;
-  icon: JSX.Element;
+  icon: JSX.Element | null;
 };
 
 interface Coordinates {
@@ -72,6 +76,7 @@ export default function EditAboutProduct() {
   const { updateMyProductDetails, loading: L } = useProfile();
 
   const { theme } = useGlobalContext();
+  const insets = useSafeAreaInsets();
   const isDark = theme === "dark";
   const [productName, setProductName] = useState(data.title || "");
   const [brandName, setBrandName] = useState(data.brand_name || "");
@@ -122,7 +127,6 @@ export default function EditAboutProduct() {
 
   const [productCountry, setProductCountry] = useState<string>("India");
 
-
   const bottomSheetRef = React.useRef<BottomSheetModal>(null);
   const googlePlacesRef = React.useRef<any>(null);
 
@@ -138,7 +142,6 @@ export default function EditAboutProduct() {
     address.trim() &&
     (selectedLocation || (location.latitude !== 0 && location.longitude !== 0)) &&
     (contactPerson === "Owner" || (otherName && otherPhoneNumber));
-
 
   const fetchAddress = useCallback(async (loc: {
     coords: Pick<Location.LocationObjectCoords, "latitude" | "longitude">;
@@ -227,13 +230,7 @@ export default function EditAboutProduct() {
       // Validate country
       const validCountries = ["USA", "UK", "India"];
       if (!validCountries.includes(country)) {
-        Toast.show({
-          type: "error",
-          text1: "Country not supported!",
-          text2: "We are currently only available in India, USA and UK",
-          position: "bottom",
-          text1Style: { color: "red" },
-        });
+        toast.error("Country not supported!", { message: "We are currently only available in India, USA and UK" });
         return;
       }
 
@@ -275,15 +272,9 @@ export default function EditAboutProduct() {
           contactPerson === "Other" ? otherPhoneNumber : userDetails?.phone,
       };
 
-
       await updateMyProductDetails(data.name, formattedProductData);
 
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Your product was updated!",
-        text2: "success",
-      });
+      toast.success("Your product was updated!");
 
       navigation.goBack();
     } catch (error) {
@@ -358,32 +349,17 @@ export default function EditAboutProduct() {
     {
       label: "Excellent",
       value: "excellent",
-      icon: (
-        <ExcellentCondition
-          size={20}
-          color={`${isDark ? "white" : "black"}`}
-        />
-      ),
+      icon: null,
     },
     {
       label: "Good",
       value: "good",
-      icon: (
-        <GoodCondition
-          size={20}
-          color={`${isDark ? "white" : "black"}`}
-        />
-      ),
+      icon: null,
     },
     {
       label: "Fair",
       value: "fair",
-      icon: (
-        <BadCondition
-          size={20}
-          color={`${isDark ? "white" : "black"}`}
-        />
-      ),
+      icon: null,
     },
   ];
 
@@ -392,7 +368,7 @@ export default function EditAboutProduct() {
       <View className=" h-10 items-center justify-center pt-2">
         <View className="flex-row items-center justify-between">
           <View className="w-[10%]">
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
               onPress={() => navigation.goBack()}
               className={`flex-row items-center py-4 px-6`}
             >
@@ -400,7 +376,7 @@ export default function EditAboutProduct() {
                 <ArrowLeftIcon
                   className=""
                   size={20}
-                  color={theme === "dark" ? "white" : "black"}
+                  color={ink.text(isDark)}
                 />
               </View>
             </TouchableOpacity>
@@ -419,125 +395,108 @@ export default function EditAboutProduct() {
         </View>
       </View>
 
-      <View
-        className={`${Platform.OS === "ios" ? "" : "flex-1"
-          } justify-between pt-2`}
-        style={{
-          paddingBottom: Platform.OS === "ios" ? wp("15%") : 0,
-        }}
-      >
+      {/* Same defect as the create flow: the iOS branch dropped flex-1 and
+          reserved a percentage of screen width, so the scroll container never
+          made room for the home indicator and the CTA was clipped. */}
+      <View className="flex-1 justify-between pt-2">
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            padding: 16,
+            paddingHorizontal: SCREEN_GUTTER,
+            paddingTop: 16,
+            paddingBottom: insets.bottom + 32,
           }}
-          style={{ height: "100%" }}
         >
-          <View className="space-y-2 mb-10">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
+          <View className="space-y-1 mb-5">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
               Product Name
-              <Text style={{ color: '#E50914' }}>{" "}*</Text>
+              <RequiredMark />
 
             </Text>
-            <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
-              Keep the name concise with relevant info
+            <Text fontSize="text-xs" tone="body">
+              Short and recognisable — “MacBook Air”, not a spec sheet
             </Text>
             <TextInput
-              placeholder={`"Macbook Air"`}
+              placeholder="e.g. MacBook Air"
               value={productName}
-              placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+              placeholderTextColor={ink.dim(isDark)}
               onChangeText={setProductName}
-              className={`rounded-[12px] h-12 border p-3 ${isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
+              className={`rounded-input h-11 border px-3 ${isDark
+                ? "border-input-line-dark text-white"
+                : "border-input-line-light text-black"
                 }`}
             />
           </View>
 
-          <View className="space-y-2 mb-10">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
+          <View className="space-y-1 mb-5">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
               Brand Name
             </Text>
             <TextInput
-              placeholder={`"Apple"`}
-              placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+              placeholder="e.g. Apple"
+              placeholderTextColor={ink.dim(isDark)}
               value={brandName}
               onChangeText={setBrandName}
-              className={`rounded-[12px] h-12 border p-3 ${isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
+              className={`rounded-input h-11 border px-3 ${isDark
+                ? "border-input-line-dark text-white"
+                : "border-input-line-light text-black"
                 }`}
             />
           </View>
 
-          <View className="space-y-2 mb-10">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
+          <View className="space-y-1 mb-5">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
               Model Name/Number
             </Text>
             <TextInput
-              placeholder={`"Macbook Air 2024"`}
+              placeholder="e.g. MacBook Air 2024"
               value={modelName}
-              placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+              placeholderTextColor={ink.dim(isDark)}
               onChangeText={setModelName}
-              className={`rounded-[12px] h-12 border p-3 ${isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
+              className={`rounded-input h-11 border px-3 ${isDark
+                ? "border-input-line-dark text-white"
+                : "border-input-line-light text-black"
                 }`}
             />
           </View>
 
-          <View className="space-y-2 mb-10">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
+          <View className="space-y-1 mb-5">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
               Condition
-              <Text style={{ color: '#E50914' }}>{" "}*</Text>
-            </Text>
-            <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
-              Choose the condition your product is in currently
+              <RequiredMark />
             </Text>
 
             <RNEDropdown
               style={{
                 height: 48,
-                backgroundColor: isDark ? "#000" : "#fff",
-                borderRadius: 10,
+                backgroundColor: ink.canvas(isDark),
+                borderRadius: radius.input,
                 borderWidth: 1,
-                borderColor: isDark ? "#292929" : "#E6E6E6",
+                borderColor: ink.line(isDark),
                 paddingHorizontal: 16,
                 marginVertical: 10,
               }}
-              activeColor={isDark ? "#0F0F0F" : "#e6e6e6"}
+              activeColor={ink.surface(isDark)}
               containerStyle={{
                 marginTop: 10,
-                backgroundColor: isDark ? "#000" : "#FFF",
-                borderRadius: 14,
+                backgroundColor: ink.canvas(isDark),
+                borderRadius: radius.group,
               }}
               itemTextStyle={{
-                color: isDark ? "white" : "black",
+                color: ink.text(isDark),
               }}
               itemContainerStyle={{
                 borderBottomWidth: 1,
-                borderBottomColor: isDark ? "#292929" : "#E6E6E6",
+                borderBottomColor: ink.line(isDark),
               }}
-              placeholderStyle={{ color: "gray", fontSize: 15 }}
-              selectedTextStyle={{ color: isDark ? "#fff" : "#000" }}
+              placeholderStyle={{ color: ink.placeholder(isDark), fontSize: 16 }}
+              selectedTextStyle={{ color: ink.text(isDark) }}
               inputSearchStyle={{
                 height: 40,
                 fontSize: 16,
-                borderRadius: 10,
-                color: isDark ? "#fff" : "#000",
+                borderRadius: radius.input,
+                color: ink.text(isDark),
               }}
               iconStyle={{ marginRight: 10 }}
               data={options}
@@ -562,7 +521,7 @@ export default function EditAboutProduct() {
                 >
                   {item.icon}
                   <Text
-                    style={{ marginLeft: 8, color: isDark ? "white" : "black" }}
+                    style={{ marginLeft: 8, color: ink.text(isDark) }}
                   >
                     {item.label}
                   </Text>
@@ -572,26 +531,22 @@ export default function EditAboutProduct() {
             />
           </View>
 
-          <View className="space-y-2 mb-10">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
+          <View className="space-y-1 mb-5">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
               Product Description
             </Text>
-            <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
-              Tell us more about your product: Any info that the buyer might
-              need to know
+            <Text fontSize="text-xs" tone="body">
+              What it is, what’s included, anything to watch for
             </Text>
             <TextInput
-              placeholder="Type something..."
+              placeholder="What it is, what condition it’s in, what’s included"
               value={productDescription}
               onChangeText={setProductDescription}
-              placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+              placeholderTextColor={ink.dim(isDark)}
               multiline
-              className={`rounded-[12px] border h-32 p-3 ${isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
+              className={`rounded-card border h-32 p-3 ${isDark
+                ? "border-input-line-dark text-white"
+                : "border-input-line-light text-black"
                 }`}
               style={{
                 textAlignVertical: "top", // Ensures text starts at the top
@@ -599,25 +554,22 @@ export default function EditAboutProduct() {
             />
           </View>
 
-          <View className="space-y-2 mb-10">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
+          <View className="space-y-1 mb-5">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
               Usage Description
             </Text>
-            <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
-              Educate the buyer on how to use your product
+            <Text fontSize="text-xs" tone="body">
+              Show a renter how to use it
             </Text>
             <TextInput
-              placeholder="Type something..."
+              placeholder="Setup, handling, anything easy to get wrong"
               value={usageDescription}
               onChangeText={setUsageDescription}
-              placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+              placeholderTextColor={ink.dim(isDark)}
               multiline
-              className={`rounded-[12px] border h-32 p-3 ${isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
+              className={`rounded-card border h-32 p-3 ${isDark
+                ? "border-input-line-dark text-white"
+                : "border-input-line-light text-black"
                 }`}
               style={{
                 textAlignVertical: "top", // Ensures text starts at the top
@@ -625,29 +577,23 @@ export default function EditAboutProduct() {
             />
           </View>
 
-          <View className="space-y-2 mb-10">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
+          <View className="space-y-1 mb-5">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
               Product Location
-              <Text style={{ color: '#E50914' }}>{" "}*</Text>
-            </Text>
-            <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
-              Mention the product's location
+              <RequiredMark />
             </Text>
 
             <TouchableOpacity
-              className={`h-[50px] rounded-[12px] w-full ${isDark
-                ? "bg-[#000] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
+              className={`h-[50px] rounded-card w-full ${isDark
+                ? "bg-canvas-dark border-input-line-dark"
+                : "bg-surface-light border-input-line-light"
                 } border px-2`}
               onPress={handleOpenBottomSheet}
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
                 <View className="flex flex-row items-center space-x-2 ">
                   <MapPinIcon
-                    color={isDark ? "white" : "black"}
+                    color={ink.text(isDark)}
                     size={24}
                   />
                   <View className="w-3/4">
@@ -663,7 +609,7 @@ export default function EditAboutProduct() {
                     ) : (
                       <Text
                         fontSize="text-sm"
-                        className={`${isDark ? "text-white/70" : "text-black/70"
+                        className={`${isDark ? "text-muted-dark" : "text-muted-light"
                           }`}
                       >
                         Select a location
@@ -673,7 +619,7 @@ export default function EditAboutProduct() {
                 </View>
                 {selectedLocationName && (
                   <PencilSquareIcon
-                    color={isDark ? "white" : "black"}
+                    color={ink.text(isDark)}
                     size={24}
                   />
                 )}
@@ -681,26 +627,23 @@ export default function EditAboutProduct() {
             </TouchableOpacity>
           </View>
 
-          <View className="space-y-2 mb-10">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
+          <View className="space-y-1 mb-5">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
               Product Address
-              <Text style={{ color: '#E50914' }}>{" "}*</Text>
+              <RequiredMark />
             </Text>
-            <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
+            <Text fontSize="text-xs" tone="body">
               Add complete address where the product is located
             </Text>
             <TextInput
               placeholder="Enter address..."
               value={address}
               onChangeText={setAddress}
-              placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+              placeholderTextColor={ink.dim(isDark)}
               multiline
-              className={`rounded-[12px] border h-32 p-3 ${isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
+              className={`rounded-card border h-32 p-3 ${isDark
+                ? "border-input-line-dark text-white"
+                : "border-input-line-light text-black"
                 }`}
               style={{
                 textAlignVertical: "top", // Ensures text starts at the top
@@ -708,97 +651,91 @@ export default function EditAboutProduct() {
             />
           </View>
 
-          <View className="space-y-2 mb-10">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
+          <View className="space-y-1 mb-5">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
               Price Per Day
-              <Text style={{ color: '#E50914' }}>{" "}*</Text>
+              <RequiredMark />
             </Text>
-            <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
-              Set a fair rent for the product to get maximum offers
+            <Text fontSize="text-xs" tone="body">
+              What a renter pays per day
             </Text>
             <View
-              className={`flex-row items-center rounded-[12px] border px-3 ${isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
+              className={`flex-row items-center rounded-card border px-3 ${isDark
+                ? "border-input-line-dark text-white"
+                : "border-input-line-light text-black"
                 }`}
             >
               {productCountry === "India" && (
                 <MaterialIcons
                   name="currency-rupee"
-                  color={"#635BE8"}
+                  color={colors.dark.brand}
                   size={20}
                 />
               )}
               {(productCountry === "USA" || productCountry === 'United States') && (
                 <MaterialIcons
                   name="attach-money"
-                  color={"#635BE8"}
+                  color={colors.dark.brand}
                   size={20}
                 />
               )}
               {productCountry === "UK" && (
                 <MaterialIcons
                   name="currency-pound"
-                  color={"#635BE8"}
+                  color={colors.dark.brand}
                   size={20}
                 />
               )}
               <TextInput
-                placeholder={`"₹1200"`}
+                placeholder="e.g. 1200"
                 keyboardType="numeric"
                 value={pricePerDay}
                 onChangeText={(value) => setPricePerDay(value.replace(/[^\d.]/g, ""))}
-                placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+                placeholderTextColor={ink.dim(isDark)}
                 className={`flex-1 h-12 p-3 ${isDark ? "text-white" : "text-black"
                   }`}
               />
             </View>
           </View>
 
-          <View className="space-y-2 mb-10">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
+          <View className="space-y-1 mb-5">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
               Security Deposit
-              <Text style={{ color: '#E50914' }}>{" "}*</Text>
+              <RequiredMark />
             </Text>
-            <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
-              Set a fair security deposit to rent your product
+            <Text fontSize="text-xs" tone="body">
+              Refunded when the item comes back
             </Text>
             <View
-              className={`flex-row items-center rounded-[12px] border px-3 ${isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
+              className={`flex-row items-center rounded-card border px-3 ${isDark
+                ? "border-input-line-dark text-white"
+                : "border-input-line-light text-black"
                 }`}
             >
               {productCountry === "India" && (
                 <MaterialIcons
                   name="currency-rupee"
-                  color={"#635BE8"}
+                  color={colors.dark.brand}
                   size={20}
                 />
               )}
               {(productCountry === "USA" || productCountry === 'United States') && (
                 <MaterialIcons
                   name="attach-money"
-                  color={"#635BE8"}
+                  color={colors.dark.brand}
                   size={20}
                 />
               )}
               {productCountry === "UK" && (
                 <MaterialIcons
                   name="currency-pound"
-                  color={"#635BE8"}
+                  color={colors.dark.brand}
                   size={20}
                 />
               )}
               <TextInput
-                placeholder={`"₹2500"`}
-                placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+                placeholder="e.g. 2500"
+                placeholderTextColor={ink.dim(isDark)}
                 keyboardType="numeric"
                 value={securityDeposit}
                 onChangeText={(value) => setSecurityDeposit(value.replace(/[^\d.]/g, ""))}
@@ -808,17 +745,14 @@ export default function EditAboutProduct() {
             </View>
           </View>
 
-          <View className="space-y-2 mb-10">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
+          <View className="space-y-1 mb-5">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
               Concerned person of contact
-              <Text style={{ color: '#E50914' }}>{" "}*</Text>
+              <RequiredMark />
             </Text>
-            <Text className={`${isDark ? "text-white/70" : "text-black/70"}`}>
+            <Text fontSize="text-xs" tone="body">
               Mention who the person of contact would be in case of any
-              questions or queries from the buyer
+              questions from renters
             </Text>
 
             <View className="flex-row items-center justify-between">
@@ -829,18 +763,18 @@ export default function EditAboutProduct() {
                   setOtherName("");
                   setOtherPhoneNumber("");
                 }}
-                className={`rounded-[12px] h-12 border w-[49%] p-3 flex-row items-center justify-between ${contactPerson === "Owner"
-                  ? "border-[#635BE8]"
+                className={`rounded-card h-12 border w-[49%] p-3 flex-row items-center justify-between ${contactPerson === "Owner"
+                  ? "border-brand"
                   : isDark
-                    ? "border-[#292929] text-white"
-                    : "border-[#e6e6e6] text-black"
+                    ? "border-input-line-dark text-white"
+                    : "border-input-line-light text-black"
                   }`}
               >
                 <Text fontSize="text-sm">Owner</Text>
                 {contactPerson === "Owner" && (
                   <CheckIcon
                     size={18}
-                    color="#635BE8"
+                    color={colors.dark.brand}
                   />
                 )}
               </TouchableOpacity>
@@ -848,18 +782,18 @@ export default function EditAboutProduct() {
               {/* Other Option */}
               <TouchableOpacity
                 onPress={() => setContactPerson("Other")}
-                className={`rounded-[12px] h-12 border w-[49%] p-3 flex-row items-center justify-between ${contactPerson === "Other"
-                  ? "border-[#635BE8]"
+                className={`rounded-card h-12 border w-[49%] p-3 flex-row items-center justify-between ${contactPerson === "Other"
+                  ? "border-brand"
                   : isDark
-                    ? "border-[#292929] text-white"
-                    : "border-[#e6e6e6] text-black"
+                    ? "border-input-line-dark text-white"
+                    : "border-input-line-light text-black"
                   }`}
               >
                 <Text fontSize="text-sm">Other</Text>
                 {contactPerson === "Other" && (
                   <CheckIcon
                     size={18}
-                    color="#635BE8"
+                    color={colors.dark.brand}
                   />
                 )}
               </TouchableOpacity>
@@ -878,10 +812,10 @@ export default function EditAboutProduct() {
                     placeholder="Enter name"
                     value={otherName}
                     onChangeText={setOtherName}
-                    placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
-                    className={`rounded-[12px] h-12 border p-3 ${isDark
-                      ? "border-[#292929] text-white"
-                      : "border-[#e6e6e6] text-black"
+                    placeholderTextColor={ink.dim(isDark)}
+                    className={`rounded-input h-11 border px-3 ${isDark
+                      ? "border-input-line-dark text-white"
+                      : "border-input-line-light text-black"
                       }`}
                   />
                 </View>
@@ -893,11 +827,11 @@ export default function EditAboutProduct() {
                   >
                     Phone Number
                   </Text>
-                  <View className="flex-row flex-1 gap-x-2 ">
+                  <View className="flex-row flex-1 space-x-2 ">
                     <View
-                      className={` rounded-[12px] flex-[0.5] border h-12  flex-row items-center justify-center ${isDark
-                        ? "border-[#292929] text-white"
-                        : "border-[#e6e6e6] text-black"
+                      className={` rounded-card flex-[0.5] border h-12  flex-row items-center justify-center ${isDark
+                        ? "border-input-line-dark text-white"
+                        : "border-input-line-light text-black"
                         }`}
                     >
                       <CountryPicker
@@ -922,7 +856,7 @@ export default function EditAboutProduct() {
                       <View className="ml-2 ">
                         <ChevronDownIcon
                           size={16}
-                          color={isDark ? "#ffffff" : "#000"}
+                          color={ink.text(isDark)}
                           className="mt-1"
                         />
                       </View>
@@ -930,9 +864,9 @@ export default function EditAboutProduct() {
 
                     <View
                       // className="flex-row items-center flex-1"
-                      className={`flex-row items-center rounded-[12px] flex-1 border px-3 h-12  ${isDark
-                        ? "border-[#292929] text-white"
-                        : "border-[#e6e6e6] text-black"
+                      className={`flex-row items-center rounded-card flex-1 border px-3 h-12  ${isDark
+                        ? "border-input-line-dark text-white"
+                        : "border-input-line-light text-black"
                         }`}
                     >
                       <View className="pr-2 items-center justify-center">
@@ -948,7 +882,7 @@ export default function EditAboutProduct() {
                           keyboardType="number-pad"
                           onChangeText={setOtherPhoneNumber}
                           placeholderTextColor={
-                            isDark ? "#ffffff80" : "#00000080"
+                            ink.dim(isDark)
                           }
                           className={`flex-1 h-12 p-3  ${isDark ? "text-white" : "text-black"
                             }`}
@@ -967,15 +901,11 @@ export default function EditAboutProduct() {
           >
             <View className="flex-row items-center justify-between">
               {L ? (
-                <Progress.CircleSnail
-                  color={"white"}
-                  size={22}
-                />
+                <ActivityIndicator size="small" color="white" />
               ) : (
-                <Text
+                <Text tone="body"
                   fontWeight="font-bold"
-                  className={`${allFieldsFilled ? "text-white" : "text-gray-500"
-                    }`}
+                  style={{ color: "#FFFFFF" }}
                 >
                   Update Product
                 </Text>
@@ -990,16 +920,16 @@ export default function EditAboutProduct() {
         ref={bottomSheetRef}
         isDark={isDark}
       >
-        <StyledBottomView className="w-full px-5 py-2 flex flex-col justify-start flex-1">
+        <StyledBottomView className="w-full px-gutter py-2 flex flex-col justify-start flex-1">
           <View className="h-full">
             <View
-              className={`flex-row pl-3 min-h-11 rounded-[12px] border ${isDark
-                ? "border-[#292929] bg-[#0F0F0F]"
-                : "border-[#e6e6e6] bg-white"
+              className={`flex-row pl-3 min-h-11 rounded-card border ${isDark
+                ? "border-input-line-dark bg-surface-dark"
+                : "border-input-line-light bg-surface-light"
                 }`}
             >
               <MagnifyingGlassIcon
-                color={isDark ? "#FFFFFFB2" : "#000000B2"}
+                color={ink.body(isDark)}
                 size={24}
                 style={{ marginTop: hp(1.1) }}
               />
@@ -1022,41 +952,41 @@ export default function EditAboutProduct() {
                 styles={{
                   textInput: {
                     height: 40,
-                    backgroundColor: isDark ? "#0F0F0F" : "#fff",
-                    borderRadius: 12,
+                    backgroundColor: ink.surface(isDark),
+                    borderRadius: radius.card,
                     paddingHorizontal: 8,
                     zIndex: 10,
-                    color: isDark ? "#fff" : "#000",
+                    color: ink.text(isDark),
                     fontSize: 16,
                   },
                   row: {
-                    backgroundColor: isDark ? "#0F0F0F" : "#FFF",
+                    backgroundColor: ink.surface(isDark),
                   },
                   description: {
-                    color: isDark ? "#fff" : "#000",
+                    color: ink.text(isDark),
                   },
-                  separator: { backgroundColor: "#292929" },
+                  separator: { backgroundColor: ink.line(true) },
                 }}
                 textInputProps={{
-                  placeholderTextColor: isDark ? "#FFFFFFB2" : "#000000B2",
+                  placeholderTextColor: ink.body(isDark),
                 }}
               />
             </View>
 
             <TouchableOpacity
-              className={`h-[48px] rounded-[12px] w-full border-b ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+              className={`h-[48px] rounded-card w-full border-b ${isDark ? "border-input-line-dark" : "border-input-line-light"
                 } px-2 mt-4`}
               onPress={handleCurrentLocation}
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
                 <View className="flex flex-row items-center space-x-4">
                   <ViewfinderCircleIcon
-                    color="#635be8"
+                    color={colors.dark.brand}
                     size={24}
                   />
                   <Text
                     fontWeight="font-bold"
-                    className="text-brand-blue"
+                    className="text-brand"
                   >
                     Use current location
                   </Text>
@@ -1073,11 +1003,11 @@ export default function EditAboutProduct() {
                     <TouchableOpacity
                       key={item.place_id}
                       onPress={() => handleSelectNearbyPlace(item)}
-                      className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+                      className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${isDark ? "border-input-line-dark" : "border-input-line-light"
                         }`}
                     >
                       <MapPinIcon
-                        color={isDark ? "white" : "black"}
+                        color={ink.text(isDark)}
                         size={20}
                       />
                       <Text fontSize="text-sm">{item.name}</Text>

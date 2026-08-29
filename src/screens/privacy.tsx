@@ -14,11 +14,14 @@ import {
 } from "react-native";
 import { ArrowLeftIcon } from "react-native-heroicons/outline";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ink } from "@/lib/design-tokens";
 
 const StyledScroll = styled(ScrollView);
 
 export default function Privacy() {
   const { theme } = useGlobalContext();
+  const insets = useSafeAreaInsets();
 
   const isDarkMode = theme === "dark";
 
@@ -26,14 +29,14 @@ export default function Privacy() {
 
   return (
     <NonScrollableContainer>
-      <View className="flex-row items-center justify-between px-4 pb-2 mt-2 ">
-        <TouchableOpacity
+      <View className="flex-row items-center justify-between px-gutter pb-2 mt-2 ">
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
           <ArrowLeftIcon
             size={26}
-            color={isDarkMode ? "#FFF" : "#000"}
+            color={ink.text(isDarkMode)}
           />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
@@ -49,10 +52,8 @@ export default function Privacy() {
       </View>
 
       <View
-        className={`${Platform.OS === "ios" ? "" : "flex-1"} justify-between`}
-        style={{
-          paddingBottom: Platform.OS === "ios" ? wp("10%") : 0,
-        }}
+        className="flex-1 justify-between"
+        style={{ paddingBottom: insets.bottom }}
       >
         {/* <StaticContainer> */}
         <StyledScroll
@@ -63,7 +64,7 @@ export default function Privacy() {
             style={{
               fontStyle: "italic",
               fontWeight: "600",
-              color: isDarkMode ? "white" : "black",
+              color: ink.text(isDarkMode),
             }}
           >
             {PRIVACY_CONTENT.effectiveDate}

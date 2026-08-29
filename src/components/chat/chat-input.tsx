@@ -1,8 +1,8 @@
-import Toast from "react-native-toast-message";
+
 import { useChat } from "@/backend/chat";
 import AttachmentSheet from "@/components/chat/attachment-sheet";
 import { useGlobalContext } from "@/context/global-context";
-import { PercentageIcon } from "@/icons/percent-outline";
+import { TagIcon } from "react-native-heroicons/outline";
 import { GENERATE_SIGNED_URLS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import axios from "axios";
@@ -24,6 +24,11 @@ import {
   XMarkIcon
 } from "react-native-heroicons/outline";
 import { PaperAirplaneIcon, } from "react-native-heroicons/solid";
+import { IconButton } from "@/components/core/icon-button";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, fontFamily, radius, ink, colors } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
+import { commitFeedback } from "@/lib/haptics";
+import { toast } from "@/lib/toast";
 
 const StyledInput = styled(TextInput);
 const StyledTO = styled(TouchableOpacity);
@@ -58,6 +63,7 @@ export function ChatInput({
   const [isUploading, setIsUploading] = useState(false);
   const { theme, authTokens } = useGlobalContext();
   const isDarkMode = theme === "dark";
+  const { color } = useTheme();
 
   const { sendMessage } = useChat();
 
@@ -143,6 +149,7 @@ export function ChatInput({
   };
 
   const handleSend = async () => {
+    commitFeedback();
     const trimmedMessage = message.trim();
 
     if (trimmedMessage) {
@@ -150,12 +157,7 @@ export function ChatInput({
         await sendMessage(trimmedMessage, conversationId);
         setMessage("");
       } catch {
-        Toast.show({
-          type: "customToast",
-          position: "bottom",
-          text1: "Could not send that message. Please try again.",
-          text2: "error",
-        });
+        toast.error("Could not send that message. Please try again.");
       }
     }
   };
@@ -185,24 +187,14 @@ export function ChatInput({
     } catch (error) {
       console.error("Error picking document:", error);
       // Optionally show an error message to the user
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Could not attach that file. Please try again.",
-        text2: "error",
-      });
+      toast.error("Could not attach that file. Please try again.");
     }
   };
 
   const handleSelectImagesVideos = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Photo library access is needed to choose an image",
-        text2: "error",
-      });
+      toast.error("Photo library access is needed to choose an image");
       return;
     }
 
@@ -246,7 +238,6 @@ export function ChatInput({
         },
       ]);
 
-
       // Upload to S3
       await uploadToS3(presignedUrls[0], mediaToUpload.uri);
 
@@ -268,11 +259,8 @@ export function ChatInput({
       setIsPreviewVisible(false);
     } catch (error) {
       console.error("Error uploading and sending media:", error);
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Could not send that attachment. Please try again.",
-        text2: "error",
+      toast.error("Couldn’t send that attachment", {
+        message: "Check your connection and try again.",
       });
     } finally {
       setIsUploading(false);
@@ -288,29 +276,52 @@ export function ChatInput({
 
   return (
     <View
-      className={`flex-row items-center px-4 py-2 ${isDarkMode ? "bg-black" : "bg-white"
-        } justify-evenly`}
+      // Symmetric gutters. The field used to sit 18pt from the left while the
+      // send button sat 29pt from the right, with 20pt of internal padding on
+      // one side of the field and 10pt on the other.
+      style={{
+        flexDirection: "row",
+        alignItems: "flex-end",
+        gap: 8,
+        paddingHorizontal: SCREEN_GUTTER,
+        paddingTop: 8,
+        paddingBottom: 8,
+        borderTopWidth: 1,
+        borderTopColor: color.line,
+        backgroundColor: color.surface,
+      }}
     >
       {/* Input */}
       <View
-        className={`border p-1 ${isDarkMode
-          ? "bg-[#0F0F0F] border-[#292929]"
-          : "bg-white border-[#e6e6e6]"
-          } flex flex-row items-center flex-1 rounded-full`}
-        style={{ minHeight: 44 }}
+        style={{
+          flex: 1,
+          flexDirection: "row",
+          alignItems: "center",
+          minHeight: MIN_TOUCH_TARGET,
+          paddingLeft: 4,
+          paddingRight: 4,
+          borderRadius: radius.full,
+          borderWidth: 1,
+          borderColor: color.inputLine,
+          backgroundColor: color.canvas,
+        }}
       >
         <StyledInput
-          className={`flex-1 ${isDarkMode ? "bg-[#0F0F0F] text-white " : "bg-white text-black "
-            } rounded-full px-4`}
-          placeholder="Type something..."
+          placeholder="Message"
           value={message}
           multiline
-          placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
+          placeholderTextColor={color.placeholder}
+          accessibilityLabel="Message"
           onChangeText={handleMessageChange}
           style={{
+            flex: 1,
+            paddingHorizontal: 12,
             textAlignVertical: "center",
             height: inputHeight,
             maxHeight: 100,
+            color: color.text,
+            fontFamily: fontFamily.regular,
+            fontSize: 16,
           }}
           editable={!isBlocked}
           onContentSizeChange={(event) => {
@@ -321,47 +332,46 @@ export function ChatInput({
             });
           }}
         />
-        <TouchableOpacity
-          className="mx-2"
+        <IconButton
+          size={36}
           disabled={isBlocked}
           onPress={handleOpenAttachmentSheet}
+          accessibilityLabel="Attach a photo or file"
         >
-          <PaperClipIcon
-            size={20}
-            color={isDarkMode ? "#FFFFFF80" : "#00000080"}
-          />
-        </TouchableOpacity>
+          <PaperClipIcon size={20} color={color.textBody} />
+        </IconButton>
 
-        <TouchableOpacity
-          onPress={onMakeOfferPress}
-          className="mx-2"
+        <IconButton
+          size={36}
           disabled={isBlocked}
+          onPress={onMakeOfferPress}
+          // The control was an unlabelled percent-in-a-badge glyph that nobody
+          // was going to decode. VoiceOver now says what it does.
+          accessibilityLabel="Make an offer"
+          accessibilityHint="Propose dates and a price for this item"
         >
-          <PercentageIcon size={20} color={isDarkMode ? "#FFFFFF80" : "#00000080"}
-          />
-        </TouchableOpacity>
+          <TagIcon size={20} color={color.textBody} />
+        </IconButton>
       </View>
 
-      {/* Send */}
-      <View className="">
-        <StyledTO
-          className={`ml-2 p-3 ${isBlocked || !message.trim() ? "bg-transparent" : "bg-[#635BE8]"
-            } rounded-full`}
-          disabled={isBlocked || !message.trim()}
-          onPress={handleSend}
-        >
-          <PaperAirplaneIcon
-            size={22}
-            color={
-              !isBlocked && message.trim()
-                ? "white"
-                : isDarkMode
-                  ? "#FFFFFF80"
-                  : "#00000080"
-            }
-          />
-        </StyledTO>
-      </View>
+      {/* Send. The brand colour finally appears on the app's most-used action;
+          it was grey in every state, and the only solid glyph beside two
+          outline ones. */}
+      <IconButton
+        size={MIN_TOUCH_TARGET}
+        disabled={isBlocked || !message.trim()}
+        onPress={handleSend}
+        accessibilityLabel="Send message"
+        style={{
+          backgroundColor:
+            isBlocked || !message.trim() ? color.surfaceRaised : color.brand,
+        }}
+      >
+        <PaperAirplaneIcon
+          size={20}
+          color={!isBlocked && message.trim() ? "#FFFFFF" : color.textDim}
+        />
+      </IconButton>
 
       <AttachmentSheet
         bottomSheetModalRef={attachmentSheetRef}
@@ -393,8 +403,8 @@ export function ChatInput({
           <View
             style={{
               width: "90%",
-              backgroundColor: isDarkMode ? "#1F1F1F" : "#fff",
-              borderRadius: 12,
+              backgroundColor: color.surface,
+              borderRadius: radius.card,
               overflow: "hidden",
             }}
           >
@@ -406,19 +416,19 @@ export function ChatInput({
                 alignItems: "center",
                 padding: 16,
                 borderBottomWidth: 1,
-                borderBottomColor: isDarkMode ? "#333" : "#e5e5e5",
+                borderBottomColor: ink.line(isDarkMode),
               }}
             >
               <Text
                 style={{
                   fontSize: 16,
                   fontWeight: "600",
-                  color: isDarkMode ? "#fff" : "#000",
+                  color: ink.text(isDarkMode),
                 }}
               >
                 Preview
               </Text>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Close"
                 onPress={() => {
                   setIsPreviewVisible(false);
                   setSelectedMedia(null);
@@ -427,7 +437,7 @@ export function ChatInput({
               >
                 <XMarkIcon
                   size={24}
-                  color={isDarkMode ? "#fff" : "#000"}
+                  color={ink.text(isDarkMode)}
                 />
               </TouchableOpacity>
             </View>
@@ -441,15 +451,15 @@ export function ChatInput({
                     style={{
                       width: "100%",
                       height: 300,
-                      borderRadius: 8,
-                      backgroundColor: isDarkMode ? "#333" : "#f5f5f5",
+                      borderRadius: radius.button,
+                      backgroundColor: ink.surfaceRaised(isDarkMode),
                     }}
                     resizeMode="contain"
                   />
                   <Text
                     style={{
                       marginTop: 8,
-                      color: isDarkMode ? "#999" : "#666",
+                      color: ink.body(isDarkMode),
                       fontSize: 14,
                     }}
                   >
@@ -460,13 +470,13 @@ export function ChatInput({
                 <View
                   style={{
                     padding: 16,
-                    backgroundColor: isDarkMode ? "#333" : "#f5f5f5",
-                    borderRadius: 8,
+                    backgroundColor: ink.surfaceRaised(isDarkMode),
+                    borderRadius: radius.button,
                   }}
                 >
                   <Text
                     style={{
-                      color: isDarkMode ? "#fff" : "#000",
+                      color: ink.text(isDarkMode),
                       fontSize: 16,
                       marginBottom: 4,
                     }}
@@ -475,7 +485,7 @@ export function ChatInput({
                   </Text>
                   <Text
                     style={{
-                      color: isDarkMode ? "#999" : "#666",
+                      color: ink.body(isDarkMode),
                       fontSize: 14,
                     }}
                   >
@@ -490,16 +500,16 @@ export function ChatInput({
               style={{
                 padding: 16,
                 borderTopWidth: 1,
-                borderTopColor: isDarkMode ? "#333" : "#e5e5e5",
+                borderTopColor: ink.line(isDarkMode),
               }}
             >
               <TouchableOpacity
                 onPress={handleSendMedia}
                 disabled={isUploading}
                 style={{
-                  backgroundColor: "#635BE8",
+                  backgroundColor: colors.dark.brand,
                   padding: 12,
-                  borderRadius: 8,
+                  borderRadius: radius.button,
                   alignItems: "center",
                   flexDirection: "row",
                   justifyContent: "center",
@@ -507,12 +517,12 @@ export function ChatInput({
               >
                 {isUploading ? (
                   <ActivityIndicator
-                    color="#fff"
+                    color="#FFFFFF"
                     style={{ marginRight: 8 }}
                   />
                 ) : null}
                 <Text
-                  style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}
+                  style={{ color: "#FFFFFF", fontSize: 16, fontFamily: fontFamily.semibold }}
                 >
                   {isUploading ? "Sending..." : "Send"}
                 </Text>

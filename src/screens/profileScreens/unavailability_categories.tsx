@@ -10,6 +10,8 @@ import {
   ArrowLeftIcon,
   ChevronRightIcon,
 } from "react-native-heroicons/outline";
+import { ink } from "@/lib/design-tokens";
+import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -37,27 +39,24 @@ export default function UnavailabilityCategories() {
       onPress={() => onPress(item)}
     >
       <View className="flex-row items-center space-x-5">
-        <Image
-          source={{
-            uri:
-              theme === "dark"
-                ? item.dark_icon ||
-                  "https://d1xuzik8wqiepv.cloudfront.net/assets/2024/10/03/JdXQXQHo/trucktrailer.svg"
-                : item.light_icon ||
-                  "https://d1xuzik8wqiepv.cloudfront.net/assets/2024/10/04/hxvbdzSz/trucktrailer.svg",
-          }}
-          style={{ width: 20, height: 20 }}
+        {/* The icon column was reserved and left empty here, while the same
+            taxonomy carried photographs on Home and identical cubes in the
+            listing flow. One glyph family, everywhere. */}
+        <CategoryIcon
+          name={item.title}
+          size={22}
+          color={ink.body(isDarkMode)}
         />
         <Text
           fontSize="text-base"
-          className={`${theme === "dark" ? "text-white" : "text-black"}`}
+          
         >
-          {item.title}
+          {categoryDisplayName(item.title)}
         </Text>
       </View>
       <ChevronRightIcon
         size={20}
-        color={theme === "dark" ? "white" : "black"}
+        color={ink.text(isDarkMode)}
       />
     </TouchableOpacity>
   );
@@ -66,16 +65,16 @@ export default function UnavailabilityCategories() {
     <NonScrollableContainer>
       <View style={{ flex: 1 }}>
         <View
-          className="flex-row items-center justify-between px-5 "
+          className="flex-row items-center justify-between px-gutter "
           style={{ paddingVertical: wp("5%") }}
         >
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             onPress={() => router.goBack()}
             className="flex-1 items-start w-[10%]"
           >
             <ArrowLeftIcon
               size={26}
-              color={isDarkMode ? "#FFF" : "#000"}
+              color={ink.text(isDarkMode)}
             />
           </TouchableOpacity>
           <View className="items-center justify-center w-[80%]">
@@ -83,13 +82,13 @@ export default function UnavailabilityCategories() {
               fontSize="text-xl"
               fontWeight="font-bold"
             >
-              Unavailability Form
+              Request an item
             </Text>
           </View>
 
           <View className="w-[10%]"></View>
         </View>
-        <View className="px-5 py-3">
+        <View className="px-gutter py-3">
           <Text
             fontSize="text-base"
             fontWeight="font-bold"

@@ -1,4 +1,4 @@
-import { StaticContainer, Text } from "@/components/core";
+import { Button, StaticContainer, Text } from "@/components/core";
 import DateRangePicker from "@/components/core/date-range-picker";
 import { useGlobalContext } from "@/context/global-context";
 import { ALL_PRODUCTS, GOOGLE_MAP_API_KEY } from "@/lib/config";
@@ -38,6 +38,10 @@ import {
 } from "react-native-heroicons/outline";
 import { CalendarIcon } from "react-native-heroicons/solid";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { SCREEN_GUTTER, fontFamily, radius, ink, colors } from "@/lib/design-tokens";
+import { CATEGORIES } from "@/lib/categories";
+import { categoryDisplayName, CategoryIcon } from "@/lib/category-icons";
+import { useTheme } from "@/lib/theme";
 
 const StyledBottomView = styled(BottomSheetView);
 
@@ -54,6 +58,7 @@ export default function SearchScreen() {
   const navigation = useTypedNavigation();
   const { theme } = useGlobalContext();
   const isDark = theme === "dark";
+  const { color } = useTheme();
   const route = useRoute<RouteProps<"Search">>();
   const { what, where, coords } = route?.params ?? {};
 
@@ -182,13 +187,19 @@ export default function SearchScreen() {
     setBottomSheetVisible(false);
   };
 
-  const isSearchDisabled = !selectedItem?.trim();
+  // Browsing the whole catalogue is the most common first intent in a
+  // marketplace, and it was shut off: the button stayed disabled until a
+  // keyword was typed, so "Anywhere / Any dates" was never a runnable query.
+  const hasKeyword = Boolean(selectedItem?.trim());
+  const hasLocation = Boolean(selectedLocationName);
+  const hasDates = Boolean(range?.startDate && range?.endDate);
+  const hasAnyCriteria = hasKeyword || hasLocation || hasDates;
 
   const onPress = () => {
     // SearchResults runs its own search when it opens without products, so the
     // tap navigates straight away instead of blocking on the network request.
     navigation.navigate("SearchResults", {
-      selectedItem: selectedItem!,
+      selectedItem: selectedItem?.trim() ?? "",
       address: selectedLocationName ?? "",
       coords: { lat: selectedLocation?.lat, lng: selectedLocation?.lng },
       range,
@@ -345,13 +356,13 @@ export default function SearchScreen() {
           {/* Header */}
 
           <View
-            className={`p-3 flex flex-row items-center border-b ${isDark ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
+            className={`p-3 flex flex-row items-center border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
               }`}
           >
             <View className="w-[10%]">
-              <TouchableOpacity onPress={() => navigation.goBack()}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back" onPress={() => navigation.goBack()}>
                 <ArrowLeftIcon
-                  color={isDark ? "white" : "black"}
+                  color={ink.text(isDark)}
                   size={24}
                 />
               </TouchableOpacity>
@@ -369,7 +380,7 @@ export default function SearchScreen() {
 
           {/* What? Dropdown */}
           <View
-            className={`p-5 border-b ${isDark ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
+            className={`p-5 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
               }`}
           >
             <Text
@@ -381,19 +392,19 @@ export default function SearchScreen() {
             </Text>
             <View
               style={isFocus && styles.focusedShadow}
-              className={`flex-row items-center rounded-[12px] w-full pl-2 border ${isFocus
+              className={`flex-row items-center rounded-card w-full pl-2 border ${isFocus
                 ? `${isDark
-                  ? "border-[#635BE8] bg-[#0F0F0F]"
-                  : "border-[#635BE8] bg-white"
+                  ? "border-brand bg-surface-dark"
+                  : "border-brand bg-surface-light"
                 }`
                 : `${isDark
-                  ? "border-[#292929] bg-[#0F0F0F]"
-                  : "border-[#e6e6e6] bg-white"
+                  ? "border-input-line-dark bg-surface-dark"
+                  : "border-input-line-light bg-surface-light"
                 }`
                 }`}
             >
               <MagnifyingGlassIcon
-                color={isDark ? "white" : "black"}
+                color={ink.text(isDark)}
                 size={24}
                 style={{
                   marginTop: 2,
@@ -411,8 +422,8 @@ export default function SearchScreen() {
                 }}
                 // initialValue={selectedItem ?? undefined}
                 inputContainerStyle={{
-                  backgroundColor: isDark ? "#0F0F0F" : "#ffffff",
-                  borderRadius: 10,
+                  backgroundColor: ink.surface(isDark),
+                  borderRadius: radius.input,
                   width: "98%",
                   paddingLeft: 24,
                 }}
@@ -426,26 +437,49 @@ export default function SearchScreen() {
                 closeOnSubmit
                 onSubmit={() => setIsFocus(false)}
                 textInputProps={{
-                  placeholder: `"Washing Machine"`,
+                  // Quoted, it read as a value already entered in the field.
+                  placeholder: "e.g. washing machine, drone, projector",
+                  // The screen exists for exactly one purpose, so the field it
+                  // exists for takes focus on open rather than costing a tap.
+                  autoFocus: true,
                   autoCapitalize: "none",
                   autoComplete: "off",
                   autoCorrect: false,
                   numberOfLines: 1,
                   value: what && what === selectedItem ? what : selectedItem ?? undefined,
-                  placeholderTextColor: isDark ? "#FFFFFF80" : "#00000080",
+                  placeholderTextColor: color.placeholder,
                   style: {
-                    color: isDark ? "#fff" : "#000",
-                    fontSize: 14,
-
+                    color: color.text,
+                    fontFamily: fontFamily.regular,
+                    fontSize: 16,
                     width: "95%",
                   },
                 }}
                 suggestionsListContainerStyle={{
-                  backgroundColor: isDark ? "#0F0F0F" : "#ffffff",
+                  backgroundColor: color.surface,
                   borderWidth: 1,
-                  borderColor: isDark ? "#292929" : "#E6E6E6",
+                  // A hairline is not enough to separate a floating panel from
+                  // the surface behind it; the popover read as part of the page
+                  // and covered the first letter of the "Where?" heading.
+                  borderColor: color.inputLine,
+                  borderRadius: radius.input,
                   width: "100%",
+                  shadowColor: "#000000",
+                  shadowOpacity: 0.18,
+                  shadowRadius: 16,
+                  shadowOffset: { width: 0, height: 8 },
+                  elevation: 8,
                 }}
+                // The library's default "Nothing found" rendered dark grey on
+                // dark grey and floated over the "Where?" heading beneath it.
+                EmptyResultComponent={
+                  <View style={{ padding: 16 }}>
+                    <Text fontSize="text-sm" tone="body">
+                      No matches yet. Try a broader word, or search the whole
+                      catalogue.
+                    </Text>
+                  </View>
+                }
                 onSelectItem={(item) => {
                   if (item) {
                     setSelectedItem(item.title!);
@@ -465,13 +499,14 @@ export default function SearchScreen() {
                   flexGrow: 1,
                 }}
                 showChevron={false}
-                renderItem={(item) => <Text className="p-5">{item.title}</Text>}
+                renderItem={(item) => (
+                  <Text fontSize="text-md" style={{ padding: 14 }}>
+                    {item.title}
+                  </Text>
+                )}
                 closeOnBlur={true}
                 ClearIconComponent={
-                  <XMarkIcon
-                    color={isDark ? "white" : "black"}
-                    size={24}
-                  />
+                  <XMarkIcon color={color.textBody} size={20} />
                 }
               />
             </View>
@@ -479,7 +514,7 @@ export default function SearchScreen() {
 
           {/* Where? */}
           <View
-            className={`p-5 border-b ${isDark ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
+            className={`p-5 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
               }`}
           >
             <Text
@@ -490,16 +525,16 @@ export default function SearchScreen() {
               Where?
             </Text>
             <TouchableOpacity
-              className={`h-[48px] rounded-[12px] w-full ${isDark
-                ? "bg-[#0F0F0F] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
+              className={`h-[48px] rounded-card w-full ${isDark
+                ? "bg-surface-dark border-input-line-dark"
+                : "bg-surface-light border-input-line-light"
                 } border px-2`}
               onPress={handleOpenBottomSheet}
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
                 <View className="flex flex-row items-center space-x-2 flex-1">
                   <MapPinIcon
-                    color={isDark ? "white" : "black"}
+                    color={ink.text(isDark)}
                     size={24}
                   />
                   <View className="flex-1">
@@ -508,15 +543,15 @@ export default function SearchScreen() {
                         {selectedLocationName}
                       </Text>
                     ) : (
-                      <Text style={{ color: "gray", fontSize: 15 }}>
-                        {"  "}Select a location (optional)
+                      <Text fontSize="text-md" style={{ color: color.placeholder }}>
+                        Anywhere
                       </Text>
                     )}
                   </View>
                 </View>
                 {selectedLocationName && (
                   <PencilSquareIcon
-                    color={isDark ? "white" : "black"}
+                    color={ink.text(isDark)}
                     size={24}
                   />
                 )}
@@ -535,31 +570,31 @@ export default function SearchScreen() {
             </Text>
             <TouchableOpacity
               onPress={() => setOpen(true)}
-              className={`h-[48px] rounded-[12px] w-full ${isDark
-                ? "bg-[#0F0F0F] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
+              className={`h-[48px] rounded-card w-full ${isDark
+                ? "bg-surface-dark border-input-line-dark"
+                : "bg-surface-light border-input-line-light"
                 } border px-2`}
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
                 <View className="flex flex-row items-center space-x-4">
                   <CalendarIcon
-                    color={isDark ? "white" : "black"}
+                    color={ink.text(isDark)}
                     size={24}
                   />
                   {range.startDate && range.endDate ? (
-                    <Text style={{ fontSize: 15 }}>
+                    <Text fontSize="text-md">
                       {formatDate(range.startDate)} -{" "}
                       {formatDate(range.endDate)}
                     </Text>
                   ) : (
-                    <Text style={{ color: "gray", fontSize: 15 }}>
-                      Select dates
+                    <Text fontSize="text-md" style={{ color: color.placeholder }}>
+                      Any dates
                     </Text>
                   )}
                 </View>
                 {range.endDate && (
                   <PencilSquareIcon
-                    color={isDark ? "white" : "black"}
+                    color={ink.text(isDark)}
                     size={24}
                   />
                 )}
@@ -567,41 +602,103 @@ export default function SearchScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Somewhere to start when you do not yet know what to type. */}
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{
+              paddingHorizontal: SCREEN_GUTTER,
+              paddingTop: 20,
+              paddingBottom: 12,
+            }}
+          >
+            <Text
+              accessibilityRole="header"
+              fontSize="text-md"
+              fontWeight="font-bold"
+              style={{ marginBottom: 12 }}
+            >
+              Popular categories
+            </Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {CATEGORIES.slice(0, 8).map((category) => (
+                <TouchableOpacity
+                  key={category.name}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Search ${categoryDisplayName(category.name)}`}
+                  onPress={() => {
+                    setSelectedItem(category.name);
+                    autocompleteDropdownRef.current?.setInputText?.(
+                      category.name
+                    );
+                  }}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    minHeight: 36,
+                    paddingHorizontal: 12,
+                    borderRadius: radius.full,
+                    borderWidth: 1,
+                    borderColor: color.line,
+                    backgroundColor: color.surface,
+                  }}
+                >
+                  <CategoryIcon
+                    name={category.name}
+                    size={16}
+                    color={color.brandText}
+                  />
+                  <Text fontSize="text-sm">{categoryDisplayName(category.name)}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+
           {/* Footer */}
           <View
-            className={`p-5 flex flex-row items-center justify-between h-[76px] border-t ${isDark ? "border-t-[#292929]" : "border-t-[#e6e6e6]"
-              }`}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              // Opaque: a wrapped fourth row of chips was drawing through it.
+              backgroundColor: color.canvas,
+              // "Clear all" sat 16pt from the left while Search sat 22pt from
+              // the right. One gutter on both sides.
+              paddingHorizontal: SCREEN_GUTTER,
+              paddingVertical: 12,
+              borderTopWidth: 1,
+              borderTopColor: color.line,
+            }}
           >
-            <View className="w-[20%]">
-              <TouchableOpacity onPress={cleanUp}>
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-bold"
-                  className="underline"
-                >
+            {/* Offering to clear filters when none are set is noise. */}
+            {hasAnyCriteria ? (
+              <TouchableOpacity
+                onPress={cleanUp}
+                accessibilityRole="button"
+                accessibilityLabel="Clear all filters"
+                style={{ minHeight: 44, justifyContent: "center" }}
+              >
+                <Text fontSize="text-md" fontWeight="font-semibold" tone="brand">
                   Clear all
                 </Text>
               </TouchableOpacity>
-            </View>
+            ) : (
+              <View />
+            )}
 
-            <View className="">
-              <TouchableOpacity
-                disabled={isSearchDisabled}
-                className={`${isSearchDisabled ? "bg-[#635be875]" : "bg-brand-blue"
-                  } py-4 px-4 rounded-[12px] h-[44px] items-center justify-center items-center align-center`}
-                onPress={onPress}
-              >
-                <View className="flex flex-row items-center">
-                  <MagnifyingGlassIcon color="white" size={22} />
-                  <Text
-                    fontSize="text-sm"
-                    fontWeight="font-bold"
-                    className="text-white ml-1"
-                  >
-                    Search
-                  </Text>
-                </View>
-              </TouchableOpacity>
+            <View style={{ minWidth: 150 }}>
+              <Button onPress={onPress}>
+                <MagnifyingGlassIcon color="#FFFFFF" size={18} />
+                <Text
+                  fontSize="text-md"
+                  fontWeight="font-bold"
+                  style={{ color: "#FFFFFF", marginLeft: 8 }}
+                >
+                  {hasAnyCriteria ? "Search" : "Browse all"}
+                </Text>
+              </Button>
             </View>
           </View>
 
@@ -613,33 +710,33 @@ export default function SearchScreen() {
               index={1}
               snapPoints={["50%", "75%", "90%"]}
               enablePanDownToClose={true}
-              backgroundStyle={{ backgroundColor: isDark ? "black" : "white" }}
+              backgroundStyle={{ backgroundColor: ink.canvas(isDark) }}
               onClose={() => setBottomSheetVisible(false)}
               handleIndicatorStyle={{
-                backgroundColor: isDark ? "#292929" : "#e6e6e6",
+                backgroundColor: ink.line(isDark),
               }}
               handleStyle={{
                 borderTopWidth: 2,
                 borderLeftWidth: 2,
                 borderRightWidth: 2,
-                borderTopColor: isDark ? "#292929" : "#e6e6e6",
-                borderLeftColor: isDark ? "#292929" : "#e6e6e6",
-                borderRightColor: isDark ? "#292929" : "#e6e6e6",
+                borderTopColor: ink.line(isDark),
+                borderLeftColor: ink.line(isDark),
+                borderRightColor: ink.line(isDark),
                 borderTopRightRadius: 50,
                 borderTopLeftRadius: 50,
               }}
             >
-              <StyledBottomView className="w-full px-5 py-2 flex flex-col justify-start flex-1">
+              <StyledBottomView className="w-full px-gutter py-2 flex flex-col justify-start flex-1">
                 <View className="h-full">
                   <View
-                    className={`flex-row pl-3 min-h-11 rounded-[12px] border ${isDark
-                      ? "border-[#292929] bg-[#0F0F0F]"
-                      : "border-[#e6e6e6] bg-white"
+                    className={`flex-row pl-3 min-h-11 rounded-card border ${isDark
+                      ? "border-input-line-dark bg-surface-dark"
+                      : "border-input-line-light bg-surface-light"
                       }`}
                     style={{ alignItems: 'flex-start' }}
                   >
                     <MagnifyingGlassIcon
-                      color={isDark ? "#FFFFFFB2" : "#000000B2"}
+                      color={ink.body(isDark)}
                       size={24}
                       style={{ marginTop: hp(1.1) }}
                     />
@@ -670,54 +767,52 @@ export default function SearchScreen() {
                         styles={{
                           textInput: {
                             height: '100%',
-                            backgroundColor: isDark ? "#0F0F0F" : "#fff",
-                            borderRadius: 12,
+                            backgroundColor: ink.surface(isDark),
+                            borderRadius: radius.card,
                             paddingHorizontal: 8,
                             zIndex: 10,
-                            color: isDark ? "#fff" : "#000",
+                            color: ink.text(isDark),
                             fontSize: 16,
                           },
                           row: {
-                            backgroundColor: isDark ? "#0F0F0F" : "#FFF",
+                            backgroundColor: ink.surface(isDark),
                           },
                           description: {
-                            color: isDark ? "#fff" : "#000",
+                            color: ink.text(isDark),
                           },
-                          separator: { backgroundColor: "#292929" },
+                          separator: { backgroundColor: ink.line(true) },
                         }}
                         textInputProps={{
-                          placeholderTextColor: isDark
-                            ? "#FFFFFFB2"
-                            : "#000000B2",
+                          placeholderTextColor: ink.body(isDark),
                         }}
                       />
                     ) : (
-                      <Text className="flex-1 self-center px-2 text-sm text-gray-500">
+                      <Text tone="body" className="flex-1 self-center px-2 text-sm">
                         Place search is unavailable in this QA build.
                       </Text>
                     )}
                   </View>
 
                   {locationError && (
-                    <Text className="mt-3 text-sm text-gray-500">
+                    <Text tone="body" className="mt-3 text-sm">
                       {locationError}
                     </Text>
                   )}
 
                   <TouchableOpacity
-                    className={`h-[48px] rounded-[12px] w-full border-b ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+                    className={`h-[48px] rounded-card w-full border-b ${isDark ? "border-input-line-dark" : "border-input-line-light"
                       } px-2 mt-4`}
                     onPress={handleCurrentLocation}
                   >
                     <View className="flex flex-row h-full w-full items-center justify-between">
                       <View className="flex flex-row items-center space-x-4">
                         <ViewfinderCircleIcon
-                          color="#635be8"
+                          color={colors.dark.brand}
                           size={24}
                         />
                         <Text
                           fontWeight="font-bold"
-                          className="text-brand-blue"
+                          className="text-brand"
                         >
                           Use current location
                         </Text>
@@ -734,11 +829,11 @@ export default function SearchScreen() {
                           <TouchableOpacity
                             key={item.place_id}
                             onPress={() => handleSelectNearbyPlace(item)}
-                            className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+                            className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${isDark ? "border-input-line-dark" : "border-input-line-light"
                               }`}
                           >
                             <MapPinIcon
-                              color={isDark ? "white" : "black"}
+                              color={ink.text(isDark)}
                               size={20}
                             />
                             <Text fontSize="text-sm">{item.name}</Text>
@@ -771,7 +866,7 @@ export default function SearchScreen() {
 
 const styles = StyleSheet.create({
   focusedShadow: {
-    shadowColor: "#635BE8",
+    shadowColor: colors.dark.brand,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

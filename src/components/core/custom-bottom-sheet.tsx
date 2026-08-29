@@ -1,6 +1,10 @@
+import { radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
 import React, { forwardRef, Ref } from "react";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
 
 interface CustomBottomSheetProps {
   snapPoints: string[];
@@ -10,32 +14,49 @@ interface CustomBottomSheetProps {
   children: React.ReactNode;
 }
 
+/**
+ * The non-modal sheet. It shares its chrome with CustomBottomSheetModal so the
+ * two do not drift: the version this replaces hardcoded its grabber to #292929
+ * (invisible on a black sheet) and declared no backdrop at all.
+ */
 const CustomBottomSheet = forwardRef(
   (
-    {
-      snapPoints,
-      isDark,
-      onCancel,
-      onSubmit,
-      children,
-    }: CustomBottomSheetProps,
+    { snapPoints, children }: CustomBottomSheetProps,
     ref: Ref<BottomSheet>
   ) => {
+    const { color } = useTheme();
+
     return (
       <BottomSheet
         ref={ref}
         index={-1}
         snapPoints={snapPoints}
-        enablePanDownToClose={true}
-        backgroundStyle={{ backgroundColor: isDark ? "black" : "white" }}
-        handleIndicatorStyle={{ backgroundColor: "#292929" }}
+        enablePanDownToClose
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            appearsOnIndex={0}
+            disappearsOnIndex={-1}
+            opacity={0.5}
+            pressBehavior="close"
+          />
+        )}
+        backgroundStyle={{
+          backgroundColor: color.surface,
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: color.inputLine,
+          width: 40,
+          height: 4,
+          borderRadius: radius.full,
+        }}
         handleStyle={{
-          borderWidth: 2,
-          borderTopColor: "#292929",
-          borderLeftColor: "#292929",
-          borderRightColor: "#292929",
-          borderTopRightRadius: 12,
-          borderTopLeftRadius: 12,
+          paddingTop: 10,
+          paddingBottom: 6,
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
         }}
       >
         <BottomSheetView style={{ padding: 16 }}>{children}</BottomSheetView>

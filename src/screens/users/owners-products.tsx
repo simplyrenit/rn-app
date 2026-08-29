@@ -5,8 +5,10 @@ import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React from "react";
 import { Dimensions, FlatList, TouchableOpacity, View } from "react-native";
-import { ArrowLeftIcon, ShareIcon } from "react-native-heroicons/outline";
+import { ArrowLeftIcon } from "react-native-heroicons/outline";
+import { IOSShareIcon } from "@/icons/share";
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { ink } from "@/lib/design-tokens";
 
 const { height } = Dimensions.get("window");
 
@@ -22,14 +24,14 @@ const OwnersProductsScreen: React.FC = () => {
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
       <View
-        className="flex-row items-center justify-between px-5"
+        className="flex-row items-center justify-between px-gutter"
         style={{ paddingVertical: wp("5%") }}
       >
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
-          <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+          <ArrowLeftIcon size={26} color={ink.text(isDarkMode)} />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
           <Text fontSize="text-xl" fontWeight="font-bold">
@@ -44,16 +46,16 @@ const OwnersProductsScreen: React.FC = () => {
         style={{ width: "100%" }}
         data={products}
         ListHeaderComponent={(
-          <View
-            className={`flex-row justify-between py-4 border-b-[1px] px-5 ${isDarkMode ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Share this catalogue"
+            className={`flex-row justify-between items-center px-gutter border-b-[1px] ${isDarkMode ? "border-b-line-dark" : "border-b-line-light"
               }`}
+            style={{ minHeight: 44 }}
           >
-            <Text fontSize="text-sm">Share entire catalogue</Text>
-
-            <TouchableOpacity>
-              <ShareIcon size={24} color={isDarkMode ? "#FFF" : "#000"} />
-            </TouchableOpacity>
-          </View>
+            <Text fontSize="text-md">Share this catalogue</Text>
+            <IOSShareIcon size={20} color={ink.body(isDarkMode)} />
+          </TouchableOpacity>
         )}
         keyExtractor={(item) => item.name}
         numColumns={2}

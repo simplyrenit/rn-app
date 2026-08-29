@@ -7,7 +7,7 @@ import {
 import { USER_REPORT_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { Conversation, Message, UserDetails } from "@/lib/types";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface BlockedRecord {
   initiator: string;
@@ -814,4 +814,65 @@ export function useChat() {
     isBlocked,
     offerOperations,
   };
+}
+
+/**
+ * Unread count for the signed-in user, summed across conversations.
+ *
+ * The data was always there — every conversation carries a per-user `readCount`
+ * — it was simply never surfaced. "Has the owner replied?" is the single most
+ * important question a rental marketplace can answer, and nothing on screen
+ * answered it.
+ */
+export function useUnreadCount() {
+  const { isAuthenticated, userDetails } = useGlobalContext();
+  const { subscribeToChats } = useChat();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAuthenticated || !userDetails?.firebase_uid) {
+      setUnreadCount(0);
+      return;
+    }
+
+    let active = true;
+    let unsubscribe = () => {};
+
+    try {
+      unsubscribe = subscribeToChats((chats) => {
+        if (!active) return;
+        setUnreadCount(countUnread(chats, userDetails.username));
+      });
+    } catch (error) {
+      // Chat can be unavailable (no Firestore, expired credentials). A missing
+      // badge is the correct degradation; a crash is not.
+      setUnreadCount(0);
+    }
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [isAuthenticated, userDetails?.firebase_uid, userDetails?.username]);
+
+  return { unreadCount };
+}
+
+/** Unread messages for `username` in one conversation. 0 when it is all read. */
+export function unreadCountFor(
+  conversation: Conversation,
+  username?: string
+): number {
+  if (!username) return 0;
+  const entry = conversation.readCount?.find(
+    (count) => count.userId === username
+  );
+  return Math.max(0, entry?.count ?? 0);
+}
+
+function countUnread(chats: Conversation[], username?: string) {
+  return chats.reduce(
+    (total, conversation) => total + unreadCountFor(conversation, username),
+    0
+  );
 }

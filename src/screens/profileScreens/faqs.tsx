@@ -9,6 +9,7 @@ import {
   ArrowLeftIcon,
   ChevronRightIcon,
 } from "react-native-heroicons/outline";
+import { ink, colors } from "@/lib/design-tokens";
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -92,14 +93,14 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
-      <View className="flex-row items-center justify-between px-5 pb-2 pt-2 ">
-        <TouchableOpacity
+      <View className="flex-row items-center justify-between px-gutter pb-2 pt-2 ">
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
           <ArrowLeftIcon
             size={26}
-            color={isDarkMode ? "#FFF" : "#000"}
+            color={ink.text(isDarkMode)}
           />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
@@ -115,7 +116,7 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
       </View>
 
       <ScrollView
-        className="px-5 flex-1 pt-2"
+        className="px-gutter flex-1 pt-2"
         contentContainerStyle={{ paddingBottom: hp("5%") }}
       >
         <View>
@@ -140,7 +141,7 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
           <Text
             fontSize="text-sm"
             className={`${
-              isDarkMode ? "text-[#ffffff80]" : "text-[#00000080]"
+              isDarkMode ? "text-subtle-dark" : "text-subtle-light"
             }`}
           >
             Have any more questions?
@@ -155,14 +156,14 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
             <Text
               fontSize="text-sm"
               fontWeight="font-bold"
-              className="text-brand-blue mx-1"
+              className="text-brand mx-1"
             >
               support@simplyrenit.com
             </Text>
             <View className="mt-1">
               <ChevronRightIcon
                 size={14}
-                color="#635be8"
+                color={colors.dark.brand}
               />
             </View>
           </View>

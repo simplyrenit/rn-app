@@ -1,3 +1,4 @@
+import React from "react";
 import moment from "moment";
 import { useNotifications } from "@/backend/useNotification";
 import { Text } from "@/components/core";
@@ -9,6 +10,11 @@ import { ScrollView, TouchableOpacity, View } from "react-native";
 import { ArrowLeftIcon } from "react-native-heroicons/outline";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { useEffect } from "react";
+import { ink } from "@/lib/design-tokens";
+import { RefreshControl } from "react-native";
+import { Avatar, EmptyState } from "@/components/core";
+import { BellIcon } from "react-native-heroicons/outline";
+import { colors } from "@/lib/design-tokens";
 
 interface NotificationProps {}
 
@@ -19,6 +25,16 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
   const router = useTypedNavigation();
 
   const { notifications, getNotifications, markAllAsRead } = useNotifications();
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
+
+  const handleRefresh = React.useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await getNotifications();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [getNotifications]);
 
   useEffect(() => {
     const bootstrapNotifications = async () => {
@@ -35,13 +51,13 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
   return (
     <NonScrollableContainer>
       <View
-        className={`flex-row items-center justify-between px-5 border-b-[1px] ${
-          isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
+        className={`flex-row items-center justify-between px-gutter border-b-[1px] ${
+          isDarkMode ? "border-line-dark" : "border-line-light"
         }`}
         style={{ paddingVertical: wp("5%") }}
       >
-        <TouchableOpacity className="w-[10%]" onPress={() => router.goBack()}>
-          <ArrowLeftIcon size={24} color={isDarkMode ? "#FFF" : "#000"} />
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back" className="w-[10%]" onPress={() => router.goBack()}>
+          <ArrowLeftIcon size={24} color={ink.text(isDarkMode)} />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
           <Text fontSize="text-xl" fontWeight="font-bold">
@@ -51,32 +67,41 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
         <View className="w-[10%]"></View>
       </View>
 
-      <ScrollView>
+      <ScrollView
+        contentContainerStyle={
+          notifications.length === 0 ? { flexGrow: 1, justifyContent: "center" } : undefined
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={ink.body(isDarkMode)}
+            colors={[colors.dark.brand]}
+          />
+        }
+      >
+        {notifications.length === 0 ? (
+          <EmptyState
+            icon={<BellIcon size={26} color={ink.brandText(isDarkMode)} />}
+            title="Nothing new"
+            body="Replies, offers and booking updates will appear here."
+          />
+        ) : null}
         {notifications.map((notification) => (
-          <View key={notification.id} className="p-4 flex-row gap-2">
+          <View key={notification.id} className="p-4 flex-row space-x-2">
             <View>
-              {notification.user.image ? (
-                <Image
-                  source={{ uri: notification.user.image }}
-                  className="rounded-full"
-                  contentFit="cover"
-                  style={{ height: wp("15%"), width: wp("15%") }}
-                />
-              ) : (
-                <View
-                  className={`rounded-full ${
-                    isDarkMode ? "bg-[#1A1A1A]" : "bg-[#F1F1F1]"
-                  }`}
-                  style={{ height: wp("15%"), width: wp("15%") }}
-                />
-              )}
+              <Avatar
+                uri={notification.user.image}
+                name={notification.user.first_name}
+                size={48}
+              />
             </View>
             <View className="w-[80%]">
-              <View className="flex-row flex-wrap gap-1">
+              <View className="flex-row flex-wrap space-x-1">
                 <Text
                   fontSize="text-sm"
                   className={`${
-                    isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                    isDarkMode ? "text-muted-dark" : "text-muted-light"
                   }`}
                 >
                   <Text fontSize="text-md" fontWeight="font-bold">
@@ -87,7 +112,7 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
               </View>
               <Text
                 className={`mt-1 ${
-                  isDarkMode ? "text-[#FFFFFF80]" : "text-[#00000080]"
+                  isDarkMode ? "text-subtle-dark" : "text-subtle-light"
                 }`}
               >
                 {moment(notification.created_at).fromNow()}

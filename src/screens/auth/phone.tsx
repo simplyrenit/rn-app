@@ -7,6 +7,7 @@ import { useTypedNavigation } from "@/lib/types";
 import React, { useCallback, useState } from "react";
 import { TextInput, View } from "react-native";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
+import { ink } from "@/lib/design-tokens";
 
 const isE164Phone = (phone: string) => /^\+[1-9]\d{7,14}$/.test(phone);
 
@@ -49,25 +50,26 @@ export default function LoginWithPhone() {
             </Text>
             <TextInput
               placeholder="+919876543210"
-              placeholderTextColor={theme === "dark" ? "#FFFFFF80" : "#00000080"}
+              placeholderTextColor={theme === "dark" ? ink.dim(true) : ink.dim(false)}
               value={phone}
               onChangeText={(value) => {
                 setPhone(value.replace(/[\s-]/g, ""));
                 setError("");
               }}
-              className={`border mt-2 rounded-lg ${
+              className={`border mt-2 rounded-button ${
                 theme === "dark"
-                  ? "text-white bg-[#292929] border-[#292929]"
-                  : "text-black bg-white border-[#e6e6e6]"
+                  ? "text-white bg-surface-raised-dark border-input-line-dark"
+                  : "text-black bg-surface-light border-input-line-light"
               } p-2 h-12`}
               keyboardType="phone-pad"
               autoComplete="tel"
               textContentType="telephoneNumber"
+              accessibilityLabel="Phone number"
             />
             {!!error && (
               <View className="flex flex-row items-center mt-4 space-x-3">
-                <InformationCircleIcon size={14} color="#ef4444" />
-                <Text fontSize="text-sm" className="text-red-500">
+                <InformationCircleIcon size={14} color={ink.danger(true)} />
+                <Text tone="danger" fontSize="text-sm">
                   {error}
                 </Text>
               </View>

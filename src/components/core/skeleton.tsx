@@ -1,69 +1,97 @@
-import React, { useEffect, useRef } from "react";
-import { Animated } from "react-native";
-import { styled } from "nativewind";
-import { useGlobalContext } from "@/context/global-context";
-
-// Define a styled Animated.View using NativeWind
-const StyledSkeleton = styled(Animated.View);
+import { radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
+import React, { useEffect, useRef, useState } from "react";
+import { AccessibilityInfo, Animated, DimensionValue, Easing } from "react-native";
 
 interface SkeletonProps {
-  width?: number | string;
-  height?: number | string;
+  width?: DimensionValue;
+  height?: DimensionValue;
   borderRadius?: number;
-  color?: string;
   style?: object;
-  className?: string; // NativeWind class support
+  className?: string;
 }
 
+/**
+ * A loading placeholder that actually animates.
+ *
+ * The previous implementation interpolated `backgroundColor` with
+ * `useNativeDriver: true`. The native driver does not support colour, so the
+ * shimmer never ran and every loading state in the app was a static grey block.
+ * Opacity is native-driver-safe, so this pulses for real — and stands still for
+ * anyone who has asked iOS to reduce motion.
+ */
 const Skeleton: React.FC<SkeletonProps> = ({
   width = 100,
   height = 100,
-  borderRadius = 10,
-  color = "#e0e0e0",
+  borderRadius = radius.card,
   style = {},
-  className = "", // NativeWind class support
+  className = "",
 }) => {
-  const animatedValue = useRef(new Animated.Value(0)).current;
+  const { color } = useTheme();
+  const pulse = useRef(new Animated.Value(0)).current;
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    Animated.loop(
+    let active = true;
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (active) setReduceMotion(enabled);
+    });
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      (enabled) => setReduceMotion(enabled)
+    );
+    return () => {
+      active = false;
+      subscription?.remove?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      pulse.setValue(0);
+      return;
+    }
+
+    const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(animatedValue, {
+        Animated.timing(pulse, {
           toValue: 1,
-          duration: 1000,
+          duration: 700,
+          easing: Easing.inOut(Easing.quad),
           useNativeDriver: true,
         }),
-        Animated.timing(animatedValue, {
+        Animated.timing(pulse, {
           toValue: 0,
-          duration: 1000,
+          duration: 700,
+          easing: Easing.inOut(Easing.quad),
           useNativeDriver: true,
         }),
       ])
-    ).start();
-  }, [animatedValue]);
-  const { theme } = useGlobalContext();
-  const isDarkMode = theme === "dark";
-
-  const interpolatedBackground = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: isDarkMode
-      ? ["#2E2E2E", "#3A3A3A"] // Dark mode colors
-      : ["#D4DAE3", "#F0F0F0"], // Light mode colors
-  });
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse, reduceMotion]);
 
   return (
-    <StyledSkeleton
-      className={className} // Apply NativeWind classes
+    <Animated.View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      className={className}
       style={[
         {
           width,
           height,
           borderRadius,
-          backgroundColor: color,
+          backgroundColor: color.skeleton,
         },
-        {
-          backgroundColor: interpolatedBackground,
-        },
+        reduceMotion
+          ? null
+          : {
+              opacity: pulse.interpolate({
+                inputRange: [0, 1],
+                outputRange: [1, 0.45],
+              }),
+            },
         style,
       ]}
     />

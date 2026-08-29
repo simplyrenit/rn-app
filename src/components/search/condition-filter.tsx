@@ -7,6 +7,7 @@ import {
 import { TouchableOpacity, View } from "react-native";
 import { Button, Text } from "../core";
 import { CheckIcon } from "react-native-heroicons/outline";
+import { ink, colors } from "@/lib/design-tokens";
 
 const options = [
   { icon: BadCondition, option: "Fair", value: "fair" },
@@ -41,25 +42,18 @@ export function ConditionFilter({
           >
             <View className="flex flex-row items-center justify-between">
               <View className="flex flex-row items-center">
-                <item.icon color={isDark ? "white" : "black"} size={20} />
+                <item.icon color={ink.text(isDark)} size={20} />
                 <Text fontSize="text-base" className="ml-3">
                   {item.option}
                 </Text>
               </View>
               {selectedFilter === item.value && (
-                <CheckIcon size={20} color="#635be8" />
+                <CheckIcon size={20} color={colors.dark.brand} />
               )}
             </View>
           </TouchableOpacity>
         ))}
       </View>
-      {selectedFilter && (
-        <View className="p-3">
-          <Button onPress={closeSheet} className="mt-5">
-            {isLoading ? "Loading..." : "Show products"}
-          </Button>
-        </View>
-      )}
     </View>
   );
 }

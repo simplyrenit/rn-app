@@ -10,6 +10,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "react-native-heroicons/outline";
+import { ink } from "@/lib/design-tokens";
+import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -47,14 +49,14 @@ export default function UnavailabilitySubCatScreen() {
         />
         <Text
           fontSize="text-base"
-          className={`${theme === "dark" ? "text-white" : "text-black"}`}
+          
         >
-          {item.title}
+          {categoryDisplayName(item.title)}
         </Text>
       </View>
       <ChevronRightIcon
         size={20}
-        color={theme === "dark" ? "white" : "black"}
+        color={ink.text(theme === "dark")}
       />
     </TouchableOpacity>
   );
@@ -63,27 +65,27 @@ export default function UnavailabilitySubCatScreen() {
     <NonScrollableContainer>
       <View style={{ flex: 1 }}>
         <View
-          className="flex-row items-center justify-between px-5 "
+          className="flex-row items-center justify-between px-gutter "
           style={{ paddingVertical: wp("5%") }}
         >
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             onPress={() => router.goBack()}
             className="flex-1 items-start w-[10%]"
           >
             <ArrowLeftIcon
               size={26}
-              color={`${theme === "dark" ? "#fff" : "#000"}`}
+              color={ink.text(theme === "dark")}
             />
           </TouchableOpacity>
           <View className="items-center justify-center w-[80%]">
             <Text fontSize="text-xl" fontWeight="font-bold">
-              Unavailability Form
+              Request an item
             </Text>
           </View>
 
           <View className="w-[10%]"></View>
         </View>
-        <View className="px-5 py-3">
+        <View className="px-gutter py-3">
           <Text fontSize="text-base" fontWeight="font-bold">
             Choose a SubCategory
           </Text>
@@ -91,17 +93,17 @@ export default function UnavailabilitySubCatScreen() {
 
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          className={`flex-row items-center py-4 border-b px-5 ${
-            theme === "dark" ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
+          className={`flex-row items-center py-4 border-b px-gutter ${
+            theme === "dark" ? "border-b-line-dark" : "border-b-line-light"
           }`}
         >
           <View className="mt-1 pr-1 ">
             <ChevronLeftIcon
               size={24}
-              color={theme === "dark" ? "white" : "black"}
+              color={ink.text(theme === "dark")}
             />
           </View>
-          <Text fontWeight="font-bold" className="text-md">
+          <Text fontWeight="font-bold" fontSize="text-md">
             {category}
           </Text>
         </TouchableOpacity>

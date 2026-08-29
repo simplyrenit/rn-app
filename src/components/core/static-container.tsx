@@ -1,13 +1,19 @@
-import { useGlobalContext } from "@/context/global-context";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
-import { StyleSheet, View } from "react-native";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface ContainerProps {
   children: React.ReactNode;
+  /**
+   * Kept for the call sites that pass 100 to opt out of the gutter (screens
+   * that manage their own edge-to-edge content). Anything else uses the app's
+   * single 20pt gutter — five different left margins is what made the home
+   * screen's headings and its cards disagree by 3pt.
+   */
   width?: number;
 }
 
@@ -15,11 +21,9 @@ export function StaticContainer({
   children,
   width,
 }: ContainerProps): JSX.Element {
-  const { theme } = useGlobalContext();
+  const { color, isDark } = useTheme();
   const keyboardInset = useKeyboardInset();
   const safeAreaInsets = useSafeAreaInsets();
-
-  const isDarkMode = theme === "dark";
 
   // Screens built on this container pin an action bar to the bottom, which the
   // iOS keyboard would otherwise cover completely. The safe-area inset is
@@ -28,24 +32,21 @@ export function StaticContainer({
   // useKeyboardInset returns 0 on Android, where adjustResize already handles
   // this, so the padding stays 0 there.
   const keyboardPadding = Math.max(0, keyboardInset - safeAreaInsets.bottom);
-
-  const styles = StyleSheet.create({
-    container: {
-      flexGrow: 1,
-      width: width ? wp(`${width}%`) : wp("90%"),
-      marginHorizontal: "auto",
-    },
-  });
+  const gutter = width === 100 ? 0 : SCREEN_GUTTER;
 
   return (
-    <SafeAreaView
-      style={{ flex: 1 }}
-      className={isDarkMode ? "bg-black" : "bg-white"}
-    >
-      <StatusBar style={isDarkMode ? "light" : "dark"} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: color.canvas }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <View
-        style={[styles.container, { paddingBottom: keyboardPadding }]}
-        className={isDarkMode ? "bg-black" : "bg-white"}
+        style={{
+          // flex, not flexGrow: a ScrollView nested in here needs a bounded
+          // height or it sizes to its content and never scrolls.
+          flex: 1,
+          width: "100%",
+          paddingHorizontal: gutter,
+          paddingBottom: keyboardPadding,
+          backgroundColor: color.canvas,
+        }}
       >
         {children}
       </View>

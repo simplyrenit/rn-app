@@ -11,6 +11,8 @@ import {
   ChevronDownIcon,
 } from "react-native-heroicons/outline";
 import { CheckBox } from "@/components/core/checkbox";
+import { ink } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 
 // Constants for date selections
 const DATES = Array.from({ length: 31 }, (_, i) =>
@@ -68,9 +70,9 @@ const Dropdown: React.FC<DropdownProps> = ({
           setIsOpen(!isOpen);
           // setDobError("");
         }}
-        className={`p-3 border rounded-xl ${isDarkMode
-          ? "bg-[#0F0F0F] border-[#292929]"
-          : "bg-white border-[#e6e6e6]"
+        className={`p-3 border rounded-card ${isDarkMode
+          ? "bg-surface-dark border-input-line-dark"
+          : "bg-surface-light border-input-line-light"
           }`}
       >
         <View className="flex-row justify-between items-center">
@@ -78,7 +80,7 @@ const Dropdown: React.FC<DropdownProps> = ({
             {value || placeholder}
           </Text>
           <ChevronDownIcon
-            color={isDarkMode ? "#fff" : "#000"}
+            color={ink.text(isDarkMode)}
             size={20}
           />
         </View>
@@ -88,7 +90,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         <Modal visible={isOpen} transparent onDismiss={() => setIsOpen(false)} onRequestClose={() => setIsOpen(false)}>
           <View style={{ height: '100%', width: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50 }} /* onTouchEnd={() => setIsOpen(false)} */>
 
-            <View style={{ backgroundColor: isDarkMode ? "#121212" : "#fff", width: '100%' }}>
+            <View style={{ backgroundColor: ink.surface(isDarkMode), width: '100%' }}>
 
               <ScrollView className="mb-[100px]" showsVerticalScrollIndicator={false} nestedScrollEnabled style={{ height: '100%' }} contentContainerStyle={{ paddingTop: 48 }}>
                 {options.map((option, index) => (
@@ -103,12 +105,12 @@ const Dropdown: React.FC<DropdownProps> = ({
                       borderBottomWidth: index < options.length - 1 ? 0 : 1,
                       borderTopLeftRadius: index === 0 ? 8 : 0,
                       borderTopRightRadius: index === 0 ? 8 : 0,
-                      borderColor: isDarkMode ? "#292929" : "#e6e6e6",
+                      borderColor: ink.line(isDarkMode),
                       borderBottomRightRadius: index === options.length - 1 ? 8 : 0,
                       borderBottomLeftRadius: index === options.length - 1 ? 8 : 0,
                     }}
-                    className={`p-4 border-b ${isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
-                      } ${value === option ? "bg-brand-blue/10" : ""}`}
+                    className={`p-4 border-b ${isDarkMode ? "border-input-line-dark" : "border-input-line-light"
+                      } ${value === option ? "bg-brand/10" : ""}`}
                   >
                     <Text className={isDarkMode ? "text-white" : "text-black"}>
                       {option}
@@ -199,19 +201,19 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
             setError((prev) => ({ ...prev, firstName: "" }));
           }
         }}
-        className={`p-2 border rounded-xl ${isDarkMode
-          ? "bg-[#0F0F0F] text-white border-[#292929]"
-          : "bg-white text-black border-[#e6e6e6]"
+        className={`p-2 border rounded-card ${isDarkMode
+          ? "bg-surface-dark text-white border-input-line-dark"
+          : "bg-surface-light text-black border-input-line-light"
           }`}
-        placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
+        placeholderTextColor={ink.placeholder(isDarkMode)}
       />
       {errors.firstName && (
         <View className="flex flex-row items-center mt-4 space-x-3">
           <InformationCircleIcon
             size={14}
-            color="#ef4444"
+            color={ink.danger(true)}
           />
-          <Text className="text-red-500">{errors.firstName}</Text>
+          <Text tone="danger">{errors.firstName}</Text>
         </View>
       )}
     </View>
@@ -232,19 +234,19 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
             setError((prev) => ({ ...prev, lastName: "" }));
           }
         }}
-        className={`p-2 border rounded-xl ${isDarkMode
-          ? "bg-[#0F0F0F] text-white border-[#292929]"
-          : "bg-white text-black border-[#e6e6e6]"
+        className={`p-2 border rounded-card ${isDarkMode
+          ? "bg-surface-dark text-white border-input-line-dark"
+          : "bg-surface-light text-black border-input-line-light"
           }`}
-        placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
+        placeholderTextColor={ink.placeholder(isDarkMode)}
       />
       {errors.lastName && (
         <View className="flex flex-row items-center mt-4 space-x-3">
           <InformationCircleIcon
             size={14}
-            color="#ef4444"
+            color={ink.danger(true)}
           />
-          <Text className="text-red-500">{errors.lastName}</Text>
+          <Text tone="danger">{errors.lastName}</Text>
         </View>
       )}
     </View>
@@ -287,14 +289,15 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
         <View className="flex flex-row items-center mt-2 mr-2 space-x-3" style={{ bottom: 0, left: 0, right: 0 }}>
           <InformationCircleIcon
             size={14}
-            color={dobError.includes("not allowed") ? "#ef4444" : "#f59e0b"}
+            color={
+              dobError.includes("not allowed")
+                ? ink.danger(isDarkMode)
+                : ink.warning(isDarkMode)
+            }
           />
           <Text
-            className={
-              dobError.includes("not allowed")
-                ? "text-red-500 flex-wrap"
-                : "text-amber-500 flex-wrap"
-            }
+            tone={dobError.includes("not allowed") ? "danger" : "warning"}
+            className="flex-wrap"
           >
             {dobError}
           </Text>
@@ -333,19 +336,19 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             setError((prev) => ({ ...prev, businessName: "" }));
           }
         }}
-        className={`p-2 border rounded-xl ${isDarkMode
-          ? "bg-[#0F0F0F] text-white border-[#292929]"
-          : "bg-white text-black border-[#e6e6e6]"
+        className={`p-2 border rounded-card ${isDarkMode
+          ? "bg-surface-dark text-white border-input-line-dark"
+          : "bg-surface-light text-black border-input-line-light"
           }`}
-        placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
+        placeholderTextColor={ink.placeholder(isDarkMode)}
       />
       {errors.businessName && (
         <View className="flex flex-row items-center mt-4 space-x-3">
           <InformationCircleIcon
             size={14}
-            color="#ef4444"
+            color={ink.danger(true)}
           />
-          <Text className="text-red-500">{errors.businessName}</Text>
+          <Text tone="danger">{errors.businessName}</Text>
         </View>
       )}
     </View>
@@ -366,19 +369,19 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             setError((prev) => ({ ...prev, firstName: "" }));
           }
         }}
-        className={`p-2 border rounded-xl ${isDarkMode
-          ? "bg-[#0F0F0F] text-white border-[#292929]"
-          : "bg-white text-black border-[#e6e6e6]"
+        className={`p-2 border rounded-card ${isDarkMode
+          ? "bg-surface-dark text-white border-input-line-dark"
+          : "bg-surface-light text-black border-input-line-light"
           }`}
-        placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
+        placeholderTextColor={ink.placeholder(isDarkMode)}
       />
       {errors.firstName && (
         <View className="flex flex-row items-center mt-4 space-x-3">
           <InformationCircleIcon
             size={14}
-            color="#ef4444"
+            color={ink.danger(true)}
           />
-          <Text className="text-red-500">{errors.firstName}</Text>
+          <Text tone="danger">{errors.firstName}</Text>
         </View>
       )}
     </View>
@@ -399,19 +402,19 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             setError((prev) => ({ ...prev, lastName: "" }));
           }
         }}
-        className={`p-2 border rounded-xl ${isDarkMode
-          ? "bg-[#0F0F0F] text-white border-[#292929]"
-          : "bg-white text-black border-[#e6e6e6]"
+        className={`p-2 border rounded-card ${isDarkMode
+          ? "bg-surface-dark text-white border-input-line-dark"
+          : "bg-surface-light text-black border-input-line-light"
           }`}
-        placeholderTextColor={isDarkMode ? "#9CA3AF" : "#6B7280"}
+        placeholderTextColor={ink.placeholder(isDarkMode)}
       />
       {errors.lastName && (
         <View className="flex flex-row items-center mt-4 space-x-3">
           <InformationCircleIcon
             size={14}
-            color="#ef4444"
+            color={ink.danger(true)}
           />
-          <Text className="text-red-500">{errors.lastName}</Text>
+          <Text tone="danger">{errors.lastName}</Text>
         </View>
       )}
     </View>
@@ -439,6 +442,7 @@ export default function AboutYourself() {
   const [dobError, setDobError] = useState("");
   const [agreementChecked, setAgreementChecked] = useState(false);
 
+  const { color } = useTheme();
   const { theme } = useGlobalContext();
   const isDarkMode = theme === "dark";
   const { saveUser } = useAuthContext();
@@ -579,7 +583,7 @@ export default function AboutYourself() {
               </Text>
               <Text
                 fontSize="text-base"
-                className={`${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000b2]"
+                className={`${isDarkMode ? "text-muted-dark" : "text-muted-light"
                   } mt-1`}
               >
                 Spill the beans already
@@ -596,10 +600,10 @@ export default function AboutYourself() {
                   Account type
                 </Text>
                 <View
-                  className={`mt-2 p-3 rounded-xl border flex-row items-center justify-between ${
+                  className={`mt-2 p-3 rounded-card border flex-row items-center justify-between ${
                     isDarkMode
-                      ? "bg-[#0F0F0F] border-[#292929]"
-                      : "bg-white border-[#e6e6e6]"
+                      ? "bg-surface-dark border-input-line-dark"
+                      : "bg-surface-light border-input-line-light"
                   }`}
                 >
                   <Text
@@ -617,7 +621,7 @@ export default function AboutYourself() {
                   />
                 </View>
                 <Text
-                  className={`mt-2 ${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"}`}
+                  className={`mt-2 ${isDarkMode ? "text-muted-dark" : "text-muted-light"}`}
                 >
                   Merchant accounts require admin approval before posting listings.
                 </Text>
@@ -658,9 +662,9 @@ export default function AboutYourself() {
               <View className="flex flex-row items-center mt-4 space-x-3">
                 <InformationCircleIcon
                   size={14}
-                  color="#ef4444"
+                  color={ink.danger(true)}
                 />
-                <Text className="text-red-500">{errors.sameName}</Text>
+                <Text tone="danger">{errors.sameName}</Text>
               </View>
             )}
           </View>
@@ -673,7 +677,7 @@ export default function AboutYourself() {
               onPress={() => setAgreementChecked(!agreementChecked)}
             />
             <Text
-              className={`ml-2 ${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000b2]"
+              className={`ml-2 ${isDarkMode ? "text-muted-dark" : "text-muted-light"
                 }`}
             >
               I agree to provide accurate and verifiable information

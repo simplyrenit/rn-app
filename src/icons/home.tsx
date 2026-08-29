@@ -1,5 +1,6 @@
 import { useGlobalContext } from "@/context/global-context";
 import Svg, { Path, Rect } from "react-native-svg";
+import { ink } from "@/lib/design-tokens";
 
 export const HomeIcon = ({ size = 20, color = "white", fill = "none" }) => (
   <Svg
@@ -34,6 +35,6 @@ export const HomeIconSolid = ({ size = 20, color = "white" }) =>{
       stroke-linecap="round"
       stroke-linejoin="round"
     />
-    <Rect x="11.25" y="14.5" width="1.5" height="1.5" rx="0.75" fill={isDarkMode ? '#000' : '#fff'}/>
+    <Rect x="11.25" y="14.5" width="1.5" height="1.5" rx="0.75" fill={ink.canvas(isDarkMode)}/>
   </Svg>
 )};

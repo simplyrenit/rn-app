@@ -5,7 +5,6 @@ import {
   GET_TOP_PICKS,
 } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
-import axios from "axios";
 
 const useHome = () => {
   const { authTokens, isAuthenticated } = useGlobalContext();
@@ -35,11 +34,10 @@ const useHome = () => {
         ),
       };
     } catch (error) {
-      if (axios.isAxiosError(error) && !error.response) {
-        return { results: [] };
-      }
-
-      console.error(`Error fetching data from ${endpoint}:`, error);
+      // A network failure used to be reported as an empty result set, so the
+      // home rails could not tell "nothing nearby" from "the request failed"
+      // and rendered a heading over blank space either way. Let it throw; the
+      // rail turns it into a retry state.
       throw error;
     }
   };

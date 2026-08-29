@@ -55,6 +55,7 @@ const StyledImage = styled(Image);
 import { Modal, View, StyleSheet } from "react-native";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useRoute } from "@react-navigation/native";
+import { ink, colors, radius } from "@/lib/design-tokens";
 
 const LOCATION_LOG_PREFIX = "[post/location-modal]";
 const LOCATION_FETCH_TIMEOUT_MS = 12000;
@@ -101,10 +102,10 @@ const LocationModal = ({}) => {
 
   const getLocationErrorMessage = useCallback(() => {
     if (Platform.OS === "android") {
-      return "We couldn't fetch your current location. If you're using an emulator, set a mock location in Android Studio and try again.";
+      return "We couldn’t fetch your current location. If you’re using an emulator, set a mock location in Android Studio and try again.";
     }
 
-    return "We couldn't fetch your current location. Please try again.";
+    return "We couldn’t fetch your current location. Please try again.";
   }, []);
 
   const fetchAddress = useCallback(async (loc: Location.LocationObject) => {
@@ -259,11 +260,11 @@ const LocationModal = ({}) => {
       setLocation(null);
       setAddress(null);
       setLocationError(
-        "We couldn't request location access. Please try again."
+        "We couldn’t request location access. Please try again."
       );
       Alert.alert(
         "Location error",
-        "We couldn't request location access. Please try again."
+        "We couldn’t request location access. Please try again."
       );
     }
   }, [openLocationSettings, resolveCurrentLocation]);
@@ -549,15 +550,15 @@ const LocationModal = ({}) => {
 
   return (
     <SafeAreaView
-      className={`flex-1 ${isDarkMode ? "bg-[#0C0C0C]" : "bg-white"}`}
+      className={`flex-1 ${isDarkMode ? "bg-canvas-dark" : "bg-surface-light"}`}
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style={isDarkMode ? "light" : "dark"} />
         <View className="flex-1 ">
-          <View className="px-4">
+          <View className="px-gutter">
             {/* <HeaderIndicator percentage={85} /> */}
             <View className="flex flex-row items-center py-4">
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
                 onPress={() => {
                   cancelLocationRequest(route.params?.requestId);
                   navigation.goBack();
@@ -565,8 +566,8 @@ const LocationModal = ({}) => {
                 className="w-[10%]"
               >
                 <ArrowLeftIcon
-                  size={wp("7.5%")}
-                  color={isDarkMode ? "#FFF" : "#000"}
+                  size={24}
+                  color={ink.text(isDarkMode)}
                 />
               </TouchableOpacity>
               <View className="w-[80%] items-center justify-center">
@@ -592,9 +593,8 @@ const LocationModal = ({}) => {
                     >
                       Allow location
                     </Text>
-                    <Text
+                    <Text tone="body"
                       fontSize="text-lg"
-                      className="text-gray-500"
                     >
                       This allows Renit to fetch products near you
                     </Text>
@@ -638,9 +638,9 @@ const LocationModal = ({}) => {
                         style={{
                           height: 30,
                           width: 30,
-                          borderRadius: 15,
-                          backgroundColor: "#635BE8",
-                          borderColor: isDarkMode ? "#000" : "#fff",
+                          borderRadius: radius.group,
+                          backgroundColor: colors.dark.brand,
+                          borderColor: ink.canvas(isDarkMode),
                           borderWidth: 5,
                           justifyContent: "center",
                           alignItems: "center",
@@ -650,8 +650,8 @@ const LocationModal = ({}) => {
                           style={{
                             height: 15,
                             width: 15,
-                            borderRadius: 7.5,
-                            backgroundColor: "#635BE8",
+                            borderRadius: radius.full,
+                            backgroundColor: colors.dark.brand,
                           }}
                         />
                       </View>
@@ -677,9 +677,9 @@ const LocationModal = ({}) => {
 
                 <View
                   style={{
-                    backgroundColor: isDarkMode ? "black" : "white",
+                    backgroundColor: ink.canvas(isDarkMode),
                     borderTopWidth: 2,
-                    borderColor: isDarkMode ? "#292929" : "#fff",
+                    borderColor: ink.line(isDarkMode),
                     height: keyboardVisible ? "92%" : "55%",
                   }}
                 >
@@ -698,14 +698,14 @@ const LocationModal = ({}) => {
                       <View className="rounded-t-3xl">
                         {locationError && (
                           <View
-                            className={`rounded-xl px-3 py-3 mb-4 ${
-                              isDarkMode ? "bg-[#171717]" : "bg-[#F5F5F5]"
+                            className={`rounded-card px-3 py-3 mb-4 ${
+                              isDarkMode ? "bg-surface-dark" : "bg-surface-raised-light"
                             }`}
                           >
                             <Text
                               fontSize="text-sm"
                               className={
-                                isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                                isDarkMode ? "text-muted-dark" : "text-muted-light"
                               }
                             >
                               {locationError}
@@ -714,15 +714,15 @@ const LocationModal = ({}) => {
                         )}
 
                         <View
-                          className={`flex-row pl-3 min-h-11 rounded-[12px] border mb-4 ${
+                          className={`flex-row pl-3 min-h-11 rounded-card border mb-4 ${
                             isDarkMode
-                              ? "border-[#292929] bg-[#0F0F0F]"
-                              : "border-[#e6e6e6] bg-white"
+                              ? "border-line-dark bg-surface-dark"
+                              : "border-line-light bg-surface-light"
                           }`}
                           style={{ alignItems: "flex-start" }}
                         >
                           <MagnifyingGlassIcon
-                            color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
+                            color={ink.body(isDarkMode)}
                             size={24}
                             style={{ marginTop: hp(1.1) }}
                           />
@@ -738,30 +738,24 @@ const LocationModal = ({}) => {
                             styles={{
                               textInput: {
                                 height: "100%",
-                                backgroundColor: isDarkMode
-                                  ? "#0F0F0F"
-                                  : "#fff",
-                                borderRadius: 12,
+                                backgroundColor: ink.surface(isDarkMode),
+                                borderRadius: radius.card,
                                 zIndex: 10,
-                                color: isDarkMode ? "#fff" : "#000",
+                                color: ink.text(isDarkMode),
                                 fontSize: 16,
                                 alignContent: "center",
                               },
                               listView: { maxHeight: hp(24) },
                               row: {
-                                backgroundColor: isDarkMode
-                                  ? "#0F0F0F"
-                                  : "#FFF",
+                                backgroundColor: ink.surface(isDarkMode),
                               },
                               description: {
-                                color: isDarkMode ? "#fff" : "#000",
+                                color: ink.text(isDarkMode),
                               },
-                              separator: { backgroundColor: "#292929" },
+                              separator: { backgroundColor: ink.line(true) },
                             }}
                             textInputProps={{
-                              placeholderTextColor: isDarkMode
-                                ? "#FFFFFFB2"
-                                : "#000000B2",
+                              placeholderTextColor: ink.body(isDarkMode),
                             }}
                           />
                         </View>
@@ -775,7 +769,7 @@ const LocationModal = ({}) => {
                         <Text
                           fontSize="text-sm"
                           className={`${
-                            isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                            isDarkMode ? "text-muted-dark" : "text-muted-light"
                           }`}
                         >
                           {address
@@ -798,8 +792,8 @@ const LocationModal = ({}) => {
                               fontSize="text-sm"
                               className={`${
                                 isDarkMode
-                                  ? "text-[#FFFFFFB2]"
-                                  : "text-[#000000B2]"
+                                  ? "text-muted-dark"
+                                  : "text-muted-light"
                               }`}
                             >
                               {selectedAddress
@@ -829,7 +823,7 @@ const LocationModal = ({}) => {
                             {signUpLoading || isFetchingLocation ? (
                               <ActivityIndicator
                                 size="small"
-                                color={"#fff"}
+                                color="#FFFFFF"
                               />
                             ) : (
                               "Confirm location"
@@ -844,7 +838,7 @@ const LocationModal = ({}) => {
                           <Text
                             fontSize="text-sm"
                             className={`${
-                              isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                              isDarkMode ? "text-muted-dark" : "text-muted-light"
                             }`}
                           >
                             Skip for now
@@ -852,20 +846,20 @@ const LocationModal = ({}) => {
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                          className={`h-[48px] rounded-[12px] w-full border-b ${
-                            isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
+                          className={`h-[48px] rounded-card w-full border-b ${
+                            isDarkMode ? "border-line-dark" : "border-line-light"
                           } px-2 mt-4`}
                           onPress={handleCurrentLocation}
                         >
                           <View className="flex flex-row h-full w-full items-center justify-between">
                             <View className="flex flex-row items-center space-x-4">
                               <ViewfinderCircleIcon
-                                color="#635be8"
+                                color={colors.dark.brand}
                                 size={24}
                               />
                               <Text
                                 fontWeight="font-bold"
-                                className="text-brand-blue"
+                                className="text-brand"
                               >
                                 {isFetchingLocation
                                   ? "Fetching current location..."
@@ -892,12 +886,12 @@ const LocationModal = ({}) => {
                               onPress={() => handleSelectNearbyPlace(item)}
                               className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${
                                 isDarkMode
-                                  ? "border-[#292929]"
-                                  : "border-[#e6e6e6]"
+                                  ? "border-line-dark"
+                                  : "border-line-light"
                               }`}
                             >
                               <MapPinIcon
-                                color={isDarkMode ? "white" : "black"}
+                                color={ink.text(isDarkMode)}
                                 size={20}
                               />
                               <Text fontSize="text-sm">{item.name}</Text>

@@ -10,6 +10,7 @@ import {
 } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { ink } from "@/lib/design-tokens";
 
 interface WhoWeAreProps {}
 
@@ -21,14 +22,14 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
 
   return (
     <NonScrollableContainer>
-      <View className="flex-row items-center justify-between px-5 pb-2 pt-2">
-        <TouchableOpacity
+      <View className="flex-row items-center justify-between px-gutter pb-2 pt-2">
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
           <ArrowLeftIcon
             size={26}
-            color={isDarkMode ? "#FFF" : "#000"}
+            color={ink.text(isDarkMode)}
           />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
@@ -43,7 +44,7 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
         <View className="w-[10%]"></View>
       </View>
 
-      <KeyboardAwareScrollView className="px-5 pb-5 pt-2 flex-1">
+      <KeyboardAwareScrollView className="px-gutter pb-5 pt-2 flex-1">
         <Text
           fontSize="text-base"
           fontWeight="font-bold"
@@ -55,7 +56,7 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
           lineHeight={23}
           fontSize="text-base"
           className={`leading-6 ${
-            isDarkMode ? "text-[#ffffffb2]" : "text-[#000000b2]"
+            isDarkMode ? "text-muted-dark" : "text-muted-light"
           }`}
         >
           Renit is a community that enables everyone to get
@@ -68,12 +69,12 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
       </KeyboardAwareScrollView>
       <View
         style={{ paddingVertical: wp("8%") }}
-        className="px-5 flex-1 justify-end py-0 "
+        className="px-gutter flex-1 justify-end py-0 "
       >
-        <View className="flex-row gap-2 items-center">
+        <View className="flex-row space-x-2 items-center">
           <QuestionMarkCircleIcon
             size={24}
-            color={isDarkMode ? "#FFF" : "#000"}
+            color={ink.text(isDarkMode)}
           />
           <Text
             fontSize="text-base"
@@ -87,10 +88,10 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
             onPress={() => {
               router.navigate("faq");
             }}
-            className={`flex-row h-12 rounded-[12px] border ${
+            className={`flex-row h-12 rounded-card border ${
               isDarkMode
-                ? "bg-[#0F0F0F] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
+                ? "bg-surface-dark border-line-dark"
+                : "bg-surface-light border-line-light"
             } items-center justify-center`}
           >
             <Text
@@ -103,7 +104,7 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
             <ChevronRightIcon
               size={20}
               strokeWidth={2}
-              color={isDarkMode ? "#FFF" : "#000"}
+              color={ink.text(isDarkMode)}
             />
           </TouchableOpacity>
         </View>

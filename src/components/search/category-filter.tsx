@@ -1,3 +1,4 @@
+import { categoryDisplayName } from "@/lib/category-icons";
 import React from "react";
 import { Image } from "expo-image";
 import { TouchableOpacity, View, ScrollView } from "react-native";
@@ -5,6 +6,7 @@ import { ChevronRightIcon } from "react-native-heroicons/outline";
 import { Text } from "../core";
 import { Category } from "@/lib/types";
 import { FlatList } from "react-native-gesture-handler";
+import { ink } from "@/lib/design-tokens";
 
 interface CategoryFilterProps {
   categories: Category[];
@@ -40,10 +42,10 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
               style={{ width: 20, height: 20 }}
             />
             <Text fontSize="text-base" className="ml-3">
-              {item.title}
+              {categoryDisplayName(item.title)}
             </Text>
           </View>
-          <ChevronRightIcon size={18} color={isDark ? "white" : "black"} />
+          <ChevronRightIcon size={18} color={ink.text(isDark)} />
         </View>
       </TouchableOpacity>)} />
   </View>

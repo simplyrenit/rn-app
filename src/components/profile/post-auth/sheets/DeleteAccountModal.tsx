@@ -3,6 +3,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { memo } from "react";
 import { Dimensions, Modal, StyleSheet, Text, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
+import { ink, darkColors, lightColors, radius } from "@/lib/design-tokens";
 
 const DeleteAccountModal = memo(({ onDelete, onCancel, open }: { onDelete: () => void; onCancel: () => void; open: boolean }) => {
   const { theme } = useGlobalContext();
@@ -21,10 +22,10 @@ const DeleteAccountModal = memo(({ onDelete, onCancel, open }: { onDelete: () =>
     >
 
       <View style={[styles.container, isDark ? styles.darkBg : styles.lightBg]}>
-        <Text style={{ color: isDark ? '#fff' : '#000', fontSize: 16, lineHeight: 24 }}>Are you sure you want to delete your account?</Text>
+        <Text style={{ color: ink.text(isDark), fontSize: 16, lineHeight: 24 }}>Are you sure you want to delete your account?</Text>
         <View style={{ flexDirection: 'row', gap: 16, justifyContent: 'space-between', marginTop: 32, }}>
           <Button onPress={onCancel} style={{ flex: 1 }}>Cancel</Button>
-          <Button onPress={onDelete} style={{ flex: 1, backgroundColor: '#E50914' }}>Delete</Button>
+          <Button onPress={onDelete} style={{ flex: 1, backgroundColor: ink.danger(isDark) }}>Delete</Button>
         </View>
       </View>
 
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
     height: Dimensions.get('window').height,
   },
   container: {
-    borderRadius: 10,
+    borderRadius: radius.input,
     overflow: "hidden",
     backgroundColor: 'red',
     width: '90%',
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 1,
   },
-  darkBg: { backgroundColor: '#000', shadowColor: '#fff', },
-  lightBg: { backgroundColor: '#fff', shadowColor: '#000', },
+  darkBg: { backgroundColor: darkColors.surface, shadowColor: "transparent" },
+  lightBg: { backgroundColor: lightColors.surface, shadowColor: lightColors.text },
   buttons: { paddingVertical: 10 },
 });

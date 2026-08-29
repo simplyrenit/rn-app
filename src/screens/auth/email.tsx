@@ -8,6 +8,7 @@ import { useTypedNavigation } from "@/lib/types";
 import React, { useCallback, useState } from "react";
 import { TextInput, View } from "react-native";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
+import { ink } from "@/lib/design-tokens";
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -85,30 +86,35 @@ export default function LoginWithEmail() {
             <TextInput
               placeholder="Enter email"
               placeholderTextColor={
-                theme === "dark" ? "#FFFFFF80" : "#00000080"
+                theme === "dark" ? ink.dim(true) : ink.dim(false)
               }
               value={email}
               onChangeText={handleEmailChange}
-              className={`border mt-2 rounded-lg ${
+              className={`border mt-2 rounded-button ${
                 theme === "dark"
-                  ? "text-white bg-[#292929] border-[#292929]"
-                  : "text-black bg-white border-[#e6e6e6]"
+                  ? "text-white bg-surface-raised-dark border-input-line-dark"
+                  : "text-black bg-surface-light border-input-line-light"
               } p-2 h-12
               `}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              // Without textContentType/autoComplete, iCloud Keychain will not
+              // offer to fill or save this credential at all.
+              textContentType="emailAddress"
+              autoComplete="email"
+              accessibilityLabel="Email address"
+              returnKeyType="next"
             />
 
             {!isValid && isTouched && (
               <View className="flex flex-row items-center mt-4 space-x-3">
                 <InformationCircleIcon
                   size={14}
-                  color="#ef4444"
+                  color={ink.danger(true)}
                 />
-                <Text
+                <Text tone="danger"
                   fontSize="text-sm"
-                  className="text-red-500"
                 >
                   Please enter a valid email address
                 </Text>
@@ -119,11 +125,10 @@ export default function LoginWithEmail() {
               <View className="flex flex-row items-center mt-4 space-x-3">
                 <InformationCircleIcon
                   size={14}
-                  color="#ef4444"
+                  color={ink.danger(true)}
                 />
-                <Text
+                <Text tone="danger"
                   fontSize="text-sm"
-                  className="text-red-500"
                 >
                   {otpSendError}
                 </Text>
@@ -133,22 +138,24 @@ export default function LoginWithEmail() {
         </ScrollContainer>
 
         <View className="py-5 space-y-3">
+          {/* One screen, one primary action. Three stacked buttons with two
+              of them in brand fill gave the customer no lead to follow. */}
           <Button
             variant="primary"
             onPress={() => handleSubmit("otp")}
             disabled={!isValid || !email}
           >
-            Continue with OTP
+            Email me a code
           </Button>
           <Button
-            variant="primary"
+            variant="outline"
             onPress={() => handleSubmit("password")}
             disabled={!isValid || !email}
           >
-            Continue with Password
+            Use my password
           </Button>
-          <Button variant="outline" onPress={() => router.navigate("Phone")}>
-            Continue with Mobile OTP
+          <Button variant="ghost" onPress={() => router.navigate("Phone")}>
+            Use my phone number instead
           </Button>
         </View>
       </View>

@@ -14,10 +14,10 @@ export function TermsAndPolicy(): JSX.Element {
       <Text
         fontSize="text-xs"
         className={`text-center ${
-          isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
+          isDark ? "text-subtle-dark" : "text-subtle-light"
         }`}
       >
-        By continuing you agree to Renit's
+        By continuing you agree to Renit’s
       </Text>
       <View className="flex flex-row space-x-1">
         <TouchableOpacity onPress={() => router.navigate("Terms")}>
@@ -25,19 +25,19 @@ export function TermsAndPolicy(): JSX.Element {
             fontSize="text-sm"
             fontWeight="font-semibold"
             className={`text-center underline ${
-              isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
+              isDark ? "text-subtle-dark" : "text-subtle-light"
             } mb-4`}
           >
             Terms & Conditions
           </Text>
         </TouchableOpacity>
-        <Text className="text-center text-sm text-gray-500 mb-4">&</Text>
+        <Text tone="body" className="text-center text-sm mb-4">&</Text>
         <TouchableOpacity onPress={() => router.navigate("Privacy")}>
           <Text
             fontSize="text-sm"
             fontWeight="font-semibold"
             className={`text-center underline ${
-              isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
+              isDark ? "text-subtle-dark" : "text-subtle-light"
             } mb-4`}
           >
             Privacy Policy

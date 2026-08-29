@@ -1,8 +1,10 @@
 import { useGlobalContext } from "@/context/global-context";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Modal, Text, TouchableOpacity, View } from "react-native";
+import { Modal, TouchableOpacity, View } from "react-native";
+import { Text } from "@/components/core";
 import { Button } from "../core";
+import { ink } from "@/lib/design-tokens";
 
 type AddressChoiceModalProps = {
   isVisible: boolean;
@@ -32,8 +34,8 @@ const AddressChoiceModal: React.FC<AddressChoiceModalProps> = ({
       >
         <View
           className={`w-4/5 ${
-            isDarkMode ? "bg-[#1A1A1A]" : "bg-white"
-          } p-5 rounded-lg items-center`}
+            isDarkMode ? "bg-surface-dark" : "bg-surface-light"
+          } p-5 rounded-button items-center`}
         >
           <View
             className={`relative w-full items-center border-b-[1px] ${
@@ -57,15 +59,15 @@ const AddressChoiceModal: React.FC<AddressChoiceModalProps> = ({
               <Feather
                 name="x"
                 size={24}
-                color={isDarkMode ? "#FFF" : "#000"}
+                color={ink.text(isDarkMode)}
               />
             </TouchableOpacity>
           </View>
 
           <Text
-            className={`text-center mb-6 text-base mt-3 ${
-              isDarkMode ? "text-gray-200" : "text-gray-700"
-            }`}
+            tone="body"
+            fontSize="text-md"
+            className="text-center mb-6 mt-3"
           >
             Do you want to go with the current address or the selected address?
           </Text>

@@ -6,7 +6,7 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { useRef, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
 import { ArrowLeftIcon, TrashIcon } from "react-native-heroicons/outline";
 import * as React from "react";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
@@ -18,10 +18,11 @@ import {
 } from "react-native-responsive-screen";
 import { useProfile } from "@/backend/profile";
 import { useFocusEffect } from "@react-navigation/native";
-import * as Progress from "react-native-progress";
 import { Dimensions } from "react-native";
-import Toast from "react-native-toast-message";
+
 import { useGetMyDetails } from "@/services/userQueries";
+import { ink } from "@/lib/design-tokens";
+import { toast } from "@/lib/toast";
 
 const { height } = Dimensions.get("window");
 
@@ -53,28 +54,21 @@ const EditProductScreen: React.FC = () => {
 
   const handleDelete = async () => {
     await deleteMyProduct(id);
-    Toast.show({
-      type: "customToast",
-      position: "bottom",
-      text1: "Your product was deleted!",
-      text2: "success",
-      visibilityTime: 4000,
-      autoHide: true,
-    });
+    toast.success("Your product was deleted!");
     navigation.navigate("myProducts");
   };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NonScrollableContainer height={height > 700 ? 105 : 100}>
-        <View className="flex-row items-center justify-between px-5 py-2 pt-4">
-          <TouchableOpacity
+        <View className="flex-row items-center justify-between px-gutter py-2 pt-4">
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             onPress={() => router.goBack()}
             className="flex-1 items-start w-[10%]"
           >
             <ArrowLeftIcon
               size={26}
-              color={isDarkMode ? "#FFF" : "#000"}
+              color={ink.text(isDarkMode)}
             />
           </TouchableOpacity>
           <View className="items-center justify-center w-[80%]">
@@ -96,57 +90,56 @@ const EditProductScreen: React.FC = () => {
           {product ? (
             <>
               <View
-                className={`flex-row px-5 gap-5 py-4 border-b-[0.2px]  ${isDarkMode ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+                className={`flex-row px-gutter space-x-5 py-4 border-b-[0.2px]  ${isDarkMode ? "border-b-line-dark" : "border-b-line-light"
                   }`}
               >
                 <View className="py-0 flex-1 ">
                   <Image
-                    className="rounded-[16px]"
+                    className="rounded-group"
                     source={{ uri: product.cover_image }}
                     style={{ width: wp("40%"), height: wp("40%") }}
                   />
                 </View>
 
                 <View className="py-0 justify-between flex-1">
-                  <View className="gap-y-[0.5]">
+                  <View style={{ gap: 2 }}>
                     <Text
                       fontSize="text-lg"
                       fontWeight="font-bold"
                     >
                       {product.title}
                     </Text>
-                    <Text
+                    <Text tone="body"
                       fontSize="text-sm"
-                      className="text-gray-500"
                     >
                       {product.location}
                     </Text>
-                    <View className="flex-row gap-1">
+                    <View className="flex-row space-x-1">
                       <Text
                         fontSize="text-sm"
                         fontWeight="font-bold"
                       >
                         ₹{Number(product.rate).toFixed(0)}
                       </Text>
-                      <Text className="text-gray-500">per day</Text>
+                      <Text tone="body">per day</Text>
                     </View>
                   </View>
                   <View>
                     <TouchableOpacity
                       onPress={openBottomSheet}
-                      className={`flex-row justify-center space-x-1 items-center border rounded-2xl h-11 mt-2 ${isDarkMode
-                        ? "border-[#292929] text-white bg-[#1a1a1a]"
-                        : "border-[#E6E6E6] text-black bg-white"
+                      className={`flex-row justify-center space-x-1 items-center border rounded-group h-11 mt-2 ${isDarkMode
+                        ? "border-line-dark text-white bg-surface-dark"
+                        : "border-line-light text-black bg-surface-light"
                         }`}
                     >
                       <TrashIcon
                         size={20}
-                        color={"#E50914"}
+                        color={ink.danger(isDarkMode)}
                       />
                       <Text
                         fontSize="text-sm"
                         fontWeight="font-bold"
-                        className="text-[#E50914]"
+                        
                       >
                         Delete
                       </Text>
@@ -154,7 +147,7 @@ const EditProductScreen: React.FC = () => {
                   </View>
                 </View>
               </View>
-              <View className="px-4 py-0">
+              <View className="px-gutter py-0">
                 <IconButton
                   onPress={() =>
                     navigation.navigate("EditCategory", {
@@ -184,7 +177,7 @@ const EditProductScreen: React.FC = () => {
                     })
                   }
                   }
-                  leftIcon="Square3Stack3DIcon"
+                  leftIcon="AdjustmentsHorizontalIcon"
                   text="Product Images"
                   isDarkMode={isDarkMode}
                 />
@@ -203,7 +196,7 @@ const EditProductScreen: React.FC = () => {
             </>
           ) : (
             <View className="flex-1 items-center justify-center">
-              <Text className="text-lg font-bold text-gray-400">
+              <Text tone="body" fontSize="text-lg" fontWeight="font-bold">
                 Product not found!
               </Text>
             </View>
@@ -226,10 +219,10 @@ const EditProductScreen: React.FC = () => {
         </View>
         {product && (
           <>
-            <View className="flex-row px-5 gap-5 ">
+            <View className="flex-row px-gutter space-x-5 ">
               <View className="py-4 ">
                 <Image
-                  className="rounded-3xl"
+                  className="rounded-group"
                   source={{ uri: product.cover_image }}
                   style={{ width: wp("20%"), height: wp("20%") }}
                 />
@@ -243,9 +236,8 @@ const EditProductScreen: React.FC = () => {
                   >
                     {product.title}
                   </Text>
-                  <Text
+                  <Text tone="body"
                     fontSize="text-sm"
-                    className="text-gray-500"
                   >
                     {product.location}
                   </Text>
@@ -256,19 +248,19 @@ const EditProductScreen: React.FC = () => {
                     >
                       ₹{Number(product.rate).toFixed(0)}
                     </Text>
-                    <Text className="text-gray-500">per day</Text>
+                    <Text tone="body">per day</Text>
                   </View>
                 </View>
               </View>
             </View>
           </>
         )}
-        <View className="flex-row justify-between mt-6 gap-x-2 px-2">
+        <View className="flex-row justify-between mt-6 space-x-2 px-2">
           <TouchableOpacity
             onPress={() => bottomSheetRef.current?.close()}
-            className={`border rounded-[12px] flex-1 items-center justify-center p-3  ${isDarkMode
-              ? "border-[#292929] text-white bg-[#1a1a1a]"
-              : "border-[#E6E6E6] text-black bg-white"
+            className={`border rounded-card flex-1 items-center justify-center p-3  ${isDarkMode
+              ? "border-line-dark text-white bg-surface-dark"
+              : "border-line-light text-black bg-surface-light"
               }`}
           >
             <Text
@@ -284,13 +276,10 @@ const EditProductScreen: React.FC = () => {
             onPress={() => {
               handleDelete();
             }}
-            className="bg-[#E50914] p-3 rounded-[12px] flex-1  flex-row items-center justify-center"
+            className="bg-danger-light p-3 rounded-card flex-1  flex-row items-center justify-center"
           >
             {loading ? (
-              <Progress.CircleSnail
-                color={"white"}
-                size={22}
-              />
+              <ActivityIndicator size="small" color="white" />
             ) : (
               <Text
                 fontWeight="font-bold"

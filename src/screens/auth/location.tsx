@@ -42,6 +42,7 @@ import {
 } from "react-native-heroicons/outline";
 import { useAuthContext } from "@/context/auth-context";
 import { SignUpError, useAuth } from "@/backend/auth";
+import { ink, colors, radius } from "@/lib/design-tokens";
 
 const StyledImage = styled(Image);
 const LOCATION_FETCH_TIMEOUT_MS = 12000;
@@ -146,10 +147,10 @@ export default function LocationScreen() {
 
   const buildLocationUnavailableMessage = useCallback(() => {
     if (Platform.OS === "android") {
-      return "We couldn't fetch your current location. If you're using an emulator, set a mock location in Android Studio and try again.";
+      return "We couldn’t fetch your current location. If you’re using an emulator, set a mock location in Android Studio and try again.";
     }
 
-    return "We couldn't fetch your current location. Please try again.";
+    return "We couldn’t fetch your current location. Please try again.";
   }, []);
 
   const resolveCurrentLocation = useCallback(async () => {
@@ -269,11 +270,11 @@ export default function LocationScreen() {
       console.error("Failed to request location permission:", error);
       setHasPermission(false);
       setLocationError(
-        "We couldn't request location access. Please try again."
+        "We couldn’t request location access. Please try again."
       );
       Alert.alert(
         "Location error",
-        "We couldn't request location access. Please try again."
+        "We couldn’t request location access. Please try again."
       );
     }
   }, [openLocationSettings, resolveCurrentLocation]);
@@ -371,7 +372,7 @@ export default function LocationScreen() {
         console.error("Failed to check location permission:", error);
         setHasPermission(false);
         setLocationError(
-          "We couldn't check location permission. Please try again."
+          "We couldn’t check location permission. Please try again."
         );
       }
     })();
@@ -617,11 +618,11 @@ export default function LocationScreen() {
 
   return (
     <SafeAreaView
-      className={`flex-1 ${isDarkMode ? "bg-[#0C0C0C]" : "bg-white"}`}
+      className={`flex-1 ${isDarkMode ? "bg-canvas-dark" : "bg-surface-light"}`}
     >
       <StatusBar style={isDarkMode ? "light" : "dark"} />
       <View className="flex-1 ">
-        <View className="px-4">
+        <View className="px-gutter">
           <HeaderIndicator percentage={85} />
         </View>
 
@@ -636,9 +637,8 @@ export default function LocationScreen() {
                   >
                     Allow location
                   </Text>
-                  <Text
+                  <Text tone="body"
                     fontSize="text-lg"
-                    className="text-gray-500"
                   >
                     This allows Renit to fetch products near you
                   </Text>
@@ -686,9 +686,9 @@ export default function LocationScreen() {
                       style={{
                         height: 30,
                         width: 30,
-                        borderRadius: 15,
-                        backgroundColor: "#635BE8",
-                        borderColor: isDarkMode ? "#000" : "#fff",
+                        borderRadius: radius.group,
+                        backgroundColor: colors.dark.brand,
+                        borderColor: ink.canvas(isDarkMode),
                         borderWidth: 5,
                         justifyContent: "center",
                         alignItems: "center",
@@ -698,8 +698,8 @@ export default function LocationScreen() {
                         style={{
                           height: 15,
                           width: 15,
-                          borderRadius: 7.5,
-                          backgroundColor: "#635BE8",
+                          borderRadius: radius.full,
+                          backgroundColor: colors.dark.brand,
                         }}
                       />
                     </View>
@@ -731,16 +731,16 @@ export default function LocationScreen() {
                 enableHandlePanningGesture={true}
                 enableContentPanningGesture={true}
                 backgroundStyle={{
-                  backgroundColor: isDarkMode ? "black" : "white",
+                  backgroundColor: ink.canvas(isDarkMode),
                 }}
-                handleIndicatorStyle={{ backgroundColor: "#292929" }}
+                handleIndicatorStyle={{ backgroundColor: ink.line(true) }}
                 handleStyle={{
                   borderTopWidth: 2,
                   borderLeftWidth: 2,
                   borderRightWidth: 2,
-                  borderTopColor: isDarkMode ? "#292929" : "#fff",
-                  borderLeftColor: isDarkMode ? "#292929" : "#fff",
-                  borderRightColor: isDarkMode ? "#292929" : "#fff",
+                  borderTopColor: ink.line(isDarkMode),
+                  borderLeftColor: ink.line(isDarkMode),
+                  borderRightColor: ink.line(isDarkMode),
                   borderTopRightRadius: 12,
                   borderTopLeftRadius: 12,
                   flex: 1,
@@ -768,7 +768,7 @@ export default function LocationScreen() {
                       <Text
                         fontSize="text-sm"
                         className={`${
-                          isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                          isDarkMode ? "text-muted-dark" : "text-muted-light"
                         }`}
                       >
                         {address ? address : "Fetching address..."}
@@ -787,8 +787,8 @@ export default function LocationScreen() {
                             fontSize="text-sm"
                             className={`${
                               isDarkMode
-                                ? "text-[#FFFFFFB2]"
-                                : "text-[#000000B2]"
+                                ? "text-muted-dark"
+                                : "text-muted-light"
                             }`}
                           >
                             {selectedAddress
@@ -813,7 +813,7 @@ export default function LocationScreen() {
                           {signUpLoading ? (
                             <ActivityIndicator
                               size="small"
-                              color={"#fff"}
+                              color="#FFFFFF"
                             />
                           ) : (
                             "Confirm location"
@@ -834,34 +834,34 @@ export default function LocationScreen() {
                         styles={{
                           textInput: {
                             height: 50,
-                            backgroundColor: isDarkMode ? "#0F0F0F" : "#fff",
-                            borderRadius: 10,
+                            backgroundColor: ink.surface(isDarkMode),
+                            borderRadius: radius.input,
                             paddingHorizontal: 8,
                             zIndex: 10,
-                            color: isDarkMode ? "#fff" : "#000",
+                            color: ink.text(isDarkMode),
                             borderWidth: 1,
-                            borderColor: isDarkMode ? "#292929" : "#E6E6E6b2",
+                            borderColor: ink.line(isDarkMode),
                           },
                           row: {
-                            backgroundColor: isDarkMode ? "#000" : "#FFF",
+                            backgroundColor: ink.canvas(isDarkMode),
                           },
                           description: {
-                            color: isDarkMode ? "#fff" : "#000",
+                            color: ink.text(isDarkMode),
                           },
-                          separator: { backgroundColor: "#292929" },
+                          separator: { backgroundColor: ink.line(true) },
                         }}
                       /> */}
 
                       <View
-                        className={`flex-row pl-3 min-h-11 rounded-[12px] border ${
+                        className={`flex-row pl-3 min-h-11 rounded-card border ${
                           isDarkMode
-                            ? "border-[#292929] bg-[#0F0F0F]"
-                            : "border-[#e6e6e6] bg-white"
+                            ? "border-line-dark bg-surface-dark"
+                            : "border-line-light bg-surface-light"
                         }`}
                         style={{ alignItems: "center" }}
                       >
                         <MagnifyingGlassIcon
-                          color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
+                          color={ink.body(isDarkMode)}
                           size={24}
                         />
                         <GooglePlacesAutocomplete
@@ -877,43 +877,41 @@ export default function LocationScreen() {
                           styles={{
                             textInput: {
                               height: "100%",
-                              backgroundColor: isDarkMode ? "#0F0F0F" : "#fff",
-                              borderRadius: 12,
+                              backgroundColor: ink.surface(isDarkMode),
+                              borderRadius: radius.card,
                               zIndex: 10,
-                              color: isDarkMode ? "#fff" : "#000",
+                              color: ink.text(isDarkMode),
                               fontSize: 16,
                             },
                             row: {
-                              backgroundColor: isDarkMode ? "#0F0F0F" : "#FFF",
+                              backgroundColor: ink.surface(isDarkMode),
                             },
                             description: {
-                              color: isDarkMode ? "#fff" : "#000",
+                              color: ink.text(isDarkMode),
                             },
-                            separator: { backgroundColor: "#292929" },
+                            separator: { backgroundColor: ink.line(true) },
                           }}
                           textInputProps={{
-                            placeholderTextColor: isDarkMode
-                              ? "#FFFFFFB2"
-                              : "#000000B2",
+                            placeholderTextColor: ink.body(isDarkMode),
                           }}
                         />
                       </View>
 
                       <TouchableOpacity
-                        className={`h-[48px] rounded-[12px] w-full border-b ${
-                          isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
+                        className={`h-[48px] rounded-card w-full border-b ${
+                          isDarkMode ? "border-line-dark" : "border-line-light"
                         } px-2 mt-4`}
                         onPress={handleCurrentLocation}
                       >
                         <View className="flex flex-row h-full w-full items-center justify-between">
                           <View className="flex flex-row items-center space-x-4">
                             <ViewfinderCircleIcon
-                              color="#635be8"
+                              color={colors.dark.brand}
                               size={24}
                             />
                             <Text
                               fontWeight="font-bold"
-                              className="text-brand-blue"
+                              className="text-brand"
                             >
                               Use current location
                             </Text>
@@ -942,12 +940,12 @@ export default function LocationScreen() {
                             onPress={() => handleSelectNearbyPlace(item)}
                             className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${
                               isDarkMode
-                                ? "border-[#292929]"
-                                : "border-[#e6e6e6]"
+                                ? "border-line-dark"
+                                : "border-line-light"
                             }`}
                           >
                             <MapPinIcon
-                              color={isDarkMode ? "white" : "black"}
+                              color={ink.text(isDarkMode)}
                               size={20}
                             />
                             <Text fontSize="text-sm">{item.name}</Text>
@@ -965,7 +963,7 @@ export default function LocationScreen() {
                 <>
                   <ActivityIndicator
                     size="large"
-                    color="#635BE8"
+                    color={colors.dark.brand}
                   />
                   <Text
                     fontSize="text-lg"
@@ -983,12 +981,12 @@ export default function LocationScreen() {
                   >
                     We need your current location
                   </Text>
-                  <Text
+                  <Text tone="body"
                     fontSize="text-lg"
-                    className="mt-2 text-center text-gray-500"
+                    className="mt-2 text-center"
                   >
                     {locationError ||
-                      "Location access is granted, but we couldn't fetch your current location yet."}
+                      "Location access is granted, but we couldn’t fetch your current location yet."}
                   </Text>
                   <Button
                     variant="primary"
@@ -1007,7 +1005,7 @@ export default function LocationScreen() {
                     {signUpLoading ? (
                       <ActivityIndicator
                         size="small"
-                        color={isDarkMode ? "#fff" : "#000"}
+                        color={ink.text(isDarkMode)}
                       />
                     ) : (
                       "Skip for now"
@@ -1019,9 +1017,9 @@ export default function LocationScreen() {
           ) : (
             <View className="w-[90%] mx-auto py-5">
               {locationError ? (
-                <Text
+                <Text tone="danger"
                   fontSize="text-sm"
-                  className="mb-3 text-center text-red-500"
+                  className="mb-3 text-center"
                 >
                   {locationError}
                 </Text>
@@ -1042,7 +1040,7 @@ export default function LocationScreen() {
                 {signUpLoading ? (
                   <ActivityIndicator
                     size="small"
-                    color={isDarkMode ? "#fff" : "#000"}
+                    color={ink.text(isDarkMode)}
                   />
                 ) : (
                   "Skip for now"

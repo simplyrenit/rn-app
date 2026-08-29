@@ -45,28 +45,28 @@ export default function NetworkDiagnosticsScreen() {
 
   const getStateColor = (state: TestState) => {
     if (state === "success") return "text-green-500";
-    if (state === "error") return "text-red-500";
+    if (state === "error") return "text-danger";
     if (state === "loading") return "text-yellow-500";
-    return "text-gray-500";
+    return "text-muted-light";
   };
 
   return (
     <StaticContainer width={100}>
-      <ScrollView className="px-5 pt-5">
+      <ScrollView className="px-gutter pt-5">
         <Text fontSize="text-2xl" fontWeight="font-bold">
           Network Diagnostics
         </Text>
-        <Text className="mt-1 text-[#777]">
+        <Text className="mt-1 text-muted-light">
           Validate runtime API connectivity on this device.
         </Text>
 
-        <View className="mt-6 rounded-xl border border-[#E6E6E6] p-4">
+        <View className="mt-6 rounded-card border border-line-light p-4">
           <Text fontWeight="font-bold">Environment</Text>
           <Text className="mt-2">APP_ENV: {DEV_MODE}</Text>
           <Text className="mt-2">SERVERURL: {SERVERURL}</Text>
         </View>
 
-        <View className="mt-6 rounded-xl border border-[#E6E6E6] p-4">
+        <View className="mt-6 rounded-card border border-line-light p-4">
           <Text fontWeight="font-bold">REST Check</Text>
           <Text className="mt-2">Endpoint: {GET_CATEGORIES}</Text>
           <Button className="mt-3" onPress={runRestTest}>

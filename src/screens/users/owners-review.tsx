@@ -8,6 +8,7 @@ import { useRoute } from "@react-navigation/native";
 import React from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { ArrowLeftIcon } from "react-native-heroicons/outline";
+import { ink } from "@/lib/design-tokens";
 
 export default function OwnersReviewScreen() {
   const route = useRoute<RouteProps<"OwnersReviewScreen">>();
@@ -19,10 +20,10 @@ export default function OwnersReviewScreen() {
 
   return (
     <NonScrollableContainer>
-      <View className="py-3 px-5 flex flex-row items-center">
+      <View className="py-3 px-gutter flex flex-row items-center">
         <View className="w-[10%]">
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ArrowLeftIcon color={isDark ? "white" : "black"} size={24} />
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back" onPress={() => navigation.goBack()}>
+            <ArrowLeftIcon color={ink.text(isDark)} size={24} />
           </TouchableOpacity>
         </View>
         <View className="w-[80%] h-full items-center">
@@ -33,7 +34,7 @@ export default function OwnersReviewScreen() {
         <View className="w-[10%]"></View>
       </View>
 
-      <ScrollView className="px-5 mt-3">
+      <ScrollView className="px-gutter mt-3">
         <Text fontSize="text-lg" fontWeight="font-bold" className="my-6">
           {pluralize(reviews.length, "review")}
         </Text>

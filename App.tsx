@@ -1,7 +1,7 @@
 import "react-native-gesture-handler";
 import "react-native-reanimated";
 import React, { useEffect } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import { GlobalProvider } from "@/context/global-context";
 import { ProductProvider } from "@/context/product-context";
 import Navigation from "@/navigation/nav";
@@ -10,9 +10,9 @@ import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { AutocompleteDropdownContextProvider } from "react-native-autocomplete-dropdown";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { CheckIcon, XMarkIcon } from "react-native-heroicons/outline";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
-import { Text } from "@/components/core";
+import { ToastBody } from "@/components/core/toast";
 import "react-native-get-random-values";
 import { AuthProvider } from "@/context/auth-context";
 import { QueryClient, QueryClientProvider } from "react-query";
@@ -83,11 +83,13 @@ export default function App() {
           <ProductProvider>
             <AutocompleteDropdownContextProvider>
               <GestureHandlerRootView style={{ flex: 1 }}>
-                <BottomSheetModalProvider>
-                  <Navigation />
-                  {/* @ts-ignore */}
-                  <Toast config={toastConfig} />
-                </BottomSheetModalProvider>
+                <SafeAreaProvider>
+                  <BottomSheetModalProvider>
+                    <Navigation />
+                    {/* @ts-ignore */}
+                    <Toast config={toastConfig} />
+                  </BottomSheetModalProvider>
+                </SafeAreaProvider>
               </GestureHandlerRootView>
             </AutocompleteDropdownContextProvider>
           </ProductProvider>
@@ -98,56 +100,11 @@ export default function App() {
 }
 
 const toastConfig = {
-  customToast: ({ text1, text2 }: { text1: string; text2?: string }) => (
-    <View style={styles.customToast}>
-      <View
-        className={`${text2 === "success" ? "bg-brand-blue" : "bg-red-500"
-          } rounded-lg p-2`}
-      >
-        {text2 === "success" ? (
-          <CheckIcon
-            size={24}
-            color="#fff"
-          />
-        ) : (
-          <XMarkIcon
-            size={24}
-            color="#fff"
-          />
-        )}
-      </View>
-      <Text
-        fontSize="text-base"
-        fontWeight="font-bold"
-        className="ml-2 text-black"
-      >
-        {text1}
-      </Text>
+  // Rendered inside the provider tree so it can read the theme. The bottom
+  // offset clears the tab bar without hardcoding its height.
+  customToast: (props: any) => (
+    <View style={{ width: "100%", alignItems: "center", marginBottom: 24 }}>
+      <ToastBody {...props} />
     </View>
   ),
 };
-
-const styles = StyleSheet.create({
-  customToast: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#EDEDFC",
-    padding: 10,
-    borderRadius: 10,
-    borderColor: "#CAC8F7",
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-    width: "90%",
-    marginBottom: 100,
-  },
-  toastText: {
-    fontSize: 16,
-    color: "#0073e6",
-    fontWeight: "500",
-    marginLeft: 8,
-  },
-});

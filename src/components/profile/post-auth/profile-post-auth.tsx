@@ -5,12 +5,13 @@ import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
-import { ArrowRightStartOnRectangleIcon } from "react-native-heroicons/outline";
 import IconButton from "./profile-icon-button";
 import ProfileImgContainer from "./profile-img";
 import AppearanceSheet from "./sheets/AppearanceSheet";
 import { CurrencySheet } from "./sheets/currency-sheet";
 import PersonalDetailsSheet from "./sheets/PersonaldetailsSheet";
+import { density } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 
 interface ProfilePostAuthProps {
   isDarkMode: boolean;
@@ -31,6 +32,16 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   const appearanceSheetRef = useRef<BottomSheetModal>(null);
   const personalDetailsSheetRef = useRef<BottomSheetModal>(null);
   const currencySheetRef = useRef<BottomSheetModal>(null);
+  const { color } = useTheme();
+
+  const sectionStyle = {
+    // Three group headers introduced one row each; header, padding and row cost
+    // 150pt to expose a single link.
+    paddingTop: density.sectionHeaderGap + 4,
+    paddingBottom: density.sectionHeaderGap,
+    borderBottomWidth: 1,
+    borderBottomColor: color.line,
+  } as const;
 
 
   const handleCurrencyModal = () => {
@@ -61,18 +72,17 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
     <>
       <View className="">
         <View
-          className={`border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-            }`}
+          style={{ borderBottomWidth: 1, borderBottomColor: color.line }}
         >
-          <View className="px-5">
+          <View className="px-gutter">
             <ProfileImgContainer
               isDarkMode={isDarkMode}
               handlePersonalDetailsSheetPress={handlePersonalDetailsSheetPress}
             />
             {isMerchant && (
               <View
-                className={`mb-4 rounded-xl border px-3 py-2 ${
-                  isDark ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6] bg-white"
+                className={`mb-4 rounded-card border px-3 py-2 ${
+                  isDark ? "border-line-dark bg-surface-dark" : "border-line-light bg-surface-light"
                 }`}
               >
                 <Text fontWeight="font-semibold">
@@ -80,7 +90,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
                 </Text>
                 {merchantStatus !== "approved" && (
                   <Text
-                    className={`mt-1 ${isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"}`}
+                    className={`mt-1 ${isDark ? "text-muted-dark" : "text-muted-light"}`}
                   >
                     Listings will be enabled after merchant approval.
                   </Text>
@@ -97,7 +107,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
                         : "Request review again"}
                     </Button>
                     {requestReviewError && (
-                      <Text className="mt-2 text-red-500">{requestReviewError}</Text>
+                      <Text tone="danger" className="mt-2">{requestReviewError}</Text>
                     )}
                   </>
                 )}
@@ -108,14 +118,16 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
 
         {/* Account */}
         <View
-          className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-            }`}
+          style={sectionStyle}
         >
-          <View className="px-5">
+          <View className="px-gutter">
             <Text
-              fontSize="text-base"
-              fontWeight="font-bold"
-              className="pb-3"
+              fontSize="text-xs"
+              fontWeight="font-semibold"
+              tone="dim"
+              accessibilityRole="header"
+              className="pb-2"
+              style={{ letterSpacing: 0.6 }}
             >
               Account
             </Text>
@@ -123,8 +135,9 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               onPress={() => {
                 router.navigate("myProducts");
               }}
-              leftIcon="CubeIcon"
-              text="My products"
+              leftIcon="Squares2X2Icon"
+              text="My listings"
+              divider={false}
               isDarkMode={isDarkMode}
             />
           </View>
@@ -132,21 +145,24 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
 
         {/* App */}
         <View
-          className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-            }`}
+          style={sectionStyle}
         >
-          <View className="px-5">
+          <View className="px-gutter">
             <Text
-              fontSize="text-base"
-              fontWeight="font-bold"
-              className="pb-3"
+              fontSize="text-xs"
+              fontWeight="font-semibold"
+              tone="dim"
+              accessibilityRole="header"
+              className="pb-2"
+              style={{ letterSpacing: 0.6 }}
             >
               App
             </Text>
             <IconButton
               onPress={handleAppeareanceModal}
-              leftIcon="DevicePhoneMobileIcon"
-              text="Switch theme"
+              leftIcon="MoonIcon"
+              text="Appearance"
+              divider={false}
               isDarkMode={isDarkMode}
             />
             {/* <IconButton
@@ -160,14 +176,16 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
 
         {/* Support */}
         <View
-          className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-            }`}
+          style={sectionStyle}
         >
-          <View className="px-5">
+          <View className="px-gutter">
             <Text
-              fontSize="text-base"
-              fontWeight="font-bold"
-              className="pb-3"
+              fontSize="text-xs"
+              fontWeight="font-semibold"
+              tone="dim"
+              accessibilityRole="header"
+              className="pb-2"
+              style={{ letterSpacing: 0.6 }}
             >
               Support
             </Text>
@@ -183,24 +201,16 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               onPress={() => {
                 router.navigate("ReportAProblem");
               }}
-              leftIcon="FlagIcon"
+              leftIcon="ExclamationTriangleIcon"
               text="Report a problem"
-              isDarkMode={isDarkMode}
-            />
-            <IconButton
-              onPress={() => {
-                router.navigate("NetworkDiagnostics");
-              }}
-              leftIcon="Square3Stack3DIcon"
-              text="Network diagnostics"
               isDarkMode={isDarkMode}
             />
             <IconButton
               onPress={() => {
                 router.navigate("feedback");
               }}
-              leftIcon="BriefcaseIcon"
-              text="Feedback & review"
+              leftIcon="ChatBubbleLeftEllipsisIcon"
+              text="Send feedback"
               isDarkMode={isDarkMode}
             />
             <IconButton
@@ -223,20 +233,23 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               onPress={() => {
                 router.navigate("unavailabilityFormCategories");
               }}
-              leftIcon="DocumentIcon"
-              text="Unavailability form"
+              leftIcon="InboxArrowDownIcon"
+              text="Request an item"
               isDarkMode={isDarkMode}
             />
           </View>
         </View>
 
         {/* <Legal */}
-        <View className="py-4 mb-16">
-          <View className="px-5">
+        <View style={sectionStyle}>
+          <View className="px-gutter">
             <Text
-              fontSize="text-base"
-              fontWeight="font-bold"
-              className="pb-3"
+              fontSize="text-xs"
+              fontWeight="font-semibold"
+              tone="dim"
+              accessibilityRole="header"
+              className="pb-2"
+              style={{ letterSpacing: 0.6 }}
             >
               Legal
             </Text>
@@ -252,33 +265,27 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               onPress={() => {
                 router.navigate("Privacy");
               }}
-              leftIcon="ClipboardDocumentIcon"
+              leftIcon="LockClosedIcon"
               text="Privacy policy"
+              divider={false}
               isDarkMode={isDarkMode}
             />
           </View>
+        </View>
 
-          {/* logout */}
-          <View className="pt-5 px-5">
-            <TouchableOpacity
+        {/* Its own group. Log out is a row like every other row — red is
+            reserved for destructive, irreversible actions and signing out is
+            neither — but it sat inside "Legal", under a heading that did not
+            describe it and with no separator above it. */}
+        <View style={{ ...sectionStyle, marginBottom: 64 }}>
+          <View className="px-gutter">
+            <IconButton
               onPress={handleLogout}
-              className={`${isDark
-                ? "bg-[#1A1A1A] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
-                } border rounded-[12px] px-4 py-3 flex-row items-center justify-center -translate-y-0.5`}
-            >
-              <ArrowRightStartOnRectangleIcon
-                size={26}
-                color="#E50914"
-              />
-              <Text
-                fontSize="text-base"
-                fontWeight="font-bold"
-                className="text-[#E50914] ml-2"
-              >
-                Logout
-              </Text>
-            </TouchableOpacity>
+              leftIcon="ArrowRightStartOnRectangleIcon"
+              text="Log out"
+              divider={false}
+              rightIcon={<View />}
+            />
           </View>
         </View>
 

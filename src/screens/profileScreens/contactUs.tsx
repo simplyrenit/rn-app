@@ -12,6 +12,7 @@ import {
 } from "react-native-heroicons/outline";
 
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { ink } from "@/lib/design-tokens";
 
 interface ContactUsProps {}
 
@@ -24,16 +25,16 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
   return (
     <NonScrollableContainer>
       <View
-        className="flex-row items-center justify-between px-5 pt-2 "
+        className="flex-row items-center justify-between px-gutter pt-2 "
         // style={{ paddingVertical: wp("5%") }}
       >
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           className="w-[10%]"
           onPress={() => router.goBack()}
         >
           <ArrowLeftIcon
             size={26}
-            color={isDarkMode ? "#FFF" : "#000"}
+            color={ink.text(isDarkMode)}
           />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
@@ -51,14 +52,14 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
       <ScrollView className="">
         <View
           style={{ paddingVertical: wp("8%") }}
-          className={`px-5 border-b-[0.2px] ${
-            isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
+          className={`px-gutter border-b-[0.2px] ${
+            isDarkMode ? "border-line-dark" : "border-line-light"
           }`}
         >
-          <View className="flex-row items-center gap-2">
+          <View className="flex-row items-center space-x-2">
             <EnvelopeOpenIcon
               size={24}
-              color={isDarkMode ? "#FFF" : "#000"}
+              color={ink.text(isDarkMode)}
             />
             <Text
               fontSize="text-md"
@@ -70,10 +71,10 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
           <View className="py-4">
             <TouchableOpacity
               onPress={() => Linking.openURL("mailto:support@simplyrenit.com")}
-              className={`flex-row h-12 rounded-[12px] border ${
+              className={`flex-row h-12 rounded-card border ${
                 isDarkMode
-                  ? "bg-[#0F0F0F] border-[#292929]"
-                  : "bg-white border-[#e6e6e6]"
+                  ? "bg-surface-dark border-line-dark"
+                  : "bg-surface-light border-line-light"
               } items-center justify-center `}
             >
               <Text
@@ -87,7 +88,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
               <ChevronRightIcon
                 size={20}
                 strokeWidth={2}
-                color={isDarkMode ? "#FFF" : "#000"}
+                color={ink.text(isDarkMode)}
                 style={{ marginTop: 1 }}
               />
             </TouchableOpacity>
@@ -96,14 +97,14 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
 
         <View
           style={{ paddingVertical: wp("8%") }}
-          className={`px-5 border-b-[0.2px] ${
-            isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
+          className={`px-gutter border-b-[0.2px] ${
+            isDarkMode ? "border-line-dark" : "border-line-light"
           }`}
         >
-          <View className="flex-row items-center gap-2">
+          <View className="flex-row items-center space-x-2">
             <PhoneIcon
               size={24}
-              color={isDarkMode ? "#FFF" : "#000"}
+              color={ink.text(isDarkMode)}
             />
             <Text
               fontSize="text-md"
@@ -115,10 +116,10 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
           <View className="py-4">
             <TouchableOpacity
               onPress={() => Linking.openURL("tel:+91-7297941741")}
-              className={`flex-row h-12 rounded-[12px] border ${
+              className={`flex-row h-12 rounded-card border ${
                 isDarkMode
-                  ? "bg-[#0F0F0F] border-[#292929]"
-                  : "bg-white border-[#e6e6e6]"
+                  ? "bg-surface-dark border-line-dark"
+                  : "bg-surface-light border-line-light"
               } items-center justify-center`}
             >
               <Text
@@ -132,7 +133,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
               <ChevronRightIcon
                 size={20}
                 strokeWidth={2}
-                color={isDarkMode ? "#FFF" : "#000"}
+                color={ink.text(isDarkMode)}
               />
             </TouchableOpacity>
           </View>
@@ -140,14 +141,14 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
 
         <View
           style={{ paddingVertical: wp("8%") }}
-          className={`px-5 border-b-[0.2px] ${
-            isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
+          className={`px-gutter border-b-[0.2px] ${
+            isDarkMode ? "border-line-dark" : "border-line-light"
           }`}
         >
-          <View className="flex-row items-center gap-2">
+          <View className="flex-row items-center space-x-2">
             <PencilIcon
               size={24}
-              color={isDarkMode ? "#FFF" : "#000"}
+              color={ink.text(isDarkMode)}
             />
             <Text
               fontSize="text-md"
@@ -161,10 +162,10 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
               onPress={() => {
                 router.navigate("feedback");
               }}
-              className={`flex-row h-12 rounded-[12px] border ${
+              className={`flex-row h-12 rounded-card border ${
                 isDarkMode
-                  ? "bg-[#0F0F0F] border-[#292929]"
-                  : "bg-white border-[#e6e6e6]"
+                  ? "bg-surface-dark border-line-dark"
+                  : "bg-surface-light border-line-light"
               } items-center justify-center`}
             >
               <Text
@@ -178,7 +179,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
               <ChevronRightIcon
                 size={20}
                 strokeWidth={2}
-                color={isDarkMode ? "#FFF" : "#000"}
+                color={ink.text(isDarkMode)}
               />
             </TouchableOpacity>
           </View>

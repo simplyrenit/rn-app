@@ -10,18 +10,18 @@ import { useGlobalContext } from "@/context/global-context";
 import { useProductContext } from "@/context/product-context";
 import { BackendProduct, PublicOwner, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
 import {
   ArrowLeftIcon,
   BanknotesIcon,
   ShareIcon,
 } from "react-native-heroicons/outline";
-import * as Progress from "react-native-progress";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { Dimensions } from "react-native";
 import useOwner from "@/backend/owner";
 import { useEffect, useState } from "react";
 import { SvgUri } from "react-native-svg";
+import { ink } from "@/lib/design-tokens";
 
 const { height } = Dimensions.get("window");
 
@@ -60,15 +60,15 @@ export default function ReviewProduct() {
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
-      <View className="px-4 flex-row items-center">
-        <TouchableOpacity
+      <View className="px-gutter flex-row items-center">
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => navigation.goBack()}
           className="w-[10%]"
         >
-          <ArrowLeftIcon size={24} color={isDark ? "#ffffff" : "#000000"} />
+          <ArrowLeftIcon size={24} color={ink.text(isDark)} />
         </TouchableOpacity>
         <View className="w-[80%]">
-          <PostProductHeader heading="Review your post" percentage={90} />
+          <PostProductHeader heading="Review your post" step={7} />
         </View>
         <View className="w-[10%]" />
       </View>
@@ -88,7 +88,7 @@ export default function ReviewProduct() {
         </View>
 
         <View
-          className={`px-4 py-6 border-b ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+          className={`px-gutter py-6 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
             }`}
         >
           <View className="flex flex-row items-center justify-between">
@@ -99,7 +99,7 @@ export default function ReviewProduct() {
         </View>
 
         <View
-          className={`px-8 w-full py-8 border-b ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+          className={`px-8 w-full py-8 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
             } flex flex-row items-center justify-between`}
         >
           {/* Custom Category Icon */}
@@ -116,7 +116,7 @@ export default function ReviewProduct() {
               {product.category.title}
             </Text>
             <Text
-              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+              className={`mt-1 font-light ${isDark ? "text-subtle-dark" : "text-subtle-light"
                 }`}
             >
               Category
@@ -125,14 +125,14 @@ export default function ReviewProduct() {
 
           <View className="flex items-center">
             <BanknotesIcon
-              color={isDark ? "white" : "black"}
-              size={wp("5.5%")}
+              color={ink.text(isDark)}
+              size={22}
             />
             <Text fontWeight="font-bold" className="mt-2">
               ₹{product.securityDeposit}
             </Text>
             <Text
-              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+              className={`mt-1 font-light ${isDark ? "text-subtle-dark" : "text-subtle-light"
                 }`}
             >
               Deposit
@@ -142,19 +142,19 @@ export default function ReviewProduct() {
           {/* Custom Icon */}
           <View className="flex items-center">
             {/* <LightBulbIcon
-              color={isDark ? "white" : "black"}
-              size={wp("5.5%")}
+              color={ink.text(isDark)}
+              size={22}
             /> */}
             <ConditionRenderer
               condition={product.condition}
-              size={wp("5.5%")}
-              color={isDark ? "white" : "black"}
+              size={22}
+              color={ink.text(isDark)}
             />
             <Text fontWeight="font-bold" className="mt-2">
               {product?.condition?.[0]?.toUpperCase()}{product?.condition?.slice(1)?.toLowerCase()}
             </Text>
             <Text
-              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
+              className={`mt-1 font-light ${isDark ? "text-subtle-dark" : "text-subtle-light"
                 }`}
             >
               Condition
@@ -163,7 +163,7 @@ export default function ReviewProduct() {
         </View>
 
         <View
-          className={`px-4 py-6 border-b ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+          className={`px-gutter py-6 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
             }`}
         >
           <View className="flex flex-row items-center justify-between">
@@ -175,7 +175,7 @@ export default function ReviewProduct() {
         </View>
 
         <View
-          className={`px-4 py-6 border-b ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+          className={`px-gutter py-6 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
             }`}
         >
           <View className="flex flex-row items-center justify-between">
@@ -193,7 +193,7 @@ export default function ReviewProduct() {
             </View>
           ) : (
             <Text
-              className={`mt-2 ${isDark ? "text-white/50" : "text-black/50"}`}
+              className={`mt-2 ${isDark ? "text-subtle-dark" : "text-subtle-light"}`}
             >
               Location was skipped for this draft.
             </Text>
@@ -201,8 +201,8 @@ export default function ReviewProduct() {
         </View>
 
         {/* <View
-          className={`px-4 py-6 border-b ${
-            isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+          className={`px-gutter py-6 border-b ${
+            isDark ? "border-b-line-dark" : "border-b-line-light"
           }`}
         >
           <View className="flex flex-row items-center justify-between">
@@ -224,7 +224,7 @@ export default function ReviewProduct() {
       </ScrollView>
 
       <View
-        className={` w-full px-4  border-t ${isDark ? "bg-black border-t-[#292929]" : "bg-white border-t-[#E6E6E6]"
+        className={` w-full px-gutter  border-t ${isDark ? "bg-canvas-dark border-t-line-dark" : "bg-surface-light border-t-line-light"
           } flex-row justify-between items-center h-[10%]`}
       >
         <View className="flex flex-row items-end w-1/2" style={{ flexWrap: "wrap" }}>
@@ -235,10 +235,10 @@ export default function ReviewProduct() {
         </View>
         <TouchableOpacity
           onPress={handlePostProduct}
-          className="bg-brand-blue flex items-center justify-center rounded-lg w-1/2 p-3"
+          className="bg-brand flex items-center justify-center rounded-button w-1/2 p-3"
         >
           {loading ? (
-            <Progress.CircleSnail color={"white"} size={22} />
+            <ActivityIndicator size="small" color="white" />
           ) : (
             <Text
               fontWeight="font-bold"

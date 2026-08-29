@@ -16,15 +16,24 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import { useProfile } from "@/backend/profile";
 import axiosInstance from "@/lib/networkUtils";
 
+/** Which provider is mid-sign-in, or null. */
+export type OAuthProvider = "google" | "apple";
+
 export function useOAuth() {
-  const [loading, setLoading] = useState(false);
+  // One shared flag put a spinner on both provider buttons at once, so the
+  // customer lost track of which one they had chosen.
+  const [pendingProvider, setPendingProvider] = useState<OAuthProvider | null>(
+    null
+  );
+  const loading = pendingProvider !== null;
   const { setAuthTokens } = useGlobalContext();
   const router = useTypedNavigation();
   // const { getUser, saveUser } = useAuthContext();
   const { getMyDetails } = useProfile();
 
   const googleSignIn = async () => {
-    setLoading(true);
+    if (pendingProvider) return;
+    setPendingProvider("google");
     try {
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
@@ -63,12 +72,13 @@ export function useOAuth() {
         console.error("Other error:", error);
       }
     } finally {
-      setLoading(false);
+      setPendingProvider(null);
     }
   };
 
   const appleSignIn = async () => {
-    setLoading(true);
+    if (pendingProvider) return;
+    setPendingProvider("apple");
     try {
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
@@ -99,9 +109,9 @@ export function useOAuth() {
         // handle other errors
       }
     } finally {
-      setLoading(false);
+      setPendingProvider(null);
     }
   };
 
-  return { googleSignIn, loading, appleSignIn };
+  return { googleSignIn, loading, appleSignIn, pendingProvider };
 }

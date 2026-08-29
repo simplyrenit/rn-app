@@ -7,12 +7,12 @@ import { useGlobalContext } from "@/context/global-context";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
-import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { XCircleIcon } from "react-native-heroicons/outline";
 import OTPTextView from "react-native-otp-textinput";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import * as Progress from "react-native-progress";
 import axiosInstance from "@/lib/networkUtils";
+import { colors, ink, radius } from "@/lib/design-tokens";
 
 export default function VerifyEmail() {
   const [verificationCode, setVerificationCode] = useState("");
@@ -150,8 +150,8 @@ export default function VerifyEmail() {
       marginHorizontal: -5,
     },
     roundedTextInput: {
-      backgroundColor: theme === "dark" ? "#0F0F0F" : "#FFF",
-      borderRadius: 10,
+      backgroundColor: ink.surface(theme === "dark"),
+      borderRadius: radius.input,
       borderWidth: 3,
       color: theme === "dark" ? "white" : "black",
       width: wp(12.5),
@@ -175,7 +175,7 @@ export default function VerifyEmail() {
             </Text>
             <Text
               fontSize="text-md"
-              className={`${theme === "dark" ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+              className={`${theme === "dark" ? "text-muted-dark" : "text-muted-light"
                 }`}
             >
               {isCodeVerification
@@ -195,17 +195,24 @@ export default function VerifyEmail() {
 
                 <View className="w-[70%]">
                   <OTPTextView
+                    // Lets iOS surface the code from Messages above the
+                    // keyboard. The library forwards unknown props to its
+                    // TextInputs but does not type them.
+                    // @ts-ignore
+                    textContentType="oneTimeCode"
+                    // @ts-ignore
+                    autoComplete="sms-otp"
                     containerStyle={styles.textInputContainer}
                     textInputStyle={styles.roundedTextInput}
                     // @ts-ignore
                     placeholder="*"
                     placeholderTextColor={
-                      theme === "dark" ? "#ffffff80" : "#00000080"
+                      ink.dim(theme === "dark")
                     }
                     inputCount={6}
                     inputCellLength={1}
-                    tintColor="#635BE8"
-                    offTintColor={theme === "dark" ? "#292929" : "#e6e6e6"}
+                    tintColor={colors.dark.brand}
+                    offTintColor={theme === "dark" ? ink.line(true) : ink.line(false)}
                     keyboardType="number-pad"
                     autoFocus
                     handleTextChange={(text) => setVerificationCode(text)}
@@ -216,11 +223,10 @@ export default function VerifyEmail() {
                   <View className="flex mt-2 flex-row items-center space-x-2">
                     <XCircleIcon
                       size={14}
-                      color="#ef4444"
+                      color={ink.danger(true)}
                     />
-                    <Text
+                    <Text tone="danger"
                       fontSize="text-sm"
-                      className="text-red-500"
                     >
                       Wrong OTP. Try again
                     </Text>
@@ -231,11 +237,10 @@ export default function VerifyEmail() {
                   <View className="flex mt-2 flex-row items-center space-x-2">
                     <XCircleIcon
                       size={14}
-                      color="#ef4444"
+                      color={ink.danger(true)}
                     />
-                    <Text
+                    <Text tone="danger"
                       fontSize="text-sm"
-                      className="text-red-500"
                     >
                       {otpVerifyError}
                     </Text>
@@ -245,7 +250,7 @@ export default function VerifyEmail() {
                 <TouchableOpacity onPress={handleResendOTP}>
                   <Text
                     fontWeight="font-bold"
-                    className="text-brand-blue mt-4"
+                    className="text-brand mt-4"
                   >
                     Resend OTP
                   </Text>
@@ -255,11 +260,10 @@ export default function VerifyEmail() {
                   <View className="flex mt-2 flex-row items-center space-x-2">
                     <XCircleIcon
                       size={14}
-                      color="#ef4444"
+                      color={ink.danger(true)}
                     />
-                    <Text
+                    <Text tone="danger"
                       fontSize="text-sm"
-                      className="text-red-500"
                     >
                       {otpResendError}
                     </Text>
@@ -278,14 +282,19 @@ export default function VerifyEmail() {
                 <TextInput
                   placeholder="Enter password"
                   placeholderTextColor={
-                    theme === "dark" ? "#FFFFFF80" : "#00000080"
+                    theme === "dark" ? ink.dim(true) : ink.dim(false)
                   }
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
-                  className={`border mt-2 rounded-lg ${theme === "dark"
-                      ? "text-white bg-[#292929] border-[#292929]"
-                      : "text-black bg-white border-[#e6e6e6]"
+                  textContentType="password"
+                  autoComplete="password"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  accessibilityLabel="Password"
+                  className={`border mt-2 rounded-button ${theme === "dark"
+                      ? "text-white bg-surface-raised-dark border-input-line-dark"
+                      : "text-black bg-surface-light border-input-line-light"
                     } p-2 h-12`}
                 />
 
@@ -293,11 +302,10 @@ export default function VerifyEmail() {
                   <View className="flex mt-2 flex-row items-center space-x-2">
                     <XCircleIcon
                       size={14}
-                      color="#ef4444"
+                      color={ink.danger(true)}
                     />
-                    <Text
+                    <Text tone="danger"
                       fontSize="text-sm"
-                      className="text-red-500"
                     >
                       Wrong password. Try again
                     </Text>
@@ -320,10 +328,7 @@ export default function VerifyEmail() {
             }
           >
             {loading ? (
-              <Progress.CircleSnail
-                size={22}
-                color="white"
-              />
+              <ActivityIndicator size="small" color="white" />
             ) : (
               "Continue"
             )}

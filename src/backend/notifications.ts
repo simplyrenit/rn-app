@@ -7,6 +7,7 @@ import { Platform } from "react-native";
 import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
 import axiosInstance from "@/lib/networkUtils";
 import { REGISTER_PUSH_TOKEN_ENDPOINT } from "@/lib/config";
+import { colors } from "@/lib/design-tokens";
 
 // Task name for background fetch
 const MESSAGE_NOTIFICATION_TASK = "MESSAGE_NOTIFICATION_TASK";
@@ -67,7 +68,7 @@ export async function registerForPushNotificationsAsync() {
       name: "Chat Messages",
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#FF231F7C",
+      lightColor: colors.dark.brand,
       sound: "default",
       enableVibrate: true,
       enableLights: true,

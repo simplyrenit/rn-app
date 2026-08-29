@@ -16,6 +16,9 @@ import {
 } from "react-native-heroicons/outline";
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { SvgUri } from "react-native-svg";
+import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
+import { useTheme } from "@/lib/theme";
+import { ink, radius } from "@/lib/design-tokens";
 
 export default function Post() {
   const { saveDetails } = useProductContext();
@@ -23,6 +26,7 @@ export default function Post() {
   const { requestMerchantReview, loading: profileActionLoading } = useProfile();
   const navigation = useTypedNavigation();
   const isDarkMode = theme === "dark";
+  const { color } = useTheme();
   const [requestReviewError, setRequestReviewError] = useState<string | null>(null);
   const merchantNeedsApproval =
     userDetails?.account_type === "merchant" &&
@@ -64,21 +68,18 @@ export default function Post() {
             />
           )
         ) : (
-          <CubeIcon
-            color={isDarkMode ? "white" : "black"}
-            size={24}
-          />
+          <CategoryIcon name={item.title} size={22} color={color.textBody} />
         )}
         <Text
           fontSize="text-base"
-          className={`${theme === "dark" ? "text-white" : "text-black"}`}
+          
         >
-          {item.title}
+          {categoryDisplayName(item.title)}
         </Text>
       </View>
       <ChevronRightIcon
         size={20}
-        color={theme === "dark" ? "white" : "black"}
+        color={ink.text(isDarkMode)}
       />
     </TouchableOpacity>;
   };
@@ -99,17 +100,17 @@ export default function Post() {
     <NonScrollableContainer>
       {authTokens && isAuthenticated ? (
         merchantNeedsApproval ? (
-          <View className="flex-1 px-5 pt-6">
+          <View className="flex-1 px-gutter pt-6">
             <View
-              className={`rounded-2xl border p-4 ${
-                isDarkMode ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6] bg-white"
+              className={`rounded-group border p-4 ${
+                isDarkMode ? "border-line-dark bg-surface-dark" : "border-line-light bg-surface-light"
               }`}
             >
               <Text fontWeight="font-bold" fontSize="text-lg">
                 Merchant approval required
               </Text>
               <Text
-                className={`mt-2 ${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"}`}
+                className={`mt-2 ${isDarkMode ? "text-muted-dark" : "text-muted-light"}`}
               >
                 Your merchant account is {userDetails?.merchant_approval_status}.
                 You can post listings once approval is complete.
@@ -117,7 +118,7 @@ export default function Post() {
               {userDetails?.merchant_approval_status === "rejected" && (
                 <>
                   <Text
-                    className={`mt-2 ${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"}`}
+                    className={`mt-2 ${isDarkMode ? "text-muted-dark" : "text-muted-light"}`}
                   >
                     Your merchant request was rejected. You can request review again.
                   </Text>
@@ -131,7 +132,7 @@ export default function Post() {
                       : "Request review again"}
                   </Button>
                   {requestReviewError && (
-                    <Text className="mt-2 text-red-500">{requestReviewError}</Text>
+                    <Text tone="danger" className="mt-2">{requestReviewError}</Text>
                   )}
                 </>
               )}
@@ -139,26 +140,26 @@ export default function Post() {
           </View>
         ) : (
           <View style={{ flex: 1 }}>
-            <View className="flex-row items-center justify-between">
+            <View>
               {
                 categories.length ?
                   <PostProductHeader
-                    percentage={10}
+                    step={1}
                     heading="Choose a category"
                     showBackArrow={false}
                   /> :
-                  <View className="mt-2 gap-2 align-center" style={{ alignItems: 'center' }}>
+                  <View className="mt-2 space-y-2 align-center" style={{ alignItems: 'center' }}>
                     <Skeleton
                       style={{
                         width: wp(30),
-                        borderRadius: 8,
+                        borderRadius: radius.button,
                         marginTop: 5,
                         height: 10,
                       }}
                     />
                     <Skeleton style={{
                       width: wp(5),
-                      borderRadius: 8,
+                      borderRadius: radius.button,
                       height: 4,
                     }} />
                   </View>
@@ -184,23 +185,23 @@ export default function Post() {
 
                 data={Array.from({ length: 12 })}
                 renderItem={({ item, index }) => (
-                  <View className="p-6 flex-row gap-4">
+                  <View className="p-6 flex-row space-x-4">
                     <Skeleton style={{
                       width: 16,
-                      borderRadius: 8,
+                      borderRadius: radius.button,
                       height: 10,
                     }} />
 
                     <Skeleton style={{
                       flex: 1,
-                      borderRadius: 8,
+                      borderRadius: radius.button,
                       height: 10,
                     }} />
                     <View>
                       <View style={{ height: 12 }} />
                       <Skeleton style={{
                         width: 16,
-                        borderRadius: 8,
+                        borderRadius: radius.button,
                         height: 6,
                         marginLeft: 24,
                         alignSelf: 'flex-end',

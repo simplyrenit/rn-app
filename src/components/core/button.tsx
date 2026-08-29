@@ -1,82 +1,171 @@
-import { useGlobalContext } from "@/context/global-context";
-import { styled } from "nativewind";
+import { MIN_TOUCH_TARGET, radius } from "@/lib/design-tokens";
+import { tapFeedback } from "@/lib/haptics";
+import { useTheme } from "@/lib/theme";
 import React from "react";
 import {
-  TouchableOpacity as RNButton,
-  TouchableOpacityProps,
+  ActivityIndicator,
+  GestureResponderEvent,
+  TouchableOpacity,
+  View,
+  ViewStyle,
 } from "react-native";
 import { Text } from "./text";
 
-const StyledButton = styled(RNButton);
+type ButtonVariant = "primary" | "outline" | "warning" | "ghost";
+type ButtonSize = "default" | "compact";
 
-type ButtonVariant = "primary" | "disabled" | "outline" | "warning" | "ghost";
-
-interface Props extends TouchableOpacityProps {
+interface Props extends React.ComponentProps<typeof TouchableOpacity> {
   className?: string;
   children: React.ReactNode;
   variant?: ButtonVariant;
+  size?: ButtonSize;
+  /**
+   * Shows a spinner beside the label and blocks further presses. Use this for
+   * anything that makes a network call — an un-disabled button with a spinner
+   * on it can still be double-tapped, which is how duplicate chats get created.
+   */
+  loading?: boolean;
+  /** Suppress the light impact fired on press. */
+  haptic?: boolean;
 }
 
+/**
+ * The app's one button.
+ *
+ * Two things it deliberately does differently from the version it replaces:
+ *
+ *  - It only wraps `children` in a `<Text>` when they are text. Previously every
+ *    child was wrapped, so an icon-plus-label button nested a `<View>` inside a
+ *    `<Text>` and needed hand-tuned vertical offsets to sit on the baseline.
+ *  - Its own colours are applied as style, not className, so a caller passing
+ *    `className="bg-surface-light"` overrides the variant instead of producing a class
+ *    string containing two backgrounds and hoping the right one wins.
+ */
 export function Button({
   children,
   className = "",
   style,
   variant = "primary",
+  size = "default",
   disabled,
+  loading = false,
+  haptic = true,
+  onPress,
+  accessibilityLabel,
   ...props
 }: Props) {
-  const { theme } = useGlobalContext();
+  const { color, isDark } = useTheme();
+  const isBlocked = Boolean(disabled) || loading;
 
-  const isDarkMode = theme === "dark";
+  const container: ViewStyle = (() => {
+    const base: ViewStyle = {
+      minHeight: size === "compact" ? 36 : MIN_TOUCH_TARGET,
+      paddingHorizontal: 16,
+      paddingVertical: size === "compact" ? 6 : 11,
+      borderRadius: radius.button,
+      alignItems: "center",
+      justifyContent: "center",
+      flexDirection: "row",
+    };
 
-  // Container and label styling are kept apart on purpose. They used to share
-  // one class string, so the label inherited the container's background and an
-  // outline button in light mode rendered white text on a white background.
-  const getVariantStyles = (): { container: string; label: string } => {
-    if (disabled) {
-      // A muted fill rather than the page background, so a disabled button
-      // still reads as a button instead of loose text.
-      return isDarkMode
-        ? { container: "bg-[#292929]", label: "text-[#FFFFFF80]" }
-        : { container: "bg-[#E6E6E6]", label: "text-[#00000080]" };
+    // One disabled treatment for the whole app: a neutral fill, never the brand
+    // held at reduced opacity.
+    //
+    // The previous version composited the brand at 40% and left the label pure
+    // white, which measured 1.82:1 — and, worse for the customer, still read as
+    // a live button, so people tapped it and nothing happened. It also meant a
+    // disabled button on a transparent parent let the page show straight
+    // through it; that is what made the date picker's Confirm unreadable.
+    if (isBlocked) {
+      return {
+        ...base,
+        backgroundColor: color.surfaceRaised,
+        borderWidth: 1,
+        borderColor: color.line,
+      };
     }
 
     switch (variant) {
-      case "primary":
-        return { container: "bg-brand-blue", label: "text-white" };
       case "outline":
-        return isDarkMode
-          ? {
-              container: "bg-[#0F0F0F] border-2 border-[#292929]",
-              label: "text-white",
-            }
-          : {
-              container: "border-2 border-[#e6e6e6] bg-white",
-              label: "text-[#292929]",
-            };
+        return {
+          ...base,
+          backgroundColor: color.surface,
+          borderWidth: 1,
+          borderColor: color.inputLine,
+        };
       case "warning":
-        return { container: "bg-red-500", label: "text-white" };
+        return { ...base, backgroundColor: color.danger };
       case "ghost":
-        return isDarkMode
-          ? { container: "bg-transparent", label: "text-white" }
-          : { container: "bg-transparent", label: "text-black" };
+        return { ...base, backgroundColor: "transparent" };
+      case "primary":
       default:
-        return { container: "bg-brand-blue", label: "text-white" };
+        return { ...base, backgroundColor: color.brand };
     }
+  })();
+
+  // 4.53:1 on the light disabled fill, 4.12:1 on the dark one — and at 16pt
+  // bold both clear the 3:1 large-text threshold comfortably.
+  const labelColor = isBlocked
+    ? color.textDim
+    : variant === "primary" || variant === "warning"
+    ? "#FFFFFF"
+    : color.text;
+
+  const handlePress = (event: GestureResponderEvent) => {
+    if (isBlocked) return;
+    if (haptic) tapFeedback();
+    onPress?.(event);
   };
 
-  const { container, label } = getVariantStyles();
+  const isTextChild =
+    typeof children === "string" || typeof children === "number";
 
   return (
-    <StyledButton
-      className={`p-3 rounded-lg ${container} ${className}`}
-      style={style}
-      disabled={disabled}
+    <TouchableOpacity
+      className={className}
+      style={[container, style]}
+      disabled={isBlocked}
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isBlocked, busy: loading }}
+      accessibilityLabel={
+        accessibilityLabel ?? (isTextChild ? String(children) : undefined)
+      }
+      activeOpacity={0.85}
       {...props}
     >
-      <Text fontWeight="font-bold" className={`text-center ${label}`}>
-        {children}
-      </Text>
-    </StyledButton>
+      {loading && (
+        <ActivityIndicator
+          size="small"
+          color={labelColor}
+          style={{ marginRight: 8 }}
+        />
+      )}
+      {isTextChild ? (
+        <Text
+          fontWeight="font-bold"
+          fontSize="text-md"
+          style={{ color: labelColor, textAlign: "center" }}
+        >
+          {children}
+        </Text>
+      ) : (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {children}
+        </View>
+      )}
+    </TouchableOpacity>
   );
+}
+
+/** Colour a caller should use for content it renders inside a Button. */
+export function useButtonLabelColor(variant: ButtonVariant = "primary") {
+  const { color } = useTheme();
+  return variant === "primary" || variant === "warning" ? "#FFFFFF" : color.text;
 }

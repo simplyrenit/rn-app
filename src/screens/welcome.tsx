@@ -8,6 +8,7 @@ import { Dimensions, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Carousel from "pinar";
 import { CarouselItem } from "../lib/types";
+import { ink } from "@/lib/design-tokens";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -63,10 +64,10 @@ export default function OnboardingScreen(): JSX.Element {
             renderPrev={() => <></>}
             renderNext={() => <></>}
             renderDot={() => (
-              <View className="w-2 h-2 mt-5 bg-gray-300 rounded-lg mx-0.5 -translate-y-8" />
+              <View className="w-2 h-2 mt-5 rounded-full mx-0.5 -translate-y-8" style={{ backgroundColor: ink.line(isDarkMode) }} />
             )}
             renderActiveDot={() => (
-              <View className="w-2 h-2 mt-5 bg-brand-blue rounded-lg mx-0.5 -translate-y-8" />
+              <View className="w-2 h-2 mt-5 bg-brand rounded-full mx-0.5 -translate-y-8" />
             )}
             onIndexChanged={(params) => setCurrentIndex(params.index)}
           >
@@ -100,8 +101,8 @@ export default function OnboardingScreen(): JSX.Element {
         </StyledView>
           <View className="flex-row justify-center items-center mt-2">
             {carouselData.map((data, index) => (
-              index === currentIndex ? <View key={index} className="w-2 h-2 mt-5 bg-brand-blue rounded-lg mx-0.5 -translate-y-8" />
-                : <View key={index} className="w-2 h-2 mt-5 bg-gray-300 rounded-lg mx-0.5 -translate-y-8" />
+              index === currentIndex ? <View key={index} className="w-2 h-2 mt-5 bg-brand rounded-full mx-0.5 -translate-y-8" />
+                : <View key={index} className="w-2 h-2 mt-5 rounded-full mx-0.5 -translate-y-8" style={{ backgroundColor: ink.line(isDarkMode) }} />
             ))}
           </View>
 

@@ -1,15 +1,15 @@
-import React, { useState } from "react";
-import { TouchableOpacity, View, Image, Modal, Platform } from "react-native";
-import { Text } from "@/components/core";
-import { styled } from "nativewind";
-import { Swipeable } from "react-native-gesture-handler";
+import { Avatar, Button, Text } from "@/components/core";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import { formatListTimestamp } from "@/lib/format";
+import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
-import { useGlobalContext } from "@/context/global-context";
+import React, { useState } from "react";
+import { Modal, TouchableOpacity, View } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import {
   DocumentIcon,
-  TrashIcon,
   PhotoIcon,
-  UserCircleIcon,
+  TrashIcon,
 } from "react-native-heroicons/outline";
 
 interface Props {
@@ -23,8 +23,6 @@ interface Props {
   onDeleteChat: (id: string) => void;
 }
 
-const StyledView = styled(View);
-
 export function ChatCard({
   id,
   name,
@@ -37,197 +35,193 @@ export function ChatCard({
 }: Props) {
   const [modalVisible, setModalVisible] = useState(false);
   const router = useTypedNavigation();
-  const { theme } = useGlobalContext();
-  const isDark = theme === "dark";
+  const { color } = useTheme();
 
-  const onPress = () => {
-    router.navigate("ChatDetails", { id });
-  };
+  const unread = !isRead && unreadCount > 0;
+  // A conversation with no name used to collapse to its grey preview line with
+  // no bold title above it, so the row simply lost its first line. "Renit
+  // member" read as a placeholder leaking into the product; this says what is
+  // actually true.
+  const displayName = name?.trim() || "Unnamed contact";
 
   const renderRightActions = () => (
     <TouchableOpacity
-      className="bg-red-500 justify-center items-center w-24 rounded-lg ml-4"
+      accessibilityRole="button"
+      accessibilityLabel={`Delete conversation with ${displayName}`}
+      style={{
+        backgroundColor: color.danger,
+        justifyContent: "center",
+        alignItems: "center",
+        width: 88,
+        borderRadius: radius.card,
+        marginLeft: 12,
+      }}
       onPress={() => setModalVisible(true)}
     >
-      <TrashIcon
-        size={24}
-        color={"white"}
-      />
+      <TrashIcon size={22} color="#FFFFFF" />
     </TouchableOpacity>
   );
 
-  const handleDelete = () => {
-    onDeleteChat(id);
-    setModalVisible(false);
-  };
-
-  let parsedMessage;
+  let parsedMessage: any;
   try {
     parsedMessage = JSON.parse(lastMessage);
-  } catch (e) {
+  } catch {
     parsedMessage = lastMessage;
   }
+
+  const isAttachment =
+    typeof parsedMessage === "object" &&
+    (parsedMessage?.type === "image" || parsedMessage?.type === "file");
+
+  const preview = () => {
+    if (!isAttachment) return lastMessage;
+    return parsedMessage.type === "image" ? "Photo" : "File";
+  };
 
   return (
     <>
       <Swipeable renderRightActions={renderRightActions}>
         <TouchableOpacity
-          onPress={onPress}
-          className={`flex-row items-center justify-between py-3 ${
-            isDark ? "bg-black" : "bg-white"
-          } rounded-lg`}
+          onPress={() => router.navigate("ChatDetails", { id })}
+          accessibilityRole="button"
+          accessibilityLabel={
+            unread
+              ? `${displayName}, ${unreadCount} unread. ${preview()}`
+              : `${displayName}. ${preview()}`
+          }
+          activeOpacity={0.7}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+            paddingVertical: 12,
+            paddingHorizontal: SCREEN_GUTTER,
+            minHeight: 72,
+            backgroundColor: color.canvas,
+          }}
         >
-          {profilePic ? (
-            <Image
-              source={{ uri: profilePic }}
-              className="h-12 w-12 rounded-full"
-              resizeMode="cover"
-            />
-          ) : (
-            <UserCircleIcon
-              size={48}
-              color={"#635BE8"}
-            />
-          )}
+          <Avatar uri={profilePic} name={displayName} size={48} />
 
-          <StyledView className="flex-1 ml-3">
+          <View style={{ flex: 1, gap: 2 }}>
             <Text
-              fontSize="text-base"
-              fontWeight="font-bold"
+              fontSize="text-md"
+              // Bold until read. "Has the owner replied?" is the question this
+              // list exists to answer, and nothing on the row answered it.
+              fontWeight={unread ? "font-bold" : "font-semibold"}
+              numberOfLines={1}
             >
-              {name}
+              {displayName}
             </Text>
-            {typeof parsedMessage === "object" &&
-            parsedMessage.type === "image" ? (
-              <View className="flex-row items-center mt-1">
-                <PhotoIcon
-                  size={16}
-                  color={isDark ? "#ffffff80" : "#00000080"}
-                />
-                <Text
-                  fontSize="text-sm"
-                  className={`ml-1 ${
-                    isDark ? "text-[#ffffff80]" : "text-[#00000080]"
-                  }`}
-                  numberOfLines={1}
-                >
-                  Image
-                </Text>
-              </View>
-            ) : typeof parsedMessage === "object" &&
-              parsedMessage.type === "file" ? (
-              <View className="flex-row items-center mt-1">
-                <DocumentIcon
-                  size={16}
-                  color={isDark ? "#ffffff80" : "#00000080"}
-                />
-                <Text
-                  fontSize="text-sm"
-                  className={`ml-1 ${
-                    isDark ? "text-[#ffffff80]" : "text-[#00000080]"
-                  }`}
-                  numberOfLines={1}
-                >
-                  File
-                </Text>
-              </View>
-            ) : (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              {isAttachment ? (
+                parsedMessage.type === "image" ? (
+                  <PhotoIcon size={14} color={color.textBody} />
+                ) : (
+                  <DocumentIcon size={14} color={color.textBody} />
+                )
+              ) : null}
               <Text
                 fontSize="text-sm"
-                className={`mt-1 ${
-                  isDark ? "text-[#ffffff80]" : "text-[#00000080]"
-                }`}
+                tone={unread ? "hi" : "body"}
                 numberOfLines={1}
+                style={{ flex: 1 }}
               >
-                {lastMessage}
+                {preview()}
               </Text>
-            )}
-          </StyledView>
+            </View>
+          </View>
 
-          <StyledView className="items-end mr-2">
-            <Text
-              fontSize="text-xs"
-              className="text-gray-400"
-            >
-              {(() => {
-                const messageDate = new Date(lastMessageTime);
-                const now = new Date();
-                const diffInHours =
-                  (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
-
-                if (diffInHours > 24) {
-                  return `${messageDate.toLocaleDateString()} ${messageDate.toLocaleTimeString(
-                    [],
-                    { hour: "2-digit", minute: "2-digit" }
-                  )}`;
-                } else {
-                  return messageDate.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-                }
-              })()}
+          {/* Aligned to the name's baseline. Centring it between the two lines
+              made it line up with neither. */}
+          <View
+            style={{
+              alignItems: "flex-end",
+              alignSelf: "flex-start",
+              gap: 6,
+              minWidth: 56,
+              paddingTop: 2,
+            }}
+          >
+            {/* Was the full 8/14/2026 12:54 AM on every row — verbose, US-ordered
+                and ~280px of row width. iOS convention is relative and smart. */}
+            <Text fontSize="text-xs" tone={unread ? "brand" : "dim"}>
+              {formatListTimestamp(lastMessageTime)}
             </Text>
-            {!isRead && unreadCount > 0 ? (
-              <View className="bg-[#635BE8] rounded-full h-6 w-6 flex items-center justify-center mt-1">
+            {unread ? (
+              <View
+                style={{
+                  minWidth: 20,
+                  height: 20,
+                  paddingHorizontal: 6,
+                  borderRadius: radius.full,
+                  backgroundColor: color.brand,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <Text
-                  fontSize="text-sm"
+                  fontSize="text-xs"
                   fontWeight="font-bold"
-                  className="text-white"
+                  style={{ color: "#FFFFFF" }}
                 >
-                  {unreadCount}
+                  {unreadCount > 99 ? "99+" : unreadCount}
                 </Text>
               </View>
             ) : null}
-          </StyledView>
+          </View>
         </TouchableOpacity>
       </Swipeable>
 
       <Modal
-        transparent={true}
+        transparent
         visible={modalVisible}
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View className="flex-1 justify-center items-center bg-black/70 bg-opacity-50">
-          <View className="bg-white rounded-lg p-6 w-4/5 items-center">
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
-              className="mb-4 text-black"
-            >
-              Delete Chat?
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: SCREEN_GUTTER,
+            backgroundColor: color.scrim,
+          }}
+        >
+          <View
+            style={{
+              width: "100%",
+              maxWidth: 340,
+              padding: 22,
+              gap: 8,
+              borderRadius: radius.group,
+              backgroundColor: color.surface,
+              borderWidth: 1,
+              borderColor: color.line,
+            }}
+          >
+            <Text fontSize="text-lg" fontWeight="font-bold">
+              Delete this conversation?
             </Text>
-            <Text
-              fontSize="text-sm"
-              className="text-gray-500 text-center mb-6"
-            >
-              Are you sure you want to delete this chat?
+            <Text fontSize="text-md" tone="body">
+              It will be removed from your list. The other person keeps their copy.
             </Text>
-            <View className="flex-row w-full justify-between">
-              <TouchableOpacity
-                className="bg-gray-200 py-2 px-4 rounded-lg flex-1 mr-2 items-center"
-                onPress={() => setModalVisible(false)}
-              >
-                <Text
-                  fontSize="text-base"
-                  className="text-black"
-                >
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
+              <View style={{ flex: 1 }}>
+                <Button variant="outline" onPress={() => setModalVisible(false)}>
                   Cancel
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="bg-red-500 py-2 px-4 rounded-lg flex-1 ml-2 items-center"
-                onPress={handleDelete}
-              >
-                <Text
-                  fontSize="text-base"
-                  fontWeight="font-bold"
-                  className="text-white"
+                </Button>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Button
+                  variant="warning"
+                  onPress={() => {
+                    onDeleteChat(id);
+                    setModalVisible(false);
+                  }}
                 >
                   Delete
-                </Text>
-              </TouchableOpacity>
+                </Button>
+              </View>
             </View>
           </View>
         </View>

@@ -1,176 +1,162 @@
-import { useGlobalContext } from "@/context/global-context";
+import { radius } from "@/lib/design-tokens";
+import { formatCurrency } from "@/lib/format";
+import { useTheme } from "@/lib/theme";
 import { ItemCard, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
-import {
-  InformationCircleIcon,
-  PencilSquareIcon,
-} from "react-native-heroicons/outline";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { InformationCircleIcon } from "react-native-heroicons/outline";
 import { Text } from "./text";
 
-const truncateText = (text: string, maxLength: number) => {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 3) + "...";
-};
-
+/**
+ * A listing on the owner's own shelf.
+ *
+ * It was a third product-card layout: hardcoded `wp("41.5%")` widths that
+ * ignored the column the grid handed it — so row one's cards started 32pt from
+ * the edge and row two's started 35pt, with different image widths per row — a
+ * "Pending approval" pill centred over the artwork with a 20pt bold white
+ * label louder than the product title, a raw `₹{price.toFixed(0)}` bypassing
+ * the money formatter, and its own full-width 60pt Edit button, so three
+ * listings meant 180pt of buttons repeating the same word.
+ *
+ * It now fills the column it is given, matches Card's proportions exactly, and
+ * opens the listing on tap — where Edit already lives in the footer.
+ */
 export function MyProductCard({
   image,
   title,
   location,
   price,
   id,
-  isDarkMode,
   moderationLabels = [],
   adminApproved,
-  width, alignItems
+  width,
+  alignItems,
 }: ItemCard) {
   const router = useTypedNavigation();
-  const { theme } = useGlobalContext();
+  const { color } = useTheme();
 
   const isModerated = moderationLabels?.length > 0;
   // A listing is pending until an admin approves it. A flagged listing already
   // shows its own overlay, so the pending badge would only duplicate it.
   const isPendingApproval = !isModerated && adminApproved !== true;
 
+  const status = isModerated
+    ? "Flagged"
+    : isPendingApproval
+    ? "Pending approval"
+    : null;
+
+  const imageStyle = {
+    width: "100%",
+    aspectRatio: 41.5 / 44.5,
+    borderRadius: radius.card,
+  } as const;
+
   return (
-    <View className="py-2" style={{ width, alignItems }}>
-      <TouchableOpacity
-        onPress={() => router.navigate("ProductDetail", { id })}
-        className="justify-center"
-        style={{ marginBottom: -8 }}
-      >
-        <View className="rounded-xl overflow-hidden mb-4 ">
+    <TouchableOpacity
+      id={id}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}${status ? `, ${status}` : ""}, ${formatCurrency(
+        price
+      )} per day. Opens the listing.`}
+      activeOpacity={0.85}
+      onPress={() => router.navigate("ProductDetail", { id })}
+      style={{ width: width ?? "100%", alignItems }}
+    >
+      <View style={{ width: "100%" }}>
+        <View style={{ position: "relative" }}>
+          {image ? (
+            <Image
+              style={imageStyle}
+              source={{ uri: image }}
+              contentFit="cover"
+              transition={150}
+            />
+          ) : (
+            <View style={[imageStyle, { backgroundColor: color.skeleton }]} />
+          )}
+
           <View
-            className="item-center justify-center"
+            pointerEvents="none"
             style={{
-              width: wp("41.5%") > 163 ? 163 : wp("41.5%"),
+              ...imageStyle,
+              position: "absolute",
+              borderWidth: 1,
+              borderColor: color.line,
             }}
-          >
-            {image ? (
-              <Image
-                style={{
-                  width: wp("41.5%") > 163 ? 163 : wp("41.5%"),
-                  height: wp("44.5%"),
-                  borderRadius: 8,
-                }}
-                source={{ uri: image }}
-                contentFit="cover"
-              />
-            ) : (
-              <View
-                style={{
-                  width: wp("41.5%") > 163 ? 163 : wp("41.5%"),
-                  height: wp("44.5%"),
-                  borderRadius: 8,
-                  backgroundColor: "#f0f0f0",
-                }}
-              />
-            )}
-            {isModerated && (
-              <View
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  right: 0,
-                  width: wp("41.5%") > 163 ? 163 : wp("41.5%"),
-                  height: wp("44.5%"),
-                  backgroundColor: "rgba(0, 0, 0, 0.7)",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderRadius: 8,
-                }}
-              >
-                <InformationCircleIcon
-                  size={24}
-                  color="red"
-                />
-                <Text
-                  fontWeight="font-bold"
-                  className="text-red-500 mt-3"
-                >
-                  Product Flagged
-                </Text>
-              </View>
-            )}
-            {isPendingApproval && (
-              <View
-                style={{
-                  position: "absolute",
-                  top: 8,
-                  left: 8,
-                  backgroundColor: "rgba(0, 0, 0, 0.75)",
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 6,
-                }}
-              >
-                <Text fontSize="text-xs" fontWeight="font-bold" className="text-white">
-                  Pending approval
-                </Text>
-              </View>
-            )}
-          </View>
-          <View className="mt-2 w-full" style={{
-            width: wp("41.5%") > 163 ? 163 : wp("41.5%"),
-          }}>
-            <Text
-              fontWeight="font-bold"
-              className="mb-1"
-              numberOfLines={1}
+          />
+
+          {isModerated && (
+            <View
+              style={{
+                ...imageStyle,
+                position: "absolute",
+                backgroundColor: "rgba(10,10,15,0.72)",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 6,
+                paddingHorizontal: 8,
+              }}
             >
-              {title}
-            </Text>
-            <Text
-              numberOfLines={1}
-              className={`mb-0 ${isDarkMode ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
-                }`}
-            >
-              {location}
-            </Text>
-            <View className="flex flex-row items-center mt-1">
+              <InformationCircleIcon size={22} color={color.danger} />
               <Text
-                fontSize="text-base"
-                fontWeight="font-bold"
+                fontSize="text-xs"
+                fontWeight="font-semibold"
+                style={{ color: color.danger, textAlign: "center" }}
               >
-                ₹{Number(price).toFixed(0)}
-              </Text>
-              <Text
-                className={`ml-1 ${isDarkMode ? "text-[#FFFFFF80]" : "text-[#00000080]"
-                  }`}
-              >
-                per day
+                Flagged for review
               </Text>
             </View>
+          )}
+
+          {/* Anchored to a corner with a consistent inset, and quieter than the
+              title it sits above. */}
+          {isPendingApproval && (
+            <View
+              style={{
+                position: "absolute",
+                top: 6,
+                left: 6,
+                backgroundColor: "rgba(10,10,15,0.72)",
+                paddingHorizontal: 7,
+                paddingVertical: 3,
+                borderRadius: radius.full,
+              }}
+            >
+              <Text
+                fontSize="text-xs"
+                fontWeight="font-medium"
+                style={{ color: "#FFFFFF" }}
+              >
+                Pending
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={{ marginTop: 8, gap: 2 }}>
+          <Text
+            numberOfLines={2}
+            ellipsizeMode="tail"
+            fontSize="text-md"
+            fontWeight="font-semibold"
+          >
+            {title}
+          </Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="body">
+            {location}
+          </Text>
+          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+            <Text fontSize="text-md" fontWeight="font-bold">
+              {formatCurrency(price)}
+            </Text>
+            <Text fontSize="text-sm" tone="body">
+              per day
+            </Text>
           </View>
         </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        id={id}
-        onPress={() => router.navigate("editProduct", { id: id })}
-        style={{
-          width: wp("41.5%") > 163 ? 163 : wp("41.5%"),
-        }}
-        className={`${theme === "dark"
-          ? "bg-[#1A1A1A] border-[#292929]"
-          : "bg-white border-[#e6e6e6]"
-          } flex-row justify-center items-center border rounded-2xl py-3 px-6`}
-      >
-        <View className="mr-2">
-          <PencilSquareIcon
-            size={22}
-            color={isDarkMode ? "white" : "black"}
-          />
-        </View>
-        <Text
-          fontSize="text-sm"
-          fontWeight="font-bold"
-        >
-          Edit
-        </Text>
-      </TouchableOpacity>
-    </View>
+      </View>
+    </TouchableOpacity>
   );
 }

@@ -2,6 +2,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Dimensions,
   Image,
   LayoutChangeEvent,
@@ -15,9 +16,11 @@ import {
   ArrowLeftIcon,
   EllipsisHorizontalCircleIcon,
   ExclamationTriangleIcon,
+  ShoppingBagIcon,
   UserCircleIcon,
 } from "react-native-heroicons/outline";
 import { Text } from "../core";
+import { MIN_TOUCH_TARGET, colors, ink } from "@/lib/design-tokens";
 
 interface ChatHeaderProps {
   name: string;
@@ -25,6 +28,13 @@ interface ChatHeaderProps {
   onReportPress: () => void;
   isBlocked: boolean;
   id: string;
+  /**
+   * Opens the listing this conversation is about. A marketplace thread's
+   * overflow menu held exactly one item — "Block & Report" — which is a button
+   * wearing a menu's clothes, and it was missing the thing people actually
+   * come to the menu for.
+   */
+  onViewListing?: () => void;
 }
 
 export function ChatHeader({
@@ -32,6 +42,7 @@ export function ChatHeader({
   profilePic,
   id,
   onReportPress,
+  onViewListing,
   isBlocked,
 }: ChatHeaderProps) {
   const navigation = useTypedNavigation();
@@ -65,7 +76,7 @@ export function ChatHeader({
 
   return (
     <View
-      className={`flex-row items-center justify-between px-4 py-2 border-b ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+      className={`flex-row items-center justify-between px-gutter py-2 border-b ${isDark ? "border-line-dark" : "border-line-light"
         }`}
       onLayout={handleLayout}
     >
@@ -88,7 +99,7 @@ export function ChatHeader({
         >
           <ArrowLeftIcon
             size={24}
-            color={isDark ? "white" : "black"}
+            color={ink.text(isDark)}
           />
         </TouchableOpacity>
 
@@ -104,7 +115,7 @@ export function ChatHeader({
           ) : (
             <UserCircleIcon
               size={40}
-              color={"#635BE8"}
+              color={colors.dark.brand}
               style={{ marginLeft: 8 }}
             />
           )}
@@ -122,10 +133,13 @@ export function ChatHeader({
         ref={ellipsisRef}
         disabled={isBlocked}
         onPress={() => setMenuVisible(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Conversation options"
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <EllipsisHorizontalCircleIcon
           size={24}
-          color={isDark ? "white" : "black"}
+          color={ink.text(isDark)}
         />
       </TouchableOpacity>
 
@@ -135,8 +149,11 @@ export function ChatHeader({
         visible={menuVisible}
         onRequestClose={() => setMenuVisible(false)}
       >
+        {/* A scrim, so the menu reads as modal and the dismissal target is
+            visible rather than being invisible dead space. */}
         <Pressable
           className="flex-1"
+          style={{ backgroundColor: ink.scrim(isDark) }}
           onPress={() => setMenuVisible(false)}
         >
           <View
@@ -146,26 +163,64 @@ export function ChatHeader({
               { top: modalPosition.top, right: modalPosition.right },
             ]}
             className={`border ${isDark
-              ? "bg-[#0F0F0F] border-[#292929]"
-              : "bg-white border-[#e6e6e6]"
-              } rounded-lg p-2`}
+              ? "bg-surface-dark border-line-dark"
+              : "bg-surface-light border-line-light"
+              } rounded-button p-2`}
           >
+            {onViewListing ? (
+              <>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="View listing"
+                  onPress={() => {
+                    setMenuVisible(false);
+                    onViewListing();
+                  }}
+                  className="px-gutter py-2 items-center flex-row"
+                  style={{ minHeight: MIN_TOUCH_TARGET }}
+                >
+                  <ShoppingBagIcon color={ink.body(isDark)} size={20} />
+                  <Text fontSize="text-md" className="ml-3">
+                    View listing
+                  </Text>
+                </TouchableOpacity>
+
+                <View
+                  style={{
+                    height: StyleSheet.hairlineWidth,
+                    backgroundColor: ink.line(isDark),
+                    marginVertical: 2,
+                  }}
+                />
+              </>
+            ) : null}
+
+            {/* Blocking and reporting are separate decisions with separate
+                consequences, and neither was confirmed — one tap did both. */}
             <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Block and report this person"
               onPress={() => {
                 setMenuVisible(false);
-                onReportPress();
+                Alert.alert(
+                  "Block and report?",
+                  "They will not be able to message you, and we will review the conversation.",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Block and report",
+                      style: "destructive",
+                      onPress: onReportPress,
+                    },
+                  ]
+                );
               }}
-              className="px-4 py-2 items-center flex-row"
+              className="px-gutter py-2 items-center flex-row"
+              style={{ minHeight: MIN_TOUCH_TARGET }}
             >
-              <ExclamationTriangleIcon
-                color="#ef4444"
-                size={24}
-              />
-              <Text
-                fontWeight="font-bold"
-                className="text-red-500 ml-2 -translate-y-0.5"
-              >
-                Block & Report
+              <ExclamationTriangleIcon color={ink.danger(isDark)} size={20} />
+              <Text tone="danger" fontSize="text-md" className="ml-3">
+                Block &amp; report
               </Text>
             </TouchableOpacity>
           </View>
@@ -177,7 +232,7 @@ export function ChatHeader({
 
 const styles = StyleSheet.create({
   shadow: {
-    shadowColor: "#808080",
+    shadowColor: ink.line(false),
     shadowOffset: {
       width: 0,
       height: 4,

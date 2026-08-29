@@ -31,7 +31,8 @@ import React, {
   useState,
 } from "react";
 import { useColorScheme } from "react-native";
-import Toast from "react-native-toast-message";
+
+import { toast } from "@/lib/toast";
 
 interface GlobalContextType {
   authTokens: AuthTokens | null;
@@ -117,12 +118,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   // authenticated request failed, with no way back to the sign-in screen.
   useEffect(() => {
     setSessionExpiredHandler(() => {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Your session expired. Please sign in again.",
-        text2: "error",
-      });
+      toast.error("Your session expired. Please sign in again.");
       void logout();
     });
 

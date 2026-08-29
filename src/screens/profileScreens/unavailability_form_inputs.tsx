@@ -8,7 +8,7 @@ import {
   useTypedNavigation,
 } from "@/lib/types";
 import React, { useCallback, useEffect, useState } from "react";
-import { TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, TextInput, TouchableOpacity, View } from "react-native";
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -24,8 +24,9 @@ import { useAuthContext } from "@/context/auth-context";
 import { useRoute } from "@react-navigation/native";
 import moment from "moment-timezone";
 import { useProfile } from "@/backend/profile";
-import * as Progress from "react-native-progress";
-import Toast from "react-native-toast-message";
+
+import { toast } from "@/lib/toast";
+import { ink } from "@/lib/design-tokens";
 
 const { height } = Dimensions.get("window");
 interface UnavailabilityProps {}
@@ -154,45 +155,25 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
 
     if (status === 201) {
       router.navigate("profile");
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Your form has been submitted",
-        text2: "success",
-        visibilityTime: 4000,
-        autoHide: true,
-        onPress: () => {
-          Toast.hide();
-        },
-      });
+      toast.success("Your form has been submitted");
     } else {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "There was an error submitting your form",
-        text2: "error",
-        visibilityTime: 4000,
-        autoHide: true,
-        onPress: () => {
-          Toast.hide();
-        },
-      });
+      toast.error("There was an error submitting your form");
     }
   };
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
       <View
-        className="flex-row items-center justify-between px-5 "
+        className="flex-row items-center justify-between px-gutter "
         style={{ paddingVertical: wp("5%") }}
       >
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
           <ArrowLeftIcon
             size={26}
-            color={isDarkMode ? "#FFF" : "#000"}
+            color={ink.text(isDarkMode)}
           />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
@@ -200,57 +181,51 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
             fontSize="text-xl"
             fontWeight="font-bold"
           >
-            Unavailability Form
+            Request an item
           </Text>
         </View>
 
         <View className="w-[10%]"></View>
       </View>
 
-      <KeyboardAwareScrollView className="px-5 py-5 flex-1">
-        <View className="space-y-2 mb-10">
-          <Text
-            fontSize="text-md"
-            fontWeight="font-bold"
-          >
+      <KeyboardAwareScrollView className="px-gutter py-5 flex-1">
+        <View className="space-y-1 mb-5">
+          <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
             What are you looking for? (Product Name)
           </Text>
           <View className="pt-3">
             <TextInput
-              placeholder={`"Product Name"`}
+              placeholder="e.g. Pressure washer"
               value={formData.productName}
-              placeholderTextColor={isDarkMode ? "#ffffff80" : "#00000080"}
+              placeholderTextColor={ink.dim(isDarkMode)}
               onChangeText={(text) =>
                 setFormData({ ...formData, productName: text })
               }
-              className={`rounded-[12px] h-12 border p-3  ${
+              className={`rounded-input h-11 border px-3  ${
                 isDarkMode
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
+                  ? "border-input-line-dark text-white"
+                  : "border-input-line-light text-black"
               }`}
             />
           </View>
         </View>
 
-        <View className="space-y-2 mb-10">
-          <Text
-            fontSize="text-md"
-            fontWeight="font-bold"
-          >
+        <View className="space-y-1 mb-5">
+          <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
             Quantity or Number of Units required
           </Text>
           <View className="pt-3">
             <TextInput
-              placeholder={`"No. of units"`}
+              placeholder="e.g. 2"
               value={formData.noOfUnits}
-              placeholderTextColor={isDarkMode ? "#ffffff80" : "#00000080"}
+              placeholderTextColor={ink.dim(isDarkMode)}
               onChangeText={(text) =>
                 setFormData({ ...formData, noOfUnits: text })
               }
-              className={`rounded-[12px] h-12 border p-3  ${
+              className={`rounded-input h-11 border px-3  ${
                 isDarkMode
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
+                  ? "border-input-line-dark text-white"
+                  : "border-input-line-light text-black"
               }`}
             />
           </View>
@@ -266,32 +241,32 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
           <View className="pt-4">
             <TouchableOpacity
               onPress={() => setOpen(true)}
-              className={`h-[48px] rounded-[12px] w-full ${
+              className={`h-[48px] rounded-card w-full ${
                 isDarkMode
-                  ? "bg-[#0F0F0F] border-[#292929]"
-                  : "bg-white border-[#e6e6e6]"
+                  ? "bg-surface-dark border-input-line-dark"
+                  : "bg-surface-light border-input-line-light"
               } border px-2`}
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
                 <View className="flex flex-row items-center space-x-4">
                   <CalendarIcon
-                    color={isDarkMode ? "white" : "black"}
+                    color={ink.text(isDarkMode)}
                     size={24}
                   />
                   {range.startDate && range.endDate ? (
-                    <Text style={{ fontSize: 15 }}>
+                    <Text fontSize="text-md">
                       {formatDate(range.startDate)} -{" "}
                       {formatDate(range.endDate)}
                     </Text>
                   ) : (
-                    <Text style={{ color: "gray", fontSize: 15 }}>
+                    <Text fontSize="text-md" tone="dim">
                       Select Dates
                     </Text>
                   )}
                 </View>
                 {range.endDate && (
                   <PencilSquareIcon
-                    color={isDarkMode ? "white" : "black"}
+                    color={ink.text(isDarkMode)}
                     size={24}
                   />
                 )}
@@ -299,29 +274,26 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
             </TouchableOpacity>
           </View>
         </View>
-        <View className="space-y-2 mb-10">
-          <Text
-            fontSize="text-md"
-            fontWeight="font-bold"
-          >
+        <View className="space-y-1 mb-5">
+          <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
             Product location
           </Text>
-          <Text className={`${isDarkMode ? "text-white/70" : "text-black/70"}`}>
+          <Text className={`${isDarkMode ? "text-muted-dark" : "text-muted-light"}`}>
             Mention the product's location
           </Text>
 
           <TouchableOpacity
-            className={`h-[50px] rounded-[12px] w-full ${
+            className={`h-[50px] rounded-card w-full ${
               isDarkMode
-                ? "bg-[#000] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
+                ? "bg-canvas-dark border-input-line-dark"
+                : "bg-surface-light border-input-line-light"
             } border px-2`}
             onPress={handleOpenBottomSheet}
           >
             <View className="flex flex-row h-full w-full items-center justify-between">
               <View className="flex flex-row items-center space-x-2 ">
                 <MapPinIcon
-                  color={isDarkMode ? "white" : "black"}
+                  color={ink.text(isDarkMode)}
                   size={24}
                 />
                 <View className="w-3/4">
@@ -337,7 +309,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
                     <Text
                       fontSize="text-sm"
                       className={`${
-                        isDarkMode ? "text-white/70" : "text-black/70"
+                        isDarkMode ? "text-muted-dark" : "text-muted-light"
                       }`}
                     >
                       Select a location
@@ -347,7 +319,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
               </View>
               {selectedLocationName && (
                 <PencilSquareIcon
-                  color={isDarkMode ? "white" : "black"}
+                  color={ink.text(isDarkMode)}
                   size={24}
                 />
               )}
@@ -355,26 +327,23 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
           </TouchableOpacity>
         </View>
 
-        <View className="space-y-2 mb-10">
-          <Text
-            fontSize="text-md"
-            fontWeight="font-bold"
-          >
+        <View className="space-y-1 mb-5">
+          <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
             Product Address
           </Text>
-          <Text className={`${isDarkMode ? "text-white/70" : "text-black/70"}`}>
+          <Text className={`${isDarkMode ? "text-muted-dark" : "text-muted-light"}`}>
             Add complete address where the product is located
           </Text>
           <TextInput
             placeholder="Enter address..."
             value={address}
             onChangeText={setAddress}
-            placeholderTextColor={isDarkMode ? "#ffffff80" : "#00000080"}
+            placeholderTextColor={ink.dim(isDarkMode)}
             multiline
-            className={`rounded-[12px] border h-32 p-3 ${
+            className={`rounded-card border h-32 p-3 ${
               isDarkMode
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
+                ? "border-input-line-dark text-white"
+                : "border-input-line-light text-black"
             }`}
             style={{
               textAlignVertical: "top", // Ensures text starts at the top
@@ -382,11 +351,8 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
           />
         </View>
 
-        <View className="space-y-2 mb-10">
-          <Text
-            fontSize="text-md"
-            fontWeight="font-bold"
-          >
+        <View className="space-y-1 mb-5">
+          <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
             How would you like to be contacted?
           </Text>
           <View className="pt-3">
@@ -401,32 +367,32 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
                 <View
                   className={`w-5 h-5 rounded-full border-2 ${
                     selectedOption === option.value
-                      ? "border-[#635BE8] bg-[#635BE8]"
+                      ? "border-brand bg-brand"
                       : "border-gray-400"
                   } flex items-center justify-center`}
                 >
                   {selectedOption === option.value && (
-                    <View className="w-2.5 h-2.5 rounded-full bg-white" />
+                    <View className="w-2.5 h-2.5 rounded-full bg-surface-light" />
                   )}
                 </View>
                 <Text className="ml-3 text-base">{option.label}</Text>
               </TouchableOpacity>
             ))}
             <TextInput
-              placeholder={`"Enter details"`}
+              placeholder="Anything else we should know?"
               value={contactDetail}
-              placeholderTextColor={isDarkMode ? "#ffffff80" : "#00000080"}
+              placeholderTextColor={ink.dim(isDarkMode)}
               onChangeText={setContactDetail}
-              className={`rounded-[12px] h-12 border p-3  ${
+              className={`rounded-input h-11 border px-3  ${
                 isDarkMode
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
+                  ? "border-input-line-dark text-white"
+                  : "border-input-line-light text-black"
               }`}
             />
           </View>
         </View>
       </KeyboardAwareScrollView>
-      <View className="py-2 px-5">
+      <View className="py-2 px-gutter">
         <Button
           disabled={
             !formData.productName ||
@@ -442,10 +408,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
           className="flex items-center justify-center"
         >
           {loading ? (
-            <Progress.CircleSnail
-              size={22}
-              color={"white"}
-            />
+            <ActivityIndicator size="small" color="white" />
           ) : (
             <View className="flex-row items-center translate-y-0.5 justify-center space-x-2">
               <Text
@@ -460,8 +423,8 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
                   !contactDetail ||
                   !selectedLocation
                     ? isDarkMode
-                      ? "text-[#ffffff80]"
-                      : "text-[#00000080]"
+                      ? "text-subtle-dark"
+                      : "text-subtle-light"
                     : "text-white"
                 }`}
               >
@@ -479,8 +442,8 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
                     !address ||
                     !contactDetail ||
                     !selectedLocation
-                      ? "#ffffff"
-                      : "#888888"
+                      ? "#FFFFFF"
+                      : ink.dim(false)
                   }
                 />
               </View>

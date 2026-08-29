@@ -1,16 +1,27 @@
-import { useGlobalContext } from "@/context/global-context";
+import { useTheme } from "@/lib/theme";
 import React from "react";
-import { ScrollView, StyleSheet, ViewStyle, StyleProp } from "react-native";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import {
+  RefreshControl,
+  ScrollView,
+  StyleProp,
+  ViewStyle,
+} from "react-native";
 
 interface Props {
   children: React.ReactNode;
   containerStyle?: StyleProp<ViewStyle>;
+  /** Supply both to give the screen pull-to-refresh. */
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }
 
-export function ScrollContainer({ children, containerStyle }: Props) {
-  const { theme } = useGlobalContext();
-  const isDarkMode = theme === "dark";
+export function ScrollContainer({
+  children,
+  containerStyle,
+  onRefresh,
+  refreshing = false,
+}: Props) {
+  const { color } = useTheme();
 
   return (
     <ScrollView
@@ -19,17 +30,20 @@ export function ScrollContainer({ children, containerStyle }: Props) {
       // dismiss it and never reaches the button underneath, so every submit
       // needs two taps.
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={[styles.container, containerStyle]}
-      className={isDarkMode ? "bg-black" : "bg-white"}
+      contentContainerStyle={[{ flexGrow: 1, paddingVertical: 20 }, containerStyle]}
+      style={{ backgroundColor: color.canvas }}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={color.textBody}
+            colors={[color.brand]}
+          />
+        ) : undefined
+      }
     >
       {children}
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    paddingVertical: wp("5%"),
-  },
-});

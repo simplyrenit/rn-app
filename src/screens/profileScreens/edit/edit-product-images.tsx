@@ -1,4 +1,4 @@
-import Toast from "react-native-toast-message";
+
 import { Button, StaticContainer, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -25,6 +25,8 @@ import {
   PlusIcon,
   XMarkIcon,
 } from "react-native-heroicons/outline";
+import { toast } from "@/lib/toast";
+import { ink, radius } from "@/lib/design-tokens";
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -61,12 +63,7 @@ export default function EditProductImages() {
   const pickImageFromGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Photo library access is needed to choose an image",
-        text2: "error",
-      });
+      toast.error("Photo library access is needed to choose an image");
       return;
     }
 
@@ -93,12 +90,7 @@ export default function EditProductImages() {
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Camera access is needed to take a photo",
-        text2: "error",
-      });
+      toast.error("Camera access is needed to take a photo");
       return;
     }
 
@@ -127,7 +119,6 @@ export default function EditProductImages() {
     setSelectedImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
 
-
   const allFieldsFilled = selectedImages.length > 0;
 
   const renderImageItem = ({
@@ -149,55 +140,55 @@ export default function EditProductImages() {
         style={{
           width: "100%",
           height: hp(20),
-          borderRadius: 10,
+          borderRadius: radius.input,
         }}
       />
-      <TouchableOpacity
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Close"
         style={{
           position: "absolute",
           top: 5,
           right: 5,
           backgroundColor: "rgba(0,0,0,0.5)",
-          borderRadius: 12,
+          borderRadius: radius.card,
           padding: 2,
         }}
         onPress={() => removeImage(index)}
       >
-        <XMarkIcon size={24} color="#ffffff" />
+        <XMarkIcon size={24} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
   );
 
   const renderAddButton = (isFullWidth: boolean = false) => (
-    <TouchableOpacity
+    <TouchableOpacity accessibilityRole="button" accessibilityLabel="Add"
       onPress={() => {
         // setBottomSheetVisible(true);
         bottomSheetRef.current?.present();
       }}
       style={{
         borderStyle: "dashed",
-        borderColor: "#C4C4C4",
+        borderColor: ink.line(false),
         borderWidth: 1,
         width: isFullWidth ? "100%" : wp("41.5%") > 163 ? 163 : wp("41.5%"),
         height: hp(20),
-        borderRadius: 10,
+        borderRadius: radius.input,
         alignItems: "center",
         justifyContent: "center",
         marginBottom: 10,
       }}
     >
-      <PlusIcon size={24} color={isDark ? "#e6e6e6" : "#292929"} />
+      <PlusIcon size={24} color={isDark ? ink.line(false) : ink.line(true)} />
     </TouchableOpacity>
   );
 
   return (
     <NonScrollableContainer>
       <View className="px-3 flex-row items-center py-4">
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => navigation.goBack()}
           className="w-[10%]"
         >
-          <ArrowLeftIcon size={20} color={isDark ? "#ffffff" : "#000000"} />
+          <ArrowLeftIcon size={20} color={ink.text(isDark)} />
         </TouchableOpacity>
         <View className="w-[80%]">
           <View className=" items-center justify-center">
@@ -209,7 +200,7 @@ export default function EditProductImages() {
         <View className="w-[10%]"></View>
       </View>
 
-      <View className="px-5 flex-1 ">
+      <View className="px-gutter flex-1 ">
         <View className="flex-1">
           {selectedImages.length === 0 ? (
             renderAddButton(true)
@@ -239,16 +230,15 @@ export default function EditProductImages() {
             onPress={onPress}
           >
             <View className="flex-row items-center justify-between">
-              <Text
+              <Text tone="body"
                 fontWeight="font-bold"
-                className={`${allFieldsFilled ? "text-white" : "text-gray-500"
-                  }`}
+                style={{ color: "#FFFFFF" }}
               >
                 Next
               </Text>
               <ChevronRightIcon
                 size={16}
-                color={allFieldsFilled ? "#ffffff" : "#888888"}
+                color={allFieldsFilled ? "#FFFFFF" : ink.dim(false)}
               />
             </View>
           </Button>
@@ -260,24 +250,24 @@ export default function EditProductImages() {
         ref={bottomSheetRef}
         isDark={isDark}
       >
-        <StyledBottomView className="w-full px-5 py-2 flex flex-col justify-start flex-1">
-          <View className="py-4 flex-row items-center justify-between gap-x-5">
+        <StyledBottomView className="w-full px-gutter py-2 flex flex-col justify-start flex-1">
+          <View className="py-4 flex-row items-center justify-between space-x-5">
             <TouchableOpacity
               onPress={pickImageFromGallery}
               className=" flex-1 space-y-4"
               style={{
                 borderStyle: "dashed",
-                borderColor: "#C4C4C4",
+                borderColor: ink.line(false),
                 borderWidth: 1,
                 height: hp("20%"),
-                borderRadius: 10,
+                borderRadius: radius.input,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <PhotoIcon size={24} color={isDark ? "#e6e6e6" : "#292929"} />
+              <PhotoIcon size={24} color={isDark ? ink.line(false) : ink.line(true)} />
               <Text
-                className={`${isDark ? "text-white/70" : "text-black/70"
+                className={`${isDark ? "text-muted-dark" : "text-muted-light"
                   } text-center`}
               >
                 Choose from gallery
@@ -288,17 +278,17 @@ export default function EditProductImages() {
               className="space-y-4 flex-1"
               style={{
                 borderStyle: "dashed",
-                borderColor: "#C4C4C4",
+                borderColor: ink.line(false),
                 borderWidth: 1,
                 height: hp("20%"),
-                borderRadius: 10,
+                borderRadius: radius.input,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <CameraIcon size={24} color={isDark ? "#e6e6e6" : "#292929"} />
+              <CameraIcon size={24} color={isDark ? ink.line(false) : ink.line(true)} />
               <Text
-                className={`${isDark ? "text-white/70" : "text-black/70"
+                className={`${isDark ? "text-muted-dark" : "text-muted-light"
                   } text-center`}
               >
                 Take a photo

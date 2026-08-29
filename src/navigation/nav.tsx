@@ -32,7 +32,6 @@ import TermsScreen from "../screens/terms";
 import UserDetailScreen from "../screens/users/users-screen";
 
 import { HomeIcon, HomeIconSolid } from "@/icons/home";
-import { PostIcon, PostIconSolid } from "@/icons/post";
 import { RootStackParamList } from "@/lib/types";
 import {
   setupChatNotifications,
@@ -45,21 +44,25 @@ import FeedbackNReviewScreen from "@/screens/profileScreens/feedback-review";
 import MyProductScreen from "@/screens/profileScreens/my-product";
 import NotificationScreen from "@/screens/profileScreens/notification";
 import WhoWeAreScreen from "@/screens/profileScreens/who-we-are";
-import { BackHandler, Platform } from "react-native";
+import { BackHandler, PixelRatio, Platform, View } from "react-native";
 import {
   ChatBubbleLeftIcon,
   HeartIcon,
+  PlusCircleIcon,
   UserIcon,
 } from "react-native-heroicons/outline";
 import {
   ChatBubbleLeftIcon as ChatBubbleLeftIconSolid,
   HeartIcon as HeartIconSolid,
+  PlusCircleIcon as PlusCircleIconSolid,
   UserIcon as UserIconSolid,
 } from "react-native-heroicons/solid";
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { darkColors, lightColors, radius } from "@/lib/design-tokens";
+import { chromeFontSize, fontFamily } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
+import { selectionFeedback } from "@/lib/haptics";
+import { useUnreadCount } from "@/backend/chat";
 
 import PostSubCategories from "@/screens/post-screens/post-sub-categories";
 import AboutProduct from "@/screens/post-screens/about-product";
@@ -223,30 +226,69 @@ function ProfileStackScreen() {
   );
 }
 
-function MainTabs() {
-  const { theme } = useGlobalContext();
+/**
+ * The tab bar is chrome, so it follows the HIG rather than the content type
+ * ramp: a 49pt bar plus the real safe-area inset (not a percentage of screen
+ * height, which rendered 111pt here and left ~43pt of dead space under the
+ * labels), one icon size for every tab, and 11pt labels in the app's own
+ * typeface — they used to fall through to system SF Pro on every screen.
+ */
+const TAB_BAR_CONTENT_HEIGHT = 49;
+const TAB_ICON_SIZE = 26;
 
-  const isDarkMode = theme === "dark";
+/**
+ * Beyond this Dynamic Type scale a five-slot tab bar cannot hold five labels.
+ * At AX-Large they ran edge to edge with no gap and "Profile" was clipped by
+ * the screen. iOS caps tab-label growth for exactly this reason and falls back
+ * to the large-content HUD; the icons and the VoiceOver labels still carry the
+ * meaning, so dropping the text is the correct degradation.
+ */
+const TAB_LABEL_SCALE_LIMIT = 1.25;
+
+function MainTabs() {
+  const { color, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { unreadCount } = useUnreadCount();
+  const fontScale = PixelRatio.getFontScale();
+  const showTabLabels = fontScale <= TAB_LABEL_SCALE_LIMIT;
+
   return (
     <Tab.Navigator
+      screenListeners={{
+        tabPress: () => selectionFeedback(),
+      }}
       screenOptions={({ route }) => ({
-        tabBarActiveTintColor: isDarkMode ? "white" : "black",
-        tabBarInactiveTintColor: "gray",
+        // The brand finally appears in the app's primary navigation. The old
+        // inactive tint was the CSS keyword "gray" (#808080), which measures
+        // 3.95:1 on white — below AA for the label it also tints.
+        tabBarActiveTintColor: isDark ? color.brandTextHi : color.brand,
+        tabBarInactiveTintColor: color.textBody,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: isDarkMode ? "#000" : "white",
-          height: Platform.OS === "ios" ? hp("12.75%") : hp("8%"), //110
-          borderTopColor: isDarkMode ? '#1A1A1A' : '#E6E6E6',
+          backgroundColor: color.surface,
+          height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
+          paddingBottom: insets.bottom,
+          paddingTop: showTabLabels ? 6 : 12,
+          borderTopColor: color.line,
           borderTopWidth: 1,
         },
+        tabBarShowLabel: showTabLabels,
         tabBarIconStyle: {
-          marginTop: 5,
+          marginTop: 0,
         },
+        // The label is chrome, so it holds its size rather than tracking the
+        // content ramp; the cap above removes it entirely past 1.25.
+        tabBarAllowFontScaling: false,
         tabBarLabelStyle: {
-          fontSize: wp("3%"),
-          paddingBottom: hp("1.3%"), //17
+          fontSize: chromeFontSize.tabLabel,
+          fontFamily: fontFamily.medium,
+          marginTop: 2,
         },
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarAccessibilityLabel:
+          route.name === "Chat" && unreadCount > 0
+            ? `Chat, ${unreadCount} unread`
+            : route.name,
+        tabBarIcon: ({ focused, color: tintColor }) => {
           let Icon;
           switch (route.name) {
             case "Home":
@@ -256,7 +298,7 @@ function MainTabs() {
               Icon = focused ? HeartIconSolid : HeartIcon;
               break;
             case "Post":
-              Icon = focused ? PostIconSolid : PostIcon;
+              Icon = focused ? PlusCircleIconSolid : PlusCircleIcon;
               break;
             case "Chat":
               Icon = focused ? ChatBubbleLeftIconSolid : ChatBubbleLeftIcon;
@@ -265,12 +307,30 @@ function MainTabs() {
               Icon = focused ? UserIconSolid : UserIcon;
               break;
           }
-          return Icon ? (
-            <Icon
-              size={wp(route.name === 'Saved' ? '7%' : route.name === 'Home' && focused ? '8%' : "6.5%")}
-              color={color}
-            />
-          ) : null;
+          if (!Icon) return null;
+
+          const showBadge = route.name === "Chat" && unreadCount > 0;
+
+          return (
+            <View>
+              <Icon size={TAB_ICON_SIZE} color={tintColor} />
+              {showBadge ? (
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -2,
+                    right: -5,
+                    minWidth: 9,
+                    height: 9,
+                    borderRadius: radius.full,
+                    backgroundColor: color.brand,
+                    borderWidth: 1.5,
+                    borderColor: color.surface,
+                  }}
+                />
+              ) : null}
+            </View>
+          );
         },
       })}
     >
@@ -282,7 +342,6 @@ function MainTabs() {
         name="Saved"
         component={SavedScreen}
       />
-      {/* <Tab.Screen name="Post" component={PostScreen} /> */}
       <Tab.Screen
         name="Post"
         component={PostScreen}
@@ -336,7 +395,10 @@ export default function Navigation() {
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         initialRouteName={isAuthenticated || hasSeenWelcome ? "MainTabs" : "Welcome"}
-        screenOptions={{ headerShown: false, navigationBarColor: theme === 'dark' ? '#000' : '#fff' }}
+        screenOptions={{
+          headerShown: false,
+          navigationBarColor: theme === "dark" ? darkColors.canvas : lightColors.canvas,
+        }}
       >
         <Stack.Screen
           name="Welcome"

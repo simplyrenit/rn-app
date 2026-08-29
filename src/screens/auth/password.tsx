@@ -5,6 +5,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import React, { useMemo, useState } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
+import { ink } from "@/lib/design-tokens";
 import {
   CheckCircleIcon,
   EyeIcon,
@@ -59,10 +60,10 @@ export default function SetPassword() {
               Create Password
             </Text>
             <View
-              className={`flex flex-row items-center border mt-3 rounded-lg p-2 h-12 ${
+              className={`flex flex-row items-center border mt-3 rounded-button p-2 h-12 ${
                 isDarkMode
-                  ? "bg-[#0F0F0F] border-[#292929]"
-                  : "bg-white border-[#e6e6e6]"
+                  ? "bg-surface-dark border-input-line-dark"
+                  : "bg-surface-light border-input-line-light"
               } `}
             >
               <TextInput
@@ -71,24 +72,27 @@ export default function SetPassword() {
                 autoCapitalize="none"
                 placeholder="Enter password"
                 placeholderTextColor={
-                  theme === "dark" ? "#FFFFFF80" : "#00000080"
+                  ink.dim(isDarkMode)
                 }
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
                 autoCorrect={false}
-                style={{ color: isDarkMode ? "#FFF" : "#000" }}
+                textContentType="newPassword"
+                autoComplete="new-password"
+                accessibilityLabel="Password"
+                style={{ color: ink.text(isDarkMode) }}
               />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Show or hide password" onPress={() => setShowPassword(!showPassword)}>
                 {showPassword ? (
                   <EyeSlashIcon
                     size={24}
-                    color={isDarkMode ? "#FFF" : "#000"}
+                    color={ink.text(isDarkMode)}
                   />
                 ) : (
                   <EyeIcon
                     size={24}
-                    color={isDarkMode ? "#FFF" : "#000"}
+                    color={ink.text(isDarkMode)}
                   />
                 )}
               </TouchableOpacity>
@@ -99,7 +103,7 @@ export default function SetPassword() {
                 fontSize="text-md"
                 fontWeight="font-semibold"
                 className={`${
-                  isDarkMode ? "text-[#FFFFFF80]" : "text-[#00000080]"
+                  isDarkMode ? "text-subtle-dark" : "text-subtle-light"
                 }`}
               >
                 Your password must include:
@@ -126,23 +130,23 @@ export default function SetPassword() {
                   {item.valid ? (
                     <CheckCircleIcon
                       size={24}
-                      color="#078861"
+                      color={ink.success(false)}
                       strokeWidth={2}
                     />
                   ) : (
                     <InformationCircleIcon
                       size={24}
-                      color={theme == "dark" ? "#FFFFFF80" : "#00000080"}
+                      color={theme == "dark" ? ink.dim(true) : ink.dim(false)}
                       strokeWidth={2}
                     />
                   )}
                   <Text
                     className={`ml-2 ${
                       item.valid
-                        ? "text-[#078861]"
+                        ? "text-success-light"
                         : isDarkMode
-                        ? "text-[#FFFFFF80]"
-                        : "text-[#00000080]"
+                        ? "text-subtle-dark"
+                        : "text-subtle-light"
                     }`}
                   >
                     {item.label}

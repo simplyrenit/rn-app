@@ -1,79 +1,63 @@
-import { useGlobalContext } from "@/context/global-context";
-import React from "react";
-import { TouchableOpacity, View } from "react-native";
-import { RocketLaunchIcon } from "react-native-heroicons/solid";
-import { Text } from "../core";
-import { ChevronRightIcon } from "react-native-heroicons/outline";
+import { Button, Text } from "@/components/core";
+import { density, radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
+import React from "react";
+import { View } from "react-native";
+import { RocketLaunchIcon } from "react-native-heroicons/solid";
 
 export function Disclaimer({ mb }: { mb?: number }) {
-  const { theme } = useGlobalContext();
+  const { color } = useTheme();
   const router = useTypedNavigation();
-
-  const onPress = () => {
-    router.navigate("unavailabilityFormCategories");
-  };
 
   return (
     <View
-      className={`border ${theme === "dark"
-          ? "bg-[#201E4D] border-[#363280]"
-          : "bg-[#EDEDFC] border-[#CAC8F7] "
-      } rounded-xl p-4 shadow-sm mt-8 mb-24`}
-      style={mb !== undefined ? { marginBottom: mb } : undefined}
+      style={{
+        borderWidth: 1,
+        borderRadius: radius.group,
+        padding: 14,
+        marginTop: density.section,
+        marginBottom: mb ?? density.section,
+        gap: 12,
+        backgroundColor: color.brandWash,
+        borderColor: color.line,
+      }}
     >
-      <View className="flex-row items-start mb-1">
+      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
         <View
-          className={`border ${theme === "dark"
-              ? "bg-black border-[#292929]"
-              : "bg-white border-[#E6E6E6]"
-            } p-2 rounded-lg mr-2`}
+          style={{
+            padding: 9,
+            borderRadius: radius.card,
+            // Was `surface`, which is LIGHTER than the brand wash behind it in
+            // light mode and DARKER in dark mode — so the same tile read as
+            // raised in one theme and as a hole punched through the card in the
+            // other. A brand fill is unambiguous in both.
+            backgroundColor: color.brand,
+          }}
         >
-          <RocketLaunchIcon
-            size={24}
-            color={theme === "dark" ? "white" : "#635be8"}
-          />
+          <RocketLaunchIcon size={20} color="#FFFFFF" />
         </View>
 
-        <View className="flex w-full space-y-1">
-          <Text
-            fontSize="text-base"
-            fontWeight="font-bold"
-          >
-            Don't see what you need?
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text fontSize="text-md" fontWeight="font-bold">
+            Don’t see what you need?
           </Text>
-          <View className="mt-1 mb-2 w-[80%]">
-            <Text
-              fontSize="text-md"
-              className={`${theme === "dark" ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
-                }`}
-            >
-              Request a product & we'll do our best to get it on Renit for you!
-            </Text>
-          </View>
+          <Text fontSize="text-sm" tone="body">
+            Tell us what you’re looking for and we’ll try to get it on Renit.
+          </Text>
         </View>
       </View>
 
-      <TouchableOpacity
-        onPress={onPress}
-        className="bg-brand-blue py-3 px-4 rounded-lg flex-row items-center justify-center"
+      {/* Was "Unavailability form" — a database concept on the home screen, in a
+          card whose own body copy already said the right thing in plain words. */}
+      {/* A chevron inside a filled button is a disclosure-row pattern; a
+          primary action just states what it does. */}
+      <Button
+        size="compact"
+        onPress={() => router.navigate("unavailabilityFormCategories")}
       >
-        {/* <View className="flex-row items-center"> */}
-        <Text
-          fontWeight="font-bold"
-          className="text-white mr-1 -translate-y-[1px]"
-        >
-          Unavailability form
-        </Text>
-        {/* <View className="flex-row items-center bg-red-500"> */}
-        <ChevronRightIcon
-          size={16}
-          // strokeWidth={3}
-          color="white"
-        />
-        {/* </View> */}
-        {/* </View> */}
-      </TouchableOpacity>
+        Request an item
+      </Button>
     </View>
   );
 }

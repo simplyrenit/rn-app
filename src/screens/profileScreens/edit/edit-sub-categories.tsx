@@ -5,14 +5,15 @@ import { useGlobalContext } from "@/context/global-context";
 import { RouteProps, Subcategory, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
-import { FlatList, Platform, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Platform, TouchableOpacity, View } from "react-native";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "react-native-heroicons/outline";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
-import * as Progress from "react-native-progress";
-import Toast from "react-native-toast-message";
+
+import { toast } from "@/lib/toast";
+import { ink } from "@/lib/design-tokens";
 
 export default function EditSubCategories() {
   const route = useRoute<RouteProps<"EditSubCategories">>();
@@ -30,14 +31,7 @@ export default function EditSubCategories() {
         },
       });
 
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Your product was updated!",
-        text2: "success",
-        visibilityTime: 4000,
-        autoHide: true,
-      });
+      toast.success("Your product was updated!");
       navigation.navigate("editProduct", { id: name });
     } catch (error) {
       console.error("Failed to update product details:", error);
@@ -61,7 +55,7 @@ export default function EditSubCategories() {
         />
         <Text
           fontSize="text-base"
-          className={`${theme === "dark" ? "text-white" : "text-black"}`}
+          
         >
           {category.title}
         </Text>
@@ -81,17 +75,17 @@ export default function EditSubCategories() {
 
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          className={`flex-row items-center py-4 border-b px-5  ${theme === "dark" ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
+          className={`flex-row items-center py-4 border-b px-gutter  ${theme === "dark" ? "border-b-line-dark" : "border-b-line-light"
             }`}
         >
           <View className="mt-1 pr-1 ">
             <ChevronLeftIcon
               className=""
               size={24}
-              color={theme === "dark" ? "white" : "black"}
+              color={ink.text(theme === "dark")}
             />
           </View>
-          <Text fontWeight="font-bold" className="text-md">
+          <Text fontWeight="font-bold" fontSize="text-md">
             {category}
           </Text>
         </TouchableOpacity>
@@ -112,7 +106,7 @@ export default function EditSubCategories() {
 
         {/* <Button onPress={onPress}>
           {loading ? (
-                <Progress.CircleSnail color={"white"} size={22} />
+                <ActivityIndicator size="small" color="white" />
           ) : (
             <Text fontWeight="font-bold">Update Category and Subcategory</Text>
           )}

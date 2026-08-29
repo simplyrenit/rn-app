@@ -1,8 +1,14 @@
-import { useGlobalContext } from "@/context/global-context";
+import {
+  FontSizeToken,
+  fontFamily,
+  fontSize as fontSizeScale,
+  lineHeight as lineHeightScale,
+} from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import { styled } from "nativewind";
 import React from "react";
 import { Text as RNText, StyleSheet, TextProps } from "react-native";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+
 type TailwindFontSize =
   | "text-xs"
   | "text-sm"
@@ -10,7 +16,8 @@ type TailwindFontSize =
   | "text-base"
   | "text-lg"
   | "text-xl"
-  | "text-2xl";
+  | "text-2xl"
+  | "text-3xl";
 
 type TailwindFontWeight =
   | "font-light"
@@ -19,32 +26,86 @@ type TailwindFontWeight =
   | "font-semibold"
   | "font-bold";
 
+/**
+ * Semantic colour role. Prefer this over a className colour: it resolves from
+ * the design tokens, so it is correct in both themes by construction.
+ */
+export type TextTone =
+  | "default"
+  | "hi"
+  | "body"
+  | "dim"
+  | "brand"
+  | "danger"
+  | "success"
+  | "warning"
+  | "info"
+  | "onBrand";
+
 interface CustomTextProps extends TextProps {
   className?: string;
   fontSize?: TailwindFontSize;
   fontWeight?: TailwindFontWeight;
   lineHeight?: number;
+  tone?: TextTone;
 }
 
 const StyledText = styled(RNText);
 
 const fontWeightMap: Record<TailwindFontWeight, string> = {
-  "font-light": "PlusJakartaSans-Light",
-  "font-normal": "PlusJakartaSans-Regular",
-  "font-medium": "PlusJakartaSans-Medium",
-  "font-semibold": "PlusJakartaSans-SemiBold",
-  "font-bold": "PlusJakartaSans-Bold",
+  "font-light": fontFamily.light,
+  "font-normal": fontFamily.regular,
+  "font-medium": fontFamily.medium,
+  "font-semibold": fontFamily.semibold,
+  "font-bold": fontFamily.bold,
 };
 
-const fontSizeMap: Record<TailwindFontSize, number> = {
-  "text-xs": wp("3.2%"), //12.666
-  "text-sm": wp("3.8%"), //15
-  "text-md": wp("4.15%"), //16.33
-  "text-base": wp("4.3%"), //17
-  "text-lg": wp("4.75%"), //18.66
-  "text-xl": wp("5.2%"), //20.333
-  "text-2xl": wp("6.5%"), //25.666
+const sizeTokenMap: Record<TailwindFontSize, FontSizeToken> = {
+  "text-xs": "xs",
+  "text-sm": "sm",
+  "text-md": "md",
+  "text-base": "base",
+  "text-lg": "lg",
+  "text-xl": "xl",
+  "text-2xl": "2xl",
+  "text-3xl": "3xl",
 };
+
+/**
+ * Dynamic Type is honoured but capped. Uncapped, an accessibility-size setting
+ * turns a 34pt headline into ~120pt and every fixed-height row in the app
+ * clips; 1.4 keeps large-text users served without breaking layout.
+ */
+const MAX_FONT_SCALE = 1.4;
+
+/** `text-*` utilities that set something other than colour. */
+const NON_COLOR_TEXT_UTILITIES = new Set([
+  "text-center",
+  "text-left",
+  "text-right",
+  "text-justify",
+  "text-auto",
+  "text-xs",
+  "text-sm",
+  "text-md",
+  "text-base",
+  "text-lg",
+  "text-xl",
+  "text-2xl",
+  "text-3xl",
+]);
+
+function hasColorClass(className: string): boolean {
+  return className
+    .split(/\s+/)
+    .filter(Boolean)
+    .some(
+      (token) =>
+        token.startsWith("text-") &&
+        !NON_COLOR_TEXT_UTILITIES.has(token.split("/")[0]) &&
+        !/^text-\[\d/.test(token)
+    );
+}
 
 export function Text({
   className = "",
@@ -52,41 +113,54 @@ export function Text({
   fontSize,
   fontWeight = "font-normal",
   lineHeight,
+  tone = "default",
+  allowFontScaling = true,
+  maxFontSizeMultiplier = MAX_FONT_SCALE,
   ...props
 }: CustomTextProps) {
-  const { theme } = useGlobalContext();
+  const { color } = useTheme();
 
-  const isDarkMode = theme === "dark";
+  const toneColor: Record<TextTone, string> = {
+    default: color.text,
+    hi: color.textHi,
+    body: color.textBody,
+    dim: color.textDim,
+    brand: color.brandText,
+    danger: color.danger,
+    success: color.success,
+    warning: color.warning,
+    info: color.info,
+    onBrand: "#FFFFFF",
+  };
 
-  const baseColorClass = isDarkMode ? "text-white" : "text-black";
-
-  const combinedClasses = `${baseColorClass} ${className}`.trim();
-
+  // An explicit colour on `style` still wins, so existing call sites that pass
+  // one keep working; `tone` only supplies the default.
   const customColor = StyleSheet.flatten(style)?.color;
 
-  const fontFamily = fontWeightMap[fontWeight];
+  // NativeWind resolves className into a style that this component's own `style`
+  // array would otherwise sit on top of. A call site that says `text-muted-dark`
+  // means it, so stand down and let the class win rather than silently
+  // overriding it with the tone default.
+  const classNameSetsColor = hasColorClass(className);
 
-  const fontSizeValue = fontSize ? fontSizeMap[fontSize] : undefined;
+  const token = sizeTokenMap[fontSize ?? "text-base"];
+  const resolvedSize = fontSize ? fontSizeScale[token] : undefined;
+  const resolvedLeading = lineHeight ?? lineHeightScale[token];
 
   return (
     <StyledText
-      className={combinedClasses}
+      className={className}
+      allowFontScaling={allowFontScaling}
+      maxFontSizeMultiplier={maxFontSizeMultiplier}
       style={[
+        classNameSetsColor && tone === "default"
+          ? null
+          : { color: toneColor[tone] },
         style,
         customColor ? { color: customColor } : null,
-        { fontFamily },
-        fontSizeValue ? { fontSize: fontSizeValue } : null,
-        {
-          lineHeight: lineHeight
-            ? lineHeight
-            : fontSize === "text-2xl"
-            ? 30
-            : fontSize === "text-xl"
-            ? 22
-            : fontSize === "text-lg"
-            ? 25
-            : 18,
-        },
+        { fontFamily: fontWeightMap[fontWeight] },
+        resolvedSize ? { fontSize: resolvedSize } : null,
+        { lineHeight: resolvedLeading },
       ]}
       {...props}
     />

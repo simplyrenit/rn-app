@@ -1,20 +1,24 @@
 import { useGlobalContext } from "@/context/global-context";
-import { CustomerRatingIcon, NearestIcon } from "@/icons/filters";
+import { NearestIcon } from "@/icons/filters";
 import { TouchableOpacity, View } from "react-native";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
   CheckIcon,
-  SparklesIcon,
+  ClockIcon,
+  StarIcon,
 } from "react-native-heroicons/outline";
 import { Button, Text } from "../core";
+import { ink, colors } from "@/lib/design-tokens";
 
+// A star means rating; two silhouettes did not, and they were the same glyph
+// the profile uses for "Who we are". A clock means recency; sparkles did not.
 const options = [
-  { icon: SparklesIcon, option: "What's new", value: "new" },
-  { icon: ArrowDownIcon, option: "Price - High to Low", value: "high-to-low" },
-  { icon: ArrowUpIcon, option: "Price - Low to High", value: "low-to-high" },
-  { icon: NearestIcon, option: "Nearest", value: "nearest" },
-  { icon: CustomerRatingIcon, option: "Customer Rating", value: "top-rated" },
+  { icon: ClockIcon, option: "Newest first", value: "new" },
+  { icon: ArrowDownIcon, option: "Price: high to low", value: "high-to-low" },
+  { icon: ArrowUpIcon, option: "Price: low to high", value: "low-to-high" },
+  { icon: NearestIcon, option: "Nearest first", value: "nearest" },
+  { icon: StarIcon, option: "Highest rated", value: "top-rated" },
 ];
 
 interface Props {
@@ -49,25 +53,18 @@ export function SortFilter({
             >
               <View className="flex flex-row items-center justify-between">
                 <View className="flex flex-row items-center">
-                  <item.icon color={isDark ? "white" : "black"} size={20} />
+                  <item.icon color={ink.text(isDark)} size={20} />
                   <Text fontSize="text-base" className="ml-3">
                     {item.option}
                   </Text>
                 </View>
                 {selectedFilter === item.value && (
-                  <CheckIcon size={20} color="#635be8" />
+                  <CheckIcon size={20} color={colors.dark.brand} />
                 )}
               </View>
             </TouchableOpacity>
           ))}
       </View>
-      {selectedFilter && (
-        <View className="p-3">
-          <Button onPress={closeSheet}>
-            {isLoading ? "Loading..." : "Show products"}
-          </Button>
-        </View>
-      )}
     </View>
   );
 }

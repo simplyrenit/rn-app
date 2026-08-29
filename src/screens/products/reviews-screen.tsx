@@ -13,7 +13,9 @@ import {
   ChevronRightIcon,
 } from "react-native-heroicons/outline";
 import { StarIcon as StarFilled } from "react-native-heroicons/solid";
-import Toast from "react-native-toast-message";
+
+import { toast } from "@/lib/toast";
+import { ink, radius } from "@/lib/design-tokens";
 
 interface ReviewData {
   rating: number;
@@ -47,21 +49,11 @@ export default function ReviewsScreen() {
 
   const handleWriteReview = () => {
     if (!isAuthenticated) {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Sign in to write a review",
-        text2: "error",
-      });
+      toast.error("Sign in to write a review");
       return;
     }
     if (isOwner) {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "You can't review your own listing",
-        text2: "error",
-      });
+      toast.error("You can’t review your own listing");
       return;
     }
     navigation.navigate("WriteReviews", {
@@ -83,11 +75,11 @@ export default function ReviewsScreen() {
 
   return (
     <Container>
-      <View className="py-4 px-5 flex flex-row items-center">
+      <View className="py-4 px-gutter flex flex-row items-center">
         <View className="w-[10%]">
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back" onPress={() => navigation.goBack()}>
             <ArrowLeftIcon
-              color={isDark ? "white" : "black"}
+              color={ink.text(isDark)}
               size={24}
             />
           </TouchableOpacity>
@@ -103,7 +95,7 @@ export default function ReviewsScreen() {
         <View className="w-[10%]"></View>
       </View>
 
-      <ScrollView className="px-5 mt-3">
+      <ScrollView className="px-gutter mt-3">
         <Text
           fontSize="text-lg"
           fontWeight="font-bold"
@@ -113,20 +105,20 @@ export default function ReviewsScreen() {
         </Text>
         <View className="flex flex-row space-x-2 items-center mt-6">
           <StarFilled
-            color={isDark ? "white" : "black"}
+            color={ink.text(isDark)}
             size={20}
           />
           <Text
             fontSize="text-md"
             fontWeight="font-bold"
-            className={`${isDark ? "#FFFFFFB2" : "#000000B2"}`}
+            className={`${ink.body(isDark)}`}
           >
             {averageRating ? averageRating.toFixed(1) : "0"}
           </Text>
           <Text
             fontSize="text-md"
             fontWeight="font-bold"
-            className={`ml-2 ${isDark ? "#FFFFFFB2" : "#000000B2"}`}
+            className={`ml-2 ${ink.body(isDark)}`}
           >
             ∙{" "}
             {totalReviews === 0 ? "No reviews yet" : pluralize(totalReviews, "review")}
@@ -140,33 +132,33 @@ export default function ReviewsScreen() {
           >
             <Text
               className="mr-2 w-[5%]"
-              style={{ color: isDark ? "#FFFFFF80" : "#00000080" }}
+              style={{ color: ink.dim(isDark) }}
             >
               {item.rating}
             </Text>
             <StarFilled
-              color={isDark ? "white" : "black"}
+              color={ink.text(isDark)}
               size={16}
             />
             <View
               className={`flex-1 h-2 ${
-                isDark ? "bg-[#292929]" : "bg-[#e6e6e6]"
+                isDark ? "bg-surface-raised-dark" : "bg-skeleton-light"
               } ml-2`}
-              style={{ borderRadius: 9999 }}
+              style={{ borderRadius: radius.full }}
             >
               <View
-                className={`h-full ${isDark ? "bg-white" : "bg-black"}`}
+                className={`h-full ${isDark ? "bg-surface-light" : "bg-canvas-dark"}`}
                 style={{
                   width: totalReviews
                     ? `${(item.count / totalReviews) * 100}%`
                     : 0,
-                  borderRadius: 9999,
+                  borderRadius: radius.full,
                 }}
               />
             </View>
             <Text
               className="ml-2 w-8 text-right"
-              style={{ color: isDark ? "#FFFFFF80" : "#00000080" }}
+              style={{ color: ink.dim(isDark) }}
             >
               {item.count}
             </Text>
@@ -176,21 +168,21 @@ export default function ReviewsScreen() {
         {isOwner ? (
           <Text
             className="mt-5"
-            style={{ color: isDark ? "#FFFFFF80" : "#00000080" }}
+            style={{ color: ink.dim(isDark) }}
           >
-            You can't review your own listing.
+            You can’t review your own listing.
           </Text>
         ) : (
           <Button
             variant="outline"
-            className="mt-5 flex flex-row items-center justify-center border rounded-xl"
+            className="mt-5 flex flex-row items-center justify-center border rounded-card"
             onPress={handleWriteReview}
           >
             <View className="flex h-full flex-row items-center justify-between w-full">
               <Text className="translate-y-0.5">Write a review</Text>
               <View className="flex flex-row items-center justify-center translate-y-0.5">
                 <ChevronRightIcon
-                  color={isDark ? "white" : "black"}
+                  color={ink.text(isDark)}
                   size={20}
                 />
               </View>

@@ -6,12 +6,18 @@ import { useGlobalContext } from "@/context/global-context";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
+import { RefreshControl } from "react-native";
+import { EmptyState } from "@/components/core";
+import { Squares2X2Icon } from "react-native-heroicons/outline";
+import { colors } from "@/lib/design-tokens";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
-import { ArrowLeftIcon, ShareIcon } from "react-native-heroicons/outline";
+import { ArrowLeftIcon } from "react-native-heroicons/outline";
+import { IOSShareIcon } from "@/icons/share";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { Dimensions } from "react-native";
 import { FlatList } from "react-native";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
+import { SCREEN_GUTTER, ink } from "@/lib/design-tokens";
 
 const { height } = Dimensions.get("window");
 
@@ -23,6 +29,16 @@ const MyProductScreen: React.FC = () => {
   const router = useTypedNavigation();
   const { getMyProducts } = useProfile();
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchProducts();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
 
   const fetchNextProducts = useCallback(() => { }, [])
 
@@ -55,8 +71,8 @@ const MyProductScreen: React.FC = () => {
   if (!authTokens || !isAuthenticated) {
     return (
       <StaticContainer width={100}>
-        <View className="flex-row items-center justify-between px-5 py-2 pt-4">
-          <TouchableOpacity
+        <View className="flex-row items-center justify-between px-gutter py-2 pt-4">
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             onPress={() =>
               router.navigate("MainTabs", {
                 screen: "Profile",
@@ -66,7 +82,7 @@ const MyProductScreen: React.FC = () => {
           >
             <ArrowLeftIcon
               size={26}
-              color={isDarkMode ? "#FFF" : "#000"}
+              color={ink.text(isDarkMode)}
             />
           </TouchableOpacity>
           <View className=" justify-center w-[80%]">
@@ -74,7 +90,7 @@ const MyProductScreen: React.FC = () => {
               fontSize="text-xl"
               fontWeight="font-bold"
             >
-              My products
+              My listings
             </Text>
           </View>
 
@@ -87,8 +103,8 @@ const MyProductScreen: React.FC = () => {
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
-      <View className="flex-row items-center justify-between px-5 py-2 pt-4">
-        <TouchableOpacity
+      <View className="flex-row items-center justify-between px-gutter py-2 pt-4">
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() =>
             router.navigate("MainTabs", {
               screen: "Profile",
@@ -98,7 +114,7 @@ const MyProductScreen: React.FC = () => {
         >
           <ArrowLeftIcon
             size={26}
-            color={isDarkMode ? "#FFF" : "#000"}
+            color={ink.text(isDarkMode)}
           />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
@@ -106,7 +122,7 @@ const MyProductScreen: React.FC = () => {
             fontSize="text-xl"
             fontWeight="font-bold"
           >
-            My products
+            My listings
           </Text>
         </View>
 
@@ -115,31 +131,39 @@ const MyProductScreen: React.FC = () => {
 
       <FlatList
         style={{ width: "100%" }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={ink.body(isDarkMode)}
+            colors={[colors.dark.brand]}
+          />
+        }
         data={myProducts}
         ListHeaderComponent={(
           <View
-            className={`flex-row justify-between py-4 border-b-[1px] px-5 ${isDarkMode ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
+            className={`flex-row justify-between py-4 border-b-[1px] px-gutter ${isDarkMode ? "border-b-line-dark" : "border-b-line-light"
               }`}
           >
             <Text fontSize="text-sm">Share entire catalogue</Text>
 
-            <TouchableOpacity>
-              <ShareIcon
-                size={24}
-                color={isDarkMode ? "#FFF" : "#000"}
-              />
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Share">
+              <IOSShareIcon size={22} color={ink.text(isDarkMode)} />
             </TouchableOpacity>
           </View>
         )}
-        ListEmptyComponent={() => <View style={{ padding: 32, height: Dimensions.get('window').height * 0.6, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: 'rgba(165, 165, 165, 0.7)', fontSize: 18, fontWeight: '600' }}>
-            No products
-          </Text>
-        </View>
+        ListEmptyComponent={
+          <EmptyState
+            icon={<Squares2X2Icon size={26} color={ink.brandText(isDarkMode)} />}
+            title="You haven't listed anything yet"
+            body="List something you already own and it will show up here."
+            actionLabel="List an item"
+            onAction={() => router.navigate("MainTabs")}
+          />
         }
         ListFooterComponent={nextProductLink ? () => isLoading ? (
           <View>
-            <ActivityIndicator color={isDarkMode ? '#fff' : '#000'} />
+            <ActivityIndicator color={ink.text(isDarkMode)} />
           </View>
         ) : <View>
           <Text>Load More</Text>
@@ -147,12 +171,17 @@ const MyProductScreen: React.FC = () => {
         onEndReached={nextProductLink ? () => fetchProducts(nextProductLink) : undefined}
         keyExtractor={(item, index) => `${index}_${item.name}`}
         numColumns={2}
+        // The grid's own gutter, matching every other product grid in the app.
+        // `alignItems: center` on the content container made each row
+        // shrink-wrap, which is how rows one and two ended up starting at
+        // different offsets.
         columnWrapperStyle={{
-          justifyContent: "space-between",
-          marginTop: 8,
-          gap: 16,
+          justifyContent: "flex-start",
+          paddingHorizontal: SCREEN_GUTTER,
+          marginTop: 16,
+          gap: 14,
         }}
-        contentContainerStyle={{ paddingBottom: hp("10%"), justifyContent: 'flex-start', alignItems: 'center', width: '100%' }}
+        contentContainerStyle={{ paddingBottom: hp("10%") }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item, index }) => (
           <MyProductCard
@@ -165,8 +194,7 @@ const MyProductScreen: React.FC = () => {
             isDarkMode={isDarkMode}
             moderationLabels={item.moderation_labels}
             adminApproved={item.admin_approved}
-            width='48.5%'
-            alignItems={index % 2 ? 'flex-start' : 'flex-end'}
+            width="48.5%"
           />
         )}
       />

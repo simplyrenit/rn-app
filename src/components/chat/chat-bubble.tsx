@@ -21,9 +21,13 @@ import { useChat } from "@/backend/chat";
 import { useState } from "react";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import Toast from "react-native-toast-message";
+
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTypedNavigation } from "@/lib/types";
+import { ink, radius } from "@/lib/design-tokens";
+import { formatCurrency, formatMessageTime } from "@/lib/format";
+import { useTheme } from "@/lib/theme";
+import { toast } from "@/lib/toast";
 
 interface ChatBubbleProps {
   message: {
@@ -45,6 +49,14 @@ interface ChatBubbleProps {
   isSent: boolean;
   type: string;
   id: string;
+  /** When the message was sent. Rendered in the bubble's footer. */
+  timestamp?: Date | string;
+  /**
+   * True when another message from the same sender follows within the minute.
+   * Tightens the gap so a run reads as one turn rather than as N separate
+   * events, which is what made short exchanges fill the whole screen.
+   */
+  grouped?: boolean;
 }
 
 const formatDate = (date: Date | undefined) => {
@@ -65,9 +77,17 @@ interface MessageContent {
 
 const isHttpUrl = (value?: string) => /^https?:\/\//i.test(value?.trim() || "");
 
-export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
+export function ChatBubble({
+  message,
+  isSent,
+  grouped = false,
+  type,
+  id,
+  timestamp,
+}: ChatBubbleProps) {
   const { theme, userDetails } = useGlobalContext();
   const isDark = theme === "dark";
+  const { color } = useTheme();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [fullImage, setFullImage] = useState<string | null>(null)
@@ -82,7 +102,6 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
   const handleRejectOffer = async () => {
     await offerOperations(id, "rejected");
   };
-
 
   const renderMessageContent = () => {
     if (type === "text") {
@@ -101,8 +120,8 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                 style={{
                   width: 200,
                   height: 200,
-                  borderRadius: 12,
-                  backgroundColor: isDark ? "#333" : "#f5f5f5",
+                  borderRadius: radius.card,
+                  backgroundColor: ink.surfaceRaised(isDark),
                   justifyContent: "center",
                   alignItems: "center",
                 }}
@@ -110,7 +129,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                 {imageLoading && (
                   <ActivityIndicator
                     size="large"
-                    color={isDark ? "#fff" : "#000"}
+                    color={ink.text(isDark)}
                     style={{
                       position: "absolute",
                       zIndex: 1,
@@ -122,7 +141,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                   style={{
                     width: "100%",
                     height: "100%",
-                    borderRadius: 12,
+                    borderRadius: radius.card,
                   }}
                   resizeMode="cover"
                   onLoadStart={() => setImageLoading(true)}
@@ -135,7 +154,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                 {imageError && (
                   <Text
                     fontSize="text-sm"
-                    className={`${isSent ? "text-white" : "text-black"}`}
+                    style={{ color: isSent ? "#FFFFFF" : color.text }}
                   >
                     Failed to load image
                   </Text>
@@ -164,11 +183,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                     if (canShare) {
                       await Sharing.shareAsync(fileUri);
                     } else {
-                      Toast.show({
-                        type: "error",
-                        text1: "Sharing not available on this device",
-                        position: "bottom",
-                      });
+                      toast.error("Sharing not available on this device");
                     }
                   } else {
                     // iOS can handle direct file opening
@@ -177,20 +192,12 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                     if (supported) {
                       await Linking.openURL(localFileUri);
                     } else {
-                      Toast.show({
-                        type: "error",
-                        text1: "No app found to open this file type",
-                        position: "bottom",
-                      });
+                      toast.error("No app found to open this file type");
                     }
                   }
                 } catch (error) {
                   console.error("Error handling file:", error);
-                  Toast.show({
-                    type: "error",
-                    text1: "Error opening file",
-                    position: "bottom",
-                  });
+                  toast.error("Error opening file");
                 }
               }}
             >
@@ -198,16 +205,16 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  backgroundColor: isDark ? "#333" : "#f5f5f5",
+                  backgroundColor: ink.surfaceRaised(isDark),
                   padding: 8,
-                  borderRadius: 12,
+                  borderRadius: radius.card,
                   width: '100%',
                   flex: 1,
                 }}
               >
                 <DocumentIcon
                   size={24}
-                  color={isDark ? "#fff" : "#000"}
+                  color={ink.text(isDark)}
                 />
                 <View className="w-[85%]">
 
@@ -231,9 +238,9 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
         if (!isLinkMessage) {
           return (
             <Text
-              fontSize="text-sm"
-              fontWeight="font-bold"
-              className={`${isSent ? "text-white" : "text-black"} p-3`}
+              fontSize="text-md"
+              className="px-3 pt-2"
+              style={{ color: isSent ? "#FFFFFF" : color.text }}
               selectable
             >
               {text}
@@ -247,19 +254,15 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
               try {
                 await Linking.openURL(text.trim());
               } catch {
-                Toast.show({
-                  type: "error",
-                  text1: "Unable to open this link",
-                  position: "bottom",
-                });
+                toast.error("Unable to open this link");
               }
             }}
           >
             <Text
-              fontSize="text-sm"
-              fontWeight="font-bold"
-              className={`${isSent ? "text-white" : "text-black"} p-3`}
+              fontSize="text-md"
+              className="px-3 pt-2"
               style={{
+                color: isSent ? "#FFFFFF" : color.brandText,
                 textDecorationLine: "underline",
               }}
               selectable
@@ -279,10 +282,11 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
     <View
       className={`flex-row ${isSent ? "justify-end" : "justify-start"} ${type === "product_post" &&
         `${isSent ? "translate-x-2" : "-translate-x-3"}`
-        } px-4 py-1`}
+        } px-gutter`}
+      style={{ paddingTop: 1, paddingBottom: grouped ? 1 : 7 }}
     >
       {type === "product_post" && message.item && (
-        <Pressable className={`p-3 rounded-2xl`} style={{ width: Dimensions.get('window').width * 0.8 }}
+        <Pressable className={`p-3 rounded-group`} style={{ width: Dimensions.get('window').width * 0.8 }}
           onPress={() => {
             if (message.item?.id) {
               router.navigate("ProductDetail", { id: message.item.id });
@@ -291,13 +295,13 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
           }
         >
           <View
-            className={`border p-2 rounded-xl ${isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
+            className={`border p-2 rounded-card ${isDark ? "bg-canvas-dark border-line-dark" : "bg-surface-light border-line-light"
               }`}
           >
             <View className={`flex-row items-center px-0 space-x-2 `}>
               <Image
                 source={{ uri: message.item.image }}
-                className="w-20 h-20 rounded-lg mr-3"
+                className="w-20 h-20 rounded-button mr-3"
               />
               <View className="space-y-2 flex-1">
                 <Text
@@ -306,10 +310,9 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                 >
                   {message.item.name}
                 </Text>
-                <Text
+                <Text tone="body"
                   fontSize="text-sm"
                   fontWeight="font-medium"
-                  className="text-gray-500"
                   numberOfLines={1}
                 >
                   {message.item.location}
@@ -319,11 +322,11 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                     fontSize="text-md"
                     fontWeight="font-bold"
                   >
-                    ₹{message.item.price}
+                    {formatCurrency(message.item.price)}
                   </Text>
                   <Text
                     fontSize="text-sm"
-                    className={`${isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
+                    className={`${isDark ? "text-subtle-dark" : "text-subtle-light"
                       }`}
                   >
                     per day
@@ -339,10 +342,40 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
       {
         type === "text" && (
           <View
-            className={`max-w-[80%] rounded-2xl ${isSent ? "bg-brand-blue" : "bg-[#e6e6e6]"
-              }`}
+            style={{
+              maxWidth: "80%",
+              borderRadius: radius.group,
+              // An incoming bubble at surfaceRaised measures 1.07:1 against the
+              // canvas — no perceptible bubble at all, just floating text. It
+              // now sits on `surface` with an input-line edge, which is the
+              // 3:1 that WCAG 1.4.11 asks of a meaningful boundary.
+              backgroundColor: isSent ? color.brand : color.surface,
+              borderWidth: isSent ? 0 : 1,
+              borderColor: isSent ? "transparent" : color.inputLine,
+              paddingBottom: 6,
+            }}
           >
             {renderMessageContent()}
+            {timestamp ? (
+              // Inline and trailing, not stacked on its own line. Stacked, the
+              // timestamp set the bubble's minimum width and doubled its
+              // height: a two-character message produced a 77pt bubble, and
+              // seven short messages filled 62% of the viewport.
+              <Text
+                fontSize="text-xs"
+                style={{
+                  // Was white at 75% on the brand fill — 3.27:1, under the
+                  // 4.5:1 a 12pt regular string needs. Solid white is 5.01:1,
+                  // the value the design system already records for this pair.
+                  color: isSent ? "#FFFFFF" : color.textDim,
+                  textAlign: "right",
+                  paddingHorizontal: 12,
+                  marginTop: -2,
+                }}
+              >
+                {formatMessageTime(timestamp)}
+              </Text>
+            ) : null}
           </View>
         )
       }
@@ -350,29 +383,35 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
       {
         type === "make_offer" && message.item && (
           <View
-            className={`border p-3 rounded-xl ${isDark ? "bg-black border-[#292929]" : "bg-white border-[#e6e6e6]"
+            className={`border p-3 rounded-card ${isDark ? "bg-canvas-dark border-line-dark" : "bg-surface-light border-line-light"
               }`}
             style={{ width: Dimensions.get('window').width * 0.8 }}
           >
             <View
-              className={`flex-1 w-full border-b ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-                } p-1 rounded-lg `}
+              className={`flex-1 w-full border-b ${isDark ? "border-line-dark" : "border-line-light"
+                } p-1 rounded-button `}
             >
+              {/* All-caps at body size is shouting, and an exclamation mark on
+                  a money event reads as unserious. Apple reserves all-caps for
+                  11–13pt eyebrows; this is one, so it keeps the letterspacing
+                  and drops to the caption step. */}
               <Text
-                fontSize="text-sm"
+                fontSize="text-xs"
                 fontWeight="font-semibold"
-                className="mb-2 uppercase text-left"
+                tone="dim"
+                className="mb-2 text-left"
+                style={{ letterSpacing: 0.6 }}
               >
                 {message?.name !== userDetails?.name
-                  ? "YOU RECEIVED AN OFFER!"
-                  : `YOU MADE AN OFFER!`}
+                  ? "OFFER RECEIVED"
+                  : "OFFER SENT"}
               </Text>
             </View>
 
-            <View className={`flex-row items-center my-2 px-4 w-full `}>
+            <View className={`flex-row items-center my-2 px-gutter w-full `}>
               <Image
                 source={{ uri: message.item.image }}
-                className="w-16 h-16 rounded-lg mr-3"
+                className="w-16 h-16 rounded-button mr-3"
               />
               <View className="space-y-1 flex-1">
                 <Text
@@ -387,7 +426,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                   numberOfLines={1}
                   fontSize="text-sm"
                   fontWeight="font-medium"
-                  className={`${isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                  className={`${isDark ? "text-muted-dark" : "text-muted-light"
                     }`}
                 >
                   {message.item.location}
@@ -397,11 +436,11 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                     fontSize="text-md"
                     fontWeight="font-bold"
                   >
-                    ₹{message.item.price}
+                    {formatCurrency(message.item.price)}
                   </Text>
                   <Text
                     fontSize="text-sm"
-                    className={`${isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
+                    className={`${isDark ? "text-subtle-dark" : "text-subtle-light"
                       }`}
                   >
                     per day
@@ -411,7 +450,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
             </View>
 
             <View
-              className={`justify-between items-center mt-1 border-t  ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
+              className={`justify-between items-center mt-1 border-t  ${isDark ? "border-line-dark" : "border-line-light"
                 } ${message.name === userDetails?.name ||
                   message?.item?.offerStatus !== "pending"
                   ? "border-b py-2"
@@ -420,8 +459,8 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
             >
               <View className="flex-row items-center">
                 <CalendarIcon
-                  size={24}
-                  color={isDark ? "#fff" : "#000"}
+                  size={18}
+                  color={ink.body(isDark)}
                 />
                 <View className="flex-row items-center space-x-2">
                   <Text
@@ -449,38 +488,27 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                 </View>
               </View>
 
+              {/* One money format. This row rendered "₹ 100 p/d" beside a card
+                  header reading "₹100 per day" — different spacing, different
+                  abbreviation, eighty points apart — and neither was grouped,
+                  so a deposit printed as ₹55445. formatCurrency does the
+                  symbol and the Indian digit grouping; the glyph in front of
+                  the number was doing it a second time. */}
               <View className="flex-row items-center my-2">
                 <MaterialIcons
-                  name="currency-rupee"
-                  size={20}
-                  color={isDark ? "#fff" : "#000"}
+                  name="event-available"
+                  size={18}
+                  color={ink.body(isDark)}
                 />
                 <View className="flex-row items-center space-x-2">
-                  <Text
-                    fontSize="text-sm"
-                    fontWeight="font-normal"
-                    className="ml-1"
-                  >
-                    {message.item.price} p/d
+                  <Text fontSize="text-sm" className="ml-1">
+                    {formatCurrency(message.item.price)} per day
                   </Text>
-                  <Text
-                    fontSize="text-sm"
-                    fontWeight="font-normal"
-                    className="ml-1"
-                  >
+                  <Text fontSize="text-sm" tone="dim" className="ml-1">
                     •
                   </Text>
-                  <MaterialIcons
-                    name="currency-rupee"
-                    size={20}
-                    color={isDark ? "#fff" : "#000"}
-                  />
-                  <Text
-                    fontSize="text-sm"
-                    fontWeight="font-normal"
-                    className="ml-1"
-                  >
-                    {message.item.securityDeposit} deposit
+                  <Text fontSize="text-sm" className="ml-1">
+                    {formatCurrency(message.item.securityDeposit)} deposit
                   </Text>
                 </View>
               </View>
@@ -491,15 +519,15 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                 <View className="flex-row items-center justify-between mt-2 w-full">
                   <Button
                     className={`w-[48%] ${isDark
-                      ? "bg-[#1A1A1A] border-[#292929]"
-                      : "bg-white border-[#e6e6e6]"
-                      } border rounded-[12px]`}
+                      ? "bg-surface-dark border-line-dark"
+                      : "bg-surface-light border-line-light"
+                      } border rounded-card`}
                     onPress={handleRejectOffer}
                   >
                     <Text
                       fontSize="text-sm"
                       fontWeight="font-bold"
-                      className="text-[#E50914]"
+                      
                     >
                       Reject
                     </Text>
@@ -513,17 +541,22 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                 </View>
               ) : <View style={{ padding: 8, alignItems: 'center' }}>
 
-                <Text>ACTION PENDING</Text></View> : null}
+                <Text fontSize="text-sm" tone="body">Waiting for a reply</Text></View> : null}
 
+            {/* One status language. Accepted used to be brand purple and
+                rejected semantic red, so the brand doubled as a success colour
+                on one card while a real semantic token was used on the next.
+                The design system ships success/danger for exactly this. */}
             {message.item.offerStatus === "accepted" && (
               <Text
                 fontSize="text-sm"
                 fontWeight="font-semibold"
-                className="text-[#413c9a] mt-2 uppercase text-center p-2"
+                tone="success"
+                className="mt-2 text-center p-2"
               >
                 {message?.name !== userDetails?.name
-                  ? "YOU ACCEPTED THE OFFER"
-                  : `YOUR OFFER WAS ACCEPTED`}
+                  ? "You accepted this offer"
+                  : "Your offer was accepted"}
               </Text>
             )}
 
@@ -531,11 +564,12 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
               <Text
                 fontSize="text-sm"
                 fontWeight="font-semibold"
-                className="text-[#E50914] mt-2 uppercase text-center p-2"
+                tone="danger"
+                className="mt-2 text-center p-2"
               >
                 {message?.name !== userDetails?.name
-                  ? "YOU REJECTED THE OFFER"
-                  : `YOUR OFFER WAS REJECTED`}
+                  ? "You declined this offer"
+                  : "Your offer was declined"}
               </Text>
             )}
           </View>
@@ -545,7 +579,13 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
         !!fullImage && <Modal visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
           <View style={{ position: 'relative', height: Dimensions.get('window').height, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
 
-            <Pressable style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }} onPress={() => setFullImage(null)}>
+            <Pressable
+              style={{ position: "absolute", top: 60, right: 16, zIndex: 1 }}
+              onPress={() => setFullImage(null)}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Close image"
+            >
               <MaterialIcons name="close" size={24} color="white" />
             </Pressable>
             <View style={{ position: 'relative', height: '100%', width: '100%', backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }}>
@@ -554,7 +594,7 @@ export function ChatBubble({ message, isSent, type, id }: ChatBubbleProps) {
                 style={{
                   width: "100%",
                   height: "100%",
-                  borderRadius: 12,
+                  borderRadius: radius.card,
                 }}
                 resizeMode="contain"
               />

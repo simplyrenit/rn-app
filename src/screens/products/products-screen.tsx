@@ -15,8 +15,28 @@ import {
   useTypedNavigation,
 } from "@/lib/types";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { SCREEN_GUTTER, density, ink } from "@/lib/design-tokens";
+import { useDistanceTo } from "@/lib/distance";
+import { formatCurrency } from "@/lib/format";
+import { useTheme } from "@/lib/theme";
+import { toast } from "@/lib/toast";
+import { IOSShareIcon } from "@/icons/share";
+import { CategoryIcon } from "@/lib/category-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
+import { IconButton } from "@/components/core/icon-button";
+import { EmptyState } from "@/components/core/empty-state";
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, Dimensions, Image, ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  Animated,
+  Dimensions,
+  Image,
+  RefreshControl,
+  ScrollView,
+  Share,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import {
   BanknotesIcon,
   ChevronDownIcon,
@@ -24,16 +44,16 @@ import {
   LightBulbIcon,
   ShareIcon,
 } from "react-native-heroicons/outline";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgUri } from "react-native-svg";
-import Toast from "react-native-toast-message";
+
 import { ProductsSkeleton } from "./products-skeleton";
 
 const MAX_CHARS = 150;
 
-const itemWidth = Dimensions.get('window').width * 0.9;
-const itemMargin = wp(5.7);
+// A review card is wide enough to peek the next one, which is what makes a
+// horizontal rail read as scrollable.
+const itemWidth = Dimensions.get("window").width - SCREEN_GUTTER * 2 - 32;
 
 export default function DetailsScreen() {
   const [loading, setLoading] = React.useState(true);
@@ -50,6 +70,50 @@ export default function DetailsScreen() {
   const { id, isFavorite } = route.params;
   const { startChat } = useChat();
   const [startingChat, setStartingChat] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const { color, isDark: isDarkTheme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const scrollY = React.useRef(new Animated.Value(0)).current;
+  // Drives the status-bar style. Light glyphs are correct while the hero (and
+  // its gradient scrim) is under the strip; once the canvas scrim covers it the
+  // strip is app chrome again and follows the theme.
+  const [heroCovered, setHeroCovered] = useState(false);
+  const distanceLabel = useDistanceTo(product?.coordinates);
+
+  /** One inset, one vertical rhythm, one hairline, for every section. */
+  const sectionStyle = {
+    paddingHorizontal: SCREEN_GUTTER,
+    // Was 24 top and bottom. A one-line "About the product" cost 180pt and an
+    // empty reviews section cost 200pt to say there was nothing in it.
+    paddingVertical: density.section,
+    borderBottomWidth: 1,
+    borderBottomColor: color.line,
+  } as const;
+
+  /**
+   * The share affordance in the title row was a TouchableOpacity with no
+   * onPress at all — a dead control that looked alive, on the growth loop that
+   * matters most to a marketplace.
+   */
+  const handleShare = async () => {
+    if (!product) return;
+    const line = `${product.title} — ${formatCurrency(product.rate)} per day on Renit`;
+    try {
+      await Share.share({ message: line, title: product.title });
+    } catch {
+      toast.error("Couldn’t open the share sheet");
+    }
+  };
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchProductDetails();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [id]);
 
   useFocusEffect(
     useCallback(() => {
@@ -59,6 +123,7 @@ export default function DetailsScreen() {
 
   async function fetchProductDetails() {
     setLoading(true);
+    setLoadError(false);
     try {
       const data = await fetchProduct(id);
       setProduct(data);
@@ -68,6 +133,9 @@ export default function DetailsScreen() {
       setReviews(reviews);
       setIsModerated(data?.moderation_labels?.length > 0);
     } catch (error: any) {
+      // Swallowing this left the screen showing the "not available" state for a
+      // listing that exists, with nothing saying the request failed.
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -89,11 +157,8 @@ export default function DetailsScreen() {
       return;
     }
     if (!isAuthenticated) {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Sign in to Renit to message owners",
-        text2: "error",
+      toast.info("Sign in to message owners", {
+        message: "It takes a moment and keeps your conversations in one place.",
       });
       return;
     }
@@ -107,7 +172,7 @@ export default function DetailsScreen() {
           username: userDetails?.name!,
           profilePicture: userDetails?.image
             ? userDetails?.image
-            : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+            : "",
         },
         {
           userId: product?.owner?.username!,
@@ -116,7 +181,7 @@ export default function DetailsScreen() {
             product?.owner?.first_name! + " " + product?.owner?.last_name!,
           profilePicture: product?.owner?.image?.image_url
             ? product?.owner?.image?.image_url
-            : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+            : "",
         },
         {
           title: product?.title!,
@@ -134,11 +199,8 @@ export default function DetailsScreen() {
       }
     } catch (error) {
       console.error("Unable to start chat:", error);
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Unable to start chat. Please try again.",
-        text2: "error",
+      toast.error("Couldn’t start the chat", {
+        message: "Check your connection and try again.",
       });
     } finally {
       setStartingChat(false);
@@ -166,19 +228,89 @@ export default function DetailsScreen() {
     categoryIconUri?.slice(-3)?.toLowerCase() === "svg";
   const displayText = showFullText ? product?.description! : truncatedText;
   if (!product) {
-    return <SafeAreaView className="flex-1 p-4" style={{ backgroundColor: isDark ? '#000' : '#fff' }}>
-      <Text>Product not found</Text>
-    </SafeAreaView>
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: color.canvas }}>
+        <EmptyState
+          variant="error"
+          title="This listing isn’t available"
+          body="It may have been removed, or the link may be out of date."
+          actionLabel="Go back"
+          onAction={() => navigation.goBack()}
+        />
+      </SafeAreaView>
+    );
   }
   return (
-    <SafeAreaView
-      className="flex-1"
-      edges={["top"]}
-      style={{ backgroundColor: isDark ? "#000" : "#fff" }}
-    >
-      <ScrollView
+    <View style={{ flex: 1, backgroundColor: color.canvas }}>
+      {/* The hero bleeds to the top of the display with its controls floating
+          over it. Reserving the top safe-area edge letterboxed the 1:1 image
+          below a dead black band. */}
+      {/* The status bar sits directly on the photograph at scroll 0, and its
+          style follows the app theme rather than the image behind it. In dark
+          mode over a bright product shot the clock and battery rendered white
+          on white and were unreadable; in light mode over a dark shot the same
+          failure occurs inverted.
+
+          A permanent gradient scrim under the status bar makes light glyphs
+          correct over any photograph, and the status bar is pinned to "light"
+          for as long as the hero is the thing underneath it. */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={["rgba(0,0,0,0.55)", "rgba(0,0,0,0.28)", "transparent"]}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: insets.top + 52,
+          zIndex: 2,
+        }}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: insets.top,
+          zIndex: 3,
+          backgroundColor: color.canvas,
+          opacity: scrollY.interpolate({
+            inputRange: [0, 120, 220],
+            outputRange: [0, 0, 1],
+            extrapolate: "clamp",
+          }),
+        }}
+      />
+      <StatusBar style={heroCovered ? (isDark ? "light" : "dark") : "light"} />
+      {/* Animated.ScrollView, not ScrollView: a native-driven Animated.event
+          has to be attached to an animated component or the plain one receives
+          the event object where it expects a handler. */}
+      <Animated.ScrollView
         className="flex-1"
-        contentContainerStyle={{ flexGrow: 1, backgroundColor: isDark ? '#000' : '#fff' }}
+        contentContainerStyle={{ flexGrow: 1, backgroundColor: color.canvas }}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          {
+            useNativeDriver: true,
+            listener: (event: any) => {
+              const covered = event.nativeEvent.contentOffset.y > 170;
+              setHeroCovered((current) =>
+                current === covered ? current : covered
+              );
+            },
+          }
+        )}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={color.textBody}
+            colors={[color.brand]}
+          />
+        }
       >
         <View style={{ width: "100%", aspectRatio: 1, }}>
           <ProductImage
@@ -190,15 +322,12 @@ export default function DetailsScreen() {
         </View>
 
         {isOwner && isModerated && (
-          <View className="px-4">
+          <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
             <ModerationBanner moderationLabels={product?.moderation_labels!} />
           </View>
         )}
 
-        <View
-          className={`px-4 -mt-5 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            }`}
-        >
+        <View style={sectionStyle}>
           <View className="flex flex-row items-center justify-between">
             <Text
               fontSize="text-xl"
@@ -207,133 +336,89 @@ export default function DetailsScreen() {
             >
               {product?.title}
             </Text>
-            <TouchableOpacity>
-              <ShareIcon
-                color={isDark ? "white" : "black"}
-                size={wp("5%")}
-              />
-            </TouchableOpacity>
+            <IconButton
+              onPress={handleShare}
+              accessibilityLabel={`Share ${product?.title ?? "this listing"}`}
+              accessibilityHint="Opens the system share sheet"
+            >
+              <IOSShareIcon color={color.text} size={22} />
+            </IconButton>
           </View>
           <View className="flex flex-row items-center my-2">
-            <Stars
-              rating={product?.average_rating!}
-              isDark={isDark}
-            />
-            <Text
-              fontSize="text-sm"
-              className="text-gray-500 ml-1"
-            >
-              ({product?.review_count})
-            </Text>
+            {product?.review_count ? (
+              <>
+                <Stars rating={product?.average_rating!} isDark={isDarkTheme} />
+                <Text fontSize="text-sm" tone="body" className="ml-1">
+                  ({product?.review_count})
+                </Text>
+              </>
+            ) : (
+              // Five hollow stars read as zero-out-of-five, which damages
+              // exactly the new listings that need the help.
+              <Text fontSize="text-sm" tone="body">
+                Not yet rated
+              </Text>
+            )}
           </View>
         </View>
 
-        {/* Categories */}
-        <View
-          className={`px-2 py-8 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            } flex flex-row items-center  `}
-        >
-          {/* Custom Category Icon */}
-          <View className="flex items-center flex-1" style={{ minWidth: 0 }}>
-            {/* <BookOpenIcon
-              color={isDark ? "white" : "black"}
-              size={wp("5.5%")}
-            /> */}
-            {categoryIconUri ? (
-              categoryIconIsSvg ? (
-              <SvgUri
-                width={wp(5.5)}
-                height={wp(5.5)}
-                uri={categoryIconUri}
-              />
-            ) : (
-              <Image
-                source={{ uri: categoryIconUri }}
-                style={{ width: wp(5.5), height: wp(5.5) }}
-              />
-              )
-            ) : (
+        {/* Specifications.
+            Was three centred columns with a decorative glyph over the VALUE
+            over the LABEL — a monitor for "Laptop / Desktop", a banknote for
+            the deposit, and a lightbulb for "Excellent" condition, which has no
+            relationship to condition at all. People scan for the label to find
+            the value, and these are arbitrary strings rather than a stat grid,
+            so the label leads and the glyphs are gone. */}
+        <View style={sectionStyle}>
+          {[
+            { label: "Category", value: product?.category?.title },
+            {
+              label: "Security deposit",
+              value: formatCurrency(product?.security_deposit),
+            },
+            {
+              label: "Condition",
+              value: product?.condition
+                ? product.condition[0].toUpperCase() + product.condition.slice(1)
+                : null,
+            },
+          ]
+            .filter((row) => Boolean(row.value))
+            .map((row, index) => (
               <View
+                key={row.label}
                 style={{
-                  width: wp(5.5),
-                  height: wp(5.5),
-                  borderRadius: wp(2.75),
-                  backgroundColor: isDark ? "#292929" : "#E6E6E6",
+                  flexDirection: "row",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  paddingTop: index === 0 ? 0 : 6,
                 }}
-              />
-            )}
-            <Text
-              fontWeight="font-bold"
-              className="mt-2"
-              numberOfLines={2}
-              style={{ textAlign: 'center' }}
-            >
-              {product?.category?.title}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
-                }`}
-            >
-              Category
-            </Text>
-          </View>
-
-          <View className="flex items-center flex-1" style={{ minWidth: 0 }}>
-            <BanknotesIcon
-              color={isDark ? "white" : "black"}
-              size={wp("5.5%")}
-            />
-            <Text
-              fontWeight="font-bold"
-              className="mt-2"
-              numberOfLines={2}
-              style={{ textAlign: 'center' }}
-
-            >
-              ₹{Number(product?.security_deposit).toFixed(0)}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
-                }`}
-            >
-              Deposit
-            </Text>
-          </View>
-
-          {/* Custom Icon */}
-          <View className="flex items-center flex-1" style={{ minWidth: 0 }}>
-            <LightBulbIcon
-              color={isDark ? "white" : "black"}
-              size={wp("5.5%")}
-            />
-            <Text
-              fontWeight="font-bold"
-              className="mt-2"
-              numberOfLines={2}
-              style={{ textAlign: 'center' }}
-            >
-              {product?.condition?.[0]?.toUpperCase()}{product?.condition.slice(1)}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-white/50" : "text-black/50"
-                }`}
-            >
-              Condition
-            </Text>
-          </View>
+              >
+                <Text fontSize="text-md" tone="body">
+                  {row.label}
+                </Text>
+                <Text
+                  fontSize="text-md"
+                  fontWeight="font-semibold"
+                  numberOfLines={2}
+                  style={{ flexShrink: 1, textAlign: "right" }}
+                >
+                  {row.value}
+                </Text>
+              </View>
+            ))}
         </View>
 
         {/* About the product */}
-        <View
-          className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            }`}
-        >
+        <View style={sectionStyle}>
           <View className="flex flex-row items-center justify-between">
             <Text
               fontWeight="font-bold"
-              fontSize="text-xl"
+              fontSize="text-lg"
+              accessibilityRole="header"
             >
-              About the product
+              Description
             </Text>
           </View>
           <Text className="mt-2">{displayText}</Text>
@@ -349,12 +434,12 @@ export default function DetailsScreen() {
                 <View className=" mt-1">
                   {showFullText ? (
                     <ChevronUpIcon
-                      color={isDark ? "#fff" : "#000"}
+                      color={ink.text(isDark)}
                       size={16}
                     />
                   ) : (
                     <ChevronDownIcon
-                      color={isDark ? "#fff" : "#000"}
+                      color={ink.text(isDark)}
                       size={16}
                     />
                   )}
@@ -364,19 +449,36 @@ export default function DetailsScreen() {
           )}
         </View>
 
-        <View
-          className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            }`}
-        >
+        <View style={sectionStyle}>
           <View className="flex flex-row items-center justify-between">
             <Text
               fontWeight="font-bold"
-              fontSize="text-xl"
+              fontSize="text-lg"
+              accessibilityRole="header"
             >
-              Product's location
+              Location
             </Text>
           </View>
-          <View className="mt-2">
+          {/* The map was a city-scale tile with an unlabelled blue dot: no
+              address, no neighbourhood, and no distance. "How far away is it?"
+              is the first question a renter asks. */}
+          <View style={{ marginTop: 2, gap: 2 }}>
+            {product?.location ? (
+              <Text fontSize="text-md" tone="hi">
+                {product.location}
+              </Text>
+            ) : null}
+            {distanceLabel ? (
+              <Text fontSize="text-sm" tone="body">
+                {distanceLabel} · exact address shared once a booking is agreed
+              </Text>
+            ) : (
+              <Text fontSize="text-sm" tone="body">
+                Exact address shared once a booking is agreed
+              </Text>
+            )}
+          </View>
+          <View className="mt-3">
             <ProductMap
               latitude={product?.coordinates?.lat!}
               longitude={product?.coordinates?.long!}
@@ -386,37 +488,41 @@ export default function DetailsScreen() {
         </View>
 
         {/* Product reviews` */}
-        <View
-          className={`py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            }`}
-        >
-          <View className="flex flex-row items-center justify-between px-4">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-xl"
-            >
-              Product reviews
-            </Text>
-          </View>
-
-          <View className="flex flex-row items-center mt-1 mb-4 px-4">
+        <View style={[sectionStyle, { paddingHorizontal: 0 }]}>
+          <View className="flex flex-row items-center justify-between" style={{ paddingHorizontal: SCREEN_GUTTER }}>
             <Text
               fontWeight="font-bold"
               fontSize="text-lg"
-              className={`mr-3 ${isDark ? "text-white/70" : "text-black/70"}`}
+              accessibilityRole="header"
             >
-              {product?.average_rating?.toFixed(1)}
+              Reviews
             </Text>
-            <Stars
-              rating={product?.average_rating!}
-              isDark={isDark}
-            />
-            <Text
-              fontSize="text-md"
-              className="text-gray-500 ml-1"
-            >
-              ({product?.review_count})
-            </Text>
+          </View>
+
+          <View
+            className="flex flex-row items-center mt-1"
+            style={{ paddingHorizontal: SCREEN_GUTTER }}
+          >
+            {product?.review_count ? (
+              <>
+                <Text
+                  fontWeight="font-bold"
+                  fontSize="text-lg"
+                  tone="hi"
+                  className="mr-3"
+                >
+                  {product?.average_rating?.toFixed(1)}
+                </Text>
+                <Stars rating={product?.average_rating!} isDark={isDarkTheme} />
+                <Text fontSize="text-md" tone="body" className="ml-1">
+                  ({product?.review_count})
+                </Text>
+              </>
+            ) : (
+              <Text fontSize="text-md" tone="body">
+                No reviews yet — be the first to rent it.
+              </Text>
+            )}
           </View>
 
           <ScrollView
@@ -425,19 +531,13 @@ export default function DetailsScreen() {
             showsHorizontalScrollIndicator={false}
             style={{ width: '100%'}}
             contentContainerStyle={{
-              paddingRight: itemMargin,
+              paddingHorizontal: SCREEN_GUTTER,
+              paddingTop: 12,
+              gap: 14,
             }}
           >
-            {lessReviews.map((item, index) => (
-              <View
-                key={item.user.username}
-                style={{
-                  width: itemWidth,
-                  marginRight:
-                    index === lessReviews.length - 1 ? 0 : itemMargin,
-                  marginLeft: index === 0 ? wp(5.7) : 0,
-                }}
-              >
+            {lessReviews.map((item) => (
+              <View key={item.user.username} style={{ width: itemWidth }}>
                 <ReviewCard
                   reviewText={item.comment}
                   reviewerName={`${item.user.first_name} ${item.user.last_name}`}
@@ -448,34 +548,37 @@ export default function DetailsScreen() {
             ))}
           </ScrollView>
 
-          <View className="px-4">
-            <Button
-              onPress={() =>
-                navigation.navigate("ReviewsScreen", {
-                  reviews,
-                  product: product!,
-                  owner: product!.owner!,
-                })
-              }
-              variant="outline"
-              className="mt-4 border rounded-xl"
-            >
-              <Text fontWeight="font-bold">View all reviews</Text>
-            </Button>
-          </View>
+          {/* A full-width 66pt button offering to show all of nothing. It
+              only exists when there is something to show. */}
+          {reviews.length > 0 ? (
+            <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+              <Button
+                onPress={() =>
+                  navigation.navigate("ReviewsScreen", {
+                    reviews,
+                    product: product!,
+                    owner: product!.owner!,
+                  })
+                }
+                variant="outline"
+                size="compact"
+                className="mt-3"
+              >
+                {`See all ${reviews.length} ${reviews.length === 1 ? "review" : "reviews"}`}
+              </Button>
+            </View>
+          ) : null}
         </View>
 
         {/* About the owner */}
-        <View
-          className={`px-4 py-6 border-b-[1px] ${isDark ? "border-b-[#292929]" : "border-b-[#E6E6E6]"
-            }`}
-        >
+        <View style={sectionStyle}>
           <View className="flex flex-row items-center justify-between">
             <Text
               fontWeight="font-bold"
-              fontSize="text-xl"
+              fontSize="text-lg"
+              accessibilityRole="header"
             >
-              About the owner
+              Owner
             </Text>
           </View>
           <View className="flex flex-row items-center ">
@@ -492,8 +595,8 @@ export default function DetailsScreen() {
 
         {/* Similar products */}
         {similarProducts.length > 0 && (
-          <View className={` py-6 `}>
-            <View className="flex flex-row items-center justify-between mb-4 px-4">
+          <View style={[sectionStyle, { paddingHorizontal: 0, borderBottomWidth: 0 }]}>
+            <View className="flex flex-row items-center justify-between mb-4" style={{ paddingHorizontal: SCREEN_GUTTER }}>
               <Text
                 fontWeight="font-bold"
                 fontSize="text-xl"
@@ -505,15 +608,13 @@ export default function DetailsScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingHorizontal: SCREEN_GUTTER,
+                gap: 14,
+              }}
             >
-              {similarProducts.map((item, index) => (
-                <View
-                  key={item.name}
-                  style={{
-                    marginRight: index === similarProducts.length - 1 ? 16 : 16, // Last item gets 16px marginRight
-                    marginLeft: index === 0 ? 16 : 0, // First item gets 16px marginLeft to match padding
-                  }}
-                >
+              {similarProducts.map((item) => (
+                <View key={item.name} style={{ width: 158 }}>
                   <Card
                     id={`${item.name}`}
                     image={item.cover_image}
@@ -526,61 +627,56 @@ export default function DetailsScreen() {
             </ScrollView>
           </View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
-      {/* Footer */}
+      {/*
+        The bar was h-[10%] with price and CTA both flex-1, so "₹25 per day"
+        occupied half the width and left ~85pt of empty space beside it while
+        the primary action was confined to the other half. The price now takes
+        the room it needs and the CTA takes the rest. The bottom inset is
+        reserved here rather than by a SafeAreaView that declared only its top
+        edge, which left the button 19pt off the screen edge.
+      */}
       <View
-        className={`bottom-0 w-full p-4 border-t ${isDark ? "bg-black border-t-[#292929]" : "bg-white border-t-[#E6E6E6]"
-          } flex-row items-center h-[10%]`}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 16,
+          paddingHorizontal: SCREEN_GUTTER,
+          paddingTop: 12,
+          paddingBottom: 12 + insets.bottom,
+          borderTopWidth: 1,
+          borderTopColor: color.line,
+          backgroundColor: color.surface,
+        }}
       >
-        <View className="flex flex-row items-end flex-1" style={{ alignItems: 'center' }}>
-          <View className="">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-lg"
-              className="mr-1"
-            >
-              ₹{Number(product?.rate).toFixed(0)}
-            </Text>
-          </View>
-          <View>
-            <Text fontSize="text-md">per day</Text>
-          </View>
+        <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+          <Text fontWeight="font-bold" fontSize="text-lg">
+            {formatCurrency(product?.rate)}
+          </Text>
+          <Text fontSize="text-sm" tone="body">
+            per day
+          </Text>
         </View>
-        <View className="flex-1">
+
+        <View style={{ flex: 1 }}>
           {isOwner ? (
-            <TouchableOpacity
-              onPress={handleEditClick}
-              className={`border-2 ${isDark
-                ? "bg-[#0F0F0F] border-[#292929]"
-                : "border-[#e6e6e6] bg-white"
-                } flex items-center justify-center rounded-lg h-full`}
-            >
-              <Text
-                fontWeight="font-bold"
-                fontSize="text-md"
-                className="tracking-wide"
-              >
-                Edit product
-              </Text>
-            </TouchableOpacity>
+            // The owner variant used to be a raw TouchableOpacity at h-full,
+            // so the two states of one bar had different button heights.
+            <Button variant="outline" onPress={handleEditClick}>
+              Edit product
+            </Button>
           ) : (
-            <Button onPress={handleStartChat} >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {(startingChat) ? <ActivityIndicator color='#fff' /> : null}
-                <Text
-                  fontWeight="font-bold"
-                  fontSize="text-md"
-                  allowFontScaling
-                  className="text-white tracking-wide text-center"
-                >
-                  Chat with owner
-                </Text>
-              </View>
+            <Button
+              onPress={handleStartChat}
+              loading={startingChat}
+              disabled={startingChat}
+            >
+              Chat with owner
             </Button>
           )}
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

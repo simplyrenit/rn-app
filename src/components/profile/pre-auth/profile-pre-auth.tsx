@@ -7,8 +7,8 @@ import React, { useRef } from "react";
 import { Platform, TouchableOpacity, View } from "react-native";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { IOS_CLIENT_ID, WEB_CLIENT_ID } from "@/lib/config";
-import { useOAuth } from "@/components/auth/oauth";
-import * as Progress from "react-native-progress";
+import { SignInOptions } from "@/components/auth/sign-in-options";
+import { useTheme } from "@/lib/theme";
 import { ArrowRightStartOnRectangleIcon } from "react-native-heroicons/outline";
 import IconButton from "../post-auth/profile-icon-button";
 import AppearanceSheet from "../post-auth/sheets/AppearanceSheet";
@@ -32,10 +32,16 @@ const StyledTouchableOpacity = styled(TouchableOpacity);
 const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
   const router = useTypedNavigation();
   const { theme, isAuthenticated } = useGlobalContext();
-  const { googleSignIn, loading, appleSignIn } = useOAuth();
   const isDark = theme === "dark";
   const appearanceSheetRef = useRef<BottomSheetModal>(null);
   const currencySheetRef = useRef<BottomSheetModal>(null);
+  const { color } = useTheme();
+
+  const sectionStyle = {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: color.line,
+  } as const;
 
   const handleCurrencyModal = () => {
     currencySheetRef.current?.present();
@@ -47,137 +53,28 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
 
   return (
     <>
-      <View className="px-4 py-4 flex-1 justify-end">
-        <View className="justify-center items-center">
-          <Text> Enjoy Renit to the fullest...</Text>
+      <View className="px-gutter py-4 flex-1 justify-end">
+        {/* This is the moment a customer decides to commit an account to
+            you. It used to read " Enjoy Renit to the fullest..." — default
+            size, no weight, a trailing ellipsis and a literal leading space. */}
+        <View style={{ gap: 6, marginBottom: 24 }}>
+          <Text fontSize="text-2xl" fontWeight="font-bold">
+            Rent what you need, from people near you.
+          </Text>
+          <Text fontSize="text-md" tone="body">
+            Sign in to save listings, message owners and track your rentals.
+          </Text>
         </View>
-        <StyledView className=" gap-3 justify-center py-5">
-          <Button
-            onPress={googleSignIn}
-            className={`flex-row justify-center gap-1 items-center ${isDark
-              ? "bg-[#1A1A1A] border-[#292929]"
-              : "bg-white border-[#e6e6e6]"
-              } border rounded-lg py-3 px-6 mx-2`}
-          >
-            {loading ? (
-              <Progress.CircleSnail
-                size={22}
-                color={isDark ? "white" : "black"}
-              />
-            ) : (
-              <>
-                <View>
-                  <StyledImage
-                    className="h-6 w-6"
-                    source={require("../../../../assets/auth/google-icon.png")}
-                  />
-                </View>
-                <View>
-                  <Text
-                    fontWeight="font-bold"
-                    className="ml-1 -translate-y-0.5"
-                  >
-                    Continue with Google
-                  </Text>
-                </View>
-              </>
-            )}
-          </Button>
 
-          {Platform.OS === "ios" && (
-            <Button
-              onPress={appleSignIn}
-              className={`flex-row justify-center gap-1 items-center ${isDark
-                ? "bg-[#1A1A1A] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
-                } border rounded-lg py-3 px-6 mx-2`}
-            >
-              {loading ? (
-                <Progress.CircleSnail
-                  size={22}
-                  color={isDark ? "white" : "black"}
-                />
-              ) : (
-                <>
-                  <View>
-                    <StyledImage
-                      className="h-6 w-6"
-                      source={
-                        isDarkMode
-                          ? require("../../../../assets/auth/apple-icon.png")
-                          : require("../../../../assets/auth/apple-icon-dark.png")
-                      }
-                    />
-                  </View>
-                  <View>
-                    <Text
-                      fontWeight="font-bold"
-                      className="ml-1"
-                    >
-                      Continue with Apple
-                    </Text>
-                  </View>
-                </>
-              )}
-            </Button>
-          )}
-
-          <Button
-            onPress={() => router.navigate("Email")}
-            className={`flex-row justify-center gap-1 items-center ${isDark
-              ? "bg-[#1A1A1A] border-[#292929]"
-              : "bg-white border-[#e6e6e6]"
-              } border rounded-lg py-3 px-6 mx-2`}
-          >
-            <View>
-              <StyledImage
-                className="h-6 w-6"
-                source={require("../../../../assets/auth/mail-icon.png")}
-                contentFit="contain"
-              />
-            </View>
-            <View>
-              <Text
-                fontWeight="font-bold"
-                className="ml-1 -translate-y-0.5"
-              >
-                {" "}
-                Continue with Email
-              </Text>
-            </View>
-          </Button>
-        </StyledView>
+        <SignInOptions />
         {/* App */}
         {router.getState().routes[router.getState().index].name ===
           "Profile" && (
             <>
               <View
-                className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-                  }`}
+                style={sectionStyle}
               >
-                <View className="px-5">
-                  <Text
-                    fontSize="text-base"
-                    fontWeight="font-bold"
-                    className="pb-3"
-                  >
-                    Account
-                  </Text>
-                  <IconButton
-                    onPress={() => {
-                      router.navigate("myProducts");
-                    }}
-                    leftIcon="CubeIcon"
-                    text="My products"
-                    isDarkMode={isDarkMode}
-                  />
-                </View>
-              </View>
-              <View
-                className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-                  }`}
-              >
-                <View className="px-5">
+                <View className="px-gutter">
                   <Text
                     fontSize="text-base"
                     fontWeight="font-bold"
@@ -187,8 +84,8 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
                   </Text>
                   <IconButton
                     onPress={handleAppeareanceModal}
-                    leftIcon="DevicePhoneMobileIcon"
-                    text="Switch theme"
+                    leftIcon="MoonIcon"
+                    text="Appearance"
                     isDarkMode={isDarkMode}
                   />
                   {/* <IconButton
@@ -202,10 +99,9 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
 
               {/* Support */}
               <View
-                className={`py-4 border-b-[0.2px] ${isDark ? "border-[#292929]" : "border-[#e6e6e6]"
-                  }`}
+                style={sectionStyle}
               >
-                <View className="px-5">
+                <View className="px-gutter">
                   <Text
                     fontSize="text-base"
                     fontWeight="font-bold"
@@ -225,7 +121,7 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
                     onPress={() => {
                       router.navigate("ReportAProblem");
                     }}
-                    leftIcon="FlagIcon"
+                    leftIcon="ExclamationTriangleIcon"
                     text="Report a problem"
                     isDarkMode={isDarkMode}
                   />
@@ -233,8 +129,8 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
                     onPress={() => {
                       router.navigate("feedback");
                     }}
-                    leftIcon="BriefcaseIcon"
-                    text="Feedback & review"
+                    leftIcon="ChatBubbleLeftEllipsisIcon"
+                    text="Send feedback"
                     isDarkMode={isDarkMode}
                   />
                   <IconButton
@@ -261,8 +157,8 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
                         router.navigate("unavailabilityFormCategories");
                       }
                     }}
-                    leftIcon="DocumentIcon"
-                    text="Unavailability form"
+                    leftIcon="InboxArrowDownIcon"
+                    text="Request an item"
                     isDarkMode={isDarkMode}
                   />
                 </View>
@@ -270,7 +166,7 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
 
               {/* <Legal */}
               <View className="py-4 mb-16">
-                <View className="px-5">
+                <View className="px-gutter">
                   <Text
                     fontSize="text-base"
                     fontWeight="font-bold"
@@ -290,7 +186,7 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
                     onPress={() => {
                       router.navigate("Privacy");
                     }}
-                    leftIcon="ClipboardDocumentIcon"
+                    leftIcon="LockClosedIcon"
                     text="Privacy policy"
                     isDarkMode={isDarkMode}
                   />

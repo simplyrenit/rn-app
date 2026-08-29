@@ -1,35 +1,16 @@
-import useSaved from "@/backend/useSaved";
-import { useGlobalContext } from "@/context/global-context";
+import { FavouriteButton } from "@/components/core/favourite-button";
+import { IconButton } from "@/components/core/icon-button";
+import { Text } from "@/components/core/text";
+import { radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
+import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
-import Lottie from "lottie-react-native";
-import { styled } from "nativewind";
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Dimensions,
-  Modal,
-  Pressable,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import {
-  ArrowLeftIcon,
-  HeartIcon as HI,
-  PhotoIcon,
-} from "react-native-heroicons/outline";
 import Carousel from "pinar";
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
-import Toast from "react-native-toast-message";
+import React, { useState } from "react";
+import { Dimensions, Modal, Pressable, View } from "react-native";
+import { ArrowLeftIcon, PhotoIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useMutation, useQueryClient } from "react-query";
-import { MaterialIcons } from "@expo/vector-icons";
-
-const StyledView = styled(View);
-const StyledButton = styled(TouchableOpacity);
 
 interface Props {
   images?: string[];
@@ -40,233 +21,204 @@ interface Props {
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-// const HEART_ICON_SIZE = 24;
-const HEART_ICON_SIZE = 17;
 
-export function ProductImage({ images, coverImage, mode, name, isFavorite: iF }: Props) {
-  const { theme, authTokens, isAuthenticated } = useGlobalContext();
-  const { saveFavorite, deleteFavorite } = useSaved();
-  const isDarkMode = theme === "dark";
+export function ProductImage({
+  images,
+  coverImage,
+  mode,
+  name,
+  isFavorite,
+}: Props) {
+  const { color } = useTheme();
   const navigation = useNavigation();
   const safeAreaInsets = useSafeAreaInsets();
-  const [isFavorite, setIsFavorite] = useState(iF ?? false);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [failedImages, setFailedImages] = useState<string[]>([]);
-  const lottieRef = useRef<Lottie>(null);
-  const queryClient = useQueryClient();
-  const [fullImage, setFullImage] = useState<string | null>(null)
+  const [fullImage, setFullImage] = useState<string | null>(null);
+  const [photoIndex, setPhotoIndex] = useState(0);
+
   const galleryImages = Array.from(
     new Set([coverImage, ...(images ?? [])].filter(Boolean))
-  )
-    .filter((image) => !failedImages.includes(image as string)) as string[];
-
-
-  const saveFavoriteMutation = useMutation(saveFavorite, {
-    onSuccess: () => {
-      queryClient.invalidateQueries("favorites");
-    },
-  });
-
-  const deleteFavoriteMutation = useMutation(deleteFavorite, {
-    onSuccess: () => {
-      queryClient.invalidateQueries("favorites");
-    },
-  });
-
-  useEffect(() => {
-    if (isFavorite) lottieRef.current?.play();
-  }, [isFavorite]);
-
-  const handleLike = async () => {
-    if (!isAuthenticated) {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Sign in to Renit to favorite products",
-        text2: "error",
-      });
-      return;
-    }
-
-    try {
-      if (isFavorite) {
-        await deleteFavoriteMutation.mutateAsync(name!);
-      } else {
-        await saveFavoriteMutation.mutateAsync(name!);
-      }
-      setIsFavorite(!isFavorite);
-    } catch (error) {
-      console.error("Error handling favorite:", error);
-    }
-  };
+  ).filter((image) => !failedImages.includes(image as string)) as string[];
 
   return (
-    <StyledView className={`h-full w-full p-6 px-4 ${isDarkMode ? "bg-black" : ""}`}>
-      <StyledView className="flex-1 relative items-center justify-center mt-3">
-        {mode === "post" ? (
-          ""
-        ) : (
-          <StyledView className="flex absolute top-0 left-0 z-10 w-full flex-row items-center justify-between">
-            <StyledButton
-              style={styles.Shadow}
-              onPress={() => navigation.goBack()}
-              className={`p-3
-${isDarkMode ? "bg-[#1A1A1A] border-[#4e4e4e]" : "bg-white border-[#f5f5f5]"}
-                    rounded-full translate-y-2`}
-            >
-              <ArrowLeftIcon
-                size={17}
-                color={isDarkMode ? "#FFF" : "#000"}
-              />
-            </StyledButton>
-
-            <StyledButton
-              style={styles.Shadow}
-              onPress={handleLike}
-              className={`p-2 rounded-full ${isDarkMode
-                ? "bg-[#1A1A1A] border-[#4e4e4e]"
-                : "bg-white border-[#f5f5f5]"
-                } shadow-inner translate-y-2`}
-            >
-              <HI
-                size={24}
-                color={isFavorite ? "" : "white"}
-                fill={isFavorite ? "#FF3B30" : "#1E1E1E70"}
-                style={{ opacity: isFavorite ? 0 : 1, }}
-              />
-              {isFavorite && (
-                <View
-                  className="absolute top-2 bg-transparent left-2"
-                  style={{ width: HEART_ICON_SIZE, height: HEART_ICON_SIZE }}
-                >
-                  <Lottie
-                    ref={lottieRef}
-                    // source={require("./like.json")}
-                    source={require("../core/like.json")}
-                    style={[
-                      styles.lottie,
-                      {
-                        width: 24,
-                        height: 24,
-                      },
-                    ]}
-                    autoPlay={false}
-                    loop={false}
-                    resizeMode="cover"
-                  />
-                  <Pressable
-                    onPress={handleLike}
-                    style={styles.invisibleFloatingBTN}
-                  />
-                </View>
-              )}
-            </StyledButton>
-          </StyledView>
-        )}
-        {galleryImages.length ? (
-          <Carousel
-            style={{
-              height: SCREEN_WIDTH - hp("10%"),
-              width: SCREEN_WIDTH + wp("10%"),
-            }}
-            renderPrev={() => <></>}
-            renderNext={() => <></>}
-            renderDot={() => (
-              <View className="w-2 h-2 bg-gray-100 opacity-20 rounded-lg mx-0.5 " />
-            )}
-            renderActiveDot={() => (
-              <View className="w-2 h-2 bg-white rounded-lg mx-0.5  " />
-            )}
-          >
-            {galleryImages.map((image) => (
-              <Pressable
-                key={image}
-                style={{ flex: 1 }}
-                onPress={() => setFullImage(image)}
-              >
-                <Image
-                  source={{ uri: image }}
-                  style={{ width: "100%", height: "100%" }}
-                  contentFit="fill"
-                  onError={() =>
-                    setFailedImages((current) =>
-                      current.includes(image) ? current : [...current, image]
-                    )
-                  }
-                />
-              </Pressable>
-            ))}
-          </Carousel>
-        ) : (
-          <View
-            className={`h-full w-full items-center justify-center rounded-xl ${
-              isDarkMode ? "bg-[#1A1A1A]" : "bg-[#F5F5F5]"
-            }`}
-          >
-            <PhotoIcon size={52} color={isDarkMode ? "#FFFFFF80" : "#00000040"} />
-          </View>
-        )}
-      </StyledView>
-      {!!fullImage && <Modal visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
-        <View style={{ position: 'relative', height: Dimensions.get('window').height, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
-
-          <View style={{ position: 'relative', height: '100%', width: '100%', backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }}>
-
-            <Image source={{ uri: fullImage }}
+    <View style={{ width: "100%", height: "100%", backgroundColor: color.canvas }}>
+      {galleryImages.length ? (
+        <Carousel
+          style={{ height: "100%", width: SCREEN_WIDTH }}
+          renderPrev={() => <></>}
+          renderNext={() => <></>}
+          onIndexChanged={({ index }) => setPhotoIndex(index)}
+          // A page indicator that draws one dot for one photo is noise, not an
+          // affordance — and on a light photograph the single 6pt white dot was
+          // invisible anyway. With one image there is nothing to indicate.
+          showsDots={galleryImages.length > 1}
+          // Both dots used to sit unscrimmed — inactive at bg-gray-100/20,
+          // active plain white — so on a light product photo neither was
+          // visible and carousel position was simply unavailable.
+          renderDot={() => (
+            <View
               style={{
-                width: "100%",
-                height: "100%",
-                borderRadius: 12,
+                width: 7,
+                height: 7,
+                borderRadius: radius.full,
+                marginHorizontal: 3,
+                backgroundColor: "rgba(255,255,255,0.45)",
+                borderWidth: 0.5,
+                borderColor: "rgba(10,10,15,0.35)",
               }}
-              contentFit="contain" />
-          </View>
-          {/* Rendered after the image, not just given a zIndex. This sits over a
-              full-screen sibling, and relying on zIndex alone to receive touches
-              is unreliable on Android; sibling order works on both platforms. */}
-          <Pressable
-            // A flat top: 10 put this under the status bar and the notch, where
-            // it was cramped against the clock and did not reliably take a tap.
-            // The modal covers the whole screen, so the inset has to be added
-            // here; it is 0 on devices without one, which keeps Android as it was.
-            style={{
-              position: "absolute",
-              top: safeAreaInsets.top + 10,
-              right: safeAreaInsets.right + 10,
-              zIndex: 1,
-            }}
-            onPress={() => setFullImage(null)}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            accessibilityRole="button"
-            accessibilityLabel="Close image"
-          >
-            <MaterialIcons name="close" size={24} color="white" />
-          </Pressable>
+            />
+          )}
+          renderActiveDot={() => (
+            <View
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: radius.full,
+                marginHorizontal: 3,
+                backgroundColor: "#FFFFFF",
+                borderWidth: 0.5,
+                borderColor: "rgba(10,10,15,0.35)",
+              }}
+            />
+          )}
+        >
+          {galleryImages.map((image, index) => (
+            <Pressable
+              key={image}
+              style={{ flex: 1 }}
+              accessibilityRole="imagebutton"
+              accessibilityLabel={`Photo ${index + 1} of ${galleryImages.length}. Tap to view full screen.`}
+              onPress={() => setFullImage(image)}
+            >
+              <Image
+                source={{ uri: image }}
+                style={{ width: "100%", height: "100%" }}
+                contentFit="cover"
+                transition={150}
+                onError={() =>
+                  setFailedImages((current) =>
+                    current.includes(image) ? current : [...current, image]
+                  )
+                }
+              />
+            </Pressable>
+          ))}
+        </Carousel>
+      ) : (
+        <View
+          style={{
+            height: "100%",
+            width: "100%",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: color.skeleton,
+          }}
+        >
+          <PhotoIcon size={48} color={color.textDim} />
         </View>
-      </Modal>}
-    </StyledView>
+      )}
+
+      {mode !== "post" && (
+        // Floats over the hero, clear of the status bar. The image now bleeds to
+        // the top of the display instead of starting below a dead black band.
+        <View
+          pointerEvents="box-none"
+          style={{
+            position: "absolute",
+            top: safeAreaInsets.top + 8,
+            left: 12,
+            right: 12,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <IconButton
+            size={40}
+            scrim
+            onPress={() => navigation.goBack()}
+            accessibilityLabel="Go back"
+          >
+            <ArrowLeftIcon size={20} color="#FFFFFF" />
+          </IconButton>
+
+          {name ? (
+            <FavouriteButton
+              id={name}
+              isFavorite={Boolean(isFavorite)}
+              onPhoto
+              photoSize={40}
+            />
+          ) : null}
+        </View>
+      )}
+
+      {/* How many photos there are, which the customer previously had no way
+          to know. Scrimmed, so it holds over any photograph. */}
+      {mode !== "post" && galleryImages.length > 1 ? (
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            bottom: 14,
+            right: 14,
+            paddingHorizontal: 9,
+            paddingVertical: 4,
+            borderRadius: radius.full,
+            backgroundColor: "rgba(10,10,15,0.62)",
+          }}
+        >
+          <Text fontSize="text-xs" fontWeight="font-medium" style={{ color: "#FFFFFF" }}>
+            {photoIndex + 1} / {galleryImages.length}
+          </Text>
+        </View>
+      ) : null}
+
+      {!!fullImage && (
+        <Modal
+          visible={!!fullImage}
+          transparent
+          onRequestClose={() => setFullImage(null)}
+        >
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "rgba(0,0,0,0.92)",
+            }}
+          >
+            <Image
+              source={{ uri: fullImage }}
+              style={{ width: "100%", height: "100%" }}
+              contentFit="contain"
+            />
+            {/* Rendered after the image, not just given a zIndex. This sits over a
+                full-screen sibling, and relying on zIndex alone to receive touches
+                is unreliable on Android; sibling order works on both platforms. */}
+            <View
+              style={{
+                position: "absolute",
+                // A flat top: 10 put this under the status bar and the notch,
+                // where it was cramped against the clock and did not reliably
+                // take a tap. The modal covers the whole screen, so the inset
+                // has to be added here; it is 0 on devices without one.
+                top: safeAreaInsets.top + 8,
+                right: safeAreaInsets.right + 12,
+              }}
+            >
+              <IconButton
+                size={40}
+                scrim
+                onPress={() => setFullImage(null)}
+                accessibilityLabel="Close image"
+              >
+                <MaterialIcons name="close" size={22} color="#FFFFFF" />
+              </IconButton>
+            </View>
+          </View>
+        </Modal>
+      )}
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  Shadow: {
-    shadowColor: "#808080",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  lottie: {
-    resizeMode: "cover",
-    transform: [{ scale: 2.3 }],
-  },
-  invisibleFloatingBTN: {
-    width: 20,
-    height: 20,
-    position: "absolute",
-    left: 6,
-    top: 5,
-  },
-});

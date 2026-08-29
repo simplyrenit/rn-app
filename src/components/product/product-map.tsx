@@ -3,6 +3,7 @@ import { View } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
 import { Text } from "@/components/core";
+import { ink, colors, radius } from "@/lib/design-tokens";
 
 interface ProductMapProps {
   latitude?: number;
@@ -26,12 +27,12 @@ export const ProductMap: React.FC<ProductMapProps> = ({
         style={{
           flex: 1,
           height: 200,
-          borderRadius: 20,
+          borderRadius: radius.group,
           justifyContent: "center",
           alignItems: "center",
         }}
       >
-        <Text className={isDarkMode ? "text-white/50" : "text-black/50"}>
+        <Text className={isDarkMode ? "text-subtle-dark" : "text-subtle-light"}>
           Location unavailable
         </Text>
       </View>
@@ -40,7 +41,7 @@ export const ProductMap: React.FC<ProductMapProps> = ({
 
   return (
     <View
-      style={{ flex: 1, height: 200, overflow: "hidden", borderRadius: 20 }}
+      style={{ flex: 1, height: 200, overflow: "hidden", borderRadius: radius.group }}
     >
       <MapView
         provider={PROVIDER_GOOGLE}
@@ -66,9 +67,9 @@ export const ProductMap: React.FC<ProductMapProps> = ({
             style={{
               height: 30,
               width: 30,
-              borderRadius: 15,
-              backgroundColor: "#635BE8",
-              borderColor: isDarkMode ? "#000" : "#fff",
+              borderRadius: radius.group,
+              backgroundColor: colors.dark.brand,
+              borderColor: ink.canvas(isDarkMode),
               borderWidth: 5,
               justifyContent: "center",
               alignItems: "center",
@@ -78,8 +79,8 @@ export const ProductMap: React.FC<ProductMapProps> = ({
               style={{
                 height: 15,
                 width: 15,
-                borderRadius: 7.5,
-                backgroundColor: "#635BE8",
+                borderRadius: radius.full,
+                backgroundColor: colors.dark.brand,
               }}
             />
           </View>

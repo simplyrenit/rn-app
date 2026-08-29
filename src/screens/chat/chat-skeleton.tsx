@@ -2,14 +2,15 @@ import { Container, StaticContainer } from "@/components/core";
 import Skeleton from "@/components/core/skeleton";
 import { View } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
+import { radius } from "@/lib/design-tokens";
 
 export function ChatSkeleton() {
   return (
     <StaticContainer>
-      <View className="flex-row items-center mb-4 pt-4 gap-4">
+      <View className="flex-row items-center mb-4 pt-4 space-x-4">
         <Skeleton style={{
           width: 16,
-          borderRadius: 8,
+          borderRadius: radius.button,
           height: 10,
         }} />
         <Skeleton height={50} width={50} borderRadius={50} />

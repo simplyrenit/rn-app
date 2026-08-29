@@ -10,6 +10,7 @@ import Lottie from "lottie-react-native";
 import { styled } from "nativewind";
 import React, { useRef, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ink } from "@/lib/design-tokens";
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -59,15 +60,15 @@ export default function ChooseCoverImage() {
 
   const renderImages = () => {
     return images.map((image, index) => (
-      <StyledTouchableOpacity
+      <StyledTouchableOpacity accessibilityRole="button" accessibilityLabel="Confirm"
         key={index}
         onPress={() => selectImage(image)}
-        className={`w-40 h-40 mb-2.5 mr-3 relative rounded-lg overflow-hidden ${selectedImage === image ? "border-2 border-[#435be8]" : ""
+        className={`w-40 h-40 mb-2.5 mr-3 relative rounded-button overflow-hidden ${selectedImage === image ? "border-2 border-brand" : ""
           }`}
       >
         <Image source={{ uri: image }} className="w-40 h-40" />
         {selectedImage === image && (
-          <StyledView className="absolute inset-0 bg-[#435be880] h-40 w-40 justify-center items-center">
+          <StyledView className="absolute inset-0 bg-brand h-40 w-40 justify-center items-center">
             {/* <CheckIcon size={24} color="#FFFFFF" /> */}
             <Lottie
               source={require("./tick.json")}
@@ -85,14 +86,14 @@ export default function ChooseCoverImage() {
   return (
     <StaticContainer width={100}>
       <StyledView className="px-3 flex-row items-center">
-        <StyledTouchableOpacity
+        <StyledTouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => navigation.goBack()}
           className="w-[10%]"
         >
-          <ArrowLeftIcon size={24} color={isDark ? "#ffffff" : "#000000"} />
+          <ArrowLeftIcon size={24} color={ink.text(isDark)} />
         </StyledTouchableOpacity>
         <StyledView className="w-[80%]">
-          <PostProductHeader heading="Choose a cover image" percentage={50} />
+          <PostProductHeader heading="Choose a cover image" step={5} />
         </StyledView>
         <StyledView className="w-[10%]" />
       </StyledView>
@@ -130,20 +131,20 @@ export default function ChooseCoverImage() {
             <>
               <Image
                 source={{ uri: croppedImage.image }}
-                className="w-44 h-44 self-center rounded-lg mb-2.5"
+                className="w-44 h-44 self-center rounded-button mb-2.5"
               />
             </>
           ) : (
             <View
-              className="w-full h-48 rounded-lg mb-2.5 justify-center items-center"
+              className="w-full h-48 rounded-button mb-2.5 justify-center items-center"
               style={{
                 borderStyle: "dashed",
-                borderColor: "#C4C4C4",
+                borderColor: ink.line(false),
                 borderWidth: 1,
               }}
             >
               <Text
-                className={`${isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"
+                className={`${isDark ? "text-subtle-dark" : "text-subtle-light"
                   }`}
               >
                 Select an image to crop
@@ -153,11 +154,11 @@ export default function ChooseCoverImage() {
           <View className="flex-row items-center space-x-2">
             <InformationCircleIcon
               size={16}
-              color={isDark ? "#FFFFFF80" : "#00000080"}
+              color={ink.dim(isDark)}
             />
             <Text
               fontSize="text-sm"
-              className={`${isDark ? "text-[#FFFFFF80]" : "text-[#00000080]"}`}
+              className={`${isDark ? "text-subtle-dark" : "text-subtle-light"}`}
             >
               Drag image to crop to your liking
             </Text>
@@ -171,16 +172,15 @@ export default function ChooseCoverImage() {
           className="w-full items-center justify-between "
         >
           <View className="flex-row items-center justify-between">
-            <Text
+            <Text tone="body"
               fontWeight="font-bold"
-              className={`mr-1 ${croppedImage ? "text-white" : "text-gray-500"
-                }`}
+              style={{ color: "#FFFFFF" }}
             >
               Next
             </Text>
             <ChevronRightIcon
               size={16}
-              color={croppedImage ? "#ffffff" : "#888888"}
+              color={croppedImage ? "#FFFFFF" : ink.dim(false)}
             />
           </View>
         </Button>

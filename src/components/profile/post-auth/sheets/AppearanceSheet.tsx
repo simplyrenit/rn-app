@@ -1,86 +1,75 @@
 import { Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
+import { selectionFeedback } from "@/lib/haptics";
+import { useTheme } from "@/lib/theme";
 import React from "react";
-import { View, TouchableOpacity } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { CheckIcon } from "react-native-heroicons/solid";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 
 interface AppearanceSheetProps {
   bottomSheetModalRef: React.RefObject<any>;
   isDarkMode: boolean;
 }
 
+const OPTIONS = [
+  { value: "device", label: "Match my device" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+] as const;
+
 const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
   bottomSheetModalRef,
   isDarkMode,
 }) => {
-  const { theme, themePreference, setTheme } = useGlobalContext();
-
-  // Debugging: Log the current themePreference
+  const { themePreference, setTheme } = useGlobalContext();
+  const { color } = useTheme();
 
   return (
     <CustomBottomSheetModal
       ref={bottomSheetModalRef}
-      snapPoints={["30%", "50%"]}
+      snapPoints={["34%"]}
       isDark={isDarkMode}
     >
-      <View className="flex items-center my-4">
+      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: 24 }}>
         <Text
-          fontSize="text-xl"
+          accessibilityRole="header"
+          fontSize="text-lg"
           fontWeight="font-bold"
+          style={{ marginBottom: 12 }}
         >
           Appearance
         </Text>
-      </View>
-      <View className="p-4 gap-2">
-        <TouchableOpacity
-          className="flex-row justify-between items-center"
-          style={{ height: 36}}
-          onPress={() => {
-            setTheme("device");
-          }}
-        >
-          <Text fontSize="text-base">Use my device settings</Text>
-          {themePreference === "device" && (
-            <CheckIcon
-              size={24}
-              color="#635BE8"
-            />
-          )}
-        </TouchableOpacity>
 
-        <TouchableOpacity
-          className="flex-row justify-between items-center"
-          style={{ height: 36}}
-          onPress={() => {
-            setTheme("dark");
-          }}
-        >
-          <Text fontSize="text-base">Dark mode</Text>
-          {themePreference === "dark" && (
-            <CheckIcon
-              size={24}
-              color="#635BE8"
-            />
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="flex-row justify-between items-center"
-          style={{ height: 36}}
-          onPress={() => {
-            setTheme("light");
-          }}
-        >
-          <Text fontSize="text-base">Light mode</Text>
-          {themePreference === "light" && (
-            <CheckIcon
-              size={24}
-              color="#635BE8"
-            />
-          )}
-        </TouchableOpacity>
+        {OPTIONS.map((option, index) => {
+          const selected = themePreference === option.value;
+          return (
+            <TouchableOpacity
+              key={option.value}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
+              accessibilityLabel={option.label}
+              // Rows were 36pt tall and 33pt apart — the tightest targets in
+              // the app, in a sheet whose whole job is three choices.
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                minHeight: MIN_TOUCH_TARGET + 8,
+                borderBottomWidth: index === OPTIONS.length - 1 ? 0 : 1,
+                borderBottomColor: color.line,
+              }}
+              onPress={() => {
+                selectionFeedback();
+                setTheme(option.value);
+              }}
+            >
+              <Text fontSize="text-md">{option.label}</Text>
+              {selected && <CheckIcon size={20} color={color.brandText} />}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </CustomBottomSheetModal>
   );

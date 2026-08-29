@@ -1,4 +1,4 @@
-import { StaticContainer, Text } from "@/components/core";
+import { PinnedHeader, StaticContainer, Text } from "@/components/core";
 import Skeleton from "@/components/core/skeleton";
 import ProfilePostAuth from "@/components/profile/post-auth/profile-post-auth";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
@@ -8,6 +8,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { BellIcon } from "react-native-heroicons/outline";
+import { ink } from "@/lib/design-tokens";
 
 type ProfileScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -32,30 +33,34 @@ export default function Profile() {
 
   return (
     <StaticContainer width={100}>
-      <View className="px-5 pb-2 mt-4 w-full">
+      {/* A real header material, not a bare opaque block: rows scrolling under
+          it were being cut through the middle of the letterforms, leaving two
+          orphaned letter-tops hanging below the title. */}
+      <PinnedHeader>
         <View className="flex-row justify-between items-center">
           <View>
             <Text
+              accessibilityRole="header"
               fontWeight="font-bold"
-              fontSize="text-2xl"
+              fontSize="text-xl"
             >
               My Profile
             </Text>
           </View>
           {authTokens && isAuthenticated && (
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Notifications"
               onPress={() => {
                 navigation.navigate("notification");
               }}
             >
               <BellIcon
                 size={24}
-                color={isDarkMode ? "#FFF" : "#000"}
+                color={ink.text(isDarkMode)}
               />
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </PinnedHeader>
 
       {loading ? <View className="p-6">
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', width: '100%' }}>
@@ -71,14 +76,14 @@ export default function Profile() {
           <View>
           </View>
         </View>
-        <View className="gap-4 flex-row items-center mt-4">
+        <View className="space-x-4 flex-row items-center mt-4">
           <Skeleton height={16} width={16} />
           <Skeleton height={12} width={'80%'} />
           <Skeleton height={8} width={16} />
         </View>
         <Skeleton height={12} width={80} className="mt-12" />
         {Array.from({ length: 8 }).map((_, i) => (
-          <View className="gap-4 flex-row items-center mt-4" key={i}>
+          <View className="space-x-4 flex-row items-center mt-4" key={i}>
             <Skeleton height={16} width={16} />
             <Skeleton height={12} width={`${80 - Math.floor(Math.random() * 41)}%`} />
             <Skeleton height={8} width={16} />

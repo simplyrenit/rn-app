@@ -34,6 +34,7 @@ import axios from "axios";
 import * as Location from "expo-location";
 import { useCallback, useEffect } from "react";
 import { Platform } from "react-native";
+import { ink, colors, radius } from "@/lib/design-tokens";
 
 interface Coordinates {
   lat: number | undefined;
@@ -194,25 +195,25 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
   return (
     <NonScrollableContainer>
       <View
-        className="flex-row items-center justify-between px-5 "
+        className="flex-row items-center justify-between px-gutter "
         style={{ paddingVertical: wp("5%") }}
       >
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => router.goBack()}
           className="flex-1 items-start w-[10%]"
         >
-          <ArrowLeftIcon size={26} color={isDarkMode ? "#FFF" : "#000"} />
+          <ArrowLeftIcon size={26} color={ink.text(isDarkMode)} />
         </TouchableOpacity>
         <View className="items-center justify-center w-[80%]">
           <Text fontSize="text-xl" fontWeight="font-bold">
-            Unavailability Form
+            Request an item
           </Text>
         </View>
 
         <View className="w-[10%]"></View>
       </View>
 
-      <KeyboardAwareScrollView className="px-5 py-5 flex-1">
+      <KeyboardAwareScrollView className="px-gutter py-5 flex-1">
         <View className="space-y-2 mb-5">
           <View className="pb-2">
             <Text fontSize="text-md" fontWeight="font-bold">
@@ -221,16 +222,16 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
           </View>
 
           <TouchableOpacity
-            className={`h-[50px] rounded-[12px] w-full ${
+            className={`h-[50px] rounded-card w-full ${
               isDarkMode
-                ? "bg-[#000] border-[#292929]"
-                : "bg-white border-[#e6e6e6]"
+                ? "bg-canvas-dark border-input-line-dark"
+                : "bg-surface-light border-input-line-light"
             } border px-2`}
             onPress={handleOpenBottomSheet}
           >
             <View className="flex flex-row h-full w-full items-center justify-between">
               <View className="flex flex-row items-center space-x-2 ">
-                <MapPinIcon color={isDarkMode ? "white" : "black"} size={24} />
+                <MapPinIcon color={ink.text(isDarkMode)} size={24} />
                 <View className="w-3/4">
                   {selectedLocationName ? (
                     // <Text fontSize="text-md">{selectedLocationName}</Text>
@@ -245,7 +246,7 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
                     <Text
                       fontSize="text-sm"
                       className={`${
-                        isDarkMode ? "text-white/70" : "text-black/70"
+                        isDarkMode ? "text-muted-dark" : "text-muted-light"
                       }`}
                     >
                       Select a location
@@ -255,7 +256,7 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
               </View>
               {selectedLocationName && (
                 <PencilSquareIcon
-                  color={isDarkMode ? "white" : "black"}
+                  color={ink.text(isDarkMode)}
                   size={24}
                 />
               )}
@@ -267,18 +268,18 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
             style={{
               textAlignVertical: "top",
               // borderBlockColor: isDarkMode ? "#333" : "#FFF",
-              color: isDarkMode ? "#FFF" : "#000",
+              color: ink.text(isDarkMode),
               // borderColor: isDarkMode ? "#444" : "#CCC",
             }}
-            className={`p-4 h-40 text-[16px] rounded-2xl  ${
+            className={`p-4 h-40 text-[16px] rounded-group  ${
               isDarkMode
-                ? "border-[1px] border-[#292929]"
-                : "border-[1px] border-[#e6e6e6]"
+                ? "border-[1px] border-input-line-dark"
+                : "border-[1px] border-input-line-light"
             }`}
             multiline={true}
             numberOfLines={10}
             placeholder="Your address"
-            placeholderTextColor={isDarkMode ? "#FFFFFF80" : "#00000080"}
+            placeholderTextColor={ink.dim(isDarkMode)}
             autoComplete="off"
             autoCorrect={false}
             value={address}
@@ -286,7 +287,7 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
           />
         </View>
       </KeyboardAwareScrollView>
-      <View className="py-2 px-5">
+      <View className="py-2 px-gutter">
         <Button
           disabled={!address.trim() || !selectedLocation}
           onPress={() => {
@@ -300,8 +301,8 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
               className={`${
                 !address.trim() || !selectedLocation
                   ? isDarkMode
-                    ? "text-[#ffffff80]"
-                    : "text-[#00000080]"
+                    ? "text-subtle-dark"
+                    : "text-subtle-light"
                   : "text-white"
               }`}
             >
@@ -310,7 +311,7 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
             <View className="mt-1">
               <ChevronRightIcon
                 size={16}
-                color={address ? "#ffffff" : "#888888"}
+                color={address ? "#FFFFFF" : ink.dim(false)}
               />
             </View>
           </View>
@@ -321,18 +322,18 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
         ref={bottomSheetRef}
         isDark={isDarkMode}
       >
-        <StyledBottomView className="w-full px-5 py-2 flex flex-col justify-start flex-1">
+        <StyledBottomView className="w-full px-gutter py-2 flex flex-col justify-start flex-1">
           <View className="h-full">
             <View
-              className={`flex-row pl-3 min-h-11 rounded-[12px] border ${
+              className={`flex-row pl-3 min-h-11 rounded-card border ${
                 isDarkMode
-                  ? "border-[#292929] bg-[#0F0F0F]"
-                  : "border-[#e6e6e6] bg-white"
+                  ? "border-input-line-dark bg-surface-dark"
+                  : "border-input-line-light bg-surface-light"
               }`}
               style={{ alignItems: 'center' }}
             >
               <MagnifyingGlassIcon
-                color={isDarkMode ? "#FFFFFFB2" : "#000000B2"}
+                color={ink.body(isDarkMode)}
                 size={24}
               />
               <GooglePlacesAutocomplete
@@ -355,37 +356,37 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
                   textInput: {
                     height: '100%',
                     marginTop: -8,
-                    backgroundColor: isDarkMode ? "#0F0F0F" : "#fff",
-                    borderRadius: 12,
+                    backgroundColor: ink.surface(isDarkMode),
+                    borderRadius: radius.card,
                     paddingHorizontal: 8,
                     zIndex: 10,
-                    color: isDarkMode ? "#fff" : "#000",
+                    color: ink.text(isDarkMode),
                     fontSize: 16,
                   },
                   row: {
-                    backgroundColor: isDarkMode ? "#0F0F0F" : "#FFF",
+                    backgroundColor: ink.surface(isDarkMode),
                   },
                   description: {
-                    color: isDarkMode ? "#fff" : "#000",
+                    color: ink.text(isDarkMode),
                   },
-                  separator: { backgroundColor: "#292929" },
+                  separator: { backgroundColor: ink.line(true) },
                 }}
                 textInputProps={{
-                  placeholderTextColor: isDarkMode ? "#FFFFFFB2" : "#000000B2",
+                  placeholderTextColor: ink.body(isDarkMode),
                 }}
               />
             </View>
 
             <TouchableOpacity
-              className={`h-[48px] rounded-[12px] w-full border-b ${
-                isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
+              className={`h-[48px] rounded-card w-full border-b ${
+                isDarkMode ? "border-input-line-dark" : "border-input-line-light"
               } px-2 mt-4`}
               onPress={handleCurrentLocation}
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
                 <View className="flex flex-row items-center space-x-4">
-                  <ViewfinderCircleIcon color="#635be8" size={24} />
-                  <Text fontWeight="font-bold" className="text-brand-blue">
+                  <ViewfinderCircleIcon color={colors.dark.brand} size={24} />
+                  <Text fontWeight="font-bold" className="text-brand">
                     Use current location
                   </Text>
                 </View>
@@ -402,11 +403,11 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
                       key={item.place_id}
                       onPress={() => handleSelectNearbyPlace(item)}
                       className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${
-                        isDarkMode ? "border-[#292929]" : "border-[#e6e6e6]"
+                        isDarkMode ? "border-input-line-dark" : "border-input-line-light"
                       }`}
                     >
                       <MapPinIcon
-                        color={isDarkMode ? "white" : "black"}
+                        color={ink.text(isDarkMode)}
                         size={20}
                       />
                       <Text fontSize="text-sm">{item.name}</Text>

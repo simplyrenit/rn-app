@@ -14,6 +14,9 @@ import {
 } from "react-native-heroicons/outline";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { SvgUri } from "react-native-svg";
+import { SCREEN_GUTTER, ink } from "@/lib/design-tokens";
+import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
+import { useTheme } from "@/lib/theme";
 
 export default function PostSubCategories() {
   const route = useRoute<RouteProps<"PostSubCategories">>();
@@ -21,6 +24,7 @@ export default function PostSubCategories() {
   const { theme } = useGlobalContext();
   const { saveDetails } = useProductContext();
   const isDarkMode = theme === "dark";
+  const { color } = useTheme();
 
   // Destructure the category and subcategories from route params
   const { category, subcategories } = route.params;
@@ -52,21 +56,18 @@ export default function PostSubCategories() {
             />
           )
         ) : (
-          <CubeIcon
-            color={isDarkMode ? "white" : "black"}
-            size={24}
-          />
+          <CategoryIcon name={item.title} size={22} color={color.textBody} />
         )}
         <Text
           fontSize="text-base"
-          className={`${theme === "dark" ? "text-white" : "text-black"}`}
+          
         >
-          {item.title}
+          {categoryDisplayName(item.title)}
         </Text>
       </View>
       <ChevronRightIcon
         size={20}
-        color={theme === "dark" ? "white" : "black"}
+        color={ink.text(isDarkMode)}
       />
     </TouchableOpacity>;
   };
@@ -76,28 +77,22 @@ export default function PostSubCategories() {
       <View style={{ flex: 1 }}>
         <PostProductHeader
           heading="Choose a subcategory"
-          percentage={10}
+          step={2}
+          showBackArrow
         />
 
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className={`flex-row items-center py-4 border-b px-5 ${
-            theme === "dark" ? "border-b-[#292929]" : "border-b-[#e6e6e6]"
-          }`}
+        {/* The category you are inside, stated as context rather than as a
+            second, differently-shaped back control. */}
+        <View
+          style={{
+            paddingHorizontal: SCREEN_GUTTER,
+            paddingBottom: 12,
+          }}
         >
-          <View className="mt-1 pr-1 ">
-            <ChevronLeftIcon
-              size={24}
-              color={theme === "dark" ? "white" : "black"}
-            />
-          </View>
-          <Text
-            fontWeight="font-bold"
-            className="text-md"
-          >
-            {category}
+          <Text fontSize="text-sm" tone="body">
+            In {category}
           </Text>
-        </TouchableOpacity>
+        </View>
 
         <FlatList
           data={subcategories}

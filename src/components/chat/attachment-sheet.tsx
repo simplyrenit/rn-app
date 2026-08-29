@@ -3,6 +3,7 @@ import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal"
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { DocumentIcon, PhotoIcon } from "react-native-heroicons/outline";
+import { colors } from "@/lib/design-tokens";
 
 interface AttachmentSheetProps {
   bottomSheetModalRef: React.RefObject<any>;
@@ -34,7 +35,7 @@ const AttachmentSheet: React.FC<AttachmentSheetProps> = ({
         </Text>
         <View className="w-full space-y-2 px-2">
           <TouchableOpacity
-            className="flex-row justify-between py-3 border border-gray-300 rounded-lg w-full px-2"
+            className="flex-row justify-between py-3 border border-gray-300 rounded-button w-full px-2"
             onPress={onSelectImagesVideos}
           >
             <Text
@@ -45,11 +46,11 @@ const AttachmentSheet: React.FC<AttachmentSheetProps> = ({
             </Text>
             <PhotoIcon
               size={20}
-              color={"#635BE8"}
+              color={colors.dark.brand}
             />
           </TouchableOpacity>
           <TouchableOpacity
-            className="flex-row justify-between py-3 border border-gray-300 rounded-lg w-full px-2"
+            className="flex-row justify-between py-3 border border-gray-300 rounded-button w-full px-2"
             onPress={onSelectDocuments}
           >
             <Text
@@ -60,7 +61,7 @@ const AttachmentSheet: React.FC<AttachmentSheetProps> = ({
             </Text>
             <DocumentIcon
               size={20}
-              color={"#635BE8"}
+              color={colors.dark.brand}
             />
           </TouchableOpacity>
           

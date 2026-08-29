@@ -13,6 +13,8 @@ import {
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { CategoryFilter } from "../../../components/search/category-filter";
 import { useRoute } from "@react-navigation/native";
+import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
+import { ink } from "@/lib/design-tokens";
 
 export default function EditCategory() {
   const { theme, categories } = useGlobalContext();
@@ -42,27 +44,24 @@ export default function EditCategory() {
       onPress={() => onPress(item)}
     >
       <View className="flex-row items-center space-x-5">
-        <Image
-          source={{
-            uri:
-              theme === "dark"
-                ? item.dark_icon ||
-                  "https://d1xuzik8wqiepv.cloudfront.net/assets/2024/10/03/JdXQXQHo/trucktrailer.svg"
-                : item.light_icon ||
-                  "https://d1xuzik8wqiepv.cloudfront.net/assets/2024/10/04/hxvbdzSz/trucktrailer.svg",
-          }}
-          style={{ width: 20, height: 20 }}
+        {/* The icon column was reserved and left empty here, while the same
+            taxonomy carried photographs on Home and identical cubes in the
+            listing flow. One glyph family, everywhere. */}
+        <CategoryIcon
+          name={item.title}
+          size={22}
+          color={ink.body(theme === "dark")}
         />
         <Text
           fontSize="text-base"
-          className={`${theme === "dark" ? "text-white" : "text-black"}`}
+          
         >
-          {item.title}
+          {categoryDisplayName(item.title)}
         </Text>
       </View>
       <ChevronRightIcon
         size={20}
-        color={theme === "dark" ? "white" : "black"}
+        color={ink.text(theme === "dark")}
       />
     </TouchableOpacity>
   );
@@ -72,7 +71,7 @@ export default function EditCategory() {
       <View style={{ flex: 1 }}>
         <View className="flex-row items-center justify-between">
           <View className="w-[10%]">
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
               onPress={() => navigation.goBack()}
               className={`flex-row items-center py-4 px-6`}
             >
@@ -80,7 +79,7 @@ export default function EditCategory() {
                 <ArrowLeftIcon
                   className=""
                   size={20}
-                  color={theme === "dark" ? "white" : "black"}
+                  color={ink.text(theme === "dark")}
                 />
               </View>
             </TouchableOpacity>

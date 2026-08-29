@@ -4,6 +4,7 @@ import { TextInput, View } from "react-native";
 import { Button, Text } from "../core";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { CurrencyRupeeIcon } from "react-native-heroicons/outline";
+import { ink, colors, fontSize as fontSizeScale } from "@/lib/design-tokens";
 
 export function PriceFilter({
   minPrice,
@@ -36,53 +37,43 @@ export function PriceFilter({
 
   return (
     <View className="flex-1 mt-2">
-      <View className="flex-1 px-4">
+      <View className="flex-1 px-gutter">
         <View className="flex flex-row items-center justify-between">
           <View
-            className={`flex flex-row items-center border ${isDark ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6]"
-              } w-[140px] h-12 rounded-xl p-1`}
+            className={`flex flex-row items-center border ${isDark ? "border-input-line-dark bg-surface-dark" : "border-input-line-light"
+              } w-[150px] h-11 rounded-input px-2`}
           >
-            {/* <CurrencyRupeeIcon color={"#635BE8"} /> */}
+            <Text fontSize="text-md" tone="body">₹</Text>
             <TextInput
-              placeholderTextColor={isDark ? "#ffffffB2" : "#000000B2"}
-              placeholder="Min price"
-              className={`p-2 h-full w-3/4 ${isDark ? "text-white" : "text-black"
+              placeholderTextColor={ink.placeholder(isDark)}
+              placeholder="Min"
+              className={`px-1 flex-1 ${isDark ? "text-white" : "text-black"
                 }`}
               keyboardType="number-pad"
-              style={{ fontSize: wp(4.15) }}
+              style={{ fontSize: fontSizeScale.base }}
               value={min}
               onChangeText={(text) => handleMinChange(text)}
             />
           </View>
           <Text fontSize="text-base">-</Text>
           <View
-            className={`flex flex-row items-center border ${isDark ? "border-[#292929] bg-[#0F0F0F]" : "border-[#e6e6e6]"
-              } w-[140px] h-12 rounded-xl p-1`}
+            className={`flex flex-row items-center border ${isDark ? "border-input-line-dark bg-surface-dark" : "border-input-line-light"
+              } w-[150px] h-11 rounded-input px-2`}
           >
-            {/* <CurrencyRupeeIcon color={"#635BE8"} /> */}
+            <Text fontSize="text-md" tone="body">₹</Text>
             <TextInput
-              placeholderTextColor={isDark ? "#ffffffB2" : "#000000B2"}
-              placeholder="Max price"
-              className={`p-2 h-full w-3/4 ${isDark ? "text-white" : "text-black"
+              placeholderTextColor={ink.placeholder(isDark)}
+              placeholder="Max"
+              className={`px-1 flex-1 ${isDark ? "text-white" : "text-black"
                 }`}
               keyboardType="number-pad"
-              style={{ fontSize: wp(4.15) }}
+              style={{ fontSize: fontSizeScale.base }}
               value={max}
               onChangeText={(text) => handleMaxChange(text)}
             />
           </View>
         </View>
       </View>
-      {(minPrice || maxPrice) && (
-        <View className="p-3">
-          <Button
-            onPress={closeSheet}
-            className="mt-5"
-          >
-            {isLoading ? "Loading..." : "Show products"}
-          </Button>
-        </View>
-      )}
     </View>
   );
 }

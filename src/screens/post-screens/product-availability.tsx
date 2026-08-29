@@ -10,6 +10,7 @@ import React, { useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 import type { MarkedDates } from "react-native-calendars/src/types";
+import { ink, colors, radius } from "@/lib/design-tokens";
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
@@ -47,12 +48,12 @@ export default function ProductAvailability() {
   //       endingDay: currentDate.isSame(end),
   //       color:
   //         currentDate.isSame(start) || currentDate.isSame(end)
-  //           ? "#C80808"
-  //           : "#C808081A",
+  //           ? ink.danger(isDark)
+  //           : ink.dangerWash(isDark),
   //       textColor:
   //         currentDate.isSame(start) || currentDate.isSame(end)
   //           ? "white"
-  //           : "#C80808",
+  //           : ink.danger(isDark),
   //     };
   //     currentDate = currentDate.add(1, "day");
 
@@ -70,7 +71,7 @@ export default function ProductAvailability() {
       marked[dateString] = {
         startingDay: true,
         endingDay: true,
-        color: "#C80808",
+        color: ink.danger(isDark),
         textColor: "white",
       };
     } else {
@@ -83,12 +84,12 @@ export default function ProductAvailability() {
           endingDay: currentDate.isSame(end),
           color:
             currentDate.isSame(start) || currentDate.isSame(end)
-              ? "#C80808"
-              : "#C808081A",
+              ? ink.danger(isDark)
+              : ink.dangerWash(isDark),
           textColor:
             currentDate.isSame(start) || currentDate.isSame(end)
               ? "white"
-              : "#C80808",
+              : ink.danger(isDark),
         };
         currentDate = currentDate.add(1, "day");
       }
@@ -194,12 +195,12 @@ export default function ProductAvailability() {
           endingDay: currentDate.isSame(endDate),
           color:
             currentDate.isSame(range.startDate) || currentDate.isSame(endDate)
-              ? "#C80808"
-              : "#C808081A",
+              ? ink.danger(isDark)
+              : ink.dangerWash(isDark),
           textColor:
             currentDate.isSame(range.startDate) || currentDate.isSame(endDate)
               ? "white"
-              : "#C80808",
+              : ink.danger(isDark),
         };
         currentDate = currentDate.add(1, "day");
       }
@@ -224,13 +225,13 @@ export default function ProductAvailability() {
           color:
             currentDate.isSame(range.startDate) ||
               currentDate.isSame(range.endDate)
-              ? "#C80808"
-              : "#C808081A",
+              ? ink.danger(isDark)
+              : ink.dangerWash(isDark),
           textColor:
             currentDate.isSame(range.startDate) ||
               currentDate.isSame(range.endDate)
               ? "white"
-              : "#C80808",
+              : ink.danger(isDark),
         };
         currentDate = currentDate.add(1, "day");
       }
@@ -244,20 +245,20 @@ export default function ProductAvailability() {
   };
 
   const calendarTheme = {
-    backgroundColor: isDark ? "#000" : "#fff",
-    calendarBackground: isDark ? "#000" : "#fff",
-    textSectionTitleColor: isDark ? "#fff" : "#000",
-    dayTextColor: isDark ? "#fff" : "#000",
-    todayTextColor: "#635BE8",
+    backgroundColor: ink.canvas(isDark),
+    calendarBackground: ink.canvas(isDark),
+    textSectionTitleColor: ink.text(isDark),
+    dayTextColor: ink.text(isDark),
+    todayTextColor: colors.dark.brand,
     selectedDayBackgroundColor: "red",
     selectedDayTextColor: "white",
-    monthTextColor: "#828282",
-    arrowColor: isDark ? "#fff" : "#000",
-    textDisabledColor: "#d9e1e8",
+    monthTextColor: ink.body(false),
+    arrowColor: ink.text(isDark),
+    textDisabledColor: ink.line(false),
     "stylesheet.calendar.header": {
       header: {
         borderBottomWidth: 1,
-        borderBottomColor: isDark ? "#292929" : "#E6E6E6",
+        borderBottomColor: ink.line(isDark),
         flexDirection: "row",
         justifyContent: "space-between",
         paddingVertical: 6,
@@ -268,19 +269,19 @@ export default function ProductAvailability() {
   return (
     <StaticContainer width={100}>
       <View className="px-3 flex-row items-center">
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => navigation.goBack()}
           className="w-[10%]"
         >
           <ArrowLeftIcon
             size={24}
-            color={isDark ? "#ffffff" : "#000000"}
+            color={ink.text(isDark)}
           />
         </TouchableOpacity>
         <View className="w-[80%]">
           <PostProductHeader
             heading="Product Unavailability"
-            percentage={70}
+            step={6}
           />
         </View>
         <View className="w-[10%]" />
@@ -291,9 +292,9 @@ export default function ProductAvailability() {
           <Calendar
             minDate={minDate}
             style={{
-              borderColor: isDark ? "#292929" : "#E6E6E6",
+              borderColor: ink.line(isDark),
               borderWidth: 1,
-              borderRadius: 10,
+              borderRadius: radius.input,
             }}
             markingType={"custom"}
             markedDates={markedDates}
@@ -313,7 +314,7 @@ export default function ProductAvailability() {
                     style={{
                       width: 36,
                       height: 36,
-                      borderRadius: 18,
+                      borderRadius: radius.group,
                       backgroundColor: marked ? marked.color : "transparent",
                       justifyContent: "center",
                       alignItems: "center",
@@ -325,11 +326,9 @@ export default function ProductAvailability() {
                           ? marked.textColor
                           : state === "disabled"
                             ? isDark
-                              ? "#292929"
-                              : "#d9e1e8"
-                            : isDark
-                              ? "#fff"
-                              : "#000",
+                              ? ink.line(true)
+                              : ink.line(false)
+                            : ink.text(isDark),
                       }}
                     >
                       {date.day}
@@ -386,10 +385,10 @@ export default function ProductAvailability() {
                       ` - ${moment(range.endDate).format("MMM D, YYYY")}`}
                   </Text>
 
-                  <StyledTouchableOpacity onPress={() => removeRange(index)}>
+                  <StyledTouchableOpacity accessibilityRole="button" accessibilityLabel="Close" onPress={() => removeRange(index)}>
                     <XMarkIcon
                       size={24}
-                      color={isDark ? "#ffffff" : "#000000"}
+                      color={ink.text(isDark)}
                     />
                   </StyledTouchableOpacity>
                 </StyledView>
@@ -403,7 +402,7 @@ export default function ProductAvailability() {
             variant="outline"
             onPress={confirmDateRange}
             disabled={!selectedRange}
-            className="w-[49%] border rounded-xl"
+            className="w-[49%] border rounded-card"
           >
             <Text fontWeight="font-bold">Add date log</Text>
           </Button>
@@ -423,7 +422,7 @@ export default function ProductAvailability() {
               <View className="mt-[0.5px]">
                 <ChevronRightIcon
                   size={16}
-                  color={ "#ffffff"}
+                  color={ "#FFFFFF"}
                 />
               </View>
             </View>

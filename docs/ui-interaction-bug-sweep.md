@@ -370,6 +370,34 @@ Every other reference in the app is simplyrenit.com.
   dataset holds two approved products, "Lenovo" and "Garvit Babel", and the
   endpoint matches on title substrings.
 
+## Round 7 — physical iPhone (iPhone 16, iOS 26.5.2)
+
+Testing moved to Yash's real device, signed in, against QA. Fresh Debug
+dev client built and deployed via `expo run:ios --device`.
+
+### Keyboard covers the address-search suggestion list (post a product → Choose Address)
+`src/screens/post-screens/location-modal.tsx`. The address sheet is a
+fixed `height: "55%"` box pinned to the bottom of the screen. Its
+`KeyboardAvoidingView` used `behavior="padding"` with
+`keyboardVerticalOffset={100}` — and because the sheet's frame already sits
+at the bottom of the screen, that offset is *added* to the avoidance
+padding, collapsing the visible sheet to roughly one row. The
+GooglePlacesAutocomplete `listView` (rendered inline under the input) then
+fell entirely behind the keyboard: only the first suggestion showed, half
+clipped, and none were tappable.
+
+Fix, cross-platform safe:
+- Dropped the harmful `keyboardVerticalOffset` to `0` (Android was already
+  `0`, so no Android change).
+- Added `keyboard{Will,Did}Show/Hide` listeners; while the keyboard is up the
+  sheet grows to `height: "92%"` so the input + suggestion list clear the
+  keyboard. iOS uses `keyboardWillShow/Hide` (animates with the keyboard),
+  Android uses `keyboardDidShow/Hide`. Android also already resizes its
+  window (`adjustResize` in AndroidManifest), so the taller sheet only
+  helps there.
+- No map overlay and no absolute-positioned list, to avoid the Android
+  rounded-view clipping and native-map z-order traps.
+
 ## Known open issues (found, not yet fixed)
 
 1. A full listing submission was not driven end to end. The interaction layer

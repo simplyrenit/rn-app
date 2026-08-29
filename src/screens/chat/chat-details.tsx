@@ -1,4 +1,5 @@
 import { useSubscribeToMessages } from "@/backend/messages";
+import { useTypedNavigation } from "@/lib/types";
 import { ChatBubble } from "@/components/chat/chat-bubble";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatInput } from "@/components/chat/chat-input";
@@ -34,10 +35,14 @@ import {
 } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import Toast from "react-native-toast-message";
+
 import { ChatSkeleton } from "./chat-skeleton";
 import { useChat } from "@/backend/chat";
 import useOwner from "@/backend/owner";
+import { ink, colors, radius } from "@/lib/design-tokens";
+import { formatDayHeading, isSameDay } from "@/lib/format";
+import { useTheme } from "@/lib/theme";
+import { toast } from "@/lib/toast";
 
 const getDaysBetweenDates = (startDate: string, endDate: string): number => {
   const start = moment(startDate);
@@ -72,6 +77,7 @@ export default function ChatDetailsScreen() {
   const bottomSheetRef = useRef<any>(null);
   const { theme, userDetails, authTokens } = useGlobalContext();
   const isDark = theme === "dark";
+  const { color } = useTheme();
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<BackendProduct | null>(
     null
@@ -116,6 +122,8 @@ export default function ChatDetailsScreen() {
     loading: l,
     error,
   } = useSubscribeToMessages(conversationId);
+
+  const listingNavigation = useTypedNavigation();
 
   const getImageSource = (uri?: string | null) =>
     uri ? { uri } : undefined;
@@ -282,11 +290,11 @@ export default function ChatDetailsScreen() {
       dates[dateString] = {
         customStyles: {
           container: {
-            backgroundColor: isDark ? "#201E4D" : "#EDEDFC",
-            borderRadius: 15, // Circular shape
+            backgroundColor: ink.brandWash(isDark),
+            borderRadius: radius.group, // Circular shape
           },
           text: {
-            color: "#635be8",
+            color: colors.dark.brand,
           },
         },
       };
@@ -335,12 +343,7 @@ export default function ChatDetailsScreen() {
   const handleBlockPress = async () => {
     const reason = blockReason.trim();
     if (!reason) {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Add a reason to report this user",
-        text2: "error",
-      });
+      toast.error("Add a reason to report this user");
       return;
     }
     if (blockAndReportInFlight.current) return;
@@ -352,19 +355,9 @@ export default function ChatDetailsScreen() {
       setIsBlocked(true);
       setBlockReason("");
       bottomSheetRef.current?.close();
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "User blocked and report sent",
-        text2: "success",
-      });
+      toast.success("User blocked and report sent");
     } catch {
-      Toast.show({
-        type: "customToast",
-        position: "bottom",
-        text1: "Couldn't block and report this user",
-        text2: "error",
-      });
+      toast.error("Couldn’t block and report this user");
     } finally {
       blockAndReportInFlight.current = false;
     }
@@ -374,6 +367,16 @@ export default function ChatDetailsScreen() {
     await unblockUser(conversationId);
     setIsBlocked(false);
   };
+
+  // The listing this conversation is about, taken from the first message that
+  // names one. The thread already carried it; the menu simply never offered it.
+  const threadListingId = (() => {
+    for (const message of m ?? []) {
+      const item = (message as any)?.message?.item;
+      if (item?.id) return item.id as string;
+    }
+    return null;
+  })();
 
   return (
     <StaticContainer width={100}>
@@ -390,6 +393,14 @@ export default function ChatDetailsScreen() {
           onReportPress={handleReportPress}
           id={participantDetails.userId}
           isBlocked={isBlocked}
+          onViewListing={
+            threadListingId
+              ? () =>
+                  listingNavigation.navigate("ProductDetail", {
+                    id: threadListingId,
+                  })
+              : undefined
+          }
         />
 
         <ScrollView
@@ -402,17 +413,67 @@ export default function ChatDetailsScreen() {
           onLayout={() => scrollToBottom(false)}
           showsVerticalScrollIndicator={false}
         >
-          {m.map((message) => (
-            <ChatBubble
-              id={message.id || ""}
-              key={message.id}
-              // message={message.message}
-              // @ts-ignore
-              message={message.message!}
-              isSent={message.from === userDetails?.username}
-              type={message.type}
-            />
-          ))}
+          {m.map((message, index) => {
+            // A sticky day heading whenever the calendar date changes, so a
+            // negotiation can be read back in time order. There was no date
+            // anywhere in a conversation, per message or per day.
+            const previous = index > 0 ? m[index - 1] : null;
+            const next = index < m.length - 1 ? m[index + 1] : null;
+            const showDay =
+              !previous || !isSameDay(previous.timestamp, message.timestamp);
+
+            // Message grouping. Every message carried its own timestamp, so six
+            // consecutive messages one minute apart produced six timestamps and
+            // six full-height bubbles. Only the last message of a run from one
+            // sender within the same minute keeps its time; the rest sit tight
+            // against it, which is the iMessage rhythm.
+            const sameSenderAsNext =
+              !!next &&
+              next.from === message.from &&
+              isSameDay(next.timestamp, message.timestamp) &&
+              Math.abs(
+                new Date(next.timestamp as any).getTime() -
+                  new Date(message.timestamp as any).getTime()
+              ) < 60_000;
+
+            return (
+              <React.Fragment key={message.id}>
+                {showDay ? (
+                  <View style={{ alignItems: "center", paddingVertical: 10 }}>
+                    {/* A View, not a styled Text: borderRadius and overflow on
+                        a Text do not clip reliably in React Native. */}
+                    <View
+                      style={{
+                        paddingHorizontal: 12,
+                        paddingVertical: 4,
+                        borderRadius: radius.full,
+                        backgroundColor: color.surfaceRaised,
+                        borderWidth: 1,
+                        borderColor: color.line,
+                      }}
+                    >
+                      <Text
+                        fontSize="text-xs"
+                        fontWeight="font-semibold"
+                        tone="body"
+                      >
+                        {formatDayHeading(message.timestamp)}
+                      </Text>
+                    </View>
+                  </View>
+                ) : null}
+                <ChatBubble
+                  id={message.id || ""}
+                  // @ts-ignore
+                  message={message.message!}
+                  isSent={message.from === userDetails?.username}
+                  type={message.type}
+                  timestamp={sameSenderAsNext ? undefined : message.timestamp}
+                  grouped={sameSenderAsNext}
+                />
+              </React.Fragment>
+            );
+          })}
         </ScrollView>
 
         {isBlocked && (
@@ -423,7 +484,7 @@ export default function ChatDetailsScreen() {
                   fontSize="text-sm"
                   fontWeight="font-semibold"
                   className={`uppercase ${
-                    isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                    isDark ? "text-muted-dark" : "text-muted-light"
                   }`}
                 >
                   {participantDetails.username} Blocked
@@ -432,7 +493,7 @@ export default function ChatDetailsScreen() {
                   fontSize="text-sm"
                   fontWeight="font-bold"
                   className={`uppercase ${
-                    isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                    isDark ? "text-muted-dark" : "text-muted-light"
                   }`}
                 >
                   -
@@ -441,7 +502,7 @@ export default function ChatDetailsScreen() {
                   <Text
                     fontSize="text-sm"
                     fontWeight="font-bold"
-                    className={`text-brand-blue`}
+                    className={`text-brand`}
                   >
                     Unblock
                   </Text>
@@ -453,7 +514,7 @@ export default function ChatDetailsScreen() {
                   fontSize="text-sm"
                   fontWeight="font-semibold"
                   className={`uppercase ${
-                    isDark ? "text-[#FFFFFFB2]" : "text-[#000000B2]"
+                    isDark ? "text-muted-dark" : "text-muted-light"
                   }`}
                 >
                   This conversation cannot be continued
@@ -463,7 +524,10 @@ export default function ChatDetailsScreen() {
           </>
         )}
 
-        <View style={{ height: "10%" }}>
+        {/* The composer used to sit in a 10%-of-screen box, leaving ~52pt of
+            empty ground beneath it — more than twice what the home indicator
+            needs — so it read as detached from the bottom of the screen. */}
+        <View>
           <ChatInput
             conversationId={conversationId}
             onMakeOfferPress={onSelectProductPress}
@@ -497,20 +561,20 @@ export default function ChatDetailsScreen() {
             }}
             className={`h-52 w-full mt-4 border ${
               isDark
-                ? "border-[#292929] text-white"
-                : "border-[#e6e6e6] text-black"
-            } rounded-xl p-3 text-base`}
-            placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+                ? "border-line-dark text-white"
+                : "border-line-light text-black"
+            } rounded-card p-3 text-base`}
+            placeholderTextColor={ink.dim(isDark)}
           />
 
           <View className="flex-row justify-between mt-6 mb-0">
             <TouchableOpacity
               onPress={() => bottomSheetRef.current?.close()}
-              className={`bg-white border ${
+              className={`bg-surface-light border ${
                 isDark
-                  ? "border-[#292929] text-white"
-                  : "border-[#e6e6e6] text-black"
-              } p-3 rounded-[11px] flex-1 mr-2`}
+                  ? "border-line-dark text-white"
+                  : "border-line-light text-black"
+              } p-3 rounded-input flex-1 mr-2`}
             >
               <Text
                 className="text-center text-black"
@@ -521,7 +585,7 @@ export default function ChatDetailsScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="bg-[#E50914] p-3 rounded-[11px] flex-1 ml-2"
+              className="bg-danger-light p-3 rounded-input flex-1 ml-2"
               onPress={handleBlockPress}
             >
               <Text
@@ -536,11 +600,11 @@ export default function ChatDetailsScreen() {
       </CustomBottomSheetModal>
 
       <BottomSheetModal
-        backgroundStyle={{ backgroundColor: isDark ? "black" : "white" }}
+        backgroundStyle={{ backgroundColor: ink.canvas(isDark) }}
         handleIndicatorStyle={{
-          backgroundColor: isDark ? "#fff" : "#000",
+          backgroundColor: ink.text(isDark),
           width: 50,
-          borderRadius: 50,
+          borderRadius: radius.full,
           padding: 2,
         }}
         ref={selectProductBottomSheetRef}
@@ -550,9 +614,9 @@ export default function ChatDetailsScreen() {
           borderTopWidth: 2,
           borderLeftWidth: 2,
           borderRightWidth: 2,
-          borderTopColor: isDark ? "#292929" : "#fff",
-          borderLeftColor: isDark ? "#292929" : "#fff",
-          borderRightColor: isDark ? "#292929" : "#fff",
+          borderTopColor: ink.line(isDark),
+          borderLeftColor: ink.line(isDark),
+          borderRightColor: ink.line(isDark),
           borderTopRightRadius: 50,
           borderTopLeftRadius: 50,
         }}
@@ -570,21 +634,21 @@ export default function ChatDetailsScreen() {
               <View
                 className={`flex-row border items-center shadow-lg ${
                   theme === "dark"
-                    ? "bg-[#0F0F0F] border-[#292929]"
-                    : "bg-white border-[#E6E6E6]"
-                } rounded-xl p-2 mt-4 w-[90%] self-center mb-3 h-12`}
+                    ? "bg-surface-dark border-line-dark"
+                    : "bg-surface-light border-line-light"
+                } rounded-card p-2 mt-4 w-[90%] self-center mb-3 h-12`}
                 style={styles.Shadow}
               >
                 <View className="w-[10%] h-full items-center justify-center">
                   <MagnifyingGlassIcon
                     size={24}
-                    color={theme === "dark" ? "#ffffff70" : "#00000070"}
+                    color={theme === "dark" ? ink.body(true) : ink.body(false)}
                   />
                 </View>
                 <View className="w-[80%] flex flex-row h-full ml-2">
                   <TextInput
-                    placeholder="Search "
-                    placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+                    placeholder="Search this conversation"
+                    placeholderTextColor={ink.dim(isDark)}
                     className={`${isDark ? "text-white" : "text-black"}`}
                     value={search}
                     onChangeText={onSearchChange}
@@ -606,13 +670,13 @@ export default function ChatDetailsScreen() {
                     <View className="flex-row items-center">
                       <Image
                         source={getImageSource(product.cover_image)}
-                        style={{ width: 50, height: 50, borderRadius: 8 }}
+                        style={{ width: 50, height: 50, borderRadius: radius.button }}
                       />
                       <Text className="ml-4">{product.title}</Text>
                     </View>
                     <ChevronRightIcon
                       size={18}
-                      color={theme === "dark" ? "#ffffff70" : "#00000070"}
+                      color={theme === "dark" ? ink.body(true) : ink.body(false)}
                     />
                   </TouchableOpacity>
                 ))}
@@ -633,13 +697,13 @@ export default function ChatDetailsScreen() {
       >
         <View className="w-[95%] mx-auto">
           <View className="flex-row justify-evenly items-center mb-4 mt-4">
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
               className="w-[10%]"
               onPress={() => checkAvailabilityBottomSheetRef.current?.close()}
             >
               <ChevronLeftIcon
                 size={24}
-                color={theme === "dark" ? "#ffffff70" : "#00000070"}
+                color={theme === "dark" ? ink.body(true) : ink.body(false)}
               />
             </TouchableOpacity>
             <Text
@@ -656,7 +720,7 @@ export default function ChatDetailsScreen() {
             <Image
               className="w-[20%]"
               source={getImageSource(selectedProduct?.cover_image)}
-              style={{ width: wp(20), height: wp(20), borderRadius: 8 }}
+              style={{ width: wp(20), height: wp(20), borderRadius: radius.button }}
               resizeMode="cover"
             />
             <View className="w-[75%] space-y-1">
@@ -669,7 +733,7 @@ export default function ChatDetailsScreen() {
               <Text
                 fontSize="text-md"
                 className={`${
-                  isDark ? "text-[#ffffffB2]" : "text-[#000000B2]"
+                  isDark ? "text-muted-dark" : "text-muted-light"
                 }`}
               >
                 {selectedProduct?.location}
@@ -686,21 +750,21 @@ export default function ChatDetailsScreen() {
           <View className="mt-5">
             <Calendar
               theme={{
-                calendarBackground: isDark ? "#0F0F0F" : "white",
-                textSectionTitleColor: isDark ? "white" : "#00000080",
-                dayTextColor: isDark ? "#ffffff" : "#000",
-                todayTextColor: "#00adf5",
-                textDisabledColor: "#d9e1e8",
-                monthTextColor: "#828282",
-                arrowColor: isDark ? "#fff" : "#000",
+                calendarBackground: ink.surface(isDark),
+                textSectionTitleColor: isDark ? "white" : ink.dim(false),
+                dayTextColor: ink.text(isDark),
+                todayTextColor: ink.info(false),
+                textDisabledColor: ink.line(false),
+                monthTextColor: ink.body(false),
+                arrowColor: ink.text(isDark),
               }}
               markingType="custom"
               markedDates={{
                 [selectedRange.startDate]: {
                   customStyles: {
                     container: {
-                      backgroundColor: "#635be8",
-                      borderRadius: 15,
+                      backgroundColor: colors.dark.brand,
+                      borderRadius: radius.group,
                     },
                     text: {
                       color: "white",
@@ -710,8 +774,8 @@ export default function ChatDetailsScreen() {
                 [selectedRange.endDate]: {
                   customStyles: {
                     container: {
-                      backgroundColor: "#635be8",
-                      borderRadius: 15,
+                      backgroundColor: colors.dark.brand,
+                      borderRadius: radius.group,
                     },
                     text: {
                       color: "white",
@@ -745,13 +809,13 @@ export default function ChatDetailsScreen() {
         <KeyboardAwareScrollView>
           <View className="w-[95%] mx-auto">
             <View className="flex-row justify-evenly items-center mb-4 mt-4">
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
                 className="w-[10%]"
                 onPress={() => makeOfferBottomSheetRef.current?.close()}
               >
                 <ChevronLeftIcon
                   size={24}
-                  color={theme === "dark" ? "#ffffff70" : "#00000070"}
+                  color={theme === "dark" ? ink.body(true) : ink.body(false)}
                 />
               </TouchableOpacity>
               <Text
@@ -768,7 +832,7 @@ export default function ChatDetailsScreen() {
               <Image
                 className="w-[20%]"
                 source={getImageSource(selectedProduct?.cover_image)}
-                style={{ width: wp(20), height: wp(20), borderRadius: 8 }}
+                style={{ width: wp(20), height: wp(20), borderRadius: radius.button }}
                 resizeMode="cover"
               />
               <View className="w-[75%] space-y-1">
@@ -781,7 +845,7 @@ export default function ChatDetailsScreen() {
                 <Text
                   fontSize="text-md"
                   className={`${
-                    isDark ? "text-[#ffffffB2]" : "text-[#000000B2]"
+                    isDark ? "text-muted-dark" : "text-muted-light"
                   }`}
                 >
                   {selectedProduct?.location}
@@ -811,28 +875,28 @@ export default function ChatDetailsScreen() {
                 {/* <Text
                   fontWeight="font-bold"
                   fontSize="text-md"
-                  className="text-[#635be8]"
+                  className="text-brand"
                 >
                   Edit
                 </Text> */}
                 <PencilSquareIcon
                   size={20}
-                  color={"#635be8"}
+                  color={colors.dark.brand}
                 />
               </TouchableOpacity>
             </View>
 
             <View className="mt-4 mx-4 flex-row items-center justify-between">
               <View
-                className={`p-3 rounded-lg border flex-row w-[40%] items-center ${
+                className={`p-3 rounded-button border flex-row w-[40%] items-center ${
                   isDark
-                    ? "bg-[#0F0F0F] border-[#292929]"
-                    : "bg-white border-[#e6e6e6]"
+                    ? "bg-surface-dark border-line-dark"
+                    : "bg-surface-light border-line-light"
                 }`}
               >
                 <CalendarIcon
                   size={24}
-                  color={theme === "dark" ? "#fff" : "#000"}
+                  color={ink.text(isDark)}
                 />
                 <Text
                   fontSize="text-md"
@@ -844,21 +908,21 @@ export default function ChatDetailsScreen() {
               <View className="w-[20%] items-center">
                 <Text
                   fontSize="text-base"
-                  className="text-[#C4C4C4]"
+                  className="text-subtle-dark"
                 >
                   --
                 </Text>
               </View>
               <View
-                className={`p-3 rounded-lg border flex-row w-[40%] items-center ${
+                className={`p-3 rounded-button border flex-row w-[40%] items-center ${
                   isDark
-                    ? "bg-[#0F0F0F] border-[#292929]"
-                    : "bg-white border-[#e6e6e6]"
+                    ? "bg-surface-dark border-line-dark"
+                    : "bg-surface-light border-line-light"
                 }`}
               >
                 <CalendarIcon
                   size={24}
-                  color={theme === "dark" ? "#fff" : "#000"}
+                  color={ink.text(isDark)}
                 />
                 <Text
                   fontSize="text-md"
@@ -871,12 +935,12 @@ export default function ChatDetailsScreen() {
             <View className="flex-row mx-4 items-center mt-2">
               <InformationCircleIcon
                 size={20}
-                color={theme === "dark" ? "#ffffff80" : "#00000080"}
+                color={ink.dim(isDark)}
               />
               <Text
                 fontSize="text-md"
                 className={`ml-2 ${
-                  isDark ? "text-[#ffffffB2]" : "text-[#000000B2]"
+                  isDark ? "text-muted-dark" : "text-muted-light"
                 }`}
               >
                 Booking for{" "}
@@ -898,9 +962,9 @@ export default function ChatDetailsScreen() {
               <View
                 className={`flex-row items-center border ${
                   isDark
-                    ? "border-[#292929] bg-[#0F0F0F] text-white"
-                    : "border-[#e6e6e6] bg-white text-black"
-                } p-3 rounded-lg w-full mt-2`}
+                    ? "border-line-dark bg-surface-dark text-white"
+                    : "border-line-light bg-surface-light text-black"
+                } p-3 rounded-button w-full mt-2`}
               >
                 <Text
                   fontSize="text-md"
@@ -910,13 +974,13 @@ export default function ChatDetailsScreen() {
                 </Text>
                 <TextInput
                   keyboardType="number-pad"
-                  placeholder={`"900"`}
-                  placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+                  placeholder="e.g. 900"
+                  placeholderTextColor={ink.dim(isDark)}
                   value={makeOfferDetails.amount}
                   onChangeText={(value) => handleTextChange("amount", value)}
                   className={`${
                     isDark ? "text-white" : "text-black"
-                  } rounded-lg w-full`}
+                  } rounded-button w-full`}
                 />
               </View>
             </View>
@@ -931,9 +995,9 @@ export default function ChatDetailsScreen() {
               <View
                 className={`flex-row items-center border ${
                   isDark
-                    ? "border-[#292929] bg-[#0F0F0F] text-white"
-                    : "border-[#e6e6e6] bg-white text-black"
-                } p-3 rounded-lg w-full mt-2`}
+                    ? "border-line-dark bg-surface-dark text-white"
+                    : "border-line-light bg-surface-light text-black"
+                } p-3 rounded-button w-full mt-2`}
               >
                 <Text
                   fontSize="text-md"
@@ -943,15 +1007,15 @@ export default function ChatDetailsScreen() {
                 </Text>
                 <TextInput
                   keyboardType="number-pad"
-                  placeholder={`"4000"`}
-                  placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
+                  placeholder="e.g. 4000"
+                  placeholderTextColor={ink.dim(isDark)}
                   value={makeOfferDetails.securityDeposit}
                   onChangeText={(value) =>
                     handleTextChange("securityDeposit", value)
                   }
                   className={`${
                     isDark ? "text-white" : "text-black"
-                  } rounded-lg w-full`}
+                  } rounded-button w-full`}
                 />
               </View>
             </View>
@@ -975,7 +1039,7 @@ export default function ChatDetailsScreen() {
 
 const styles = StyleSheet.create({
   Shadow: {
-    shadowColor: "#808080",
+    shadowColor: ink.line(false),
     shadowOffset: {
       width: 0,
       height: 4,

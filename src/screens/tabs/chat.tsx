@@ -1,39 +1,32 @@
 import { useChat } from "@/backend/chat";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { ChatCard } from "@/components/chat/chat-card";
-import { StaticContainer, Text } from "@/components/core";
+import { EmptyState, StaticContainer, Text } from "@/components/core";
+import Skeleton from "@/components/core/skeleton";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { useGlobalContext } from "@/context/global-context";
-import { Conversation } from "@/lib/types";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import { fontFamily } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
+import { Conversation, useTypedNavigation } from "@/lib/types";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect } from "@react-navigation/native";
-import { styled } from "nativewind";
 import React from "react";
-import { Dimensions, FlatList, View } from "react-native";
-import { TextInput } from "react-native-gesture-handler";
-import { MagnifyingGlassIcon } from "react-native-heroicons/outline";
-import { StyleSheet } from "react-native";
-import Skeleton from "@/components/core/skeleton";
-
-const StyledInput = styled(TextInput);
+import { FlatList, TextInput, View } from "react-native";
+import {
+  ChatBubbleLeftRightIcon,
+  MagnifyingGlassIcon,
+} from "react-native-heroicons/outline";
 
 export default function Chat() {
   const tabBarHeight = useBottomTabBarHeight();
-  const { theme, authTokens, isAuthenticated, userDetails } =
-    useGlobalContext();
+  const { authTokens, isAuthenticated, userDetails } = useGlobalContext();
   const [conversations, setConversations] = React.useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [query, setQuery] = React.useState("");
+  const { color, isDark, shadow } = useTheme();
+  const navigation = useTypedNavigation();
 
-  const isDark = theme === "dark";
   const { subscribeToChats, deleteChat } = useChat();
-
-  // Add a ref to track mounted state
-  const isMounted = React.useRef(true);
-
-  React.useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -54,94 +47,148 @@ export default function Chat() {
           unsubscribe();
         }
       };
-    }, [
-      authTokens,
-      isAuthenticated,
-      userDetails?.firebase_uid,
-    ])
+    }, [authTokens, isAuthenticated, userDetails?.firebase_uid])
+  );
+
+  const heading = (
+    <Text accessibilityRole="header" fontSize="text-2xl" fontWeight="font-bold">
+      Chat
+    </Text>
   );
 
   if (!authTokens || !isAuthenticated) {
     return (
       <StaticContainer width={100}>
-        <View className="mt-4 w-full flex-1">
-          <Text
-            fontSize="text-2xl"
-            fontWeight="font-bold"
-            className="mb-4 px-4"
-          >
-            Chat
-          </Text>
+        <View style={{ flex: 1, marginTop: 16 }}>
+          <View style={{ paddingHorizontal: SCREEN_GUTTER, marginBottom: 16 }}>
+            {heading}
+          </View>
           <ProfilePreAuth isDarkMode={isDark} />
         </View>
       </StaticContainer>
     );
   }
 
+  const nameOf = (conversation: Conversation) =>
+    conversation.initialParticipants.find(
+      (participant) => participant.userId !== userDetails?.username
+    )?.username ?? "";
+
+  const filtered = query.trim()
+    ? conversations.filter((conversation) =>
+        `${nameOf(conversation)} ${conversation.lastMessage ?? ""}`
+          .toLowerCase()
+          .includes(query.trim().toLowerCase())
+      )
+    : conversations;
+
   return (
     <StaticContainer width={100}>
-      <View className="px-4 pb-4 mt-4 w-full">
-        <Text
-          fontSize="text-2xl"
-          fontWeight="font-bold"
-        >
-          Chat
-        </Text>
+      <View style={{ flex: 1, marginTop: 16 }}>
+        <View style={{ paddingHorizontal: SCREEN_GUTTER, gap: 16 }}>
+          {heading}
 
-        {isLoading ? <View className="p-4 gap-4">
-          <Skeleton height={16} width={16} />
-          <Skeleton height={16} width={'80%'} />
-        </View> : <View
-          style={styles.Shadow}
-          className={`border mt-6 mb-4 flex flex-row items-center h-12 rounded-xl p-2 ${isDark
-            ? "bg-[#0F0F0F] border-[#292929]"
-            : "bg-white border-[#E6E6E6]"
-            }`}
-        >
-          <MagnifyingGlassIcon
-            color="gray"
-            size={24}
-          />
-          <StyledInput
-            className={`ml-2 w-4/5 text-black ${isDark ? "text-white" : "text-black"
-              }`}
-            placeholder="Search chat"
-            placeholderTextColor={isDark ? "#ffffff80" : "#00000080"}
-            autoCapitalize="none"
-            autoCorrect={false}
-            onChangeText={() => { }}
-            style={{ fontSize: 16 }}
-          />
-        </View>}
+          <View
+            style={[
+              {
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                height: MIN_TOUCH_TARGET,
+                paddingHorizontal: 12,
+                borderRadius: radius.input,
+                borderWidth: 1,
+                borderColor: color.inputLine,
+                backgroundColor: color.surface,
+              },
+              shadow,
+            ]}
+          >
+            <MagnifyingGlassIcon size={18} color={color.textBody} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search conversations"
+              placeholderTextColor={color.placeholder}
+              accessibilityLabel="Search conversations"
+              autoCapitalize="none"
+              autoCorrect={false}
+              clearButtonMode="while-editing"
+              // The field used to set fontSize but never fontFamily, so it
+              // rendered in system SF Pro while the rest of the app did not.
+              style={{
+                flex: 1,
+                fontSize: 16,
+                fontFamily: fontFamily.regular,
+                color: color.text,
+              }}
+            />
+          </View>
+        </View>
 
         {isLoading ? (
           <FlatList
-
-            data={Array.from({ length: 5 })}
-            renderItem={({ item, index }) => (<View className="gap-2 p-3" style={{ flexDirection: 'row' }}>
-              <Skeleton height={50} width={50} borderRadius={50} />
+            data={Array.from({ length: 6 })}
+            keyExtractor={(_, index) => `skeleton-${index}`}
+            contentContainerStyle={{ paddingTop: 16 }}
+            renderItem={() => (
               <View
-                className="flex-1 gap-2"
+                style={{
+                  flexDirection: "row",
+                  gap: 12,
+                  paddingVertical: 12,
+                  paddingHorizontal: SCREEN_GUTTER,
+                }}
               >
-                <Skeleton width={'90%'} height={14} />
-                <Skeleton width={'80%'} height={12} />
-                <Skeleton width={'60%'} height={10} />
+                <Skeleton height={48} width={48} borderRadius={radius.full} />
+                <View style={{ flex: 1, gap: 8, justifyContent: "center" }}>
+                  <Skeleton width="60%" height={14} borderRadius={4} />
+                  <Skeleton width="85%" height={12} borderRadius={4} />
+                </View>
               </View>
-            </View>)}
+            )}
           />
         ) : (
           <FlatList
-            data={conversations}
+            data={filtered}
             // Measured tab bar height, so the last conversation is not hidden
             // behind the bar. Differs between iOS and Android.
-            contentContainerStyle={{ paddingBottom: tabBarHeight }}
-            ListEmptyComponent={() => <View style={{ padding: 32, height: Dimensions.get('window').height * 0.6, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: 'rgba(165, 165, 165, 0.7)', fontSize: 18, fontWeight: '600' }}>
-                No Chats
-              </Text>
-            </View>
+            contentContainerStyle={{
+              paddingTop: 8,
+              paddingBottom: tabBarHeight,
+              flexGrow: filtered.length ? 0 : 1,
+              justifyContent: filtered.length ? "flex-start" : "center",
+            }}
+            ItemSeparatorComponent={() => (
+              // Inset separators between rows, iOS convention. Six-item lists
+              // used to read as floating text.
+              <View
+                style={{
+                  height: 1,
+                  marginLeft: SCREEN_GUTTER + 60,
+                  backgroundColor: color.line,
+                }}
+              />
+            )}
+            ListEmptyComponent={
+              query.trim() ? (
+                <EmptyState
+                  title="No conversations match that"
+                  body="Try a different name or word from a message."
+                />
+              ) : (
+                <EmptyState
+                  icon={
+                    <ChatBubbleLeftRightIcon size={26} color={color.brandText} />
+                  }
+                  title="No conversations yet"
+                  body="Message an owner from any listing and the conversation will appear here."
+                  actionLabel="Browse listings"
+                  onAction={() => navigation.navigate("MainTabs")}
+                />
+              )
             }
-            renderItem={({ item }) => (
+            renderItem={({ item }) =>
               item.id ? (
                 <ChatCard
                   isRead={
@@ -150,11 +197,7 @@ export default function Chat() {
                     )?.isRead || false
                   }
                   id={item.id}
-                  name={
-                    item.initialParticipants.find(
-                      (p) => p.userId !== userDetails?.username
-                    )?.username || "Unknown"
-                  }
+                  name={nameOf(item)}
                   lastMessage={item.lastMessage || ""}
                   unreadCount={
                     item.readCount.find(
@@ -170,26 +213,12 @@ export default function Chat() {
                   onDeleteChat={deleteChat}
                 />
               ) : null
-            )}
+            }
             keyExtractor={(item, index) => item.id ?? `conversation-${index}`}
             showsVerticalScrollIndicator={false}
-            style={{ height: "80%" }}
           />
         )}
       </View>
     </StaticContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  Shadow: {
-    shadowColor: "#808080",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-});
