@@ -1,19 +1,16 @@
 import { useProfile } from "@/backend/profile";
-import { Button, Text } from "@/components/core";
+import { BackButton, Button, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { useRef, useState } from "react";
-import { Platform, TextInput, TouchableOpacity, View } from "react-native";
-import {
-  ArrowLeftIcon,
-  ChevronRightIcon,
-} from "react-native-heroicons/outline";
+import { Platform, TextInput, View } from "react-native";
+import { ChevronRightIcon } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 
 import { toast } from "@/lib/toast";
-import { ink, colors } from "@/lib/design-tokens";
+import { ink, colors, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
 
 interface FeedbackNReviewProps {}
 
@@ -44,26 +41,14 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
 
   return (
     <NonScrollableContainer>
-      <View className="flex-row items-center justify-between px-gutter pb-2 pt-2">
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-          onPress={() => router.goBack()}
-          className="flex-1 items-start w-[10%]"
-        >
-          <ArrowLeftIcon
-            size={26}
-            color={ink.text(isDarkMode)}
-          />
-        </TouchableOpacity>
-        <View className="items-center justify-center w-[80%]">
-          <Text
-            fontSize="text-xl"
-            fontWeight="font-bold"
-          >
+      <View className="flex-row items-center px-gutter pb-2 pt-2">
+        <BackButton />
+        <View className="flex-1 items-center justify-center">
+          <Text role="sectionTitle" fontWeight="font-bold">
             Feedback & Review
           </Text>
         </View>
-
-        <View className="w-[10%]"></View>
+        <View style={{ width: MIN_TOUCH_TARGET }} />
       </View>
 
       <KeyboardAwareScrollView className="px-gutter pb-5 pt-2 flex-1">

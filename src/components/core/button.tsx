@@ -10,6 +10,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { Text } from "./text";
+import { usePressFeedback } from "./use-press-feedback";
 
 type ButtonVariant = "primary" | "outline" | "warning" | "ghost";
 type ButtonSize = "default" | "compact";
@@ -51,11 +52,14 @@ export function Button({
   loading = false,
   haptic = true,
   onPress,
+  onPressIn,
+  onPressOut,
   accessibilityLabel,
   ...props
 }: Props) {
   const { color, isDark } = useTheme();
   const isBlocked = Boolean(disabled) || loading;
+  const feedback = usePressFeedback({ disabled: isBlocked });
 
   const container: ViewStyle = (() => {
     const base: ViewStyle = {
@@ -123,7 +127,17 @@ export function Button({
   return (
     <TouchableOpacity
       className={className}
-      style={[container, style]}
+      style={[container, style, feedback.pressStyle]}
+      // Chained rather than replaced, so a call site that needs its own
+      // press-in handler does not silently lose the shared feedback.
+      onPressIn={(event) => {
+        feedback.onPressIn();
+        onPressIn?.(event);
+      }}
+      onPressOut={(event) => {
+        feedback.onPressOut();
+        onPressOut?.(event);
+      }}
       disabled={isBlocked}
       onPress={handlePress}
       accessibilityRole="button"
@@ -131,7 +145,9 @@ export function Button({
       accessibilityLabel={
         accessibilityLabel ?? (isTextChild ? String(children) : undefined)
       }
-      activeOpacity={0.85}
+      // The dip is ours now, from `usePressFeedback`; TouchableOpacity's own
+      // fade would double it. A caller can still override via props.
+      activeOpacity={1}
       {...props}
     >
       {loading && (

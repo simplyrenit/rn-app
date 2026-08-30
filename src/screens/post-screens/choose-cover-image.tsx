@@ -12,7 +12,6 @@ import React, { useRef, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ink } from "@/lib/design-tokens";
 import {
-  ArrowLeftIcon,
   ChevronRightIcon,
   InformationCircleIcon,
 } from "react-native-heroicons/outline";
@@ -85,18 +84,7 @@ export default function ChooseCoverImage() {
 
   return (
     <StaticContainer width={100}>
-      <StyledView className="px-3 flex-row items-center">
-        <StyledTouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-          onPress={() => navigation.goBack()}
-          className="w-[10%]"
-        >
-          <ArrowLeftIcon size={24} color={ink.text(isDark)} />
-        </StyledTouchableOpacity>
-        <StyledView className="w-[80%]">
-          <PostProductHeader heading="Choose a cover image" step={5} />
-        </StyledView>
-        <StyledView className="w-[10%]" />
-      </StyledView>
+      <PostProductHeader heading="Choose a cover image" step={5} showBackArrow />
       <ScrollView ref={scrollViewRef} className="px-0  flex-1">
         <ScrollView
           horizontal
@@ -172,10 +160,7 @@ export default function ChooseCoverImage() {
           className="w-full items-center justify-between "
         >
           <View className="flex-row items-center justify-between">
-            <Text tone="body"
-              fontWeight="font-bold"
-              style={{ color: "#FFFFFF" }}
-            >
+            <Text tone="onBrand" fontWeight="font-bold">
               Next
             </Text>
             <ChevronRightIcon

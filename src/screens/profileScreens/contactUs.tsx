@@ -1,10 +1,9 @@
-import { Text } from "@/components/core";
+import { BackButton, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { ScrollView, TouchableOpacity, View, Linking } from "react-native";
 import {
-  ArrowLeftIcon,
   ChevronRightIcon,
   EnvelopeOpenIcon,
   PencilIcon,
@@ -12,7 +11,7 @@ import {
 } from "react-native-heroicons/outline";
 
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { ink } from "@/lib/design-tokens";
+import { ink, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
 
 interface ContactUsProps {}
 
@@ -24,29 +23,14 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
 
   return (
     <NonScrollableContainer>
-      <View
-        className="flex-row items-center justify-between px-gutter pt-2 "
-        // style={{ paddingVertical: wp("5%") }}
-      >
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-          className="w-[10%]"
-          onPress={() => router.goBack()}
-        >
-          <ArrowLeftIcon
-            size={26}
-            color={ink.text(isDarkMode)}
-          />
-        </TouchableOpacity>
-        <View className="items-center justify-center w-[80%]">
-          <Text
-            fontSize="text-xl"
-            fontWeight="font-bold"
-          >
+      <View className="flex-row items-center px-gutter pt-2">
+        <BackButton />
+        <View className="flex-1 items-center justify-center">
+          <Text role="sectionTitle" fontWeight="font-bold">
             Contact Us
           </Text>
         </View>
-
-        <View className="w-[10%]"></View>
+        <View style={{ width: MIN_TOUCH_TARGET }} />
       </View>
 
       <ScrollView className="">

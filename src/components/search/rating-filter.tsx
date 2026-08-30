@@ -2,7 +2,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { useState } from "react";
 import { View } from "react-native";
 import StarRating from "react-native-star-rating-widget";
-import { Button, Text } from "../core";
+import { Text } from "../core";
 import { Rating } from "react-native-ratings";
 import { colors } from "@/lib/design-tokens";
 
@@ -32,11 +32,9 @@ export function RatingFilter({
   return (
     <View className="flex-1">
       <View className="mt-0 w-[90%] mx-auto flex-1">
-        <Text
-          fontSize="text-base"
-          fontWeight="font-bold"
-          className="mb-3"
-        >
+        {/* A label must not outrank the value beside it — this was 17pt bold
+            over a rating the customer actually reads. */}
+        <Text role="fieldLabel" className="mb-3">
           Product Review
         </Text>
         <View
@@ -63,11 +61,7 @@ export function RatingFilter({
 
           <Text fontSize="text-2xl">{rating.product}</Text>
         </View>
-        <Text
-          fontSize="text-base"
-          fontWeight="font-bold"
-          className="mt-8 mb-3"
-        >
+        <Text role="fieldLabel" className="mt-8 mb-3">
           Owner Review
         </Text>
         <View

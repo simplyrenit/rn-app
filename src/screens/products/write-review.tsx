@@ -1,5 +1,5 @@
 import useReviews from "@/backend/reviews";
-import { Button, Text } from "@/components/core";
+import { BackButton, Button, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import {
@@ -11,13 +11,12 @@ import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import React, { useState } from "react";
-import { ActivityIndicator, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import { ScrollView, TextInput, View } from "react-native";
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
-import { ArrowLeftIcon } from "react-native-heroicons/outline";
 
 import { toast } from "@/lib/toast";
 import Rating from "@/components/core/rating";
-import { ink, radius } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, ink, radius } from "@/lib/design-tokens";
 
 type ConditionOption = {
   label: string;
@@ -93,18 +92,21 @@ export default function WriteReviewScreen() {
   return (
     <NonScrollableContainer>
       <View className="flex-1">
-        <View className="py-3 px-gutter flex flex-row items-center">
-          <View className="w-[10%]">
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back" onPress={() => navigation.goBack()}>
-              <ArrowLeftIcon color={ink.text(isDark)} size={24} />
-            </TouchableOpacity>
-          </View>
-          <View className="w-[80%] h-full items-center">
-            <Text fontSize="text-xl" fontWeight="font-bold">
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+          }}
+        >
+          <BackButton />
+          <View style={{ flex: 1, alignItems: "center" }}>
+            <Text role="screenTitle" numberOfLines={1}>
               Write a review
             </Text>
           </View>
-          <View className="w-[10%]"></View>
+          <View style={{ width: MIN_TOUCH_TARGET }} />
         </View>
 
         <View className="px-gutter pb-2 mt-4 flex flex-row items-center space-x-3">
@@ -145,8 +147,8 @@ export default function WriteReviewScreen() {
 
         <ScrollView keyboardShouldPersistTaps="handled">
           <View className="px-gutter mt-4">
-            <Text fontSize="text-md" fontWeight="font-bold" className="mb-1">
-              How was the product's condition?
+            <Text role="fieldLabel" className="mb-1">
+              Condition
             </Text>
 
             <RNEDropdown
@@ -213,12 +215,8 @@ export default function WriteReviewScreen() {
             />
           </View>
           <View className="px-gutter mt-4 space-y-2">
-            <Text fontSize="text-md" fontWeight="font-bold">
-              Product Review
-            </Text>
-            <Text className={`${isDark ? "text-muted-dark" : "text-muted-light"}`}>
-              Share your thoughts about the product
-            </Text>
+            <Text role="fieldLabel">Product review</Text>
+            <Text role="fieldHint">Share your thoughts about the product</Text>
             <TextInput
               placeholder="How did the rental go?"
               value={productReview}
@@ -236,10 +234,8 @@ export default function WriteReviewScreen() {
             />
           </View>
           <View className="px-gutter mt-4 space-y-2">
-            <Text fontSize="text-md" fontWeight="font-bold">
-              Owner Review
-            </Text>
-            <Text className={`${isDark ? "text-muted-dark" : "text-muted-light"}`}>
+            <Text role="fieldLabel">Owner review</Text>
+            <Text role="fieldHint">
               Share your thoughts about the owner of the product
             </Text>
             <TextInput
@@ -259,9 +255,7 @@ export default function WriteReviewScreen() {
             />
           </View>
           <View className="px-gutter mt-4 space-y-2">
-            <Text fontSize="text-md" fontWeight="font-bold">
-              Rate the product
-            </Text>
+            <Text role="fieldLabel">Product rating</Text>
             <View
               className={`flex flex-row items-center justify-between border ${
                 isDark
@@ -288,9 +282,7 @@ export default function WriteReviewScreen() {
             </View>
           </View>
           <View className="px-gutter mt-4 space-y-2">
-            <Text fontSize="text-md" fontWeight="font-bold">
-              Rate the owner
-            </Text>
+            <Text role="fieldLabel">Owner rating</Text>
             <View
               className={`flex flex-row items-center justify-between border ${
                 isDark

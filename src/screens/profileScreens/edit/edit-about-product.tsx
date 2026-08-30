@@ -1,7 +1,8 @@
 import { useProfile } from "@/backend/profile";
-import { Button, Text } from "@/components/core";
+import { BackButton, Button, FieldLabel, FieldShell, Text, TextField, useFieldSurfaceStyle } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
+import { SegmentedChoice } from "@/components/core/segmented-choice";
 import { useGlobalContext } from "@/context/global-context";
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
 import { createLocationRequest } from "@/lib/location-request";
@@ -17,10 +18,9 @@ import { ActivityIndicator, Platform, Pressable, TextInput, TouchableOpacity, Vi
 import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 import { ScrollView } from "react-native-gesture-handler";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import {
-  ArrowLeftIcon,
-  CheckIcon,
   ChevronDownIcon,
   MagnifyingGlassIcon,
   MapPinIcon,
@@ -39,8 +39,7 @@ import {
   GoodCondition,
 } from "@/icons/conditions";
 import { MaterialIcons } from "@expo/vector-icons";
-import { RequiredMark } from "@/components/core/field";
-import { ink, colors, radius } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, density, ink, colors, radius } from "@/lib/design-tokens";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { toast } from "@/lib/toast";
@@ -94,7 +93,12 @@ export default function EditAboutProduct() {
   const [securityDeposit, setSecurityDeposit] = useState(
     data.security_deposit?.toString() || ""
   );
+  // Condition is a select, not a TextInput, so it tracks its own focus rather
+  // than getting one for free from TextField.
   const [isFocus, setIsFocus] = useState(false);
+  const [priceFocus, setPriceFocus] = useState(false);
+  const [depositFocus, setDepositFocus] = useState(false);
+  const [phoneFocus, setPhoneFocus] = useState(false);
 
   const [contactPerson, setContactPerson] = useState<"Owner" | "Other" | null>(
     data.isOwnerContact ? 'Owner' : 'Other'
@@ -367,31 +371,15 @@ export default function EditAboutProduct() {
     <NonScrollableContainer>
       <View className=" h-10 items-center justify-center pt-2">
         <View className="flex-row items-center justify-between">
-          <View className="w-[10%]">
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-              onPress={() => navigation.goBack()}
-              className={`flex-row items-center py-4 px-6`}
-            >
-              <View className="mt-1 pr-1">
-                <ArrowLeftIcon
-                  className=""
-                  size={20}
-                  color={ink.text(isDark)}
-                />
-              </View>
-            </TouchableOpacity>
+          <View style={{ width: MIN_TOUCH_TARGET }}>
+            <BackButton />
           </View>
-          <View className="w-[80%]">
-            <View className="h-24 items-center justify-center">
-              <Text
-                fontSize="text-lg"
-                fontWeight="font-bold"
-              >
-                Edit Product Details
-              </Text>
-            </View>
+          <View className="flex-1 items-center">
+            <Text role="sectionTitle" fontSize="text-lg">
+              Edit Product Details
+            </Text>
           </View>
-          <View className="w-[10%]"></View>
+          <View style={{ width: MIN_TOUCH_TARGET }} />
         </View>
       </View>
 
@@ -399,89 +387,56 @@ export default function EditAboutProduct() {
           reserved a percentage of screen width, so the scroll container never
           made room for the home indicator and the CTA was clipped. */}
       <View className="flex-1 justify-between pt-2">
-        <ScrollView
+        <KeyboardAwareScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          enableOnAndroid
+          extraScrollHeight={16}
           contentContainerStyle={{
             paddingHorizontal: SCREEN_GUTTER,
             paddingTop: 16,
             paddingBottom: insets.bottom + 32,
           }}
         >
-          <View className="space-y-1 mb-5">
-            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
-              Product Name
-              <RequiredMark />
+          <TextField
+            label="Product Name"
+            required
+            hint="Short and recognisable — “MacBook Air”, not a spec sheet"
+            placeholder="e.g. MacBook Air"
+            value={productName}
+            onChangeText={setProductName}
+          />
 
-            </Text>
-            <Text fontSize="text-xs" tone="body">
-              Short and recognisable — “MacBook Air”, not a spec sheet
-            </Text>
-            <TextInput
-              placeholder="e.g. MacBook Air"
-              value={productName}
-              placeholderTextColor={ink.dim(isDark)}
-              onChangeText={setProductName}
-              className={`rounded-input h-11 border px-3 ${isDark
-                ? "border-input-line-dark text-white"
-                : "border-input-line-light text-black"
-                }`}
-            />
-          </View>
+          <TextField
+            label="Brand Name"
+            placeholder="e.g. Apple"
+            value={brandName}
+            onChangeText={setBrandName}
+          />
 
-          <View className="space-y-1 mb-5">
-            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
-              Brand Name
-            </Text>
-            <TextInput
-              placeholder="e.g. Apple"
-              placeholderTextColor={ink.dim(isDark)}
-              value={brandName}
-              onChangeText={setBrandName}
-              className={`rounded-input h-11 border px-3 ${isDark
-                ? "border-input-line-dark text-white"
-                : "border-input-line-light text-black"
-                }`}
-            />
-          </View>
+          <TextField
+            label="Model Name/Number"
+            placeholder="e.g. MacBook Air 2024"
+            value={modelName}
+            onChangeText={setModelName}
+          />
 
-          <View className="space-y-1 mb-5">
-            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
-              Model Name/Number
-            </Text>
-            <TextInput
-              placeholder="e.g. MacBook Air 2024"
-              value={modelName}
-              placeholderTextColor={ink.dim(isDark)}
-              onChangeText={setModelName}
-              className={`rounded-input h-11 border px-3 ${isDark
-                ? "border-input-line-dark text-white"
-                : "border-input-line-light text-black"
-                }`}
-            />
-          </View>
-
-          <View className="space-y-1 mb-5">
-            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
-              Condition
-              <RequiredMark />
-            </Text>
-
+          <View style={{ marginBottom: density.fieldGap }}>
+            <FieldLabel label="Condition" required />
             <RNEDropdown
+              onFocus={() => setIsFocus(true)}
+              onBlur={() => setIsFocus(false)}
               style={{
-                height: 48,
-                backgroundColor: ink.canvas(isDark),
-                borderRadius: radius.input,
-                borderWidth: 1,
-                borderColor: ink.line(isDark),
-                paddingHorizontal: 16,
-                marginVertical: 10,
+                ...useFieldSurfaceStyle({ focused: isFocus }),
+                height: MIN_TOUCH_TARGET,
               }}
               activeColor={ink.surface(isDark)}
               containerStyle={{
                 marginTop: 10,
-                backgroundColor: ink.canvas(isDark),
+                backgroundColor: ink.surface(isDark),
                 borderRadius: radius.group,
+                borderColor: ink.inputLine(isDark),
+                overflow: "hidden",
               }}
               itemTextStyle={{
                 color: ink.text(isDark),
@@ -531,309 +486,162 @@ export default function EditAboutProduct() {
             />
           </View>
 
-          <View className="space-y-1 mb-5">
-            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
-              Product Description
-            </Text>
-            <Text fontSize="text-xs" tone="body">
-              What it is, what’s included, anything to watch for
-            </Text>
-            <TextInput
-              placeholder="What it is, what condition it’s in, what’s included"
-              value={productDescription}
-              onChangeText={setProductDescription}
-              placeholderTextColor={ink.dim(isDark)}
-              multiline
-              className={`rounded-card border h-32 p-3 ${isDark
-                ? "border-input-line-dark text-white"
-                : "border-input-line-light text-black"
-                }`}
-              style={{
-                textAlignVertical: "top", // Ensures text starts at the top
-              }}
-            />
-          </View>
+          <TextField
+            label="Product Description"
+            hint="What it is, what’s included, anything to watch for"
+            placeholder="What it is, what condition it’s in, what’s included"
+            value={productDescription}
+            onChangeText={setProductDescription}
+            multiline
+          />
 
-          <View className="space-y-1 mb-5">
-            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
-              Usage Description
-            </Text>
-            <Text fontSize="text-xs" tone="body">
-              Show a renter how to use it
-            </Text>
-            <TextInput
-              placeholder="Setup, handling, anything easy to get wrong"
-              value={usageDescription}
-              onChangeText={setUsageDescription}
-              placeholderTextColor={ink.dim(isDark)}
-              multiline
-              className={`rounded-card border h-32 p-3 ${isDark
-                ? "border-input-line-dark text-white"
-                : "border-input-line-light text-black"
-                }`}
-              style={{
-                textAlignVertical: "top", // Ensures text starts at the top
-              }}
-            />
-          </View>
+          <TextField
+            label="Usage Description"
+            hint="Show a renter how to use it"
+            placeholder="Setup, handling, anything easy to get wrong"
+            value={usageDescription}
+            onChangeText={setUsageDescription}
+            multiline
+          />
 
-          <View className="space-y-1 mb-5">
-            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
-              Product Location
-              <RequiredMark />
-            </Text>
-
+          <View style={{ marginBottom: density.fieldGap }}>
+            <FieldLabel label="Product Location" required />
             <TouchableOpacity
-              className={`h-[50px] rounded-card w-full ${isDark
-                ? "bg-canvas-dark border-input-line-dark"
-                : "bg-surface-light border-input-line-light"
-                } border px-2`}
               onPress={handleOpenBottomSheet}
+              accessibilityRole="button"
+              accessibilityLabel={selectedLocationName ?? "Select a location"}
             >
-              <View className="flex flex-row h-full w-full items-center justify-between">
-                <View className="flex flex-row items-center space-x-2 ">
-                  <MapPinIcon
-                    color={ink.text(isDark)}
-                    size={24}
-                  />
-                  <View className="w-3/4">
-                    {selectedLocationName ? (
-                      // <Text fontSize="text-md">{selectedLocationName}</Text>
-                      <Text
-                        fontSize="text-xs"
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        {selectedLocationName}
-                      </Text>
-                    ) : (
-                      <Text
-                        fontSize="text-sm"
-                        className={`${isDark ? "text-muted-dark" : "text-muted-light"
-                          }`}
-                      >
-                        Select a location
-                      </Text>
-                    )}
-                  </View>
+              <FieldShell>
+                <MapPinIcon color={ink.text(isDark)} size={24} />
+                <View style={{ flex: 1 }}>
+                  {selectedLocationName ? (
+                    <Text
+                      fontSize="text-xs"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {selectedLocationName}
+                    </Text>
+                  ) : (
+                    <Text fontSize="text-sm" tone="dim">
+                      Select a location
+                    </Text>
+                  )}
                 </View>
                 {selectedLocationName && (
-                  <PencilSquareIcon
-                    color={ink.text(isDark)}
-                    size={24}
-                  />
+                  <PencilSquareIcon color={ink.text(isDark)} size={24} />
                 )}
-              </View>
+              </FieldShell>
             </TouchableOpacity>
           </View>
 
-          <View className="space-y-1 mb-5">
-            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
-              Product Address
-              <RequiredMark />
-            </Text>
-            <Text fontSize="text-xs" tone="body">
-              Add complete address where the product is located
-            </Text>
-            <TextInput
-              placeholder="Enter address..."
-              value={address}
-              onChangeText={setAddress}
-              placeholderTextColor={ink.dim(isDark)}
-              multiline
-              className={`rounded-card border h-32 p-3 ${isDark
-                ? "border-input-line-dark text-white"
-                : "border-input-line-light text-black"
-                }`}
-              style={{
-                textAlignVertical: "top", // Ensures text starts at the top
-              }}
-            />
-          </View>
+          <TextField
+            label="Product Address"
+            required
+            hint="Add complete address where the product is located"
+            placeholder="Enter address..."
+            value={address}
+            onChangeText={setAddress}
+            multiline
+          />
 
-          <View className="space-y-1 mb-5">
-            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
-              Price Per Day
-              <RequiredMark />
-            </Text>
-            <Text fontSize="text-xs" tone="body">
-              What a renter pays per day
-            </Text>
-            <View
-              className={`flex-row items-center rounded-card border px-3 ${isDark
-                ? "border-input-line-dark text-white"
-                : "border-input-line-light text-black"
-                }`}
-            >
+          <View style={{ marginBottom: density.fieldGap }}>
+            <FieldLabel
+              label="Price Per Day"
+              required
+              hint="What a renter pays per day"
+            />
+            <FieldShell focused={priceFocus}>
               {productCountry === "India" && (
-                <MaterialIcons
-                  name="currency-rupee"
-                  color={colors.dark.brand}
-                  size={20}
-                />
+                <MaterialIcons name="currency-rupee" color={ink.brandText(isDark)} size={20} />
               )}
               {(productCountry === "USA" || productCountry === 'United States') && (
-                <MaterialIcons
-                  name="attach-money"
-                  color={colors.dark.brand}
-                  size={20}
-                />
+                <MaterialIcons name="attach-money" color={ink.brandText(isDark)} size={20} />
               )}
               {productCountry === "UK" && (
-                <MaterialIcons
-                  name="currency-pound"
-                  color={colors.dark.brand}
-                  size={20}
-                />
+                <MaterialIcons name="currency-pound" color={ink.brandText(isDark)} size={20} />
               )}
               <TextInput
                 placeholder="e.g. 1200"
                 keyboardType="numeric"
                 value={pricePerDay}
                 onChangeText={(value) => setPricePerDay(value.replace(/[^\d.]/g, ""))}
-                placeholderTextColor={ink.dim(isDark)}
-                className={`flex-1 h-12 p-3 ${isDark ? "text-white" : "text-black"
-                  }`}
+                placeholderTextColor={ink.placeholder(isDark)}
+                onFocus={() => setPriceFocus(true)}
+                onBlur={() => setPriceFocus(false)}
+                style={{ flex: 1, color: ink.text(isDark) }}
               />
-            </View>
+            </FieldShell>
           </View>
 
-          <View className="space-y-1 mb-5">
-            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
-              Security Deposit
-              <RequiredMark />
-            </Text>
-            <Text fontSize="text-xs" tone="body">
-              Refunded when the item comes back
-            </Text>
-            <View
-              className={`flex-row items-center rounded-card border px-3 ${isDark
-                ? "border-input-line-dark text-white"
-                : "border-input-line-light text-black"
-                }`}
-            >
+          <View style={{ marginBottom: density.fieldGap }}>
+            <FieldLabel
+              label="Security Deposit"
+              required
+              hint="Refunded when the item comes back"
+            />
+            <FieldShell focused={depositFocus}>
               {productCountry === "India" && (
-                <MaterialIcons
-                  name="currency-rupee"
-                  color={colors.dark.brand}
-                  size={20}
-                />
+                <MaterialIcons name="currency-rupee" color={ink.brandText(isDark)} size={20} />
               )}
               {(productCountry === "USA" || productCountry === 'United States') && (
-                <MaterialIcons
-                  name="attach-money"
-                  color={colors.dark.brand}
-                  size={20}
-                />
+                <MaterialIcons name="attach-money" color={ink.brandText(isDark)} size={20} />
               )}
               {productCountry === "UK" && (
-                <MaterialIcons
-                  name="currency-pound"
-                  color={colors.dark.brand}
-                  size={20}
-                />
+                <MaterialIcons name="currency-pound" color={ink.brandText(isDark)} size={20} />
               )}
               <TextInput
                 placeholder="e.g. 2500"
-                placeholderTextColor={ink.dim(isDark)}
+                placeholderTextColor={ink.placeholder(isDark)}
                 keyboardType="numeric"
                 value={securityDeposit}
                 onChangeText={(value) => setSecurityDeposit(value.replace(/[^\d.]/g, ""))}
-                className={`flex-1 h-12 p-3 ${isDark ? "text-white" : "text-black"
-                  }`}
+                onFocus={() => setDepositFocus(true)}
+                onBlur={() => setDepositFocus(false)}
+                style={{ flex: 1, color: ink.text(isDark) }}
               />
-            </View>
+            </FieldShell>
           </View>
 
-          <View className="space-y-1 mb-5">
-            <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
-              Concerned person of contact
-              <RequiredMark />
-            </Text>
-            <Text fontSize="text-xs" tone="body">
-              Mention who the person of contact would be in case of any
-              questions from renters
-            </Text>
+          <View style={{ marginBottom: density.fieldGap }}>
+            <FieldLabel
+              label="Concerned person of contact"
+              required
+              hint="Mention who the person of contact would be in case of any questions from renters"
+            />
 
-            <View className="flex-row items-center justify-between">
-              {/* Owner Option */}
-              <TouchableOpacity
-                onPress={() => {
-                  setContactPerson("Owner");
+            <SegmentedChoice
+              accessibilityLabel="Concerned person of contact"
+              value={contactPerson}
+              onChange={(next) => {
+                setContactPerson(next);
+                if (next === "Owner") {
                   setOtherName("");
                   setOtherPhoneNumber("");
-                }}
-                className={`rounded-card h-12 border w-[49%] p-3 flex-row items-center justify-between ${contactPerson === "Owner"
-                  ? "border-brand"
-                  : isDark
-                    ? "border-input-line-dark text-white"
-                    : "border-input-line-light text-black"
-                  }`}
-              >
-                <Text fontSize="text-sm">Owner</Text>
-                {contactPerson === "Owner" && (
-                  <CheckIcon
-                    size={18}
-                    color={colors.dark.brand}
-                  />
-                )}
-              </TouchableOpacity>
-
-              {/* Other Option */}
-              <TouchableOpacity
-                onPress={() => setContactPerson("Other")}
-                className={`rounded-card h-12 border w-[49%] p-3 flex-row items-center justify-between ${contactPerson === "Other"
-                  ? "border-brand"
-                  : isDark
-                    ? "border-input-line-dark text-white"
-                    : "border-input-line-light text-black"
-                  }`}
-              >
-                <Text fontSize="text-sm">Other</Text>
-                {contactPerson === "Other" && (
-                  <CheckIcon
-                    size={18}
-                    color={colors.dark.brand}
-                  />
-                )}
-              </TouchableOpacity>
-            </View>
+                }
+              }}
+              options={[
+                { value: "Owner", label: "Owner" },
+                { value: "Other", label: "Other" },
+              ]}
+            />
 
             {contactPerson === "Other" && (
               <View>
-                <View className="space-y-2 mt-8">
-                  <Text
-                    fontSize="text-md"
-                    fontWeight="font-bold"
-                  >
-                    Name
-                  </Text>
-                  <TextInput
+                <View style={{ marginTop: density.fieldGap }}>
+                  <TextField
+                    label="Name"
+                    required
                     placeholder="Enter name"
                     value={otherName}
                     onChangeText={setOtherName}
-                    placeholderTextColor={ink.dim(isDark)}
-                    className={`rounded-input h-11 border px-3 ${isDark
-                      ? "border-input-line-dark text-white"
-                      : "border-input-line-light text-black"
-                      }`}
                   />
                 </View>
 
-                <View className="space-y-2 mt-8">
-                  <Text
-                    fontSize="text-md"
-                    fontWeight="font-bold"
-                  >
-                    Phone Number
-                  </Text>
-                  <View className="flex-row flex-1 space-x-2 ">
-                    <View
-                      className={` rounded-card flex-[0.5] border h-12  flex-row items-center justify-center ${isDark
-                        ? "border-input-line-dark text-white"
-                        : "border-input-line-light text-black"
-                        }`}
-                    >
+                <View>
+                  <FieldLabel label="Phone Number" required />
+                  <View className="flex-row flex-1 space-x-2">
+                    <FieldShell style={{ flex: 0.5, justifyContent: "center" }}>
                       <CountryPicker
                         {...(isDark && { theme: DARK_THEME })}
                         withFlag
@@ -853,42 +661,23 @@ export default function EditAboutProduct() {
                           });
                         }}
                       />
-                      <View className="ml-2 ">
-                        <ChevronDownIcon
-                          size={16}
-                          color={ink.text(isDark)}
-                          className="mt-1"
-                        />
-                      </View>
-                    </View>
+                      <ChevronDownIcon size={16} color={ink.text(isDark)} />
+                    </FieldShell>
 
-                    <View
-                      // className="flex-row items-center flex-1"
-                      className={`flex-row items-center rounded-card flex-1 border px-3 h-12  ${isDark
-                        ? "border-input-line-dark text-white"
-                        : "border-input-line-light text-black"
-                        }`}
-                    >
-                      <View className="pr-2 items-center justify-center">
-                        <Text>
-                          +{country.callingCode}
-                        </Text>
-                      </View>
-                      <View>
-                        <TextInput
-                          maxLength={10}
-                          placeholder="Enter phone number"
-                          value={otherPhoneNumber}
-                          keyboardType="number-pad"
-                          onChangeText={setOtherPhoneNumber}
-                          placeholderTextColor={
-                            ink.dim(isDark)
-                          }
-                          className={`flex-1 h-12 p-3  ${isDark ? "text-white" : "text-black"
-                            }`}
-                        />
-                      </View>
-                    </View>
+                    <FieldShell focused={phoneFocus} style={{ flex: 1 }}>
+                      <Text>+{country.callingCode}</Text>
+                      <TextInput
+                        maxLength={10}
+                        placeholder="Enter phone number"
+                        value={otherPhoneNumber}
+                        keyboardType="number-pad"
+                        onChangeText={setOtherPhoneNumber}
+                        placeholderTextColor={ink.placeholder(isDark)}
+                        onFocus={() => setPhoneFocus(true)}
+                        onBlur={() => setPhoneFocus(false)}
+                        style={{ flex: 1, color: ink.text(isDark) }}
+                      />
+                    </FieldShell>
                   </View>
                 </View>
               </View>
@@ -903,16 +692,13 @@ export default function EditAboutProduct() {
               {L ? (
                 <ActivityIndicator size="small" color="white" />
               ) : (
-                <Text tone="body"
-                  fontWeight="font-bold"
-                  style={{ color: "#FFFFFF" }}
-                >
+                <Text tone="onBrand" fontWeight="font-bold">
                   Update Product
                 </Text>
               )}
             </View>
           </Button>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </View>
 
       <CustomBottomSheetModal

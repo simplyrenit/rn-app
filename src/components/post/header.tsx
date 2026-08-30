@@ -3,9 +3,9 @@ import { useGlobalContext } from "@/context/global-context";
 import { MIN_TOUCH_TARGET, ink } from "@/lib/design-tokens";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
-import { Alert, TouchableOpacity, View } from "react-native";
-import { ArrowLeftIcon, XMarkIcon } from "react-native-heroicons/outline";
-import { Text } from "../core";
+import { Alert, View } from "react-native";
+import { XMarkIcon } from "react-native-heroicons/outline";
+import { BackButton, IconButton, Text } from "../core";
 import { POST_FLOW_STEPS, PostProductPageIndicator } from "./page-indicator";
 
 interface Props {
@@ -64,16 +64,7 @@ export function PostProductHeader({
         }}
       >
         <View style={{ width: MIN_TOUCH_TARGET, alignItems: "center" }}>
-          {showBackArrow ? (
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-            >
-              <ArrowLeftIcon size={24} color={ink.text(isDark)} />
-            </TouchableOpacity>
-          ) : null}
+          {showBackArrow ? <BackButton /> : null}
         </View>
 
         <View style={{ flex: 1, alignItems: "center", gap: 4 }}>
@@ -96,14 +87,12 @@ export function PostProductHeader({
 
         <View style={{ width: MIN_TOUCH_TARGET, alignItems: "center" }}>
           {showClose ? (
-            <TouchableOpacity
+            <IconButton
               onPress={leave}
-              hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
-              accessibilityRole="button"
               accessibilityLabel="Close and discard this listing"
             >
               <XMarkIcon size={24} color={ink.body(isDark)} />
-            </TouchableOpacity>
+            </IconButton>
           ) : null}
         </View>
       </View>

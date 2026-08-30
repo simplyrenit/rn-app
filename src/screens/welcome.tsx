@@ -47,17 +47,30 @@ export default function OnboardingScreen(): JSX.Element {
   const isDarkMode = theme === "dark";
   const progress = useSharedValue(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+  // The carousel is sized to whatever vertical space is left once the login
+  // buttons and terms have taken theirs, rather than a fixed 60% of the screen
+  // that overflowed onto the buttons on shorter devices.
+  const [carouselHeight, setCarouselHeight] = useState(
+    Math.round(SCREEN_HEIGHT * 0.55)
+  );
 
   const AnimatedStyledView = Animated.createAnimatedComponent(StyledView);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StaticContainer width={100}>
-        <StyledView className="flex-1" style={{ height: SCREEN_HEIGHT*0.6 }}>
+        <StyledView
+          className="flex-1"
+          style={{ overflow: "hidden" }}
+          onLayout={(e) => {
+            const h = Math.round(e.nativeEvent.layout.height);
+            if (h > 0 && h !== carouselHeight) setCarouselHeight(h);
+          }}
+        >
           <Carousel
             loop
             autoplay
-            height={SCREEN_HEIGHT * 0.6}
+            height={carouselHeight}
             width={SCREEN_WIDTH}
             showsDots={false}
             autoplayInterval={3000}
@@ -75,11 +88,12 @@ export default function OnboardingScreen(): JSX.Element {
               <StyledView
                 key={index}
                 className="items-center justify-center w-full border border-transparent"
+                style={{ height: carouselHeight }}
               >
                 <StyledImage
                   source={isDarkMode ? item.darkImage : item.lightImage}
                   className="w-full"
-                  style={{ height: SCREEN_HEIGHT * 0.5 }}
+                  style={{ height: carouselHeight * 0.68 }}
                   contentFit="contain"
                 />
                 <Text

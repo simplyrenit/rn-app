@@ -58,6 +58,12 @@
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
+        "UIBackgroundModes": ["fetch", "remote-notification"],
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["app-1-377005499010-ios-0d9b22bd6d32787d258a9b"]
+          }
+        ],
         "NSLocationWhenInUseUsageDescription": "Renit needs access to your location to fetch products near you.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Renit needs access to your location to fetch products near you, even when the app is in the background.",
         "NSLocationAlwaysUsageDescription": "Renit needs access to your location to fetch products near you, even when the app is in the background.",

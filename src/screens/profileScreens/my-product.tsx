@@ -1,31 +1,43 @@
 import { useProfile } from "@/backend/profile";
-import { StaticContainer, Text } from "@/components/core";
+import { BackButton, StaticContainer, Text } from "@/components/core";
 import { MyProductCard } from "@/components/core/my-product-card";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
+import { IconButton } from "@/components/core/icon-button";
+import {
+  ListingStatusPill,
+  resolveListingStatus,
+} from "@/components/product/listing-status";
 import { useGlobalContext } from "@/context/global-context";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
-import { RefreshControl } from "react-native";
+import { RefreshControl, Share } from "react-native";
 import { EmptyState } from "@/components/core";
 import { Squares2X2Icon } from "react-native-heroicons/outline";
-import { colors } from "@/lib/design-tokens";
-import { ActivityIndicator, TouchableOpacity, View } from "react-native";
-import { ArrowLeftIcon } from "react-native-heroicons/outline";
+import { ActivityIndicator, Dimensions, FlatList, View } from "react-native";
 import { IOSShareIcon } from "@/icons/share";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
-import { Dimensions } from "react-native";
-import { FlatList } from "react-native";
+import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
-import { SCREEN_GUTTER, ink } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, colors } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
+import { toast } from "@/lib/toast";
 
 const { height } = Dimensions.get("window");
 
+const GRID_GAP = 14;
+
+/**
+ * An exact column width. Two cards at "48.5%" plus a 14pt gap comes to more
+ * than the row, so the right-hand card was clipped against the screen edge.
+ */
+const COLUMN_WIDTH =
+  (Dimensions.get("window").width - SCREEN_GUTTER * 2 - GRID_GAP) / 2;
+
 const MyProductScreen: React.FC = () => {
-  const { theme, authTokens, isAuthenticated } = useGlobalContext();
+  const { authTokens, isAuthenticated } = useGlobalContext();
   const [myProducts, setMyProducts] = useState<BackendProduct[]>([]);
   const [nextProductLink, setNextProductLink] = useState<string | null>(null);
-  const isDarkMode = theme === "dark";
+  const { color, isDark } = useTheme();
   const router = useTypedNavigation();
   const { getMyProducts } = useProfile();
   const [isLoading, setIsLoading] = useState(false);
@@ -39,8 +51,6 @@ const MyProductScreen: React.FC = () => {
       setIsRefreshing(false);
     }
   }, []);
-
-  const fetchNextProducts = useCallback(() => { }, [])
 
   const fetchProducts = useCallback(async (link?: string) => {
     if (!isAuthenticated || isLoading) {
@@ -68,66 +78,63 @@ const MyProductScreen: React.FC = () => {
     }, [isAuthenticated])
   );
 
+  const goToProfile = () =>
+    router.navigate("MainTabs", {
+      screen: "Profile",
+    });
+
+  const handleShare = async () => {
+    const line = `My listings on Renit — ${myProducts.length} ${
+      myProducts.length === 1 ? "item" : "items"
+    } to rent`;
+    try {
+      await Share.share({ message: line });
+    } catch {
+      toast.error("Couldn’t open the share sheet");
+    }
+  };
+
+  const header = (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+      }}
+    >
+      <BackButton onPress={goToProfile} />
+      <View style={{ flex: 1, alignItems: "center" }}>
+        <Text role="screenTitle" numberOfLines={1}>
+          My listings
+        </Text>
+      </View>
+      {isAuthenticated ? (
+        <IconButton
+          onPress={handleShare}
+          accessibilityLabel="Share my listings"
+          accessibilityHint="Opens the system share sheet"
+        >
+          <IOSShareIcon size={20} color={color.text} />
+        </IconButton>
+      ) : (
+        <View style={{ width: MIN_TOUCH_TARGET }} />
+      )}
+    </View>
+  );
+
   if (!authTokens || !isAuthenticated) {
     return (
       <StaticContainer width={100}>
-        <View className="flex-row items-center justify-between px-gutter py-2 pt-4">
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-            onPress={() =>
-              router.navigate("MainTabs", {
-                screen: "Profile",
-              })
-            }
-            className="flex-1 items-start w-[10%]"
-          >
-            <ArrowLeftIcon
-              size={26}
-              color={ink.text(isDarkMode)}
-            />
-          </TouchableOpacity>
-          <View className=" justify-center w-[80%]">
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
-            >
-              My listings
-            </Text>
-          </View>
-
-          <View className="w-[10%]"></View>
-        </View>
-        <ProfilePreAuth isDarkMode={isDarkMode} />
+        {header}
+        <ProfilePreAuth isDarkMode={isDark} />
       </StaticContainer>
     );
   }
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
-      <View className="flex-row items-center justify-between px-gutter py-2 pt-4">
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-          onPress={() =>
-            router.navigate("MainTabs", {
-              screen: "Profile",
-            })
-          }
-          className="flex-1 items-start w-[10%]"
-        >
-          <ArrowLeftIcon
-            size={26}
-            color={ink.text(isDarkMode)}
-          />
-        </TouchableOpacity>
-        <View className="items-center justify-center w-[80%]">
-          <Text
-            fontSize="text-xl"
-            fontWeight="font-bold"
-          >
-            My listings
-          </Text>
-        </View>
-
-        <View className="w-[10%]"></View>
-      </View>
+      {header}
 
       <FlatList
         style={{ width: "100%" }}
@@ -135,26 +142,14 @@ const MyProductScreen: React.FC = () => {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            tintColor={ink.body(isDarkMode)}
+            tintColor={color.textBody}
             colors={[colors.dark.brand]}
           />
         }
         data={myProducts}
-        ListHeaderComponent={(
-          <View
-            className={`flex-row justify-between py-4 border-b-[1px] px-gutter ${isDarkMode ? "border-b-line-dark" : "border-b-line-light"
-              }`}
-          >
-            <Text fontSize="text-sm">Share entire catalogue</Text>
-
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Share">
-              <IOSShareIcon size={22} color={ink.text(isDarkMode)} />
-            </TouchableOpacity>
-          </View>
-        )}
         ListEmptyComponent={
           <EmptyState
-            icon={<Squares2X2Icon size={26} color={ink.brandText(isDarkMode)} />}
+            icon={<Squares2X2Icon size={26} color={color.brandText} />}
             title="You haven't listed anything yet"
             body="List something you already own and it will show up here."
             actionLabel="List an item"
@@ -163,7 +158,7 @@ const MyProductScreen: React.FC = () => {
         }
         ListFooterComponent={nextProductLink ? () => isLoading ? (
           <View>
-            <ActivityIndicator color={ink.text(isDarkMode)} />
+            <ActivityIndicator color={color.text} />
           </View>
         ) : <View>
           <Text>Load More</Text>
@@ -171,56 +166,49 @@ const MyProductScreen: React.FC = () => {
         onEndReached={nextProductLink ? () => fetchProducts(nextProductLink) : undefined}
         keyExtractor={(item, index) => `${index}_${item.name}`}
         numColumns={2}
-        // The grid's own gutter, matching every other product grid in the app.
-        // `alignItems: center` on the content container made each row
-        // shrink-wrap, which is how rows one and two ended up starting at
-        // different offsets.
         columnWrapperStyle={{
           justifyContent: "flex-start",
           paddingHorizontal: SCREEN_GUTTER,
           marginTop: 16,
-          gap: 14,
+          gap: GRID_GAP,
         }}
         contentContainerStyle={{ paddingBottom: hp("10%") }}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => (
-          <MyProductCard
-            key={index}
-            id={item.name}
-            image={item.cover_image}
-            title={item.title}
-            location={item.location}
-            price={item.rate}
-            isDarkMode={isDarkMode}
-            moderationLabels={item.moderation_labels}
-            adminApproved={item.admin_approved}
-            width="48.5%"
-          />
-        )}
-      />
-      {/* <View
-          className="flex-row flex-wrap justify-between p-5"
-        // style={{ padding: itemMargin }}
-        >
-          {myProducts?.map((item, index) => (
-            <View
-              key={item.name}
-              style={{
-                marginBottom: 12,
-              }}
-            >
+        renderItem={({ item }) => {
+          // Only the failing states were ever labelled, so a published listing
+          // was told apart from a broken one by the absence of a badge. Every
+          // row now says what state it is in, in one place and one language.
+          //
+          // `MyProductCard` still draws its own "Pending" chip over the photo,
+          // so that one state reads twice until the chip is removed there — it
+          // lives in `components/core`, which this lane does not own. Faking
+          // `adminApproved` to suppress it would be worse than the repetition.
+          const status = resolveListingStatus({
+            moderationLabels: item.moderation_labels,
+            adminApproved: item.admin_approved,
+          });
+          return (
+            <View style={{ width: COLUMN_WIDTH }}>
               <MyProductCard
                 id={item.name}
                 image={item.cover_image}
                 title={item.title}
                 location={item.location}
                 price={item.rate}
-                isDarkMode={isDarkMode}
+                isDarkMode={isDark}
                 moderationLabels={item.moderation_labels}
+                adminApproved={item.admin_approved}
+                width="100%"
               />
+              {status ? (
+                <View style={{ marginTop: 6 }}>
+                  <ListingStatusPill status={status} />
+                </View>
+              ) : null}
             </View>
-          ))}
-        </View> */}
+          );
+        }}
+      />
     </NonScrollableContainer>
   );
 };

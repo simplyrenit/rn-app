@@ -1,37 +1,64 @@
-import { Image, View } from "react-native";
+import { View } from "react-native";
 import { Text } from "../core";
-import { useGlobalContext } from "@/context/global-context";
 import { DarkIcon, LightIcon } from "@/icons/logo";
+import { density, radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 
 interface ModerationBannerProps {
   moderationLabels: string[];
 }
 
 export function ModerationBanner({ moderationLabels }: ModerationBannerProps) {
-  const { theme } = useGlobalContext();
+  const { color, isDark } = useTheme();
 
-  const icon =
-    theme === "dark" ? <DarkIcon size={24} /> : <LightIcon size={24} />;
+  const icon = isDark ? <DarkIcon size={20} /> : <LightIcon size={20} />;
+
   return (
-    <View className="bg-danger-wash-light p-5 border border-danger-light rounded-group mb-4">
-      <Text fontSize="text-sm">
-        Your product has been flagged internally by Renit because of
-        in-appropriate content - {moderationLabels.join(", ")} etc.
-      </Text>
-
-      <View className="flex flex-row items-center mt-4 space-x-2">
-        <View className="flex w-10 h-10 flex-row items-center justify-center bg-danger-wash-light rounded-full p-2">
+    // Was `bg-danger-wash-light` and `border-danger-light` with a
+    // `text-muted-light` caption — the light-theme tokens hardcoded, so in dark
+    // mode this was a pale pink card on a near-black canvas. Tokens resolve per
+    // theme.
+    <View
+      style={{
+        backgroundColor: color.dangerWash,
+        borderWidth: 1,
+        borderColor: color.danger,
+        borderRadius: radius.group,
+        padding: density.block,
+        marginBottom: density.section,
+        gap: 12,
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <View
+          style={{
+            width: 28,
+            height: 28,
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: radius.full,
+            backgroundColor: color.surface,
+          }}
+        >
           {icon}
         </View>
-        <View className="flex flex-col">
-          <Text fontSize="text-sm" fontWeight="font-bold">
-            Renit
-          </Text>
-          <Text fontSize="text-sm" className="text-muted-light">
-            9 hours ago
-          </Text>
-        </View>
+        {/* The caption used to read "9 hours ago" on every banner, for every
+            listing — a hardcoded string presented as a fact about this one. */}
+        <Text fontSize="text-sm" fontWeight="font-bold">
+          Renit review
+        </Text>
       </View>
+
+      <Text fontSize="text-sm" tone="hi">
+        {moderationLabels.length
+          ? `This listing is hidden from renters while we check it: ${moderationLabels.join(
+              ", "
+            )}.`
+          : "This listing is hidden from renters while we check it."}
+      </Text>
+      <Text fontSize="text-sm" tone="body">
+        Editing the photos or the description sends it back for another look.
+      </Text>
     </View>
   );
 }

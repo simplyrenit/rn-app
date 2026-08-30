@@ -1,84 +1,109 @@
-import { Card, Text } from "@/components/core";
+import { BackButton, Card, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { useGlobalContext } from "@/context/global-context";
-import { RouteProps, useTypedNavigation } from "@/lib/types";
+import { IconButton } from "@/components/core/icon-button";
+import { RouteProps } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React from "react";
-import { Dimensions, FlatList, TouchableOpacity, View } from "react-native";
-import { ArrowLeftIcon } from "react-native-heroicons/outline";
+import { Dimensions, FlatList, Share, View } from "react-native";
 import { IOSShareIcon } from "@/icons/share";
-import { heightPercentageToDP as hp, widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { ink } from "@/lib/design-tokens";
+import { heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
+import { toast } from "@/lib/toast";
 
-const { height } = Dimensions.get("window");
+const GRID_GAP = 14;
+
+/**
+ * An exact column width, not a percentage.
+ *
+ * Two cards at "48.5%" plus a 14pt gap comes to more than the row, so the
+ * second card overflowed and was clipped on the right edge.
+ */
+const COLUMN_WIDTH =
+  (Dimensions.get("window").width - SCREEN_GUTTER * 2 - GRID_GAP) / 2;
 
 const OwnersProductsScreen: React.FC = () => {
-  const { theme } = useGlobalContext();
-
   const { params } = useRoute<RouteProps<"OwnersProducts">>();
   const { products, name } = params;
+  const { color } = useTheme();
 
-  const isDarkMode = theme === "dark";
-  const router = useTypedNavigation();
+  const handleShare = async () => {
+    const line = `${name}'s listings on Renit — ${products.length} ${
+      products.length === 1 ? "item" : "items"
+    } to rent`;
+    try {
+      await Share.share({ message: line });
+    } catch {
+      toast.error("Couldn’t open the share sheet");
+    }
+  };
 
   return (
-    <NonScrollableContainer height={height > 700 ? 105 : 100}>
+    <NonScrollableContainer>
+      {/* Bare-noun heading, the same rule as the profile this came from. */}
       <View
-        className="flex-row items-center justify-between px-gutter"
-        style={{ paddingVertical: wp("5%") }}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+        }}
       >
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-          onPress={() => router.goBack()}
-          className="flex-1 items-start w-[10%]"
-        >
-          <ArrowLeftIcon size={26} color={ink.text(isDarkMode)} />
-        </TouchableOpacity>
-        <View className="items-center justify-center w-[80%]">
-          <Text fontSize="text-xl" fontWeight="font-bold">
-            {name}'s products
+        <BackButton />
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text role="screenTitle" numberOfLines={1}>
+            Listings
           </Text>
         </View>
-
-        <View className="w-[10%]"></View>
+        <IconButton
+          onPress={handleShare}
+          accessibilityLabel={`Share ${name}'s listings`}
+          accessibilityHint="Opens the system share sheet"
+        >
+          <IOSShareIcon size={20} color={color.text} />
+        </IconButton>
       </View>
 
       <FlatList
         style={{ width: "100%" }}
         data={products}
-        ListHeaderComponent={(
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Share this catalogue"
-            className={`flex-row justify-between items-center px-gutter border-b-[1px] ${isDarkMode ? "border-b-line-dark" : "border-b-line-light"
-              }`}
-            style={{ minHeight: 44 }}
-          >
-            <Text fontSize="text-md">Share this catalogue</Text>
-            <IOSShareIcon size={20} color={ink.body(isDarkMode)} />
-          </TouchableOpacity>
-        )}
+        ListHeaderComponent={
+          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 4 }}>
+            <Text fontSize="text-sm" tone="body">
+              {`${products.length} ${
+                products.length === 1 ? "item" : "items"
+              } from ${name}`}
+            </Text>
+          </View>
+        }
         keyExtractor={(item) => item.name}
         numColumns={2}
         columnWrapperStyle={{
-          justifyContent: "space-between",
-          marginTop: 8,
-          gap: 12,
+          justifyContent: "flex-start",
+          paddingHorizontal: SCREEN_GUTTER,
+          marginTop: 16,
+          gap: GRID_GAP,
         }}
-        // Same fix as the search results grid: centring the content container
-        // makes each row shrink-wrap, so the cards' "48.5%" resolved against a
-        // collapsed row. columnWrapperStyle's space-between does the real work.
         contentContainerStyle={{ paddingBottom: hp("10%") }}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => (
-          <Card
-            id={item.name}
-            image={item.cover_image}
-            title={item.title}
-            location={item.location}
-            price={item.rate}
-            width='48.5%'
-          />
-        )}
+        renderItem={({ item, index }) => {
+          // With a catalogue this small a trailing single-item row is the
+          // common case, not the edge case. Left at half width it stranded an
+          // empty column beside itself; it now takes the row it is in.
+          const isTrailingOdd =
+            products.length % 2 === 1 && index === products.length - 1;
+          return (
+            <Card
+              id={item.name}
+              image={item.cover_image}
+              title={item.title}
+              location={item.location}
+              price={item.rate}
+              coordinates={item.coordinates}
+              width={isTrailingOdd ? COLUMN_WIDTH * 2 + GRID_GAP : COLUMN_WIDTH}
+            />
+          );
+        }}
       />
     </NonScrollableContainer>
   );

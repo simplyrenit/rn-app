@@ -12,7 +12,6 @@ import { Calendar } from "react-native-calendars";
 import type { MarkedDates } from "react-native-calendars/src/types";
 import { ink, colors, radius } from "@/lib/design-tokens";
 import {
-  ArrowLeftIcon,
   ChevronRightIcon,
   XMarkIcon,
 } from "react-native-heroicons/outline";
@@ -250,7 +249,10 @@ export default function ProductAvailability() {
     textSectionTitleColor: ink.text(isDark),
     dayTextColor: ink.text(isDark),
     todayTextColor: colors.dark.brand,
-    selectedDayBackgroundColor: "red",
+    // Every date this screen paints red is destined to become unavailable —
+    // not a mere selection — so this uses the same danger token the custom
+    // day component already marks ranges with, not an ad-hoc "red".
+    selectedDayBackgroundColor: ink.danger(isDark),
     selectedDayTextColor: "white",
     monthTextColor: ink.body(false),
     arrowColor: ink.text(isDark),
@@ -268,24 +270,11 @@ export default function ProductAvailability() {
 
   return (
     <StaticContainer width={100}>
-      <View className="px-3 flex-row items-center">
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-          onPress={() => navigation.goBack()}
-          className="w-[10%]"
-        >
-          <ArrowLeftIcon
-            size={24}
-            color={ink.text(isDark)}
-          />
-        </TouchableOpacity>
-        <View className="w-[80%]">
-          <PostProductHeader
-            heading="Product Unavailability"
-            step={6}
-          />
-        </View>
-        <View className="w-[10%]" />
-      </View>
+      <PostProductHeader
+        heading="Product Unavailability"
+        step={6}
+        showBackArrow
+      />
 
       <StyledView className="px-3 flex-1 justify-between">
         <View className="h-[90%]">
@@ -309,6 +298,10 @@ export default function ProductAvailability() {
               <TouchableOpacity
                 disabled={state === "disabled"}
                 onPress={() => handleDayPress(date)}
+                // The cell itself is 36×36 — below Apple's 44pt floor — and is
+                // tapped repeatedly while marking a range. hitSlop makes up
+                // the shortfall without inflating the calendar grid.
+                hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
               >
                   <View
                     style={{

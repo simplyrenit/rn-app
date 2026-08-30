@@ -1,12 +1,13 @@
 import { categoryDisplayName } from "@/lib/category-icons";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
-import { CheckIcon, ChevronLeftIcon } from "react-native-heroicons/outline";
+import { ChevronLeftIcon } from "react-native-heroicons/outline";
+import { CheckIcon } from "react-native-heroicons/solid";
 import { Image } from "expo-image";
-import { Button, Text } from "@/components/core";
+import { Text } from "@/components/core";
 import { Subcategory } from "@/lib/types";
 import { FlatList } from "react-native-gesture-handler";
-import { ink, colors } from "@/lib/design-tokens";
+import { ink } from "@/lib/design-tokens";
 
 interface SubCategoryFilterProps {
   selectedCategory: string;
@@ -69,10 +70,7 @@ const SubCategoryFilter: React.FC<SubCategoryFilterProps> = ({
         </View>
 
         {selectedSubCategory === item.title && (
-          <CheckIcon
-            size={24}
-            color={colors.dark.brand}
-          />
+          <CheckIcon size={20} color={ink.brandText(isDark)} />
         )}
       </View>
     </TouchableOpacity>)} />

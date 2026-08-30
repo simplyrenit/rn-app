@@ -1,4 +1,12 @@
-import { Button, StaticContainer, Text } from "@/components/core";
+import {
+  BackButton,
+  Button,
+  FieldShell,
+  StaticContainer,
+  Text,
+  useFieldSurfaceStyle,
+  usePressFeedback,
+} from "@/components/core";
 import DateRangePicker from "@/components/core/date-range-picker";
 import { useGlobalContext } from "@/context/global-context";
 import { ALL_PRODUCTS, GOOGLE_MAP_API_KEY } from "@/lib/config";
@@ -13,14 +21,7 @@ import axios from "axios";
 import * as Location from "expo-location";
 import { styled } from "nativewind";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Platform, TouchableOpacity, View } from "react-native";
 import { AutocompleteDropdown } from "react-native-autocomplete-dropdown";
 import {
   GestureHandlerRootView,
@@ -29,7 +30,6 @@ import {
 } from "react-native-gesture-handler";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import {
-  ArrowLeftIcon,
   MagnifyingGlassIcon,
   MapPinIcon,
   PencilSquareIcon,
@@ -38,7 +38,14 @@ import {
 } from "react-native-heroicons/outline";
 import { CalendarIcon } from "react-native-heroicons/solid";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
-import { SCREEN_GUTTER, fontFamily, radius, ink, colors } from "@/lib/design-tokens";
+import {
+  MIN_TOUCH_TARGET,
+  SCREEN_GUTTER,
+  fontFamily,
+  radius,
+  ink,
+  colors,
+} from "@/lib/design-tokens";
 import { CATEGORIES } from "@/lib/categories";
 import { categoryDisplayName, CategoryIcon } from "@/lib/category-icons";
 import { useTheme } from "@/lib/theme";
@@ -54,11 +61,100 @@ interface Coordinates {
   lng: number | undefined;
 }
 
+/** The three questions this screen asks, in the order it asks them. */
+type SearchStep = "what" | "where" | "when";
+
+/**
+ * A step nobody is answering right now.
+ *
+ * The screen used to keep all three open — three headings, three full-bleed
+ * rules and three 56pt controls — which spent the top two thirds of the
+ * viewport on inputs that were, in the common case, already answered. Collapsed
+ * it is one filled row: the question on the left, its current answer on the
+ * right, so nothing is hidden, only quietened.
+ */
+function StepSummary({
+  label,
+  value,
+  isSet,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  isSet: boolean;
+  onPress: () => void;
+}) {
+  const { pressStyle, onPressIn, onPressOut } = usePressFeedback();
+
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${value}`}
+      accessibilityHint="Opens this step so you can change it"
+      activeOpacity={1}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      onPress={onPress}
+      style={pressStyle}
+    >
+      <FieldShell style={{ minHeight: 52 }}>
+        <Text role="fieldLabel" tone="body">
+          {label}
+        </Text>
+        <Text
+          fontSize="text-md"
+          fontWeight="font-semibold"
+          tone={isSet ? "default" : "dim"}
+          numberOfLines={1}
+          style={{ flex: 1, textAlign: "right" }}
+        >
+          {value}
+        </Text>
+      </FieldShell>
+    </TouchableOpacity>
+  );
+}
+
+/** The one step that is open: its question, then the control that answers it. */
+function StepCard({
+  label,
+  children,
+  style,
+}: {
+  label: string;
+  children: React.ReactNode;
+  style?: any;
+}) {
+  const { color, shadow } = useTheme();
+
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: color.surface,
+          borderRadius: radius.group,
+          borderWidth: 1,
+          borderColor: color.line,
+          padding: 14,
+          gap: 10,
+        },
+        // The open step is the raised one. Light elevates with a shadow, dark
+        // with the hairline above — both come from the theme, not a literal.
+        shadow,
+        style,
+      ]}
+    >
+      <Text role="fieldLabel">{label}</Text>
+      {children}
+    </View>
+  );
+}
+
 export default function SearchScreen() {
   const navigation = useTypedNavigation();
   const { theme } = useGlobalContext();
   const isDark = theme === "dark";
-  const { color } = useTheme();
+  const { color, shadow } = useTheme();
   const route = useRoute<RouteProps<"Search">>();
   const { what, where, coords } = route?.params ?? {};
 
@@ -88,6 +184,9 @@ export default function SearchScreen() {
   });
   const [open, setOpen] = useState(false);
   const [isFocus, setIsFocus] = useState(false);
+  // Only one question is open at a time; the keyword is the one you always
+  // start with, so it is the step that is open when the screen arrives.
+  const [activeStep, setActiveStep] = useState<SearchStep>("what");
   const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [suggestionsList, setSuggestionsList] = useState<any[] | null>(null);
@@ -113,6 +212,7 @@ export default function SearchScreen() {
     setSelectedLocation(null);
     setSelectedLocationName(null); // Reset the location name
     setRange({ startDate: undefined, endDate: undefined });
+    setActiveStep("what");
     googlePlacesRef.current?.clear();
     autocompleteDropdownRef.current?.clear();
   };
@@ -169,9 +269,17 @@ export default function SearchScreen() {
     }
   }, []);
 
+  // Opening a step and opening the picker it exists for are one intent, so they
+  // are one tap: a collapsed "Where" row goes straight to the place search.
   const handleOpenBottomSheet = () => {
+    setActiveStep("where");
     setBottomSheetVisible(true);
     bottomSheetRef.current?.expand();
+  };
+
+  const handleOpenDatePicker = () => {
+    setActiveStep("when");
+    setOpen(true);
   };
 
   const handleCurrentLocation = async () => {
@@ -195,6 +303,14 @@ export default function SearchScreen() {
   const hasDates = Boolean(range?.startDate && range?.endDate);
   const hasAnyCriteria = hasKeyword || hasLocation || hasDates;
 
+  // What each collapsed step reports. Never blank: an empty row reads as broken
+  // rather than as "not narrowed down".
+  const whatSummary = selectedItem?.trim() || "Anything";
+  const whereSummary = selectedLocationName || "Anywhere";
+  const whenSummary = hasDates
+    ? `${formatDate(range.startDate)} – ${formatDate(range.endDate)}`
+    : "Any dates";
+
   const onPress = () => {
     // SearchResults runs its own search when it opens without products, so the
     // tap navigates straight away instead of blocking on the network request.
@@ -202,7 +318,12 @@ export default function SearchScreen() {
       selectedItem: selectedItem?.trim() ?? "",
       address: selectedLocationName ?? "",
       coords: { lat: selectedLocation?.lat, lng: selectedLocation?.lng },
-      range,
+      // Navigation params must survive being written to disk and read back, so
+      // the range crosses as ISO strings rather than as Date instances.
+      range: {
+        startDate: range.startDate?.toISOString(),
+        endDate: range.endDate?.toISOString(),
+      },
       products: [],
     });
   };
@@ -349,59 +470,71 @@ export default function SearchScreen() {
     []
   );
 
+  // One focus treatment for the whole app: the border changes colour and
+  // nothing else. The purple glow ring this field used to grow is a web
+  // pattern; iOS has never shipped one.
+  const keywordSurface = useFieldSurfaceStyle({ focused: isFocus });
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StaticContainer width={100}>
-        <View className="h-full w-full pt-2">
+        <View className="flex-1 w-full pt-2">
           {/* Header */}
 
           <View
             className={`p-3 flex flex-row items-center border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
               }`}
           >
-            <View className="w-[10%]">
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back" onPress={() => navigation.goBack()}>
-                <ArrowLeftIcon
-                  color={ink.text(isDark)}
-                  size={24}
-                />
-              </TouchableOpacity>
+            <BackButton />
+            <View style={{ flex: 1, alignItems: "center" }}>
+              <Text role="screenTitle">Search anything</Text>
             </View>
-            <View className="w-[80%] h-full items-center">
-              <Text
-                fontSize="text-xl"
-                fontWeight="font-bold"
-              >
-                Search anything
-              </Text>
-            </View>
-            <View className="w-[10%]"></View>
+            {/* Balances the back button so the title stays optically centred. */}
+            <View style={{ width: MIN_TOUCH_TARGET }} />
           </View>
 
-          {/* What? Dropdown */}
-          <View
-            className={`p-5 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
-              }`}
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            // The filter controls must remain reachable when the keyboard has
+            // reduced the viewport. Unhandled taps dismiss it; controls still
+            // receive their first tap.
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+            // Clear of the footer bar: the last chip row used to end flush with
+            // the scroll viewport and read as sliced by the Search button.
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
           >
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-              className="mb-3"
-            >
-              What?
-            </Text>
+            {/* The three questions, one open at a time. */}
             <View
-              style={isFocus && styles.focusedShadow}
-              className={`flex-row items-center rounded-card w-full pl-2 border ${isFocus
-                ? `${isDark
-                  ? "border-brand bg-surface-dark"
-                  : "border-brand bg-surface-light"
-                }`
-                : `${isDark
-                  ? "border-input-line-dark bg-surface-dark"
-                  : "border-input-line-light bg-surface-light"
-                }`
-                }`}
+              style={{
+                paddingHorizontal: SCREEN_GUTTER,
+                paddingTop: 12,
+                gap: 10,
+              }}
+            >
+            {/* What — the keyword. */}
+            {activeStep !== "what" ? (
+              <StepSummary
+                label="What"
+                value={whatSummary}
+                isSet={hasKeyword}
+                onPress={() => setActiveStep("what")}
+              />
+            ) : (
+            // Above its siblings so the suggestions popover is not clipped by
+            // the collapsed rows underneath it.
+            <StepCard label="What" style={{ zIndex: 20 }}>
+            <View
+              style={[
+                keywordSurface,
+                {
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: 8,
+                  paddingVertical: 0,
+                },
+              ]}
             >
               <MagnifyingGlassIcon
                 color={ink.text(isDark)}
@@ -421,8 +554,10 @@ export default function SearchScreen() {
                   setSelectedItem(text); // Set selectedItem to the input text
                 }}
                 // initialValue={selectedItem ?? undefined}
+                // Transparent: the shell above already paints the field's
+                // surface, and a second one inside it drew a box in a box.
                 inputContainerStyle={{
-                  backgroundColor: ink.surface(isDark),
+                  backgroundColor: "transparent",
                   borderRadius: radius.input,
                   width: "98%",
                   paddingLeft: 24,
@@ -464,11 +599,9 @@ export default function SearchScreen() {
                   borderColor: color.inputLine,
                   borderRadius: radius.input,
                   width: "100%",
-                  shadowColor: "#000000",
-                  shadowOpacity: 0.18,
-                  shadowRadius: 16,
-                  shadowOffset: { width: 0, height: 8 },
-                  elevation: 8,
+                  // Elevation from the theme, not a hand-rolled shadow: light
+                  // lifts with a shadow, dark with the hairline above.
+                  ...shadow,
                 }}
                 // The library's default "Nothing found" rendered dark grey on
                 // dark grey and floated over the "Where?" heading beneath it.
@@ -510,149 +643,129 @@ export default function SearchScreen() {
                 }
               />
             </View>
-          </View>
+            </StepCard>
+            )}
 
-          {/* Where? */}
-          <View
-            className={`p-5 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
-              }`}
-          >
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-              className="mb-3"
-            >
-              Where?
-            </Text>
-            <TouchableOpacity
-              className={`h-[48px] rounded-card w-full ${isDark
-                ? "bg-surface-dark border-input-line-dark"
-                : "bg-surface-light border-input-line-light"
-                } border px-2`}
-              onPress={handleOpenBottomSheet}
-            >
-              <View className="flex flex-row h-full w-full items-center justify-between">
-                <View className="flex flex-row items-center space-x-2 flex-1">
-                  <MapPinIcon
-                    color={ink.text(isDark)}
-                    size={24}
-                  />
-                  <View className="flex-1">
-                    {selectedLocationName ? ( // Show selected location name if available
-                      <Text fontSize="text-sm" numberOfLines={1}>
-                        {selectedLocationName}
-                      </Text>
-                    ) : (
-                      <Text fontSize="text-md" style={{ color: color.placeholder }}>
-                        Anywhere
-                      </Text>
-                    )}
-                  </View>
-                </View>
-                {selectedLocationName && (
-                  <PencilSquareIcon
-                    color={ink.text(isDark)}
-                    size={24}
-                  />
-                )}
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* When? Range Picker */}
-          <View className="p-5 flex-1">
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-              className="mb-3"
-            >
-              When?
-            </Text>
-            <TouchableOpacity
-              onPress={() => setOpen(true)}
-              className={`h-[48px] rounded-card w-full ${isDark
-                ? "bg-surface-dark border-input-line-dark"
-                : "bg-surface-light border-input-line-light"
-                } border px-2`}
-            >
-              <View className="flex flex-row h-full w-full items-center justify-between">
-                <View className="flex flex-row items-center space-x-4">
-                  <CalendarIcon
-                    color={ink.text(isDark)}
-                    size={24}
-                  />
-                  {range.startDate && range.endDate ? (
-                    <Text fontSize="text-md">
-                      {formatDate(range.startDate)} -{" "}
-                      {formatDate(range.endDate)}
-                    </Text>
-                  ) : (
-                    <Text fontSize="text-md" style={{ color: color.placeholder }}>
-                      Any dates
-                    </Text>
+            {/* Where — the place. */}
+            {activeStep !== "where" ? (
+              <StepSummary
+                label="Where"
+                value={whereSummary}
+                isSet={hasLocation}
+                onPress={handleOpenBottomSheet}
+              />
+            ) : (
+            <StepCard label="Where">
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={`Where: ${whereSummary}`}
+                accessibilityHint="Opens place search"
+                onPress={handleOpenBottomSheet}
+              >
+                <FieldShell>
+                  <MapPinIcon color={ink.text(isDark)} size={20} />
+                  <Text
+                    fontSize="text-md"
+                    tone={hasLocation ? "default" : "dim"}
+                    numberOfLines={1}
+                    style={{ flex: 1 }}
+                  >
+                    {whereSummary}
+                  </Text>
+                  {hasLocation && (
+                    <PencilSquareIcon color={ink.text(isDark)} size={20} />
                   )}
-                </View>
-                {range.endDate && (
-                  <PencilSquareIcon
-                    color={ink.text(isDark)}
-                    size={24}
-                  />
-                )}
-              </View>
-            </TouchableOpacity>
-          </View>
+                </FieldShell>
+              </TouchableOpacity>
+            </StepCard>
+            )}
 
-          {/* Somewhere to start when you do not yet know what to type. */}
-          <ScrollView
-            style={{ flex: 1 }}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{
-              paddingHorizontal: SCREEN_GUTTER,
-              paddingTop: 20,
-              paddingBottom: 12,
-            }}
-          >
-            <Text
-              accessibilityRole="header"
-              fontSize="text-md"
-              fontWeight="font-bold"
-              style={{ marginBottom: 12 }}
+            {/* When — the dates. */}
+            {activeStep !== "when" ? (
+              <StepSummary
+                label="When"
+                value={whenSummary}
+                isSet={hasDates}
+                onPress={handleOpenDatePicker}
+              />
+            ) : (
+            <StepCard label="When">
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={`When: ${whenSummary}`}
+                accessibilityHint="Opens the date picker"
+                onPress={handleOpenDatePicker}
+              >
+                <FieldShell>
+                  <CalendarIcon color={ink.text(isDark)} size={20} />
+                  <Text
+                    fontSize="text-md"
+                    tone={hasDates ? "default" : "dim"}
+                    numberOfLines={1}
+                    style={{ flex: 1 }}
+                  >
+                    {whenSummary}
+                  </Text>
+                  {hasDates && (
+                    <PencilSquareIcon color={ink.text(isDark)} size={20} />
+                  )}
+                </FieldShell>
+              </TouchableOpacity>
+            </StepCard>
+            )}
+            </View>
+
+            {/* Somewhere to start when you do not yet know what to type. */}
+            <View
+              style={{
+                paddingHorizontal: SCREEN_GUTTER,
+                paddingTop: 20,
+                paddingBottom: 12,
+              }}
             >
-              Popular categories
-            </Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {CATEGORIES.slice(0, 8).map((category) => (
-                <TouchableOpacity
-                  key={category.name}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Search ${categoryDisplayName(category.name)}`}
-                  onPress={() => {
-                    setSelectedItem(category.name);
-                    autocompleteDropdownRef.current?.setInputText?.(
-                      category.name
-                    );
-                  }}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 6,
-                    minHeight: 36,
-                    paddingHorizontal: 12,
-                    borderRadius: radius.full,
-                    borderWidth: 1,
-                    borderColor: color.line,
-                    backgroundColor: color.surface,
-                  }}
-                >
-                  <CategoryIcon
-                    name={category.name}
-                    size={16}
-                    color={color.brandText}
-                  />
-                  <Text fontSize="text-sm">{categoryDisplayName(category.name)}</Text>
-                </TouchableOpacity>
-              ))}
+              <Text
+                accessibilityRole="header"
+                role="sectionTitle"
+                style={{ marginBottom: 12 }}
+              >
+                Popular categories
+              </Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {CATEGORIES.slice(0, 8).map((category) => (
+                  <TouchableOpacity
+                    key={category.name}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Search ${categoryDisplayName(category.name)}`}
+                    onPress={() => {
+                      setSelectedItem(category.name);
+                      autocompleteDropdownRef.current?.setInputText?.(
+                        category.name
+                      );
+                      // The keyword question is answered, so hand the stack on
+                      // to the next one instead of leaving the field open.
+                      setActiveStep("where");
+                    }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
+                      minHeight: 36,
+                      paddingHorizontal: 12,
+                      borderRadius: radius.full,
+                      borderWidth: 1,
+                      borderColor: color.line,
+                      backgroundColor: color.surface,
+                    }}
+                  >
+                    <CategoryIcon
+                      name={category.name}
+                      size={16}
+                      color={color.brandText}
+                    />
+                    <Text fontSize="text-sm">{categoryDisplayName(category.name)}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           </ScrollView>
 
@@ -863,13 +976,3 @@ export default function SearchScreen() {
     </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  focusedShadow: {
-    shadowColor: colors.dark.brand,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-});

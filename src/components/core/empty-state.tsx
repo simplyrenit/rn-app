@@ -13,6 +13,12 @@ interface Props {
   body?: string;
   actionLabel?: string;
   onAction?: () => void;
+  /**
+   * A quieter second way out — "Maybe later", "Browse instead". Rendered as a
+   * ghost button under the primary action, so the two never compete.
+   */
+  secondaryActionLabel?: string;
+  onSecondaryAction?: () => void;
   /** `error` tints the icon chip with the danger colour. */
   variant?: "empty" | "error";
   compact?: boolean;
@@ -31,6 +37,8 @@ export function EmptyState({
   body,
   actionLabel,
   onAction,
+  secondaryActionLabel,
+  onSecondaryAction,
   variant = "empty",
   compact = false,
 }: Props) {
@@ -85,13 +93,18 @@ export function EmptyState({
       ) : null}
 
       {actionLabel && onAction ? (
-        <View style={{ marginTop: 12, minWidth: 180 }}>
+        <View style={{ marginTop: 12, minWidth: 180, gap: 4 }}>
           <Button
             variant={variant === "error" ? "outline" : "primary"}
             onPress={onAction}
           >
             {actionLabel}
           </Button>
+          {secondaryActionLabel && onSecondaryAction ? (
+            <Button variant="ghost" onPress={onSecondaryAction}>
+              {secondaryActionLabel}
+            </Button>
+          ) : null}
         </View>
       ) : null}
     </View>

@@ -122,12 +122,9 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
         >
           <View className="px-gutter">
             <Text
-              fontSize="text-xs"
-              fontWeight="font-semibold"
-              tone="dim"
+              role="groupHeader"
               accessibilityRole="header"
               className="pb-2"
-              style={{ letterSpacing: 0.6 }}
             >
               Account
             </Text>
@@ -149,12 +146,9 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
         >
           <View className="px-gutter">
             <Text
-              fontSize="text-xs"
-              fontWeight="font-semibold"
-              tone="dim"
+              role="groupHeader"
               accessibilityRole="header"
               className="pb-2"
-              style={{ letterSpacing: 0.6 }}
             >
               App
             </Text>
@@ -180,12 +174,9 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
         >
           <View className="px-gutter">
             <Text
-              fontSize="text-xs"
-              fontWeight="font-semibold"
-              tone="dim"
+              role="groupHeader"
               accessibilityRole="header"
               className="pb-2"
-              style={{ letterSpacing: 0.6 }}
             >
               Support
             </Text>
@@ -244,12 +235,9 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
         <View style={sectionStyle}>
           <View className="px-gutter">
             <Text
-              fontSize="text-xs"
-              fontWeight="font-semibold"
-              tone="dim"
+              role="groupHeader"
               accessibilityRole="header"
               className="pb-2"
-              style={{ letterSpacing: 0.6 }}
             >
               Legal
             </Text>

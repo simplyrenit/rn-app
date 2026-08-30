@@ -1,4 +1,4 @@
-import { PinnedHeader, StaticContainer, Text } from "@/components/core";
+import { CrossFade, PinnedHeader, StaticContainer, Text } from "@/components/core";
 import Skeleton from "@/components/core/skeleton";
 import ProfilePostAuth from "@/components/profile/post-auth/profile-post-auth";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
@@ -41,8 +41,8 @@ export default function Profile() {
           <View>
             <Text
               accessibilityRole="header"
+              role="sectionTitle"
               fontWeight="font-bold"
-              fontSize="text-xl"
             >
               My Profile
             </Text>
@@ -62,52 +62,58 @@ export default function Profile() {
         </View>
       </PinnedHeader>
 
-      {loading ? <View className="p-6">
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', width: '100%' }}>
-          <Skeleton height={50} width={50} borderRadius={50} />
-          <View style={{ flexDirection: 'column', flex: 1 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Skeleton height={10} width={60} borderRadius={20} />
-              <View style={{ flex: 1 }} />
-              <Skeleton height={10} width={10} borderRadius={8} />
+      <CrossFade
+        loading={loading}
+        placeholder={
+          <View className="p-6">
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', width: '100%' }}>
+              <Skeleton height={50} width={50} borderRadius={50} />
+              <View style={{ flexDirection: 'column', flex: 1 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Skeleton height={10} width={60} borderRadius={20} />
+                  <View style={{ flex: 1 }} />
+                  <Skeleton height={10} width={10} borderRadius={8} />
+                </View>
+                <Skeleton height={10} width={160} borderRadius={20} className="mt-2" />
+              </View>
+              <View>
+              </View>
             </View>
-            <Skeleton height={10} width={160} borderRadius={20} className="mt-2" />
+            <View className="space-x-4 flex-row items-center mt-4">
+              <Skeleton height={16} width={16} />
+              <Skeleton height={12} width={'80%'} />
+              <Skeleton height={8} width={16} />
+            </View>
+            <Skeleton height={12} width={80} className="mt-12" />
+            {Array.from({ length: 8 }).map((_, i) => (
+              <View className="space-x-4 flex-row items-center mt-4" key={i}>
+                <Skeleton height={16} width={16} />
+                <Skeleton height={12} width={`${80 - Math.floor(Math.random() * 41)}%`} />
+                <Skeleton height={8} width={16} />
+              </View>
+            ))}
           </View>
-          <View>
-          </View>
-        </View>
-        <View className="space-x-4 flex-row items-center mt-4">
-          <Skeleton height={16} width={16} />
-          <Skeleton height={12} width={'80%'} />
-          <Skeleton height={8} width={16} />
-        </View>
-        <Skeleton height={12} width={80} className="mt-12" />
-        {Array.from({ length: 8 }).map((_, i) => (
-          <View className="space-x-4 flex-row items-center mt-4" key={i}>
-            <Skeleton height={16} width={16} />
-            <Skeleton height={12} width={`${80 - Math.floor(Math.random() * 41)}%`} />
-            <Skeleton height={8} width={16} />
-          </View>
-        ))}
-
-      </View> : <ScrollView
-        contentContainerStyle={
-          authTokens && isAuthenticated
-            ? {}
-            : {
-              flexGrow: 1,
-            }
         }
       >
-        {authTokens && isAuthenticated ? (
-          <ProfilePostAuth
-            isDarkMode={isDarkMode}
-            handleLogout={handleLogout}
-          />
-        ) : (
-          <ProfilePreAuth isDarkMode={isDarkMode} />
-        )}
-      </ScrollView>}
+        <ScrollView
+          contentContainerStyle={
+            authTokens && isAuthenticated
+              ? {}
+              : {
+                flexGrow: 1,
+              }
+          }
+        >
+          {authTokens && isAuthenticated ? (
+            <ProfilePostAuth
+              isDarkMode={isDarkMode}
+              handleLogout={handleLogout}
+            />
+          ) : (
+            <ProfilePreAuth isDarkMode={isDarkMode} />
+          )}
+        </ScrollView>
+      </CrossFade>
     </StaticContainer>
   );
 }

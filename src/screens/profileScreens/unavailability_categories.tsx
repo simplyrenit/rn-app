@@ -1,4 +1,4 @@
-import { Text } from "@/components/core";
+import { BackButton, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { useProductContext } from "@/context/product-context";
@@ -6,11 +6,8 @@ import { Category, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
 import { useEffect } from "react";
 import { FlatList, Platform, TouchableOpacity, View } from "react-native";
-import {
-  ArrowLeftIcon,
-  ChevronRightIcon,
-} from "react-native-heroicons/outline";
-import { ink } from "@/lib/design-tokens";
+import { ChevronRightIcon } from "react-native-heroicons/outline";
+import { ink, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import {
   heightPercentageToDP as hp,
@@ -65,28 +62,16 @@ export default function UnavailabilityCategories() {
     <NonScrollableContainer>
       <View style={{ flex: 1 }}>
         <View
-          className="flex-row items-center justify-between px-gutter "
+          className="flex-row items-center px-gutter"
           style={{ paddingVertical: wp("5%") }}
         >
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-            onPress={() => router.goBack()}
-            className="flex-1 items-start w-[10%]"
-          >
-            <ArrowLeftIcon
-              size={26}
-              color={ink.text(isDarkMode)}
-            />
-          </TouchableOpacity>
-          <View className="items-center justify-center w-[80%]">
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
-            >
+          <BackButton />
+          <View className="flex-1 items-center justify-center">
+            <Text role="sectionTitle" fontWeight="font-bold">
               Request an item
             </Text>
           </View>
-
-          <View className="w-[10%]"></View>
+          <View style={{ width: MIN_TOUCH_TARGET }} />
         </View>
         <View className="px-gutter py-3">
           <Text

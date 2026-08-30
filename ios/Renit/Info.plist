@@ -45,6 +45,12 @@
 				<string>com.googleusercontent.apps.899825999056-e571k4p5f0tni5n0cv542otq9n274l80</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>app-1-377005499010-ios-0d9b22bd6d32787d258a9b</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>2</string>
@@ -82,6 +88,7 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
+		<string>remote-notification</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>SplashScreen</string>

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ViewStyle,
 } from "react-native";
+import { usePressFeedback } from "./use-press-feedback";
 
 interface Props {
   children: React.ReactNode;
@@ -46,6 +47,7 @@ export function IconButton({
   hitSlopExtra = 0,
 }: Props) {
   const { isDark } = useTheme();
+  const { pressStyle, onPressIn, onPressOut } = usePressFeedback({ disabled });
   const shortfall = Math.max(0, (MIN_TOUCH_TARGET - size) / 2) + hitSlopExtra;
 
   const handlePress = (event: GestureResponderEvent) => {
@@ -68,7 +70,11 @@ export function IconButton({
         left: shortfall,
         right: shortfall,
       }}
-      activeOpacity={0.7}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      // The shared press treatment replaces the built-in fade, which was a
+      // different depth here (0.7) than on Button (0.85) for no reason.
+      activeOpacity={1}
       style={[
         {
           width: size,
@@ -88,6 +94,9 @@ export function IconButton({
             }
           : null,
         style,
+        // Only when live: the disabled dim above is an opacity too, and the
+        // press style would otherwise reset it to full strength.
+        disabled ? null : pressStyle,
       ]}
     >
       {children}

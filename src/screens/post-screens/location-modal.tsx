@@ -27,7 +27,7 @@ import {
 } from "react-native-responsive-screen";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
-import { Button, StaticContainer, Text } from "@/components/core";
+import { BackButton, Button, StaticContainer, Text } from "@/components/core";
 import AddressChoiceModal from "@/components/modals/AddressChoiceModalProps";
 import { useGlobalContext } from "@/context/global-context";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
@@ -43,7 +43,6 @@ import {
 import { NearbyPlace, RouteProps, useTypedNavigation } from "@/lib/types";
 import axios from "axios";
 import {
-  ArrowLeftIcon,
   MagnifyingGlassIcon,
   MapPinIcon,
   ViewfinderCircleIcon,
@@ -558,19 +557,13 @@ const LocationModal = ({}) => {
           <View className="px-gutter">
             {/* <HeaderIndicator percentage={85} /> */}
             <View className="flex flex-row items-center py-4">
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
+              <BackButton
                 onPress={() => {
                   cancelLocationRequest(route.params?.requestId);
                   navigation.goBack();
                 }}
-                className="w-[10%]"
-              >
-                <ArrowLeftIcon
-                  size={24}
-                  color={ink.text(isDarkMode)}
-                />
-              </TouchableOpacity>
-              <View className="w-[80%] items-center justify-center">
+              />
+              <View style={{ flex: 1, alignItems: "center" }}>
                 <Text
                   fontSize="text-xl"
                   fontWeight="font-bold"
@@ -587,10 +580,7 @@ const LocationModal = ({}) => {
               <>
                 <StaticContainer>
                   <View className="flex">
-                    <Text
-                      fontSize="text-2xl"
-                      fontWeight="font-semibold"
-                    >
+                    <Text role="screenTitle">
                       Allow location
                     </Text>
                     <Text tone="body"

@@ -3,6 +3,7 @@ import {
   authenticateFirebase,
   getFirestoreDb,
   getFirestoreModule,
+  isPhoneReauthInProgress,
 } from "@/lib/firebase";
 import { USER_REPORT_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
@@ -288,8 +289,18 @@ export function useChat() {
               );
             callback(chats);
           },
-          (error: unknown) => {
-            console.error("Unable to load chats:", error);
+          (error: any) => {
+            // The phone-number-change flow briefly swaps the Firebase user; the
+            // permission error it triggers here is expected and self-heals once
+            // the real session is restored a moment later.
+            if (
+              isPhoneReauthInProgress() &&
+              String(error?.code || error).includes("permission-denied")
+            ) {
+              console.log("Chat listener paused during phone re-verification");
+            } else {
+              console.error("Unable to load chats:", error);
+            }
             callback([]);
           }
         );

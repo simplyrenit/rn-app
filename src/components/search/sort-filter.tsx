@@ -1,15 +1,16 @@
-import { useGlobalContext } from "@/context/global-context";
 import { NearestIcon } from "@/icons/filters";
+import { MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { selectionFeedback } from "@/lib/haptics";
+import { useTheme } from "@/lib/theme";
 import { TouchableOpacity, View } from "react-native";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
-  CheckIcon,
   ClockIcon,
   StarIcon,
 } from "react-native-heroicons/outline";
-import { Button, Text } from "../core";
-import { ink, colors } from "@/lib/design-tokens";
+import { CheckIcon } from "react-native-heroicons/solid";
+import { Text } from "../core";
 
 // A star means rating; two silhouettes did not, and they were the same glyph
 // the profile uses for "Who we are". A clock means recency; sparkles did not.
@@ -29,42 +30,65 @@ interface Props {
   hasLocation: boolean;
 }
 
+/**
+ * Sort order.
+ *
+ * The active option was marked with a hairline outline check in the brand
+ * colour, which at 20pt on the far edge of the sheet read as nothing at all —
+ * so there was no way to tell which of these four the results were sorted by.
+ * The treatment here is the one the Appearance sheet already uses: a solid
+ * check, `brandText`, and a `radio` role so VoiceOver says "selected".
+ */
 export function SortFilter({
   selectedFilter,
   onSelect,
-  closeSheet,
-  isLoading,
   hasLocation,
 }: Props) {
-  const { theme } = useGlobalContext();
-
-  const isDark = theme === "dark";
+  const { color } = useTheme();
+  const visible = options.filter(
+    (item) => hasLocation || item.value !== "nearest"
+  );
 
   return (
     <View className="flex-1">
-      <View className="flex-1">
-        {options
-          .filter((item) => hasLocation || item.value !== "nearest")
-          .map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              className={`p-3 ${index === 0 ? 'pt-0' : ''}`}
-              onPress={() => onSelect(item.value)}
-            >
-              <View className="flex flex-row items-center justify-between">
-                <View className="flex flex-row items-center">
-                  <item.icon color={ink.text(isDark)} size={20} />
-                  <Text fontSize="text-base" className="ml-3">
-                    {item.option}
-                  </Text>
-                </View>
-                {selectedFilter === item.value && (
-                  <CheckIcon size={20} color={colors.dark.brand} />
-                )}
-              </View>
-            </TouchableOpacity>
-          ))}
-      </View>
+      {visible.map((item, index) => {
+        const selected = selectedFilter === item.value;
+        return (
+          <TouchableOpacity
+            key={item.value}
+            accessibilityRole="radio"
+            accessibilityState={{ selected }}
+            accessibilityLabel={item.option}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              minHeight: MIN_TOUCH_TARGET + 8,
+              borderBottomWidth: index === visible.length - 1 ? 0 : 1,
+              borderBottomColor: color.line,
+            }}
+            onPress={() => {
+              selectionFeedback();
+              onSelect(item.value);
+            }}
+          >
+            <View className="flex flex-row items-center">
+              <item.icon
+                color={selected ? color.brandText : color.text}
+                size={20}
+              />
+              <Text
+                fontSize="text-md"
+                fontWeight={selected ? "font-semibold" : "font-normal"}
+                className="ml-3"
+              >
+                {item.option}
+              </Text>
+            </View>
+            {selected && <CheckIcon size={20} color={color.brandText} />}
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }

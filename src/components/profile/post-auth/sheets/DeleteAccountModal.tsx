@@ -1,13 +1,12 @@
 import { Button } from "@/components/core";
-import { useGlobalContext } from "@/context/global-context";
+import { useTheme } from "@/lib/theme";
 import { memo } from "react";
 import { Dimensions, Modal, StyleSheet, Text, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
-import { ink, darkColors, lightColors, radius } from "@/lib/design-tokens";
+import { radius } from "@/lib/design-tokens";
 
 const DeleteAccountModal = memo(({ onDelete, onCancel, open }: { onDelete: () => void; onCancel: () => void; open: boolean }) => {
-  const { theme } = useGlobalContext();
-  const isDark = theme === "dark";
+  const { color, shadow } = useTheme();
   return <Modal
     visible={open}
     transparent={true}
@@ -16,16 +15,16 @@ const DeleteAccountModal = memo(({ onDelete, onCancel, open }: { onDelete: () =>
     style={styles.modalStyle}
   >
     <TouchableOpacity
-      style={styles.modalBackground}
+      style={[styles.modalBackground, { backgroundColor: color.scrim }]}
       activeOpacity={1}
       onPress={onCancel} // Close modal when clicking on the background
     >
 
-      <View style={[styles.container, isDark ? styles.darkBg : styles.lightBg]}>
-        <Text style={{ color: ink.text(isDark), fontSize: 16, lineHeight: 24 }}>Are you sure you want to delete your account?</Text>
+      <View style={[styles.container, shadow, { backgroundColor: color.surface }]}>
+        <Text style={{ color: color.text, fontSize: 16, lineHeight: 24 }}>Are you sure you want to delete your account?</Text>
         <View style={{ flexDirection: 'row', gap: 16, justifyContent: 'space-between', marginTop: 32, }}>
           <Button onPress={onCancel} style={{ flex: 1 }}>Cancel</Button>
-          <Button onPress={onDelete} style={{ flex: 1, backgroundColor: ink.danger(isDark) }}>Delete</Button>
+          <Button onPress={onDelete} style={{ flex: 1, backgroundColor: color.danger }}>Delete</Button>
         </View>
       </View>
 
@@ -43,8 +42,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderColor: 'green',
-    borderWidth: 1,
     height: Dimensions.get('window').height,
     width: Dimensions.get('window').width,
   },
@@ -52,7 +49,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
     position: 'absolute',
     top: 0,
     left: 0,
@@ -63,15 +59,8 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: radius.input,
     overflow: "hidden",
-    backgroundColor: 'red',
     width: '90%',
     padding: 32,
-    elevation: 5,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.8,
-    shadowRadius: 1,
   },
-  darkBg: { backgroundColor: darkColors.surface, shadowColor: "transparent" },
-  lightBg: { backgroundColor: lightColors.surface, shadowColor: lightColors.text },
   buttons: { paddingVertical: 10 },
 });

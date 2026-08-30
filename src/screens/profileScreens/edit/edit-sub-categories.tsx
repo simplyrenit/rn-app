@@ -53,10 +53,7 @@ export default function EditSubCategories() {
           }}
           style={{ width: 20, height: 20 }}
         />
-        <Text
-          fontSize="text-base"
-          
-        >
+        <Text fontSize="text-base">
           {category.title}
         </Text>
       </View>

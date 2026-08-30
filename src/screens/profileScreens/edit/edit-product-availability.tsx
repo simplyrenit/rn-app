@@ -1,6 +1,6 @@
 import { pluralize } from "@/lib/pluralize";
 import { useProfile } from "@/backend/profile";
-import { Button, StaticContainer, Text } from "@/components/core";
+import { BackButton, Button, StaticContainer, Text } from "@/components/core";
 import { PostProductHeader } from "@/components/post/header";
 import { useGlobalContext } from "@/context/global-context";
 import { useProductContext } from "@/context/product-context";
@@ -13,12 +13,11 @@ import { ScrollView, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 import type { MarkedDates } from "react-native-calendars/src/types";
 import {
-  ArrowLeftIcon,
   ChevronRightIcon,
   XMarkIcon,
 } from "react-native-heroicons/outline";
 
-import { ink, colors, radius } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, ink, colors, radius } from "@/lib/design-tokens";
 import { toast } from "@/lib/toast";
 
 const StyledView = styled(View);
@@ -31,6 +30,10 @@ export default function ProductAvailability() {
   } | null>(null);
   const route = useRoute<RouteProps<"EditProductAvailability">>();
   const { name, dates_blocked } = route.params;
+  // Read before use below: the marked-dates initializer closes over `isDark`,
+  // so it has to exist before that useState call runs, not after it.
+  const { theme } = useGlobalContext();
+  const isDark = theme === "dark";
   const [unavailableDates, setUnavailableDates] = useState<
     { startDate: string; endDate: string }[]
   >(dates_blocked.map((date) => ({
@@ -64,8 +67,6 @@ export default function ProductAvailability() {
   }, {}));
   const navigation = useTypedNavigation();
 
-  const { theme } = useGlobalContext();
-  const isDark = theme === "dark";
   const { saveDetails } = useProductContext();
   const router = useTypedNavigation();
   const { updateMyProductDetails, loading } = useProfile();
@@ -251,7 +252,10 @@ export default function ProductAvailability() {
     textSectionTitleColor: ink.text(isDark),
     dayTextColor: ink.text(isDark),
     todayTextColor: colors.dark.brand,
-    selectedDayBackgroundColor: "red",
+    // Every date this screen paints red is destined to become unavailable —
+    // not a mere selection — so this uses the same danger token the custom
+    // day component already marks ranges with, not an ad-hoc "red".
+    selectedDayBackgroundColor: ink.danger(isDark),
     selectedDayTextColor: "white",
     monthTextColor: ink.body(false),
     arrowColor: ink.text(isDark),
@@ -270,28 +274,15 @@ export default function ProductAvailability() {
   return (
     <StaticContainer width={100}>
       <View className="px-3 flex-row items-center pt-2">
-        <View className="flex-row items-center justify-between px-gutter pl-1 py-2">
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-            onPress={() => router.goBack()}
-            className="flex-1 items-start"
-          >
-            <ArrowLeftIcon
-              size={20}
-              color={ink.text(isDark)}
-            />
-          </TouchableOpacity>
-          <View className="items-center justify-center w-[80%]">
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
-            >
-              Edit Unavailability
-            </Text>
-          </View>
-
-          <View className="w-[10%]"></View>
+        <View style={{ width: MIN_TOUCH_TARGET }}>
+          <BackButton onPress={() => router.goBack()} />
         </View>
-        <View className="w-[10%]" />
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text role="sectionTitle" fontSize="text-xl">
+            Edit Unavailability
+          </Text>
+        </View>
+        <View style={{ width: MIN_TOUCH_TARGET }} />
       </View>
 
       <StyledView className="px-gutter flex-1 pt-4 justify-between">
@@ -316,6 +307,10 @@ export default function ProductAvailability() {
               <TouchableOpacity
                 disabled={state === "disabled"}
                 onPress={() => handleDayPress(date)}
+                // The cell itself is 36×36 — below Apple's 44pt floor — and is
+                // tapped repeatedly while marking a range. hitSlop makes up
+                // the shortfall without inflating the calendar grid.
+                hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
               >
                   <View
                     style={{

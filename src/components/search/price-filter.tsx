@@ -1,17 +1,51 @@
-import { useGlobalContext } from "@/context/global-context";
+import { fontSize as fontSizeScale } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import { useState } from "react";
 import { TextInput, View } from "react-native";
-import { Button, Text } from "../core";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { CurrencyRupeeIcon } from "react-native-heroicons/outline";
-import { ink, colors, fontSize as fontSizeScale } from "@/lib/design-tokens";
+import { FieldShell, Text } from "../core";
+
+/** One price box. Focus is the shared field treatment — a border colour change
+ *  and nothing else — so these match every other input in the app. */
+function PriceBox({
+  label,
+  value,
+  onChangeText,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (next: string) => void;
+}) {
+  const { color } = useTheme();
+  const [focused, setFocused] = useState(false);
+
+  return (
+    <FieldShell focused={focused} style={{ flex: 1, gap: 4 }}>
+      <Text fontSize="text-md" tone="body">
+        ₹
+      </Text>
+      <TextInput
+        placeholderTextColor={color.placeholder}
+        placeholder={label}
+        accessibilityLabel={`${label} price`}
+        keyboardType="number-pad"
+        style={{
+          flex: 1,
+          color: color.text,
+          fontSize: fontSizeScale.base,
+        }}
+        value={value}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onChangeText={onChangeText}
+      />
+    </FieldShell>
+  );
+}
 
 export function PriceFilter({
   minPrice,
   maxPrice,
   onSelect,
-  closeSheet,
-  isLoading,
 }: {
   minPrice: string;
   maxPrice: string;
@@ -19,9 +53,6 @@ export function PriceFilter({
   closeSheet: () => void;
   isLoading: boolean;
 }) {
-  const { theme } = useGlobalContext();
-  const isDark = theme === "dark";
-
   const [min, setMin] = useState(minPrice || "");
   const [max, setMax] = useState(maxPrice || "");
 
@@ -37,42 +68,12 @@ export function PriceFilter({
 
   return (
     <View className="flex-1 mt-2">
-      <View className="flex-1 px-gutter">
-        <View className="flex flex-row items-center justify-between">
-          <View
-            className={`flex flex-row items-center border ${isDark ? "border-input-line-dark bg-surface-dark" : "border-input-line-light"
-              } w-[150px] h-11 rounded-input px-2`}
-          >
-            <Text fontSize="text-md" tone="body">₹</Text>
-            <TextInput
-              placeholderTextColor={ink.placeholder(isDark)}
-              placeholder="Min"
-              className={`px-1 flex-1 ${isDark ? "text-white" : "text-black"
-                }`}
-              keyboardType="number-pad"
-              style={{ fontSize: fontSizeScale.base }}
-              value={min}
-              onChangeText={(text) => handleMinChange(text)}
-            />
-          </View>
-          <Text fontSize="text-base">-</Text>
-          <View
-            className={`flex flex-row items-center border ${isDark ? "border-input-line-dark bg-surface-dark" : "border-input-line-light"
-              } w-[150px] h-11 rounded-input px-2`}
-          >
-            <Text fontSize="text-md" tone="body">₹</Text>
-            <TextInput
-              placeholderTextColor={ink.placeholder(isDark)}
-              placeholder="Max"
-              className={`px-1 flex-1 ${isDark ? "text-white" : "text-black"
-                }`}
-              keyboardType="number-pad"
-              style={{ fontSize: fontSizeScale.base }}
-              value={max}
-              onChangeText={(text) => handleMaxChange(text)}
-            />
-          </View>
-        </View>
+      <View className="px-gutter flex flex-row items-center" style={{ gap: 10 }}>
+        <PriceBox label="Min" value={min} onChangeText={handleMinChange} />
+        <Text fontSize="text-base" tone="body">
+          –
+        </Text>
+        <PriceBox label="Max" value={max} onChangeText={handleMaxChange} />
       </View>
     </View>
   );

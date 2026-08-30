@@ -1,5 +1,5 @@
-import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
+import { useTheme } from "@/lib/theme";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -13,13 +13,12 @@ import {
   View,
 } from "react-native";
 import {
-  ArrowLeftIcon,
   EllipsisHorizontalCircleIcon,
   ExclamationTriangleIcon,
   ShoppingBagIcon,
   UserCircleIcon,
 } from "react-native-heroicons/outline";
-import { Text } from "../core";
+import { BackButton, CrossFade, Skeleton, Text } from "../core";
 import { MIN_TOUCH_TARGET, colors, ink } from "@/lib/design-tokens";
 
 interface ChatHeaderProps {
@@ -28,6 +27,12 @@ interface ChatHeaderProps {
   onReportPress: () => void;
   isBlocked: boolean;
   id: string;
+  /**
+   * True until the participant's name and photo resolve. The anonymous glyph
+   * used to render with no name for a beat and nothing covered it; this swaps
+   * in a skeleton for that gap instead.
+   */
+  loading?: boolean;
   /**
    * Opens the listing this conversation is about. A marketplace thread's
    * overflow menu held exactly one item — "Block & Report" — which is a button
@@ -44,11 +49,11 @@ export function ChatHeader({
   onReportPress,
   onViewListing,
   isBlocked,
+  loading = false,
 }: ChatHeaderProps) {
   const navigation = useTypedNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
-  const { theme } = useGlobalContext();
-  const isDark = theme === "dark";
+  const { isDark, shadow } = useTheme();
 
   const [modalPosition, setModalPosition] = useState({ top: 0, right: 0 });
   const ellipsisRef = useRef<TouchableOpacity>(null);
@@ -80,8 +85,8 @@ export function ChatHeader({
         }`}
       onLayout={handleLayout}
     >
-      <View className="flex-row items-center relative">
-        <TouchableOpacity
+      <View className="flex-row items-center relative" style={{ flex: 1 }}>
+        <BackButton
           // goBack() pops this screen. navigate("Chat") only focuses the Chat
           // tab, which still had this detail screen on top of its stack, so the
           // back arrow fired and nothing appeared to happen. The fallback
@@ -92,40 +97,49 @@ export function ChatHeader({
               ? navigation.goBack()
               : navigation.navigate("Chat")
           }
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityRole="button"
           accessibilityLabel="Back to chats"
-          className="flex-row items-center mr-3"
-        >
-          <ArrowLeftIcon
-            size={24}
-            color={ink.text(isDark)}
-          />
-        </TouchableOpacity>
+        />
 
-        <Pressable style={{ flexDirection: 'row' }} className="items-center" onPress={() => navigation.navigate("UserDetail", { id })}
+        <Pressable
+          style={{ flexDirection: "row", flex: 1 }}
+          className="items-center"
+          disabled={loading}
+          onPress={() => navigation.navigate("UserDetail", { id })}
         >
-
-          {profilePic ? (
-            <Image
-              source={{ uri: profilePic }}
-              className="h-10 w-10 rounded-full ml-2"
-              resizeMode="cover"
-            />
-          ) : (
-            <UserCircleIcon
-              size={40}
-              color={colors.dark.brand}
-              style={{ marginLeft: 8 }}
-            />
-          )}
-          <Text
-            fontSize="text-base"
-            fontWeight="font-bold"
-            className="ml-3"
+          <CrossFade
+            loading={loading}
+            placeholder={
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Skeleton width={40} height={40} borderRadius={20} />
+                <Skeleton
+                  width={120}
+                  height={16}
+                  borderRadius={4}
+                  style={{ marginLeft: 12 }}
+                />
+              </View>
+            }
           >
-            {name}
-          </Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {profilePic ? (
+                <Image
+                  source={{ uri: profilePic }}
+                  className="h-10 w-10 rounded-full"
+                  resizeMode="cover"
+                />
+              ) : (
+                <UserCircleIcon size={40} color={colors.dark.brand} />
+              )}
+              <Text
+                fontSize="text-base"
+                fontWeight="font-bold"
+                className="ml-3"
+                numberOfLines={1}
+              >
+                {name}
+              </Text>
+            </View>
+          </CrossFade>
         </Pressable>
       </View>
 
@@ -159,7 +173,7 @@ export function ChatHeader({
           <View
             style={[
               styles.modalContent,
-              styles.shadow,
+              shadow,
               { top: modalPosition.top, right: modalPosition.right },
             ]}
             className={`border ${isDark
@@ -231,16 +245,6 @@ export function ChatHeader({
 }
 
 const styles = StyleSheet.create({
-  shadow: {
-    shadowColor: ink.line(false),
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
   modalContent: {
     position: "absolute",
     width: "auto",

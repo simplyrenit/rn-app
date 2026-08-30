@@ -197,6 +197,18 @@ export const radius = {
   full: 999,
 } as const;
 
+/**
+ * Fixed proportions.
+ *
+ * The product tile's ratio was written out longhand in two different card
+ * components. Naming it is the only thing that keeps the customer's shelf and
+ * the browse grid rendering the same tile.
+ */
+export const aspect = {
+  /** Product photo on a card — very slightly taller than it is wide. */
+  productImage: 41.5 / 44.5,
+} as const;
+
 /** Apple's minimum comfortable target. Not a guideline — a floor. */
 export const MIN_TOUCH_TARGET = 44;
 
@@ -276,6 +288,22 @@ export const duration = {
   fast: 150,
   base: 220,
   slow: 320,
+} as const;
+
+/**
+ * Press feedback.
+ *
+ * 149 of the app's touchables took React Native's default opacity dip, which
+ * nobody chose. These are the numbers that replace it: small enough to read as
+ * the control acknowledging a finger rather than as an animation, and applied
+ * by the shared wrappers so no screen has to pick its own `activeOpacity`.
+ *
+ * The scale is dropped under Reduce Motion; the opacity dip is not, because it
+ * is the feedback itself and not movement.
+ */
+export const press = {
+  scale: 0.97,
+  opacity: 0.86,
 } as const;
 
 /**

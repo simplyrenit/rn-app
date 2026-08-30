@@ -1,15 +1,12 @@
-import { Text } from "@/components/core";
+import { BackButton, Text } from "@/components/core";
 import Accordion from "@/components/core/accordion";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
-import { Dimensions, ScrollView, TouchableOpacity, View } from "react-native";
-import {
-  ArrowLeftIcon,
-  ChevronRightIcon,
-} from "react-native-heroicons/outline";
-import { ink, colors } from "@/lib/design-tokens";
+import { Dimensions, ScrollView, View } from "react-native";
+import { ChevronRightIcon } from "react-native-heroicons/outline";
+import { ink, colors, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -26,38 +23,37 @@ const FAQScreen: React.FC<FAQProps> = () => {
 
   const accordionData = [
     {
+      // Used to open with website instructions and a "Sign up" control that
+      // does not exist in the app — there are three "Continue with" buttons.
       question: "How do I sign up for Renit?",
-      answer: `You sign up for Renit by visiting our website (simplyrenit.com) or downloading our mobile application from Google Play Store or Apple App Store.
-Using website: Click on the ‘Profile’ icon and then 'Sign up' at the top right corner of your screen and follow the prompts by filling in the required information to create an account using your email address.
-Using mobile application: Click on the ‘Profile’ icon at the bottom right corner and then 'Sign up' at the top of your screen and follow the prompts by filling in the required information to create an account using your email address.
-`,
+      answer: `Open the Renit app and tap the profile icon in the bottom tab bar.
+
+Choose ‘Continue with Google’, ‘Continue with Apple’, or ‘Continue with email’, then follow the prompts to finish creating your account.`,
     },
     {
       question: "How to effectively use Renit?",
-      answer: `There are two ways to use Renit effectively:
-Upload products as an owner:
-Post all your additional resources or products that are currently being kept unused, are constantly depreciating; costing you significant income generation opportunity.
-Find products you need:
-Use the search bar at the top of the homepage to search anything, anywhere, anytime.
-You can also browse through the categories.
-Use sort & filters to narrow down your search & find the most suitable products for your rental requirement; you can sort or filter search results based on price, ratings, product condition, category, proximity etc.
-Once you find a product, check its availability, read the details, and click on ‘chat with owner’ if you have any questions or want to make a rental request.
-Note: Currently, Renit is a rental marketplace that directly connects the users with the product owners, so the only way to rent a product is to contact the owner directly.
-`,
+      answer: `There are two ways to use Renit effectively.
+
+As an owner: list any resources or products you have sitting idle instead of depreciating in a closet — it’s income you’re currently leaving on the table.
+
+As a renter: use the search bar on the Home tab to find anything, anywhere, or browse by category. Sort and filter results by price, rating, condition, or proximity to narrow things down.
+
+Once you find a product, check its availability, read the details, and tap ‘Chat with owner’ if you have questions or want to make a rental request.
+
+Renit connects renters directly with owners, so contacting the owner is currently the only way to arrange a rental.`,
     },
     {
       question: "How to upload and post products?",
-      answer: `Steps to post products:
-Log in or sign up to your account and go to the 'Post' section from ‘Home Page’.
-Provide detailed information about your product, including photos, description, rental price, availability, condition etc. Research shows that high-quality photos from multiple angles can help attract more renters.
-Once you’ve added all the information click ‘Preview’ and ensure all the details are accurate by reviewing the entire post.
-After carefully reviewing all the details, click on ‘Publish’ to post your product online and make it live.
-`,
+      answer: `Log in and go to the ‘Post’ tab.
+
+Provide detailed information about your product, including photos, description, rental price, availability, and condition. High-quality photos from multiple angles help attract more renters.
+
+Review your listing carefully, then publish it to make it live.`,
     },
     {
       question: "Can I set my own rental price?",
       answer:
-        "Yes, as an owner, you can set your own rental price and the refundable deposit you’re looking to charge for your product. We suggest thoroughly considering the products’ condition, market demand, and competitive prices on Renit when determining your price.",
+        "Yes, as an owner, you can set your own rental price and the refundable deposit you’re looking to charge for your product. We suggest thoroughly considering the product’s condition, market demand, and competitive prices on Renit when determining your price.",
     },
     {
       question: "Can I rent products outside my local area?",
@@ -77,7 +73,7 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
     {
       question: "How do I report my issues?",
       answer:
-        "If you encounter any issues, you can report them through the 'Feedback & Review' section on our website or mobile application. You can also contact our customer support team by dropping an email at support@simplyrenit.com or calling at +91-7014230599 for assistance.",
+        "If you encounter any issues, you can report them through the ‘Feedback & Review’ section of the app. You can also contact our customer support team by dropping an email at support@simplyrenit.com or calling at +91-7014230599 for assistance.",
     },
     {
       question: "Are you currently hiring?",
@@ -93,26 +89,14 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
-      <View className="flex-row items-center justify-between px-gutter pb-2 pt-2 ">
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-          onPress={() => router.goBack()}
-          className="flex-1 items-start w-[10%]"
-        >
-          <ArrowLeftIcon
-            size={26}
-            color={ink.text(isDarkMode)}
-          />
-        </TouchableOpacity>
-        <View className="items-center justify-center w-[80%]">
-          <Text
-            fontSize="text-xl"
-            fontWeight="font-bold"
-          >
+      <View className="flex-row items-center px-gutter pb-2 pt-2">
+        <BackButton />
+        <View className="flex-1 items-center justify-center">
+          <Text role="sectionTitle" fontWeight="font-bold">
             FAQs
           </Text>
         </View>
-
-        <View className="w-[10%]"></View>
+        <View style={{ width: MIN_TOUCH_TARGET }} />
       </View>
 
       <ScrollView
@@ -124,7 +108,7 @@ After carefully reviewing all the details, click on ‘Publish’ to post your p
             fontSize="text-sm"
             fontWeight="font-bold"
           >
-            You've got questions, we've got answers!
+            You’ve got questions, we’ve got answers
           </Text>
         </View>
         <View className="py-5">

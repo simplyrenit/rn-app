@@ -1,13 +1,14 @@
-import { useGlobalContext } from "@/context/global-context";
 import {
   BadCondition,
   ExcellentCondition,
   GoodCondition,
 } from "@/icons/conditions";
+import { MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { selectionFeedback } from "@/lib/haptics";
+import { useTheme } from "@/lib/theme";
 import { TouchableOpacity, View } from "react-native";
-import { Button, Text } from "../core";
-import { CheckIcon } from "react-native-heroicons/outline";
-import { ink, colors } from "@/lib/design-tokens";
+import { CheckIcon } from "react-native-heroicons/solid";
+import { Text } from "../core";
 
 const options = [
   { icon: BadCondition, option: "Fair", value: "fair" },
@@ -22,38 +23,51 @@ interface Props {
   isLoading: boolean;
 }
 
-export function ConditionFilter({
-  selectedFilter,
-  onSelect,
-  closeSheet,
-  isLoading,
-}: Props) {
-  const { theme } = useGlobalContext();
-  const isDark = theme === "dark";
+/** Same selected-row treatment as Sort and the Appearance sheet — one pattern
+ *  for "this is the one that is on", not three. */
+export function ConditionFilter({ selectedFilter, onSelect }: Props) {
+  const { color } = useTheme();
 
   return (
     <View className="flex-1">
-      <View className="mt-0 flex-1">
-        {options.map((item, index) => (
+      {options.map((item, index) => {
+        const selected = selectedFilter === item.value;
+        return (
           <TouchableOpacity
-            key={index}
-            className={`p-3 ${index === 0 ? "pt-0" : ""}`}
-            onPress={() => onSelect(item.value)}
+            key={item.value}
+            accessibilityRole="radio"
+            accessibilityState={{ selected }}
+            accessibilityLabel={item.option}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              minHeight: MIN_TOUCH_TARGET + 8,
+              borderBottomWidth: index === options.length - 1 ? 0 : 1,
+              borderBottomColor: color.line,
+            }}
+            onPress={() => {
+              selectionFeedback();
+              onSelect(item.value);
+            }}
           >
-            <View className="flex flex-row items-center justify-between">
-              <View className="flex flex-row items-center">
-                <item.icon color={ink.text(isDark)} size={20} />
-                <Text fontSize="text-base" className="ml-3">
-                  {item.option}
-                </Text>
-              </View>
-              {selectedFilter === item.value && (
-                <CheckIcon size={20} color={colors.dark.brand} />
-              )}
+            <View className="flex flex-row items-center">
+              <item.icon
+                color={selected ? color.brandText : color.text}
+                size={20}
+              />
+              <Text
+                fontSize="text-md"
+                fontWeight={selected ? "font-semibold" : "font-normal"}
+                className="ml-3"
+              >
+                {item.option}
+              </Text>
             </View>
+            {selected && <CheckIcon size={20} color={color.brandText} />}
           </TouchableOpacity>
-        ))}
-      </View>
+        );
+      })}
     </View>
   );
 }

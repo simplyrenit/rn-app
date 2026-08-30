@@ -9,6 +9,16 @@ let firebaseSignIn: Promise<void> | null = null;
 let firebaseAccessToken: string | null = null;
 let appCheckInitialization: Promise<void> | null = null;
 
+// The phone-number-change flow deliberately swaps auth.currentUser for a few
+// seconds while it verifies a code, then restores the real session. During that
+// window Firestore listeners tied to the real user throw permission-denied; this
+// flag lets them treat that as expected instead of a real error.
+let phoneReauthInProgress = false;
+export const setPhoneReauthInProgress = (value: boolean) => {
+  phoneReauthInProgress = value;
+};
+export const isPhoneReauthInProgress = () => phoneReauthInProgress;
+
 export const initializeAppCheck = () => {
   if (!appCheckInitialization) {
     // Modular App Check API. `ReactNativeFirebaseAppCheckProvider` is exported at

@@ -1,4 +1,4 @@
-import { Button, Text } from "@/components/core";
+import { BackButton, Button, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { createLocationRequest } from "@/lib/location-request";
@@ -10,7 +10,6 @@ import {
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, TextInput, TouchableOpacity, View } from "react-native";
 import {
-  ArrowLeftIcon,
   ChevronRightIcon,
   CalendarIcon,
   PencilSquareIcon,
@@ -26,7 +25,7 @@ import moment from "moment-timezone";
 import { useProfile } from "@/backend/profile";
 
 import { toast } from "@/lib/toast";
-import { ink } from "@/lib/design-tokens";
+import { ink, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
 
 const { height } = Dimensions.get("window");
 interface UnavailabilityProps {}
@@ -164,28 +163,16 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
       <View
-        className="flex-row items-center justify-between px-gutter "
+        className="flex-row items-center px-gutter"
         style={{ paddingVertical: wp("5%") }}
       >
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-          onPress={() => router.goBack()}
-          className="flex-1 items-start w-[10%]"
-        >
-          <ArrowLeftIcon
-            size={26}
-            color={ink.text(isDarkMode)}
-          />
-        </TouchableOpacity>
-        <View className="items-center justify-center w-[80%]">
-          <Text
-            fontSize="text-xl"
-            fontWeight="font-bold"
-          >
+        <BackButton />
+        <View className="flex-1 items-center justify-center">
+          <Text role="sectionTitle" fontWeight="font-bold">
             Request an item
           </Text>
         </View>
-
-        <View className="w-[10%]"></View>
+        <View style={{ width: MIN_TOUCH_TARGET }} />
       </View>
 
       <KeyboardAwareScrollView className="px-gutter py-5 flex-1">

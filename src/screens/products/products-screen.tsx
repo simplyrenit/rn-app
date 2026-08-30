@@ -1,12 +1,26 @@
 import { useChat } from "@/backend/chat";
 import { useProduct } from "@/backend/product";
-import { Button, Card, Text } from "@/components/core";
+import { useProfile } from "@/backend/profile";
+import {
+  BackButton,
+  Button,
+  Card,
+  CrossFade,
+  SectionHeader,
+  Text,
+} from "@/components/core";
 import { ModerationBanner } from "@/components/product/moderation-banner";
+import {
+  ListingStatus,
+  ListingStatusPill,
+  resolveListingStatus,
+} from "@/components/product/listing-status";
 import { ProductImage } from "@/components/product/product-image";
 import { ProductMap } from "@/components/product/product-map";
 import { AboutOwner } from "@/components/product/product-owner";
 import { ReviewCard } from "@/components/product/review-card";
 import { Stars } from "@/components/product/stars";
+import { useFocusedStatusBar } from "@/components/product/use-focused-status-bar";
 import { useGlobalContext } from "@/context/global-context";
 import {
   BackendProduct,
@@ -15,37 +29,31 @@ import {
   useTypedNavigation,
 } from "@/lib/types";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
-import { SCREEN_GUTTER, density, ink } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density } from "@/lib/design-tokens";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { IOSShareIcon } from "@/icons/share";
-import { CategoryIcon } from "@/lib/category-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { StatusBar } from "expo-status-bar";
 import { IconButton } from "@/components/core/icon-button";
 import { EmptyState } from "@/components/core/empty-state";
 import React, { useCallback, useState } from "react";
 import {
   Animated,
   Dimensions,
-  Image,
   RefreshControl,
   ScrollView,
   Share,
+  StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
 import {
-  BanknotesIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  LightBulbIcon,
-  ShareIcon,
 } from "react-native-heroicons/outline";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { SvgUri } from "react-native-svg";
 
 import { ProductsSkeleton } from "./products-skeleton";
 
@@ -55,14 +63,32 @@ const MAX_CHARS = 150;
 // horizontal rail read as scrollable.
 const itemWidth = Dimensions.get("window").width - SCREEN_GUTTER * 2 - 32;
 
+/**
+ * The pinned band's own height, below the safe-area inset. It matches the
+ * hero's floating control row (40pt button at +8) so the back affordance does
+ * not move as one treatment cross-fades into the other.
+ */
+const BAND_HEIGHT = 56;
+
+/**
+ * Where the band takes over from the hero.
+ *
+ * The hero's controls used to sit inside the scroll and the replacement band
+ * only began to appear at 120pt — but a control at `insets.top + 8` has already
+ * left the screen by ~100pt, so there was a stretch with no way back at all.
+ * The band is fully there well before that.
+ */
+const COLLAPSE_START = 32;
+const COLLAPSE_END = 84;
+
 export default function DetailsScreen() {
   const [loading, setLoading] = React.useState(true);
   const [showFullText, setShowFullText] = useState(false);
   const route = useRoute<RouteProps<"ProductDetail">>();
-  const { theme, isAuthenticated, userDetails } = useGlobalContext();
-  const isDark = theme === "dark";
+  const { isAuthenticated, userDetails } = useGlobalContext();
   const navigation = useTypedNavigation();
   const { fetchProduct, fetchSimilarProducts, fetchReviews } = useProduct();
+  const { getMyProductDetails } = useProfile();
   const [product, setProduct] = useState<BackendProduct | null>(null);
   const [similarProducts, setSimilarProducts] = useState<BackendProduct[]>([]);
   const [isModerated, setIsModerated] = useState(false);
@@ -72,14 +98,47 @@ export default function DetailsScreen() {
   const [startingChat, setStartingChat] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const { color, isDark: isDarkTheme } = useTheme();
+  // One resolved theme for the whole screen. It used to read `theme === "dark"`
+  // from the global context in some places and `useTheme()` in others.
+  const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const scrollY = React.useRef(new Animated.Value(0)).current;
-  // Drives the status-bar style. Light glyphs are correct while the hero (and
-  // its gradient scrim) is under the strip; once the canvas scrim covers it the
-  // strip is app chrome again and follows the theme.
+  // True once the pinned band, not the photograph, is what sits under the
+  // status bar. Drives the bar's style and which back treatment takes taps.
   const [heroCovered, setHeroCovered] = useState(false);
+  // Only the owner-facing endpoint knows whether a listing is approved, so this
+  // is fetched separately and only for the owner.
+  const [ownerStatus, setOwnerStatus] = useState<ListingStatus | null>(null);
   const distanceLabel = useDistanceTo(product?.coordinates);
+
+  /**
+   * Light glyphs while the hero is under the strip.
+   *
+   * This is not a guess about the photograph: the scrim below holds black at
+   * α ≥ 0.55 across the whole glyph band, which puts white on at worst a
+   * #737373 ground — 4.76:1, AA — even for a pure-white product shot. Deriving
+   * the style from the image's own luminance would still leave a mixed-luminance
+   * photo failing under half the clock; a scrim strong enough to carry light
+   * glyphs is correct for every photograph, so the style is pinned to match it.
+   */
+  useFocusedStatusBar(
+    heroCovered
+      ? isDark
+        ? "light-content"
+        : "dark-content"
+      : "light-content"
+  );
+
+  const bandProgress = scrollY.interpolate({
+    inputRange: [COLLAPSE_START, COLLAPSE_END],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+  const heroProgress = scrollY.interpolate({
+    inputRange: [COLLAPSE_START, COLLAPSE_END],
+    outputRange: [1, 0],
+    extrapolate: "clamp",
+  });
 
   /** One inset, one vertical rhythm, one hairline, for every section. */
   const sectionStyle = {
@@ -132,6 +191,7 @@ export default function DetailsScreen() {
       setSimilarProducts(similarProducts);
       setReviews(reviews);
       setIsModerated(data?.moderation_labels?.length > 0);
+      await loadOwnerStatus(data);
     } catch (error: any) {
       // Swallowing this left the screen showing the "not available" state for a
       // listing that exists, with nothing saying the request failed.
@@ -141,8 +201,28 @@ export default function DetailsScreen() {
     }
   }
 
-  if (loading) {
-    return <ProductsSkeleton />;
+  /**
+   * The public listing payload carries no approval state, so an owner looking
+   * at their own listing could not tell whether renters could see it. Failure
+   * here is silent: the status is additive and must not take the page down.
+   */
+  async function loadOwnerStatus(data: BackendProduct | null) {
+    if (!data || !userDetails?.username) return;
+    if (data.owner?.username !== userDetails.username) {
+      setOwnerStatus(null);
+      return;
+    }
+    try {
+      const owned = await getMyProductDetails(data.name);
+      setOwnerStatus(
+        resolveListingStatus({
+          moderationLabels: owned?.moderation_labels,
+          adminApproved: owned?.admin_approved,
+        })
+      );
+    } catch {
+      setOwnerStatus(null);
+    }
   }
 
   const handleEditClick = () => {
@@ -220,52 +300,60 @@ export default function DetailsScreen() {
     product?.description!,
     MAX_CHARS
   );
-  const categoryIconUri =
-    theme === "dark"
-      ? product?.category?.dark_icon
-      : product?.category?.light_icon;
-  const categoryIconIsSvg =
-    categoryIconUri?.slice(-3)?.toLowerCase() === "svg";
   const displayText = showFullText ? product?.description! : truncatedText;
-  if (!product) {
+
+  // Only the very first load gets a skeleton. A refetch — pull-to-refresh, or
+  // the refetch this screen runs every time it regains focus — used to swap the
+  // whole screen for the skeleton, which unmounted the scroll view and left it
+  // remounted at offset 0 while `heroCovered` still held the value it had
+  // before: the collapsed style over an uncovered photograph.
+  const showSkeleton = loading && !product;
+
+  /**
+   * Black at α ≥ 0.55 for the full height of the status bar, then a fall-off
+   * that also carries the floating controls.
+   *
+   * The previous ramp reached 0.28 by the middle of the strip, so the lower half
+   * of the clock sat at ~2.7:1. Holding 0.55 to `insets.top` puts a white glyph
+   * on at worst #737373 — 4.76:1 — over even a pure-white photograph.
+   */
+  const scrimHeight = insets.top + 60;
+  const scrimLocations = [
+    0,
+    Math.min(1, insets.top / scrimHeight),
+    Math.min(1, (insets.top + 22) / scrimHeight),
+    1,
+  ] as const;
+
+  if (!product && !showSkeleton) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: color.canvas }}>
         <EmptyState
           variant="error"
-          title="This listing isn’t available"
-          body="It may have been removed, or the link may be out of date."
-          actionLabel="Go back"
-          onAction={() => navigation.goBack()}
+          title={
+            loadError
+              ? "We couldn’t load this listing"
+              : "This listing isn’t available"
+          }
+          body={
+            loadError
+              ? "Check your connection and try again."
+              : "It may have been removed, or the link may be out of date."
+          }
+          actionLabel={loadError ? "Try again" : "Go back"}
+          onAction={loadError ? fetchProductDetails : () => navigation.goBack()}
+          secondaryActionLabel={loadError ? "Go back" : undefined}
+          onSecondaryAction={loadError ? () => navigation.goBack() : undefined}
         />
       </SafeAreaView>
     );
   }
+
   return (
     <View style={{ flex: 1, backgroundColor: color.canvas }}>
       {/* The hero bleeds to the top of the display with its controls floating
           over it. Reserving the top safe-area edge letterboxed the 1:1 image
           below a dead black band. */}
-      {/* The status bar sits directly on the photograph at scroll 0, and its
-          style follows the app theme rather than the image behind it. In dark
-          mode over a bright product shot the clock and battery rendered white
-          on white and were unreadable; in light mode over a dark shot the same
-          failure occurs inverted.
-
-          A permanent gradient scrim under the status bar makes light glyphs
-          correct over any photograph, and the status bar is pinned to "light"
-          for as long as the hero is the thing underneath it. */}
-      <LinearGradient
-        pointerEvents="none"
-        colors={["rgba(0,0,0,0.55)", "rgba(0,0,0,0.28)", "transparent"]}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top + 52,
-          zIndex: 2,
-        }}
-      />
       <Animated.View
         pointerEvents="none"
         style={{
@@ -273,17 +361,99 @@ export default function DetailsScreen() {
           top: 0,
           left: 0,
           right: 0,
-          height: insets.top,
-          zIndex: 3,
-          backgroundColor: color.canvas,
-          opacity: scrollY.interpolate({
-            inputRange: [0, 120, 220],
-            outputRange: [0, 0, 1],
-            extrapolate: "clamp",
-          }),
+          height: scrimHeight,
+          zIndex: 2,
+          opacity: heroProgress,
         }}
-      />
-      <StatusBar style={heroCovered ? (isDark ? "light" : "dark") : "light"} />
+      >
+        <LinearGradient
+          colors={[
+            "rgba(0,0,0,0.64)",
+            "rgba(0,0,0,0.55)",
+            "rgba(0,0,0,0.20)",
+            "transparent",
+          ]}
+          locations={scrimLocations as unknown as number[]}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+
+      {/* The pinned band. It used to be an empty canvas-coloured strip that
+          existed only to hide content passing under it; it now carries the
+          title and the back control the hero surrenders. */}
+      <View
+        pointerEvents="box-none"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 4,
+        }}
+      >
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: color.canvas,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: color.line,
+            opacity: bandProgress,
+          }}
+        />
+        <View
+          pointerEvents="box-none"
+          style={{
+            marginTop: insets.top,
+            height: BAND_HEIGHT,
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 10,
+            gap: 4,
+          }}
+        >
+          {/* Two treatments of one control, cross-faded in place, so the
+              affordance never leaves and never jumps. */}
+          <View
+            style={{
+              width: MIN_TOUCH_TARGET,
+              height: MIN_TOUCH_TARGET,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Animated.View
+              pointerEvents={heroCovered ? "none" : "auto"}
+              style={{ position: "absolute", opacity: heroProgress }}
+            >
+              <BackButton onPhoto size={20} />
+            </Animated.View>
+            <Animated.View
+              pointerEvents={heroCovered ? "auto" : "none"}
+              style={{ position: "absolute", opacity: bandProgress }}
+            >
+              <BackButton />
+            </Animated.View>
+          </View>
+
+          <Animated.View
+            pointerEvents="none"
+            style={{ flex: 1, opacity: bandProgress }}
+          >
+            <Text
+              role="sectionTitle"
+              numberOfLines={1}
+              style={{ textAlign: "center" }}
+            >
+              {product?.title ?? ""}
+            </Text>
+          </Animated.View>
+
+          {/* Balances the back control so the title is centred on the screen. */}
+          <View style={{ width: MIN_TOUCH_TARGET }} />
+        </View>
+      </View>
+
       {/* Animated.ScrollView, not ScrollView: a native-driven Animated.event
           has to be attached to an animated component or the plain one receives
           the event object where it expects a handler. */}
@@ -296,7 +466,8 @@ export default function DetailsScreen() {
           {
             useNativeDriver: true,
             listener: (event: any) => {
-              const covered = event.nativeEvent.contentOffset.y > 170;
+              const covered =
+                event.nativeEvent.contentOffset.y > COLLAPSE_END - 12;
               setHeroCovered((current) =>
                 current === covered ? current : covered
               );
@@ -312,12 +483,18 @@ export default function DetailsScreen() {
           />
         }
       >
+        {/* The skeleton used to be swapped for the real screen in a single
+            frame, which reads as a flicker rather than as arrival. */}
+        <CrossFade loading={showSkeleton} placeholder={<ProductsSkeleton />}>
+        {product ? (
+        <View>
         <View style={{ width: "100%", aspectRatio: 1, }}>
           <ProductImage
-            images={product!.images}
-            coverImage={product!.cover_image}
+            images={product.images}
+            coverImage={product.cover_image}
             name={id}
             isFavorite={isFavorite}
+            showBack={false}
           />
         </View>
 
@@ -329,11 +506,7 @@ export default function DetailsScreen() {
 
         <View style={sectionStyle}>
           <View className="flex flex-row items-center justify-between">
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
-              style={{ flex: 1 }}
-            >
+            <Text role="screenTitle" style={{ flex: 1 }}>
               {product?.title}
             </Text>
             <IconButton
@@ -347,7 +520,7 @@ export default function DetailsScreen() {
           <View className="flex flex-row items-center my-2">
             {product?.review_count ? (
               <>
-                <Stars rating={product?.average_rating!} isDark={isDarkTheme} />
+                <Stars rating={product?.average_rating!} isDark={isDark} />
                 <Text fontSize="text-sm" tone="body" className="ml-1">
                   ({product?.review_count})
                 </Text>
@@ -360,6 +533,12 @@ export default function DetailsScreen() {
               </Text>
             )}
           </View>
+
+          {/* Your own listing said nothing about whether renters could see it.
+              "Live" is a fact the owner needs stated, not inferred. */}
+          {isOwner && ownerStatus ? (
+            <ListingStatusPill status={ownerStatus} withDetail />
+          ) : null}
         </View>
 
         {/* Specifications.
@@ -410,38 +589,25 @@ export default function DetailsScreen() {
             ))}
         </View>
 
-        {/* About the product */}
+        {/* Bare-noun headings, the same rule on every screen in this flow. */}
         <View style={sectionStyle}>
-          <View className="flex flex-row items-center justify-between">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-lg"
-              accessibilityRole="header"
-            >
-              Description
-            </Text>
-          </View>
-          <Text className="mt-2">{displayText}</Text>
+          <SectionHeader title="Description" gutter={false} />
+          <Text>{displayText}</Text>
           {product?.description.length! > MAX_CHARS && (
-            <TouchableOpacity onPress={() => setShowFullText(!showFullText)}>
+            <TouchableOpacity
+              onPress={() => setShowFullText(!showFullText)}
+              accessibilityRole="button"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <View className="flex flex-row items-center  mt-2 space-x-2">
-                <Text
-                  fontWeight="font-bold"
-                  className={isDark ? "text-white" : "text-black"}
-                >
+                <Text fontWeight="font-bold">
                   {showFullText ? "Show less" : "Show more"}
                 </Text>
                 <View className=" mt-1">
                   {showFullText ? (
-                    <ChevronUpIcon
-                      color={ink.text(isDark)}
-                      size={16}
-                    />
+                    <ChevronUpIcon color={color.text} size={16} />
                   ) : (
-                    <ChevronDownIcon
-                      color={ink.text(isDark)}
-                      size={16}
-                    />
+                    <ChevronDownIcon color={color.text} size={16} />
                   )}
                 </View>
               </View>
@@ -450,19 +616,11 @@ export default function DetailsScreen() {
         </View>
 
         <View style={sectionStyle}>
-          <View className="flex flex-row items-center justify-between">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-lg"
-              accessibilityRole="header"
-            >
-              Location
-            </Text>
-          </View>
+          <SectionHeader title="Location" gutter={false} />
           {/* The map was a city-scale tile with an unlabelled blue dot: no
               address, no neighbourhood, and no distance. "How far away is it?"
               is the first question a renter asks. */}
-          <View style={{ marginTop: 2, gap: 2 }}>
+          <View style={{ gap: 2 }}>
             {product?.location ? (
               <Text fontSize="text-md" tone="hi">
                 {product.location}
@@ -483,24 +641,17 @@ export default function DetailsScreen() {
               latitude={product?.coordinates?.lat!}
               longitude={product?.coordinates?.long!}
               isDarkMode={isDark}
+              placeName={product?.location}
             />
           </View>
         </View>
 
-        {/* Product reviews` */}
+        {/* Product reviews */}
         <View style={[sectionStyle, { paddingHorizontal: 0 }]}>
-          <View className="flex flex-row items-center justify-between" style={{ paddingHorizontal: SCREEN_GUTTER }}>
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-lg"
-              accessibilityRole="header"
-            >
-              Reviews
-            </Text>
-          </View>
+          <SectionHeader title="Reviews" />
 
           <View
-            className="flex flex-row items-center mt-1"
+            className="flex flex-row items-center"
             style={{ paddingHorizontal: SCREEN_GUTTER }}
           >
             {product?.review_count ? (
@@ -513,7 +664,7 @@ export default function DetailsScreen() {
                 >
                   {product?.average_rating?.toFixed(1)}
                 </Text>
-                <Stars rating={product?.average_rating!} isDark={isDarkTheme} />
+                <Stars rating={product?.average_rating!} isDark={isDark} />
                 <Text fontSize="text-md" tone="body" className="ml-1">
                   ({product?.review_count})
                 </Text>
@@ -525,28 +676,30 @@ export default function DetailsScreen() {
             )}
           </View>
 
-          <ScrollView
-            horizontal
-            nestedScrollEnabled
-            showsHorizontalScrollIndicator={false}
-            style={{ width: '100%'}}
-            contentContainerStyle={{
-              paddingHorizontal: SCREEN_GUTTER,
-              paddingTop: 12,
-              gap: 14,
-            }}
-          >
-            {lessReviews.map((item) => (
-              <View key={item.user.username} style={{ width: itemWidth }}>
-                <ReviewCard
-                  reviewText={item.comment}
-                  reviewerName={`${item.user.first_name} ${item.user.last_name}`}
-                  reviewDate={item.created_at}
-                  reviewerImage={item.user?.image?.image_url}
-                />
-              </View>
-            ))}
-          </ScrollView>
+          {lessReviews.length > 0 ? (
+            <ScrollView
+              horizontal
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={false}
+              style={{ width: '100%'}}
+              contentContainerStyle={{
+                paddingHorizontal: SCREEN_GUTTER,
+                paddingTop: 12,
+                gap: 14,
+              }}
+            >
+              {lessReviews.map((item) => (
+                <View key={item.user.username} style={{ width: itemWidth }}>
+                  <ReviewCard
+                    reviewText={item.comment}
+                    reviewerName={`${item.user.first_name} ${item.user.last_name}`}
+                    reviewDate={item.created_at}
+                    reviewerImage={item.user?.image?.image_url}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          ) : null}
 
           {/* A full-width 66pt button offering to show all of nothing. It
               only exists when there is something to show. */}
@@ -570,17 +723,9 @@ export default function DetailsScreen() {
           ) : null}
         </View>
 
-        {/* About the owner */}
+        {/* Owner */}
         <View style={sectionStyle}>
-          <View className="flex flex-row items-center justify-between">
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-lg"
-              accessibilityRole="header"
-            >
-              Owner
-            </Text>
-          </View>
+          <SectionHeader title="Owner" gutter={false} />
           <View className="flex flex-row items-center ">
             <AboutOwner
               id={product?.owner?.username!}
@@ -596,14 +741,7 @@ export default function DetailsScreen() {
         {/* Similar products */}
         {similarProducts.length > 0 && (
           <View style={[sectionStyle, { paddingHorizontal: 0, borderBottomWidth: 0 }]}>
-            <View className="flex flex-row items-center justify-between mb-4" style={{ paddingHorizontal: SCREEN_GUTTER }}>
-              <Text
-                fontWeight="font-bold"
-                fontSize="text-xl"
-              >
-                Similar products
-              </Text>
-            </View>
+            <SectionHeader title="Similar products" />
 
             <ScrollView
               horizontal
@@ -621,12 +759,16 @@ export default function DetailsScreen() {
                     title={item.title}
                     location={item.location}
                     price={item.rate}
+                    coordinates={item.coordinates}
                   />
                 </View>
               ))}
             </ScrollView>
           </View>
         )}
+        </View>
+        ) : null}
+        </CrossFade>
       </Animated.ScrollView>
 
       {/*
@@ -637,6 +779,7 @@ export default function DetailsScreen() {
         reserved here rather than by a SafeAreaView that declared only its top
         edge, which left the button 19pt off the screen edge.
       */}
+      {product ? (
       <View
         style={{
           flexDirection: "row",
@@ -661,11 +804,10 @@ export default function DetailsScreen() {
 
         <View style={{ flex: 1 }}>
           {isOwner ? (
-            // The owner variant used to be a raw TouchableOpacity at h-full,
-            // so the two states of one bar had different button heights.
-            <Button variant="outline" onPress={handleEditClick}>
-              Edit product
-            </Button>
+            // The one action in the bar, so it is the primary one. It was an
+            // outlined secondary competing against nothing, in the same slot
+            // where a visitor gets a filled button.
+            <Button onPress={handleEditClick}>Edit product</Button>
           ) : (
             <Button
               onPress={handleStartChat}
@@ -677,6 +819,7 @@ export default function DetailsScreen() {
           )}
         </View>
       </View>
+      ) : null}
     </View>
   );
 }

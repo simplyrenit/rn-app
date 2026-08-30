@@ -9,6 +9,7 @@ import { Swipeable } from "react-native-gesture-handler";
 import {
   DocumentIcon,
   PhotoIcon,
+  TagIcon,
   TrashIcon,
 } from "react-native-heroicons/outline";
 
@@ -73,6 +74,11 @@ export function ChatCard({
     typeof parsedMessage === "object" &&
     (parsedMessage?.type === "image" || parsedMessage?.type === "file");
 
+  // `makeOffer` writes this exact string as the conversation's lastMessage —
+  // there's no structured offer summary on the conversation itself, so this is
+  // the only signal available to flag it in the list without opening the thread.
+  const isOffer = lastMessage === "An offer was made!";
+
   const preview = () => {
     if (!isAttachment) return lastMessage;
     return parsedMessage.type === "image" ? "Photo" : "File";
@@ -119,6 +125,8 @@ export function ChatCard({
                 ) : (
                   <DocumentIcon size={14} color={color.textBody} />
                 )
+              ) : isOffer ? (
+                <TagIcon size={14} color={color.textBody} />
               ) : null}
               <Text
                 fontSize="text-sm"

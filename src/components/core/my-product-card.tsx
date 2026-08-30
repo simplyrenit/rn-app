@@ -1,4 +1,4 @@
-import { radius } from "@/lib/design-tokens";
+import { aspect, darkColors, radius } from "@/lib/design-tokens";
 import { formatCurrency } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { ItemCard, useTypedNavigation } from "@/lib/types";
@@ -7,6 +7,7 @@ import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
 import { Text } from "./text";
+import { usePressFeedback } from "./use-press-feedback";
 
 /**
  * A listing on the owner's own shelf.
@@ -20,7 +21,7 @@ import { Text } from "./text";
  * listings meant 180pt of buttons repeating the same word.
  *
  * It now fills the column it is given, matches Card's proportions exactly, and
- * opens the listing on tap — where Edit already lives in the footer.
+ * opens its owner-management editor on tap.
  */
 export function MyProductCard({
   image,
@@ -35,21 +36,25 @@ export function MyProductCard({
 }: ItemCard) {
   const router = useTypedNavigation();
   const { color } = useTheme();
+  const { pressStyle, onPressIn, onPressOut } = usePressFeedback();
 
   const isModerated = moderationLabels?.length > 0;
-  // A listing is pending until an admin approves it. A flagged listing already
-  // shows its own overlay, so the pending badge would only duplicate it.
-  const isPendingApproval = !isModerated && adminApproved !== true;
+  // The owner API uses three distinct approval states. Treating false and null
+  // as the same state said "Pending" beside a rejected listing's explicit pill.
+  const isPendingApproval = !isModerated && adminApproved === null;
+  const isRejected = !isModerated && adminApproved === false;
 
   const status = isModerated
     ? "Flagged"
+    : isRejected
+    ? "Rejected"
     : isPendingApproval
     ? "Pending approval"
     : null;
 
   const imageStyle = {
     width: "100%",
-    aspectRatio: 41.5 / 44.5,
+    aspectRatio: aspect.productImage,
     borderRadius: radius.card,
   } as const;
 
@@ -59,10 +64,12 @@ export function MyProductCard({
       accessibilityRole="button"
       accessibilityLabel={`${title}${status ? `, ${status}` : ""}, ${formatCurrency(
         price
-      )} per day. Opens the listing.`}
-      activeOpacity={0.85}
-      onPress={() => router.navigate("ProductDetail", { id })}
-      style={{ width: width ?? "100%", alignItems }}
+      )} per day. Opens the product editor.`}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      activeOpacity={1}
+      onPress={() => router.navigate("editProduct", { id })}
+      style={[{ width: width ?? "100%", alignItems }, pressStyle]}
     >
       <View style={{ width: "100%" }}>
         <View style={{ position: "relative" }}>
@@ -112,7 +119,7 @@ export function MyProductCard({
 
           {/* Anchored to a corner with a consistent inset, and quieter than the
               title it sits above. */}
-          {isPendingApproval && (
+          {(isPendingApproval || isRejected) && (
             <View
               style={{
                 position: "absolute",
@@ -127,9 +134,9 @@ export function MyProductCard({
               <Text
                 fontSize="text-xs"
                 fontWeight="font-medium"
-                style={{ color: "#FFFFFF" }}
+                style={{ color: darkColors.text }}
               >
-                Pending
+                {isRejected ? "Rejected" : "Pending"}
               </Text>
             </View>
           )}

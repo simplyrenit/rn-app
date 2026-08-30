@@ -12,7 +12,6 @@ import { BackendProduct, PublicOwner, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
 import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
 import {
-  ArrowLeftIcon,
   BanknotesIcon,
   ShareIcon,
 } from "react-native-heroicons/outline";
@@ -60,18 +59,7 @@ export default function ReviewProduct() {
 
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
-      <View className="px-gutter flex-row items-center">
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-          onPress={() => navigation.goBack()}
-          className="w-[10%]"
-        >
-          <ArrowLeftIcon size={24} color={ink.text(isDark)} />
-        </TouchableOpacity>
-        <View className="w-[80%]">
-          <PostProductHeader heading="Review your post" step={7} />
-        </View>
-        <View className="w-[10%]" />
-      </View>
+      <PostProductHeader heading="Review your post" step={7} showBackArrow />
 
       <ScrollView
         // className="flex-1"

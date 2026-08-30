@@ -1,7 +1,17 @@
 import { useChat } from "@/backend/chat";
 import useOwner from "@/backend/owner";
 import useReviews from "@/backend/reviews";
-import { Avatar, Button, Card, Container, Text } from "@/components/core";
+import {
+  Avatar,
+  BackButton,
+  Button,
+  Card,
+  CrossFade,
+  SectionHeader,
+  StaticContainer,
+  Text,
+} from "@/components/core";
+import Skeleton from "@/components/core/skeleton";
 import { ReviewCard } from "@/components/product/review-card";
 import { useGlobalContext } from "@/context/global-context";
 import {
@@ -12,29 +22,43 @@ import {
   useTypedNavigation,
 } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
-import { Image } from "expo-image";
-import { styled } from "nativewind";
 import React, { useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import {
-  ArrowLeftIcon,
   CalendarIcon,
-  CubeIcon,
+  CheckBadgeIcon,
+  MapPinIcon,
+  ShieldExclamationIcon,
   StarIcon,
-  UserCircleIcon,
   Squares2X2Icon,
 } from "react-native-heroicons/outline";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { CheckBadgeIcon as CheckBadgeSolid } from "react-native-heroicons/solid";
 
 import { toast } from "@/lib/toast";
-import { ink } from "@/lib/design-tokens";
+import {
+  MIN_TOUCH_TARGET,
+  SCREEN_GUTTER,
+  density,
+  radius,
+} from "@/lib/design-tokens";
 import { describeRating } from "@/lib/rating";
 import { useTheme } from "@/lib/theme";
 
-const StyledImage = styled(Image);
+const RAIL_CARD_WIDTH = 158;
+const RAIL_GAP = 14;
 
-const itemWidth = wp(40);
-const itemMargin = wp(6);
+/**
+ * Fields the owner object embedded in a listing carries but `PublicOwner` — the
+ * shape returned by `owner-details/` — does not. `src/lib/types.ts` belongs to
+ * another lane, so the extra fields are described here and read off the listing
+ * payload the profile already fetches. See the handoff note.
+ */
+interface OwnerTrustFields {
+  email_verified?: boolean;
+  phone_verified?: boolean;
+  account_type?: string;
+  business_name?: string | null;
+}
 
 export default function UsersDetails() {
   const route = useRoute<RouteProps<"UserDetail">>();
@@ -44,62 +68,74 @@ export default function UsersDetails() {
   const { id } = route.params;
   const { startChat } = useChat();
   const { getReviews } = useReviews();
-  const { theme } = useGlobalContext();
   const [products, setProducts] = useState<BackendProduct[]>([]);
   const [owner, setOwner] = useState<PublicOwner | null>(null);
   const [ownerReviews, setOwnerReviews] = useState<OwnerReview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [messaging, setMessaging] = useState(false);
 
-  const isDark = theme === "dark";
+  const { color, isDark } = useTheme();
 
   const isOwner = userDetails?.username === owner?.username;
 
   const { getOwnerDetails, getOwnerProducts } = useOwner();
 
   const fetchOwnerDetails = async () => {
-    const data = await getOwnerDetails(id);
-    const products = (await getOwnerProducts(id)) as BackendProduct[];
-    const owner_reviews = await getReviews(id);
+    setLoading(true);
+    try {
+      const data = await getOwnerDetails(id);
+      const products = (await getOwnerProducts(id)) as BackendProduct[];
+      const owner_reviews = await getReviews(id);
 
-    setOwner(data);
-    setProducts(products);
-    setOwnerReviews(owner_reviews || []);
+      setOwner(data);
+      setProducts(products);
+      setOwnerReviews(owner_reviews || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleStartChat = async () => {
+    if (messaging) return;
     if (!isAuthenticated) {
       toast.error("Sign in to Renit to message owners");
       return;
     }
 
-    const { success, content } = await startChat(
-      {
-        userId: userDetails?.username!,
-        firebaseUid: userDetails?.firebase_uid!,
-        username: userDetails?.name!,
-        profilePicture: userDetails?.image
-          ? userDetails?.image
-          : "",
-      },
-      {
-        userId: owner?.username!,
-        firebaseUid: owner?.firebase_uid!,
-        username: owner?.first_name! + " " + owner?.last_name!,
-        profilePicture: owner?.image?.image_url
-          ? owner?.image?.image_url
-          : "",
-      },
-      {
-        title: "",
-        location: "",
-        image: "",
-        rate: "",
-        type: "",
-        text: "Hello, I am interested in your products!",
-      }
-    );
+    setMessaging(true);
+    try {
+      const { success, content } = await startChat(
+        {
+          userId: userDetails?.username!,
+          firebaseUid: userDetails?.firebase_uid!,
+          username: userDetails?.name!,
+          profilePicture: userDetails?.image
+            ? userDetails?.image
+            : "",
+        },
+        {
+          userId: owner?.username!,
+          firebaseUid: owner?.firebase_uid!,
+          username: owner?.first_name! + " " + owner?.last_name!,
+          profilePicture: owner?.image?.image_url
+            ? owner?.image?.image_url
+            : "",
+        },
+        {
+          title: "",
+          location: "",
+          image: "",
+          rate: "",
+          type: "",
+          text: "Hello, I am interested in your products!",
+        }
+      );
 
-    if (success) {
-      navigation.navigate("ChatDetails", { id: content });
+      if (success) {
+        navigation.navigate("ChatDetails", { id: content });
+      }
+    } finally {
+      setMessaging(false);
     }
   };
 
@@ -107,9 +143,8 @@ export default function UsersDetails() {
     fetchOwnerDetails();
   }, [id]);
 
-  const { color } = useTheme();
   const ownerRating = owner?.average_rating ?? 0;
-  const ratingDisplay = describeRating(ownerRating);
+  const ratingDisplay = describeRating(ownerRating, ownerReviews.length);
   // Was "Jul 22, '26" — an apostrophe year and day-level precision on a
   // "member since" fact, in en-US on a rupee marketplace. The month and year
   // are the only part anyone reads.
@@ -119,217 +154,384 @@ export default function UsersDetails() {
         month: "short",
       })
     : "—";
-  const productLabel = `${products.length} ${
-    products.length === 1 ? "product" : "products"
-  }`;
+
+  /**
+   * The profile exists to make a renter comfortable handing over a deposit, and
+   * offered three numbers to do it with. These are the rest of what the API
+   * actually knows about this person: identity verification, whether they trade
+   * as a business, and the area their listings are in. Nothing here is invented
+   * — a signal the payload does not carry is simply not drawn.
+   */
+  const listedOwner = products[0]?.owner as
+    | (NonNullable<BackendProduct["owner"]> & OwnerTrustFields)
+    | undefined;
+  const emailVerified = listedOwner?.email_verified;
+  const phoneVerified = listedOwner?.phone_verified;
+  const businessName =
+    listedOwner?.account_type && listedOwner.account_type !== "user"
+      ? listedOwner.business_name || null
+      : null;
+
+  // Where this person's listings are. A renter cares far more about "are they
+  // near me" than about any badge, and the listings already say it.
+  const primaryArea = (() => {
+    const counts = new Map<string, number>();
+    products.forEach((item) => {
+      const place = item.location?.trim();
+      if (place) counts.set(place, (counts.get(place) ?? 0) + 1);
+    });
+    const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    if (!ranked.length) return null;
+    return ranked.length === 1
+      ? ranked[0][0]
+      : `${ranked[0][0]} and ${ranked.length - 1} other ${
+          ranked.length === 2 ? "area" : "areas"
+        }`;
+  })();
+
+  const trustRows: {
+    key: string;
+    icon: React.ReactNode;
+    label: string;
+    met: boolean;
+  }[] = [];
+
+  if (typeof emailVerified === "boolean") {
+    trustRows.push({
+      key: "email",
+      icon: emailVerified ? (
+        <CheckBadgeSolid size={18} color={color.success} />
+      ) : (
+        <ShieldExclamationIcon size={18} color={color.textDim} />
+      ),
+      label: emailVerified ? "Email verified" : "Email not verified",
+      met: emailVerified,
+    });
+  }
+  if (typeof phoneVerified === "boolean") {
+    trustRows.push({
+      key: "phone",
+      icon: phoneVerified ? (
+        <CheckBadgeSolid size={18} color={color.success} />
+      ) : (
+        <ShieldExclamationIcon size={18} color={color.textDim} />
+      ),
+      label: phoneVerified ? "Phone verified" : "Phone not verified",
+      met: phoneVerified,
+    });
+  }
+  if (primaryArea) {
+    trustRows.push({
+      key: "area",
+      icon: <MapPinIcon size={18} color={color.textBody} />,
+      label: `Lists in ${primaryArea}`,
+      met: true,
+    });
+  }
+
+  const stats = [
+    {
+      key: "rating",
+      icon: (
+        <StarIcon
+          color={ratingDisplay.rated ? color.warning : color.textDim}
+          size={22}
+        />
+      ),
+      value: ratingDisplay.label,
+      // "0.0" under the word "Rating" told every unrated host they were scored
+      // zero out of five. A host with no reviews is New.
+      caption: ratingDisplay.rated ? "Rating" : "Host",
+    },
+    {
+      key: "listings",
+      icon: <Squares2X2Icon color={color.textBody} size={22} />,
+      value: `${products.length}`,
+      caption: products.length === 1 ? "Listing" : "Listings",
+    },
+    {
+      key: "joined",
+      icon: <CalendarIcon color={color.textBody} size={22} />,
+      value: joinedDateLabel,
+      caption: "Member since",
+    },
+  ];
+
+  const divider = (
+    <View
+      style={{
+        marginVertical: density.section,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: color.line,
+      }}
+    />
+  );
 
   return (
-    <Container>
-      <View className="p-5 flex flex-row items-center">
-        <View className="w-[10%]">
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back" onPress={() => navigation.goBack()}>
-            <ArrowLeftIcon
-              color={ink.text(isDark)}
-              size={24}
+    <StaticContainer width={100}>
+      {/* The back control and the title used to live inside the scroll, so both
+          were gone the moment the customer moved a finger. */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+        }}
+      >
+        <BackButton />
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text role="screenTitle" numberOfLines={1}>
+            Owner
+          </Text>
+        </View>
+        <View style={{ width: MIN_TOUCH_TARGET }} />
+      </View>
+
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        <CrossFade loading={loading} placeholder={<OwnerSkeleton />}>
+          <View style={{ paddingBottom: density.section * 3 }}>
+            <View style={{ alignItems: "center", gap: 6 }}>
+              <Avatar
+                uri={owner?.image?.image_url}
+                name={`${owner?.first_name ?? ""} ${owner?.last_name ?? ""}`.trim()}
+                size={96}
+              />
+              <Text role="sectionTitle" style={{ marginTop: 6 }}>
+                {owner?.first_name} {owner?.last_name}
+              </Text>
+              {businessName ? (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 5,
+                    backgroundColor: color.brandWash,
+                    borderRadius: radius.full,
+                    paddingHorizontal: 9,
+                    paddingVertical: 3,
+                  }}
+                >
+                  <CheckBadgeIcon size={14} color={color.brandText} />
+                  <Text fontSize="text-xs" fontWeight="font-semibold" tone="brand">
+                    {businessName}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                paddingHorizontal: SCREEN_GUTTER,
+                paddingTop: density.section,
+              }}
+            >
+              {stats.map((stat) => (
+                <View key={stat.key} style={{ flex: 1, alignItems: "center" }}>
+                  {stat.icon}
+                  <Text
+                    fontSize="text-md"
+                    fontWeight="font-bold"
+                    style={{ marginTop: 6 }}
+                  >
+                    {stat.value}
+                  </Text>
+                  <Text fontSize="text-xs" tone="body">
+                    {stat.caption}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            {trustRows.length ? (
+              <View
+                style={{
+                  marginTop: density.section,
+                  marginHorizontal: SCREEN_GUTTER,
+                  padding: density.block,
+                  gap: 10,
+                  borderRadius: radius.group,
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: color.line,
+                  backgroundColor: color.surface,
+                }}
+              >
+                {trustRows.map((row) => (
+                  <View
+                    key={row.key}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                  >
+                    {row.icon}
+                    <Text
+                      fontSize="text-sm"
+                      tone={row.met ? "hi" : "dim"}
+                      numberOfLines={1}
+                      style={{ flex: 1 }}
+                    >
+                      {row.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+
+            {!isOwner && (
+              <View style={{ paddingHorizontal: SCREEN_GUTTER, marginTop: density.section }}>
+                <Button
+                  onPress={handleStartChat}
+                  loading={messaging}
+                  disabled={messaging}
+                >
+                  {`Message ${owner?.first_name ?? "the owner"}`}
+                </Button>
+              </View>
+            )}
+
+            {divider}
+
+            <SectionHeader
+              title="Listings"
+              subtitle={`${products.length} ${
+                products.length === 1 ? "item" : "items"
+              }`}
             />
-          </TouchableOpacity>
-        </View>
-        <View className="w-[80%] h-full items-center">
-          <Text
-            fontSize="text-xl"
-            fontWeight="font-bold"
-          >
-            About the owner
-          </Text>
-        </View>
-        <View className="w-[10%]"></View>
-      </View>
-
-      <View className="items-center justify-center">
-        <Avatar
-          uri={owner?.image?.image_url}
-          name={`${owner?.first_name ?? ""} ${owner?.last_name ?? ""}`.trim()}
-          size={96}
-        />
-        <Text
-          fontSize="text-md"
-          fontWeight="font-bold"
-          className="mt-3"
-        >
-          {owner?.first_name} {owner?.last_name}
-        </Text>
-      </View>
-
-      <View className="p-5 items-center justify-evenly flex flex-row">
-        <View className="items-center w-1/3">
-          {/* "0.0" under the word "Rating" told every unrated host they were
-              scored zero out of five. A host with no reviews is New. */}
-          <StarIcon
-            color={ratingDisplay.rated ? color.warning : color.textDim}
-            size={22}
-          />
-          <Text fontSize="text-md" fontWeight="font-bold" className="mt-2">
-            {ratingDisplay.label}
-          </Text>
-          <Text fontSize="text-xs" tone="body" className="mt-1">
-            {ratingDisplay.rated ? "Rating" : "Host"}
-          </Text>
-        </View>
-        <View className="items-center w-1/3">
-          <Squares2X2Icon color={color.textBody} size={22} />
-          <Text fontSize="text-md" fontWeight="font-bold" className="mt-2">
-            {products.length}
-          </Text>
-          <Text fontSize="text-xs" tone="body" className="mt-1">
-            {products.length === 1 ? "Listing" : "Listings"}
-          </Text>
-        </View>
-        <View className="items-center w-1/3">
-          <CalendarIcon color={color.textBody} size={22} />
-          <Text fontSize="text-md" fontWeight="font-bold" className="mt-2">
-            {joinedDateLabel}
-          </Text>
-          <Text fontSize="text-xs" tone="body" className="mt-1">
-            Member since
-          </Text>
-        </View>
-      </View>
-
-      {!isOwner && (
-        <View className="px-gutter">
-          <Button onPress={handleStartChat}>
-            {`Message ${owner?.first_name ?? "the owner"}`}
-          </Button>
-        </View>
-      )}
-
-      <View
-        className={`my-5 border-b-[0.5px] ${isDark ? "border-b-line-dark" : "border-b-line-light"
-          }`}
-      ></View>
-
-      <View className="">
-        <View className="">
-          <View className="px-gutter">
-            <Text
-              fontSize="text-lg"
-              fontWeight="font-bold"
-              className="mb-5  "
-            >
-              {productLabel}
-            </Text>
-          </View>
-
-          <ScrollView
-            className=""
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          >
-            {products.slice(0, 4).map((item, index) => (
-              <View
-                key={item.name}
-                // style={{ marginRight: index === experiences.length - 1 ? 16 : 12 }}
-                style={{
-                  width: itemWidth,
-                  marginRight: itemMargin,
-                  marginLeft: index === 0 ? wp(5.5) : 0,
+            {products.length ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{
+                  paddingHorizontal: SCREEN_GUTTER,
+                  gap: RAIL_GAP,
                 }}
               >
-                <Card
-                  id={item.name}
-                  image={item.cover_image}
-                  title={item.title}
-                  location={item.location}
-                  price={item.rate.toString()}
-                />
+                {products.slice(0, 4).map((item) => (
+                  <View key={item.name} style={{ width: RAIL_CARD_WIDTH }}>
+                    <Card
+                      id={item.name}
+                      image={item.cover_image}
+                      title={item.title}
+                      location={item.location}
+                      price={item.rate.toString()}
+                      coordinates={item.coordinates}
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text
+                fontSize="text-sm"
+                tone="body"
+                style={{ paddingHorizontal: SCREEN_GUTTER }}
+              >
+                Nothing listed yet
+              </Text>
+            )}
+
+            {products.length > 2 ? (
+              <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+                <Button
+                  variant="outline"
+                  size="compact"
+                  style={{ marginTop: 12 }}
+                  onPress={() =>
+                    navigation.navigate("OwnersProducts", {
+                      products: products,
+                      name: owner?.first_name!,
+                    })
+                  }
+                >
+                  {`See all ${products.length} listings`}
+                </Button>
               </View>
-            ))}
-          </ScrollView>
-        </View>
+            ) : null}
 
-        {products.length > 2 && <View className="px-gutter">
-          <Button
-            variant="outline"
-            className="mt-4 border rounded-card"
-            onPress={() =>
-              navigation.navigate("OwnersProducts", {
-                products: products,
-                name: owner?.first_name!,
-              })
-            }
-          >
-            <Text fontWeight="font-bold">View all products</Text>
-          </Button>
-        </View>}
-      </View>
+            {divider}
 
-      {/* <View className="border-b-[1px] border-line-dark my-5"></View> */}
-
-      <View
-        className={`my-5 border-b-[0.5px] ${isDark ? "border-b-line-dark" : "border-b-line-light"
-          }`}
-      ></View>
-
-      <View className=" mb-16">
-        <View className="">
-          <View className="px-gutter">
-            <Text
-              fontSize="text-lg"
-              fontWeight="font-bold"
-              className="mb-5"
-            >
-              {owner?.first_name}'s reviews
-            </Text>
-          </View>
-          {!ownerReviews.length && (
-            <Text fontSize="text-sm"
-              className={`mt-0 ml-6 text-subtle-light ${isDark ? "text-subtle-dark" : "text-subtle-light"
-                }`}>No reviews yet</Text>
-          )}
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          >
-            {ownerReviews.map((item, index) => (
-              <View
-                key={item.id}
-                // style={{ marginRight: index === experiences.length - 1 ? 16 : 12 }}
-                // style={{
-                //   marginRight: itemMargin,
-                //   marginLeft: index === 0 ? wp(5.5) : 0,
-                // }}
-                style={{
-                  marginRight: itemMargin,
-                  marginLeft: index === 0 ? wp(5.5) : 0,
+            <SectionHeader
+              title="Reviews"
+              subtitle={
+                ownerReviews.length
+                  ? `${ownerReviews.length} ${
+                      ownerReviews.length === 1 ? "review" : "reviews"
+                    }`
+                  : undefined
+              }
+            />
+            {ownerReviews.length ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{
+                  paddingHorizontal: SCREEN_GUTTER,
+                  gap: RAIL_GAP,
                 }}
               >
-                <ReviewCard
-                  reviewText={item.comment}
-                  reviewerName={`${item.reviewer.first_name} ${item.reviewer.last_name}`}
-                  reviewDate={item.created_at}
-                  reviewerImage={item.reviewer.image}
-                />
-              </View>
-            ))}
-          </ScrollView>
-        </View>
+                {ownerReviews.map((item) => (
+                  <View key={item.id} style={{ width: 260 }}>
+                    <ReviewCard
+                      reviewText={item.comment}
+                      reviewerName={`${item.reviewer.first_name} ${item.reviewer.last_name}`}
+                      reviewDate={item.created_at}
+                      reviewerImage={item.reviewer.image}
+                    />
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text
+                fontSize="text-sm"
+                tone="body"
+                style={{ paddingHorizontal: SCREEN_GUTTER }}
+              >
+                No reviews yet
+              </Text>
+            )}
 
-        {ownerReviews.length > 1 ? <View className="px-gutter">
-          <Button
-            onPress={() =>
-              navigation.navigate("OwnersReviewScreen", {
-                owner: owner!,
-                reviews: ownerReviews,
-              })
-            }
-            variant="outline"
-            className="mt-4 border rounded-card"
-          >
-            <Text fontWeight="font-bold">View all reviews</Text>
-          </Button>
-        </View> : null}
+            {ownerReviews.length > 1 ? (
+              <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+                <Button
+                  onPress={() =>
+                    navigation.navigate("OwnersReviewScreen", {
+                      owner: owner!,
+                      reviews: ownerReviews,
+                    })
+                  }
+                  variant="outline"
+                  size="compact"
+                  style={{ marginTop: 12 }}
+                >
+                  {`See all ${ownerReviews.length} reviews`}
+                </Button>
+              </View>
+            ) : null}
+          </View>
+        </CrossFade>
+      </ScrollView>
+    </StaticContainer>
+  );
+}
+
+/** Mirrors the profile's own rhythm so the cross-fade does not move anything. */
+function OwnerSkeleton() {
+  return (
+    <View style={{ alignItems: "center", gap: 12 }}>
+      <Skeleton width={96} height={96} borderRadius={radius.full} />
+      <Skeleton width={160} height={22} borderRadius={radius.button} />
+      <View
+        style={{
+          flexDirection: "row",
+          gap: 24,
+          marginTop: density.section,
+        }}
+      >
+        {[0, 1, 2].map((index) => (
+          <Skeleton key={index} width={72} height={54} borderRadius={radius.card} />
+        ))}
       </View>
-    </Container>
+      <View style={{ width: "100%", paddingHorizontal: SCREEN_GUTTER, marginTop: density.section }}>
+        <Skeleton width="100%" height={96} borderRadius={radius.group} />
+      </View>
+    </View>
   );
 }

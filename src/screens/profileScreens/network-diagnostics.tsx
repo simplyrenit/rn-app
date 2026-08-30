@@ -1,8 +1,11 @@
 import { Button, StaticContainer, Text } from "@/components/core";
 import { DEV_MODE, GET_CATEGORIES, SERVERURL } from "@/lib/config";
 import { fetchWithRetry } from "@/lib/networkUtils";
+import { radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import React, { useState } from "react";
 import { ScrollView, View } from "react-native";
+import { TextTone } from "@/components/core/text";
 
 type TestState = "idle" | "loading" | "success" | "error";
 
@@ -43,12 +46,14 @@ export default function NetworkDiagnosticsScreen() {
     }
   };
 
-  const getStateColor = (state: TestState) => {
-    if (state === "success") return "text-green-500";
-    if (state === "error") return "text-danger";
-    if (state === "loading") return "text-yellow-500";
-    return "text-muted-light";
+  const getStateTone = (state: TestState): TextTone => {
+    if (state === "success") return "success";
+    if (state === "error") return "danger";
+    if (state === "loading") return "warning";
+    return "dim";
   };
+
+  const { color } = useTheme();
 
   return (
     <StaticContainer width={100}>
@@ -56,23 +61,39 @@ export default function NetworkDiagnosticsScreen() {
         <Text fontSize="text-2xl" fontWeight="font-bold">
           Network Diagnostics
         </Text>
-        <Text className="mt-1 text-muted-light">
+        <Text tone="dim" style={{ marginTop: 4 }}>
           Validate runtime API connectivity on this device.
         </Text>
 
-        <View className="mt-6 rounded-card border border-line-light p-4">
+        <View
+          style={{
+            marginTop: 24,
+            borderRadius: radius.card,
+            borderWidth: 1,
+            borderColor: color.line,
+            padding: 16,
+          }}
+        >
           <Text fontWeight="font-bold">Environment</Text>
-          <Text className="mt-2">APP_ENV: {DEV_MODE}</Text>
-          <Text className="mt-2">SERVERURL: {SERVERURL}</Text>
+          <Text style={{ marginTop: 8 }}>APP_ENV: {DEV_MODE}</Text>
+          <Text style={{ marginTop: 8 }}>SERVERURL: {SERVERURL}</Text>
         </View>
 
-        <View className="mt-6 rounded-card border border-line-light p-4">
+        <View
+          style={{
+            marginTop: 24,
+            borderRadius: radius.card,
+            borderWidth: 1,
+            borderColor: color.line,
+            padding: 16,
+          }}
+        >
           <Text fontWeight="font-bold">REST Check</Text>
-          <Text className="mt-2">Endpoint: {GET_CATEGORIES}</Text>
+          <Text style={{ marginTop: 8 }}>Endpoint: {GET_CATEGORIES}</Text>
           <Button className="mt-3" onPress={runRestTest}>
             Test REST
           </Button>
-          <Text className={`mt-2 ${getStateColor(restResult.state)}`}>
+          <Text tone={getStateTone(restResult.state)} style={{ marginTop: 8 }}>
             {restResult.message || "No test run yet"}
           </Text>
         </View>

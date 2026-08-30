@@ -45,6 +45,9 @@ export const PageIndicator: React.FC<PageIndicatorProps> = ({
       // An explicit width: the segments are flex children, so inside a parent
       // that only wraps its content they would collapse to nothing.
       style={{
+        // This component has a deliberate fixed width. Center it in whichever
+        // header owns it rather than leaving it pinned to that header's start.
+        alignSelf: "center",
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",

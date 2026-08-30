@@ -1,15 +1,15 @@
+import { BackButton } from "@/components/core/back-button";
 import { FavouriteButton } from "@/components/core/favourite-button";
 import { IconButton } from "@/components/core/icon-button";
 import { Text } from "@/components/core/text";
 import { radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import Carousel from "pinar";
 import React, { useState } from "react";
 import { Dimensions, Modal, Pressable, View } from "react-native";
-import { ArrowLeftIcon, PhotoIcon } from "react-native-heroicons/outline";
+import { PhotoIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Props {
@@ -18,6 +18,12 @@ interface Props {
   mode?: string;
   name?: string;
   isFavorite?: boolean;
+  /**
+   * Set false when the screen pins its own back control above the hero. A
+   * button that lives inside the scroll leaves the customer with no way back
+   * the moment the photo scrolls off.
+   */
+  showBack?: boolean;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -28,9 +34,9 @@ export function ProductImage({
   mode,
   name,
   isFavorite,
+  showBack = true,
 }: Props) {
   const { color } = useTheme();
-  const navigation = useNavigation();
   const safeAreaInsets = useSafeAreaInsets();
   const [failedImages, setFailedImages] = useState<string[]>([]);
   const [fullImage, setFullImage] = useState<string | null>(null);
@@ -133,14 +139,13 @@ export function ProductImage({
             justifyContent: "space-between",
           }}
         >
-          <IconButton
-            size={40}
-            scrim
-            onPress={() => navigation.goBack()}
-            accessibilityLabel="Go back"
-          >
-            <ArrowLeftIcon size={20} color="#FFFFFF" />
-          </IconButton>
+          {showBack ? (
+            <BackButton onPhoto size={20} />
+          ) : (
+            // Holds the favourite button on the right of the row when the
+            // screen pins its own back control over this one.
+            <View style={{ width: 40, height: 40 }} />
+          )}
 
           {name ? (
             <FavouriteButton

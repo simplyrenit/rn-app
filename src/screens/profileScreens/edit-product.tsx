@@ -1,4 +1,4 @@
-import { Text } from "@/components/core";
+import { BackButton, EmptyState, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import IconButton from "@/components/profile/post-auth/profile-icon-button";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
@@ -7,7 +7,7 @@ import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
-import { ArrowLeftIcon, TrashIcon } from "react-native-heroicons/outline";
+import { TrashIcon } from "react-native-heroicons/outline";
 import * as React from "react";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
@@ -21,7 +21,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Dimensions } from "react-native";
 
 import { useGetMyDetails } from "@/services/userQueries";
-import { ink } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, ink } from "@/lib/design-tokens";
 import { toast } from "@/lib/toast";
 
 const { height } = Dimensions.get("window");
@@ -62,32 +62,27 @@ const EditProductScreen: React.FC = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NonScrollableContainer height={height > 700 ? 105 : 100}>
         <View className="flex-row items-center justify-between px-gutter py-2 pt-4">
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-            onPress={() => router.goBack()}
-            className="flex-1 items-start w-[10%]"
-          >
-            <ArrowLeftIcon
-              size={26}
-              color={ink.text(isDarkMode)}
-            />
-          </TouchableOpacity>
-          <View className="items-center justify-center w-[80%]">
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
-            >
-              Edit product
-            </Text>
+          <View style={{ width: MIN_TOUCH_TARGET }}>
+            <BackButton onPress={() => router.goBack()} />
           </View>
-
-          <View className="w-[10%]"></View>
+          <View style={{ flex: 1, alignItems: "center" }}>
+            <Text role="screenTitle">Edit product</Text>
+          </View>
+          <View style={{ width: MIN_TOUCH_TARGET }} />
         </View>
 
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ flexGrow: 1 }}
         >
-          {product ? (
+          {/* The product fetch used to leave this screen either blank or
+              reading "Product not found" while it was still in flight — a
+              network wait with no acknowledgement reads as a dead screen. */}
+          {loading && !product ? (
+            <View className="flex-1 items-center justify-center py-20">
+              <ActivityIndicator size="large" color={ink.brandText(isDarkMode)} />
+            </View>
+          ) : product ? (
             <>
               <View
                 className={`flex-row px-gutter space-x-5 py-4 border-b-[0.2px]  ${isDarkMode ? "border-b-line-dark" : "border-b-line-light"
@@ -136,11 +131,7 @@ const EditProductScreen: React.FC = () => {
                         size={20}
                         color={ink.danger(isDarkMode)}
                       />
-                      <Text
-                        fontSize="text-sm"
-                        fontWeight="font-bold"
-                        
-                      >
+                      <Text fontSize="text-sm" fontWeight="font-bold">
                         Delete
                       </Text>
                     </TouchableOpacity>
@@ -195,11 +186,7 @@ const EditProductScreen: React.FC = () => {
               </View>
             </>
           ) : (
-            <View className="flex-1 items-center justify-center">
-              <Text tone="body" fontSize="text-lg" fontWeight="font-bold">
-                Product not found!
-              </Text>
-            </View>
+            <EmptyState variant="error" title="Product not found" />
           )}
         </ScrollView>
       </NonScrollableContainer>

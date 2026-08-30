@@ -232,7 +232,13 @@ export type RootStackParamList = {
     | undefined;
   SearchResults: {
     selectedItem: string;
-    range: { startDate: Date | undefined; endDate: Date | undefined };
+    /**
+     * ISO 8601 timestamps, never `Date`. React Navigation serialises the whole
+     * param tree for state persistence and deep links; a Date instance made it
+     * warn on every search and left a restored session unable to rebuild the
+     * query. Producers call `toISOString()`, consumers parse.
+     */
+    range: { startDate: string | undefined; endDate: string | undefined };
     address: string;
     coords: { lat: number | undefined; lng: number | undefined };
     products: BackendProduct[];

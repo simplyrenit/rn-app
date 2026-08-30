@@ -1,4 +1,4 @@
-import { Text } from "@/components/core";
+import { BackButton, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { PostProductHeader } from "@/components/post/header";
 import { useGlobalContext } from "@/context/global-context";
@@ -6,15 +6,12 @@ import { useProductContext } from "@/context/product-context";
 import { Category, RouteProps, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
 import { FlatList, Platform, TouchableOpacity, View } from "react-native";
-import {
-  ArrowLeftIcon,
-  ChevronRightIcon,
-} from "react-native-heroicons/outline";
+import { ChevronRightIcon } from "react-native-heroicons/outline";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { CategoryFilter } from "../../../components/search/category-filter";
 import { useRoute } from "@react-navigation/native";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
-import { ink } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, ink } from "@/lib/design-tokens";
 
 export default function EditCategory() {
   const { theme, categories } = useGlobalContext();
@@ -52,10 +49,7 @@ export default function EditCategory() {
           size={22}
           color={ink.body(theme === "dark")}
         />
-        <Text
-          fontSize="text-base"
-          
-        >
+        <Text fontSize="text-base">
           {categoryDisplayName(item.title)}
         </Text>
       </View>
@@ -70,28 +64,15 @@ export default function EditCategory() {
     <NonScrollableContainer>
       <View style={{ flex: 1 }}>
         <View className="flex-row items-center justify-between">
-          <View className="w-[10%]">
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-              onPress={() => navigation.goBack()}
-              className={`flex-row items-center py-4 px-6`}
-            >
-              <View className="mt-1 pr-1">
-                <ArrowLeftIcon
-                  className=""
-                  size={20}
-                  color={ink.text(theme === "dark")}
-                />
-              </View>
-            </TouchableOpacity>
+          <View style={{ width: MIN_TOUCH_TARGET }}>
+            <BackButton />
           </View>
-          <View className="w-[80%]">
-            <View className="h-24 items-center justify-center">
-              <Text fontSize="text-lg" fontWeight="font-bold">
-                Edit Category
-              </Text>
-            </View>
+          <View className="flex-1 items-center">
+            <Text role="sectionTitle" fontSize="text-lg">
+              Edit Category
+            </Text>
           </View>
-          <View className="w-[10%]"></View>
+          <View style={{ width: MIN_TOUCH_TARGET }} />
         </View>
 
         <FlatList

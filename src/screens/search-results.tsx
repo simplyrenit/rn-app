@@ -1,5 +1,13 @@
 import { pluralize } from "@/lib/pluralize";
-import { Button, Card, EmptyState, Text } from "@/components/core";
+import {
+  BackButton,
+  Button,
+  Card,
+  CrossFade,
+  EmptyState,
+  ProductCardSkeleton,
+  Text,
+} from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { CategoryFilter } from "@/components/search/category-filter";
@@ -16,19 +24,15 @@ import { StackActions, useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { styled } from "nativewind";
 import React, { useRef, useState, useEffect } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import { FlatList, Pressable, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
-import {
-  AdjustmentsVerticalIcon,
-  ArrowLeftIcon,
-  CheckIcon,
-  ChevronLeftIcon,
-} from "react-native-heroicons/outline";
+import { AdjustmentsVerticalIcon } from "react-native-heroicons/outline";
 import { useSearch } from "@/backend/search";
 import { Dimensions } from "react-native";
 import { Disclaimer } from "@/components/home/disclaimer";
-import { SCREEN_GUTTER, colors, ink } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, colors, ink, radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 
 const { height } = Dimensions.get("window");
 
@@ -75,6 +79,10 @@ function tabHasValue(tab: string, filters: any) {
 }
 
 
+/** Identity of a filter set, so "has this changed since we last counted?" is
+ *  one comparison rather than eight. */
+const keyOf = (filters: unknown) => JSON.stringify(filters);
+
 const createDefaultFilters = (category = "") => ({
   sort: "",
   category,
@@ -84,14 +92,32 @@ const createDefaultFilters = (category = "") => ({
   condition: "",
 });
 
-const formatDate = (date: Date | undefined) => {
+/** The range arrives as an ISO string, because navigation params must be
+ *  serializable — see `RootStackParamList["SearchResults"]`. */
+const formatDate = (date: string | undefined) => {
   if (!date) return "";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "";
   const options: Intl.DateTimeFormatOptions = {
     month: "short",
     day: "numeric",
   };
-  return date.toLocaleDateString("en-US", options);
+  return parsed.toLocaleDateString("en-US", options);
 };
+
+/** How long a filter edit has to settle before the count is re-counted. */
+const COUNT_DEBOUNCE_MS = 350;
+
+/** Two rows of the same grid the results use, while the first search runs. */
+function ResultsSkeleton() {
+  return (
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 8 }}>
+      {[0, 1, 2, 3].map((key) => (
+        <ProductCardSkeleton key={key} width="48.5%" />
+      ))}
+    </View>
+  );
+}
 
 export default function SearchResults() {
   const navigation = useTypedNavigation();
@@ -99,6 +125,7 @@ export default function SearchResults() {
 
   const { theme, categories } = useGlobalContext();
   const isDark = theme === "dark";
+  const { color, shadow } = useTheme();
   const bottomSheetRef = useRef<any>(null);
   const subCategoryBottomSheetRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(
@@ -128,6 +155,22 @@ export default function SearchResults() {
   const [filters, setFilters] = useState(() =>
     createDefaultFilters(category || "")
   );
+
+  const filtersKey = keyOf(filters);
+  /** The filter set the products on screen were actually fetched with. */
+  const [appliedKey, setAppliedKey] = useState(filtersKey);
+  /**
+   * A count for a filter set that has been entered but not yet applied.
+   *
+   * "Show 2 results" was the previous search's total: with a minimum price of
+   * ₹50 typed against a ₹25 item it still said 2, and applying it returned 1.
+   * The number is the entire value of that button, so it re-counts against
+   * whatever is currently in the fields — including a half-typed price.
+   */
+  const [preview, setPreview] = useState<{
+    key: string;
+    products: BackendProduct[];
+  } | null>(null);
 
   const isFilterActive = () => {
     const { sort, category, subCategory, price, ratings, condition } = filters;
@@ -177,32 +220,37 @@ export default function SearchResults() {
     }));
   };
 
+  /** One query for both the applied search and the live count on the button. */
+  const runSearch = (nextFilters: typeof filters) =>
+    searchProducts(
+      selectedItem,
+      coords.lat != null && coords.lng != null
+        ? { lat: coords.lat, lng: coords.lng }
+        : undefined,
+      {
+        start_date: range.startDate ?? undefined,
+        end_date: range.endDate ?? undefined,
+      },
+      {
+        sort: nextFilters.sort,
+        category: nextFilters.category,
+        subcategory: nextFilters.subCategory,
+        min_price: nextFilters.price.min,
+        max_price: nextFilters.price.max,
+        product_rating: nextFilters.ratings.product,
+        owner_rating: nextFilters.ratings.owner,
+        condition: nextFilters.condition,
+      }
+    );
+
   const applyFilterAndSearch = async (
     nextFilters: typeof filters = filters
   ) => {
     setIsLoading(true);
     try {
-      const filteredProducts = await searchProducts(
-        selectedItem,
-        coords.lat != null && coords.lng != null
-          ? { lat: coords.lat, lng: coords.lng }
-          : undefined,
-        {
-          start_date: range.startDate?.toISOString() ?? undefined,
-          end_date: range.endDate?.toISOString() ?? undefined,
-        },
-        {
-          sort: nextFilters.sort,
-          category: nextFilters.category,
-          subcategory: nextFilters.subCategory,
-          min_price: nextFilters.price.min,
-          max_price: nextFilters.price.max,
-          product_rating: nextFilters.ratings.product,
-          owner_rating: nextFilters.ratings.owner,
-          condition: nextFilters.condition,
-        }
-      );
+      const filteredProducts = await runSearch(nextFilters);
       setProducts(filteredProducts.filter(prod => !prod?.moderation_labels?.length));
+      setAppliedKey(keyOf(nextFilters));
     } catch (error) {
       console.error(error);
     } finally {
@@ -218,7 +266,44 @@ export default function SearchResults() {
     await applyFilterAndSearch(resetFilters);
   };
 
+  // Re-count whenever the entered filters drift from the applied ones. Debounced
+  // so a price typed digit by digit is one request, not four.
+  useEffect(() => {
+    if (filtersKey === appliedKey) return;
+    if (preview?.key === filtersKey) return;
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const counted = await runSearch(filters);
+        if (!cancelled) setPreview({ key: filtersKey, products: counted });
+      } catch {
+        // Leave the count unknown rather than showing a stale one.
+      }
+    }, COUNT_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [filtersKey, appliedKey, preview?.key]);
+
+  const pendingCount =
+    filtersKey === appliedKey
+      ? products.length
+      : preview?.key === filtersKey
+      ? preview.products.length
+      : null;
+
   const closeSheet = async () => {
+    // Commit exactly the set that was counted, so the number cannot change
+    // between reading it and tapping it.
+    if (preview?.key === filtersKey) {
+      setProducts(preview.products);
+      setAppliedKey(filtersKey);
+      bottomSheetRef.current?.dismiss();
+      return;
+    }
     await applyFilterAndSearch();
     bottomSheetRef.current?.dismiss();
   };
@@ -231,19 +316,6 @@ export default function SearchResults() {
   };
 
   const [selectedTab, setSelectedTab] = useState("Sort");
-
-  const styles = StyleSheet.create({
-    Shadow: {
-      shadowColor: isDark ? ink.line(false) : ink.dim(false),
-      shadowOffset: {
-        width: 0,
-        height: 3.5,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      elevation: 5,
-    },
-  });
 
   const [showSubCategory, setShowSubCategory] = useState(false);
 
@@ -286,20 +358,25 @@ export default function SearchResults() {
               })
             );
           }}
-          style={styles.Shadow}
-          className={`border h-[64px] w-[90%] ${isDark
-            ? "border-line-dark bg-surface-dark"
-            : "border-line-light bg-surface-light"
-            } flex flex-row items-center w-full my-2 rounded-group p-4 space-x-3`}
+          accessibilityRole="button"
+          accessibilityLabel="Edit this search"
+          accessibilityHint="Reopens the search screen with these criteria"
+          style={[
+            {
+              minHeight: 64,
+              backgroundColor: color.surface,
+              borderColor: color.line,
+              borderWidth: 1,
+              borderRadius: radius.group,
+            },
+            // Theme elevation, not a hand-rolled 0.25 shadow.
+            shadow,
+          ]}
+          className="flex flex-row items-center w-full my-2 px-3 py-2 space-x-2"
         >
-          <TouchableOpacity onPress={() => {
-            navigation.goBack()
-          }}>
-            <ArrowLeftIcon
-              color={ink.dim(isDark)}
-              size={24}
-            />
-          </TouchableOpacity>
+          {/* 44pt target inside the same 64pt row: the arrow used to be a bare
+              24pt glyph with no hit slop. */}
+          <BackButton onPress={() => navigation.goBack()} />
 
           <View style={{ flex: 1 }}>
             <Text
@@ -351,10 +428,7 @@ export default function SearchResults() {
 
         {/* Filters and Results */}
         <View className="mx-1 mt-1 mb-2 flex flex-row items-center justify-between">
-          <Text
-            fontSize="text-base"
-            fontWeight="font-bold"
-          >
+          <Text accessibilityRole="header" role="sectionTitle">
             {isLoading && products.length === 0
               ? "Searching…"
               : pluralize(products.length, "result")}
@@ -427,9 +501,9 @@ export default function SearchResults() {
           // shrink-wrap its children instead of filling the list, so the cards'
           // "48.5%" resolved against a collapsed row and came out tiny.
           // columnWrapperStyle's space-between does the real work.
-          contentContainerStyle={{ paddingBottom: hp("10%") }}
+          contentContainerStyle={{ paddingBottom: hp("10%"), flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item, index }) => (
+          renderItem={({ item }) => (
             <Card
               id={item.name}
               image={item.cover_image}
@@ -437,30 +511,33 @@ export default function SearchResults() {
               location={item.location}
               price={item.rate}
               width="48.5%"
+              // "How far away is it?" is the first question in peer-to-peer
+              // rental, and the results grid was the one place it was missing.
+              coordinates={item.coordinates}
             />
           )}
+          // Searching and finding nothing are the same slot, so the skeleton
+          // can cross-fade into whichever one arrives. The list itself stays
+          // mounted, which keeps it the thing that owns scrolling.
+          ListEmptyComponent={
+            <CrossFade loading={isLoading} placeholder={<ResultsSkeleton />}>
+              <View>
+                <EmptyState
+                  compact
+                  title="No matches"
+                  body={
+                    isFilterActive()
+                      ? "Try widening your dates, price or location."
+                      : "Try a broader word, or browse a category from Home."
+                  }
+                  actionLabel={isFilterActive() ? "Clear filters" : undefined}
+                  onAction={isFilterActive() ? clearFiltersAndSearch : undefined}
+                />
+                <Disclaimer mb={24} />
+              </View>
+            </CrossFade>
+          }
         />
-        {isLoading && products.length === 0 ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color={colors.dark.brand} />
-          </View>
-        ) : null}
-        {!isLoading && products.length === 0 ? (
-          <>
-            <EmptyState
-              compact
-              title="No matches"
-              body={
-                isFilterActive()
-                  ? "Try widening your dates, price or location."
-                  : "Try a broader word, or browse a category from Home."
-              }
-              actionLabel={isFilterActive() ? "Clear filters" : undefined}
-              onAction={isFilterActive() ? clearFiltersAndSearch : undefined}
-            />
-            <Disclaimer mb={24} />
-          </>
-        ) : null}
       </View>
 
       {/* Main Bottom Sheet */}
@@ -478,8 +555,7 @@ export default function SearchResults() {
             <View className="flex w-full " style={{ marginBottom: selectedTab === 'Category' && !showSubCategory ? 0 : 12 }}>
               <Text
                 accessibilityRole="header"
-                fontSize="text-md"
-                fontWeight="font-semibold"
+                role="sectionTitle"
                 className="text-center"
               >
                 Filters
@@ -640,9 +716,11 @@ export default function SearchResults() {
               <Button loading={isLoading} onPress={closeSheet}>
                 {isLoading
                   ? "Loading"
-                  : `Show ${products.length} ${
-                      products.length === 1 ? "result" : "results"
-                    }`}
+                  : pendingCount == null
+                  ? // Counting. A number we know is out of date is worse than
+                    // no number at all.
+                    "Show results"
+                  : `Show ${pluralize(pendingCount, "result")}`}
               </Button>
             </View>
           </View>

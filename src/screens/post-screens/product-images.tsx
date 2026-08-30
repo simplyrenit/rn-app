@@ -1,5 +1,5 @@
 
-import { Button, StaticContainer, Text } from "@/components/core";
+import { Button, IconButton, StaticContainer, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { PostProductHeader } from "@/components/post/header";
@@ -17,7 +17,6 @@ import { styled } from "nativewind";
 import React, { useRef, useState } from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 import {
-  ArrowLeftIcon,
   CameraIcon,
   ChevronRightIcon,
   PhotoIcon,
@@ -25,7 +24,7 @@ import {
   XMarkIcon,
 } from "react-native-heroicons/outline";
 import { toast } from "@/lib/toast";
-import { ink, radius } from "@/lib/design-tokens";
+import { darkColors, ink, radius } from "@/lib/design-tokens";
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -139,19 +138,15 @@ export default function ProductImages() {
           borderRadius: radius.input,
         }}
       />
-      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Close"
-        style={{
-          position: "absolute",
-          top: 5,
-          right: 5,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          borderRadius: radius.card,
-          padding: 2,
-        }}
+      <IconButton
+        accessibilityLabel="Remove image"
+        size={32}
+        scrim
+        style={{ position: "absolute", top: 5, right: 5 }}
         onPress={() => removeImage(index)}
       >
-        <XMarkIcon size={24} color="#FFFFFF" />
-      </TouchableOpacity>
+        <XMarkIcon size={20} color={darkColors.text} />
+      </IconButton>
     </View>
   );
 
@@ -179,18 +174,7 @@ export default function ProductImages() {
 
   return (
     <NonScrollableContainer>
-      <View className="px-3 flex-row items-center">
-        <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-          onPress={() => navigation.goBack()}
-          className="w-[10%]"
-        >
-          <ArrowLeftIcon size={24} color={ink.text(isDark)} />
-        </TouchableOpacity>
-        <View className="w-[80%]">
-          <PostProductHeader heading="Show us how it looks" step={4} />
-        </View>
-        <View className="w-[10%]"></View>
-      </View>
+      <PostProductHeader heading="Show us how it looks" step={4} showBackArrow />
 
       <View className="px-gutter flex-1 ">
         <View className="flex-1">
@@ -222,10 +206,7 @@ export default function ProductImages() {
             onPress={onPress}
           >
             <View className="flex-row items-center justify-between">
-              <Text tone="body"
-                fontWeight="font-bold"
-                style={{ color: "#FFFFFF" }}
-              >
+              <Text tone="onBrand" fontWeight="font-bold">
                 Next
               </Text>
               <ChevronRightIcon

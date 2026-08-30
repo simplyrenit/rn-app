@@ -1,7 +1,13 @@
 import { MIN_TOUCH_TARGET, density, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
-import React from "react";
-import { TextInput, TextInputProps, View } from "react-native";
+import React, { useState } from "react";
+import {
+  StyleProp,
+  TextInput,
+  TextInputProps,
+  View,
+  ViewStyle,
+} from "react-native";
 import { Text } from "./text";
 
 export function RequiredMark() {
@@ -29,12 +35,12 @@ export function FieldLabel({ label, required, hint }: FieldLabelProps) {
           below it. This was 16pt bold — the same weight and nearly the same
           size as a section heading — over a 16pt helper line, which is how a
           single field group came to cost 146pt of vertical space. */}
-      <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
+      <Text role="fieldLabel">
         {label}
         {required ? <RequiredMark /> : null}
       </Text>
       {hint ? (
-        <Text fontSize="text-xs" tone="body">
+        <Text fontSize="text-xs" role="fieldHint">
           {hint}
         </Text>
       ) : null}
@@ -60,6 +66,82 @@ export function FieldError({ children }: FieldErrorProps) {
   );
 }
 
+interface FieldSurfaceOptions {
+  focused?: boolean;
+  error?: boolean;
+  disabled?: boolean;
+  multiline?: boolean;
+}
+
+/**
+ * The box every field in the app is drawn in.
+ *
+ * There were three treatments before this: search grew a purple glow ring on
+ * focus (a web pattern iOS has never used), post-flow text inputs showed no
+ * focus state at all, and the selects sitting beside those inputs carried a
+ * filled background while the inputs themselves were transparent — so one
+ * screen showed two kinds of field.
+ *
+ * The settled answer is one filled box on the canvas, and on focus the border
+ * changes colour and nothing else. No halo, no shadow, and the border width is
+ * held constant so focusing a field never nudges the form.
+ */
+export function useFieldSurfaceStyle({
+  focused = false,
+  error = false,
+  disabled = false,
+  multiline = false,
+}: FieldSurfaceOptions = {}): ViewStyle {
+  const { color } = useTheme();
+
+  return {
+    minHeight: multiline ? 76 : MIN_TOUCH_TARGET,
+    paddingHorizontal: 12,
+    paddingVertical: multiline ? 10 : 8,
+    borderRadius: radius.input,
+    borderWidth: 1,
+    // Control borders use input-line, not the hairline token: a 1.13:1 border
+    // fails WCAG 1.4.11 and reads as no border at all. Error outranks focus —
+    // the field is still wrong while you are fixing it.
+    borderColor: error
+      ? color.danger
+      : focused
+      ? color.focus
+      : color.inputLine,
+    backgroundColor: color.surface,
+    opacity: disabled ? 0.5 : 1,
+  };
+}
+
+interface FieldShellProps extends FieldSurfaceOptions {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}
+
+/**
+ * The same box, for a control that is not a `TextInput` — a select, a date
+ * chooser, a category picker. Wrap the control's contents in this and it
+ * matches the text inputs beside it instead of inventing a fourth look.
+ */
+export function FieldShell({
+  children,
+  style,
+  ...options
+}: FieldShellProps) {
+  const surface = useFieldSurfaceStyle(options);
+  return (
+    <View
+      style={[
+        surface,
+        { flexDirection: "row", alignItems: "center", gap: 8 },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
+}
+
 interface TextFieldProps extends TextInputProps {
   label?: string;
   hint?: string;
@@ -81,9 +163,17 @@ export function TextField({
   error,
   style,
   multiline,
+  onFocus,
+  onBlur,
   ...props
 }: TextFieldProps) {
   const { color } = useTheme();
+  const [focused, setFocused] = useState(false);
+  const surface = useFieldSurfaceStyle({
+    focused,
+    error: Boolean(error),
+    multiline,
+  });
 
   return (
     <View style={{ marginBottom: density.fieldGap }}>
@@ -93,17 +183,17 @@ export function TextField({
       <TextInput
         placeholderTextColor={color.placeholder}
         accessibilityLabel={label}
+        onFocus={(event) => {
+          setFocused(true);
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setFocused(false);
+          onBlur?.(event);
+        }}
         style={[
+          surface,
           {
-            minHeight: multiline ? 76 : MIN_TOUCH_TARGET,
-            paddingHorizontal: 12,
-            paddingVertical: multiline ? 10 : 8,
-            borderRadius: radius.input,
-            borderWidth: 1,
-            // Control borders use input-line, not the hairline token: a 1.13:1
-            // border fails WCAG 1.4.11 and reads as no border at all.
-            borderColor: error ? color.danger : color.inputLine,
-            backgroundColor: color.surface,
             color: color.text,
             fontFamily: "PlusJakartaSans-Regular",
             fontSize: 16,

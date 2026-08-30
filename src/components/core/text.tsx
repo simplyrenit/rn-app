@@ -3,6 +3,7 @@ import {
   fontFamily,
   fontSize as fontSizeScale,
   lineHeight as lineHeightScale,
+  typeRole,
 } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { styled } from "nativewind";
@@ -42,13 +43,42 @@ export type TextTone =
   | "info"
   | "onBrand";
 
-interface CustomTextProps extends TextProps {
+export type TypeRole = keyof typeof typeRole;
+
+// `role` shadows the ARIA prop RN inherited from the web. Nothing in the app
+// uses that one, and `accessibilityRole` is the API this codebase already
+// speaks, so the name is better spent on the type role.
+interface CustomTextProps extends Omit<TextProps, "role"> {
   className?: string;
   fontSize?: TailwindFontSize;
   fontWeight?: TailwindFontWeight;
   lineHeight?: number;
   tone?: TextTone;
+  /**
+   * What this text is *for*. Resolves size, weight and a default tone in one
+   * prop, so a section heading cannot accidentally ship at screen-title volume.
+   * Prefer this over hand-picking `fontSize` + `fontWeight` + `tone`.
+   */
+  role?: TypeRole;
 }
+
+/**
+ * Presentation a role implies beyond size and weight.
+ *
+ * A grouped-list header is not just small text: iOS sets it in caps with open
+ * tracking, and that treatment is a large part of what tells the reader it
+ * labels a group rather than titling the screen.
+ */
+const roleExtras: Record<
+  TypeRole,
+  { tone: TextTone; uppercase?: boolean; letterSpacing?: number }
+> = {
+  screenTitle: { tone: "default" },
+  sectionTitle: { tone: "default" },
+  groupHeader: { tone: "dim", uppercase: true, letterSpacing: 0.6 },
+  fieldLabel: { tone: "hi" },
+  fieldHint: { tone: "body" },
+};
 
 const StyledText = styled(RNText);
 
@@ -111,9 +141,11 @@ export function Text({
   className = "",
   style,
   fontSize,
-  fontWeight = "font-normal",
+  fontWeight,
   lineHeight,
-  tone = "default",
+  tone,
+  role,
+  children,
   allowFontScaling = true,
   maxFontSizeMultiplier = MAX_FONT_SCALE,
   ...props
@@ -133,6 +165,21 @@ export function Text({
     onBrand: "#FFFFFF",
   };
 
+  // Precedence, most specific first:
+  //   style.color  >  className colour  >  tone  >  role's tone  >  "default"
+  //   fontSize     >  role's size       >  17pt base
+  //   fontWeight   >  role's weight     >  regular
+  // A role only ever supplies defaults, so a call site can adopt `role` and
+  // still override one axis of it without losing the rest.
+  const spec = role ? typeRole[role] : undefined;
+  const extras = role ? roleExtras[role] : undefined;
+
+  const resolvedTone: TextTone = tone ?? extras?.tone ?? "default";
+  const resolvedWeight: TailwindFontWeight =
+    fontWeight ?? spec?.weight ?? "font-normal";
+  const resolvedSizeClass: TailwindFontSize | undefined =
+    fontSize ?? (spec ? (`text-${spec.size}` as TailwindFontSize) : undefined);
+
   // An explicit colour on `style` still wins, so existing call sites that pass
   // one keep working; `tone` only supplies the default.
   const customColor = StyleSheet.flatten(style)?.color;
@@ -141,10 +188,13 @@ export function Text({
   // array would otherwise sit on top of. A call site that says `text-muted-dark`
   // means it, so stand down and let the class win rather than silently
   // overriding it with the tone default.
+  // A role's tone is a default too, so a call site that spelled out a colour
+  // class still wins over it.
   const classNameSetsColor = hasColorClass(className);
+  const toneIsExplicit = tone !== undefined && tone !== "default";
 
-  const token = sizeTokenMap[fontSize ?? "text-base"];
-  const resolvedSize = fontSize ? fontSizeScale[token] : undefined;
+  const token = sizeTokenMap[resolvedSizeClass ?? "text-base"];
+  const resolvedSize = resolvedSizeClass ? fontSizeScale[token] : undefined;
   const resolvedLeading = lineHeight ?? lineHeightScale[token];
 
   return (
@@ -153,16 +203,24 @@ export function Text({
       allowFontScaling={allowFontScaling}
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       style={[
-        classNameSetsColor && tone === "default"
+        classNameSetsColor && !toneIsExplicit
           ? null
-          : { color: toneColor[tone] },
+          : { color: toneColor[resolvedTone] },
+        extras?.letterSpacing ? { letterSpacing: extras.letterSpacing } : null,
         style,
         customColor ? { color: customColor } : null,
-        { fontFamily: fontWeightMap[fontWeight] },
+        { fontFamily: fontWeightMap[resolvedWeight] },
         resolvedSize ? { fontSize: resolvedSize } : null,
         { lineHeight: resolvedLeading },
       ]}
       {...props}
-    />
+    >
+      {/* Caps are a presentation choice, so they are applied here rather than
+          asked of every call site — and `textTransform` is unreliable on
+          Android, which is where this app's headers lost their treatment. */}
+      {extras?.uppercase && typeof children === "string"
+        ? children.toUpperCase()
+        : children}
+    </StyledText>
   );
 }

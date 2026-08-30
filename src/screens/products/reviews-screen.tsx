@@ -1,21 +1,30 @@
 import { pluralize } from "@/lib/pluralize";
 import useReviews from "@/backend/reviews";
 import { useProduct } from "@/backend/product";
-import { Button, Container, Text } from "@/components/core";
+import {
+  BackButton,
+  Button,
+  SectionHeader,
+  StaticContainer,
+  Text,
+} from "@/components/core";
 import { ReviewCard } from "@/components/product/review-card";
+import { Stars } from "@/components/product/stars";
 import { useGlobalContext } from "@/context/global-context";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
-import {
-  ArrowLeftIcon,
-  ChevronRightIcon,
-} from "react-native-heroicons/outline";
+import { ScrollView, View } from "react-native";
 import { StarIcon as StarFilled } from "react-native-heroicons/solid";
 
 import { toast } from "@/lib/toast";
-import { ink, radius } from "@/lib/design-tokens";
+import {
+  MIN_TOUCH_TARGET,
+  SCREEN_GUTTER,
+  density,
+  radius,
+} from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 
 interface ReviewData {
   rating: number;
@@ -30,7 +39,8 @@ export default function ReviewsScreen() {
   const [currentReviews, setCurrentReviews] = useState(reviews);
   const { getReviewStats } = useReviews();
   const { fetchReviews } = useProduct();
-  const { theme, isAuthenticated, userDetails } = useGlobalContext();
+  const { isAuthenticated, userDetails } = useGlobalContext();
+  const { color, isDark } = useTheme();
   const isOwner = userDetails?.username === owner?.username;
 
   useFocusEffect(
@@ -62,8 +72,6 @@ export default function ReviewsScreen() {
     });
   };
 
-  const isDark = theme === "dark";
-
   // Star ratings run 1-5. The API also returns a "0" bucket, which only ever
   // catches a rating of exactly 0 and rendered a meaningless "0 star" row.
   const ratingBuckets = reviewStats.filter((item) => item.rating > 0);
@@ -74,143 +82,135 @@ export default function ReviewsScreen() {
     : 0;
 
   return (
-    <Container>
-      <View className="py-4 px-gutter flex flex-row items-center">
-        <View className="w-[10%]">
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back" onPress={() => navigation.goBack()}>
-            <ArrowLeftIcon
-              color={ink.text(isDark)}
-              size={24}
-            />
-          </TouchableOpacity>
-        </View>
-        <View className="w-[80%] h-full items-center">
-          <Text
-            fontSize="text-xl"
-            fontWeight="font-bold"
-          >
-            All reviews
+    <StaticContainer width={100}>
+      {/* One heading rule across the flow: bare nouns. The product page's
+          section is called "Reviews", so this screen is too. */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+        }}
+      >
+        <BackButton />
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text role="screenTitle" numberOfLines={1}>
+            Reviews
           </Text>
         </View>
-        <View className="w-[10%]"></View>
+        <View style={{ width: MIN_TOUCH_TARGET }} />
       </View>
 
-      <ScrollView className="px-gutter mt-3">
-        <Text
-          fontSize="text-lg"
-          fontWeight="font-bold"
-          className="mt-2"
-        >
-          Product Reviews
-        </Text>
-        <View className="flex flex-row space-x-2 items-center mt-6">
-          <StarFilled
-            color={ink.text(isDark)}
-            size={20}
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        <View style={{ paddingTop: density.section }}>
+          <SectionHeader
+            title="Rating"
+            subtitle={
+              totalReviews === 0
+                ? "No reviews yet"
+                : pluralize(totalReviews, "review")
+            }
           />
-          <Text
-            fontSize="text-md"
-            fontWeight="font-bold"
-            className={`${ink.body(isDark)}`}
-          >
-            {averageRating ? averageRating.toFixed(1) : "0"}
-          </Text>
-          <Text
-            fontSize="text-md"
-            fontWeight="font-bold"
-            className={`ml-2 ${ink.body(isDark)}`}
-          >
-            ∙{" "}
-            {totalReviews === 0 ? "No reviews yet" : pluralize(totalReviews, "review")}
-          </Text>
         </View>
 
-        {ratingBuckets.map((item, index) => (
+        <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
           <View
-            key={index}
-            className="flex flex-row  items-center mt-2"
+            style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
           >
-            <Text
-              className="mr-2 w-[5%]"
-              style={{ color: ink.dim(isDark) }}
-            >
-              {item.rating}
+            <Text fontSize="text-2xl" fontWeight="font-bold">
+              {averageRating ? averageRating.toFixed(1) : "—"}
             </Text>
-            <StarFilled
-              color={ink.text(isDark)}
-              size={16}
-            />
-            <View
-              className={`flex-1 h-2 ${
-                isDark ? "bg-surface-raised-dark" : "bg-skeleton-light"
-              } ml-2`}
-              style={{ borderRadius: radius.full }}
-            >
-              <View
-                className={`h-full ${isDark ? "bg-surface-light" : "bg-canvas-dark"}`}
-                style={{
-                  width: totalReviews
-                    ? `${(item.count / totalReviews) * 100}%`
-                    : 0,
-                  borderRadius: radius.full,
-                }}
-              />
-            </View>
-            <Text
-              className="ml-2 w-8 text-right"
-              style={{ color: ink.dim(isDark) }}
-            >
-              {item.count}
-            </Text>
+            <Stars rating={averageRating} isDark={isDark} />
           </View>
-        ))}
 
-        {isOwner ? (
-          <Text
-            className="mt-5"
-            style={{ color: ink.dim(isDark) }}
-          >
-            You can’t review your own listing.
-          </Text>
-        ) : (
-          <Button
-            variant="outline"
-            className="mt-5 flex flex-row items-center justify-center border rounded-card"
-            onPress={handleWriteReview}
-          >
-            <View className="flex h-full flex-row items-center justify-between w-full">
-              <Text className="translate-y-0.5">Write a review</Text>
-              <View className="flex flex-row items-center justify-center translate-y-0.5">
-                <ChevronRightIcon
-                  color={ink.text(isDark)}
-                  size={20}
+          {ratingBuckets.map((item) => (
+            <View
+              key={item.rating}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginTop: 8,
+                gap: 8,
+              }}
+            >
+              <Text fontSize="text-sm" tone="dim" style={{ width: 12 }}>
+                {item.rating}
+              </Text>
+              {/* Gold, so the histogram reads as a rating and not as a chart. */}
+              <StarFilled color={color.warning} size={14} />
+              <View
+                style={{
+                  flex: 1,
+                  height: 8,
+                  backgroundColor: color.skeleton,
+                  borderRadius: radius.full,
+                  overflow: "hidden",
+                }}
+              >
+                <View
+                  style={{
+                    height: "100%",
+                    width: totalReviews
+                      ? `${(item.count / totalReviews) * 100}%`
+                      : 0,
+                    backgroundColor: color.brand,
+                    borderRadius: radius.full,
+                  }}
                 />
               </View>
+              <Text
+                fontSize="text-sm"
+                tone="dim"
+                style={{ width: 28, textAlign: "right" }}
+              >
+                {item.count}
+              </Text>
             </View>
-          </Button>
-        )}
+          ))}
 
-        <Text
-          fontSize="text-lg"
-          fontWeight="font-bold"
-          className="my-6"
-        >
-          {currentReviews.length === 0
-            ? "No reviews yet"
-            : pluralize(currentReviews.length, "review")}
-        </Text>
+          {isOwner ? (
+            <Text fontSize="text-sm" tone="dim" style={{ marginTop: density.section }}>
+              You can’t review your own listing.
+            </Text>
+          ) : (
+            <Button
+              variant="outline"
+              style={{ marginTop: density.section }}
+              onPress={handleWriteReview}
+            >
+              Write a review
+            </Button>
+          )}
+        </View>
 
-        {currentReviews.map((review, index) => (
-          <ReviewCard
-            size={100}
-            key={index}
-            reviewText={review.comment}
-            reviewerName={`${review.user.first_name} ${review.user.last_name}`}
-            reviewDate={review.created_at}
-            reviewerImage={review.user.image?.image_url}
+        <View style={{ paddingTop: density.section * 1.5 }}>
+          <SectionHeader
+            title="Reviews"
+            subtitle={
+              currentReviews.length === 0 ? "Nothing written yet" : undefined
+            }
           />
-        ))}
+        </View>
+
+        <View
+          style={{
+            paddingHorizontal: SCREEN_GUTTER,
+            paddingBottom: density.section * 2,
+            gap: 12,
+          }}
+        >
+          {currentReviews.map((review, index) => (
+            <ReviewCard
+              key={index}
+              reviewText={review.comment}
+              reviewerName={`${review.user.first_name} ${review.user.last_name}`}
+              reviewDate={review.created_at}
+              reviewerImage={review.user.image?.image_url}
+            />
+          ))}
+        </View>
       </ScrollView>
-    </Container>
+    </StaticContainer>
   );
 }

@@ -1,6 +1,6 @@
 import { useGlobalContext } from "@/context/global-context";
 import { SCREEN_GUTTER, colors, ink, radius, space } from "@/lib/design-tokens";
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { Button } from "./button";
@@ -19,6 +19,12 @@ interface DateRangePickerProps {
   onCancel: () => void;
 }
 
+/** Height of a day cell. The row pitch is 50pt, so the hit slop below can make
+ *  up Apple's 44pt floor without two rows fighting over the same finger. */
+const DAY_HEIGHT = 36;
+const DAY_CAP = DAY_HEIGHT / 2;
+const DAY_HIT_SLOP = { top: 4, bottom: 4, left: 4, right: 4 };
+
 const dayLabel = (date?: Date) =>
   date
     ? date.toLocaleDateString(undefined, {
@@ -26,6 +32,34 @@ const dayLabel = (date?: Date) =>
         month: "short",
       })
     : null;
+
+/** `YYYY-MM-DD` for a Date the calendar produced (they are UTC midnight). */
+const toISODate = (date: Date) => date.toISOString().split("T")[0];
+
+/**
+ * Today in the *device's* calendar. `new Date().toISOString()` is UTC, which
+ * in IST names yesterday for the first five and a half hours of every day —
+ * long enough for `minDate` to disagree with the cell the calendar itself
+ * marks as today.
+ */
+const localToday = () => {
+  const now = new Date();
+  const month = `${now.getMonth() + 1}`.padStart(2, "0");
+  const day = `${now.getDate()}`.padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
+const generateRange = (start: string, end: string): string[] => {
+  const range: string[] = [];
+  const currentDate = new Date(start);
+  const endDate = new Date(end);
+
+  while (currentDate <= endDate) {
+    range.push(toISODate(currentDate));
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  return range;
+};
 
 /**
  * The range picker.
@@ -38,6 +72,13 @@ const dayLabel = (date?: Date) =>
  * through the button: "Popular categories" from the page beneath ran across the
  * word "Confirm". There was also no Cancel, and nothing said whether you were
  * picking the start of the range or its end.
+ *
+ * The days themselves drew each selected date as its own rounded pill, so three
+ * contiguous nights read as three separate choices with gaps between them, and
+ * "today" was purple text sitting beside purple-filled endpoints — one colour
+ * carrying two meanings. Days now render through `dayComponent`: one continuous
+ * track capped at the ends, today as a neutral ring, and a hit area that clears
+ * 44pt on a cell that is tapped over and over during date entry.
  */
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
   startDate,
@@ -45,7 +86,6 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   onConfirm,
   onCancel,
 }) => {
-  const [selectedDates, setSelectedDates] = useState<any>({});
   const [tempStartDate, setTempStartDate] = useState<Date | undefined>(
     startDate
   );
@@ -53,81 +93,113 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const { theme } = useGlobalContext();
   const isDark = theme === "dark";
 
-  const onDayPress = (day: any) => {
-    let markedDates: any = {};
-    const start = tempStartDate
-      ? tempStartDate.toISOString().split("T")[0]
-      : undefined;
-    const end = day.dateString;
+  const onDayPress = (day: { dateString: string }) => {
+    const picked = new Date(day.dateString);
 
-    if (!start || tempEndDate) {
-      markedDates = {
-        [day.dateString]: {
-          startingDay: true,
-          color: colors.dark.brand,
-          textColor: "white",
-          customStyles: {
-            container: {
-              backgroundColor: colors.dark.brand,
-              borderRadius: radius.group,
-            },
-            text: { color: "white" },
-          },
-        },
-      };
-      setTempStartDate(new Date(day.dateString));
+    // A tap before the current start is a new start, not an invalid end —
+    // which is what picking an earlier date obviously means.
+    if (!tempStartDate || tempEndDate || picked < tempStartDate) {
+      setTempStartDate(picked);
       setTempEndDate(undefined);
-    } else {
-      const range = generateRange(start, end);
-      range.forEach((date, index) => {
-        if (index === 0 || index === range.length - 1) {
-          markedDates[date] = {
-            customStyles: {
-              container: {
-                backgroundColor: colors.dark.brand,
-                borderRadius: radius.group,
-              },
-              text: { color: "white" },
-            },
-            startingDay: index === 0,
-            endingDay: index === range.length - 1,
-          };
-        } else {
-          markedDates[date] = {
-            customStyles: {
-              container: {
-                backgroundColor: ink.brandWash(isDark),
-                borderRadius: radius.group,
-              },
-              text: { color: ink.brandText(isDark) },
-            },
-          };
-        }
-      });
-      setTempEndDate(new Date(end));
+      return;
     }
-    setSelectedDates(markedDates);
+
+    setTempEndDate(picked);
   };
 
-  const generateRange = (start: string, end: string): string[] => {
-    const range: string[] = [];
-    let currentDate = new Date(start);
-    const endDate = new Date(end);
+  const markedDates = useMemo(() => {
+    if (!tempStartDate) return {};
 
-    while (currentDate <= endDate) {
-      range.push(currentDate.toISOString().split("T")[0]);
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    return range;
-  };
+    const start = toISODate(tempStartDate);
+    const end = tempEndDate ? toISODate(tempEndDate) : start;
+    const dates = generateRange(start, end);
+
+    return dates.reduce<Record<string, any>>((marks, iso, index) => {
+      marks[iso] = {
+        inRange: true,
+        rangeStart: index === 0,
+        rangeEnd: index === dates.length - 1,
+      };
+      return marks;
+    }, {});
+  }, [tempStartDate, tempEndDate]);
+
+  const renderDay = useCallback(
+    ({ date, state, marking, onPress }: any) => {
+      const inRange = Boolean(marking?.inRange);
+      const isEndpoint = Boolean(marking?.rangeStart || marking?.rangeEnd);
+      const isDisabled = state === "disabled";
+      const isToday = state === "today";
+
+      const textColor = isEndpoint
+        ? "#FFFFFF"
+        : isDisabled
+        ? ink.dim(isDark)
+        : inRange
+        ? ink.brandText(isDark)
+        : ink.text(isDark);
+
+      return (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={date?.dateString}
+          accessibilityState={{
+            disabled: isDisabled,
+            selected: inRange,
+          }}
+          disabled={isDisabled}
+          // 36pt cells, tapped repeatedly through a whole date entry.
+          hitSlop={DAY_HIT_SLOP}
+          activeOpacity={0.8}
+          onPress={() => onPress?.(date)}
+          style={{
+            // Stretched to the full column so adjacent days touch: the track is
+            // one bar, capped only where the range actually starts and ends.
+            alignSelf: "stretch",
+            height: DAY_HEIGHT,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: inRange ? ink.brandWash(isDark) : "transparent",
+            borderTopLeftRadius: marking?.rangeStart ? DAY_CAP : 0,
+            borderBottomLeftRadius: marking?.rangeStart ? DAY_CAP : 0,
+            borderTopRightRadius: marking?.rangeEnd ? DAY_CAP : 0,
+            borderBottomRightRadius: marking?.rangeEnd ? DAY_CAP : 0,
+          }}
+        >
+          <View
+            style={{
+              width: DAY_HEIGHT,
+              height: DAY_HEIGHT,
+              borderRadius: DAY_CAP,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: isEndpoint ? colors.dark.brand : "transparent",
+              // Today is a ring and never a fill. A purple fill already means
+              // "range endpoint" on this same row, and one colour cannot carry
+              // two meanings.
+              borderWidth: isToday && !isEndpoint ? 1.5 : 0,
+              borderColor: ink.inputLine(isDark),
+            }}
+          >
+            <Text
+              fontSize="text-md"
+              fontWeight={isToday || isEndpoint ? "font-semibold" : "font-normal"}
+              style={{ color: textColor }}
+            >
+              {date?.day}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      );
+    },
+    [isDark]
+  );
 
   const handleConfirm = () => {
     if (tempStartDate && tempEndDate) {
       onConfirm({ startDate: tempStartDate, endDate: tempEndDate });
     }
   };
-
-  const today = new Date().toISOString().split("T")[0];
 
   // Says which end of the range the next tap will set, and echoes what has been
   // chosen so far. Previously the customer had no way to tell either.
@@ -174,23 +246,18 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           </View>
 
           <Calendar
-            markingType={"custom"}
-            markedDates={selectedDates}
+            markedDates={markedDates}
+            dayComponent={renderDay}
             onDayPress={onDayPress}
-            minDate={today}
+            minDate={localToday()}
             theme={{
               backgroundColor: ink.surface(isDark),
               calendarBackground: ink.surface(isDark),
               textSectionTitleColor: ink.body(isDark),
-              dayTextColor: ink.text(isDark),
-              todayTextColor: ink.brandText(isDark),
-              selectedDayBackgroundColor: colors.dark.brand,
-              selectedDayTextColor: "#FFFFFF",
               monthTextColor: ink.text(isDark),
               arrowColor: ink.brandText(isDark),
-              // Was the literal "gray" in both themes, which sat at 2.8:1 on the
-              // light card and read as "everything is disabled".
-              textDisabledColor: ink.dim(isDark),
+              // Day colours — including today's and the range's — belong to
+              // `dayComponent` above; nothing here can reach them.
             }}
           />
 

@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/backend/auth";
 import { useProfile } from "@/backend/profile";
-import { Button, Text } from "@/components/core";
+import { Button, IconButton, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
 import { Image } from "expo-image";
@@ -18,6 +18,7 @@ import {
   PencilSquareIcon,
   PhoneIcon,
   PhotoIcon,
+  TrashIcon,
 } from "react-native-heroicons/outline";
 import OTPTextView from "react-native-otp-textinput";
 import {
@@ -25,8 +26,12 @@ import {
   widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
 import DeleteAccountModal from "./DeleteAccountModal";
-import { ink, colors, radius, fontSize } from "@/lib/design-tokens";
+import { ink, colors, radius, fontSize, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
 import { toast } from "@/lib/toast";
+
+// A fixed-length mask so the field never leaks the real password's length —
+// seven asterisks previously meant "this password is seven characters".
+const PASSWORD_MASK = "••••••••";
 
 interface PersonalDetailsSheetProps {
   bottomSheetModalRef: React.RefObject<any>;
@@ -38,7 +43,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   isDarkMode,
 }) => {
   const { theme } = useGlobalContext();
-  const { sendOTP } = useAuth();
+  const { sendOTP, requestPhoneNumberChangeOtp, verifyPhoneNumberChange } =
+    useAuth();
   const isDark = theme === "dark";
   const [deleteAccountModal, setDeleteAccountModal] = useState(false);
 
@@ -47,7 +53,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     fullName: "Garvit Babel",
     email: "garvit.babel200@gmail.com",
     phone: "9999999999",
-    password: "*******",
+    password: PASSWORD_MASK,
   });
   const [nameId, setNameId] = useState("");
 
@@ -66,12 +72,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       fullName: details.first_name + " " + details.last_name,
       email: details.email,
       phone: details.phone,
-      password: "*******",
+      password: PASSWORD_MASK,
     });
     setUpdatedName(details.first_name + " " + details.last_name);
     setUpdatedEmail(details.email);
     setUpdatedPhone(details.phone.slice(-10));
-    setUpdatedPassword("*******");
+    setUpdatedPassword(PASSWORD_MASK);
   };
 
   useEffect(() => {
@@ -182,9 +188,32 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     }
   };
 
-  const handleSendOtpToMobile = () => {
-    if (updatedPhone) {
+  const [isPhoneOtpLoading, setIsPhoneOtpLoading] = useState(false);
+  // A failed send only fired a toast, which renders behind this bottom sheet and
+  // so was invisible — the button looked dead. Surface it inline instead.
+  const [phoneOtpError, setPhoneOtpError] = useState("");
+
+  // Firebase phone auth wants E.164; callingCode lands here without the "+".
+  const fullPhone = `+${country.callingCode}${updatedPhone}`;
+
+  const handleSendOtpToMobile = async () => {
+    if (!updatedPhone) {
+      return;
+    }
+    setPhoneOtpError("");
+    setIsIncorrect(false);
+    setIsPhoneOtpLoading(true);
+    try {
+      await requestPhoneNumberChangeOtp(fullPhone);
       setIsMobileOtpSent(true);
+    } catch (error: any) {
+      const message =
+        error?.message ||
+        "Unable to send the code right now. Please try again.";
+      setPhoneOtpError(message);
+      toast.error(message);
+    } finally {
+      setIsPhoneOtpLoading(false);
     }
   };
 
@@ -246,27 +275,29 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   //   }
   // };
   const handleSubmitOtpForMobile = async () => {
-    if (mobileOtpVerificationCode.length === 6) {
-      if (mobileOtpVerificationCode !== "111111") {
-        setIsIncorrect(true);
-        return;
-      }
+    if (mobileOtpVerificationCode.length !== 6) {
+      return;
+    }
 
-      try {
-        await updateMyDetails(nameId, {
-          phone: "+" + country.callingCode + "-" + updatedPhone,
-        });
+    setIsIncorrect(false);
+    try {
+      // Throws on a wrong/expired code. Runs on an isolated Firebase app, so it
+      // does not touch the login/chat session.
+      await verifyPhoneNumberChange(mobileOtpVerificationCode);
 
-        setDetails((prevDetails) => ({
-          ...prevDetails,
-          phone: "+" + country.callingCode + "-" + updatedPhone,
-        }));
+      const nextPhone = "+" + country.callingCode + "-" + updatedPhone;
+      await updateMyDetails(nameId, { phone: nextPhone });
 
-        editPhoneModalRef.current?.close();
-        setIsMobileOtpSent(false);
-      } catch (error) {
-        console.error("Error updating phone number:", error);
-      }
+      setDetails((prevDetails) => ({
+        ...prevDetails,
+        phone: nextPhone,
+      }));
+
+      editPhoneModalRef.current?.close();
+      setIsMobileOtpSent(false);
+    } catch (error: any) {
+      console.error("Error verifying phone number:", error);
+      setIsIncorrect(true);
     }
   };
 
@@ -385,12 +416,13 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       }} />}
       {!deleteAccountModal && <CustomBottomSheetModal
         ref={bottomSheetModalRef}
-        snapPoints={["90%"]}
+        // Five static rows and a destructive action never needed 90% of the
+        // screen — that read as ~350pt of dead space below the content. The
+        // filter sheet in search-results.tsx tunes its snap point to what it
+        // actually holds; this does the same instead of over-reserving.
+        snapPoints={["62%"]}
         isDark={isDarkMode}
       >
-        <Pressable style={{ position: 'absolute', bottom: 12, left: 0, right: 0, alignItems: 'center', padding: 32, }} onPress={() => setDeleteAccountModal(true)}>
-          <Text style={{ color: ink.danger(isDark) }}>Delete my account</Text>
-        </Pressable>
         <View className="flex items-center my-4">
           <Text
             fontSize="text-xl"
@@ -422,16 +454,15 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               </Text>
             </View>
           </View>
+          {/* One edit affordance for one action: the pencil icon used by every
+              row below, not a second "Upload" text link doing the same job. */}
           {!selectedImage && (
-            <TouchableOpacity onPress={openProfileImageSheet}>
-              <Text
-                fontSize="text-md"
-                fontWeight="font-bold"
-                className="text-brand"
-              >
-                Upload
-              </Text>
-            </TouchableOpacity>
+            <IconButton
+              accessibilityLabel="Edit profile picture"
+              onPress={openProfileImageSheet}
+            >
+              <PencilSquareIcon size={20} color={colors.dark.brand} />
+            </IconButton>
           )}
         </View>
 
@@ -452,12 +483,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Edit" onPress={openEditNameModal}>
+            <IconButton accessibilityLabel="Edit full name" onPress={openEditNameModal}>
               <PencilSquareIcon
-                size={24}
+                size={20}
                 color={colors.dark.brand}
               />
-            </TouchableOpacity>
+            </IconButton>
           </View>
 
           {/* Email Address */}
@@ -476,12 +507,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Edit" onPress={openEditEmailModal}>
+            <IconButton accessibilityLabel="Edit email address" onPress={openEditEmailModal}>
               <PencilSquareIcon
-                size={24}
+                size={20}
                 color={colors.dark.brand}
               />
-            </TouchableOpacity>
+            </IconButton>
           </View>
 
           {/* Phone Number */}
@@ -500,12 +531,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Edit" onPress={openEditPhoneModal}>
+            <IconButton accessibilityLabel="Edit phone number" onPress={openEditPhoneModal}>
               <PencilSquareIcon
-                size={24}
+                size={20}
                 color={colors.dark.brand}
               />
-            </TouchableOpacity>
+            </IconButton>
           </View>
 
           {/* Password */}
@@ -524,12 +555,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Edit" onPress={openEditPasswordModal}>
+            <IconButton accessibilityLabel="Edit password" onPress={openEditPasswordModal}>
               <PencilSquareIcon
-                size={24}
+                size={20}
                 color={colors.dark.brand}
               />
-            </TouchableOpacity>
+            </IconButton>
           </View>
         </View>
 
@@ -552,6 +583,36 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               )}
             </TouchableOpacity>
           )}
+        </View>
+
+        {/* Delete account used to float unbounded below the last row with no
+            container of its own. A top separator and a proper 44pt row read
+            as an intentional, contained destructive action instead. */}
+        <View
+          style={{
+            borderTopWidth: 1,
+            borderTopColor: ink.line(isDark),
+            marginTop: 8,
+            paddingHorizontal: wp("4%"),
+          }}
+        >
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Delete my account"
+            onPress={() => setDeleteAccountModal(true)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              minHeight: MIN_TOUCH_TARGET,
+            }}
+          >
+            <TrashIcon size={18} color={ink.danger(isDark)} />
+            <Text fontWeight="font-semibold" style={{ color: ink.danger(isDark) }}>
+              Delete my account
+            </Text>
+          </TouchableOpacity>
         </View>
       </CustomBottomSheetModal>}
 
@@ -831,7 +892,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         >
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
-            onPress={() => editPhoneModalRef.current?.close()}
+            onPress={() => {
+              setPhoneOtpError("");
+              setIsIncorrect(false);
+              setIsMobileOtpSent(false);
+              editPhoneModalRef.current?.close();
+            }}
           >
             <ArrowLeftIcon
               size={26}
@@ -853,7 +919,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           <View></View>
         </View>
 
-        <View className="p-4 space-x-4  flex-1">
+        <View className="p-4 space-y-4  flex-1">
           {!isMobileOtpSent ? (
             <>
               <View className="flex-row space-x-2 ">
@@ -916,7 +982,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   </View>
                 </View>
               </View>
-              <Button onPress={handleSendOtpToMobile}>
+              <Button onPress={handleSendOtpToMobile} loading={isPhoneOtpLoading}>
                 <Text
                   fontSize="text-sm"
                   fontWeight="font-bold"
@@ -925,6 +991,17 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   Verify
                 </Text>
               </Button>
+              {phoneOtpError ? (
+                <View className="flex mt-2 flex-row items-center space-x-2">
+                  <Text
+                    tone="danger"
+                    fontSize="text-sm"
+                    fontWeight="font-bold"
+                  >
+                    {phoneOtpError}
+                  </Text>
+                </View>
+              ) : null}
             </>
           ) : (
             <>
@@ -965,9 +1042,25 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </View>
               )}
 
+              {phoneOtpError ? (
+                <View className="flex mt-2 flex-row items-center space-x-2">
+                  <Text
+                    tone="danger"
+                    fontSize="text-sm"
+                    fontWeight="font-bold"
+                  >
+                    {phoneOtpError}
+                  </Text>
+                </View>
+              ) : null}
+
               <View className=" flex-row space-x-3 ">
                 <View className="flex-1">
-                  <Button variant="outline">
+                  <Button
+                    variant="outline"
+                    onPress={handleSendOtpToMobile}
+                    loading={isPhoneOtpLoading}
+                  >
                     <Text
                       fontSize="text-sm"
                       fontWeight="font-bold"

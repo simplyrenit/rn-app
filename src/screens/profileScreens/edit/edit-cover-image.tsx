@@ -1,5 +1,5 @@
 import { useProfile } from "@/backend/profile";
-import { Button, Text } from "@/components/core";
+import { BackButton, Button, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { ProductImage, RouteProps, useTypedNavigation } from "@/lib/types";
@@ -16,13 +16,10 @@ import { ActivityIndicator,
   View,
   Dimensions,
 } from "react-native";
-import {
-  ArrowLeftIcon,
-  InformationCircleIcon,
-} from "react-native-heroicons/outline";
+import { InformationCircleIcon } from "react-native-heroicons/outline";
 
 import { toast } from "@/lib/toast";
-import { ink } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, ink } from "@/lib/design-tokens";
 
 const StyledView = styled(View);
 const StyledTouchableOpacity = styled(TouchableOpacity);
@@ -111,20 +108,15 @@ export default function EditCoverImage() {
   return (
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
       <StyledView className="px-3 flex-row items-center py-4">
-        <StyledTouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-          onPress={() => navigation.goBack()}
-          className="w-[10%]"
-        >
-          <ArrowLeftIcon size={20} color={ink.text(isDark)} />
-        </StyledTouchableOpacity>
-        <StyledView className="w-[80%]">
-          <View className="items-center justify-center">
-            <Text fontSize="text-lg" fontWeight="font-bold">
-              Edit Cover Image
-            </Text>
-          </View>
-        </StyledView>
-        <StyledView className="w-[10%]" />
+        <View style={{ width: MIN_TOUCH_TARGET }}>
+          <BackButton />
+        </View>
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text role="sectionTitle" fontSize="text-lg">
+            Edit Cover Image
+          </Text>
+        </View>
+        <View style={{ width: MIN_TOUCH_TARGET }} />
       </StyledView>
       <ScrollView ref={scrollViewRef} className="px-3  flex-1">
         <ScrollView
@@ -203,10 +195,7 @@ export default function EditCoverImage() {
             {loading ? (
               <ActivityIndicator size="small" color="white" />
             ) : (
-              <Text tone="body"
-                fontWeight="font-bold"
-                style={{ color: "#FFFFFF" }}
-              >
+              <Text tone="onBrand" fontWeight="font-bold">
                 Update Product
               </Text>
             )}

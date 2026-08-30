@@ -1,6 +1,6 @@
 import { useChat } from "@/backend/chat";
 import { ChatCard } from "@/components/chat/chat-card";
-import { EmptyState, StaticContainer, Text } from "@/components/core";
+import { CrossFade, EmptyState, StaticContainer, Text } from "@/components/core";
 import Skeleton from "@/components/core/skeleton";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { useGlobalContext } from "@/context/global-context";
@@ -51,7 +51,7 @@ export default function Chat() {
   );
 
   const heading = (
-    <Text accessibilityRole="header" fontSize="text-2xl" fontWeight="font-bold">
+    <Text accessibilityRole="header" role="screenTitle">
       Chat
     </Text>
   );
@@ -126,29 +126,32 @@ export default function Chat() {
           </View>
         </View>
 
-        {isLoading ? (
-          <FlatList
-            data={Array.from({ length: 6 })}
-            keyExtractor={(_, index) => `skeleton-${index}`}
-            contentContainerStyle={{ paddingTop: 16 }}
-            renderItem={() => (
-              <View
-                style={{
-                  flexDirection: "row",
-                  gap: 12,
-                  paddingVertical: 12,
-                  paddingHorizontal: SCREEN_GUTTER,
-                }}
-              >
-                <Skeleton height={48} width={48} borderRadius={radius.full} />
-                <View style={{ flex: 1, gap: 8, justifyContent: "center" }}>
-                  <Skeleton width="60%" height={14} borderRadius={4} />
-                  <Skeleton width="85%" height={12} borderRadius={4} />
+        <CrossFade
+          loading={isLoading}
+          placeholder={
+            <FlatList
+              data={Array.from({ length: 6 })}
+              keyExtractor={(_, index) => `skeleton-${index}`}
+              contentContainerStyle={{ paddingTop: 16 }}
+              renderItem={() => (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    gap: 12,
+                    paddingVertical: 12,
+                    paddingHorizontal: SCREEN_GUTTER,
+                  }}
+                >
+                  <Skeleton height={48} width={48} borderRadius={radius.full} />
+                  <View style={{ flex: 1, gap: 8, justifyContent: "center" }}>
+                    <Skeleton width="60%" height={14} borderRadius={4} />
+                    <Skeleton width="85%" height={12} borderRadius={4} />
+                  </View>
                 </View>
-              </View>
-            )}
-          />
-        ) : (
+              )}
+            />
+          }
+        >
           <FlatList
             data={filtered}
             // Measured tab bar height, so the last conversation is not hidden
@@ -217,7 +220,7 @@ export default function Chat() {
             keyExtractor={(item, index) => item.id ?? `conversation-${index}`}
             showsVerticalScrollIndicator={false}
           />
-        )}
+        </CrossFade>
       </View>
     </StaticContainer>
   );

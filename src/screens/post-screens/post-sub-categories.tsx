@@ -58,10 +58,7 @@ export default function PostSubCategories() {
         ) : (
           <CategoryIcon name={item.title} size={22} color={color.textBody} />
         )}
-        <Text
-          fontSize="text-base"
-          
-        >
+        <Text fontSize="text-base">
           {categoryDisplayName(item.title)}
         </Text>
       </View>

@@ -3,7 +3,7 @@ import { useTypedNavigation } from "@/lib/types";
 import { ChatBubble } from "@/components/chat/chat-bubble";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatInput } from "@/components/chat/chat-input";
-import { Button, StaticContainer, Text } from "@/components/core";
+import { BackButton, Button, StaticContainer, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
 import {
@@ -18,7 +18,6 @@ import moment from "moment";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Image,
-  StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
@@ -27,7 +26,6 @@ import { Calendar } from "react-native-calendars";
 import { ScrollView } from "react-native-gesture-handler";
 import {
   CalendarIcon,
-  ChevronLeftIcon,
   ChevronRightIcon,
   InformationCircleIcon,
   MagnifyingGlassIcon,
@@ -39,7 +37,7 @@ import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { ChatSkeleton } from "./chat-skeleton";
 import { useChat } from "@/backend/chat";
 import useOwner from "@/backend/owner";
-import { ink, colors, radius } from "@/lib/design-tokens";
+import { ink, colors, radius, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
 import { formatDayHeading, isSameDay } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -77,7 +75,7 @@ export default function ChatDetailsScreen() {
   const bottomSheetRef = useRef<any>(null);
   const { theme, userDetails, authTokens } = useGlobalContext();
   const isDark = theme === "dark";
-  const { color } = useTheme();
+  const { color, shadow } = useTheme();
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<BackendProduct | null>(
     null
@@ -101,6 +99,9 @@ export default function ChatDetailsScreen() {
     username: "",
   });
   const [isBlocked, setIsBlocked] = useState(false);
+  // Covers the beat before the participant's name/photo resolve — the header
+  // used to show an anonymous glyph with no name and nothing masking the gap.
+  const [headerLoading, setHeaderLoading] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
   const [blockReason, setBlockReason] = useState("");
   const [blockedBy, setBlockedBy] = useState("");
@@ -129,27 +130,30 @@ export default function ChatDetailsScreen() {
     uri ? { uri } : undefined;
 
   async function fetchDetails() {
-    const details = await getParticipantDetails(conversationId);
-    const myDetails = await getMyDetails(conversationId);
-    const blocked = await isChatBlocked(conversationId);
-    const products = await getOwnerProducts(details.userId);
-    
+    try {
+      const details = await getParticipantDetails(conversationId);
+      const myDetails = await getMyDetails(conversationId);
+      const blocked = await isChatBlocked(conversationId);
+      const products = await getOwnerProducts(details.userId);
 
-    setIsBlocked(blocked.isBlocked);
-    setBlockedBy(blocked.initiatedBy);
-    setParticipantDetails({
-      profilePicture: details.profilePicture,
-      username: details.username,
-      userId: details.userId,
-    });
+      setIsBlocked(blocked.isBlocked);
+      setBlockedBy(blocked.initiatedBy);
+      setParticipantDetails({
+        profilePicture: details.profilePicture,
+        username: details.username,
+        userId: details.userId,
+      });
 
-    setOwnerProducts(products);
-    setFilteredProducts(products);
+      setOwnerProducts(products);
+      setFilteredProducts(products);
 
-    setMyDetails({
-      profilePicture: myDetails.profilePicture,
-      username: myDetails.username,
-    });
+      setMyDetails({
+        profilePicture: myDetails.profilePicture,
+        username: myDetails.username,
+      });
+    } finally {
+      setHeaderLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -393,6 +397,7 @@ export default function ChatDetailsScreen() {
           onReportPress={handleReportPress}
           id={participantDetails.userId}
           isBlocked={isBlocked}
+          loading={headerLoading}
           onViewListing={
             threadListingId
               ? () =>
@@ -637,7 +642,7 @@ export default function ChatDetailsScreen() {
                     ? "bg-surface-dark border-line-dark"
                     : "bg-surface-light border-line-light"
                 } rounded-card p-2 mt-4 w-[90%] self-center mb-3 h-12`}
-                style={styles.Shadow}
+                style={shadow}
               >
                 <View className="w-[10%] h-full items-center justify-center">
                   <MagnifyingGlassIcon
@@ -696,24 +701,19 @@ export default function ChatDetailsScreen() {
         isDark={isDark}
       >
         <View className="w-[95%] mx-auto">
-          <View className="flex-row justify-evenly items-center mb-4 mt-4">
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-              className="w-[10%]"
+          <View className="flex-row items-center mb-4 mt-4">
+            <BackButton
+              accessibilityLabel="Close"
               onPress={() => checkAvailabilityBottomSheetRef.current?.close()}
-            >
-              <ChevronLeftIcon
-                size={24}
-                color={theme === "dark" ? ink.body(true) : ink.body(false)}
-              />
-            </TouchableOpacity>
+            />
             <Text
               fontWeight="font-bold"
               fontSize="text-xl"
-              className="w-[80%] text-center"
+              className="flex-1 text-center"
             >
               Check Availability
             </Text>
-            <View className="w-[10%]"></View>
+            <View style={{ width: MIN_TOUCH_TARGET }} />
           </View>
 
           <View className="flex-row items-center justify-between mx-4 mt-3">
@@ -808,24 +808,19 @@ export default function ChatDetailsScreen() {
       >
         <KeyboardAwareScrollView>
           <View className="w-[95%] mx-auto">
-            <View className="flex-row justify-evenly items-center mb-4 mt-4">
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-                className="w-[10%]"
+            <View className="flex-row items-center mb-4 mt-4">
+              <BackButton
+                accessibilityLabel="Close"
                 onPress={() => makeOfferBottomSheetRef.current?.close()}
-              >
-                <ChevronLeftIcon
-                  size={24}
-                  color={theme === "dark" ? ink.body(true) : ink.body(false)}
-                />
-              </TouchableOpacity>
+              />
               <Text
                 fontWeight="font-bold"
                 fontSize="text-xl"
-                className="w-[80%] text-center"
+                className="flex-1 text-center"
               >
                 Make Offer
               </Text>
-              <View className="w-[10%]"></View>
+              <View style={{ width: MIN_TOUCH_TARGET }} />
             </View>
 
             <View className="flex-row items-center justify-between mx-4 mt-3">
@@ -1036,16 +1031,3 @@ export default function ChatDetailsScreen() {
     </StaticContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  Shadow: {
-    shadowColor: ink.line(false),
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-});
