@@ -2,7 +2,7 @@ diff --git a/node_modules/expo-dev-menu/ios/DevMenuViewController.swift b/node_m
 index 9600b24..ac0ecdf 100644
 --- a/node_modules/expo-dev-menu/ios/DevMenuViewController.swift
 +++ b/node_modules/expo-dev-menu/ios/DevMenuViewController.swift
-@@ -63,7 +63,11 @@ internal final class DevMenuViewController: UIViewController {
+@@ -63,6 +63,10 @@ internal final class DevMenuViewController: UIViewController {
    // MARK: private
 
    private func initialProps() -> [String: Any] {

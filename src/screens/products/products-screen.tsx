@@ -29,7 +29,7 @@ import {
   useTypedNavigation,
 } from "@/lib/types";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, radius, shadow } from "@/lib/design-tokens";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
@@ -143,9 +143,8 @@ export default function DetailsScreen() {
   /** One inset, one vertical rhythm, one hairline, for every section. */
   const sectionStyle = {
     paddingHorizontal: SCREEN_GUTTER,
-    // Was 24 top and bottom. A one-line "About the product" cost 180pt and an
-    // empty reviews section cost 200pt to say there was nothing in it.
-    paddingVertical: density.section,
+    // Bumped from density.section (20) for a calmer, more premium rhythm.
+    paddingVertical: 26,
     borderBottomWidth: 1,
     borderBottomColor: color.line,
   } as const;
@@ -488,7 +487,7 @@ export default function DetailsScreen() {
         <CrossFade loading={showSkeleton} placeholder={<ProductsSkeleton />}>
         {product ? (
         <View>
-        <View style={{ width: "100%", aspectRatio: 1, }}>
+        <View style={{ width: "100%", aspectRatio: 4 / 5, }}>
           <ProductImage
             images={product.images}
             coverImage={product.cover_image}
@@ -497,6 +496,20 @@ export default function DetailsScreen() {
             showBack={false}
           />
         </View>
+
+        {/* The info sheet overlaps the bottom of the hero photo, creating an
+            iOS-native sheet-rise effect. The negative margin pulls it up; the
+            rounded top corners and canvas background visually separate it from
+            the photograph. */}
+        <View
+          style={{
+            marginTop: -20,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            backgroundColor: color.canvas,
+            overflow: "hidden",
+          }}
+        >
 
         {isOwner && isModerated && (
           <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
@@ -509,13 +522,25 @@ export default function DetailsScreen() {
             <Text role="screenTitle" style={{ flex: 1 }}>
               {product?.title}
             </Text>
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: radius.full,
+                borderWidth: 1,
+                borderColor: color.line,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
             <IconButton
               onPress={handleShare}
               accessibilityLabel={`Share ${product?.title ?? "this listing"}`}
               accessibilityHint="Opens the system share sheet"
             >
-              <IOSShareIcon color={color.text} size={22} />
+              <IOSShareIcon color={color.text} size={20} />
             </IconButton>
+            </View>
           </View>
           <View className="flex flex-row items-center my-2">
             {product?.review_count ? (
@@ -549,6 +574,13 @@ export default function DetailsScreen() {
             the value, and these are arbitrary strings rather than a stat grid,
             so the label leads and the glyphs are gone. */}
         <View style={sectionStyle}>
+          <View
+            style={{
+              backgroundColor: color.surfaceRaised,
+              borderRadius: radius.card,
+              padding: density.block,
+            }}
+          >
           {[
             { label: "Category", value: product?.category?.title },
             {
@@ -587,6 +619,7 @@ export default function DetailsScreen() {
                 </Text>
               </View>
             ))}
+          </View>
         </View>
 
         {/* Bare-noun headings, the same rule on every screen in this flow. */}
@@ -767,6 +800,8 @@ export default function DetailsScreen() {
           </View>
         )}
         </View>
+        {/* end sheet-overlap wrapper */}
+        </View>
         ) : null}
         </CrossFade>
       </Animated.ScrollView>
@@ -791,6 +826,7 @@ export default function DetailsScreen() {
           borderTopWidth: 1,
           borderTopColor: color.line,
           backgroundColor: color.surface,
+          ...(isDark ? shadow.dark : shadow.light),
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
