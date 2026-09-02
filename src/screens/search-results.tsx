@@ -423,6 +423,42 @@ export default function SearchResults() {
               </Text>
             </View>
           </View>
+
+          {/* The design carries the filter control inside the search pill, not
+              down on the results row: 36pt visually at x=294 of a 342pt bar.
+              Rendered at 36 with hit slop back out to the 44pt floor. */}
+          <TouchableOpacity
+            onPress={handleOpenBottomSheet}
+            accessibilityRole="button"
+            accessibilityLabel="Filters"
+            accessibilityHint="Refine these results by price, dates and location"
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: radius.full,
+              alignItems: "center",
+              justifyContent: "center",
+              borderWidth: 1,
+              borderColor: color.line,
+              backgroundColor: color.surfaceRaised,
+            }}
+          >
+            <AdjustmentsVerticalIcon color={color.textDim} size={20} />
+            {isFilterActive() && (
+              <View
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  width: 8,
+                  height: 8,
+                  borderRadius: radius.full,
+                  backgroundColor: color.brand,
+                }}
+              />
+            )}
+          </TouchableOpacity>
         </Pressable>
 
         {/* Filters and Results */}
@@ -447,34 +483,6 @@ export default function SearchResults() {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
-              onPress={handleOpenBottomSheet}
-              accessibilityRole="button"
-              accessibilityLabel="Filters"
-              accessibilityHint="Refine these results by price, dates and location"
-              className={`relative rounded-full p-2 border ${isDark
-                ? "border-line-dark bg-surface-dark"
-                : "border-line-light bg-surface-light"
-                }`}
-            >
-              <AdjustmentsVerticalIcon
-                color={ink.dim(isDark)}
-                size={20}
-              />
-              {isFilterActive() && (
-                <View
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    right: 0,
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: colors.dark.brand,
-                  }}
-                />
-              )}
-            </TouchableOpacity>
           </View>
         </View>
 
