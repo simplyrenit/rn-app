@@ -99,7 +99,7 @@ export function MyProductCard({
               style={{
                 ...imageStyle,
                 position: "absolute",
-                backgroundColor: "rgba(10,10,15,0.72)",
+                backgroundColor: color.photoScrim,
                 justifyContent: "center",
                 alignItems: "center",
                 gap: 6,
@@ -125,7 +125,7 @@ export function MyProductCard({
                 position: "absolute",
                 top: 6,
                 left: 6,
-                backgroundColor: "rgba(10,10,15,0.72)",
+                backgroundColor: color.photoScrim,
                 paddingHorizontal: 7,
                 paddingVertical: 3,
                 borderRadius: radius.full,

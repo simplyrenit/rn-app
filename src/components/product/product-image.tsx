@@ -70,7 +70,7 @@ export function ProductImage({
                 marginHorizontal: 3,
                 backgroundColor: "rgba(255,255,255,0.45)",
                 borderWidth: 0.5,
-                borderColor: "rgba(10,10,15,0.35)",
+                borderColor: color.photoScrimSoft,
               }}
             />
           )}
@@ -83,7 +83,7 @@ export function ProductImage({
                 marginHorizontal: 3,
                 backgroundColor: color.onPhoto,
                 borderWidth: 0.5,
-                borderColor: "rgba(10,10,15,0.35)",
+                borderColor: color.photoScrimSoft,
               }}
             />
           )}
@@ -170,7 +170,7 @@ export function ProductImage({
             paddingHorizontal: 9,
             paddingVertical: 4,
             borderRadius: radius.full,
-            backgroundColor: "rgba(10,10,15,0.62)",
+            backgroundColor: color.photoScrim,
           }}
         >
           <Text fontSize="text-xs" fontWeight="font-medium" style={{ color: color.onPhoto }}>

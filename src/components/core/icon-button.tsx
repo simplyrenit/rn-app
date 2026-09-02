@@ -46,7 +46,7 @@ export function IconButton({
   style,
   hitSlopExtra = 0,
 }: Props) {
-  const { isDark } = useTheme();
+  const { isDark, color } = useTheme();
   const { pressStyle, onPressIn, onPressOut } = usePressFeedback({ disabled });
   const shortfall = Math.max(0, (MIN_TOUCH_TARGET - size) / 2) + hitSlopExtra;
 
@@ -88,9 +88,9 @@ export function IconButton({
           ? {
               // Light enough to read as a control chip rather than a grey disc,
               // dark enough that a white glyph survives a white product photo.
-              backgroundColor: "rgba(22,21,26,0.32)",
+              backgroundColor: color.photoScrimSoft,
               borderWidth: 0.5,
-              borderColor: "rgba(255,255,255,0.35)",
+              borderColor: "rgba(255,255,255,0.35)", // hairline on the scrim, not a palette tone
             }
           : null,
         style,

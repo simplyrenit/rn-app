@@ -62,6 +62,17 @@ export interface ColorTokens {
   onPhoto: string;
   /** Modal scrim behind sheets and dialogs. */
   scrim: string;
+  /**
+   * The canvas at partial opacity, painted behind blurred chrome so a pinned
+   * header still reads as the screen's own surface rather than as frosted glass
+   * over nothing. Must track `canvas` — four files used to hardcode the old
+   * canvas here and went stale the moment the palette moved.
+   */
+  canvasVeil: string;
+  /** A dark wash over photography — chips and badges laid on a product shot. */
+  photoScrim: string;
+  /** As `photoScrim`, at the weight a floating icon button needs. */
+  photoScrimSoft: string;
   /** Neutral fill for skeletons, image placeholders, avatar rings. */
   skeleton: string;
   skeletonHighlight: string;
@@ -95,6 +106,9 @@ export const darkColors: ColorTokens = {
   onBrand: "#FFFFFF",
   onPhoto: "#FFFFFF",
   scrim: "rgba(0,0,0,0.60)",
+  canvasVeil: "rgba(15,15,15,0.55)",
+  photoScrim: "rgba(0,0,0,0.62)",
+  photoScrimSoft: "rgba(0,0,0,0.32)",
   skeleton: "#1A1A1A",
   skeletonHighlight: "#292929",
   success: "#6FCF97",
@@ -126,6 +140,9 @@ export const lightColors: ColorTokens = {
   onBrand: "#FFFFFF",
   onPhoto: "#FFFFFF",
   scrim: "rgba(0,0,0,0.45)",
+  canvasVeil: "rgba(255,255,255,0.60)",
+  photoScrim: "rgba(0,0,0,0.62)",
+  photoScrimSoft: "rgba(0,0,0,0.32)",
   skeleton: "#F5F5F5",
   skeletonHighlight: "#E6E6E6",
   success: "#1E7A47",
@@ -350,6 +367,11 @@ export const ink = {
     isDark ? darkColors.surfaceRaised : lightColors.surfaceRaised,
   line: (isDark?: boolean) => (isDark ? darkColors.line : lightColors.line),
   scrim: (isDark?: boolean) => (isDark ? darkColors.scrim : lightColors.scrim),
+  canvasVeil: (isDark?: boolean) =>
+    isDark ? darkColors.canvasVeil : lightColors.canvasVeil,
+  /** Over photography. Theme-invariant — takes no argument by design. */
+  photoScrim: () => darkColors.photoScrim,
+  photoScrimSoft: () => darkColors.photoScrimSoft,
   /** On the brand fill. Theme-invariant — takes no argument by design. */
   onBrand: () => lightColors.onBrand,
   /** On a photograph or scrim. Theme-invariant — takes no argument by design. */

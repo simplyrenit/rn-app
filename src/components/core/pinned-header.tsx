@@ -61,7 +61,7 @@ export function PinnedHeader({ children, gutter = true, style }: Props) {
           tint={isDark ? "dark" : "light"}
           // The blur samples what is behind it; without a faint tint on top the
           // canvas and the header read as the same plane in dark mode.
-          style={{ backgroundColor: isDark ? "rgba(10,10,15,0.55)" : "rgba(251,250,249,0.6)" }}
+          style={{ backgroundColor: color.canvasVeil }}
         >
           {body}
         </BlurView>
