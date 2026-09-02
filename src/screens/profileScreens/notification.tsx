@@ -7,9 +7,8 @@ import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
 import { ScrollView, View } from "react-native";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { useEffect } from "react";
-import { ink, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { ink, MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
 import { RefreshControl } from "react-native";
 import { Avatar, EmptyState } from "@/components/core";
 import { BellIcon } from "react-native-heroicons/outline";
@@ -53,7 +52,7 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
         className={`flex-row items-center px-gutter border-b-[1px] ${
           isDarkMode ? "border-line-dark" : "border-line-light"
         }`}
-        style={{ paddingVertical: wp("5%") }}
+        style={{ paddingVertical: SCREEN_GUTTER }}
       >
         <BackButton />
         <View className="flex-1 items-center justify-center">

@@ -415,7 +415,7 @@ export default function ProductAvailability() {
               <View className="mt-[0.5px]">
                 <ChevronRightIcon
                   size={16}
-                  color={ "#FFFFFF"}
+                  color={ink.onBrand()}
                 />
               </View>
             </View>

@@ -41,7 +41,8 @@ export type TextTone =
   | "success"
   | "warning"
   | "info"
-  | "onBrand";
+  | "onBrand"
+  | "onPhoto";
 
 export type TypeRole = keyof typeof typeRole;
 
@@ -162,7 +163,8 @@ export function Text({
     success: color.success,
     warning: color.warning,
     info: color.info,
-    onBrand: "#FFFFFF",
+    onBrand: color.onBrand,
+    onPhoto: color.onPhoto,
   };
 
   // Precedence, most specific first:

@@ -7,7 +7,6 @@ import { useRef, useState } from "react";
 import { TextInput, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 
 import { toast } from "@/lib/toast";
 import { ink, colors, MIN_TOUCH_TARGET } from "@/lib/design-tokens";

@@ -9,12 +9,12 @@ import { useProductContext } from "@/context/product-context";
 import { Category, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
 import { useState } from "react";
-import { FlatList, Platform, TouchableOpacity, View } from "react-native";
+import { FlatList, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import {
   ChevronRightIcon,
   CubeIcon,
 } from "react-native-heroicons/outline";
-import { heightPercentageToDP as hp, widthPercentageToDP as wp } from "react-native-responsive-screen";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgUri } from "react-native-svg";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import { useTheme } from "@/lib/theme";
@@ -27,6 +27,8 @@ export default function Post() {
   const navigation = useTypedNavigation();
   const isDarkMode = theme === "dark";
   const { color } = useTheme();
+  const { width: winW } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [requestReviewError, setRequestReviewError] = useState<string | null>(null);
   const merchantNeedsApproval =
     userDetails?.account_type === "merchant" &&
@@ -151,14 +153,14 @@ export default function Post() {
                   <View className="mt-2 space-y-2 align-center" style={{ alignItems: 'center' }}>
                     <Skeleton
                       style={{
-                        width: wp(30),
+                        width: winW * 0.30,
                         borderRadius: radius.button,
                         marginTop: 5,
                         height: 10,
                       }}
                     />
                     <Skeleton style={{
-                      width: wp(5),
+                      width: winW * 0.05,
                       borderRadius: radius.button,
                       height: 4,
                     }} />
@@ -178,7 +180,7 @@ export default function Post() {
                   // Clear the floating bottom tab bar so the last category is
                   // fully visible and scrollable. iOS only: Android's tab bar
                   // does not overlap the list.
-                  paddingBottom: Platform.OS === "ios" ? hp("7") : 0,
+                  paddingBottom: insets.bottom,
                 }}
                 showsVerticalScrollIndicator={false}
               /> : <FlatList

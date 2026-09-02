@@ -35,7 +35,7 @@ export function Disclaimer({ mb }: { mb?: number }) {
             backgroundColor: color.brand,
           }}
         >
-          <RocketLaunchIcon size={20} color="#FFFFFF" />
+          <RocketLaunchIcon size={20} color={color.onBrand} />
         </View>
 
         <View style={{ flex: 1, gap: 4 }}>

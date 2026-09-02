@@ -16,7 +16,6 @@ import {
   MapPinIcon,
 } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import DateRangePicker from "@/components/core/date-range-picker";
 import { Dimensions } from "react-native";
 import { useAuthContext } from "@/context/auth-context";
@@ -25,7 +24,8 @@ import moment from "moment-timezone";
 import { useProfile } from "@/backend/profile";
 
 import { toast } from "@/lib/toast";
-import { ink, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { ink, MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 
 const { height } = Dimensions.get("window");
 interface UnavailabilityProps {}
@@ -42,6 +42,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
   const { theme } = useGlobalContext();
   const { user } = useAuthContext();
   const isDarkMode = theme === "dark";
+  const { color } = useTheme();
   const [open, setOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [address, setAddress] = useState("");
@@ -164,7 +165,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
     <NonScrollableContainer height={height > 700 ? 105 : 100}>
       <View
         className="flex-row items-center px-gutter"
-        style={{ paddingVertical: wp("5%") }}
+        style={{ paddingVertical: SCREEN_GUTTER }}
       >
         <BackButton />
         <View className="flex-1 items-center justify-center">
@@ -429,7 +430,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
                     !address ||
                     !contactDetail ||
                     !selectedLocation
-                      ? "#FFFFFF"
+                      ? color.onBrand
                       : ink.dim(false)
                   }
                 />

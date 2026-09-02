@@ -369,7 +369,7 @@ export function ChatInput({
       >
         <PaperAirplaneIcon
           size={20}
-          color={!isBlocked && message.trim() ? "#FFFFFF" : color.textDim}
+          color={!isBlocked && message.trim() ? color.onBrand : color.textDim}
         />
       </IconButton>
 
@@ -517,12 +517,12 @@ export function ChatInput({
               >
                 {isUploading ? (
                   <ActivityIndicator
-                    color="#FFFFFF"
+                    color={color.onBrand}
                     style={{ marginRight: 8 }}
                   />
                 ) : null}
                 <Text
-                  style={{ color: "#FFFFFF", fontSize: 16, fontFamily: fontFamily.semibold }}
+                  style={{ color: color.onBrand, fontSize: 16, fontFamily: fontFamily.semibold }}
                 >
                   {isUploading ? "Sending..." : "Send"}
                 </Text>

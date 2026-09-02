@@ -6,16 +6,18 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { useRef, useState } from "react";
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { TrashIcon } from "react-native-heroicons/outline";
 import * as React from "react";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
 import { useProfile } from "@/backend/profile";
 import { useFocusEffect } from "@react-navigation/native";
 import { Dimensions } from "react-native";
@@ -34,6 +36,7 @@ const EditProductScreen: React.FC = () => {
   const isDarkMode = theme === "dark";
   const router = useTypedNavigation();
   const { id } = route.params;
+  const { width: winW } = useWindowDimensions();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const openBottomSheet = () => {
     bottomSheetRef.current?.present();
@@ -92,7 +95,7 @@ const EditProductScreen: React.FC = () => {
                   <Image
                     className="rounded-group"
                     source={{ uri: product.cover_image }}
-                    style={{ width: wp("40%"), height: wp("40%") }}
+                    style={{ width: winW * 0.4, height: winW * 0.4 }}
                   />
                 </View>
 
@@ -211,7 +214,7 @@ const EditProductScreen: React.FC = () => {
                 <Image
                   className="rounded-group"
                   source={{ uri: product.cover_image }}
-                  style={{ width: wp("20%"), height: wp("20%") }}
+                  style={{ width: winW * 0.2, height: winW * 0.2 }}
                 />
               </View>
 

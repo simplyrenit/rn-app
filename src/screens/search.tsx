@@ -37,7 +37,6 @@ import {
   XMarkIcon,
 } from "react-native-heroicons/outline";
 import { CalendarIcon } from "react-native-heroicons/solid";
-import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import {
   MIN_TOUCH_TARGET,
   SCREEN_GUTTER,
@@ -45,6 +44,7 @@ import {
   radius,
   ink,
   colors,
+  space,
 } from "@/lib/design-tokens";
 import { CATEGORIES } from "@/lib/categories";
 import { categoryDisplayName, CategoryIcon } from "@/lib/category-icons";
@@ -803,11 +803,11 @@ export default function SearchScreen() {
 
             <View style={{ minWidth: 150 }}>
               <Button onPress={onPress}>
-                <MagnifyingGlassIcon color="#FFFFFF" size={18} />
+                <MagnifyingGlassIcon color={color.onBrand} size={18} />
                 <Text
                   fontSize="text-md"
                   fontWeight="font-bold"
-                  style={{ color: "#FFFFFF", marginLeft: 8 }}
+                  style={{ color: color.onBrand, marginLeft: 8 }}
                 >
                   {hasAnyCriteria ? "Search" : "Browse all"}
                 </Text>
@@ -851,7 +851,7 @@ export default function SearchScreen() {
                     <MagnifyingGlassIcon
                       color={ink.body(isDark)}
                       size={24}
-                      style={{ marginTop: hp(1.1) }}
+                      style={{ marginTop: space.sm }}
                     />
                     {hasGooglePlacesApiKey ? (
                       <GooglePlacesAutocomplete

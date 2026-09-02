@@ -81,7 +81,7 @@ export function ProductImage({
                 height: 7,
                 borderRadius: radius.full,
                 marginHorizontal: 3,
-                backgroundColor: "#FFFFFF",
+                backgroundColor: color.onPhoto,
                 borderWidth: 0.5,
                 borderColor: "rgba(10,10,15,0.35)",
               }}
@@ -173,7 +173,7 @@ export function ProductImage({
             backgroundColor: "rgba(10,10,15,0.62)",
           }}
         >
-          <Text fontSize="text-xs" fontWeight="font-medium" style={{ color: "#FFFFFF" }}>
+          <Text fontSize="text-xs" fontWeight="font-medium" style={{ color: color.onPhoto }}>
             {photoIndex + 1} / {galleryImages.length}
           </Text>
         </View>
@@ -218,7 +218,7 @@ export function ProductImage({
                 onPress={() => setFullImage(null)}
                 accessibilityLabel="Close image"
               >
-                <MaterialIcons name="close" size={22} color="#FFFFFF" />
+                <MaterialIcons name="close" size={22} color={color.onPhoto} />
               </IconButton>
             </View>
           </View>

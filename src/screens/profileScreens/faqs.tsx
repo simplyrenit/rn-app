@@ -6,11 +6,7 @@ import { useTypedNavigation } from "@/lib/types";
 import React from "react";
 import { Dimensions, ScrollView, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/outline";
-import { ink, colors, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
+import { ink, colors, MIN_TOUCH_TARGET, density } from "@/lib/design-tokens";
 
 const { height } = Dimensions.get("window");
 
@@ -101,7 +97,7 @@ Review your listing carefully, then publish it to make it live.`,
 
       <ScrollView
         className="px-gutter flex-1 pt-2"
-        contentContainerStyle={{ paddingBottom: hp("5%") }}
+        contentContainerStyle={{ paddingBottom: density.listFooterCompact }}
       >
         <View>
           <Text

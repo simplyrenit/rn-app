@@ -13,7 +13,6 @@ import {
   Platform,
 } from "react-native";
 import { ArrowLeftIcon } from "react-native-heroicons/outline";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ink } from "@/lib/design-tokens";
 

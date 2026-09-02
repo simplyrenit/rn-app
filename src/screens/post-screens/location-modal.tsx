@@ -19,12 +19,9 @@ import {
   Linking,
   Platform,
   TouchableOpacity,
+  useWindowDimensions,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
 import { BackButton, Button, StaticContainer, Text } from "@/components/core";
@@ -54,7 +51,7 @@ const StyledImage = styled(Image);
 import { Modal, View, StyleSheet } from "react-native";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useRoute } from "@react-navigation/native";
-import { ink, colors, radius } from "@/lib/design-tokens";
+import { ink, colors, radius, SCREEN_GUTTER, space, density } from "@/lib/design-tokens";
 
 const LOCATION_LOG_PREFIX = "[post/location-modal]";
 const LOCATION_FETCH_TIMEOUT_MS = 12000;
@@ -66,6 +63,7 @@ const DEFAULT_MAP_REGION = {
 };
 
 const LocationModal = ({}) => {
+  const { height: winH } = useWindowDimensions();
   const route = useRoute<RouteProps<"LocationModal">>();
   const { theme, setAuthTokens } = useGlobalContext();
   const { signUpUser, loading: signUpLoading } = useAuth();
@@ -659,8 +657,8 @@ const LocationModal = ({}) => {
 
                 <View
                   style={{
-                    paddingVertical: wp("5%"),
-                    paddingHorizontal: wp("5%"),
+                    paddingVertical: SCREEN_GUTTER,
+                    paddingHorizontal: SCREEN_GUTTER,
                   }}
                   className="rounded-t-3xl"
                 ></View>
@@ -680,8 +678,8 @@ const LocationModal = ({}) => {
                   >
                     <View
                       style={{
-                        paddingVertical: wp("5%"),
-                        paddingHorizontal: wp("5%"),
+                        paddingVertical: SCREEN_GUTTER,
+                        paddingHorizontal: SCREEN_GUTTER,
                         flex: 1,
                       }}
                     >
@@ -714,7 +712,7 @@ const LocationModal = ({}) => {
                           <MagnifyingGlassIcon
                             color={ink.body(isDarkMode)}
                             size={24}
-                            style={{ marginTop: hp(1.1) }}
+                            style={{ marginTop: space.sm }}
                           />
                           <GooglePlacesAutocomplete
                             ref={googlePlacesRef}
@@ -735,7 +733,7 @@ const LocationModal = ({}) => {
                                 fontSize: 16,
                                 alignContent: "center",
                               },
-                              listView: { maxHeight: hp(24) },
+                              listView: { maxHeight: winH * 0.24 },
                               row: {
                                 backgroundColor: ink.surface(isDarkMode),
                               },
@@ -813,7 +811,7 @@ const LocationModal = ({}) => {
                             {signUpLoading || isFetchingLocation ? (
                               <ActivityIndicator
                                 size="small"
-                                color="#FFFFFF"
+                                color={ink.onBrand()}
                               />
                             ) : (
                               "Confirm location"
@@ -869,7 +867,7 @@ const LocationModal = ({}) => {
                           data={nearbyPlaces}
                           keyExtractor={(item) => item.place_id}
                           style={{ maxHeight: 450 }}
-                          contentContainerStyle={{ paddingBottom: wp("5%") }}
+                          contentContainerStyle={{ paddingBottom: density.listFooterCompact }}
                           keyboardShouldPersistTaps="handled"
                           renderItem={({ item }) => (
                             <TouchableOpacity

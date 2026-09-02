@@ -112,7 +112,7 @@ export function Button({
   const labelColor = isBlocked
     ? color.textDim
     : variant === "primary" || variant === "warning"
-    ? "#FFFFFF"
+    ? color.onBrand
     : color.text;
 
   const handlePress = (event: GestureResponderEvent) => {
@@ -183,5 +183,7 @@ export function Button({
 /** Colour a caller should use for content it renders inside a Button. */
 export function useButtonLabelColor(variant: ButtonVariant = "primary") {
   const { color } = useTheme();
-  return variant === "primary" || variant === "warning" ? "#FFFFFF" : color.text;
+  return variant === "primary" || variant === "warning"
+    ? color.onBrand
+    : color.text;
 }

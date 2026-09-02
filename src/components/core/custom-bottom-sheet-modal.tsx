@@ -98,8 +98,8 @@ const CustomBottomSheetModal = forwardRef<
         // square background still rendered square top corners.
         backgroundStyle={{
           backgroundColor: color.surface,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
+          borderTopLeftRadius: radius.sheet,
+          borderTopRightRadius: radius.sheet,
         }}
         handleIndicatorStyle={{
           backgroundColor: color.inputLine,
@@ -116,8 +116,8 @@ const CustomBottomSheetModal = forwardRef<
         handleStyle={{
           paddingTop: 10,
           paddingBottom: 6,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
+          borderTopLeftRadius: radius.sheet,
+          borderTopRightRadius: radius.sheet,
         }}
       >
         {scrollView ? (

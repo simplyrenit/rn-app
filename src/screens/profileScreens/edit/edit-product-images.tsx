@@ -16,7 +16,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { styled } from "nativewind";
 import React, { useRef, useState } from "react";
-import { FlatList, TouchableOpacity, View } from "react-native";
+import { FlatList, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import {
   CameraIcon,
   ChevronRightIcon,
@@ -26,10 +26,6 @@ import {
 } from "react-native-heroicons/outline";
 import { toast } from "@/lib/toast";
 import { MIN_TOUCH_TARGET, darkColors, ink, radius } from "@/lib/design-tokens";
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
 
 const StyledBottomView = styled(BottomSheetView);
 const MAX_IMAGES = 5;
@@ -42,6 +38,7 @@ export default function EditProductImages() {
 
   const { theme } = useGlobalContext();
   const isDark = theme === "dark";
+  const { width: winW, height: winH } = useWindowDimensions();
 
   // const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState<ProductImage[]>(
@@ -129,7 +126,7 @@ export default function EditProductImages() {
   }) => (
     <View
       style={{
-        width: wp("41.5%") > 163 ? 163 : wp("41.5%"),
+        width: Math.min(winW * 0.415, 163),
         marginBottom: 24,
         position: "relative",
       }}
@@ -138,7 +135,7 @@ export default function EditProductImages() {
         source={{ uri: item.image }}
         style={{
           width: "100%",
-          height: hp(20),
+          height: winH * 0.20,
           borderRadius: radius.input,
         }}
       />
@@ -164,8 +161,8 @@ export default function EditProductImages() {
         borderStyle: "dashed",
         borderColor: ink.line(false),
         borderWidth: 1,
-        width: isFullWidth ? "100%" : wp("41.5%") > 163 ? 163 : wp("41.5%"),
-        height: hp(20),
+        width: isFullWidth ? "100%" : Math.min(winW * 0.415, 163),
+        height: winH * 0.20,
         borderRadius: radius.input,
         alignItems: "center",
         justifyContent: "center",
@@ -225,7 +222,7 @@ export default function EditProductImages() {
               </Text>
               <ChevronRightIcon
                 size={16}
-                color={allFieldsFilled ? "#FFFFFF" : ink.dim(false)}
+                color={allFieldsFilled ? ink.onBrand() : ink.dim(false)}
               />
             </View>
           </Button>
@@ -246,7 +243,7 @@ export default function EditProductImages() {
                 borderStyle: "dashed",
                 borderColor: ink.line(false),
                 borderWidth: 1,
-                height: hp("20%"),
+                height: winH * 0.20,
                 borderRadius: radius.input,
                 alignItems: "center",
                 justifyContent: "center",
@@ -267,7 +264,7 @@ export default function EditProductImages() {
                 borderStyle: "dashed",
                 borderColor: ink.line(false),
                 borderWidth: 1,
-                height: hp("20%"),
+                height: winH * 0.20,
                 borderRadius: radius.input,
                 alignItems: "center",
                 justifyContent: "center",

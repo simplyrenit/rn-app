@@ -43,8 +43,8 @@ const CustomBottomSheet = forwardRef(
         )}
         backgroundStyle={{
           backgroundColor: color.surface,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
+          borderTopLeftRadius: radius.sheet,
+          borderTopRightRadius: radius.sheet,
         }}
         handleIndicatorStyle={{
           backgroundColor: color.inputLine,
@@ -55,8 +55,8 @@ const CustomBottomSheet = forwardRef(
         handleStyle={{
           paddingTop: 10,
           paddingBottom: 6,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
+          borderTopLeftRadius: radius.sheet,
+          borderTopRightRadius: radius.sheet,
         }}
       >
         <BottomSheetView style={{ padding: 16 }}>{children}</BottomSheetView>

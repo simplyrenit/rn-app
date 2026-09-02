@@ -35,10 +35,6 @@ import {
   PhoneIcon,
   ViewfinderCircleIcon,
 } from "react-native-heroicons/outline";
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
 
 import {
   BadCondition,
@@ -46,7 +42,7 @@ import {
   GoodCondition,
 } from "@/icons/conditions";
 import { MaterialIcons } from "@expo/vector-icons";
-import { SCREEN_GUTTER, MIN_TOUCH_TARGET, density, ink, colors, radius } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, MIN_TOUCH_TARGET, density, ink, colors, radius, space } from "@/lib/design-tokens";
 import { SegmentedChoice } from "@/components/core/segmented-choice";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "@/lib/toast";
@@ -750,7 +746,7 @@ export default function AboutProduct() {
             </Text>
             <ChevronRightIcon
               size={16}
-              color={allFieldsFilled ? "#FFFFFF" : ink.dim(isDark)}
+              color={allFieldsFilled ? ink.onBrand() : ink.dim(isDark)}
               style={{ marginLeft: 6 }}
             />
           </Button>
@@ -775,7 +771,7 @@ export default function AboutProduct() {
               <MagnifyingGlassIcon
                 color={ink.body(isDark)}
                 size={24}
-                style={{ marginTop: hp(1.1) }}
+                style={{ marginTop: space.sm }}
               />
               <GooglePlacesAutocomplete
                 ref={googlePlacesRef}

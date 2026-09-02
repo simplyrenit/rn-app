@@ -47,6 +47,19 @@ export interface ColorTokens {
   placeholder: string;
   /** Keyboard focus ring. */
   focus: string;
+  /**
+   * The tone that sits ON the brand fill — a primary button's label, a sent
+   * chat bubble's text. Identical to `onPhoto` today; they are separate tokens
+   * because a redesign that lightens the brand must be able to darken this one
+   * without also darkening every label that sits over a photograph.
+   */
+  onBrand: string;
+  /**
+   * The tone that sits ON a photograph or a scrim — a close button over a hero
+   * image, a favourite heart on a product tile. Never resolves against the
+   * theme's own surface, so it does not flip between light and dark.
+   */
+  onPhoto: string;
   /** Modal scrim behind sheets and dialogs. */
   scrim: string;
   /** Neutral fill for skeletons, image placeholders, avatar rings. */
@@ -79,6 +92,8 @@ export const darkColors: ColorTokens = {
   inputLine: "#6A6A7E", // 3.53:1 vs surface
   placeholder: "#8A8A9E", // 5.51:1 AA
   focus: "#928CEF",
+  onBrand: "#FFFFFF",
+  onPhoto: "#FFFFFF",
   scrim: "rgba(0,0,0,0.60)",
   skeleton: "#1A1A24",
   skeletonHighlight: "#262634",
@@ -108,6 +123,8 @@ export const lightColors: ColorTokens = {
   inputLine: "#949089", // 3.17:1 vs #FFF
   placeholder: "#6F6D7A", // 4.91:1 AA
   focus: "#635BE8",
+  onBrand: "#FFFFFF",
+  onPhoto: "#FFFFFF",
   scrim: "rgba(22,21,26,0.45)",
   skeleton: "#E9E7E3",
   skeletonHighlight: "#F6F5F3",
@@ -194,6 +211,12 @@ export const radius = {
   input: 11,
   card: 12,
   group: 14,
+  /**
+   * The top corners of a bottom sheet. Larger than `group` on purpose — a sheet
+   * reads as a separate surface sliding over the screen, not as a card on it.
+   * Three files hardcoded this as a bare `20`; this is that value, on the scale.
+   */
+  sheet: 20,
   full: 999,
 } as const;
 
@@ -244,6 +267,14 @@ export const density = {
   chip: 36,
   /** Padding inside a content block (card body, section body). */
   block: 14,
+  /**
+   * Space below the last row of a list that the tab bar overlaps. Replaces
+   * `hp("10%")`, which resolved to 84 on the reference device and to whatever
+   * the launch height happened to be everywhere else.
+   */
+  listFooter: 84,
+  /** As above, for a list with no tab bar under it. Was `hp("5%")` ≈ 42. */
+  listFooterCompact: 44,
 } as const;
 
 /**
@@ -319,6 +350,10 @@ export const ink = {
     isDark ? darkColors.surfaceRaised : lightColors.surfaceRaised,
   line: (isDark?: boolean) => (isDark ? darkColors.line : lightColors.line),
   scrim: (isDark?: boolean) => (isDark ? darkColors.scrim : lightColors.scrim),
+  /** On the brand fill. Theme-invariant — takes no argument by design. */
+  onBrand: () => lightColors.onBrand,
+  /** On a photograph or scrim. Theme-invariant — takes no argument by design. */
+  onPhoto: () => lightColors.onPhoto,
   inputLine: (isDark?: boolean) =>
     isDark ? darkColors.inputLine : lightColors.inputLine,
   text: (isDark?: boolean) => (isDark ? darkColors.text : lightColors.text),

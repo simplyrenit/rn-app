@@ -20,6 +20,7 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
@@ -32,7 +33,6 @@ import {
   PencilSquareIcon,
 } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 
 import { ChatSkeleton } from "./chat-skeleton";
 import { useChat } from "@/backend/chat";
@@ -76,6 +76,7 @@ export default function ChatDetailsScreen() {
   const { theme, userDetails, authTokens } = useGlobalContext();
   const isDark = theme === "dark";
   const { color, shadow } = useTheme();
+  const { width: winW } = useWindowDimensions();
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<BackendProduct | null>(
     null
@@ -720,7 +721,7 @@ export default function ChatDetailsScreen() {
             <Image
               className="w-[20%]"
               source={getImageSource(selectedProduct?.cover_image)}
-              style={{ width: wp(20), height: wp(20), borderRadius: radius.button }}
+              style={{ width: winW * 0.20, height: winW * 0.20, borderRadius: radius.button }}
               resizeMode="cover"
             />
             <View className="w-[75%] space-y-1">
@@ -827,7 +828,7 @@ export default function ChatDetailsScreen() {
               <Image
                 className="w-[20%]"
                 source={getImageSource(selectedProduct?.cover_image)}
-                style={{ width: wp(20), height: wp(20), borderRadius: radius.button }}
+                style={{ width: winW * 0.20, height: winW * 0.20, borderRadius: radius.button }}
                 resizeMode="cover"
               />
               <View className="w-[75%] space-y-1">

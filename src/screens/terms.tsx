@@ -13,9 +13,8 @@ import {
   Platform,
 } from "react-native";
 import { ArrowLeftIcon } from "react-native-heroicons/outline";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ink } from "@/lib/design-tokens";
+import { ink, space } from "@/lib/design-tokens";
 
 const StyledScroll = styled(ScrollView);
 
@@ -29,7 +28,7 @@ export default function Terms() {
     <NonScrollableContainer>
       <View
         className="flex-row items-center justify-between px-gutter py-2 mt-2"
-        style={{ paddingTop: wp("2.5%") }}
+        style={{ paddingTop: space.sm }}
       >
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
           onPress={() => router.goBack()}

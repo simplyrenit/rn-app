@@ -59,7 +59,7 @@ export function ChatCard({
       }}
       onPress={() => setModalVisible(true)}
     >
-      <TrashIcon size={22} color="#FFFFFF" />
+      <TrashIcon size={22} color={color.onBrand} />
     </TouchableOpacity>
   );
 
@@ -170,7 +170,7 @@ export function ChatCard({
                 <Text
                   fontSize="text-xs"
                   fontWeight="font-bold"
-                  style={{ color: "#FFFFFF" }}
+                  style={{ color: color.onBrand }}
                 >
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </Text>

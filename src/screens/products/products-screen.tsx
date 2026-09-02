@@ -504,8 +504,8 @@ export default function DetailsScreen() {
         <View
           style={{
             marginTop: -20,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
+            borderTopLeftRadius: radius.sheet,
+            borderTopRightRadius: radius.sheet,
             backgroundColor: color.canvas,
             overflow: "hidden",
           }}

@@ -3,7 +3,6 @@ import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { ArrowLeftIcon } from "react-native-heroicons/outline";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { PageIndicator } from "../core/page-indicator";
 import { ink } from "@/lib/design-tokens";
 

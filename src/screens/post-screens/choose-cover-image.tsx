@@ -165,7 +165,7 @@ export default function ChooseCoverImage() {
             </Text>
             <ChevronRightIcon
               size={16}
-              color={croppedImage ? "#FFFFFF" : ink.dim(false)}
+              color={croppedImage ? ink.onBrand() : ink.dim(false)}
             />
           </View>
         </Button>

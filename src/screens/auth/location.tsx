@@ -20,10 +20,6 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
 import { Button, StaticContainer, Text } from "@/components/core";
@@ -42,7 +38,7 @@ import {
 } from "react-native-heroicons/outline";
 import { useAuthContext } from "@/context/auth-context";
 import { SignUpError, useAuth } from "@/backend/auth";
-import { ink, colors, radius } from "@/lib/design-tokens";
+import { ink, colors, radius, SCREEN_GUTTER, density } from "@/lib/design-tokens";
 
 const StyledImage = styled(Image);
 const LOCATION_FETCH_TIMEOUT_MS = 12000;
@@ -716,8 +712,8 @@ export default function LocationScreen() {
 
               <View
                 style={{
-                  paddingVertical: wp("5%"),
-                  paddingHorizontal: wp("5%"),
+                  paddingVertical: SCREEN_GUTTER,
+                  paddingHorizontal: SCREEN_GUTTER,
                 }}
                 className="rounded-t-3xl"
               ></View>
@@ -753,8 +749,8 @@ export default function LocationScreen() {
                 >
                   <View
                     style={{
-                      paddingVertical: wp("5%"),
-                      paddingHorizontal: wp("5%"),
+                      paddingVertical: SCREEN_GUTTER,
+                      paddingHorizontal: SCREEN_GUTTER,
                       flex: 1,
                     }}
                   >
@@ -813,7 +809,7 @@ export default function LocationScreen() {
                           {signUpLoading ? (
                             <ActivityIndicator
                               size="small"
-                              color="#FFFFFF"
+                              color={ink.onBrand()}
                             />
                           ) : (
                             "Confirm location"
@@ -933,7 +929,9 @@ export default function LocationScreen() {
                         data={nearbyPlaces}
                         keyExtractor={(item) => item.place_id}
                         style={{ maxHeight: 450 }}
-                        contentContainerStyle={{ paddingBottom: wp("5%") }}
+                        contentContainerStyle={{
+                          paddingBottom: density.listFooterCompact,
+                        }}
                         keyboardShouldPersistTaps="handled"
                         renderItem={({ item }) => (
                           <TouchableOpacity

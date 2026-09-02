@@ -6,8 +6,16 @@ import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal"
 import { useGlobalContext } from "@/context/global-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
 import {
   ArrowLeftIcon,
@@ -21,12 +29,16 @@ import {
   TrashIcon,
 } from "react-native-heroicons/outline";
 import OTPTextView from "react-native-otp-textinput";
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
 import DeleteAccountModal from "./DeleteAccountModal";
-import { ink, colors, radius, fontSize, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import {
+  ink,
+  colors,
+  radius,
+  fontSize,
+  MIN_TOUCH_TARGET,
+  space,
+  SCREEN_GUTTER,
+} from "@/lib/design-tokens";
 import { toast } from "@/lib/toast";
 
 // A fixed-length mask so the field never leaks the real password's length —
@@ -46,6 +58,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const { sendOTP, requestPhoneNumberChangeOtp, verifyPhoneNumberChange } =
     useAuth();
   const isDark = theme === "dark";
+  const { width: winW, height: winH } = useWindowDimensions();
   const [deleteAccountModal, setDeleteAccountModal] = useState(false);
 
   const [details, setDetails] = useState({
@@ -305,10 +318,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     emailInput: {
       backgroundColor: ink.surfaceRaised(theme === "dark"),
       color: ink.text(isDark),
-      padding: wp("3%"),
+      padding: space.md,
       borderWidth: 1,
       borderRadius: radius.input,
-      marginVertical: wp("4%"),
+      marginVertical: space.md,
       borderColor: ink.inputLine(theme === "dark"),
     },
     otpInputContainer: {
@@ -324,13 +337,13 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       fontSize: fontSize.md,
       borderColor: ink.line(true),
       borderWidth: 1,
-      padding: wp("2.5%"),
-      marginVertical: wp("3%"),
+      padding: space.sm,
+      marginVertical: space.md,
       borderRadius: radius.group,
     },
     saveButton: {
       backgroundColor: colors.dark.brand,
-      padding: wp("3.5%"),
+      padding: space.md,
       alignItems: "center",
       borderRadius: radius.card,
     },
@@ -342,9 +355,15 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       borderRadius: radius.input,
       borderWidth: 3,
       color: ink.text(isDark),
-      width: wp(12.5),
     },
   });
+  // roundedTextInput's width is proportional to the viewport, so it can't
+  // live inside StyleSheet.create (which can't see the useWindowDimensions
+  // hook). Compose it in the component body instead.
+  const roundedTextInputStyle = useMemo(
+    () => ({ ...styles.roundedTextInput, width: winW * 0.125 }),
+    [isDark, winW]
+  );
   const handleProfileUpdate = async () => {
     if (selectedImage) {
       try {
@@ -433,7 +452,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         </View>
 
         <View
-          style={{ paddingVertical: wp("5%") }}
+          style={{ paddingVertical: SCREEN_GUTTER }}
           className={`flex-row justify-between items-center border-b-[1px] ${isDark ? "border-input-line-dark" : "border-input-line-light"
             } p-4`}
         >
@@ -441,7 +460,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             <View>
               <Image
                 source={{ uri: selectedImage || details.profilePic }}
-                style={{ width: wp("12%"), height: wp("12%") }}
+                style={{ width: winW * 0.12, height: winW * 0.12 }}
                 className="rounded-full"
               />
             </View>
@@ -469,7 +488,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         {/* Full Name */}
         <View className="p-4">
           <View
-            style={{ paddingVertical: wp("5%") }}
+            style={{ paddingVertical: SCREEN_GUTTER }}
             className="flex-row justify-between items-center "
           >
             <View className="flex-row space-x-3 items-center justify-center">
@@ -493,7 +512,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
           {/* Email Address */}
           <View
-            style={{ paddingVertical: wp("5%") }}
+            style={{ paddingVertical: SCREEN_GUTTER }}
             className="flex-row justify-between items-center "
           >
             <View className="flex-row space-x-3 items-center justify-center">
@@ -517,7 +536,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
           {/* Phone Number */}
           <View
-            style={{ paddingVertical: wp("5%") }}
+            style={{ paddingVertical: SCREEN_GUTTER }}
             className="flex-row justify-between items-center "
           >
             <View className="flex-row space-x-3 items-center justify-center">
@@ -541,7 +560,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
           {/* Password */}
           <View
-            style={{ paddingVertical: wp("5%") }}
+            style={{ paddingVertical: SCREEN_GUTTER }}
             className="flex-row justify-between items-center "
           >
             <View className="flex-row space-x-3 items-center justify-center">
@@ -568,7 +587,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           {selectedImage && (
             <TouchableOpacity
               onPress={handleProfileUpdate}
-              style={[styles.saveButton, { marginTop: hp(5) }]}
+              style={[styles.saveButton, { marginTop: space.xl }]}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="white" />
@@ -593,7 +612,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
             borderTopWidth: 1,
             borderTopColor: ink.line(isDark),
             marginTop: 8,
-            paddingHorizontal: wp("4%"),
+            paddingHorizontal: space.md,
           }}
         >
           <TouchableOpacity
@@ -631,7 +650,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 borderStyle: "dashed",
                 borderColor: ink.line(false),
                 borderWidth: 1,
-                height: hp("20%"),
+                height: winH * 0.20,
                 borderRadius: radius.input,
                 alignItems: "center",
                 justifyContent: "center",
@@ -655,7 +674,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 borderStyle: "dashed",
                 borderColor: ink.line(false),
                 borderWidth: 1,
-                height: hp("20%"),
+                height: winH * 0.20,
                 borderRadius: radius.input,
                 alignItems: "center",
                 justifyContent: "center",
@@ -684,7 +703,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       >
         <View
           className="flex-row items-center justify-between px-6"
-          style={{ paddingVertical: wp("5%") }}
+          style={{ paddingVertical: SCREEN_GUTTER }}
         >
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
@@ -750,7 +769,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       >
         <View
           className="flex-row items-center justify-between relative px-6"
-          style={{ paddingVertical: wp("5%") }}
+          style={{ paddingVertical: SCREEN_GUTTER }}
         >
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
@@ -824,7 +843,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               <View className="w-[90%] ">
                 <OTPTextView
                   containerStyle={styles.textInputContainer}
-                  textInputStyle={styles.roundedTextInput}
+                  textInputStyle={roundedTextInputStyle}
                   // @ts-ignore
                   placeholder="*"
                   placeholderTextColor={
@@ -888,7 +907,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       >
         <View
           className="flex-row items-center justify-between px-6"
-          style={{ paddingVertical: wp("5%") }}
+          style={{ paddingVertical: SCREEN_GUTTER }}
         >
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
@@ -1015,7 +1034,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               <View className="w-[90%] self-center">
                 <OTPTextView
                   containerStyle={styles.textInputContainer}
-                  textInputStyle={styles.roundedTextInput}
+                  textInputStyle={roundedTextInputStyle}
                   // @ts-ignore
                   placeholder="*"
                   placeholderTextColor={
@@ -1104,7 +1123,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       >
         <View
           className="flex-row items-center justify-between px-6"
-          style={{ paddingVertical: wp("5%") }}
+          style={{ paddingVertical: SCREEN_GUTTER }}
         >
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
@@ -1240,7 +1259,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               onPress={handleSavePassword}
               style={{
                 backgroundColor: colors.dark.brand,
-                padding: wp("3.5%"),
+                padding: space.md,
                 alignItems: "center",
                 borderRadius: radius.card,
               }}

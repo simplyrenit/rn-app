@@ -5,15 +5,15 @@ import { useGlobalContext } from "@/context/global-context";
 import { RouteProps, Subcategory, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
-import { ActivityIndicator, FlatList, Platform, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, TouchableOpacity, View } from "react-native";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "react-native-heroicons/outline";
-import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 
 import { toast } from "@/lib/toast";
 import { ink } from "@/lib/design-tokens";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function EditSubCategories() {
   const route = useRoute<RouteProps<"EditSubCategories">>();
@@ -21,6 +21,7 @@ export default function EditSubCategories() {
   const { theme } = useGlobalContext();
   const { name, category, subcategories } = route.params;
   const { updateMyProductDetails, loading } = useProfile();
+  const insets = useSafeAreaInsets();
 
   const onPress = async (subcategory: Subcategory) => {
     try {
@@ -96,7 +97,7 @@ export default function EditSubCategories() {
             // Clear the floating bottom tab bar so the last row is fully
             // visible and scrollable. iOS only: Android's tab bar does not
             // overlap the list.
-            paddingBottom: Platform.OS === "ios" ? hp("14%") : 0,
+            paddingBottom: insets.bottom,
           }}
           showsVerticalScrollIndicator={false}
         />

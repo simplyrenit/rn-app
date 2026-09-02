@@ -29,17 +29,12 @@ import {
   ViewfinderCircleIcon,
 } from "react-native-heroicons/outline";
 import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
-
-import {
   BadCondition,
   ExcellentCondition,
   GoodCondition,
 } from "@/icons/conditions";
 import { MaterialIcons } from "@expo/vector-icons";
-import { MIN_TOUCH_TARGET, density, ink, colors, radius } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, density, ink, colors, radius, space } from "@/lib/design-tokens";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { toast } from "@/lib/toast";
@@ -717,7 +712,7 @@ export default function EditAboutProduct() {
               <MagnifyingGlassIcon
                 color={ink.body(isDark)}
                 size={24}
-                style={{ marginTop: hp(1.1) }}
+                style={{ marginTop: space.sm }}
               />
               <GooglePlacesAutocomplete
                 ref={googlePlacesRef}

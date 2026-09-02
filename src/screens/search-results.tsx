@@ -26,12 +26,11 @@ import { styled } from "nativewind";
 import React, { useRef, useState, useEffect } from "react";
 import { FlatList, Pressable, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { AdjustmentsVerticalIcon } from "react-native-heroicons/outline";
 import { useSearch } from "@/backend/search";
 import { Dimensions } from "react-native";
 import { Disclaimer } from "@/components/home/disclaimer";
-import { SCREEN_GUTTER, colors, ink, radius } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, colors, density, ink, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
 const { height } = Dimensions.get("window");
@@ -501,7 +500,7 @@ export default function SearchResults() {
           // shrink-wrap its children instead of filling the list, so the cards'
           // "48.5%" resolved against a collapsed row and came out tiny.
           // columnWrapperStyle's space-between does the real work.
-          contentContainerStyle={{ paddingBottom: hp("10%"), flexGrow: 1 }}
+          contentContainerStyle={{ paddingBottom: density.listFooter, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <Card

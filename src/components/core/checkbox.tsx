@@ -52,7 +52,7 @@ export const CheckBox: React.FC<CheckBoxProps> = ({
           borderColor: checked ? color.brand : color.inputLine,
         }}
       >
-        {checked && <CheckIcon size={15} color="#FFFFFF" />}
+        {checked && <CheckIcon size={15} color={color.onBrand} />}
       </View>
     </TouchableOpacity>
   );

@@ -5,8 +5,7 @@ import { useProductContext } from "@/context/product-context";
 import { RouteProps, Subcategory, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
-import { FlatList, Platform, TouchableOpacity, View } from "react-native";
-import { heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { FlatList, TouchableOpacity, View } from "react-native";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -17,6 +16,7 @@ import { SvgUri } from "react-native-svg";
 import { SCREEN_GUTTER, ink } from "@/lib/design-tokens";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import { useTheme } from "@/lib/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function PostSubCategories() {
   const route = useRoute<RouteProps<"PostSubCategories">>();
@@ -25,6 +25,7 @@ export default function PostSubCategories() {
   const { saveDetails } = useProductContext();
   const isDarkMode = theme === "dark";
   const { color } = useTheme();
+  const insets = useSafeAreaInsets();
 
   // Destructure the category and subcategories from route params
   const { category, subcategories } = route.params;
@@ -100,7 +101,7 @@ export default function PostSubCategories() {
             // Clear the floating bottom tab bar so the last subcategory is
             // fully visible and scrollable. iOS only: Android's tab bar does
             // not overlap the list.
-            paddingBottom: Platform.OS === "ios" ? hp("14%") : 0,
+            paddingBottom: insets.bottom,
           }}
           showsVerticalScrollIndicator={false}
         />

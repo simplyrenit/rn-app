@@ -8,8 +8,7 @@ import {
   QuestionMarkCircleIcon,
 } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { ink, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { ink, MIN_TOUCH_TARGET, space } from "@/lib/design-tokens";
 
 interface WhoWeAreProps {}
 
@@ -35,7 +34,7 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
         <Text
           fontSize="text-base"
           fontWeight="font-bold"
-          style={{ paddingVertical: wp("2%") }}
+          style={{ paddingVertical: space.sm }}
         >
           What is Renit?
         </Text>
@@ -55,7 +54,7 @@ const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
         </Text>
       </KeyboardAwareScrollView>
       <View
-        style={{ paddingVertical: wp("8%") }}
+        style={{ paddingVertical: space.xl }}
         className="px-gutter flex-1 justify-end py-0 "
       >
         <View className="flex-row space-x-2 items-center">

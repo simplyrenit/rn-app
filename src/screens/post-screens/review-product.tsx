@@ -15,7 +15,6 @@ import {
   BanknotesIcon,
   ShareIcon,
 } from "react-native-heroicons/outline";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { Dimensions } from "react-native";
 import useOwner from "@/backend/owner";
 import { useEffect, useState } from "react";

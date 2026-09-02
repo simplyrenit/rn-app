@@ -154,7 +154,7 @@ export function ChatBubble({
                 {imageError && (
                   <Text
                     fontSize="text-sm"
-                    style={{ color: isSent ? "#FFFFFF" : color.text }}
+                    style={{ color: isSent ? color.onBrand : color.text }}
                   >
                     Failed to load image
                   </Text>
@@ -240,7 +240,7 @@ export function ChatBubble({
             <Text
               fontSize="text-md"
               className="px-3 pt-2"
-              style={{ color: isSent ? "#FFFFFF" : color.text }}
+              style={{ color: isSent ? color.onBrand : color.text }}
               selectable
             >
               {text}
@@ -262,7 +262,7 @@ export function ChatBubble({
               fontSize="text-md"
               className="px-3 pt-2"
               style={{
-                color: isSent ? "#FFFFFF" : color.brandText,
+                color: isSent ? color.onBrand : color.brandText,
                 textDecorationLine: "underline",
               }}
               selectable
@@ -367,7 +367,7 @@ export function ChatBubble({
                   // Was white at 75% on the brand fill — 3.27:1, under the
                   // 4.5:1 a 12pt regular string needs. Solid white is 5.01:1,
                   // the value the design system already records for this pair.
-                  color: isSent ? "#FFFFFF" : color.textDim,
+                  color: isSent ? color.onBrand : color.textDim,
                   textAlign: "right",
                   paddingHorizontal: 12,
                   marginTop: -2,

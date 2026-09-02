@@ -107,7 +107,7 @@ export function FavouriteButton({
   // Over a photo the chip behind the glyph is always dark, so the heart takes
   // the dark-theme values in both app themes; off a photo it follows the theme.
   const activeColor = onPhoto ? darkColors.danger : color.danger;
-  const inactiveColor = onPhoto ? "#FFFFFF" : color.textBody;
+  const inactiveColor = onPhoto ? color.onPhoto : color.textBody;
 
   return (
     <IconButton

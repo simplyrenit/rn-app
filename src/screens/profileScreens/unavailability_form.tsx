@@ -18,10 +18,6 @@ import {
   ViewfinderCircleIcon,
 } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
 import { ScrollView } from "react-native-gesture-handler";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
@@ -33,7 +29,8 @@ import axios from "axios";
 import * as Location from "expo-location";
 import { useCallback, useEffect } from "react";
 import { Platform } from "react-native";
-import { ink, colors, radius, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { ink, colors, radius, MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 
 interface Coordinates {
   lat: number | undefined;
@@ -48,6 +45,7 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
   const router = useTypedNavigation();
   const { theme } = useGlobalContext();
   const isDarkMode = theme === "dark";
+  const { color } = useTheme();
   const [address, setAddress] = useState("");
 
   const [selectedLocationName, setSelectedLocationName] = useState<
@@ -195,7 +193,7 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
     <NonScrollableContainer>
       <View
         className="flex-row items-center px-gutter"
-        style={{ paddingVertical: wp("5%") }}
+        style={{ paddingVertical: SCREEN_GUTTER }}
       >
         <BackButton />
         <View className="flex-1 items-center justify-center">
@@ -304,7 +302,7 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
             <View className="mt-1">
               <ChevronRightIcon
                 size={16}
-                color={address ? "#FFFFFF" : ink.dim(false)}
+                color={address ? color.onBrand : ink.dim(false)}
               />
             </View>
           </View>

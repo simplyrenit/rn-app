@@ -6,8 +6,7 @@ import { useRoute } from "@react-navigation/native";
 import React from "react";
 import { Dimensions, FlatList, Share, View } from "react-native";
 import { IOSShareIcon } from "@/icons/share";
-import { heightPercentageToDP as hp } from "react-native-responsive-screen";
-import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 
@@ -84,7 +83,7 @@ const OwnersProductsScreen: React.FC = () => {
           marginTop: 16,
           gap: GRID_GAP,
         }}
-        contentContainerStyle={{ paddingBottom: hp("10%") }}
+        contentContainerStyle={{ paddingBottom: density.listFooter }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item, index }) => {
           // With a catalogue this small a trailing single-item row is the

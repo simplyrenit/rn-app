@@ -116,6 +116,7 @@ module.exports = {
         input: "11px",
         card: "12px",
         group: "14px",
+        sheet: "20px",
         full: "999px",
       },
     },

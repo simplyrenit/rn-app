@@ -16,9 +16,8 @@ import { EmptyState } from "@/components/core";
 import { Squares2X2Icon } from "react-native-heroicons/outline";
 import { ActivityIndicator, Dimensions, FlatList, View } from "react-native";
 import { IOSShareIcon } from "@/icons/share";
-import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, colors } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, colors, density } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 
@@ -172,7 +171,7 @@ const MyProductScreen: React.FC = () => {
           marginTop: 16,
           gap: GRID_GAP,
         }}
-        contentContainerStyle={{ paddingBottom: hp("10%") }}
+        contentContainerStyle={{ paddingBottom: density.listFooter }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           // Only the failing states were ever labelled, so a published listing

@@ -5,20 +5,18 @@ import { useProductContext } from "@/context/product-context";
 import { Category, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
 import { useEffect } from "react";
-import { FlatList, Platform, TouchableOpacity, View } from "react-native";
+import { FlatList, TouchableOpacity, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/outline";
-import { ink, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { ink, MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function UnavailabilityCategories() {
   const { saveDetails } = useProductContext();
   const { theme, categories } = useGlobalContext();
   const router = useTypedNavigation();
   const isDarkMode = theme === "dark";
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
   }, [categories]);
@@ -63,7 +61,7 @@ export default function UnavailabilityCategories() {
       <View style={{ flex: 1 }}>
         <View
           className="flex-row items-center px-gutter"
-          style={{ paddingVertical: wp("5%") }}
+          style={{ paddingVertical: SCREEN_GUTTER }}
         >
           <BackButton />
           <View className="flex-1 items-center justify-center">
@@ -91,7 +89,7 @@ export default function UnavailabilityCategories() {
             // Clear the floating bottom tab bar so the last row is fully
             // visible and scrollable. iOS only: Android's tab bar does not
             // overlap the list.
-            paddingBottom: Platform.OS === "ios" ? hp("7") : 0,
+            paddingBottom: insets.bottom,
           }}
           showsVerticalScrollIndicator={false}
         />

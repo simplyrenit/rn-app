@@ -132,7 +132,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       const isToday = state === "today";
 
       const textColor = isEndpoint
-        ? "#FFFFFF"
+        ? ink.onBrand()
         : isDisabled
         ? ink.dim(isDark)
         : inRange

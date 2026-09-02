@@ -5,17 +5,18 @@ import { useGlobalContext } from "@/context/global-context";
 import { useProductContext } from "@/context/product-context";
 import { Category, RouteProps, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
-import { FlatList, Platform, TouchableOpacity, View } from "react-native";
+import { FlatList, TouchableOpacity, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/outline";
-import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { CategoryFilter } from "../../../components/search/category-filter";
 import { useRoute } from "@react-navigation/native";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import { MIN_TOUCH_TARGET, ink } from "@/lib/design-tokens";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function EditCategory() {
   const { theme, categories } = useGlobalContext();
   const navigation = useTypedNavigation();
+  const insets = useSafeAreaInsets();
 
   const route = useRoute<RouteProps<"EditCategory">>();
   const { name } = route.params;
@@ -84,7 +85,7 @@ export default function EditCategory() {
             // Clear the floating bottom tab bar so the last row is fully
             // visible and scrollable. iOS only: Android's tab bar does not
             // overlap the list.
-            paddingBottom: Platform.OS === "ios" ? hp("7") : 0,
+            paddingBottom: insets.bottom,
           }}
           showsVerticalScrollIndicator={false}
         />

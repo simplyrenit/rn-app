@@ -99,7 +99,7 @@ export function Avatar({ uri, name, size = 40 }: Props) {
       ) : (
         <Text
           fontWeight="font-bold"
-          style={{ color: "#FFFFFF", fontSize: size * 0.38 }}
+          style={{ color: color.onPhoto, fontSize: size * 0.38 }}
         >
           {initials}
         </Text>

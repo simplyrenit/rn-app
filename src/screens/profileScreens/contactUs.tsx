@@ -10,8 +10,7 @@ import {
   PhoneIcon,
 } from "react-native-heroicons/outline";
 
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { ink, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { ink, MIN_TOUCH_TARGET, space } from "@/lib/design-tokens";
 
 interface ContactUsProps {}
 
@@ -35,7 +34,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
 
       <ScrollView className="">
         <View
-          style={{ paddingVertical: wp("8%") }}
+          style={{ paddingVertical: space.xl }}
           className={`px-gutter border-b-[0.2px] ${
             isDarkMode ? "border-line-dark" : "border-line-light"
           }`}
@@ -80,7 +79,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
         </View>
 
         <View
-          style={{ paddingVertical: wp("8%") }}
+          style={{ paddingVertical: space.xl }}
           className={`px-gutter border-b-[0.2px] ${
             isDarkMode ? "border-line-dark" : "border-line-light"
           }`}
@@ -124,7 +123,7 @@ const ContactUsScreen: React.FC<ContactUsProps> = () => {
         </View>
 
         <View
-          style={{ paddingVertical: wp("8%") }}
+          style={{ paddingVertical: space.xl }}
           className={`px-gutter border-b-[0.2px] ${
             isDarkMode ? "border-line-dark" : "border-line-light"
           }`}
