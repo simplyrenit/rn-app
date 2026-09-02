@@ -77,26 +77,26 @@ export interface ColorTokens {
 }
 
 export const darkColors: ColorTokens = {
-  canvas: "#0A0A0F",
-  surface: "#12121A",
-  surfaceRaised: "#1A1A24",
-  line: "#22222E",
-  text: "#FFFFFF", // 19.6:1 AAA
-  textHi: "#B4B4C0", // 9.62:1 AAA
-  textBody: "#9B9BA8", // 7.19:1 AA
-  textDim: "#7A7A8E", // 4.70:1 AA
-  brand: "#635BE8", // white on it 5.01:1
-  brandText: "#827CED", // 5.70:1 AA
-  brandTextHi: "#928CEF", // 6.79:1 AA
+  canvas: "#0F0F0F", // Black and White/1200
+  surface: "#1A1A1A", // Black and White/1100
+  surfaceRaised: "#292929", // Black and White/1000
+  line: "#292929", // Black and White/1000
+  text: "#FFFFFF", // Text - Dark mode/Primary, 18.9:1 AAA
+  textHi: "rgba(255,255,255,0.70)", // Text/Secondary
+  textBody: "rgba(255,255,255,0.70)",
+  textDim: "rgba(255,255,255,0.50)", // Text/Tertiary
+  brand: "#635BE8", // Purple/400
+  brandText: "#827CED", // Purple/400 itself fails on #0F0F0F; this is the readable tint
+  brandTextHi: "#928CEF",
   brandWash: "rgba(99,91,232,0.12)",
-  inputLine: "#6A6A7E", // 3.53:1 vs surface
-  placeholder: "#8A8A9E", // 5.51:1 AA
+  inputLine: "#767676", // Black and White/700
+  placeholder: "rgba(255,255,255,0.50)",
   focus: "#928CEF",
   onBrand: "#FFFFFF",
   onPhoto: "#FFFFFF",
   scrim: "rgba(0,0,0,0.60)",
-  skeleton: "#1A1A24",
-  skeletonHighlight: "#262634",
+  skeleton: "#1A1A1A",
+  skeletonHighlight: "#292929",
   success: "#6FCF97",
   warning: "#FFD479",
   danger: "#EB6F62",
@@ -108,34 +108,34 @@ export const darkColors: ColorTokens = {
 };
 
 export const lightColors: ColorTokens = {
-  canvas: "#FBFAF9",
+  canvas: "#FFFFFF", // Black and White/50
   surface: "#FFFFFF",
-  surfaceRaised: "#F4F2EF",
-  line: "#E6E4E0",
-  text: "#16151A", // 16.8:1 AAA
-  textHi: "#35333D", // 11.4:1 AAA
-  textBody: "#55535E", // 7.31:1 AA
-  textDim: "#6F6D7A", // 4.91:1 AA
-  brand: "#635BE8", // white on it 5.01:1
-  brandText: "#635BE8", // 4.85:1 AA
-  brandTextHi: "#635BE8",
+  surfaceRaised: "#F5F5F5", // Black and White/100
+  line: "#E6E6E6", // Black and White/200
+  text: "#000000", // Text - Light mode/Primary, 21:1 AAA
+  textHi: "rgba(0,0,0,0.70)", // Text/Secondary
+  textBody: "rgba(0,0,0,0.70)",
+  textDim: "rgba(0,0,0,0.58)", // Text/Tertiary — design says 0.50 (3.95:1, below AA); 0.58 is the smallest step that clears 4.5 on both light grounds
+  brand: "#635BE8", // Purple/400
+  brandText: "#635BE8", // 4.85:1 AA on white
+  brandTextHi: "#363280", // Purple/700
   brandWash: "rgba(99,91,232,0.07)",
-  inputLine: "#949089", // 3.17:1 vs #FFF
-  placeholder: "#6F6D7A", // 4.91:1 AA
+  inputLine: "#C4C4C4", // Black and White/300
+  placeholder: "rgba(0,0,0,0.58)", // as textDim — 0.50 fails AA on white
   focus: "#635BE8",
   onBrand: "#FFFFFF",
   onPhoto: "#FFFFFF",
-  scrim: "rgba(22,21,26,0.45)",
-  skeleton: "#E9E7E3",
-  skeletonHighlight: "#F6F5F3",
+  scrim: "rgba(0,0,0,0.45)",
+  skeleton: "#F5F5F5",
+  skeletonHighlight: "#E6E6E6",
   success: "#1E7A47",
   warning: "#7A5200",
   danger: "#B3261E",
   info: "#1F5F94",
-  successWash: "#EAF6EE",
-  warningWash: "#FFF6E0",
-  dangerWash: "#FBEAE8",
-  infoWash: "#EAF2F9",
+  successWash: "rgba(30,122,71,0.08)",
+  warningWash: "rgba(122,82,0,0.08)",
+  dangerWash: "rgba(179,38,30,0.08)",
+  infoWash: "rgba(31,95,148,0.08)",
 };
 
 export const colors: Record<ThemeName, ColorTokens> = {
@@ -154,7 +154,7 @@ export const fontSize = {
   xs: 12,
   sm: 14,
   md: 16,
-  base: 17,
+  base: 18, // Body Large
   lg: 20,
   xl: 24,
   "2xl": 28,
@@ -162,14 +162,15 @@ export const fontSize = {
 } as const;
 
 export const lineHeight = {
-  xs: 16, // 1.33
-  sm: 20, // 1.43
-  md: 24, // 1.50
-  base: 24, // 1.41
-  lg: 26, // 1.30
-  xl: 30, // 1.25
-  "2xl": 34, // 1.21
-  "3xl": 40, // 1.18
+  // The new system sets body text at 1.5 and headings at 1.2.
+  xs: 18, // 1.5
+  sm: 21, // 1.5
+  md: 24, // 1.5
+  base: 27, // 1.5
+  lg: 24, // 1.2  H3
+  xl: 29, // 1.2  H2
+  "2xl": 34, // 1.2 — no Figma equivalent above 24; retained for existing call sites
+  "3xl": 41, // 1.2 — as above
 } as const;
 
 export type FontSizeToken = keyof typeof fontSize;
@@ -209,7 +210,7 @@ export const space = {
 export const radius = {
   button: 9,
   input: 11,
-  card: 12,
+  card: 16,
   group: 14,
   /**
    * The top corners of a bottom sheet. Larger than `group` on purpose — a sheet
@@ -236,7 +237,7 @@ export const aspect = {
 export const MIN_TOUCH_TARGET = 44;
 
 /** Standard horizontal page gutter. One value, every screen. */
-export const SCREEN_GUTTER = 20;
+export const SCREEN_GUTTER = 24;
 
 /**
  * Vertical density.
