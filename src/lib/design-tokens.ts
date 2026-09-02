@@ -208,16 +208,15 @@ export const space = {
  * `full` is for pills and avatars only — never a card.
  */
 export const radius = {
-  button: 9,
+  button: 11, // measured off the Figma Button component (Primary, 358x44)
   input: 11,
   card: 16,
   group: 14,
   /**
-   * The top corners of a bottom sheet. Larger than `group` on purpose — a sheet
-   * reads as a separate surface sliding over the screen, not as a card on it.
-   * Three files hardcoded this as a bare `20`; this is that value, on the scale.
+   * The top corners of a bottom sheet. Three files hardcoded this as a bare 20;
+   * the design measures 16, matching `card` — sheets and tiles share a radius.
    */
-  sheet: 20,
+  sheet: 16,
   full: 999,
 } as const;
 

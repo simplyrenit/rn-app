@@ -112,11 +112,11 @@ module.exports = {
         touch: "44px",
       },
       borderRadius: {
-        button: "9px",
+        button: "11px",
         input: "11px",
         card: "16px",
         group: "14px",
-        sheet: "20px",
+        sheet: "16px",
         full: "999px",
       },
     },
