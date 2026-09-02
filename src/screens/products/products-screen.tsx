@@ -16,6 +16,11 @@ import {
   resolveListingStatus,
 } from "@/components/product/listing-status";
 import { ProductImage } from "@/components/product/product-image";
+import { SpecStrip } from "@/components/product/spec-strip";
+import { ConditionRenderer } from "@/components/core/condition-renderer";
+import { BanknotesIcon } from "react-native-heroicons/outline";
+import { Image } from "expo-image";
+import { SvgUri } from "react-native-svg";
 import { ProductMap } from "@/components/product/product-map";
 import { AboutOwner } from "@/components/product/product-owner";
 import { ReviewCard } from "@/components/product/review-card";
@@ -101,6 +106,12 @@ export default function DetailsScreen() {
   // One resolved theme for the whole screen. It used to read `theme === "dark"`
   // from the global context in some places and `useTheme()` in others.
   const { color, isDark } = useTheme();
+  // The category ships its own icon per theme, and some are SVG. Note the
+  // snake_case: this product comes off the API, whereas the post wizard's
+  // review step reads the same category out of product-context in camelCase.
+  const categoryIconUri = isDark
+    ? product?.category?.dark_icon
+    : product?.category?.light_icon;
   const insets = useSafeAreaInsets();
   const scrollY = React.useRef(new Animated.Value(0)).current;
   // True once the pinned band, not the photograph, is what sits under the
@@ -566,61 +577,47 @@ export default function DetailsScreen() {
           ) : null}
         </View>
 
-        {/* Specifications.
-            Was three centred columns with a decorative glyph over the VALUE
-            over the LABEL — a monitor for "Laptop / Desktop", a banknote for
-            the deposit, and a lightbulb for "Excellent" condition, which has no
-            relationship to condition at all. People scan for the label to find
-            the value, and these are arbitrary strings rather than a stat grid,
-            so the label leads and the glyphs are gone. */}
-        <View style={sectionStyle}>
-          <View
-            style={{
-              backgroundColor: color.surfaceRaised,
-              borderRadius: radius.card,
-              padding: density.block,
-            }}
-          >
-          {[
-            { label: "Category", value: product?.category?.title },
+        {/* Specifications. The design's three-up strip; see spec-strip.tsx for
+            why this layout replaced the label-led rows that were here. */}
+        <SpecStrip
+          items={[
             {
-              label: "Security deposit",
-              value: formatCurrency(product?.security_deposit),
+              icon: categoryIconUri ? (
+                categoryIconUri.slice(-3).toLowerCase() === "svg" ? (
+                  <SvgUri uri={categoryIconUri} width={22} height={22} />
+                ) : (
+                  <Image
+                    source={{ uri: categoryIconUri }}
+                    style={{ width: 22, height: 22 }}
+                    contentFit="contain"
+                  />
+                )
+              ) : null,
+              value: product?.category?.title,
+              label: "Category",
             },
             {
-              label: "Condition",
+              icon: <BanknotesIcon color={color.text} size={22} />,
+              value: product?.security_deposit
+                ? formatCurrency(product.security_deposit)
+                : null,
+              label: "Deposit",
+            },
+            {
+              icon: product?.condition ? (
+                <ConditionRenderer
+                  condition={product.condition}
+                  size={22}
+                  color={color.text}
+                />
+              ) : null,
               value: product?.condition
                 ? product.condition[0].toUpperCase() + product.condition.slice(1)
                 : null,
+              label: "Condition",
             },
-          ]
-            .filter((row) => Boolean(row.value))
-            .map((row, index) => (
-              <View
-                key={row.label}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "baseline",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  paddingTop: index === 0 ? 0 : 6,
-                }}
-              >
-                <Text fontSize="text-md" tone="body">
-                  {row.label}
-                </Text>
-                <Text
-                  fontSize="text-md"
-                  fontWeight="font-semibold"
-                  numberOfLines={2}
-                  style={{ flexShrink: 1, textAlign: "right" }}
-                >
-                  {row.value}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
+          ]}
+        />
 
         {/* Bare-noun headings, the same rule on every screen in this flow. */}
         <View style={sectionStyle}>

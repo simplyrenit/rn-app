@@ -1,6 +1,7 @@
 import { usePost } from "@/backend/post";
 import { Text } from "@/components/core";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
+import { SpecStrip } from "@/components/product/spec-strip";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { PostProductHeader } from "@/components/post/header";
 import { ProductImage } from "@/components/product/product-image";
@@ -73,6 +74,58 @@ export default function ReviewProduct() {
             mode="post"
           />
         </View>
+
+        <View
+          className={`px-gutter py-6 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
+            }`}
+        >
+          <View className="flex flex-row items-center justify-between">
+            <Text fontSize="text-xl" fontWeight="font-bold">
+              {product.name}
+            </Text>
+          </View>
+        </View>
+
+        <SpecStrip
+          items={[
+            {
+              icon: productCategoryIcon ? (
+                productCategoryIcon.slice(-3).toLowerCase() === "svg" ? (
+                  <SvgUri uri={productCategoryIcon} width={22} height={22} />
+                ) : (
+                  <Image
+                    source={{ uri: productCategoryIcon }}
+                    style={{ width: 22, height: 22 }}
+                    contentFit="contain"
+                  />
+                )
+              ) : null,
+              value: product.category.title,
+              label: "Category",
+            },
+            {
+              icon: <BanknotesIcon color={ink.text(isDark)} size={22} />,
+              value: product.securityDeposit
+                ? `₹${product.securityDeposit}`
+                : null,
+              label: "Deposit",
+            },
+            {
+              icon: product.condition ? (
+                <ConditionRenderer
+                  condition={product.condition}
+                  size={22}
+                  color={ink.text(isDark)}
+                />
+              ) : null,
+              value: product.condition
+                ? product.condition[0].toUpperCase() +
+                  product.condition.slice(1).toLowerCase()
+                : null,
+              label: "Condition",
+            },
+          ]}
+        />
 
         <View
           className={`px-gutter py-6 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
