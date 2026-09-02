@@ -522,7 +522,7 @@ export function ChatInput({
                   />
                 ) : null}
                 <Text
-                  style={{ color: color.onBrand, fontSize: 16, fontFamily: fontFamily.semibold }}
+                  style={{ color: color.onBrand, fontSize: 16, fontFamily: fontFamily.bold }}
                 >
                   {isUploading ? "Sending..." : "Send"}
                 </Text>

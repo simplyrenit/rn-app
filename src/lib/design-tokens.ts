@@ -201,6 +201,14 @@ export const chromeFontSize = {
   navTitle: 17,
 } as const;
 
+/**
+ * The design system uses two weights: Regular 400 and Bold 700.
+ *
+ * `light`, `medium` and `semibold` are retained only so the five-name
+ * `fontWeight` prop keeps type-checking; nothing resolves to them any more
+ * (see `fontWeightMap` in components/core/text.tsx). The three faces can be
+ * dropped from the App.tsx font load once the design is settled.
+ */
 export const fontFamily = {
   light: "PlusJakartaSans-Light",
   regular: "PlusJakartaSans-Regular",
@@ -305,11 +313,11 @@ export const typeRole = {
   /** The one title of a screen. At most one per screen. */
   screenTitle: { size: "xl", weight: "font-bold" },
   /** A section inside a screen. There may be several. */
-  sectionTitle: { size: "lg", weight: "font-semibold" },
+  sectionTitle: { size: "lg", weight: "font-bold" },
   /** A grouped-list header — "Account", "Support". Quiet, not a title. */
-  groupHeader: { size: "xs", weight: "font-semibold" },
+  groupHeader: { size: "xs", weight: "font-bold" },
   /** A form field's label. Must never outrank the value the reader types. */
-  fieldLabel: { size: "sm", weight: "font-semibold" },
+  fieldLabel: { size: "sm", weight: "font-bold" },
   /** Helper text under a field label. */
   fieldHint: { size: "sm", weight: "font-normal" },
 } as const;

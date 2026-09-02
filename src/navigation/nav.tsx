@@ -281,7 +281,7 @@ function MainTabs() {
         tabBarAllowFontScaling: false,
         tabBarLabelStyle: {
           fontSize: chromeFontSize.tabLabel,
-          fontFamily: fontFamily.medium,
+          fontFamily: fontFamily.regular,
           marginTop: 2,
         },
         tabBarAccessibilityLabel:
