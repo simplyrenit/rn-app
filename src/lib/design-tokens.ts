@@ -254,7 +254,7 @@ export const radius = {
  */
 export const aspect = {
   /** Product photo on a card — very slightly taller than it is wide. */
-  productImage: 41.5 / 44.5,
+  productImage: 163 / 176, // measured off the Figma product tile (163x250, image 176 tall)
 } as const;
 
 /** Apple's minimum comfortable target. Not a guideline — a floor. */

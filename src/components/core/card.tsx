@@ -90,29 +90,32 @@ export function Card({
             }}
           />
 
-          <View style={{ position: "absolute", top: 4, right: 4 }}>
+          <View style={{ position: "absolute", top: 0, right: 0 }}>
             <FavouriteButton id={id} isFavorite={Boolean(checked)} title={title} />
           </View>
         </View>
 
-        <View style={{ marginTop: 8, gap: 2 }}>
-          {/* The name of the thing leads. It used to fall through to the RN
-              default (~14pt) while the price beside it was 17pt.
+        <View style={{ marginTop: 8 }}>
+          {/* Body Small - Bold at Primary, per the design's tile.
+              This deliberately reverses an earlier call to hold the title at
+              `hi` (70%) to soften a grid of full-white titles on a dark canvas.
+              The redesign sets Primary here, so Primary is what ships; if the
+              glare reads badly on a long grid, `tone="hi"` is the one-word
+              revert and the reason is recorded here.
 
-              `hi` rather than the default: on a dark canvas a full-white title
-              measures 19.6:1, which is glare on a grid of a dozen tiles. */}
+              One line, not two: the design's tile is a fixed 250pt tall, and a
+              wrapping title makes neighbouring grid rows different heights. */}
           <Text
-            numberOfLines={2}
+            numberOfLines={1}
             ellipsizeMode="tail"
-            fontSize="text-md"
-            fontWeight="font-semibold"
-            tone="hi"
+            fontSize="text-sm"
+            fontWeight="font-bold"
           >
             {title}
           </Text>
           {/* Distance is the more useful of the two, so it takes the line when
               we have it and the place name follows it. */}
-          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="body">
+          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="dim">
             {distanceLine ? `${distanceLine} · ${location}` : location}
           </Text>
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
@@ -121,7 +124,7 @@ export function Card({
             </Text>
             {/* Same tone as the location line above it. These two adjacent lines
                 of secondary text used to sit at visibly different weights. */}
-            <Text fontSize="text-sm" tone="body">
+            <Text fontSize="text-sm" tone="dim">
               per day
             </Text>
           </View>

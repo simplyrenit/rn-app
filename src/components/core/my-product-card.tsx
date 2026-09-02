@@ -142,23 +142,26 @@ export function MyProductCard({
           )}
         </View>
 
-        <View style={{ marginTop: 8, gap: 2 }}>
+        {/* Kept identical to Card's text block on purpose: My Listings sits a
+            tap away from Saved, and the two grids read as one system only if the
+            tile below the photo is the same tile. */}
+        <View style={{ marginTop: 8 }}>
           <Text
-            numberOfLines={2}
+            numberOfLines={1}
             ellipsizeMode="tail"
-            fontSize="text-md"
-            fontWeight="font-semibold"
+            fontSize="text-sm"
+            fontWeight="font-bold"
           >
             {title}
           </Text>
-          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="body">
+          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="dim">
             {location}
           </Text>
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
             <Text fontSize="text-md" fontWeight="font-bold">
               {formatCurrency(price)}
             </Text>
-            <Text fontSize="text-sm" tone="body">
+            <Text fontSize="text-sm" tone="dim">
               per day
             </Text>
           </View>
