@@ -13,6 +13,7 @@ import {
 } from "@/components/core";
 import Skeleton from "@/components/core/skeleton";
 import { ReviewCard } from "@/components/product/review-card";
+import { SpecStrip } from "@/components/product/spec-strip";
 import { useGlobalContext } from "@/context/global-context";
 import {
   BackendProduct,
@@ -320,28 +321,16 @@ export default function UsersDetails() {
               ) : null}
             </View>
 
-            <View
-              style={{
-                flexDirection: "row",
-                paddingHorizontal: SCREEN_GUTTER,
-                paddingTop: density.section,
-              }}
-            >
-              {stats.map((stat) => (
-                <View key={stat.key} style={{ flex: 1, alignItems: "center" }}>
-                  {stat.icon}
-                  <Text
-                    fontSize="text-md"
-                    fontWeight="font-bold"
-                    style={{ marginTop: 6 }}
-                  >
-                    {stat.value}
-                  </Text>
-                  <Text fontSize="text-xs" tone="body">
-                    {stat.caption}
-                  </Text>
-                </View>
-              ))}
+            {/* Same three-up strip the product detail and post review use. */}
+            <View style={{ paddingTop: density.section }}>
+              <SpecStrip
+                dividers={false}
+                items={stats.map((stat) => ({
+                  icon: stat.icon,
+                  value: stat.value,
+                  label: stat.caption,
+                }))}
+              />
             </View>
 
             {trustRows.length ? (

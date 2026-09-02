@@ -34,7 +34,15 @@ export interface SpecItem {
  * are the category's own and the condition's own, not stand-ins — which is why
  * `icon` is a caller-supplied node and not a hardcoded set.
  */
-export function SpecStrip({ items }: { items: SpecItem[] }) {
+export function SpecStrip({
+  items,
+  dividers = true,
+}: {
+  items: SpecItem[];
+  /** Hairlines above and below. Off where the screen already rules its own
+   *  sections, as the owner profile does. */
+  dividers?: boolean;
+}) {
   const { color } = useTheme();
   const shown = items.filter((item) => Boolean(item.value));
   if (shown.length === 0) return null;
@@ -47,8 +55,8 @@ export function SpecStrip({ items }: { items: SpecItem[] }) {
         alignItems: "flex-start",
         paddingHorizontal: SCREEN_GUTTER,
         paddingVertical: density.section,
-        borderTopWidth: 1,
-        borderBottomWidth: 1,
+        borderTopWidth: dividers ? 1 : 0,
+        borderBottomWidth: dividers ? 1 : 0,
         borderColor: color.line,
       }}
     >
