@@ -24,7 +24,13 @@ import {
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
-import { BackButton, Button, StaticContainer, Text } from "@/components/core";
+import {
+  BackButton,
+  Button,
+  StaticContainer,
+  Text,
+  useButtonLabelColor,
+} from "@/components/core";
 import AddressChoiceModal from "@/components/modals/AddressChoiceModalProps";
 import { useGlobalContext } from "@/context/global-context";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
@@ -61,6 +67,19 @@ const DEFAULT_MAP_REGION = {
   latitudeDelta: 0.0922,
   longitudeDelta: 0.0421,
 };
+
+/**
+ * The "Confirm location" button's loading spinner. Has to be its own
+ * component rather than inline JSX: `useButtonLabelColor` only picks up the
+ * theme/disabled-aware colour `Button` resolved for itself once this actually
+ * renders as a descendant of that `Button`, not from `LocationModal`'s own
+ * render pass higher up the tree. Was hardcoded to `ink.onBrand()`, which read
+ * as white-on-white-ish once the button's own disabled fill kicked in.
+ */
+function ConfirmLocationSpinner() {
+  const color = useButtonLabelColor();
+  return <ActivityIndicator size="small" color={color} />;
+}
 
 const LocationModal = ({}) => {
   const { height: winH } = useWindowDimensions();
@@ -809,10 +828,7 @@ const LocationModal = ({}) => {
                             className="flex-row justify-center"
                           >
                             {signUpLoading || isFetchingLocation ? (
-                              <ActivityIndicator
-                                size="small"
-                                color={ink.onBrand()}
-                              />
+                              <ConfirmLocationSpinner />
                             ) : (
                               "Confirm location"
                             )}
