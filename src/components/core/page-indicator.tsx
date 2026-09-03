@@ -1,3 +1,4 @@
+import { radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import React from "react";
 import { View } from "react-native";
@@ -64,7 +65,8 @@ export const PageIndicator: React.FC<PageIndicatorProps> = ({
               flex: 1,
               maxWidth: 44,
               height: 4,
-              borderRadius: 4,
+              // A 4pt-tall bar is a pill, not a card corner — radius.full.
+              borderRadius: radius.full,
               overflow: "hidden",
               backgroundColor: color.line,
             }}

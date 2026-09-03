@@ -17,7 +17,6 @@ import {
 } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import DateRangePicker from "@/components/core/date-range-picker";
-import { Dimensions } from "react-native";
 import { useAuthContext } from "@/context/auth-context";
 import { useRoute } from "@react-navigation/native";
 import moment from "moment-timezone";
@@ -27,7 +26,6 @@ import { toast } from "@/lib/toast";
 import { ink, MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
-const { height } = Dimensions.get("window");
 interface UnavailabilityProps {}
 
 const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
@@ -162,7 +160,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
   };
 
   return (
-    <NonScrollableContainer height={height > 700 ? 105 : 100}>
+    <NonScrollableContainer>
       <View
         className="flex-row items-center px-gutter"
         style={{ paddingVertical: SCREEN_GUTTER }}

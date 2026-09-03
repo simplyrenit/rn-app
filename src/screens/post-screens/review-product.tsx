@@ -16,13 +16,11 @@ import {
   BanknotesIcon,
   ShareIcon,
 } from "react-native-heroicons/outline";
-import { Dimensions } from "react-native";
 import useOwner from "@/backend/owner";
 import { useEffect, useState } from "react";
 import { SvgUri } from "react-native-svg";
 import { ink } from "@/lib/design-tokens";
 
-const { height } = Dimensions.get("window");
 
 export default function ReviewProduct() {
   const navigation = useTypedNavigation();
@@ -58,13 +56,11 @@ export default function ReviewProduct() {
   const productCategoryIcon = product.category[isDark ? "darkIcon" : "lightIcon"];
 
   return (
-    <NonScrollableContainer height={height > 700 ? 105 : 100}>
+    <NonScrollableContainer>
       <PostProductHeader heading="Review your post" step={7} showBackArrow />
 
       <ScrollView
-        // className="flex-1"
         contentContainerStyle={{
-          // paddingBottom: hp("10%"),
           flexGrow: 1,
         }}
       >
@@ -126,81 +122,6 @@ export default function ReviewProduct() {
             },
           ]}
         />
-
-        <View
-          className={`px-gutter py-6 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
-            }`}
-        >
-          <View className="flex flex-row items-center justify-between">
-            <Text fontSize="text-xl" fontWeight="font-bold">
-              {product.name}
-            </Text>
-          </View>
-        </View>
-
-        <View
-          className={`px-8 w-full py-8 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
-            } flex flex-row items-center justify-between`}
-        >
-          {/* Custom Category Icon */}
-          <View className="flex items-center">
-            {productCategoryIcon?.slice(-3)?.toLowerCase() === 'svg' ? <SvgUri uri={productCategoryIcon} height={30} width={30} /> : <Image
-              source={{
-                uri: isDark
-                  ? product.category.darkIcon
-                  : product.category.lightIcon,
-              }}
-              className="w-5 h-5"
-            />}
-            <Text fontWeight="font-bold" className="mt-2">
-              {product.category.title}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-subtle-dark" : "text-subtle-light"
-                }`}
-            >
-              Category
-            </Text>
-          </View>
-
-          <View className="flex items-center">
-            <BanknotesIcon
-              color={ink.text(isDark)}
-              size={22}
-            />
-            <Text fontWeight="font-bold" className="mt-2">
-              ₹{product.securityDeposit}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-subtle-dark" : "text-subtle-light"
-                }`}
-            >
-              Deposit
-            </Text>
-          </View>
-
-          {/* Custom Icon */}
-          <View className="flex items-center">
-            {/* <LightBulbIcon
-              color={ink.text(isDark)}
-              size={22}
-            /> */}
-            <ConditionRenderer
-              condition={product.condition}
-              size={22}
-              color={ink.text(isDark)}
-            />
-            <Text fontWeight="font-bold" className="mt-2">
-              {product?.condition?.[0]?.toUpperCase()}{product?.condition?.slice(1)?.toLowerCase()}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-subtle-dark" : "text-subtle-light"
-                }`}
-            >
-              Condition
-            </Text>
-          </View>
-        </View>
 
         <View
           className={`px-gutter py-6 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
@@ -278,12 +199,12 @@ export default function ReviewProduct() {
           className="bg-brand flex items-center justify-center rounded-button w-1/2 p-3"
         >
           {loading ? (
-            <ActivityIndicator size="small" color="white" />
+            <ActivityIndicator size="small" color={ink.onBrand()} />
           ) : (
             <Text
               fontWeight="font-bold"
               fontSize="text-base"
-              className="text-white"
+              tone="onBrand"
             >
               Post product
             </Text>

@@ -6,13 +6,12 @@ import { useProductContext } from "@/context/product-context";
 import { DarkIcon, LightIcon } from "@/icons/logo";
 import { useTypedNavigation } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, Easing, View } from "react-native";
+import { Animated, Easing, View } from "react-native";
 
 import { successFeedback } from "@/lib/haptics";
 import { toast } from "@/lib/toast";
-import { ink } from "@/lib/design-tokens";
+import { ink, radius } from "@/lib/design-tokens";
 
-const { height } = Dimensions.get("window");
 
 /**
  * `postProduct()` resolves once at the end of a multi-step upload — it has no
@@ -77,7 +76,9 @@ function UploadSpinner({ color }: { color: string }) {
       style={{
         width: 28,
         height: 28,
-        borderRadius: 14,
+        // 28x28, so this is a circle, not a card corner — radius.full, not a
+        // bare half-width literal.
+        borderRadius: radius.full,
         borderWidth: 3,
         borderColor: color,
         borderTopColor: "transparent",
@@ -136,7 +137,7 @@ export default function HangTight() {
   }, []);
 
   return (
-    <NonScrollableContainer height={height > 700 ? 105 : 100}>
+    <NonScrollableContainer>
       <View className="flex-1 items-center justify-center">
         {isDark ? (
           <DarkIcon size={60} color={ink.dim(true)} />

@@ -28,12 +28,10 @@ import { FlatList, Pressable, TouchableOpacity, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { AdjustmentsVerticalIcon } from "react-native-heroicons/outline";
 import { useSearch } from "@/backend/search";
-import { Dimensions } from "react-native";
 import { Disclaimer } from "@/components/home/disclaimer";
 import { SCREEN_GUTTER, colors, density, ink, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
-const { height } = Dimensions.get("window");
 
 const StyledBottomView = styled(BottomSheetView);
 
@@ -341,7 +339,7 @@ export default function SearchResults() {
   }, [category, fetchedProducts.length]);
 
   return (
-    <NonScrollableContainer height={height > 700 ? 105 : 100}>
+    <NonScrollableContainer>
       <View className="w-[90%] mx-auto flex-1">
         {/* Header */}
         <Pressable

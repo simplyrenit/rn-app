@@ -20,13 +20,11 @@ import { useGlobalContext } from "@/context/global-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useProfile } from "@/backend/profile";
 import { useFocusEffect } from "@react-navigation/native";
-import { Dimensions } from "react-native";
 
 import { useGetMyDetails } from "@/services/userQueries";
 import { MIN_TOUCH_TARGET, ink } from "@/lib/design-tokens";
 import { toast } from "@/lib/toast";
 
-const { height } = Dimensions.get("window");
 
 const EditProductScreen: React.FC = () => {
   const route = useRoute<RouteProps<"editProduct">>();
@@ -63,7 +61,7 @@ const EditProductScreen: React.FC = () => {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <NonScrollableContainer height={height > 700 ? 105 : 100}>
+      <NonScrollableContainer>
         <View className="flex-row items-center justify-between px-gutter py-2 pt-4">
           <View style={{ width: MIN_TOUCH_TARGET }}>
             <BackButton onPress={() => router.goBack()} />
@@ -126,8 +124,8 @@ const EditProductScreen: React.FC = () => {
                     <TouchableOpacity
                       onPress={openBottomSheet}
                       className={`flex-row justify-center space-x-1 items-center border rounded-group h-11 mt-2 ${isDarkMode
-                        ? "border-line-dark text-white bg-surface-dark"
-                        : "border-line-light text-black bg-surface-light"
+                        ? "border-line-dark bg-surface-dark"
+                        : "border-line-light bg-surface-light"
                         }`}
                     >
                       <TrashIcon
@@ -249,8 +247,8 @@ const EditProductScreen: React.FC = () => {
           <TouchableOpacity
             onPress={() => bottomSheetRef.current?.close()}
             className={`border rounded-card flex-1 items-center justify-center p-3  ${isDarkMode
-              ? "border-line-dark text-white bg-surface-dark"
-              : "border-line-light text-black bg-surface-light"
+              ? "border-line-dark bg-surface-dark"
+              : "border-line-light bg-surface-light"
               }`}
           >
             <Text
@@ -269,7 +267,10 @@ const EditProductScreen: React.FC = () => {
             className="bg-danger-light p-3 rounded-card flex-1  flex-row items-center justify-center"
           >
             {loading ? (
-              <ActivityIndicator size="small" color="white" />
+              // No `onDanger` token exists yet; `onBrand` is the nearest
+              // available (theme-invariant white), same as the label it
+              // stands in for below.
+              <ActivityIndicator size="small" color={ink.onBrand()} />
             ) : (
               <Text
                 fontWeight="font-bold"

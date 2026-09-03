@@ -21,7 +21,6 @@ import { MIN_TOUCH_TARGET, SCREEN_GUTTER, colors, density } from "@/lib/design-t
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 
-const { height } = Dimensions.get("window");
 
 const GRID_GAP = 14;
 
@@ -132,7 +131,7 @@ const MyProductScreen: React.FC = () => {
   }
 
   return (
-    <NonScrollableContainer height={height > 700 ? 105 : 100}>
+    <NonScrollableContainer>
       {header}
 
       <FlatList

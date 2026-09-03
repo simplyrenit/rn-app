@@ -4,11 +4,10 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
-import { Dimensions, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/outline";
 import { ink, colors, MIN_TOUCH_TARGET, density } from "@/lib/design-tokens";
 
-const { height } = Dimensions.get("window");
 
 interface FAQProps {}
 
@@ -84,7 +83,7 @@ Review your listing carefully, then publish it to make it live.`,
   ];
 
   return (
-    <NonScrollableContainer height={height > 700 ? 105 : 100}>
+    <NonScrollableContainer>
       <View className="flex-row items-center px-gutter pb-2 pt-2">
         <BackButton />
         <View className="flex-1 items-center justify-center">

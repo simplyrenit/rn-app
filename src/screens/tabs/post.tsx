@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgUri } from "react-native-svg";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import { useTheme } from "@/lib/theme";
-import { ink, radius } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, ink, radius } from "@/lib/design-tokens";
 
 export default function Post() {
   const { saveDetails } = useProductContext();
@@ -166,7 +166,6 @@ export default function Post() {
                     }} />
                   </View>
               }
-              <View className="w-[10%]"></View>
             </View>
 
             {categories.length ?
@@ -176,7 +175,7 @@ export default function Post() {
                 renderItem={renderItem}
                 keyExtractor={(item) => item.title}
                 contentContainerStyle={{
-                  paddingHorizontal: 24,
+                  paddingHorizontal: SCREEN_GUTTER,
                   // Clear the floating bottom tab bar so the last category is
                   // fully visible and scrollable. iOS only: Android's tab bar
                   // does not overlap the list.
