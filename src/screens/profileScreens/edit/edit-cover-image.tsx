@@ -35,6 +35,7 @@ export default function EditCoverImage() {
     <NonScrollableContainer>
       <EditStepHeader title="Edit Cover Image" />
       <CoverImagePicker
+        reserveBottomInset
         images={images}
         initialCoverImage={coverImage}
         onSubmit={handleSubmit}

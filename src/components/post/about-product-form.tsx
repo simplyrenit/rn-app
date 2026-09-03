@@ -723,8 +723,21 @@ export function AboutProductForm({
                         onPress={onOpen}
                         accessibilityRole="button"
                         accessibilityLabel="Change country dialling code"
+                        // The chevron is the affordance people aim at, so it
+                        // belongs inside the target rather than beside it: it
+                        // used to sit outside this Pressable as a sibling, so
+                        // tapping it did nothing and the only live target was
+                        // 16pt of flag, well under the 44pt floor.
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: space.xs,
+                          minHeight: MIN_TOUCH_TARGET,
+                          minWidth: MIN_TOUCH_TARGET,
+                        }}
                       >
                         <Flag countryCode={country.cca2} flagSize={16} />
+                        <ChevronDownIcon size={16} color={color.text} />
                       </Pressable>
                     )}
                     countryCode={country.cca2}
@@ -735,7 +748,6 @@ export function AboutProductForm({
                       });
                     }}
                   />
-                  <ChevronDownIcon size={16} color={color.text} />
                 </FieldShell>
 
                 <FieldShell focused={phoneFocus} style={{ flex: 1 }}>

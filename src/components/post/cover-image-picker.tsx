@@ -1,4 +1,5 @@
 import { Button, Text, useButtonLabelColor } from "@/components/core";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useGlobalContext } from "@/context/global-context";
 import { ink } from "@/lib/design-tokens";
 import { ProductImage } from "@/lib/types";
@@ -64,6 +65,18 @@ interface CoverImagePickerProps {
    * second `updateProductImages` call.
    */
   loading?: boolean;
+  /**
+   * Reserve the home-indicator inset under the pinned submit control.
+   *
+   * Opt-in rather than automatic because the two callers sit in different
+   * containers: the post flow's `StaticContainer` wraps a bare `SafeAreaView`
+   * that has already reserved the bottom edge, while the edit flow's
+   * `NonScrollableContainer` sets `edges={["top","left","right"]}` and so
+   * reserves nothing there. Adding the inset unconditionally would double it
+   * on the post flow. `ProductImageGrid` needs no such prop because it owns
+   * its own container.
+   */
+  reserveBottomInset?: boolean;
 }
 
 /**
@@ -84,7 +97,9 @@ export function CoverImagePicker({
   submitLabel = "Next",
   showSubmitChevron = true,
   loading = false,
+  reserveBottomInset = false,
 }: CoverImagePickerProps) {
+  const insets = useSafeAreaInsets();
   const { theme } = useGlobalContext();
   const isDark = theme === "dark";
   // The previous screen can remove images from the selection (edit-product-images
@@ -229,7 +244,10 @@ export function CoverImagePicker({
           </View>
         </StyledView>
       </ScrollView>
-      <View className="pb-2 px-3">
+      <View
+        className="px-3"
+        style={{ paddingBottom: 8 + (reserveBottomInset ? insets.bottom : 0) }}
+      >
         <Button
           onPress={handleSubmit}
           disabled={!croppedImage}

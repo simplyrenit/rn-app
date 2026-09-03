@@ -26,9 +26,9 @@ import { SvgUri } from "react-native-svg";
  * chevron on a row that pushes a screen.
  *
  * Row geometry (`py-4`, `space-x-5`) is carried over verbatim rather than
- * re-derived from the spacing scale: the Post tab draws the parent half of this
- * same taxonomy and is owned elsewhere, so the two halves have to keep matching
- * until it adopts this component too.
+ * re-derived from the spacing scale, so that the geometry change and the
+ * consolidation stay separable — all four callers now render from here, so the
+ * scale can be applied in one edit whenever the design settles it.
  */
 
 /**

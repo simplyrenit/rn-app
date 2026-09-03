@@ -1,5 +1,5 @@
 import { usePost } from "@/backend/post";
-import { Text } from "@/components/core";
+import { Button, Text } from "@/components/core";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
 import { SpecStrip } from "@/components/product/spec-strip";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -11,11 +11,8 @@ import { useGlobalContext } from "@/context/global-context";
 import { useProductContext } from "@/context/product-context";
 import { BackendProduct, PublicOwner, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
-import {
-  BanknotesIcon,
-  ShareIcon,
-} from "react-native-heroicons/outline";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import { BanknotesIcon } from "react-native-heroicons/outline";
 import useOwner from "@/backend/owner";
 import { useEffect, useState } from "react";
 import { SvgUri } from "react-native-svg";
@@ -194,22 +191,17 @@ export default function ReviewProduct() {
           </Text>
           <Text fontSize="text-md" className="my-1">per day</Text>
         </View>
-        <TouchableOpacity
+        {/* The primitive, not a hand-rolled TouchableOpacity: this CTA had no
+            disabled treatment at all, so it stayed pressable through its own
+            submit. `Button` blocks the press while `loading` and resolves a
+            label colour that survives both themes. */}
+        <Button
+          className="w-1/2"
           onPress={handlePostProduct}
-          className="bg-brand flex items-center justify-center rounded-button w-1/2 p-3"
+          loading={loading}
         >
-          {loading ? (
-            <ActivityIndicator size="small" color={ink.onBrand()} />
-          ) : (
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-base"
-              tone="onBrand"
-            >
-              Post product
-            </Text>
-          )}
-        </TouchableOpacity>
+          Post product
+        </Button>
       </View>
     </NonScrollableContainer>
   );
