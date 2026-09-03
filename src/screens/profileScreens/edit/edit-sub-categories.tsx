@@ -1,31 +1,32 @@
 import { useProfile } from "@/backend/profile";
-import { Text, Button } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { useGlobalContext } from "@/context/global-context";
+import { EditStepHeader } from "@/components/post/edit-step-header";
+import { TaxonomyList } from "@/components/post/taxonomy-list";
+import { toast } from "@/lib/toast";
 import { RouteProps, Subcategory, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
-import { Image } from "expo-image";
-import { ActivityIndicator, FlatList, TouchableOpacity, View } from "react-native";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from "react-native-heroicons/outline";
+import React, { useState } from "react";
+import { View } from "react-native";
 
-import { toast } from "@/lib/toast";
-import { ink } from "@/lib/design-tokens";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-
+/**
+ * Re-filing an existing product under a different subcategory. The list is
+ * shared with step 2 of the listing flow; this adapter owns the PATCH.
+ */
 export default function EditSubCategories() {
   const route = useRoute<RouteProps<"EditSubCategories">>();
   const navigation = useTypedNavigation();
-  const { theme } = useGlobalContext();
   const { name, category, subcategories } = route.params;
-  const { updateMyProductDetails, loading } = useProfile();
-  const insets = useSafeAreaInsets();
+  const { updateMyProductDetails } = useProfile();
+  // Which row is saving. `useProfile`'s own `loading` is shared by every call
+  // the hook exposes, so it cannot say *which* subcategory is in flight.
+  const [savingTitle, setSavingTitle] = useState<string | null>(null);
 
-  const onPress = async (subcategory: Subcategory) => {
+  const onSelect = async (subcategory: Subcategory) => {
+    if (savingTitle) return;
+    setSavingTitle(subcategory.title);
+
     try {
-      const response = await updateMyProductDetails(name, {
+      await updateMyProductDetails(name, {
         category: {
           parent: category,
           title: subcategory.title,
@@ -36,79 +37,25 @@ export default function EditSubCategories() {
       navigation.navigate("editProduct", { id: name });
     } catch (error) {
       console.error("Failed to update product details:", error);
+      // Selecting a row is the whole screen; a failure that only reached the
+      // console left the customer tapping a row that appeared to do nothing.
+      toast.error("We could not change the category. Please try again.");
+    } finally {
+      setSavingTitle(null);
     }
   };
-
-  const renderItem = ({ item: category }: { item: Subcategory }) => (
-    <TouchableOpacity
-      className="flex-row justify-between items-center py-4"
-      onPress={() => onPress(category)}
-    >
-      <View className="flex-row items-center space-x-5">
-        <Image
-          source={{
-            uri:
-              theme === "dark"
-                ? category.dark_icon || ""
-                : category.light_icon || "",
-          }}
-          style={{ width: 20, height: 20 }}
-        />
-        <Text fontSize="text-base">
-          {category.title}
-        </Text>
-      </View>
-      {/* Insert Tick Mark Icon here for the SubCategory theyve chosen */}
-    </TouchableOpacity>
-  );
 
   return (
     <NonScrollableContainer>
       <View style={{ flex: 1 }}>
-        <View className="h-24 items-center justify-center">
-          <Text fontSize="text-lg" fontWeight="font-bold">
-            Edit Sub Category
-          </Text>
-        </View>
+        <EditStepHeader title="Edit Sub Category" />
 
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className={`flex-row items-center py-4 border-b px-gutter  ${theme === "dark" ? "border-b-line-dark" : "border-b-line-light"
-            }`}
-        >
-          <View className="mt-1 pr-1 ">
-            <ChevronLeftIcon
-              className=""
-              size={24}
-              color={ink.text(theme === "dark")}
-            />
-          </View>
-          <Text fontWeight="font-bold" fontSize="text-md">
-            {category}
-          </Text>
-        </TouchableOpacity>
-
-        <FlatList
-          data={subcategories}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.title}
-          contentContainerStyle={{
-            paddingHorizontal: 24,
-            // Clear the floating bottom tab bar so the last row is fully
-            // visible and scrollable. iOS only: Android's tab bar does not
-            // overlap the list.
-            paddingBottom: insets.bottom,
-          }}
-          showsVerticalScrollIndicator={false}
+        <TaxonomyList
+          items={subcategories}
+          onSelect={onSelect}
+          contextLabel={`In ${category}`}
+          busyTitle={savingTitle}
         />
-
-        {/* <Button onPress={onPress}>
-          {loading ? (
-                <ActivityIndicator size="small" color="white" />
-          ) : (
-            <Text fontWeight="font-bold">Update Category and Subcategory</Text>
-          )}
-        </Button> */}
       </View>
     </NonScrollableContainer>
   );
