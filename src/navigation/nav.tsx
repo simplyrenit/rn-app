@@ -322,6 +322,10 @@ function MainTabs() {
                 {...(route.name === "Home" && focused
                   ? { edge: color.canvas }
                   : null)}
+                // The active Post tab is a solid square with the plus knocked out.
+                {...(route.name === "Post" && focused
+                  ? { filled: true, edge: color.canvas }
+                  : null)}
               />
               {showBadge ? (
                 <View

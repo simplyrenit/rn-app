@@ -251,3 +251,29 @@ there.
 Not done: **Notifications** (`1:18332`) is not restyled: opening the screen calls
 `markAllAsRead` on the signed-in account, which changes real data. It needs an
 `AGENT_QA_<run-id>` account or a read-only capture path first.
+
+## Post flow, step 1 "Choose a category" — audited 2026-09-20
+
+Figma light `1:13231` (section `1:13230`; frames `1:13231` category, `1:13333` sub-category,
+`1:13455`/`1:13548` form, `1:13650` upload, `1:13673` images, `1:13698` cover, `1:13729`/
+`1:13817`/`1:13908` availability, `1:14002` review, `1:14083`/`1:14210` My products) · app
+`src/screens/post-screens/*`, `src/screens/tabs/post.tsx`.
+
+Fixed now: the tab bar's **active Post glyph** is a solid rounded square with the plus knocked
+out, as the frame draws it (it was the outline square in both states): `PlusSquareIcon` gains
+opt-in `filled` and `edge`.
+
+Not restyled: the wizard differs from the frames in **content and flow**, not only pixels.
+
+| Element | App | Figma |
+| --- | --- | --- |
+| Header | Centred title, "Step 1 of 7", an X at the right | Back arrow at the left, centred title, no step caption |
+| Progress | Seven segments | Five segments |
+| Category list | Curated order (Automobiles, Appliances, Machines, Books, …), the app's own outline glyphs, 9 categories | Alphabetical, its own glyph set (books, gamepad, robot, forklift, guitar, building), 11 categories including "Emerging" and "Real Estate" |
+| Row copy | "Arts & crafts", "Musical instruments" | "Arts & Crafts", "Musicals" |
+
+Decisions needed before anyone restyles it: (1) is the wizard five steps or seven (the frames
+show five; the app has seven screens), (2) is the category list the design's (alphabetical,
+with "Emerging" and "Real Estate", "Musicals") or the app's, since it drives the backend
+category names, (3) where do the design's category glyphs come from (they are illustrations,
+not heroicons; no asset exists in the repo).
