@@ -1,17 +1,16 @@
-import { BackButton, Text } from "@/components/core";
+import { SubpageHeader, Text } from "@/components/core";
 import Accordion from "@/components/core/accordion";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
 import { ScrollView, View } from "react-native";
 import { ChevronRightIcon as ChevronRightMini } from "react-native-heroicons/mini";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
 // Measured off the Figma FAQs frame: the back control sits 16 from the edge, the
 // content is padded 24 with 16 between the intro, the list and the footer, and the
 // questions are 8 apart.
-const HEADER_INSET = 16;
 const BLOCK_GAP = 16;
 const ROW_GAP = 8;
 
@@ -90,26 +89,7 @@ Review your listing carefully, then publish it to make it live.`,
 
   return (
     <NonScrollableContainer>
-      {/* The frame's header: a 44pt row, the title centred at 18 bold and the back
-          control 16 from the edge (not the 24 gutter the content uses). */}
-      <View
-        style={{
-          height: MIN_TOUCH_TARGET,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Text
-          accessibilityRole="header"
-          fontSize="text-base"
-          fontWeight="font-bold"
-        >
-          FAQs
-        </Text>
-        <View style={{ position: "absolute", left: HEADER_INSET, top: 0 }}>
-          <BackButton />
-        </View>
-      </View>
+      <SubpageHeader title="FAQs" />
 
       <ScrollView
         style={{ flex: 1 }}

@@ -375,3 +375,27 @@ Kept from the app, not the frame: the addresses (`support@simplyrenit.com` again
 `support@renit.co.in`; the phone number is the same) and the frame's unused first-frame
 profile row ("Tejas Hinduja … Edit"), which sits off the visible canvas and is not part of the
 screen.
+
+## Who we are, Terms & Conditions, Privacy Policy (light) — 2026-09-20
+
+Figma light `1:11932`, `1:11963`, `1:11981` (dark `1:11511`, `1:11542`, `1:11560`, not compared) ·
+app `src/screens/profileScreens/who-we-are.tsx`, `src/screens/terms.tsx`, `src/screens/privacy.tsx`,
+new `src/components/core/subpage-header.tsx` (also now used by FAQs and Contact Us) · captures
+`design/app/{whoweare,terms,privacy}.light.iphone16e.png`, side by side in `design/app/*.compare.light.png`.
+
+Changed: all three take the shared sub-page header (a 44pt row, 18 bold title, the back control 16
+from the edge; Terms and Privacy had a bare 26pt arrow with no hit target, a 20pt title and 10%/80%
+width columns). Who we are: the copy is body text (16/24) in the secondary tone, the FAQs block
+follows it with the heading over a 44pt outline button, and it is no longer pinned to the bottom of
+the screen. Terms and Privacy: the text sits on the 24 gutter (it was 16), is 14/21 (the app's default
+line height was 27), the effective date is bold not italic, and the blocks are 20 apart.
+
+Result (light, 2× grid): Who we are matches the frame line for line (0px, every text run and the
+FAQs heading and button). Terms and Privacy: every line lands within 1–2px of the frame's line
+pitch (42px), first lines within 1px; the block gaps differ by ~1.5pt where the frame's paragraphs
+carry blank lines.
+
+**Copy is not copied.** The frames show an older legal text (Terms "Effective Date: 16/06/2023",
+"Mobile Application"; the app's is the current "Last updated: 10/11/2024" text that says
+"Platform"), and the Who we are copy differs in a phrase. Legal wording is a product and legal call,
+so only layout was matched. Not verified: dark for all three.

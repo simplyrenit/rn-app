@@ -1,100 +1,96 @@
-import { BackButton, Text } from "@/components/core";
+import { SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { useGlobalContext } from "@/context/global-context";
+import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
-import { TouchableOpacity, View } from "react-native";
-import {
-  ChevronRightIcon,
-  QuestionMarkCircleIcon,
-} from "react-native-heroicons/outline";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { ink, MIN_TOUCH_TARGET, space } from "@/lib/design-tokens";
+import React from "react";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import { ChevronRightIcon } from "react-native-heroicons/mini";
+import { QuestionMarkCircleIcon } from "react-native-heroicons/outline";
 
-interface WhoWeAreProps {}
+// Measured off the Figma Who we are frame: the content is padded 24, the copy is
+// body text (16/24) in the secondary tone, and the FAQs block follows it with a
+// 16pt gap between its heading and its 44pt outline button.
+const SECTION_GAP = 48;
+// The frame sits its first heading 28 below the header, 4 more than the 24 gutter.
+const TOP_INSET = 28;
+const BLOCK_GAP = 16;
+const HEADING_GAP = 8;
+const GLYPH = 24;
+const BUTTON_HEIGHT = 44;
+// The design draws the button at radius 12; `radius.button` is 11.
+const BUTTON_RADIUS = 12;
 
-const WhoWeAreScreen: React.FC<WhoWeAreProps> = () => {
-  const { theme } = useGlobalContext();
-
-  const isDarkMode = theme === "dark";
+const WhoWeAreScreen: React.FC = () => {
+  const { color, shadow } = useTheme();
   const router = useTypedNavigation();
 
   return (
     <NonScrollableContainer>
-      <View className="flex-row items-center px-gutter pb-2 pt-2">
-        <BackButton />
-        <View className="flex-1 items-center justify-center">
-          <Text role="sectionTitle" fontWeight="font-bold">
-            Who we are
-          </Text>
-        </View>
-        <View style={{ width: MIN_TOUCH_TARGET }} />
-      </View>
+      <SubpageHeader title="Who we are" />
 
-      <KeyboardAwareScrollView className="px-gutter pb-5 pt-2 flex-1">
-        <Text
-          fontSize="text-base"
-          fontWeight="font-bold"
-          style={{ paddingVertical: space.sm }}
-        >
-          What is Renit?
-        </Text>
-        <Text
-          lineHeight={23}
-          fontSize="text-base"
-          className={`leading-6 ${
-            isDarkMode ? "text-muted-dark" : "text-muted-light"
-          }`}
-        >
-          Renit is a community that enables everyone to get
-          access to anything by providing everyone with the most seamless rental
-          marketplace. A place where anyone can ‘rent out’ their belongings to
-          others or ‘rent in’ anything they need. What really drives us at Renit
-          is our simple yet profound vision to enable everyone around the world
-          to access anything; fostering a world of shared abundance.
-        </Text>
-      </KeyboardAwareScrollView>
-      <View
-        style={{ paddingVertical: space.xl }}
-        className="px-gutter flex-1 justify-end py-0 "
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: SCREEN_GUTTER,
+          paddingTop: TOP_INSET,
+          gap: SECTION_GAP,
+          paddingBottom: density.listFooterCompact,
+        }}
       >
-        <View className="flex-row space-x-2 items-center">
-          <QuestionMarkCircleIcon
-            size={24}
-            color={ink.text(isDarkMode)}
-          />
-          <Text
-            fontSize="text-base"
-            fontWeight="font-bold"
-          >
-            FAQs
+        <View style={{ gap: HEADING_GAP }}>
+          <Text accessibilityRole="header" fontSize="text-md" fontWeight="font-bold">
+            What is Renit?
+          </Text>
+          <Text fontSize="text-md" tone="body">
+            Renit is a community that enables everyone to get access to anything by
+            providing everyone with the most seamless rental marketplace. A place
+            where anyone can ‘rent out’ their belongings to others or ‘rent in’
+            anything they need. What really drives us at Renit is our simple yet
+            profound vision to enable everyone around the world to access anything;
+            fostering a world of shared abundance.
           </Text>
         </View>
-        <View className="py-4">
-          <TouchableOpacity
-            onPress={() => {
-              router.navigate("faq");
-            }}
-            className={`flex-row h-12 rounded-card border ${
-              isDarkMode
-                ? "bg-surface-dark border-line-dark"
-                : "bg-surface-light border-line-light"
-            } items-center justify-center`}
+
+        <View style={{ gap: BLOCK_GAP }}>
+          <View
+            style={{ flexDirection: "row", alignItems: "center", gap: HEADING_GAP }}
           >
+            <QuestionMarkCircleIcon size={GLYPH} color={color.text} />
             <Text
-              className="px-2"
-              fontSize="text-sm"
+              accessibilityRole="header"
+              fontSize="text-md"
               fontWeight="font-bold"
             >
+              FAQs
+            </Text>
+          </View>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Check all FAQs"
+            onPress={() => router.navigate("faq")}
+            style={[
+              {
+                height: BUTTON_HEIGHT,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 4,
+                borderRadius: BUTTON_RADIUS,
+                borderWidth: 1,
+                borderColor: color.line,
+                backgroundColor: color.surface,
+              },
+              shadow,
+            ]}
+          >
+            <Text fontSize="text-sm" fontWeight="font-bold">
               Check all FAQs
             </Text>
-            <ChevronRightIcon
-              size={20}
-              strokeWidth={2}
-              color={ink.text(isDarkMode)}
-            />
+            <ChevronRightIcon size={GLYPH} color={color.text} />
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     </NonScrollableContainer>
   );
 };

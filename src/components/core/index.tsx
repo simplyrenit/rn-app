@@ -1,5 +1,6 @@
 export * from "./avatar";
 export * from "./back-button";
+export * from "./subpage-header";
 export * from "./button";
 export * from "./card";
 export * from "./container";

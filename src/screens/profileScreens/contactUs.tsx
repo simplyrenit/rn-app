@@ -1,6 +1,6 @@
-import { BackButton, Text } from "@/components/core";
+import { SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
@@ -12,10 +12,8 @@ import {
   PhoneIcon,
 } from "react-native-heroicons/outline";
 
-// Measured off the Figma Contact Us frame: the back control sits 16 from the edge,
-// each block is padded 32 top and bottom and 24 at the sides with 16 between its
+// Measured off the Figma Contact Us frame: each block is padded 32 top and bottom and 24 at the sides with 16 between its
 // heading and its 44pt button, and a hairline closes each one.
-const HEADER_INSET = 16;
 const BLOCK_PAD_V = 32;
 const BLOCK_GAP = 16;
 const HEADING_GAP = 8;
@@ -97,25 +95,7 @@ const ContactUsScreen: React.FC = () => {
 
   return (
     <NonScrollableContainer>
-      {/* The frame's header: a 44pt row, the title centred at 18 bold. */}
-      <View
-        style={{
-          height: MIN_TOUCH_TARGET,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Text
-          accessibilityRole="header"
-          fontSize="text-base"
-          fontWeight="font-bold"
-        >
-          Contact Us
-        </Text>
-        <View style={{ position: "absolute", left: HEADER_INSET, top: 0 }}>
-          <BackButton />
-        </View>
-      </View>
+      <SubpageHeader title="Contact Us" />
 
       {/* The frame leaves 4pt between the header and the first block. */}
       <ScrollView style={{ marginTop: 4 }}>
