@@ -1,3 +1,4 @@
+import useSaved from "@/backend/useSaved";
 import { pluralize } from "@/lib/pluralize";
 import {
   BackButton,
@@ -112,7 +113,8 @@ const formatDate = (date: string | undefined) => {
 const COUNT_DEBOUNCE_MS = 350;
 
 // Measured off the Figma results frame: a 64pt search bar with 16 above and below it,
-// a 21pt count 24 under the bar, then a two-column grid of the Home tile with 16
+// a 21pt count 24 below the frame's topbar (the bar's 16 bottom inset plus this 24 is 40
+// from the bar to the count: margins do not collapse), then a two-column grid of the Home tile with 16
 // between columns and 24 between rows. A column is half of what the gutters and the
 // gap leave, so it is 163 on the 390pt frame and shrinks on a narrower phone.
 const SUMMARY_HEIGHT = 64;
@@ -121,11 +123,19 @@ const RESULTS_GAP = 24;
 const COLUMN_GAP = 16;
 
 /** Two rows of the same grid the results use, while the first search runs. */
-function ResultsSkeleton() {
+function ResultsSkeleton({ width }: { width: number }) {
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 8 }}>
+    // The real grid's columns and gaps, so the cross-fade lands without a jump.
+    <View
+      style={{
+        flexDirection: "row",
+        flexWrap: "wrap",
+        columnGap: COLUMN_GAP,
+        rowGap: RESULTS_GAP,
+      }}
+    >
       {[0, 1, 2, 3].map((key) => (
-        <ProductCardSkeleton key={key} width="48.5%" />
+        <ProductCardSkeleton key={key} width={width} />
       ))}
     </View>
   );
@@ -138,6 +148,7 @@ export default function SearchResults() {
   const { theme, categories } = useGlobalContext();
   const isDark = theme === "dark";
   const { color, shadow } = useTheme();
+  const { favorites } = useSaved();
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = Math.floor(
     (screenWidth - 2 * SCREEN_GUTTER - COLUMN_GAP) / 2
@@ -542,7 +553,7 @@ export default function SearchResults() {
           // No alignItems here: centring the content container makes each row
           // shrink-wrap its children instead of filling the list, so the cards'
           // "48.5%" resolved against a collapsed row and came out tiny.
-          // columnWrapperStyle's space-between does the real work.
+          // columnWrapperStyle's gap does the real work.
           contentContainerStyle={{
             paddingBottom: density.listFooter,
             flexGrow: 1,
@@ -557,6 +568,7 @@ export default function SearchResults() {
               location={item.location}
               price={item.rate}
               width={cardWidth}
+              isFavorite={favorites.some((fav) => fav.name === item.name)}
               tile
               // "How far away is it?" is the first question in peer-to-peer
               // rental, and the results grid was the one place it was missing.
@@ -567,7 +579,7 @@ export default function SearchResults() {
           // can cross-fade into whichever one arrives. The list itself stays
           // mounted, which keeps it the thing that owns scrolling.
           ListEmptyComponent={
-            <CrossFade loading={isLoading} placeholder={<ResultsSkeleton />}>
+            <CrossFade loading={isLoading} placeholder={<ResultsSkeleton width={cardWidth} />}>
               <View>
                 <EmptyState
                   compact

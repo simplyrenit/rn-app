@@ -26,6 +26,8 @@ interface ReviewCardProps {
    * control opens the full list instead of expanding in place.
    */
   onShowMore?: () => void;
+  /** What VoiceOver says the control opens. Defaults to the listing's reviews. */
+  showMoreHint?: string;
 }
 
 const PREVIEW_CHARS = 140;
@@ -43,6 +45,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
   size,
   variant = "default",
   onShowMore,
+  showMoreHint = "Opens every review for this listing",
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const { color, shadow } = useTheme();
@@ -85,7 +88,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
           control="underline"
           onPress={onShowMore}
           accessibilityHint={
-            onShowMore ? "Opens every review for this listing" : undefined
+            onShowMore ? showMoreHint : undefined
           }
         />
       ) : (

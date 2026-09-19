@@ -77,6 +77,16 @@ that I have found yet (Figma's Saved is the signed-in "Wishlist").
 
 ## Open decisions
 
+Third review (`renit-build-reviewer`, 2026-09-20), fixed in the commit after `04a8d4f`: the owner
+screen's back arrow was dead at scroll 0 (a pinned copy of the header swallowed the tap;
+reproduced on the simulator, then fixed with `pointerEvents` and re-checked); Search results now
+shows saved listings' hearts as saved; the results and owner loading skeletons mirror their real
+layouts; the review card's VoiceOver hint is a prop so the owner screen no longer says
+"listing"; stale comments updated. Still open from that review: the WCAG control-edge ruling for
+hairline-bordered controls (Logout, the results filter button, the owner buttons); the fixed 44pt
+header boxes at very large Dynamic Type; a numeric-`snapPoints` keyboard path in the shared sheet;
+consolidating the tile-width formula.
+
 Second review (`renit-build-reviewer`, 2026-09-20) fixed in the commit after `9c74a3f`: Saved's
 columns are now computed from the window (163 on the 390pt frame, narrower on a smaller
 phone) instead of a fixed 163 that clipped the right card on an iPhone SE; `ProductMap` is

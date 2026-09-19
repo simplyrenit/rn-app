@@ -123,7 +123,13 @@ function OwnerHeader({ interactive }: { interactive: boolean }) {
   const navigation = useTypedNavigation();
 
   return (
-    <View style={{ height: HEADER_HEIGHT, justifyContent: "center" }}>
+    // box-none, and the title none: the pinned copy of this header sits over the
+    // scrolled copy's arrow at rest, and a plain View here swallowed the tap
+    // (iOS hit-tests ignore opacity), so back was dead until the page was scrolled.
+    <View
+      pointerEvents="box-none"
+      style={{ height: HEADER_HEIGHT, justifyContent: "center" }}
+    >
       <Text
         accessibilityRole="header"
         fontSize="text-lg"
@@ -131,6 +137,7 @@ function OwnerHeader({ interactive }: { interactive: boolean }) {
         numberOfLines={1}
         style={{
           textAlign: "center",
+          pointerEvents: "none",
           // Reserve the arrow's box on both sides so a long title never runs
           // under it.
           paddingHorizontal: HEADER_INSET + MIN_TOUCH_TARGET,
@@ -619,6 +626,7 @@ export default function UsersDetails() {
                         reviewDate={item.created_at}
                         reviewerImage={item.reviewer.image}
                         onShowMore={openAllReviews}
+                      showMoreHint="Opens every review for this owner"
                       />
                     </View>
                   ))}
@@ -655,26 +663,28 @@ export default function UsersDetails() {
 function OwnerSkeleton() {
   return (
     <View style={{ paddingTop: PROFILE_GAP, gap: PROFILE_GAP }}>
-      <View style={{ alignItems: "center", gap: NAME_GAP }}>
-        <Skeleton
-          width={AVATAR_SIZE}
-          height={AVATAR_SIZE}
-          borderRadius={radius.full}
-        />
-        <Skeleton width={140} height={21} borderRadius={radius.button} />
-      </View>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "center",
-          gap: 24,
-          // The facts row's own 16 top and bottom.
-          paddingVertical: 16,
-        }}
-      >
-        {[0, 1, 2].map((index) => (
-          <Skeleton key={index} width={72} height={69} borderRadius={radius.card} />
-        ))}
+      <View style={{ gap: FACTS_GAP }}>
+        <View style={{ alignItems: "center", gap: NAME_GAP }}>
+          <Skeleton
+            width={AVATAR_SIZE}
+            height={AVATAR_SIZE}
+            borderRadius={radius.full}
+          />
+          <Skeleton width={140} height={21} borderRadius={radius.button} />
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 24,
+            // The facts row's own 16 top and bottom.
+            paddingVertical: 16,
+          }}
+        >
+          {[0, 1, 2].map((index) => (
+            <Skeleton key={index} width={72} height={69} borderRadius={radius.card} />
+          ))}
+        </View>
       </View>
       <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
         <Skeleton
