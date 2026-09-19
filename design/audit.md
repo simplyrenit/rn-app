@@ -356,3 +356,22 @@ Kept from the app, not the frame: the answers' copy (the frame's answers name th
 `garvit.babel2000@gmail.com` for hiring, which is a freelancer value; the app's answers use the
 `simplyrenit.com` addresses and app-specific instructions) and the support address
 (`support@simplyrenit.com`, the frame says `support@renit.com`).
+
+## Contact Us (light + dark) — 2026-09-20
+
+Figma light `1:11890`, dark `1:11469` · app `src/screens/profileScreens/contactUs.tsx` · captures
+`design/app/contact.{light,dark}.iphone16e.png`, side by side in `design/app/contact.compare.*`.
+
+Changed: the header is the FAQs' 44pt row (18 bold title, back control 16 from the edge); the
+screen is three blocks, each padded 32/24 with a 24pt icon and a 16 bold heading over one 44pt
+outline button (radius 12, hairline, mini chevron), closed by a hairline. It was three blocks with
+14pt padding, a 20pt heading-to-button gap, 48pt buttons at radius 16 and a 0.2pt divider.
+
+Result (light): the back arrow, title, icon, heading, all three buttons and all three rules are
+within 1px (0.5pt) of the frame. Dark: page and button fills match; the hairlines are 4–5/255
+darker than the frame's `#292929`.
+
+Kept from the app, not the frame: the addresses (`support@simplyrenit.com` against the frame's
+`support@renit.co.in`; the phone number is the same) and the frame's unused first-frame
+profile row ("Tejas Hinduja … Edit"), which sits off the visible canvas and is not part of the
+screen.
