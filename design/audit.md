@@ -65,28 +65,51 @@ the app follows the OS as designed.
 - Nothing about dark: it is verified (below).
 - The place sheet and the date picker (frames `1:8241`–`1:8572`) are not yet audited.
 
-## Product Details (light) — audited 2026-09-20, not yet fixed
+## Product Details, top of page (light + dark) — 2026-09-20
 
-Figma `1:9120` · app `src/screens/products/products-screen.tsx` · captures
-`design/figma-images/saved-product/light/1-9120.png`,
-`design/app/product-detail.light.iphone16e.png`.
+Figma light `1:9120`, dark `1:8958` · app `src/screens/products/products-screen.tsx`,
+`src/components/product/{product-hero,product-image,spec-strip,stars}.tsx` ·
+captures `design/app/product-detail.{light,dark}.iphone16e.png`, side by side in
+`design/app/product-detail.compare.{light,dark}.png`.
 
-Compared by eye only; no spec has been pulled yet. The two differ in concept, not
-in spacing, so this needs a decision before any code moves.
+Scope: hero, title and rating, the facts row, the bottom bar. The sections below
+(About, location, reviews, owner, similar products) are **not done** and still carry
+the old styling ("Description" where the frame says "About the product").
 
-| Element | App | Figma |
-| --- | --- | --- |
-| Hero | Full-bleed photo under the status bar, ~470pt, the sheet rising over it | Photo contained on white, centred, ~250pt, a 4-segment page indicator below |
-| Back / favourite | Translucent scrim chips over the photo | 44pt outlined circles, white fill, hairline border |
-| Title row | "Lenovo laptop" 26pt with a boxed share tile (share-up glyph) | "1984 – George Orwell" 22pt with a bare three-node share glyph |
-| Rating | "Not yet rated" text | Five stars and the count "(24)" |
-| Facts row | Category / Deposit / Condition, value first then label; the category icon is missing when the value is long | Icon, value, label, three equal columns, 24pt icons |
-| Below the fold | not captured | "About the product" and more |
-| Bottom bar | Price + "Chat with owner" | Same content; needs measuring |
+### Mismatches found and resolved
 
-Open question: the app's full-bleed hero with scroll-collapsing navigation was a
-deliberate redesign decision (see the `renit-product-detail` agent). Matching the
-design means replacing it with the contained-photo layout. The Figma also has only
-a single-image hero with a page indicator; the app's carousel behaviour needs to be
-kept. Suggest going ahead, as with Search, but this one rewrites the screen's
-scroll behaviour, so it wants an explicit yes.
+| Element | Was | Figma | Resolution |
+| --- | --- | --- | --- |
+| Hero | Full-bleed photo under the status bar, ~470pt, scrim chips, sheet rising over it | Photo contained in a 270pt box on the page, 44pt circle controls, page indicator | New `ProductHero`; carousel kept, contained photo with a light-only drop shadow |
+| Title row | 26pt, boxed share-up tile | 20pt, bare three-node share glyph | Matched |
+| Rating | "Not yet rated" only | Five ink stars and "(24)" | Ink stars via opt-in `Stars tone="ink"`; copy kept when unrated |
+| Facts row | Value above label, category icon missing on long values | Icon, value, label; three equal columns | Matched; icon now always drawn (the API's icon URL was the cause) |
+| Bottom bar | 12pt padding, boxed | 76pt: 16 padding, 44pt button radius 12, faint upward shadow in light | Matched |
+| Dark ground | canvas black throughout | hero on `#0F0F0F`, circles `#1A1A1A` with a `#4E4E4E` edge | New tokens `controlFill`, `controlLine`; hero on `surface` |
+
+### Result
+
+Light, measured on the 2× grid: back and heart circles, share glyph, both dividers,
+spec icons and labels, the title and the bottom bar's rule, price and button are
+within 1px (0.5pt) of the frame. The heart glyph, first 1pt small, was closed with
+opt-in `ink` on `FavouriteButton` (20pt, stroke 1.5, primary text). Dark: hero ground
+`#0F0F0F`, circle fill `#1A1A1A`, edge `#4E4E4E`, page `#000000` and the dividers match
+the frame to within 1/255; the hero's lower edge is 1px off.
+
+### Where the design and the data disagree (not bugs)
+
+- The frame's price block is a fixed 132pt, so the button starts at 172. The app
+  lets it grow with the price ("₹3,000 per day"), so the button starts ~2.5pt earlier
+  on this listing. A fixed width would truncate real prices.
+- The frame shows a four-segment page indicator; this listing has one photo, so the
+  indicator is hidden and its 4pt slot kept.
+- The frame's photo is a transparent cut-out with a shadow that follows its outline;
+  listing photos are rectangles, so the shadow follows the photo's box.
+- The condition glyph draws ~1.8pt stroke against the frame's 1.25: the shared
+  `ConditionRenderer` hard-codes it. Left, not worth a core change for a 0.5pt line.
+
+### Decisions taken
+
+Share glyph switched from the iOS share-up to the frame's three-node glyph, and stars
+from gold to ink in the title row, both because the frame asks for it. The pinned
+back band was kept so a 44pt back control is always reachable while scrolling.

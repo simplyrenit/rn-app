@@ -6,6 +6,34 @@ import { View } from "react-native";
 
 const ICON_SIZE = 22;
 
+/**
+ * The two sets of metrics this strip ships in.
+ *
+ * `default` is the rhythm the post wizard and the owner profile already use.
+ * `detail` is measured off the product detail frame (Figma 1:9120): a 20pt
+ * glyph, the value and label both at 14/21 and set solid against each other,
+ * and the block's own 16pt inset repeated inside every column — which is what
+ * gives that screen its taller, calmer strip.
+ */
+const METRICS = {
+  default: {
+    blockPaddingVertical: density.section,
+    columnPaddingVertical: 0,
+    iconSlot: ICON_SIZE,
+    gap: 6,
+    stackGap: 6,
+    valueSize: "text-md",
+  },
+  detail: {
+    blockPaddingVertical: 16,
+    columnPaddingVertical: 16,
+    iconSlot: 20,
+    gap: 8,
+    stackGap: 0,
+    valueSize: "text-sm",
+  },
+} as const;
+
 export interface SpecItem {
   /** The glyph above the value. Supplied by the caller so each screen can use
    *  the real icon for the thing — the category's own icon, the condition's own
@@ -37,13 +65,17 @@ export interface SpecItem {
 export function SpecStrip({
   items,
   dividers = true,
+  variant = "default",
 }: {
   items: SpecItem[];
   /** Hairlines above and below. Off where the screen already rules its own
    *  sections, as the owner profile does. */
   dividers?: boolean;
+  /** Opt-in. `detail` is the product detail frame's taller strip; see METRICS. */
+  variant?: keyof typeof METRICS;
 }) {
   const { color } = useTheme();
+  const metrics = METRICS[variant];
   const shown = items.filter((item) => Boolean(item.value));
   if (shown.length === 0) return null;
 
@@ -54,7 +86,7 @@ export function SpecStrip({
         justifyContent: "space-between",
         alignItems: "flex-start",
         paddingHorizontal: SCREEN_GUTTER,
-        paddingVertical: density.section,
+        paddingVertical: metrics.blockPaddingVertical,
         borderTopWidth: dividers ? 1 : 0,
         borderBottomWidth: dividers ? 1 : 0,
         borderColor: color.line,
@@ -63,21 +95,40 @@ export function SpecStrip({
       {shown.map((item) => (
         <View
           key={item.label}
-          style={{ flex: 1, alignItems: "center", gap: 6 }}
+          style={{
+            flex: 1,
+            alignItems: "center",
+            gap: metrics.gap,
+            paddingVertical: metrics.columnPaddingVertical,
+          }}
         >
           {/* A fixed slot, so a column whose icon failed to load still lines
               its value up with the columns either side of it. */}
           <View
-            style={{ height: ICON_SIZE, justifyContent: "center" }}
+            style={{ height: metrics.iconSlot, justifyContent: "center" }}
           >
             {item.icon}
           </View>
-          <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={1}>
-            {item.value}
-          </Text>
-          <Text fontSize="text-sm" tone="dim" numberOfLines={1}>
-            {item.label}
-          </Text>
+          {/* The value and its label are one stack: `default` sets them at the
+              column's own rhythm, `detail` sets them solid. */}
+          <View
+            style={{
+              alignSelf: "stretch",
+              alignItems: "center",
+              gap: metrics.stackGap,
+            }}
+          >
+            <Text
+              fontSize={metrics.valueSize}
+              fontWeight="font-bold"
+              numberOfLines={1}
+            >
+              {item.value}
+            </Text>
+            <Text fontSize="text-sm" tone="dim" numberOfLines={1}>
+              {item.label}
+            </Text>
+          </View>
         </View>
       ))}
     </View>

@@ -27,6 +27,14 @@ export interface ColorTokens {
   line: string;
   /** The tab bar's top edge — a step quieter than `line` on dark, per the design. */
   navLine: string;
+  /**
+   * A round control's fill and edge where it sits on the page (the Product
+   * Details back and favourite circles). Light draws both as the plain surface and
+   * the hairline; dark lifts the fill one step and strengthens the edge, which the
+   * dark frame does and the hairline alone would not.
+   */
+  controlFill: string;
+  controlLine: string;
   /** Headlines and primary copy. */
   text: string;
   /** Body copy on tinted/busy surfaces. */
@@ -102,6 +110,8 @@ export const darkColors: ColorTokens = {
   surfaceRaised: "#292929", // Black and White/1000
   line: "#292929", // Black and White/1000
   navLine: "#1A1A1A", // Black and White/1100
+  controlFill: "#1A1A1A", // Black and White/1100
+  controlLine: "#4E4E4E", // sampled from the dark Product Details frame
   text: "#FFFFFF", // Text - Dark mode/Primary, 18.9:1 AAA
   textHi: "rgba(255,255,255,0.70)", // Text/Secondary
   textBody: "rgba(255,255,255,0.70)",
@@ -141,6 +151,8 @@ export const lightColors: ColorTokens = {
   surfaceRaised: "#F5F5F5", // Black and White/100
   line: "#E6E6E6", // Black and White/200
   navLine: "#E6E6E6", // Black and White/200
+  controlFill: "#FFFFFF", // Black and White/50
+  controlLine: "#E6E6E6", // Black and White/200
   text: "#000000", // Text - Light mode/Primary, 21:1 AAA
   textHi: "rgba(0,0,0,0.70)", // Text/Secondary
   textBody: "rgba(0,0,0,0.70)",
