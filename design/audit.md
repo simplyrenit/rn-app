@@ -398,4 +398,6 @@ carry blank lines.
 **Copy is not copied.** The frames show an older legal text (Terms "Effective Date: 16/06/2023",
 "Mobile Application"; the app's is the current "Last updated: 10/11/2024" text that says
 "Platform"), and the Who we are copy differs in a phrase. Legal wording is a product and legal call,
-so only layout was matched. Not verified: dark for all three.
+so only layout was matched.
+
+Dark (frames `1:11511`, `1:11542`, `1:11560`): Privacy and Who we are compared; Terms not. Page `#000000`, headings and Privacy's body text `#FFFFFF` and the Who we are button fill `#0F0F0F` match the frames exactly. Who we are's body text measures 206/255 against the frame's 178 (70% white): the app's body tone reads lighter than the design's secondary tone in dark, even with the theme's `textBody` token set directly; the cause was not found (it is app-wide if it is the tone).

@@ -42,7 +42,7 @@ const WhoWeAreScreen: React.FC = () => {
           <Text accessibilityRole="header" fontSize="text-md" fontWeight="font-bold">
             What is Renit?
           </Text>
-          <Text fontSize="text-md" tone="body">
+          <Text fontSize="text-md" style={{ color: color.textBody }}>
             Renit is a community that enables everyone to get access to anything by
             providing everyone with the most seamless rental marketplace. A place
             where anyone can ‘rent out’ their belongings to others or ‘rent in’
