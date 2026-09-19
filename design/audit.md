@@ -205,3 +205,20 @@ logout border uses the hairline as the frame does, which the token file says a c
 edge should not (WCAG 1.4.11): needs a ruling; the loading placeholder still has the old
 rhythm. Not verified: the signed-out state (frame `1:10110`, not yet restyled beyond the
 shared topbar).
+
+## Saved, signed in (light + dark) — 2026-09-20
+
+Figma light `1:8859`, dark `1:8760` · app `src/screens/tabs/saved.tsx` · captures
+`design/app/saved.{light,dark}.iphone16e.png`, side by side in
+`design/app/saved.compare.{light,dark}.png`.
+
+The screen was already a two-column grid; it is now the frame's: the Home tile (`Card tile`,
+163pt wide, no hairline, bare corner heart) with 16 between columns and 24 between rows, and a
+61pt topbar whose title is the `screenTitle` role (it was `text-2xl`, which drew 43px tall
+against the frame's 37px). Measured on the 2× grid the title, both photo rows, the card titles
+and the prices are within 1px (0.5pt); dark page and text colours match exactly.
+
+Not copied: the frame's heart is `#E50914`; the app draws it in its danger tone on a photo
+(`#EB6F62`), the same as Home. Widths of the price and location lines differ only because
+the listings differ. Not verified: the empty state and loading skeleton against a frame
+(none exists).
