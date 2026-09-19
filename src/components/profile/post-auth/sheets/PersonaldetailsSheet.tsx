@@ -1,7 +1,7 @@
 
 import { useAuth } from "@/backend/auth";
 import { useProfile } from "@/backend/profile";
-import { Button, IconButton, Text } from "@/components/core";
+import { Button, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
 import { Image } from "expo-image";
@@ -70,7 +70,7 @@ function DetailField({
 }) {
   const { color } = useTheme();
   return (
-    <View style={{ height: FIELD_HEIGHT, paddingVertical: ROW_PAD_V, paddingHorizontal: SCREEN_GUTTER, gap: 8 }}>
+    <View style={{ minHeight: FIELD_HEIGHT, paddingVertical: ROW_PAD_V, paddingHorizontal: SCREEN_GUTTER, gap: 8 }}>
       <Text fontSize="text-sm" fontWeight="font-bold">
         {label}
       </Text>
@@ -517,7 +517,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           {!selectedImage && (
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel="Edit profile picture"
+              accessibilityLabel="Upload profile picture"
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               onPress={openProfileImageSheet}
             >
@@ -560,7 +560,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           style={{
             borderTopWidth: 1,
             borderTopColor: color.line,
-            paddingHorizontal: space.md,
+            paddingHorizontal: SCREEN_GUTTER,
           }}
         >
           <TouchableOpacity

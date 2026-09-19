@@ -443,3 +443,20 @@ restyled and not opened, since they write to the account.
 Frame `1:12006`. Not implemented: the frame draws a "Share entire catalogue" row and an Edit button per listing,
 while the app's "My listings" shows Live/Rejected moderation pills and no Edit buttons. Which model is wanted is a
 product decision (status pills vs Edit), so the screen is parked until Yash decides.
+
+## Review 4 (commits 1e50c45..b6dd31e) — 2026-09-20
+
+Fixed: Personal details fields `minHeight` (Dynamic Type clipped the values), "Upload profile picture" label
+(WCAG label-in-name), delete row on the 24 gutter; SubpageHeader renders the back control first (VoiceOver order);
+unused imports/locals and 57 empty `className=""` removed from Terms/Privacy/FAQs/Feedback/Accordion; legal scrollers
+use `flex: 1`; Feedback footer tokenised like FAQs (no hardcoded dark brand); Accordion answer on the same 16 as its
+question; Contact Us bottom padding; buttons use `MIN_TOUCH_TARGET`; `subpage-header` export order.
+
+Deferred, recorded: (1) 14 screens still hand-roll their headers at 20pt (notification, report-a-problem, my-product,
+edit-product, unavailability_*, reviews-screen, write-review, products-screen, owners-review, chat-details,
+edit-step-header); they move onto `SubpageHeader` as their frames are matched. (2) Frames draw buttons/accordions at
+radius 12 where `radius.button` is 11: three local `12` constants remain until one ruling on the token (token and
+`tailwind.config.js` change together). (3) Numeric snap point shrinks 10% while the keyboard is up (custom sheet
+behaviour); the picture-update button can push past the sheet height (scrolls). (4) Who we are dark body text: the
+reviewer computes `textBody` (0.70 white over #000) = 178, the frame's value, so the 206 reading is probably a capture
+artefact; re-measure with the P3 to sRGB conversion before trusting it.

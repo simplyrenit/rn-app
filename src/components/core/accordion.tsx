@@ -1,5 +1,3 @@
-import { radius } from "@/lib/design-tokens";
-
 import { useTheme } from "@/lib/theme";
 import React, { useState } from "react";
 import {
@@ -105,7 +103,7 @@ const Accordion: React.FC<AccordionProps> = ({ question, answer }) => {
         </Animated.View>
       </Pressable>
       {isOpen && (
-        <View style={{ padding: 14 }}>
+        <View style={{ padding: 15 }}>
           <Text fontSize="text-md" tone="body">
             {answer}
           </Text>

@@ -1,7 +1,6 @@
 import { SubpageHeader, Text } from "@/components/core";
 import Accordion from "@/components/core/accordion";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { useTypedNavigation } from "@/lib/types";
 import React from "react";
 import { ScrollView, View } from "react-native";
 import { ChevronRightIcon as ChevronRightMini } from "react-native-heroicons/mini";
@@ -19,7 +18,6 @@ interface FAQProps {}
 
 const FAQScreen: React.FC<FAQProps> = () => {
   const { color } = useTheme();
-  const router = useTypedNavigation();
 
   const accordionData = [
     {

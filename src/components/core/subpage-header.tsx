@@ -22,12 +22,13 @@ export function SubpageHeader({ title }: { title: string }) {
         justifyContent: "center",
       }}
     >
-      <Text accessibilityRole="header" fontSize="text-base" fontWeight="font-bold">
-        {title}
-      </Text>
+      {/* First in the tree so VoiceOver reads the back control before the title. */}
       <View style={{ position: "absolute", left: BACK_INSET, top: 0 }}>
         <BackButton />
       </View>
+      <Text accessibilityRole="header" fontSize="text-base" fontWeight="font-bold">
+        {title}
+      </Text>
     </View>
   );
 }

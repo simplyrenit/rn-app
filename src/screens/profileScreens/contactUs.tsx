@@ -1,6 +1,6 @@
 import { SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
@@ -18,7 +18,6 @@ const BLOCK_PAD_V = 32;
 const BLOCK_GAP = 16;
 const HEADING_GAP = 8;
 const GLYPH = 24;
-const BUTTON_HEIGHT = 44;
 // The design draws these buttons at radius 12; `radius.button` is 11.
 const BUTTON_RADIUS = 12;
 
@@ -67,7 +66,7 @@ function ContactBlock({
         onPress={onPress}
         style={[
           {
-            height: BUTTON_HEIGHT,
+            height: MIN_TOUCH_TARGET,
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
@@ -98,7 +97,10 @@ const ContactUsScreen: React.FC = () => {
       <SubpageHeader title="Contact Us" />
 
       {/* The frame leaves 4pt between the header and the first block. */}
-      <ScrollView style={{ marginTop: 4 }}>
+      <ScrollView
+        style={{ marginTop: 4 }}
+        contentContainerStyle={{ paddingBottom: density.listFooterCompact }}
+      >
         <ContactBlock
           icon={<EnvelopeOpenIcon size={GLYPH} color={color.text} />}
           heading="Email us"

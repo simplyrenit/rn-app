@@ -1,6 +1,6 @@
 import { SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
@@ -17,7 +17,6 @@ const TOP_INSET = 28;
 const BLOCK_GAP = 16;
 const HEADING_GAP = 8;
 const GLYPH = 24;
-const BUTTON_HEIGHT = 44;
 // The design draws the button at radius 12; `radius.button` is 11.
 const BUTTON_RADIUS = 12;
 
@@ -71,7 +70,7 @@ const WhoWeAreScreen: React.FC = () => {
             onPress={() => router.navigate("faq")}
             style={[
               {
-                height: BUTTON_HEIGHT,
+                height: MIN_TOUCH_TARGET,
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",

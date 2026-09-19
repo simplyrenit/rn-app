@@ -1,15 +1,14 @@
 import { useProfile } from "@/backend/profile";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { useRef, useState } from "react";
-import { Platform, TextInput, View } from "react-native";
-import { ChevronRightIcon } from "react-native-heroicons/outline";
+import { TextInput, View } from "react-native";
+import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 import { toast } from "@/lib/toast";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, colors, radius } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
 // Measured off the Figma Feedback & Review frame: the copy sits 28 under the header on
@@ -22,9 +21,7 @@ const FIELD_PADDING = 16;
 interface FeedbackNReviewProps {}
 
 const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
-  const { theme } = useGlobalContext();
   const { giveFeedback } = useProfile();
-  const isDarkMode = theme === "dark";
   const { color } = useTheme();
   const router = useTypedNavigation();
 
@@ -123,27 +120,18 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
         )}
       </KeyboardAwareScrollView>
 
-      <View className="pb-3 px-gutter">
-        <Text
-          fontSize="text-sm"
-          className={`${isDarkMode ? "text-subtle-dark" : "text-subtle-light"}`}
-        >
+      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: 12, gap: 2 }}>
+        <Text fontSize="text-sm" tone="body">
           Have any more questions?
         </Text>
-        <View className="flex-row items-center mt-1">
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
           <Text fontSize="text-sm" fontWeight="font-bold">
             Email us at
           </Text>
-          <Text
-            fontSize="text-sm"
-            fontWeight="font-bold"
-            className="text-brand mx-1"
-          >
+          <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
             support@simplyrenit.com
           </Text>
-          <View className="mt-1 ">
-            <ChevronRightIcon size={14} color={colors.dark.brand} />
-          </View>
+          <ChevronRightIcon size={20} color={color.brandText} />
         </View>
       </View>
     </NonScrollableContainer>
