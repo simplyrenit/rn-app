@@ -555,3 +555,11 @@ state.
 Also worth a second look next session: a macOS "wants to control this computer using accessibility
 features" dialog opened while probing for a way to tap (from `osascript`/`cliclick`). It was left alone —
 granting it is a permission decision for you, not for an agent — but it is sitting on the desktop.
+
+## Change password / Change phone number / Change profile picture — no sheet drawn — 2026-09-20
+
+Sections `1:18756`, `1:22817`, `1:22245` (labelled "Dark mode") hold 5, 5 and 2 frames that are each a copy of the
+Profile tab: the first is dimmed and the rest are undimmed light; their Overlay nodes contain only a home indicator
+(checked `1:18822`, and by eye `1:22919`, `1:22346`). No sheet, field, OTP step or picture chooser is drawn, so there
+is nothing to match (same as the Filter sheet). The app's sub-sheets stay as they are. The frames also show a
+"Dark mode / Currency" pair in the App group that the app replaces with "Appearance" and has no Currency row.
