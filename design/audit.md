@@ -51,3 +51,29 @@ picker, "Clear all" only when a filter is set, and "Browse all" when none is.
 - **Dark.** The simulator switched to dark but the app stayed light (the known theme
   state issue), so dark is unmeasured. It uses the same tokens as Home, which matched.
 - The place sheet and the date picker (frames `1:8241`–`1:8572`) are not yet audited.
+
+## Product Details (light) — audited 2026-09-20, not yet fixed
+
+Figma `1:9120` · app `src/screens/products/products-screen.tsx` · captures
+`design/figma-images/saved-product/light/1-9120.png`,
+`design/app/product-detail.light.iphone16e.png`.
+
+Compared by eye only; no spec has been pulled yet. The two differ in concept, not
+in spacing, so this needs a decision before any code moves.
+
+| Element | App | Figma |
+| --- | --- | --- |
+| Hero | Full-bleed photo under the status bar, ~470pt, the sheet rising over it | Photo contained on white, centred, ~250pt, a 4-segment page indicator below |
+| Back / favourite | Translucent scrim chips over the photo | 44pt outlined circles, white fill, hairline border |
+| Title row | "Lenovo laptop" 26pt with a boxed share tile (share-up glyph) | "1984 – George Orwell" 22pt with a bare three-node share glyph |
+| Rating | "Not yet rated" text | Five stars and the count "(24)" |
+| Facts row | Category / Deposit / Condition, value first then label; the category icon is missing when the value is long | Icon, value, label, three equal columns, 24pt icons |
+| Below the fold | not captured | "About the product" and more |
+| Bottom bar | Price + "Chat with owner" | Same content; needs measuring |
+
+Open question: the app's full-bleed hero with scroll-collapsing navigation was a
+deliberate redesign decision (see the `renit-product-detail` agent). Matching the
+design means replacing it with the contained-photo layout. The Figma also has only
+a single-image hero with a page indicator; the app's carousel behaviour needs to be
+kept. Suggest going ahead, as with Search, but this one rewrites the screen's
+scroll behaviour, so it wants an explicit yes.
