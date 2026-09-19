@@ -5,18 +5,41 @@ import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
-import IconButton from "./profile-icon-button";
+import {
+  ArrowRightOnRectangleIcon,
+  ChatBubbleLeftEllipsisIcon,
+  CubeIcon,
+  DevicePhoneMobileIcon,
+  DocumentTextIcon,
+  EnvelopeIcon,
+  FlagIcon,
+  InboxArrowDownIcon,
+  LockClosedIcon,
+  QuestionMarkCircleIcon,
+  UsersIcon,
+} from "react-native-heroicons/outline";
 import ProfileImgContainer from "./profile-img";
+import {
+  PROFILE_LIST_GAP,
+  ProfileBlockRule,
+  ProfileRow,
+  ProfileSection,
+  ProfileSectionRule,
+} from "./profile-row";
 import AppearanceSheet from "./sheets/AppearanceSheet";
 import { CurrencySheet } from "./sheets/currency-sheet";
 import PersonalDetailsSheet from "./sheets/PersonaldetailsSheet";
-import { density } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
 interface ProfilePostAuthProps {
   isDarkMode: boolean;
   handleLogout: () => void;
 }
+
+/** Gap between the logout glyph and its label, off the frame. */
+const LOGOUT_ICON_GAP = 4;
+const LOGOUT_ICON_SIZE = 24;
 
 const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   isDarkMode,
@@ -32,17 +55,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   const appearanceSheetRef = useRef<BottomSheetModal>(null);
   const personalDetailsSheetRef = useRef<BottomSheetModal>(null);
   const currencySheetRef = useRef<BottomSheetModal>(null);
-  const { color } = useTheme();
-
-  const sectionStyle = {
-    // Three group headers introduced one row each; header, padding and row cost
-    // 150pt to expose a single link.
-    paddingTop: density.sectionHeaderGap + 4,
-    paddingBottom: density.sectionHeaderGap,
-    borderBottomWidth: 1,
-    borderBottomColor: color.line,
-  } as const;
-
+  const { color, shadow } = useTheme();
 
   const handleCurrencyModal = () => {
     currencySheetRef.current?.present();
@@ -70,211 +83,185 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
 
   return (
     <>
-      <View className="">
-        <View
-          style={{ borderBottomWidth: 1, borderBottomColor: color.line }}
-        >
+      {/* The tab bar floats over this list, so the last block needs air under it
+          or the logout button sits behind the bar. */}
+      <View style={{ paddingBottom: density.listFooter }}>
+        <ProfileImgContainer
+          isDarkMode={isDarkMode}
+          handlePersonalDetailsSheetPress={handlePersonalDetailsSheetPress}
+        />
+        {isMerchant && (
           <View className="px-gutter">
-            <ProfileImgContainer
-              isDarkMode={isDarkMode}
-              handlePersonalDetailsSheetPress={handlePersonalDetailsSheetPress}
-            />
-            {isMerchant && (
-              <View
-                className={`mb-4 rounded-card border px-3 py-2 ${
-                  isDark ? "border-line-dark bg-surface-dark" : "border-line-light bg-surface-light"
-                }`}
-              >
-                <Text fontWeight="font-semibold">
-                  Merchant status: {merchantStatus}
-                </Text>
-                {merchantStatus !== "approved" && (
-                  <Text
-                    className={`mt-1 ${isDark ? "text-muted-dark" : "text-muted-light"}`}
-                  >
-                    Listings will be enabled after merchant approval.
-                  </Text>
-                )}
-                {merchantStatus === "rejected" && (
-                  <>
-                    <Button
-                      className="mt-3"
-                      onPress={handleRequestReviewAgain}
-                      disabled={profileActionLoading}
-                    >
-                      {profileActionLoading
-                        ? "Requesting review..."
-                        : "Request review again"}
-                    </Button>
-                    {requestReviewError && (
-                      <Text tone="danger" className="mt-2">{requestReviewError}</Text>
-                    )}
-                  </>
-                )}
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Account */}
-        <View
-          style={sectionStyle}
-        >
-          <View className="px-gutter">
-            <Text
-              role="groupHeader"
-              accessibilityRole="header"
-              className="pb-2"
+            <View
+              className={`mb-4 rounded-card border px-3 py-2 ${
+                isDark ? "border-line-dark bg-surface-dark" : "border-line-light bg-surface-light"
+              }`}
             >
-              Account
-            </Text>
-            <IconButton
+              <Text fontWeight="font-semibold">
+                Merchant status: {merchantStatus}
+              </Text>
+              {merchantStatus !== "approved" && (
+                <Text
+                  className={`mt-1 ${isDark ? "text-muted-dark" : "text-muted-light"}`}
+                >
+                  Listings will be enabled after merchant approval.
+                </Text>
+              )}
+              {merchantStatus === "rejected" && (
+                <>
+                  <Button
+                    className="mt-3"
+                    onPress={handleRequestReviewAgain}
+                    disabled={profileActionLoading}
+                  >
+                    {profileActionLoading
+                      ? "Requesting review..."
+                      : "Request review again"}
+                  </Button>
+                  {requestReviewError && (
+                    <Text tone="danger" className="mt-2">{requestReviewError}</Text>
+                  )}
+                </>
+              )}
+            </View>
+          </View>
+        )}
+
+        <ProfileBlockRule />
+
+        {/* One list, four sections. The sections carry no borders of their own:
+            the design separates them with a single centred hairline, and rows
+            inside a section run edge to edge with nothing between them. */}
+        <View style={{ paddingVertical: PROFILE_LIST_GAP }}>
+          <ProfileSection title="Account">
+            <ProfileRow
+              icon={CubeIcon}
+              label="My products"
               onPress={() => {
                 router.navigate("myProducts");
               }}
-              leftIcon="Squares2X2Icon"
-              text="My listings"
-              divider={false}
-              isDarkMode={isDarkMode}
             />
-          </View>
-        </View>
+          </ProfileSection>
 
-        {/* App */}
-        <View
-          style={sectionStyle}
-        >
-          <View className="px-gutter">
-            <Text
-              role="groupHeader"
-              accessibilityRole="header"
-              className="pb-2"
-            >
-              App
-            </Text>
-            <IconButton
+          <ProfileSectionRule />
+
+          <ProfileSection title="App">
+            {/* The frame labels this "Dark mode" with a phone glyph, but the row
+                opens a three-way system/light/dark choice — "Dark mode" would
+                promise a switch the sheet does not offer. */}
+            <ProfileRow
+              icon={DevicePhoneMobileIcon}
+              label="Appearance"
               onPress={handleAppeareanceModal}
-              leftIcon="MoonIcon"
-              text="Appearance"
-              divider={false}
-              isDarkMode={isDarkMode}
             />
-            {/* <IconButton
-              onPress={handleCurrencyModal}
-              leftIcon="BanknotesIcon"
-              text="Currency"
-              isDarkMode={isDarkMode}
-            /> */}
-          </View>
-        </View>
+          </ProfileSection>
 
-        {/* Support */}
-        <View
-          style={sectionStyle}
-        >
-          <View className="px-gutter">
-            <Text
-              role="groupHeader"
-              accessibilityRole="header"
-              className="pb-2"
-            >
-              Support
-            </Text>
-            <IconButton
+          <ProfileSectionRule />
+
+          <ProfileSection title="Support">
+            <ProfileRow
+              icon={QuestionMarkCircleIcon}
+              label="FAQs"
               onPress={() => {
                 router.navigate("faq");
               }}
-              leftIcon="QuestionMarkCircleIcon"
-              text="FAQs"
-              isDarkMode={isDarkMode}
             />
-            <IconButton
+            <ProfileRow
+              icon={FlagIcon}
+              label="Report a problem"
               onPress={() => {
                 router.navigate("ReportAProblem");
               }}
-              leftIcon="ExclamationTriangleIcon"
-              text="Report a problem"
-              isDarkMode={isDarkMode}
             />
-            <IconButton
+            <ProfileRow
+              icon={ChatBubbleLeftEllipsisIcon}
+              label="Feedback & review"
               onPress={() => {
                 router.navigate("feedback");
               }}
-              leftIcon="ChatBubbleLeftEllipsisIcon"
-              text="Send feedback"
-              isDarkMode={isDarkMode}
             />
-            <IconButton
+            <ProfileRow
+              icon={EnvelopeIcon}
+              label="Contact us"
               onPress={() => {
                 router.navigate("contactUs");
               }}
-              leftIcon="EnvelopeIcon"
-              text="Contact us"
-              isDarkMode={isDarkMode}
             />
-            <IconButton
+            <ProfileRow
+              icon={UsersIcon}
+              label="Who we are"
               onPress={() => {
                 router.navigate("whoWeAre");
               }}
-              leftIcon="UsersIcon"
-              text="Who we are"
-              isDarkMode={isDarkMode}
             />
-            <IconButton
+            <ProfileRow
+              icon={InboxArrowDownIcon}
+              label="Unavailability form"
               onPress={() => {
                 router.navigate("unavailabilityFormCategories");
               }}
-              leftIcon="InboxArrowDownIcon"
-              text="Request an item"
-              isDarkMode={isDarkMode}
             />
-          </View>
-        </View>
+          </ProfileSection>
 
-        {/* <Legal */}
-        <View style={sectionStyle}>
-          <View className="px-gutter">
-            <Text
-              role="groupHeader"
-              accessibilityRole="header"
-              className="pb-2"
-            >
-              Legal
-            </Text>
-            <IconButton
+          <ProfileSectionRule />
+
+          <ProfileSection title="Legal">
+            <ProfileRow
+              icon={DocumentTextIcon}
+              label="Terms & conditions"
               onPress={() => {
                 router.navigate("Terms");
               }}
-              leftIcon="DocumentTextIcon"
-              text="Terms & conditions"
-              isDarkMode={isDarkMode}
             />
-            <IconButton
+            <ProfileRow
+              icon={LockClosedIcon}
+              label="Privacy policy"
               onPress={() => {
                 router.navigate("Privacy");
               }}
-              leftIcon="LockClosedIcon"
-              text="Privacy policy"
-              divider={false}
-              isDarkMode={isDarkMode}
             />
-          </View>
+          </ProfileSection>
         </View>
 
-        {/* Its own group. Log out is a row like every other row — red is
-            reserved for destructive, irreversible actions and signing out is
-            neither — but it sat inside "Legal", under a heading that did not
-            describe it and with no separator above it. */}
-        <View style={{ ...sectionStyle, marginBottom: 64 }}>
-          <View className="px-gutter">
-            <IconButton
-              onPress={handleLogout}
-              leftIcon="ArrowRightStartOnRectangleIcon"
-              text="Log out"
-              divider={false}
-              rightIcon={<View />}
+        {/* Logout is a bordered button at the foot of the screen, not a row in
+            the list. It reads in the danger tone because the design says so —
+            signing out is recoverable, so the colour is the design's emphasis
+            and not this app's usual "destructive" signal. */}
+        <View
+          style={{
+            paddingVertical: PROFILE_LIST_GAP,
+            paddingHorizontal: SCREEN_GUTTER,
+          }}
+        >
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Logout"
+            activeOpacity={0.6}
+            onPress={handleLogout}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: LOGOUT_ICON_GAP,
+              minHeight: MIN_TOUCH_TARGET,
+              borderRadius: radius.button,
+              borderWidth: 1,
+              borderColor: color.line,
+              backgroundColor: color.surface,
+              // Light lifts the button off the canvas; dark draws the edge only,
+              // which is what this token pair already encodes.
+              ...shadow,
+            }}
+          >
+            <ArrowRightOnRectangleIcon
+              size={LOGOUT_ICON_SIZE}
+              color={color.danger}
+              strokeWidth={1.5}
             />
-          </View>
+            <Text fontSize="text-sm" fontWeight="font-bold" tone="danger">
+              Logout
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <CurrencySheet

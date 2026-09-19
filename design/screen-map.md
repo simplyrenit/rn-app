@@ -26,7 +26,7 @@ Status: `DONE` matches within 0.5pt · `TODO` not started · `BLOCKED` see note.
 | Product detail | `ProductDetail` (`src/screens/products/products-screen.tsx`) | `1:9120` | `1:8958` | DONE (top light+dark; lower sections light, partly verified) | Lower sections restyled; dark, the review rail and the description clamp are unverified. Five delivery decisions to confirm in `design/audit.md`. |
 | Saved (signed-out state) | `Saved` tab (`src/screens/tabs/saved.tsx`) | — | — | TODO | Tab bar already matches. |
 | Post (signed-out state) | `Post` tab (`src/screens/tabs/post.tsx`) | — | — | TODO | |
-| Profile (signed-out state) | `Profile` tab (`src/screens/tabs/profile.tsx`) | — | — | TODO | |
+| Profile | `Profile` tab (`src/screens/tabs/profile.tsx`) | signed in `1:10017`, signed out `1:10110` | signed in `1:9953` | DONE signed in (light+dark); signed out TODO | Signed-in list matches to 0.5pt. Signed-out (title, "Enjoy Renit to the fullest…", three outline buttons; note the frame's "Create an Apple" typo) not restyled. See `design/audit.md`. |
 | Chat (signed-out state) | `Chat` tab (`src/screens/tabs/chat.tsx`) | — | — | TODO | |
 | Welcome / onboarding | `Welcome` (`src/screens/welcome.tsx`) | — | — | TODO | Capture in `design/app/onboarding-2.dark.png` exists. |
 | Auth: email, phone, password, confirm, about, location | `src/screens/auth/*` | email `1:9745` | email `1:9720` | AUDITED (email), parked | The frames model a different flow (single "Continue", then a "Welcome back" step) from the app's method-choice footer. Needs a product decision before any restyle; see `design/audit.md`. |

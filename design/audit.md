@@ -177,3 +177,31 @@ without touching the flow, but the screen would still not equal the frame.
 Decision needed: keep the app's method-choice footer and match everything above it, or
 move to the frames' single "Continue" and a second step. Until that is decided the seven
 auth screens are parked.
+
+## Profile, signed in (light + dark) — 2026-09-20
+
+Figma light `1:10017`, dark `1:9953` · app `src/screens/tabs/profile.tsx`,
+`src/components/profile/post-auth/{profile-post-auth,profile-img,profile-row}.tsx` ·
+captures `design/app/profile.{light,dark}.iphone16e.png`, side by side in
+`design/app/profile.compare.{light,dark}.png`.
+
+Mismatches resolved: group headers were small grey ALL-CAPS, now Title Case 16 bold;
+rows were separated and tighter, now 56pt with 20pt icons and no separators; the profile
+block's avatar was 60pt with a centred pencil, now 48pt with a top-aligned brand pencil;
+"My listings", "Send feedback", "Request an item" and "Log out" now read as the frame
+("My products", "Feedback & review", "Unavailability form", "Logout"); Logout is the
+frame's secondary button in the danger tone; the topbar matches (61pt, H2, 44pt bell box).
+
+Result (light, 2× grid): title, bell, avatar, pencil, divider, section headers, row icon,
+row label and chevron, and the hairlines are within 1px (0.5pt) of the frame. The name's
+vertical extent differs by 3px only because the frame's sample name ("Garvit Babel") has
+no descenders. Dark: page, row ground and dividers match exactly.
+
+Deliberate differences: the frame's **Currency** row is not added (the app has no
+currency setting); the **Appearance** row keeps its label where the frame says "Dark
+mode" (it opens a three-way choice) and takes the frame's phone icon; the frame's
+logout red `#E50914` and radius 12 use the danger token and `radius.button` (11); the
+logout border uses the hairline as the frame does, which the token file says a control
+edge should not (WCAG 1.4.11): needs a ruling; the loading placeholder still has the old
+rhythm. Not verified: the signed-out state (frame `1:10110`, not yet restyled beyond the
+shared topbar).
