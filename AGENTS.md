@@ -1,7 +1,8 @@
 # AGENTS.md
 
-Guidance for AI coding agents working in this repository. The companion
-`CLAUDE.md` carries the same contract for Claude Code; keep the two in step.
+Guidance for AI coding agents working in this repository. This is the single
+source of truth: `CLAUDE.md` imports it, so Claude Code and other agents follow
+the same contract. Edit this file, not `CLAUDE.md`.
 
 ## Agentic Development Contract
 
@@ -83,6 +84,10 @@ changing signing, accessing credentials, creating an Xcode archive, uploading
 to App Store Connect, declaring export compliance, assigning a tester group,
 submitting Beta App Review, creating an EAS build, or releasing to production.
 
+iPhone v1 supports Xcode/devicectl build, install, launch, and log collection.
+It does not promise autonomous interaction with system prompts or external
+sign-in screens.
+
 ## Project Overview
 
 **Renit** is a React Native rental-marketplace app built with Expo SDK 51.
@@ -101,7 +106,9 @@ Firebase Cloud Functions; the REST/WebSocket backend is a separate project
 - Firebase via `@react-native-firebase/*` v21.14 (app, app-check, auth,
   firestore, storage) — native modules, so **Expo Go does not work**; use
   development builds
-- Socket.io client for real-time chat (`src/services/socket.ts`)
+- Real-time chat runs on Firestore (`src/backend/chat.tsx`); the backend's
+  WebSocket endpoint (`wsBaseUrl` in `src/lib/config.ts`) and the
+  `socket.io-client` dependency are no longer used by the app
 - Google Maps (`react-native-maps`), Google/Apple Sign-in, Expo Notifications
 - Firebase Cloud Functions in `functions/` (Node 22, TypeScript 4.9, separate
   npm project; a Firestore `onNewMessage` CloudEvent trigger that fans out
@@ -193,7 +200,7 @@ Path alias: `@/*` maps to `src/*` (configured in both `tsconfig.json` and
   - `auth-fns.ts` — AsyncStorage helpers for auth-token persistence.
   - `theme.ts` / `design-tokens.ts` — theme hook and design tokens.
   - `categories.ts`, `content.ts` — static data.
-- `src/services/` — Socket.io client for chat, user query helpers.
+- `src/services/` — user query helpers.
 - `src/screens/` — screens by feature area: `auth/`, `tabs/` (5 main tabs),
   `products/`, `chat/`, `users/`, `post-screens/` (multi-step posting),
   `profileScreens/`.
@@ -221,7 +228,8 @@ Path alias: `@/*` maps to `src/*` (configured in both `tsconfig.json` and
   that describe the old behavior.
 - Data fetching: React Query v3 API (`useQuery`, `useMutation`, `queryClient`
   from `react-query`), always through `axiosInstance` from
-  `src/lib/networkUtils.ts`, which handles JWT refresh on 401s.
+  `src/lib/networkUtils.ts`, which handles JWT refresh on 401s. Unauthenticated
+  requests use the static `ACCESS_TOKEN` from `src/lib/config.ts`.
 - Make the smallest correct change; do not opportunistically refactor,
   reformat, or rename unrelated code.
 
@@ -230,7 +238,7 @@ Path alias: `@/*` maps to `src/*` (configured in both `tsconfig.json` and
 - Jest is configured with the `jest-expo` preset (`npm test` runs
   `--watchAll`); there is currently no committed test suite, so verification
   relies on type-checking, the native smoke script, and device QA.
-- QA/e2e strategy is documented in `docs/qa-e2e-strategy.md`; device QA runs
+- QA method is documented in `docs/qa-e2e-strategy.md`; device QA runs
   against the QA backend only, with fixtures labelled `AGENT_QA_<run-id>`.
 - After any JS dependency bump that ships a native module, do a full native
   rebuild and run `scripts/smoke-native-build.sh` — this exact failure mode
@@ -255,9 +263,12 @@ Path alias: `@/*` maps to `src/*` (configured in both `tsconfig.json` and
 ## Documentation
 
 - `README.md` — quick start.
-- `docs/environments.md` — environment matrix and Metro/EAS workflows.
-- `docs/local-development.md` — prerequisites, connected-iPhone QA loop,
-  local-backend table, troubleshooting.
-- `docs/beta-launch-guide.md`, `docs/qa-e2e-strategy.md`,
-  `docs/qa-production-revalidation.md`, `docs/known-issues.md` — release and
-  QA references.
+- `docs/local-development.md` — environment matrix, running the app,
+  connected-iPhone QA loop, local-backend table, builds, troubleshooting.
+- `docs/qa-e2e-strategy.md` — QA method: test modes, preconditions, severity
+  scale, exit criteria.
+- `docs/qa-production-revalidation.md` — release-readiness baseline, blockers
+  and the P0/P1 ledger (July 2026; needs re-baselining).
+- `docs/beta-launch-guide.md` — app-side beta distribution steps.
+- `docs/known-issues.md` — diagnosed recurring failures and testing gotchas.
+  Check it before guessing at a failure.
