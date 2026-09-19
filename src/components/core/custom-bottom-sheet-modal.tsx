@@ -17,6 +17,12 @@ interface CustomBottomSheetModalProps {
   isDark: boolean;
   children: React.ReactNode;
   scrollView?: boolean;
+  /**
+   * Opt-in. The grabber and scrim as the Figma sheets draw them: a 44x5 grabber in
+   * the hairline tone on a 37pt row (24 above, 8 below) and a 60% scrim. Every
+   * other sheet keeps the default 40x4 grabber and 50% scrim.
+   */
+  frame?: boolean;
 }
 
 const CustomBottomSheetModal = forwardRef<
@@ -24,7 +30,13 @@ const CustomBottomSheetModal = forwardRef<
   CustomBottomSheetModalProps
 >(
   (
-    { snapPoints = ["30%", "50%", "70%"], children, isDark, scrollView = true },
+    {
+      snapPoints = ["30%", "50%", "70%"],
+      children,
+      isDark,
+      scrollView = true,
+      frame = false,
+    },
     ref
   ) => {
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
@@ -86,7 +98,7 @@ const CustomBottomSheetModal = forwardRef<
         // modal at all.
         appearsOnIndex={0}
         disappearsOnIndex={-1}
-        opacity={0.5}
+        opacity={frame ? 0.6 : 0.5}
         pressBehavior="close"
       />
     );
@@ -102,9 +114,9 @@ const CustomBottomSheetModal = forwardRef<
           borderTopRightRadius: radius.sheet,
         }}
         handleIndicatorStyle={{
-          backgroundColor: color.inputLine,
-          width: 40,
-          height: 4,
+          backgroundColor: frame ? color.line : color.inputLine,
+          width: frame ? 44 : 40,
+          height: frame ? 5 : 4,
           borderRadius: radius.full,
         }}
         ref={modalRef}
@@ -114,8 +126,8 @@ const CustomBottomSheetModal = forwardRef<
         enablePanDownToClose
         enableOverDrag={false}
         handleStyle={{
-          paddingTop: 10,
-          paddingBottom: 6,
+          paddingTop: frame ? 24 : 10,
+          paddingBottom: frame ? 8 : 6,
           borderTopLeftRadius: radius.sheet,
           borderTopRightRadius: radius.sheet,
         }}

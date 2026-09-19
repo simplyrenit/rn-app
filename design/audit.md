@@ -222,3 +222,32 @@ Not copied: the frame's heart is `#E50914`; the app draws it in its danger tone 
 (`#EB6F62`), the same as Home. Widths of the price and location lines differ only because
 the listings differ. Not verified: the empty state and loading skeleton against a frame
 (none exists).
+
+## Appearance sheet (light; dark partly) — 2026-09-20
+
+Figma light `1:19482` (overlay `1:19544`), dark `1:19346` · app
+`src/components/profile/post-auth/sheets/AppearanceSheet.tsx`, opt-in `frame` on
+`src/components/core/custom-bottom-sheet-modal.tsx` · captures
+`design/app/appearance.{light,dark}.iphone16e.png`.
+
+Changed: the title is centred at 18 bold in a 44pt header (it was left-aligned at 20); the
+rows are 56pt with bold 16pt labels and 24pt side padding, no rules between them (they were
+regular weight with hairlines); the copy and order follow the frame ("Use my device
+settings", "Dark mode", "Light mode", was "Match my device", "Light", "Dark"); the sheet is
+249pt plus the safe-area inset, with a 44×5 grabber in the hairline tone on a 37pt row and
+a 60% scrim, all behind `frame` so the app's other sheets keep the 40×4 grabber and 50%
+scrim.
+
+Result (light): measured from the sheet's own top edge, the grabber, title and all three
+row labels are within 1px (0.5pt) of the frame. The sheet's top edge itself sits ~13pt
+higher on device than in the frame because the frame draws the home indicator on a black
+strip 21pt tall while the device's bottom inset is 34pt and belongs to the sheet.
+
+Dark: the frame's sheet is `#000000` with an `#E6E6E6` grabber, which are the light
+sheet's stroke colours left in the dark frame; the app keeps its raised `#0F0F0F` sheet and
+its dark grabber (the design system's elevation), so dark is deliberately not matched
+there.
+
+Not done: **Notifications** (`1:18332`) is not restyled: opening the screen calls
+`markAllAsRead` on the signed-in account, which changes real data. It needs an
+`AGENT_QA_<run-id>` account or a read-only capture path first.
