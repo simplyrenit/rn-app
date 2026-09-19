@@ -652,6 +652,7 @@ export default function DetailsScreen() {
               the distance now ride in the card's own caption — the frame's
               block is the heading and the card, with no line between them. */}
           <ProductMap
+            variant="detail"
             latitude={product?.coordinates?.lat!}
             longitude={product?.coordinates?.long!}
             isDarkMode={isDark}

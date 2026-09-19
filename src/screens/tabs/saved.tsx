@@ -12,17 +12,17 @@ import { useTheme } from "@/lib/theme";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import React from "react";
-import { FlatList, RefreshControl, View } from "react-native";
+import { FlatList, RefreshControl, View, useWindowDimensions } from "react-native";
 import { HeartIcon } from "react-native-heroicons/outline";
 import { Text } from "@/components/core";
 
 // Measured off the Figma Saved frame: a two-column wrap of the same 163pt tile the
 // Home rails use, 16 between columns and 24 between rows, under a 61pt topbar
-// (16 padding, an H2 title). The columns are fixed rather than fractions of the
-// screen so the tile matches Home's to the point and a lone card in the last row
-// stays one column wide instead of stretching.
+// (16 padding, an H2 title). A column is half of what is left after the gutters
+// and the gap, which is exactly 163 on the 390pt frame and shrinks with a narrower
+// phone instead of overflowing it; being a width rather than a flex fraction, a
+// lone card in the last row stays one column wide.
 const COLUMN_GAP = 16;
-const CARD_WIDTH = 163;
 const TOPBAR_PADDING = 16;
 
 export default function Saved() {
@@ -31,9 +31,13 @@ export default function Saved() {
   const { authTokens, isAuthenticated } = useGlobalContext();
   const { color, isDark } = useTheme();
   const navigation = useTypedNavigation();
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = Math.floor(
+    (screenWidth - 2 * SCREEN_GUTTER - COLUMN_GAP) / 2
+  );
 
   const renderItem = ({ item }: { item: BackendProduct }) => (
-    <View style={{ width: CARD_WIDTH }}>
+    <View style={{ width: cardWidth }}>
       <Card
         id={`${item.name}`}
         image={item.cover_image}
@@ -69,7 +73,7 @@ export default function Saved() {
             <FlatList
               data={[0, 1, 2, 3, 4, 5]}
               renderItem={() => (
-                <View style={{ width: CARD_WIDTH }}>
+                <View style={{ width: cardWidth }}>
                   <ProductCardSkeleton />
                 </View>
               )}

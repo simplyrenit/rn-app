@@ -31,7 +31,7 @@ interface Props {
   /**
    * The design's product-tile heart: a bare 44pt box in the photo's corner, no
    * chip behind it, a 24pt white-stroked outline with a translucent dark fill.
-   * Only the Home rails use it; every other surface keeps the chip.
+   * The Home rails and Saved use it; every other surface keeps the chip.
    */
   tile?: boolean;
   /**

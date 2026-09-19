@@ -19,7 +19,8 @@ interface Props {
   /**
    * Opt-in. `detail` is the row as Figma 1:9120 draws it in "About the owner":
    * a 48pt avatar, the meta line set entirely in tertiary, and a mini chevron
-   * at full strength. The post wizard's review step keeps `default`.
+   * at full strength. The default is what the post wizard's review step would draw (its owner block is
+   * currently commented out).
    */
   variant?: "default" | "detail";
 }

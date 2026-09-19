@@ -1,4 +1,5 @@
 import React from "react";
+import { ProductMapClassic } from "./product-map-classic";
 import { StyleProp, View, ViewStyle } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
@@ -6,7 +7,7 @@ import { Text } from "@/components/core";
 import { darkColors, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
-interface ProductMapProps {
+export interface ProductMapProps {
   latitude?: number;
   longitude?: number;
   isDarkMode: boolean;
@@ -60,7 +61,7 @@ const MARKER_SHADOW = {
  */
 const NEIGHBOURHOOD_DELTA = 0.012;
 
-export const ProductMap: React.FC<ProductMapProps> = ({
+const DetailProductMap: React.FC<ProductMapProps> = ({
   latitude,
   longitude,
   isDarkMode,
@@ -196,7 +197,7 @@ export const ProductMap: React.FC<ProductMapProps> = ({
           <Text
             fontSize="text-xs"
             fontWeight="font-medium"
-            numberOfLines={1}
+            numberOfLines={2}
             style={{ color: darkColors.text }}
           >
             {caption}
@@ -206,3 +207,24 @@ export const ProductMap: React.FC<ProductMapProps> = ({
     </View>
   );
 };
+
+interface Props extends ProductMapProps {
+  /**
+   * Opt-in. `detail` is the map as Figma 1:9120 draws it on Product Details: a
+   * fixed ring marker and a caption chip. The default is the original 500m circle
+   * and pin, which the post wizard's review step still shows.
+   */
+  variant?: "default" | "detail";
+}
+
+export const ProductMap: React.FC<Props> = ({ variant = "default", ...props }) =>
+  variant === "detail" ? (
+    <DetailProductMap {...props} />
+  ) : (
+    <ProductMapClassic
+      latitude={props.latitude}
+      longitude={props.longitude}
+      isDarkMode={props.isDarkMode}
+      placeName={props.placeName}
+    />
+  );

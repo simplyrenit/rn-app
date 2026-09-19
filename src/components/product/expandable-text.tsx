@@ -81,7 +81,7 @@ export function ExpandableText({
     <View style={{ gap: controlGap }}>
       <View
         style={
-          collapsedHeight && !expanded ? { height: collapsedHeight } : undefined
+          collapsedHeight && !expanded ? { minHeight: collapsedHeight } : undefined
         }
       >
         <Text
@@ -120,7 +120,7 @@ export function ExpandableText({
           accessibilityRole="button"
           accessibilityLabel={label}
           accessibilityHint={accessibilityHint}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           <View
             style={{

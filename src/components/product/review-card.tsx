@@ -71,7 +71,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
         // mixing reviews that are cut off with reviews that are not still
         // lines its avatars up.
         detail
-          ? { height: DETAIL_HEIGHT, justifyContent: "space-between" }
+          ? { minHeight: DETAIL_HEIGHT, justifyContent: "space-between" }
           : shadow,
       ]}
     >

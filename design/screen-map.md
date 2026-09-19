@@ -77,6 +77,17 @@ that I have found yet (Figma's Saved is the signed-in "Wishlist").
 
 ## Open decisions
 
+Second review (`renit-build-reviewer`, 2026-09-20) fixed in the commit after `9c74a3f`: Saved's
+columns are now computed from the window (163 on the 390pt frame, narrower on a smaller
+phone) instead of a fixed 163 that clipped the right card on an iPhone SE; `ProductMap` is
+opt-in (`variant="detail"`), the post wizard keeps the original 500m circle and pin
+(`product-map-classic.tsx`); the map caption may wrap to two lines; the expand control's
+target is 44pt; the review card and its body are minimums, so they grow with Larger Text; four
+stale comments updated. Left for a device pass: a long place name and Larger Text at 1.4× on
+Product Details, and dark rendering of the ring marker. Left as a copy decision: the
+"Unavailability form" (Home card, Profile) versus "Request an item" (Search results card)
+naming, and the unreachable `CurrencySheet` code in the Profile file.
+
 From the independent review (`renit-build-reviewer`, 2026-09-20), fixed in the commit after `ee2dffe`: Product
 Details title no longer capped at one line, the CTA can grow with text size, the
 skeleton lands on the hero's ground and width, the photo indicator is clamped, the

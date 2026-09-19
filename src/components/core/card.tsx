@@ -24,8 +24,8 @@ export interface CardProps extends ItemCard {
   distance?: string | null;
   /**
    * The Home rails' tile, as the design draws it: an 8pt-radius photo with no
-   * hairline over it and the bare corner heart. Search and Saved keep the
-   * default tile until their own frames are compared.
+   * hairline over it and the bare corner heart. Saved uses it too; Search keeps
+   * the default tile until its own frame is compared.
    */
   tile?: boolean;
 }
