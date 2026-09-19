@@ -420,3 +420,26 @@ Result (light, 2× grid): the header, all four lines of copy, the field (452 to 
 text are within 1px (0.5pt) of the frame. Dark: page and intro text match; the field is left unfilled
 like the frame's (the app's other fields fill with the surface tone); the hairline is 4/255 darker.
 Not verified: the typed state with the keyboard up, the sent state.
+
+## Personal details sheet (light + dark) — 2026-09-20
+
+Figma light frame `1:10776` (Bottom sheet `1:10839`) · app `src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx` ·
+captures `design/app/personal.{light,dark}.iphone16e.png`. Viewed only: no field was edited, saved or uploaded.
+
+Changed: title "Personal details" 18 bold centred in a 44pt row (was 24pt "Personal Details"); picture row 80pt
+(16/24 padding, 48pt round avatar, 14 bold label, purple "Upload" text replacing the pencil, hairline under);
+four fields 85pt each (16/24 padding, 14 bold label, 16 value, 8 gap, pencil pinned top-right at 24) with no
+rules between them; `frame` grabber/scrim; sheet snaps to its content height (37 grabber row + rows) plus the
+bottom inset instead of `62%`. Pencil and Upload keep a 12pt hitSlop so the targets stay reachable. The
+"Delete my account" row is ours, not the frame's; kept as a contained destructive row under the fields.
+
+Deviation kept: the frame's avatar is an initials chip ("GB") in the hairline tone; the app shows the account photo
+(the frame's hidden Image variant is the photo), so the photo stays. Frame values that are freelancer data
+(name, email, phone) are not copied. Sub-sheets (edit name/email/phone/password, profile-picture chooser) are not
+restyled and not opened, since they write to the account.
+
+## My Products (parked) — 2026-09-20
+
+Frame `1:12006`. Not implemented: the frame draws a "Share entire catalogue" row and an Edit button per listing,
+while the app's "My listings" shows Live/Rejected moderation pills and no Edit buttons. Which model is wanted is a
+product decision (status pills vs Edit), so the screen is parked until Yash decides.
