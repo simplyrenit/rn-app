@@ -1,7 +1,7 @@
 import { Text } from "@/components/core";
 import { usePressFeedback } from "@/components/core/use-press-feedback";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
-import { SCREEN_GUTTER, density, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { Image } from "expo-image";
 import React from "react";
@@ -11,7 +11,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { ChevronRightIcon } from "react-native-heroicons/outline";
+import { ChevronLeftIcon } from "react-native-heroicons/outline";
+// The frames draw the row's chevron at the mini weight (20pt box, a 6×10pt
+// glyph); the outline one this used draws half as tall again.
+import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgUri } from "react-native-svg";
 
@@ -42,10 +45,29 @@ export interface TaxonomyItem {
   light_icon: string | null;
 }
 
-/** Remote category artwork, as the API sizes it. */
-const REMOTE_ICON = 20;
-/** The bundled glyph, optically matched to the remote artwork above. */
-const GLYPH = 22;
+/**
+ * Row geometry, measured off the Figma frames `1:13231` (category) and
+ * `1:13333` (sub-category): a 56pt row on the 24pt gutter, a 20pt glyph, 8pt
+ * to a 16pt label, and a 20pt chevron right-aligned to the gutter. The glyph
+ * was 22pt with 20pt of space after it, which put every label 12pt right of
+ * the frame.
+ */
+const ICON = 20;
+/** Space between the glyph and its label. */
+const ICON_GAP = 8;
+/** The branch row above the list: a 24pt back chevron, then a 14pt bold name. */
+const CONTEXT_ICON = 24;
+/**
+ * 4, not the 8 the list rows use: the branch chevron is a 24pt glyph where a
+ * row's is 20, and the frame lines the branch name up with the row labels
+ * below it rather than with the glyph's own trailing edge.
+ */
+const CONTEXT_GAP = 4;
+/**
+ * The frames set every row in this list at 56pt — the list rows reach it as
+ * `py-4` around a 24pt line, the branch row has to be told.
+ */
+const ROW_HEIGHT = 56;
 
 interface RowProps<T extends TaxonomyItem> {
   item: T;
@@ -88,26 +110,37 @@ function TaxonomyRow<T extends TaxonomyItem>({
       accessibilityState={{ disabled, busy }}
       onPress={() => onSelect(item)}
     >
-      <View className="flex-row items-center space-x-5">
-        {remoteIcon ? (
-          isSvg ? (
-            <SvgUri width={REMOTE_ICON} height={REMOTE_ICON} uri={remoteIcon} />
+      <View
+        className="flex-row items-center"
+        style={{ flex: 1, gap: ICON_GAP }}
+      >
+        {/* A fixed box, so a wide glyph (the car) and a narrow one (the phone)
+            start their labels on the same pixel, as the frames do. */}
+        <View style={{ width: ICON, alignItems: "center" }}>
+          {remoteIcon ? (
+            isSvg ? (
+              <SvgUri width={ICON} height={ICON} uri={remoteIcon} />
+            ) : (
+              <Image
+                source={{ uri: remoteIcon }}
+                style={{ width: ICON, height: ICON }}
+              />
+            )
           ) : (
-            <Image
-              source={{ uri: remoteIcon }}
-              style={{ width: REMOTE_ICON, height: REMOTE_ICON }}
-            />
-          )
-        ) : (
-          <CategoryIcon name={item.title} size={GLYPH} color={color.textBody} />
-        )}
-        <Text fontSize="text-base">{categoryDisplayName(item.title)}</Text>
+            <CategoryIcon name={item.title} size={ICON} color={color.textBody} />
+          )}
+        </View>
+        {/* 16pt, not 18: the label measures 12pt cap on the frames, which is
+            where the 56pt row height comes from (py-4 around a 24pt line). */}
+        <Text fontSize="text-md" numberOfLines={1} style={{ flex: 1 }}>
+          {categoryDisplayName(item.title)}
+        </Text>
       </View>
 
       {busy ? (
         <ActivityIndicator size="small" color={color.brandText} />
       ) : (
-        <ChevronRightIcon size={REMOTE_ICON} color={color.text} />
+        <ChevronRightIcon size={ICON} color={color.text} />
       )}
     </TouchableOpacity>
   );
@@ -117,10 +150,17 @@ interface Props<T extends TaxonomyItem> {
   items?: T[];
   onSelect: (item: T) => void;
   /**
-   * The branch the customer is already inside, stated as context rather than as
-   * a second, differently-shaped back control.
+   * The branch the customer is already inside. The frame draws it as a 56pt
+   * row above the list — a back chevron, the branch name in 14 bold, a
+   * full-bleed hairline under it — so the label and the way out of the branch
+   * are one control rather than two differently-shaped ones.
    */
   contextLabel?: string;
+  /**
+   * What the branch row's chevron does. Omit and the row draws as a static
+   * label, which is what a caller with no branch to return to wants.
+   */
+  onContextPress?: () => void;
   /**
    * Title of the row whose selection is being saved. Shows a spinner on that
    * row and blocks the rest, so a slow PATCH cannot be fired twice.
@@ -137,25 +177,45 @@ export function TaxonomyList<T extends TaxonomyItem>({
   items,
   onSelect,
   contextLabel,
+  onContextPress,
   busyTitle = null,
   preferRemoteIcon = true,
 }: Props<T>) {
   const insets = useSafeAreaInsets();
+  const { color } = useTheme();
+
+  const contextRow = contextLabel ? (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: CONTEXT_GAP,
+        minHeight: ROW_HEIGHT,
+        paddingHorizontal: SCREEN_GUTTER,
+        borderBottomWidth: 1,
+        borderBottomColor: color.line,
+      }}
+    >
+      <ChevronLeftIcon size={CONTEXT_ICON} color={color.text} />
+      <Text fontSize="text-sm" fontWeight="font-bold" numberOfLines={1}>
+        {contextLabel}
+      </Text>
+    </View>
+  ) : null;
 
   return (
     <>
-      {contextLabel ? (
-        <View
-          style={{
-            paddingHorizontal: SCREEN_GUTTER,
-            paddingBottom: space.md,
-          }}
+      {contextRow && onContextPress ? (
+        <TouchableOpacity
+          onPress={onContextPress}
+          accessibilityRole="button"
+          accessibilityLabel={`Back to ${contextLabel}`}
         >
-          <Text fontSize="text-sm" tone="body">
-            {contextLabel}
-          </Text>
-        </View>
-      ) : null}
+          {contextRow}
+        </TouchableOpacity>
+      ) : (
+        contextRow
+      )}
 
       <FlatList
         data={items}

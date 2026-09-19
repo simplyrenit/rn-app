@@ -2,6 +2,7 @@ import { useProfile } from "@/backend/profile";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { EditStepHeader } from "@/components/post/edit-step-header";
 import { TaxonomyList } from "@/components/post/taxonomy-list";
+import { categoryDisplayName } from "@/lib/category-icons";
 import { toast } from "@/lib/toast";
 import { RouteProps, Subcategory, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
@@ -53,7 +54,8 @@ export default function EditSubCategories() {
         <TaxonomyList
           items={subcategories}
           onSelect={onSelect}
-          contextLabel={`In ${category}`}
+          contextLabel={categoryDisplayName(category)}
+          onContextPress={() => navigation.goBack()}
           busyTitle={savingTitle}
         />
       </View>

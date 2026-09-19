@@ -2,7 +2,7 @@ import { Button, IconButton, Text, useButtonLabelColor } from "@/components/core
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
-import { ink, radius } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, ink, radius } from "@/lib/design-tokens";
 import { ProductImage } from "@/lib/types";
 import { toast } from "@/lib/toast";
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
@@ -22,6 +22,28 @@ import {
 
 const StyledBottomView = styled(BottomSheetView);
 const MAX_IMAGES = 5;
+
+/**
+ * The empty state, measured off Figma `1:13650`: one dashed box on the 24pt
+ * gutter, 160pt tall at the field radius, a plus centred in it, and 40pt of
+ * air between the progress bar and its top edge. It was a box whose height was
+ * 20% of the window — so it grew on a tall phone and shrank on a short one —
+ * and a full-width disabled button where the frame draws bare text.
+ */
+const UPLOAD_BOX_HEIGHT = 160;
+const UPLOAD_TOP_INSET = 24;
+/**
+ * The frame's plus draws 18.5pt wide. Heroicons' `PlusIcon` reaches that at
+ * 28, not at the 24 this used — the glyph's own stroke is part of its width.
+ */
+const UPLOAD_GLYPH = 28;
+/** The frame leaves 20pt under the Next row before the chrome below it. */
+const SUBMIT_BOTTOM_GAP = 20;
+/**
+ * The frame sets 6pt between "Next" and its chevron. The 4/8 spacing scale has
+ * no 6, and 8 measured 2pt wide of the frame, so the measured value wins here.
+ */
+const SUBMIT_LABEL_GAP = 6;
 
 /**
  * The Next label + chevron rendered *inside* the submit `Button`. It has to be
@@ -198,7 +220,7 @@ export function ProductImageGrid({
         borderColor: ink.inputLine(isDark),
         borderWidth: 1,
         width: isFullWidth ? "100%" : Math.min(winW * 0.415, 163),
-        height: winH * 0.2,
+        height: isFullWidth ? UPLOAD_BOX_HEIGHT : winH * 0.2,
         borderRadius: radius.input,
         alignItems: "center",
         justifyContent: "center",
@@ -208,7 +230,10 @@ export function ProductImageGrid({
       {/* Was borrowing an inverted `line` token as an icon colour; `dim` is the
           token this app already uses for a secondary icon on a plain surface
           (see the InformationCircleIcon two screens over in cover-image-picker). */}
-      <PlusIcon size={24} color={ink.dim(isDark)} />
+      <PlusIcon
+        size={isFullWidth ? UPLOAD_GLYPH : 24}
+        color={ink.dim(isDark)}
+      />
     </TouchableOpacity>
   );
 
@@ -217,7 +242,12 @@ export function ProductImageGrid({
       {header}
 
       <View className="px-gutter flex-1 ">
-        <View className="flex-1">
+        <View
+          className="flex-1"
+          style={{
+            paddingTop: selectedImages.length === 0 ? UPLOAD_TOP_INSET : 0,
+          }}
+        >
           {selectedImages.length === 0 ? (
             renderAddButton(true)
           ) : (
@@ -239,14 +269,41 @@ export function ProductImageGrid({
             />
           )}
         </View>
-        <View style={{ paddingTop: 8, paddingBottom: 8 + insets.bottom }}>
-          <Button
-            className="w-full items-center justify-between"
-            disabled={!allFieldsFilled}
-            onPress={handleSubmit}
-          >
-            <SubmitLabel />
-          </Button>
+        <View style={{ paddingTop: 8, paddingBottom: SUBMIT_BOTTOM_GAP + insets.bottom }}>
+          {allFieldsFilled ? (
+            <Button
+              className="w-full items-center justify-between"
+              onPress={handleSubmit}
+            >
+              <SubmitLabel />
+            </Button>
+          ) : (
+            // The frame draws the empty state's Next as bare tertiary text with
+            // a mini chevron and no fill — the same treatment Feedback & Review
+            // and Write a review already use for an incomplete form.
+            <View
+              accessible
+              accessibilityRole="button"
+              accessibilityState={{ disabled: true }}
+              accessibilityLabel="Next"
+              style={{
+                height: MIN_TOUCH_TARGET,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: SUBMIT_LABEL_GAP,
+              }}
+            >
+              <Text
+                fontSize="text-sm"
+                fontWeight="font-bold"
+                style={{ color: ink.dim(isDark) }}
+              >
+                Next
+              </Text>
+              <ChevronRightIcon size={16} color={ink.dim(isDark)} />
+            </View>
+          )}
         </View>
       </View>
 

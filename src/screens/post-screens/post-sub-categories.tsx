@@ -2,6 +2,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { PostProductHeader } from "@/components/post/header";
 import { TaxonomyList } from "@/components/post/taxonomy-list";
 import { useProductContext } from "@/context/product-context";
+import { categoryDisplayName } from "@/lib/category-icons";
 import { RouteProps, Subcategory, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React from "react";
@@ -32,10 +33,14 @@ export default function PostSubCategories() {
           showBackArrow
         />
 
+        {/* The frame names the branch on its own ("Electronics"), because the
+            chevron beside it already says what the row does. It read
+            "In Electronics" when it was a caption with no control. */}
         <TaxonomyList
           items={subcategories}
           onSelect={onSelect}
-          contextLabel={`In ${category}`}
+          contextLabel={categoryDisplayName(category)}
+          onContextPress={() => navigation.goBack()}
         />
       </View>
     </NonScrollableContainer>

@@ -582,3 +582,127 @@ Toast (decision, not done): the frame's only toast is a success one drawn in a b
 brand hairline, filled brand check square). `ToastBody` carries four severities on the semantic colours, which are
 deliberately kept until the designer ships a set (see the redesign memory), so restyling success alone would make
 it the odd one out. Waiting on that set.
+
+## Post wizard, steps 1–4 (light + dark) — 2026-09-20
+
+Figma light `1:13231` (category), `1:13333` (sub-category), `1:13455` (form), `1:13650` (image
+upload), section `1:13230` · exports in `design/figma-images/post/light/` · app
+`src/components/post/{header,page-indicator,taxonomy-list,product-image-grid}.tsx`,
+`src/screens/post-screens/post-sub-categories.tsx`,
+`src/screens/profileScreens/edit/edit-sub-categories.tsx` · captures
+`design/app/post-{category,subcategory,form,images}.{light,dark}.iphone16e.png`.
+
+This closes the "AUDITED (step 1), parked" entry above. The three decisions it was parked on are
+settled by the goal for this pass: the wizard keeps its seven steps, its X exit with the
+"Step N of 7" caption, and the app's own category list, order, names and glyphs. Everything that
+maps 1:1 to the frames is matched.
+
+### Header (all seven steps, and the edit twins that share it)
+
+| Element | Was | Figma | Resolution |
+| --- | --- | --- | --- |
+| Title | 16pt semibold | 18 bold, centred, cap line 86.5pt down the screen | Matched (`text-base` / `font-bold`) — the same type `SubpageHeader` already uses |
+| Back control | 44pt box 4pt from the edge | 24pt arrow in a 44pt target 16 from the edge | Matched |
+| Progress | 7 segments spread over a fixed 220pt (28pt each) | 24×4 pills, 4pt gaps, brand fill on an `#E6E6E6` track | Segment geometry matched; the wizard draws its own row rather than change the `PageIndicator` the auth flow shares |
+| Separator | Hairline under the header | None | Removed |
+| Material | Blur | Header is part of the page | `material="solid"` — the blur measured 8/255 over true black, a grey band the frame does not draw |
+
+Result (light, 2× grid, app aligned +12px on the status-bar baseline): the title's cap line, all
+seven segments' x positions, their 24pt width and 4pt gaps land on the frame's pixels (0px). The
+bar is 1px (0.5pt) low.
+
+**The one place the kept structure and the design disagree.** The frames draw no step caption, and
+they leave 16pt between the title's line box and the bar. "Step N of 7" needs 18 of it, so the
+caption's leading is tightened to 16 and the gap to the bar is 0. That buys the frame's title
+position and the frame's bar position at the same time, to within 1px, at the cost of the caption
+sitting in air the frame leaves empty.
+
+### Step 1, "Choose a category" (frame `1:13231`)
+
+Rows were a 22pt glyph with 20pt of space after it and an 18pt label, so every label sat 12pt right
+of the frame and every row was 59pt instead of 56. Now: a fixed 20pt glyph box on the 24 gutter,
+8pt, a 16pt label, and the mini (not outline) chevron at 20pt right-aligned to the gutter — the
+outline one drew 14pt tall against the frame's 10.
+
+Result: the first row's chevron centre, the 112px row pitch, the glyph box, the label's start (104px)
+and its 12pt cap height are within 1px (0.5pt) of the frame. Residual: the chevron's right edge is
+1pt inside the frame's.
+
+### Step 2, "Choose a subcategory" (frame `1:13333`)
+
+The branch was a 14pt grey caption reading "In Electronics" with 14pt under it. The frame draws a
+56pt row — a 24pt back chevron on the gutter, the branch name in 14 bold, a full-bleed hairline
+under it — so the label and the way out of the branch are one control. `TaxonomyList` gains an
+opt-in `onContextPress`; without it the row still draws, inert, which is what a caller with no
+branch to return to wants. Both callers (the wizard step and `EditSubCategories`) now pass
+`categoryDisplayName(category)` and `goBack`.
+
+Result: the chevron (63–80px), the label's start (106px), its cap height, the hairline (396–397px)
+and the first four list rows land on the frame's pixels (0px).
+
+### Step 3, "Tell us about your product" (frame `1:13455`) — header only
+
+The header matches. **The field ramp is not restyled, and needs your ruling.** Measured, the frame
+wants 16pt bold labels over 16pt helper text, 48pt fields with an `#E6E6E6` hairline edge, and 39pt
+between field groups. The app is at 14pt bold labels, 14pt hints, 44pt fields with the `inputLine`
+control edge, and an 18pt `fieldGap` — every one of those is a deliberate, commented decision in
+`src/components/core/field.tsx` and `design-tokens.ts` ("a label must not outrank the value the
+customer types into the field below it… a single field group came to cost 146pt"; "control borders
+use `inputLine`, not the hairline: a 1.13:1 border fails WCAG 1.4.11"). Matching the frame means
+reverting both, in `core/`, for every form in the app. That is a design-system call, not a
+screen-level restyle, so the screen is left as it is and the difference recorded. The same ruling
+is already open for the hairline-bordered controls on Logout, the results filter and the owner
+buttons.
+
+Not copied either way: the frame's title-case labels ("Product Name") against the app's sentence
+case, and its placeholder sample data (`"Macbook AIr"`, with the typo).
+
+### Step 4, "Show us how it looks" (frame `1:13650`)
+
+The empty state was a dashed box 20% of the window tall — so it grew on a tall phone and shrank on a
+short one — under a full-width disabled button. Now: one dashed box on the 24 gutter, 160pt tall at
+the field radius, a 28pt plus centred in it (Heroicons' `PlusIcon` reaches the frame's 18.5pt drawn
+width at 28, not at 24), 24pt under the header, and a bare tertiary "Next ›" in a 44pt row — the
+treatment Feedback & Review and Write a review already use for an incomplete form — which becomes
+the primary button once there is a photo.
+
+Result: the box's left and right edges (48/731px), its top edge, the plus's x and y, the "Next"
+label's width and its 20px cap are within 1px (0.5pt); the box's lower edge and the chevron are 1pt
+out. The frame's "Next" is `#7F7F7F` (50% black); the app draws `textDim` (0.58), which is the
+smallest step that clears AA on white.
+
+**Structural difference, deliberate:** the frames draw the tab bar under every wizard step and put
+"Next" 42pt above it. Entering Post hides the tab bar in the app, so "Next" is pinned above the home
+indicator instead; matching the frame's absolute y would leave it floating in the middle of empty
+space.
+
+### Dark
+
+No dark frame exists for section `1:13230` in the exports available this session, so dark was
+checked against the tokens, not against a frame: page `#000000`, header band `#000000` (after the
+material change), hairline and bar track `#292929` (= `line`, exact), bar fill `#635BE8` (= `brand`,
+exact), labels `#FFFFFF`, the upload plus `#808080` (= `textDim`, exact).
+
+### Steps 5, 6 and 7 — not audited
+
+`ChooseCoverImage`, `ProductAvailability` and `ReviewProduct` inherit the new header and nothing
+else. Their frames (`1:13673` images-filled, `1:13698` cover, `1:13729`/`1:13817`/`1:13908`
+availability, `1:14002` review) could not be exported this session: `ToolSearch` is disabled so the
+Figwright MCP could not be loaded, and Figma's REST API answered 429 (the ~4.5-day quota lockout the
+`renit-figma-access` memory records). Re-export at 2× and measure when either is reachable.
+
+### How these were captured, and what that does not prove
+
+Same constraint as the All reviews / Write a review pass: the Simulator's window is closed on this
+machine and macOS Accessibility is not granted to the shell (`System Events` reports no window and
+no menu bar for the Simulator process), so the wizard cannot be reached by tapping. All eight
+captures were taken through a temporary harness that mounted one post screen at a time in a bare
+stack, with the sub-category step's route params taken from the signed-in account's own category
+list. The harness wrote nothing — no listing was published, no photo picked, no permission prompt
+accepted, no submit pressed — and it is deleted; `App.tsx` is byte-identical to `HEAD`.
+
+Not verified on device, and worth a run that can tap: the transitions between steps, the
+sub-category row's new back chevron actually going back, the image grid with photos in it (the
+picker needs a permission prompt, which is an approval gate), the condition dropdown's open state,
+and steps 5–7 in any state. Step 1's capture also lacks the tab bar, which the real Post tab draws —
+the harness does not mount the tab navigator, so only the top of that screen is evidence.
