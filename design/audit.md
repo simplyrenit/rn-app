@@ -46,10 +46,23 @@ are 1px (0.5pt) high, rounding.
 Keyword suggestions, the place bottom sheet, current-location lookup, the date-range
 picker, "Clear all" only when a filter is set, and "Browse all" when none is.
 
+### Dark — 2026-09-20
+
+Frame `1:7571`, capture `design/app/search.dark.iphone16e.png`, side by side in
+`design/app/search.compare.dark.png`. Geometry is identical to light (the Where field,
+dividers, pin, pencil and labels land on the same pixels as the frame). Colours: page
+`#000000` and field fill `#0F0F0F` match exactly. The hairline is 3/255 lighter in the
+frame (`#292929`) than the app's `line` token (~`#262626`); left as the design
+system's value rather than adding a one-screen token.
+
+The earlier "app stays light" was not a code fault: this simulator had
+`themePreference = light` saved in AsyncStorage from an earlier session, which
+overrides the OS setting. Resetting that key to `device` (the app's default) fixed it;
+the app follows the OS as designed.
+
 ### Not verified
 
-- **Dark.** The simulator switched to dark but the app stayed light (the known theme
-  state issue), so dark is unmeasured. It uses the same tokens as Home, which matched.
+- Nothing about dark: it is verified (below).
 - The place sheet and the date picker (frames `1:8241`–`1:8572`) are not yet audited.
 
 ## Product Details (light) — audited 2026-09-20, not yet fixed
