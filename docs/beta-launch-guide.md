@@ -1,427 +1,114 @@
 # Beta Launch Guide
 
-Step-by-step guide to launch Renit for beta users using Cloudflare Tunnel for the backend and EAS for app distribution.
+App-side steps to get Renit builds to beta testers: runtime configuration, EAS
+builds, distribution, and a pre-launch checklist.
 
-> The shared QA deployment is `https://qa-api.toratora.site`; use the backend
-> repository's `docs/ubuntu-qa-deployment.md` for its current runbook.
-> Production hostname examples below are planning examples, not QA
-> configuration.
-
----
-
-## Table of Contents
-
-1. [Prerequisites](#1-prerequisites)
-2. [Backend Preparation](#2-backend-preparation)
-3. [Cloudflare Tunnel Setup](#3-cloudflare-tunnel-setup)
-4. [AWS / S3 Setup](#4-aws--s3-setup)
-5. [App Configuration](#5-app-configuration)
-6. [Build the App with EAS](#6-build-the-app-with-eas)
-7. [Distribute to Beta Testers](#7-distribute-to-beta-testers)
-8. [Post-Launch Monitoring](#8-post-launch-monitoring)
-9. [Checklist](#9-checklist)
-
----
+> **Backend and infrastructure are out of scope here.** The backend (Docker
+> services, database, Cloudflare Tunnel, AWS/S3) lives in its own repository.
+> The shared QA deployment is `https://qa-api.toratora.site`; use that
+> repository's `docs/ubuntu-qa-deployment.md` for its runbook. Production
+> hostnames below are planning values, not QA configuration.
+>
+> **Approval gates apply.** Creating an EAS build, uploading to App Store
+> Connect, assigning testers, and releasing to production each need explicit
+> approval (see the human approval gates in `AGENTS.md`). The local Xcode/
+> TestFlight route (`renit-local-testflight-release` skill) does not use EAS.
 
 ## 1. Prerequisites
 
-- [ ] Domain name (e.g., `simplyrenit.com`) added to Cloudflare
-- [ ] Apple Developer Account ($99/year) — required for iOS TestFlight
-- [ ] Google Play Console ($25 one-time) — required for Android distribution
-- [ ] Expo account — sign up at https://expo.dev
-- [ ] AWS account with S3 access
+- [ ] Apple Developer account, required for iOS TestFlight
+- [ ] Google Play Console account, required for Play distribution
+- [ ] Expo account with access to the project's EAS
 - [ ] Firebase project configured (auth, firestore, storage)
+- [ ] A reachable backend for the environment you are building against
 
----
+## 2. Runtime configuration
 
-## 2. Backend Preparation
+URL selection in `src/lib/config.ts` is driven by `EXPO_PUBLIC_APP_ENV`, set per
+EAS build profile in `eas.json`:
 
-### 2.1 Environment Configuration
+| Value | API |
+| --- | --- |
+| `DEV` | Local backend (LAN), for local debugging only |
+| `QA` | `https://qa-api.toratora.site/api/` |
+| `PROD` | `https://api.simplyrenit.com/api/` |
 
-Update `/rn-api/rn-api/.env` with production-ready values:
+Before building, check these against the real files rather than a copy in this
+guide:
 
-```env
-# AWS (use dedicated production credentials)
-AWS_ACCESS_KEY_ID=<prod-access-key>
-AWS_SECRET_ACCESS_KEY=<prod-secret-key>
-AWS_STORAGE_BUCKET_NAME=<prod-bucket-name>
-AWS_S3_REGION_NAME=<bucket-region>
-AWS_CLOUDFRONT_DOMAIN=<cloudfront-or-s3-domain>
+- `app.json` / `app.config.js`: name, slug, `version`, `runtimeVersion`, iOS
+  `bundleIdentifier` and `buildNumber`, Android `package` and `versionCode`.
+  `app.config.js` switches the app to "Renit QA" and the `com.renit.app.qa`
+  package when `EXPO_PUBLIC_APP_ENV=QA`.
+- `eas.json`: profiles `development`, `qa`, `testflight-qa` and `release`. The
+  QA host must match `config/environments/qa.env.example`.
+- `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) are
+  present for the target environment.
 
-# Django
-DJANGO_SECRET_KEY=<generate-a-strong-secret-key>
-
-# Database (local PostgreSQL via Docker)
-DB_NAME=rn_api
-DB_USER=rn_api
-DB_PASSWORD=<strong-password>
-DB_HOST=db
-DB_PORT=5432
-
-# Redis (local via Docker)
-CELERY_BROKER_URL=redis://redis:6379/0
-CELERY_RESULT_BACKEND=redis://redis:6379/0
-```
-
-### 2.2 Generate a Strong Django Secret Key
-
-```bash
-python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-```
-
-### 2.3 Start the Backend
-
-```bash
-cd /home/yash/git/personal/rn-api/rn-api
-docker compose down
-docker compose up -d
-```
-
-### 2.4 Verify Backend is Running
-
-```bash
-curl http://localhost:8000/api/
-```
-
----
-
-## 3. Cloudflare Tunnel Setup
-
-### 3.1 Install Cloudflared
-
-```bash
-curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-sudo dpkg -i cloudflared.deb
-```
-
-### 3.2 Authenticate with Cloudflare
-
-```bash
-cloudflared tunnel login
-```
-
-This opens a browser to authorize your Cloudflare account.
-
-### 3.3 Create a Tunnel
-
-```bash
-cloudflared tunnel create renit-api
-```
-
-Note the tunnel UUID from the output — you'll need it for the config.
-
-### 3.4 Configure the Tunnel
-
-Create `~/.cloudflared/config.yml`:
-
-```yaml
-tunnel: <TUNNEL_UUID>
-credentials-file: /home/yash/.cloudflared/<TUNNEL_UUID>.json
-
-ingress:
-  - hostname: api.simplyrenit.com
-    service: http://localhost:8000
-  - service: http_status:404
-```
-
-### 3.5 Route DNS
-
-```bash
-cloudflared tunnel route dns renit-api api.simplyrenit.com
-```
-
-### 3.6 Start the Tunnel
-
-```bash
-cloudflared tunnel run renit-api
-```
-
-### 3.7 Set Up as a Systemd Service (auto-start on boot)
-
-```bash
-sudo cloudflared service install
-sudo systemctl enable cloudflared
-sudo systemctl start cloudflared
-```
-
-### 3.8 Verify
-
-```bash
-curl https://api.simplyrenit.com/api/
-```
-
----
-
-## 4. AWS / S3 Setup
-
-### 4.1 Create a Production S3 Bucket
-
-```bash
-aws s3 mb s3://<prod-bucket-name> --region <region>
-```
-
-### 4.2 Disable Public Access Block
-
-```bash
-aws s3api put-public-access-block \
-  --bucket <prod-bucket-name> \
-  --public-access-block-configuration \
-  "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
-```
-
-### 4.3 Set Bucket Policy (Public Read)
-
-```bash
-aws s3api put-bucket-policy --bucket <prod-bucket-name> --policy '{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Sid": "PublicRead",
-    "Effect": "Allow",
-    "Principal": "*",
-    "Action": "s3:GetObject",
-    "Resource": "arn:aws:s3:::<prod-bucket-name>/*"
-  }]
-}'
-```
-
-### 4.4 Enable CORS
-
-```bash
-aws s3api put-bucket-cors --bucket <prod-bucket-name> --cors-configuration '{
-  "CORSRules": [{
-    "AllowedHeaders": ["*"],
-    "AllowedMethods": ["GET", "PUT", "POST"],
-    "AllowedOrigins": ["*"],
-    "ExposeHeaders": ["ETag"],
-    "MaxAgeSeconds": 3600
-  }]
-}'
-```
-
-### 4.5 (Optional) Set Up CloudFront
-
-For better performance, create a CloudFront distribution in front of the S3 bucket. Update `AWS_CLOUDFRONT_DOMAIN` in `.env` with the CloudFront domain.
-
-Without CloudFront, use the S3 domain directly:
-```
-<bucket-name>.s3.<region>.amazonaws.com
-```
-
----
-
-## 5. App Configuration
-
-### 5.1 Update Runtime Environment Mapping
-
-In `src/lib/config.ts`, URL selection is env-driven (no manual `DEV_MODE` toggle).
-
-Set env via EAS profile variable `EXPO_PUBLIC_APP_ENV`:
-
-- `DEV` -> LAN backend (local debugging)
-- `QA` -> `https://qa-api.toratora.site/api/`
-- `PROD` -> `https://api.simplyrenit.com/api/`
-
-### 5.2 Update `app.json` / `app.config.js`
-
-Verify the following fields are set correctly:
-
-```json
-{
-  "expo": {
-    "name": "Renit",
-    "slug": "renit",
-    "version": "1.0.2",
-    "owner": "yashtejwani00",
-    "runtimeVersion": "1.0.2",
-    "updates": {
-      "url": "https://u.expo.dev/d9ee200a-0c82-4db8-bb21-95c3b225ba4a"
-    },
-    "ios": {
-      "bundleIdentifier": "com.renit.app",
-      "buildNumber": "1"
-    },
-    "android": {
-      "package": "com.renit.app",
-      "versionCode": 1,
-      "googleServicesFile": "./google-services.json"
-    }
-  }
-}
-```
-
-### 5.3 Configure EAS
-
-```bash
-npx expo install eas-cli
-eas login
-eas build:configure
-```
-
-This generates `eas.json`. Ensure profiles/channels are aligned with your release tracks:
-
-```json
-{
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "env": {
-        "EXPO_PUBLIC_APP_ENV": "DEV"
-      }
-    },
-    "qa": {
-      "env": {
-        "EXPO_PUBLIC_APP_ENV": "QA"
-      },
-      "android": {
-        "buildType": "apk"
-      }
-    },
-    "release": {
-      "env": {
-        "EXPO_PUBLIC_APP_ENV": "PROD"
-      },
-      "android": {
-        "buildType": "apk"
-      }
-    }
-  }
-}
-```
-
-### 5.4 Set Up EAS Secrets (for sensitive keys)
+Sensitive keys go in EAS secrets, never in `EXPO_PUBLIC_*` values (those are
+embedded in the bundle):
 
 ```bash
 eas secret:create --name GOOGLE_MAP_API_KEY --value "<your-key>"
 ```
 
----
-
-## 6. Build the App with EAS
-
-### 6.1 Android Build (APK for direct sharing)
+## 3. Build with EAS
 
 ```bash
-eas build --platform android --profile qa
+eas build --platform android --profile qa       # QA APK, shareable directly
+eas build --platform ios --profile release      # iOS build for TestFlight
+eas submit --platform ios                       # submit the iOS build to TestFlight
 ```
 
-This produces an APK file you can download and share directly.
+## 4. Distribute to beta testers
 
-### 6.2 iOS Build (for TestFlight)
+**Android**
 
-```bash
-eas build --platform ios --profile release
-```
+- *Direct APK:* share the APK download link from EAS with testers.
+- *Google Play Internal Testing:* in Play Console > Internal Testing, upload an
+  AAB (set `buildType: app-bundle` on the `release` profile for Play uploads),
+  add tester emails, and share the opt-in link.
 
-### 6.3 Submit iOS Build to TestFlight
+**iOS**
 
-```bash
-eas submit --platform ios
-```
+1. In App Store Connect > TestFlight, wait for the build to finish processing.
+2. Add internal testers (up to 25) or external testers (up to 10,000).
+3. Testers install through the TestFlight app.
 
----
+## 5. Post-launch monitoring
 
-## 7. Distribute to Beta Testers
+- **Error tracking:** Sentry is recommended (`npx expo install @sentry/react-native`).
+- **Uptime:** point a monitor (UptimeRobot, Better Uptime) at the API base URL.
+- **Backend logs and tunnel health:** see the backend repository's runbook.
 
-### Android
-
-**Option A: Direct APK** — Share the APK download link from EAS with testers.
-
-**Option B: Google Play Internal Testing**
-1. Go to Google Play Console > Internal Testing
-2. Upload the AAB (configure `release` profile with `buildType: app-bundle` when preparing Play upload)
-3. Add tester email addresses
-4. Share the opt-in link with testers
-
-### iOS
-
-1. Go to App Store Connect > TestFlight
-2. After the build is processed, add internal testers (up to 25) or external testers (up to 10,000)
-3. Testers receive an email to install via the TestFlight app
-
----
-
-## 8. Post-Launch Monitoring
-
-### 8.1 Error Tracking (Recommended: Sentry)
-
-Install in the RN app:
-
-```bash
-npx expo install @sentry/react-native
-```
-
-### 8.2 Backend Logging
-
-Monitor Docker logs:
-
-```bash
-docker compose logs -f web
-```
-
-### 8.3 Uptime Monitoring
-
-Use a free service like UptimeRobot or Better Uptime to monitor `https://api.simplyrenit.com/api/`.
-
-### 8.4 Cloudflare Dashboard
-
-Monitor tunnel health and traffic at https://one.dash.cloudflare.com.
-
----
-
-## 9. Checklist
+## 6. Pre-launch checklist
 
 ### Security
 
-- [ ] Rotate any AWS credentials that were shared or exposed
-- [ ] Generate a new strong Django secret key for production
-- [ ] Use a strong database password
-- [ ] Ensure no secrets are hardcoded in source code
-- [ ] Verify HTTPS is working on the API domain
-- [ ] Review Firebase security rules
-
-### Backend
-
-- [ ] Docker Compose running with production `.env`
-- [ ] Database migrations applied
-- [ ] Cloudflare Tunnel running and verified
-- [ ] Cloudflared set up as a systemd service (auto-restart)
-- [ ] API accessible at `https://api.simplyrenit.com`
-- [ ] WebSocket (chat) working through the tunnel
-
-### AWS
-
-- [ ] S3 bucket created with correct permissions
-- [ ] CORS configured on the bucket
-- [ ] Presigned URL uploads verified
-- [ ] Image serving working (CloudFront or direct S3)
+- [ ] No secrets hardcoded in source or in `EXPO_PUBLIC_*` values
+- [ ] HTTPS working on the API domain
+- [ ] Firebase security rules reviewed (`firestore.rules`) and deployed only
+      with approval
+- [ ] Any AWS or API credentials that were shared or exposed have been rotated
 
 ### App
 
-- [ ] `EXPO_PUBLIC_APP_ENV` mapping verified in `config.ts` for DEV/QA/PROD
-- [ ] `app.json` has correct bundle identifiers and version
-- [ ] `eas.json` configured with development/qa/release profiles
-- [ ] Google Services file (`google-services.json`) present for Android
+- [ ] `EXPO_PUBLIC_APP_ENV` mapping verified in `src/lib/config.ts` for DEV/QA/PROD
+- [ ] `app.json` has the correct bundle identifiers and version
+- [ ] `eas.json` has the development, qa, testflight-qa and release profiles
+- [ ] Google services files present for each platform
 - [ ] Push notifications configured (FCM + APNs)
 - [ ] Android APK built and tested
 - [ ] iOS build submitted to TestFlight
 
-### Testing (before sharing with users)
+### Functional (before sharing with users)
 
-- [ ] User registration / login flow works
-- [ ] Google Sign-In works
-- [ ] Product posting with images works
-- [ ] Product browsing and search works
-- [ ] Chat / messaging works (WebSocket through tunnel)
+- [ ] Registration and login
+- [ ] Google Sign-In
+- [ ] Product posting with images
+- [ ] Product browsing and search
+- [ ] Chat / messaging (Firestore-backed)
 - [ ] Push notifications received
-- [ ] Favorites / saved products works
-- [ ] Profile editing works
-- [ ] Location / maps working
-
-### Machine (since backend runs locally)
-
-- [ ] Machine set to never sleep / auto-suspend disabled
-- [ ] Docker set to start on boot (`sudo systemctl enable docker`)
-- [ ] Cloudflared service enabled on boot
-- [ ] Stable internet connection
-- [ ] UPS / power backup (optional but recommended)
+- [ ] Favorites / saved products
+- [ ] Profile editing
+- [ ] Location and maps

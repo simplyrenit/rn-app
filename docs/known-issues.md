@@ -111,6 +111,45 @@ IAM API. This removes the weekly-expiry failure mode entirely.
 
 ---
 
+## Simulator and device testing gotchas
+
+Traps that make a working app look broken, or a broken one look fine. Learned
+during the 2026-08 UI interaction sweep.
+
+- **No software keyboard in the iOS simulator by default.** It uses the Mac's
+  keyboard, so the whole "keyboard covers the button / swallows the first tap"
+  bug class is invisible. Enable it with
+  `defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false`
+  and relaunch Simulator.app.
+- **Simulator text injection mangles uppercase and symbols.** Typing
+  `AGENT_QA_20260820 Laptop` produced `aent-qa-20260820 laptop`. That is the
+  harness, not the app. Use lowercase alphanumerics when testing input, and
+  check the source before reporting an input-mangling bug.
+- **React Navigation restores the previous screen across restarts,** so tap
+  coordinates from an earlier session can land on the wrong control. Navigate
+  deliberately after each relaunch.
+- **Keyboard avoidance: use `useKeyboardInset`, not `KeyboardAvoidingView`.**
+  Wrapping a `StaticContainer` screen in `KeyboardAvoidingView` did not lift a
+  pinned action bar. `StaticContainer` now pads by the keyboard height from
+  `src/lib/use-keyboard-inset.ts` (0 on Android, where `adjustResize` already
+  handles it), which covers every screen built on it.
+- **Dead buttons are not reliably greppable.** A grep for "touchable with no
+  `onPress`" produced only false positives. Find them by walking the screens.
+  `keyboardShouldPersistTaps` is the one pattern that is exhaustively findable
+  in source.
+
+## Untested paths
+
+- **Full listing submission end to end.** The form's interaction layer is
+  tested, but the submit/validation path is not: the image step needs a photo
+  library, and a fresh simulator has none (`xcrun simctl addmedia` would
+  unblock it).
+- **Write-review submission.** Deliberately not exercised: it would permanently
+  alter another owner's rating, which is unlabelled QA data, and a review
+  cannot be removed from the app.
+
+---
+
 ## Template for new entries
 
 ```
