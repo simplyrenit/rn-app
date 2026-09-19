@@ -277,3 +277,28 @@ show five; the app has seven screens), (2) is the category list the design's (al
 with "Emerging" and "Real Estate", "Musicals") or the app's, since it drives the backend
 category names, (3) where do the design's category glyphs come from (they are illustrations,
 not heroicons; no asset exists in the repo).
+
+## Search results (light + dark) — 2026-09-20
+
+Figma light `1:5212`, dark `1:3958` (the "Filters" section `1:5211`/`1:3957` has ten more frames
+of the filter sheet in its states, `1:5325` … `1:6351`, **not yet audited**) · app
+`src/screens/search-results.tsx` · captures `design/app/results.{light,dark}.iphone16e.png`,
+side by side in `design/app/results.compare.{light,dark}.png`.
+
+Changed: the screen sat inside a 90%-wide column (≈20pt gutters); it now uses the 24pt
+gutter. The summary bar is the frame's: 64pt, radius 16, 4pt inset on the left where the 44pt
+back target sits and 12pt on the right, a 4pt round dot between the dates and the place (it was a
+bullet glyph), the filter button filled in the hairline tone it is bordered in. The count is 14
+bold (it was the 22pt section title) with 24 above and below it. The grid is the Home tile
+(`Card tile`) in two computed columns (163 on the 390pt frame, narrower on a smaller phone) with
+16 between columns and 24 between rows; it had hairlines, chip hearts and 48.5% columns.
+
+Result (light, 2× grid): the bar's edges, back arrow, title, filter button, the count, the second
+column's left and right edges and the first card's title are within 1–2px of the frame. Dark:
+page and bar fills match exactly; the bar's hairline is 6/255 darker and the filter button 8/255
+lighter than the frame (`#292929` token against sampled `#222`).
+
+Kept on purpose: the frame's back arrow is drawn at 50% (tertiary); `BackButton` keeps the primary
+tone the app uses on every screen. The results screen's empty state still shows the compact
+`Disclaimer`, since `Disclaimer card` is Home's until this screen has its own frame for it.
+Not verified: the filter sheet and its ten states, the loading skeleton.

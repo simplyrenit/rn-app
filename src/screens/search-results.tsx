@@ -24,7 +24,13 @@ import { StackActions, useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { styled } from "nativewind";
 import React, { useRef, useState, useEffect } from "react";
-import { FlatList, Pressable, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  Pressable,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { AdjustmentsVerticalIcon } from "react-native-heroicons/outline";
 import { useSearch } from "@/backend/search";
@@ -105,6 +111,15 @@ const formatDate = (date: string | undefined) => {
 /** How long a filter edit has to settle before the count is re-counted. */
 const COUNT_DEBOUNCE_MS = 350;
 
+// Measured off the Figma results frame: a 64pt search bar with 16 above and below it,
+// a 21pt count 24 under the bar, then a two-column grid of the Home tile with 16
+// between columns and 24 between rows. A column is half of what the gutters and the
+// gap leave, so it is 163 on the 390pt frame and shrinks on a narrower phone.
+const SUMMARY_HEIGHT = 64;
+const SUMMARY_INSET = 16;
+const RESULTS_GAP = 24;
+const COLUMN_GAP = 16;
+
 /** Two rows of the same grid the results use, while the first search runs. */
 function ResultsSkeleton() {
   return (
@@ -123,6 +138,10 @@ export default function SearchResults() {
   const { theme, categories } = useGlobalContext();
   const isDark = theme === "dark";
   const { color, shadow } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = Math.floor(
+    (screenWidth - 2 * SCREEN_GUTTER - COLUMN_GAP) / 2
+  );
   const bottomSheetRef = useRef<any>(null);
   const subCategoryBottomSheetRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(
@@ -340,7 +359,7 @@ export default function SearchResults() {
 
   return (
     <NonScrollableContainer>
-      <View className="w-[90%] mx-auto flex-1">
+      <View style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER }}>
         {/* Header */}
         <Pressable
           onPress={() => {
@@ -360,16 +379,21 @@ export default function SearchResults() {
           accessibilityHint="Reopens the search screen with these criteria"
           style={[
             {
-              minHeight: 64,
+              // The frame's search bar: 64pt, radius 16, 4pt in on the left where
+              // the 44pt back target sits and 12pt on the right.
+              minHeight: SUMMARY_HEIGHT,
               backgroundColor: color.surface,
               borderColor: color.line,
               borderWidth: 1,
-              borderRadius: radius.group,
+              borderRadius: radius.card,
+              paddingLeft: 4,
+              paddingRight: 12,
+              marginVertical: SUMMARY_INSET,
             },
             // Theme elevation, not a hand-rolled 0.25 shadow.
             shadow,
           ]}
-          className="flex flex-row items-center w-full my-2 px-3 py-2 space-x-2"
+          className="flex flex-row items-center w-full"
         >
           {/* 44pt target inside the same 64pt row: the arrow used to be a bare
               24pt glyph with no hit slop. */}
@@ -384,7 +408,7 @@ export default function SearchResults() {
             >
               {selectedItem || "Everything on Renit"}
             </Text>
-            <View className="flex flex-row items-center space-x-2 mt-1 w-full" >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, width: "100%" }}>
               {!!range.startDate || !!range.endDate ? <Text
                 fontSize="text-sm"
                 style={{
@@ -400,15 +424,16 @@ export default function SearchResults() {
                   }}
                 >
                   Any dates
-                </Text>}<Text
-                  fontSize="text-sm"
-                  className="mb-1"
-                  style={{
-                    color: ink.dim(isDark),
-                  }}
-                >
-                •
-              </Text>
+                </Text>}
+              {/* A 4pt round dot, not a bullet glyph, as the frame draws it. */}
+              <View
+                style={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: radius.full,
+                  backgroundColor: color.inputLine,
+                }}
+              />
               <Text
                 fontSize="text-sm"
                 style={{
@@ -439,7 +464,8 @@ export default function SearchResults() {
               justifyContent: "center",
               borderWidth: 1,
               borderColor: color.line,
-              backgroundColor: color.surfaceRaised,
+              // The frame fills the button with the hairline tone it borders it in.
+              backgroundColor: color.line,
             }}
           >
             <AdjustmentsVerticalIcon color={color.textDim} size={20} />
@@ -460,8 +486,20 @@ export default function SearchResults() {
         </Pressable>
 
         {/* Filters and Results */}
-        <View className="mx-1 mt-1 mb-2 flex flex-row items-center justify-between">
-          <Text accessibilityRole="header" role="sectionTitle">
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: RESULTS_GAP,
+            marginBottom: RESULTS_GAP,
+          }}
+        >
+          <Text
+            accessibilityRole="header"
+            fontSize="text-sm"
+            fontWeight="font-bold"
+          >
             {isLoading && products.length === 0
               ? "Searching…"
               : pluralize(products.length, "result")}
@@ -499,14 +537,17 @@ export default function SearchResults() {
           numColumns={2}
           columnWrapperStyle={{
             justifyContent: "flex-start",
-            marginTop: 8,
-            gap: 12,
+            gap: COLUMN_GAP,
           }}
           // No alignItems here: centring the content container makes each row
           // shrink-wrap its children instead of filling the list, so the cards'
           // "48.5%" resolved against a collapsed row and came out tiny.
           // columnWrapperStyle's space-between does the real work.
-          contentContainerStyle={{ paddingBottom: density.listFooter, flexGrow: 1 }}
+          contentContainerStyle={{
+            paddingBottom: density.listFooter,
+            flexGrow: 1,
+            gap: RESULTS_GAP,
+          }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <Card
@@ -515,7 +556,8 @@ export default function SearchResults() {
               title={item.title}
               location={item.location}
               price={item.rate}
-              width="48.5%"
+              width={cardWidth}
+              tile
               // "How far away is it?" is the first question in peer-to-peer
               // rental, and the results grid was the one place it was missing.
               coordinates={item.coordinates}
