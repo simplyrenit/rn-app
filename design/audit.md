@@ -136,7 +136,7 @@ should be re-measured in Figma before it is trusted.
 
 ### Decisions taken by the delivery agent, to confirm
 
-1. The location block lost its two text lines ("exact address shared once a booking is
+1. (Reversed in the next commit: the "exact address shared once a booking is agreed" line is back under the map.) The location block lost its two text lines ("exact address shared once a booking is
    agreed", and the distance) to reach the frame's 304pt; the place name and distance
    moved into the map's caption chip, "approximate area" stays.
 2. The 500m geographic circle is replaced by the frame's fixed-size ring marker, so the

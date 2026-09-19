@@ -658,6 +658,13 @@ export default function DetailsScreen() {
             placeName={product?.location}
             distanceLabel={distanceLabel}
           />
+          {/* Not in the frame, kept on purpose: the ring marker says "somewhere
+              near here" but not that the address is withheld, and that promise
+              is what makes a renter comfortable sharing a home location. It
+              adds one 14pt line (~21pt) to the frame's 304pt block. */}
+          <Text fontSize="text-sm" tone="body">
+            Exact address shared once a booking is agreed
+          </Text>
         </DetailSection>
 
         <DetailSection

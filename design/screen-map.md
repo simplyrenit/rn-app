@@ -82,11 +82,10 @@ Details title no longer capped at one line, the CTA can grow with text size, the
 skeleton lands on the hero's ground and width, the photo indicator is clamped, the
 Home tiles speak the app-wide category name. Still open, needing a ruling:
 
-- **`Disclaimer` on Search results.** The Home request card (brand panel, larger
-  body, "Unavailability form ›", tile fill) changed for every caller, so Search
-  results shows it too without its own frame. Gate it behind an opt-in prop that only
-  Home passes, or accept it on Search results deliberately. The design's dark card was
-  never sampled, so its dark values are not design-backed.
+- **`Disclaimer` on Search results** — resolved by the goal's own rule (shared components
+  gain opt-in props only): the Home request card is now `<Disclaimer card />`, and Search
+  results keeps the compact card it had, byte for byte. It should get its own frame
+  before being restyled. The dark request-card values are still unsampled.
 - **Home category wording.** The tiles show the design's text ("Musicals",
   "Art & Craft", "Real Estate") where the rest of the app says "Musical instruments",
   "Arts & crafts", "Real estate". Only the spoken label was normalised.

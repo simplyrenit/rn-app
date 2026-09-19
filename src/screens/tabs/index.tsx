@@ -93,7 +93,7 @@ export default function Home() {
         {/* The rails already carry 16 below them, and the design puts another 16
             above the request card. */}
         <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16 }}>
-          <Disclaimer mt={0} mb={0} />
+          <Disclaimer card mt={0} mb={0} />
         </View>
       </ScrollView>
     </StaticContainer>
