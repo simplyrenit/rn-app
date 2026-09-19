@@ -8,7 +8,14 @@ import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 import { toast } from "@/lib/toast";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import {
+  MIN_TOUCH_TARGET,
+  SCREEN_GUTTER,
+  fontFamily,
+  fontSize,
+  lineHeight,
+  radius,
+} from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
 // Measured off the Figma Feedback & Review frame: the copy sits 28 under the header on
@@ -68,7 +75,11 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
             textAlignVertical: "top",
             height: FIELD_HEIGHT,
             padding: FIELD_PADDING,
-            fontSize: 16,
+            // A bare TextInput falls back to the system face at 16; the frame
+            // types in the app font at 14/21, the same as the copy above it.
+            fontFamily: fontFamily.regular,
+            fontSize: fontSize.sm,
+            lineHeight: lineHeight.sm,
             color: color.text,
             borderWidth: 1,
             // The frame draws this box with the hairline tone and a 16 radius.

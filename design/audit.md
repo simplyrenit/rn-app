@@ -563,3 +563,17 @@ Profile tab: the first is dimmed and the rest are undimmed light; their Overlay 
 (checked `1:18822`, and by eye `1:22919`, `1:22346`). No sheet, field, OTP step or picture chooser is drawn, so there
 is nothing to match (same as the Filter sheet). The app's sub-sheets stay as they are. The frames also show a
 "Dark mode / Currency" pair in the App group that the app replaces with "Appearance" and has no Currency row.
+
+## Feedback & Review, typed and sent states — 2026-09-20
+
+Frames `1:11831` (typed) and `1:11858` (sent), light. Typed state: the field text is the app face at 14/21
+(the app's bare `TextInput` fell back to the system font at 16, so the lines wrapped differently and read as
+foreign text); it now sets `fontFamily.regular`, `fontSize.sm`, `lineHeight.sm`. With that, the six line
+breaks of the frame's sample text match the app's exactly, and the primary Submit button is the frame's 44pt
+radius-12 fill (`design/app/feedback-typed.light.iphone16e.png`). The frame draws no "Have any more questions?"
+footer in either state; the app keeps it. Typed in the simulator only, nothing submitted.
+
+Sent state: the frame draws a "Feedback submitted!" toast above the tab bar (brand-tint fill, brand hairline,
+filled brand check square, 14 bold text). That is the app-wide toast component (`src/lib/toast`), not this
+screen, so it was left alone and needs its own pass. The Terms dark frame `1:11542` is a plain text page on
+black like Privacy's, whose dark check passed; not compared separately.
