@@ -302,3 +302,34 @@ Kept on purpose: the frame's back arrow is drawn at 50% (tertiary); `BackButton`
 tone the app uses on every screen. The results screen's empty state still shows the compact
 `Disclaimer`, since `Disclaimer card` is Home's until this screen has its own frame for it.
 Not verified: the filter sheet and its ten states, the loading skeleton.
+
+## About the owner (light) — 2026-09-20
+
+Figma light `1:21984` (section `1:21983`, dark section `1:21885`) · app
+`src/screens/users/users-screen.tsx`, opt-in `variant="profile"` on
+`src/components/product/{detail-section,spec-strip}.tsx` · captures
+`design/app/owner.light.iphone16e.png`, side by side in `design/app/owner.compare.light.png`.
+
+Changed: a centred "About the owner" header with a mini back arrow, a 72pt avatar over a small
+bold name, a three-column facts strip (rating, products, user since) 8pt under it, a 56pt outline
+"Chat with {first name}" button, then hairline-separated products and reviews blocks that reuse
+the Home tile rail and the detail review card, each ending in a 56pt "View all" button.
+
+Result (light, 2× grid): header, back arrow, avatar, facts icons, values and labels, the chat
+button, the hairline, the "products" heading and the first rail photo are within 1px (0.5pt).
+The first pass had the facts row 8pt low (a 16pt gap where the frame has 8pt), fixed in the
+same commit.
+
+**Removed, needs your sign-off:** the old screen's verification card (email and phone
+verified, "Lists in <area>") and the business-name pill, which the frame does not draw. They
+came from the listing payload. If they are a trust signal you want to keep, they need a slot in
+the design; the old code is in git history (`git show 25d3b0c:src/screens/users/users-screen.tsx`).
+
+Kept away from the frame on purpose: the buttons' border is the control-edge token (`inputLine`)
+not the hairline, per the token file's WCAG note; "User since" reads "Aug 2026" not "May 15, ’24"
+(an earlier fix); the rating column keeps "New / Host" for an unrated owner; "View all products"
+and "View all reviews" keep their existing show-only-when-there-is-more gating.
+
+Not verified: dark (frame in section `1:21885`); the review rail (this owner has no reviews);
+the "View all" buttons (this owner has two products and no reviews); the cross-fade between the
+scrolled and pinned headers beyond a static look.

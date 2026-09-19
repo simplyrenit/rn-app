@@ -9,11 +9,14 @@ const ICON_SIZE = 22;
 /**
  * The two sets of metrics this strip ships in.
  *
- * `default` is the rhythm the post wizard and the owner profile already use.
+ * `default` is the rhythm the post wizard uses.
  * `detail` is measured off the product detail frame (Figma 1:9120): a 20pt
  * glyph, the value and label both at 14/21 and set solid against each other,
  * and the block's own 16pt inset repeated inside every column — which is what
  * gives that screen its taller, calmer strip.
+ * `profile` is `detail`'s column inside the owner profile's facts row (Figma
+ * 1:21984), where the surrounding block already sets the 16pt gap either side
+ * of the strip — so the strip must not add a second one of its own.
  */
 const METRICS = {
   default: {
@@ -26,6 +29,14 @@ const METRICS = {
   },
   detail: {
     blockPaddingVertical: 16,
+    columnPaddingVertical: 16,
+    iconSlot: 20,
+    gap: 8,
+    stackGap: 0,
+    valueSize: "text-sm",
+  },
+  profile: {
+    blockPaddingVertical: 0,
     columnPaddingVertical: 16,
     iconSlot: 20,
     gap: 8,
@@ -71,7 +82,7 @@ export function SpecStrip({
   /** Hairlines above and below. Off where the screen already rules its own
    *  sections, as the owner profile does. */
   dividers?: boolean;
-  /** Opt-in. `detail` is the product detail frame's taller strip; see METRICS. */
+  /** Opt-in. `detail` and `profile` are the redesigned frames' strips; see METRICS. */
   variant?: keyof typeof METRICS;
 }) {
   const { color } = useTheme();

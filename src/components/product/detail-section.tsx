@@ -14,6 +14,14 @@ import { View } from "react-native";
  */
 const SECTION_PAD_V = 32;
 const SECTION_GAP = 16;
+/**
+ * The owner profile (Figma 1:21984) rules its page with the same blocks at a
+ * different rhythm: 24 above and below rather than 32, and 24 under the heading
+ * rather than 16. Its blocks introduce a rail with a button beneath it, not a
+ * paragraph, so the heading needs the extra air and the block needs less.
+ */
+const PROFILE_PAD_V = 24;
+const PROFILE_GAP = 24;
 /** A line that belongs to the heading — the reviews block's score — sits closer. */
 const META_GAP = 4;
 
@@ -32,6 +40,11 @@ interface Props {
   inset?: boolean;
   /** The hairline below. Off for the last block on the page. */
   divider?: boolean;
+  /**
+   * Opt-in. `profile` is the owner profile's tighter block; see the metrics
+   * above. Everything else keeps the product detail page's rhythm.
+   */
+  variant?: "detail" | "profile";
   children?: React.ReactNode;
 }
 
@@ -40,16 +53,18 @@ export function DetailSection({
   meta,
   inset = true,
   divider = true,
+  variant = "detail",
   children,
 }: Props) {
   const { color } = useTheme();
+  const profile = variant === "profile";
 
   return (
     <View
       style={{
-        paddingVertical: SECTION_PAD_V,
+        paddingVertical: profile ? PROFILE_PAD_V : SECTION_PAD_V,
         paddingHorizontal: inset ? SCREEN_GUTTER : 0,
-        gap: SECTION_GAP,
+        gap: profile ? PROFILE_GAP : SECTION_GAP,
         borderBottomWidth: divider ? 1 : 0,
         borderBottomColor: color.line,
       }}
