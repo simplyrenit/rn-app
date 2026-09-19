@@ -27,7 +27,7 @@ Status: `DONE` matches within 0.5pt · `TODO` not started · `BLOCKED` see note.
 | Saved | `Saved` tab (`src/screens/tabs/saved.tsx`) | `1:8859` | `1:8760` | DONE signed in (light+dark) | Grid, tile and topbar match to 0.5pt. Signed-out state and empty state have no frame. See `design/audit.md`. |
 | Post (signed-out state) | `Post` tab (`src/screens/tabs/post.tsx`) | — | — | TODO | |
 | Profile | `Profile` tab (`src/screens/tabs/profile.tsx`) | signed in `1:10017`, signed out `1:10110` | signed in `1:9953` | DONE signed in (light+dark); signed out TODO | Signed-in list matches to 0.5pt. Signed-out (title, "Enjoy Renit to the fullest…", three outline buttons; note the frame's "Create an Apple" typo) not restyled. See `design/audit.md`. |
-| Chat (signed-out state) | `Chat` tab (`src/screens/tabs/chat.tsx`) | — | — | TODO | |
+| Chat tab (list) | `Chat` tab (`src/screens/tabs/chat.tsx`) | — | — | NO FRAME | Figma has no conversation-list frame: the five Chat frames are message threads. The list stays as it is. |
 | Welcome / onboarding | `Welcome` (`src/screens/welcome.tsx`) | — | — | TODO | Capture in `design/app/onboarding-2.dark.png` exists. |
 | Auth: email, phone, password, confirm, about, location | `src/screens/auth/*` | email `1:9745` | email `1:9720` | AUDITED (email), parked | The frames model a different flow (single "Continue", then a "Welcome back" step) from the app's method-choice footer. Needs a product decision before any restyle; see `design/audit.md`. |
 | Auth: verify (OTP) | `Verify` (`src/screens/auth/verify.tsx`) | — | — | BLOCKED | Needs a real code; capture the entry state only, never submit. |
@@ -38,7 +38,7 @@ Status: `DONE` matches within 0.5pt · `TODO` not started · `BLOCKED` see note.
 
 | Screen | Route (file) | Status | Notes |
 | --- | --- | --- | --- |
-| Chat list / thread | `Chat`, `ChatDetails` | TODO | |
+| Chat thread | `ChatDetails` | PARKED | Frames light `1:15543`, `1:15593`, `1:15651`, `1:15695`, `1:15742` (section `1:15542`; dark in section `1:15316`): header with avatar and name and a "⋯" menu ("Block & Report"), grey and purple bubbles, a pill composer with attach and rupee glyphs and a round send button. Verifying needs a conversation, and opening one on this signed-in session marks it read on the real backend. Wait for an `AGENT_QA_<run-id>` fixture conversation. Exports in `design/figma-images/chat/light/`. |
 | Profile (full) and sub-screens | `profile`, `notification`, `myProducts`, `feedback`, `NetworkDiagnostics`, `ReportAProblem`, `UserDetail`, `unavailabilityForm*` | TODO | |
 | Post flow | `PostSubCategories`, `AboutProduct`, `ProductImages`, `ChooseCoverImage`, `ProductAvailability`, `LocationModal`, `ReviewProduct`, `HangTight` | TODO | |
 | Edit flow | `editProduct`, `EditAboutProduct`, `EditCategory`, `EditSubCategories`, `EditProductImages`, `EditCoverImage`, `EditProductAvailability` | TODO | |
