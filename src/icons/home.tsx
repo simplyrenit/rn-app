@@ -21,7 +21,13 @@ export const HomeIcon = ({ size = 20, color = "white", fill = "none" }) => (
   </Svg>
 );
 
-export const HomeIconSolid = ({ size = 20, color = "white" }) =>{
+/**
+ * `edge` is the colour of the 1.5pt outline. It defaults to the fill, which draws
+ * the plain glyph. The design strokes it in the opposite tone instead (white on a
+ * black house in light mode), which trims the visible glyph from 19.5pt to about
+ * 16.5 — pass the canvas colour to draw it that way.
+ */
+export const HomeIconSolid = ({ size = 20, color = "white", edge = "" }) =>{
    const { theme } = useGlobalContext();
   
     const isDarkMode = theme === "dark";
@@ -30,7 +36,7 @@ export const HomeIconSolid = ({ size = 20, color = "white" }) =>{
     <Path
       d="M9.06231 4.826L3.23931 9.921C2.73931 10.358 3.07531 11.134 3.76231 11.134C4.18231 11.134 4.52331 11.449 4.52331 11.837V15.081C4.52331 17.871 4.52331 19.266 5.46231 20.133C6.40031 21 7.91031 21 10.9323 21H13.0683C16.0893 21 17.6003 21 18.5383 20.133C19.4773 19.266 19.4773 17.871 19.4773 15.081V11.837C19.4773 11.449 19.8173 11.134 20.2373 11.134C20.9253 11.134 21.2603 10.358 20.7613 9.921L14.9383 4.826C13.5473 3.61 12.8513 3 12.0003 3C11.1493 3 10.4533 3.609 9.06231 4.826Z"
       fill={color}
-      stroke={color}
+      stroke={edge || color}
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"

@@ -25,6 +25,8 @@ export interface ColorTokens {
   surfaceRaised: string;
   /** Hairlines, borders, dividers. Never the edge of a control. */
   line: string;
+  /** The tab bar's top edge — a step quieter than `line` on dark, per the design. */
+  navLine: string;
   /** Headlines and primary copy. */
   text: string;
   /** Body copy on tinted/busy surfaces. */
@@ -41,6 +43,10 @@ export interface ColorTokens {
   brandTextHi: string;
   /** Brand wash behind tinted surfaces (12% dark / 7% light). */
   brandWash: string;
+  /** Solid tinted panel — the request card. Purple/50 on light. */
+  brandPanel: string;
+  /** Edge of the tinted panel. Purple/100 on light. */
+  brandPanelLine: string;
   /** Border of an interactive control — WCAG 1.4.11, ≥3:1 vs its surface. */
   inputLine: string;
   /** Placeholder text. Shipped, never left to the browser/OS default. */
@@ -88,25 +94,33 @@ export interface ColorTokens {
 }
 
 export const darkColors: ColorTokens = {
-  canvas: "#0F0F0F", // Black and White/1200
-  surface: "#1A1A1A", // Black and White/1100
+  // The Figma canvas is true black (Black and White/1300) with inputs and the
+  // search field one step up. These used to sit a step lighter (1200 / 1100),
+  // which is why every dark screen read as grey next to the design.
+  canvas: "#000000", // Black and White/1300
+  surface: "#0F0F0F", // Black and White/1200
   surfaceRaised: "#292929", // Black and White/1000
   line: "#292929", // Black and White/1000
+  navLine: "#1A1A1A", // Black and White/1100
   text: "#FFFFFF", // Text - Dark mode/Primary, 18.9:1 AAA
   textHi: "rgba(255,255,255,0.70)", // Text/Secondary
   textBody: "rgba(255,255,255,0.70)",
   textDim: "rgba(255,255,255,0.50)", // Text/Tertiary
   brand: "#635BE8", // Purple/400
-  brandText: "#827CED", // Purple/400 itself fails on #0F0F0F; this is the readable tint
+  brandText: "#827CED", // Purple/400 itself fails on the dark grounds; this is the readable tint
   brandTextHi: "#928CEF",
   brandWash: "rgba(99,91,232,0.12)",
+  // The design's dark request card was below the fold of the frame that could be
+  // sampled, so dark keeps the wash and hairline it already had.
+  brandPanel: "rgba(99,91,232,0.12)",
+  brandPanelLine: "#292929",
   inputLine: "#767676", // Black and White/700
   placeholder: "rgba(255,255,255,0.50)",
   focus: "#928CEF",
   onBrand: "#FFFFFF",
   onPhoto: "#FFFFFF",
   scrim: "rgba(0,0,0,0.60)",
-  canvasVeil: "rgba(15,15,15,0.55)",
+  canvasVeil: "rgba(0,0,0,0.55)",
   photoScrim: "rgba(0,0,0,0.62)",
   photoScrimSoft: "rgba(0,0,0,0.32)",
   skeleton: "#1A1A1A",
@@ -126,6 +140,7 @@ export const lightColors: ColorTokens = {
   surface: "#FFFFFF",
   surfaceRaised: "#F5F5F5", // Black and White/100
   line: "#E6E6E6", // Black and White/200
+  navLine: "#E6E6E6", // Black and White/200
   text: "#000000", // Text - Light mode/Primary, 21:1 AAA
   textHi: "rgba(0,0,0,0.70)", // Text/Secondary
   textBody: "rgba(0,0,0,0.70)",
@@ -134,6 +149,8 @@ export const lightColors: ColorTokens = {
   brandText: "#635BE8", // 4.85:1 AA on white
   brandTextHi: "#363280", // Purple/700
   brandWash: "rgba(99,91,232,0.07)",
+  brandPanel: "#EDEDFC", // Purple/50
+  brandPanelLine: "#CAC8F7", // Purple/100
   inputLine: "#C4C4C4", // Black and White/300
   placeholder: "rgba(0,0,0,0.58)", // as textDim — 0.50 fails AA on white
   focus: "#635BE8",
@@ -193,8 +210,9 @@ export const lineHeight = {
 export type FontSizeToken = keyof typeof fontSize;
 
 /**
- * iOS chrome sits outside the content ramp: tab-bar labels and nav titles
- * follow the HIG, not the reading scale.
+ * iOS chrome sits outside the content ramp: nav titles follow the HIG, not the
+ * reading scale. The tab bar no longer uses `tabLabel` — it follows the design's
+ * navbar, which sets its labels on the content ramp at 14pt.
  */
 export const chromeFontSize = {
   tabLabel: 11,
@@ -330,6 +348,29 @@ export const shadow = {
     shadowRadius: 2,
     shadowOffset: { width: 0, height: 1 },
     elevation: 1,
+  },
+  dark: {
+    shadowColor: "transparent",
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
+  },
+} as const;
+
+/**
+ * The elevation of a floating field — the Home search box. The design draws it
+ * 0 2 6 at 12% black in light (blur 6 is a radius of about 3) and with the
+ * hairline alone in dark, so it is a separate step from `shadow`, which is
+ * subtler and belongs to cards and sheets.
+ */
+export const fieldShadow = {
+  light: {
+    shadowColor: "#000000",
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   dark: {
     shadowColor: "transparent",
