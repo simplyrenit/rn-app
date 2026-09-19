@@ -59,8 +59,16 @@ Change phone number `1:22817` · Filters `1:5211` · Search products from user p
 Dark counterparts are the same names at y<20000 (Search `1:7401`, Saved `1:8759`,
 Product Details `1:8957`, Profile `1:9952`/`1:10080`, …).
 
-Onboarding, auth and legal screens are not sections; find them by name search
-(`search_nodes`) rather than a page read. Never read node `0:1` whole: it times the
+Onboarding, auth and legal screens are not in the 39 sections. The auth flow IS in the
+file as top-level frames: the dark sign-up email screen is `1:9720` (390×844; a 44pt
+back row, a 24pt "Welcome to Renit" title, an "Enter your email" 14pt bold label over a
+48pt field, and a "Continue" text button at the foot), with sibling frames in the
+`1:97xx`–`1:99xx` range (email, "Welcome back to Renit", password, OTP with "Resend OTP")
+and a second family in `1:20xxx` (light, same copy). There are no frames for the
+welcome carousel, terms or privacy; `search_nodes` for "onboard", "sign in" and "terms"
+finds nothing. Find the rest by `search_nodes` on a known string (it returns text nodes
+with their `parentId`; climb with `get_nodes_info`), never by reading `0:1` whole. Note
+the frame exports the back arrow as `#FFFFFFB2` (white at 70%) on both themes. Never read node `0:1` whole: it times the
 Figwright plugin out and drops it.
 
 App captures (signed out, light, 780×1688) are in `design/app/`: saved, post, chat,
