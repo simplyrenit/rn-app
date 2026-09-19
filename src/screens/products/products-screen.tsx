@@ -1,15 +1,17 @@
 import { useChat } from "@/backend/chat";
 import { useProduct } from "@/backend/product";
 import { useProfile } from "@/backend/profile";
+import useSaved from "@/backend/useSaved";
 import {
   BackButton,
   Button,
   Card,
   CrossFade,
-  SectionHeader,
   Text,
   useButtonLabelColor,
 } from "@/components/core";
+import { DetailSection } from "@/components/product/detail-section";
+import { ExpandableText } from "@/components/product/expandable-text";
 import { ModerationBanner } from "@/components/product/moderation-banner";
 import {
   ListingStatus,
@@ -43,18 +45,14 @@ import { EmptyState } from "@/components/core/empty-state";
 import React, { useCallback, useState } from "react";
 import {
   Animated,
-  Dimensions,
   RefreshControl,
   ScrollView,
   Share,
   StyleSheet,
-  TouchableOpacity,
   View,
 } from "react-native";
 import {
   BanknotesIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
   LightBulbIcon,
   ShareIcon,
 } from "react-native-heroicons/outline";
@@ -62,11 +60,17 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { ProductsSkeleton } from "./products-skeleton";
 
-const MAX_CHARS = 150;
-
-// A review card is wide enough to peek the next one, which is what makes a
-// horizontal rail read as scrollable.
-const itemWidth = Dimensions.get("window").width - SCREEN_GUTTER * 2 - 32;
+/**
+ * The rails below the facts row. Both start on the page gutter and run to the
+ * screen edge, so the next card is always visibly cut off — which is what
+ * makes a rail read as scrollable without a control saying so.
+ *
+ * The similar-products tile is the Home rails' tile, at the Home rails' width;
+ * a second size for the same component is how two surfaces drift apart.
+ */
+const RAIL_GAP = 16;
+const REVIEW_CARD_WIDTH = 285;
+const SIMILAR_CARD_WIDTH = 163;
 
 /** The pinned band's own height, below the safe-area inset. */
 const BAND_HEIGHT = 56;
@@ -173,7 +177,6 @@ function CtaLabel({ children }: { children: string }) {
 
 export default function DetailsScreen() {
   const [loading, setLoading] = React.useState(true);
-  const [showFullText, setShowFullText] = useState(false);
   const route = useRoute<RouteProps<"ProductDetail">>();
   const { isAuthenticated, userDetails } = useGlobalContext();
   const navigation = useTypedNavigation();
@@ -200,6 +203,10 @@ export default function DetailsScreen() {
   // is fetched separately and only for the owner.
   const [ownerStatus, setOwnerStatus] = useState<ListingStatus | null>(null);
   const distanceLabel = useDistanceTo(product?.coordinates);
+  // The similar-products rail draws the Home tile, whose heart has to start in
+  // the right state. One shared, cached query — the same one every
+  // `FavouriteButton` on the page already subscribes to.
+  const { favorites } = useSaved();
 
   /**
    * The theme's own glyphs, at every offset.
@@ -216,15 +223,6 @@ export default function DetailsScreen() {
     outputRange: [0, 1],
     extrapolate: "clamp",
   });
-
-  /** One inset, one vertical rhythm, one hairline, for every section. */
-  const sectionStyle = {
-    paddingHorizontal: SCREEN_GUTTER,
-    // Bumped from density.section (20) for a calmer, more premium rhythm.
-    paddingVertical: 26,
-    borderBottomWidth: 1,
-    borderBottomColor: color.line,
-  } as const;
 
   /**
    * The share affordance in the title row was a TouchableOpacity with no
@@ -365,18 +363,19 @@ export default function DetailsScreen() {
 
   const lessReviews = reviews.slice(0, 4);
 
-  const truncateAtNearestSpace = (text: string, maxLength: number) => {
-    if (text?.length <= maxLength) return text;
-    const truncated = text?.slice(0, maxLength);
-    const lastSpaceIndex = truncated?.lastIndexOf(" ");
-    return truncated?.slice(0, lastSpaceIndex) + "...";
+  /**
+   * The rail's cards cannot grow — they are a fixed height so a row of them
+   * lines up — so a review that is cut off opens the full list rather than
+   * expanding in place. It is also what the "See all" control below does.
+   */
+  const openAllReviews = () => {
+    if (!product) return;
+    navigation.navigate("ReviewsScreen", {
+      reviews,
+      product,
+      owner: product.owner!,
+    });
   };
-
-  const truncatedText = truncateAtNearestSpace(
-    product?.description!,
-    MAX_CHARS
-  );
-  const displayText = showFullText ? product?.description! : truncatedText;
 
   // Only the very first load gets a skeleton. A refetch — pull-to-refresh, or
   // the refetch this screen runs every time it regains focus — used to swap the
@@ -641,170 +640,129 @@ export default function DetailsScreen() {
           ]}
         />
 
-        {/* Bare-noun headings, the same rule on every screen in this flow. */}
-        <View style={sectionStyle}>
-          <SectionHeader title="Description" gutter={false} />
-          <Text>{displayText}</Text>
-          {product?.description.length! > MAX_CHARS && (
-            <TouchableOpacity
-              onPress={() => setShowFullText(!showFullText)}
-              accessibilityRole="button"
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <View className="flex flex-row items-center  mt-2 space-x-2">
-                <Text fontWeight="font-bold">
-                  {showFullText ? "Show less" : "Show more"}
-                </Text>
-                <View className=" mt-1">
-                  {showFullText ? (
-                    <ChevronUpIcon color={color.text} size={16} />
-                  ) : (
-                    <ChevronDownIcon color={color.text} size={16} />
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
+        {/* The frame's headings, which name the thing rather than the field:
+            "About the product", not "Description". */}
+        <DetailSection title="About the product">
+          <ExpandableText text={product?.description ?? ""} />
+        </DetailSection>
 
-        <View style={sectionStyle}>
-          <SectionHeader title="Location" gutter={false} />
+        <DetailSection title="Product’s location">
           {/* The map was a city-scale tile with an unlabelled blue dot: no
-              address, no neighbourhood, and no distance. "How far away is it?"
-              is the first question a renter asks. */}
-          <View style={{ gap: 2 }}>
-            {product?.location ? (
-              <Text fontSize="text-md" tone="hi">
-                {product.location}
-              </Text>
-            ) : null}
-            {distanceLabel ? (
-              <Text fontSize="text-sm" tone="body">
-                {distanceLabel} · exact address shared once a booking is agreed
-              </Text>
-            ) : (
-              <Text fontSize="text-sm" tone="body">
-                Exact address shared once a booking is agreed
-              </Text>
-            )}
-          </View>
-          <View className="mt-3">
-            <ProductMap
-              latitude={product?.coordinates?.lat!}
-              longitude={product?.coordinates?.long!}
-              isDarkMode={isDark}
-              placeName={product?.location}
-            />
-          </View>
-        </View>
+              address, no neighbourhood, and no distance. The place name and
+              the distance now ride in the card's own caption — the frame's
+              block is the heading and the card, with no line between them. */}
+          <ProductMap
+            latitude={product?.coordinates?.lat!}
+            longitude={product?.coordinates?.long!}
+            isDarkMode={isDark}
+            placeName={product?.location}
+            distanceLabel={distanceLabel}
+          />
+        </DetailSection>
 
-        {/* Product reviews */}
-        <View style={[sectionStyle, { paddingHorizontal: 0 }]}>
-          <SectionHeader title="Reviews" />
-
-          <View
-            className="flex flex-row items-center"
-            style={{ paddingHorizontal: SCREEN_GUTTER }}
-          >
-            {product?.review_count ? (
-              <>
-                <Text
-                  fontWeight="font-bold"
-                  fontSize="text-lg"
-                  tone="hi"
-                  className="mr-3"
-                >
-                  {product?.average_rating?.toFixed(1)}
+        <DetailSection
+          title="Product reviews"
+          inset={false}
+          meta={
+            // The block already puts its heading stack on the gutter.
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+            >
+              {product?.review_count ? (
+                <>
+                  {/* The score is set at heading size and weight, a step
+                      quieter than the heading itself — as are the stars. */}
+                  <Text fontWeight="font-bold" fontSize="text-lg" tone="body">
+                    {product?.average_rating?.toFixed(1)}
+                  </Text>
+                  <Stars
+                    rating={product?.average_rating!}
+                    isDark={isDark}
+                    size={GLYPH_SIZE}
+                    tone="secondary"
+                    gap={0}
+                  />
+                  <Text fontSize="text-sm" tone="dim">
+                    ({product?.review_count})
+                  </Text>
+                </>
+              ) : (
+                <Text fontSize="text-sm" tone="dim">
+                  No reviews yet — be the first to rent it.
                 </Text>
-                <Stars rating={product?.average_rating!} isDark={isDark} />
-                <Text fontSize="text-md" tone="body" className="ml-1">
-                  ({product?.review_count})
-                </Text>
-              </>
-            ) : (
-              <Text fontSize="text-md" tone="body">
-                No reviews yet — be the first to rent it.
-              </Text>
-            )}
-          </View>
-
+              )}
+            </View>
+          }
+        >
           {lessReviews.length > 0 ? (
             <ScrollView
               horizontal
               nestedScrollEnabled
               showsHorizontalScrollIndicator={false}
-              style={{ width: '100%'}}
               contentContainerStyle={{
                 paddingHorizontal: SCREEN_GUTTER,
-                paddingTop: 12,
-                gap: 14,
+                gap: RAIL_GAP,
               }}
             >
               {lessReviews.map((item) => (
-                <View key={item.user.username} style={{ width: itemWidth }}>
+                <View key={item.user.username} style={{ width: REVIEW_CARD_WIDTH }}>
                   <ReviewCard
+                    variant="detail"
                     reviewText={item.comment}
                     reviewerName={`${item.user.first_name} ${item.user.last_name}`}
                     reviewDate={item.created_at}
                     reviewerImage={item.user?.image?.image_url}
+                    onShowMore={openAllReviews}
                   />
                 </View>
               ))}
             </ScrollView>
           ) : null}
 
-          {/* A full-width 66pt button offering to show all of nothing. It
-              only exists when there is something to show. */}
+          {/* Not in the frame, which has no way out of the rail at all. A
+              review that is short enough to fit shows no "Show more", so
+              without this there are listings whose later reviews cannot be
+              reached. It only exists when there is something to show. */}
           {reviews.length > 0 ? (
             <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
-              <Button
-                onPress={() =>
-                  navigation.navigate("ReviewsScreen", {
-                    reviews,
-                    product: product!,
-                    owner: product!.owner!,
-                  })
-                }
-                variant="outline"
-                size="compact"
-                className="mt-3"
-              >
+              <Button onPress={openAllReviews} variant="outline" size="compact">
                 {`See all ${reviews.length} ${reviews.length === 1 ? "review" : "reviews"}`}
               </Button>
             </View>
           ) : null}
-        </View>
+        </DetailSection>
 
-        {/* Owner */}
-        <View style={sectionStyle}>
-          <SectionHeader title="Owner" gutter={false} />
-          <View className="flex flex-row items-center ">
-            <AboutOwner
-              id={product?.owner?.username!}
-              name={`${product?.owner?.first_name} ${product?.owner?.last_name}`}
-              profilePic={product?.owner?.image?.image_url || ""}
-              rating={product?.avg_rating ?? 0}
-              products={product?.products_listed ?? 0}
-              isDark={isDark}
-            />
-          </View>
-        </View>
+        {/* The last block on the page rules no line under itself: the bottom
+            bar's own top border would sit right beneath it. */}
+        <DetailSection
+          title="About the owner"
+          divider={similarProducts.length > 0}
+        >
+          <AboutOwner
+            variant="detail"
+            id={product?.owner?.username!}
+            name={`${product?.owner?.first_name} ${product?.owner?.last_name}`}
+            profilePic={product?.owner?.image?.image_url || ""}
+            rating={product?.avg_rating ?? 0}
+            products={product?.products_listed ?? 0}
+            isDark={isDark}
+          />
+        </DetailSection>
 
-        {/* Similar products */}
         {similarProducts.length > 0 && (
-          <View style={[sectionStyle, { paddingHorizontal: 0, borderBottomWidth: 0 }]}>
-            <SectionHeader title="Similar products" />
-
+          <DetailSection title="Similar products" inset={false} divider={false}>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{
                 paddingHorizontal: SCREEN_GUTTER,
-                gap: 14,
+                gap: RAIL_GAP,
               }}
             >
               {similarProducts.map((item) => (
-                <View key={item.name} style={{ width: 158 }}>
+                <View key={item.name} style={{ width: SIMILAR_CARD_WIDTH }}>
+                  {/* The Home rails' tile, not a second one: same width, same
+                      8pt photo radius, same bare corner heart. */}
                   <Card
                     id={`${item.name}`}
                     image={item.cover_image}
@@ -812,11 +770,13 @@ export default function DetailsScreen() {
                     location={item.location}
                     price={item.rate}
                     coordinates={item.coordinates}
+                    isFavorite={favorites.some((fav) => fav.name === item.name)}
+                    tile
                   />
                 </View>
               ))}
             </ScrollView>
-          </View>
+          </DetailSection>
         )}
         </View>
         ) : null}

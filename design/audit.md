@@ -113,3 +113,36 @@ the frame to within 1/255; the hero's lower edge is 1px off.
 Share glyph switched from the iOS share-up to the frame's three-node glyph, and stars
 from gold to ink in the title row, both because the frame asks for it. The pinned
 back band was kept so a 44pt back control is always reachable while scrolling.
+
+## Product Details, lower sections (light) — 2026-09-20, partly verified
+
+Figma `1:9165` (about), `1:9174` (location), `1:9182` (reviews), `1:9217` (owner),
+`1:9232` (similar) · exports in `design/figma-images/saved-product/light/sections/` ·
+app `products-screen.tsx` and `src/components/product/{detail-section,expandable-text,
+product-map,review-card,product-owner,stars}.tsx`, `core/section-header.tsx` (opt-in `flush`).
+
+Every block now comes from one `DetailSection` (32/24 padding, 16 gap, H3 heading,
+1px hairline below) and the headings use the frame's copy. Measured on the simulator
+against a listing with no reviews: the About/Location/Reviews/Owner block boundaries land
+where the frame's do (location block 305pt against the frame's 304+1), the map card is
+200pt tall with radius 16, the owner row is a 48pt avatar, bold name, a tertiary line
+and a right chevron, and Similar products reuses the Home `tile` rail.
+
+**Not verified:** dark mode; the review rail (the QA catalogue has no reviews, so only
+the empty state rendered); the description's 3-line clamp and "Show more" (this listing's
+description is one line); the 120pt map marker on first layout. The frame's 462pt
+similar-products block cannot be reproduced with the Home tile (~354pt); that number
+should be re-measured in Figma before it is trusted.
+
+### Decisions taken by the delivery agent, to confirm
+
+1. The location block lost its two text lines ("exact address shared once a booking is
+   agreed", and the distance) to reach the frame's 304pt; the place name and distance
+   moved into the map's caption chip, "approximate area" stays.
+2. The 500m geographic circle is replaced by the frame's fixed-size ring marker, so the
+   area no longer scales with zoom.
+3. `ProductMap` is restyled for both callers, so the post wizard's review step changes too.
+4. The review card's "Show more" opens the reviews screen (a fixed 185pt card in a rail
+   cannot expand); an extra "See all N reviews" button that the frame lacks is kept so
+   short reviews still lead somewhere.
+5. The owner row says "3 products" in this variant only; the rest of the app says "listings".

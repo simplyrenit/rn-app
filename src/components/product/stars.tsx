@@ -17,11 +17,11 @@ export const Stars = ({
   size?: number;
   /**
    * Opt-in. The rating that heads the product detail page is drawn in the
-   * design as solid black stars on white, not as the gold score this uses
-   * everywhere else — so the palette is a prop rather than a second component.
-   * Every existing call site keeps `gold`.
+   * design as solid black stars on white, and the one in its reviews block a
+   * step quieter than that — so the palette is a prop rather than two more
+   * components. Every existing call site keeps `gold`.
    */
-  tone?: "gold" | "ink";
+  tone?: "gold" | "ink" | "secondary";
   /** Opt-in: the detail frame sets the five stars flush, with no gap. */
   gap?: number;
   strokeWidth?: number;
@@ -30,10 +30,13 @@ export const Stars = ({
   const filledStars = Math.round(rating ?? 0);
 
   // Gold, not the foreground colour: a rating drawn in body-text black reads as
-  // an icon, not as a score. `ink` exists only because the detail frame draws
-  // it that way, next to the title it belongs to.
-  const filledColor = tone === "ink" ? color.text : color.warning;
-  const emptyColor = tone === "ink" ? color.text : color.textDim;
+  // an icon, not as a score. `ink` and `secondary` exist only because the
+  // detail frame draws it that way — as ink next to the title it belongs to,
+  // and at 70% in the reviews block, where the score beside it is set to match.
+  const inkColor =
+    tone === "secondary" ? color.textBody : tone === "ink" ? color.text : null;
+  const filledColor = inkColor ?? color.warning;
+  const emptyColor = inkColor ?? color.textDim;
 
   return (
     <View
