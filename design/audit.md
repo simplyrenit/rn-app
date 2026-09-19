@@ -333,3 +333,26 @@ and "View all reviews" keep their existing show-only-when-there-is-more gating.
 Dark (frame `1:21886`, captured scrolled so the pinned header shows): page `#000000`, the chat button's fill `#0F0F0F` and the hairline (`#282828` against the frame's `#292929`) match. Not verified: the review rail (this owner has no reviews);
 the "View all" buttons (this owner has two products and no reviews); the cross-fade between the
 scrolled and pinned headers beyond a static look.
+
+## FAQs (light + dark) — 2026-09-20
+
+Figma light `1:11770`, dark `1:11349` (sections `1:11707` / `1:11286`, which also hold Feedback
+& Review ×3, Contact Us, Who we are, T&C, Privacy Policy and My Products, not yet audited) ·
+app `src/screens/profileScreens/faqs.tsx`, `src/components/core/accordion.tsx` (used only here) ·
+captures `design/app/faqs.{light,dark}.iphone16e.png`, side by side in `design/app/faqs.compare.*`.
+
+Changed: the header is a 44pt row with the title centred at 18 bold (it was the 20pt section
+title) and the back control 16 from the edge (24 before); the content is padded 24 with 16
+between the intro, the list and the footer; the questions are 14 bold in 56pt cards, radius 12,
+hairline, no shadow, 8 apart (they were 18 bold, 74pt, radius 14 with a shadow and 16 apart);
+the plus is heroicons' mini glyph in tertiary; the footer link uses the mini chevron. The
+intro's trailing "!" is restored to the frame's copy.
+
+Result: the back arrow, title, intro, plus glyph and all four measured cards (including the
+two-line ones) are at the same pixels as the frame in light (0px). Dark: page, card fill and
+plus colour match; the card border is 5/255 darker than the frame's `#292929`.
+
+Kept from the app, not the frame: the answers' copy (the frame's answers name the website and
+`garvit.babel2000@gmail.com` for hiring, which is a freelancer value; the app's answers use the
+`simplyrenit.com` addresses and app-specific instructions) and the support address
+(`support@simplyrenit.com`, the frame says `support@renit.com`).
