@@ -146,3 +146,34 @@ should be re-measured in Figma before it is trusted.
    cannot expand); an extra "See all N reviews" button that the frame lacks is kept so
    short reviews still lead somewhere.
 5. The owner row says "3 products" in this variant only; the rest of the app says "listings".
+
+## Auth: email (signed out) — audited 2026-09-20, not changed
+
+Figma light `1:9745`, dark `1:9720` · app `src/screens/auth/email.tsx`.
+
+Light spec: a 44pt back row (12 left inset, arrow-left outline 24, stroke at 70%), a title
+block (16/24 padding) with "Welcome to Renit" 24 bold at 120% line height, a field block
+(14/24 padding) holding the label "Enter your email" (14 bold) 12pt above a 48pt field
+(radius 12, white fill, `#E6E6E6` hairline, 8/16 padding, 16pt placeholder "Enter email"
+at 50% black), and a 76pt bottom wrapper (16 padding) with one 358×44 "Continue"
+button (radius 12, disabled style: no fill, label at 50%).
+
+| Element | App | Figma |
+| --- | --- | --- |
+| Top of screen | A progress `HeaderIndicator` | A back arrow row, no progress bar |
+| Field | 48pt, `rounded-button` (11), `surface-raised` in dark, control-edge border, 8pt padding | 48pt, radius 12, `surface` in dark (`#0F0F0F`), hairline border, 16pt padding |
+| Label | `mt-6 mb-2` plus the field's `mt-2` | 12pt gap, 14 bold |
+| Footer | Three buttons: "Email me a code", "Use my password", "Use my phone number instead" | One "Continue" |
+
+**Not a pixel fix.** The footer is the sign-in method choice: the app asks for the email,
+then lets the customer pick a code or a password on this same screen, and offers phone
+as an alternative. The frames model a different flow (email, then a "Welcome back to
+Renit" step for existing accounts, then password or OTP). Matching the frame means
+changing the auth flow, which is a product decision with backend implications (does
+the API tell the client whether an email is registered before asking for a
+credential?), not a restyle. The field, label, title and header could be matched
+without touching the flow, but the screen would still not equal the frame.
+
+Decision needed: keep the app's method-choice footer and match everything above it, or
+move to the frames' single "Continue" and a second step. Until that is decided the seven
+auth screens are parked.

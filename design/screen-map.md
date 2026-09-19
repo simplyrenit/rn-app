@@ -29,7 +29,7 @@ Status: `DONE` matches within 0.5pt · `TODO` not started · `BLOCKED` see note.
 | Profile (signed-out state) | `Profile` tab (`src/screens/tabs/profile.tsx`) | — | — | TODO | |
 | Chat (signed-out state) | `Chat` tab (`src/screens/tabs/chat.tsx`) | — | — | TODO | |
 | Welcome / onboarding | `Welcome` (`src/screens/welcome.tsx`) | — | — | TODO | Capture in `design/app/onboarding-2.dark.png` exists. |
-| Auth: email, phone, password, confirm, about, location | `src/screens/auth/*` | — | — | TODO | |
+| Auth: email, phone, password, confirm, about, location | `src/screens/auth/*` | email `1:9745` | email `1:9720` | AUDITED (email), parked | The frames model a different flow (single "Continue", then a "Welcome back" step) from the app's method-choice footer. Needs a product decision before any restyle; see `design/audit.md`. |
 | Auth: verify (OTP) | `Verify` (`src/screens/auth/verify.tsx`) | — | — | BLOCKED | Needs a real code; capture the entry state only, never submit. |
 | Legal: terms, privacy | `Terms`, `Privacy` (`src/screens/terms.tsx`, `privacy.tsx`) | — | — | TODO | |
 | Static info: who we are, FAQ, contact us | `whoWeAre`, `faq`, `contactUs` | — | — | TODO | Reachable signed out only if the Profile tab exposes them; check. |
