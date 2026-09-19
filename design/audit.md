@@ -460,3 +460,98 @@ radius 12 where `radius.button` is 11: three local `12` constants remain until o
 behaviour); the picture-update button can push past the sheet height (scrolls). (4) Who we are dark body text: the
 reviewer computes `textBody` (0.70 white over #000) = 178, the frame's value, so the 206 reading is probably a capture
 artefact; re-measure with the P3 to sRGB conversion before trusting it.
+
+## All reviews (light + dark) — 2026-09-20
+
+Figma `1:17697` (section "Writing a review", `1:17538`) · app `src/screens/products/reviews-screen.tsx`,
+call-site only on `src/components/product/review-card.tsx` · captures
+`design/app/reviews.{light,dark}.iphone16e.png`, side by side in `design/app/reviews.compare.*`.
+
+Changed: the shared `SubpageHeader` replaces the hand-rolled 20pt row, titled "All reviews" (it said
+"Reviews"); "Rating"/"Reviews" `SectionHeader`s are gone. The screen is now one 24pt column — a 20pt bold
+"Product Reviews", 24 under it a score line (one 70%-ink star, then `4.1`, `•` and `188 reviews` as three
+runs on the row's 8pt gap), 16 under that five bar rows 8 apart (digit, 20pt star, 8pt track, count column
+30 wide, left-aligned), 24 under those a 44pt hairline "Write a review" row at radius 12 with a mini
+chevron, 32 under that the "N reviews" heading at 16 bold, then the cards 16 apart. The cards are the
+product page's `variant="detail"` card at full width (185pt, body clamped to three lines, underlined
+"Show more"), not the old shadowed card; with no `onShowMore` the control expands in place.
+
+Result (frame upscaled to the 2× grid, app shifted +7pt): the back arrow, title, "Product Reviews", the
+score line's star and first run, all five bar rows' tops, every bar track and count column, the write row's
+box, label and chevron, and the card's three body lines and avatar land on the frame's pixels (0px). The
+rest is within 1px: the "N reviews" heading, the card's own box (my card measures 187 against the frame's
+185 — RN adds the 1px stroke outside the 16pt padding, the same 2px the product page's rail already
+carries), and the card gap.
+
+**Monochrome, not gold or brand — needs your sign-off.** The frame draws both the score star and the bar
+fill in ink (`#000` light) with an `#E6E6E6` track; the screen used a gold star and a purple bar. `Stars`
+already carries `tone="ink" | "secondary"` for exactly this, so the change follows the product page, but
+the histogram losing the brand colour is a visible call.
+
+**The frame's own numbers do not add up.** It reads "4.0 • 180 reviews" over bars labelled 56/100/20/10/2
+(sum 188) and a list headed "24 reviews", and its bar widths are not proportional to those counts (4★=100
+draws shorter than it should). The app computes all three from the API, so it will not reproduce the
+frame's figures; only the geometry was matched.
+
+Measurement floor: the frame export in `design/figma-images/profile-subs/dark/1-17697.png` is 1× (390×844),
+not the 2× the earlier passes used, because the Figwright MCP was not available this session (`ToolSearch`
+is disabled, so the figwright tools could not be loaded). 1px there is 1pt, so "0px" here means ≤1pt, not
+≤0.5pt. Re-export at 2× and re-measure when the plugin is reachable.
+
+Dark (no dark twin found for this frame; checked against the tokens): page `#000000`, bar track `#292929`
+(= `line`, exact), bar fill and bar stars `#FFFFFF`, score star and score text 70% white, card and write-row
+fill `#0F0F0F`, their border reads `#242424` against the `#292929` token — the same 4–5/255 capture offset
+every earlier dark entry records.
+
+## Write a review (light + dark) — 2026-09-20
+
+Figma `1:18034` · app `src/screens/products/write-review.tsx` · captures
+`design/app/write-review.{light,dark}.iphone16e.png`, side by side in `design/app/write-review.compare.*`.
+
+Changed: the shared `SubpageHeader`; a 24pt column 27 under it with 16 between blocks and 8 between a
+heading and its control. The summary row is a 72pt thumbnail at radius 12, 16 from a column of title
+(14 bold, one line, truncated), location (14, secondary) and a baseline-aligned `₹1990` (16 bold) + "per
+day" (14, tertiary) 4 apart. The product review is the frame's 200pt box — radius 16, hairline, 16 padding,
+no fill, placeholder "Share your thoughts..." — with no label above it. The condition control is 48pt at
+radius 12 with 16/8 padding, a 20pt condition glyph 8 from a 16pt value and the app's mini chevron-down
+replacing the library's filled caret. Submit is bare tertiary 14 bold in a 44pt row until the review is
+complete, then the primary button — the treatment Feedback & Review already uses.
+
+Result (frame upscaled to the 2× grid, app shifted +7pt): header, thumbnail, summary title, summary
+location and the condition heading land on the frame's pixels (0px); the price line, the text area's box,
+its placeholder and the condition control are 1px low. Same 1× measurement floor as All reviews above.
+
+**Deviation, and a product decision for you.** The frame has no owner review and no star ratings, but
+`write-review/` requires `productReview`, `ownerReview`, `productRating` and `ownerRating`, so they are
+kept: "How was the owner?" over a second copy of the frame's text area, then "Rate the product" and "Rate
+the owner" over 48pt radius-12 hairline boxes modelled on the condition control. That pushes Submit below
+the fold, where the frame draws it 16 under the condition control. Either the frame is missing three
+required fields or the API should stop requiring them — that is your call, not a layout one. The star boxes
+are invented: the frame draws nothing for them.
+
+Kept from the app, not the frame: the condition value (the frame shows "Fair"; the app defaults to "Good")
+and the listing data. The frame's listing (Hero Xpulse 200T, Goregaon) is freelancer data and is not copied;
+the captures use a QA listing.
+
+Two frame values that are not clean tokens, both kept because they are what lands on the frame: the 27pt
+top inset (All reviews measures 24 under the identical header) and the 5pt gap between the three lines of
+the summary column.
+
+Dark: page `#000000`, both fields left unfilled with a hairline as the frame's boxes are, the condition
+control the same, thumbnail unchanged. No dark twin frame was found for `1:18034`.
+
+## How these two were captured — 2026-09-20
+
+The Simulator's window was closed on this machine and macOS Accessibility is not granted to the shell, so
+neither screen could be reached by tapping (`CGWindowList` shows no Simulator window; `xcrun simctl io …
+screenshot` still renders). Both were captured through a temporary harness that mounted the two screens in
+a bare stack with fixture route params and an axios request interceptor that answered
+`product-review-stats/` and `product-review/` from fixtures. The harness wrote nothing — only those two GETs
+were stubbed, no review was submitted — and it is deleted; `App.tsx` is byte-identical to `HEAD`. A run that
+can tap should still walk product detail → All reviews → Write a review to check the two transitions, the
+condition picker's open state, the keyboard-up state of both text areas, and the Submit button in its live
+state.
+
+Also worth a second look next session: a macOS "wants to control this computer using accessibility
+features" dialog opened while probing for a way to tap (from `osascript`/`cliclick`). It was left alone —
+granting it is a permission decision for you, not for an agent — but it is sitting on the desktop.

@@ -1,6 +1,7 @@
 import useReviews from "@/backend/reviews";
-import { BackButton, Button, Text } from "@/components/core";
+import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
+import Rating from "@/components/core/rating";
 import { useGlobalContext } from "@/context/global-context";
 import {
   BadCondition,
@@ -11,12 +12,52 @@ import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import React, { useState } from "react";
-import { ScrollView, TextInput, View } from "react-native";
+import { TextInput, View } from "react-native";
+import { ChevronDownIcon } from "react-native-heroicons/mini";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 
 import { toast } from "@/lib/toast";
-import Rating from "@/components/core/rating";
-import { MIN_TOUCH_TARGET, ink, radius } from "@/lib/design-tokens";
+import {
+  MIN_TOUCH_TARGET,
+  SCREEN_GUTTER,
+  density,
+  fontFamily,
+  fontSize,
+  radius,
+} from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
+
+// Measured off the Figma "Write a review" frame (1:18034): a 24pt column under
+// the shared 44pt header, 27 from it, with 16 between blocks and 8 between a
+// heading and the control it introduces. 27, not the 24 the All reviews frame
+// uses — the two frames disagree, and this is the one that lands on the frame.
+const TOP_INSET = 27;
+const BLOCK_GAP = 16;
+const HEADING_GAP = 8;
+/** The listing thumbnail, and the gap to the text beside it. */
+const THUMB = 72;
+const THUMB_GAP = 16;
+/**
+ * The three lines of the summary column measure 5 apart in the frame — wider
+ * than the type ramp's own leading, and the only place the number appears.
+ */
+const SUMMARY_LINE_GAP = 5;
+/** The frame's text area, and the box the extra sections reuse. */
+const FIELD_HEIGHT = 200;
+const FIELD_PADDING = 16;
+/** The condition control, and the star rows modelled on it. */
+const CONTROL_HEIGHT = 48;
+const CONTROL_PAD_H = 16;
+const CONTROL_PAD_V = 8;
+const CONTROL_GAP = 8;
+const GLYPH = 20;
+/**
+ * The frame draws the thumbnail, the condition control and the star rows at
+ * radius 12, where `radius.button` is 11 and `radius.group` is 14. Kept local
+ * until one ruling moves the token (see design/audit.md).
+ */
+const CONTROL_RADIUS = 12;
 
 type ConditionOption = {
   label: string;
@@ -35,17 +76,13 @@ export default function WriteReviewScreen() {
 
   const [selectedValue, setSelectedValue] = useState<string>("good");
 
-  const { theme, userDetails } = useGlobalContext();
-  const isDark = theme === "dark";
+  const { color } = useTheme();
+  const { userDetails } = useGlobalContext();
   const isOwner = userDetails?.username === owner?.username;
 
-  const onSelect = (productRating: number, ownerRating: number) => {
-    setRating({ product: productRating, owner: ownerRating });
-  };
-
-  const reviewValid = !isOwner && Boolean(
-    productReview && ownerReview && rating.product && rating.owner
-  );
+  const reviewValid =
+    !isOwner &&
+    Boolean(productReview && ownerReview && rating.product && rating.owner);
 
   const handleSubmit = async () => {
     if (isOwner) {
@@ -63,264 +100,322 @@ export default function WriteReviewScreen() {
     };
 
     try {
-      const response = await writeAReview(reviewData);
+      await writeAReview(reviewData);
       toast.success("Review submitted");
       navigation.goBack();
     } catch (error: any) {
     }
   };
+
   const options: ConditionOption[] = [
     {
       label: "Excellent",
       value: "excellent",
-      icon: (
-        <ExcellentCondition size={20} color={`${ink.text(isDark)}`} />
-      ),
+      icon: <ExcellentCondition size={GLYPH} color={color.text} />,
     },
     {
       label: "Good",
       value: "good",
-      icon: <GoodCondition size={20} color={`${ink.text(isDark)}`} />,
+      icon: <GoodCondition size={GLYPH} color={color.text} />,
     },
     {
       label: "Fair",
       value: "fair",
-      icon: <BadCondition size={20} color={`${ink.text(isDark)}`} />,
+      icon: <BadCondition size={GLYPH} color={color.text} />,
     },
   ];
 
+  /** The frame's box: a hairline, no fill, and the page's own ground inside. */
+  const fieldStyle = {
+    textAlignVertical: "top" as const,
+    height: FIELD_HEIGHT,
+    padding: FIELD_PADDING,
+    fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
+    // No `lineHeight`: the ramp's 21pt leading pushes the first line 2pt below
+    // where the frame sets it, and an input is a single block of typing rather
+    // than body copy that needs the extra air.
+    color: color.text,
+    borderWidth: 1,
+    borderColor: color.line,
+    borderRadius: radius.card,
+  };
+
+  /** The condition control's box, reused by the two star rows. */
+  const controlBox = {
+    height: CONTROL_HEIGHT,
+    paddingHorizontal: CONTROL_PAD_H,
+    paddingVertical: CONTROL_PAD_V,
+    borderRadius: CONTROL_RADIUS,
+    borderWidth: 1,
+    borderColor: color.line,
+  };
+
   return (
     <NonScrollableContainer>
-      <View className="flex-1">
+      <SubpageHeader title="Write a review" />
+
+      <KeyboardAwareScrollView
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingHorizontal: SCREEN_GUTTER,
+          paddingTop: TOP_INSET,
+          paddingBottom: density.listFooterCompact,
+          gap: BLOCK_GAP,
+        }}
+      >
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
-            paddingHorizontal: 10,
-            paddingVertical: 6,
+            gap: THUMB_GAP,
           }}
         >
-          <BackButton />
-          <View style={{ flex: 1, alignItems: "center" }}>
-            <Text role="screenTitle" numberOfLines={1}>
-              Write a review
-            </Text>
-          </View>
-          <View style={{ width: MIN_TOUCH_TARGET }} />
-        </View>
-
-        <View className="px-gutter pb-2 mt-4 flex flex-row items-center space-x-3">
           {product.cover_image ? (
             <Image
               source={{ uri: product.cover_image }}
-              className="w-1/4 aspect-square rounded-card"
+              style={{
+                width: THUMB,
+                height: THUMB,
+                borderRadius: CONTROL_RADIUS,
+              }}
               contentFit="cover"
+              accessibilityLabel={product.title}
             />
           ) : (
-            <View className="w-1/4 aspect-square rounded-card bg-skeleton-light" />
+            <View
+              style={{
+                width: THUMB,
+                height: THUMB,
+                borderRadius: CONTROL_RADIUS,
+                backgroundColor: color.skeleton,
+              }}
+            />
           )}
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold" className="mb-1">
-              {product.title.slice(0, 20)}...
+          <View style={{ flex: 1, gap: SUMMARY_LINE_GAP }}>
+            <Text fontSize="text-sm" fontWeight="font-bold" numberOfLines={1}>
+              {product.title}
             </Text>
-            <Text
-              fontSize="text-sm"
-              style={{ color: ink.dim(isDark) }}
-              className="mb-1"
+            <Text fontSize="text-sm" tone="body" numberOfLines={1}>
+              {product.location}
+            </Text>
+            {/* Baseline-aligned, so the unit sits on the price's own line
+                rather than on the middle of its digits. */}
+            <View
+              style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}
             >
-              {product.location.slice(0, 20)}...
-            </Text>
-            <View className="flex flex-row items-center mt-1">
               <Text fontSize="text-md" fontWeight="font-bold">
                 ₹{Number(product.rate).toFixed(0)}
               </Text>
-              <Text
-                fontSize="text-xs"
-                style={{ color: ink.dim(isDark) }}
-                className="ml-1"
-              >
+              <Text fontSize="text-sm" tone="dim">
                 per day
               </Text>
             </View>
           </View>
         </View>
 
-        <ScrollView keyboardShouldPersistTaps="handled">
-          <View className="px-gutter mt-4">
-            <Text role="fieldLabel" className="mb-1">
-              Condition
-            </Text>
+        {/* The frame labels this field with its placeholder alone. */}
+        <TextInput
+          style={fieldStyle}
+          multiline
+          placeholder="Share your thoughts..."
+          placeholderTextColor={color.placeholder}
+          accessibilityLabel="Your review of the product"
+          value={productReview}
+          onChangeText={setProductReview}
+        />
 
-            <RNEDropdown
-              style={{
-                height: 55,
-                backgroundColor: ink.canvas(isDark),
-                borderRadius: radius.input,
-                borderWidth: 1,
-                borderColor: ink.line(isDark),
-                paddingHorizontal: 16,
-                marginVertical: 10,
-              }}
-              activeColor={ink.surface(isDark)}
-              containerStyle={{
-                marginTop: 10,
-                backgroundColor: ink.canvas(isDark),
-                borderRadius: radius.group,
-              }}
-              itemTextStyle={{
-                color: ink.text(isDark),
-              }}
-              itemContainerStyle={{
-                borderBottomWidth: 1,
-                borderBottomColor: ink.line(isDark),
-              }}
-              placeholderStyle={{ color: ink.placeholder(isDark), fontSize: 16 }}
-              selectedTextStyle={{ color: ink.text(isDark) }}
-              inputSearchStyle={{
-                height: 40,
-                fontSize: 16,
-                borderRadius: radius.input,
-                color: ink.text(isDark),
-              }}
-              iconStyle={{ marginRight: 10 }}
-              data={options}
-              labelField="label"
-              valueField="value"
-              value={selectedValue}
-              onChange={(item) => setSelectedValue(item.value)}
-              renderLeftIcon={() =>
-                selectedValue ? (
-                  <View style={{ marginRight: 8 }}>
-                    {
-                      options.find((option) => option.value === selectedValue)
-                        ?.icon
-                    }
-                  </View>
-                ) : null
+        <View style={{ gap: HEADING_GAP }}>
+          <Text
+            accessibilityRole="header"
+            fontSize="text-md"
+            fontWeight="font-bold"
+          >
+            How was the product’s condition?
+          </Text>
+
+          <RNEDropdown
+            style={controlBox}
+            activeColor={color.surfaceRaised}
+            containerStyle={{
+              marginTop: HEADING_GAP,
+              backgroundColor: color.surface,
+              borderRadius: CONTROL_RADIUS,
+              borderWidth: 1,
+              borderColor: color.line,
+              overflow: "hidden",
+            }}
+            itemTextStyle={{
+              color: color.text,
+              fontFamily: fontFamily.regular,
+              fontSize: fontSize.md,
+            }}
+            itemContainerStyle={{
+              borderBottomWidth: 1,
+              borderBottomColor: color.line,
+            }}
+            placeholderStyle={{
+              color: color.placeholder,
+              fontFamily: fontFamily.regular,
+              fontSize: fontSize.md,
+            }}
+            selectedTextStyle={{
+              color: color.text,
+              fontFamily: fontFamily.regular,
+              fontSize: fontSize.md,
+            }}
+            data={options}
+            labelField="label"
+            valueField="value"
+            value={selectedValue}
+            onChange={(item) => setSelectedValue(item.value)}
+            accessibilityLabel="Condition"
+            renderLeftIcon={() => (
+              <View style={{ marginRight: CONTROL_GAP }}>
+                {options.find((option) => option.value === selectedValue)?.icon}
+              </View>
+            )}
+            // The frame's caret is the mini chevron the rest of the app uses;
+            // the library's default is a larger filled triangle.
+            renderRightIcon={() => (
+              <ChevronDownIcon size={GLYPH} color={color.text} />
+            )}
+            renderItem={(item) => (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: CONTROL_GAP,
+                  paddingHorizontal: CONTROL_PAD_H,
+                  height: CONTROL_HEIGHT,
+                }}
+              >
+                {item.icon}
+                <Text fontSize="text-md">{item.label}</Text>
+              </View>
+            )}
+            placeholder="Select condition"
+          />
+        </View>
+
+        {/* Not in the frame. The backend requires an owner review and both
+            ratings, so they stay — set in the frame's own tokens and rhythm
+            rather than dropped. See design/audit.md: which of the two is
+            wrong is a product decision, not a layout one. */}
+        <View style={{ gap: HEADING_GAP }}>
+          <Text
+            accessibilityRole="header"
+            fontSize="text-md"
+            fontWeight="font-bold"
+          >
+            How was the owner?
+          </Text>
+          <TextInput
+            style={fieldStyle}
+            multiline
+            placeholder="Share your thoughts..."
+            placeholderTextColor={color.placeholder}
+            accessibilityLabel="Your review of the owner"
+            value={ownerReview}
+            onChangeText={setOwnerReview}
+          />
+        </View>
+
+        <View style={{ gap: HEADING_GAP }}>
+          <Text
+            accessibilityRole="header"
+            fontSize="text-md"
+            fontWeight="font-bold"
+          >
+            Rate the product
+          </Text>
+          <View
+            style={[
+              controlBox,
+              {
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              },
+            ]}
+          >
+            <Rating
+              value={rating.product}
+              size={GLYPH}
+              onChange={(next) =>
+                setRating((prev) => ({ ...prev, product: next }))
               }
-              renderItem={(item) => (
-                <View
-                  className="p-4"
-                  style={{ flexDirection: "row", alignItems: "center" }}
-                >
-                  {item.icon}
-                  <Text
-                    style={{ marginLeft: 8, color: ink.text(isDark) }}
-                  >
-                    {item.label}
-                  </Text>
-                </View>
-              )}
-              placeholder="Select Condition"
             />
-          </View>
-          <View className="px-gutter mt-4 space-y-2">
-            <Text role="fieldLabel">Product review</Text>
-            <Text role="fieldHint">Share your thoughts about the product</Text>
-            <TextInput
-              placeholder="How did the rental go?"
-              value={productReview}
-              onChangeText={setProductReview}
-              placeholderTextColor={ink.dim(isDark)}
-              multiline
-              className={`rounded-card border h-32 p-3 ${
-                isDark
-                  ? "border-input-line-dark text-white"
-                  : "border-input-line-light text-black"
-              }`}
-              style={{
-                textAlignVertical: "top", // Ensures text starts at the top
-              }}
-            />
-          </View>
-          <View className="px-gutter mt-4 space-y-2">
-            <Text role="fieldLabel">Owner review</Text>
-            <Text role="fieldHint">
-              Share your thoughts about the owner of the product
+            <Text fontSize="text-md" fontWeight="font-bold">
+              {rating.product || "—"}
             </Text>
-            <TextInput
-              placeholder="Anything the next renter should know?"
-              value={ownerReview}
-              onChangeText={setOwnerReview}
-              placeholderTextColor={ink.dim(isDark)}
-              multiline
-              className={`rounded-card border h-32 p-3 ${
-                isDark
-                  ? "border-input-line-dark text-white"
-                  : "border-input-line-light text-black"
-              }`}
-              style={{
-                textAlignVertical: "top", // Ensures text starts at the top
-              }}
-            />
           </View>
-          <View className="px-gutter mt-4 space-y-2">
-            <Text role="fieldLabel">Product rating</Text>
-            <View
-              className={`flex flex-row items-center justify-between border ${
-                isDark
-                  ? "bg-canvas-dark border-input-line-dark"
-                  : "bg-surface-light border-input-line-light"
-              } w-full h-16 rounded-group p-3`}
-            >
-              {/* The app's own star, so a rating looks the same here as it
-                  does on a product page. */}
-              <Rating
-                value={rating.product}
-                size={26}
-                onChange={(newRating) => {
-                  setRating((prev) => ({
-                    ...prev,
-                    product: newRating,
-                  }));
-                  onSelect(newRating, rating.owner);
-                }}
-              />
-              <Text fontSize="text-lg" fontWeight="font-bold">
-                {rating.product || "—"}
-              </Text>
-            </View>
-          </View>
-          <View className="px-gutter mt-4 space-y-2">
-            <Text role="fieldLabel">Owner rating</Text>
-            <View
-              className={`flex flex-row items-center justify-between border ${
-                isDark
-                  ? "bg-canvas-dark border-input-line-dark"
-                  : "bg-surface-light border-input-line-light"
-              } w-full h-16 rounded-group p-3`}
-            >
-              {/* The app's own star, so a rating looks the same here as it
-                  does on a product page. */}
-              <Rating
-                value={rating.owner}
-                size={26}
-                onChange={(newRating) => {
-                  setRating((prev) => ({
-                    ...prev,
-                    owner: newRating,
-                  }));
-                  onSelect(rating.product, newRating);
-                }}
-              />
-              <Text fontSize="text-lg" fontWeight="font-bold">
-                {rating.owner || "—"}
-              </Text>
-            </View>
-          </View>
-        </ScrollView>
-      </View>
+        </View>
 
-      <View className="py-2 px-gutter">
-        <Button
-          variant="primary"
-          disabled={!reviewValid}
-          loading={isLoading}
-          onPress={handleSubmit}
-        >
-          Submit feedback
-        </Button>
-      </View>
+        <View style={{ gap: HEADING_GAP }}>
+          <Text
+            accessibilityRole="header"
+            fontSize="text-md"
+            fontWeight="font-bold"
+          >
+            Rate the owner
+          </Text>
+          <View
+            style={[
+              controlBox,
+              {
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              },
+            ]}
+          >
+            <Rating
+              value={rating.owner}
+              size={GLYPH}
+              onChange={(next) =>
+                setRating((prev) => ({ ...prev, owner: next }))
+              }
+            />
+            <Text fontSize="text-md" fontWeight="font-bold">
+              {rating.owner || "—"}
+            </Text>
+          </View>
+        </View>
+
+        {reviewValid ? (
+          <Button loading={isLoading} onPress={handleSubmit}>
+            <Text tone="onBrand" fontWeight="font-bold" fontSize="text-sm">
+              Submit feedback
+            </Text>
+          </Button>
+        ) : (
+          // The frame draws the inactive state as bare tertiary text in a 44pt
+          // row with no fill; it becomes the primary button once the review is
+          // complete. Same treatment as Feedback & Review.
+          <View
+            accessible
+            accessibilityRole="button"
+            accessibilityState={{ disabled: true }}
+            accessibilityLabel="Submit feedback"
+            accessibilityHint={
+              isOwner
+                ? "You can’t review your own listing"
+                : "Write both reviews and set both ratings to submit"
+            }
+            style={{
+              height: MIN_TOUCH_TARGET,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text fontSize="text-sm" fontWeight="font-bold" tone="dim">
+              Submit feedback
+            </Text>
+          </View>
+        )}
+      </KeyboardAwareScrollView>
     </NonScrollableContainer>
   );
 }

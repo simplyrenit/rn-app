@@ -42,7 +42,7 @@ Status: `DONE` matches within 0.5pt · `TODO` not started · `BLOCKED` see note.
 | Profile sub-screens | `profile`, `notification`, `myProducts`, `feedback`, `NetworkDiagnostics`, `ReportAProblem`, `UserDetail`, `unavailabilityForm*` | PARTLY | Appearance sheet DONE (light; frames `1:19482`/`1:19346`). Notifications (`1:18332`) PARKED: opening it calls `markAllAsRead` on the real account. FAQs DONE (light+dark, frames `1:11770`/`1:11349`); Contact Us DONE (light+dark, `1:11890`/`1:11469`); Who we are, Terms & Conditions and Privacy Policy DONE in light (`1:11932`, `1:11963`, `1:11981`; dark `1:11511`, `1:11542`, `1:11560`: Privacy and Who we are compared, Terms not; Who we are's dark body text is brighter than the frame's; the frames DO exist for Terms and Privacy, an earlier note here was wrong); Feedback & Review empty state DONE (light+dark, `1:11804`/`1:11383`; the other two frames `1:11831`, `1:11858` not audited); My Products (`1:12006`) PARKED (frame has Edit buttons + "Share entire catalogue"; app has Live/Rejected status pills; product decision). Personal details sheet DONE view-only (light+dark, `1:10776`; sub-sheets not restyled). Filter sheet: NO FRAME (the Overlay frames of section `1:5211` contain only a home indicator; the sheet was never drawn). Not yet looked at: Profile subpages (`1:11707`/`1:11286`), Change password (`1:18756`), Change phone number (`1:22817`), Change profile picture (`1:22245`). |
 | Post flow | `PostSubCategories`, `AboutProduct`, `ProductImages`, `ChooseCoverImage`, `ProductAvailability`, `LocationModal`, `ReviewProduct`, `HangTight` | AUDITED (step 1), parked | Section `1:13230`. The active Post tab glyph is fixed. The wizard differs in flow (5 vs 7 steps, X vs back arrow, category list and glyphs); see `design/audit.md` for three decisions needed. |
 | Edit flow | `editProduct`, `EditAboutProduct`, `EditCategory`, `EditSubCategories`, `EditProductImages`, `EditCoverImage`, `EditProductAvailability` | TODO | |
-| Reviews / owner | `ReviewsScreen`, `WriteReviews`, `OwnersReviewScreen`, `OwnersProducts`, owner profile (`UserDetail`) | PARTLY | Owner profile (`UserDetail`, frame `1:21984`, dark `1:21886`) DONE in light, dark fills match; the old verification card and business pill were removed (needs sign-off, see `design/audit.md`). Writing a review (`1:17538`) and the others not started. |
+| Reviews / owner | `ReviewsScreen`, `WriteReviews`, `OwnersReviewScreen`, `OwnersProducts`, owner profile (`UserDetail`) | PARTLY | Owner profile (`UserDetail`, frame `1:21984`, dark `1:21886`) DONE in light, dark fills match; the old verification card and business pill were removed (needs sign-off, see `design/audit.md`). All reviews (`ReviewsScreen`, frame `1:17697`) DONE (light measured, dark by token); Write a review (`WriteReviews`, frame `1:18034`) DONE (light measured, dark by token) — the frame omits the owner review and both star ratings that the API requires, so they are kept as extra sections and need a product ruling. Both were measured against 1× exports (no Figwright this session), so the floor is 1pt not 0.5pt, and both were captured through a temporary harness because the Simulator window was closed — see `design/audit.md`. `OwnersReviewScreen` and `OwnersProducts` not started. |
 
 ## Figma section inventory
 
@@ -76,6 +76,17 @@ profile. The signed-out Saved/Post/Chat/Profile states have no matching Figma fr
 that I have found yet (Figma's Saved is the signed-in "Wishlist").
 
 ## Open decisions
+
+From the All reviews / Write a review pass (2026-09-20), needing a ruling:
+
+- **The review histogram goes monochrome.** The frame draws the score star and the bar fill in ink with an
+  `#E6E6E6` track; the screen had a gold star and a brand-purple bar. Matched to the frame, but it is the
+  last place the brand colour appeared on that screen.
+- **Write a review is missing three required fields in Figma.** The frame has no owner review and no star
+  ratings; `write-review/` requires both reviews and both ratings. They are kept as extra sections in the
+  frame's own tokens. Either the frame needs them drawn or the API should stop requiring them.
+- **The two frames disagree about the top inset** under an identical 44pt header: All reviews measures 24,
+  Write a review 27. Both are matched as measured.
 
 Third review (`renit-build-reviewer`, 2026-09-20), fixed in the commit after `04a8d4f`: the owner
 screen's back arrow was dead at scroll 0 (a pinned copy of the header swallowed the tap;
