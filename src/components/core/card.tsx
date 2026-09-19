@@ -10,6 +10,9 @@ import { FavouriteButton } from "./favourite-button";
 import { Text } from "./text";
 import { usePressFeedback } from "./use-press-feedback";
 
+// The design's Home tile rounds its photo to 8; the shared tile uses `radius.card`.
+const TILE_IMAGE_RADIUS = 8;
+
 export interface CardProps extends ItemCard {
   /**
    * The listing's coordinates. Given them, the card answers "how far away is
@@ -19,6 +22,12 @@ export interface CardProps extends ItemCard {
   coordinates?: { lat?: number; long?: number } | null;
   /** A distance the caller has already worked out. Wins over `coordinates`. */
   distance?: string | null;
+  /**
+   * The Home rails' tile, as the design draws it: an 8pt-radius photo with no
+   * hairline over it and the bare corner heart. Search and Saved keep the
+   * default tile until their own frames are compared.
+   */
+  tile?: boolean;
 }
 
 export function Card({
@@ -32,6 +41,7 @@ export function Card({
   alignItems,
   coordinates,
   distance,
+  tile = false,
 }: CardProps) {
   const router = useTypedNavigation();
   const { color } = useTheme();
@@ -49,7 +59,7 @@ export function Card({
   const imageStyle = {
     width: "100%",
     aspectRatio: aspect.productImage,
-    borderRadius: radius.card,
+    borderRadius: tile ? TILE_IMAGE_RADIUS : radius.card,
   } as const;
 
   return (
@@ -79,19 +89,27 @@ export function Card({
           )}
 
           {/* A hairline over the photo. Without it a product shot on a white
-              background bleeds into a light canvas and the tile loses its edge. */}
-          <View
-            pointerEvents="none"
-            style={{
-              ...imageStyle,
-              position: "absolute",
-              borderWidth: 1,
-              borderColor: color.line,
-            }}
-          />
+              background bleeds into a light canvas and the tile loses its edge.
+              The Home tile omits it, as the design does. */}
+          {tile ? null : (
+            <View
+              pointerEvents="none"
+              style={{
+                ...imageStyle,
+                position: "absolute",
+                borderWidth: 1,
+                borderColor: color.line,
+              }}
+            />
+          )}
 
           <View style={{ position: "absolute", top: 0, right: 0 }}>
-            <FavouriteButton id={id} isFavorite={Boolean(checked)} title={title} />
+            <FavouriteButton
+              id={id}
+              isFavorite={Boolean(checked)}
+              title={title}
+              tile={tile}
+            />
           </View>
         </View>
 

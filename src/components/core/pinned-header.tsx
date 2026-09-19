@@ -8,6 +8,18 @@ interface Props {
   children: React.ReactNode;
   /** Set false when the caller lays out its own horizontal padding. */
   gutter?: boolean;
+  /**
+   * Draw the hairline under the header. On by default; a screen whose design
+   * has no rule between the header and the content passes false and relies on
+   * the blur alone to mark the boundary once content scrolls behind it.
+   */
+  separator?: boolean;
+  /**
+   * `blur` (the default) frosts what scrolls behind the header. `solid` paints
+   * the canvas instead, for a screen whose design shows the header as part of
+   * the page — over true black a blur reads as a grey band that isn't there.
+   */
+  material?: "blur" | "solid";
   style?: ViewStyle;
 }
 
@@ -25,7 +37,13 @@ interface Props {
  * clipped by nothing. Android gets a solid canvas fill, where BlurView is
  * expensive and inconsistent across OEM skins.
  */
-export function PinnedHeader({ children, gutter = true, style }: Props) {
+export function PinnedHeader({
+  children,
+  gutter = true,
+  separator = true,
+  material = "blur",
+  style,
+}: Props) {
   const { color, isDark } = useTheme();
 
   const body = (
@@ -51,11 +69,11 @@ export function PinnedHeader({ children, gutter = true, style }: Props) {
         // plain View shrink-wraps to its content instead of spanning.
         alignSelf: "stretch",
         width: "100%",
-        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomWidth: separator ? StyleSheet.hairlineWidth : 0,
         borderBottomColor: color.line,
       }}
     >
-      {Platform.OS === "ios" ? (
+      {Platform.OS === "ios" && material === "blur" ? (
         <BlurView
           intensity={isDark ? 40 : 60}
           tint={isDark ? "dark" : "light"}

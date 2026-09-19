@@ -1,14 +1,19 @@
 import useSaved from "@/backend/useSaved";
-import { Card, ProductCardSkeleton, SectionHeader } from "@/components/core";
+import { Card, ProductCardSkeleton, Text } from "@/components/core";
 import { EmptyState } from "@/components/core/empty-state";
-import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
-import { useTheme } from "@/lib/theme";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useRailClaim } from "./rail-dedupe";
 import React from "react";
 import { ScrollView, View } from "react-native";
 
-const CARD_WIDTH = 158;
-const GAP = 14;
+// Measured off the Figma Home frame: 163pt cards (the photo is 176 tall, so the
+// tile's 163:176 ratio holds) with a 16pt gap, under a heading that sits 24pt
+// above them. Each section carries 16pt above and below, which is what makes
+// 16pt after the category rail and 32pt between two rails.
+const CARD_WIDTH = 163;
+const GAP = 16;
+const SECTION_PADDING = 16;
+const HEADING_GAP = 24;
 
 export interface RailProduct {
   name: string;
@@ -49,7 +54,6 @@ export function ProductRail({
   emptyBody,
 }: Props) {
   const { favorites } = useSaved();
-  const { color } = useTheme();
 
   // Three rankings over one small catalogue return the same items, so without
   // this the home screen showed the identical pair of listings under three
@@ -69,8 +73,17 @@ export function ProductRail({
   }
 
   return (
-    <View style={{ marginTop: density.section }}>
-      <SectionHeader title={title} />
+    <View style={{ paddingVertical: SECTION_PADDING }}>
+      <View
+        style={{
+          paddingHorizontal: SCREEN_GUTTER,
+          marginBottom: HEADING_GAP,
+        }}
+      >
+        <Text accessibilityRole="header" fontSize="text-base" fontWeight="font-bold">
+          {title}
+        </Text>
+      </View>
 
       {loading ? (
         <View
@@ -111,6 +124,7 @@ export function ProductRail({
                 location={item.location}
                 price={item.rate}
                 isFavorite={favorites.some((fav) => fav.name === item.name)}
+                tile
               />
             </View>
           ))}

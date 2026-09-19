@@ -11,6 +11,7 @@ import { HeartIcon as HeartSolid } from "react-native-heroicons/solid";
 import { IconButton } from "./icon-button";
 
 const GLYPH_SIZE = 18;
+const TILE_GLYPH_SIZE = 24;
 
 interface Props {
   /** Product name — this API's identifier for a listing. */
@@ -25,6 +26,12 @@ interface Props {
    * floating controls on the same image did not look like a pair.
    */
   photoSize?: number;
+  /**
+   * The design's product-tile heart: a bare 44pt box in the photo's corner, no
+   * chip behind it, a 24pt white-stroked outline with a translucent dark fill.
+   * Only the Home rails use it; every other surface keeps the chip.
+   */
+  tile?: boolean;
 }
 
 /**
@@ -45,6 +52,7 @@ export function FavouriteButton({
   onPhoto = true,
   title,
   photoSize = 30,
+  tile = false,
 }: Props) {
   const { isAuthenticated } = useGlobalContext();
   const { saveFavorite, deleteFavorite } = useSaved();
@@ -115,8 +123,8 @@ export function FavouriteButton({
       haptic={false}
       // The chip is the visible size; IconButton makes the 44pt hit area up in
       // hitSlop, so a small chip is still a full target.
-      size={onPhoto ? photoSize : MIN_TOUCH_TARGET}
-      scrim={onPhoto}
+      size={tile ? MIN_TOUCH_TARGET : onPhoto ? photoSize : MIN_TOUCH_TARGET}
+      scrim={onPhoto && !tile}
       accessibilityLabel={
         active
           ? `Remove ${title ?? "this item"} from saved`
@@ -126,9 +134,14 @@ export function FavouriteButton({
     >
       <Animated.View style={{ transform: [{ scale }] }}>
         <Glyph
-          size={GLYPH_SIZE}
+          size={tile ? TILE_GLYPH_SIZE : GLYPH_SIZE}
           color={active ? activeColor : inactiveColor}
           strokeWidth={active ? 0 : 2}
+          // A translucent fill inside the white outline is what keeps the heart
+          // legible over a bright sky without a chip to sit on. Spread rather
+          // than passed as `undefined`, which would override the solid icon's
+          // own fill and paint it black.
+          {...(tile && !active ? { fill: color.photoScrimSoft } : null)}
         />
       </Animated.View>
     </IconButton>
