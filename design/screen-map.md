@@ -21,7 +21,7 @@ Status: `DONE` matches within 0.5pt · `TODO` not started · `BLOCKED` see note.
 
 | Screen | Route (file) | Light frame | Dark frame | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Search | `Search` (`src/screens/search.tsx`) | — | — | TODO | Reached from the Home search bar. |
+| Search | `Search` (`src/screens/search.tsx`) | `1:8212` (flow: `1:8041`–`1:8572` in section `1:8040`) | section `1:7401` | AUDITED | Reached from the Home search bar. Structural mismatch, not a spacing one: the app is a progressive-disclosure screen (back arrow, boxed What/Where/When cards, "Popular categories", "Browse all" CTA); the design is three flat stacked sections ("What?" field, "Where?" row with pin + pencil, "When?" row with calendar + pencil, each 24pt padded and divided by a hairline), a centred 44pt "Search anything" header, and a bottom bar with "Clear all" (text) and "Search" (primary, magnifier). Matching it reverses a deliberate UX decision in a 978-line screen with location and date logic — needs a go-ahead. Exports in `design/figma-images/search/light/`. |
 | Search results | `SearchResults` (`src/screens/search-results.tsx`) | — | — | TODO | Shares `Disclaimer` with Home, which changed visually; verify. |
 | Product detail | `ProductDetail` (`src/screens/products/products-screen.tsx`) | — | — | TODO | |
 | Saved (signed-out state) | `Saved` tab (`src/screens/tabs/saved.tsx`) | — | — | TODO | Tab bar already matches. |
@@ -43,6 +43,29 @@ Status: `DONE` matches within 0.5pt · `TODO` not started · `BLOCKED` see note.
 | Post flow | `PostSubCategories`, `AboutProduct`, `ProductImages`, `ChooseCoverImage`, `ProductAvailability`, `LocationModal`, `ReviewProduct`, `HangTight` | TODO | |
 | Edit flow | `editProduct`, `EditAboutProduct`, `EditCategory`, `EditSubCategories`, `EditProductImages`, `EditCoverImage`, `EditProductAvailability` | TODO | |
 | Reviews | `ReviewsScreen`, `WriteReviews`, `OwnersReviewScreen`, `OwnersProducts` | TODO | |
+
+## Figma section inventory
+
+The page has 39 sections in dark/light pairs: the dark set sits at y<20000 and the
+light set at y>20000, both named "… - Dark mode" (Home's light frame is under a
+section labelled "Dark mode"; the fill tells them apart). Light section IDs:
+Home `1:21676` · Search `1:8040` · Saved `1:8858` (frame `1:8859`, "Wishlist",
+signed-in state) · Product Details `1:9119` (frame `1:9120`) · Profile `1:10016` and
+`1:10109` · Post a Product `1:13230` · Chat `1:15542` · Make an offer `1:16369` ·
+Writing a review `1:17538` · Notifications `1:18269` · Edit personal details `1:10712` ·
+Profile subpages `1:11707` · Edit Product `1:14552`, `1:15029` · Change password `1:18756` ·
+Appearance settings `1:19418` · About Owner `1:21983` · Change profile picture `1:22245` ·
+Change phone number `1:22817` · Filters `1:5211` · Search products from user profiles `1:19806`.
+Dark counterparts are the same names at y<20000 (Search `1:7401`, Saved `1:8759`,
+Product Details `1:8957`, Profile `1:9952`/`1:10080`, …).
+
+Onboarding, auth and legal screens are not sections; find them by name search
+(`search_nodes`) rather than a page read. Never read node `0:1` whole: it times the
+Figwright plugin out and drops it.
+
+App captures (signed out, light, 780×1688) are in `design/app/`: saved, post, chat,
+profile. The signed-out Saved/Post/Chat/Profile states have no matching Figma frame
+that I have found yet (Figma's Saved is the signed-in "Wishlist").
 
 ## Open decisions
 
