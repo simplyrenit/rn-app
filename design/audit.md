@@ -401,3 +401,22 @@ carry blank lines.
 so only layout was matched.
 
 Dark (frames `1:11511`, `1:11542`, `1:11560`): Privacy and Who we are compared; Terms not. Page `#000000`, headings and Privacy's body text `#FFFFFF` and the Who we are button fill `#0F0F0F` match the frames exactly. Who we are's body text measures 206/255 against the frame's 178 (70% white): the app's body tone reads lighter than the design's secondary tone in dark, even with the theme's `textBody` token set directly; the cause was not found (it is app-wide if it is the tone).
+
+## Feedback & Review, empty state (light + dark) — 2026-09-20
+
+Figma light `1:11804`, dark `1:11383` (two more frames of the flow, `1:11831` and `1:11858`, and
+their dark twins are not audited: presumably a typed state and the sent state) · app
+`src/screens/profileScreens/feedback-review.tsx` · captures `design/app/feedback.{light,dark}.iphone16e.png`,
+side by side in `design/app/feedback.compare.*`.
+
+Changed: the shared sub-page header; the copy sits 28 under it on the 24 gutter; the field is 200
+tall with 16 padding, radius 16 and a hairline (it was 160 tall at radius 14 with the stronger
+control edge); and the empty Submit is bare grey text with no fill, as the frame draws it, turning
+into the primary button once there is text (it was a full-width disabled button box). The app's
+"Have any more questions? Email us at …" footer is kept at the bottom although the frame does not
+draw it.
+
+Result (light, 2× grid): the header, all four lines of copy, the field (452 to 851px) and the Submit
+text are within 1px (0.5pt) of the frame. Dark: page and intro text match; the field is left unfilled
+like the frame's (the app's other fields fill with the surface tone); the hairline is 4/255 darker.
+Not verified: the typed state with the keyboard up, the sent state.
