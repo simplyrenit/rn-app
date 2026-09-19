@@ -175,7 +175,9 @@ function PhotoIndicator({ index, count }: { index: number; count: number }) {
           height: "100%",
           borderRadius: radius.full,
           backgroundColor: color.brand,
-          transform: [{ translateX: thumbWidth * index }],
+          // Clamped: a photo that fails to load shrinks the gallery while the carousel
+          // can still be parked on it, which would slide the thumb off the track.
+          transform: [{ translateX: thumbWidth * Math.min(index, count - 1) }],
         }}
       />
     </View>

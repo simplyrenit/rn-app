@@ -69,6 +69,25 @@ that I have found yet (Figma's Saved is the signed-in "Wishlist").
 
 ## Open decisions
 
+From the independent review (`renit-build-reviewer`, 2026-09-20), fixed in the commit after `ee2dffe`: Product
+Details title no longer capped at one line, the CTA can grow with text size, the
+skeleton lands on the hero's ground and width, the photo indicator is clamped, the
+Home tiles speak the app-wide category name. Still open, needing a ruling:
+
+- **`Disclaimer` on Search results.** The Home request card (brand panel, larger
+  body, "Unavailability form ›", tile fill) changed for every caller, so Search
+  results shows it too without its own frame. Gate it behind an opt-in prop that only
+  Home passes, or accept it on Search results deliberately. The design's dark card was
+  never sampled, so its dark values are not design-backed.
+- **Home category wording.** The tiles show the design's text ("Musicals",
+  "Art & Craft", "Real Estate") where the rest of the app says "Musical instruments",
+  "Arts & crafts", "Real estate". Only the spoken label was normalised.
+- **Home rail headings** bypass `SectionHeader` (18pt bold against its 20pt
+  semibold). Fine if the design wants it; a `SectionHeader` variant would be tidier.
+- **Tab-bar home glyph** renders ~1pt larger than the design reads because the
+  `stroke-width` attribute in `src/icons/home.tsx` is kebab-case and ignored; the
+  measured match was taken against the glyph as it renders.
+
 - Which Figma frame is canonical where light and dark disagree (Home dark below row 1).
 - Whether the shared `Disclaimer` should stay changed on Search results or be limited to Home.
 - The Figma is not fully authoritative (freelancer-drawn): flag suspect values instead of copying them.

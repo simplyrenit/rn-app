@@ -103,9 +103,12 @@ const GLYPH_SIZE = 20;
  */
 const CTA_RADIUS = 12;
 
-/** Exactly 44 tall, so the bar measures the frame's 76. */
+/**
+ * 44 tall at rest, so the bar measures the frame's 76. A floor, not a fixed
+ * height, so the label can still grow the button at accessibility text sizes.
+ */
 const CTA_STYLE = {
-  height: MIN_TOUCH_TARGET,
+  minHeight: MIN_TOUCH_TARGET,
   paddingVertical: 0,
   borderRadius: CTA_RADIUS,
 } as const;
@@ -539,7 +542,9 @@ export default function DetailsScreen() {
             <Text
               fontSize="text-lg"
               fontWeight="font-bold"
-              numberOfLines={1}
+              // No line cap: the frame's title box hugs its text, and a listing's
+              // full name is not shown anywhere else on the page (the pinned band
+              // truncates it), so cutting it here would lose it.
             >
               {product?.title}
             </Text>

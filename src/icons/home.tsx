@@ -22,7 +22,9 @@ export const HomeIcon = ({ size = 20, color = "white", fill = "none" }) => (
 );
 
 /**
- * `edge` is the colour of the 1.5pt outline. It defaults to the fill, which draws
+ * `edge` is the colour of the outline (drawn at react-native-svg's default width:
+ * the `stroke-width` attribute below is kebab-case, which the library ignores, and
+ * the tab bar was measured against the glyph as it renders, so it is left as is). It defaults to the fill, which draws
  * the plain glyph. The design strokes it in the opposite tone instead (white on a
  * black house in light mode), which trims the visible glyph from 19.5pt to about
  * 16.5 — pass the canvas colour to draw it that way.

@@ -1,4 +1,5 @@
 import { CATEGORIES } from "@/lib/categories";
+import { categoryDisplayName } from "@/lib/category-icons";
 import { getDiscoveryLocationData } from "@/lib/location";
 import { CategoryItem, useTypedNavigation } from "@/lib/types";
 import React from "react";
@@ -99,7 +100,9 @@ export function Categories() {
       <TouchableOpacity
         key={category.name}
         accessibilityRole="button"
-        accessibilityLabel={`Browse ${category.name}`}
+        // The spoken name is the app-wide one ("Musical instruments"); the tile
+        // keeps the design's own wording on screen.
+        accessibilityLabel={`Browse ${categoryDisplayName(category.name)}`}
         activeOpacity={0.7}
         onPress={() => openCategory(category)}
         style={{

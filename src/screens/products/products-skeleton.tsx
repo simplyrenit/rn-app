@@ -1,3 +1,4 @@
+import { useTheme } from "@/lib/theme";
 import Skeleton from "@/components/core/skeleton";
 import { SCREEN_GUTTER, density, radius } from "@/lib/design-tokens";
 import { View } from "react-native";
@@ -15,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
  */
 export function ProductsSkeleton() {
   const insets = useSafeAreaInsets();
+  const { color } = useTheme();
 
   return (
     <View style={{ width: "100%" }}>
@@ -27,6 +29,8 @@ export function ProductsSkeleton() {
           paddingHorizontal: SCREEN_GUTTER,
           gap: 16,
           alignItems: "center",
+          // The hero's own ground, so the cross-fade lands on the same colour.
+          backgroundColor: color.surface,
         }}
       >
         <View
@@ -39,7 +43,7 @@ export function ProductsSkeleton() {
           <Skeleton width={44} height={44} borderRadius={radius.full} />
           <Skeleton width={44} height={44} borderRadius={radius.full} />
         </View>
-        <Skeleton width="62%" height={270} borderRadius={radius.card} />
+        <Skeleton width="100%" height={270} borderRadius={radius.card} />
         <Skeleton width={132} height={4} borderRadius={radius.full} />
       </View>
 
