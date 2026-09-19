@@ -577,3 +577,8 @@ Sent state: the frame draws a "Feedback submitted!" toast above the tab bar (bra
 filled brand check square, 14 bold text). That is the app-wide toast component (`src/lib/toast`), not this
 screen, so it was left alone and needs its own pass. The Terms dark frame `1:11542` is a plain text page on
 black like Privacy's, whose dark check passed; not compared separately.
+
+Toast (decision, not done): the frame's only toast is a success one drawn in a brand tint (`#EDECFB`-like wash,
+brand hairline, filled brand check square). `ToastBody` carries four severities on the semantic colours, which are
+deliberately kept until the designer ships a set (see the redesign memory), so restyling success alone would make
+it the odd one out. Waiting on that set.
