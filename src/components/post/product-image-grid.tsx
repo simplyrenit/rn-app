@@ -14,11 +14,11 @@ import { FlatList, TouchableOpacity, useWindowDimensions, View } from "react-nat
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   CameraIcon,
-  ChevronRightIcon,
   PhotoIcon,
   PlusIcon,
   XMarkIcon,
 } from "react-native-heroicons/outline";
+import { ChevronRightIcon } from "react-native-heroicons/mini";
 
 const StyledBottomView = styled(BottomSheetView);
 const MAX_IMAGES = 5;
@@ -301,7 +301,7 @@ export function ProductImageGrid({
               >
                 Next
               </Text>
-              <ChevronRightIcon size={16} color={ink.dim(isDark)} />
+              <ChevronRightIcon size={20} color={ink.dim(isDark)} />
             </View>
           )}
         </View>

@@ -28,10 +28,9 @@ import { SvgUri } from "react-native-svg";
  * display name and one printed the raw API string, and only two of them drew a
  * chevron on a row that pushes a screen.
  *
- * Row geometry (`py-4`, `space-x-5`) is carried over verbatim rather than
- * re-derived from the spacing scale, so that the geometry change and the
- * consolidation stay separable — all four callers now render from here, so the
- * scale can be applied in one edit whenever the design settles it.
+ * Row geometry follows the Figma frame (56pt minimum, an 8pt icon gap) rather
+ * than the spacing scale; all four callers render from here, so it is one edit
+ * if the design changes.
  */
 
 /**
@@ -132,7 +131,7 @@ function TaxonomyRow<T extends TaxonomyItem>({
         </View>
         {/* 16pt, not 18: the label measures 12pt cap on the frames, which is
             where the 56pt row height comes from (py-4 around a 24pt line). */}
-        <Text fontSize="text-md" numberOfLines={1} style={{ flex: 1 }}>
+        <Text fontSize="text-md" style={{ flex: 1 }}>
           {categoryDisplayName(item.title)}
         </Text>
       </View>
@@ -196,7 +195,9 @@ export function TaxonomyList<T extends TaxonomyItem>({
         borderBottomColor: color.line,
       }}
     >
-      <ChevronLeftIcon size={CONTEXT_ICON} color={color.text} />
+      {onContextPress ? (
+        <ChevronLeftIcon size={CONTEXT_ICON} color={color.text} />
+      ) : null}
       <Text fontSize="text-sm" fontWeight="font-bold" numberOfLines={1}>
         {contextLabel}
       </Text>

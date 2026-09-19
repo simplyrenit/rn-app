@@ -706,3 +706,20 @@ sub-category row's new back chevron actually going back, the image grid with pho
 picker needs a permission prompt, which is an approval gate), the condition dropdown's open state,
 and steps 5–7 in any state. Step 1's capture also lacks the tab bar, which the real Post tab draws —
 the harness does not mount the tab navigator, so only the top of that screen is evidence.
+
+## Review 5 (Post wizard steps 1-4, All reviews, Write review, Feedback typed) — 2026-09-20
+
+Fixed: star rating targets (`Rating` horizontal hitSlop now reaches the 44pt floor without overlapping the
+neighbour, which repairs the 20pt stars on Write review), the image-grid "Next" chevron (mini, 20), the
+one-line clamp on category labels (rows absorb two lines), the inert back chevron when a taxonomy row has no
+handler, and two stale comments (taxonomy geometry, edit header).
+
+Deferred: (1) the edit twins (`EditCategory`, `EditSubCategories`, `EditProductImages`) keep the old 4pt/20pt
+header and were never captured; (2) sub-category step draws both a header back arrow and a context-row chevron
+(the frame draws both; VoiceOver reads two Backs); (3) three "inactive submit" colour APIs (`ink.dim`,
+`tone="dim"`, `color.textDim`) and `text-white` on Feedback's active label; (4) Feedback sets `lineHeight.sm` on
+its field while Write review omits it, on the frames' 2pt difference; (5) All reviews histogram hand-rolls
+`StarIcon` instead of `Stars`; (6) fixed-height boxes around scaling text in the review screens; (7) steps 5-7
+of the wizard (frames exported this session to `design/figma-images/post/light/`, not yet audited) and the
+walk-through on device; (8) `write-review.tsx` swallows a failed submit in an empty `catch`, so a network failure
+shows nothing (pre-existing).

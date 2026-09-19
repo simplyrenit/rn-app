@@ -17,7 +17,9 @@ interface Props {
  * the subcategory editor used a 96pt-tall centred block with no back control in
  * it at all, and the horizontal inset was a different number on each. This is
  * the same three-box row `PostProductHeader` uses, so a title stays centred on
- * the screen and not on whatever is left over beside the arrow.
+ * the screen and not on whatever is left over beside the arrow. The wizard's
+ * header has since moved to the frame's 16pt inset, 44pt row and 18pt title;
+ * the edit twins keep the older 4pt inset and 20pt title until they are matched.
  */
 export function EditStepHeader({ title, onBack }: Props) {
   return (

@@ -104,8 +104,11 @@ export default function Rating({
             hitSlop={{
               top: (MIN_TOUCH_TARGET - size) / 2,
               bottom: (MIN_TOUCH_TARGET - size) / 2,
-              left: 4,
-              right: 4,
+              // Wide enough to reach the 44pt floor without overlapping the
+              // neighbouring star's target (the stars sit 2 apart), so a
+              // near-miss cannot silently pick the wrong rating.
+              left: Math.max(4, (MIN_TOUCH_TARGET - size - 2) / 2),
+              right: Math.max(4, (MIN_TOUCH_TARGET - size - 2) / 2),
             }}
           >
             {glyph}
