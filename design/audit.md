@@ -330,6 +330,6 @@ not the hairline, per the token file's WCAG note; "User since" reads "Aug 2026" 
 (an earlier fix); the rating column keeps "New / Host" for an unrated owner; "View all products"
 and "View all reviews" keep their existing show-only-when-there-is-more gating.
 
-Not verified: dark (frame in section `1:21885`); the review rail (this owner has no reviews);
+Dark (frame `1:21886`, captured scrolled so the pinned header shows): page `#000000`, the chat button's fill `#0F0F0F` and the hairline (`#282828` against the frame's `#292929`) match. Not verified: the review rail (this owner has no reviews);
 the "View all" buttons (this owner has two products and no reviews); the cross-fade between the
 scrolled and pinned headers beyond a static look.
