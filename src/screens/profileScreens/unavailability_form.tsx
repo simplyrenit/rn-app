@@ -1,4 +1,5 @@
-import { BackButton, Button, Text } from "@/components/core";
+import { Button, Text } from "@/components/core";
+import { EditStepHeader } from "@/components/post/edit-step-header";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
@@ -29,7 +30,7 @@ import axios from "axios";
 import * as Location from "expo-location";
 import { useCallback, useEffect } from "react";
 import { Platform } from "react-native";
-import { ink, colors, radius, MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
+import { ink, colors, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
 interface Coordinates {
@@ -191,18 +192,7 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
 
   return (
     <NonScrollableContainer>
-      <View
-        className="flex-row items-center px-gutter"
-        style={{ paddingVertical: SCREEN_GUTTER }}
-      >
-        <BackButton />
-        <View className="flex-1 items-center justify-center">
-          <Text role="sectionTitle" fontWeight="font-bold">
-            Request an item
-          </Text>
-        </View>
-        <View style={{ width: MIN_TOUCH_TARGET }} />
-      </View>
+      <EditStepHeader title="Request an item" />
 
       <KeyboardAwareScrollView className="px-gutter py-5 flex-1">
         <View className="space-y-2 mb-5">
