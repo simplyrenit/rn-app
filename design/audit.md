@@ -1094,3 +1094,13 @@ Chat authentication was restored (the host's gcloud credentials were re-issued a
 **Block & Report sheet, verified on the device** (light and dark): frame grabber and scrim, centred title, the 200pt reason box, Cancel and the red Block & Report side by side; the red button is disabled until a reason is typed, enables when one is, and Cancel clears the reason (reopening shows an empty box). Nothing was submitted (no block, no report was sent).
 
 **Chat thread dark:** sampled: hairline under the header, sent bubble, product card, and the composer with its control edge all read correctly on black.
+
+## Edit Cover Image and the Rejected card, walked with a fixture (2026-09-20, light)
+
+With the owner's earlier approval for `AGENT_QA_` fixtures, one listing (`AGENT_QA_coverwalk`, three stock photos, 10 per day, published from the Post wizard on the QA account) gave the flows that the older listings could not (their `images` come back empty). Captures `edit-images.light` and `edit-cover.light` in `design/app/` (stock photos only).
+
+- **Edit Product Images** with photos: 2-column grid at the wizard's gutter, remove discs, dashed add tile, Next: consistent with the wizard's photo step and the shared header. Earlier notes about the empty upload state were a property of the old listings' data.
+- **Edit Cover Image:** same tiles, crop box and Update Product control as the wizard's cover step (shared `CoverImagePicker`), on `EditStepHeader`; the current cover is not pre-selected (its stored URL is a cropped file that is not among `images`, which the picker treats as invalid on purpose). Nothing was selected or updated, so the ninth review's selected-tile fix was checked on the wizard's cover step instead, where it reads correctly: white disc with a brand tick over the brand veil and a 2pt edge, and the crop preview shows the whole portrait crop.
+- **My Products, Rejected state:** the fixture was flagged Rejected by moderation, which showed the Rejected overlay chip on the photo, the Rejected pill under the price and the new Edit button together without collisions.
+
+Cleanup: the fixture is still on the QA account. Deleting it is a permanent delete and is left to the owner (Delete on its Edit product screen).
