@@ -234,6 +234,7 @@ export function UnavailabilityEditor({
     monthTextColor: color.textBody,
     // The frame sets the month at 20 regular in the secondary tone.
     textMonthFontFamily: fontFamily.regular,
+    textMonthFontWeight: "400" as const,
     textMonthFontSize: fontSize.lg,
     arrowColor: color.text,
     // A past date is dimmed text, not a hairline. `line` measures 1.24:1 on the
@@ -246,8 +247,6 @@ export function UnavailabilityEditor({
         borderBottomColor: color.line,
         flexDirection: "row",
         justifyContent: "space-between",
-        // Was a bare 6. The scale has no 6, and 4 and 8 are equidistant from
-        // it; the tighter one is the direction the density tokens run.
         // The frame's month row is 54 tall.
         paddingVertical: space.md,
       },

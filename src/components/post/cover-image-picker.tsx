@@ -8,7 +8,7 @@ import { Image } from "expo-image";
 import React, { useEffect, useRef, useState } from "react";
 import { ScrollView, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { ChevronRightIcon, InformationCircleIcon } from "react-native-heroicons/outline";
-import { CheckCircleIcon } from "react-native-heroicons/mini";
+import { CheckIcon } from "react-native-heroicons/mini";
 
 // Measured off the Figma Cover Image frame: content padded 24, two 159pt tiles 24
 // apart at radius 16, a 2pt brand edge and a 40% brand wash on the chosen one, a
@@ -139,7 +139,6 @@ export function CoverImagePicker({
   const selectImage = (image: string) => {
     if (editTimerRef.current) clearTimeout(editTimerRef.current);
     setSelectedImage(image);
-    scrollViewRef.current?.scrollToEnd({ animated: true });
     editTimerRef.current = setTimeout(() => {
       setIsEditing(true); // Enable editing when an image is selected
     }, 1500);
@@ -151,6 +150,8 @@ export function CoverImagePicker({
       file_type: "image/jpeg",
     });
     setIsEditing(false); // Disable editing after cropping
+    // The preview sits under the tiles, which can be several rows tall.
+    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
   const onEditingCancel = () => {
@@ -176,9 +177,10 @@ export function CoverImagePicker({
             return (
               <TouchableOpacity
                 accessibilityRole="button"
-                accessibilityLabel={
-                  selected ? "Selected cover image" : "Use as the cover image"
-                }
+                accessibilityLabel={`Image ${index + 1} of ${images.length}${
+                  selected ? ", selected as the cover" : ""
+                }`}
+                accessibilityHint={selected ? undefined : "Use as the cover image"}
                 accessibilityState={{ selected }}
                 key={index}
                 onPress={() => selectImage(image)}
@@ -209,7 +211,21 @@ export function CoverImagePicker({
                       borderRadius: radius.card,
                     }}
                   >
-                    <CheckCircleIcon size={32} color={color.onBrand} />
+                    {/* A solid disc with the tick in brand, not the knockout
+                        glyph: over a light photo the wash leaves a knockout
+                        tick invisible. */}
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: radius.full,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: color.onBrand,
+                      }}
+                    >
+                      <CheckIcon size={20} color={color.brand} />
+                    </View>
                   </View>
                 ) : null}
               </TouchableOpacity>
@@ -238,7 +254,9 @@ export function CoverImagePicker({
           {croppedImage ? (
             <Image
               source={{ uri: croppedImage.image }}
-              contentFit="cover"
+              // The whole crop, not a slice of it: the crop is portrait and this
+              // box is not, so `cover` hid the part the customer is approving.
+              contentFit="contain"
               style={{
                 width: "100%",
                 height: CROP_HEIGHT,
@@ -253,7 +271,9 @@ export function CoverImagePicker({
                 height: CROP_HEIGHT,
                 borderRadius: radius.card,
                 borderWidth: 1,
-                borderColor: color.line,
+                // The empty state's whole affordance: the control edge, since
+                // the hairline is 1.3:1 on the dark canvas.
+                borderColor: color.inputLine,
                 alignItems: "center",
                 justifyContent: "center",
               }}
@@ -265,7 +285,7 @@ export function CoverImagePicker({
           )}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <InformationCircleIcon size={20} color={color.textDim} />
-            <Text fontSize="text-sm" tone="dim">
+            <Text fontSize="text-sm" tone="dim" style={{ flexShrink: 1 }}>
               Drag image to crop to your liking
             </Text>
           </View>

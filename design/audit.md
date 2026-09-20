@@ -949,3 +949,13 @@ frame shows none).
 Step 7 (review, frame `1:14002`): already on the Product Details components (hero, title, spec strip, bottom bar with "Post
 product"), so it inherits that pass; not measured separately. The frame's share icon on the title row is not drawn (nothing to
 share before posting). Frames `1:13817` and `1:13908` (availability with dates chosen) were not reached.
+
+Review 9 (cover and availability steps) — 2026-09-20. Fixed: the selected tile's tick is a brand tick on a solid white disc (the knockout
+glyph vanished over a light photo); the crop preview uses `contain` so the whole portrait crop is visible (the frame's box is
+landscape, so this deviates from the frame's fill on purpose); the empty crop placeholder uses the control edge; scroll to the
+preview after cropping instead of on selection; per-tile labels ("Image 2 of 3"); the info caption may shrink; the month weight is
+set with the family; a stale comment. NOT re-verified on the simulator: the app reloaded during the re-walk and a stray tap opened an
+external page in Safari, so these changes are checked by `tsc` only. Open: dark capture of steps 5 and 6; a token for the 40% brand
+wash (it duplicates the brand hex); `edit-cover-image` and `edit-product-images` were not walked (the edit header still uses a 4pt
+inset against the pickers' 24); `lottie-react-native` and `tick.json` are now unused (removal needs a native rebuild); the back
+button's dev warning fires on press only.
