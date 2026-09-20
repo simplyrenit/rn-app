@@ -963,3 +963,11 @@ button's dev warning fires on press only.
 ## Post wizard step 3, dark check (2026-09-20)
 
 Captured `design/app/post-step3.dark.iphone16e.png` on the iPhone 16e. The 48pt framed fields keep a visible `color.inputLine` edge on the dark canvas, the required markers and helper text hold contrast, and the disabled Next reads as disabled. No dark-specific defect found. Steps 4 to 7 are still unchecked in dark: reaching them needs a photo set and a filled form, which a Fast-Refresh reset keeps wiping.
+
+## Edit flow headers (2026-09-20)
+
+`EditStepHeader` now uses the wizard header's measurements (16pt inset, 44pt row, 18pt bold title) instead of the older 4pt inset, 52pt row and 20pt title. Walked on the iPhone 16e, view-only, on the QA account's unlabelled listing (nothing saved): Edit Product Details, Edit Product Images and Edit Unavailability all read the same as the wizard steps. The hub ("Edit product") and Edit Product Details keep their own hand-rolled headers, which already sit on the same 16pt inset.
+
+Observation, not a styling defect: this listing's `product.images` is empty, so Edit Product Images opens on the empty upload state with Next disabled even though the listing has a cover photo. It is a property of that record (the hub passes `product.images` straight through), so it was left alone. If real listings can have a cover but no `images`, the edit flow blocks the owner from continuing, and that is worth a backend/product check.
+
+Still not walked: Edit Category and Edit Cover Image (the latter needs a listing with images).
