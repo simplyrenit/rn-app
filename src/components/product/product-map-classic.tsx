@@ -1,6 +1,7 @@
 // The map as it was before the Product Details pass: a 500m circle and a pin. The
-// post wizard's review step still draws it, so it lives on unchanged next to the
-// detail variant in `product-map.tsx`.
+// post wizard's review step still draws it, next to the detail variant in
+// `product-map.tsx`. It carries the shared `MAP_LOGO_LIFT` (see below) that both
+// maps use to keep Google's logo clear of the caption chip.
 import React from "react";
 import { View } from "react-native";
 import MapView, { Circle, Marker, PROVIDER_GOOGLE } from "react-native-maps";

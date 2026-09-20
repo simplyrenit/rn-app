@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { MAP_LOGO_LIFT, ProductMapClassic } from "./product-map-classic";
 import { StyleProp, View, ViewStyle } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
@@ -61,6 +61,9 @@ const MARKER_SHADOW = {
  */
 const NEIGHBOURHOOD_DELTA = 0.012;
 
+/** The gap Google keeps between its logo and the padded edge, plus the chip's own inset. */
+const MAP_LOGO_MARGIN = 16;
+
 const DetailProductMap: React.FC<ProductMapProps> = ({
   latitude,
   longitude,
@@ -68,6 +71,10 @@ const DetailProductMap: React.FC<ProductMapProps> = ({
   placeName,
   distanceLabel,
 }) => {
+  // The caption wraps to two lines on a long place name, and Google's logo has to
+  // stay above it whatever its height, so the map's bottom padding follows the
+  // measured chip instead of assuming one line.
+  const [chipHeight, setChipHeight] = useState(MAP_LOGO_LIFT - MAP_LOGO_MARGIN);
   const { color, isDark } = useTheme();
 
   /** One ring of the marker: a soft disc of canvas inside a hairline. */
@@ -118,7 +125,7 @@ const DetailProductMap: React.FC<ProductMapProps> = ({
   return (
     <View style={card}>
       <MapView
-        mapPadding={{ top: 0, left: 0, right: 0, bottom: MAP_LOGO_LIFT }}
+        mapPadding={{ top: 0, left: 0, right: 0, bottom: chipHeight + MAP_LOGO_MARGIN }}
         provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
         initialRegion={{
@@ -187,6 +194,7 @@ const DetailProductMap: React.FC<ProductMapProps> = ({
         }}
       >
         <View
+          onLayout={(e) => setChipHeight(Math.ceil(e.nativeEvent.layout.height))}
           style={{
             backgroundColor: color.photoScrim,
             borderRadius: radius.full,

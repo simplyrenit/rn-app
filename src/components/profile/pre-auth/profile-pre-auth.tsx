@@ -22,6 +22,7 @@ import {
 } from "react-native-heroicons/outline";
 import {
   PROFILE_LIST_GAP,
+  ProfileBlockRule,
   ProfileRow,
   ProfileSection,
   ProfileSectionRule,
@@ -91,9 +92,16 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
               copy of the list, inside the hero's 24pt gutter and then a second
               24pt gutter per section, so every row sat 48pt in from the edge
               with an inset rule and an older glyph set. */}
-          <ProfileSectionRule />
+          <ProfileBlockRule />
 
-          <View style={{ paddingBottom: PROFILE_LIST_GAP * 2 }}>
+          {/* The list's own padding, as signed in, plus a second gap at the foot
+              so the last row clears the tab bar (there is no Logout below it). */}
+          <View
+            style={{
+              paddingTop: PROFILE_LIST_GAP,
+              paddingBottom: PROFILE_LIST_GAP * 2,
+            }}
+          >
             <ProfileSection title="App">
               <ProfileRow
                 icon={DevicePhoneMobileIcon}
