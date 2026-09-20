@@ -1084,3 +1084,13 @@ Answered by the product owner in chat.
 ## Onboarding artwork, re-assessed (2026-09-20)
 
 `assets/auth/rent-any*-light.png` are alpha PNGs whose panel body is opaque `#FBFAF9` with transparent corners, sitting on the `#FFFFFF` canvas: a 4/255 step per channel, visible as a faint edge in a capture and not otherwise. Editing the designer's three light images programmatically to hide it was judged not worth the risk of degrading the shadows and gradients, so it is recorded as a designer note, not a defect. Earlier notes calling it "an off-white rectangle needing a re-export" overstated it.
+
+## Chat verified on the device after the QA backend restart (2026-09-20)
+
+Chat authentication was restored (the host's gcloud credentials were re-issued and `rn-api-web-1` restarted, no rebuild), so a real conversation could be opened for the first time since the header restyle. Opened the already-read "Hello" thread (20 Aug, nothing sent, nothing marked read, no message written), light and dark. Captures `chat-thread.dark`, `block-sheet.{light,dark}` in `design/app/` are untracked (they show another QA user's listing photo and avatar).
+
+**Defect found and fixed: the thread header never showed the participant's name.** The name row inside `CrossFade` was `flex: 1`; `CrossFade` wraps its children in a column of automatic height, where `flex: 1` collapses the row, so only the fixed-size 32pt avatar drew and the flex-shrinking name text got no room. A "Unnamed contact" fallback (matching the list row) was added and did not appear either, which is how the layout collapse was confirmed. Removing `flex: 1` from the row (`chat-header.tsx`) shows "Yashwant Tejwani" at 14 bold, 8pt from the avatar, as the frame draws it. The earlier device check of this header (recorded above under "Chat thread, device check") did not catch it.
+
+**Block & Report sheet, verified on the device** (light and dark): frame grabber and scrim, centred title, the 200pt reason box, Cancel and the red Block & Report side by side; the red button is disabled until a reason is typed, enables when one is, and Cancel clears the reason (reopening shows an empty box). Nothing was submitted (no block, no report was sent).
+
+**Chat thread dark:** sampled: hairline under the header, sent bubble, product card, and the composer with its control edge all read correctly on black.

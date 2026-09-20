@@ -149,9 +149,7 @@ export function ChatHeader({
               </View>
             }
           >
-            <View
-              style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
-            >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               {profilePic ? (
                 <Image
                   source={{ uri: profilePic }}
@@ -171,7 +169,9 @@ export function ChatHeader({
                 style={{ marginLeft: 8, flexShrink: 1 }}
                 numberOfLines={1}
               >
-                {name}
+                {/* The chat list falls back to "Unnamed contact"; the header used to
+                    print nothing for the same conversation. */}
+                {name?.trim() || "Unnamed contact"}
               </Text>
             </View>
           </CrossFade>
