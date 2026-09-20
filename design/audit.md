@@ -1050,3 +1050,9 @@ Walked the "Macbook" listing in dark on the iPhone 16e (captures `product-detail
 ## Header sweep, three more screens (2026-09-20)
 
 `unavailability_form.tsx` and `unavailability_form_inputs.tsx` (the last two steps of "Request an item") now use `EditStepHeader`, the same header as the two category steps before them; `report-a-problem.tsx` uses `SubpageHeader`, like FAQs, Contact Us, Feedback and the legal pages. Each hand-rolled a 24pt-inset row with a 20pt title and a 24pt vertical pad. Report a problem was checked on the device in light (`design/app/report-problem.light.iphone16e.png`); the two request-form screens were type-checked only (they need a category and sub-category chosen first, and submit a real request). Still hand-rolling their header, left on purpose: `edit-product` (the hub uses a 28pt `screenTitle` and is tied to the parked My Products ruling), `owners-products` and `owners-review` (frames were matched with their current header), `search`, `search-results`, `products-screen`, `my-product`.
+
+## Rulings taken from the owner (2026-09-20)
+
+Answered by the product owner in chat: (1) My Products follows both the frame's layout (Edit buttons, "Share entire catalogue") and keeps the status pill; (2) the auth flow keeps the app's method-choice structure (restyle only); (3) the owner verification card is restored; (4) reviews follow the frame's ink stars and bars.
+
+Owner card, done: `users-screen.tsx` again shows the business-name pill under the name and one quiet card of trust rows (email / phone verified, "Lists in <area>") between the facts strip and the chat button, inside the profile block so the frame's 16pt rhythm is untouched. The rows come from the listing payload, and a signal the payload does not carry is not drawn; the code is the version from `25d3b0c` rebuilt on tokens. Checked on the device in light on a real owner (email verified, phone not, "Lists in Gayatri appartments and 1 other area").

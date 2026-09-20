@@ -32,7 +32,14 @@ import {
   CalendarIcon as CalendarMini,
   ChevronRightIcon as ChevronRightMini,
 } from "react-native-heroicons/mini";
-import { CubeIcon, StarIcon } from "react-native-heroicons/outline";
+import {
+  CheckBadgeIcon,
+  CubeIcon,
+  MapPinIcon,
+  ShieldExclamationIcon,
+  StarIcon,
+} from "react-native-heroicons/outline";
+import { CheckBadgeIcon as CheckBadgeSolid } from "react-native-heroicons/solid";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
@@ -85,6 +92,19 @@ const GLYPH_SIZE = 20;
 /** The chevron in a block's button is drawn in a 24pt box. */
 const CHEVRON_SIZE = 24;
 /** Label to chevron. */
+/**
+ * Fields the owner object embedded in a listing carries but `PublicOwner` (the
+ * shape `owner-details/` returns) does not. `src/lib/types.ts` belongs to another
+ * lane, so they are described here and read off the listing payload the profile
+ * already fetches.
+ */
+interface OwnerTrustFields {
+  email_verified?: boolean;
+  phone_verified?: boolean;
+  account_type?: string;
+  business_name?: string | null;
+}
+
 const CHEVRON_GAP = 4;
 
 const AVATAR_SIZE = 72;
@@ -350,6 +370,75 @@ export default function UsersDetails() {
 
   const ownerFirstName = owner?.first_name ?? "";
 
+  /**
+   * What the API actually knows about this person, for a renter deciding whether
+   * to hand over a deposit: identity verification, whether they trade as a
+   * business, and where their listings are. The frame does not draw these, so they
+   * sit as one quiet card under the facts strip; a signal the payload does not
+   * carry is simply not drawn.
+   */
+  const listedOwner = products[0]?.owner as
+    | (NonNullable<BackendProduct["owner"]> & OwnerTrustFields)
+    | undefined;
+  const businessName =
+    listedOwner?.account_type && listedOwner.account_type !== "user"
+      ? listedOwner.business_name || null
+      : null;
+
+  const primaryArea = (() => {
+    const counts = new Map<string, number>();
+    products.forEach((item) => {
+      const place = item.location?.trim();
+      if (place) counts.set(place, (counts.get(place) ?? 0) + 1);
+    });
+    const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    if (!ranked.length) return null;
+    return ranked.length === 1
+      ? ranked[0][0]
+      : `${ranked[0][0]} and ${ranked.length - 1} other ${
+          ranked.length === 2 ? "area" : "areas"
+        }`;
+  })();
+
+  const verification = (
+    key: string,
+    verified: boolean | undefined,
+    noun: string
+  ) =>
+    typeof verified === "boolean"
+      ? [
+          {
+            key,
+            icon: verified ? (
+              <CheckBadgeSolid size={18} color={color.success} />
+            ) : (
+              <ShieldExclamationIcon size={18} color={color.textDim} />
+            ),
+            label: verified ? `${noun} verified` : `${noun} not verified`,
+            met: verified,
+          },
+        ]
+      : [];
+  const trustRows: {
+    key: string;
+    icon: React.ReactNode;
+    label: string;
+    met: boolean;
+  }[] = [
+    ...verification("email", listedOwner?.email_verified, "Email"),
+    ...verification("phone", listedOwner?.phone_verified, "Phone"),
+    ...(primaryArea
+      ? [
+          {
+            key: "area",
+            icon: <MapPinIcon size={18} color={color.textBody} />,
+            label: `Lists in ${primaryArea}`,
+            met: true,
+          },
+        ]
+      : []),
+  ];
+
   const stats = [
     {
       key: "rating",
@@ -512,6 +601,24 @@ export default function UsersDetails() {
                 <Text fontSize="text-sm" fontWeight="font-bold">
                   {owner?.first_name} {owner?.last_name}
                 </Text>
+                {businessName ? (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 5,
+                      backgroundColor: color.brandWash,
+                      borderRadius: radius.full,
+                      paddingHorizontal: 9,
+                      paddingVertical: 3,
+                    }}
+                  >
+                    <CheckBadgeIcon size={14} color={color.brandText} />
+                    <Text fontSize="text-xs" fontWeight="font-semibold" tone="brand">
+                      {businessName}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
 
               {/* The same three-up strip the product detail and the post
@@ -526,6 +633,37 @@ export default function UsersDetails() {
                 }))}
               />
               </View>
+
+              {trustRows.length ? (
+                <View
+                  style={{
+                    marginHorizontal: SCREEN_GUTTER,
+                    padding: density.block,
+                    gap: 10,
+                    borderRadius: radius.group,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: color.line,
+                    backgroundColor: color.surface,
+                  }}
+                >
+                  {trustRows.map((row) => (
+                    <View
+                      key={row.key}
+                      style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                    >
+                      {row.icon}
+                      <Text
+                        fontSize="text-sm"
+                        tone={row.met ? "hi" : "dim"}
+                        numberOfLines={1}
+                        style={{ flex: 1 }}
+                      >
+                        {row.label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
 
               {!isOwner && (
                 <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
