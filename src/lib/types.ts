@@ -137,7 +137,12 @@ export interface OwnerReview {
     email: string;
     first_name: string;
     last_name: string;
-    image: string;
+    /**
+     * A URL in older payloads, an `{ image_url, name }` object in current ones
+     * (the same shape every other user object carries). Read it through
+     * `imageUrlOf`; passing it straight to `Avatar` crashed the owner profile.
+     */
+    image: string | { image_url?: string | null } | null;
   };
   updated_at: string;
 }

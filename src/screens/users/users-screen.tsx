@@ -48,6 +48,7 @@ import {
   density,
   radius,
 } from "@/lib/design-tokens";
+import { imageUrlOf } from "@/lib/image-url";
 import { pluralize } from "@/lib/pluralize";
 import { describeRating } from "@/lib/rating";
 import { useTheme } from "@/lib/theme";
@@ -759,7 +760,7 @@ export default function UsersDetails() {
                         reviewText={item.comment}
                         reviewerName={`${item.reviewer.first_name} ${item.reviewer.last_name}`}
                         reviewDate={item.created_at}
-                        reviewerImage={item.reviewer.image}
+                        reviewerImage={imageUrlOf(item.reviewer.image)}
                         onShowMore={openAllReviews}
                       showMoreHint="Opens every review for this owner"
                       />

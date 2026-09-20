@@ -1,3 +1,4 @@
+import { imageUrlOf } from "@/lib/image-url";
 import { BackButton, SectionHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { ReviewCard } from "@/components/product/review-card";
@@ -59,7 +60,7 @@ export default function OwnersReviewScreen() {
               reviewText={review.comment}
               reviewerName={`${review.reviewer.first_name} ${review.reviewer.last_name}`}
               reviewDate={review.created_at}
-              reviewerImage={review.reviewer.image || ""}
+              reviewerImage={imageUrlOf(review.reviewer.image)}
             />
           ))}
         </View>
