@@ -819,3 +819,12 @@ auto-grow floor, the scroll-to-bottom behaviour and VoiceOver order are unchecke
 section was never sampled, and `line` is `#292929` there, one step off true black). Not touched and not measured: the
 offer card, the `product_post` card, the image and file bubbles (colours only), the ⋯ menu, the Block & Report sheet
 (frame `1:15593`), the blocked/unblock footer, and frames `1:15695` and `1:15742`.
+
+Chat thread, device check (light, fixture thread `QA_CHAT_E2E_20260723`, opened once, nothing sent): header row and its
+hairline sit within 1pt of the frame on the 2x grid, the 32pt avatar and the 24pt ellipsis at 16 from the edge match,
+the received bubble is the grey 16-radius fill with 14 bold text, and messages are 16 apart. Not verified: the sent
+bubble (the fixture has no message of ours, and sending would write), the composer (covered by the dev push toast in
+the capture; its top sits 8pt higher than the frame because the 16e's 34pt home-indicator inset is taller than the
+frame's 21), dark, and the menu and Block & Report frames. Review notes from the agent still open: the pill and
+received bubble use the hairline instead of the control edge (WCAG 1.4.11), pill glyph targets are 28x44, and 14 bold
+for every message is heavy for body copy.
