@@ -326,7 +326,9 @@ export function ChatInput({
           paddingRight: 8,
           borderRadius: radius.full,
           borderWidth: PILL_BORDER,
-          borderColor: color.line,
+          // The control edge, not the hairline: with the same canvas fill on
+          // both sides a hairline is 1.25:1 (WCAG 1.4.11).
+          borderColor: color.inputLine,
           backgroundColor: color.canvas,
         }}
       >
@@ -360,12 +362,11 @@ export function ChatInput({
             });
           }}
         />
-        {/* 28 wide by a full 44 tall, abutting: that is the widest target the
-            frame's 8pt gap between the two glyphs allows without the two hit
-            areas overlapping each other, which is worse than a narrow one. */}
+        {/* 28pt boxes, so the pill stays 44 tall; IconButton's hit slop takes
+            each to 44 in both directions. The two abut, so where their slops
+            meet the later one wins, which leaves the earlier one 36 wide. */}
         <IconButton
-          size={MIN_TOUCH_TARGET}
-          style={{ width: GLYPH_BOX }}
+          size={GLYPH_BOX}
           disabled={isBlocked}
           onPress={handleOpenAttachmentSheet}
           accessibilityLabel="Attach a photo or file"
@@ -374,8 +375,7 @@ export function ChatInput({
         </IconButton>
 
         <IconButton
-          size={MIN_TOUCH_TARGET}
-          style={{ width: GLYPH_BOX }}
+          size={GLYPH_BOX}
           disabled={isBlocked}
           onPress={onMakeOfferPress}
           // The control was an unlabelled percent-in-a-badge glyph that nobody

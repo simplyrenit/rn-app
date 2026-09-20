@@ -49,8 +49,9 @@ export function ToastBody({ text1, text2, props }: ToastBodyProps) {
   const message = legacy.message;
 
   // The Figma success toast: a brand-tint pill on the 24 gutter with a brand
-  // check tile. Only success takes it — the other severities keep the semantic
-  // palette below until the designer ships one for them.
+  // check tile. Only a success toast without a second line takes it — the other
+  // severities, and a success that carries a message, keep the semantic palette
+  // below until the designer ships one for them.
   if (severity === "success" && !message) {
     return (
       <View

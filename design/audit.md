@@ -455,8 +455,7 @@ question; Contact Us bottom padding; buttons use `MIN_TOUCH_TARGET`; `subpage-he
 Deferred, recorded: (1) 14 screens still hand-roll their headers at 20pt (notification, report-a-problem, my-product,
 edit-product, unavailability_*, reviews-screen, write-review, products-screen, owners-review, chat-details,
 edit-step-header); they move onto `SubpageHeader` as their frames are matched. (2) Frames draw buttons/accordions at
-radius 12 where `radius.button` is 11: three local `12` constants remain until one ruling on the token (token and
-`tailwind.config.js` change together). (3) Numeric snap point shrinks 10% while the keyboard is up (custom sheet
+radius 12: resolved, `radius.button` is now 12 (see "Rulings taken"); the search fields on Home and Search keep local 12s next to `radius.input` 11. (3) Numeric snap point shrinks 10% while the keyboard is up (custom sheet
 behaviour); the picture-update button can push past the sheet height (scrolls). (4) Who we are dark body text: the
 reviewer computes `textBody` (0.70 white over #000) = 178, the frame's value, so the 206 reading is probably a capture
 artefact; re-measure with the P3 to sRGB conversion before trusting it.
@@ -828,3 +827,16 @@ the capture; its top sits 8pt higher than the frame because the 16e's 34pt home-
 frame's 21), dark, and the menu and Block & Report frames. Review notes from the agent still open: the pill and
 received bubble use the hairline instead of the control edge (WCAG 1.4.11), pill glyph targets are 28x44, and 14 bold
 for every message is heavy for body copy.
+
+## Review 6 (radius, Post form fields, toast, Chat list and thread) — 2026-09-20
+
+Fixed: the chat composer pill and the chat search field are back on the control edge (`color.inputLine`) since the
+frame's hairline is 1.25:1 against the same canvas fill and the WCAG control-edge ruling was only accepted for the Post
+form; the two composer glyph buttons are 28pt boxes with the IconButton hit slop (44pt vertical, 36-44 wide) so the
+pill is exactly 44; the chat row's time and badge clearances scale with the font scale; the toast comment names its
+second condition; an unused import.
+
+Open: `FieldFrame` also reaches the edit-product twin (`edit-about-product.tsx`) because the wrapper is in the shared
+form, confirm the edit frame `1:14332` agrees before device QA; the toast success branch keeps a raw radius 8 and no
+shadow; message text is 14 bold both sides (the frame's, heavy for body copy); the attachment bubble's 4pt inset around a
+16-radius photo; local 12s in `search.tsx` and `home/search-bar.tsx`.

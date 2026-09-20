@@ -1,10 +1,10 @@
 import { Avatar, Button, Text } from "@/components/core";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { formatListTimestamp } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React, { useState } from "react";
-import { Modal, TouchableOpacity, View } from "react-native";
+import { Modal, PixelRatio, TouchableOpacity, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import {
   DocumentIcon,
@@ -46,6 +46,9 @@ export function ChatCard({
   const [modalVisible, setModalVisible] = useState(false);
   const router = useTypedNavigation();
   const { color } = useTheme();
+  // The timestamp and badge are pinned, so the room left for them has to grow
+  // with the text size or a larger setting runs the name under them.
+  const textScale = Math.min(PixelRatio.getFontScale(), 1.4);
 
   const unread = !isRead && unreadCount > 0;
   // A conversation with no name used to collapse to its grey preview line with
@@ -127,7 +130,7 @@ export function ChatCard({
               fontWeight={unread ? "font-bold" : "font-semibold"}
               numberOfLines={1}
               // Clear of the timestamp pinned to the row's top right.
-              style={{ paddingRight: TIME_CLEARANCE }}
+              style={{ paddingRight: TIME_CLEARANCE * textScale }}
             >
               {displayName}
             </Text>
@@ -137,7 +140,7 @@ export function ChatCard({
                 alignItems: "center",
                 gap: 4,
                 // Clear of the unread badge pinned to the row's bottom right.
-                paddingRight: unread ? BADGE_CLEARANCE : 0,
+                paddingRight: unread ? BADGE_CLEARANCE * textScale : 0,
               }}
             >
               {isAttachment ? (

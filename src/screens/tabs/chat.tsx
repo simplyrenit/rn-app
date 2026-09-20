@@ -104,7 +104,7 @@ export default function Chat() {
                 paddingHorizontal: 16,
                 borderRadius: radius.button,
                 borderWidth: 1,
-                borderColor: color.line,
+                borderColor: color.inputLine,
                 backgroundColor: color.surface,
               },
               shadow,
