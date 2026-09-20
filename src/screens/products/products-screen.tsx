@@ -49,6 +49,7 @@ import {
   ScrollView,
   Share,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from "react-native";
 import {
@@ -76,15 +77,11 @@ const SIMILAR_CARD_WIDTH = 163;
 const BAND_HEIGHT = 56;
 
 /**
- * Where the band takes over from the hero.
- *
- * The hero's back control sits 16 below the safe-area inset and is 44 tall, so
- * by 52pt of scroll it is entirely behind the band. The band has to be fully
- * there by then: the affordance may change treatment as the page scrolls, but
- * there must never be an offset with no way back on screen.
+ * The distance over which the header band takes over from the photo. The photo is
+ * a full-width square below the safe area, so the band fills in only as the
+ * photo's bottom edge reaches it (see `collapseEnd` in the screen).
  */
-const COLLAPSE_START = 16;
-const COLLAPSE_END = 52;
+const COLLAPSE_SPAN = 48;
 
 /**
  * The title block's inset. The design gives this block far more air than the
@@ -190,6 +187,10 @@ export default function DetailsScreen() {
   // from the global context in some places and `useTheme()` in others.
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  // The hero is the safe-area inset plus a square as wide as the screen; the band
+  // (inset + BAND_HEIGHT tall) is fully in once the photo's bottom edge reaches it.
+  const collapseEnd = windowWidth - BAND_HEIGHT;
   const scrollY = React.useRef(new Animated.Value(0)).current;
   // True once the pinned band, not the hero, owns the top of the screen. It is
   // what decides which of the two back controls takes a tap.
@@ -204,17 +205,13 @@ export default function DetailsScreen() {
   const { favorites } = useSaved();
 
   /**
-   * The theme's own glyphs, at every offset.
-   *
-   * This used to be pinned to `light-content` while the hero was on screen,
-   * because a photograph ran under the status bar behind a scrim. Nothing does
-   * any more: the hero is the canvas, so the bar takes the same style as every
-   * other screen in the app.
+   * The theme's own glyphs, at every offset: the photo starts below the status
+   * bar, so the bar always sits on the canvas or the header band.
    */
   useFocusedStatusBar(isDark ? "light-content" : "dark-content");
 
   const bandProgress = scrollY.interpolate({
-    inputRange: [COLLAPSE_START, COLLAPSE_END],
+    inputRange: [collapseEnd - COLLAPSE_SPAN, collapseEnd],
     outputRange: [0, 1],
     extrapolate: "clamp",
   });
@@ -446,12 +443,11 @@ export default function DetailsScreen() {
             gap: 4,
           }}
         >
-          <Animated.View
-            pointerEvents={heroCovered ? "auto" : "none"}
-            style={{ opacity: bandProgress }}
-          >
-            <BackButton />
-          </Animated.View>
+          {/* Always on screen: it floats over the photo with the scrim, and takes
+              the page's own treatment once the band has filled in behind it. The
+              photo draws no back control of its own, so there is never an offset
+              with no way back. */}
+          <BackButton onPhoto={!heroCovered} />
 
           <Animated.View
             pointerEvents="none"
@@ -484,7 +480,7 @@ export default function DetailsScreen() {
             useNativeDriver: true,
             listener: (event: any) => {
               const covered =
-                event.nativeEvent.contentOffset.y > COLLAPSE_END - 12;
+                event.nativeEvent.contentOffset.y > collapseEnd - 12;
               setHeroCovered((current) =>
                 current === covered ? current : covered
               );

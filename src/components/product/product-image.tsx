@@ -2,7 +2,7 @@ import { BackButton } from "@/components/core/back-button";
 import { FavouriteButton } from "@/components/core/favourite-button";
 import { IconButton } from "@/components/core/icon-button";
 import { Text } from "@/components/core/text";
-import { radius } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -18,6 +18,8 @@ interface Props {
   mode?: string;
   name?: string;
   isFavorite?: boolean;
+  /** Names the listing in the favourite control's spoken label. */
+  title?: string;
   /**
    * Set false when the screen pins its own back control above the hero. A
    * button that lives inside the scroll leaves the customer with no way back
@@ -78,6 +80,7 @@ export function ProductImage({
   mode,
   name,
   isFavorite,
+  title,
   showBack = true,
   contained = false,
   frameWidth = SCREEN_WIDTH,
@@ -261,16 +264,19 @@ export function ProductImage({
       )}
 
       {mode !== "post" && !contained && (
-        // Floats over a full-bleed hero, clear of the status bar. Contained,
+        // Floats over the photo, 8 below its top edge (the hero starts below the
+        // status bar, so the inset is not this component's to add). Contained,
         // the photo no longer runs under the status bar and the controls are
         // the screen's own — see the detail screen's hero block.
         <View
           pointerEvents="box-none"
           style={{
             position: "absolute",
-            top: safeAreaInsets.top + 8,
-            left: 12,
-            right: 12,
+            top: 8,
+            // The page gutter, so the favourite lines up with the back control the
+            // detail screen pins on the left.
+            left: SCREEN_GUTTER,
+            right: SCREEN_GUTTER,
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
@@ -290,6 +296,7 @@ export function ProductImage({
               isFavorite={Boolean(isFavorite)}
               onPhoto
               photoSize={40}
+              title={title}
             />
           ) : null}
         </View>

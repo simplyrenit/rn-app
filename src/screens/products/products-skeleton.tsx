@@ -1,7 +1,7 @@
 import { useTheme } from "@/lib/theme";
 import Skeleton from "@/components/core/skeleton";
 import { SCREEN_GUTTER, density, radius } from "@/lib/design-tokens";
-import { View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /**
@@ -11,40 +11,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
  * second `<StatusBar>` competing for the bar — plus a 52%-height block that
  * matched nothing on the screen it stood in for, so the swap to real content
  * moved everything. It is now a plain block inside the detail screen's own
- * scroll view, standing in for the same contained hero and the same section
+ * scroll view, standing in for the same full-bleed hero and the same section
  * rhythm, so the cross-fade lands rather than jumps.
  */
 export function ProductsSkeleton() {
+  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { color } = useTheme();
 
   return (
     <View style={{ width: "100%" }}>
-      {/* The hero's own geometry: its controls row and the photo box inside a
-          382pt block below the status bar. */}
-      <View
-        style={{
-          paddingTop: insets.top + 16,
-          paddingBottom: 16,
-          paddingHorizontal: SCREEN_GUTTER,
-          gap: 16,
-          alignItems: "center",
-          // The hero's own ground, so the cross-fade lands on the same colour.
-          backgroundColor: color.surface,
-        }}
-      >
-        <View
-          style={{
-            width: "100%",
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          <Skeleton width={44} height={44} borderRadius={radius.full} />
-          <Skeleton width={44} height={44} borderRadius={radius.full} />
-        </View>
-        <Skeleton width="100%" height={270} borderRadius={radius.card} />
-        <Skeleton width={132} height={4} borderRadius={radius.full} />
+      {/* The hero's own geometry: a full-width square below the safe area. */}
+      <View style={{ paddingTop: insets.top }}>
+        <Skeleton width={width} height={width} borderRadius={0} />
       </View>
 
       <View
