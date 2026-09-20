@@ -889,3 +889,24 @@ snapshot; the outer row `Text` injects a 27pt line height; Android `Modal` statu
 Chat list, unread state (second QA account, 2026-09-20): with a conversation that has 2 unread, the badge is a 24pt brand
 circle below the time on the 24 gutter as the frame draws it; the time is now always the tertiary tone (the app had
 tinted it brand when unread; the frame does not). The capture shows another user's photo and names and is not committed.
+
+## Make an offer: Check Availability and Make Offer sheets (light) — 2026-09-20
+
+Frames `1:16414` (Check Availability) and `1:16670` (Make Offer) of section `1:16369` · app `src/screens/chat/chat-details.tsx`.
+Reached with the second QA account (a thread that lists two products): "Select a product" -> Check Availability ->
+Make Offer, view only; the final "Make an offer" was never pressed and nothing was sent.
+
+Found and fixed on the way: opening Check Availability crashed with "Couldn't find a navigation object", because
+`BackButton` called `useNavigation()` inside a bottom sheet, which renders in a portal outside the navigator. `BackButton`
+now reads `NavigationContext` (no throw) and the chat sheets no longer draw a back arrow, as the frames do not. Any other
+sheet that mounts `BackButton` outside the tree is fixed by the same change.
+
+Restyled: 44pt centred 18 bold title with the frame grabber; 72pt product thumbnail at radius 12 with 14 bold title, 14
+location and the price as "₹25" 16 bold + "per day" 14 tertiary; the calendar in a hairline radius-16 card with a bold month
+row closed by a rule; 48pt date fields, amount and deposit fields at the button radius on the hairline; "Duration" with
+the brand pencil; the bare tertiary inactive action that becomes the primary button once usable. Measured against the
+frame (sheet tops differ by the 90% snap): Duration, Amount and Security Deposit sit within 3pt of the frame's rows.
+
+Not matched: weekday names are not uppercase (needs a global calendar locale change), the month rule is inset by the
+header padding, the frame's sheet is content height where the app snaps to 90%, and the "Select a product" sheet has no
+frame. Dark not checked. The captures show another user's listing and are not committed.
