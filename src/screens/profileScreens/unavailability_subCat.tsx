@@ -1,25 +1,22 @@
-import { BackButton, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { useGlobalContext } from "@/context/global-context";
+import { Text } from "@/components/core";
+import { EditStepHeader } from "@/components/post/edit-step-header";
+import { TaxonomyList } from "@/components/post/taxonomy-list";
+import { categoryDisplayName } from "@/lib/category-icons";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { RouteProps, Subcategory, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
-import { Image } from "expo-image";
-import { FlatList, TouchableOpacity, View } from "react-native";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from "react-native-heroicons/outline";
-import { ink, MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
-import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import React from "react";
+import { View } from "react-native";
 
+/**
+ * Step two of the "Request an item" form: the same sub-category list the listing
+ * wizard and the edit flow use, with the branch row above it that goes back to
+ * the category.
+ */
 export default function UnavailabilitySubCatScreen() {
   const route = useRoute<RouteProps<"UnavailabilitySubCat">>();
   const navigation = useTypedNavigation();
-  const { theme } = useGlobalContext();
-  // const { saveDetails } = useProductContext();
-  const router = useTypedNavigation();
-  const insets = useSafeAreaInsets();
 
   // Destructure the category and subcategories from route params
   const { category, subcategories } = route.params;
@@ -31,83 +28,21 @@ export default function UnavailabilitySubCatScreen() {
     });
   };
 
-  const renderItem = ({ item }: { item: Subcategory }) => (
-    <TouchableOpacity
-      className="flex-row justify-between items-center py-4"
-      onPress={() => onPress(item)}
-    >
-      <View className="flex-row items-center space-x-5">
-        <Image
-          source={{
-            uri:
-              theme === "dark" ? item.dark_icon || "" : item.light_icon || "",
-          }}
-          style={{ width: 20, height: 20 }}
-        />
-        <Text
-          fontSize="text-base"
-          
-        >
-          {categoryDisplayName(item.title)}
-        </Text>
-      </View>
-      <ChevronRightIcon
-        size={20}
-        color={ink.text(theme === "dark")}
-      />
-    </TouchableOpacity>
-  );
-
   return (
     <NonScrollableContainer>
       <View style={{ flex: 1 }}>
-        <View
-          className="flex-row items-center px-gutter"
-          style={{ paddingVertical: SCREEN_GUTTER }}
-        >
-          <BackButton />
-          <View className="flex-1 items-center justify-center">
-            <Text role="sectionTitle" fontWeight="font-bold">
-              Request an item
-            </Text>
-          </View>
-          <View style={{ width: MIN_TOUCH_TARGET }} />
-        </View>
-        <View className="px-gutter py-3">
+        <EditStepHeader title="Request an item" />
+        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: 12 }}>
           <Text fontSize="text-base" fontWeight="font-bold">
             Choose a SubCategory
           </Text>
         </View>
 
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className={`flex-row items-center py-4 border-b px-gutter ${
-            theme === "dark" ? "border-b-line-dark" : "border-b-line-light"
-          }`}
-        >
-          <View className="mt-1 pr-1 ">
-            <ChevronLeftIcon
-              size={24}
-              color={ink.text(theme === "dark")}
-            />
-          </View>
-          <Text fontWeight="font-bold" fontSize="text-md">
-            {category}
-          </Text>
-        </TouchableOpacity>
-
-        <FlatList
-          data={subcategories}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.title}
-          contentContainerStyle={{
-            paddingHorizontal: 24,
-            // Clear the floating bottom tab bar so the last row is fully
-            // visible and scrollable. iOS only: Android's tab bar does not
-            // overlap the list.
-            paddingBottom: insets.bottom,
-          }}
-          showsVerticalScrollIndicator={false}
+        <TaxonomyList
+          items={subcategories}
+          onSelect={onPress}
+          contextLabel={categoryDisplayName(category)}
+          onContextPress={() => navigation.goBack()}
         />
       </View>
     </NonScrollableContainer>
