@@ -971,3 +971,16 @@ Captured `design/app/post-step3.dark.iphone16e.png` on the iPhone 16e. The 48pt 
 Observation, not a styling defect: this listing's `product.images` is empty, so Edit Product Images opens on the empty upload state with Next disabled even though the listing has a cover photo. It is a property of that record (the hub passes `product.images` straight through), so it was left alone. If real listings can have a cover but no `images`, the edit flow blocks the owner from continuing, and that is worth a backend/product check.
 
 Edit Category was walked too (view-only): same taxonomy list and header as wizard step 1. Still not walked: Edit Cover Image, which needs a listing with images.
+
+## Post wizard steps 3 to 7, dark walk on device (2026-09-20)
+
+Walked the whole wizard in dark on the iPhone 16e with a fixture (`AGENT_QA_darkwalk`) and three stock photos; nothing was published ("Post product" was never pressed) and the draft was discarded. Captures in `design/app/`: `post-step3.dark`, `post-step3-filled.dark`, `post-images-photos.dark`, `post-cover.dark`, `post-availability.dark`, `post-review.dark`, `toast-error.dark`. The Post frames exist in light only, so there is no `compare.dark` for them.
+
+Verified on device, closing the ninth review's open item: the selected cover tile shows the solid white disc with a brand tick over the brand wash and the 2pt brand edge; the crop preview shows the whole portrait crop (`contain`); the page scrolls to the preview after cropping. Dark reads correctly on every step: framed 48pt fields with visible edges, the focus ring, the condition menu, the Me/Someone else chips, the disabled and enabled Next, the dimmed past days in the calendar, the review hero and facts row, and the error toast.
+
+Defect found and fixed: on the review and on the Product Details page, the "Approximate area" chip on the map sat on top of the Google logo in the bottom-left corner. Google's terms require the logo to stay uncovered. Both `product-map-classic.tsx` (the default variant that renders here) and `product-map.tsx` now inset the chip 84pt from the left and right-align it; verified on device.
+
+Observations, not fixed:
+- The review's hero carousel shows `product.images` in order, not the chosen cover. The live product page does the same, and the cover only feeds the cards, so it is consistent.
+- Choose Address (the map step reached from step 3) is not restyled: its header is a hand-rolled band, and the map, search and buttons follow the old layout. It has no Figma frame in section `1:13230`.
+- The Metro "Refreshing..." banner is a dev-only overlay and was excluded from the captures.

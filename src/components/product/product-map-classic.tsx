@@ -127,10 +127,13 @@ export const ProductMapClassic: React.FC<ProductMapProps> = ({
         pointerEvents="none"
         style={{
           position: "absolute",
-          left: 10,
+          // Right of the Google logo Maps draws bottom-left (66pt on a 10pt
+          // inset); its terms require the mark to stay uncovered.
+          left: 84,
           bottom: 10,
           right: 10,
           flexDirection: "row",
+          justifyContent: "flex-end",
         }}
       >
         <View

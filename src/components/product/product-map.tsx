@@ -60,6 +60,12 @@ const MARKER_SHADOW = {
  * a renter has; at this scale the streets around the pickup are legible.
  */
 const NEIGHBOURHOOD_DELTA = 0.012;
+/**
+ * The Google logo Maps draws in the bottom-left corner is 66pt wide on a 10pt
+ * inset, and its terms require it to stay visible. The caption sits to the right
+ * of it, so it can never cover the mark.
+ */
+const MAP_LOGO_CLEARANCE = 84;
 
 const DetailProductMap: React.FC<ProductMapProps> = ({
   latitude,
@@ -179,10 +185,11 @@ const DetailProductMap: React.FC<ProductMapProps> = ({
         pointerEvents="none"
         style={{
           position: "absolute",
-          left: 10,
+          left: MAP_LOGO_CLEARANCE,
           bottom: 10,
           right: 10,
           flexDirection: "row",
+          justifyContent: "flex-end",
         }}
       >
         <View
