@@ -862,3 +862,14 @@ when empty) and the sent states. The app's flow opens on a "Select a product" sh
 was empty for the only fixture thread, so neither later sheet could be reached on the simulator without sending or
 creating data. The sheets live in `src/screens/chat/chat-details.tsx` (~lines 800-1050). Needs a thread with a selectable
 product (an `AGENT_QA_<run-id>` listing and conversation from a second account), or a ruling to restyle statically.
+
+## Notifications (light) — 2026-09-20
+
+Figma light frame `1:18332` · app `src/screens/profileScreens/notification.tsx`. The QA account has no notifications, so only
+the empty state exists on the simulator (the frame draws no empty state); opening it made no writes (the earlier fix now
+patches only unread items). Changed: the shared sub-page header (44pt row, 18 bold title) with the frame's hairline under
+it; rows are 16/24 padded with the 48pt avatar 8 from the text, the name 16 bold inline with the 14 message and the 12
+tertiary time below, no rules between rows; the 10pt brand dot for items that were unread when the screen opened (kept in
+local state, since opening marks them read). Not verified on device: the rows and the dot (no data; a fixture
+notification would need a second account acting on this one), and dark. The header and hairline were checked in the
+capture only. Frame sample text and names are data and were not copied. Capture not committed.
