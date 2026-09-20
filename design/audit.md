@@ -959,3 +959,7 @@ external page in Safari, so these changes are checked by `tsc` only. Open: dark 
 wash (it duplicates the brand hex); `edit-cover-image` and `edit-product-images` were not walked (the edit header still uses a 4pt
 inset against the pickers' 24); `lottie-react-native` and `tick.json` are now unused (removal needs a native rebuild); the back
 button's dev warning fires on press only.
+
+## Post wizard step 3, dark check (2026-09-20)
+
+Captured `design/app/post-step3.dark.iphone16e.png` on the iPhone 16e. The 48pt framed fields keep a visible `color.inputLine` edge on the dark canvas, the required markers and helper text hold contrast, and the disabled Next reads as disabled. No dark-specific defect found. Steps 4 to 7 are still unchecked in dark: reaching them needs a photo set and a filled form, which a Fast-Refresh reset keeps wiping.
