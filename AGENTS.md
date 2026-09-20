@@ -84,6 +84,14 @@ changing signing, accessing credentials, creating an Xcode archive, uploading
 to App Store Connect, declaring export compliance, assigning a tester group,
 submitting Beta App Review, creating an EAS build, or releasing to production.
 
+Standing exception: `.github/workflows/testflight-qa.yml` archives and uploads
+a QA build to TestFlight on every merge to `main` with no per-run approval. The
+user authorised this durably; merging to `main` is the approval. It covers only
+that workflow, only QA (`qa-api.toratora.site`), and only the archive/upload
+step. Agents still ask before any *local* archive or upload, and before
+changing the workflow's signing, secrets, or QA pinning. Export compliance and
+tester-group assignment stay human even for CI builds.
+
 iPhone v1 supports Xcode/devicectl build, install, launch, and log collection.
 It does not promise autonomous interaction with system prompts or external
 sign-in screens.
