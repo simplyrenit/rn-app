@@ -2,6 +2,8 @@ import { Button, IconButton, Text } from "@/components/core";
 import {
   SCREEN_GUTTER,
   density,
+  fontFamily,
+  fontSize,
   ink,
   radius,
   space,
@@ -230,6 +232,9 @@ export function UnavailabilityEditor({
     // These two resolved the light palette unconditionally in both copies, so
     // in dark mode the month name was near-black on a near-black canvas.
     monthTextColor: color.textBody,
+    // The frame sets the month at 20 regular in the secondary tone.
+    textMonthFontFamily: fontFamily.regular,
+    textMonthFontSize: fontSize.lg,
     arrowColor: color.text,
     // A past date is dimmed text, not a hairline. `line` measures 1.24:1 on the
     // light canvas and 1.32:1 on the dark one — invisible rather than quiet —
@@ -243,7 +248,8 @@ export function UnavailabilityEditor({
         justifyContent: "space-between",
         // Was a bare 6. The scale has no 6, and 4 and 8 are equidistant from
         // it; the tighter one is the direction the density tokens run.
-        paddingVertical: space.xs,
+        // The frame's month row is 54 tall.
+        paddingVertical: space.md,
       },
     },
   };
@@ -314,7 +320,7 @@ export function UnavailabilityEditor({
               {pluralize(totalDays(ranges), "day")}
             </Text>
           ) : (
-            <Text role="sectionTitle">
+            <Text fontSize="text-md" fontWeight="font-bold" tone="body">
               Choose the dates where the product will be unavailable
             </Text>
           )}
