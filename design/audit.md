@@ -853,3 +853,12 @@ Not matched, product decision: the Block & Report frame `1:15593` is a bottom sh
 Cancel / Block & Report buttons (the destructive fill drawn in Figma's `#E50914` red, not the danger token). The app
 confirms with a native Alert and `onReportPress` sends no reason; a reason field needs a backend field for it.
 The capture is not committed (it shows the QA thread).
+
+## Make an offer — blocked, not restyled — 2026-09-20
+
+Section `1:16369` (seven frames, exported to `design/figma-images/chat/offer/`): "Check Availability" (calendar in a
+sheet), "Make Offer" (product summary, Duration with two date fields, Amount, Security Deposit, a bare-text "Make an offer"
+when empty) and the sent states. The app's flow opens on a "Select a product" sheet the frames do not draw, and its list
+was empty for the only fixture thread, so neither later sheet could be reached on the simulator without sending or
+creating data. The sheets live in `src/screens/chat/chat-details.tsx` (~lines 800-1050). Needs a thread with a selectable
+product (an `AGENT_QA_<run-id>` listing and conversation from a second account), or a ruling to restyle statically.
