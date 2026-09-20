@@ -840,3 +840,16 @@ Open: `FieldFrame` also reaches the edit-product twin (`edit-about-product.tsx`)
 form, confirm the edit frame `1:14332` agrees before device QA; the toast success branch keeps a raw radius 8 and no
 shadow; message text is 14 bold both sides (the frame's, heavy for body copy); the attachment bubble's 4pt inset around a
 16-radius photo; local 12s in `search.tsx` and `home/search-bar.tsx`.
+
+## Chat menu (light) — 2026-09-20
+
+Figma light frame `1:15543` · app `src/components/chat/chat-header.tsx`. Changed: the menu is a popover over the live
+thread with no scrim (the app dimmed the whole screen), 196 wide, radius 16, hanging from the header hairline and 21
+from the right edge; the full-screen Pressable stays so a tap outside dismisses it. On the simulator: right edge
+368.4pt against the frame's 369, width 195 against 196, top on the header hairline. Kept: the "View listing" item the
+frame does not draw, and the app's copy ("Block & report").
+
+Not matched, product decision: the Block & Report frame `1:15593` is a bottom sheet with a free-text reason box and
+Cancel / Block & Report buttons (the destructive fill drawn in Figma's `#E50914` red, not the danger token). The app
+confirms with a native Alert and `onReportPress` sends no reason; a reason field needs a backend field for it.
+The capture is not committed (it shows the QA thread).

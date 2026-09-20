@@ -20,7 +20,7 @@ import {
   UserCircleIcon,
 } from "react-native-heroicons/outline";
 import { CrossFade, IconButton, Skeleton, Text } from "../core";
-import { MIN_TOUCH_TARGET, colors, ink } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, colors, ink, radius } from "@/lib/design-tokens";
 
 /** Round participant photo. The frame draws 32, not the 40 this row had. */
 const AVATAR = 32;
@@ -203,23 +203,24 @@ export function ChatHeader({
         visible={menuVisible}
         onRequestClose={() => setMenuVisible(false)}
       >
-        {/* A scrim, so the menu reads as modal and the dismissal target is
-            visible rather than being invisible dead space. */}
-        <Pressable
-          className="flex-1"
-          style={{ backgroundColor: ink.scrim(isDark) }}
-          onPress={() => setMenuVisible(false)}
-        >
+        {/* The frame draws this menu as a popover over the live thread, with no
+            dimming. The Pressable stays full-screen so a tap outside still
+            dismisses it. */}
+        <Pressable className="flex-1" onPress={() => setMenuVisible(false)}>
           <View
             style={[
               styles.modalContent,
               shadow,
-              { top: modalPosition.top, right: modalPosition.right },
+              {
+                top: modalPosition.top + MENU_TOP_GAP,
+                right: MENU_RIGHT_INSET,
+                borderRadius: radius.card,
+              },
             ]}
             className={`border ${isDark
               ? "bg-surface-dark border-line-dark"
               : "bg-surface-light border-line-light"
-              } rounded-button p-2`}
+              } p-2`}
           >
             {onViewListing ? (
               <>
@@ -284,9 +285,14 @@ export function ChatHeader({
   );
 }
 
+// Measured off the Figma menu: it hangs from the header's hairline, 18 below the
+// overflow control's box, and stops 21 from the screen's right edge.
+const MENU_TOP_GAP = 18;
+const MENU_RIGHT_INSET = 21;
+
 const styles = StyleSheet.create({
   modalContent: {
     position: "absolute",
-    width: "auto",
+    width: 196,
   },
 });
