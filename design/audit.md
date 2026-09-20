@@ -741,3 +741,21 @@ shows nothing (pre-existing).
   `brandPanel`/`brandPanelLine`, 24 gutter, 8 padding, 16 radius, 36pt brand check tile, 16 bold text) for a
   success toast without a second line; other severities and success-with-message keep the semantic palette.
   Not seen on device yet (needs a success event; the only ones write data).
+
+## Chat list (light + dark) — 2026-09-20
+
+Figma light frame `1:15742` (section `1:15542`; the other four frames are the thread, its menu and the Block &
+Report sheet) · app `src/screens/tabs/chat.tsx`, `src/components/chat/chat-card.tsx`. Viewed only: the list is read
+from the real QA account's own conversations and nothing was opened, so no read receipt was written. The captures
+(`design/app/chat.{light,dark}.iphone16e.png`) show third-party names from that account and are NOT committed.
+
+Changed: title padded 16 above/below with the search block padded 8 (the field 48 tall, radius 12, hairline, 20pt
+icon, 16 padding); rows 80 tall (16/24 padding, 8 from the 48pt avatar to the text), no rules between rows (the frame
+draws none), the time pinned top right and the unread badge a 24pt circle below it, neither taking width from the
+text. Measured on the 2x grid: title, search field, row pitch (80pt), avatar, text column (x 80) and the time's right
+edge are within 1px of the frame in light; dark spot-checked by eye.
+
+Deviations kept: the app's copy ("Chat", "Search conversations", dates instead of "7:19 pm"); read previews stay on
+the body tone, since the frame's 50% black is 3.95:1 on white and fails AA for 14pt text; semibold names when read
+(the frame draws them bold). Not verified: the unread badge and the tinted time (no unread conversation exists), the
+swipe-to-delete action, and the thread, menu and Block & Report frames, which need a thread opened (read receipts).

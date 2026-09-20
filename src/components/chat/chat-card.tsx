@@ -13,6 +13,15 @@ import {
   TrashIcon,
 } from "react-native-heroicons/outline";
 
+// Measured off the Figma Chat row: 80 tall, the time 17.5 from the top, the unread
+// badge a 24pt circle 39 from the top. Both sit at the 24 gutter.
+const ROW_HEIGHT = 80;
+const TIME_TOP = 17.5;
+const BADGE_TOP = 39;
+const BADGE_SIZE = 24;
+const TIME_CLEARANCE = 56;
+const BADGE_CLEARANCE = 32;
+
 interface Props {
   id: string;
   name: string;
@@ -99,26 +108,38 @@ export function ChatCard({
           style={{
             flexDirection: "row",
             alignItems: "center",
-            gap: 12,
-            paddingVertical: 12,
+            // The frame's row: 80 tall, 16 above and below, 8 from the avatar
+            // to the text. It draws no rule between rows.
+            gap: 8,
+            paddingVertical: 16,
             paddingHorizontal: SCREEN_GUTTER,
-            minHeight: 72,
+            minHeight: ROW_HEIGHT,
             backgroundColor: color.canvas,
           }}
         >
           <Avatar uri={profilePic} name={displayName} size={48} />
 
-          <View style={{ flex: 1, gap: 2 }}>
+          <View style={{ flex: 1 }}>
             <Text
               fontSize="text-md"
               // Bold until read. "Has the owner replied?" is the question this
               // list exists to answer, and nothing on the row answered it.
               fontWeight={unread ? "font-bold" : "font-semibold"}
               numberOfLines={1}
+              // Clear of the timestamp pinned to the row's top right.
+              style={{ paddingRight: TIME_CLEARANCE }}
             >
               {displayName}
             </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+                // Clear of the unread badge pinned to the row's bottom right.
+                paddingRight: unread ? BADGE_CLEARANCE : 0,
+              }}
+            >
               {isAttachment ? (
                 parsedMessage.type === "image" ? (
                   <PhotoIcon size={14} color={color.textBody} />
@@ -139,44 +160,40 @@ export function ChatCard({
             </View>
           </View>
 
-          {/* Aligned to the name's baseline. Centring it between the two lines
-              made it line up with neither. */}
-          <View
-            style={{
-              alignItems: "flex-end",
-              alignSelf: "flex-start",
-              gap: 6,
-              minWidth: 56,
-              paddingTop: 2,
-            }}
+          {/* Pinned where the frame puts them: the time on the name's line at
+              the right edge, the badge below it. Neither takes width from the
+              text column. */}
+          <Text
+            fontSize="text-xs"
+            tone={unread ? "brand" : "dim"}
+            style={{ position: "absolute", top: TIME_TOP, right: SCREEN_GUTTER }}
           >
-            {/* Was the full 8/14/2026 12:54 AM on every row — verbose, US-ordered
-                and ~280px of row width. iOS convention is relative and smart. */}
-            <Text fontSize="text-xs" tone={unread ? "brand" : "dim"}>
-              {formatListTimestamp(lastMessageTime)}
-            </Text>
-            {unread ? (
-              <View
-                style={{
-                  minWidth: 20,
-                  height: 20,
-                  paddingHorizontal: 6,
-                  borderRadius: radius.full,
-                  backgroundColor: color.brand,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+            {formatListTimestamp(lastMessageTime)}
+          </Text>
+          {unread ? (
+            <View
+              style={{
+                position: "absolute",
+                top: BADGE_TOP,
+                right: SCREEN_GUTTER,
+                minWidth: BADGE_SIZE,
+                height: BADGE_SIZE,
+                paddingHorizontal: 6,
+                borderRadius: radius.full,
+                backgroundColor: color.brand,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                fontSize="text-xs"
+                fontWeight="font-bold"
+                style={{ color: color.onBrand }}
               >
-                <Text
-                  fontSize="text-xs"
-                  fontWeight="font-bold"
-                  style={{ color: color.onBrand }}
-                >
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </Text>
-              </View>
-            ) : null}
-          </View>
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </Text>
+            </View>
+          ) : null}
         </TouchableOpacity>
       </Swipeable>
 
