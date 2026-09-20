@@ -23,7 +23,6 @@ import {
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { HeaderIndicator } from "@/components/auth/headerIndicator";
 import {
   Button,
   StaticContainer,
@@ -53,15 +52,15 @@ import { useAuthContext } from "@/context/auth-context";
 import { useAuth } from "@/backend/auth";
 
 const StyledImage = styled(Image);
-
-const SEARCH_HEIGHT = 48;
-/** The field's height inside its 1pt border, so the input fills it and centres its text. */
-const SEARCH_INNER = SEARCH_HEIGHT - 2;
 import { Modal, View, StyleSheet } from "react-native";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { EditStepHeader } from "@/components/post/edit-step-header";
 import { useRoute } from "@react-navigation/native";
 import { ink, colors, radius, SCREEN_GUTTER, density } from "@/lib/design-tokens";
+
+const SEARCH_HEIGHT = 48;
+/** The field's height inside its 1pt border, so the input fills it and centres its text. */
+const SEARCH_INNER = SEARCH_HEIGHT - 2;
 
 const LOCATION_LOG_PREFIX = "[post/location-modal]";
 const LOCATION_FETCH_TIMEOUT_MS = 12000;
@@ -736,6 +735,11 @@ const LocationModal = ({}) => {
                             enablePoweredByContainer={false}
                             styles={{
                               textInput: {
+                                // The library's default style adds a 5pt bottom margin
+                                // and 10pt side padding under ours, which made this box
+                                // 53pt tall with its text 2.5pt high.
+                                marginTop: 0,
+                                marginBottom: 0,
                                 height: SEARCH_INNER,
                                 backgroundColor: ink.surface(isDarkMode),
                                 borderRadius: radius.button,

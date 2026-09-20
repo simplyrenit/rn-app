@@ -106,7 +106,11 @@ const MyProductScreen: React.FC = () => {
 
   // "My Products", as the Profile row and the frame name it; this screen said
   // "My listings" at 28pt.
-  const header = <SubpageHeader title="My Products" onBack={goToProfile} />;
+  const header = <SubpageHeader
+      title="My Products"
+      onBack={goToProfile}
+      backLabel="Back to profile"
+    />;
 
   /**
    * The frame's row under the header: the action in words, the share glyph on the

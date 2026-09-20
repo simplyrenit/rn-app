@@ -60,12 +60,12 @@ import { toast } from "@/lib/toast";
  * page uses, so the blocks below the profile are `DetailSection` at its
  * `profile` rhythm rather than a second set of section primitives.
  *
- * Deliberately not drawn any more: the verification card (email/phone verified,
- * "Lists in <area>") and the business-name pill a previous pass added. Neither
- * is in the frame and neither could be placed inside it without breaking the
- * profile block's 16pt rhythm. Both were derived from the listing payload
- * rather than from `owner-details/`, so nothing is lost on the API side — the
- * markup is in this file's history if the signals come back.
+ * Not in the frame, but drawn on the owner's ruling: the verification card
+ * (email/phone verified, "Lists in <area>") and the business-name pill. They sit
+ * inside the profile block, between the facts strip and the chat button, so the
+ * frame's 16pt rhythm is untouched. Both come from the listing payload rather
+ * than from `owner-details/`, and a signal the payload does not carry is simply
+ * not drawn.
  */
 
 /** The frame's header row and, with it, the back control's target. */
@@ -91,7 +91,6 @@ const BAND_TAKEOVER = 16;
 const GLYPH_SIZE = 20;
 /** The chevron in a block's button is drawn in a 24pt box. */
 const CHEVRON_SIZE = 24;
-/** Label to chevron. */
 /**
  * Fields the owner object embedded in a listing carries but `PublicOwner` (the
  * shape `owner-details/` returns) does not. `src/lib/types.ts` belongs to another
@@ -105,6 +104,7 @@ interface OwnerTrustFields {
   business_name?: string | null;
 }
 
+/** Label to chevron. */
 const CHEVRON_GAP = 4;
 
 const AVATAR_SIZE = 72;
@@ -655,7 +655,7 @@ export default function UsersDetails() {
                       <Text
                         fontSize="text-sm"
                         tone={row.met ? "hi" : "dim"}
-                        numberOfLines={1}
+                        numberOfLines={2}
                         style={{ flex: 1 }}
                       >
                         {row.label}

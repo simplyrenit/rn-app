@@ -107,7 +107,7 @@ export function AboutOwner({
               detail ? (
                 <StarMini color={color.textDim} size={20} />
               ) : (
-                <StarIcon color={color.text} size={16} />
+                <StarIcon color={color.warning} size={16} />
               )
             ) : null}
             <Text fontSize="text-sm" tone={detail ? "dim" : "body"}>

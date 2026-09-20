@@ -23,9 +23,10 @@ interface Props {
    */
   showUnratedCopy?: boolean;
   /**
-   * Opt-in. The review surfaces draw their stars in ink, as the detail and
-   * reviews frames do; the default stays gold for the search filter, which has no
-   * frame to say otherwise.
+   * Opt-in: draws the filled stars in ink instead of gold. Only the filled star
+   * changes (the outline stays the dim tone), unlike `Stars`, whose ink tone
+   * colours both. Used by the Write a review rating control; the default stays
+   * gold for the search filter, which has no frame to say otherwise.
    */
   tone?: "gold" | "ink";
 }

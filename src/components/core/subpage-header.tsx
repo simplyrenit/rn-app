@@ -16,22 +16,25 @@ const BACK_INSET = 16;
 export function SubpageHeader({
   title,
   onBack,
+  backLabel,
 }: {
   title: string;
   /** Opt-in: where the arrow goes when it is not simply "back". */
   onBack?: () => void;
+  /** Opt-in: what VoiceOver says when the arrow does not go simply "back". */
+  backLabel?: string;
 }) {
   return (
     <View
       style={{
-        height: MIN_TOUCH_TARGET,
+        minHeight: MIN_TOUCH_TARGET,
         alignItems: "center",
         justifyContent: "center",
       }}
     >
       {/* First in the tree so VoiceOver reads the back control before the title. */}
       <View style={{ position: "absolute", left: BACK_INSET, top: 0 }}>
-        <BackButton onPress={onBack} />
+        <BackButton onPress={onBack} accessibilityLabel={backLabel} />
       </View>
       <Text accessibilityRole="header" fontSize="text-base" fontWeight="font-bold">
         {title}
