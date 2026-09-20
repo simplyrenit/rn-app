@@ -970,4 +970,4 @@ Captured `design/app/post-step3.dark.iphone16e.png` on the iPhone 16e. The 48pt 
 
 Observation, not a styling defect: this listing's `product.images` is empty, so Edit Product Images opens on the empty upload state with Next disabled even though the listing has a cover photo. It is a property of that record (the hub passes `product.images` straight through), so it was left alone. If real listings can have a cover but no `images`, the edit flow blocks the owner from continuing, and that is worth a backend/product check.
 
-Still not walked: Edit Category and Edit Cover Image (the latter needs a listing with images).
+Edit Category was walked too (view-only): same taxonomy list and header as wizard step 1. Still not walked: Edit Cover Image, which needs a listing with images.
