@@ -1,3 +1,4 @@
+import { radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import React, { useState } from "react";
 import {
@@ -21,8 +22,6 @@ interface AccordionProps {
   answer: string;
 }
 
-// The frame draws the question row at radius 12 where `radius.button` is 11.
-const FRAME_RADIUS = 12;
 // The frame's plus is heroicons' mini glyph (14.4pt) in a 24pt box.
 const GLYPH = 24;
 
@@ -61,7 +60,7 @@ const Accordion: React.FC<AccordionProps> = ({ question, answer }) => {
         {
           // The frame draws these cards at radius 12 with a hairline and no
           // shadow, 8 apart (the list owns the gap, so there is no margin here).
-          borderRadius: FRAME_RADIUS,
+          borderRadius: radius.button,
           borderWidth: 1,
           backgroundColor: color.surface,
           borderColor: color.line,

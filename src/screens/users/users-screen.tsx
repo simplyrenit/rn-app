@@ -104,13 +104,10 @@ const RAIL_GAP = 16;
 
 /**
  * The frame's block action. 56 tall as a floor rather than a height, so the
- * label can still grow it at accessibility text sizes, and a 12pt radius where
- * `radius.button` is 11 — the design system is being re-measured this phase, so
- * the frame wins locally rather than by moving a token every screen shares.
- * (Product Details' bottom-bar CTA carries the same local 12.)
+ * label can still grow it at accessibility text sizes; it takes the button radius.
  */
 const BUTTON_HEIGHT = 56;
-const BUTTON_RADIUS = 12;
+const BUTTON_RADIUS = radius.button;
 
 /**
  * The header, drawn twice: once in the scroll as the frame has it, once pinned

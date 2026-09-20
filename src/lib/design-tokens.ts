@@ -263,7 +263,7 @@ export const space = {
  * `full` is for pills and avatars only — never a card.
  */
 export const radius = {
-  button: 11, // measured off the Figma Button component (Primary, 358x44)
+  button: 12, // the Figma Button component's cornerRadius (Primary/Secondary/Disabled)
   input: 11,
   card: 16,
   group: 14,

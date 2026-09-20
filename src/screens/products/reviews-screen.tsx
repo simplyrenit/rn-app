@@ -43,12 +43,7 @@ const LABEL_GAP = 8;
 const BAR_INSET = 12;
 /** The count column the frame right of each bar; left-aligned, not ragged. */
 const COUNT_WIDTH = 30;
-/**
- * The frame draws the write row at radius 12, where `radius.button` is 11 and
- * `radius.group` is 14. Kept local until one ruling moves the token (see
- * design/audit.md); the same 12 is in contactUs.tsx and faqs.tsx.
- */
-const ROW_RADIUS = 12;
+const ROW_RADIUS = radius.button;
 /** The row's label sits on 16; its chevron measures ~13 from the edge. */
 const ROW_PAD_LEFT = 16;
 const ROW_PAD_RIGHT = 12;

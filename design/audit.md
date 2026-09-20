@@ -723,3 +723,21 @@ its field while Write review omits it, on the frames' 2pt difference; (5) All re
 of the wizard (frames exported this session to `design/figma-images/post/light/`, not yet audited) and the
 walk-through on device; (8) `write-review.tsx` swallows a failed submit in an empty `catch`, so a network failure
 shows nothing (pre-existing).
+
+## Rulings taken 2026-09-20 (user approved the defaults) — radius, Post form fields, success toast
+
+- **`radius.button` is 12** (was 11). The Figma Button component (`1:141`, `1:145`) has `cornerRadius: 12`; the 11 was a
+  mis-measure. `tailwind.config.js` `borderRadius.button` follows. The local `12` constants in Contact Us, Who we
+  are, Accordion, About the owner, Product Details' CTA, All reviews and Write review now read `radius.button`
+  (`radius.input` stays 11 until a frame shows a single-line input at another value).
+- **Post form fields:** the shared field gains an opt-in `FieldFrame` (context) and a `frame` option on
+  `useFieldSurfaceStyle`: 48pt, 16 padding, radius 12, hairline edge. Only `about-product-form.tsx` wraps its
+  content in it; Search, price filter and the auth screens keep the default 44pt box with the stronger control edge.
+  The hairline is below the 3:1 control-edge rule (WCAG 1.4.11); accepted for this form only. Step 3 capture:
+  `design/app/post-form.light.iphone16e.png` (fields 48pt, radius 12). Not matched: the app's labels/hints
+  (smaller, grey, with required marks and different copy) and the 18pt group gap against the frame's 32; the frame
+  also has fewer fields than the app.
+- **Success toast:** `ToastBody` draws the frame's brand-tint pill (Purple/50 fill, Purple/100 line via
+  `brandPanel`/`brandPanelLine`, 24 gutter, 8 padding, 16 radius, 36pt brand check tile, 16 bold text) for a
+  success toast without a second line; other severities and success-with-message keep the semantic palette.
+  Not seen on device yet (needs a success event; the only ones write data).

@@ -1,6 +1,6 @@
 import { SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
@@ -17,8 +17,6 @@ const TOP_INSET = 28;
 const BLOCK_GAP = 16;
 const HEADING_GAP = 8;
 const GLYPH = 24;
-// The design draws the button at radius 12; `radius.button` is 11.
-const BUTTON_RADIUS = 12;
 
 const WhoWeAreScreen: React.FC = () => {
   const { color, shadow } = useTheme();
@@ -75,7 +73,7 @@ const WhoWeAreScreen: React.FC = () => {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 4,
-                borderRadius: BUTTON_RADIUS,
+                borderRadius: radius.button,
                 borderWidth: 1,
                 borderColor: color.line,
                 backgroundColor: color.surface,

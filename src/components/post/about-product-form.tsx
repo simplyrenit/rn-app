@@ -1,5 +1,6 @@
 import {
   Button,
+  FieldFrame,
   FieldLabel,
   FieldShell,
   Text,
@@ -230,7 +231,11 @@ export function AboutProductForm({
     callingCode: string;
   }>({ cca2: "IN", callingCode: "91" });
 
-  const conditionSurface = useFieldSurfaceStyle({ focused: conditionFocus });
+  const conditionSurface = useFieldSurfaceStyle({
+    focused: conditionFocus,
+    // This component renders the FieldFrame, so it cannot read it.
+    frame: true,
+  });
   const currencyIcon = CURRENCY_ICON[productCountry];
 
   /**
@@ -443,6 +448,7 @@ export function AboutProductForm({
   ) : null;
 
   return (
+    <FieldFrame>
     <KeyboardAwareScrollView
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
@@ -488,7 +494,7 @@ export function AboutProductForm({
         <RNEDropdown
           onFocus={() => setConditionFocus(true)}
           onBlur={() => setConditionFocus(false)}
-          style={{ ...conditionSurface, height: MIN_TOUCH_TARGET }}
+          style={{ ...conditionSurface, height: conditionSurface.minHeight }}
           activeColor={color.surfaceRaised}
           containerStyle={{
             marginTop: space.sm,
@@ -803,5 +809,6 @@ export function AboutProductForm({
         {submitAccessory?.(submitLabelColor)}
       </Button>
     </KeyboardAwareScrollView>
+    </FieldFrame>
   );
 }

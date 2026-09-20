@@ -1,6 +1,6 @@
 import { MIN_TOUCH_TARGET, density, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
-import React, { useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import {
   StyleProp,
   TextInput,
@@ -9,6 +9,8 @@ import {
   ViewStyle,
 } from "react-native";
 import { Text } from "./text";
+
+const FRAME_FIELD_HEIGHT = 48;
 
 export function RequiredMark() {
   const { color } = useTheme();
@@ -66,11 +68,30 @@ export function FieldError({ children }: FieldErrorProps) {
   );
 }
 
+const FieldFrameContext = createContext(false);
+
+/**
+ * Opt-in. Fields inside are drawn as the Figma Post form draws them: 48pt tall,
+ * padded 16, radius 12 and the hairline edge rather than the stronger control
+ * edge. Everything outside keeps the default box, so no other screen moves. The
+ * hairline is a deliberate step below the 3:1 control-edge rule the default box
+ * keeps (WCAG 1.4.11); the frame's ruling was accepted for this form only.
+ */
+export function FieldFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <FieldFrameContext.Provider value={true}>
+      {children}
+    </FieldFrameContext.Provider>
+  );
+}
+
 interface FieldSurfaceOptions {
   focused?: boolean;
   error?: boolean;
   disabled?: boolean;
   multiline?: boolean;
+  /** Override the `FieldFrame` context: for a caller that renders it. */
+  frame?: boolean;
 }
 
 /**
@@ -91,14 +112,17 @@ export function useFieldSurfaceStyle({
   error = false,
   disabled = false,
   multiline = false,
+  frame,
 }: FieldSurfaceOptions = {}): ViewStyle {
   const { color } = useTheme();
+  const inFrame = useContext(FieldFrameContext);
+  const framed = frame ?? inFrame;
 
   return {
-    minHeight: multiline ? 76 : MIN_TOUCH_TARGET,
-    paddingHorizontal: 12,
+    minHeight: multiline ? 76 : framed ? FRAME_FIELD_HEIGHT : MIN_TOUCH_TARGET,
+    paddingHorizontal: framed ? 16 : 12,
     paddingVertical: multiline ? 10 : 8,
-    borderRadius: radius.input,
+    borderRadius: framed ? radius.button : radius.input,
     borderWidth: 1,
     // Control borders use input-line, not the hairline token: a 1.13:1 border
     // fails WCAG 1.4.11 and reads as no border at all. Error outranks focus —
@@ -107,6 +131,8 @@ export function useFieldSurfaceStyle({
       ? color.danger
       : focused
       ? color.focus
+      : framed
+      ? color.line
       : color.inputLine,
     backgroundColor: color.surface,
     opacity: disabled ? 0.5 : 1,

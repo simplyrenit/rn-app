@@ -34,7 +34,7 @@ import {
   useTypedNavigation,
 } from "@/lib/types";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { CategoryIcon } from "@/lib/category-icons";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
@@ -100,12 +100,7 @@ const TITLE_GAP = 12;
  */
 const GLYPH_SIZE = 20;
 
-/**
- * The bottom bar's button. The design draws a 12pt radius here where
- * `radius.button` is 11; the design system is being re-measured this phase, so
- * the frame wins locally rather than by moving a token every screen shares.
- */
-const CTA_RADIUS = 12;
+const CTA_RADIUS = radius.button;
 
 /**
  * 44 tall at rest, so the bar measures the frame's 76. A floor, not a fixed

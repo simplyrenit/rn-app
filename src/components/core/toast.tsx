@@ -1,12 +1,13 @@
-import { radius } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import React from "react";
-import { View } from "react-native";
+import { View, useWindowDimensions } from "react-native";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   XCircleIcon,
+  CheckIcon,
 } from "react-native-heroicons/solid";
 import { Text } from "./text";
 
@@ -42,9 +43,51 @@ interface ToastBodyProps {
  */
 export function ToastBody({ text1, text2, props }: ToastBodyProps) {
   const { color, shadow } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const legacy = splitLegacyToastProps(text2);
   const severity = props?.severity ?? legacy.severity;
   const message = legacy.message;
+
+  // The Figma success toast: a brand-tint pill on the 24 gutter with a brand
+  // check tile. Only success takes it — the other severities keep the semantic
+  // palette below until the designer ships one for them.
+  if (severity === "success" && !message) {
+    return (
+      <View
+        accessible
+        accessibilityRole="alert"
+        accessibilityLiveRegion="polite"
+        accessibilityLabel={text1}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          width: screenWidth - 2 * SCREEN_GUTTER,
+          padding: 8,
+          borderRadius: radius.card,
+          borderWidth: 1,
+          borderColor: color.brandPanelLine,
+          backgroundColor: color.brandPanel,
+        }}
+      >
+        <View
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: color.brand,
+          }}
+        >
+          <CheckIcon size={24} color={color.onBrand} />
+        </View>
+        <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
+          {text1}
+        </Text>
+      </View>
+    );
+  }
 
   const palette: Record<
     ToastSeverity,

@@ -1,6 +1,6 @@
 import { SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
@@ -18,8 +18,6 @@ const BLOCK_PAD_V = 32;
 const BLOCK_GAP = 16;
 const HEADING_GAP = 8;
 const GLYPH = 24;
-// The design draws these buttons at radius 12; `radius.button` is 11.
-const BUTTON_RADIUS = 12;
 
 /** A block: an icon and heading, then one full-width outline button. */
 function ContactBlock({
@@ -71,7 +69,7 @@ function ContactBlock({
             alignItems: "center",
             justifyContent: "center",
             gap: 4,
-            borderRadius: BUTTON_RADIUS,
+            borderRadius: radius.button,
             borderWidth: 1,
             borderColor: color.line,
             backgroundColor: color.surface,

@@ -52,12 +52,9 @@ const CONTROL_PAD_H = 16;
 const CONTROL_PAD_V = 8;
 const CONTROL_GAP = 8;
 const GLYPH = 20;
-/**
- * The frame draws the thumbnail, the condition control and the star rows at
- * radius 12, where `radius.button` is 11 and `radius.group` is 14. Kept local
- * until one ruling moves the token (see design/audit.md).
- */
-const CONTROL_RADIUS = 12;
+// The frame draws the thumbnail, the condition control and the star rows at the
+// button radius.
+const CONTROL_RADIUS = radius.button;
 
 type ConditionOption = {
   label: string;
