@@ -13,13 +13,24 @@ import {
   View,
 } from "react-native";
 import {
+  ArrowLeftIcon,
   EllipsisHorizontalCircleIcon,
   ExclamationTriangleIcon,
   ShoppingBagIcon,
   UserCircleIcon,
 } from "react-native-heroicons/outline";
-import { BackButton, CrossFade, Skeleton, Text } from "../core";
+import { CrossFade, IconButton, Skeleton, Text } from "../core";
 import { MIN_TOUCH_TARGET, colors, ink } from "@/lib/design-tokens";
+
+/** Round participant photo. The frame draws 32, not the 40 this row had. */
+const AVATAR = 32;
+
+/**
+ * Horizontal inset of the thread's chrome. Narrower than `SCREEN_GUTTER`, which
+ * the message list keeps: the Figma thread pulls the back arrow and the overflow
+ * control to 16 so the 44pt targets sit closer to the screen edges.
+ */
+const HEADER_INSET = 16;
 
 interface ChatHeaderProps {
   name: string;
@@ -53,7 +64,7 @@ export function ChatHeader({
 }: ChatHeaderProps) {
   const navigation = useTypedNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
-  const { isDark, shadow } = useTheme();
+  const { isDark, color, shadow } = useTheme();
 
   const [modalPosition, setModalPosition] = useState({ top: 0, right: 0 });
   const ellipsisRef = useRef<TouchableOpacity>(null);
@@ -81,12 +92,25 @@ export function ChatHeader({
 
   return (
     <View
-      className={`flex-row items-center justify-between px-gutter py-2 border-b ${isDark ? "border-line-dark" : "border-line-light"
-        }`}
+      // 8 + a 44pt back target + 8 = the frame's 60pt row, on a 16 inset with a
+      // hairline under it. It used to sit on the 24 gutter with a `border-b`.
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: HEADER_INSET,
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: color.line,
+      }}
       onLayout={handleLayout}
     >
       <View className="flex-row items-center relative" style={{ flex: 1 }}>
-        <BackButton
+        {/* Not `BackButton`: the thread's arrow is drawn in the secondary tone,
+            and the shared control has no tone prop (and lives in core/, which
+            this area does not edit). Everything else it guarantees — the 44pt
+            box, the label, the press treatment — comes from `IconButton`. */}
+        <IconButton
           // goBack() pops this screen. navigate("Chat") only focuses the Chat
           // tab, which still had this detail screen on top of its stack, so the
           // back arrow fired and nothing appeared to happen. The fallback
@@ -98,7 +122,10 @@ export function ChatHeader({
               : navigation.navigate("Chat")
           }
           accessibilityLabel="Back to chats"
-        />
+          accessibilityHint="Returns to the previous screen"
+        >
+          <ArrowLeftIcon size={24} color={color.textHi} />
+        </IconButton>
 
         <Pressable
           style={{ flexDirection: "row", flex: 1 }}
@@ -108,32 +135,45 @@ export function ChatHeader({
         >
           <CrossFade
             loading={loading}
+            // Bounded, so a long display name truncates at the overflow control
+            // instead of running under it.
+            style={{ flex: 1 }}
             placeholder={
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Skeleton width={40} height={40} borderRadius={20} />
+                <Skeleton
+                  width={AVATAR}
+                  height={AVATAR}
+                  borderRadius={AVATAR / 2}
+                />
                 <Skeleton
                   width={120}
-                  height={16}
+                  height={14}
                   borderRadius={4}
-                  style={{ marginLeft: 12 }}
+                  style={{ marginLeft: 8 }}
                 />
               </View>
             }
           >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
+            >
               {profilePic ? (
                 <Image
                   source={{ uri: profilePic }}
-                  className="h-10 w-10 rounded-full"
+                  style={{
+                    width: AVATAR,
+                    height: AVATAR,
+                    borderRadius: AVATAR / 2,
+                  }}
                   resizeMode="cover"
                 />
               ) : (
-                <UserCircleIcon size={40} color={colors.dark.brand} />
+                <UserCircleIcon size={AVATAR} color={colors.dark.brand} />
               )}
               <Text
-                fontSize="text-base"
+                fontSize="text-sm"
                 fontWeight="font-bold"
-                className="ml-3"
+                style={{ marginLeft: 8, flexShrink: 1 }}
                 numberOfLines={1}
               >
                 {name}

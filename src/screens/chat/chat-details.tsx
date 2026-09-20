@@ -411,8 +411,13 @@ export default function ChatDetailsScreen() {
 
         <ScrollView
           ref={scrollViewRef}
+          // The frame's rhythm: 16 above the first message and below the last,
+          // 16 between every pair. It is a `gap` and not a per-bubble margin
+          // because a day chip counts as a message for spacing purposes.
           contentContainerStyle={{
             flexGrow: 1,
+            paddingVertical: 16,
+            gap: 16,
           }}
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => scrollToBottom(false)}
@@ -431,8 +436,9 @@ export default function ChatDetailsScreen() {
             // Message grouping. Every message carried its own timestamp, so six
             // consecutive messages one minute apart produced six timestamps and
             // six full-height bubbles. Only the last message of a run from one
-            // sender within the same minute keeps its time; the rest sit tight
-            // against it, which is the iMessage rhythm.
+            // sender within the same minute keeps its time. The run no longer
+            // tightens the gap as well: the Figma thread draws a flat 16
+            // between every pair of bubbles, whoever sent them.
             const sameSenderAsNext =
               !!next &&
               next.from === message.from &&
@@ -445,7 +451,9 @@ export default function ChatDetailsScreen() {
             return (
               <React.Fragment key={message.id}>
                 {showDay ? (
-                  <View style={{ alignItems: "center", paddingVertical: 10 }}>
+                  // No padding of its own — the list's 16pt gap already sits on
+                  // both sides of the chip.
+                  <View style={{ alignItems: "center" }}>
                     {/* A View, not a styled Text: borderRadius and overflow on
                         a Text do not clip reliably in React Native. */}
                     <View
@@ -475,7 +483,6 @@ export default function ChatDetailsScreen() {
                   isSent={message.from === userDetails?.username}
                   type={message.type}
                   timestamp={sameSenderAsNext ? undefined : message.timestamp}
-                  grouped={sameSenderAsNext}
                 />
               </React.Fragment>
             );

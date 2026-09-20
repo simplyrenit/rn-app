@@ -759,3 +759,63 @@ Deviations kept: the app's copy ("Chat", "Search conversations", dates instead o
 the body tone, since the frame's 50% black is 3.95:1 on white and fails AA for 14pt text; semibold names when read
 (the frame draws them bold). Not verified: the unread badge and the tinted time (no unread conversation exists), the
 swipe-to-delete action, and the thread, menu and Block & Report frames, which need a thread opened (read receipts).
+
+## Chat thread (light) — 2026-09-20
+
+Figma light `1:15651` (thread), `1:15543` (⋯ menu open), `1:15593` (Block & Report sheet), section `1:15542`; the dark
+section `1:15316` was not sampled · app `src/screens/chat/chat-details.tsx`, `src/components/chat/chat-header.tsx`,
+`chat-bubble.tsx`, `chat-input.tsx` · restyled from a measured spec plus the 2× exports in
+`design/figma-images/chat/frames/`. **Nothing here was run.** No conversation was opened, no message sent and nothing
+marked read, so every value below is static: the only check performed is `npx tsc --noEmit` (clean apart from the two
+known `functions/` module errors). Sample names and message text in the frames are freelancer data and are not copied.
+
+Changed:
+
+- **Header.** A 60pt row (8 padding, 16 inset, 1pt `line` under it) replacing the 24-gutter `border-b` row. Back arrow
+  24 in the secondary tone inside a 44pt `IconButton` — not `BackButton`, which has no tone prop and lives in `core/`,
+  which this area does not edit. Avatar 32 (was 40), 8 to the name (was 12), name 14 bold (was 18 bold); the loading
+  skeleton follows the new sizes. The name is width-bounded now, so a long one truncates instead of running under the
+  ⋯ control. Menu, Block & Report, "View listing", the blocked state and the tap through to `UserDetail` are untouched.
+- **Message list.** 16 above the first message and below the last, and a flat 16 between every pair — drawn as a `gap`
+  on the scroller so a day chip is spaced by the same rule (it lost its own 10pt padding). Bubbles keep the 24 gutter.
+  `ChatBubble`'s `grouped` prop is gone: the frame draws no tighter spacing for a run from one sender. The run itself
+  survives — it still suppresses the repeated timestamp, which is computed in the screen.
+- **Text bubbles.** Radius 16 (was 14), 8 vertical / 12 horizontal padding, text 14 **bold** (was 16 regular), max width
+  220 (was 80%). Received is filled with `line` and has no edge (was `surface` + an `inputLine` edge); sent is `brand`
+  with `onBrand` text. Link messages keep the underline and the brand text colour.
+- **Timestamp.** Kept, at 12pt with its leading pulled to 14 so it costs the bubble ~14pt, right-aligned inside the
+  bubble's own padding. The frame draws no timestamp at all.
+- **Composer.** A 16/24 row on the canvas with no rule above it and no raised ground under it (the frame draws
+  neither). The pill is exactly 44 — the two 1pt edges are subtracted from the field's floor, because React Native lays
+  borders inside the box and a 44pt field in a 1pt edge drew a 46pt pill. Radius full, `line` hairline, canvas fill, 16
+  left inset. Typed text and placeholder are 14 regular with `fontFamily.regular` set explicitly on the bare
+  `TextInput`. Clip and offer glyphs are 20 in the tertiary tone. Send is unchanged: a 44pt brand circle with a 20pt
+  airplane, dimmed while the field is empty. Offers, attachments, the preview modal and the upload path are untouched.
+
+Deviations, and what needs a ruling:
+
+- **The pill's edge is `line`, not `inputLine`.** `design-tokens.ts` states that a control's edge must be `inputLine`
+  (WCAG 1.4.11, ≥3:1); the frame draws `#E6E6E6`, which is 1.2:1 on white. This is the same trade already accepted for
+  the Post form fields (see "Rulings taken"). If the rule is meant to hold everywhere, this is the place it matters
+  most — it is the app's most-used control.
+- **Received bubbles lost their 3:1 edge** for the same reason: the fill is the boundary now. A bubble is not an
+  interactive control, so 1.4.11 does not strictly govern it, but the bubble/canvas separation is weak on light.
+- **The two glyphs in the pill get 28×44 targets, not 44×44.** The frame puts 8 between the glyphs; 44-wide boxes would
+  make the two hit areas overlap, which is a worse failure than a narrow target. 28 is the widest the drawing allows.
+- **220 is taken as the bubble width** although the frame's first sent bubble is 300 and the other three are 220. It is
+  a fixed width, not a fraction, so bubbles stay 220 on a larger phone — as the design has it.
+- **The sent timestamp keeps solid white**, not the 70% secondary the spec suggests: 70% white on the brand fill is
+  3.27:1, under what a 12pt string needs.
+- **Every message is 14pt bold.** That is what both frames draw, and it is unusually heavy for body copy at any length
+  beyond a line or two. Worth a designer confirmation before it ships.
+
+Found on the way (pre-existing, fixed here): a message whose body happens to be valid JSON without being an attachment
+envelope — a bare number, `true`, `null` — parsed successfully, matched neither the image nor the file branch, and fell
+out of the renderer as `null`, i.e. an empty bubble. Parsing now happens once, and anything that is not an image or
+file envelope is treated as prose.
+
+Not verified: all of it on device — the screen was never opened, so the keyboard path with the taller composer, the
+auto-grow floor, the scroll-to-bottom behaviour and VoiceOver order are unchecked. Dark is by token only (the dark
+section was never sampled, and `line` is `#292929` there, one step off true black). Not touched and not measured: the
+offer card, the `product_post` card, the image and file bubbles (colours only), the ⋯ menu, the Block & Report sheet
+(frame `1:15593`), the blocked/unblock footer, and frames `1:15695` and `1:15742`.

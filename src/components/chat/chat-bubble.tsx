@@ -24,7 +24,7 @@ import * as Sharing from "expo-sharing";
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTypedNavigation } from "@/lib/types";
-import { ink, radius } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, ink, radius } from "@/lib/design-tokens";
 import { formatCurrency, formatMessageTime } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -51,13 +51,14 @@ interface ChatBubbleProps {
   id: string;
   /** When the message was sent. Rendered in the bubble's footer. */
   timestamp?: Date | string;
-  /**
-   * True when another message from the same sender follows within the minute.
-   * Tightens the gap so a run reads as one turn rather than as N separate
-   * events, which is what made short exchanges fill the whole screen.
-   */
-  grouped?: boolean;
 }
+
+/**
+ * Widest a text bubble may grow. The Figma thread sets every bubble it draws to
+ * 220 on a 390pt frame — a fixed width, not a fraction, so the measure stays the
+ * same on a larger phone. Attachments keep their own proportional cap.
+ */
+const TEXT_BUBBLE_MAX_WIDTH = 220;
 
 const formatDate = (date: Date | undefined) => {
   if (!date) return "";
@@ -77,10 +78,35 @@ interface MessageContent {
 
 const isHttpUrl = (value?: string) => /^https?:\/\//i.test(value?.trim() || "");
 
+/**
+ * Attachments travel as a JSON envelope inside a text message, so the only way
+ * to tell a photo from a sentence is to try parsing it.
+ *
+ * Parsing used to happen inside the renderer, which had two consequences: the
+ * bubble could not know whether it was wrapping a sentence or a 200pt image
+ * before it drew its own padding, and any message that happened to be valid
+ * JSON without being an envelope — a bare number, "true" — fell through every
+ * branch and rendered as an empty bubble. Both are fixed by parsing once here
+ * and treating anything that is not an image or a file envelope as prose.
+ */
+const parseAttachment = (
+  type: string,
+  text?: string
+): MessageContent | null => {
+  if (type !== "text") return null;
+  try {
+    const parsed = JSON.parse(text || "") as MessageContent | null;
+    return parsed && (parsed.type === "image" || parsed.type === "file")
+      ? parsed
+      : null;
+  } catch {
+    return null;
+  }
+};
+
 export function ChatBubble({
   message,
   isSent,
-  grouped = false,
   type,
   id,
   timestamp,
@@ -103,17 +129,20 @@ export function ChatBubble({
     await offerOperations(id, "rejected");
   };
 
+  const attachment = parseAttachment(type, message.text);
+  const isProse = type === "text" && !attachment;
+
   const renderMessageContent = () => {
     if (type === "text") {
-      try {
-        // Try to parse the message as JSON (for attachments)
-        const messageContent: MessageContent = JSON.parse(message.text || "");
+      if (attachment) {
+        const messageContent = attachment;
 
         if (messageContent.type === "image") {
           return (
             <Pressable
+              // The 4pt frame moved onto the bubble itself, so the photo does
+              // not get it twice.
               style={{ position: "relative" }}
-              className="p-1"
               onPress={() => setFullImage(messageContent.url)}
             >
               <View
@@ -165,7 +194,7 @@ export function ChatBubble({
         } else if (messageContent.type === "file") {
           return (
             <TouchableOpacity
-              className="p-1 w-full"
+              className="w-full"
               onPress={async () => {
                 try {
                   const fileUri =
@@ -230,48 +259,50 @@ export function ChatBubble({
             </TouchableOpacity>
           );
         }
-      } catch {
-        // If parsing fails, it's a regular text message
-        const text = message.text || "";
-        const isLinkMessage = isHttpUrl(text);
+      }
 
-        if (!isLinkMessage) {
-          return (
-            <Text
-              fontSize="text-md"
-              className="px-3 pt-2"
-              style={{ color: isSent ? color.onBrand : color.text }}
-              selectable
-            >
-              {text}
-            </Text>
-          );
-        }
+      // Prose. The frame sets both sides at 14 bold — the bubble is the only
+      // thing on the screen, so the message carries the weight; the inset lives
+      // on the bubble now, not on the string.
+      const text = message.text || "";
+      const isLinkMessage = isHttpUrl(text);
 
+      if (!isLinkMessage) {
         return (
-          <Pressable
-            onPress={async () => {
-              try {
-                await Linking.openURL(text.trim());
-              } catch {
-                toast.error("Unable to open this link");
-              }
-            }}
+          <Text
+            fontSize="text-sm"
+            fontWeight="font-bold"
+            style={{ color: isSent ? color.onBrand : color.text }}
+            selectable
           >
-            <Text
-              fontSize="text-md"
-              className="px-3 pt-2"
-              style={{
-                color: isSent ? color.onBrand : color.brandText,
-                textDecorationLine: "underline",
-              }}
-              selectable
-            >
-              {text}
-            </Text>
-          </Pressable>
+            {text}
+          </Text>
         );
       }
+
+      return (
+        <Pressable
+          onPress={async () => {
+            try {
+              await Linking.openURL(text.trim());
+            } catch {
+              toast.error("Unable to open this link");
+            }
+          }}
+        >
+          <Text
+            fontSize="text-sm"
+            fontWeight="font-bold"
+            style={{
+              color: isSent ? color.onBrand : color.brandText,
+              textDecorationLine: "underline",
+            }}
+            selectable
+          >
+            {text}
+          </Text>
+        </Pressable>
+      );
     }
 
     // Handle other message types (product_post, make_offer)
@@ -282,8 +313,11 @@ export function ChatBubble({
     <View
       className={`flex-row ${isSent ? "justify-end" : "justify-start"} ${type === "product_post" &&
         `${isSent ? "translate-x-2" : "-translate-x-3"}`
-        } px-gutter`}
-      style={{ paddingTop: 1, paddingBottom: grouped ? 1 : 7 }}
+        }`}
+      // No vertical padding of its own: the frame puts a flat 16 between every
+      // pair of messages, including a run from one sender, and the list draws
+      // that as a `gap`. A per-bubble padding could only halve it.
+      style={{ paddingHorizontal: SCREEN_GUTTER }}
     >
       {type === "product_post" && message.item && (
         <Pressable className={`p-3 rounded-group`} style={{ width: Dimensions.get('window').width * 0.8 }}
@@ -342,35 +376,54 @@ export function ChatBubble({
       {
         type === "text" && (
           <View
-            style={{
-              maxWidth: "80%",
-              borderRadius: radius.group,
-              // An incoming bubble at surfaceRaised measures 1.07:1 against the
-              // canvas — no perceptible bubble at all, just floating text. It
-              // now sits on `surface` with an input-line edge, which is the
-              // 3:1 that WCAG 1.4.11 asks of a meaningful boundary.
-              backgroundColor: isSent ? color.brand : color.surface,
-              borderWidth: isSent ? 0 : 1,
-              borderColor: isSent ? "transparent" : color.inputLine,
-              paddingBottom: 6,
-            }}
+            style={
+              isProse
+                ? {
+                    maxWidth: TEXT_BUBBLE_MAX_WIDTH,
+                    borderRadius: radius.card,
+                    // The frame fills a received bubble with the hairline tone
+                    // and draws no edge at all. The surface + input-line
+                    // treatment this replaces was chosen when the bubble had no
+                    // fill to separate it from the canvas; now it has one, and
+                    // a bubble is not an interactive control, so WCAG 1.4.11
+                    // does not govern its boundary. `line` resolves to #E6E6E6
+                    // on light and #292929 on dark — the design's own pair.
+                    backgroundColor: isSent ? color.brand : color.line,
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                  }
+                : {
+                    // Attachments keep the bordered surface they had: a 200pt
+                    // photo or a file card carries its own ground, and the text
+                    // bubble's 12pt inset would frame it in purple.
+                    maxWidth: "80%",
+                    borderRadius: radius.card,
+                    backgroundColor: isSent ? color.brand : color.surface,
+                    borderWidth: isSent ? 0 : 1,
+                    borderColor: isSent ? "transparent" : color.inputLine,
+                    padding: 4,
+                  }
+            }
           >
             {renderMessageContent()}
             {timestamp ? (
-              // Inline and trailing, not stacked on its own line. Stacked, the
-              // timestamp set the bubble's minimum width and doubled its
-              // height: a two-character message produced a 77pt bubble, and
-              // seven short messages filled 62% of the viewport.
+              // Trailing, and set on the caption step with its leading pulled
+              // in, so it costs the bubble ~14pt rather than a second line.
+              // Stacked at body size the timestamp set the bubble's minimum
+              // width and doubled its height: a two-character message produced
+              // a 77pt bubble, and seven of them filled 62% of the viewport.
+              // The frame draws no timestamp at all; the app keeps one.
               <Text
                 fontSize="text-xs"
+                lineHeight={14}
                 style={{
                   // Was white at 75% on the brand fill — 3.27:1, under the
                   // 4.5:1 a 12pt regular string needs. Solid white is 5.01:1,
-                  // the value the design system already records for this pair.
+                  // the value the design system already records for this pair,
+                  // so the sent side keeps it rather than taking a secondary.
                   color: isSent ? color.onBrand : color.textDim,
                   textAlign: "right",
-                  paddingHorizontal: 12,
-                  marginTop: -2,
+                  marginTop: 2,
                 }}
               >
                 {formatMessageTime(timestamp)}

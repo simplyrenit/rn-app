@@ -25,13 +25,33 @@ import {
 } from "react-native-heroicons/outline";
 import { PaperAirplaneIcon, } from "react-native-heroicons/solid";
 import { IconButton } from "@/components/core/icon-button";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, fontFamily, radius, ink, colors } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, fontFamily, fontSize, radius, ink, colors } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { commitFeedback } from "@/lib/haptics";
 import { toast } from "@/lib/toast";
 
 const StyledInput = styled(TextInput);
 const StyledTO = styled(TouchableOpacity);
+
+/** Space between the input pill and the send button, per the frame. */
+const COMPOSER_GAP = 4;
+
+/**
+ * Width of a glyph control inside the pill. 20pt icon + 4 either side, so two
+ * of them abut with the 8pt gap the frame draws between the glyphs themselves.
+ */
+const GLYPH_BOX = 28;
+
+/**
+ * The pill's hairline, and the height its content may take.
+ *
+ * React Native lays borders out inside the box, so a 44pt input inside a 1pt
+ * edge drew a 46pt pill. Subtracting the two edges puts the pill on the frame's
+ * 44 exactly, and the field still grows from there.
+ */
+const PILL_BORDER = 1;
+const INPUT_MIN_HEIGHT = MIN_TOUCH_TARGET - PILL_BORDER * 2;
+const INPUT_MAX_HEIGHT = 100;
 
 interface Props {
   onMakeOfferPress: () => void;
@@ -56,7 +76,7 @@ export function ChatInput({
   conversationId,
 }: Props) {
   const [message, setMessage] = React.useState("");
-  const [inputHeight, setInputHeight] = useState(44);
+  const [inputHeight, setInputHeight] = useState(INPUT_MIN_HEIGHT);
   const [selectedFile, setSelectedFile] = useState<MediaPreview | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<MediaPreview | null>(null);
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
@@ -67,9 +87,11 @@ export function ChatInput({
 
   const { sendMessage } = useChat();
 
+  // Collapse back to one line after a send; `onContentSizeChange` does not
+  // always fire on the way down.
   React.useEffect(() => {
     if (!message) {
-      setInputHeight(44);
+      setInputHeight(INPUT_MIN_HEIGHT);
     }
   }, [message]);
 
@@ -278,17 +300,16 @@ export function ChatInput({
     <View
       // Symmetric gutters. The field used to sit 18pt from the left while the
       // send button sat 29pt from the right, with 20pt of internal padding on
-      // one side of the field and 10pt on the other.
+      // one side of the field and 10pt on the other. The frame draws no rule
+      // above the row and no raised ground under it: the pill's own hairline is
+      // the only edge, so the row sits on the canvas like the message list.
       style={{
         flexDirection: "row",
         alignItems: "flex-end",
-        gap: 8,
+        gap: COMPOSER_GAP,
         paddingHorizontal: SCREEN_GUTTER,
-        paddingTop: 8,
-        paddingBottom: 8,
-        borderTopWidth: 1,
-        borderTopColor: color.line,
-        backgroundColor: color.surface,
+        paddingVertical: 16,
+        backgroundColor: color.canvas,
       }}
     >
       {/* Input */}
@@ -298,11 +319,14 @@ export function ChatInput({
           flexDirection: "row",
           alignItems: "center",
           minHeight: MIN_TOUCH_TARGET,
-          paddingLeft: 4,
-          paddingRight: 4,
+          paddingLeft: 16,
+          // 8, not the frame's 12: each glyph sits in a 28pt box (below), which
+          // already carries 4 of inset on each side. Drawn, the tag's right
+          // edge lands 12 from the pill.
+          paddingRight: 8,
           borderRadius: radius.full,
-          borderWidth: 1,
-          borderColor: color.inputLine,
+          borderWidth: PILL_BORDER,
+          borderColor: color.line,
           backgroundColor: color.canvas,
         }}
       >
@@ -315,34 +339,43 @@ export function ChatInput({
           onChangeText={handleMessageChange}
           style={{
             flex: 1,
-            paddingHorizontal: 12,
             textAlignVertical: "center",
             height: inputHeight,
-            maxHeight: 100,
+            maxHeight: INPUT_MAX_HEIGHT,
             color: color.text,
+            // A bare TextInput takes the system face unless it is told
+            // otherwise; the rest of the screen is Plus Jakarta.
             fontFamily: fontFamily.regular,
-            fontSize: 16,
+            fontSize: fontSize.sm,
           }}
           editable={!isBlocked}
           onContentSizeChange={(event) => {
             const { height } = event.nativeEvent.contentSize;
             setInputHeight((currentHeight) => {
-              const nextHeight = Math.min(Math.max(44, height), 100);
+              const nextHeight = Math.min(
+                Math.max(INPUT_MIN_HEIGHT, height),
+                INPUT_MAX_HEIGHT
+              );
               return currentHeight === nextHeight ? currentHeight : nextHeight;
             });
           }}
         />
+        {/* 28 wide by a full 44 tall, abutting: that is the widest target the
+            frame's 8pt gap between the two glyphs allows without the two hit
+            areas overlapping each other, which is worse than a narrow one. */}
         <IconButton
-          size={36}
+          size={MIN_TOUCH_TARGET}
+          style={{ width: GLYPH_BOX }}
           disabled={isBlocked}
           onPress={handleOpenAttachmentSheet}
           accessibilityLabel="Attach a photo or file"
         >
-          <PaperClipIcon size={20} color={color.textBody} />
+          <PaperClipIcon size={20} color={color.textDim} />
         </IconButton>
 
         <IconButton
-          size={36}
+          size={MIN_TOUCH_TARGET}
+          style={{ width: GLYPH_BOX }}
           disabled={isBlocked}
           onPress={onMakeOfferPress}
           // The control was an unlabelled percent-in-a-badge glyph that nobody
@@ -350,7 +383,7 @@ export function ChatInput({
           accessibilityLabel="Make an offer"
           accessibilityHint="Propose dates and a price for this item"
         >
-          <TagIcon size={20} color={color.textBody} />
+          <TagIcon size={20} color={color.textDim} />
         </IconButton>
       </View>
 
