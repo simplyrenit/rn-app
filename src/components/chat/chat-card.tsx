@@ -168,7 +168,9 @@ export function ChatCard({
               text column. */}
           <Text
             fontSize="text-xs"
-            tone={unread ? "brand" : "dim"}
+            // The frame draws the time in the tertiary tone whether or not the row
+            // is unread; the badge carries the unread state.
+            tone="dim"
             style={{ position: "absolute", top: TIME_TOP, right: SCREEN_GUTTER }}
           >
             {formatListTimestamp(lastMessageTime)}

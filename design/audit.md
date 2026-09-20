@@ -885,3 +885,7 @@ Open: no dark frame or capture for the menu (no scrim leaves a `#0F0F0F` panel o
 the Notifications rows and dot have never been seen with data; the menu is anchored to the icon box, so it drifts at large
 text sizes; a refresh that resolves while the open-time PATCHes are in flight can overwrite the fresher list with the older
 snapshot; the outer row `Text` injects a 27pt line height; Android `Modal` status-bar offset.
+
+Chat list, unread state (second QA account, 2026-09-20): with a conversation that has 2 unread, the badge is a 24pt brand
+circle below the time on the 24 gutter as the frame draws it; the time is now always the tertiary tone (the app had
+tinted it brand when unread; the frame does not). The capture shows another user's photo and names and is not committed.
