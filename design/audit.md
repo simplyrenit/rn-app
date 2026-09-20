@@ -917,3 +917,9 @@ dark), a NaN price, and a dead local. Open: the sheets hand-roll `FieldShell` an
 (which carries `minDate` and the day hit slop, so past dates are selectable and day cells are under 44pt); the inactive
 action is a second disabled treatment next to `Button`'s; the sheets have no labelled dismiss control (the frames draw
 none); `BackButton` now fails silently outside a navigator; the raw amount `TextInput` ignores the font-scale cap.
+
+Dark check, chat thread and offer sheets (second QA account, 2026-09-20): the thread (header hairline, sent bubble, product card,
+composer pill with the control edge) reads correctly on black; Check Availability shows past dates greyed by the new
+`minDate`, the selected range in the brand fill with the in-range days in brandText on the wash (legible), the month rule and
+the card edge visible; Make Offer's date fields, Amount and Security Deposit boxes are visible on the sheet surface with the
+control edge. Nothing was sent. Simulator restored to light appearance afterwards.
