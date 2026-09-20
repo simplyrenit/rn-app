@@ -918,6 +918,9 @@ export default function ChatDetailsScreen() {
               },
             }}
             markingType="custom"
+            // Local today, not UTC: an availability check for a past date is
+            // meaningless (the shared range picker guards this the same way).
+            minDate={moment().format("YYYY-MM-DD")}
             markedDates={{
               [selectedRange.startDate]: {
                 customStyles: {

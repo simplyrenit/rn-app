@@ -48,7 +48,18 @@ export function BackButton({
 
   return (
     <IconButton
-      onPress={onPress ?? (() => navigation?.goBack())}
+      onPress={
+        onPress ??
+        (() => {
+          if (navigation) {
+            navigation.goBack();
+          } else if (__DEV__) {
+            console.warn(
+              "BackButton has no navigator and no onPress: it does nothing here."
+            );
+          }
+        })
+      }
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
       disabled={disabled}
