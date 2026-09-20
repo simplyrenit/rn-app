@@ -79,6 +79,8 @@ const documentExists = (
 // Measured off the Figma Check Availability and Make Offer sheets: a 44pt title
 // row, a 72pt product thumbnail, 48pt fields at the button radius on the hairline.
 const OFFER_FIELD_HEIGHT = 48;
+/** The Block & Report frame's reason box. */
+const BLOCK_REASON_HEIGHT = 200;
 const OFFER_THUMB = 72;
 
 function SheetTitle({ title }: { title: string }) {
@@ -268,6 +270,7 @@ export default function ChatDetailsScreen() {
   const [headerLoading, setHeaderLoading] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
   const [blockReason, setBlockReason] = useState("");
+  const [blocking, setBlocking] = useState(false);
   const [blockedBy, setBlockedBy] = useState("");
   const blockAndReportInFlight = useRef(false);
 
@@ -518,6 +521,7 @@ export default function ChatDetailsScreen() {
     if (blockAndReportInFlight.current) return;
 
     blockAndReportInFlight.current = true;
+    setBlocking(true);
     try {
       await reportUser(participantDetails.userId, reason);
       await blockUser(participantDetails.userId, reason, conversationId);
@@ -529,6 +533,7 @@ export default function ChatDetailsScreen() {
       toast.error("Couldn’t block and report this user");
     } finally {
       blockAndReportInFlight.current = false;
+      setBlocking(false);
     }
   };
 
@@ -715,63 +720,67 @@ export default function ChatDetailsScreen() {
 
       <CustomBottomSheetModal
         ref={bottomSheetRef}
-        // snapPoints={["60%"]}
+        snapPoints={["52%"]}
+        frame
         isDark={isDark}
+        onDismiss={() => setBlockReason("")}
       >
-        <View className="w-[95%] mx-auto">
-          <View className="flex items-center mb-4">
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
+        <SheetTitle title="Block & Report" />
+
+        {/* The frame's 200pt box: radius 16, hairline, 16 padding, placeholder
+            "Share your thoughts...". The value is controlled now (it was not, so
+            the reason typed before a Cancel came back on the next open). */}
+        <TextInput
+          value={blockReason}
+          onChangeText={setBlockReason}
+          placeholder="Share your thoughts..."
+          placeholderTextColor={color.placeholder}
+          multiline
+          accessibilityLabel="Reason for blocking and reporting"
+          style={{
+            height: BLOCK_REASON_HEIGHT,
+            marginTop: 16,
+            marginHorizontal: SCREEN_GUTTER,
+            padding: 16,
+            textAlignVertical: "top",
+            borderWidth: 1,
+            borderColor: color.line,
+            borderRadius: radius.card,
+            color: color.text,
+            fontFamily: fontFamily.regular,
+            fontSize: fontSize.md,
+          }}
+        />
+
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 8,
+            marginTop: 32,
+            marginBottom: 16,
+            paddingHorizontal: SCREEN_GUTTER,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Button
+              variant="outline"
+              onPress={() => {
+                setBlockReason("");
+                bottomSheetRef.current?.close();
+              }}
+            >
+              Cancel
+            </Button>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button
+              variant="warning"
+              onPress={handleBlockPress}
+              disabled={!blockReason.trim()}
+              loading={blocking}
             >
               Block & Report
-            </Text>
-          </View>
-
-          <TextInput
-            placeholder="Share your thoughts..."
-            multiline
-            // value={blockReason}
-            onChangeText={(text) => setBlockReason(text)}
-            style={{
-              textAlignVertical: "top",
-            }}
-            className={`h-52 w-full mt-4 border ${
-              isDark
-                ? "border-line-dark text-white"
-                : "border-line-light text-black"
-            } rounded-card p-3 text-base`}
-            placeholderTextColor={ink.dim(isDark)}
-          />
-
-          <View className="flex-row justify-between mt-6 mb-0">
-            <TouchableOpacity
-              onPress={() => bottomSheetRef.current?.close()}
-              className={`bg-surface-light border ${
-                isDark
-                  ? "border-line-dark text-white"
-                  : "border-line-light text-black"
-              } p-3 rounded-input flex-1 mr-2`}
-            >
-              <Text
-                className="text-center text-black"
-                fontWeight="font-bold"
-              >
-                Cancel
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="bg-danger-light p-3 rounded-input flex-1 ml-2"
-              onPress={handleBlockPress}
-            >
-              <Text
-                fontWeight="font-bold"
-                className="text-center text-white"
-              >
-                Block & Report
-              </Text>
-            </TouchableOpacity>
+            </Button>
           </View>
         </View>
       </CustomBottomSheetModal>

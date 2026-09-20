@@ -23,6 +23,8 @@ interface CustomBottomSheetModalProps {
    * other sheet keeps the default 40x4 grabber and 50% scrim.
    */
   frame?: boolean;
+  /** Opt-in: runs when the sheet has closed, however it was closed. */
+  onDismiss?: () => void;
 }
 
 const CustomBottomSheetModal = forwardRef<
@@ -36,6 +38,7 @@ const CustomBottomSheetModal = forwardRef<
       isDark,
       scrollView = true,
       frame = false,
+      onDismiss,
     },
     ref
   ) => {
@@ -123,6 +126,7 @@ const CustomBottomSheetModal = forwardRef<
         snapPoints={adjustedSnapPoints}
         backdropComponent={renderBackdrop}
         onChange={(index) => setIsOpen(index >= 0)}
+        onDismiss={onDismiss}
         enablePanDownToClose
         enableOverDrag={false}
         handleStyle={{

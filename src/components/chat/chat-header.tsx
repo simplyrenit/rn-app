@@ -2,7 +2,6 @@ import { useTypedNavigation } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Image,
   LayoutChangeEvent,
   Modal,
@@ -250,25 +249,16 @@ export function ChatHeader({
               </>
             ) : null}
 
-            {/* Blocking and reporting are separate decisions with separate
-                consequences, and neither was confirmed — one tap did both. */}
+            {/* The frame goes straight from the menu to the Block & Report sheet,
+                which is itself the confirmation: a reason is required and it has
+                its own Cancel. The alert that used to sit between the two asked the
+                same question twice. */}
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Block and report this person"
               onPress={() => {
                 setMenuVisible(false);
-                Alert.alert(
-                  "Block and report?",
-                  "They will not be able to message you, and we will review the conversation.",
-                  [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                      text: "Block and report",
-                      style: "destructive",
-                      onPress: onReportPress,
-                    },
-                  ]
-                );
+                onReportPress();
               }}
               className="px-4 py-2 items-center flex-row"
               style={{ minHeight: MIN_TOUCH_TARGET }}
