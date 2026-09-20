@@ -194,11 +194,6 @@ const MyProductScreen: React.FC = () => {
           // Only the failing states were ever labelled, so a published listing
           // was told apart from a broken one by the absence of a badge. Every
           // row now says what state it is in, in one place and one language.
-          //
-          // `MyProductCard` still draws its own "Pending" chip over the photo,
-          // so that one state reads twice until the chip is removed there — it
-          // lives in `components/core`, which this lane does not own. Faking
-          // `adminApproved` to suppress it would be worse than the repetition.
           const status = resolveListingStatus({
             moderationLabels: item.moderation_labels,
             adminApproved: item.admin_approved,

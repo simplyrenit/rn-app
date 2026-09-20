@@ -27,8 +27,13 @@ export function resolveListingStatus({
 }: Source): ListingStatus | null {
   if (moderationLabels && moderationLabels.length > 0) return "flagged";
   if (adminApproved === true) return "live";
-  if (adminApproved === false) return "rejected";
-  if (adminApproved === null) return "pending";
+  // The backend's `admin_approved` defaults to False on every new listing and is
+  // only set to null when an edit sends it back for re-moderation, so False is
+  // "not approved yet", not "rejected": the API has no field that separates the
+  // two. Calling every fresh listing "Rejected" was wrong; until the backend
+  // exposes a real rejection status, both read as pending. `rejected` stays in
+  // the type for that day.
+  if (adminApproved === false || adminApproved === null) return "pending";
   return null;
 }
 
