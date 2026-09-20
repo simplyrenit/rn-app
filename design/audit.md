@@ -873,3 +873,15 @@ tertiary time below, no rules between rows; the 10pt brand dot for items that we
 local state, since opening marks them read). Not verified on device: the rows and the dot (no data; a fixture
 notification would need a second account acting on this one), and dark. The header and hairline were checked in the
 capture only. Frame sample text and names are data and were not copied. Capture not committed.
+
+## Review 7 (Chat menu, Notifications) — 2026-09-20
+
+Fixed: pull-to-refresh on Notifications now runs the same load-and-mark path as opening (dots accumulate, new items get
+marked read, unmounted guard); `markAllAsRead` uses `allSettled` so one failed PATCH keeps the others; the menu rows use
+16 side padding so the label has room inside the 196pt panel and the icon sits 24 from its edge as in the frame; the menu's
+dismissal target is labelled; dead `right`/`Dimensions` removed; list footer inset on Notifications.
+
+Open: no dark frame or capture for the menu (no scrim leaves a `#0F0F0F` panel on black separated by a 1.8:1 hairline);
+the Notifications rows and dot have never been seen with data; the menu is anchored to the icon box, so it drifts at large
+text sizes; a refresh that resolves while the open-time PATCHes are in flight can overwrite the fresher list with the older
+snapshot; the outer row `Text` injects a 27pt line height; Android `Modal` status-bar offset.

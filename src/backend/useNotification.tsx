@@ -43,29 +43,32 @@ export function useNotifications() {
       return;
     }
 
-    try {
-      const updatedNotifications = await Promise.all(
-        unread.map((notification) =>
-          axiosInstance
-            .patch(`${NOTIFICATIONS_ENDPOINT}${notification.id}/`, {
-              is_read: true,
-            })
-            .then((response) => response.data)
-        )
-      );
+    // allSettled, so one failed PATCH does not throw away the ones that went
+    // through: those rows are read on the server and should be read here too.
+    const results = await Promise.allSettled(
+      unread.map((notification) =>
+        axiosInstance
+          .patch(`${NOTIFICATIONS_ENDPOINT}${notification.id}/`, {
+            is_read: true,
+          })
+          .then((response) => response.data)
+      )
+    );
 
-      // Keep the ones that were already read; replacing the list with only the
-      // patched ones would drop them from the screen.
-      const updatedById = new Map(
-        updatedNotifications.map((notification) => [notification.id, notification])
-      );
-      setNotifications(
-        items.map((notification) => updatedById.get(notification.id) ?? notification)
-      );
-    } catch (error) {
-      console.error("Error marking notifications as read:", error);
-      return;
-    }
+    const updatedById = new Map<string, Notification>();
+    results.forEach((result) => {
+      if (result.status === "fulfilled") {
+        updatedById.set(result.value.id, result.value);
+      } else {
+        console.error("Error marking a notification as read:", result.reason);
+      }
+    });
+
+    // Keep the ones that were already read; replacing the list with only the
+    // patched ones would drop them from the screen.
+    setNotifications(
+      items.map((notification) => updatedById.get(notification.id) ?? notification)
+    );
   }, [access_token, isAuthenticated]);
 
   return { notifications, getNotifications, markAllAsRead };

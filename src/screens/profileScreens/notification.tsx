@@ -7,7 +7,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import { ScrollView, View } from "react-native";
 import { useEffect } from "react";
-import { ink, radius, SCREEN_GUTTER } from "@/lib/design-tokens";
+import { density, ink, radius, SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { RefreshControl } from "react-native";
 import { Avatar, EmptyState } from "@/components/core";
@@ -29,33 +29,43 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
   // and the frame's brand dot is for exactly those.
   const [unreadOnOpen, setUnreadOnOpen] = React.useState<Set<string>>(new Set());
 
+  const mounted = React.useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  // One path for opening and for pull-to-refresh: fetch, remember what is unread
+  // right now (added to what was, so a refresh does not lose earlier dots), then
+  // mark it read. A refresh used to fetch only, leaving anything that arrived
+  // meanwhile unread on the server and without a dot.
+  const load = React.useCallback(async () => {
+    const fetchedNotifications = await getNotifications();
+    if (!mounted.current) return;
+    setUnreadOnOpen((previous) => {
+      const next = new Set(previous);
+      fetchedNotifications
+        .filter((notification) => !notification.is_read)
+        .forEach((notification) => next.add(notification.id));
+      return next;
+    });
+    await markAllAsRead(fetchedNotifications);
+  }, [getNotifications, markAllAsRead]);
+
   const handleRefresh = React.useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await getNotifications();
+      await load();
     } finally {
       setIsRefreshing(false);
     }
-  }, [getNotifications]);
+  }, [load]);
 
   useEffect(() => {
-    const bootstrapNotifications = async () => {
-      const fetchedNotifications = await getNotifications();
-      setUnreadOnOpen(
-        new Set(
-          fetchedNotifications
-            .filter((notification) => !notification.is_read)
-            .map((notification) => notification.id)
-        )
-      );
-
-      if (fetchedNotifications.length > 0) {
-        await markAllAsRead(fetchedNotifications);
-      }
-    };
-
-    void bootstrapNotifications();
-  }, [getNotifications, markAllAsRead]);
+    void load();
+  }, [load]);
 
   return (
     <NonScrollableContainer>
@@ -65,7 +75,9 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
 
       <ScrollView
         contentContainerStyle={
-          notifications.length === 0 ? { flexGrow: 1, justifyContent: "center" } : undefined
+          notifications.length === 0
+            ? { flexGrow: 1, justifyContent: "center" }
+            : { paddingBottom: density.listFooterCompact }
         }
         refreshControl={
           <RefreshControl

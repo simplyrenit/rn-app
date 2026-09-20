@@ -3,7 +3,6 @@ import { useTheme } from "@/lib/theme";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
-  Dimensions,
   Image,
   LayoutChangeEvent,
   Modal,
@@ -66,15 +65,12 @@ export function ChatHeader({
   const [menuVisible, setMenuVisible] = useState(false);
   const { isDark, color, shadow } = useTheme();
 
-  const [modalPosition, setModalPosition] = useState({ top: 0, right: 0 });
+  const [modalPosition, setModalPosition] = useState({ top: 0 });
   const ellipsisRef = useRef<TouchableOpacity>(null);
 
   const updateModalPosition = () => {
     ellipsisRef.current?.measure((fx, fy, width, height, px, py) => {
-      setModalPosition({
-        top: py + height,
-        right: Dimensions.get("window").width - (px + width),
-      });
+      setModalPosition({ top: py + height });
     });
   };
 
@@ -206,7 +202,11 @@ export function ChatHeader({
         {/* The frame draws this menu as a popover over the live thread, with no
             dimming. The Pressable stays full-screen so a tap outside still
             dismisses it. */}
-        <Pressable className="flex-1" onPress={() => setMenuVisible(false)}>
+        <Pressable
+          className="flex-1"
+          accessibilityLabel="Close menu"
+          onPress={() => setMenuVisible(false)}
+        >
           <View
             style={[
               styles.modalContent,
@@ -231,7 +231,7 @@ export function ChatHeader({
                     setMenuVisible(false);
                     onViewListing();
                   }}
-                  className="px-gutter py-2 items-center flex-row"
+                  className="px-4 py-2 items-center flex-row"
                   style={{ minHeight: MIN_TOUCH_TARGET }}
                 >
                   <ShoppingBagIcon color={ink.body(isDark)} size={20} />
@@ -270,7 +270,7 @@ export function ChatHeader({
                   ]
                 );
               }}
-              className="px-gutter py-2 items-center flex-row"
+              className="px-4 py-2 items-center flex-row"
               style={{ minHeight: MIN_TOUCH_TARGET }}
             >
               <ExclamationTriangleIcon color={ink.danger(isDark)} size={20} />
