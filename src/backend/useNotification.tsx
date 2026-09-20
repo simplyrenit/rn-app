@@ -36,13 +36,16 @@ export function useNotifications() {
   }, [access_token, isAuthenticated]);
 
   const markAllAsRead = useCallback(async (items: Notification[]) => {
-    if (!isAuthenticated || !access_token || items.length === 0) {
+    // Only what is still unread: opening the screen used to PATCH every
+    // notification on the account each time, read or not.
+    const unread = items.filter((notification) => !notification.is_read);
+    if (!isAuthenticated || !access_token || unread.length === 0) {
       return;
     }
 
     try {
       const updatedNotifications = await Promise.all(
-        items.map((notification) =>
+        unread.map((notification) =>
           axiosInstance
             .patch(`${NOTIFICATIONS_ENDPOINT}${notification.id}/`, {
               is_read: true,
@@ -51,7 +54,14 @@ export function useNotifications() {
         )
       );
 
-      setNotifications(updatedNotifications);
+      // Keep the ones that were already read; replacing the list with only the
+      // patched ones would drop them from the screen.
+      const updatedById = new Map(
+        updatedNotifications.map((notification) => [notification.id, notification])
+      );
+      setNotifications(
+        items.map((notification) => updatedById.get(notification.id) ?? notification)
+      );
     } catch (error) {
       console.error("Error marking notifications as read:", error);
       return;
