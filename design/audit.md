@@ -923,3 +923,29 @@ composer pill with the control edge) reads correctly on black; Check Availabilit
 `minDate`, the selected range in the brand fill with the in-range days in brandText on the wash (legible), the month rule and
 the card edge visible; Make Offer's date fields, Amount and Security Deposit boxes are visible on the sheet surface with the
 control edge. Nothing was sent. Simulator restored to light appearance afterwards.
+
+## Post wizard steps 4 to 7 on device (light) — 2026-09-20
+
+Walked with placeholder `AGENT_QA_wizardcheck` values, local state only: Post -> Electronics -> Laptops -> form (San Francisco
+default location after you granted location permission; the "Country not supported" toast is the app's own guard for non-IN/US/UK
+addresses, dismissed by the flow) -> two photos from the simulator library (the system picker needs no app permission) ->
+crop -> availability -> review. Nothing was published: "Post product" was never pressed (it navigates to HangTight, which uploads).
+
+Step 4 (photos): 2-up grid at radius 16, the add tile, the Next button; captured `design/app/post-images-photos.light.iphone16e.png`.
+Fixed: the Next label sat at the left of the button (`justify-between` on a single label); it is now centred with the 6pt
+chevron gap, on both the image and cover steps.
+
+Step 5 (cover, frame `1:13698`): rewritten to the frame: 24 padding, two square tiles 24 apart at radius 16 (was a 160pt strip),
+the chosen tile a 2pt brand edge with a 40% brand wash and a mini check-circle (was a Lottie tick on a brand fill), the "Crop
+Image" heading, a 200pt crop preview at radius 16 on the hairline (was 176pt square), a 20pt info icon, tertiary caption. The
+native crop tool (`expo-crop-image`) and its aspect ratio are unchanged. The wash is `rgba(99,91,232,0.4)`, a raw colour: the
+frame's 40% brand has no token, add one if it is reused. Shared with the edit-cover screen (same component).
+
+Step 6 (availability, frame `1:13729`): month title 20 regular in the secondary tone, month row 54 tall, the heading 16 bold in the
+secondary tone. Not matched: uppercase weekday names (needs a calendar locale), the frame's white "Add date log" outline
+button (the app's is grey while no date is chosen), and the range colours (the app marks unavailable days in danger red; the
+frame shows none).
+
+Step 7 (review, frame `1:14002`): already on the Product Details components (hero, title, spec strip, bottom bar with "Post
+product"), so it inherits that pass; not measured separately. The frame's share icon on the title row is not drawn (nothing to
+share before posting). Frames `1:13817` and `1:13908` (availability with dates chosen) were not reached.
