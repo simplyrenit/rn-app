@@ -25,7 +25,6 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
 import {
-  BackButton,
   Button,
   StaticContainer,
   Text,
@@ -54,10 +53,15 @@ import { useAuthContext } from "@/context/auth-context";
 import { useAuth } from "@/backend/auth";
 
 const StyledImage = styled(Image);
+
+const SEARCH_HEIGHT = 48;
+/** The field's height inside its 1pt border, so the input fills it and centres its text. */
+const SEARCH_INNER = SEARCH_HEIGHT - 2;
 import { Modal, View, StyleSheet } from "react-native";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
+import { EditStepHeader } from "@/components/post/edit-step-header";
 import { useRoute } from "@react-navigation/native";
-import { ink, colors, radius, SCREEN_GUTTER, space, density } from "@/lib/design-tokens";
+import { ink, colors, radius, SCREEN_GUTTER, density } from "@/lib/design-tokens";
 
 const LOCATION_LOG_PREFIX = "[post/location-modal]";
 const LOCATION_FETCH_TIMEOUT_MS = 12000;
@@ -566,33 +570,22 @@ const LocationModal = ({}) => {
 
   return (
     <SafeAreaView
-      className={`flex-1 ${isDarkMode ? "bg-canvas-dark" : "bg-surface-light"}`}
+      // The canvas token, so the header and the safe-area band match the panel
+      // below the map; the class it replaces was a lighter grey in dark.
+      style={{ flex: 1, backgroundColor: ink.canvas(isDarkMode) }}
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style={isDarkMode ? "light" : "dark"} />
         <View className="flex-1 ">
-          <View className="px-gutter">
-            {/* <HeaderIndicator percentage={85} /> */}
-            <View className="flex flex-row items-center py-4">
-              <BackButton
-                onPress={() => {
-                  cancelLocationRequest(route.params?.requestId);
-                  navigation.goBack();
-                }}
-              />
-              <View style={{ flex: 1, alignItems: "center" }}>
-                <Text
-                  fontSize="text-xl"
-                  fontWeight="font-bold"
-                  className="tracking-wide"
-                >
-                  Choose Address
-                </Text>
-              </View>
-            </View>
-          </View>
+          <EditStepHeader
+            title="Choose Address"
+            onBack={() => {
+              cancelLocationRequest(route.params?.requestId);
+              navigation.goBack();
+            }}
+          />
 
-          <View className="space-y-5 flex-1 ">
+          <View className="flex-1">
             {!hasPermission && (
               <>
                 <StaticContainer>
@@ -676,14 +669,6 @@ const LocationModal = ({}) => {
 
                 <View
                   style={{
-                    paddingVertical: SCREEN_GUTTER,
-                    paddingHorizontal: SCREEN_GUTTER,
-                  }}
-                  className="rounded-t-3xl"
-                ></View>
-
-                <View
-                  style={{
                     backgroundColor: ink.canvas(isDarkMode),
                     borderTopWidth: 2,
                     borderColor: ink.line(isDarkMode),
@@ -721,17 +706,24 @@ const LocationModal = ({}) => {
                         )}
 
                         <View
-                          className={`flex-row pl-3 min-h-11 rounded-card border mb-4 ${
-                            isDarkMode
-                              ? "border-line-dark bg-surface-dark"
-                              : "border-line-light bg-surface-light"
-                          }`}
-                          style={{ alignItems: "flex-start" }}
+                          // The control edge, not the hairline (1.3:1 on the dark
+                          // canvas), on the 48pt field the Chat search draws.
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "flex-start",
+                            paddingLeft: 12,
+                            minHeight: SEARCH_HEIGHT,
+                            marginBottom: 16,
+                            borderWidth: 1,
+                            borderRadius: radius.button,
+                            borderColor: ink.inputLine(isDarkMode),
+                            backgroundColor: ink.surface(isDarkMode),
+                          }}
                         >
                           <MagnifyingGlassIcon
                             color={ink.body(isDarkMode)}
                             size={24}
-                            style={{ marginTop: space.sm }}
+                            style={{ marginTop: (SEARCH_INNER - 24) / 2 }}
                           />
                           <GooglePlacesAutocomplete
                             ref={googlePlacesRef}
@@ -744,9 +736,9 @@ const LocationModal = ({}) => {
                             enablePoweredByContainer={false}
                             styles={{
                               textInput: {
-                                height: "100%",
+                                height: SEARCH_INNER,
                                 backgroundColor: ink.surface(isDarkMode),
-                                borderRadius: radius.card,
+                                borderRadius: radius.button,
                                 zIndex: 10,
                                 color: ink.text(isDarkMode),
                                 fontSize: 16,

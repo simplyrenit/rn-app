@@ -1006,3 +1006,13 @@ Follow-ups from the eleventh review (2026-09-20):
 - Signed out and signed in now close the profile block with the same 2pt rule and open the list with the same padding; only the signed-out list adds a second gap at its foot (no Logout below it).
 - The gate is `useRoute().name === "Profile"`, a bare string against an untyped tab navigator: renaming the tab would silently remove the signed-out list. Left as is; the same literal was compared before.
 Verified on the device after the change: a one-line caption gives the same result as before (logo clear above the chip). A two-line caption was not seen on a real listing (none of the QA listings has a place name long enough), so the wrapped case is covered by the measurement logic, not by a capture.
+
+## Choose Address (Post wizard step 3 map picker, 2026-09-20, light + dark)
+
+No Figma frame exists for this screen, so it was audited against the tokens and the neighbouring wizard screens (captures `design/app/choose-address.{light,dark}.iphone16e.png`). Fixed in `src/screens/post-screens/location-modal.tsx`:
+- The hand-rolled 24pt title (off-centre, `tracking-wide`, back control at the 24 gutter) is now `EditStepHeader`, the 16pt inset / 44pt row / 18pt bold title every other wizard and edit screen uses; its `onBack` still cancels the pending location request before going back.
+- A 48pt-tall empty spacer plus a `space-y-5` gap sat between the map and the panel and showed as a dead white band; both are gone and the map fills to the panel.
+- The search field was 44pt on the hairline (`border-line-*`, 1.3:1 on the dark canvas) at `radius.card`; it is now 48pt on the control edge (`inputLine`) at `radius.button`, with the input sized to fill the box so the placeholder centres.
+- The screen root used a class-based background that resolved to a lighter grey than the panel in dark (visible in the header and the safe-area band); it now uses the canvas token.
+
+Left as is: the map's dark style asset (`assets/mapJSON/darkModeMapStyle.json`) colours water `#a7cdf2`, a light blue that reads as a bright block in dark mode; it may be deliberate and there is no frame to say, so it needs a design ruling. The "Use current location" row keeps its short inset rule, and the nearby-places list below it is a scrolling list inside a fixed 55% panel.
