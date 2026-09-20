@@ -338,6 +338,7 @@ export default function WriteReviewScreen() {
             ]}
           >
             <Rating
+              tone="ink"
               value={rating.product}
               size={GLYPH}
               onChange={(next) =>
@@ -369,6 +370,7 @@ export default function WriteReviewScreen() {
             ]}
           >
             <Rating
+              tone="ink"
               value={rating.owner}
               size={GLYPH}
               onChange={(next) =>

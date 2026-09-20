@@ -13,7 +13,14 @@ const BACK_INSET = 16;
  * The header the profile sub-pages share: a 44pt row with a centred 18pt bold title
  * and a back control 16pt from the edge.
  */
-export function SubpageHeader({ title }: { title: string }) {
+export function SubpageHeader({
+  title,
+  onBack,
+}: {
+  title: string;
+  /** Opt-in: where the arrow goes when it is not simply "back". */
+  onBack?: () => void;
+}) {
   return (
     <View
       style={{
@@ -24,7 +31,7 @@ export function SubpageHeader({ title }: { title: string }) {
     >
       {/* First in the tree so VoiceOver reads the back control before the title. */}
       <View style={{ position: "absolute", left: BACK_INSET, top: 0 }}>
-        <BackButton />
+        <BackButton onPress={onBack} />
       </View>
       <Text accessibilityRole="header" fontSize="text-base" fontWeight="font-bold">
         {title}

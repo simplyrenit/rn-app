@@ -22,6 +22,12 @@ interface Props {
    * the new listings that need help.
    */
   showUnratedCopy?: boolean;
+  /**
+   * Opt-in. The review surfaces draw their stars in ink, as the detail and
+   * reviews frames do; the default stays gold for the search filter, which has no
+   * frame to say otherwise.
+   */
+  tone?: "gold" | "ink";
 }
 
 /**
@@ -39,6 +45,7 @@ export default function Rating({
   size = 20,
   count,
   showUnratedCopy = false,
+  tone = "gold",
 }: Props) {
   const { color } = useTheme();
   const interactive = Boolean(onChange) && !readOnly;
@@ -83,7 +90,10 @@ export default function Rating({
                   overflow: "hidden",
                 }}
               >
-                <StarSolid size={size} color={color.warning} />
+                <StarSolid
+                  size={size}
+                  color={tone === "ink" ? color.text : color.warning}
+                />
               </View>
             )}
           </View>
