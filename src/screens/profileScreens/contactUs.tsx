@@ -1,173 +1,125 @@
-import { BackButton, Text } from "@/components/core";
+import { SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { useGlobalContext } from "@/context/global-context";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
-import { ScrollView, TouchableOpacity, View, Linking } from "react-native";
+import React from "react";
+import { Linking, ScrollView, TouchableOpacity, View } from "react-native";
+import { ChevronRightIcon } from "react-native-heroicons/mini";
 import {
-  ChevronRightIcon,
   EnvelopeOpenIcon,
   PencilIcon,
   PhoneIcon,
 } from "react-native-heroicons/outline";
 
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { ink, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+// Measured off the Figma Contact Us frame: each block is padded 32 top and bottom and 24 at the sides with 16 between its
+// heading and its 44pt button, and a hairline closes each one.
+const BLOCK_PAD_V = 32;
+const BLOCK_GAP = 16;
+const HEADING_GAP = 8;
+const GLYPH = 24;
 
-interface ContactUsProps {}
+/** A block: an icon and heading, then one full-width outline button. */
+function ContactBlock({
+  icon,
+  heading,
+  label,
+  onPress,
+  accessibilityHint,
+}: {
+  icon: React.ReactNode;
+  heading: string;
+  label: string;
+  onPress: () => void;
+  accessibilityHint: string;
+}) {
+  const { color, shadow } = useTheme();
 
-const ContactUsScreen: React.FC<ContactUsProps> = () => {
-  const { theme } = useGlobalContext();
+  return (
+    <View
+      style={{
+        paddingVertical: BLOCK_PAD_V,
+        paddingHorizontal: SCREEN_GUTTER,
+        gap: BLOCK_GAP,
+        borderBottomWidth: 1,
+        borderBottomColor: color.line,
+      }}
+    >
+      <View
+        style={{ flexDirection: "row", alignItems: "center", gap: HEADING_GAP }}
+      >
+        {icon}
+        <Text
+          accessibilityRole="header"
+          fontSize="text-md"
+          fontWeight="font-bold"
+        >
+          {heading}
+        </Text>
+      </View>
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={accessibilityHint}
+        onPress={onPress}
+        style={[
+          {
+            height: MIN_TOUCH_TARGET,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+            borderRadius: radius.button,
+            borderWidth: 1,
+            borderColor: color.line,
+            backgroundColor: color.surface,
+          },
+          shadow,
+        ]}
+      >
+        <Text fontSize="text-sm" fontWeight="font-bold">
+          {label}
+        </Text>
+        <ChevronRightIcon size={GLYPH} color={color.text} />
+      </TouchableOpacity>
+    </View>
+  );
+}
 
-  const isDarkMode = theme === "dark";
+const ContactUsScreen: React.FC = () => {
+  const { color } = useTheme();
   const router = useTypedNavigation();
 
   return (
     <NonScrollableContainer>
-      <View className="flex-row items-center px-gutter pt-2">
-        <BackButton />
-        <View className="flex-1 items-center justify-center">
-          <Text role="sectionTitle" fontWeight="font-bold">
-            Contact Us
-          </Text>
-        </View>
-        <View style={{ width: MIN_TOUCH_TARGET }} />
-      </View>
+      <SubpageHeader title="Contact Us" />
 
-      <ScrollView className="">
-        <View
-          style={{ paddingVertical: wp("8%") }}
-          className={`px-gutter border-b-[0.2px] ${
-            isDarkMode ? "border-line-dark" : "border-line-light"
-          }`}
-        >
-          <View className="flex-row items-center space-x-2">
-            <EnvelopeOpenIcon
-              size={24}
-              color={ink.text(isDarkMode)}
-            />
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
-              Email us
-            </Text>
-          </View>
-          <View className="py-4">
-            <TouchableOpacity
-              onPress={() => Linking.openURL("mailto:support@simplyrenit.com")}
-              className={`flex-row h-12 rounded-card border ${
-                isDarkMode
-                  ? "bg-surface-dark border-line-dark"
-                  : "bg-surface-light border-line-light"
-              } items-center justify-center `}
-            >
-              <Text
-                className="px-2"
-                fontSize="text-sm"
-                fontWeight="font-bold"
-                style={{ lineHeight: 18 }}
-              >
-                support@simplyrenit.com
-              </Text>
-              <ChevronRightIcon
-                size={20}
-                strokeWidth={2}
-                color={ink.text(isDarkMode)}
-                style={{ marginTop: 1 }}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View
-          style={{ paddingVertical: wp("8%") }}
-          className={`px-gutter border-b-[0.2px] ${
-            isDarkMode ? "border-line-dark" : "border-line-light"
-          }`}
-        >
-          <View className="flex-row items-center space-x-2">
-            <PhoneIcon
-              size={24}
-              color={ink.text(isDarkMode)}
-            />
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
-              Call our customer support
-            </Text>
-          </View>
-          <View className="py-4">
-            <TouchableOpacity
-              onPress={() => Linking.openURL("tel:+91-7297941741")}
-              className={`flex-row h-12 rounded-card border ${
-                isDarkMode
-                  ? "bg-surface-dark border-line-dark"
-                  : "bg-surface-light border-line-light"
-              } items-center justify-center`}
-            >
-              <Text
-                className="px-2"
-                fontSize="text-sm"
-                fontWeight="font-bold"
-                style={{ lineHeight: 20 }}
-              >
-                +91-7297941741
-              </Text>
-              <ChevronRightIcon
-                size={20}
-                strokeWidth={2}
-                color={ink.text(isDarkMode)}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View
-          style={{ paddingVertical: wp("8%") }}
-          className={`px-gutter border-b-[0.2px] ${
-            isDarkMode ? "border-line-dark" : "border-line-light"
-          }`}
-        >
-          <View className="flex-row items-center space-x-2">
-            <PencilIcon
-              size={24}
-              color={ink.text(isDarkMode)}
-            />
-            <Text
-              fontSize="text-md"
-              fontWeight="font-bold"
-            >
-              Leave us your feedback
-            </Text>
-          </View>
-          <View className="py-4">
-            <TouchableOpacity
-              onPress={() => {
-                router.navigate("feedback");
-              }}
-              className={`flex-row h-12 rounded-card border ${
-                isDarkMode
-                  ? "bg-surface-dark border-line-dark"
-                  : "bg-surface-light border-line-light"
-              } items-center justify-center`}
-            >
-              <Text
-                className="px-2"
-                fontSize="text-sm"
-                fontWeight="font-bold"
-                style={{ lineHeight: 16 }}
-              >
-                Feedback & review
-              </Text>
-              <ChevronRightIcon
-                size={20}
-                strokeWidth={2}
-                color={ink.text(isDarkMode)}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+      {/* The frame leaves 4pt between the header and the first block. */}
+      <ScrollView
+        style={{ marginTop: 4 }}
+        contentContainerStyle={{ paddingBottom: density.listFooterCompact }}
+      >
+        <ContactBlock
+          icon={<EnvelopeOpenIcon size={GLYPH} color={color.text} />}
+          heading="Email us"
+          label="support@simplyrenit.com"
+          accessibilityHint="Opens your mail app"
+          onPress={() => Linking.openURL("mailto:support@simplyrenit.com")}
+        />
+        <ContactBlock
+          icon={<PhoneIcon size={GLYPH} color={color.text} />}
+          heading="Call our customer support"
+          label="+91-7297941741"
+          accessibilityHint="Starts a phone call"
+          onPress={() => Linking.openURL("tel:+91-7297941741")}
+        />
+        <ContactBlock
+          icon={<PencilIcon size={GLYPH} color={color.text} />}
+          heading="Leave us your feedback"
+          label="Feedback & Review"
+          accessibilityHint="Opens the feedback form"
+          onPress={() => router.navigate("feedback")}
+        />
       </ScrollView>
     </NonScrollableContainer>
   );

@@ -1,8 +1,7 @@
 import { useProfile } from "@/backend/profile";
-import { BackButton, StaticContainer, Text } from "@/components/core";
+import { StaticContainer, SubpageHeader, Text } from "@/components/core";
 import { MyProductCard } from "@/components/core/my-product-card";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { IconButton } from "@/components/core/icon-button";
 import {
   ListingStatusPill,
   resolveListingStatus,
@@ -13,18 +12,29 @@ import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, Share } from "react-native";
 import { EmptyState } from "@/components/core";
-import { Squares2X2Icon } from "react-native-heroicons/outline";
-import { ActivityIndicator, Dimensions, FlatList, View } from "react-native";
-import { IOSShareIcon } from "@/icons/share";
-import { heightPercentageToDP as hp } from "react-native-responsive-screen";
+import {
+  PencilSquareIcon,
+  ShareIcon,
+  Squares2X2Icon,
+} from "react-native-heroicons/outline";
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, colors } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, colors, density, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 
-const { height } = Dimensions.get("window");
 
 const GRID_GAP = 14;
+/** The frame's share row: 51pt with its hairline. */
+const SHARE_ROW_HEIGHT = 51;
+/** The frame's Edit button under each card. */
+const EDIT_BUTTON_HEIGHT = 44;
 
 /**
  * An exact column width. Two cards at "48.5%" plus a 14pt gap comes to more
@@ -94,33 +104,38 @@ const MyProductScreen: React.FC = () => {
     }
   };
 
-  const header = (
-    <View
+  // "My Products", as the Profile row and the frame name it; this screen said
+  // "My listings" at 28pt.
+  const header = <SubpageHeader
+      title="My Products"
+      onBack={goToProfile}
+      backLabel="Back to profile"
+    />;
+
+  /**
+   * The frame's row under the header: the action in words, the share glyph on the
+   * right, and a hairline closing it. It replaces the bare glyph that sat in the
+   * header, which said nothing about what it would share.
+   */
+  const shareRow = (
+    <TouchableOpacity
+      onPress={handleShare}
+      accessibilityRole="button"
+      accessibilityLabel="Share entire catalogue"
+      accessibilityHint="Opens the system share sheet"
       style={{
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 10,
-        paddingVertical: 6,
+        justifyContent: "space-between",
+        minHeight: SHARE_ROW_HEIGHT,
+        paddingHorizontal: SCREEN_GUTTER,
+        borderBottomWidth: 1,
+        borderBottomColor: color.line,
       }}
     >
-      <BackButton onPress={goToProfile} />
-      <View style={{ flex: 1, alignItems: "center" }}>
-        <Text role="screenTitle" numberOfLines={1}>
-          My listings
-        </Text>
-      </View>
-      {isAuthenticated ? (
-        <IconButton
-          onPress={handleShare}
-          accessibilityLabel="Share my listings"
-          accessibilityHint="Opens the system share sheet"
-        >
-          <IOSShareIcon size={20} color={color.text} />
-        </IconButton>
-      ) : (
-        <View style={{ width: MIN_TOUCH_TARGET }} />
-      )}
-    </View>
+      <Text fontSize="text-md">Share entire catalogue</Text>
+      <ShareIcon size={24} color={color.text} strokeWidth={1.5} />
+    </TouchableOpacity>
   );
 
   if (!authTokens || !isAuthenticated) {
@@ -133,8 +148,9 @@ const MyProductScreen: React.FC = () => {
   }
 
   return (
-    <NonScrollableContainer height={height > 700 ? 105 : 100}>
+    <NonScrollableContainer>
       {header}
+      {shareRow}
 
       <FlatList
         style={{ width: "100%" }}
@@ -169,20 +185,15 @@ const MyProductScreen: React.FC = () => {
         columnWrapperStyle={{
           justifyContent: "flex-start",
           paddingHorizontal: SCREEN_GUTTER,
-          marginTop: 16,
+          marginTop: 24,
           gap: GRID_GAP,
         }}
-        contentContainerStyle={{ paddingBottom: hp("10%") }}
+        contentContainerStyle={{ paddingBottom: density.listFooter }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           // Only the failing states were ever labelled, so a published listing
           // was told apart from a broken one by the absence of a badge. Every
           // row now says what state it is in, in one place and one language.
-          //
-          // `MyProductCard` still draws its own "Pending" chip over the photo,
-          // so that one state reads twice until the chip is removed there — it
-          // lives in `components/core`, which this lane does not own. Faking
-          // `adminApproved` to suppress it would be worse than the repetition.
           const status = resolveListingStatus({
             moderationLabels: item.moderation_labels,
             adminApproved: item.admin_approved,
@@ -205,6 +216,29 @@ const MyProductScreen: React.FC = () => {
                   <ListingStatusPill status={status} />
                 </View>
               ) : null}
+              {/* The frame's Edit button. The card already opens the editor on
+                  tap; this says so in words, at the size of a button. */}
+              <TouchableOpacity
+                onPress={() => router.navigate("editProduct", { id: item.name })}
+                accessibilityRole="button"
+                accessibilityLabel={`Edit ${item.title}`}
+                style={{
+                  marginTop: 8,
+                  height: EDIT_BUTTON_HEIGHT,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  borderRadius: radius.button,
+                  borderWidth: 1,
+                  borderColor: color.inputLine,
+                }}
+              >
+                <PencilSquareIcon size={20} color={color.text} />
+                <Text fontSize="text-md" fontWeight="font-bold">
+                  Edit
+                </Text>
+              </TouchableOpacity>
             </View>
           );
         }}

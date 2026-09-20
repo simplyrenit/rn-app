@@ -1,4 +1,4 @@
-import { radius } from "@/lib/design-tokens";
+import { aspect, radius } from "@/lib/design-tokens";
 import React from "react";
 import { View } from "react-native";
 import Skeleton from "./skeleton";
@@ -11,7 +11,7 @@ import Skeleton from "./skeleton";
 export function ProductCardSkeleton({ width }: { width?: number | string }) {
   return (
     <View style={{ width: (width as any) ?? "100%", gap: 8 }}>
-      <View style={{ width: "100%", aspectRatio: 41.5 / 44.5 }}>
+      <View style={{ width: "100%", aspectRatio: aspect.productImage }}>
         <Skeleton width="100%" height="100%" borderRadius={radius.card} />
       </View>
       <View style={{ gap: 6 }}>

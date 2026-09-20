@@ -10,6 +10,9 @@ import { FavouriteButton } from "./favourite-button";
 import { Text } from "./text";
 import { usePressFeedback } from "./use-press-feedback";
 
+// The design's Home tile rounds its photo to 8; the shared tile uses `radius.card`.
+const TILE_IMAGE_RADIUS = 8;
+
 export interface CardProps extends ItemCard {
   /**
    * The listing's coordinates. Given them, the card answers "how far away is
@@ -19,6 +22,12 @@ export interface CardProps extends ItemCard {
   coordinates?: { lat?: number; long?: number } | null;
   /** A distance the caller has already worked out. Wins over `coordinates`. */
   distance?: string | null;
+  /**
+   * The Home rails' tile, as the design draws it: an 8pt-radius photo with no
+   * hairline over it and the bare corner heart. Saved, Search results and the
+   * owner profile use it too.
+   */
+  tile?: boolean;
 }
 
 export function Card({
@@ -32,6 +41,7 @@ export function Card({
   alignItems,
   coordinates,
   distance,
+  tile = false,
 }: CardProps) {
   const router = useTypedNavigation();
   const { color } = useTheme();
@@ -49,7 +59,7 @@ export function Card({
   const imageStyle = {
     width: "100%",
     aspectRatio: aspect.productImage,
-    borderRadius: radius.card,
+    borderRadius: tile ? TILE_IMAGE_RADIUS : radius.card,
   } as const;
 
   return (
@@ -79,40 +89,51 @@ export function Card({
           )}
 
           {/* A hairline over the photo. Without it a product shot on a white
-              background bleeds into a light canvas and the tile loses its edge. */}
-          <View
-            pointerEvents="none"
-            style={{
-              ...imageStyle,
-              position: "absolute",
-              borderWidth: 1,
-              borderColor: color.line,
-            }}
-          />
+              background bleeds into a light canvas and the tile loses its edge.
+              The Home tile omits it, as the design does. */}
+          {tile ? null : (
+            <View
+              pointerEvents="none"
+              style={{
+                ...imageStyle,
+                position: "absolute",
+                borderWidth: 1,
+                borderColor: color.line,
+              }}
+            />
+          )}
 
-          <View style={{ position: "absolute", top: 4, right: 4 }}>
-            <FavouriteButton id={id} isFavorite={Boolean(checked)} title={title} />
+          <View style={{ position: "absolute", top: 0, right: 0 }}>
+            <FavouriteButton
+              id={id}
+              isFavorite={Boolean(checked)}
+              title={title}
+              tile={tile}
+            />
           </View>
         </View>
 
-        <View style={{ marginTop: 8, gap: 2 }}>
-          {/* The name of the thing leads. It used to fall through to the RN
-              default (~14pt) while the price beside it was 17pt.
+        <View style={{ marginTop: 8 }}>
+          {/* Body Small - Bold at Primary, per the design's tile.
+              This deliberately reverses an earlier call to hold the title at
+              `hi` (70%) to soften a grid of full-white titles on a dark canvas.
+              The redesign sets Primary here, so Primary is what ships; if the
+              glare reads badly on a long grid, `tone="hi"` is the one-word
+              revert and the reason is recorded here.
 
-              `hi` rather than the default: on a dark canvas a full-white title
-              measures 19.6:1, which is glare on a grid of a dozen tiles. */}
+              One line, not two: the design's tile is a fixed 250pt tall, and a
+              wrapping title makes neighbouring grid rows different heights. */}
           <Text
-            numberOfLines={2}
+            numberOfLines={1}
             ellipsizeMode="tail"
-            fontSize="text-md"
-            fontWeight="font-semibold"
-            tone="hi"
+            fontSize="text-sm"
+            fontWeight="font-bold"
           >
             {title}
           </Text>
           {/* Distance is the more useful of the two, so it takes the line when
               we have it and the place name follows it. */}
-          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="body">
+          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="dim">
             {distanceLine ? `${distanceLine} · ${location}` : location}
           </Text>
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
@@ -121,7 +142,7 @@ export function Card({
             </Text>
             {/* Same tone as the location line above it. These two adjacent lines
                 of secondary text used to sit at visibly different weights. */}
-            <Text fontSize="text-sm" tone="body">
+            <Text fontSize="text-sm" tone="dim">
               per day
             </Text>
           </View>

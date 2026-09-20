@@ -8,7 +8,7 @@ import { useRoute } from "@react-navigation/native";
 
 import React, { useCallback, useState } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
-import { ink } from "@/lib/design-tokens";
+import { fontFamily, fontSize, ink } from "@/lib/design-tokens";
 import {
   EyeIcon,
   EyeSlashIcon,
@@ -73,7 +73,7 @@ export default function ConfirmPassword() {
             </Text>
 
             <View
-              className={`flex flex-row items-center border mt-6 rounded-button p-2 h-12 ${
+              className={`flex flex-row items-center border mt-6 rounded-button px-4 h-12 ${
                 isDarkMode
                   ? "bg-surface-dark border-input-line-dark"
                   : "bg-surface-light border-input-line-light"
@@ -94,7 +94,11 @@ export default function ConfirmPassword() {
                 textContentType="newPassword"
                 autoComplete="new-password"
                 accessibilityLabel="Confirm password"
-                style={{ color: ink.text(isDarkMode) }}
+                style={{
+                  color: ink.text(isDarkMode),
+                  fontFamily: fontFamily.regular,
+                  fontSize: fontSize.md,
+                }}
               />
               <TouchableOpacity accessibilityRole="button" accessibilityLabel="Show or hide password" onPress={() => setShowPassword(!showPassword)}>
                 {showPassword ? (

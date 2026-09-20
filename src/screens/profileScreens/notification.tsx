@@ -1,15 +1,14 @@
 import React from "react";
 import moment from "moment";
 import { useNotifications } from "@/backend/useNotification";
-import { BackButton, Text } from "@/components/core";
+import { SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
-import { Image } from "expo-image";
 import { ScrollView, View } from "react-native";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import { useEffect } from "react";
-import { ink, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { density, ink, radius, SCREEN_GUTTER } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import { RefreshControl } from "react-native";
 import { Avatar, EmptyState } from "@/components/core";
 import { BellIcon } from "react-native-heroicons/outline";
@@ -25,48 +24,60 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
 
   const { notifications, getNotifications, markAllAsRead } = useNotifications();
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const { color } = useTheme();
+  // Which ones were unread when the screen opened: opening marks them all read,
+  // and the frame's brand dot is for exactly those.
+  const [unreadOnOpen, setUnreadOnOpen] = React.useState<Set<string>>(new Set());
+
+  const mounted = React.useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  // One path for opening and for pull-to-refresh: fetch, remember what is unread
+  // right now (added to what was, so a refresh does not lose earlier dots), then
+  // mark it read. A refresh used to fetch only, leaving anything that arrived
+  // meanwhile unread on the server and without a dot.
+  const load = React.useCallback(async () => {
+    const fetchedNotifications = await getNotifications();
+    if (!mounted.current) return;
+    setUnreadOnOpen((previous) => {
+      const next = new Set(previous);
+      fetchedNotifications
+        .filter((notification) => !notification.is_read)
+        .forEach((notification) => next.add(notification.id));
+      return next;
+    });
+    await markAllAsRead(fetchedNotifications);
+  }, [getNotifications, markAllAsRead]);
 
   const handleRefresh = React.useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await getNotifications();
+      await load();
     } finally {
       setIsRefreshing(false);
     }
-  }, [getNotifications]);
+  }, [load]);
 
   useEffect(() => {
-    const bootstrapNotifications = async () => {
-      const fetchedNotifications = await getNotifications();
-
-      if (fetchedNotifications.length > 0) {
-        await markAllAsRead(fetchedNotifications);
-      }
-    };
-
-    void bootstrapNotifications();
-  }, [getNotifications, markAllAsRead]);
+    void load();
+  }, [load]);
 
   return (
     <NonScrollableContainer>
-      <View
-        className={`flex-row items-center px-gutter border-b-[1px] ${
-          isDarkMode ? "border-line-dark" : "border-line-light"
-        }`}
-        style={{ paddingVertical: wp("5%") }}
-      >
-        <BackButton />
-        <View className="flex-1 items-center justify-center">
-          <Text role="sectionTitle" fontWeight="font-bold">
-            Notifications
-          </Text>
-        </View>
-        <View style={{ width: MIN_TOUCH_TARGET }} />
-      </View>
+      <SubpageHeader title="Notifications" />
+      {/* The frame closes the header with a hairline. */}
+      <View style={{ height: 1, backgroundColor: color.line }} />
 
       <ScrollView
         contentContainerStyle={
-          notifications.length === 0 ? { flexGrow: 1, justifyContent: "center" } : undefined
+          notifications.length === 0
+            ? { flexGrow: 1, justifyContent: "center" }
+            : { paddingBottom: density.listFooterCompact }
         }
         refreshControl={
           <RefreshControl
@@ -85,36 +96,47 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
           />
         ) : null}
         {notifications.map((notification) => (
-          <View key={notification.id} className="p-4 flex-row space-x-2">
-            <View>
-              <Avatar
-                uri={notification.user.image}
-                name={notification.user.first_name}
-                size={48}
-              />
-            </View>
-            <View className="w-[80%]">
-              <View className="flex-row flex-wrap space-x-1">
-                <Text
-                  fontSize="text-sm"
-                  className={`${
-                    isDarkMode ? "text-muted-dark" : "text-muted-light"
-                  }`}
-                >
-                  <Text fontSize="text-md" fontWeight="font-bold">
-                    {notification.user.first_name}{" "}
-                  </Text>
+          // The frame's row: 16 above and below on the 24 gutter, the 48pt
+          // avatar 8 from the text, no rule between rows.
+          <View
+            key={notification.id}
+            style={{
+              flexDirection: "row",
+              gap: 8,
+              paddingVertical: 16,
+              paddingHorizontal: SCREEN_GUTTER,
+            }}
+          >
+            <Avatar
+              uri={notification.user.image}
+              name={notification.user.first_name}
+              size={48}
+            />
+            <View style={{ flex: 1 }}>
+              <Text numberOfLines={2}>
+                <Text fontSize="text-md" fontWeight="font-bold">
+                  {notification.user.first_name}{" "}
+                </Text>
+                <Text fontSize="text-sm" tone="body">
                   {notification.message}
                 </Text>
-              </View>
-              <Text
-                className={`mt-1 ${
-                  isDarkMode ? "text-subtle-dark" : "text-subtle-light"
-                }`}
-              >
+              </Text>
+              <Text fontSize="text-xs" tone="dim">
                 {moment(notification.created_at).fromNow()}
               </Text>
             </View>
+            {unreadOnOpen.has(notification.id) ? (
+              <View
+                accessibilityLabel="Unread"
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: radius.full,
+                  backgroundColor: color.brand,
+                  alignSelf: "center",
+                }}
+              />
+            ) : null}
           </View>
         ))}
       </ScrollView>

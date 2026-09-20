@@ -3,6 +3,7 @@ import {
   ColorTokens,
   ThemeName,
   colors,
+  fieldShadow,
   radius,
   shadow,
   space,
@@ -16,6 +17,8 @@ export interface Theme {
   radius: typeof radius;
   /** Elevation for a card/sheet. Dark elevates with a hairline, light with a shadow. */
   shadow: (typeof shadow)["light"] | (typeof shadow)["dark"];
+  /** Elevation for a floating field — the Home search box. */
+  fieldShadow: (typeof fieldShadow)["light"] | (typeof fieldShadow)["dark"];
 }
 
 /**
@@ -32,6 +35,7 @@ export function useTheme(): Theme {
     space,
     radius,
     shadow: shadow[name],
+    fieldShadow: fieldShadow[name],
   };
 }
 
@@ -45,5 +49,6 @@ export function themeFor(name: string | undefined): Theme {
     space,
     radius,
     shadow: shadow[resolved],
+    fieldShadow: fieldShadow[resolved],
   };
 }

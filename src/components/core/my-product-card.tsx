@@ -1,4 +1,4 @@
-import { aspect, darkColors, radius } from "@/lib/design-tokens";
+import { aspect, radius } from "@/lib/design-tokens";
 import { formatCurrency } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { ItemCard, useTypedNavigation } from "@/lib/types";
@@ -6,6 +6,10 @@ import { Image } from "expo-image";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
+import {
+  listingStatusLabel,
+  resolveListingStatus,
+} from "@/components/product/listing-status";
 import { Text } from "./text";
 import { usePressFeedback } from "./use-press-feedback";
 
@@ -39,18 +43,12 @@ export function MyProductCard({
   const { pressStyle, onPressIn, onPressOut } = usePressFeedback();
 
   const isModerated = moderationLabels?.length > 0;
-  // The owner API uses three distinct approval states. Treating false and null
-  // as the same state said "Pending" beside a rejected listing's explicit pill.
-  const isPendingApproval = !isModerated && adminApproved === null;
-  const isRejected = !isModerated && adminApproved === false;
-
-  const status = isModerated
-    ? "Flagged"
-    : isRejected
-    ? "Rejected"
-    : isPendingApproval
-    ? "Pending approval"
-    : null;
+  // The same states the screen's status pill shows, so the row is announced with
+  // the label that is drawn under it. The card draws only the "Flagged" overlay
+  // itself: the pill carries live / pending, and used to be repeated by a corner
+  // chip here.
+  const resolved = resolveListingStatus({ moderationLabels, adminApproved });
+  const status = resolved && resolved !== "live" ? listingStatusLabel(resolved) : null;
 
   const imageStyle = {
     width: "100%",
@@ -99,7 +97,7 @@ export function MyProductCard({
               style={{
                 ...imageStyle,
                 position: "absolute",
-                backgroundColor: "rgba(10,10,15,0.72)",
+                backgroundColor: color.photoScrim,
                 justifyContent: "center",
                 alignItems: "center",
                 gap: 6,
@@ -117,48 +115,28 @@ export function MyProductCard({
             </View>
           )}
 
-          {/* Anchored to a corner with a consistent inset, and quieter than the
-              title it sits above. */}
-          {(isPendingApproval || isRejected) && (
-            <View
-              style={{
-                position: "absolute",
-                top: 6,
-                left: 6,
-                backgroundColor: "rgba(10,10,15,0.72)",
-                paddingHorizontal: 7,
-                paddingVertical: 3,
-                borderRadius: radius.full,
-              }}
-            >
-              <Text
-                fontSize="text-xs"
-                fontWeight="font-medium"
-                style={{ color: darkColors.text }}
-              >
-                {isRejected ? "Rejected" : "Pending"}
-              </Text>
-            </View>
-          )}
         </View>
 
-        <View style={{ marginTop: 8, gap: 2 }}>
+        {/* Kept identical to Card's text block on purpose: My Listings sits a
+            tap away from Saved, and the two grids read as one system only if the
+            tile below the photo is the same tile. */}
+        <View style={{ marginTop: 8 }}>
           <Text
-            numberOfLines={2}
+            numberOfLines={1}
             ellipsizeMode="tail"
-            fontSize="text-md"
-            fontWeight="font-semibold"
+            fontSize="text-sm"
+            fontWeight="font-bold"
           >
             {title}
           </Text>
-          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="body">
+          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="dim">
             {location}
           </Text>
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
             <Text fontSize="text-md" fontWeight="font-bold">
               {formatCurrency(price)}
             </Text>
-            <Text fontSize="text-sm" tone="body">
+            <Text fontSize="text-sm" tone="dim">
               per day
             </Text>
           </View>

@@ -29,7 +29,7 @@ const AddressChoiceModal: React.FC<AddressChoiceModalProps> = ({
       onRequestClose={onClose}
     >
       <View
-        style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+        style={{ backgroundColor: ink.scrim(isDarkMode) }}
         className="flex-1 justify-center items-center"
       >
         <View

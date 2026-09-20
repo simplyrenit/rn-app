@@ -13,6 +13,12 @@ interface Props {
    * the content it introduces always share one content edge.
    */
   gutter?: boolean;
+  /**
+   * Opt-in: drop the heading's own bottom margin, for a parent that sets the
+   * gap between its children itself. Without it the two spacings add up, which
+   * is how a block asking for 16 under its heading ends up with 24.
+   */
+  flush?: boolean;
 }
 
 /** One heading treatment, at the app's one content edge. */
@@ -21,12 +27,13 @@ export function SectionHeader({
   subtitle,
   accessory,
   gutter = true,
+  flush = false,
 }: Props) {
   return (
     <View
       style={{
         paddingHorizontal: gutter ? SCREEN_GUTTER : 0,
-        marginBottom: density.sectionHeaderGap,
+        marginBottom: flush ? 0 : density.sectionHeaderGap,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",

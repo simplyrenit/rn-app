@@ -3,22 +3,14 @@ import { useProfile } from "@/backend/profile";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import Skeleton from "@/components/core/skeleton";
 import { PostProductHeader } from "@/components/post/header";
+import { TaxonomyList } from "@/components/post/taxonomy-list";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { useGlobalContext } from "@/context/global-context";
 import { useProductContext } from "@/context/product-context";
 import { Category, useTypedNavigation } from "@/lib/types";
-import { Image } from "expo-image";
 import { useState } from "react";
-import { FlatList, Platform, TouchableOpacity, View } from "react-native";
-import {
-  ChevronRightIcon,
-  CubeIcon,
-} from "react-native-heroicons/outline";
-import { heightPercentageToDP as hp, widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { SvgUri } from "react-native-svg";
-import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
-import { useTheme } from "@/lib/theme";
-import { ink, radius } from "@/lib/design-tokens";
+import { FlatList, useWindowDimensions, View } from "react-native";
+import { radius } from "@/lib/design-tokens";
 
 export default function Post() {
   const { saveDetails } = useProductContext();
@@ -26,7 +18,7 @@ export default function Post() {
   const { requestMerchantReview, loading: profileActionLoading } = useProfile();
   const navigation = useTypedNavigation();
   const isDarkMode = theme === "dark";
-  const { color } = useTheme();
+  const { width: winW } = useWindowDimensions();
   const [requestReviewError, setRequestReviewError] = useState<string | null>(null);
   const merchantNeedsApproval =
     userDetails?.account_type === "merchant" &&
@@ -44,44 +36,6 @@ export default function Post() {
       category: cat.title,
       subcategories: cat.subcategories,
     });
-  };
-
-  const renderItem = ({ item }: { item: Category }) => {
-    const icon = theme === "dark" ? item.dark_icon : item.light_icon;
-
-    return <TouchableOpacity
-      className="flex-row justify-between items-center py-4"
-      onPress={() => onPress(item)}
-    >
-      <View className="flex-row items-center space-x-5">
-        {icon ? (
-          icon.slice(-3).toLowerCase() === 'svg' ? (
-            <SvgUri
-              width={20}
-              height={20}
-              uri={icon}
-            />
-          ) : (
-            <Image
-              source={{ uri: icon }}
-              style={{ width: 20, height: 20 }}
-            />
-          )
-        ) : (
-          <CategoryIcon name={item.title} size={22} color={color.textBody} />
-        )}
-        <Text
-          fontSize="text-base"
-          
-        >
-          {categoryDisplayName(item.title)}
-        </Text>
-      </View>
-      <ChevronRightIcon
-        size={20}
-        color={ink.text(isDarkMode)}
-      />
-    </TouchableOpacity>;
   };
 
   const handleRequestReviewAgain = async () => {
@@ -151,37 +105,24 @@ export default function Post() {
                   <View className="mt-2 space-y-2 align-center" style={{ alignItems: 'center' }}>
                     <Skeleton
                       style={{
-                        width: wp(30),
+                        width: winW * 0.30,
                         borderRadius: radius.button,
                         marginTop: 5,
                         height: 10,
                       }}
                     />
                     <Skeleton style={{
-                      width: wp(5),
+                      width: winW * 0.05,
                       borderRadius: radius.button,
                       height: 4,
                     }} />
                   </View>
               }
-              <View className="w-[10%]"></View>
             </View>
 
             {categories.length ?
 
-              <FlatList
-                data={categories}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.title}
-                contentContainerStyle={{
-                  paddingHorizontal: 24,
-                  // Clear the floating bottom tab bar so the last category is
-                  // fully visible and scrollable. iOS only: Android's tab bar
-                  // does not overlap the list.
-                  paddingBottom: Platform.OS === "ios" ? hp("7") : 0,
-                }}
-                showsVerticalScrollIndicator={false}
-              /> : <FlatList
+              <TaxonomyList items={categories} onSelect={onPress} /> : <FlatList
 
                 data={Array.from({ length: 12 })}
                 renderItem={({ item, index }) => (

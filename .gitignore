@@ -46,3 +46,17 @@ config/environments/qa-test-accounts.local.json
 /*.xml
 /*.db
 *.swp
+
+# Local Xcode archives (multi-hundred-MB)
+/build/
+
+# Output of tools/figma-pull.mjs; regenerate rather than commit
+/design/figma/*.png
+/design/figma/tree.json
+
+.claude/
+
+# Device captures and Figma exports: they can show QA users, emails and listing
+# photos, so they stay local. Files already tracked here stay tracked.
+/design/app/
+/design/figma-images/

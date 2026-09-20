@@ -8,7 +8,7 @@ import { Dimensions, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Carousel from "pinar";
 import { CarouselItem } from "../lib/types";
-import { ink } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, ink } from "@/lib/design-tokens";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -120,8 +120,14 @@ export default function OnboardingScreen(): JSX.Element {
             ))}
           </View>
 
-          <LoginOptions isDarkMode={isDarkMode} />
-          <TermsAndPolicy />
+          {/* `width={100}` above drops the container's gutter so the carousel can
+              bleed; the actions below are not part of that, and without their own
+              gutter the buttons ran to the screen edges with their corners
+              clipped. */}
+          <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+            <LoginOptions isDarkMode={isDarkMode} />
+            <TermsAndPolicy />
+          </View>
       </StaticContainer>
     </GestureHandlerRootView>
   );

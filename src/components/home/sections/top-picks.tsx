@@ -3,14 +3,14 @@ import React from "react";
 import { ProductRail } from "./product-rail";
 import { useRailData } from "./use-rail-data";
 
-export function RecentlyAdded() {
+export function TopPicks() {
   const { fetchTopPicks } = useHome();
   const { products, loading, error, reload } = useRailData(fetchTopPicks);
 
   return (
     <ProductRail
       railId="recent"
-      title="Recently added"
+      title="Top picks to explore"
       products={products}
       loading={loading}
       error={error}

@@ -11,6 +11,9 @@ import { HeartIcon as HeartSolid } from "react-native-heroicons/solid";
 import { IconButton } from "./icon-button";
 
 const GLYPH_SIZE = 18;
+const TILE_GLYPH_SIZE = 24;
+const INK_GLYPH_SIZE = 20;
+const INK_STROKE = 1.5;
 
 interface Props {
   /** Product name — this API's identifier for a listing. */
@@ -25,6 +28,18 @@ interface Props {
    * floating controls on the same image did not look like a pair.
    */
   photoSize?: number;
+  /**
+   * The design's product-tile heart: a bare 44pt box in the photo's corner, no
+   * chip behind it, a 24pt white-stroked outline with a translucent dark fill.
+   * The Home rails, Saved, Search results and the owner profile use it; the rest keep the chip.
+   */
+  tile?: boolean;
+  /**
+   * The Product Details hero's heart: an outline in the primary text colour at
+   * the design's 20pt and 1.5 stroke, sitting in a bordered circle the caller
+   * draws. Off a photo only; the saved state keeps its danger red.
+   */
+  ink?: boolean;
 }
 
 /**
@@ -45,6 +60,8 @@ export function FavouriteButton({
   onPhoto = true,
   title,
   photoSize = 30,
+  tile = false,
+  ink = false,
 }: Props) {
   const { isAuthenticated } = useGlobalContext();
   const { saveFavorite, deleteFavorite } = useSaved();
@@ -107,7 +124,7 @@ export function FavouriteButton({
   // Over a photo the chip behind the glyph is always dark, so the heart takes
   // the dark-theme values in both app themes; off a photo it follows the theme.
   const activeColor = onPhoto ? darkColors.danger : color.danger;
-  const inactiveColor = onPhoto ? "#FFFFFF" : color.textBody;
+  const inactiveColor = onPhoto ? color.onPhoto : ink ? color.text : color.textBody;
 
   return (
     <IconButton
@@ -115,8 +132,8 @@ export function FavouriteButton({
       haptic={false}
       // The chip is the visible size; IconButton makes the 44pt hit area up in
       // hitSlop, so a small chip is still a full target.
-      size={onPhoto ? photoSize : MIN_TOUCH_TARGET}
-      scrim={onPhoto}
+      size={tile ? MIN_TOUCH_TARGET : onPhoto ? photoSize : MIN_TOUCH_TARGET}
+      scrim={onPhoto && !tile}
       accessibilityLabel={
         active
           ? `Remove ${title ?? "this item"} from saved`
@@ -126,9 +143,14 @@ export function FavouriteButton({
     >
       <Animated.View style={{ transform: [{ scale }] }}>
         <Glyph
-          size={GLYPH_SIZE}
+          size={tile ? TILE_GLYPH_SIZE : ink ? INK_GLYPH_SIZE : GLYPH_SIZE}
           color={active ? activeColor : inactiveColor}
-          strokeWidth={active ? 0 : 2}
+          strokeWidth={active ? 0 : ink ? INK_STROKE : 2}
+          // A translucent fill inside the white outline is what keeps the heart
+          // legible over a bright sky without a chip to sit on. Spread rather
+          // than passed as `undefined`, which would override the solid icon's
+          // own fill and paint it black.
+          {...(tile && !active ? { fill: color.photoScrimSoft } : null)}
         />
       </Animated.View>
     </IconButton>

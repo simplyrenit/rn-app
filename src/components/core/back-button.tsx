@@ -1,6 +1,6 @@
 import { darkColors } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
-import { useTypedNavigation } from "@/lib/types";
+import { NavigationContext } from "@react-navigation/native";
 import React from "react";
 import { StyleProp, ViewStyle } from "react-native";
 import { ArrowLeftIcon } from "react-native-heroicons/outline";
@@ -40,12 +40,26 @@ export function BackButton({
   disabled = false,
   style,
 }: Props) {
-  const navigation = useTypedNavigation();
+  // Read from the context rather than `useNavigation`, which throws outside a
+  // navigator: a bottom sheet renders in a portal above the container, and the
+  // chat sheets pass their own `onPress`, so they never need it.
+  const navigation = React.useContext(NavigationContext);
   const { color } = useTheme();
 
   return (
     <IconButton
-      onPress={onPress ?? (() => navigation.goBack())}
+      onPress={
+        onPress ??
+        (() => {
+          if (navigation) {
+            navigation.goBack();
+          } else if (__DEV__) {
+            console.warn(
+              "BackButton has no navigator and no onPress: it does nothing here."
+            );
+          }
+        })
+      }
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
       disabled={disabled}

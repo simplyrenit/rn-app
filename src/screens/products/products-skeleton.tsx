@@ -1,6 +1,8 @@
+import { useTheme } from "@/lib/theme";
 import Skeleton from "@/components/core/skeleton";
 import { SCREEN_GUTTER, density, radius } from "@/lib/design-tokens";
-import { View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /**
  * The shape of a product page, not a generic pair of bars.
@@ -9,14 +11,19 @@ import { View } from "react-native";
  * second `<StatusBar>` competing for the bar — plus a 52%-height block that
  * matched nothing on the screen it stood in for, so the swap to real content
  * moved everything. It is now a plain block inside the detail screen's own
- * scroll view, on the same square hero and the same section rhythm, so the
- * cross-fade lands rather than jumps.
+ * scroll view, standing in for the same full-bleed hero and the same section
+ * rhythm, so the cross-fade lands rather than jumps.
  */
 export function ProductsSkeleton() {
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const { color } = useTheme();
+
   return (
     <View style={{ width: "100%" }}>
-      <View style={{ width: "100%", aspectRatio: 1 }}>
-        <Skeleton width="100%" height="100%" borderRadius={0} />
+      {/* The hero's own geometry: a full-width square below the safe area. */}
+      <View style={{ paddingTop: insets.top }}>
+        <Skeleton width={width} height={width} borderRadius={0} />
       </View>
 
       <View

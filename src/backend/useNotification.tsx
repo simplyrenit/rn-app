@@ -36,26 +36,39 @@ export function useNotifications() {
   }, [access_token, isAuthenticated]);
 
   const markAllAsRead = useCallback(async (items: Notification[]) => {
-    if (!isAuthenticated || !access_token || items.length === 0) {
+    // Only what is still unread: opening the screen used to PATCH every
+    // notification on the account each time, read or not.
+    const unread = items.filter((notification) => !notification.is_read);
+    if (!isAuthenticated || !access_token || unread.length === 0) {
       return;
     }
 
-    try {
-      const updatedNotifications = await Promise.all(
-        items.map((notification) =>
-          axiosInstance
-            .patch(`${NOTIFICATIONS_ENDPOINT}${notification.id}/`, {
-              is_read: true,
-            })
-            .then((response) => response.data)
-        )
-      );
+    // allSettled, so one failed PATCH does not throw away the ones that went
+    // through: those rows are read on the server and should be read here too.
+    const results = await Promise.allSettled(
+      unread.map((notification) =>
+        axiosInstance
+          .patch(`${NOTIFICATIONS_ENDPOINT}${notification.id}/`, {
+            is_read: true,
+          })
+          .then((response) => response.data)
+      )
+    );
 
-      setNotifications(updatedNotifications);
-    } catch (error) {
-      console.error("Error marking notifications as read:", error);
-      return;
-    }
+    const updatedById = new Map<string, Notification>();
+    results.forEach((result) => {
+      if (result.status === "fulfilled") {
+        updatedById.set(result.value.id, result.value);
+      } else {
+        console.error("Error marking a notification as read:", result.reason);
+      }
+    });
+
+    // Keep the ones that were already read; replacing the list with only the
+    // patched ones would drop them from the screen.
+    setNotifications(
+      items.map((notification) => updatedById.get(notification.id) ?? notification)
+    );
   }, [access_token, isAuthenticated]);
 
   return { notifications, getNotifications, markAllAsRead };

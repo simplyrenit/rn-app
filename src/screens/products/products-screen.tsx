@@ -1,21 +1,26 @@
 import { useChat } from "@/backend/chat";
 import { useProduct } from "@/backend/product";
 import { useProfile } from "@/backend/profile";
+import useSaved from "@/backend/useSaved";
 import {
   BackButton,
   Button,
   Card,
   CrossFade,
-  SectionHeader,
   Text,
+  useButtonLabelColor,
 } from "@/components/core";
+import { DetailSection } from "@/components/product/detail-section";
+import { ExpandableText } from "@/components/product/expandable-text";
 import { ModerationBanner } from "@/components/product/moderation-banner";
 import {
   ListingStatus,
   ListingStatusPill,
   resolveListingStatus,
 } from "@/components/product/listing-status";
-import { ProductImage } from "@/components/product/product-image";
+import { ProductHero } from "@/components/product/product-hero";
+import { SpecStrip } from "@/components/product/spec-strip";
+import { ConditionRenderer } from "@/components/core/condition-renderer";
 import { ProductMap } from "@/components/product/product-map";
 import { AboutOwner } from "@/components/product/product-owner";
 import { ReviewCard } from "@/components/product/review-card";
@@ -29,61 +34,141 @@ import {
   useTypedNavigation,
 } from "@/lib/types";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, radius, shadow } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import { CategoryIcon } from "@/lib/category-icons";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
-import { IOSShareIcon } from "@/icons/share";
-import { LinearGradient } from "expo-linear-gradient";
 import { IconButton } from "@/components/core/icon-button";
 import { EmptyState } from "@/components/core/empty-state";
 import React, { useCallback, useState } from "react";
 import {
   Animated,
-  Dimensions,
   RefreshControl,
   ScrollView,
   Share,
   StyleSheet,
-  TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import {
-  ChevronDownIcon,
-  ChevronUpIcon,
+  BanknotesIcon,
+  LightBulbIcon,
+  ShareIcon,
 } from "react-native-heroicons/outline";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ProductsSkeleton } from "./products-skeleton";
 
-const MAX_CHARS = 150;
-
-// A review card is wide enough to peek the next one, which is what makes a
-// horizontal rail read as scrollable.
-const itemWidth = Dimensions.get("window").width - SCREEN_GUTTER * 2 - 32;
-
 /**
- * The pinned band's own height, below the safe-area inset. It matches the
- * hero's floating control row (40pt button at +8) so the back affordance does
- * not move as one treatment cross-fades into the other.
+ * The rails below the facts row. Both start on the page gutter and run to the
+ * screen edge, so the next card is always visibly cut off — which is what
+ * makes a rail read as scrollable without a control saying so.
+ *
+ * The similar-products tile is the Home rails' tile, at the Home rails' width;
+ * a second size for the same component is how two surfaces drift apart.
  */
+const RAIL_GAP = 16;
+const REVIEW_CARD_WIDTH = 285;
+const SIMILAR_CARD_WIDTH = 163;
+
+/** The pinned band's own height, below the safe-area inset. */
 const BAND_HEIGHT = 56;
 
 /**
- * Where the band takes over from the hero.
- *
- * The hero's controls used to sit inside the scroll and the replacement band
- * only began to appear at 120pt — but a control at `insets.top + 8` has already
- * left the screen by ~100pt, so there was a stretch with no way back at all.
- * The band is fully there well before that.
+ * The distance over which the header band takes over from the photo. The photo is
+ * a full-width square below the safe area, so the band fills in only as the
+ * photo's bottom edge reaches it (see `collapseEnd` in the screen).
  */
-const COLLAPSE_START = 32;
-const COLLAPSE_END = 84;
+const COLLAPSE_SPAN = 48;
+
+/**
+ * The title block's inset. The design gives this block far more air than the
+ * 26pt the rest of the page uses — it is the one place the page stops.
+ */
+const TITLE_PAD_V = 32;
+/** Title to rating, and title column to share glyph. */
+const TITLE_GAP = 12;
+
+/**
+ * Every glyph below the hero is 20pt in the design: the share mark, each of
+ * the five rating stars, and the three specification icons.
+ */
+const GLYPH_SIZE = 20;
+
+const CTA_RADIUS = radius.button;
+
+/**
+ * 44 tall at rest, so the bar measures the frame's 76. A floor, not a fixed
+ * height, so the label can still grow the button at accessibility text sizes.
+ */
+const CTA_STYLE = {
+  minHeight: MIN_TOUCH_TARGET,
+  paddingVertical: 0,
+  borderRadius: CTA_RADIUS,
+} as const;
+
+/**
+ * The bar's upward lift: black at 5%, offset 0/-2, blur 16 — a Figma blur is
+ * twice a Core Animation radius, so 8. Light only; on dark the top hairline
+ * carries the separation on its own, exactly as `shadow.dark` does for cards.
+ * The colour is taken from `color.text`, which is black on the only theme that
+ * draws this.
+ */
+const BAR_LIFT = {
+  shadowOpacity: 0.05,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: -2 },
+  elevation: 12,
+} as const;
+
+/**
+ * The condition glyph — the design's lightbulb-with-a-bolt, which is what the
+ * app already draws for "Excellent".
+ *
+ * `ConditionRenderer` knows the three conditions the post flow can set and
+ * returns nothing at all for anything else, so a listing carrying an
+ * unexpected string left this column with a hole where its icon should be.
+ */
+function ConditionIcon({
+  condition,
+  color,
+}: {
+  condition: string;
+  color: string;
+}) {
+  const known = ["excellent", "good", "bad"].includes(condition.toLowerCase());
+  return known ? (
+    <ConditionRenderer condition={condition} size={GLYPH_SIZE} color={color} />
+  ) : (
+    <LightBulbIcon size={GLYPH_SIZE} color={color} strokeWidth={1.5} />
+  );
+}
+
+/**
+ * The bar's CTA label.
+ *
+ * The design sets it at 14 Bold; `Button` sets a plain string child at 16. A
+ * node child keeps the design's size and still takes the colour the button has
+ * already resolved for the state it is in, so the disabled treatment does not
+ * have to be re-derived here.
+ */
+function CtaLabel({ children }: { children: string }) {
+  const labelColor = useButtonLabelColor();
+  return (
+    <Text
+      fontSize="text-sm"
+      fontWeight="font-bold"
+      style={{ color: labelColor }}
+    >
+      {children}
+    </Text>
+  );
+}
 
 export default function DetailsScreen() {
   const [loading, setLoading] = React.useState(true);
-  const [showFullText, setShowFullText] = useState(false);
   const route = useRoute<RouteProps<"ProductDetail">>();
   const { isAuthenticated, userDetails } = useGlobalContext();
   const navigation = useTypedNavigation();
@@ -102,52 +187,34 @@ export default function DetailsScreen() {
   // from the global context in some places and `useTheme()` in others.
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  // The hero is the safe-area inset plus a square as wide as the screen; the band
+  // (inset + BAND_HEIGHT tall) is fully in once the photo's bottom edge reaches it.
+  const collapseEnd = windowWidth - BAND_HEIGHT;
   const scrollY = React.useRef(new Animated.Value(0)).current;
-  // True once the pinned band, not the photograph, is what sits under the
-  // status bar. Drives the bar's style and which back treatment takes taps.
+  // True once the pinned band, not the hero, owns the top of the screen. It is
+  // what decides which of the two back controls takes a tap.
   const [heroCovered, setHeroCovered] = useState(false);
   // Only the owner-facing endpoint knows whether a listing is approved, so this
   // is fetched separately and only for the owner.
   const [ownerStatus, setOwnerStatus] = useState<ListingStatus | null>(null);
   const distanceLabel = useDistanceTo(product?.coordinates);
+  // The similar-products rail draws the Home tile, whose heart has to start in
+  // the right state. One shared, cached query — the same one every
+  // `FavouriteButton` on the page already subscribes to.
+  const { favorites } = useSaved();
 
   /**
-   * Light glyphs while the hero is under the strip.
-   *
-   * This is not a guess about the photograph: the scrim below holds black at
-   * α ≥ 0.55 across the whole glyph band, which puts white on at worst a
-   * #737373 ground — 4.76:1, AA — even for a pure-white product shot. Deriving
-   * the style from the image's own luminance would still leave a mixed-luminance
-   * photo failing under half the clock; a scrim strong enough to carry light
-   * glyphs is correct for every photograph, so the style is pinned to match it.
+   * The theme's own glyphs, at every offset: the photo starts below the status
+   * bar, so the bar always sits on the canvas or the header band.
    */
-  useFocusedStatusBar(
-    heroCovered
-      ? isDark
-        ? "light-content"
-        : "dark-content"
-      : "light-content"
-  );
+  useFocusedStatusBar(isDark ? "light-content" : "dark-content");
 
   const bandProgress = scrollY.interpolate({
-    inputRange: [COLLAPSE_START, COLLAPSE_END],
+    inputRange: [collapseEnd - COLLAPSE_SPAN, collapseEnd],
     outputRange: [0, 1],
     extrapolate: "clamp",
   });
-  const heroProgress = scrollY.interpolate({
-    inputRange: [COLLAPSE_START, COLLAPSE_END],
-    outputRange: [1, 0],
-    extrapolate: "clamp",
-  });
-
-  /** One inset, one vertical rhythm, one hairline, for every section. */
-  const sectionStyle = {
-    paddingHorizontal: SCREEN_GUTTER,
-    // Bumped from density.section (20) for a calmer, more premium rhythm.
-    paddingVertical: 26,
-    borderBottomWidth: 1,
-    borderBottomColor: color.line,
-  } as const;
 
   /**
    * The share affordance in the title row was a TouchableOpacity with no
@@ -288,41 +355,26 @@ export default function DetailsScreen() {
 
   const lessReviews = reviews.slice(0, 4);
 
-  const truncateAtNearestSpace = (text: string, maxLength: number) => {
-    if (text?.length <= maxLength) return text;
-    const truncated = text?.slice(0, maxLength);
-    const lastSpaceIndex = truncated?.lastIndexOf(" ");
-    return truncated?.slice(0, lastSpaceIndex) + "...";
+  /**
+   * The rail's cards cannot grow — they are a fixed height so a row of them
+   * lines up — so a review that is cut off opens the full list rather than
+   * expanding in place. It is also what the "See all" control below does.
+   */
+  const openAllReviews = () => {
+    if (!product) return;
+    navigation.navigate("ReviewsScreen", {
+      reviews,
+      product,
+      owner: product.owner!,
+    });
   };
-
-  const truncatedText = truncateAtNearestSpace(
-    product?.description!,
-    MAX_CHARS
-  );
-  const displayText = showFullText ? product?.description! : truncatedText;
 
   // Only the very first load gets a skeleton. A refetch — pull-to-refresh, or
   // the refetch this screen runs every time it regains focus — used to swap the
   // whole screen for the skeleton, which unmounted the scroll view and left it
   // remounted at offset 0 while `heroCovered` still held the value it had
-  // before: the collapsed style over an uncovered photograph.
+  // before: the collapsed treatment over an uncollapsed hero.
   const showSkeleton = loading && !product;
-
-  /**
-   * Black at α ≥ 0.55 for the full height of the status bar, then a fall-off
-   * that also carries the floating controls.
-   *
-   * The previous ramp reached 0.28 by the middle of the strip, so the lower half
-   * of the clock sat at ~2.7:1. Holding 0.55 to `insets.top` puts a white glyph
-   * on at worst #737373 — 4.76:1 — over even a pure-white photograph.
-   */
-  const scrimHeight = insets.top + 60;
-  const scrimLocations = [
-    0,
-    Math.min(1, insets.top / scrimHeight),
-    Math.min(1, (insets.top + 22) / scrimHeight),
-    1,
-  ] as const;
 
   if (!product && !showSkeleton) {
     return (
@@ -350,36 +402,14 @@ export default function DetailsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.canvas }}>
-      {/* The hero bleeds to the top of the display with its controls floating
-          over it. Reserving the top safe-area edge letterboxed the 1:1 image
-          below a dead black band. */}
-      <Animated.View
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: scrimHeight,
-          zIndex: 2,
-          opacity: heroProgress,
-        }}
-      >
-        <LinearGradient
-          colors={[
-            "rgba(0,0,0,0.64)",
-            "rgba(0,0,0,0.55)",
-            "rgba(0,0,0,0.20)",
-            "transparent",
-          ]}
-          locations={scrimLocations as unknown as number[]}
-          style={StyleSheet.absoluteFill}
-        />
-      </Animated.View>
-
-      {/* The pinned band. It used to be an empty canvas-coloured strip that
-          existed only to hide content passing under it; it now carries the
-          title and the back control the hero surrenders. */}
+      {/* The pinned band.
+          The design draws no header at all, and the hero's own back control
+          scrolls away with it. That would leave the page with no way back for
+          most of its length, so the band stays: it fades in exactly as the
+          hero's control leaves, carrying the title and a back button. It no
+          longer cross-fades two treatments of the same control, because there
+          is no longer a photograph under the status bar for one of them to
+          float over. */}
       <View
         pointerEvents="box-none"
         style={{
@@ -407,33 +437,17 @@ export default function DetailsScreen() {
             height: BAND_HEIGHT,
             flexDirection: "row",
             alignItems: "center",
-            paddingHorizontal: 10,
+            // The page gutter, so the back control does not slide sideways as
+            // the hero's — which sits on that gutter — fades out under it.
+            paddingHorizontal: SCREEN_GUTTER,
             gap: 4,
           }}
         >
-          {/* Two treatments of one control, cross-faded in place, so the
-              affordance never leaves and never jumps. */}
-          <View
-            style={{
-              width: MIN_TOUCH_TARGET,
-              height: MIN_TOUCH_TARGET,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Animated.View
-              pointerEvents={heroCovered ? "none" : "auto"}
-              style={{ position: "absolute", opacity: heroProgress }}
-            >
-              <BackButton onPhoto size={20} />
-            </Animated.View>
-            <Animated.View
-              pointerEvents={heroCovered ? "auto" : "none"}
-              style={{ position: "absolute", opacity: bandProgress }}
-            >
-              <BackButton />
-            </Animated.View>
-          </View>
+          {/* Always on screen: it floats over the photo with the scrim, and takes
+              the page's own treatment once the band has filled in behind it. The
+              photo draws no back control of its own, so there is never an offset
+              with no way back. */}
+          <BackButton onPhoto={!heroCovered} />
 
           <Animated.View
             pointerEvents="none"
@@ -466,7 +480,7 @@ export default function DetailsScreen() {
             useNativeDriver: true,
             listener: (event: any) => {
               const covered =
-                event.nativeEvent.contentOffset.y > COLLAPSE_END - 12;
+                event.nativeEvent.contentOffset.y > collapseEnd - 12;
               setHeroCovered((current) =>
                 current === covered ? current : covered
               );
@@ -487,29 +501,13 @@ export default function DetailsScreen() {
         <CrossFade loading={showSkeleton} placeholder={<ProductsSkeleton />}>
         {product ? (
         <View>
-        <View style={{ width: "100%", aspectRatio: 4 / 5, }}>
-          <ProductImage
-            images={product.images}
-            coverImage={product.cover_image}
-            name={id}
-            isFavorite={isFavorite}
-            showBack={false}
-          />
-        </View>
-
-        {/* The info sheet overlaps the bottom of the hero photo, creating an
-            iOS-native sheet-rise effect. The negative margin pulls it up; the
-            rounded top corners and canvas background visually separate it from
-            the photograph. */}
-        <View
-          style={{
-            marginTop: -20,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            backgroundColor: color.canvas,
-            overflow: "hidden",
-          }}
-        >
+        <ProductHero
+          images={product.images}
+          coverImage={product.cover_image}
+          productId={id}
+          title={product.title}
+          isFavorite={isFavorite}
+        />
 
         {isOwner && isModerated && (
           <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
@@ -517,275 +515,253 @@ export default function DetailsScreen() {
           </View>
         )}
 
-        <View style={sectionStyle}>
-          <View className="flex flex-row items-center justify-between">
-            <Text role="screenTitle" style={{ flex: 1 }}>
+        {/* The title block. It carries the page's one heading, the rating and
+            the share affordance, and nothing else — which is why it is given
+            the deepest inset on the page. */}
+        <View
+          style={{
+            paddingVertical: TITLE_PAD_V,
+            paddingHorizontal: SCREEN_GUTTER,
+            flexDirection: "row",
+            gap: TITLE_GAP,
+          }}
+        >
+          <View style={{ flex: 1, gap: TITLE_GAP }}>
+            {/* H3, not the screen title role: the photograph above is what
+                announces the listing, so the name is set to sit under it. */}
+            <Text
+              fontSize="text-lg"
+              fontWeight="font-bold"
+              // No line cap: the frame's title box hugs its text, and a listing's
+              // full name is not shown anywhere else on the page (the pinned band
+              // truncates it), so cutting it here would lose it.
+            >
               {product?.title}
             </Text>
+
             <View
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: radius.full,
-                borderWidth: 1,
-                borderColor: color.line,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
             >
-            <IconButton
-              onPress={handleShare}
-              accessibilityLabel={`Share ${product?.title ?? "this listing"}`}
-              accessibilityHint="Opens the system share sheet"
-            >
-              <IOSShareIcon color={color.text} size={20} />
-            </IconButton>
-            </View>
-          </View>
-          <View className="flex flex-row items-center my-2">
-            {product?.review_count ? (
-              <>
-                <Stars rating={product?.average_rating!} isDark={isDark} />
-                <Text fontSize="text-sm" tone="body" className="ml-1">
-                  ({product?.review_count})
+              {product?.review_count ? (
+                <>
+                  <Stars
+                    rating={product?.average_rating!}
+                    isDark={isDark}
+                    size={GLYPH_SIZE}
+                    tone="ink"
+                    gap={0}
+                    strokeWidth={1.25}
+                  />
+                  <Text fontSize="text-sm" tone="dim">
+                    ({product?.review_count})
+                  </Text>
+                </>
+              ) : (
+                // Five hollow stars read as zero-out-of-five, which damages
+                // exactly the new listings that need the help.
+                <Text fontSize="text-sm" tone="dim">
+                  Not yet rated
                 </Text>
-              </>
-            ) : (
-              // Five hollow stars read as zero-out-of-five, which damages
-              // exactly the new listings that need the help.
-              <Text fontSize="text-sm" tone="body">
-                Not yet rated
-              </Text>
-            )}
+              )}
+            </View>
+
+            {/* Your own listing said nothing about whether renters could see
+                it. "Live" is a fact the owner needs stated, not inferred. */}
+            {isOwner && ownerStatus ? (
+              <ListingStatusPill status={ownerStatus} withDetail />
+            ) : null}
           </View>
 
-          {/* Your own listing said nothing about whether renters could see it.
-              "Live" is a fact the owner needs stated, not inferred. */}
-          {isOwner && ownerStatus ? (
-            <ListingStatusPill status={ownerStatus} withDetail />
-          ) : null}
+          {/* A bare glyph, top-aligned on the title. The design drops the
+              outlined tile this used to sit in — and with it the iOS
+              share-up-box glyph, in favour of the three-node one the rest of
+              the design system uses. `IconButton` still makes the 20pt glyph
+              up to a 44pt target in hitSlop. */}
+          <IconButton
+            onPress={handleShare}
+            size={GLYPH_SIZE}
+            style={{ alignSelf: "flex-start" }}
+            accessibilityLabel={`Share ${product?.title ?? "this listing"}`}
+            accessibilityHint="Opens the system share sheet"
+          >
+            <ShareIcon color={color.text} size={GLYPH_SIZE} strokeWidth={1.5} />
+          </IconButton>
         </View>
 
-        {/* Specifications.
-            Was three centred columns with a decorative glyph over the VALUE
-            over the LABEL — a monitor for "Laptop / Desktop", a banknote for
-            the deposit, and a lightbulb for "Excellent" condition, which has no
-            relationship to condition at all. People scan for the label to find
-            the value, and these are arbitrary strings rather than a stat grid,
-            so the label leads and the glyphs are gone. */}
-        <View style={sectionStyle}>
-          <View
-            style={{
-              backgroundColor: color.surfaceRaised,
-              borderRadius: radius.card,
-              padding: density.block,
-            }}
-          >
-          {[
-            { label: "Category", value: product?.category?.title },
+        {/* Specifications. The design's three-up strip; see spec-strip.tsx for
+            why this layout replaced the label-led rows that were here. */}
+        <SpecStrip
+          variant="detail"
+          items={[
             {
-              label: "Security deposit",
-              value: formatCurrency(product?.security_deposit),
+              // The bundled glyph for the category, not the per-theme icon URL
+              // the API ships. That URL is frequently absent, which is how the
+              // strip came to read as two icons and one bare word — and a
+              // remote round trip for a 20pt monochrome mark is not worth it.
+              icon: product?.category?.title ? (
+                <CategoryIcon
+                  name={product.category.title}
+                  size={GLYPH_SIZE}
+                  color={color.text}
+                  strokeWidth={1.5}
+                />
+              ) : null,
+              value: product?.category?.title,
+              label: "Category",
             },
             {
-              label: "Condition",
+              icon: <BanknotesIcon color={color.text} size={GLYPH_SIZE} />,
+              value: product?.security_deposit
+                ? formatCurrency(product.security_deposit)
+                : null,
+              label: "Deposit",
+            },
+            {
+              icon: product?.condition ? (
+                <ConditionIcon
+                  condition={product.condition}
+                  color={color.text}
+                />
+              ) : null,
               value: product?.condition
                 ? product.condition[0].toUpperCase() + product.condition.slice(1)
                 : null,
+              label: "Condition",
             },
-          ]
-            .filter((row) => Boolean(row.value))
-            .map((row, index) => (
-              <View
-                key={row.label}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "baseline",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  paddingTop: index === 0 ? 0 : 6,
-                }}
-              >
-                <Text fontSize="text-md" tone="body">
-                  {row.label}
-                </Text>
-                <Text
-                  fontSize="text-md"
-                  fontWeight="font-semibold"
-                  numberOfLines={2}
-                  style={{ flexShrink: 1, textAlign: "right" }}
-                >
-                  {row.value}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
+          ]}
+        />
 
-        {/* Bare-noun headings, the same rule on every screen in this flow. */}
-        <View style={sectionStyle}>
-          <SectionHeader title="Description" gutter={false} />
-          <Text>{displayText}</Text>
-          {product?.description.length! > MAX_CHARS && (
-            <TouchableOpacity
-              onPress={() => setShowFullText(!showFullText)}
-              accessibilityRole="button"
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <View className="flex flex-row items-center  mt-2 space-x-2">
-                <Text fontWeight="font-bold">
-                  {showFullText ? "Show less" : "Show more"}
-                </Text>
-                <View className=" mt-1">
-                  {showFullText ? (
-                    <ChevronUpIcon color={color.text} size={16} />
-                  ) : (
-                    <ChevronDownIcon color={color.text} size={16} />
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
+        {/* The frame's headings, which name the thing rather than the field:
+            "About the product", not "Description". */}
+        <DetailSection title="About the product">
+          <ExpandableText text={product?.description ?? ""} />
+        </DetailSection>
 
-        <View style={sectionStyle}>
-          <SectionHeader title="Location" gutter={false} />
+        <DetailSection title="Product’s location">
           {/* The map was a city-scale tile with an unlabelled blue dot: no
-              address, no neighbourhood, and no distance. "How far away is it?"
-              is the first question a renter asks. */}
-          <View style={{ gap: 2 }}>
-            {product?.location ? (
-              <Text fontSize="text-md" tone="hi">
-                {product.location}
-              </Text>
-            ) : null}
-            {distanceLabel ? (
-              <Text fontSize="text-sm" tone="body">
-                {distanceLabel} · exact address shared once a booking is agreed
-              </Text>
-            ) : (
-              <Text fontSize="text-sm" tone="body">
-                Exact address shared once a booking is agreed
-              </Text>
-            )}
-          </View>
-          <View className="mt-3">
-            <ProductMap
-              latitude={product?.coordinates?.lat!}
-              longitude={product?.coordinates?.long!}
-              isDarkMode={isDark}
-              placeName={product?.location}
-            />
-          </View>
-        </View>
+              address, no neighbourhood, and no distance. The place name and
+              the distance now ride in the card's own caption — the frame's
+              block is the heading and the card, with no line between them. */}
+          <ProductMap
+            variant="detail"
+            latitude={product?.coordinates?.lat!}
+            longitude={product?.coordinates?.long!}
+            isDarkMode={isDark}
+            placeName={product?.location}
+            distanceLabel={distanceLabel}
+          />
+          {/* Not in the frame, kept on purpose: the ring marker says "somewhere
+              near here" but not that the address is withheld, and that promise
+              is what makes a renter comfortable sharing a home location. It
+              adds one 14pt line (~21pt) to the frame's 304pt block. */}
+          <Text fontSize="text-sm" tone="body">
+            Exact address shared once a booking is agreed
+          </Text>
+        </DetailSection>
 
-        {/* Product reviews */}
-        <View style={[sectionStyle, { paddingHorizontal: 0 }]}>
-          <SectionHeader title="Reviews" />
-
-          <View
-            className="flex flex-row items-center"
-            style={{ paddingHorizontal: SCREEN_GUTTER }}
-          >
-            {product?.review_count ? (
-              <>
-                <Text
-                  fontWeight="font-bold"
-                  fontSize="text-lg"
-                  tone="hi"
-                  className="mr-3"
-                >
-                  {product?.average_rating?.toFixed(1)}
+        <DetailSection
+          title="Product reviews"
+          inset={false}
+          meta={
+            // The block already puts its heading stack on the gutter.
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+            >
+              {product?.review_count ? (
+                <>
+                  {/* The score is set at heading size and weight, a step
+                      quieter than the heading itself — as are the stars. */}
+                  <Text fontWeight="font-bold" fontSize="text-lg" tone="body">
+                    {product?.average_rating?.toFixed(1)}
+                  </Text>
+                  <Stars
+                    rating={product?.average_rating!}
+                    isDark={isDark}
+                    size={GLYPH_SIZE}
+                    tone="secondary"
+                    gap={0}
+                  />
+                  <Text fontSize="text-sm" tone="dim">
+                    ({product?.review_count})
+                  </Text>
+                </>
+              ) : (
+                <Text fontSize="text-sm" tone="dim">
+                  No reviews yet — be the first to rent it.
                 </Text>
-                <Stars rating={product?.average_rating!} isDark={isDark} />
-                <Text fontSize="text-md" tone="body" className="ml-1">
-                  ({product?.review_count})
-                </Text>
-              </>
-            ) : (
-              <Text fontSize="text-md" tone="body">
-                No reviews yet — be the first to rent it.
-              </Text>
-            )}
-          </View>
-
+              )}
+            </View>
+          }
+        >
           {lessReviews.length > 0 ? (
             <ScrollView
               horizontal
               nestedScrollEnabled
               showsHorizontalScrollIndicator={false}
-              style={{ width: '100%'}}
               contentContainerStyle={{
                 paddingHorizontal: SCREEN_GUTTER,
-                paddingTop: 12,
-                gap: 14,
+                gap: RAIL_GAP,
               }}
             >
               {lessReviews.map((item) => (
-                <View key={item.user.username} style={{ width: itemWidth }}>
+                <View key={item.user.username} style={{ width: REVIEW_CARD_WIDTH }}>
                   <ReviewCard
+                    variant="detail"
                     reviewText={item.comment}
                     reviewerName={`${item.user.first_name} ${item.user.last_name}`}
                     reviewDate={item.created_at}
                     reviewerImage={item.user?.image?.image_url}
+                    onShowMore={openAllReviews}
                   />
                 </View>
               ))}
             </ScrollView>
           ) : null}
 
-          {/* A full-width 66pt button offering to show all of nothing. It
-              only exists when there is something to show. */}
+          {/* Not in the frame, which has no way out of the rail at all. A
+              review that is short enough to fit shows no "Show more", so
+              without this there are listings whose later reviews cannot be
+              reached. It only exists when there is something to show. */}
           {reviews.length > 0 ? (
             <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
-              <Button
-                onPress={() =>
-                  navigation.navigate("ReviewsScreen", {
-                    reviews,
-                    product: product!,
-                    owner: product!.owner!,
-                  })
-                }
-                variant="outline"
-                size="compact"
-                className="mt-3"
-              >
+              <Button onPress={openAllReviews} variant="outline" size="compact">
                 {`See all ${reviews.length} ${reviews.length === 1 ? "review" : "reviews"}`}
               </Button>
             </View>
           ) : null}
-        </View>
+        </DetailSection>
 
-        {/* Owner */}
-        <View style={sectionStyle}>
-          <SectionHeader title="Owner" gutter={false} />
-          <View className="flex flex-row items-center ">
-            <AboutOwner
-              id={product?.owner?.username!}
-              name={`${product?.owner?.first_name} ${product?.owner?.last_name}`}
-              profilePic={product?.owner?.image?.image_url || ""}
-              rating={product?.avg_rating ?? 0}
-              products={product?.products_listed ?? 0}
-              isDark={isDark}
-            />
-          </View>
-        </View>
+        {/* The last block on the page rules no line under itself: the bottom
+            bar's own top border would sit right beneath it. */}
+        <DetailSection
+          title="About the owner"
+          divider={similarProducts.length > 0}
+        >
+          <AboutOwner
+            variant="detail"
+            id={product?.owner?.username!}
+            name={`${product?.owner?.first_name} ${product?.owner?.last_name}`}
+            profilePic={product?.owner?.image?.image_url || ""}
+            rating={product?.avg_rating ?? 0}
+            products={product?.products_listed ?? 0}
+            isDark={isDark}
+          />
+        </DetailSection>
 
-        {/* Similar products */}
         {similarProducts.length > 0 && (
-          <View style={[sectionStyle, { paddingHorizontal: 0, borderBottomWidth: 0 }]}>
-            <SectionHeader title="Similar products" />
-
+          <DetailSection title="Similar products" inset={false} divider={false}>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{
                 paddingHorizontal: SCREEN_GUTTER,
-                gap: 14,
+                gap: RAIL_GAP,
               }}
             >
               {similarProducts.map((item) => (
-                <View key={item.name} style={{ width: 158 }}>
+                <View key={item.name} style={{ width: SIMILAR_CARD_WIDTH }}>
+                  {/* The Home rails' tile, not a second one: same width, same
+                      8pt photo radius, same bare corner heart. */}
                   <Card
                     id={`${item.name}`}
                     image={item.cover_image}
@@ -793,14 +769,14 @@ export default function DetailsScreen() {
                     location={item.location}
                     price={item.rate}
                     coordinates={item.coordinates}
+                    isFavorite={favorites.some((fav) => fav.name === item.name)}
+                    tile
                   />
                 </View>
               ))}
             </ScrollView>
-          </View>
+          </DetailSection>
         )}
-        </View>
-        {/* end sheet-overlap wrapper */}
         </View>
         ) : null}
         </CrossFade>
@@ -809,24 +785,26 @@ export default function DetailsScreen() {
       {/*
         The bar was h-[10%] with price and CTA both flex-1, so "₹25 per day"
         occupied half the width and left ~85pt of empty space beside it while
-        the primary action was confined to the other half. The price now takes
-        the room it needs and the CTA takes the rest. The bottom inset is
-        reserved here rather than by a SafeAreaView that declared only its top
-        edge, which left the button 19pt off the screen edge.
+        the primary action was confined to the other half. The price takes the
+        room it needs and the CTA takes the rest. The bottom inset is reserved
+        here rather than by a SafeAreaView that declared only its top edge,
+        which left the button 19pt off the screen edge.
       */}
       {product ? (
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
+          // 16 + a 44pt button + 16 is the frame's 76pt bar.
           gap: 16,
           paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: 12,
-          paddingBottom: 12 + insets.bottom,
+          paddingTop: 16,
+          paddingBottom: 16 + insets.bottom,
           borderTopWidth: 1,
           borderTopColor: color.line,
-          backgroundColor: color.surface,
-          ...(isDark ? shadow.dark : shadow.light),
+          backgroundColor: color.canvas,
+          shadowColor: color.text,
+          ...(isDark ? null : BAR_LIFT),
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
@@ -843,14 +821,22 @@ export default function DetailsScreen() {
             // The one action in the bar, so it is the primary one. It was an
             // outlined secondary competing against nothing, in the same slot
             // where a visitor gets a filled button.
-            <Button onPress={handleEditClick}>Edit product</Button>
+            <Button
+              onPress={handleEditClick}
+              style={CTA_STYLE}
+              accessibilityLabel="Edit product"
+            >
+              <CtaLabel>Edit product</CtaLabel>
+            </Button>
           ) : (
             <Button
               onPress={handleStartChat}
               loading={startingChat}
               disabled={startingChat}
+              style={CTA_STYLE}
+              accessibilityLabel="Chat with owner"
             >
-              Chat with owner
+              <CtaLabel>Chat with owner</CtaLabel>
             </Button>
           )}
         </View>

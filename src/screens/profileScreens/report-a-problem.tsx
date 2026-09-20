@@ -1,5 +1,5 @@
 import { useProfile } from "@/backend/profile";
-import { BackButton, Button, Text } from "@/components/core";
+import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
@@ -7,10 +7,9 @@ import { useRef, useState } from "react";
 import { TextInput, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 
 import { toast } from "@/lib/toast";
-import { ink, colors, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { ink, colors } from "@/lib/design-tokens";
 
 const ReportAProblemScreen: React.FC = () => {
   const { theme } = useGlobalContext();
@@ -39,15 +38,7 @@ const ReportAProblemScreen: React.FC = () => {
 
   return (
     <NonScrollableContainer>
-      <View className="flex-row items-center px-gutter pb-2 pt-2">
-        <BackButton />
-        <View className="flex-1 items-center justify-center">
-          <Text role="sectionTitle" fontWeight="font-bold">
-            Report a problem
-          </Text>
-        </View>
-        <View style={{ width: MIN_TOUCH_TARGET }} />
-      </View>
+      <SubpageHeader title="Report a problem" />
 
       <KeyboardAwareScrollView className="px-gutter pb-5 pt-2 flex-1">
         <Text fontSize="text-sm">

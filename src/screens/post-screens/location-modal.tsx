@@ -19,15 +19,16 @@ import {
   Linking,
   Platform,
   TouchableOpacity,
+  useWindowDimensions,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { HeaderIndicator } from "@/components/auth/headerIndicator";
-import { BackButton, Button, StaticContainer, Text } from "@/components/core";
+import {
+  Button,
+  StaticContainer,
+  Text,
+  useButtonLabelColor,
+} from "@/components/core";
 import AddressChoiceModal from "@/components/modals/AddressChoiceModalProps";
 import { useGlobalContext } from "@/context/global-context";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
@@ -53,8 +54,13 @@ import { useAuth } from "@/backend/auth";
 const StyledImage = styled(Image);
 import { Modal, View, StyleSheet } from "react-native";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
+import { EditStepHeader } from "@/components/post/edit-step-header";
 import { useRoute } from "@react-navigation/native";
-import { ink, colors, radius } from "@/lib/design-tokens";
+import { ink, colors, radius, SCREEN_GUTTER, density } from "@/lib/design-tokens";
+
+const SEARCH_HEIGHT = 48;
+/** The field's height inside its 1pt border, so the input fills it and centres its text. */
+const SEARCH_INNER = SEARCH_HEIGHT - 2;
 
 const LOCATION_LOG_PREFIX = "[post/location-modal]";
 const LOCATION_FETCH_TIMEOUT_MS = 12000;
@@ -65,7 +71,21 @@ const DEFAULT_MAP_REGION = {
   longitudeDelta: 0.0421,
 };
 
+/**
+ * The "Confirm location" button's loading spinner. Has to be its own
+ * component rather than inline JSX: `useButtonLabelColor` only picks up the
+ * theme/disabled-aware colour `Button` resolved for itself once this actually
+ * renders as a descendant of that `Button`, not from `LocationModal`'s own
+ * render pass higher up the tree. Was hardcoded to `ink.onBrand()`, which read
+ * as white-on-white-ish once the button's own disabled fill kicked in.
+ */
+function ConfirmLocationSpinner() {
+  const color = useButtonLabelColor();
+  return <ActivityIndicator size="small" color={color} />;
+}
+
 const LocationModal = ({}) => {
+  const { height: winH } = useWindowDimensions();
   const route = useRoute<RouteProps<"LocationModal">>();
   const { theme, setAuthTokens } = useGlobalContext();
   const { signUpUser, loading: signUpLoading } = useAuth();
@@ -549,33 +569,22 @@ const LocationModal = ({}) => {
 
   return (
     <SafeAreaView
-      className={`flex-1 ${isDarkMode ? "bg-canvas-dark" : "bg-surface-light"}`}
+      // The canvas token, so the header and the safe-area band match the panel
+      // below the map; the class it replaces was a lighter grey in dark.
+      style={{ flex: 1, backgroundColor: ink.canvas(isDarkMode) }}
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style={isDarkMode ? "light" : "dark"} />
         <View className="flex-1 ">
-          <View className="px-gutter">
-            {/* <HeaderIndicator percentage={85} /> */}
-            <View className="flex flex-row items-center py-4">
-              <BackButton
-                onPress={() => {
-                  cancelLocationRequest(route.params?.requestId);
-                  navigation.goBack();
-                }}
-              />
-              <View style={{ flex: 1, alignItems: "center" }}>
-                <Text
-                  fontSize="text-xl"
-                  fontWeight="font-bold"
-                  className="tracking-wide"
-                >
-                  Choose Address
-                </Text>
-              </View>
-            </View>
-          </View>
+          <EditStepHeader
+            title="Choose Address"
+            onBack={() => {
+              cancelLocationRequest(route.params?.requestId);
+              navigation.goBack();
+            }}
+          />
 
-          <View className="space-y-5 flex-1 ">
+          <View className="flex-1">
             {!hasPermission && (
               <>
                 <StaticContainer>
@@ -659,14 +668,6 @@ const LocationModal = ({}) => {
 
                 <View
                   style={{
-                    paddingVertical: wp("5%"),
-                    paddingHorizontal: wp("5%"),
-                  }}
-                  className="rounded-t-3xl"
-                ></View>
-
-                <View
-                  style={{
                     backgroundColor: ink.canvas(isDarkMode),
                     borderTopWidth: 2,
                     borderColor: ink.line(isDarkMode),
@@ -680,8 +681,8 @@ const LocationModal = ({}) => {
                   >
                     <View
                       style={{
-                        paddingVertical: wp("5%"),
-                        paddingHorizontal: wp("5%"),
+                        paddingVertical: SCREEN_GUTTER,
+                        paddingHorizontal: SCREEN_GUTTER,
                         flex: 1,
                       }}
                     >
@@ -704,17 +705,24 @@ const LocationModal = ({}) => {
                         )}
 
                         <View
-                          className={`flex-row pl-3 min-h-11 rounded-card border mb-4 ${
-                            isDarkMode
-                              ? "border-line-dark bg-surface-dark"
-                              : "border-line-light bg-surface-light"
-                          }`}
-                          style={{ alignItems: "flex-start" }}
+                          // The control edge, not the hairline (1.3:1 on the dark
+                          // canvas), on the 48pt field the Chat search draws.
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "flex-start",
+                            paddingLeft: 12,
+                            minHeight: SEARCH_HEIGHT,
+                            marginBottom: 16,
+                            borderWidth: 1,
+                            borderRadius: radius.button,
+                            borderColor: ink.inputLine(isDarkMode),
+                            backgroundColor: ink.surface(isDarkMode),
+                          }}
                         >
                           <MagnifyingGlassIcon
                             color={ink.body(isDarkMode)}
                             size={24}
-                            style={{ marginTop: hp(1.1) }}
+                            style={{ marginTop: (SEARCH_INNER - 24) / 2 }}
                           />
                           <GooglePlacesAutocomplete
                             ref={googlePlacesRef}
@@ -727,15 +735,20 @@ const LocationModal = ({}) => {
                             enablePoweredByContainer={false}
                             styles={{
                               textInput: {
-                                height: "100%",
+                                // The library's default style adds a 5pt bottom margin
+                                // and 10pt side padding under ours, which made this box
+                                // 53pt tall with its text 2.5pt high.
+                                marginTop: 0,
+                                marginBottom: 0,
+                                height: SEARCH_INNER,
                                 backgroundColor: ink.surface(isDarkMode),
-                                borderRadius: radius.card,
+                                borderRadius: radius.button,
                                 zIndex: 10,
                                 color: ink.text(isDarkMode),
                                 fontSize: 16,
                                 alignContent: "center",
                               },
-                              listView: { maxHeight: hp(24) },
+                              listView: { maxHeight: winH * 0.24 },
                               row: {
                                 backgroundColor: ink.surface(isDarkMode),
                               },
@@ -811,10 +824,7 @@ const LocationModal = ({}) => {
                             className="flex-row justify-center"
                           >
                             {signUpLoading || isFetchingLocation ? (
-                              <ActivityIndicator
-                                size="small"
-                                color="#FFFFFF"
-                              />
+                              <ConfirmLocationSpinner />
                             ) : (
                               "Confirm location"
                             )}
@@ -869,7 +879,7 @@ const LocationModal = ({}) => {
                           data={nearbyPlaces}
                           keyExtractor={(item) => item.place_id}
                           style={{ maxHeight: 450 }}
-                          contentContainerStyle={{ paddingBottom: wp("5%") }}
+                          contentContainerStyle={{ paddingBottom: density.listFooterCompact }}
                           keyboardShouldPersistTaps="handled"
                           renderItem={({ item }) => (
                             <TouchableOpacity

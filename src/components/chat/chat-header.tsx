@@ -2,8 +2,6 @@ import { useTypedNavigation } from "@/lib/types";
 import { useTheme } from "@/lib/theme";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  Dimensions,
   Image,
   LayoutChangeEvent,
   Modal,
@@ -13,13 +11,24 @@ import {
   View,
 } from "react-native";
 import {
+  ArrowLeftIcon,
   EllipsisHorizontalCircleIcon,
   ExclamationTriangleIcon,
   ShoppingBagIcon,
   UserCircleIcon,
 } from "react-native-heroicons/outline";
-import { BackButton, CrossFade, Skeleton, Text } from "../core";
-import { MIN_TOUCH_TARGET, colors, ink } from "@/lib/design-tokens";
+import { CrossFade, IconButton, Skeleton, Text } from "../core";
+import { MIN_TOUCH_TARGET, colors, ink, radius } from "@/lib/design-tokens";
+
+/** Round participant photo. The frame draws 32, not the 40 this row had. */
+const AVATAR = 32;
+
+/**
+ * Horizontal inset of the thread's chrome. Narrower than `SCREEN_GUTTER`, which
+ * the message list keeps: the Figma thread pulls the back arrow and the overflow
+ * control to 16 so the 44pt targets sit closer to the screen edges.
+ */
+const HEADER_INSET = 16;
 
 interface ChatHeaderProps {
   name: string;
@@ -53,17 +62,14 @@ export function ChatHeader({
 }: ChatHeaderProps) {
   const navigation = useTypedNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
-  const { isDark, shadow } = useTheme();
+  const { isDark, color, shadow } = useTheme();
 
-  const [modalPosition, setModalPosition] = useState({ top: 0, right: 0 });
+  const [modalPosition, setModalPosition] = useState({ top: 0 });
   const ellipsisRef = useRef<TouchableOpacity>(null);
 
   const updateModalPosition = () => {
     ellipsisRef.current?.measure((fx, fy, width, height, px, py) => {
-      setModalPosition({
-        top: py + height,
-        right: Dimensions.get("window").width - (px + width),
-      });
+      setModalPosition({ top: py + height });
     });
   };
 
@@ -81,12 +87,25 @@ export function ChatHeader({
 
   return (
     <View
-      className={`flex-row items-center justify-between px-gutter py-2 border-b ${isDark ? "border-line-dark" : "border-line-light"
-        }`}
+      // 8 + a 44pt back target + 8 = the frame's 60pt row, on a 16 inset with a
+      // hairline under it. It used to sit on the 24 gutter with a `border-b`.
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: HEADER_INSET,
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: color.line,
+      }}
       onLayout={handleLayout}
     >
       <View className="flex-row items-center relative" style={{ flex: 1 }}>
-        <BackButton
+        {/* Not `BackButton`: the thread's arrow is drawn in the secondary tone,
+            and the shared control has no tone prop (and lives in core/, which
+            this area does not edit). Everything else it guarantees — the 44pt
+            box, the label, the press treatment — comes from `IconButton`. */}
+        <IconButton
           // goBack() pops this screen. navigate("Chat") only focuses the Chat
           // tab, which still had this detail screen on top of its stack, so the
           // back arrow fired and nothing appeared to happen. The fallback
@@ -98,7 +117,10 @@ export function ChatHeader({
               : navigation.navigate("Chat")
           }
           accessibilityLabel="Back to chats"
-        />
+          accessibilityHint="Returns to the previous screen"
+        >
+          <ArrowLeftIcon size={24} color={color.textHi} />
+        </IconButton>
 
         <Pressable
           style={{ flexDirection: "row", flex: 1 }}
@@ -108,14 +130,21 @@ export function ChatHeader({
         >
           <CrossFade
             loading={loading}
+            // Bounded, so a long display name truncates at the overflow control
+            // instead of running under it.
+            style={{ flex: 1 }}
             placeholder={
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Skeleton width={40} height={40} borderRadius={20} />
+                <Skeleton
+                  width={AVATAR}
+                  height={AVATAR}
+                  borderRadius={AVATAR / 2}
+                />
                 <Skeleton
                   width={120}
-                  height={16}
+                  height={14}
                   borderRadius={4}
-                  style={{ marginLeft: 12 }}
+                  style={{ marginLeft: 8 }}
                 />
               </View>
             }
@@ -124,19 +153,25 @@ export function ChatHeader({
               {profilePic ? (
                 <Image
                   source={{ uri: profilePic }}
-                  className="h-10 w-10 rounded-full"
+                  style={{
+                    width: AVATAR,
+                    height: AVATAR,
+                    borderRadius: AVATAR / 2,
+                  }}
                   resizeMode="cover"
                 />
               ) : (
-                <UserCircleIcon size={40} color={colors.dark.brand} />
+                <UserCircleIcon size={AVATAR} color={colors.dark.brand} />
               )}
               <Text
-                fontSize="text-base"
+                fontSize="text-sm"
                 fontWeight="font-bold"
-                className="ml-3"
+                style={{ marginLeft: 8, flexShrink: 1 }}
                 numberOfLines={1}
               >
-                {name}
+                {/* The chat list falls back to "Unnamed contact"; the header used to
+                    print nothing for the same conversation. */}
+                {name?.trim() || "Unnamed contact"}
               </Text>
             </View>
           </CrossFade>
@@ -163,23 +198,28 @@ export function ChatHeader({
         visible={menuVisible}
         onRequestClose={() => setMenuVisible(false)}
       >
-        {/* A scrim, so the menu reads as modal and the dismissal target is
-            visible rather than being invisible dead space. */}
+        {/* The frame draws this menu as a popover over the live thread, with no
+            dimming. The Pressable stays full-screen so a tap outside still
+            dismisses it. */}
         <Pressable
           className="flex-1"
-          style={{ backgroundColor: ink.scrim(isDark) }}
+          accessibilityLabel="Close menu"
           onPress={() => setMenuVisible(false)}
         >
           <View
             style={[
               styles.modalContent,
               shadow,
-              { top: modalPosition.top, right: modalPosition.right },
+              {
+                top: modalPosition.top + MENU_TOP_GAP,
+                right: MENU_RIGHT_INSET,
+                borderRadius: radius.card,
+              },
             ]}
             className={`border ${isDark
               ? "bg-surface-dark border-line-dark"
               : "bg-surface-light border-line-light"
-              } rounded-button p-2`}
+              } p-2`}
           >
             {onViewListing ? (
               <>
@@ -190,7 +230,7 @@ export function ChatHeader({
                     setMenuVisible(false);
                     onViewListing();
                   }}
-                  className="px-gutter py-2 items-center flex-row"
+                  className="px-4 py-2 items-center flex-row"
                   style={{ minHeight: MIN_TOUCH_TARGET }}
                 >
                   <ShoppingBagIcon color={ink.body(isDark)} size={20} />
@@ -209,27 +249,18 @@ export function ChatHeader({
               </>
             ) : null}
 
-            {/* Blocking and reporting are separate decisions with separate
-                consequences, and neither was confirmed — one tap did both. */}
+            {/* The frame goes straight from the menu to the Block & Report sheet,
+                which is itself the confirmation: a reason is required and it has
+                its own Cancel. The alert that used to sit between the two asked the
+                same question twice. */}
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Block and report this person"
               onPress={() => {
                 setMenuVisible(false);
-                Alert.alert(
-                  "Block and report?",
-                  "They will not be able to message you, and we will review the conversation.",
-                  [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                      text: "Block and report",
-                      style: "destructive",
-                      onPress: onReportPress,
-                    },
-                  ]
-                );
+                onReportPress();
               }}
-              className="px-gutter py-2 items-center flex-row"
+              className="px-4 py-2 items-center flex-row"
               style={{ minHeight: MIN_TOUCH_TARGET }}
             >
               <ExclamationTriangleIcon color={ink.danger(isDark)} size={20} />
@@ -244,9 +275,14 @@ export function ChatHeader({
   );
 }
 
+// Measured off the Figma menu: it hangs from the header's hairline, 18 below the
+// overflow control's box, and stops 21 from the screen's right edge.
+const MENU_TOP_GAP = 18;
+const MENU_RIGHT_INSET = 21;
+
 const styles = StyleSheet.create({
   modalContent: {
     position: "absolute",
-    width: "auto",
+    width: 196,
   },
 });

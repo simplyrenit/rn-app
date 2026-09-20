@@ -1,13 +1,21 @@
 
 import { useAuth } from "@/backend/auth";
 import { useProfile } from "@/backend/profile";
-import { Button, IconButton, Text } from "@/components/core";
+import { Button, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
 import {
   ArrowLeftIcon,
@@ -21,17 +29,66 @@ import {
   TrashIcon,
 } from "react-native-heroicons/outline";
 import OTPTextView from "react-native-otp-textinput";
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
 import DeleteAccountModal from "./DeleteAccountModal";
-import { ink, colors, radius, fontSize, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import {
+  ink,
+  colors,
+  radius,
+  fontSize,
+  MIN_TOUCH_TARGET,
+  space,
+  SCREEN_GUTTER,
+} from "@/lib/design-tokens";
 import { toast } from "@/lib/toast";
+import { useTheme } from "@/lib/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // A fixed-length mask so the field never leaks the real password's length —
 // seven asterisks previously meant "this password is seven characters".
 const PASSWORD_MASK = "••••••••";
+
+// Measured off the Figma Personal details sheet: a 37pt grabber row, a 44pt
+// title, an 80pt picture row and four 85pt fields (16 above and below a 21pt
+// label, 8, and a 24pt value). The delete row below is ours, not the frame's.
+const HEADER_HEIGHT = 44;
+const ROW_PAD_V = 16;
+const AVATAR = 48;
+const FIELD_HEIGHT = 85;
+const SHEET_HEIGHT =
+  37 + HEADER_HEIGHT + (AVATAR + 2 * ROW_PAD_V + 1) + 4 * FIELD_HEIGHT + 1 + MIN_TOUCH_TARGET;
+
+function DetailField({
+  label,
+  value,
+  accessibilityLabel,
+  onEdit,
+}: {
+  label: string;
+  value: string;
+  accessibilityLabel: string;
+  onEdit: () => void;
+}) {
+  const { color } = useTheme();
+  return (
+    <View style={{ minHeight: FIELD_HEIGHT, paddingVertical: ROW_PAD_V, paddingHorizontal: SCREEN_GUTTER, gap: 8 }}>
+      <Text fontSize="text-sm" fontWeight="font-bold">
+        {label}
+      </Text>
+      <Text fontSize="text-md" numberOfLines={1} style={{ paddingRight: 32 }}>
+        {value}
+      </Text>
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        onPress={onEdit}
+        style={{ position: "absolute", top: ROW_PAD_V, right: SCREEN_GUTTER }}
+      >
+        <PencilSquareIcon size={20} color={color.brandText} />
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 interface PersonalDetailsSheetProps {
   bottomSheetModalRef: React.RefObject<any>;
@@ -43,9 +100,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   isDarkMode,
 }) => {
   const { theme } = useGlobalContext();
+  const { color } = useTheme();
+  const insets = useSafeAreaInsets();
   const { sendOTP, requestPhoneNumberChangeOtp, verifyPhoneNumberChange } =
     useAuth();
   const isDark = theme === "dark";
+  const { width: winW, height: winH } = useWindowDimensions();
   const [deleteAccountModal, setDeleteAccountModal] = useState(false);
 
   const [details, setDetails] = useState({
@@ -305,10 +365,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     emailInput: {
       backgroundColor: ink.surfaceRaised(theme === "dark"),
       color: ink.text(isDark),
-      padding: wp("3%"),
+      padding: space.md,
       borderWidth: 1,
       borderRadius: radius.input,
-      marginVertical: wp("4%"),
+      marginVertical: space.md,
       borderColor: ink.inputLine(theme === "dark"),
     },
     otpInputContainer: {
@@ -324,13 +384,13 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       fontSize: fontSize.md,
       borderColor: ink.line(true),
       borderWidth: 1,
-      padding: wp("2.5%"),
-      marginVertical: wp("3%"),
+      padding: space.sm,
+      marginVertical: space.md,
       borderRadius: radius.group,
     },
     saveButton: {
       backgroundColor: colors.dark.brand,
-      padding: wp("3.5%"),
+      padding: space.md,
       alignItems: "center",
       borderRadius: radius.card,
     },
@@ -342,9 +402,15 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       borderRadius: radius.input,
       borderWidth: 3,
       color: ink.text(isDark),
-      width: wp(12.5),
     },
   });
+  // roundedTextInput's width is proportional to the viewport, so it can't
+  // live inside StyleSheet.create (which can't see the useWindowDimensions
+  // hook). Compose it in the component body instead.
+  const roundedTextInputStyle = useMemo(
+    () => ({ ...styles.roundedTextInput, width: winW * 0.125 }),
+    [isDark, winW]
+  );
   const handleProfileUpdate = async () => {
     if (selectedImage) {
       try {
@@ -416,159 +482,62 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       }} />}
       {!deleteAccountModal && <CustomBottomSheetModal
         ref={bottomSheetModalRef}
-        // Five static rows and a destructive action never needed 90% of the
-        // screen — that read as ~350pt of dead space below the content. The
-        // filter sheet in search-results.tsx tunes its snap point to what it
-        // actually holds; this does the same instead of over-reserving.
-        snapPoints={["62%"]}
+        // The frame's sheet is exactly its rows tall; a fixed point (plus the
+        // home-indicator inset it draws outside the sheet) keeps the bottom
+        // from reading as dead space, which "62%" left on shorter phones.
+        snapPoints={[SHEET_HEIGHT + insets.bottom]}
+        frame
         isDark={isDarkMode}
       >
-        <View className="flex items-center my-4">
-          <Text
-            fontSize="text-xl"
-            fontWeight="font-bold"
-          >
-            Personal Details
+        <View style={{ height: HEADER_HEIGHT, alignItems: "center", justifyContent: "center" }}>
+          <Text accessibilityRole="header" fontSize="text-base" fontWeight="font-bold">
+            Personal details
           </Text>
         </View>
 
         <View
-          style={{ paddingVertical: wp("5%") }}
-          className={`flex-row justify-between items-center border-b-[1px] ${isDark ? "border-input-line-dark" : "border-input-line-light"
-            } p-4`}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+            paddingVertical: ROW_PAD_V,
+            paddingHorizontal: SCREEN_GUTTER,
+            borderBottomWidth: 1,
+            borderBottomColor: color.line,
+          }}
         >
-          <View className="flex-row space-x-3 items-center justify-center">
-            <View>
-              <Image
-                source={{ uri: selectedImage || details.profilePic }}
-                style={{ width: wp("12%"), height: wp("12%") }}
-                className="rounded-full"
-              />
-            </View>
-            <View>
-              <Text
-                fontSize="text-md"
-                fontWeight="font-bold"
-              >
-                Profile picture
-              </Text>
-            </View>
-          </View>
-          {/* One edit affordance for one action: the pencil icon used by every
-              row below, not a second "Upload" text link doing the same job. */}
+          <Image
+            source={{ uri: selectedImage || details.profilePic }}
+            style={{ width: AVATAR, height: AVATAR, borderRadius: AVATAR / 2 }}
+          />
+          <Text fontSize="text-sm" fontWeight="font-bold" style={{ flex: 1 }}>
+            Profile picture
+          </Text>
+          {/* Hidden once a picture is picked: the Update button below takes over. */}
           {!selectedImage && (
-            <IconButton
-              accessibilityLabel="Edit profile picture"
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Upload profile picture"
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               onPress={openProfileImageSheet}
             >
-              <PencilSquareIcon size={20} color={colors.dark.brand} />
-            </IconButton>
+              <Text fontSize="text-sm" fontWeight="font-bold" style={{ color: color.brandText }}>
+                Upload
+              </Text>
+            </TouchableOpacity>
           )}
         </View>
 
-        {/* Full Name */}
-        <View className="p-4">
-          <View
-            style={{ paddingVertical: wp("5%") }}
-            className="flex-row justify-between items-center "
-          >
-            <View className="flex-row space-x-3 items-center justify-center">
-              <View>
-                <Text fontWeight="font-bold">Full name</Text>
-                <Text
-                  fontSize="text-base"
-                  className="pt-2"
-                >
-                  {details.fullName}
-                </Text>
-              </View>
-            </View>
-            <IconButton accessibilityLabel="Edit full name" onPress={openEditNameModal}>
-              <PencilSquareIcon
-                size={20}
-                color={colors.dark.brand}
-              />
-            </IconButton>
-          </View>
+        <DetailField label="Full name" value={details.fullName} accessibilityLabel="Edit full name" onEdit={openEditNameModal} />
+        <DetailField label="Email address" value={details.email} accessibilityLabel="Edit email address" onEdit={openEditEmailModal} />
+        <DetailField label="Phone number" value={details.phone} accessibilityLabel="Edit phone number" onEdit={openEditPhoneModal} />
+        <DetailField label="Password" value={details.password} accessibilityLabel="Edit password" onEdit={openEditPasswordModal} />
 
-          {/* Email Address */}
-          <View
-            style={{ paddingVertical: wp("5%") }}
-            className="flex-row justify-between items-center "
-          >
-            <View className="flex-row space-x-3 items-center justify-center">
-              <View>
-                <Text fontWeight="font-bold">Email address</Text>
-                <Text
-                  fontSize="text-base"
-                  className="pt-2"
-                >
-                  {details.email}
-                </Text>
-              </View>
-            </View>
-            <IconButton accessibilityLabel="Edit email address" onPress={openEditEmailModal}>
-              <PencilSquareIcon
-                size={20}
-                color={colors.dark.brand}
-              />
-            </IconButton>
-          </View>
-
-          {/* Phone Number */}
-          <View
-            style={{ paddingVertical: wp("5%") }}
-            className="flex-row justify-between items-center "
-          >
-            <View className="flex-row space-x-3 items-center justify-center">
-              <View>
-                <Text fontWeight="font-bold">Phone number</Text>
-                <Text
-                  fontSize="text-base"
-                  className="pt-2"
-                >
-                  {details.phone}
-                </Text>
-              </View>
-            </View>
-            <IconButton accessibilityLabel="Edit phone number" onPress={openEditPhoneModal}>
-              <PencilSquareIcon
-                size={20}
-                color={colors.dark.brand}
-              />
-            </IconButton>
-          </View>
-
-          {/* Password */}
-          <View
-            style={{ paddingVertical: wp("5%") }}
-            className="flex-row justify-between items-center "
-          >
-            <View className="flex-row space-x-3 items-center justify-center">
-              <View>
-                <Text fontWeight="font-bold">Password</Text>
-                <Text
-                  fontSize="text-base"
-                  className="pt-2"
-                >
-                  {details.password}
-                </Text>
-              </View>
-            </View>
-            <IconButton accessibilityLabel="Edit password" onPress={openEditPasswordModal}>
-              <PencilSquareIcon
-                size={20}
-                color={colors.dark.brand}
-              />
-            </IconButton>
-          </View>
-        </View>
-
-        <View className="px-gutter">
-          {selectedImage && (
+        {selectedImage && (
+          <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
             <TouchableOpacity
               onPress={handleProfileUpdate}
-              style={[styles.saveButton, { marginTop: hp(5) }]}
+              style={[styles.saveButton, { marginTop: space.md }]}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="white" />
@@ -582,18 +551,16 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </Text>
               )}
             </TouchableOpacity>
-          )}
-        </View>
+          </View>
+        )}
 
-        {/* Delete account used to float unbounded below the last row with no
-            container of its own. A top separator and a proper 44pt row read
-            as an intentional, contained destructive action instead. */}
+        {/* The frame has no delete action; it stays as a contained destructive
+            row under the fields rather than being dropped. */}
         <View
           style={{
             borderTopWidth: 1,
-            borderTopColor: ink.line(isDark),
-            marginTop: 8,
-            paddingHorizontal: wp("4%"),
+            borderTopColor: color.line,
+            paddingHorizontal: SCREEN_GUTTER,
           }}
         >
           <TouchableOpacity
@@ -631,7 +598,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 borderStyle: "dashed",
                 borderColor: ink.line(false),
                 borderWidth: 1,
-                height: hp("20%"),
+                height: winH * 0.20,
                 borderRadius: radius.input,
                 alignItems: "center",
                 justifyContent: "center",
@@ -655,7 +622,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 borderStyle: "dashed",
                 borderColor: ink.line(false),
                 borderWidth: 1,
-                height: hp("20%"),
+                height: winH * 0.20,
                 borderRadius: radius.input,
                 alignItems: "center",
                 justifyContent: "center",
@@ -684,7 +651,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       >
         <View
           className="flex-row items-center justify-between px-6"
-          style={{ paddingVertical: wp("5%") }}
+          style={{ paddingVertical: SCREEN_GUTTER }}
         >
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
@@ -750,7 +717,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       >
         <View
           className="flex-row items-center justify-between relative px-6"
-          style={{ paddingVertical: wp("5%") }}
+          style={{ paddingVertical: SCREEN_GUTTER }}
         >
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
@@ -824,7 +791,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               <View className="w-[90%] ">
                 <OTPTextView
                   containerStyle={styles.textInputContainer}
-                  textInputStyle={styles.roundedTextInput}
+                  textInputStyle={roundedTextInputStyle}
                   // @ts-ignore
                   placeholder="*"
                   placeholderTextColor={
@@ -888,7 +855,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       >
         <View
           className="flex-row items-center justify-between px-6"
-          style={{ paddingVertical: wp("5%") }}
+          style={{ paddingVertical: SCREEN_GUTTER }}
         >
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
@@ -1015,7 +982,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               <View className="w-[90%] self-center">
                 <OTPTextView
                   containerStyle={styles.textInputContainer}
-                  textInputStyle={styles.roundedTextInput}
+                  textInputStyle={roundedTextInputStyle}
                   // @ts-ignore
                   placeholder="*"
                   placeholderTextColor={
@@ -1104,7 +1071,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       >
         <View
           className="flex-row items-center justify-between px-6"
-          style={{ paddingVertical: wp("5%") }}
+          style={{ paddingVertical: SCREEN_GUTTER }}
         >
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
             className="items-start"
@@ -1240,7 +1207,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               onPress={handleSavePassword}
               style={{
                 backgroundColor: colors.dark.brand,
-                padding: wp("3.5%"),
+                padding: space.md,
                 alignItems: "center",
                 borderRadius: radius.card,
               }}

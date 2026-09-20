@@ -25,6 +25,16 @@ export interface ColorTokens {
   surfaceRaised: string;
   /** Hairlines, borders, dividers. Never the edge of a control. */
   line: string;
+  /** The tab bar's top edge — a step quieter than `line` on dark, per the design. */
+  navLine: string;
+  /**
+   * A round control's fill and edge where it sits on the page (the Product
+   * Details back and favourite circles). Light draws both as the plain surface and
+   * the hairline; dark lifts the fill one step and strengthens the edge, which the
+   * dark frame does and the hairline alone would not.
+   */
+  controlFill: string;
+  controlLine: string;
   /** Headlines and primary copy. */
   text: string;
   /** Body copy on tinted/busy surfaces. */
@@ -41,14 +51,44 @@ export interface ColorTokens {
   brandTextHi: string;
   /** Brand wash behind tinted surfaces (12% dark / 7% light). */
   brandWash: string;
+  /** Brand tint laid over a photo to mark it chosen (40% both themes). */
+  brandVeil: string;
+  /** Solid tinted panel — the request card. Purple/50 on light. */
+  brandPanel: string;
+  /** Edge of the tinted panel. Purple/100 on light. */
+  brandPanelLine: string;
   /** Border of an interactive control — WCAG 1.4.11, ≥3:1 vs its surface. */
   inputLine: string;
   /** Placeholder text. Shipped, never left to the browser/OS default. */
   placeholder: string;
   /** Keyboard focus ring. */
   focus: string;
+  /**
+   * The tone that sits ON the brand fill — a primary button's label, a sent
+   * chat bubble's text. Identical to `onPhoto` today; they are separate tokens
+   * because a redesign that lightens the brand must be able to darken this one
+   * without also darkening every label that sits over a photograph.
+   */
+  onBrand: string;
+  /**
+   * The tone that sits ON a photograph or a scrim — a close button over a hero
+   * image, a favourite heart on a product tile. Never resolves against the
+   * theme's own surface, so it does not flip between light and dark.
+   */
+  onPhoto: string;
   /** Modal scrim behind sheets and dialogs. */
   scrim: string;
+  /**
+   * The canvas at partial opacity, painted behind blurred chrome so a pinned
+   * header still reads as the screen's own surface rather than as frosted glass
+   * over nothing. Must track `canvas` — four files used to hardcode the old
+   * canvas here and went stale the moment the palette moved.
+   */
+  canvasVeil: string;
+  /** A dark wash over photography — chips and badges laid on a product shot. */
+  photoScrim: string;
+  /** As `photoScrim`, at the weight a floating icon button needs. */
+  photoScrimSoft: string;
   /** Neutral fill for skeletons, image placeholders, avatar rings. */
   skeleton: string;
   skeletonHighlight: string;
@@ -64,24 +104,40 @@ export interface ColorTokens {
 }
 
 export const darkColors: ColorTokens = {
-  canvas: "#0A0A0F",
-  surface: "#12121A",
-  surfaceRaised: "#1A1A24",
-  line: "#22222E",
-  text: "#FFFFFF", // 19.6:1 AAA
-  textHi: "#B4B4C0", // 9.62:1 AAA
-  textBody: "#9B9BA8", // 7.19:1 AA
-  textDim: "#7A7A8E", // 4.70:1 AA
-  brand: "#635BE8", // white on it 5.01:1
-  brandText: "#827CED", // 5.70:1 AA
-  brandTextHi: "#928CEF", // 6.79:1 AA
+  // The Figma canvas is true black (Black and White/1300) with inputs and the
+  // search field one step up. These used to sit a step lighter (1200 / 1100),
+  // which is why every dark screen read as grey next to the design.
+  canvas: "#000000", // Black and White/1300
+  surface: "#0F0F0F", // Black and White/1200
+  surfaceRaised: "#292929", // Black and White/1000
+  line: "#292929", // Black and White/1000
+  navLine: "#1A1A1A", // Black and White/1100
+  controlFill: "#1A1A1A", // Black and White/1100
+  controlLine: "#4E4E4E", // sampled from the dark Product Details frame
+  text: "#FFFFFF", // Text - Dark mode/Primary, 18.9:1 AAA
+  textHi: "rgba(255,255,255,0.70)", // Text/Secondary
+  textBody: "rgba(255,255,255,0.70)",
+  textDim: "rgba(255,255,255,0.50)", // Text/Tertiary
+  brand: "#635BE8", // Purple/400
+  brandText: "#827CED", // Purple/400 itself fails on the dark grounds; this is the readable tint
+  brandTextHi: "#928CEF",
   brandWash: "rgba(99,91,232,0.12)",
-  inputLine: "#6A6A7E", // 3.53:1 vs surface
-  placeholder: "#8A8A9E", // 5.51:1 AA
+  brandVeil: "rgba(99,91,232,0.4)",
+  // The design's dark request card was below the fold of the frame that could be
+  // sampled, so dark keeps the wash and hairline it already had.
+  brandPanel: "rgba(99,91,232,0.12)",
+  brandPanelLine: "#292929",
+  inputLine: "#767676", // Black and White/700
+  placeholder: "rgba(255,255,255,0.50)",
   focus: "#928CEF",
+  onBrand: "#FFFFFF",
+  onPhoto: "#FFFFFF",
   scrim: "rgba(0,0,0,0.60)",
-  skeleton: "#1A1A24",
-  skeletonHighlight: "#262634",
+  canvasVeil: "rgba(0,0,0,0.55)",
+  photoScrim: "rgba(0,0,0,0.62)",
+  photoScrimSoft: "rgba(0,0,0,0.32)",
+  skeleton: "#1A1A1A",
+  skeletonHighlight: "#292929",
   success: "#6FCF97",
   warning: "#FFD479",
   danger: "#EB6F62",
@@ -93,32 +149,43 @@ export const darkColors: ColorTokens = {
 };
 
 export const lightColors: ColorTokens = {
-  canvas: "#FBFAF9",
+  canvas: "#FFFFFF", // Black and White/50
   surface: "#FFFFFF",
-  surfaceRaised: "#F4F2EF",
-  line: "#E6E4E0",
-  text: "#16151A", // 16.8:1 AAA
-  textHi: "#35333D", // 11.4:1 AAA
-  textBody: "#55535E", // 7.31:1 AA
-  textDim: "#6F6D7A", // 4.91:1 AA
-  brand: "#635BE8", // white on it 5.01:1
-  brandText: "#635BE8", // 4.85:1 AA
-  brandTextHi: "#635BE8",
+  surfaceRaised: "#F5F5F5", // Black and White/100
+  line: "#E6E6E6", // Black and White/200
+  navLine: "#E6E6E6", // Black and White/200
+  controlFill: "#FFFFFF", // Black and White/50
+  controlLine: "#E6E6E6", // Black and White/200
+  text: "#000000", // Text - Light mode/Primary, 21:1 AAA
+  textHi: "rgba(0,0,0,0.70)", // Text/Secondary
+  textBody: "rgba(0,0,0,0.70)",
+  textDim: "rgba(0,0,0,0.58)", // Text/Tertiary — design says 0.50 (3.95:1, below AA); 0.58 is the smallest step that clears 4.5 on both light grounds
+  brand: "#635BE8", // Purple/400
+  brandText: "#635BE8", // 4.85:1 AA on white
+  brandTextHi: "#363280", // Purple/700
   brandWash: "rgba(99,91,232,0.07)",
-  inputLine: "#949089", // 3.17:1 vs #FFF
-  placeholder: "#6F6D7A", // 4.91:1 AA
+  brandVeil: "rgba(99,91,232,0.4)",
+  brandPanel: "#EDEDFC", // Purple/50
+  brandPanelLine: "#CAC8F7", // Purple/100
+  inputLine: "#C4C4C4", // Black and White/300
+  placeholder: "rgba(0,0,0,0.58)", // as textDim — 0.50 fails AA on white
   focus: "#635BE8",
-  scrim: "rgba(22,21,26,0.45)",
-  skeleton: "#E9E7E3",
-  skeletonHighlight: "#F6F5F3",
+  onBrand: "#FFFFFF",
+  onPhoto: "#FFFFFF",
+  scrim: "rgba(0,0,0,0.45)",
+  canvasVeil: "rgba(255,255,255,0.60)",
+  photoScrim: "rgba(0,0,0,0.62)",
+  photoScrimSoft: "rgba(0,0,0,0.32)",
+  skeleton: "#F5F5F5",
+  skeletonHighlight: "#E6E6E6",
   success: "#1E7A47",
   warning: "#7A5200",
   danger: "#B3261E",
   info: "#1F5F94",
-  successWash: "#EAF6EE",
-  warningWash: "#FFF6E0",
-  dangerWash: "#FBEAE8",
-  infoWash: "#EAF2F9",
+  successWash: "rgba(30,122,71,0.08)",
+  warningWash: "rgba(122,82,0,0.08)",
+  dangerWash: "rgba(179,38,30,0.08)",
+  infoWash: "rgba(31,95,148,0.08)",
 };
 
 export const colors: Record<ThemeName, ColorTokens> = {
@@ -137,7 +204,7 @@ export const fontSize = {
   xs: 12,
   sm: 14,
   md: 16,
-  base: 17,
+  base: 18, // Body Large
   lg: 20,
   xl: 24,
   "2xl": 28,
@@ -145,27 +212,37 @@ export const fontSize = {
 } as const;
 
 export const lineHeight = {
-  xs: 16, // 1.33
-  sm: 20, // 1.43
-  md: 24, // 1.50
-  base: 24, // 1.41
-  lg: 26, // 1.30
-  xl: 30, // 1.25
-  "2xl": 34, // 1.21
-  "3xl": 40, // 1.18
+  // The new system sets body text at 1.5 and headings at 1.2.
+  xs: 18, // 1.5
+  sm: 21, // 1.5
+  md: 24, // 1.5
+  base: 27, // 1.5
+  lg: 24, // 1.2  H3
+  xl: 29, // 1.2  H2
+  "2xl": 34, // 1.2 — no Figma equivalent above 24; retained for existing call sites
+  "3xl": 41, // 1.2 — as above
 } as const;
 
 export type FontSizeToken = keyof typeof fontSize;
 
 /**
- * iOS chrome sits outside the content ramp: tab-bar labels and nav titles
- * follow the HIG, not the reading scale.
+ * iOS chrome sits outside the content ramp: nav titles follow the HIG, not the
+ * reading scale. The tab bar no longer uses `tabLabel` — it follows the design's
+ * navbar, which sets its labels on the content ramp at 14pt.
  */
 export const chromeFontSize = {
   tabLabel: 11,
   navTitle: 17,
 } as const;
 
+/**
+ * The design system uses two weights: Regular 400 and Bold 700.
+ *
+ * `light`, `medium` and `semibold` are retained only so the five-name
+ * `fontWeight` prop keeps type-checking; nothing resolves to them any more
+ * (see `fontWeightMap` in components/core/text.tsx). The three faces can be
+ * dropped from the App.tsx font load once the design is settled.
+ */
 export const fontFamily = {
   light: "PlusJakartaSans-Light",
   regular: "PlusJakartaSans-Regular",
@@ -190,10 +267,15 @@ export const space = {
  * `full` is for pills and avatars only — never a card.
  */
 export const radius = {
-  button: 9,
+  button: 12, // the Figma Button component's cornerRadius (Primary/Secondary/Disabled)
   input: 11,
-  card: 12,
+  card: 16,
   group: 14,
+  /**
+   * The top corners of a bottom sheet. Three files hardcoded this as a bare 20;
+   * the design measures 16, matching `card` — sheets and tiles share a radius.
+   */
+  sheet: 16,
   full: 999,
 } as const;
 
@@ -206,14 +288,14 @@ export const radius = {
  */
 export const aspect = {
   /** Product photo on a card — very slightly taller than it is wide. */
-  productImage: 41.5 / 44.5,
+  productImage: 163 / 176, // measured off the Figma product tile (163x250, image 176 tall)
 } as const;
 
 /** Apple's minimum comfortable target. Not a guideline — a floor. */
 export const MIN_TOUCH_TARGET = 44;
 
 /** Standard horizontal page gutter. One value, every screen. */
-export const SCREEN_GUTTER = 20;
+export const SCREEN_GUTTER = 24;
 
 /**
  * Vertical density.
@@ -244,6 +326,14 @@ export const density = {
   chip: 36,
   /** Padding inside a content block (card body, section body). */
   block: 14,
+  /**
+   * Space below the last row of a list that the tab bar overlaps. Replaces
+   * `hp("10%")`, which resolved to 84 on the reference device and to whatever
+   * the launch height happened to be everywhere else.
+   */
+  listFooter: 84,
+  /** As above, for a list with no tab bar under it. Was `hp("5%")` ≈ 42. */
+  listFooterCompact: 44,
 } as const;
 
 /**
@@ -257,11 +347,11 @@ export const typeRole = {
   /** The one title of a screen. At most one per screen. */
   screenTitle: { size: "xl", weight: "font-bold" },
   /** A section inside a screen. There may be several. */
-  sectionTitle: { size: "lg", weight: "font-semibold" },
+  sectionTitle: { size: "lg", weight: "font-bold" },
   /** A grouped-list header — "Account", "Support". Quiet, not a title. */
-  groupHeader: { size: "xs", weight: "font-semibold" },
+  groupHeader: { size: "xs", weight: "font-bold" },
   /** A form field's label. Must never outrank the value the reader types. */
-  fieldLabel: { size: "sm", weight: "font-semibold" },
+  fieldLabel: { size: "sm", weight: "font-bold" },
   /** Helper text under a field label. */
   fieldHint: { size: "sm", weight: "font-normal" },
 } as const;
@@ -274,6 +364,29 @@ export const shadow = {
     shadowRadius: 2,
     shadowOffset: { width: 0, height: 1 },
     elevation: 1,
+  },
+  dark: {
+    shadowColor: "transparent",
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
+  },
+} as const;
+
+/**
+ * The elevation of a floating field — the Home search box. The design draws it
+ * 0 2 6 at 12% black in light (blur 6 is a radius of about 3) and with the
+ * hairline alone in dark, so it is a separate step from `shadow`, which is
+ * subtler and belongs to cards and sheets.
+ */
+export const fieldShadow = {
+  light: {
+    shadowColor: "#000000",
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   dark: {
     shadowColor: "transparent",
@@ -319,6 +432,15 @@ export const ink = {
     isDark ? darkColors.surfaceRaised : lightColors.surfaceRaised,
   line: (isDark?: boolean) => (isDark ? darkColors.line : lightColors.line),
   scrim: (isDark?: boolean) => (isDark ? darkColors.scrim : lightColors.scrim),
+  canvasVeil: (isDark?: boolean) =>
+    isDark ? darkColors.canvasVeil : lightColors.canvasVeil,
+  /** Over photography. Theme-invariant — takes no argument by design. */
+  photoScrim: () => darkColors.photoScrim,
+  photoScrimSoft: () => darkColors.photoScrimSoft,
+  /** On the brand fill. Theme-invariant — takes no argument by design. */
+  onBrand: () => lightColors.onBrand,
+  /** On a photograph or scrim. Theme-invariant — takes no argument by design. */
+  onPhoto: () => lightColors.onPhoto,
   inputLine: (isDark?: boolean) =>
     isDark ? darkColors.inputLine : lightColors.inputLine,
   text: (isDark?: boolean) => (isDark ? darkColors.text : lightColors.text),

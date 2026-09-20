@@ -9,6 +9,7 @@ export * from "./field";
 export * from "./favourite-button";
 export * from "./icon-button";
 export * from "./non-scrollable-container";
+export * from "./subpage-header";
 export * from "./product-card-skeleton";
 export * from "./scroll-container";
 export * from "./pinned-header";

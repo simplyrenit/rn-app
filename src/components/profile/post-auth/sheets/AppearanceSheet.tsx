@@ -1,23 +1,33 @@
 import { Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { selectionFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { CheckIcon } from "react-native-heroicons/solid";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface AppearanceSheetProps {
   bottomSheetModalRef: React.RefObject<any>;
   isDarkMode: boolean;
 }
 
+// The frame's wording and order: the device setting first, then dark, then light.
 const OPTIONS = [
-  { value: "device", label: "Match my device" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
+  { value: "device", label: "Use my device settings" },
+  { value: "dark", label: "Dark mode" },
+  { value: "light", label: "Light mode" },
 ] as const;
+
+// Measured off the Figma sheet: a 44pt header holding a centred 18pt title, then
+// three 56pt rows (24 side padding, 16 above and below), with no rules between
+// them. 44 + 3 x 56 = 212, plus the 37pt grabber row; the safe-area inset is added
+// where it is used, because the frame draws the home indicator outside the sheet.
+const HEADER_HEIGHT = 44;
+const ROW_HEIGHT = 56;
+const SHEET_HEIGHT = 249;
 
 const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
   bottomSheetModalRef,
@@ -25,24 +35,33 @@ const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
 }) => {
   const { themePreference, setTheme } = useGlobalContext();
   const { color } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <CustomBottomSheetModal
       ref={bottomSheetModalRef}
-      snapPoints={["34%"]}
+      snapPoints={[SHEET_HEIGHT + insets.bottom]}
+      frame
       isDark={isDarkMode}
     >
-      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: 24 }}>
-        <Text
-          accessibilityRole="header"
-          fontSize="text-lg"
-          fontWeight="font-bold"
-          style={{ marginBottom: 12 }}
+      <View>
+        <View
+          style={{
+            height: HEADER_HEIGHT,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          Appearance
-        </Text>
+          <Text
+            accessibilityRole="header"
+            fontSize="text-base"
+            fontWeight="font-bold"
+          >
+            Appearance
+          </Text>
+        </View>
 
-        {OPTIONS.map((option, index) => {
+        {OPTIONS.map((option) => {
           const selected = themePreference === option.value;
           return (
             <TouchableOpacity
@@ -50,22 +69,23 @@ const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
               accessibilityRole="radio"
               accessibilityState={{ selected }}
               accessibilityLabel={option.label}
-              // Rows were 36pt tall and 33pt apart — the tightest targets in
-              // the app, in a sheet whose whole job is three choices.
+              // The frame's 56pt row: comfortably over the 44pt floor, in a sheet
+              // whose whole job is three choices. No rules between rows.
               style={{
                 flexDirection: "row",
                 justifyContent: "space-between",
                 alignItems: "center",
-                minHeight: MIN_TOUCH_TARGET + 8,
-                borderBottomWidth: index === OPTIONS.length - 1 ? 0 : 1,
-                borderBottomColor: color.line,
+                minHeight: ROW_HEIGHT,
+                paddingHorizontal: SCREEN_GUTTER,
               }}
               onPress={() => {
                 selectionFeedback();
                 setTheme(option.value);
               }}
             >
-              <Text fontSize="text-md">{option.label}</Text>
+              <Text fontSize="text-md" fontWeight="font-bold">
+                {option.label}
+              </Text>
               {selected && <CheckIcon size={20} color={color.brandText} />}
             </TouchableOpacity>
           );

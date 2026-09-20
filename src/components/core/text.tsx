@@ -41,7 +41,8 @@ export type TextTone =
   | "success"
   | "warning"
   | "info"
-  | "onBrand";
+  | "onBrand"
+  | "onPhoto";
 
 export type TypeRole = keyof typeof typeRole;
 
@@ -82,11 +83,21 @@ const roleExtras: Record<
 
 const StyledText = styled(RNText);
 
+/**
+ * The new type system has two weights, not five: Regular 400 and Bold 700.
+ * Every style in the Figma resolves to one of those, so the three in-between
+ * faces have nothing to map to.
+ *
+ * The public `fontWeight` prop keeps all five names — 269 call sites use them
+ * and renaming would be churn without meaning — but they resolve onto two
+ * families. `font-medium` reads as Regular and `font-semibold` as Bold, which
+ * is the weight the design intends at those sites.
+ */
 const fontWeightMap: Record<TailwindFontWeight, string> = {
-  "font-light": fontFamily.light,
+  "font-light": fontFamily.regular,
   "font-normal": fontFamily.regular,
-  "font-medium": fontFamily.medium,
-  "font-semibold": fontFamily.semibold,
+  "font-medium": fontFamily.regular,
+  "font-semibold": fontFamily.bold,
   "font-bold": fontFamily.bold,
 };
 
@@ -162,7 +173,8 @@ export function Text({
     success: color.success,
     warning: color.warning,
     info: color.info,
-    onBrand: "#FFFFFF",
+    onBrand: color.onBrand,
+    onPhoto: color.onPhoto,
   };
 
   // Precedence, most specific first:

@@ -1,6 +1,7 @@
 import { usePost } from "@/backend/post";
-import { Text } from "@/components/core";
+import { Button, Text } from "@/components/core";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
+import { SpecStrip } from "@/components/product/spec-strip";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { PostProductHeader } from "@/components/post/header";
 import { ProductImage } from "@/components/product/product-image";
@@ -10,19 +11,13 @@ import { useGlobalContext } from "@/context/global-context";
 import { useProductContext } from "@/context/product-context";
 import { BackendProduct, PublicOwner, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
-import {
-  BanknotesIcon,
-  ShareIcon,
-} from "react-native-heroicons/outline";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
-import { Dimensions } from "react-native";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import { BanknotesIcon } from "react-native-heroicons/outline";
 import useOwner from "@/backend/owner";
 import { useEffect, useState } from "react";
 import { SvgUri } from "react-native-svg";
 import { ink } from "@/lib/design-tokens";
 
-const { height } = Dimensions.get("window");
 
 export default function ReviewProduct() {
   const navigation = useTypedNavigation();
@@ -58,13 +53,11 @@ export default function ReviewProduct() {
   const productCategoryIcon = product.category[isDark ? "darkIcon" : "lightIcon"];
 
   return (
-    <NonScrollableContainer height={height > 700 ? 105 : 100}>
+    <NonScrollableContainer>
       <PostProductHeader heading="Review your post" step={7} showBackArrow />
 
       <ScrollView
-        // className="flex-1"
         contentContainerStyle={{
-          // paddingBottom: hp("10%"),
           flexGrow: 1,
         }}
       >
@@ -86,69 +79,46 @@ export default function ReviewProduct() {
           </View>
         </View>
 
-        <View
-          className={`px-8 w-full py-8 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
-            } flex flex-row items-center justify-between`}
-        >
-          {/* Custom Category Icon */}
-          <View className="flex items-center">
-            {productCategoryIcon?.slice(-3)?.toLowerCase() === 'svg' ? <SvgUri uri={productCategoryIcon} height={30} width={30} /> : <Image
-              source={{
-                uri: isDark
-                  ? product.category.darkIcon
-                  : product.category.lightIcon,
-              }}
-              className="w-5 h-5"
-            />}
-            <Text fontWeight="font-bold" className="mt-2">
-              {product.category.title}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-subtle-dark" : "text-subtle-light"
-                }`}
-            >
-              Category
-            </Text>
-          </View>
-
-          <View className="flex items-center">
-            <BanknotesIcon
-              color={ink.text(isDark)}
-              size={22}
-            />
-            <Text fontWeight="font-bold" className="mt-2">
-              ₹{product.securityDeposit}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-subtle-dark" : "text-subtle-light"
-                }`}
-            >
-              Deposit
-            </Text>
-          </View>
-
-          {/* Custom Icon */}
-          <View className="flex items-center">
-            {/* <LightBulbIcon
-              color={ink.text(isDark)}
-              size={22}
-            /> */}
-            <ConditionRenderer
-              condition={product.condition}
-              size={22}
-              color={ink.text(isDark)}
-            />
-            <Text fontWeight="font-bold" className="mt-2">
-              {product?.condition?.[0]?.toUpperCase()}{product?.condition?.slice(1)?.toLowerCase()}
-            </Text>
-            <Text
-              className={`mt-1 font-light ${isDark ? "text-subtle-dark" : "text-subtle-light"
-                }`}
-            >
-              Condition
-            </Text>
-          </View>
-        </View>
+        <SpecStrip
+          items={[
+            {
+              icon: productCategoryIcon ? (
+                productCategoryIcon.slice(-3).toLowerCase() === "svg" ? (
+                  <SvgUri uri={productCategoryIcon} width={22} height={22} />
+                ) : (
+                  <Image
+                    source={{ uri: productCategoryIcon }}
+                    style={{ width: 22, height: 22 }}
+                    contentFit="contain"
+                  />
+                )
+              ) : null,
+              value: product.category.title,
+              label: "Category",
+            },
+            {
+              icon: <BanknotesIcon color={ink.text(isDark)} size={22} />,
+              value: product.securityDeposit
+                ? `₹${product.securityDeposit}`
+                : null,
+              label: "Deposit",
+            },
+            {
+              icon: product.condition ? (
+                <ConditionRenderer
+                  condition={product.condition}
+                  size={22}
+                  color={ink.text(isDark)}
+                />
+              ) : null,
+              value: product.condition
+                ? product.condition[0].toUpperCase() +
+                  product.condition.slice(1).toLowerCase()
+                : null,
+              label: "Condition",
+            },
+          ]}
+        />
 
         <View
           className={`px-gutter py-6 border-b ${isDark ? "border-b-line-dark" : "border-b-line-light"
@@ -221,22 +191,17 @@ export default function ReviewProduct() {
           </Text>
           <Text fontSize="text-md" className="my-1">per day</Text>
         </View>
-        <TouchableOpacity
+        {/* The primitive, not a hand-rolled TouchableOpacity: this CTA had no
+            disabled treatment at all, so it stayed pressable through its own
+            submit. `Button` blocks the press while `loading` and resolves a
+            label colour that survives both themes. */}
+        <Button
+          className="w-1/2"
           onPress={handlePostProduct}
-          className="bg-brand flex items-center justify-center rounded-button w-1/2 p-3"
+          loading={loading}
         >
-          {loading ? (
-            <ActivityIndicator size="small" color="white" />
-          ) : (
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-base"
-              className="text-white"
-            >
-              Post product
-            </Text>
-          )}
-        </TouchableOpacity>
+          Post product
+        </Button>
       </View>
     </NonScrollableContainer>
   );

@@ -1,7 +1,7 @@
 import { MIN_TOUCH_TARGET, radius } from "@/lib/design-tokens";
 import { tapFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
-import React from "react";
+import React, { createContext, useContext } from "react";
 import {
   ActivityIndicator,
   GestureResponderEvent,
@@ -14,6 +14,16 @@ import { usePressFeedback } from "./use-press-feedback";
 
 type ButtonVariant = "primary" | "outline" | "warning" | "ghost";
 type ButtonSize = "default" | "compact";
+
+/**
+ * The foreground colour a live `Button` has already resolved for its own
+ * label — theme, variant and (crucially) disabled state all folded in. Custom
+ * `children` read it via `useButtonLabelColor` instead of re-deriving the same
+ * three inputs at the call site, which is how the disabled-label colour ended
+ * up wrong in more than one place at once: every call site was allowed to
+ * invent its own answer.
+ */
+const ButtonForegroundContext = createContext<string | null>(null);
 
 interface Props extends React.ComponentProps<typeof TouchableOpacity> {
   className?: string;
@@ -109,10 +119,24 @@ export function Button({
 
   // 4.53:1 on the light disabled fill, 4.12:1 on the dark one — and at 16pt
   // bold both clear the 3:1 large-text threshold comfortably.
+  //
+  // `warning` cannot share `primary`'s `onBrand` label: `danger` is a deep red
+  // on light (#B3261E) and a light salmon on dark (#EB6F62). White clears AA
+  // on the first (6.6:1) and fails it on the second (3.0:1). There is no
+  // `onDanger` token yet — design-tokens.ts is frozen this phase — so this
+  // derives the label from the two tokens that already exist: dark canvas
+  // reads at 6.3:1 on the salmon fill, which is the same derivation
+  // `unavailability-editor.tsx` already uses for the calendar's danger marks,
+  // now shared here instead of staying a second, undiscoverable answer to the
+  // same problem.
   const labelColor = isBlocked
     ? color.textDim
-    : variant === "primary" || variant === "warning"
-    ? "#FFFFFF"
+    : variant === "warning"
+    ? isDark
+      ? color.canvas
+      : color.onBrand
+    : variant === "primary"
+    ? color.onBrand
     : color.text;
 
   const handlePress = (event: GestureResponderEvent) => {
@@ -166,22 +190,45 @@ export function Button({
           {children}
         </Text>
       ) : (
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {children}
-        </View>
+        <ButtonForegroundContext.Provider value={labelColor}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {children}
+          </View>
+        </ButtonForegroundContext.Provider>
       )}
     </TouchableOpacity>
   );
 }
 
-/** Colour a caller should use for content it renders inside a Button. */
+/**
+ * Colour a caller should use for content it renders inside a `Button` — an
+ * icon beside the label, a custom spinner, anything that isn't the plain-text
+ * child `Button` already colours itself.
+ *
+ * Called from inside a live `Button`'s children, this reads the exact colour
+ * that `Button` already resolved for its own label, so it is automatically
+ * right for the current theme, variant *and* disabled state without the
+ * caller re-deriving any of the three. That was the actual bug this fixes:
+ * every non-text `Button` child that hand-picked its own colour handled
+ * `disabled` differently (or not at all), so a disabled CTA's icon could stay
+ * full-strength while its label vanished, or vice versa.
+ *
+ * Called with no `Button` above it in the tree, it falls back to the same
+ * variant-only defaults it always returned, for the few call sites that use
+ * it as a standalone lookup (e.g. to colour something that sits beside a
+ * `Button` rather than inside one). That path cannot know about `disabled`,
+ * so it does not attempt to.
+ */
 export function useButtonLabelColor(variant: ButtonVariant = "primary") {
-  const { color } = useTheme();
-  return variant === "primary" || variant === "warning" ? "#FFFFFF" : color.text;
+  const { color, isDark } = useTheme();
+  const fromButton = useContext(ButtonForegroundContext);
+  if (fromButton !== null) return fromButton;
+  if (variant === "warning") return isDark ? color.canvas : color.onBrand;
+  return variant === "primary" ? color.onBrand : color.text;
 }

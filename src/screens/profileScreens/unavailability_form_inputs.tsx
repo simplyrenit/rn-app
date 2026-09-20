@@ -1,4 +1,5 @@
-import { BackButton, Button, Text } from "@/components/core";
+import { Button, Text } from "@/components/core";
+import { EditStepHeader } from "@/components/post/edit-step-header";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { createLocationRequest } from "@/lib/location-request";
@@ -16,18 +17,16 @@ import {
   MapPinIcon,
 } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import DateRangePicker from "@/components/core/date-range-picker";
-import { Dimensions } from "react-native";
 import { useAuthContext } from "@/context/auth-context";
 import { useRoute } from "@react-navigation/native";
 import moment from "moment-timezone";
 import { useProfile } from "@/backend/profile";
 
 import { toast } from "@/lib/toast";
-import { ink, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { ink } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 
-const { height } = Dimensions.get("window");
 interface UnavailabilityProps {}
 
 const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
@@ -42,6 +41,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
   const { theme } = useGlobalContext();
   const { user } = useAuthContext();
   const isDarkMode = theme === "dark";
+  const { color } = useTheme();
   const [open, setOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [address, setAddress] = useState("");
@@ -161,19 +161,8 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
   };
 
   return (
-    <NonScrollableContainer height={height > 700 ? 105 : 100}>
-      <View
-        className="flex-row items-center px-gutter"
-        style={{ paddingVertical: wp("5%") }}
-      >
-        <BackButton />
-        <View className="flex-1 items-center justify-center">
-          <Text role="sectionTitle" fontWeight="font-bold">
-            Request an item
-          </Text>
-        </View>
-        <View style={{ width: MIN_TOUCH_TARGET }} />
-      </View>
+    <NonScrollableContainer>
+      <EditStepHeader title="Request an item" />
 
       <KeyboardAwareScrollView className="px-gutter py-5 flex-1">
         <View className="space-y-1 mb-5">
@@ -429,7 +418,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
                     !address ||
                     !contactDetail ||
                     !selectedLocation
-                      ? "#FFFFFF"
+                      ? color.onBrand
                       : ink.dim(false)
                   }
                 />

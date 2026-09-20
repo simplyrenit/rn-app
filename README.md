@@ -1,60 +1,45 @@
 # Renit mobile app
 
-Renit is an Expo/React Native rental marketplace. This repository contains the mobile app and Firebase Cloud Functions; the REST/WebSocket backend is maintained separately.
+Renit is an Expo/React Native rental marketplace. This repository contains the
+mobile app and its Firebase Cloud Functions; the REST backend is maintained
+separately.
 
 ## Start locally
 
-### 1. Install prerequisites
+The standard workflow runs against the shared **QA backend**
+(`https://qa-api.toratora.site`). You do not need a local backend.
 
-- Node.js 20 LTS (and npm)
-- Android Studio, Android SDK, and an Android emulator **or** an Android device with USB debugging enabled
-- The companion backend running on port `8000` if you need local API data
+1. Install Node.js 20 LTS, then install dependencies:
 
-### 2. Install dependencies
+   ```bash
+   npm install
+   ```
 
-```bash
-npm install
-```
+2. Copy the QA environment template. The real file is git-ignored; never commit
+   keys or QA account credentials.
 
-If PowerShell blocks `npm.ps1` on Windows, use `npm.cmd` in place of `npm`.
+   ```bash
+   cp config/environments/qa.env.example config/environments/qa.env
+   ```
 
-### 3. Build and run Android
+3. Build and install a native development client. The app uses native modules,
+   so Expo Go does not work:
 
-The app uses native modules, so use an Expo development build rather than Expo Go:
+   ```bash
+   npm run ios       # macOS + Xcode
+   npm run android   # Android Studio or a USB-debuggable device
+   ```
 
-```bash
-npm run android
-```
+4. For later sessions, start the QA-configured Metro server and open the
+   installed development client:
 
-For later sessions, start Metro and open the already-installed development build:
+   ```bash
+   npm run start:qa -- --clear --lan
+   ```
 
-```bash
-npm start -- --dev-client
-```
-
-## Local backend
-
-Enable the local API explicitly and choose the host reachable by the app:
-
-```powershell
-# Android device connected by USB
-adb reverse tcp:8000 tcp:8000
-$env:EXPO_PUBLIC_USE_LOCAL_API = "true"
-$env:EXPO_PUBLIC_LOCAL_API_HOST = "127.0.0.1:8000"
-npm start -- --dev-client
-```
-
-For an Android Studio emulator, use `10.0.2.2:8000` instead. See [local development details](docs/local-development.md) for iOS, troubleshooting, Firebase Functions, and build commands.
-
-## Project map
-
-- `src/screens/` - application screens
-- `src/components/` - shared and feature UI
-- `src/backend/` - API hooks and requests
-- `src/context/` - application state contexts
-- `src/navigation/nav.tsx` - navigation setup
-- `src/lib/config.ts` - API, WebSocket, Firebase, and runtime configuration
-- `functions/` - Firebase Cloud Functions project
+Connecting a physical iPhone, working against a local backend, Firebase
+Functions, builds and troubleshooting are all in
+[`docs/local-development.md`](docs/local-development.md).
 
 ## Commands
 
@@ -66,12 +51,30 @@ npm run ios               # native iOS development build (macOS only)
 npm run web               # Expo web server (limited native-module support)
 npm test                  # Jest in watch mode
 npm run build:qa          # EAS Android QA APK
+npx tsc --noEmit          # type-check (there is no linter)
 ```
+
+## Project map
+
+- `src/screens/` — application screens
+- `src/components/` — shared and feature UI
+- `src/backend/` — API hooks and requests
+- `src/context/` — application state contexts
+- `src/navigation/nav.tsx` — navigation setup
+- `src/lib/config.ts` — API, Firebase and runtime configuration
+- `functions/` — Firebase Cloud Functions project
 
 ## Documentation
 
-- [Environment guide](docs/environments.md)
-- [Local development](docs/local-development.md)
-- [Run QA on a connected iPhone](docs/local-development.md#run-qa-on-a-connected-iphone)
-- [Beta launch guide](docs/beta-launch-guide.md)
-- [QA strategy](docs/qa-e2e-strategy.md)
+- [`AGENTS.md`](AGENTS.md) — architecture, conventions and the agent contract
+  (`CLAUDE.md` imports it)
+- [`docs/local-development.md`](docs/local-development.md) — environments, running
+  the app, iPhone QA, builds, troubleshooting
+- [`docs/qa-e2e-strategy.md`](docs/qa-e2e-strategy.md) — how QA flows are run and
+  classified
+- [`docs/qa-production-revalidation.md`](docs/qa-production-revalidation.md) —
+  release-readiness baseline and blockers
+- [`docs/beta-launch-guide.md`](docs/beta-launch-guide.md) — getting builds to
+  beta testers
+- [`docs/known-issues.md`](docs/known-issues.md) — diagnosed recurring failures
+  and testing gotchas

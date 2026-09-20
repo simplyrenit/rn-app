@@ -6,7 +6,7 @@ import { SearchBar } from "@/components/home/search-bar";
 import { Experiences } from "@/components/home/sections/experiences";
 import { Popular } from "@/components/home/sections/popular";
 import { RailDedupeProvider } from "@/components/home/sections/rail-dedupe";
-import { RecentlyAdded } from "@/components/home/sections/top-picks";
+import { TopPicks } from "@/components/home/sections/top-picks";
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
@@ -55,7 +55,15 @@ export default function Home() {
           list. Without the header's material the scroll view's top edge cut
           card titles and price lines through the middle of the letterforms and
           read as a rendering fault rather than as content passing behind. */}
-      <PinnedHeader gutter={false}>
+      {/* 16 above the field; the 8 below is what remains of the design's 16
+          once the category rail's -8 overlap is taken out. The design draws no
+          rule under the topbar, so the hairline is off. */}
+      <PinnedHeader
+        gutter={false}
+        separator={false}
+        material="solid"
+        style={{ paddingTop: 16, paddingBottom: 8 }}
+      >
         <SearchBar />
       </PinnedHeader>
       <ScrollView
@@ -78,12 +86,14 @@ export default function Home() {
         <View key={refreshKey}>
           <RailDedupeProvider key={refreshKey}>
             <Experiences />
+            <TopPicks />
             <Popular />
-            <RecentlyAdded />
           </RailDedupeProvider>
         </View>
-        <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
-          <Disclaimer />
+        {/* The rails already carry 16 below them, and the design puts another 16
+            above the request card. */}
+        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16 }}>
+          <Disclaimer card mt={0} mb={0} />
         </View>
       </ScrollView>
     </StaticContainer>

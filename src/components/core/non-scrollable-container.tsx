@@ -7,7 +7,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 interface ContainerProps {
   children: React.ReactNode;
-  height?: number;
 }
 
 export function NonScrollableContainer({

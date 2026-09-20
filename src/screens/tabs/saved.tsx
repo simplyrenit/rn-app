@@ -12,11 +12,18 @@ import { useTheme } from "@/lib/theme";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import React from "react";
-import { FlatList, RefreshControl, View } from "react-native";
+import { FlatList, RefreshControl, View, useWindowDimensions } from "react-native";
 import { HeartIcon } from "react-native-heroicons/outline";
 import { Text } from "@/components/core";
 
-const COLUMN_GAP = 14;
+// Measured off the Figma Saved frame: a two-column wrap of the same 163pt tile the
+// Home rails use, 16 between columns and 24 between rows, under a 61pt topbar
+// (16 padding, an H2 title). A column is half of what is left after the gutters
+// and the gap, which is exactly 163 on the 390pt frame and shrinks with a narrower
+// phone instead of overflowing it; being a width rather than a flex fraction, a
+// lone card in the last row stays one column wide.
+const COLUMN_GAP = 16;
+const TOPBAR_PADDING = 16;
 
 export default function Saved() {
   const tabBarHeight = useBottomTabBarHeight();
@@ -24,11 +31,13 @@ export default function Saved() {
   const { authTokens, isAuthenticated } = useGlobalContext();
   const { color, isDark } = useTheme();
   const navigation = useTypedNavigation();
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = Math.floor(
+    (screenWidth - 2 * SCREEN_GUTTER - COLUMN_GAP) / 2
+  );
 
   const renderItem = ({ item }: { item: BackendProduct }) => (
-    // flex so the card fills its column, maxWidth so a lone card in a
-    // two-column grid stays a column wide instead of stretching full-bleed.
-    <View style={{ flex: 1, maxWidth: "48.5%" }}>
+    <View style={{ width: cardWidth }}>
       <Card
         id={`${item.name}`}
         image={item.cover_image}
@@ -36,6 +45,7 @@ export default function Saved() {
         location={item.location}
         price={item.rate}
         isFavorite
+        tile
       />
     </View>
   );
@@ -43,9 +53,9 @@ export default function Saved() {
   const heading = (
     <Text
       accessibilityRole="header"
-      fontSize="text-2xl"
-      fontWeight="font-bold"
-      style={{ marginBottom: 16 }}
+      role="screenTitle"
+      // The frame's topbar: H2 with 16 above and below it.
+      style={{ paddingVertical: TOPBAR_PADDING }}
     >
       Saved
     </Text>
@@ -55,7 +65,7 @@ export default function Saved() {
     <NonScrollableContainer>
       {authTokens && isAuthenticated ? (
         <View
-          style={{ flex: 1, marginTop: 16, paddingHorizontal: SCREEN_GUTTER }}
+          style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER }}
         >
           {heading}
 
@@ -63,7 +73,7 @@ export default function Saved() {
             <FlatList
               data={[0, 1, 2, 3, 4, 5]}
               renderItem={() => (
-                <View style={{ flex: 1, maxWidth: "48.5%" }}>
+                <View style={{ width: cardWidth }}>
                   <ProductCardSkeleton />
                 </View>
               )}
@@ -91,9 +101,6 @@ export default function Saved() {
               renderItem={renderItem}
               keyExtractor={(item) => item.name}
               numColumns={2}
-              // Saved passed no width to Card, so it fell back to a hard 163pt
-              // cap inside a 181pt column and left dead space in every gutter.
-              // The cards now fill the column they are given.
               columnWrapperStyle={
                 favorites.length ? { gap: COLUMN_GAP } : undefined
               }
@@ -118,7 +125,7 @@ export default function Saved() {
           )}
         </View>
       ) : (
-        <View style={{ flex: 1, marginTop: 16 }}>
+        <View style={{ flex: 1 }}>
           <View style={{ paddingHorizontal: SCREEN_GUTTER }}>{heading}</View>
           <ProfilePreAuth isDarkMode={isDark} />
         </View>

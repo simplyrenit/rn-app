@@ -6,25 +6,25 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { useRef, useState } from "react";
-import { ActivityIndicator, ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { TrashIcon } from "react-native-heroicons/outline";
 import * as React from "react";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
 import { useProfile } from "@/backend/profile";
 import { useFocusEffect } from "@react-navigation/native";
-import { Dimensions } from "react-native";
 
 import { useGetMyDetails } from "@/services/userQueries";
 import { MIN_TOUCH_TARGET, ink } from "@/lib/design-tokens";
 import { toast } from "@/lib/toast";
 
-const { height } = Dimensions.get("window");
 
 const EditProductScreen: React.FC = () => {
   const route = useRoute<RouteProps<"editProduct">>();
@@ -34,6 +34,7 @@ const EditProductScreen: React.FC = () => {
   const isDarkMode = theme === "dark";
   const router = useTypedNavigation();
   const { id } = route.params;
+  const { width: winW } = useWindowDimensions();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const openBottomSheet = () => {
     bottomSheetRef.current?.present();
@@ -60,7 +61,7 @@ const EditProductScreen: React.FC = () => {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <NonScrollableContainer height={height > 700 ? 105 : 100}>
+      <NonScrollableContainer>
         <View className="flex-row items-center justify-between px-gutter py-2 pt-4">
           <View style={{ width: MIN_TOUCH_TARGET }}>
             <BackButton onPress={() => router.goBack()} />
@@ -92,7 +93,7 @@ const EditProductScreen: React.FC = () => {
                   <Image
                     className="rounded-group"
                     source={{ uri: product.cover_image }}
-                    style={{ width: wp("40%"), height: wp("40%") }}
+                    style={{ width: winW * 0.4, height: winW * 0.4 }}
                   />
                 </View>
 
@@ -123,8 +124,8 @@ const EditProductScreen: React.FC = () => {
                     <TouchableOpacity
                       onPress={openBottomSheet}
                       className={`flex-row justify-center space-x-1 items-center border rounded-group h-11 mt-2 ${isDarkMode
-                        ? "border-line-dark text-white bg-surface-dark"
-                        : "border-line-light text-black bg-surface-light"
+                        ? "border-line-dark bg-surface-dark"
+                        : "border-line-light bg-surface-light"
                         }`}
                     >
                       <TrashIcon
@@ -211,7 +212,7 @@ const EditProductScreen: React.FC = () => {
                 <Image
                   className="rounded-group"
                   source={{ uri: product.cover_image }}
-                  style={{ width: wp("20%"), height: wp("20%") }}
+                  style={{ width: winW * 0.2, height: winW * 0.2 }}
                 />
               </View>
 
@@ -246,8 +247,8 @@ const EditProductScreen: React.FC = () => {
           <TouchableOpacity
             onPress={() => bottomSheetRef.current?.close()}
             className={`border rounded-card flex-1 items-center justify-center p-3  ${isDarkMode
-              ? "border-line-dark text-white bg-surface-dark"
-              : "border-line-light text-black bg-surface-light"
+              ? "border-line-dark bg-surface-dark"
+              : "border-line-light bg-surface-light"
               }`}
           >
             <Text
@@ -266,7 +267,10 @@ const EditProductScreen: React.FC = () => {
             className="bg-danger-light p-3 rounded-card flex-1  flex-row items-center justify-center"
           >
             {loading ? (
-              <ActivityIndicator size="small" color="white" />
+              // No `onDanger` token exists yet; `onBrand` is the nearest
+              // available (theme-invariant white), same as the label it
+              // stands in for below.
+              <ActivityIndicator size="small" color={ink.onBrand()} />
             ) : (
               <Text
                 fontWeight="font-bold"

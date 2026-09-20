@@ -22,6 +22,13 @@ interface Props {
    * the new listings that need help.
    */
   showUnratedCopy?: boolean;
+  /**
+   * Opt-in: draws the filled stars in ink instead of gold. Only the filled star
+   * changes (the outline stays the dim tone), unlike `Stars`, whose ink tone
+   * colours both. Used by the Write a review rating control; the default stays
+   * gold for the search filter, which has no frame to say otherwise.
+   */
+  tone?: "gold" | "ink";
 }
 
 /**
@@ -39,6 +46,7 @@ export default function Rating({
   size = 20,
   count,
   showUnratedCopy = false,
+  tone = "gold",
 }: Props) {
   const { color } = useTheme();
   const interactive = Boolean(onChange) && !readOnly;
@@ -83,7 +91,10 @@ export default function Rating({
                   overflow: "hidden",
                 }}
               >
-                <StarSolid size={size} color={color.warning} />
+                <StarSolid
+                  size={size}
+                  color={tone === "ink" ? color.text : color.warning}
+                />
               </View>
             )}
           </View>
@@ -104,8 +115,11 @@ export default function Rating({
             hitSlop={{
               top: (MIN_TOUCH_TARGET - size) / 2,
               bottom: (MIN_TOUCH_TARGET - size) / 2,
-              left: 4,
-              right: 4,
+              // Wide enough to reach the 44pt floor without overlapping the
+              // neighbouring star's target (the stars sit 2 apart), so a
+              // near-miss cannot silently pick the wrong rating.
+              left: Math.max(4, (MIN_TOUCH_TARGET - size - 2) / 2),
+              right: Math.max(4, (MIN_TOUCH_TARGET - size - 2) / 2),
             }}
           >
             {glyph}

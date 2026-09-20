@@ -3,7 +3,7 @@ import { useTypedNavigation } from "@/lib/types";
 import { ChatBubble } from "@/components/chat/chat-bubble";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatInput } from "@/components/chat/chat-input";
-import { BackButton, Button, StaticContainer, Text } from "@/components/core";
+import { Button, StaticContainer, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
 import {
@@ -32,12 +32,19 @@ import {
   PencilSquareIcon,
 } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 
 import { ChatSkeleton } from "./chat-skeleton";
 import { useChat } from "@/backend/chat";
 import useOwner from "@/backend/owner";
-import { ink, colors, radius, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import {
+  ink,
+  colors,
+  radius,
+  MIN_TOUCH_TARGET,
+  SCREEN_GUTTER,
+  fontFamily,
+  fontSize,
+} from "@/lib/design-tokens";
 import { formatDayHeading, isSameDay } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -68,6 +75,165 @@ const documentExists = (
     ? snapshot.exists()
     : Boolean(snapshot.exists);
 };
+
+// Measured off the Figma Check Availability and Make Offer sheets: a 44pt title
+// row, a 72pt product thumbnail, 48pt fields at the button radius on the hairline.
+const OFFER_FIELD_HEIGHT = 48;
+/** The Block & Report frame's reason box. */
+const BLOCK_REASON_HEIGHT = 200;
+const OFFER_THUMB = 72;
+
+function SheetTitle({ title }: { title: string }) {
+  return (
+    <View
+      style={{
+        height: MIN_TOUCH_TARGET,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Text accessibilityRole="header" fontSize="text-base" fontWeight="font-bold">
+        {title}
+      </Text>
+    </View>
+  );
+}
+
+function OfferProduct({
+  product,
+  getImageSource,
+}: {
+  product?: BackendProduct | null;
+  getImageSource: (uri?: string | null) => any;
+}) {
+  return (
+    <View
+      style={{
+        marginTop: 16,
+        paddingHorizontal: SCREEN_GUTTER,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 16,
+      }}
+    >
+      <Image
+        source={getImageSource(product?.cover_image)}
+        style={{
+          width: OFFER_THUMB,
+          height: OFFER_THUMB,
+          borderRadius: radius.button,
+        }}
+        resizeMode="cover"
+      />
+      <View style={{ flex: 1, gap: 4 }}>
+        <Text fontSize="text-sm" fontWeight="font-bold" numberOfLines={1}>
+          {product?.title}
+        </Text>
+        <Text fontSize="text-sm" tone="body" numberOfLines={1}>
+          {product?.location}
+        </Text>
+        <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+          <Text fontSize="text-md" fontWeight="font-bold">
+            {Number.isFinite(Number(product?.rate))
+              ? `₹${Number(product?.rate).toFixed(0)}`
+              : "—"}
+          </Text>
+          <Text fontSize="text-sm" tone="dim">
+            per day
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function OfferAmount({
+  label,
+  placeholder,
+  value,
+  onChangeText,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChangeText: (value: string) => void;
+}) {
+  const { color } = useTheme();
+  return (
+    <View style={{ marginTop: 48, paddingHorizontal: SCREEN_GUTTER, gap: 16 }}>
+      <Text fontSize="text-md" fontWeight="font-bold">
+        {label}
+      </Text>
+      <View
+        style={{
+          height: OFFER_FIELD_HEIGHT,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          paddingHorizontal: 16,
+          borderRadius: radius.button,
+          borderWidth: 1,
+          // On the sheet's own surface a hairline vanishes in dark (1.3:1).
+          borderColor: color.inputLine,
+          backgroundColor: color.surface,
+        }}
+      >
+        <Text fontSize="text-md">₹</Text>
+        <TextInput
+          keyboardType="number-pad"
+          accessibilityLabel={label}
+          placeholder={placeholder}
+          placeholderTextColor={color.placeholder}
+          value={value}
+          onChangeText={onChangeText}
+          style={{
+            flex: 1,
+            padding: 0,
+            fontFamily: fontFamily.regular,
+            fontSize: fontSize.md,
+            color: color.text,
+          }}
+        />
+      </View>
+    </View>
+  );
+}
+
+/** The frame's inactive action is bare tertiary text; it becomes the primary button once it can be used. */
+function SheetAction({
+  label,
+  disabled,
+  onPress,
+}: {
+  label: string;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  const { color } = useTheme();
+  return (
+    <View style={{ marginTop: 32, paddingHorizontal: SCREEN_GUTTER }}>
+      {disabled ? (
+        <View
+          accessible
+          accessibilityRole="button"
+          accessibilityState={{ disabled: true }}
+          accessibilityLabel={label}
+          style={{
+            height: MIN_TOUCH_TARGET,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text fontSize="text-sm" fontWeight="font-bold" style={{ color: color.textDim }}>
+            {label}
+          </Text>
+        </View>
+      ) : (
+        <Button onPress={onPress}>{label}</Button>
+      )}
+    </View>
+  );
+}
 
 export default function ChatDetailsScreen() {
   const router = useRoute<RouteProps<"ChatDetails">>();
@@ -104,6 +270,7 @@ export default function ChatDetailsScreen() {
   const [headerLoading, setHeaderLoading] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
   const [blockReason, setBlockReason] = useState("");
+  const [blocking, setBlocking] = useState(false);
   const [blockedBy, setBlockedBy] = useState("");
   const blockAndReportInFlight = useRef(false);
 
@@ -294,11 +461,12 @@ export default function ChatDetailsScreen() {
       dates[dateString] = {
         customStyles: {
           container: {
-            backgroundColor: ink.brandWash(isDark),
+            backgroundColor: color.brandWash,
             borderRadius: radius.group, // Circular shape
           },
           text: {
-            color: colors.dark.brand,
+            // brandText, not the brand fill: the fill is 3.3:1 on the dark sheet.
+            color: color.brandText,
           },
         },
       };
@@ -353,6 +521,7 @@ export default function ChatDetailsScreen() {
     if (blockAndReportInFlight.current) return;
 
     blockAndReportInFlight.current = true;
+    setBlocking(true);
     try {
       await reportUser(participantDetails.userId, reason);
       await blockUser(participantDetails.userId, reason, conversationId);
@@ -364,6 +533,7 @@ export default function ChatDetailsScreen() {
       toast.error("Couldn’t block and report this user");
     } finally {
       blockAndReportInFlight.current = false;
+      setBlocking(false);
     }
   };
 
@@ -410,8 +580,13 @@ export default function ChatDetailsScreen() {
 
         <ScrollView
           ref={scrollViewRef}
+          // The frame's rhythm: 16 above the first message and below the last,
+          // 16 between every pair. It is a `gap` and not a per-bubble margin
+          // because a day chip counts as a message for spacing purposes.
           contentContainerStyle={{
             flexGrow: 1,
+            paddingVertical: 16,
+            gap: 16,
           }}
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => scrollToBottom(false)}
@@ -430,8 +605,9 @@ export default function ChatDetailsScreen() {
             // Message grouping. Every message carried its own timestamp, so six
             // consecutive messages one minute apart produced six timestamps and
             // six full-height bubbles. Only the last message of a run from one
-            // sender within the same minute keeps its time; the rest sit tight
-            // against it, which is the iMessage rhythm.
+            // sender within the same minute keeps its time. The run no longer
+            // tightens the gap as well: the Figma thread draws a flat 16
+            // between every pair of bubbles, whoever sent them.
             const sameSenderAsNext =
               !!next &&
               next.from === message.from &&
@@ -444,7 +620,9 @@ export default function ChatDetailsScreen() {
             return (
               <React.Fragment key={message.id}>
                 {showDay ? (
-                  <View style={{ alignItems: "center", paddingVertical: 10 }}>
+                  // No padding of its own — the list's 16pt gap already sits on
+                  // both sides of the chip.
+                  <View style={{ alignItems: "center" }}>
                     {/* A View, not a styled Text: borderRadius and overflow on
                         a Text do not clip reliably in React Native. */}
                     <View
@@ -474,7 +652,6 @@ export default function ChatDetailsScreen() {
                   isSent={message.from === userDetails?.username}
                   type={message.type}
                   timestamp={sameSenderAsNext ? undefined : message.timestamp}
-                  grouped={sameSenderAsNext}
                 />
               </React.Fragment>
             );
@@ -543,63 +720,67 @@ export default function ChatDetailsScreen() {
 
       <CustomBottomSheetModal
         ref={bottomSheetRef}
-        // snapPoints={["60%"]}
+        snapPoints={["52%"]}
+        frame
         isDark={isDark}
+        onDismiss={() => setBlockReason("")}
       >
-        <View className="w-[95%] mx-auto">
-          <View className="flex items-center mb-4">
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
+        <SheetTitle title="Block & Report" />
+
+        {/* The frame's 200pt box: radius 16, hairline, 16 padding, placeholder
+            "Share your thoughts...". The value is controlled now (it was not, so
+            the reason typed before a Cancel came back on the next open). */}
+        <TextInput
+          value={blockReason}
+          onChangeText={setBlockReason}
+          placeholder="Share your thoughts..."
+          placeholderTextColor={color.placeholder}
+          multiline
+          accessibilityLabel="Reason for blocking and reporting"
+          style={{
+            height: BLOCK_REASON_HEIGHT,
+            marginTop: 16,
+            marginHorizontal: SCREEN_GUTTER,
+            padding: 16,
+            textAlignVertical: "top",
+            borderWidth: 1,
+            borderColor: color.line,
+            borderRadius: radius.card,
+            color: color.text,
+            fontFamily: fontFamily.regular,
+            fontSize: fontSize.md,
+          }}
+        />
+
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 8,
+            marginTop: 32,
+            marginBottom: 16,
+            paddingHorizontal: SCREEN_GUTTER,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Button
+              variant="outline"
+              onPress={() => {
+                setBlockReason("");
+                bottomSheetRef.current?.close();
+              }}
+            >
+              Cancel
+            </Button>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button
+              variant="warning"
+              onPress={handleBlockPress}
+              disabled={!blockReason.trim()}
+              loading={blocking}
             >
               Block & Report
-            </Text>
-          </View>
-
-          <TextInput
-            placeholder="Share your thoughts..."
-            multiline
-            // value={blockReason}
-            onChangeText={(text) => setBlockReason(text)}
-            style={{
-              textAlignVertical: "top",
-            }}
-            className={`h-52 w-full mt-4 border ${
-              isDark
-                ? "border-line-dark text-white"
-                : "border-line-light text-black"
-            } rounded-card p-3 text-base`}
-            placeholderTextColor={ink.dim(isDark)}
-          />
-
-          <View className="flex-row justify-between mt-6 mb-0">
-            <TouchableOpacity
-              onPress={() => bottomSheetRef.current?.close()}
-              className={`bg-surface-light border ${
-                isDark
-                  ? "border-line-dark text-white"
-                  : "border-line-light text-black"
-              } p-3 rounded-input flex-1 mr-2`}
-            >
-              <Text
-                className="text-center text-black"
-                fontWeight="font-bold"
-              >
-                Cancel
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="bg-danger-light p-3 rounded-input flex-1 ml-2"
-              onPress={handleBlockPress}
-            >
-              <Text
-                fontWeight="font-bold"
-                className="text-center text-white"
-              >
-                Block & Report
-              </Text>
-            </TouchableOpacity>
+            </Button>
           </View>
         </View>
       </CustomBottomSheetModal>
@@ -698,333 +879,204 @@ export default function ChatDetailsScreen() {
       <CustomBottomSheetModal
         ref={checkAvailabilityBottomSheetRef}
         snapPoints={["90%"]}
+        frame
         isDark={isDark}
       >
-        <View className="w-[95%] mx-auto">
-          <View className="flex-row items-center mb-4 mt-4">
-            <BackButton
-              accessibilityLabel="Close"
-              onPress={() => checkAvailabilityBottomSheetRef.current?.close()}
-            />
-            <Text
-              fontWeight="font-bold"
-              fontSize="text-xl"
-              className="flex-1 text-center"
-            >
-              Check Availability
-            </Text>
-            <View style={{ width: MIN_TOUCH_TARGET }} />
-          </View>
+        <SheetTitle title="Check Availability" />
+        <OfferProduct product={selectedProduct} getImageSource={getImageSource} />
 
-          <View className="flex-row items-center justify-between mx-4 mt-3">
-            <Image
-              className="w-[20%]"
-              source={getImageSource(selectedProduct?.cover_image)}
-              style={{ width: wp(20), height: wp(20), borderRadius: radius.button }}
-              resizeMode="cover"
-            />
-            <View className="w-[75%] space-y-1">
-              <Text
-                fontSize="text-md"
-                fontWeight="font-bold"
-              >
-                {selectedProduct?.title}
-              </Text>
-              <Text
-                fontSize="text-md"
-                className={`${
-                  isDark ? "text-muted-dark" : "text-muted-light"
-                }`}
-              >
-                {selectedProduct?.location}
-              </Text>
-              <Text
-                fontSize="text-md"
-                fontWeight="font-bold"
-              >
-                ₹ {Number(selectedProduct?.rate).toFixed(0)}
-              </Text>
-            </View>
-          </View>
-
-          <View className="mt-5">
-            <Calendar
-              theme={{
-                calendarBackground: ink.surface(isDark),
-                textSectionTitleColor: isDark ? "white" : ink.dim(false),
-                dayTextColor: ink.text(isDark),
-                todayTextColor: ink.info(false),
-                textDisabledColor: ink.line(false),
-                monthTextColor: ink.body(false),
-                arrowColor: ink.text(isDark),
-              }}
-              markingType="custom"
-              markedDates={{
-                [selectedRange.startDate]: {
-                  customStyles: {
-                    container: {
-                      backgroundColor: colors.dark.brand,
-                      borderRadius: radius.group,
-                    },
-                    text: {
-                      color: "white",
-                    },
-                  },
+        {/* The frame draws the calendar as a hairline card with its month row
+            closed by a rule. */}
+        <View
+          style={{
+            marginTop: 24,
+            marginHorizontal: SCREEN_GUTTER,
+            borderWidth: 1,
+            borderColor: color.line,
+            borderRadius: radius.card,
+            overflow: "hidden",
+          }}
+        >
+          <Calendar
+            theme={{
+              calendarBackground: color.surface,
+              textSectionTitleColor: color.textBody,
+              dayTextColor: color.text,
+              todayTextColor: color.brandText,
+              textDisabledColor: color.textDim,
+              monthTextColor: color.text,
+              arrowColor: color.text,
+              textDayFontFamily: fontFamily.regular,
+              textMonthFontFamily: fontFamily.bold,
+              textDayHeaderFontFamily: fontFamily.regular,
+              textDayFontSize: fontSize.md,
+              textMonthFontSize: fontSize.md,
+              textDayHeaderFontSize: fontSize.xs,
+              // @ts-ignore — the library's stylesheet override key
+              "stylesheet.calendar.header": {
+                header: {
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingHorizontal: 16,
+                  paddingBottom: 12,
+                  marginBottom: 8,
+                  borderBottomWidth: 1,
+                  borderBottomColor: color.line,
                 },
-                [selectedRange.endDate]: {
-                  customStyles: {
-                    container: {
-                      backgroundColor: colors.dark.brand,
-                      borderRadius: radius.group,
-                    },
-                    text: {
-                      color: "white",
-                    },
+              },
+            }}
+            markingType="custom"
+            // Local today, not UTC: an availability check for a past date is
+            // meaningless (the shared range picker guards this the same way).
+            minDate={moment().format("YYYY-MM-DD")}
+            markedDates={{
+              [selectedRange.startDate]: {
+                customStyles: {
+                  container: {
+                    backgroundColor: color.brand,
+                    borderRadius: radius.group,
                   },
+                  text: { color: color.onBrand },
                 },
-                ...getIntermediateDates(
-                  selectedRange.startDate,
-                  selectedRange.endDate
-                ),
-              }}
-              onDayPress={handleDayPress}
-            />
-          </View>
-
-          <Button
-            disabled={!selectedRange.startDate || !selectedRange.endDate}
-            onPress={onDateSelect}
-            className="mt-4"
-          >
-            Confirm
-          </Button>
+              },
+              [selectedRange.endDate]: {
+                customStyles: {
+                  container: {
+                    backgroundColor: color.brand,
+                    borderRadius: radius.group,
+                  },
+                  text: { color: color.onBrand },
+                },
+              },
+              ...getIntermediateDates(
+                selectedRange.startDate,
+                selectedRange.endDate
+              ),
+            }}
+            onDayPress={handleDayPress}
+          />
         </View>
+
+        <SheetAction
+          label="Confirm"
+          disabled={!selectedRange.startDate || !selectedRange.endDate}
+          onPress={onDateSelect}
+        />
       </CustomBottomSheetModal>
 
       <CustomBottomSheetModal
         ref={makeOfferBottomSheetRef}
         snapPoints={["90%"]}
+        frame
         isDark={isDark}
       >
         <KeyboardAwareScrollView>
-          <View className="w-[95%] mx-auto">
-            <View className="flex-row items-center mb-4 mt-4">
-              <BackButton
-                accessibilityLabel="Close"
-                onPress={() => makeOfferBottomSheetRef.current?.close()}
-              />
-              <Text
-                fontWeight="font-bold"
-                fontSize="text-xl"
-                className="flex-1 text-center"
-              >
-                Make Offer
-              </Text>
-              <View style={{ width: MIN_TOUCH_TARGET }} />
-            </View>
+          <SheetTitle title="Make Offer" />
+          <OfferProduct product={selectedProduct} getImageSource={getImageSource} />
 
-            <View className="flex-row items-center justify-between mx-4 mt-3">
-              <Image
-                className="w-[20%]"
-                source={getImageSource(selectedProduct?.cover_image)}
-                style={{ width: wp(20), height: wp(20), borderRadius: radius.button }}
-                resizeMode="cover"
-              />
-              <View className="w-[75%] space-y-1">
-                <Text
-                  fontSize="text-md"
-                  fontWeight="font-bold"
-                >
-                  {selectedProduct?.title}
-                </Text>
-                <Text
-                  fontSize="text-md"
-                  className={`${
-                    isDark ? "text-muted-dark" : "text-muted-light"
-                  }`}
-                >
-                  {selectedProduct?.location}
-                </Text>
-                <Text
-                  fontSize="text-md"
-                  fontWeight="font-bold"
-                >
-                  ₹ {Number(selectedProduct?.rate).toFixed(0)}
-                </Text>
-              </View>
-            </View>
-
-            <View className="mt-8 mx-4 flex-row items-center justify-between">
-              <Text
-                fontWeight="font-bold"
-                fontSize="text-md"
-              >
-                Duration
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  makeOfferBottomSheetRef.current?.close();
-                  checkAvailabilityBottomSheetRef.current?.present();
-                }}
-              >
-                {/* <Text
-                  fontWeight="font-bold"
-                  fontSize="text-md"
-                  className="text-brand"
-                >
-                  Edit
-                </Text> */}
-                <PencilSquareIcon
-                  size={20}
-                  color={colors.dark.brand}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <View className="mt-4 mx-4 flex-row items-center justify-between">
-              <View
-                className={`p-3 rounded-button border flex-row w-[40%] items-center ${
-                  isDark
-                    ? "bg-surface-dark border-line-dark"
-                    : "bg-surface-light border-line-light"
-                }`}
-              >
-                <CalendarIcon
-                  size={24}
-                  color={ink.text(isDark)}
-                />
-                <Text
-                  fontSize="text-md"
-                  className="ml-4"
-                >
-                  {formatDate(new Date(selectedRange.startDate))}
-                </Text>
-              </View>
-              <View className="w-[20%] items-center">
-                <Text
-                  fontSize="text-base"
-                  className="text-subtle-dark"
-                >
-                  --
-                </Text>
-              </View>
-              <View
-                className={`p-3 rounded-button border flex-row w-[40%] items-center ${
-                  isDark
-                    ? "bg-surface-dark border-line-dark"
-                    : "bg-surface-light border-line-light"
-                }`}
-              >
-                <CalendarIcon
-                  size={24}
-                  color={ink.text(isDark)}
-                />
-                <Text
-                  fontSize="text-md"
-                  className="ml-4"
-                >
-                  {formatDate(new Date(selectedRange.endDate))}
-                </Text>
-              </View>
-            </View>
-            <View className="flex-row mx-4 items-center mt-2">
-              <InformationCircleIcon
-                size={20}
-                color={ink.dim(isDark)}
-              />
-              <Text
-                fontSize="text-md"
-                className={`ml-2 ${
-                  isDark ? "text-muted-dark" : "text-muted-light"
-                }`}
-              >
-                Booking for{" "}
-                {getDaysBetweenDates(
-                  selectedRange.startDate,
-                  selectedRange.endDate
-                )}{" "}
-                days
-              </Text>
-            </View>
-
-            <View className="mx-4 mt-8">
-              <Text
-                fontSize="text-md"
-                fontWeight="font-bold"
-              >
-                Amount
-              </Text>
-              <View
-                className={`flex-row items-center border ${
-                  isDark
-                    ? "border-line-dark bg-surface-dark text-white"
-                    : "border-line-light bg-surface-light text-black"
-                } p-3 rounded-button w-full mt-2`}
-              >
-                <Text
-                  fontSize="text-md"
-                  className="mr-2"
-                >
-                  ₹
-                </Text>
-                <TextInput
-                  keyboardType="number-pad"
-                  placeholder="e.g. 900"
-                  placeholderTextColor={ink.dim(isDark)}
-                  value={makeOfferDetails.amount}
-                  onChangeText={(value) => handleTextChange("amount", value)}
-                  className={`${
-                    isDark ? "text-white" : "text-black"
-                  } rounded-button w-full`}
-                />
-              </View>
-            </View>
-
-            <View className="mx-4 mt-8">
-              <Text
-                fontSize="text-md"
-                fontWeight="font-bold"
-              >
-                Security Deposit
-              </Text>
-              <View
-                className={`flex-row items-center border ${
-                  isDark
-                    ? "border-line-dark bg-surface-dark text-white"
-                    : "border-line-light bg-surface-light text-black"
-                } p-3 rounded-button w-full mt-2`}
-              >
-                <Text
-                  fontSize="text-md"
-                  className="mr-2"
-                >
-                  ₹
-                </Text>
-                <TextInput
-                  keyboardType="number-pad"
-                  placeholder="e.g. 4000"
-                  placeholderTextColor={ink.dim(isDark)}
-                  value={makeOfferDetails.securityDeposit}
-                  onChangeText={(value) =>
-                    handleTextChange("securityDeposit", value)
-                  }
-                  className={`${
-                    isDark ? "text-white" : "text-black"
-                  } rounded-button w-full`}
-                />
-              </View>
-            </View>
-
-            <Button
-              onPress={onSubmit}
-              disabled={
-                !makeOfferDetails.amount || !makeOfferDetails.securityDeposit
-              }
-              className="mt-10"
+          <View
+            style={{
+              marginTop: 40,
+              paddingHorizontal: SCREEN_GUTTER,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text fontWeight="font-bold" fontSize="text-md">
+              Duration
+            </Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Edit dates"
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              onPress={() => {
+                makeOfferBottomSheetRef.current?.close();
+                checkAvailabilityBottomSheetRef.current?.present();
+              }}
             >
-              Make an offer
-            </Button>
+              <PencilSquareIcon size={20} color={color.brandText} />
+            </TouchableOpacity>
           </View>
+
+          <View
+            style={{
+              marginTop: 16,
+              paddingHorizontal: SCREEN_GUTTER,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            {[selectedRange.startDate, selectedRange.endDate].map((day, index) => (
+              <React.Fragment key={index}>
+                {index === 1 ? (
+                  <Text fontSize="text-base" tone="dim">
+                    --
+                  </Text>
+                ) : null}
+                <View
+                  style={{
+                    flex: 1,
+                    height: OFFER_FIELD_HEIGHT,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                    paddingHorizontal: 16,
+                    borderRadius: radius.button,
+                    borderWidth: 1,
+                    borderColor: color.inputLine,
+                    backgroundColor: color.surface,
+                  }}
+                >
+                  <CalendarIcon size={24} color={color.text} />
+                  <Text fontSize="text-md">{formatDate(new Date(day))}</Text>
+                </View>
+              </React.Fragment>
+            ))}
+          </View>
+
+          <View
+            style={{
+              marginTop: 12,
+              paddingHorizontal: SCREEN_GUTTER,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <InformationCircleIcon size={20} color={color.textDim} />
+            <Text fontSize="text-sm" tone="dim">
+              Booking for{" "}
+              {getDaysBetweenDates(
+                selectedRange.startDate,
+                selectedRange.endDate
+              )}{" "}
+              days
+            </Text>
+          </View>
+
+          <OfferAmount
+            label="Amount"
+            placeholder="e.g. 900"
+            value={makeOfferDetails.amount}
+            onChangeText={(value) => handleTextChange("amount", value)}
+          />
+          <OfferAmount
+            label="Security Deposit"
+            placeholder="e.g. 4000"
+            value={makeOfferDetails.securityDeposit}
+            onChangeText={(value) => handleTextChange("securityDeposit", value)}
+          />
+
+          <SheetAction
+            label="Make an offer"
+            onPress={onSubmit}
+            disabled={
+              !makeOfferDetails.amount || !makeOfferDetails.securityDeposit
+            }
+          />
         </KeyboardAwareScrollView>
       </CustomBottomSheetModal>
 

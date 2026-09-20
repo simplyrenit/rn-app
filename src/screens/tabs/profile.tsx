@@ -1,4 +1,4 @@
-import { CrossFade, PinnedHeader, StaticContainer, Text } from "@/components/core";
+import { CrossFade, IconButton, PinnedHeader, StaticContainer, Text } from "@/components/core";
 import Skeleton from "@/components/core/skeleton";
 import ProfilePostAuth from "@/components/profile/post-auth/profile-post-auth";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
@@ -6,20 +6,34 @@ import { useGlobalContext } from "@/context/global-context";
 import { RootStackParamList } from "@/lib/types";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { BellIcon } from "react-native-heroicons/outline";
-import { ink } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, lineHeight } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 
 type ProfileScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Welcome"
 >;
 
+/** The design's topbar padding: 24 in from the title side, 16 on the bell's. */
+const TOPBAR_PADDING_Y = 16;
+const TOPBAR_PADDING_RIGHT = 16;
+const BELL_SIZE = 24;
+/**
+ * The topbar is 61pt: 16 + the H2's 29pt line box + 16. A 44pt hit target is
+ * 15pt taller than that line box, so half the difference is pulled back above
+ * and below — the bell keeps a full target and its 44pt box still ends 16 from
+ * the screen edge, without the bar growing to 76.
+ */
+const BELL_OVERHANG = (MIN_TOUCH_TARGET - lineHeight.xl) / 2;
+
 export default function Profile() {
   const { logout, authTokens, isAuthenticated, theme, loading } = useGlobalContext();
 
   const isDarkMode = theme === "dark";
   const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const { color } = useTheme();
 
 
   const handleLogout = async () => {
@@ -33,31 +47,35 @@ export default function Profile() {
 
   return (
     <StaticContainer width={100}>
-      {/* A real header material, not a bare opaque block: rows scrolling under
-          it were being cut through the middle of the letterforms, leaving two
-          orphaned letter-tops hanging below the title. */}
-      <PinnedHeader>
+      {/* Solid rather than blurred, and with no rule: the design draws the
+          topbar as part of the page. The material still has to be opaque —
+          rows used to scroll under a header with no fill at all and were cut
+          through the middle of the letterforms. */}
+      <PinnedHeader
+        gutter={false}
+        separator={false}
+        material="solid"
+        style={{
+          paddingTop: TOPBAR_PADDING_Y,
+          paddingBottom: TOPBAR_PADDING_Y,
+          paddingLeft: SCREEN_GUTTER,
+          paddingRight: TOPBAR_PADDING_RIGHT,
+        }}
+      >
         <View className="flex-row justify-between items-center">
-          <View>
-            <Text
-              accessibilityRole="header"
-              role="sectionTitle"
-              fontWeight="font-bold"
-            >
-              My Profile
-            </Text>
-          </View>
+          <Text accessibilityRole="header" role="screenTitle">
+            My Profile
+          </Text>
           {authTokens && isAuthenticated && (
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Notifications"
+            <IconButton
+              accessibilityLabel="Notifications"
               onPress={() => {
                 navigation.navigate("notification");
               }}
+              style={{ marginVertical: -BELL_OVERHANG }}
             >
-              <BellIcon
-                size={24}
-                color={ink.text(isDarkMode)}
-              />
-            </TouchableOpacity>
+              <BellIcon size={BELL_SIZE} color={color.text} strokeWidth={1.5} />
+            </IconButton>
           )}
         </View>
       </PinnedHeader>

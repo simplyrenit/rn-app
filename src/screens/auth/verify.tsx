@@ -7,12 +7,18 @@ import { useGlobalContext } from "@/context/global-context";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { XCircleIcon } from "react-native-heroicons/outline";
 import OTPTextView from "react-native-otp-textinput";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import axiosInstance from "@/lib/networkUtils";
-import { colors, ink, radius } from "@/lib/design-tokens";
+import { colors, fontFamily, fontSize, ink, radius } from "@/lib/design-tokens";
 
 export default function VerifyEmail() {
   const [verificationCode, setVerificationCode] = useState("");
@@ -145,18 +151,21 @@ export default function VerifyEmail() {
     }
   }, [email, phone, sendOTP, sendPhoneOTP, verificationType]);
 
+  const { width: winW } = useWindowDimensions();
+
   const styles = StyleSheet.create({
     textInputContainer: {
       marginHorizontal: -5,
     },
-    roundedTextInput: {
-      backgroundColor: ink.surface(theme === "dark"),
-      borderRadius: radius.input,
-      borderWidth: 3,
-      color: theme === "dark" ? "white" : "black",
-      width: wp(12.5),
-    },
   });
+
+  const roundedTextInputStyle = {
+    backgroundColor: ink.surface(theme === "dark"),
+    borderRadius: radius.input,
+    borderWidth: 3,
+    color: theme === "dark" ? "white" : "black",
+    width: winW * 0.125,
+  };
 
   return (
     <StaticContainer>
@@ -203,7 +212,7 @@ export default function VerifyEmail() {
                     // @ts-ignore
                     autoComplete="sms-otp"
                     containerStyle={styles.textInputContainer}
-                    textInputStyle={styles.roundedTextInput}
+                    textInputStyle={roundedTextInputStyle}
                     // @ts-ignore
                     placeholder="*"
                     placeholderTextColor={
@@ -293,9 +302,12 @@ export default function VerifyEmail() {
                   autoCorrect={false}
                   accessibilityLabel="Password"
                   className={`border mt-2 rounded-button ${theme === "dark"
-                      ? "text-white bg-surface-raised-dark border-input-line-dark"
+                      ? "text-white bg-surface-dark border-input-line-dark"
                       : "text-black bg-surface-light border-input-line-light"
-                    } p-2 h-12`}
+                    } px-4 h-12`}
+                  // The app font and the frame's 16pt inset, as on the other auth
+                  // fields: a raw TextInput falls back to the system font.
+                  style={{ fontFamily: fontFamily.regular, fontSize: fontSize.md }}
                 />
 
                 {isIncorrect && (

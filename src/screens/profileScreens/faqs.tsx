@@ -1,25 +1,23 @@
-import { BackButton, Text } from "@/components/core";
+import { SubpageHeader, Text } from "@/components/core";
 import Accordion from "@/components/core/accordion";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { useGlobalContext } from "@/context/global-context";
-import { useTypedNavigation } from "@/lib/types";
 import React from "react";
-import { Dimensions, ScrollView, View } from "react-native";
-import { ChevronRightIcon } from "react-native-heroicons/outline";
-import { ink, colors, MIN_TOUCH_TARGET } from "@/lib/design-tokens";
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from "react-native-responsive-screen";
+import { ScrollView, View } from "react-native";
+import { ChevronRightIcon as ChevronRightMini } from "react-native-heroicons/mini";
+import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 
-const { height } = Dimensions.get("window");
+// Measured off the Figma FAQs frame: the back control sits 16 from the edge, the
+// content is padded 24 with 16 between the intro, the list and the footer, and the
+// questions are 8 apart.
+const BLOCK_GAP = 16;
+const ROW_GAP = 8;
+
 
 interface FAQProps {}
 
 const FAQScreen: React.FC<FAQProps> = () => {
-  const { theme } = useGlobalContext();
-  const isDarkMode = theme === "dark";
-  const router = useTypedNavigation();
+  const { color } = useTheme();
 
   const accordionData = [
     {
@@ -88,30 +86,22 @@ Review your listing carefully, then publish it to make it live.`,
   ];
 
   return (
-    <NonScrollableContainer height={height > 700 ? 105 : 100}>
-      <View className="flex-row items-center px-gutter pb-2 pt-2">
-        <BackButton />
-        <View className="flex-1 items-center justify-center">
-          <Text role="sectionTitle" fontWeight="font-bold">
-            FAQs
-          </Text>
-        </View>
-        <View style={{ width: MIN_TOUCH_TARGET }} />
-      </View>
+    <NonScrollableContainer>
+      <SubpageHeader title="FAQs" />
 
       <ScrollView
-        className="px-gutter flex-1 pt-2"
-        contentContainerStyle={{ paddingBottom: hp("5%") }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          padding: SCREEN_GUTTER,
+          gap: BLOCK_GAP,
+          paddingBottom: density.listFooterCompact,
+        }}
       >
-        <View>
-          <Text
-            fontSize="text-sm"
-            fontWeight="font-bold"
-          >
-            You’ve got questions, we’ve got answers
-          </Text>
-        </View>
-        <View className="py-5">
+        <Text fontSize="text-sm" fontWeight="font-bold">
+          You’ve got questions, we’ve got answers!
+        </Text>
+
+        <View style={{ gap: ROW_GAP }}>
           {accordionData.map((item, index) => (
             <Accordion
               key={index}
@@ -121,35 +111,18 @@ Review your listing carefully, then publish it to make it live.`,
           ))}
         </View>
 
-        <View className="pb-3">
-          <Text
-            fontSize="text-sm"
-            className={`${
-              isDarkMode ? "text-subtle-dark" : "text-subtle-light"
-            }`}
-          >
+        <View style={{ gap: 2 }}>
+          <Text fontSize="text-sm" tone="body">
             Have any more questions?
           </Text>
-          <View className="flex-row items-center mt-1">
-            <Text
-              fontSize="text-sm"
-              fontWeight="font-bold"
-            >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+            <Text fontSize="text-sm" fontWeight="font-bold">
               Email us at
             </Text>
-            <Text
-              fontSize="text-sm"
-              fontWeight="font-bold"
-              className="text-brand mx-1"
-            >
+            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
               support@simplyrenit.com
             </Text>
-            <View className="mt-1">
-              <ChevronRightIcon
-                size={14}
-                color={colors.dark.brand}
-              />
-            </View>
+            <ChevronRightMini size={20} color={color.brandText} />
           </View>
         </View>
       </ScrollView>

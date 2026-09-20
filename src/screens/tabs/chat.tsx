@@ -4,7 +4,7 @@ import { CrossFade, EmptyState, StaticContainer, Text } from "@/components/core"
 import Skeleton from "@/components/core/skeleton";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { useGlobalContext } from "@/context/global-context";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { fontFamily } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { Conversation, useTypedNavigation } from "@/lib/types";
@@ -16,6 +16,9 @@ import {
   ChatBubbleLeftRightIcon,
   MagnifyingGlassIcon,
 } from "react-native-heroicons/outline";
+
+// The frame draws the search field 48 tall (the default field is 44).
+const SEARCH_HEIGHT = 48;
 
 export default function Chat() {
   const tabBarHeight = useBottomTabBarHeight();
@@ -84,19 +87,22 @@ export default function Chat() {
 
   return (
     <StaticContainer width={100}>
-      <View style={{ flex: 1, marginTop: 16 }}>
-        <View style={{ paddingHorizontal: SCREEN_GUTTER, gap: 16 }}>
+      <View style={{ flex: 1 }}>
+        {/* The frame's topbar: the title padded 16 above and below on the
+            gutter, then the search block padded 8 above and below. */}
+        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: 16 }}>
           {heading}
-
+        </View>
+        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: 8 }}>
           <View
             style={[
               {
                 flexDirection: "row",
                 alignItems: "center",
                 gap: 8,
-                height: MIN_TOUCH_TARGET,
-                paddingHorizontal: 12,
-                borderRadius: radius.input,
+                height: SEARCH_HEIGHT,
+                paddingHorizontal: 16,
+                borderRadius: radius.button,
                 borderWidth: 1,
                 borderColor: color.inputLine,
                 backgroundColor: color.surface,
@@ -104,7 +110,7 @@ export default function Chat() {
               shadow,
             ]}
           >
-            <MagnifyingGlassIcon size={18} color={color.textBody} />
+            <MagnifyingGlassIcon size={20} color={color.textBody} />
             <TextInput
               value={query}
               onChangeText={setQuery}
@@ -157,22 +163,10 @@ export default function Chat() {
             // Measured tab bar height, so the last conversation is not hidden
             // behind the bar. Differs between iOS and Android.
             contentContainerStyle={{
-              paddingTop: 8,
               paddingBottom: tabBarHeight,
               flexGrow: filtered.length ? 0 : 1,
               justifyContent: filtered.length ? "flex-start" : "center",
             }}
-            ItemSeparatorComponent={() => (
-              // Inset separators between rows, iOS convention. Six-item lists
-              // used to read as floating text.
-              <View
-                style={{
-                  height: 1,
-                  marginLeft: SCREEN_GUTTER + 60,
-                  backgroundColor: color.line,
-                }}
-              />
-            )}
             ListEmptyComponent={
               query.trim() ? (
                 <EmptyState

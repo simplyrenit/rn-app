@@ -13,6 +13,23 @@ This is the reference for running the Renit mobile app on a development machine.
 Run `npm install` from the repository root after cloning or changing dependencies.
 If PowerShell blocks `npm.ps1` on Windows, use `npm.cmd` in place of `npm`.
 
+## Environments
+
+The app has three explicit runtime environments, resolved in `src/lib/config.ts`
+from `EXPO_PUBLIC_*` values. Those values are embedded in the app bundle and
+must never contain secrets.
+
+| Environment | API | Intended use |
+| --- | --- | --- |
+| Dev | Local backend | Deliberate local-backend work only |
+| QA | `https://qa-api.toratora.site` | All development, build, and device-QA work |
+| Prod | `https://api.simplyrenit.com` | Customer release builds |
+
+The files in `config/environments/` are the source of truth for local Metro
+sessions (`qa.env.example`, `dev.env.example`, `prod.env.example`; the real
+`qa.env` and `*.local.json` files are git-ignored). Restart Metro after
+changing any of them.
+
 ## Run the app
 
 Renit includes native Firebase, maps, and sign-in packages. Expo Go is therefore not the normal development path.
@@ -114,7 +131,19 @@ window before retrying.
 
 ## Connect to the local backend
 
-The app resolves its API and chat URLs in `src/lib/config.ts`. Set these variables before starting Metro:
+Only do this for a deliberate local-backend task; the standard workflow uses QA.
+Copy the Dev template once, then start Metro with it (Android emulators use
+`10.0.2.2:8000`; physical devices need the LAN IP of the machine running the API):
+
+```bash
+cp config/environments/dev.env.example config/environments/dev.env
+node --env-file=config/environments/dev.env ./node_modules/expo/bin/cli start --clear
+# or build and install on Android with the same settings:
+node --env-file=config/environments/dev.env ./node_modules/expo/bin/cli run:android
+```
+
+The app resolves its API and chat URLs in `src/lib/config.ts`. To set them by
+hand instead, set these variables before starting Metro:
 
 | Target | `EXPO_PUBLIC_LOCAL_API_HOST` |
 | --- | --- |
@@ -163,16 +192,26 @@ npm run serve
 - **Android build fails:** open Android Studio once to install the required SDK components, accept licenses with `sdkmanager --licenses`, then retry.
 - **Need remote services instead:** unset `EXPO_PUBLIC_USE_LOCAL_API` and restart Metro.
 
-## QA build
+## Builds
 
-Create the configured Android QA APK with:
+Create the configured Android QA APK with the environment locked into the
+build (requires access to the project's Expo/EAS account):
 
 ```bash
-npm run build:qa
+npm run build:qa    # eas build --platform android --profile qa
 ```
 
-This requires access to the project's Expo/EAS account.
-
 The local iPhone QA workflow above is separate from an EAS-distributed build.
-Before creating an EAS QA build, reconcile and verify the QA host in `eas.json`
-with `config/environments/qa.env.example`; they currently differ.
+Before creating an EAS QA build, confirm the QA host in `eas.json` matches
+`config/environments/qa.env.example` (they match today:
+`qa-api.toratora.site`).
+
+Production settings are only for release verification and customer builds. Do
+not point a QA build at production by changing its runtime environment:
+
+```bash
+npx eas-cli build --platform android --profile release
+```
+
+Creating an EAS build needs explicit approval (see the human approval gates in
+`AGENTS.md`). The local TestFlight route does not use EAS.

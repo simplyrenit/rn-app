@@ -8,7 +8,7 @@ import {
   UIManager,
   View,
 } from "react-native";
-import { MinusIcon, PlusIcon } from "react-native-heroicons/solid";
+import { MinusIcon, PlusIcon } from "react-native-heroicons/mini";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -22,6 +22,9 @@ interface AccordionProps {
   answer: string;
 }
 
+// The frame's plus is heroicons' mini glyph (14.4pt) in a 24pt box.
+const GLYPH = 24;
+
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental
@@ -31,7 +34,7 @@ if (
 
 const Accordion: React.FC<AccordionProps> = ({ question, answer }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { color, shadow } = useTheme();
+  const { color } = useTheme();
 
   const rotation = useSharedValue(0);
 
@@ -55,14 +58,14 @@ const Accordion: React.FC<AccordionProps> = ({ question, answer }) => {
     <View
       style={[
         {
-          borderRadius: radius.group,
+          // The frame draws these cards at radius 12 with a hairline and no
+          // shadow, 8 apart (the list owns the gap, so there is no margin here).
+          borderRadius: radius.button,
           borderWidth: 1,
-          marginVertical: 8,
           backgroundColor: color.surface,
           borderColor: color.line,
           overflow: "hidden",
         },
-        shadow,
       ]}
     >
       <Pressable
@@ -75,31 +78,31 @@ const Accordion: React.FC<AccordionProps> = ({ question, answer }) => {
           flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: 14,
-          minHeight: 56,
+          // 16 from the card's outer edge: the 1pt border is part of it.
+          padding: 15,
+          // 56 outside edge to outside edge: the card's own 1pt borders make up
+          // the other 2.
+          minHeight: 54,
           borderBottomWidth: isOpen ? 1 : 0,
           borderBottomColor: color.line,
         }}
         onPress={toggleAccordion}
       >
         <View className=" flex-1 pr-3">
-          <Text
-            fontSize="text-base"
-            fontWeight="font-bold"
-          >
+          <Text fontSize="text-sm" fontWeight="font-bold">
             {question}
           </Text>
         </View>
         <Animated.View style={animatedIconStyle}>
           {isOpen ? (
-            <MinusIcon size={20} color={color.textBody} />
+            <MinusIcon size={GLYPH} color={color.textDim} />
           ) : (
-            <PlusIcon size={20} color={color.textBody} />
+            <PlusIcon size={GLYPH} color={color.textDim} />
           )}
         </Animated.View>
       </Pressable>
       {isOpen && (
-        <View style={{ padding: 14 }}>
+        <View style={{ padding: 15 }}>
           <Text fontSize="text-md" tone="body">
             {answer}
           </Text>

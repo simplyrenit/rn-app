@@ -32,6 +32,7 @@ import TermsScreen from "../screens/terms";
 import UserDetailScreen from "../screens/users/users-screen";
 
 import { HomeIcon, HomeIconSolid } from "@/icons/home";
+import { PlusSquareIcon } from "@/icons/plus-square";
 import { RootStackParamList } from "@/lib/types";
 import {
   setupChatNotifications,
@@ -48,18 +49,16 @@ import { BackHandler, PixelRatio, Platform, View } from "react-native";
 import {
   ChatBubbleLeftIcon,
   HeartIcon,
-  PlusCircleIcon,
   UserIcon,
 } from "react-native-heroicons/outline";
 import {
   ChatBubbleLeftIcon as ChatBubbleLeftIconSolid,
   HeartIcon as HeartIconSolid,
-  PlusCircleIcon as PlusCircleIconSolid,
   UserIcon as UserIconSolid,
 } from "react-native-heroicons/solid";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { darkColors, lightColors, radius } from "@/lib/design-tokens";
-import { chromeFontSize, fontFamily } from "@/lib/design-tokens";
+import { fontFamily, fontSize, lineHeight } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { selectionFeedback } from "@/lib/haptics";
 import { useUnreadCount } from "@/backend/chat";
@@ -227,14 +226,17 @@ function ProfileStackScreen() {
 }
 
 /**
- * The tab bar is chrome, so it follows the HIG rather than the content type
- * ramp: a 49pt bar plus the real safe-area inset (not a percentage of screen
- * height, which rendered 111pt here and left ~43pt of dead space under the
- * labels), one icon size for every tab, and 11pt labels in the app's own
- * typeface — they used to fall through to system SF Pro on every screen.
+ * The tab bar follows the design's navbar rather than the HIG default: 24pt
+ * icons over a 14pt label, 4pt apart, inside 8pt of navbar padding plus 8pt of
+ * tab padding top and bottom — 81pt of bar above the home-indicator inset. The
+ * active tab is drawn in the primary text tone and the rest in the tertiary
+ * one; the brand purple no longer marks the current tab.
  */
-const TAB_BAR_CONTENT_HEIGHT = 49;
-const TAB_ICON_SIZE = 26;
+const TAB_BAR_PADDING = 16;
+const TAB_ICON_SIZE = 24;
+const TAB_LABEL_GAP = 4;
+const TAB_BAR_CONTENT_HEIGHT =
+  TAB_BAR_PADDING * 2 + TAB_ICON_SIZE + TAB_LABEL_GAP + lineHeight.sm;
 
 /**
  * Beyond this Dynamic Type scale a five-slot tab bar cannot hold five labels.
@@ -258,18 +260,17 @@ function MainTabs() {
         tabPress: () => selectionFeedback(),
       }}
       screenOptions={({ route }) => ({
-        // The brand finally appears in the app's primary navigation. The old
-        // inactive tint was the CSS keyword "gray" (#808080), which measures
-        // 3.95:1 on white — below AA for the label it also tints.
-        tabBarActiveTintColor: isDark ? color.brandTextHi : color.brand,
-        tabBarInactiveTintColor: color.textBody,
+        // Primary for the current tab, tertiary for the rest, as the design
+        // draws them.
+        tabBarActiveTintColor: color.text,
+        tabBarInactiveTintColor: color.textDim,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: color.surface,
+          backgroundColor: color.canvas,
           height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingTop: showTabLabels ? 6 : 12,
-          borderTopColor: color.line,
+          paddingBottom: insets.bottom + TAB_BAR_PADDING,
+          paddingTop: showTabLabels ? TAB_BAR_PADDING : 12,
+          borderTopColor: color.navLine,
           borderTopWidth: 1,
         },
         tabBarShowLabel: showTabLabels,
@@ -280,9 +281,10 @@ function MainTabs() {
         // content ramp; the cap above removes it entirely past 1.25.
         tabBarAllowFontScaling: false,
         tabBarLabelStyle: {
-          fontSize: chromeFontSize.tabLabel,
-          fontFamily: fontFamily.medium,
-          marginTop: 2,
+          fontSize: fontSize.sm,
+          lineHeight: lineHeight.sm,
+          fontFamily: fontFamily.regular,
+          marginTop: TAB_LABEL_GAP,
         },
         tabBarAccessibilityLabel:
           route.name === "Chat" && unreadCount > 0
@@ -298,7 +300,7 @@ function MainTabs() {
               Icon = focused ? HeartIconSolid : HeartIcon;
               break;
             case "Post":
-              Icon = focused ? PlusCircleIconSolid : PlusCircleIcon;
+              Icon = PlusSquareIcon;
               break;
             case "Chat":
               Icon = focused ? ChatBubbleLeftIconSolid : ChatBubbleLeftIcon;
@@ -313,7 +315,18 @@ function MainTabs() {
 
           return (
             <View>
-              <Icon size={TAB_ICON_SIZE} color={tintColor} />
+              <Icon
+                size={TAB_ICON_SIZE}
+                color={tintColor}
+                // The design outlines the filled house in the opposite tone.
+                {...(route.name === "Home" && focused
+                  ? { edge: color.canvas }
+                  : null)}
+                // The active Post tab is a solid square with the plus knocked out.
+                {...(route.name === "Post" && focused
+                  ? { filled: true, edge: color.canvas }
+                  : null)}
+              />
               {showBadge ? (
                 <View
                   style={{
@@ -325,7 +338,7 @@ function MainTabs() {
                     borderRadius: radius.full,
                     backgroundColor: color.brand,
                     borderWidth: 1.5,
-                    borderColor: color.surface,
+                    borderColor: color.canvas,
                   }}
                 />
               ) : null}
