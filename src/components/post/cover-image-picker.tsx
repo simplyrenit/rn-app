@@ -205,7 +205,7 @@ export function CoverImagePicker({
                       bottom: 0,
                       alignItems: "center",
                       justifyContent: "center",
-                      backgroundColor: "rgba(99,91,232,0.4)",
+                      backgroundColor: color.brandVeil,
                       borderWidth: 2,
                       borderColor: color.brand,
                       borderRadius: radius.card,

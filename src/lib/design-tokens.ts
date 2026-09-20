@@ -51,6 +51,8 @@ export interface ColorTokens {
   brandTextHi: string;
   /** Brand wash behind tinted surfaces (12% dark / 7% light). */
   brandWash: string;
+  /** Brand tint laid over a photo to mark it chosen (40% both themes). */
+  brandVeil: string;
   /** Solid tinted panel — the request card. Purple/50 on light. */
   brandPanel: string;
   /** Edge of the tinted panel. Purple/100 on light. */
@@ -120,6 +122,7 @@ export const darkColors: ColorTokens = {
   brandText: "#827CED", // Purple/400 itself fails on the dark grounds; this is the readable tint
   brandTextHi: "#928CEF",
   brandWash: "rgba(99,91,232,0.12)",
+  brandVeil: "rgba(99,91,232,0.4)",
   // The design's dark request card was below the fold of the frame that could be
   // sampled, so dark keeps the wash and hairline it already had.
   brandPanel: "rgba(99,91,232,0.12)",
@@ -161,6 +164,7 @@ export const lightColors: ColorTokens = {
   brandText: "#635BE8", // 4.85:1 AA on white
   brandTextHi: "#363280", // Purple/700
   brandWash: "rgba(99,91,232,0.07)",
+  brandVeil: "rgba(99,91,232,0.4)",
   brandPanel: "#EDEDFC", // Purple/50
   brandPanelLine: "#CAC8F7", // Purple/100
   inputLine: "#C4C4C4", // Black and White/300
