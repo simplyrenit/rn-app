@@ -1016,3 +1016,9 @@ No Figma frame exists for this screen, so it was audited against the tokens and 
 - The screen root used a class-based background that resolved to a lighter grey than the panel in dark (visible in the header and the safe-area band); it now uses the canvas token.
 
 Left as is: the map's dark style asset (`assets/mapJSON/darkModeMapStyle.json`) colours water `#a7cdf2`, a light blue that reads as a bright block in dark mode; it may be deliberate and there is no frame to say, so it needs a design ruling. The "Use current location" row keeps its short inset rule, and the nearby-places list below it is a scrolling list inside a fixed 55% panel.
+
+## Notifications empty state and Edit Cover Image reachability (2026-09-20)
+
+Signed in as the QA "Development Team" account. Notifications opens on its empty state ("Nothing new"): title row and hairline from `SubpageHeader`, the brand-tint tile and body copy centred; light and dark both read correctly (`design/app/notifications-empty.{light,dark}.iphone16e.png`). This account has no notifications either, so the row layout, the unread dot and the pull-to-refresh path remain unseen with real data (they were verified only by the typed code and the reviewer).
+
+Edit Cover Image cannot be reached with the available data: both of this account's listings ("Renit", "Lenovo laptop") return an empty `images` array from `getMyProductDetails`, so Edit Product Images opens on the empty upload state with Next disabled and never passes images on to the cover step. Getting there needs a listing with photos, which means creating an `AGENT_QA_` fixture with a publish, and that was not done.
