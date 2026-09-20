@@ -1034,3 +1034,7 @@ Defects fixed in `email.tsx`, `phone.tsx`, `password.tsx`, `confirm-password.tsx
 
 Not changed: the six OTP cells in `verify.tsx` (that screen stays blocked on a real code) and the email/phone flow (single "Continue" versus method choice), which is still awaiting a product ruling.
 Environment note: after signing back in, Home showed two toasts, "Unable to authenticate chat" and a `[network] response failed`. Chat authentication depends on the QA host's Google credentials, so this is an environment issue, not UI.
+
+## Terms & Conditions, dark (2026-09-20)
+
+Compared `design/app/terms.dark.iphone16e.png` with the dark frame `1:11542` (2x export in `design/figma-images/profile-subs/dark/`): body inset 24pt, line pitch 21pt, back arrow centred at 38pt, 18pt bold centred title, black canvas and the same text tones all match. The frame shows the tab bar and an older legal text ("Effective Date: 16/06/2023"); the app hides the tab bar on pushed screens and keeps its newer text ("Last updated: 10/11/2024"), which is deliberate and unchanged. Nothing to fix. Legal rows in the screen map are now DONE in light and dark.
