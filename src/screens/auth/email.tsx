@@ -8,12 +8,19 @@ import { useTypedNavigation } from "@/lib/types";
 import React, { useCallback, useState } from "react";
 import { TextInput, View } from "react-native";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
-import { ink } from "@/lib/design-tokens";
+import { fontFamily, fontSize, ink } from "@/lib/design-tokens";
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
+
+/**
+ * A raw `TextInput` has no font of its own, so it fell back to the system font
+ * while everything around it is Plus Jakarta; the frame draws the value in the app
+ * font at 16pt.
+ */
+const AUTH_INPUT_TEXT = { fontFamily: fontFamily.regular, fontSize: fontSize.md };
 
 export default function LoginWithEmail() {
   const { theme } = useGlobalContext();
@@ -92,10 +99,11 @@ export default function LoginWithEmail() {
               onChangeText={handleEmailChange}
               className={`border mt-2 rounded-button ${
                 theme === "dark"
-                  ? "text-white bg-surface-raised-dark border-input-line-dark"
+                  ? "text-white bg-surface-dark border-input-line-dark"
                   : "text-black bg-surface-light border-input-line-light"
-              } p-2 h-12
+              } px-4 h-12
               `}
+              style={AUTH_INPUT_TEXT}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}

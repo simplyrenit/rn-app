@@ -1022,3 +1022,15 @@ Left as is: the map's dark style asset (`assets/mapJSON/darkModeMapStyle.json`) 
 Signed in as the QA "Development Team" account. Notifications opens on its empty state ("Nothing new"): title row and hairline from `SubpageHeader`, the brand-tint tile and body copy centred; light and dark both read correctly (`design/app/notifications-empty.{light,dark}.iphone16e.png`). This account has no notifications either, so the row layout, the unread dot and the pull-to-refresh path remain unseen with real data (they were verified only by the typed code and the reviewer).
 
 Edit Cover Image cannot be reached with the available data: both of this account's listings ("Renit", "Lenovo laptop") return an empty `images` array from `getMyProductDetails`, so Edit Product Images opens on the empty upload state with Next disabled and never passes images on to the cover step. Getting there needs a listing with photos, which means creating an `AGENT_QA_` fixture with a publish, and that was not done.
+
+## Auth inputs: email, phone, password, login password (2026-09-20, light + dark)
+
+Walked view-only (nothing submitted: no code was requested, no SMS sent, no password typed; the email typed was the `example.com` placeholder `agent.qa@example.com`). The email step has the only Figma frame (`1:9720`, dark); the phone and password screens have none, so they were matched to the email step and the tokens. Captures `auth-phone`, `auth-password`, `auth-email-filled` in `design/app/`.
+
+Defects fixed in `email.tsx`, `phone.tsx`, `password.tsx`, `confirm-password.tsx` and the login-password field in `verify.tsx`:
+- The raw `TextInput`s had no font family, so the typed value and placeholder rendered in the system font next to Plus Jakarta labels; they now use `fontFamily.regular` at `fontSize.md` (16, as the frame draws the value).
+- Horizontal padding was 8; the frame's field pads 16 (`px-4`).
+- Email, phone and the login-password field used `bg-surface-raised-dark` in dark (a lighter grey than every other field, and than the email frame); they now use `bg-surface-dark` like the create-password fields.
+
+Not changed: the six OTP cells in `verify.tsx` (that screen stays blocked on a real code) and the email/phone flow (single "Continue" versus method choice), which is still awaiting a product ruling.
+Environment note: after signing back in, Home showed two toasts, "Unable to authenticate chat" and a `[network] response failed`. Chat authentication depends on the QA host's Google credentials, so this is an environment issue, not UI.

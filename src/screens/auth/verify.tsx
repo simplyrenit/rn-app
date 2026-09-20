@@ -18,7 +18,7 @@ import {
 import { XCircleIcon } from "react-native-heroicons/outline";
 import OTPTextView from "react-native-otp-textinput";
 import axiosInstance from "@/lib/networkUtils";
-import { colors, ink, radius } from "@/lib/design-tokens";
+import { colors, fontFamily, fontSize, ink, radius } from "@/lib/design-tokens";
 
 export default function VerifyEmail() {
   const [verificationCode, setVerificationCode] = useState("");
@@ -302,9 +302,12 @@ export default function VerifyEmail() {
                   autoCorrect={false}
                   accessibilityLabel="Password"
                   className={`border mt-2 rounded-button ${theme === "dark"
-                      ? "text-white bg-surface-raised-dark border-input-line-dark"
+                      ? "text-white bg-surface-dark border-input-line-dark"
                       : "text-black bg-surface-light border-input-line-light"
-                    } p-2 h-12`}
+                    } px-4 h-12`}
+                  // The app font and the frame's 16pt inset, as on the other auth
+                  // fields: a raw TextInput falls back to the system font.
+                  style={{ fontFamily: fontFamily.regular, fontSize: fontSize.md }}
                 />
 
                 {isIncorrect && (

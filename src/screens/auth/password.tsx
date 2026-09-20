@@ -5,7 +5,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import React, { useMemo, useState } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
-import { ink } from "@/lib/design-tokens";
+import { fontFamily, fontSize, ink } from "@/lib/design-tokens";
 import {
   CheckCircleIcon,
   EyeIcon,
@@ -60,7 +60,7 @@ export default function SetPassword() {
               Create Password
             </Text>
             <View
-              className={`flex flex-row items-center border mt-3 rounded-button p-2 h-12 ${
+              className={`flex flex-row items-center border mt-3 rounded-button px-4 h-12 ${
                 isDarkMode
                   ? "bg-surface-dark border-input-line-dark"
                   : "bg-surface-light border-input-line-light"
@@ -81,7 +81,11 @@ export default function SetPassword() {
                 textContentType="newPassword"
                 autoComplete="new-password"
                 accessibilityLabel="Password"
-                style={{ color: ink.text(isDarkMode) }}
+                style={{
+                  color: ink.text(isDarkMode),
+                  fontFamily: fontFamily.regular,
+                  fontSize: fontSize.md,
+                }}
               />
               <TouchableOpacity accessibilityRole="button" accessibilityLabel="Show or hide password" onPress={() => setShowPassword(!showPassword)}>
                 {showPassword ? (
