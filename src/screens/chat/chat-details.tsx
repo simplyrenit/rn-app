@@ -20,7 +20,6 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
@@ -133,7 +132,9 @@ function OfferProduct({
         </Text>
         <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
           <Text fontSize="text-md" fontWeight="font-bold">
-            ₹{Number(product?.rate).toFixed(0)}
+            {Number.isFinite(Number(product?.rate))
+              ? `₹${Number(product?.rate).toFixed(0)}`
+              : "—"}
           </Text>
           <Text fontSize="text-sm" tone="dim">
             per day
@@ -170,7 +171,8 @@ function OfferAmount({
           paddingHorizontal: 16,
           borderRadius: radius.button,
           borderWidth: 1,
-          borderColor: color.line,
+          // On the sheet's own surface a hairline vanishes in dark (1.3:1).
+          borderColor: color.inputLine,
           backgroundColor: color.surface,
         }}
       >
@@ -238,7 +240,6 @@ export default function ChatDetailsScreen() {
   const { theme, userDetails, authTokens } = useGlobalContext();
   const isDark = theme === "dark";
   const { color, shadow } = useTheme();
-  const { width: winW } = useWindowDimensions();
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<BackendProduct | null>(
     null
@@ -457,11 +458,12 @@ export default function ChatDetailsScreen() {
       dates[dateString] = {
         customStyles: {
           container: {
-            backgroundColor: ink.brandWash(isDark),
+            backgroundColor: color.brandWash,
             borderRadius: radius.group, // Circular shape
           },
           text: {
-            color: colors.dark.brand,
+            // brandText, not the brand fill: the fill is 3.3:1 on the dark sheet.
+            color: color.brandText,
           },
         },
       };
@@ -1012,7 +1014,7 @@ export default function ChatDetailsScreen() {
                     paddingHorizontal: 16,
                     borderRadius: radius.button,
                     borderWidth: 1,
-                    borderColor: color.line,
+                    borderColor: color.inputLine,
                     backgroundColor: color.surface,
                   }}
                 >

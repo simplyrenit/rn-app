@@ -910,3 +910,10 @@ frame (sheet tops differ by the 90% snap): Duration, Amount and Security Deposit
 Not matched: weekday names are not uppercase (needs a global calendar locale change), the month rule is inset by the
 header padding, the frame's sheet is content height where the app snaps to 90%, and the "Select a product" sheet has no
 frame. Dark not checked. The captures show another user's listing and are not committed.
+
+Review 8 (offer sheets, BackButton): fixed the dark-mode edges of the Amount, Security Deposit and date fields (they sit on the
+sheet's own surface, so they take the control edge), the in-range day colours (brandText/brandWash, the fill failed AA on
+dark), a NaN price, and a dead local. Open: the sheets hand-roll `FieldShell` and the calendar instead of `date-range-picker`
+(which carries `minDate` and the day hit slop, so past dates are selectable and day cells are under 44pt); the inactive
+action is a second disabled treatment next to `Button`'s; the sheets have no labelled dismiss control (the frames draw
+none); `BackButton` now fails silently outside a navigator; the raw amount `TextInput` ignores the font-scale cap.
