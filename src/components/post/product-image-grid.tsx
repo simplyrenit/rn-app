@@ -57,7 +57,13 @@ const SUBMIT_LABEL_GAP = 6;
 function SubmitLabel() {
   const color = useButtonLabelColor();
   return (
-    <View className="flex-row items-center justify-between">
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: SUBMIT_LABEL_GAP,
+      }}
+    >
       <Text fontWeight="font-bold" style={{ color }}>
         Next
       </Text>
@@ -272,7 +278,7 @@ export function ProductImageGrid({
         <View style={{ paddingTop: 8, paddingBottom: SUBMIT_BOTTOM_GAP + insets.bottom }}>
           {allFieldsFilled ? (
             <Button
-              className="w-full items-center justify-between"
+              className="w-full items-center"
               onPress={handleSubmit}
             >
               <SubmitLabel />

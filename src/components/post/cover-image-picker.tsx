@@ -1,18 +1,20 @@
 import { Button, Text, useButtonLabelColor } from "@/components/core";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useGlobalContext } from "@/context/global-context";
-import { ink } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import { ProductImage } from "@/lib/types";
 import { ImageEditor } from "@tahsinz21366/expo-crop-image";
 import { Image } from "expo-image";
-import Lottie from "lottie-react-native";
-import { styled } from "nativewind";
 import React, { useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ScrollView, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { ChevronRightIcon, InformationCircleIcon } from "react-native-heroicons/outline";
+import { CheckCircleIcon } from "react-native-heroicons/mini";
 
-const StyledView = styled(View);
-const StyledTouchableOpacity = styled(TouchableOpacity);
+// Measured off the Figma Cover Image frame: content padded 24, two 159pt tiles 24
+// apart at radius 16, a 2pt brand edge and a 40% brand wash on the chosen one, a
+// 200pt crop preview at radius 16 on the hairline.
+const TILE_GAP = 24;
+const CROP_HEIGHT = 200;
 
 /**
  * The crop tool's fixed aspect ratio. This is expo-crop-image configuration,
@@ -36,7 +38,7 @@ function SubmitLabel({
 }) {
   const color = useButtonLabelColor();
   return (
-    <View className="flex-row items-center justify-between">
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
       <Text fontWeight="font-bold" style={{ color }}>
         {label}
       </Text>
@@ -100,8 +102,9 @@ export function CoverImagePicker({
   reserveBottomInset = false,
 }: CoverImagePickerProps) {
   const insets = useSafeAreaInsets();
-  const { theme } = useGlobalContext();
-  const isDark = theme === "dark";
+  const { color } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const tileSize = Math.floor((windowWidth - 2 * SCREEN_GUTTER - TILE_GAP) / 2);
   // The previous screen can remove images from the selection (edit-product-images
   // lets the owner delete photos), but `initialCoverImage` is threaded through
   // route params from before that edit and isn't re-validated on the way in. If
@@ -162,39 +165,57 @@ export function CoverImagePicker({
 
   return (
     <>
-      <ScrollView ref={scrollViewRef} className="px-3 flex-1">
-        <ScrollView
-          horizontal
-          contentContainerStyle={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          {images.map((image, index) => (
-            <StyledTouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Confirm"
-              key={index}
-              onPress={() => selectImage(image)}
-              className={`w-40 h-40 mb-2.5 mr-3 relative rounded-button overflow-hidden ${
-                selectedImage === image ? "border-2 border-brand" : ""
-              }`}
-            >
-              <Image source={{ uri: image }} className="w-40 h-40" />
-              {selectedImage === image && (
-                <StyledView className="absolute inset-0 bg-brand h-40 w-40 justify-center items-center">
-                  <Lottie
-                    source={require("./tick.json")}
-                    style={[styles.lottie, { width: 40, height: 40 }]}
-                    autoPlay={true}
-                    loop={true}
-                    resizeMode="cover"
-                  />
-                </StyledView>
-              )}
-            </StyledTouchableOpacity>
-          ))}
-        </ScrollView>
+      <ScrollView
+        ref={scrollViewRef}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: SCREEN_GUTTER, gap: TILE_GAP }}
+      >
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: TILE_GAP }}>
+          {images.map((image, index) => {
+            const selected = selectedImage === image;
+            return (
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={
+                  selected ? "Selected cover image" : "Use as the cover image"
+                }
+                accessibilityState={{ selected }}
+                key={index}
+                onPress={() => selectImage(image)}
+                style={{
+                  width: tileSize,
+                  height: tileSize,
+                  borderRadius: radius.card,
+                  overflow: "hidden",
+                }}
+              >
+                <Image
+                  source={{ uri: image }}
+                  style={{ width: tileSize, height: tileSize }}
+                />
+                {selected ? (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "rgba(99,91,232,0.4)",
+                      borderWidth: 2,
+                      borderColor: color.brand,
+                      borderRadius: radius.card,
+                    }}
+                  >
+                    <CheckCircleIcon size={32} color={color.onBrand} />
+                  </View>
+                ) : null}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
         {isEditing && selectedImage && (
           <ImageEditor
@@ -210,49 +231,57 @@ export function CoverImagePicker({
           />
         )}
 
-        <Text fontSize="text-md" fontWeight="font-bold" className="mt-5">
-          Crop Image
-        </Text>
-        <StyledView className="mt-5">
+        <View style={{ gap: 16 }}>
+          <Text fontSize="text-md" fontWeight="font-bold">
+            Crop Image
+          </Text>
           {croppedImage ? (
             <Image
               source={{ uri: croppedImage.image }}
-              className="w-44 h-44 self-center rounded-button mb-2.5"
+              contentFit="cover"
+              style={{
+                width: "100%",
+                height: CROP_HEIGHT,
+                borderRadius: radius.card,
+                borderWidth: 1,
+                borderColor: color.line,
+              }}
             />
           ) : (
             <View
-              className="w-full h-48 rounded-button mb-2.5 justify-center items-center"
               style={{
-                borderStyle: "dashed",
-                borderColor: ink.inputLine(isDark),
+                height: CROP_HEIGHT,
+                borderRadius: radius.card,
                 borderWidth: 1,
+                borderColor: color.line,
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              <Text className={`${isDark ? "text-subtle-dark" : "text-subtle-light"}`}>
+              <Text fontSize="text-sm" tone="dim">
                 Select an image to crop
               </Text>
             </View>
           )}
-          <View className="flex-row items-center space-x-2">
-            <InformationCircleIcon size={16} color={ink.dim(isDark)} />
-            <Text
-              fontSize="text-sm"
-              className={`${isDark ? "text-subtle-dark" : "text-subtle-light"}`}
-            >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <InformationCircleIcon size={20} color={color.textDim} />
+            <Text fontSize="text-sm" tone="dim">
               Drag image to crop to your liking
             </Text>
           </View>
-        </StyledView>
+        </View>
       </ScrollView>
       <View
-        className="px-3"
-        style={{ paddingBottom: 8 + (reserveBottomInset ? insets.bottom : 0) }}
+        style={{
+          paddingHorizontal: SCREEN_GUTTER,
+          paddingBottom: 16 + (reserveBottomInset ? insets.bottom : 0),
+        }}
       >
         <Button
           onPress={handleSubmit}
           disabled={!croppedImage}
           loading={loading}
-          className="w-full items-center justify-between "
+          className="w-full items-center"
         >
           <SubmitLabel label={submitLabel} showChevron={showSubmitChevron} />
         </Button>
@@ -260,10 +289,3 @@ export function CoverImagePicker({
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  lottie: {
-    resizeMode: "cover",
-    transform: [{ scale: 2.3 }],
-  },
-});
