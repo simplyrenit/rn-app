@@ -1,6 +1,7 @@
 import { Button, Text } from "@/components/core";
 import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
+import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { styled } from "nativewind";
 import React, { useRef } from "react";
@@ -8,9 +9,23 @@ import { Platform, TouchableOpacity, View } from "react-native";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { IOS_CLIENT_ID, WEB_CLIENT_ID } from "@/lib/config";
 import { SignInOptions } from "@/components/auth/sign-in-options";
-import { useTheme } from "@/lib/theme";
-import { ArrowRightStartOnRectangleIcon } from "react-native-heroicons/outline";
-import IconButton from "../post-auth/profile-icon-button";
+import {
+  ChatBubbleLeftEllipsisIcon,
+  DevicePhoneMobileIcon,
+  DocumentTextIcon,
+  EnvelopeIcon,
+  FlagIcon,
+  InboxArrowDownIcon,
+  LockClosedIcon,
+  QuestionMarkCircleIcon,
+  UsersIcon,
+} from "react-native-heroicons/outline";
+import {
+  PROFILE_LIST_GAP,
+  ProfileRow,
+  ProfileSection,
+  ProfileSectionRule,
+} from "../post-auth/profile-row";
 import AppearanceSheet from "../post-auth/sheets/AppearanceSheet";
 import { CurrencySheet } from "../post-auth/sheets/currency-sheet";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -35,13 +50,6 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
   const isDark = theme === "dark";
   const appearanceSheetRef = useRef<BottomSheetModal>(null);
   const currencySheetRef = useRef<BottomSheetModal>(null);
-  const { color } = useTheme();
-
-  const sectionStyle = {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: color.line,
-  } as const;
 
   const handleCurrencyModal = () => {
     currencySheetRef.current?.present();
@@ -51,9 +59,16 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
     appearanceSheetRef.current?.present();
   };
 
+  // The screen's own route, not the navigator's focused tab: this component is
+  // shared by Profile, Saved, Post and Chat, and reading `getState()` at render
+  // time made whichever tab happened to be mounted show the list whenever it
+  // re-rendered while Profile was the focused one (a theme change made from the
+  // Appearance sheet was enough).
+  const onProfile = useRoute().name === "Profile";
+
   return (
-    <>
-      <View className="px-gutter py-4 flex-1 justify-end">
+    <View className="flex-1 justify-end">
+      <View className="px-gutter py-4">
         {/* This is the moment a customer decides to commit an account to
             you. It used to read " Enjoy Renit to the fullest..." — default
             size, no weight, a trailing ellipsis and a literal leading space. */}
@@ -67,146 +82,109 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
         </View>
 
         <SignInOptions />
-        {/* App */}
-        {router.getState().routes[router.getState().index].name ===
-          "Profile" && (
-            <>
-              <View
-                style={sectionStyle}
-              >
-                <View className="px-gutter">
-                  <Text
-                    fontSize="text-base"
-                    fontWeight="font-bold"
-                    className="pb-3"
-                  >
-                    App
-                  </Text>
-                  <IconButton
-                    onPress={handleAppeareanceModal}
-                    leftIcon="MoonIcon"
-                    text="Appearance"
-                    isDarkMode={isDarkMode}
-                  />
-                  {/* <IconButton
-                  onPress={handleCurrencyModal}
-                  leftIcon="BanknotesIcon"
-                  text="Currency"
-                  isDarkMode={isDarkMode}
-                /> */}
-                </View>
-              </View>
-
-              {/* Support */}
-              <View
-                style={sectionStyle}
-              >
-                <View className="px-gutter">
-                  <Text
-                    fontSize="text-base"
-                    fontWeight="font-bold"
-                    className="pb-3"
-                  >
-                    Support
-                  </Text>
-                  <IconButton
-                    onPress={() => {
-                      router.navigate("faq");
-                    }}
-                    leftIcon="QuestionMarkCircleIcon"
-                    text="FAQs"
-                    isDarkMode={isDarkMode}
-                  />
-                  <IconButton
-                    onPress={() => {
-                      router.navigate("ReportAProblem");
-                    }}
-                    leftIcon="ExclamationTriangleIcon"
-                    text="Report a problem"
-                    isDarkMode={isDarkMode}
-                  />
-                  <IconButton
-                    onPress={() => {
-                      router.navigate("feedback");
-                    }}
-                    leftIcon="ChatBubbleLeftEllipsisIcon"
-                    text="Send feedback"
-                    isDarkMode={isDarkMode}
-                  />
-                  <IconButton
-                    onPress={() => {
-                      router.navigate("contactUs");
-                    }}
-                    leftIcon="EnvelopeIcon"
-                    text="Contact us"
-                    isDarkMode={isDarkMode}
-                  />
-                  <IconButton
-                    onPress={() => {
-                      router.navigate("whoWeAre");
-                    }}
-                    leftIcon="UsersIcon"
-                    text="Who we are"
-                    isDarkMode={isDarkMode}
-                  />
-                  <IconButton
-                    onPress={() => {
-                      if (!isAuthenticated) {
-                        router.navigate("Welcome"); // or whatever your login route name is
-                      } else {
-                        router.navigate("unavailabilityFormCategories");
-                      }
-                    }}
-                    leftIcon="InboxArrowDownIcon"
-                    text="Request an item"
-                    isDarkMode={isDarkMode}
-                  />
-                </View>
-              </View>
-
-              {/* <Legal */}
-              <View className="py-4 mb-16">
-                <View className="px-gutter">
-                  <Text
-                    fontSize="text-base"
-                    fontWeight="font-bold"
-                    className="pb-3"
-                  >
-                    Legal
-                  </Text>
-                  <IconButton
-                    onPress={() => {
-                      router.navigate("Terms");
-                    }}
-                    leftIcon="DocumentTextIcon"
-                    text="Terms & conditions"
-                    isDarkMode={isDarkMode}
-                  />
-                  <IconButton
-                    onPress={() => {
-                      router.navigate("Privacy");
-                    }}
-                    leftIcon="LockClosedIcon"
-                    text="Privacy policy"
-                    isDarkMode={isDarkMode}
-                  />
-                </View>
-              </View>
-
-              <CurrencySheet
-                bottomSheetModalRef={currencySheetRef}
-                isDarkMode={isDarkMode}
-              />
-
-              <AppearanceSheet
-                bottomSheetModalRef={appearanceSheetRef}
-                isDarkMode={isDarkMode}
-              />
-
-            </>
-          )}
       </View>
-    </>
+
+      {onProfile && (
+        <>
+          {/* The same list, rows and rules the signed-in Profile draws, so the
+              two states of one tab read as one screen. This used to be its own
+              copy of the list, inside the hero's 24pt gutter and then a second
+              24pt gutter per section, so every row sat 48pt in from the edge
+              with an inset rule and an older glyph set. */}
+          <ProfileSectionRule />
+
+          <View style={{ paddingBottom: PROFILE_LIST_GAP * 2 }}>
+            <ProfileSection title="App">
+              <ProfileRow
+                icon={DevicePhoneMobileIcon}
+                label="Appearance"
+                onPress={handleAppeareanceModal}
+              />
+            </ProfileSection>
+
+            <ProfileSectionRule />
+
+            <ProfileSection title="Support">
+              <ProfileRow
+                icon={QuestionMarkCircleIcon}
+                label="FAQs"
+                onPress={() => {
+                  router.navigate("faq");
+                }}
+              />
+              <ProfileRow
+                icon={FlagIcon}
+                label="Report a problem"
+                onPress={() => {
+                  router.navigate("ReportAProblem");
+                }}
+              />
+              <ProfileRow
+                icon={ChatBubbleLeftEllipsisIcon}
+                label="Feedback & review"
+                onPress={() => {
+                  router.navigate("feedback");
+                }}
+              />
+              <ProfileRow
+                icon={EnvelopeIcon}
+                label="Contact us"
+                onPress={() => {
+                  router.navigate("contactUs");
+                }}
+              />
+              <ProfileRow
+                icon={UsersIcon}
+                label="Who we are"
+                onPress={() => {
+                  router.navigate("whoWeAre");
+                }}
+              />
+              <ProfileRow
+                icon={InboxArrowDownIcon}
+                label="Request an item"
+                onPress={() => {
+                  if (!isAuthenticated) {
+                    router.navigate("Welcome"); // or whatever your login route name is
+                  } else {
+                    router.navigate("unavailabilityFormCategories");
+                  }
+                }}
+              />
+            </ProfileSection>
+
+            <ProfileSectionRule />
+
+            <ProfileSection title="Legal">
+              <ProfileRow
+                icon={DocumentTextIcon}
+                label="Terms & conditions"
+                onPress={() => {
+                  router.navigate("Terms");
+                }}
+              />
+              <ProfileRow
+                icon={LockClosedIcon}
+                label="Privacy policy"
+                onPress={() => {
+                  router.navigate("Privacy");
+                }}
+              />
+            </ProfileSection>
+          </View>
+
+          <CurrencySheet
+            bottomSheetModalRef={currencySheetRef}
+            isDarkMode={isDarkMode}
+          />
+
+          <AppearanceSheet
+            bottomSheetModalRef={appearanceSheetRef}
+            isDarkMode={isDarkMode}
+          />
+        </>
+      )}
+    </View>
   );
 };
 

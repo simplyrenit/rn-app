@@ -31,6 +31,16 @@ const APPROXIMATE_RADIUS_M = 500;
  */
 const NEIGHBOURHOOD_DELTA = 0.012;
 
+/**
+ * Google draws its logo in the bottom-left corner of the map and its terms
+ * require it to stay visible, but the caption chip lives in the same corner.
+ * Padding the map's bottom edge by the chip's height (28) plus its inset (10)
+ * makes Google lift its own logo clear above the chip, so the caption keeps its
+ * full width and its place in the frame. It also nudges the map's centre up by
+ * half this amount, which the marker's card has room for.
+ */
+export const MAP_LOGO_LIFT = 44;
+
 export const ProductMapClassic: React.FC<ProductMapProps> = ({
   latitude,
   longitude,
@@ -67,6 +77,7 @@ export const ProductMapClassic: React.FC<ProductMapProps> = ({
       style={{ flex: 1, height: 200, overflow: "hidden", borderRadius: radius.group }}
     >
       <MapView
+        mapPadding={{ top: 0, left: 0, right: 0, bottom: MAP_LOGO_LIFT }}
         provider={PROVIDER_GOOGLE}
         style={{ flex: 1 }}
         initialRegion={{
@@ -127,18 +138,15 @@ export const ProductMapClassic: React.FC<ProductMapProps> = ({
         pointerEvents="none"
         style={{
           position: "absolute",
-          // Right of the Google logo Maps draws bottom-left (66pt on a 10pt
-          // inset); its terms require the mark to stay uncovered.
-          left: 84,
+          left: 10,
           bottom: 10,
           right: 10,
           flexDirection: "row",
-          justifyContent: "flex-end",
         }}
       >
         <View
           style={{
-            backgroundColor: color.scrim,
+            backgroundColor: color.photoScrim,
             borderRadius: radius.full,
             paddingHorizontal: 10,
             paddingVertical: 5,

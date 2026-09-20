@@ -88,7 +88,7 @@ const Dropdown: React.FC<DropdownProps> = ({
 
       {isOpen && (
         <Modal visible={isOpen} transparent onDismiss={() => setIsOpen(false)} onRequestClose={() => setIsOpen(false)}>
-          <View style={{ height: '100%', width: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50 }} /* onTouchEnd={() => setIsOpen(false)} */>
+          <View style={{ height: '100%', width: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: ink.scrim(isDarkMode), position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50 }} /* onTouchEnd={() => setIsOpen(false)} */>
 
             <View style={{ backgroundColor: ink.surface(isDarkMode), width: '100%' }}>
 
