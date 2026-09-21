@@ -44,6 +44,25 @@ Status: `DONE` matches within 0.5pt · `TODO` not started · `BLOCKED` see note.
 | Edit flow | `editProduct`, `EditAboutProduct`, `EditCategory`, `EditSubCategories`, `EditProductImages`, `EditCoverImage`, `EditProductAvailability` | PARTLY (walked view-only 2026-09-20) | Header matches the wizard (`EditStepHeader`, 16pt inset / 44pt row / 18pt bold); the edit hub, Product Details, Product Images (empty state), Category and Unavailability were walked in light and the hub in dark; they share the wizard components, so the wizard's matches carry over. Edit Product Images and Edit Cover Image were walked on an `AGENT_QA_` fixture listing 2026-09-20 (nothing saved); edit-product form fields changed with `FieldFrame` (edit frame `1:14332` not compared). |
 | Reviews / owner | `ReviewsScreen`, `WriteReviews`, `OwnersReviewScreen`, `OwnersProducts`, owner profile (`UserDetail`) | PARTLY | Owner profile (`UserDetail`, frame `1:21984`, dark `1:21886`) DONE in light, dark fills match; the old verification card and business pill were removed (needs sign-off, see `design/audit.md`). All reviews (`ReviewsScreen`, frame `1:17697`) DONE (light measured, dark by token); Write a review (`WriteReviews`, frame `1:18034`) DONE (light measured, dark by token) — the frame omits the owner review and both star ratings that the API requires, so they are kept as extra sections and need a product ruling. Both were measured against 1× exports (no Figwright this session), so the floor is 1pt not 0.5pt, and both were captured through a temporary harness because the Simulator window was closed — see `design/audit.md`. `OwnersReviewScreen` and `OwnersProducts` not started. |
 
+## Android — physical OnePlus CPH2423, 360 dp (2026-09-21)
+
+Reference is the owner's phone at its own 360 dp width (no density override); the frames are 390 wide, so this checks fixed dimensions and reflow, not widths. Bar: about 90%. Method and every finding (F1 to F5) are in `design/audit.md`, "Android audit". Status: `OK` renders correctly, no visible or structural difference · `FIXED` · `OPEN` finding needs a ruling · `NOT WALKED` reason given.
+
+| Screen | Light | Dark | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Home, tab bar | yes | yes | OK | |
+| Search, keyboard | yes | yes | OK | |
+| Where sheet | | yes | FIXED (F1) / OPEN (F2) | Back popped the screen; fixed in `search.tsx`. Box-in-a-box field is the tailwind/token dark mismatch. |
+| Date picker | | yes | OPEN (F5) | White system nav bar under the dark modal. |
+| Search results, Filters sheet | | yes | OK | |
+| Saved, Post steps 1 and 2, Chat (empty) | yes | yes | OK | |
+| Product Details | yes | | OPEN (F3, F4) | Map swallows scrolling; "No reviews yet" beside a real review. |
+| All reviews, Owner profile | yes | | OK | |
+| Profile, Appearance, FAQs, My Products | yes | yes | OK | |
+| Contact, Who we are, Terms, Privacy, Report | | yes | OK | |
+| Welcome, sign-in, OTP | | | NOT WALKED | signed-out only; the session stays signed in |
+| Notifications, Chat thread, Make an offer, Write review, Edit product, Post steps 3 to 7 | | | NOT WALKED | write or mark-read on the real backend; wait for `AGENT_QA_<run-id>` fixtures |
+
 ## Figma section inventory
 
 The page has 39 sections in dark/light pairs: the dark set sits at y<20000 and the
