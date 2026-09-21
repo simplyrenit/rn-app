@@ -64,7 +64,11 @@ Reference is the owner's phone at its own 360 dp width (no density override); th
 | Chat list | yes | | OK | works after the QA backend restart (see the audit addendum); no frame exists for it |
 | Edit product: hub, Category, Product Details, Images, Unavailability | yes | | OK (F7 minor) | walked on the `Agent-qa-photos` fixture, nothing saved |
 | Post step 3 (details form, keyboard, dropdown) | yes | | OK | walked, nothing published; test text discarded |
-| Notifications, Chat thread, Make an offer, Write review, Post steps 4 to 7 | | | NOT WALKED | write or mark-read on the real backend; wait for `AGENT_QA_<run-id>` fixtures |
+| Notifications | yes | | OK (empty state) | no rows to see: the account has none |
+| Chat thread, options menu, composer + keyboard | yes | | OK | on the `QA_CHAT_E2E` fixture thread, nothing sent |
+| Make an offer | yes | | PARTLY | "Select a product" sheet only; its list is empty for this thread |
+| Post step 4 (images) | yes | | PARTLY | empty state only; needs photo access (owner's call) for steps 5 to 7 |
+| Write review | | | NOT WALKED | writes a review on another user's listing |
 
 ## Figma section inventory
 
