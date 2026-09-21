@@ -63,7 +63,8 @@ Reference is the owner's phone at its own 360 dp width (no density override); th
 | Welcome, sign-in, OTP | | | NOT WALKED | signed-out only; the session stays signed in |
 | Chat list | yes | | OK | works after the QA backend restart (see the audit addendum); no frame exists for it |
 | Edit product: hub, Category, Product Details, Images, Unavailability | yes | | OK (F7 minor) | walked on the `Agent-qa-photos` fixture, nothing saved |
-| Notifications, Chat thread, Make an offer, Write review, Post steps 3 to 7 | | | NOT WALKED | write or mark-read on the real backend; wait for `AGENT_QA_<run-id>` fixtures |
+| Post step 3 (details form, keyboard, dropdown) | yes | | OK | walked, nothing published; test text discarded |
+| Notifications, Chat thread, Make an offer, Write review, Post steps 4 to 7 | | | NOT WALKED | write or mark-read on the real backend; wait for `AGENT_QA_<run-id>` fixtures |
 
 ## Figma section inventory
 
