@@ -39,8 +39,11 @@ const light = {
 };
 
 const dark = {
-  canvas: "#0F0F0F",
-  surface: "#1A1A1A",
+  // Mirrors darkColors in src/lib/design-tokens.ts: the Figma canvas is true
+  // black with inputs one step up. These lagged a step lighter (#0F0F0F/#1A1A1A),
+  // so a `bg-*-dark` class beside a token drew two different greys.
+  canvas: "#000000",
+  surface: "#0F0F0F",
   "surface-raised": "#292929",
   line: "#292929",
   text: "#FFFFFF",
