@@ -1213,3 +1213,12 @@ Owner's rulings: tolerance is about 90%; fix F2; fixtures allowed (the owner del
 - No fixture listing was published, so there is nothing to clean up on the QA backend from this pass.
 
 - **Post step 4, photo picker (2026-09-21, after the owner allowed photo access):** "Choose from gallery" opens the system photo picker on the owner's *whole* library (with the earlier limited grant showing one item pre-selected). It is the owner's personal media, including payment and card screenshots, so I did not browse it, select anything or press Done (Done would upload the pre-selected item to QA storage); I cancelled with Back, nothing was added, and the two picker screenshots I took were removed. Steps 5 to 7 therefore remain unwalked. To finish them the owner picks `AGENT_QA_a1.jpg` (on the phone in `Pictures/`) themselves and presses Done; the wizard stays on step 4 with the labelled step-3 test values.
+
+### Post steps 4 to 7 on Android (2026-09-21, dark: the phone's system theme had switched to dark by then)
+
+After the owner picked photos in the system picker themselves, I walked the rest of the wizard with the labelled `AGENT_QA_a1` values and **did not press "Post product"**. All four steps render correctly at 360 dp:
+- **Step 4/5, "Choose a cover image":** three selectable photo tiles, a "Crop Image" action and the drag-to-crop hint. Selecting a tile opens the native cropper (Cancel / Crop, then Back / Save); after Save the tile reads "selected as the cover" and Next enables. Header, five filled progress segments and the Next button match the other steps.
+- **Step 6, "Product Unavailability":** the calendar card with past days dimmed, "Choose the dates where the product will be unavailable", a disabled "Add date log" and Next.
+- **Step 7, "Review your post":** seven filled segments, the photo carousel, the title, the Category / Deposit / Condition strip, About the product, and the sticky "per day / Post product" bar; the same components as Product Details.
+- The wizard's local draft was discarded; **no listing was created** (`AGENT_QA_a1` is absent from My Products). I cannot see whether the picked photos were uploaded to storage before publishing; if they were, they are unlisted files on the QA CDN. The full-screen captures of these steps contained the owner's photos and were deleted; only cropped chrome was viewed.
+- The three cover-step photos were the owner's own choice; I did not view them beyond the cropped chrome.

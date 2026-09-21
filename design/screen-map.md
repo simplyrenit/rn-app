@@ -67,7 +67,7 @@ Reference is the owner's phone at its own 360 dp width (no density override); th
 | Notifications | yes | | OK (empty state) | no rows to see: the account has none |
 | Chat thread, options menu, composer + keyboard | yes | | OK | on the `QA_CHAT_E2E` fixture thread, nothing sent |
 | Make an offer | yes | | PARTLY | "Select a product" sheet only; its list is empty for this thread |
-| Post step 4 (images) | yes | | PARTLY | empty state only; needs photo access (owner's call) for steps 5 to 7 |
+| Post steps 4 to 7 (images, cover + cropper, unavailability, review) | | yes | OK | walked without publishing; nothing created |
 | Write review | | | NOT WALKED | writes a review on another user's listing |
 
 ## Figma section inventory
