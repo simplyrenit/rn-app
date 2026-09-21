@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { MAP_LOGO_LIFT, ProductMapClassic } from "./product-map-classic";
-import { StyleProp, View, ViewStyle } from "react-native";
+import { Platform, StyleProp, View, ViewStyle } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
 import { Text } from "@/components/core";
@@ -135,8 +135,8 @@ const DetailProductMap: React.FC<ProductMapProps> = ({
           longitudeDelta: NEIGHBOURHOOD_DELTA,
         }}
         customMapStyle={isDarkMode ? darkModeMapStyle : []}
-        scrollEnabled={true}
-        zoomEnabled={true}
+        scrollEnabled={MAP_INTERACTIVE}
+        zoomEnabled={MAP_INTERACTIVE}
         rotateEnabled={false}
         pitchEnabled={false}
         maxZoomLevel={16}
@@ -225,6 +225,11 @@ interface Props extends ProductMapProps {
    */
   variant?: "default" | "detail";
 }
+
+// On Android a pannable map inside the page's vertical scroll takes every swipe
+// that starts on it, so the page seems stuck. The map shows an approximate area
+// anyway; iOS keeps the pan and zoom.
+const MAP_INTERACTIVE = Platform.select({ android: false, default: true });
 
 export const ProductMap: React.FC<Props> = ({ variant = "default", ...props }) =>
   variant === "detail" ? (
