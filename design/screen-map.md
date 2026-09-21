@@ -52,11 +52,11 @@ Reference is the owner's phone at its own 360 dp width (no density override); th
 | --- | --- | --- | --- | --- |
 | Home, tab bar | yes | yes | OK | |
 | Search, keyboard | yes | yes | OK | |
-| Where sheet | | yes | FIXED (F1) / OPEN (F2) | Back popped the screen; fixed in `search.tsx`. Box-in-a-box field is the tailwind/token dark mismatch. |
+| Where sheet | | yes | FIXED (F1, F2) | Back popped the screen: fixed in `search.tsx`. The box-in-a-box field was the tailwind/token dark mismatch: fixed in `tailwind.config.js`, verified on the phone. |
 | Date picker | | yes | OPEN (F5) | White system nav bar under the dark modal. |
 | Search results, Filters sheet | | yes | OK | |
 | Saved, Post steps 1 and 2, Chat (empty) | yes | yes | OK | |
-| Product Details | yes | | OPEN (F3, F4) | Map swallows scrolling; "No reviews yet" beside a real review. |
+| Product Details | yes | yes | FIXED (F3) / OPEN (F4) | Map no longer swallows scrolling on Android; "No reviews yet" beside a real review is a data/copy issue. |
 | All reviews, Owner profile | yes | | OK | |
 | Profile, Appearance, FAQs, My Products | yes | yes | OK | |
 | Contact, Who we are, Terms, Privacy, Report | | yes | OK | |
