@@ -1431,7 +1431,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - ExpoAdapterGoogleSignIn (13.3.1):
+  - ExpoAdapterGoogleSignIn (13.1.0):
     - ExpoModulesCore
     - GoogleSignIn (~> 7.1)
     - React-Core
@@ -3002,7 +3002,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNGoogleSignin (13.3.1):
+  - RNGoogleSignin (13.1.0):
     - GoogleSignIn (~> 7.1)
     - React-Core
   - RNReanimated (3.10.1):
@@ -3048,7 +3048,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNSVG (15.15.5):
+  - RNSVG (15.2.0):
     - React-Core
   - SDWebImage (5.19.7):
     - SDWebImage/Core (= 5.19.7)
@@ -3441,7 +3441,7 @@ SPEC CHECKSUMS:
   expo-dev-launcher: f58f89fedd75f253811e9d667ee1d55a3ffc490f
   expo-dev-menu: 65c50c838ef948aa8843a85708d0d13ce796a9d2
   expo-dev-menu-interface: 5c6b79875bf0ab1251ea9962f60968fe39ed2637
-  ExpoAdapterGoogleSignIn: 2d18762fc21b37216b3afdf39ad4aea5352f22e9
+  ExpoAdapterGoogleSignIn: 6393c1ad521f880f6e467bca40baf1e5dcaea4a3
   ExpoAppleAuthentication: 8a661b6f4936affafd830f983ac22463c936dad5
   ExpoAsset: 286fee7ba711ce66bf20b315e68106b13b8629fc
   ExpoBackgroundFetch: 2988b27bc95f322e856dbd44060b6951fdfe8950
@@ -3553,10 +3553,10 @@ SPEC CHECKSUMS:
   RNFBFirestore: 03f3648f47529a14b54e9b427c722898c9046917
   RNFBStorage: f058204f5e684a95797ac78e2d3918fc3dd07b17
   RNGestureHandler: 5d95b0a3cffed8325ed0c181f4f411c1dcd49317
-  RNGoogleSignin: 576a84dd0407b912e7a0adf07492de9feb79e5d9
+  RNGoogleSignin: ba93c1137f8d5cebdd39b04f493fd212ddf5ecd6
   RNReanimated: f6c3a3aa35de5a312c01b9256a61f23eed660b34
   RNScreens: 5b35d863db10f9be81da4e8f4e08096ee7644f8c
-  RNSVG: 9ffb83515d2c4e0c11d5ca5f83fd9c016348d6cf
+  RNSVG: 0e7deccab0678200815104223aadd5ca734dd41d
   SDWebImage: 8a6b7b160b4d710e2a22b6900e25301075c34cb3
   SDWebImageAVIFCoder: afe194a084e851f70228e4be35ef651df0fc5c57
   SDWebImageSVGCoder: 15a300a97ec1c8ac958f009c02220ac0402e936c
