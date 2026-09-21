@@ -20,7 +20,7 @@ import axios from "axios";
 import * as Location from "expo-location";
 import { styled } from "nativewind";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Platform, TouchableOpacity, View } from "react-native";
+import { BackHandler, Platform, TouchableOpacity, View } from "react-native";
 import { AutocompleteDropdown } from "react-native-autocomplete-dropdown";
 import {
   GestureHandlerRootView,
@@ -191,6 +191,18 @@ export default function SearchScreen() {
       console.error(error);
     }
   }, []);
+
+  // Hardware Back has to close the place sheet before it leaves the screen: the
+  // navigator's global handler would otherwise pop Search with the sheet still
+  // open. Registered last, so it runs first (iOS never fires this event).
+  useEffect(() => {
+    if (!isBottomSheetVisible) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      bottomSheetRef.current?.close();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [isBottomSheetVisible]);
 
   const handleOpenBottomSheet = () => {
     setBottomSheetVisible(true);
