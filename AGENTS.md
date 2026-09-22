@@ -92,6 +92,15 @@ step. Agents still ask before any *local* archive or upload, and before
 changing the workflow's signing, secrets, or QA pinning. Export compliance and
 tester-group assignment stay human even for CI builds.
 
+Second standing exception, same shape: `.github/workflows/android-qa-distribution.yml`
+builds a QA APK and pushes it to the Firebase App Distribution `qa-testers`
+group on every merge to `main`, no per-run approval (user authorised
+2026-09-22; merging to `main` is the approval). Covers only that workflow,
+only QA, and only the build/distribute step. Agents still ask before any
+*local* Android release build or distribution, and before changing the
+workflow's signing, secrets, or QA pinning. Who is in `qa-testers` stays a
+human decision, made in the Firebase console, not in the workflow.
+
 iPhone v1 supports Xcode/devicectl build, install, launch, and log collection.
 It does not promise autonomous interaction with system prompts or external
 sign-in screens.
