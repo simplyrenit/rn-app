@@ -82,6 +82,12 @@ export default function ListPreviewScreen() {
   const { draft } = flow;
   const [state, setState] = useState<SubmitState>("idle");
   const mounted = useRef(true);
+  /**
+   * True from the tap until the create call settles. Leaving mid-request is
+   * how a listing gets created twice: the first request still lands, and the
+   * owner, back on Review with the draft intact, submits it again.
+   */
+  const submitting = useRef(false);
 
   useEffect(() => {
     flow.track("preview_opened");
@@ -90,6 +96,22 @@ export default function ListPreviewScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Blocks Back, the Android back button (nav.tsx routes it through goBack)
+  // and any other removal while the create call is in flight.
+  useEffect(
+    () =>
+      navigation.addListener("beforeRemove", (event) => {
+        if (submitting.current) event.preventDefault();
+      }),
+    [navigation]
+  );
+
+  // The iOS edge swipe is not interceptable by `beforeRemove` on the native
+  // stack, so it is switched off for the same window.
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: state === "idle" });
+  }, [navigation, state]);
 
   if (!draft) return <NonScrollableContainer>{null}</NonScrollableContainer>;
   const f = draft.fields;
@@ -100,7 +122,8 @@ export default function ListPreviewScreen() {
   const deposit = f.security_deposit.value;
 
   const onSubmit = async () => {
-    if (state !== "idle") return;
+    if (state !== "idle" || submitting.current) return;
+    submitting.current = true;
     commitFeedback();
     setState("submitting");
     const payload = buildCreatePayload(draft, {
@@ -114,16 +137,28 @@ export default function ListPreviewScreen() {
         photos: payload.images.length,
       });
       successFeedback();
-      if (!mounted.current) return;
-      setState("done");
-      // Let the check land before leaving. The stack is reset so Back from
+
+      // The listing exists now, so the draft goes whatever happens to this
+      // screen — the context outlives it. The stack is reset so Back from
       // Submitted cannot walk into a flow whose draft is gone.
-      setTimeout(() => {
+      const finish = () => {
+        flow.clearSubmitted();
+        submitting.current = false;
         navigation.reset({
           index: 1,
-          routes: [{ name: "MainTabs" }, { name: "ListSubmitted", params: { productName: payload.title } }],
+          routes: [
+            { name: "MainTabs" },
+            { name: "ListSubmitted", params: { productName: payload.title, coverUrl: payload.cover_image } },
+          ],
         });
-      }, 500);
+      };
+      if (!mounted.current) {
+        finish();
+        return;
+      }
+      setState("done");
+      // Let the check land before leaving.
+      setTimeout(finish, 500);
     } catch (error) {
       const status = axios.isAxiosError(error) ? error.response?.status ?? 0 : 0;
       const serverMessage = axios.isAxiosError(error)
@@ -131,6 +166,7 @@ export default function ListPreviewScreen() {
           (error.response?.data as { detail?: string } | undefined)?.detail
         : undefined;
       flow.track("listing_submit_failed", { status });
+      submitting.current = false;
       if (mounted.current) setState("idle");
       // The draft is untouched, so the owner can simply try again.
       toast.error("We couldn't submit your listing", {
@@ -141,7 +177,7 @@ export default function ListPreviewScreen() {
 
   return (
     <NonScrollableContainer>
-      <FlowHeader step={4} />
+      <FlowHeader step={4} showBack={state === "idle"} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: space.xl }}>
         <View style={{ width: "100%", aspectRatio: 1 }}>

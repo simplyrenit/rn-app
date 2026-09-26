@@ -1,6 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   DRAFT_MAX_AGE_MS,
+  MAX_RUNS_PER_ATTEMPT,
+  canRunAgain,
   createDraft,
   draftReducer,
   hydrateDraft,
@@ -217,7 +219,37 @@ describe("photos", () => {
     expect(d.photosChangedSinceRun).toBe(true);
     d = apply(d, { type: "runStarted" });
     expect(d.photosChangedSinceRun).toBe(false);
-    expect(d.extractionRuns).toBe(1);
+    // Only a run the server actually created counts against the three.
+    expect(d.extractionRuns).toBe(0);
+    d = apply(d, { type: "serverRunCounted" }, { type: "serverRunCounted" });
+    expect(d.extractionRuns).toBe(2);
+  });
+
+  it("forgets a Keep-it for a replaced photo and for a new run", () => {
+    let d = apply(
+      fresh(),
+      { type: "addPhoto", photo: photo("a") },
+      { type: "addPhoto", photo: photo("b") },
+      { type: "dismissWarning", warning: { type: "stock_photo", photo: 1 } },
+      { type: "dismissWarning", warning: { type: "duplicate", photo: 2 } },
+      { type: "replacePhoto", index: 0, photo: photo("a2") }
+    );
+    expect(d.dismissedWarnings).toEqual(["duplicate:2"]);
+    d = apply(d, { type: "runStarted" });
+    expect(d.dismissedWarnings).toEqual([]);
+  });
+
+  it("renumbers Keep-it choices when an earlier photo is removed", () => {
+    const d = apply(
+      fresh(),
+      { type: "addPhoto", photo: photo("a") },
+      { type: "addPhoto", photo: photo("b") },
+      { type: "addPhoto", photo: photo("c") },
+      { type: "dismissWarning", warning: { type: "stock_photo", photo: 1 } },
+      { type: "dismissWarning", warning: { type: "duplicate", photo: 3 } },
+      { type: "removePhoto", id: "a" }
+    );
+    expect(d.dismissedWarnings).toEqual(["duplicate:2"]);
   });
 
   it("keeps the cover on the same photo when an earlier one is removed", () => {
@@ -246,6 +278,14 @@ describe("photos", () => {
       { type: "removePhoto", id: "a" }
     );
     expect(d.warnings).toEqual([{ type: "unreadable", photo: 2, reason: undefined }]);
+  });
+});
+
+describe("run budget", () => {
+  it("believes the server's quota_runs over the local count", () => {
+    const d = apply(fresh(), { type: "serverRunCounted" }, { type: "runsExhausted" });
+    expect(d.extractionRuns).toBe(MAX_RUNS_PER_ATTEMPT);
+    expect(canRunAgain(d)).toBe(false);
   });
 });
 
@@ -286,6 +326,13 @@ describe("requirements", () => {
       }
     );
     expect(missingRequirements(d)).toEqual([]);
+  });
+
+  it("asks for a deposit the owner cleared instead of sending 0", () => {
+    const d = apply(fresh(), { type: "editField", field: "rate", value: "500" });
+    expect(missingRequirements(d).map((m) => m.key)).not.toContain("deposit");
+    const cleared = apply(d, { type: "editField", field: "security_deposit", value: "" });
+    expect(missingRequirements(cleared).map((m) => m.key)).toContain("deposit");
   });
 
   it("rejects a zero or malformed price", () => {

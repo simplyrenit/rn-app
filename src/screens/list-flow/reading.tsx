@@ -38,9 +38,13 @@ export default function ListReadingScreen() {
   const left = useRef(false);
 
   const visible = (w: ListingWarning) => !draft?.dismissedWarnings.includes(warningKey(w));
-  const unreadable = draft?.warnings.find((w) => w.type === "unreadable" && visible(w));
+  // A warning with no photo number cannot be retaken — there is no slot to
+  // replace — so it never becomes L-13b and never holds the move to Review.
+  const unreadable = draft?.warnings.find(
+    (w) => w.type === "unreadable" && Boolean(w.photo) && visible(w)
+  );
   const retakeWarning = draft?.warnings.find((w) => RETAKE_WARNINGS.includes(w.type) && visible(w));
-  const holding = Boolean(unreadable || retakeWarning);
+  const holding = Boolean(unreadable || retakeWarning?.photo);
 
   const goToReview = () => {
     if (left.current) return;
@@ -202,9 +206,11 @@ export default function ListReadingScreen() {
               </Text>
             ) : null}
             <View style={{ flexDirection: "row", gap: space.sm }}>
-              <Button size="compact" style={{ flex: 1 }} onPress={onRetakePhoto}>
-                {`Retake photo ${retakeWarning.photo ?? ""}`.trim()}
-              </Button>
+              {retakeWarning.photo ? (
+                <Button size="compact" style={{ flex: 1 }} onPress={onRetakePhoto}>
+                  {`Retake photo ${retakeWarning.photo}`}
+                </Button>
+              ) : null}
               <Button size="compact" variant="outline" style={{ flex: 1 }} onPress={onKeep}>
                 Keep it
               </Button>

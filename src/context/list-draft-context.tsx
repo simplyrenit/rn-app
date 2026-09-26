@@ -23,6 +23,7 @@ import {
   PhotoItem,
   PhotoSource,
 } from "@/lib/list-flow/types";
+import { toast } from "@/lib/toast";
 import { uuidv4 } from "@/lib/uuid";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, {
@@ -148,35 +149,55 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, []);
 
+  // Storage writes go through one queue, in order, so a removal issued after
+  // a save can never land before it. `epoch` moves on every forget(): a save
+  // scheduled before it is stale and is dropped rather than resurrecting a
+  // draft that was just submitted or discarded.
+  const storageQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const epoch = useRef(0);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const enqueueStorage = useCallback((write: () => Promise<unknown>) => {
+    storageQueue.current = storageQueue.current.then(write).catch(() => {});
+    return storageQueue.current;
+  }, []);
+
   useEffect(() => {
     if (!draft) return;
+    const scheduledIn = epoch.current;
     const timer = setTimeout(() => {
+      saveTimer.current = null;
+      if (epoch.current !== scheduledIn) return;
       // Emptied back to nothing (every photo removed, every field cleared):
       // there is nothing left to offer back, so do not keep an older copy.
       if (!isDraftWorthResuming(draft)) {
-        void AsyncStorage.removeItem(DRAFT_STORAGE_KEY).catch(() => {});
+        void enqueueStorage(() => AsyncStorage.removeItem(DRAFT_STORAGE_KEY));
         return;
       }
-      AsyncStorage.setItem(DRAFT_STORAGE_KEY, serializeDraft(draft))
-        .then(() => {
-          if (!savedAttempts.current.has(draft.attemptId)) {
-            savedAttempts.current.add(draft.attemptId);
-            trackEvent("draft_saved", {}, draft.attemptId);
-          }
-        })
-        .catch(() => {});
+      void enqueueStorage(async () => {
+        if (epoch.current !== scheduledIn) return;
+        await AsyncStorage.setItem(DRAFT_STORAGE_KEY, serializeDraft(draft));
+        if (!savedAttempts.current.has(draft.attemptId)) {
+          savedAttempts.current.add(draft.attemptId);
+          trackEvent("draft_saved", {}, draft.attemptId);
+        }
+      });
     }, SAVE_DEBOUNCE_MS);
+    saveTimer.current = timer;
     return () => clearTimeout(timer);
-  }, [draft]);
+  }, [draft, enqueueStorage]);
 
   const forget = useCallback(() => {
+    epoch.current += 1;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = null;
     runHandle.current?.cancel();
     runHandle.current = null;
     setRun(IDLE_RUN);
     setStored(null);
     dispatch({ type: "reset", draft: null });
-    void AsyncStorage.removeItem(DRAFT_STORAGE_KEY).catch(() => {});
-  }, [dispatch]);
+    void enqueueStorage(() => AsyncStorage.removeItem(DRAFT_STORAGE_KEY));
+  }, [dispatch, enqueueStorage]);
 
   // A draft belongs to whoever was signed in; the next account must not see it.
   useEffect(() => {
@@ -354,6 +375,7 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         },
         {
           onRun: (event) => setRun((r) => ({ ...r, runId: event.run_id })),
+          onServerRun: () => dispatch({ type: "serverRunCounted" }),
           onField: (event) => {
             if (!(AI_FIELDS as readonly string[]).includes(event.field)) return;
             if (!firstFieldSeen) {
@@ -396,6 +418,12 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             // Out of attempts for today: Review explains its blanks. Out of
             // runs on this attempt: Review keeps what it has, no note.
             if (code === "quota_attempts") dispatch({ type: "setReviewNote", note: "quota" });
+            if (code === "quota_runs") {
+              // The server has counted more runs than we did; believe it, so
+              // no control offers a run it will refuse.
+              dispatch({ type: "runsExhausted" });
+              toast.info("You've used the AI fills for this listing — you can still edit by hand.");
+            }
             trackForDraft("extraction_rate_limited", { code });
             runHandle.current = null;
           },

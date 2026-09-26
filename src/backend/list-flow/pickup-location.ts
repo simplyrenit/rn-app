@@ -34,7 +34,10 @@ export async function lastListingLocation(): Promise<LocationValue | null> {
     const product = response.data?.results?.[0];
     const coords = product?.coordinates;
     if (!product || !coords || (coords.lat === 0 && coords.long === 0)) return null;
-    const locality = product.location || (await localityFor(coords.lat, coords.long));
+    // Named from the coordinates first: older listings stored a full street
+    // address in `location`, and that must not be copied into a new public
+    // listing. The stored string is only a fallback when geocoding fails.
+    const locality = (await localityFor(coords.lat, coords.long)) || product.location;
     if (!locality) return null;
     return {
       locality,

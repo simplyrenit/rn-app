@@ -292,10 +292,13 @@ export default function ListReviewScreen() {
 
   const openLocationPicker = () => {
     navigation.navigate("LocationModal", {
-      requestId: createLocationRequest(async (coords, address) => {
+      requestId: createLocationRequest(async (coords) => {
         // The picker's "skip" is not a request to forget a location.
         if (!coords) return;
-        const locality = (await localityFor(coords.latitude, coords.longitude)) ?? address ?? "";
+        // Never the picker's own address line: it is street-level, and
+        // `location` is public. If the point cannot be named, the locality
+        // stays empty and Preview keeps asking for a pickup location.
+        const locality = (await localityFor(coords.latitude, coords.longitude)) ?? "";
         edit("location", {
           locality,
           fullAddress: flow.draft?.fields.location.value?.fullAddress ?? "",

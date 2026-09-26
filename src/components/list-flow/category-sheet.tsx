@@ -39,6 +39,7 @@ export const CategorySheet = forwardRef<
         </View>
         {parent ? (
           <TaxonomyList
+            inBottomSheet
             items={parent.subcategories}
             contextLabel={categoryDisplayName(parent.title)}
             onContextPress={() => setParent(null)}
@@ -48,7 +49,7 @@ export const CategorySheet = forwardRef<
             }}
           />
         ) : (
-          <TaxonomyList items={categories} onSelect={(item) => setParent(item)} />
+          <TaxonomyList inBottomSheet items={categories} onSelect={(item) => setParent(item)} />
         )}
       </View>
     </CustomBottomSheetModal>

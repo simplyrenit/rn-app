@@ -17,6 +17,7 @@ import { ChevronLeftIcon } from "react-native-heroicons/outline";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgUri } from "react-native-svg";
+import { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 
 /**
  * The taxonomy picker, in one place.
@@ -170,6 +171,12 @@ interface Props<T extends TaxonomyItem> {
    * the API's artwork.
    */
   preferRemoteIcon?: boolean;
+  /**
+   * Set when the list is inside a @gorhom bottom sheet. A plain FlatList there
+   * loses its scroll to the sheet's own pan gesture on Android; the sheet's
+   * scrollable hands the gesture over properly. Screens leave this off.
+   */
+  inBottomSheet?: boolean;
 }
 
 export function TaxonomyList<T extends TaxonomyItem>({
@@ -179,9 +186,13 @@ export function TaxonomyList<T extends TaxonomyItem>({
   onContextPress,
   busyTitle = null,
   preferRemoteIcon = true,
+  inBottomSheet = false,
 }: Props<T>) {
   const insets = useSafeAreaInsets();
   const { color } = useTheme();
+
+  // Same props either way; only the scrollable differs.
+  const List = (inBottomSheet ? BottomSheetFlatList : FlatList) as typeof FlatList;
 
   const contextRow = contextLabel ? (
     <View
@@ -218,7 +229,7 @@ export function TaxonomyList<T extends TaxonomyItem>({
         contextRow
       )}
 
-      <FlatList
+      <List
         data={items}
         renderItem={({ item }) => (
           <TaxonomyRow

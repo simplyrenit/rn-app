@@ -129,6 +129,8 @@ export type DraftAction =
   | { type: "removePhoto"; id: string }
   | { type: "setCover"; id: string }
   | { type: "runStarted" }
+  | { type: "serverRunCounted" }
+  | { type: "runsExhausted" }
   | { type: "mergeAi"; event: FieldEvent }
   | { type: "addWarning"; warning: WarningEvent }
   | { type: "dismissWarning"; warning: Pick<ListingWarning, "type" | "photo"> }
@@ -242,6 +244,19 @@ function editField(
   return next;
 }
 
+function keyPhoto(key: string) {
+  return Number(key.split(":")[1] ?? 0);
+}
+
+function renumberDismissedAfterRemoval(keys: string[], removed: number) {
+  return keys
+    .filter((k) => keyPhoto(k) !== removed)
+    .map((k) => {
+      const photo = keyPhoto(k);
+      return photo > removed ? `${k.split(":")[0]}:${photo - 1}` : k;
+    });
+}
+
 function renumberWarningsAfterRemoval(warnings: ListingWarning[], removed: number) {
   return warnings
     .filter((w) => w.photo !== removed)
@@ -279,6 +294,8 @@ export function draftReducer(
         ...draft,
         photos,
         warnings: draft.warnings.filter((w) => w.photo !== photoNumber),
+        // A "Keep it" was about the old photo in this slot, not the new one.
+        dismissedWarnings: draft.dismissedWarnings.filter((k) => keyPhoto(k) !== photoNumber),
         photosChangedSinceRun: true,
       };
     }
@@ -295,6 +312,7 @@ export function draftReducer(
         photos,
         coverIndex: Math.max(0, Math.min(coverIndex, photos.length - 1)),
         warnings: renumberWarningsAfterRemoval(draft.warnings, index + 1),
+        dismissedWarnings: renumberDismissedAfterRemoval(draft.dismissedWarnings, index + 1),
         photosChangedSinceRun: true,
       };
     }
@@ -305,14 +323,28 @@ export function draftReducer(
     }
 
     case "runStarted":
+      // The run counter is not bumped here: a request refused before the
+      // server creates a run (403, 429, a pre-stream 503) costs nothing, and
+      // counting it would disable retries the server still allows. See
+      // `serverRunCounted`.
       return {
         ...draft,
-        extractionRuns: draft.extractionRuns + 1,
         photosChangedSinceRun: false,
-        // Photo numbers in old warnings refer to the old photo set.
+        // Photo numbers in old warnings — and old "Keep it" choices — refer
+        // to the old photo set.
         warnings: [],
+        dismissedWarnings: [],
         reviewNote: null,
       };
+
+    case "serverRunCounted":
+      return { ...draft, extractionRuns: draft.extractionRuns + 1 };
+
+    case "runsExhausted":
+      // The server said 429 quota_runs: whatever we counted, there are none left.
+      return draft.extractionRuns >= MAX_RUNS_PER_ATTEMPT
+        ? draft
+        : { ...draft, extractionRuns: MAX_RUNS_PER_ATTEMPT };
 
     case "mergeAi":
       return mergeAi(draft, action.event);
@@ -398,7 +430,7 @@ export function canRunAgain(draft: ListingDraft) {
 }
 
 export interface Requirement {
-  key: "rate" | "condition" | "category" | "title" | "description" | "location";
+  key: "rate" | "condition" | "category" | "title" | "description" | "location" | "deposit";
   label: string;
 }
 
@@ -416,6 +448,14 @@ export function missingRequirements(draft: ListingDraft): Requirement[] {
   // A pin with no name would reach the server as an empty `location`.
   if (!f.location.value?.locality?.trim())
     missing.push({ key: "location", label: "pickup location" });
+  // The deposit is derived from the price, so it is only named once there is
+  // a price. After that an empty one means the owner cleared it: sending 0
+  // would list the item with no deposit at all, which nobody chose.
+  if (
+    parseRate(f.rate.value) !== null &&
+    !/^\d+(\.\d{1,2})?$/.test(f.security_deposit.value?.trim() ?? "")
+  )
+    missing.push({ key: "deposit", label: "deposit" });
   return missing;
 }
 

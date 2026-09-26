@@ -282,7 +282,8 @@ export type RootStackParamList = {
   ListReading: undefined;
   ListReview: { manual?: boolean } | undefined;
   ListPreview: undefined;
-  ListSubmitted: { productName: string };
+  // `coverUrl` is additive to §8.1: the draft is cleared before L-17 opens.
+  ListSubmitted: { productName: string; coverUrl?: string | null };
   OwnersProducts: { products: BackendProduct[]; name: string };
   [key: string]: object | undefined;
 };

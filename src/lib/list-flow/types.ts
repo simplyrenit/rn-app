@@ -189,7 +189,11 @@ export interface ExtractionJsonResponse {
   done: DoneEvent;
 }
 
-/** §4.6's pre-stream error codes, plus the client-side failure reasons. */
+/**
+ * §4.6's pre-stream error codes and the client-side failure reasons. The
+ * server may send codes this list does not know (in an `error` event or a
+ * 503 body); those are passed through as they are, for `extraction_failed`.
+ */
 export type ExtractionErrorCode =
   | "invalid_request"
   | "merchant_not_approved"
@@ -200,4 +204,5 @@ export type ExtractionErrorCode =
   | "network"
   | "server_error"
   | "unauthorized"
-  | "no_photos";
+  | "no_photos"
+  | (string & {});

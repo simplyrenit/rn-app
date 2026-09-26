@@ -8,7 +8,7 @@ import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { ScrollView, View } from "react-native";
 import Animated, { FadeIn, ZoomIn } from "react-native-reanimated";
 import { CheckIcon } from "react-native-heroicons/outline";
@@ -26,16 +26,12 @@ export default function ListSubmittedScreen() {
   const reduceMotion = useReduceMotion();
   const flow = useListDraft();
 
-  // Read the cover before the draft is cleared below.
-  const [cover] = useState(() => {
-    const d = flow.draft;
-    const photo = d ? d.photos[d.coverIndex] ?? d.photos[0] : undefined;
-    return photo?.remoteUrl ?? null;
-  });
+  const cover = route.params?.coverUrl ?? null;
 
-  // §8.6: the draft is cleared on arrival.
+  // §8.6: the draft is cleared on arrival. Preview already cleared it the
+  // moment the create call succeeded; this only covers any other way here.
   useEffect(() => {
-    flow.clearSubmitted();
+    if (flow.draft) flow.clearSubmitted();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
