@@ -1,4 +1,4 @@
-import { Text } from "@/components/core";
+import { Text, useReduceMotion } from "@/components/core";
 import { ChecklistRow } from "@/context/list-draft-context";
 import { categoryDisplayName } from "@/lib/category-icons";
 import { space } from "@/lib/design-tokens";
@@ -6,10 +6,10 @@ import { AI_FIELDS, AiFieldName, ListingDraft } from "@/lib/list-flow/types";
 import { useTheme } from "@/lib/theme";
 import React from "react";
 import { ActivityIndicator, View } from "react-native";
-import Animated from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut, ZoomIn } from "react-native-reanimated";
 import { CheckCircleIcon, MinusCircleIcon, SparklesIcon } from "react-native-heroicons/outline";
 import { CONDITION_LABEL, FIELD_LABEL } from "./copy";
-import { useRowMotion } from "./motion";
+import { EASE_OUT, MOTION, useRowMotion } from "./motion";
 
 type RowState = "pending" | "filled" | "blank" | "condition";
 
@@ -29,7 +29,17 @@ function valueText(field: AiFieldName, draft: ListingDraft): string | null {
 
 function Row({ field, state, draft, index }: { field: AiFieldName; state: RowState; draft: ListingDraft; index: number }) {
   const { color } = useTheme();
+  const reduceMotion = useReduceMotion();
   const motion = useRowMotion(index);
+  // The row stays mounted as its field resolves; only the icon and the text
+  // are keyed by state, so they cross-fade instead of swapping in one frame.
+  const iconIn = reduceMotion
+    ? FadeIn.duration(MOTION.exit)
+    : state === "pending"
+    ? FadeIn.duration(MOTION.enter)
+    : ZoomIn.duration(MOTION.enter).easing(EASE_OUT);
+  const textIn = FadeIn.duration(reduceMotion ? MOTION.exit : MOTION.enter);
+  const out = FadeOut.duration(MOTION.exit);
   const label = FIELD_LABEL[field];
   const value = valueText(field, draft);
 
@@ -65,10 +75,21 @@ function Row({ field, state, draft, index }: { field: AiFieldName; state: RowSta
       accessibilityLabel={state === "pending" ? `${label}, reading` : text}
       style={{ flexDirection: "row", alignItems: "center", gap: space.sm, minHeight: 36 }}
     >
-      <View style={{ width: 22, alignItems: "center" }}>{icon}</View>
-      <Text fontSize="text-md" tone={tone} numberOfLines={1} style={{ flex: 1 }}>
-        {text}
-      </Text>
+      <View style={{ width: 22, height: 22, alignItems: "center", justifyContent: "center" }}>
+        <Animated.View
+          key={state}
+          entering={iconIn}
+          exiting={out}
+          style={{ position: "absolute" }}
+        >
+          {icon}
+        </Animated.View>
+      </View>
+      <Animated.View key={text} entering={textIn} exiting={out} style={{ flex: 1 }}>
+        <Text fontSize="text-md" tone={tone} numberOfLines={1}>
+          {text}
+        </Text>
+      </Animated.View>
     </Animated.View>
   );
 }

@@ -3,6 +3,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { RETAKE_WARNINGS, warningHeadline } from "@/components/list-flow/copy";
 import { ExtractionChecklist } from "@/components/list-flow/extraction-checklist";
 import { FlowHeader } from "@/components/list-flow/flow-header";
+import { useAppear } from "@/components/list-flow/motion";
 import { pickPhotos } from "@/components/list-flow/pick-photos";
 import { FoundChip, ScanPanel } from "@/components/list-flow/scan-panel";
 import { useListDraft } from "@/context/list-draft-context";
@@ -17,6 +18,7 @@ import { useTypedNavigation } from "@/lib/types";
 import { StackActions } from "@react-navigation/native";
 import React, { useEffect, useMemo, useRef } from "react";
 import { ScrollView, View } from "react-native";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /** §8.3: after `done`, hold the finished checklist this long before Review. */
@@ -34,6 +36,7 @@ export default function ListReadingScreen() {
   const insets = useSafeAreaInsets();
   const flow = useListDraft();
   const { draft, run } = flow;
+  const appear = useAppear();
   const shown = useRef(new Set<string>());
   const left = useRef(false);
 
@@ -156,19 +159,24 @@ export default function ListReadingScreen() {
         }}
       >
         {unreadable ? (
-          <Text fontSize="text-xl" fontWeight="font-bold" accessibilityRole="header">
-            {warningHeadline(unreadable)}
-          </Text>
+          <Animated.View entering={appear.entering} exiting={appear.exiting}>
+            <Text fontSize="text-xl" fontWeight="font-bold" accessibilityRole="header">
+              {warningHeadline(unreadable)}
+            </Text>
+          </Animated.View>
         ) : null}
 
-        <ScanPanel
-          uri={cover ? cover.remoteUrl ?? cover.localUri : null}
-          scanning={reading}
-          chips={chips}
-          status={`Reading photo ${current} of ${total}`}
-        />
+        <Animated.View layout={appear.layout}>
+          <ScanPanel
+            uri={cover ? cover.remoteUrl ?? cover.localUri : null}
+            scanning={reading}
+            chips={chips}
+            status={`Reading photo ${current} of ${total}`}
+          />
+        </Animated.View>
 
-        <View
+        <Animated.View
+          layout={appear.layout}
           style={{
             padding: space.md,
             borderRadius: radius.group,
@@ -184,10 +192,14 @@ export default function ListReadingScreen() {
           <Text fontSize="text-sm" tone="dim">
             {pluralize(total, "photo")}
           </Text>
-        </View>
+        </Animated.View>
 
         {retakeWarning && !unreadable ? (
-          <View
+          <Animated.View
+            key={warningKey(retakeWarning)}
+            entering={appear.entering}
+            exiting={appear.exiting}
+            layout={appear.layout}
             style={{
               padding: space.md,
               borderRadius: radius.group,
@@ -215,10 +227,12 @@ export default function ListReadingScreen() {
                 Keep it
               </Button>
             </View>
-          </View>
+          </Animated.View>
         ) : null}
 
-        <ExtractionChecklist checklist={run.checklist} draft={draft} running={reading} />
+        <Animated.View layout={appear.layout}>
+          <ExtractionChecklist checklist={run.checklist} draft={draft} running={reading} />
+        </Animated.View>
       </ScrollView>
 
       <View
@@ -229,22 +243,30 @@ export default function ListReadingScreen() {
           gap: space.xs,
         }}
       >
-        {unreadable ? (
-          <>
-            {canRunAgain(draft) ? (
-              <Button onPress={onRetakeLabel} loading={reading && run.checklist.length === 0}>
-                Retake the label photo
+        {/* The actions cross-fade as the run moves from reading to done or
+            to the retake state, instead of swapping in one frame. */}
+        <Animated.View
+          key={unreadable ? "unreadable" : reading ? "reading" : "done"}
+          entering={appear.entering}
+          style={{ gap: space.xs }}
+        >
+          {unreadable ? (
+            <>
+              {canRunAgain(draft) ? (
+                <Button onPress={onRetakeLabel} loading={reading && run.checklist.length === 0}>
+                  Retake the label photo
+                </Button>
+              ) : null}
+              <Button variant="ghost" onPress={onTypeIt}>
+                Leave it blank — I'll type it
               </Button>
-            ) : null}
-            <Button variant="ghost" onPress={onTypeIt}>
-              Leave it blank — I'll type it
+            </>
+          ) : (
+            <Button variant="ghost" onPress={goToReview}>
+              {reading ? "Skip to review — we'll keep filling in" : "Go to review"}
             </Button>
-          </>
-        ) : (
-          <Button variant="ghost" onPress={goToReview}>
-            {reading ? "Skip to review — we'll keep filling in" : "Go to review"}
-          </Button>
-        )}
+          )}
+        </Animated.View>
       </View>
     </NonScrollableContainer>
   );

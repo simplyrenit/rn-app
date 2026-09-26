@@ -7,9 +7,10 @@ import { View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withDelay,
   withTiming,
 } from "react-native-reanimated";
+import { EASE_OUT } from "./motion";
 
 /** §8.1: Add photos, Reading, Review, Preview. */
 export const FLOW_STEPS = 4;
@@ -18,20 +19,30 @@ const SEGMENT_HEIGHT = 4;
 const SEGMENT_GAP = 4;
 const EDGE_INSET = 16;
 
-function Segment({ fill }: { fill: number }) {
+function fillFor(index: number, step: number) {
+  return index + 1 < step ? 1 : index + 1 === step ? 0.5 : 0;
+}
+
+function Segment({ fill, from }: { fill: number; from: number }) {
   const { color } = useTheme();
   const reduceMotion = useReduceMotion();
-  const progress = useSharedValue(fill);
+  // Every screen draws its own header, so a segment that started at `fill`
+  // made the bar jump between steps as the new screen slid in. It starts where
+  // the previous step left it and fills once the push has mostly landed.
+  const progress = useSharedValue(reduceMotion ? fill : from);
 
   useEffect(() => {
-    // §8.7: progress segments spring on change; Reduce Motion gets a short fade.
     progress.value = reduceMotion
       ? withTiming(fill, { duration: duration.fast })
-      : withSpring(fill, { damping: 14, stiffness: 180 });
+      : withDelay(180, withTiming(fill, { duration: 520, easing: EASE_OUT }));
   }, [fill, reduceMotion, progress]);
 
+  // A full-width fill slid in with a transform, not an animated width: width
+  // re-runs layout every frame, a translate stays on the UI thread.
   const fillStyle = useAnimatedStyle(() => ({
-    width: `${Math.max(0, Math.min(1, progress.value)) * 100}%`,
+    transform: [
+      { translateX: (Math.max(0, Math.min(1, progress.value)) - 1) * SEGMENT_WIDTH },
+    ],
   }));
 
   return (
@@ -44,7 +55,7 @@ function Segment({ fill }: { fill: number }) {
         backgroundColor: color.line,
       }}
     >
-      <Animated.View style={[{ height: "100%", backgroundColor: color.brand }, fillStyle]} />
+      <Animated.View style={[{ width: "100%", height: "100%", backgroundColor: color.brand }, fillStyle]} />
     </View>
   );
 }
@@ -96,7 +107,7 @@ export function FlowHeader({ step, title = "List an item", onBack, showBack = tr
         }}
       >
         {Array.from({ length: FLOW_STEPS }).map((_, index) => (
-          <Segment key={index} fill={index + 1 < step ? 1 : index + 1 === step ? 0.5 : 0} />
+          <Segment key={index} fill={fillFor(index, step)} from={fillFor(index, step - 1)} />
         ))}
       </View>
     </PinnedHeader>

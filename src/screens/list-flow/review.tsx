@@ -19,7 +19,7 @@ import {
   labelWithSource,
 } from "@/components/list-flow/copy";
 import { FlowHeader } from "@/components/list-flow/flow-header";
-import { AiValueFade, PulseOnce } from "@/components/list-flow/motion";
+import { AiValueFade, PulseOnce, useAppear } from "@/components/list-flow/motion";
 import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
@@ -57,6 +57,7 @@ import { Image } from "expo-image";
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import Animated from "react-native-reanimated";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { MapPinIcon, PlusIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -175,6 +176,7 @@ export default function ListReviewScreen() {
   const route = useRoute<RouteProps<"ListReview">>();
   const manual = Boolean(route.params?.manual);
   const { color } = useTheme();
+  const appear = useAppear();
   const insets = useSafeAreaInsets();
   const { categories } = useGlobalContext();
   const flow = useListDraft();
@@ -375,7 +377,11 @@ export default function ListReviewScreen() {
   };
 
   const categorySection = (
-    <View onLayout={onLayoutSection("category")} style={{ marginBottom: density.fieldGap }}>
+    <Animated.View
+      layout={appear.layout}
+      onLayout={onLayoutSection("category")}
+      style={{ marginBottom: density.fieldGap }}
+    >
       <FieldLabel label={labelWithSource("Category", f.category.source)} required />
       <AiValueFade value={f.category.value} active={f.category.source === "ai"}>
         <PickerRow
@@ -397,7 +403,7 @@ export default function ListReviewScreen() {
           Fill the rest for this category
         </Button>
       ) : null}
-    </View>
+    </Animated.View>
   );
 
   return (
@@ -488,29 +494,35 @@ export default function ListReviewScreen() {
               Think about what you'd pay to borrow it for a day.
             </Text>
             {rate !== null && deposit ? (
-              <Text fontSize="text-sm" tone="body" style={{ marginTop: 2 }}>
-                {draft.depositTouched
-                  ? `Deposit Rs ${formatNumber(deposit)} · `
-                  : `Deposit Rs ${formatNumber(deposit)} · ${formatNumber(rule.multiplier)} × your daily rate · `}
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-bold"
-                  tone="brand"
-                  accessibilityRole="button"
-                  onPress={() => {
-                    const y = sectionY.current.deposit;
-                    if (y !== undefined) scrollRef.current?.scrollToPosition(0, Math.max(0, y - space.md), true);
-                    depositRef.current?.focus();
-                  }}
-                >
-                  change
+              <Animated.View entering={appear.entering} exiting={appear.exiting}>
+                <Text fontSize="text-sm" tone="body" style={{ marginTop: 2 }}>
+                  {draft.depositTouched
+                    ? `Deposit Rs ${formatNumber(deposit)} · `
+                    : `Deposit Rs ${formatNumber(deposit)} · ${formatNumber(rule.multiplier)} × your daily rate · `}
+                  <Text
+                    fontSize="text-sm"
+                    fontWeight="font-bold"
+                    tone="brand"
+                    accessibilityRole="button"
+                    onPress={() => {
+                      const y = sectionY.current.deposit;
+                      if (y !== undefined) scrollRef.current?.scrollToPosition(0, Math.max(0, y - space.md), true);
+                      depositRef.current?.focus();
+                    }}
+                  >
+                    change
+                  </Text>
                 </Text>
-              </Text>
+              </Animated.View>
             ) : null}
           </View>
 
-          {/* Check 2 · condition */}
-          <View onLayout={onLayoutSection("condition")} style={{ marginBottom: density.fieldGap }}>
+          {/* Check 2 · condition — glides down as the deposit line appears. */}
+          <Animated.View
+            layout={appear.layout}
+            onLayout={onLayoutSection("condition")}
+            style={{ marginBottom: density.fieldGap }}
+          >
             <FieldLabel label="Check 2 · condition" required />
             <PulseOnce>
               <SegmentedChoice<Condition>
@@ -529,7 +541,7 @@ export default function ListReviewScreen() {
             <Text fontSize="text-xs" tone="body" style={{ marginTop: space.xs }}>
               Pick what's true — it protects you if there's ever a dispute.
             </Text>
-          </View>
+          </Animated.View>
 
           {categoryFirst ? null : categorySection}
 

@@ -5,6 +5,7 @@ import { useTheme } from "@/lib/theme";
 import { Image } from "expo-image";
 import React from "react";
 import { ActivityIndicator, TouchableOpacity, View } from "react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { ArrowPathIcon, PlusIcon } from "react-native-heroicons/outline";
 
 interface TileProps {
@@ -61,8 +62,14 @@ export function PhotoTile({ photo, index, size, isCover, warningTag, onLongPress
         transition={150}
       />
 
+      {/* The upload scrim, warning tag and cover badge fade rather than
+          blink, so a finished upload clears softly and "Cover" moves smoothly
+          when the owner picks another photo. */}
       {uploading || failed ? (
-        <View
+        <Animated.View
+          key={failed ? "failed" : "uploading"}
+          entering={FadeIn.duration(150)}
+          exiting={FadeOut.duration(260)}
           style={{
             position: "absolute",
             top: 0,
@@ -86,11 +93,13 @@ export function PhotoTile({ photo, index, size, isCover, warningTag, onLongPress
           ) : (
             <ActivityIndicator color={color.onPhoto} />
           )}
-        </View>
+        </Animated.View>
       ) : null}
 
       {warningTag ? (
-        <View
+        <Animated.View
+          entering={FadeIn.duration(220)}
+          exiting={FadeOut.duration(150)}
           style={{
             position: "absolute",
             top: 6,
@@ -111,11 +120,13 @@ export function PhotoTile({ photo, index, size, isCover, warningTag, onLongPress
               {warningTag}
             </Text>
           </View>
-        </View>
+        </Animated.View>
       ) : null}
 
       {isCover ? (
-        <View
+        <Animated.View
+          entering={FadeIn.duration(220)}
+          exiting={FadeOut.duration(150)}
           style={{
             position: "absolute",
             left: 6,
@@ -129,7 +140,7 @@ export function PhotoTile({ photo, index, size, isCover, warningTag, onLongPress
           <Text fontSize="text-xs" fontWeight="font-bold" tone="onPhoto">
             Cover
           </Text>
-        </View>
+        </Animated.View>
       ) : null}
     </TouchableOpacity>
   );

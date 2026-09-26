@@ -1,10 +1,61 @@
 import { MIN_TOUCH_TARGET, radius } from "@/lib/design-tokens";
 import { selectionFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
-import React from "react";
+import React, { useEffect } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { CheckCircleIcon } from "react-native-heroicons/solid";
+import Animated, {
+  Easing,
+  FadeOut,
+  ZoomIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { Text } from "./text";
+import { useReduceMotion } from "./use-press-feedback";
+
+const EASE_OUT = Easing.bezierFn(0.2, 0, 0, 1);
+
+/**
+ * The selected state, drawn over a fixed 1 pt border instead of by changing it.
+ * Switching the border from 1 to 2 pt and inserting a check into the row made
+ * the card reflow on every tap — the label shifted and could re-wrap
+ * ("Excell/ent") — so the brand border and wash now fade in on top.
+ */
+function SelectionLayer({ selected }: { selected: boolean }) {
+  const { color } = useTheme();
+  const reduceMotion = useReduceMotion();
+  const opacity = useSharedValue(selected ? 1 : 0);
+
+  useEffect(() => {
+    opacity.value = withTiming(selected ? 1 : 0, {
+      duration: reduceMotion ? 0 : selected ? 200 : 140,
+      easing: EASE_OUT,
+    });
+  }, [selected, reduceMotion, opacity]);
+
+  const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        {
+          position: "absolute",
+          top: -1,
+          left: -1,
+          right: -1,
+          bottom: -1,
+          borderRadius: radius.input,
+          borderWidth: 2,
+          borderColor: color.brand,
+          backgroundColor: color.brandWash,
+        },
+        style,
+      ]}
+    />
+  );
+}
 
 interface Option<T extends string> {
   value: T;
@@ -43,6 +94,7 @@ export function SegmentedChoice<T extends string>({
   suggestedLabel,
 }: Props<T>) {
   const { color } = useTheme();
+  const reduceMotion = useReduceMotion();
 
   return (
     <View
@@ -76,17 +128,32 @@ export function SegmentedChoice<T extends string>({
               paddingVertical: 10,
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
               borderRadius: radius.input,
               // Selected reads as selected: brand border, brand wash, and a
-              // filled check. Unselected is visibly a control, not an input.
-              borderWidth: selected || isSuggested ? 2 : 1,
-              borderStyle: isSuggested ? "dashed" : "solid",
-              borderColor: selected || isSuggested ? color.brand : color.inputLine,
-              backgroundColor: selected ? color.brandWash : color.surface,
+              // filled check (SelectionLayer). Unselected is visibly a
+              // control, not an input. The border itself never changes width.
+              borderWidth: 1,
+              borderColor: color.inputLine,
+              backgroundColor: color.surface,
             }}
           >
+            <SelectionLayer selected={selected} />
+            {isSuggested ? (
+              <View
+                pointerEvents="none"
+                style={{
+                  position: "absolute",
+                  top: -1,
+                  left: -1,
+                  right: -1,
+                  bottom: -1,
+                  borderRadius: radius.input,
+                  borderWidth: 2,
+                  borderStyle: "dashed",
+                  borderColor: color.brand,
+                }}
+              />
+            ) : null}
             <View style={{ flex: 1 }}>
               <Text
                 fontSize="text-md"
@@ -106,7 +173,15 @@ export function SegmentedChoice<T extends string>({
               ) : null}
             </View>
             {selected ? (
-              <CheckCircleIcon size={20} color={color.brand} />
+              // In the corner, out of the text's way, so it cannot squeeze the label.
+              <Animated.View
+                entering={reduceMotion ? undefined : ZoomIn.duration(220).easing(EASE_OUT)}
+                exiting={reduceMotion ? undefined : FadeOut.duration(120)}
+                pointerEvents="none"
+                style={{ position: "absolute", right: 8, bottom: 8 }}
+              >
+                <CheckCircleIcon size={18} color={color.brand} />
+              </Animated.View>
             ) : null}
           </TouchableOpacity>
         );

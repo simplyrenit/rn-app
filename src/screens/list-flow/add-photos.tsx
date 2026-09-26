@@ -2,6 +2,7 @@ import { Button, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { RETAKE_WARNINGS, WARNING_TAG, warningHeadline } from "@/components/list-flow/copy";
 import { FlowHeader } from "@/components/list-flow/flow-header";
+import { useAppear } from "@/components/list-flow/motion";
 import { pickPhotos } from "@/components/list-flow/pick-photos";
 import { AddPhotoTile, PhotoTile } from "@/components/list-flow/photo-tile";
 import { AddPhotoSheet, ResumeDraftSheet } from "@/components/list-flow/sheets";
@@ -21,6 +22,7 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
 import { Alert, ScrollView, useWindowDimensions, View } from "react-native";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const COLUMNS = 3;
@@ -39,6 +41,7 @@ export default function ListAddPhotosScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const flow = useListDraft();
+  const tileMotion = useAppear();
   const { draft, hydrated, resumable, run } = flow;
 
   const addSheet = useRef<BottomSheetModal>(null);
@@ -235,24 +238,34 @@ export default function ListAddPhotosScreen() {
             gap: GRID_GAP,
           }}
         >
+          {/* Tiles fade up as they arrive and fade out when removed, and the
+              rest glide into place instead of snapping. */}
           {photos.map((photo, index) => (
-            <PhotoTile
+            <Animated.View
               key={photo.id}
-              photo={photo}
-              index={index}
-              size={tileSize}
-              isCover={draft?.coverIndex === index}
-              warningTag={tagFor(index)}
-              onLongPress={() => onTileLongPress(photo.id, index)}
-              onRetry={() => flow.retryPhoto(photo.id)}
-            />
+              entering={tileMotion.entering}
+              exiting={tileMotion.exiting}
+              layout={tileMotion.layout}
+            >
+              <PhotoTile
+                photo={photo}
+                index={index}
+                size={tileSize}
+                isCover={draft?.coverIndex === index}
+                warningTag={tagFor(index)}
+                onLongPress={() => onTileLongPress(photo.id, index)}
+                onRetry={() => flow.retryPhoto(photo.id)}
+              />
+            </Animated.View>
           ))}
           {photos.length < MAX_PHOTOS ? (
-            <AddPhotoTile
-              size={tileSize}
-              label={photos.length ? "Add more · up to 5" : "Add a photo · up to 5"}
-              onPress={() => openAddSheet(null)}
-            />
+            <Animated.View key="add" layout={tileMotion.layout}>
+              <AddPhotoTile
+                size={tileSize}
+                label={photos.length ? "Add more · up to 5" : "Add a photo · up to 5"}
+                onPress={() => openAddSheet(null)}
+              />
+            </Animated.View>
           ) : null}
         </View>
 

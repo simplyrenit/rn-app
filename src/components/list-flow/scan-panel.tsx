@@ -9,13 +9,14 @@ import Animated, {
   Easing,
   FadeIn,
   FadeInLeft,
+  FadeOut,
   cancelAnimation,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import { FLOW_SPRING } from "./motion";
+import { EASE_OUT, FLOW_SPRING, MOTION, SMOOTH_LAYOUT, exitFade } from "./motion";
 
 const BAND_HEIGHT = 96;
 
@@ -29,13 +30,20 @@ export interface FoundChip {
 function Chip({ chip }: { chip: FoundChip }) {
   const { color } = useTheme();
   const reduceMotion = useReduceMotion();
-  // §8.7: chips spring in (damping 14, stiffness 180); Reduce Motion fades.
+  // §8.7: chips spring in on the flow spring, from 12 pt left rather than the
+  // preset's full-width slide; Reduce Motion fades. They also fade out, and the
+  // stack reflows smoothly, when a new run replaces them.
   const entering = reduceMotion
     ? FadeIn.duration(duration.fast)
-    : FadeInLeft.springify().damping(FLOW_SPRING.damping).stiffness(FLOW_SPRING.stiffness);
+    : FadeInLeft.springify()
+        .damping(FLOW_SPRING.damping)
+        .stiffness(FLOW_SPRING.stiffness)
+        .withInitialValues({ opacity: 0, transform: [{ translateX: -12 }] });
   return (
     <Animated.View
       entering={entering}
+      exiting={reduceMotion ? FadeOut.duration(duration.fast) : exitFade}
+      layout={reduceMotion ? undefined : SMOOTH_LAYOUT}
       style={{
         alignSelf: "flex-start",
         paddingHorizontal: 10,
@@ -81,15 +89,18 @@ export function ScanPanel({
 
   useEffect(() => {
     if (!scanning || reduceMotion || !height) {
+      // Let the beam dissolve where it is rather than blink out.
       cancelAnimation(sweep);
-      bandOpacity.value = withTiming(0, { duration: duration.fast });
+      bandOpacity.value = withTiming(0, { duration: 450, easing: EASE_OUT });
       return;
     }
-    bandOpacity.value = 1;
+    bandOpacity.value = withTiming(1, { duration: MOTION.enter, easing: EASE_OUT });
     sweep.value = 0;
-    // §8.7: 1400 ms, inOut(quad), repeating until `done`.
+    // Repeats until `done`. §8.7 had 1400 ms on inOut(quad); quad's harder
+    // ease made the beam visibly stall at each edge, so it is now a slightly
+    // slower pass on a sine curve.
     sweep.value = withRepeat(
-      withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.quad) }),
+      withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.sin) }),
       -1,
       false
     );
@@ -113,7 +124,12 @@ export function ScanPanel({
       }}
     >
       {uri ? (
-        <Image source={{ uri }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+        <Image
+          source={{ uri }}
+          style={{ width: "100%", height: "100%" }}
+          contentFit="cover"
+          transition={reduceMotion ? 0 : { duration: MOTION.enter, effect: "cross-dissolve" }}
+        />
       ) : null}
       <View
         pointerEvents="none"
