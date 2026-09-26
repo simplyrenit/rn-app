@@ -104,6 +104,14 @@ def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInRelea
  */
 def jscFlavor = 'org.webkit:android-jsc:+'
 
+// A local build keeps the literal default below. CI overrides it with the run
+// number (-PVERSION_CODE=…) so every distributed build is installable over the
+// last one — Android refuses an update with an equal or lower versionCode, and
+// the QA channel gets a build on every merge. Computed here, not inside
+// defaultConfig: that DSL closure's method resolution does not reach
+// Project.findProperty the way a plain script-scope closure does.
+def qaVersionCode = (findProperty('VERSION_CODE') ?: '3').toInteger()
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -115,7 +123,7 @@ android {
         applicationId 'com.renit.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
+        versionCode qaVersionCode
         versionName "1.0.2"
     }
     signingConfigs {

@@ -1,0 +1,138 @@
+# Build a QA-configured Renit Android APK and push it to Firebase App
+# Distribution's `qa-testers` group on every merge to main. Same trigger
+# pattern as testflight-qa.yml; that workflow stays iOS-only.
+#
+# QA ONLY. The backend host and app env are pinned in the `env:` block below.
+# A production build is a separate, deliberate workflow — do not point this
+# one at PROD.
+#
+# Required repository secrets (Settings > Secrets and variables > Actions):
+#   FIREBASE_SERVICE_ACCOUNT_JSON   a Firebase service account key (JSON),
+#     base64-encoded. Firebase console > Project settings > Service accounts
+#     > Generate new private key, on a service account with only the
+#     "Firebase App Distribution Admin" role (least privilege — it does not
+#     need Editor/Owner). Add testers or remove them in the Firebase console's
+#     App Distribution > Testers and Groups tab, in the `qa-testers` group;
+#     this workflow never lists individual emails, so it needs no edit when
+#     testers change.
+#   QA_GOOGLE_MAP_API_KEY   optional; the QA Google Maps key the JS side
+#     reads. Shared with testflight-qa.yml — reuse the same secret.
+#
+# Known gap, not fixed here: the QA signing keystore (android/app/
+# my-upload-key.keystore) and its password are committed to the repo, not
+# held as a secret — that predates this workflow and is unrelated to CI. It
+# is acceptable for a sideloaded QA channel (nothing here reaches the Play
+# Store) but would need a real secret-held key before any Play Store release.
+name: Android QA Distribution
+
+on:
+  push:
+    branches: [main]
+    # Nothing under these paths can change the Android binary or its JS
+    # bundle, so a merge that only touches them should not burn a build.
+    paths-ignore:
+      - "docs/**"
+      - "design/**"
+      - "functions/**"
+      - "ios/**"
+      - "plugins/**"
+      - ".claude/**"
+      - "**/*.md"
+  workflow_dispatch:
+
+concurrency:
+  group: android-qa-distribution
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  EXPO_PUBLIC_APP_ENV: QA
+  EXPO_PUBLIC_QA_API_HOST: qa-api.toratora.site
+  EXPO_PUBLIC_QA_GOOGLE_MAP_API_KEY: ${{ secrets.QA_GOOGLE_MAP_API_KEY }}
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # postinstall runs patch-package, so the patches in patches/ are applied.
+      - name: Install JS dependencies
+        run: npm ci
+
+      - uses: android-actions/setup-android@v3
+
+      # Matches ndkVersion / buildToolsVersion / compileSdk in
+      # android/build.gradle — keep these three in step with that file.
+      - name: Install the Android SDK components this project pins
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125"
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      # Testers are on physical phones, never an emulator, so armeabi-v7a and
+      # arm64-v8a cover them; skipping x86/x86_64 keeps the download smaller.
+      # The run number always increases, so it is always installable over
+      # whatever CI shipped last — see the comment on versionCode in
+      # android/app/build.gradle.
+      - name: Build the QA APK
+        working-directory: android
+        run: |
+          ./gradlew :app:assembleQa \
+            -PreactNativeArchitectures=armeabi-v7a,arm64-v8a \
+            -PVERSION_CODE="$GITHUB_RUN_NUMBER" \
+            --no-daemon
+
+      - name: Write the Firebase service account key
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          set -euo pipefail
+          [ -n "$FIREBASE_SERVICE_ACCOUNT_JSON" ] || { echo "::error::secret FIREBASE_SERVICE_ACCOUNT_JSON is not set"; exit 1; }
+          KEY_PATH="$RUNNER_TEMP/firebase-service-account.json"
+          echo "$FIREBASE_SERVICE_ACCOUNT_JSON" | base64 --decode > "$KEY_PATH"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$KEY_PATH" >> "$GITHUB_ENV"
+
+      - name: Distribute to the qa-testers group
+        run: |
+          npx --yes firebase-tools@15 appdistribution:distribute \
+            android/app/build/outputs/apk/qa/app-qa.apk \
+            --app 1:377005499010:android:d7cb68f50407281b258a9b \
+            --groups qa-testers \
+            --release-notes "$(git log -1 --format='%h %s')"
+
+      - name: Summary
+        run: |
+          {
+            echo "### Android QA distribution"
+            echo "- Build: \`$GITHUB_RUN_NUMBER\`"
+            echo "- Commit: \`${GITHUB_SHA::7}\`"
+            echo "- Backend: \`$EXPO_PUBLIC_QA_API_HOST\` (QA)"
+            echo "- Testers: the \`qa-testers\` Firebase App Distribution group"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Clean up the service account key
+        if: always()
+        run: rm -f "${GOOGLE_APPLICATION_CREDENTIALS:-}"
