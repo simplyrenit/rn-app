@@ -151,7 +151,12 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     if (!draft) return;
     const timer = setTimeout(() => {
-      if (!isDraftWorthResuming(draft)) return;
+      // Emptied back to nothing (every photo removed, every field cleared):
+      // there is nothing left to offer back, so do not keep an older copy.
+      if (!isDraftWorthResuming(draft)) {
+        void AsyncStorage.removeItem(DRAFT_STORAGE_KEY).catch(() => {});
+        return;
+      }
       AsyncStorage.setItem(DRAFT_STORAGE_KEY, serializeDraft(draft))
         .then(() => {
           if (!savedAttempts.current.has(draft.attemptId)) {

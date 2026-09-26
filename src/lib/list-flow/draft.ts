@@ -413,7 +413,9 @@ export function missingRequirements(draft: ListingDraft): Requirement[] {
   if (!f.title.value?.trim()) missing.push({ key: "title", label: "title" });
   if (!f.description.value?.trim())
     missing.push({ key: "description", label: "description" });
-  if (!f.location.value) missing.push({ key: "location", label: "pickup location" });
+  // A pin with no name would reach the server as an empty `location`.
+  if (!f.location.value?.locality?.trim())
+    missing.push({ key: "location", label: "pickup location" });
   return missing;
 }
 

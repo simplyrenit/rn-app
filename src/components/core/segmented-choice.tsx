@@ -17,6 +17,13 @@ interface Props<T extends string> {
   value: T | null;
   onChange: (value: T) => void;
   accessibilityLabel?: string;
+  /**
+   * An option someone else proposed — the listing flow's AI condition guess.
+   * Drawn with a dashed brand outline and a caption, and deliberately NOT
+   * selected: the owner still has to tap to confirm it.
+   */
+  suggested?: T | null;
+  suggestedLabel?: string;
 }
 
 /**
@@ -32,6 +39,8 @@ export function SegmentedChoice<T extends string>({
   value,
   onChange,
   accessibilityLabel,
+  suggested = null,
+  suggestedLabel,
 }: Props<T>) {
   const { color } = useTheme();
 
@@ -43,12 +52,17 @@ export function SegmentedChoice<T extends string>({
     >
       {options.map((option) => {
         const selected = value === option.value;
+        const isSuggested = !selected && suggested === option.value;
         return (
           <TouchableOpacity
             key={option.value}
             accessibilityRole="radio"
             accessibilityState={{ selected }}
-            accessibilityLabel={option.label}
+            accessibilityLabel={
+              isSuggested && suggestedLabel
+                ? `${option.label}, ${suggestedLabel}`
+                : option.label
+            }
             accessibilityHint={option.hint}
             activeOpacity={0.8}
             onPress={() => {
@@ -67,8 +81,9 @@ export function SegmentedChoice<T extends string>({
               borderRadius: radius.input,
               // Selected reads as selected: brand border, brand wash, and a
               // filled check. Unselected is visibly a control, not an input.
-              borderWidth: selected ? 2 : 1,
-              borderColor: selected ? color.brand : color.inputLine,
+              borderWidth: selected || isSuggested ? 2 : 1,
+              borderStyle: isSuggested ? "dashed" : "solid",
+              borderColor: selected || isSuggested ? color.brand : color.inputLine,
               backgroundColor: selected ? color.brandWash : color.surface,
             }}
           >
@@ -82,6 +97,11 @@ export function SegmentedChoice<T extends string>({
               {option.hint ? (
                 <Text fontSize="text-xs" tone="body">
                   {option.hint}
+                </Text>
+              ) : null}
+              {isSuggested && suggestedLabel ? (
+                <Text fontSize="text-xs" fontWeight="font-bold" tone="brand">
+                  {suggestedLabel}
                 </Text>
               ) : null}
             </View>
