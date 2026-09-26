@@ -38,7 +38,16 @@ export async function pickPhotos(source: PhotoSource, limit: number): Promise<Pi
       permissionDenied("Camera");
       return [];
     }
-    const result = await ImagePicker.launchCameraAsync({ allowsEditing: false, quality: 1 });
+    let result: ImagePicker.ImagePickerResult;
+    try {
+      result = await ImagePicker.launchCameraAsync({ allowsEditing: false, quality: 1 });
+    } catch {
+      // launchCameraAsync rejects when no camera is available (the iOS
+      // simulator; a camera held by another app). Unhandled, that made
+      // "Retake the label photo" do nothing at all — fall back to the library
+      // so the owner still has a way forward.
+      return pickPhotos("gallery", limit);
+    }
     if (result.canceled) return [];
     return (result.assets ?? []).slice(0, 1).map((asset) => ({
       uri: asset.uri,
