@@ -24,7 +24,6 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
 import { styled } from "nativewind";
 
-import { useProductContext } from "@/context/product-context";
 import { NearbyPlace } from "@/lib/types";
 import axios from "axios";
 import * as Location from "expo-location";

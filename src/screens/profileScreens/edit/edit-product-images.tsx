@@ -9,10 +9,8 @@ export default function EditProductImages() {
   const route = useRoute<RouteProps<"EditProductImages">>();
   const { images, name, coverImage } = route.params;
 
-  // Unlike the post flow, the edit flow doesn't write through `ProductContext`
-  // — it threads the selection to the next screen via route params instead,
-  // since it's editing one field of an already-published listing rather than
-  // walking the create wizard.
+  // The selection is threaded to the next screen via route params, since this
+  // edits one field of an already-published listing rather than a draft.
   const handleSubmit = (selected: ProductImage[]) => {
     navigation.navigate("EditCoverImage", {
       images: selected.map((img) => img.image),

@@ -135,8 +135,8 @@ const isNonNegativeAmount = (value: string) =>
 const digitsOnly = (value: string) => value.replace(/[^\d.]/g, "");
 
 /**
- * The product form shared by "Tell us about your product" (step 3 of the post
- * flow) and "Edit product details".
+ * The product form behind "Edit product details". Until ENG-10 it was shared
+ * with "Tell us about your product", step 3 of the old create wizard.
  *
  * These were two 800-line copies of one screen that had drifted 439 lines
  * apart: a fix for the iOS address format, a clearing branch on the location

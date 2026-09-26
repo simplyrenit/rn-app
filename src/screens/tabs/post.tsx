@@ -1,42 +1,21 @@
 import { Button, Text } from "@/components/core";
 import { useProfile } from "@/backend/profile";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import Skeleton from "@/components/core/skeleton";
-import { PostProductHeader } from "@/components/post/header";
-import { TaxonomyList } from "@/components/post/taxonomy-list";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { useGlobalContext } from "@/context/global-context";
-import { useProductContext } from "@/context/product-context";
-import { Category, useTypedNavigation } from "@/lib/types";
+import { useTypedNavigation } from "@/lib/types";
 import { useState } from "react";
-import { FlatList, useWindowDimensions, View } from "react-native";
-import { radius } from "@/lib/design-tokens";
+import { View } from "react-native";
 
 export default function Post() {
-  const { saveDetails } = useProductContext();
-  const { theme, categories, authTokens, isAuthenticated, userDetails } = useGlobalContext();
+  const { theme, authTokens, isAuthenticated, userDetails } = useGlobalContext();
   const { requestMerchantReview, loading: profileActionLoading } = useProfile();
   const navigation = useTypedNavigation();
   const isDarkMode = theme === "dark";
-  const { width: winW } = useWindowDimensions();
   const [requestReviewError, setRequestReviewError] = useState<string | null>(null);
   const merchantNeedsApproval =
     userDetails?.account_type === "merchant" &&
     userDetails?.merchant_approval_status !== "approved";
-
-  const onPress = (cat: Category) => {
-    const category = {
-      title: cat.title,
-      name: cat.title,
-      darkIcon: cat.dark_icon || "",
-      lightIcon: cat.light_icon || "",
-    };
-    saveDetails({ category });
-    navigation.navigate("PostSubCategories", {
-      category: cat.title,
-      subcategories: cat.subcategories,
-    });
-  };
 
   const handleRequestReviewAgain = async () => {
     try {
@@ -93,67 +72,15 @@ export default function Post() {
             </View>
           </View>
         ) : (
-          <View style={{ flex: 1 }}>
-            <View>
-              {
-                categories.length ?
-                  <PostProductHeader
-                    step={1}
-                    heading="Choose a category"
-                    showBackArrow={false}
-                  /> :
-                  <View className="mt-2 space-y-2 align-center" style={{ alignItems: 'center' }}>
-                    <Skeleton
-                      style={{
-                        width: winW * 0.30,
-                        borderRadius: radius.button,
-                        marginTop: 5,
-                        height: 10,
-                      }}
-                    />
-                    <Skeleton style={{
-                      width: winW * 0.05,
-                      borderRadius: radius.button,
-                      height: 4,
-                    }} />
-                  </View>
-              }
-            </View>
-
-            {categories.length ?
-
-              <TaxonomyList items={categories} onSelect={onPress} /> : <FlatList
-
-                data={Array.from({ length: 12 })}
-                renderItem={({ item, index }) => (
-                  <View className="p-6 flex-row space-x-4">
-                    <Skeleton style={{
-                      width: 16,
-                      borderRadius: radius.button,
-                      height: 10,
-                    }} />
-
-                    <Skeleton style={{
-                      flex: 1,
-                      borderRadius: radius.button,
-                      height: 10,
-                    }} />
-                    <View>
-                      <View style={{ height: 12 }} />
-                      <Skeleton style={{
-                        width: 16,
-                        borderRadius: radius.button,
-                        height: 6,
-                        marginLeft: 24,
-                        alignSelf: 'flex-end',
-                        marginTop: 8,
-                      }} />
-                    </View>
-
-                  </View>
-                )}
-              />
-            }
+          // Normally unreachable: the tab's `tabPress` listener in nav.tsx
+          // opens the listing flow instead of focusing this tab. A navigation
+          // straight to MainTabs › Post still lands here, so offer the way in
+          // rather than a blank tab — and do not auto-navigate, or Back from
+          // the flow would bounce straight back into it.
+          <View className="flex-1 px-gutter justify-center">
+            <Button onPress={() => navigation.navigate("ListAddPhotos")}>
+              List an item
+            </Button>
           </View>
         )
       ) : (

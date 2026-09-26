@@ -252,8 +252,6 @@ export type RootStackParamList = {
   };
   myProducts: undefined;
   editProduct: { id: string };
-  PostSubCategories: { category: string; subcategories?: Subcategory[] };
-  ChooseCoverImage: { images: string[] };
   unavailabilityForm: undefined;
   UnavailabilityFormInputs: {
     category: string;
@@ -279,7 +277,6 @@ export type RootStackParamList = {
   LocationModal: {
     requestId: string;
   };
-  HangTight: undefined;
   // The photo-first listing flow (ENG-10, IMPLEMENTATION.md §8.1).
   ListAddPhotos: { focusPhoto?: number } | undefined;
   ListReading: undefined;
