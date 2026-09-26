@@ -37,7 +37,9 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({
       name: "",
       brandName: "",
       modelName: "",
-      condition: "",
+      // "Not chosen yet". `Product.condition` now only admits the three API
+      // values; this context goes with the old create flow in ENG-10 WP5.
+      condition: "" as unknown as Product["condition"],
       productDescription: "",
       usageDescription: "",
       location: {

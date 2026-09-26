@@ -181,3 +181,12 @@ export const AVAILABILITY = SERVERURL + "availability/";
 export const WRITE_REVIEW = SERVERURL + "write-review/";
 
 export const GET_REFRESH_TOKEN = SERVERURL + "token/refresh/";
+
+// ENG-10 photo-first listing flow (IMPLEMENTATION.md §4.6, §5.4, §6).
+export const LISTING_EXTRACTION_STREAM = SERVERURL + "listing-extractions/stream/";
+
+export const LISTING_EXTRACTION = SERVERURL + "listing-extractions/";
+
+export const DEPOSIT_RULES = SERVERURL + "deposit-rules/";
+
+export const EVENTS = SERVERURL + "events/";

@@ -153,7 +153,8 @@ export interface Product {
   name: string;
   brandName: string;
   modelName: string;
-  condition: "Excellent" | "Good" | "Bad" | "";
+  /** The values the create/edit API accepts; the form always sends lower case. */
+  condition: "excellent" | "good" | "fair";
   productDescription: string;
   usageDescription: string;
   location: {
@@ -279,6 +280,12 @@ export type RootStackParamList = {
     requestId: string;
   };
   HangTight: undefined;
+  // The photo-first listing flow (ENG-10, IMPLEMENTATION.md §8.1).
+  ListAddPhotos: { focusPhoto?: number } | undefined;
+  ListReading: undefined;
+  ListReview: { manual?: boolean } | undefined;
+  ListPreview: undefined;
+  ListSubmitted: { productName: string };
   OwnersProducts: { products: BackendProduct[]; name: string };
   [key: string]: object | undefined;
 };
@@ -455,6 +462,8 @@ export interface BackendProduct {
   review_count?: number;
   images: string[];
   location: string;
+  /** Flat/building/landmark. Owner-facing endpoints only (ENG-10 §5.2). */
+  full_address?: string;
   cover_image: string;
   brand_name: string;
   model_name: string;
