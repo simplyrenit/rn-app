@@ -281,6 +281,53 @@ describe("photos", () => {
   });
 });
 
+describe("a run on a changed photo set", () => {
+  const firstRun = () =>
+    apply(
+      fresh(),
+      { type: "addPhoto", photo: photo("canon") },
+      { type: "runStarted" },
+      filled("brand_name", "Canon"),
+      filled("category", { parent: "Electronics", title: "Camera & Lens" }),
+      filled("title", "Canon DSLR"),
+      filled("condition", "good"),
+      { type: "editField", field: "title", value: "My Canon" }
+    );
+
+  it("drops the old photos' untouched AI values, keeps the owner's", () => {
+    const d = apply(
+      firstRun(),
+      { type: "removePhoto", id: "canon" },
+      { type: "addPhoto", photo: photo("ps5") },
+      { type: "runStarted" },
+      // The new run can't read a brand: the old photo's brand must not survive.
+      blank("brand_name")
+    );
+    expect(d.fields.brand_name).toMatchObject({ value: null, source: "empty" });
+    expect(d.fields.category).toMatchObject({ value: null, source: "empty" });
+    expect(d.fields.condition).toMatchObject({ value: null, source: "empty" });
+    expect(d.conditionProposal).toBeNull();
+    expect(d.fields.title).toMatchObject({ value: "My Canon", source: "ai_edited" });
+  });
+
+  it("keeps a confirmed condition", () => {
+    const d = apply(
+      firstRun(),
+      { type: "confirmCondition", value: "good" },
+      { type: "addPhoto", photo: photo("label") },
+      { type: "runStarted" }
+    );
+    expect(d.fields.condition).toMatchObject({ value: "good", source: "ai" });
+    expect(d.conditionProposal).toBe("good");
+  });
+
+  it("leaves values alone on a same-photo re-run (a category hint)", () => {
+    const d = apply(firstRun(), { type: "runStarted" }, blank("brand_name"));
+    expect(d.fields.brand_name).toMatchObject({ value: "Canon", source: "ai" });
+    expect(d.conditionProposal).toBe("good");
+  });
+});
+
 describe("run budget", () => {
   it("believes the server's quota_runs over the local count", () => {
     const d = apply(fresh(), { type: "serverRunCounted" }, { type: "runsExhausted" });

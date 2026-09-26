@@ -217,6 +217,32 @@ function mergeAi(draft: ListingDraft, event: FieldEvent): ListingDraft {
   };
 }
 
+/**
+ * Drop the untouched AI values when a run starts on a changed photo set.
+ *
+ * They describe photos that may no longer be in the listing, and because a
+ * blank never clears an earlier value (see `mergeAi`), a new run that can't
+ * read the brand would otherwise leave the old photo's brand standing, still
+ * marked "ai", on a different item. Anything the owner typed, edited or
+ * confirmed stays. Same-photo re-runs (a category hint) keep today's values.
+ */
+function withoutStaleAi(draft: ListingDraft): ListingDraft {
+  const fields = { ...draft.fields } as Record<FieldName, { value: unknown; source: FieldSource }>;
+  let changed = false;
+  for (const name of AI_FIELDS) {
+    if (name === "condition" && draft.conditionConfirmed) continue;
+    if (fields[name].source !== "ai") continue;
+    fields[name] = { value: null, source: "empty" };
+    changed = true;
+  }
+  if (!changed) return draft;
+  return {
+    ...draft,
+    fields: fields as unknown as DraftFields,
+    conditionProposal: draft.conditionConfirmed ? draft.conditionProposal : null,
+  };
+}
+
 function isBlankValue(value: unknown) {
   return value === null || value === undefined || (typeof value === "string" && value === "");
 }
@@ -328,7 +354,7 @@ export function draftReducer(
       // counting it would disable retries the server still allows. See
       // `serverRunCounted`.
       return {
-        ...draft,
+        ...(draft.photosChangedSinceRun ? withoutStaleAi(draft) : draft),
         photosChangedSinceRun: false,
         // Photo numbers in old warnings — and old "Keep it" choices — refer
         // to the old photo set.
