@@ -2,7 +2,7 @@ import { Text } from "@/components/core";
 import { FieldShell } from "@/components/core/field";
 import { usePressFeedback } from "@/components/core/use-press-feedback";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
-import { SCREEN_GUTTER, density, fontFamily, space } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, fontFamily, space } from "@/lib/design-tokens";
 import { searchTaxonomy } from "@/lib/taxonomy-search";
 import { useTheme } from "@/lib/theme";
 import { Subcategory } from "@/lib/types";
@@ -18,7 +18,7 @@ import {
 import { ChevronLeftIcon, MagnifyingGlassIcon } from "react-native-heroicons/outline";
 // The frames draw the row's chevron at the mini weight (20pt box, a 6×10pt
 // glyph); the outline one this used draws half as tall again.
-import { ChevronRightIcon } from "react-native-heroicons/mini";
+import { ChevronRightIcon, XCircleIcon } from "react-native-heroicons/mini";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgUri } from "react-native-svg";
 import { BottomSheetFlatList, BottomSheetTextInput } from "@gorhom/bottom-sheet";
@@ -34,8 +34,9 @@ import { BottomSheetFlatList, BottomSheetTextInput } from "@gorhom/bottom-sheet"
  * chevron on a row that pushes a screen.
  *
  * Row geometry follows the Figma frame (56pt minimum, an 8pt icon gap) rather
- * than the spacing scale; all four callers render from here, so it is one edit
- * if the design changes.
+ * than the spacing scale; every category picker renders from here — the
+ * listing flow's sheet, the edit flow, the request form and the search filter
+ * sheet — so it is one edit if the design changes.
  *
  * The parent level can also search every sub-category at once (ENG-29): v2 has
  * ~300 of them under 16 parents, too many to find by drilling in and guessing.
@@ -208,7 +209,8 @@ interface Props<T extends TaxonomyItem> {
   inBottomSheet?: boolean;
   /**
    * Set at the parent level to show the search field. Choosing a result must
-   * do exactly what drilling into `parent` and choosing `child` does; while it
+   * select what drilling into `parent` and choosing `child` selects — and never
+   * deselect, since a result row shows no current-selection mark; while it
    * saves, `busyTitle` is `taxonomyPathKey(parent.title, child.title)`.
    */
   onSearchSelect?: (parent: T, child: Subcategory) => void;
@@ -276,9 +278,21 @@ export function TaxonomyList<T extends TaxonomyItem>({
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="search"
-          clearButtonMode="while-editing"
           style={{ flex: 1, fontSize: 16, fontFamily: fontFamily.regular, color: color.text }}
         />
+        {/* Ours, not `clearButtonMode`: that one is iOS-only, and on Android
+            the only way back to the parent list was backspacing the query. */}
+        {query ? (
+          <TouchableOpacity
+            onPress={() => setQuery("")}
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+            // A 20pt glyph; the slop brings the target to the 44pt minimum.
+            hitSlop={(MIN_TOUCH_TARGET - ICON) / 2}
+          >
+            <XCircleIcon size={ICON} color={color.textBody} />
+          </TouchableOpacity>
+        ) : null}
       </FieldShell>
     </View>
   ) : null;

@@ -697,10 +697,12 @@ export default function SearchResults() {
                   inBottomSheet
                   items={categories}
                   onSelect={(item) => handleCategorySelect(item.title)}
-                  // Exactly the two taps it stands for: the parent, then the child.
+                  // The parent tap, then the child set outright. Not
+                  // `handleFilterSelect`: that toggles, and a result carries
+                  // no check mark to warn it would clear an existing pick.
                   onSearchSelect={(parent, child) => {
                     handleCategorySelect(parent.title);
-                    handleFilterSelect("subCategory", child.title);
+                    setFilters((prev) => ({ ...prev, subCategory: child.title }));
                   }}
                 />
               )}

@@ -10,7 +10,8 @@ import { View } from "react-native";
 
 /**
  * The parent half of the taxonomy, for a product that already exists. Choosing
- * here pushes the subcategory screen; nothing is saved until that one saves it.
+ * a parent pushes the subcategory screen, which saves; choosing a search result
+ * (already a sub-category) saves here, through the same PATCH.
  */
 export default function EditCategory() {
   const { categories } = useGlobalContext();
