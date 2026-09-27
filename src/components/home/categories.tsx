@@ -1,3 +1,4 @@
+import { useGlobalContext } from "@/context/global-context";
 import { CATEGORIES } from "@/lib/categories";
 import { categoryDisplayName } from "@/lib/category-icons";
 import { getDiscoveryLocationData } from "@/lib/location";
@@ -40,7 +41,6 @@ const PICTURE_ORIGIN: Record<string, { x: number; y: number }> = {
   Machines: { x: 6.92, y: 17 },
   Fashion: { x: 12.92, y: 8 },
   "Art & Craft": { x: 13.92, y: 9 },
-  "Real Estate": { x: 10.92, y: 21 },
   Appliances: { x: 13.94, y: 9.02 },
   Sports: { x: 13.12, y: 8.2 },
 };
@@ -58,11 +58,18 @@ const PICTURE_ORIGIN: Record<string, { x: number; y: number }> = {
  */
 export function Categories() {
   const navigation = useTypedNavigation();
+  const { categories } = useGlobalContext();
 
   const openCategory = async (category: CategoryItem) => {
+    // The tile's wording is the design's, not the server's ("Automobiles" vs
+    // "Automobiles & Mobility"), so search by the server title of the parent
+    // with the tile's slug. A loaded list without that slug is a server from
+    // before taxonomy v2: send the tile name, as before. No list at all (cold
+    // start, offline): send the slug, which search also matches (ENG-29).
+    const title = categories.find((c) => c.slug === category.slug)?.title;
     const locationData = await getDiscoveryLocationData();
     navigation.navigate("SearchResults", {
-      category: category.name,
+      category: title ?? (categories.length ? category.name : category.slug),
       address: locationData?.address ?? "",
       coords: locationData?.coordinates
         ? {
@@ -72,7 +79,7 @@ export function Categories() {
         : { lat: undefined, lng: undefined },
       range: { startDate: undefined, endDate: undefined },
       products: [],
-      selectedItem: category.name,
+      selectedItem: title ?? category.name,
     });
   };
 

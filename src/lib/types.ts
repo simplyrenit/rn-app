@@ -21,6 +21,8 @@ export interface PhoneVerificationResponse {
 
 export interface CategoryItem {
   name: string;
+  /** The taxonomy v2 parent slug this Home tile opens. */
+  slug: string;
   image: ImageSourcePropType;
 }
 

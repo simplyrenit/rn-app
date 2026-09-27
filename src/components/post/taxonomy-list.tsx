@@ -1,23 +1,27 @@
 import { Text } from "@/components/core";
+import { FieldShell } from "@/components/core/field";
 import { usePressFeedback } from "@/components/core/use-press-feedback";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
-import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, fontFamily, space } from "@/lib/design-tokens";
+import { indexTaxonomy, searchIndex } from "@/lib/taxonomy-search";
 import { useTheme } from "@/lib/theme";
+import { Subcategory } from "@/lib/types";
 import { Image } from "expo-image";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { ChevronLeftIcon } from "react-native-heroicons/outline";
+import { ChevronLeftIcon, MagnifyingGlassIcon } from "react-native-heroicons/outline";
 // The frames draw the row's chevron at the mini weight (20pt box, a 6×10pt
 // glyph); the outline one this used draws half as tall again.
-import { ChevronRightIcon } from "react-native-heroicons/mini";
+import { ChevronRightIcon, XCircleIcon } from "react-native-heroicons/mini";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SvgUri } from "react-native-svg";
-import { BottomSheetFlatList } from "@gorhom/bottom-sheet";
+import { BottomSheetFlatList, BottomSheetTextInput } from "@gorhom/bottom-sheet";
 
 /**
  * The taxonomy picker, in one place.
@@ -30,8 +34,13 @@ import { BottomSheetFlatList } from "@gorhom/bottom-sheet";
  * chevron on a row that pushes a screen.
  *
  * Row geometry follows the Figma frame (56pt minimum, an 8pt icon gap) rather
- * than the spacing scale; all four callers render from here, so it is one edit
- * if the design changes.
+ * than the spacing scale; every category picker renders from here — the
+ * listing flow's sheet, the edit flow, the request form and the search filter
+ * sheet — so it is one edit if the design changes.
+ *
+ * The parent level can also search every sub-category at once (ENG-29): v2 has
+ * well over a hundred of them under 16 parents, too many to find by drilling
+ * in and guessing.
  */
 
 /**
@@ -41,8 +50,18 @@ import { BottomSheetFlatList } from "@gorhom/bottom-sheet";
  */
 export interface TaxonomyItem {
   title: string;
+  slug?: string;
   dark_icon: string | null;
   light_icon: string | null;
+  subcategories?: Subcategory[];
+}
+
+/**
+ * A search result's identity, and what `busyTitle` names while it saves. The
+ * child title alone is not unique: every v2 parent has an "Other".
+ */
+export function taxonomyPathKey(parentTitle: string, childTitle: string) {
+  return `${parentTitle} › ${childTitle}`;
 }
 
 /**
@@ -77,6 +96,8 @@ interface RowProps<T extends TaxonomyItem> {
   /** Some row's selection is in flight, so no row may be tapped. */
   disabled: boolean;
   preferRemoteIcon: boolean;
+  /** Set for a search result, which reads "Parent › Child" by the parent's glyph. */
+  parent?: TaxonomyItem;
 }
 
 function TaxonomyRow<T extends TaxonomyItem>({
@@ -85,6 +106,7 @@ function TaxonomyRow<T extends TaxonomyItem>({
   busy,
   disabled,
   preferRemoteIcon,
+  parent,
 }: RowProps<T>) {
   const { color, isDark } = useTheme();
   const feedback = usePressFeedback({ disabled });
@@ -95,6 +117,8 @@ function TaxonomyRow<T extends TaxonomyItem>({
       : item.light_icon
     : null;
   const isSvg = remoteIcon?.slice(-3).toLowerCase() === "svg";
+  const name = categoryDisplayName(item.title, item.slug);
+  const parentName = parent ? categoryDisplayName(parent.title, parent.slug) : null;
 
   return (
     <TouchableOpacity
@@ -107,6 +131,8 @@ function TaxonomyRow<T extends TaxonomyItem>({
       activeOpacity={1}
       disabled={disabled}
       accessibilityRole="button"
+      // "›" is read out literally; say where the result lives instead.
+      accessibilityLabel={parentName ? `${name}, in ${parentName}` : undefined}
       accessibilityState={{ disabled, busy }}
       onPress={() => onSelect(item)}
     >
@@ -127,13 +153,18 @@ function TaxonomyRow<T extends TaxonomyItem>({
               />
             )
           ) : (
-            <CategoryIcon name={item.title} size={ICON} color={color.textBody} />
+            <CategoryIcon
+              name={(parent ?? item).title}
+              slug={(parent ?? item).slug}
+              size={ICON}
+              color={color.textBody}
+            />
           )}
         </View>
         {/* 16pt, not 18: the label measures 12pt cap on the frames, which is
             where the 56pt row height comes from (py-4 around a 24pt line). */}
         <Text fontSize="text-md" style={{ flex: 1 }}>
-          {categoryDisplayName(item.title)}
+          {parentName ? `${parentName} › ${name}` : name}
         </Text>
       </View>
 
@@ -177,6 +208,13 @@ interface Props<T extends TaxonomyItem> {
    * scrollable hands the gesture over properly. Screens leave this off.
    */
   inBottomSheet?: boolean;
+  /**
+   * Set at the parent level to show the search field. Choosing a result must
+   * select what drilling into `parent` and choosing `child` selects — and never
+   * deselect, since a result row shows no current-selection mark; while it
+   * saves, `busyTitle` is `taxonomyPathKey(parent.title, child.title)`.
+   */
+  onSearchSelect?: (parent: T, child: Subcategory) => void;
 }
 
 export function TaxonomyList<T extends TaxonomyItem>({
@@ -187,12 +225,30 @@ export function TaxonomyList<T extends TaxonomyItem>({
   busyTitle = null,
   preferRemoteIcon = true,
   inBottomSheet = false,
+  onSearchSelect,
 }: Props<T>) {
   const insets = useSafeAreaInsets();
   const { color } = useTheme();
+  const [query, setQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
 
-  // Same props either way; only the scrollable differs.
+  // Same props either way; only the scrollable differs. A plain TextInput in a
+  // sheet does not lift the sheet over the keyboard; the sheet's own one does.
   const List = (inBottomSheet ? BottomSheetFlatList : FlatList) as typeof FlatList;
+  const SearchInput = (inBottomSheet ? BottomSheetTextInput : TextInput) as typeof TextInput;
+
+  // Keyed on whether search is on, not on the callback: callers pass an inline
+  // arrow, and the index should only rebuild when the tree does.
+  const searchable = Boolean(onSearchSelect);
+  const index = useMemo(
+    () => (searchable ? indexTaxonomy<Subcategory, T>(items ?? [], categoryDisplayName) : []),
+    [searchable, items]
+  );
+  const searching = searchable && query.trim() !== "";
+  const results = useMemo(
+    () => (searching ? searchIndex(index, query) : []),
+    [searching, index, query]
+  );
 
   const contextRow = contextLabel ? (
     <View
@@ -215,8 +271,85 @@ export function TaxonomyList<T extends TaxonomyItem>({
     </View>
   ) : null;
 
+  const searchField = onSearchSelect ? (
+    <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.sm }}>
+      <FieldShell focused={searchFocused}>
+        <MagnifyingGlassIcon size={ICON} color={color.textBody} />
+        <SearchInput
+          value={query}
+          onChangeText={setQuery}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+          placeholder="Search all categories"
+          placeholderTextColor={color.placeholder}
+          accessibilityLabel="Search all categories"
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="search"
+          style={{ flex: 1, fontSize: 16, fontFamily: fontFamily.regular, color: color.text }}
+        />
+        {/* Ours, not `clearButtonMode`: that one is iOS-only, and on Android
+            the only way back to the parent list was backspacing the query. */}
+        {query ? (
+          <TouchableOpacity
+            onPress={() => setQuery("")}
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+            // A 20pt glyph; the slop brings the target to the 44pt minimum.
+            hitSlop={(MIN_TOUCH_TARGET - ICON) / 2}
+          >
+            <XCircleIcon size={ICON} color={color.textBody} />
+          </TouchableOpacity>
+        ) : null}
+      </FieldShell>
+    </View>
+  ) : null;
+
+  const listStyle = {
+    paddingHorizontal: SCREEN_GUTTER,
+    // Clear the floating bottom tab bar so the last row is fully visible
+    // and scrollable. iOS only: Android's tab bar does not overlap the
+    // list.
+    paddingBottom: insets.bottom,
+  };
+
+  if (searching) {
+    return (
+      <>
+        {searchField}
+        <List
+          data={results}
+          renderItem={({ item: { parent, child } }) => {
+            const key = taxonomyPathKey(parent.title, child.title);
+            return (
+              <TaxonomyRow
+                item={child}
+                parent={parent}
+                onSelect={() => onSearchSelect?.(parent, child)}
+                busy={busyTitle === key}
+                disabled={busyTitle !== null}
+                preferRemoteIcon={false}
+              />
+            );
+          }}
+          keyExtractor={({ parent, child }) => taxonomyPathKey(parent.title, child.title)}
+          ListEmptyComponent={
+            <Text tone="body" style={{ paddingVertical: space.md }} accessibilityLiveRegion="polite">
+              No category matches “{query.trim()}”.
+            </Text>
+          }
+          // A tap on a result must land while the keyboard is still up.
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={listStyle}
+          showsVerticalScrollIndicator={false}
+        />
+      </>
+    );
+  }
+
   return (
     <>
+      {searchField}
       {contextRow && onContextPress ? (
         <TouchableOpacity
           onPress={onContextPress}
@@ -241,13 +374,8 @@ export function TaxonomyList<T extends TaxonomyItem>({
           />
         )}
         keyExtractor={(item) => item.title}
-        contentContainerStyle={{
-          paddingHorizontal: SCREEN_GUTTER,
-          // Clear the floating bottom tab bar so the last row is fully visible
-          // and scrollable. iOS only: Android's tab bar does not overlap the
-          // list.
-          paddingBottom: insets.bottom,
-        }}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={listStyle}
         showsVerticalScrollIndicator={false}
       />
     </>
