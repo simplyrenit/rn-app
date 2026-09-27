@@ -345,6 +345,8 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const startedAt = Date.now();
       let firstFieldSeen = false;
       const runNumber = current.extractionRuns + 1;
+      // Read before `runStarted` resets it.
+      const photosChanged = current.photosChangedSinceRun;
 
       dispatch({ type: "runStarted" });
       setRun({
@@ -375,7 +377,7 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         },
         {
           onRun: (event) => setRun((r) => ({ ...r, runId: event.run_id })),
-          onServerRun: () => dispatch({ type: "serverRunCounted" }),
+          onServerRun: () => dispatch({ type: "serverRunCounted", clearStaleAi: photosChanged }),
           onField: (event) => {
             if (!(AI_FIELDS as readonly string[]).includes(event.field)) return;
             if (!firstFieldSeen) {

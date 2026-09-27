@@ -129,7 +129,11 @@ export type DraftAction =
   | { type: "removePhoto"; id: string }
   | { type: "setCover"; id: string }
   | { type: "runStarted" }
-  | { type: "serverRunCounted" }
+  | {
+      type: "serverRunCounted";
+      /** The run was started on a changed photo set: drop the old AI values now. */
+      clearStaleAi?: boolean;
+    }
   | { type: "runsExhausted" }
   | { type: "mergeAi"; event: FieldEvent }
   | { type: "addWarning"; warning: WarningEvent }
@@ -218,7 +222,8 @@ function mergeAi(draft: ListingDraft, event: FieldEvent): ListingDraft {
 }
 
 /**
- * Drop the untouched AI values when a run starts on a changed photo set.
+ * Drop the untouched AI values once the server accepts a run on a changed
+ * photo set.
  *
  * They describe photos that may no longer be in the listing, and because a
  * blank never clears an earlier value (see `mergeAi`), a new run that can't
@@ -235,11 +240,17 @@ function withoutStaleAi(draft: ListingDraft): ListingDraft {
     fields[name] = { value: null, source: "empty" };
     changed = true;
   }
-  if (!changed) return draft;
+  // The old photos' guess goes too, unless the owner confirmed exactly it —
+  // otherwise "AI's guess" would keep pointing at a condition read off photos
+  // that are gone.
+  const keepProposal =
+    draft.conditionConfirmed && draft.fields.condition.value === draft.conditionProposal;
+  const conditionProposal = keepProposal ? draft.conditionProposal : null;
+  if (!changed && conditionProposal === draft.conditionProposal) return draft;
   return {
     ...draft,
     fields: fields as unknown as DraftFields,
-    conditionProposal: draft.conditionConfirmed ? draft.conditionProposal : null,
+    conditionProposal,
   };
 }
 
@@ -354,7 +365,7 @@ export function draftReducer(
       // counting it would disable retries the server still allows. See
       // `serverRunCounted`.
       return {
-        ...(draft.photosChangedSinceRun ? withoutStaleAi(draft) : draft),
+        ...draft,
         photosChangedSinceRun: false,
         // Photo numbers in old warnings — and old "Keep it" choices — refer
         // to the old photo set.
@@ -363,8 +374,13 @@ export function draftReducer(
         reviewNote: null,
       };
 
-    case "serverRunCounted":
-      return { ...draft, extractionRuns: draft.extractionRuns + 1 };
+    case "serverRunCounted": {
+      // Stale AI values go only once the server has accepted the run. Clearing
+      // them at `runStarted` lost them for good when the request was then
+      // refused (offline, a pre-stream 503, 403, 429), with no re-run offered.
+      const next = action.clearStaleAi ? withoutStaleAi(draft) : draft;
+      return { ...next, extractionRuns: draft.extractionRuns + 1 };
+    }
 
     case "runsExhausted":
       // The server said 429 quota_runs: whatever we counted, there are none left.

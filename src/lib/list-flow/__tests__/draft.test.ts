@@ -287,6 +287,7 @@ describe("a run on a changed photo set", () => {
       fresh(),
       { type: "addPhoto", photo: photo("canon") },
       { type: "runStarted" },
+      { type: "serverRunCounted", clearStaleAi: true },
       filled("brand_name", "Canon"),
       filled("category", { parent: "Electronics", title: "Camera & Lens" }),
       filled("title", "Canon DSLR"),
@@ -294,12 +295,17 @@ describe("a run on a changed photo set", () => {
       { type: "editField", field: "title", value: "My Canon" }
     );
 
-  it("drops the old photos' untouched AI values, keeps the owner's", () => {
+  const accepted: DraftAction[] = [
+    { type: "runStarted" },
+    { type: "serverRunCounted", clearStaleAi: true },
+  ];
+
+  it("drops the old photos' untouched AI values once the server takes the run", () => {
     const d = apply(
       firstRun(),
       { type: "removePhoto", id: "canon" },
       { type: "addPhoto", photo: photo("ps5") },
-      { type: "runStarted" },
+      ...accepted,
       // The new run can't read a brand: the old photo's brand must not survive.
       blank("brand_name")
     );
@@ -310,19 +316,46 @@ describe("a run on a changed photo set", () => {
     expect(d.fields.title).toMatchObject({ value: "My Canon", source: "ai_edited" });
   });
 
-  it("keeps a confirmed condition", () => {
+  it("keeps them when the run is refused before the server creates it", () => {
+    // Offline, a pre-stream 503, 403 or 429: runStarted, then nothing.
+    const d = apply(
+      firstRun(),
+      { type: "addPhoto", photo: photo("label") },
+      { type: "runStarted" }
+    );
+    expect(d.fields.brand_name).toMatchObject({ value: "Canon", source: "ai" });
+    expect(d.conditionProposal).toBe("good");
+  });
+
+  it("keeps a confirmed condition and the guess it agreed with", () => {
     const d = apply(
       firstRun(),
       { type: "confirmCondition", value: "good" },
       { type: "addPhoto", photo: photo("label") },
-      { type: "runStarted" }
+      ...accepted
     );
     expect(d.fields.condition).toMatchObject({ value: "good", source: "ai" });
     expect(d.conditionProposal).toBe("good");
   });
 
+  it("drops an old guess the owner overruled", () => {
+    const d = apply(
+      firstRun(),
+      { type: "confirmCondition", value: "fair" },
+      { type: "addPhoto", photo: photo("label") },
+      ...accepted
+    );
+    expect(d.fields.condition).toMatchObject({ value: "fair", source: "ai_edited" });
+    expect(d.conditionProposal).toBeNull();
+  });
+
   it("leaves values alone on a same-photo re-run (a category hint)", () => {
-    const d = apply(firstRun(), { type: "runStarted" }, blank("brand_name"));
+    const d = apply(
+      firstRun(),
+      { type: "runStarted" },
+      { type: "serverRunCounted", clearStaleAi: false },
+      blank("brand_name")
+    );
     expect(d.fields.brand_name).toMatchObject({ value: "Canon", source: "ai" });
     expect(d.conditionProposal).toBe("good");
   });

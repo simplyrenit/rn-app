@@ -243,10 +243,11 @@ export default function ListReadingScreen() {
           gap: space.xs,
         }}
       >
-        {/* The actions cross-fade as the run moves from reading to done or
-            to the retake state, instead of swapping in one frame. */}
+        {/* The actions cross-fade into the retake state instead of swapping
+            in one frame. Keyed on that alone: remounting on every phase
+            change also dropped the screen reader's focus. */}
         <Animated.View
-          key={unreadable ? "unreadable" : reading ? "reading" : "done"}
+          key={unreadable ? "unreadable" : "default"}
           entering={appear.entering}
           style={{ gap: space.xs }}
         >
