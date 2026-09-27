@@ -3,7 +3,7 @@ import { FieldShell } from "@/components/core/field";
 import { usePressFeedback } from "@/components/core/use-press-feedback";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, fontFamily, space } from "@/lib/design-tokens";
-import { searchTaxonomy } from "@/lib/taxonomy-search";
+import { indexTaxonomy, searchIndex } from "@/lib/taxonomy-search";
 import { useTheme } from "@/lib/theme";
 import { Subcategory } from "@/lib/types";
 import { Image } from "expo-image";
@@ -39,7 +39,8 @@ import { BottomSheetFlatList, BottomSheetTextInput } from "@gorhom/bottom-sheet"
  * sheet — so it is one edit if the design changes.
  *
  * The parent level can also search every sub-category at once (ENG-29): v2 has
- * ~300 of them under 16 parents, too many to find by drilling in and guessing.
+ * well over a hundred of them under 16 parents, too many to find by drilling
+ * in and guessing.
  */
 
 /**
@@ -236,10 +237,17 @@ export function TaxonomyList<T extends TaxonomyItem>({
   const List = (inBottomSheet ? BottomSheetFlatList : FlatList) as typeof FlatList;
   const SearchInput = (inBottomSheet ? BottomSheetTextInput : TextInput) as typeof TextInput;
 
-  const searching = Boolean(onSearchSelect) && query.trim() !== "";
+  // Keyed on whether search is on, not on the callback: callers pass an inline
+  // arrow, and the index should only rebuild when the tree does.
+  const searchable = Boolean(onSearchSelect);
+  const index = useMemo(
+    () => (searchable ? indexTaxonomy<Subcategory, T>(items ?? [], categoryDisplayName) : []),
+    [searchable, items]
+  );
+  const searching = searchable && query.trim() !== "";
   const results = useMemo(
-    () => (searching ? searchTaxonomy<Subcategory, T>(items ?? [], query, categoryDisplayName) : []),
-    [searching, items, query]
+    () => (searching ? searchIndex(index, query) : []),
+    [searching, index, query]
   );
 
   const contextRow = contextLabel ? (

@@ -63,12 +63,13 @@ export function Categories() {
   const openCategory = async (category: CategoryItem) => {
     // The tile's wording is the design's, not the server's ("Automobiles" vs
     // "Automobiles & Mobility"), so search by the server title of the parent
-    // with the tile's slug. A server without slugs gets the tile name, as before.
-    const title =
-      categories.find((c) => c.slug === category.slug)?.title ?? category.name;
+    // with the tile's slug. A loaded list without that slug is a server from
+    // before taxonomy v2: send the tile name, as before. No list at all (cold
+    // start, offline): send the slug, which search also matches (ENG-29).
+    const title = categories.find((c) => c.slug === category.slug)?.title;
     const locationData = await getDiscoveryLocationData();
     navigation.navigate("SearchResults", {
-      category: title,
+      category: title ?? (categories.length ? category.name : category.slug),
       address: locationData?.address ?? "",
       coords: locationData?.coordinates
         ? {
@@ -78,7 +79,7 @@ export function Categories() {
         : { lat: undefined, lng: undefined },
       range: { startDate: undefined, endDate: undefined },
       products: [],
-      selectedItem: title,
+      selectedItem: title ?? category.name,
     });
   };
 
