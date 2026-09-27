@@ -218,10 +218,16 @@ describe("photos", () => {
     expect(d.photos).toHaveLength(5);
     expect(d.photosChangedSinceRun).toBe(true);
     d = apply(d, { type: "runStarted" });
-    expect(d.photosChangedSinceRun).toBe(false);
-    // Only a run the server actually created counts against the three.
+    // Settled only once the server takes the run, against what it was sent;
+    // and only a run the server actually created counts against the three.
+    expect(d.photosChangedSinceRun).toBe(true);
     expect(d.extractionRuns).toBe(0);
-    d = apply(d, { type: "serverRunCounted" }, { type: "serverRunCounted" });
+    d = apply(d, {
+      type: "serverRunCounted",
+      sentPhotoIds: d.photos.map((p) => p.id),
+    });
+    expect(d.photosChangedSinceRun).toBe(false);
+    d = apply(d, { type: "runStarted" }, { type: "serverRunCounted" });
     expect(d.extractionRuns).toBe(2);
   });
 
@@ -325,6 +331,20 @@ describe("a run on a changed photo set", () => {
     );
     expect(d.fields.brand_name).toMatchObject({ value: "Canon", source: "ai" });
     expect(d.conditionProposal).toBe("good");
+    // Nothing read the new photo, so Continue must still offer a run.
+    expect(d.photosChangedSinceRun).toBe(true);
+  });
+
+  it("leaves a photo that was still uploading marked unread", () => {
+    const d = apply(
+      firstRun(),
+      { type: "addPhoto", photo: photo("late", "uploading") },
+      { type: "runStarted" },
+      // The run was sent only the uploaded photo.
+      { type: "serverRunCounted", sentPhotoIds: ["canon"] },
+      { type: "updatePhoto", id: "late", patch: { status: "done", remoteUrl: "https://cdn.example.com/late.jpg" } }
+    );
+    expect(d.photosChangedSinceRun).toBe(true);
   });
 
   it("keeps a confirmed condition and the guess it agreed with", () => {
@@ -435,6 +455,23 @@ describe("persistence", () => {
     const restored = hydrateDraft(serializeDraft(d), NOW + 1000)!;
     expect(restored.photos.map((p) => p.id)).toEqual(["b", "c"]);
     expect(restored.photos[restored.coverIndex].id).toBe("c");
+  });
+
+  it("renumbers warnings and Keep-it choices past a dropped photo", () => {
+    const d = apply(
+      fresh(),
+      { type: "addPhoto", photo: photo("a") },
+      { type: "addPhoto", photo: photo("b", "uploading") },
+      { type: "addPhoto", photo: photo("c") },
+      { type: "addWarning", warning: { type: "stock_photo", photo: 3 } },
+      { type: "addWarning", warning: { type: "unreadable", photo: 2 } },
+      { type: "dismissWarning", warning: { type: "stock_photo", photo: 3 } }
+    );
+    const restored = hydrateDraft(serializeDraft(d), NOW + 1000)!;
+    expect(restored.photos.map((p) => p.id)).toEqual(["a", "c"]);
+    // C is photo 2 now; the warning about the dropped B is gone.
+    expect(restored.warnings).toEqual([{ type: "stock_photo", photo: 2, reason: undefined }]);
+    expect(restored.dismissedWarnings).toEqual(["stock_photo:2"]);
   });
 
   it("discards a draft older than 14 days", () => {

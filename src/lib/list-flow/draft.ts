@@ -133,6 +133,8 @@ export type DraftAction =
       type: "serverRunCounted";
       /** The run was started on a changed photo set: drop the old AI values now. */
       clearStaleAi?: boolean;
+      /** Ids of the photos the run was given; the rest are still unread. */
+      sentPhotoIds?: string[];
     }
   | { type: "runsExhausted" }
   | { type: "mergeAi"; event: FieldEvent }
@@ -364,9 +366,10 @@ export function draftReducer(
       // server creates a run (403, 429, a pre-stream 503) costs nothing, and
       // counting it would disable retries the server still allows. See
       // `serverRunCounted`.
+      // `photosChangedSinceRun` is settled in `serverRunCounted`: a run the
+      // server refuses has read nothing, so the photos are still unread.
       return {
         ...draft,
-        photosChangedSinceRun: false,
         // Photo numbers in old warnings — and old "Keep it" choices — refer
         // to the old photo set.
         warnings: [],
@@ -379,7 +382,14 @@ export function draftReducer(
       // them at `runStarted` lost them for good when the request was then
       // refused (offline, a pre-stream 503, 403, 429), with no re-run offered.
       const next = action.clearStaleAi ? withoutStaleAi(draft) : draft;
-      return { ...next, extractionRuns: draft.extractionRuns + 1 };
+      // The set is unchanged only if it is exactly what the run was sent: a
+      // photo still uploading when the run started, or added since, has not
+      // been read, so Continue must run again.
+      const sent = action.sentPhotoIds;
+      const photosChangedSinceRun = sent
+        ? draft.photos.length !== sent.length || draft.photos.some((p) => !sent.includes(p.id))
+        : false;
+      return { ...next, photosChangedSinceRun, extractionRuns: draft.extractionRuns + 1 };
     }
 
     case "runsExhausted":
@@ -516,10 +526,29 @@ export function stillNeededLabel(missing: Requirement[]) {
  * so only uploaded photos are kept (§7.2).
  */
 export function serializeDraft(draft: ListingDraft): string {
+  return JSON.stringify(withUploadedPhotosOnly(draft));
+}
+
+/**
+ * The draft with its not-yet-uploaded photos dropped, and the photo numbers in
+ * warnings and "Keep it" choices renumbered to match — kept as-is they would
+ * point at the wrong photo (or none) after a resume.
+ */
+function withUploadedPhotosOnly(draft: ListingDraft): ListingDraft {
+  const isUploaded = (p: PhotoItem) => p.status === "done" && Boolean(p.remoteUrl);
+  if (draft.photos.every(isUploaded)) return draft;
+  let warnings = draft.warnings;
+  let dismissedWarnings = draft.dismissedWarnings;
+  // Highest first, so each removal leaves the lower numbers untouched.
+  for (let n = draft.photos.length; n >= 1; n--) {
+    if (isUploaded(draft.photos[n - 1])) continue;
+    warnings = renumberWarningsAfterRemoval(warnings, n);
+    dismissedWarnings = renumberDismissedAfterRemoval(dismissedWarnings, n);
+  }
   const cover = draft.photos[draft.coverIndex];
-  const photos = draft.photos.filter((p) => p.status === "done" && p.remoteUrl);
+  const photos = draft.photos.filter(isUploaded);
   const coverIndex = cover ? Math.max(0, photos.indexOf(cover)) : 0;
-  return JSON.stringify({ ...draft, photos, coverIndex });
+  return { ...draft, photos, coverIndex, warnings, dismissedWarnings };
 }
 
 /** Parse a stored draft; null when it is missing, malformed or expired. */
@@ -532,15 +561,17 @@ export function hydrateDraft(raw: string | null, now: number): ListingDraft | nu
       return null;
     }
     const base = createDraft(parsed.attemptId, parsed.startedAt);
-    const photos = (parsed.photos ?? []).filter((p) => p.status === "done" && p.remoteUrl);
-    return {
+    const draft = withUploadedPhotosOnly({
       ...base,
       ...parsed,
       fields: { ...base.fields, ...parsed.fields },
-      photos,
-      coverIndex: Math.min(Math.max(0, parsed.coverIndex ?? 0), Math.max(0, photos.length - 1)),
+      photos: parsed.photos ?? [],
       dismissedWarnings: parsed.dismissedWarnings ?? [],
       warnings: parsed.warnings ?? [],
+    });
+    return {
+      ...draft,
+      coverIndex: Math.min(Math.max(0, draft.coverIndex ?? 0), Math.max(0, draft.photos.length - 1)),
     };
   } catch {
     return null;

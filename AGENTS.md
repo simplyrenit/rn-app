@@ -257,8 +257,11 @@ Path alias: `@/*` maps to `src/*` (configured in both `tsconfig.json` and
 ## Testing
 
 - Jest is configured with the `jest-expo` preset (`npm test` runs
-  `--watchAll`); there is currently no committed test suite, so verification
-  relies on type-checking, the native smoke script, and device QA.
+  `--watchAll`). Unit tests cover the listing flow's pure logic — draft merge
+  rules, deposit maths, create payload, events queue (`src/lib/list-flow/__tests__`)
+  and the extraction client (`src/backend/list-flow/__tests__`). Run them with
+  `npx jest --watchAll=false`; screens are verified by type-checking, the
+  native smoke script, and device QA.
 - QA method is documented in `docs/qa-e2e-strategy.md`; device QA runs
   against the QA backend only, with fixtures labelled `AGENT_QA_<run-id>`.
 - After any JS dependency bump that ships a native module, do a full native

@@ -345,8 +345,12 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const startedAt = Date.now();
       let firstFieldSeen = false;
       const runNumber = current.extractionRuns + 1;
-      // Read before `runStarted` resets it.
-      const photosChanged = current.photosChangedSinceRun;
+      // Stale AI values are cleared once per start, on the first run the
+      // server counts: the stream's `open` and a later JSON fallback both
+      // count, and a second clear would wipe fields the stream had already
+      // delivered for these photos.
+      let clearStaleAi = current.photosChangedSinceRun;
+      const sentPhotoIds = sent.map((p) => p.id);
 
       dispatch({ type: "runStarted" });
       setRun({
@@ -377,7 +381,10 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         },
         {
           onRun: (event) => setRun((r) => ({ ...r, runId: event.run_id })),
-          onServerRun: () => dispatch({ type: "serverRunCounted", clearStaleAi: photosChanged }),
+          onServerRun: () => {
+            dispatch({ type: "serverRunCounted", clearStaleAi, sentPhotoIds });
+            clearStaleAi = false;
+          },
           onField: (event) => {
             if (!(AI_FIELDS as readonly string[]).includes(event.field)) return;
             if (!firstFieldSeen) {
