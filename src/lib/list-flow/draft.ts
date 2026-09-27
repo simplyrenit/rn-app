@@ -256,6 +256,13 @@ function withoutStaleAi(draft: ListingDraft): ListingDraft {
   };
 }
 
+/** Same parent and title; `id` is ignored because only the picker supplies it. */
+function sameCategory(a: unknown, b: unknown) {
+  const x = a as CategoryValue | null;
+  const y = b as CategoryValue | null;
+  return Boolean(x && y && x.parent === y.parent && x.title === y.title);
+}
+
 function isBlankValue(value: unknown) {
   return value === null || value === undefined || (typeof value === "string" && value === "");
 }
@@ -268,6 +275,16 @@ function editField(
   const current = draft.fields[field] as { value: unknown; source: FieldSource };
   const nextValue = isBlankValue(value) ? null : value;
   if (JSON.stringify(current.value) === JSON.stringify(nextValue)) return draft;
+
+  // The AI proposes titles only; the sheet adds the id. Picking the category
+  // the AI proposed is a confirmation, not an edit: keep the source (so a
+  // changed-photos run still clears it) and just take the id.
+  if (field === "category" && sameCategory(current.value, nextValue)) {
+    return {
+      ...draft,
+      fields: { ...draft.fields, category: { ...draft.fields.category, value: nextValue as CategoryValue } },
+    };
+  }
 
   // Clearing keeps the edited source, so a later run cannot refill the field.
   const next = {
