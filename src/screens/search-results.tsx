@@ -11,7 +11,7 @@ import {
 } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { CategoryFilter } from "@/components/search/category-filter";
+import { TaxonomyList } from "@/components/post/taxonomy-list";
 import { ConditionFilter } from "@/components/search/condition-filter";
 import { PriceFilter } from "@/components/search/price-filter";
 import { RatingFilter } from "@/components/search/rating-filter";
@@ -691,13 +691,17 @@ export default function SearchResults() {
                 />
               )}
               {selectedTab === "Category" && !showSubCategory && (
-                <CategoryFilter
-                  selectedCategory={filters.category}
-                  onSelect={handleCategorySelect}
-                  closeSheet={closeSheet}
-                  categories={categories}
-                  isDark={isDark}
-                  isLoading={isLoading}
+                // The picker every other screen uses, so the search across
+                // sub-categories behaves the same here as there.
+                <TaxonomyList
+                  inBottomSheet
+                  items={categories}
+                  onSelect={(item) => handleCategorySelect(item.title)}
+                  // Exactly the two taps it stands for: the parent, then the child.
+                  onSearchSelect={(parent, child) => {
+                    handleCategorySelect(parent.title);
+                    handleFilterSelect("subCategory", child.title);
+                  }}
                 />
               )}
 

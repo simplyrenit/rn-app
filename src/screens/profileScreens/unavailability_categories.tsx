@@ -34,7 +34,18 @@ export default function UnavailabilityCategories() {
           </Text>
         </View>
 
-        <TaxonomyList items={categories} onSelect={onPress} preferRemoteIcon={false} />
+        <TaxonomyList
+          items={categories}
+          onSelect={onPress}
+          preferRemoteIcon={false}
+          // What choosing the row on the sub-category step does.
+          onSearchSelect={(cat, sub) =>
+            router.navigate("unavailabilityFormInputs", {
+              category: cat.title,
+              subcategory: sub.title,
+            })
+          }
+        />
       </View>
     </NonScrollableContainer>
   );

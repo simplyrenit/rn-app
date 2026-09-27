@@ -1,6 +1,7 @@
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { EditStepHeader } from "@/components/post/edit-step-header";
-import { TaxonomyList } from "@/components/post/taxonomy-list";
+import { TaxonomyList, taxonomyPathKey } from "@/components/post/taxonomy-list";
+import { useSaveSubcategory } from "./edit-sub-categories";
 import { useGlobalContext } from "@/context/global-context";
 import { Category, RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
@@ -17,6 +18,9 @@ export default function EditCategory() {
 
   const route = useRoute<RouteProps<"EditCategory">>();
   const { name } = route.params;
+  // A search result is a sub-category, so choosing one saves here rather than
+  // pushing the sub-category screen.
+  const { save, saving } = useSaveSubcategory(name);
 
   const onSelect = (cat: Category) => {
     navigation.navigate("EditSubCategories", {
@@ -38,6 +42,10 @@ export default function EditCategory() {
           // taxonomy carried photographs on Home and identical cubes in the
           // listing flow. One glyph family, everywhere.
           preferRemoteIcon={false}
+          onSearchSelect={(cat, sub) =>
+            save(cat.title, sub, taxonomyPathKey(cat.title, sub.title))
+          }
+          busyTitle={saving}
         />
       </View>
     </NonScrollableContainer>

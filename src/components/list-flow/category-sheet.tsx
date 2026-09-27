@@ -41,7 +41,7 @@ export const CategorySheet = forwardRef<
           <TaxonomyList
             inBottomSheet
             items={parent.subcategories}
-            contextLabel={categoryDisplayName(parent.title)}
+            contextLabel={categoryDisplayName(parent.title, parent.slug)}
             onContextPress={() => setParent(null)}
             onSelect={(child) => {
               onSelect({ id: child.id, parent: parent.title, title: child.title });
@@ -49,7 +49,14 @@ export const CategorySheet = forwardRef<
             }}
           />
         ) : (
-          <TaxonomyList inBottomSheet items={categories} onSelect={(item) => setParent(item)} />
+          <TaxonomyList
+            inBottomSheet
+            items={categories}
+            onSelect={(item) => setParent(item)}
+            onSearchSelect={(match, child) =>
+              onSelect({ id: child.id, parent: match.title, title: child.title })
+            }
+          />
         )}
       </View>
     </CustomBottomSheetModal>
