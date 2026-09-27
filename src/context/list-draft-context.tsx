@@ -1,7 +1,7 @@
 import { startExtraction as openExtraction, Transport } from "@/backend/list-flow/extraction";
 import { uploadPhoto } from "@/backend/list-flow/upload";
 import { useGlobalContext } from "@/context/global-context";
-import { EventName, track as trackEvent } from "@/lib/events";
+import { EventName, resetEvents, track as trackEvent } from "@/lib/events";
 import { parseDepositRule } from "@/lib/list-flow/deposit";
 import {
   DRAFT_STORAGE_KEY,
@@ -11,6 +11,7 @@ import {
   draftReducer,
   hydrateDraft,
   isDraftWorthResuming,
+  photosChangedSinceRun,
   serializeDraft,
   uploadedPhotos,
 } from "@/lib/list-flow/draft";
@@ -199,9 +200,12 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     void enqueueStorage(() => AsyncStorage.removeItem(DRAFT_STORAGE_KEY));
   }, [dispatch, enqueueStorage]);
 
-  // A draft belongs to whoever was signed in; the next account must not see it.
+  // A draft belongs to whoever was signed in; the next account must not see
+  // it, nor inherit its unsent funnel events.
   useEffect(() => {
-    if (isAuthenticated === false && (draftRef.current || stored)) forget();
+    if (isAuthenticated !== false) return;
+    resetEvents();
+    if (draftRef.current || stored) forget();
   }, [isAuthenticated, forget, stored]);
 
   // ---- Lifecycle ------------------------------------------------------------
@@ -349,7 +353,7 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // server counts: the stream's `open` and a later JSON fallback both
       // count, and a second clear would wipe fields the stream had already
       // delivered for these photos.
-      let clearStaleAi = current.photosChangedSinceRun;
+      let clearStaleAi = photosChangedSinceRun(current);
       const sentPhotoIds = sent.map((p) => p.id);
 
       dispatch({ type: "runStarted" });

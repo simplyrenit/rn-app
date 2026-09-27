@@ -91,19 +91,25 @@ export default function ListReadingScreen() {
   const chips = useMemo<FoundChip[]>(() => {
     if (!draft) return [];
     const f = draft.fields;
+    // Only what this run has delivered: until the server accepts a run on new
+    // photos, the draft still holds the old photos' AI values, and those must
+    // not appear as "found" on the new cover.
+    const found = new Set(
+      run.checklist.filter((row) => row.status === "filled").map((row) => row.field)
+    );
     const list: FoundChip[] = [];
     const add = (key: string, label: string | null | undefined) => {
       if (label && !list.some((c) => c.label.toLowerCase() === label.toLowerCase())) {
         list.push({ key, label });
       }
     };
-    if (f.brand_name.source === "ai") add("brand", f.brand_name.value);
-    if (f.model_name.source === "ai") add("model", f.model_name.value);
-    if (f.category.source === "ai" && f.category.value)
+    if (found.has("brand_name") && f.brand_name.source === "ai") add("brand", f.brand_name.value);
+    if (found.has("model_name") && f.model_name.source === "ai") add("model", f.model_name.value);
+    if (found.has("category") && f.category.source === "ai" && f.category.value)
       add("category", categoryDisplayName(f.category.value.title));
     if (unreadable) list.push({ key: "unreadable", label: "Label", dashed: true });
     return list.slice(0, 4);
-  }, [draft, unreadable]);
+  }, [draft, unreadable, run.checklist]);
 
   if (!draft) return <NonScrollableContainer>{null}</NonScrollableContainer>;
 

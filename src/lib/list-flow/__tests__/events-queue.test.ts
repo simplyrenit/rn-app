@@ -107,6 +107,21 @@ describe("event queue", () => {
     expect(sent[1][0].name).toBe("preview_opened");
   });
 
+  it("forgets queued and in-flight events on reset (sign-out)", async () => {
+    let rejectSend: (error: Error) => void = () => {};
+    const { queue } = setup(
+      () => new Promise<void>((_, reject) => (rejectSend = reject))
+    );
+    queue.track("preview_opened");
+    const flushing = queue.flush();
+    queue.track("price_entered");
+    queue.reset();
+    rejectSend(new Error("401"));
+    await flushing;
+    // Neither the waiting event nor the failed batch comes back.
+    expect(queue.size()).toBe(0);
+  });
+
   it("does nothing when there is nothing to send", async () => {
     const { queue, sent } = setup();
     await queue.flush();

@@ -73,6 +73,8 @@ export function createEventQueue({
   let queue: QueuedEvent[] = [];
   let timer: ReturnType<typeof setTimeout> | null = null;
   let inFlight: Promise<void> | null = null;
+  /** Bumped by `reset()`, so a batch that fails afterwards is not put back. */
+  let generation = 0;
 
   const clearTimer = () => {
     if (timer) clearTimeout(timer);
@@ -89,11 +91,15 @@ export function createEventQueue({
 
     const batch = queue.slice(0, maxBatch);
     queue = queue.slice(batch.length);
+    const sentIn = generation;
 
     inFlight = send(batch)
       .catch(() => {
         // Put the batch back in front for the next flush. Order matters less
-        // than not losing the funnel's last steps to a dropped connection.
+        // than not losing the funnel's last steps to a dropped connection —
+        // unless the queue was reset (sign-out) meanwhile: those events belong
+        // to the previous account and must not go out under the next one.
+        if (sentIn !== generation) return;
         queue = [...batch, ...queue].slice(-maxQueued);
       })
       .finally(() => {
@@ -129,9 +135,17 @@ export function createEventQueue({
     }
   };
 
+  /** Drop everything queued, and any batch still in flight if it fails. */
+  const reset = () => {
+    generation += 1;
+    queue = [];
+    clearTimer();
+  };
+
   return {
     track,
     flush,
+    reset,
     size: () => queue.length,
     dispose: clearTimer,
   };
@@ -187,4 +201,13 @@ export function track(
   } catch {
     // Analytics is a garnish; a failure here must not break the flow.
   }
+}
+
+/**
+ * Forget queued events on sign-out. They were recorded for the account that
+ * just left; posting them later with the next account's token would file them
+ * under that account.
+ */
+export function resetEvents() {
+  appQueue?.reset();
 }

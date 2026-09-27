@@ -12,6 +12,7 @@ import {
   MAX_PHOTOS,
   canRunAgain,
   draftDisplayTitle,
+  photosChangedSinceRun,
   uploadedPhotos,
   warningKey,
 } from "@/lib/list-flow/draft";
@@ -158,7 +159,7 @@ export default function ListAddPhotosScreen() {
     const { draft: current, run: currentRun } = flowRef.current;
     if (!current) return;
     const shouldRun =
-      current.extractionRuns === 0 || (current.photosChangedSinceRun && canRunAgain(current));
+      current.extractionRuns === 0 || (photosChangedSinceRun(current) && canRunAgain(current));
     if (shouldRun) {
       flowRef.current.startExtraction();
       navigation.navigate("ListReading");

@@ -7,6 +7,7 @@ import {
   draftReducer,
   hydrateDraft,
   missingRequirements,
+  photosChangedSinceRun,
   serializeDraft,
   stillNeededLabel,
 } from "../draft";
@@ -216,17 +217,17 @@ describe("photos", () => {
     let d = fresh();
     for (let i = 0; i < 7; i++) d = apply(d, { type: "addPhoto", photo: photo(`p${i}`) });
     expect(d.photos).toHaveLength(5);
-    expect(d.photosChangedSinceRun).toBe(true);
+    expect(photosChangedSinceRun(d)).toBe(true);
     d = apply(d, { type: "runStarted" });
     // Settled only once the server takes the run, against what it was sent;
     // and only a run the server actually created counts against the three.
-    expect(d.photosChangedSinceRun).toBe(true);
+    expect(photosChangedSinceRun(d)).toBe(true);
     expect(d.extractionRuns).toBe(0);
     d = apply(d, {
       type: "serverRunCounted",
       sentPhotoIds: d.photos.map((p) => p.id),
     });
-    expect(d.photosChangedSinceRun).toBe(false);
+    expect(photosChangedSinceRun(d)).toBe(false);
     d = apply(d, { type: "runStarted" }, { type: "serverRunCounted" });
     expect(d.extractionRuns).toBe(2);
   });
@@ -332,7 +333,7 @@ describe("a run on a changed photo set", () => {
     expect(d.fields.brand_name).toMatchObject({ value: "Canon", source: "ai" });
     expect(d.conditionProposal).toBe("good");
     // Nothing read the new photo, so Continue must still offer a run.
-    expect(d.photosChangedSinceRun).toBe(true);
+    expect(photosChangedSinceRun(d)).toBe(true);
   });
 
   it("leaves a photo that was still uploading marked unread", () => {
@@ -344,7 +345,25 @@ describe("a run on a changed photo set", () => {
       { type: "serverRunCounted", sentPhotoIds: ["canon"] },
       { type: "updatePhoto", id: "late", patch: { status: "done", remoteUrl: "https://cdn.example.com/late.jpg" } }
     );
-    expect(d.photosChangedSinceRun).toBe(true);
+    expect(photosChangedSinceRun(d)).toBe(true);
+  });
+
+  it("does not count a photo whose upload failed as a change", () => {
+    let d = apply(
+      firstRun(),
+      { type: "addPhoto", photo: photo("broken", "failed") },
+      { type: "runStarted" },
+      { type: "serverRunCounted", sentPhotoIds: ["canon"] }
+    );
+    // Continue would send the same photo again: no new run.
+    expect(photosChangedSinceRun(d)).toBe(false);
+    // Once a retry succeeds it is new to the model.
+    d = apply(d, {
+      type: "updatePhoto",
+      id: "broken",
+      patch: { status: "done", remoteUrl: "https://cdn.example.com/broken.jpg" },
+    });
+    expect(photosChangedSinceRun(d)).toBe(true);
   });
 
   it("keeps a confirmed condition and the guess it agreed with", () => {

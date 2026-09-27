@@ -128,7 +128,12 @@ export interface ListingDraft {
   /** Warnings the owner chose to keep ("Keep it"); not shown again. */
   dismissedWarnings: string[];
   extractionRuns: number;
-  photosChangedSinceRun: boolean;
+  /**
+   * The photos the last run the server accepted was sent; null before any.
+   * Whether the photos changed since is derived from this against the
+   * uploaded photos (`photosChangedSinceRun` in draft.ts), never stored.
+   */
+  lastRunPhotoIds: string[] | null;
   /**
    * Why Review opened without AI help, when it did. Persisted so a resumed
    * draft still explains its blanks.

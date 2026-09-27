@@ -56,7 +56,7 @@ export function createDraft(attemptId: string, now: number): ListingDraft {
     warnings: [],
     dismissedWarnings: [],
     extractionRuns: 0,
-    photosChangedSinceRun: false,
+    lastRunPhotoIds: null,
     reviewNote: null,
   };
 }
@@ -315,7 +315,6 @@ export function draftReducer(
       return {
         ...draft,
         photos: [...draft.photos, action.photo],
-        photosChangedSinceRun: true,
       };
 
     case "updatePhoto":
@@ -335,7 +334,6 @@ export function draftReducer(
         warnings: draft.warnings.filter((w) => w.photo !== photoNumber),
         // A "Keep it" was about the old photo in this slot, not the new one.
         dismissedWarnings: draft.dismissedWarnings.filter((k) => keyPhoto(k) !== photoNumber),
-        photosChangedSinceRun: true,
       };
     }
 
@@ -352,7 +350,6 @@ export function draftReducer(
         coverIndex: Math.max(0, Math.min(coverIndex, photos.length - 1)),
         warnings: renumberWarningsAfterRemoval(draft.warnings, index + 1),
         dismissedWarnings: renumberDismissedAfterRemoval(draft.dismissedWarnings, index + 1),
-        photosChangedSinceRun: true,
       };
     }
 
@@ -366,8 +363,8 @@ export function draftReducer(
       // server creates a run (403, 429, a pre-stream 503) costs nothing, and
       // counting it would disable retries the server still allows. See
       // `serverRunCounted`.
-      // `photosChangedSinceRun` is settled in `serverRunCounted`: a run the
-      // server refuses has read nothing, so the photos are still unread.
+      // `lastRunPhotoIds` moves only in `serverRunCounted`: a run the server
+      // refuses has read nothing, so the photos are still unread.
       return {
         ...draft,
         // Photo numbers in old warnings — and old "Keep it" choices — refer
@@ -382,14 +379,11 @@ export function draftReducer(
       // them at `runStarted` lost them for good when the request was then
       // refused (offline, a pre-stream 503, 403, 429), with no re-run offered.
       const next = action.clearStaleAi ? withoutStaleAi(draft) : draft;
-      // The set is unchanged only if it is exactly what the run was sent: a
-      // photo still uploading when the run started, or added since, has not
-      // been read, so Continue must run again.
-      const sent = action.sentPhotoIds;
-      const photosChangedSinceRun = sent
-        ? draft.photos.length !== sent.length || draft.photos.some((p) => !sent.includes(p.id))
-        : false;
-      return { ...next, photosChangedSinceRun, extractionRuns: draft.extractionRuns + 1 };
+      return {
+        ...next,
+        lastRunPhotoIds: action.sentPhotoIds ?? draft.lastRunPhotoIds,
+        extractionRuns: draft.extractionRuns + 1,
+      };
     }
 
     case "runsExhausted":
@@ -468,6 +462,20 @@ export function draftReducer(
 
 export function uploadedPhotos(draft: ListingDraft) {
   return draft.photos.filter((p) => p.status === "done" && p.remoteUrl);
+}
+
+/**
+ * Whether the photos a run would be sent now differ from what the last
+ * accepted run read. Compared against the uploaded photos only: a photo still
+ * uploading when a run started counts once it lands, and one whose upload
+ * failed counts only after a retry succeeds — a failed tile alone never makes
+ * Continue spend another run on the same photos.
+ */
+export function photosChangedSinceRun(draft: ListingDraft) {
+  const last = draft.lastRunPhotoIds;
+  if (last === null) return true;
+  const now = uploadedPhotos(draft).map((p) => p.id);
+  return now.length !== last.length || now.some((id) => !last.includes(id));
 }
 
 /** Fields the model filled and nobody has changed — the L-14 "prefilled_count". */
