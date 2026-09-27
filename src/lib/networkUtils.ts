@@ -143,6 +143,71 @@ const axiosInstance = axios.create({
   },
 });
 
+/**
+ * Trade the stored refresh token for a new access token and install it, the
+ * same way the 401 interceptor below always has. Shared so a transport that
+ * cannot go through Axios (the listing flow's SSE stream) refreshes the same
+ * way instead of growing its own copy. Throws when there is no refresh token
+ * or the server refuses it; the caller decides what that means.
+ */
+export const refreshAccessToken = async (): Promise<string> => {
+  const tokens = await getAuthTokens();
+  if (!tokens?.refresh_token) {
+    throw new Error("No refresh token stored");
+  }
+
+  const response = await axios.post(GET_REFRESH_TOKEN, {
+    refresh: tokens.refresh_token,
+  });
+  const access = response.data.access as string;
+
+  await setAuthTokens({
+    access_token: access,
+    refresh_token: tokens.refresh_token,
+  });
+  axiosInstance.defaults.headers.Authorization = `Bearer ${access}`;
+  return access;
+};
+
+/** Seconds until a JWT's `exp`, or null when the token cannot be read. */
+const secondsUntilExpiry = (jwt: string): number | null => {
+  try {
+    const payload = jwt.split(".")[1];
+    if (!payload) return null;
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+    const decoded = JSON.parse(globalThis.atob(padded)) as { exp?: number };
+    return typeof decoded.exp === "number" ? decoded.exp - Date.now() / 1000 : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * An access token with at least `minValiditySeconds` left, refreshing first if
+ * needed. For requests that bypass the interceptor — react-native-sse speaks
+ * XHR directly — and so would otherwise open with a token that expires mid-way
+ * and never be retried. Resolves null when signed out.
+ */
+export const ensureFreshAccessToken = async (
+  minValiditySeconds = 60
+): Promise<string | null> => {
+  const tokens = await getAuthTokens();
+  if (!tokens?.access_token) return null;
+
+  const remaining = secondsUntilExpiry(tokens.access_token);
+  if (remaining !== null && remaining > minValiditySeconds) {
+    return tokens.access_token;
+  }
+
+  try {
+    return await refreshAccessToken();
+  } catch {
+    // Let the request go out with what we have; its own 401 handling decides.
+    return tokens.access_token;
+  }
+};
+
 axiosInstance.interceptors.request.use(
   (config) => {
     const networkConfig = config as NetworkRequestConfig;
@@ -207,25 +272,15 @@ axiosInstance.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        const response = await axios.post(GET_REFRESH_TOKEN, {
-          refresh: tokens.refresh_token,
-        });
-
-        const newTokens = response.data;
-
-        await setAuthTokens({
-          access_token: newTokens.access,
-          refresh_token: tokens.refresh_token,
-        });
+        const access = await refreshAccessToken();
 
         console.log(`${NETWORK_LOG_PREFIX} token refresh succeeded`, {
           requestId: originalRequest?.metadata?.requestId,
         });
 
         if (originalRequest?.headers) {
-          originalRequest.headers.Authorization = `Bearer ${newTokens.access}`;
+          originalRequest.headers.Authorization = `Bearer ${access}`;
         }
-        axiosInstance.defaults.headers.Authorization = `Bearer ${newTokens.access}`;
         if (originalRequest) {
           originalRequest._retry = true;
           return axiosInstance(originalRequest);

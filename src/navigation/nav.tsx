@@ -63,12 +63,6 @@ import { useTheme } from "@/lib/theme";
 import { selectionFeedback } from "@/lib/haptics";
 import { useUnreadCount } from "@/backend/chat";
 
-import PostSubCategories from "@/screens/post-screens/post-sub-categories";
-import AboutProduct from "@/screens/post-screens/about-product";
-import ProductImages from "@/screens/post-screens/product-images";
-import ChooseCoverImage from "@/screens/post-screens/choose-cover-image";
-import ProductAvailability from "@/screens/post-screens/product-availability";
-import ReviewProduct from "@/screens/post-screens/review-product";
 import UnavailabilityFormScreen from "@/screens/profileScreens/unavailability_form";
 import UnavailabilityCategories from "@/screens/profileScreens/unavailability_categories";
 import UnavailabilityFormInputs from "@/screens/profileScreens/unavailability_form_inputs";
@@ -81,8 +75,12 @@ import EditCoverImage from "@/screens/profileScreens/edit/edit-cover-image";
 import ReportAProblemScreen from "@/screens/profileScreens/report-a-problem";
 import NetworkDiagnosticsScreen from "@/screens/profileScreens/network-diagnostics";
 import OwnersReviewScreen from "@/screens/users/owners-review";
-import HangTight from "@/screens/post-screens/hang-tight";
 import LocationModal from "@/screens/post-screens/location-modal";
+import ListAddPhotosScreen from "@/screens/list-flow/add-photos";
+import ListReadingScreen from "@/screens/list-flow/reading";
+import ListReviewScreen from "@/screens/list-flow/review";
+import ListPreviewScreen from "@/screens/list-flow/preview";
+import ListSubmittedScreen from "@/screens/list-flow/submitted";
 import OwnersProductsScreen from "@/screens/users/owners-products";
 import UnavailabilitySubCatScreen from "@/screens/profileScreens/unavailability_subCat";
 
@@ -90,45 +88,6 @@ const Tab = createBottomTabNavigator();
 const PostStack = createNativeStackNavigator();
 const HomeStack = createNativeStackNavigator();
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
-
-function PostStackScreen() {
-  return (
-    <PostStack.Navigator screenOptions={{ headerShown: false }}>
-      <PostStack.Screen
-        name="Post"
-        component={PostScreen}
-      />
-      <PostStack.Screen
-        name="PostSubCategories"
-        component={PostSubCategories}
-      />
-      <PostStack.Screen
-        name="AboutProduct"
-        component={AboutProduct}
-      />
-      <PostStack.Screen
-        name="ProductImages"
-        component={ProductImages}
-      />
-      <PostStack.Screen
-        name="ChooseCoverImage"
-        component={ChooseCoverImage}
-      />
-      <PostStack.Screen
-        name="ProductAvailability"
-        component={ProductAvailability}
-      />
-      <PostStack.Screen
-        name="ReviewProduct"
-        component={ReviewProduct}
-      />
-      <PostStack.Screen
-        name="HangTight"
-        component={HangTight}
-      />
-    </PostStack.Navigator>
-  );
-}
 
 function ProfileStackScreen() {
   return (
@@ -251,6 +210,14 @@ function MainTabs() {
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { unreadCount } = useUnreadCount();
+  const { authTokens, isAuthenticated, userDetails } = useGlobalContext();
+  // The same two gates the Post tab renders (sign-in, merchant approval).
+  const canStartListing =
+    Boolean(authTokens && isAuthenticated) &&
+    !(
+      userDetails?.account_type === "merchant" &&
+      userDetails?.merchant_approval_status !== "approved"
+    );
   const fontScale = PixelRatio.getFontScale();
   const showTabLabels = fontScale <= TAB_LABEL_SCALE_LIMIT;
 
@@ -358,6 +325,18 @@ function MainTabs() {
       <Tab.Screen
         name="Post"
         component={PostScreen}
+        listeners={({ navigation }) => ({
+          // The Post tab is a doorway, not a destination: when the owner may
+          // list, a tap opens the listing flow on the root stack instead of
+          // focusing the tab. Preventing the default also means a second tap
+          // never leaves a blank tab behind. Signed-out owners and merchants
+          // awaiting approval still land on the tab, which shows their gate.
+          tabPress: (event) => {
+            if (!canStartListing) return;
+            event.preventDefault();
+            navigation.navigate("ListAddPhotos");
+          },
+        })}
       />
       <Tab.Screen
         name="Chat"
@@ -498,37 +477,28 @@ export default function Navigation() {
           name="LocationModal"
           component={LocationModal}
         />
+        {/* The photo-first listing flow (ENG-10). On the root stack, so the
+            tab bar is hidden for the whole flow. */}
         <Stack.Screen
-          name="Post"
-          component={PostScreen}
+          name="ListAddPhotos"
+          component={ListAddPhotosScreen}
         />
         <Stack.Screen
-          name="PostSubCategories"
-          component={PostSubCategories}
+          name="ListReading"
+          component={ListReadingScreen}
         />
         <Stack.Screen
-          name="AboutProduct"
-          component={AboutProduct}
+          name="ListReview"
+          component={ListReviewScreen}
         />
         <Stack.Screen
-          name="ProductImages"
-          component={ProductImages}
+          name="ListPreview"
+          component={ListPreviewScreen}
         />
         <Stack.Screen
-          name="ChooseCoverImage"
-          component={ChooseCoverImage}
-        />
-        <Stack.Screen
-          name="ProductAvailability"
-          component={ProductAvailability}
-        />
-        <Stack.Screen
-          name="ReviewProduct"
-          component={ReviewProduct}
-        />
-        <Stack.Screen
-          name="HangTight"
-          component={HangTight}
+          name="ListSubmitted"
+          component={ListSubmittedScreen}
+          options={{ gestureEnabled: false }}
         />
         <Stack.Screen
           name="profile"

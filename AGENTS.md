@@ -199,14 +199,17 @@ Path alias: `@/*` maps to `src/*` (configured in both `tsconfig.json` and
   contexts, toast.
 - `src/navigation/nav.tsx` — single file defining all navigation: bottom tab
   navigator (Home, Saved, Post, Chat, Profile) with nested native-stack
-  navigators for sub-flows (auth, product details, post flow, profile
-  screens, chat details).
+  navigators for sub-flows (auth, product details, profile screens, chat
+  details). The listing flow (`List*` routes) is registered on the root stack
+  so the tab bar hides; the Post tab only runs the auth and merchant gates
+  and then opens it.
 - `src/lib/types.ts` — `RootStackParamList` (every screen name and its
   params), `useTypedNavigation()`, `RouteProps<T>`. Use these for type-safe
   navigation and route params; never navigate with raw strings.
 - `src/context/` — three React Contexts: `global-context` (auth tokens, user
   data, theme, categories), `auth-context` (registration data during signup),
-  `product-context` (data during the create/edit posting flow).
+  `list-draft-context` (the listing draft for the AI-assisted create flow,
+  persisted to AsyncStorage; merge rules live in `src/lib/list-flow/draft.ts`).
 - `src/backend/` — custom hooks and API functions by feature (useHome,
   useSaved, auth, post, product, chat, reviews, search, profile, owner,
   messages, notifications). These wrap Axios calls and React Query queries.
@@ -219,8 +222,9 @@ Path alias: `@/*` maps to `src/*` (configured in both `tsconfig.json` and
   - `categories.ts`, `content.ts` — static data.
 - `src/services/` — user query helpers.
 - `src/screens/` — screens by feature area: `auth/`, `tabs/` (5 main tabs),
-  `products/`, `chat/`, `users/`, `post-screens/` (multi-step posting),
-  `profileScreens/`.
+  `products/`, `chat/`, `users/`, `list-flow/` (the AI-assisted create flow,
+  ENG-10), `post-screens/` (now only the shared location picker),
+  `profileScreens/` (including the multi-step edit-listing screens).
 - `src/components/` — reusable components: `core/` (Button, Card, Text,
   Accordion, toast, etc.) plus feature folders (home, product, post, profile,
   search, chat, modals, auth).
@@ -253,8 +257,11 @@ Path alias: `@/*` maps to `src/*` (configured in both `tsconfig.json` and
 ## Testing
 
 - Jest is configured with the `jest-expo` preset (`npm test` runs
-  `--watchAll`); there is currently no committed test suite, so verification
-  relies on type-checking, the native smoke script, and device QA.
+  `--watchAll`). Unit tests cover the listing flow's pure logic — draft merge
+  rules, deposit maths, create payload, events queue (`src/lib/list-flow/__tests__`)
+  and the extraction client (`src/backend/list-flow/__tests__`). Run them with
+  `npx jest --watchAll=false`; screens are verified by type-checking, the
+  native smoke script, and device QA.
 - QA method is documented in `docs/qa-e2e-strategy.md`; device QA runs
   against the QA backend only, with fixtures labelled `AGENT_QA_<run-id>`.
 - After any JS dependency bump that ships a native module, do a full native

@@ -87,8 +87,8 @@ interface ProductImageGridProps {
 }
 
 /**
- * Grid picker shared by `product-images` (post flow) and `edit-product-images`
- * (profile edit flow). The two screens were 90% identical implementations of
+ * Grid picker for `edit-product-images` (profile edit flow). It was shared
+ * with the old create wizard's `product-images`, removed in ENG-10. The two screens were 90% identical implementations of
  * the same grid, add-tile and gallery/camera bottom sheet; only the header and
  * what happens on submit differ, and both of those stay in the caller.
  */

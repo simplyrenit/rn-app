@@ -82,9 +82,11 @@ interface CoverImagePickerProps {
 }
 
 /**
- * Cover-image picker shared by `choose-cover-image` (post flow) and
- * `edit-cover-image` (profile edit flow): the horizontal image strip, the
- * crop tool, the crop preview, and the submit control.
+ * Cover-image picker for `edit-cover-image` (profile edit flow): the
+ * horizontal image strip, the crop tool, the crop preview, and the submit
+ * control. It was shared with the old create wizard's `choose-cover-image`,
+ * removed in ENG-10 (the new flow sets the cover on the photo grid); the
+ * notes below still describe why it takes the shape it does.
  *
  * The outer container and header stay with each screen — the post flow uses
  * `StaticContainer` + `PostProductHeader` (a wizard step), the edit flow uses

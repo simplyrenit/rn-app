@@ -3,7 +3,7 @@ import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { View } from "react-native";
 import { GlobalProvider } from "@/context/global-context";
-import { ProductProvider } from "@/context/product-context";
+import { ListDraftProvider } from "@/context/list-draft-context";
 import Navigation from "@/navigation/nav";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useFonts } from "expo-font";
@@ -80,7 +80,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <GlobalProvider>
         <AuthProvider>
-          <ProductProvider>
+          <ListDraftProvider>
             <AutocompleteDropdownContextProvider>
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <SafeAreaProvider>
@@ -92,7 +92,7 @@ export default function App() {
                 </SafeAreaProvider>
               </GestureHandlerRootView>
             </AutocompleteDropdownContextProvider>
-          </ProductProvider>
+          </ListDraftProvider>
         </AuthProvider>
       </GlobalProvider>
     </QueryClientProvider>

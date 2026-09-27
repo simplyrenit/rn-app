@@ -39,13 +39,11 @@ export default function EditProductAvailability() {
       endDate: moment(range.endDate || range.startDate).format("YYYY-MM-DD"),
     }));
 
-    // Deliberately NOT written into the product context. That context is the
-    // *new listing* wizard's draft, and `backend/post.tsx` reads
-    // `productAvailability` straight into the create-listing body — so a write
-    // here leaked this product's blocked dates into the next listing the owner
-    // posted. Nothing clears the draft when the flow is entered; it is cleared
-    // only on logout and after a successful post. This screen persists through
-    // the PATCH below and has no business touching the draft at all.
+    // Persisted through the PATCH below and nowhere else. This used to be
+    // written into the old create wizard's shared draft, which leaked this
+    // product's blocked dates into the owner's next new listing. That wizard
+    // and its context are gone (ENG-10); new listings start with no blocked
+    // dates and have their own draft (`list-draft-context`).
     try {
       await updateMyProductDetails(name, {
         blocked_dates: normalised.map((range) => ({
