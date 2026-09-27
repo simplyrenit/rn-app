@@ -11,6 +11,7 @@ import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   TextInput,
   TouchableOpacity,
   View,
@@ -232,10 +233,16 @@ export function TaxonomyList<T extends TaxonomyItem>({
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
 
-  // Same props either way; only the scrollable differs. A plain TextInput in a
-  // sheet does not lift the sheet over the keyboard; the sheet's own one does.
+  // Same props either way; only the scrollable differs. On iOS a plain
+  // TextInput in a sheet does not lift the sheet over the keyboard; the sheet's
+  // own one does. Android already resizes the window for the keyboard
+  // (adjustResize), so the sheet's input made room twice: the results shrank to
+  // a sliver behind the footer, and the sheet stayed raised after the keyboard
+  // closed. The plain one behaves there, as the Price tab's inputs show.
   const List = (inBottomSheet ? BottomSheetFlatList : FlatList) as typeof FlatList;
-  const SearchInput = (inBottomSheet ? BottomSheetTextInput : TextInput) as typeof TextInput;
+  const SearchInput = (
+    inBottomSheet && Platform.OS === "ios" ? BottomSheetTextInput : TextInput
+  ) as typeof TextInput;
 
   // Keyed on whether search is on, not on the callback: callers pass an inline
   // arrow, and the index should only rebuild when the tree does.
