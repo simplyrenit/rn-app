@@ -288,7 +288,13 @@ export type RootStackParamList = {
   [key: string]: object | undefined;
 };
 
+/**
+ * `id` and `slug` arrive with taxonomy v2 (ENG-28). QA servers built before it
+ * omit both, so every reader has to work without them.
+ */
 export interface Subcategory {
+  id?: number;
+  slug?: string;
   dark_icon: string | null;
   light_icon: string | null;
   main_icon: string;
@@ -297,6 +303,8 @@ export interface Subcategory {
 }
 
 export interface Category {
+  id?: number;
+  slug?: string;
   dark_icon: string | null;
   light_icon: string | null;
   main_icon: string;
@@ -432,7 +440,12 @@ export interface BackendProduct {
   description: string;
   security_deposit: string;
   category: {
+    // Optional for the same reason as on `Category`: older servers omit them.
+    id?: number;
+    slug?: string;
     parent: {
+      id?: number;
+      slug?: string;
       title: string;
       parent?: string | null;
       main_icon?: string | null;

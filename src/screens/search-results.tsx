@@ -18,7 +18,6 @@ import { RatingFilter } from "@/components/search/rating-filter";
 import { SortFilter } from "@/components/search/sort-filter";
 import SubCategoryFilter from "@/components/search/sub-category-filter";
 import { useGlobalContext } from "@/context/global-context";
-import { SUB_CATEGORIES } from "@/lib/categories";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetView } from "@gorhom/bottom-sheet";
 import { StackActions, useRoute } from "@react-navigation/native";

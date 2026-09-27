@@ -3,6 +3,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { EditStepHeader } from "@/components/post/edit-step-header";
 import { TaxonomyList } from "@/components/post/taxonomy-list";
 import { categoryDisplayName } from "@/lib/category-icons";
+import { categoryPayload } from "@/lib/list-flow/payload";
 import { toast } from "@/lib/toast";
 import { RouteProps, Subcategory, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
@@ -28,10 +29,11 @@ export default function EditSubCategories() {
 
     try {
       await updateMyProductDetails(name, {
-        category: {
+        category: categoryPayload({
+          id: subcategory.id,
           parent: category,
           title: subcategory.title,
-        },
+        }),
       });
 
       toast.success("Your product was updated!");

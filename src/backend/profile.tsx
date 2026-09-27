@@ -29,7 +29,7 @@ import {
 } from "@/lib/my-details";
 
 type ProductUpdateData = Partial<Omit<BackendProduct, "category">> & {
-  category?: { parent: string; title: string };
+  category?: { id?: number; parent: string; title: string };
 };
 
 type ProfileNavigationProp = NativeStackNavigationProp<
