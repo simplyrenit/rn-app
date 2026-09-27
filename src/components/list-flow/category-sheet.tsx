@@ -44,7 +44,7 @@ export const CategorySheet = forwardRef<
             contextLabel={categoryDisplayName(parent.title)}
             onContextPress={() => setParent(null)}
             onSelect={(child) => {
-              onSelect({ parent: parent.title, title: child.title });
+              onSelect({ id: child.id, parent: parent.title, title: child.title });
               setParent(null);
             }}
           />

@@ -289,7 +289,8 @@ export default function ListReviewScreen() {
   const fillForCategory = () => {
     const hint = draft.fields.category.value;
     if (!hint) return;
-    flow.startExtraction({ categoryHint: hint });
+    // Titles only: the extraction service's hint shape predates category ids.
+    flow.startExtraction({ categoryHint: { parent: hint.parent, title: hint.title } });
   };
 
   const openLocationPicker = () => {

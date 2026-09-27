@@ -1,9 +1,18 @@
 import { parseRate } from "./deposit";
-import { FieldName, ListingDraft } from "./types";
+import { CategoryValue, FieldName, ListingDraft } from "./types";
 
 export interface ContactDetails {
   name: string;
   phone: string;
+}
+
+/**
+ * The `category` key for create and edit. Titles always go: a server without
+ * taxonomy ids resolves by them, and one with ids lets `id` win and ignores
+ * them. A value with no id (AI extraction, an old draft) still resolves.
+ */
+export function categoryPayload({ id, parent, title }: CategoryValue) {
+  return id == null ? { parent, title } : { id, parent, title };
 }
 
 /**
@@ -38,9 +47,7 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
     rate,
     security_deposit: Number.isFinite(deposit) ? deposit : 0,
     currency: "INR",
-    category: f.category.value
-      ? { parent: f.category.value.parent, title: f.category.value.title }
-      : null,
+    category: f.category.value ? categoryPayload(f.category.value) : null,
     condition: f.condition.value ? f.condition.value.toLowerCase() : null,
     brand_name: f.brand_name.value?.trim() ?? "",
     model_name: f.model_name.value?.trim() ?? "",
