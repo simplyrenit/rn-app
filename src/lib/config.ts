@@ -190,6 +190,9 @@ export const LISTING_EXTRACTION_STREAM = SERVERURL + "listing-extractions/stream
 
 export const LISTING_EXTRACTION = SERVERURL + "listing-extractions/";
 
+// ENG-34: the sub-category's specs, asked for apart from the stream.
+export const LISTING_EXTRACTION_SPECS = SERVERURL + "listing-extractions/specs/";
+
 export const DEPOSIT_RULES = SERVERURL + "deposit-rules/";
 
 export const EVENTS = SERVERURL + "events/";

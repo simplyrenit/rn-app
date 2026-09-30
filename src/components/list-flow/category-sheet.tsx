@@ -17,8 +17,13 @@ import { View } from "react-native";
  */
 export const CategorySheet = forwardRef<
   BottomSheetModal,
-  { categories: Category[]; onSelect: (value: CategoryValue) => void }
->(({ categories, onSelect }, ref) => {
+  {
+    categories: Category[];
+    onSelect: (value: CategoryValue) => void;
+    /** A line under the title: what choosing will cost, when it costs something. */
+    note?: string | null;
+  }
+>(({ categories, onSelect, note }, ref) => {
   const { isDark } = useTheme();
   const [parent, setParent] = useState<Category | null>(null);
 
@@ -36,6 +41,11 @@ export const CategorySheet = forwardRef<
           <Text role="sectionTitle" accessibilityRole="header">
             Choose a category
           </Text>
+          {note ? (
+            <Text fontSize="text-sm" tone="body" style={{ marginTop: space.xs }}>
+              {note}
+            </Text>
+          ) : null}
         </View>
         {parent ? (
           <TaxonomyList

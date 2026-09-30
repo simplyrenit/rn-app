@@ -1,4 +1,5 @@
 import { parseRate } from "./deposit";
+import { specAttributes } from "./specs";
 import { CategoryValue, FieldName, ListingDraft } from "./types";
 
 export interface ContactDetails {
@@ -40,6 +41,7 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
   const rate = parseRate(f.rate.value);
   const deposit = Number(f.security_deposit.value);
   const location = f.location.value;
+  const attributes = specAttributes(draft);
 
   return {
     title: f.title.value?.trim() ?? "",
@@ -63,6 +65,10 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
     extraction_attempt_id: draft.attemptId,
     field_sources: fieldSources,
     photo_sources: photos.map((p) => p.source),
+    // ENG-34: only specs with a value; the server fills blanks after publish
+    // and never overwrites these. Left out entirely when there are none, so a
+    // listing without specs sends exactly what it did before.
+    ...(Object.keys(attributes).length > 0 ? { attributes } : {}),
   };
 }
 
