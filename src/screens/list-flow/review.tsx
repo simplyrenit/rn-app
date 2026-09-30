@@ -19,6 +19,7 @@ import {
   labelWithSource,
 } from "@/components/list-flow/copy";
 import { FlowHeader } from "@/components/list-flow/flow-header";
+import { SpecSheet, SpecsCard } from "@/components/list-flow/specs-card";
 import { AiValueFade, PulseOnce, useAppear } from "@/components/list-flow/motion";
 import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
@@ -41,12 +42,15 @@ import {
   stillNeededLabel,
   uploadedPhotos,
 } from "@/lib/list-flow/draft";
+import { currentSpecs, specsLoading } from "@/lib/list-flow/specs";
 import {
   CONDITIONS,
   CategoryValue,
   Condition,
   FieldName,
   ListingDraft,
+  Spec,
+  SpecValue,
 } from "@/lib/list-flow/types";
 import { createLocationRequest } from "@/lib/location-request";
 import { useTheme } from "@/lib/theme";
@@ -186,6 +190,8 @@ export default function ListReviewScreen() {
   const scrollRef = useRef<KeyboardAwareScrollView>(null);
   const depositRef = useRef<TextInput>(null);
   const categorySheet = useRef<BottomSheetModal>(null);
+  const specSheet = useRef<BottomSheetModal>(null);
+  const [openSpec, setOpenSpec] = useState<Spec | null>(null);
   const sectionY = useRef<Partial<Record<SectionKey | "deposit", number>>>({});
   const editedOnce = useRef(new Set<FieldName>());
   const [showMissing, setShowMissing] = useState(false);
@@ -226,6 +232,14 @@ export default function ListReviewScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Specs for a category that arrived before this screen could ask — a
+  // resumed draft, or a taxonomy that loaded after the stream named the
+  // category. A no-op when they are already here or on the way.
+  useEffect(() => {
+    flow.ensureSpecs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories]);
 
   // The deposit default follows the chosen category's rule.
   const parent = draft?.fields.category.value?.parent;
@@ -283,7 +297,20 @@ export default function ListReviewScreen() {
 
   const onCategory = (value: CategoryValue) => {
     categorySheet.current?.dismiss();
+    // A different category clears the specs in the reducer (the sheet said
+    // so); this asks for the new one's.
     edit("category", value);
+    flow.ensureSpecs();
+  };
+
+  const onPressSpec = (spec: Spec) => {
+    setOpenSpec(spec);
+    specSheet.current?.present();
+  };
+
+  const onSaveSpec = (value: SpecValue | null) => {
+    specSheet.current?.dismiss();
+    if (openSpec) flow.dispatch({ type: "setSpec", key: openSpec.key, value });
   };
 
   const fillForCategory = () => {
@@ -377,34 +404,48 @@ export default function ListReviewScreen() {
     );
   };
 
+  const specs = currentSpecs(draft);
   const categorySection = (
-    <Animated.View
-      layout={appear.layout}
-      onLayout={onLayoutSection("category")}
-      style={{ marginBottom: density.fieldGap }}
-    >
-      <FieldLabel label={labelWithSource("Category", f.category.source)} required />
-      <AiValueFade value={f.category.value} active={f.category.source === "ai"}>
-        <PickerRow
-          icon={
-            <CategoryIcon
-              name={f.category.value?.parent ?? ""}
-              size={20}
-              color={f.category.value ? color.text : color.textDim}
-            />
-          }
-          value={categoryLabel}
-          placeholder="Choose a category"
-          onPress={() => categorySheet.current?.present()}
-          accessibilityLabel={categoryLabel ? `Category, ${categoryLabel}` : "Choose a category"}
+    <>
+      <Animated.View
+        layout={appear.layout}
+        onLayout={onLayoutSection("category")}
+        style={{ marginBottom: density.fieldGap }}
+      >
+        <FieldLabel label={labelWithSource("Category", f.category.source)} required />
+        {/* The label, not the value: the app attaching the id to the model's
+            category is not a new value, and must not wash the field again. */}
+        <AiValueFade value={categoryLabel} active={f.category.source === "ai"}>
+          <PickerRow
+            icon={
+              <CategoryIcon
+                name={f.category.value?.parent ?? ""}
+                size={20}
+                color={f.category.value ? color.text : color.textDim}
+              />
+            }
+            value={categoryLabel}
+            placeholder="Choose a category"
+            onPress={() => categorySheet.current?.present()}
+            accessibilityLabel={categoryLabel ? `Category, ${categoryLabel}` : "Choose a category"}
+          />
+        </AiValueFade>
+        {showFillRest ? (
+          <Button variant="outline" size="compact" style={{ marginTop: space.sm }} onPress={fillForCategory}>
+            Fill the rest for this category
+          </Button>
+        ) : null}
+      </Animated.View>
+      <Animated.View layout={appear.layout} entering={appear.entering}>
+        {/* Keyed on the category, so "Add more detail" folds again for a new one. */}
+        <SpecsCard
+          key={draft.specs.categoryId ?? "none"}
+          specs={specs}
+          loading={specsLoading(draft)}
+          onPressSpec={onPressSpec}
         />
-      </AiValueFade>
-      {showFillRest ? (
-        <Button variant="outline" size="compact" style={{ marginTop: space.sm }} onPress={fillForCategory}>
-          Fill the rest for this category
-        </Button>
-      ) : null}
-    </Animated.View>
+      </Animated.View>
+    </>
   );
 
   return (
@@ -659,7 +700,18 @@ export default function ListReviewScreen() {
         )}
       </View>
 
-      <CategorySheet ref={categorySheet} categories={categories} onSelect={onCategory} />
+      <CategorySheet
+        ref={categorySheet}
+        categories={categories}
+        onSelect={onCategory}
+        note={specs.length > 0 ? "Changing the category clears the specs." : null}
+      />
+      <SpecSheet
+        ref={specSheet}
+        spec={openSpec}
+        onSave={onSaveSpec}
+        onCancel={() => specSheet.current?.dismiss()}
+      />
     </NonScrollableContainer>
   );
 }
