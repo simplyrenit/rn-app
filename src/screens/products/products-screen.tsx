@@ -22,6 +22,7 @@ import { ProductHero } from "@/components/product/product-hero";
 import { SpecStrip } from "@/components/product/spec-strip";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
 import { ProductMap } from "@/components/product/product-map";
+import { AllSpecsSheet, SpecsCard } from "@/components/product/product-specs";
 import { AboutOwner } from "@/components/product/product-owner";
 import { ReviewCard } from "@/components/product/review-card";
 import { Stars } from "@/components/product/stars";
@@ -33,11 +34,18 @@ import {
   RouteProps,
   useTypedNavigation,
 } from "@/lib/types";
-import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import {
+  StackActions,
+  useFocusEffect,
+  useRoute,
+} from "@react-navigation/native";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { CategoryIcon } from "@/lib/category-icons";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
+import { getDiscoveryLocationData } from "@/lib/location";
+import { keySpecLine, specMatchesFilters } from "@/lib/product-specs";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { IconButton } from "@/components/core/icon-button";
@@ -49,6 +57,7 @@ import {
   ScrollView,
   Share,
   StyleSheet,
+  TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -57,6 +66,7 @@ import {
   LightBulbIcon,
   ShareIcon,
 } from "react-native-heroicons/outline";
+import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ProductsSkeleton } from "./products-skeleton";
@@ -178,7 +188,8 @@ export default function DetailsScreen() {
   const [similarProducts, setSimilarProducts] = useState<BackendProduct[]>([]);
   const [isModerated, setIsModerated] = useState(false);
   const [reviews, setReviews] = useState<BackendReview[]>([]);
-  const { id, isFavorite } = route.params;
+  const { id, isFavorite, specFilters } = route.params;
+  const allSpecsRef = React.useRef<BottomSheetModal>(null);
   const { startChat } = useChat();
   const [startingChat, setStartingChat] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -355,6 +366,42 @@ export default function DetailsScreen() {
 
   const lessReviews = reviews.slice(0, 4);
 
+  // Older API responses carry no specs; they render as a listing without any.
+  const specs = product?.specs ?? [];
+  const keySpecs = product ? keySpecLine(product.title, specs) : "";
+  // Only said when a value on the page really matched, so a filter this
+  // listing carries no spec for cannot make the line claim otherwise.
+  const specMatched = specs.some((spec) => specMatchesFilters(spec, specFilters));
+  const subCategory = product?.category?.parent?.title
+    ? { parent: product.category.parent.title, child: product.category.title }
+    : null;
+
+  /**
+   * The breadcrumb opens that sub-category's results. Pushed, not navigated: a
+   * renter who came here from results has a SearchResults screen below, and
+   * `navigate` would pop back to it with its old filters still applied.
+   */
+  const openSubCategory = async () => {
+    if (!subCategory) return;
+    const locationData = await getDiscoveryLocationData();
+    navigation.dispatch(
+      StackActions.push("SearchResults", {
+        category: subCategory.parent,
+        subCategory: subCategory.child,
+        selectedItem: subCategory.child,
+        address: locationData?.address ?? "",
+        coords: locationData?.coordinates
+          ? {
+              lat: locationData.coordinates.lat,
+              lng: locationData.coordinates.long,
+            }
+          : { lat: undefined, lng: undefined },
+        range: { startDate: undefined, endDate: undefined },
+        products: [],
+      })
+    );
+  };
+
   /**
    * The rail's cards cannot grow — they are a fixed height so a row of them
    * lines up — so a review that is cut off opens the full list rather than
@@ -520,7 +567,10 @@ export default function DetailsScreen() {
             the deepest inset on the page. */}
         <View
           style={{
-            paddingVertical: TITLE_PAD_V,
+            paddingTop: TITLE_PAD_V,
+            // The breadcrumb's 44pt target already runs ~23pt below its text,
+            // so the block gives up that much of its own inset (PDP-01 round 3).
+            paddingBottom: subCategory ? TITLE_GAP : TITLE_PAD_V,
             paddingHorizontal: SCREEN_GUTTER,
             flexDirection: "row",
             gap: TITLE_GAP,
@@ -538,6 +588,14 @@ export default function DetailsScreen() {
             >
               {product?.title}
             </Text>
+
+            {/* Only main specs the title does not already say, so the line is
+                never the title again; absent when there are none left. */}
+            {keySpecs ? (
+              <Text fontSize="text-md" tone="body">
+                {keySpecs}
+              </Text>
+            ) : null}
 
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
@@ -569,6 +627,29 @@ export default function DetailsScreen() {
                 it. "Live" is a fact the owner needs stated, not inferred. */}
             {isOwner && ownerStatus ? (
               <ListingStatusPill status={ownerStatus} withDetail />
+            ) : null}
+
+            {/* Shown with or without specs: "more like this" is useful either
+                way. The label sits at the top of its 44pt target (PDP-01). */}
+            {subCategory ? (
+              <TouchableOpacity
+                onPress={openSubCategory}
+                accessibilityRole="button"
+                accessibilityLabel={`${subCategory.parent}, ${subCategory.child}`}
+                accessibilityHint={`Shows more listings in ${subCategory.child}`}
+                style={{
+                  minHeight: MIN_TOUCH_TARGET,
+                  alignSelf: "flex-start",
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  gap: 4,
+                }}
+              >
+                <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+                  {`${subCategory.parent} › ${subCategory.child}`}
+                </Text>
+                <ChevronRightIcon size={GLYPH_SIZE} color={color.brandText} />
+              </TouchableOpacity>
             ) : null}
           </View>
 
@@ -630,6 +711,32 @@ export default function DetailsScreen() {
             },
           ]}
         />
+
+        {/* Straight after the strip, where a renter decides (ENG-35); absent,
+            dividers and all, when the listing has no specs (PDP-04b). */}
+        {specs.length > 0 ? (
+          <DetailSection
+            title="Specifications"
+            meta={
+              specMatched ? (
+                <Text
+                  fontSize="text-sm"
+                  fontWeight="font-bold"
+                  tone="brand"
+                  accessibilityLabel="Matches your filters"
+                >
+                  ✓ Matches your filters
+                </Text>
+              ) : null
+            }
+          >
+            <SpecsCard
+              specs={specs}
+              specFilters={specFilters}
+              onSeeAll={() => allSpecsRef.current?.present()}
+            />
+          </DetailSection>
+        ) : null}
 
         {/* The frame's headings, which name the thing rather than the field:
             "About the product", not "Description". */}
@@ -841,6 +948,15 @@ export default function DetailsScreen() {
           )}
         </View>
       </View>
+      ) : null}
+
+      {specs.length > 0 ? (
+        <AllSpecsSheet
+          ref={allSpecsRef}
+          specs={specs}
+          specFilters={specFilters}
+          onClose={() => allSpecsRef.current?.dismiss()}
+        />
       ) : null}
     </View>
   );

@@ -91,10 +91,10 @@ function tabHasValue(tab: string, filters: any) {
  *  one comparison rather than eight. */
 const keyOf = (filters: unknown) => JSON.stringify(filters);
 
-const createDefaultFilters = (category = "") => ({
+const createDefaultFilters = (category = "", subCategory = "") => ({
   sort: "",
   category,
-  subCategory: "",
+  subCategory,
   price: { min: "", max: "" },
   ratings: { product: 0, owner: 0 },
   condition: "",
@@ -176,6 +176,7 @@ export default function SearchResults() {
     selectedItem,
     products: fetchedProducts,
     category,
+    subCategory,
   } = route.params;
   const { searchProducts, fetchSpecFilters } = useSearch();
   const [products, setProducts] = useState<BackendProduct[]>(fetchedProducts);
@@ -186,12 +187,20 @@ export default function SearchResults() {
   };
 
   const [filters, setFilters] = useState(() =>
-    createDefaultFilters(category || "")
+    createDefaultFilters(category || "", (category && subCategory) || "")
   );
 
   const filtersKey = keyOf(filters);
   /** The filter set the products on screen were actually fetched with. */
   const [appliedKey, setAppliedKey] = useState(filtersKey);
+  /**
+   * The spec filters behind the grid on screen, for the product page to mark
+   * (ENG-35). The applied set, not the entered one: a spec picked in the sheet
+   * but never applied did not choose these results.
+   */
+  const appliedSpecs: Record<string, string[]> = JSON.parse(appliedKey).specs;
+  const specFilters =
+    Object.keys(appliedSpecs).length > 0 ? appliedSpecs : undefined;
   /**
    * A count for a filter set that has been entered but not yet applied.
    *
@@ -446,6 +455,8 @@ export default function SearchResults() {
     if (category) {
       setSelectedCategory(category);
       setSelectedTab("Category");
+      // Arrived with the child already chosen: open the sheet on its list.
+      if (subCategory) setShowSubCategory(true);
     }
   }, [category]);
 
@@ -456,7 +467,7 @@ export default function SearchResults() {
 
     didBootstrapSearchRef.current = true;
     void applyFilterAndSearch(
-      createDefaultFilters(category || "")
+      createDefaultFilters(category || "", (category && subCategory) || "")
     );
   }, [category, fetchedProducts.length]);
 
@@ -665,6 +676,7 @@ export default function SearchResults() {
               // "How far away is it?" is the first question in peer-to-peer
               // rental, and the results grid was the one place it was missing.
               coordinates={item.coordinates}
+              specFilters={specFilters}
             />
           )}
           // Searching and finding nothing are the same slot, so the skeleton
