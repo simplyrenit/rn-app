@@ -28,6 +28,11 @@ export interface CardProps extends ItemCard {
    * owner profile use it too.
    */
   tile?: boolean;
+  /**
+   * The search's spec filters, handed on to the product page so it can mark
+   * the values that matched (ENG-35). Search results only.
+   */
+  specFilters?: Record<string, string[]>;
 }
 
 export function Card({
@@ -42,6 +47,7 @@ export function Card({
   coordinates,
   distance,
   tile = false,
+  specFilters,
 }: CardProps) {
   const router = useTypedNavigation();
   const { color } = useTheme();
@@ -72,7 +78,9 @@ export function Card({
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       activeOpacity={1}
-      onPress={() => router.navigate("ProductDetail", { id, isFavorite: checked })}
+      onPress={() =>
+        router.navigate("ProductDetail", { id, isFavorite: checked, specFilters })
+      }
       style={[{ width: width ?? fallbackCardWidth, alignItems }, pressStyle]}
     >
       <View style={{ width: "100%" }}>
