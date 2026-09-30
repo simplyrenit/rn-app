@@ -14,9 +14,12 @@ import {
   ListingDraft,
   ListingWarning,
   PhotoItem,
+  SpecValue,
   WarningEvent,
   WarningType,
+  WireSpec,
 } from "./types";
+import { EMPTY_SPECS, hasSpecValue, specsFromResponse } from "./specs";
 
 export const MAX_PHOTOS = 5;
 export const MAX_RUNS_PER_ATTEMPT = 3;
@@ -58,6 +61,7 @@ export function createDraft(attemptId: string, now: number): ListingDraft {
     extractionRuns: 0,
     lastRunPhotoIds: null,
     reviewNote: null,
+    specs: EMPTY_SPECS,
   };
 }
 
@@ -144,7 +148,11 @@ export type DraftAction =
   | { type: "confirmCondition"; value: Condition }
   | { type: "prefillLocation"; value: FieldValues["location"] }
   | { type: "setDepositRule"; rule: DepositRule | null }
-  | { type: "setReviewNote"; note: ListingDraft["reviewNote"] };
+  | { type: "setReviewNote"; note: ListingDraft["reviewNote"] }
+  | { type: "specsRequested"; categoryId: number }
+  | { type: "specsLoaded"; categoryId: number; specs: WireSpec[] }
+  | { type: "specsUnavailable"; categoryId: number }
+  | { type: "setSpec"; key: string; value: SpecValue | null };
 
 /** Recompute the deposit default while the owner has not overridden it. */
 function withDerivedDeposit(draft: ListingDraft): ListingDraft {
@@ -294,6 +302,10 @@ function editField(
       [field]: { ...current, value: nextValue, source: editedSource(current.source) },
     },
   } as ListingDraft;
+
+  // Specs belong to one sub-category: another one's would be wrong answers to
+  // different questions, and the owner was warned before choosing.
+  if (field === "category") return { ...next, specs: EMPTY_SPECS };
 
   if (field === "security_deposit") return { ...next, depositTouched: true };
   if (field === "rate") return withDerivedDeposit(next);
@@ -470,6 +482,39 @@ export function draftReducer(
     case "setReviewNote":
       return draft.reviewNote === action.note ? draft : { ...draft, reviewNote: action.note };
 
+    case "specsRequested":
+      // A fresh request replaces whatever was there, owner values included:
+      // it is only ever made for a category the specs do not already cover.
+      return { ...draft, specs: { categoryId: action.categoryId, status: "loading", items: [] } };
+
+    case "specsLoaded":
+    case "specsUnavailable":
+      // An answer for a category the owner has since left is dropped (the
+      // contract compares `category_id`), and so is a second answer to a
+      // request already settled.
+      if (draft.specs.categoryId !== action.categoryId || draft.specs.status !== "loading") return draft;
+      return {
+        ...draft,
+        specs:
+          action.type === "specsLoaded"
+            ? { categoryId: action.categoryId, status: "ready", items: specsFromResponse(action.specs) }
+            : { categoryId: action.categoryId, status: "unavailable", items: [] },
+      };
+
+    case "setSpec": {
+      const index = draft.specs.items.findIndex((spec) => spec.key === action.key);
+      if (index < 0) return draft;
+      const items = draft.specs.items.slice();
+      // Saving the value a Check tag was on is the owner confirming it, so it
+      // is theirs now and the tag goes, same as for a changed value.
+      items[index] = {
+        ...items[index],
+        value: hasSpecValue(action.value) ? action.value : null,
+        status: "user",
+      };
+      return { ...draft, specs: { ...draft.specs, items } };
+    }
+
     default:
       return draft;
   }
@@ -586,6 +631,10 @@ export function hydrateDraft(raw: string | null, now: number): ListingDraft | nu
       return null;
     }
     const base = createDraft(parsed.attemptId, parsed.startedAt);
+    // A specs call cannot outlive the app, so one saved mid-flight is asked
+    // again when Review opens rather than left loading for good.
+    const specs =
+      parsed.specs && parsed.specs.status !== "loading" ? parsed.specs : base.specs;
     const draft = withUploadedPhotosOnly({
       ...base,
       ...parsed,
@@ -593,6 +642,7 @@ export function hydrateDraft(raw: string | null, now: number): ListingDraft | nu
       photos: parsed.photos ?? [],
       dismissedWarnings: parsed.dismissedWarnings ?? [],
       warnings: parsed.warnings ?? [],
+      specs,
     });
     return {
       ...draft,

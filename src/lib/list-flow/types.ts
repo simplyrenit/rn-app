@@ -112,6 +112,36 @@ export interface DepositRule {
   round_to: number;
 }
 
+// ---- Specs (ENG-34) -----------------------------------------------------------
+
+export type SpecType = "enum" | "multi_enum";
+/** An option for `enum`, a list of options for `multi_enum`. */
+export type SpecValue = string | string[];
+/**
+ * `filled` and `check` come from the server (`check` is a value it is less
+ * sure of); `user` is anything the owner has set, confirmed or cleared.
+ */
+export type SpecStatus = "filled" | "check" | "blank" | "user";
+
+export interface Spec {
+  key: string;
+  label: string;
+  type: SpecType;
+  /** "default" specs sit on the card; anything else waits behind "Add more detail". */
+  facet: string;
+  options: string[];
+  value: SpecValue | null;
+  status: SpecStatus;
+}
+
+export interface SpecsState {
+  /** The sub-category the specs were asked for; null before any request. */
+  categoryId: number | null;
+  /** `unavailable` means the call failed: no card, and never a blocker. */
+  status: "idle" | "loading" | "ready" | "unavailable";
+  items: Spec[];
+}
+
 export interface ListingDraft {
   /** uuid v4, created when L-12 opens a fresh draft. */
   attemptId: string;
@@ -144,6 +174,7 @@ export interface ListingDraft {
    * draft still explains its blanks.
    */
   reviewNote: "failed" | "quota" | null;
+  specs: SpecsState;
 }
 
 // ---- Wire shapes (IMPLEMENTATION.md §4.6) ----------------------------------
@@ -197,6 +228,31 @@ export interface ExtractionJsonResponse {
   fields: FieldEvent[];
   warnings: WarningEvent[];
   done: DoneEvent;
+}
+
+/** `POST listing-extractions/specs/` (ENG-34 contract). */
+export interface SpecsRequest {
+  attempt_id: string;
+  category_id: number;
+  title?: string;
+  brand_name?: string;
+  model_name?: string;
+  description?: string;
+}
+
+export interface WireSpec {
+  key: string;
+  label: string;
+  type: string;
+  facet: string;
+  options: string[];
+  value: unknown;
+  status: string;
+}
+
+export interface SpecsResponse {
+  category_id: number;
+  specs: WireSpec[];
 }
 
 /**

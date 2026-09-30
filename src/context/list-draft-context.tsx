@@ -1,4 +1,5 @@
 import { startExtraction as openExtraction, Transport } from "@/backend/list-flow/extraction";
+import { fetchSpecs } from "@/backend/list-flow/specs";
 import { uploadPhoto } from "@/backend/list-flow/upload";
 import { useGlobalContext } from "@/context/global-context";
 import { EventName, resetEvents, track as trackEvent } from "@/lib/events";
@@ -15,6 +16,7 @@ import {
   serializeDraft,
   uploadedPhotos,
 } from "@/lib/list-flow/draft";
+import { resolveCategoryId } from "@/lib/list-flow/specs";
 import {
   AI_FIELDS,
   AiFieldName,
@@ -100,6 +102,11 @@ interface ListDraftContextValue {
   waitForUploads: (timeoutMs?: number) => Promise<void>;
   startExtraction: (options?: { categoryHint?: CategoryValue | null }) => void;
   cancelExtraction: () => void;
+  /**
+   * Ask for the draft's sub-category specs unless they are already here or on
+   * the way. Safe to call whenever the category may have changed.
+   */
+  ensureSpecs: () => void;
   /** `track()` with this draft's attempt id attached. */
   track: (name: EventName, props?: Record<string, unknown>) => void;
 }
@@ -107,7 +114,7 @@ interface ListDraftContextValue {
 const ListDraftContext = createContext<ListDraftContextValue | undefined>(undefined);
 
 export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useGlobalContext();
+  const { isAuthenticated, categories } = useGlobalContext();
   const [draft, rawDispatch] = useReducer(draftReducer, null);
   const [hydrated, setHydrated] = useState(false);
   const [stored, setStored] = useState<ListingDraft | null>(null);
@@ -118,6 +125,9 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const draftRef = useRef<ListingDraft | null>(null);
   draftRef.current = draft;
   const runHandle = useRef<{ cancel: () => void } | null>(null);
+  // Read from stream callbacks, which outlive the render that made them.
+  const categoriesRef = useRef(categories);
+  categoriesRef.current = categories;
   const savedAttempts = useRef(new Set<string>());
 
   const dispatch = useCallback((action: DraftAction) => {
@@ -331,6 +341,48 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   }, []);
 
+  // ---- Specs (ENG-34) ---------------------------------------------------------
+
+  const ensureSpecs = useCallback(() => {
+    const current = draftRef.current;
+    const category = current?.fields.category.value ?? null;
+    if (!current || !category) return;
+    const categoryId = resolveCategoryId(categoriesRef.current, category);
+    // Not in the loaded taxonomy (or not loaded yet): no card rather than a
+    // guess. Review asks again once the categories arrive.
+    if (categoryId === null) return;
+    // The model names categories by title; keeping the id on the draft is what
+    // lets a late answer be matched to the category it was asked for. Same
+    // titles, so the reducer treats it as a confirmation, not an edit.
+    if (category.id == null) {
+      dispatch({ type: "editField", field: "category", value: { ...category, id: categoryId } });
+    }
+    const { specs } = current;
+    if (specs.categoryId === categoryId && specs.status !== "idle") return;
+
+    dispatch({ type: "specsRequested", categoryId });
+    const f = current.fields;
+    const text = (v: string | null) => v?.trim() || undefined;
+    void fetchSpecs({
+      attempt_id: current.attemptId,
+      category_id: categoryId,
+      title: text(f.title.value),
+      brand_name: text(f.brand_name.value),
+      model_name: text(f.model_name.value),
+      description: text(f.description.value),
+    }).then((result) => {
+      // Discarded or replaced by another listing while the call ran.
+      if (draftRef.current?.attemptId !== current.attemptId) return;
+      // An answer about some other category than the one asked for is no
+      // answer: the card goes rather than sitting on its skeleton.
+      if (result.ok && result.categoryId === categoryId) {
+        dispatch({ type: "specsLoaded", categoryId, specs: result.specs });
+      } else {
+        dispatch({ type: "specsUnavailable", categoryId });
+      }
+    });
+  }, [dispatch]);
+
   // ---- Extraction -----------------------------------------------------------
 
   const cancelExtraction = useCallback(() => {
@@ -396,6 +448,10 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               trackForDraft("extraction_first_field", { ms: Date.now() - startedAt });
             }
             dispatch({ type: "mergeAi", event });
+            // Specs hang off the sub-category, so they are asked for the
+            // moment it is known, beside the rest of the stream: `done` and
+            // the move to Review never wait on them.
+            if (event.field === "category" && event.status === "filled") ensureSpecs();
             const row: ChecklistRow = { field: event.field as AiFieldName, status: event.status };
             setRun((r) => {
               const at = r.checklist.findIndex((c) => c.field === row.field);
@@ -449,7 +505,7 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       );
     },
-    [dispatch, trackForDraft]
+    [dispatch, trackForDraft, ensureSpecs]
   );
 
   const clearSubmitted = useCallback(() => {
@@ -480,6 +536,7 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     waitForUploads,
     startExtraction,
     cancelExtraction,
+    ensureSpecs,
     track: trackForDraft,
   };
 
