@@ -80,7 +80,8 @@ export function SpecFilter({ specs, selected, onToggle }: Props) {
   return (
     <BottomSheetScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingTop: 4, paddingBottom: 16 }}
+      // The same inset as the Sort and Condition rows beside it.
+      contentContainerStyle={{ paddingTop: 4, paddingBottom: 16, paddingHorizontal: 12 }}
     >
       {primary.map(renderSpec)}
       {more.length > 0 && !showAll && (
