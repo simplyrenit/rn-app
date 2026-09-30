@@ -196,6 +196,23 @@ describe("ensureSpecs", () => {
     expect(currentSpecs(draft as ListingDraft)[0]).toMatchObject({ value: "Window" });
   });
 
+  it("keeps the owner's value when the re-ask after new photos hits spec_limit", async () => {
+    post.mockResolvedValueOnce({ data: { category_id: 7, specs: [spec("Split")] } });
+    await run();
+    draft = draftReducer(draft, { type: "setSpec", key: "ac_type", value: "Window" });
+    draft = draftReducer(draft, { type: "serverRunCounted", clearStaleAi: true, sentPhotoIds: [] });
+    draft = draftReducer(draft, {
+      type: "mergeAi",
+      event: { field: "category", status: "filled", value: AC },
+    });
+    post.mockRejectedValueOnce(httpError(409, { code: "spec_limit" }));
+    await run();
+    expect(draft?.specs.status).toBe("unavailable");
+    expect(currentSpecs(draft as ListingDraft)).toEqual([
+      expect.objectContaining({ key: "ac_type", value: "Window", status: "user" }),
+    ]);
+  });
+
   it("marks the specs unavailable when the call fails", async () => {
     post.mockRejectedValueOnce(httpError(409, { code: "spec_limit" }));
     await run();

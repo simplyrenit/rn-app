@@ -10,7 +10,7 @@ import { CategoryValue, ListingDraft, Spec, SpecValue, SpecsState, WireSpec } fr
 export const EMPTY_SPECS: SpecsState = { categoryId: null, requestId: null, status: "idle", items: [] };
 
 /** Only the owner's own answers; everything else came from the server. */
-function ownerSpecs(specs: SpecsState) {
+export function ownerSpecs(specs: SpecsState) {
   return specs.items.filter((s) => s.status === "user");
 }
 
@@ -129,12 +129,17 @@ export function specDisplayValue(value: SpecValue | null) {
  * The specs that belong to the draft's category right now, or none. A late
  * response, or a category the model re-read on a later run, leaves specs for
  * a category the draft no longer holds; those are never shown or sent.
+ *
+ * Until an answer is in — a re-ask after new photos still running, never
+ * made, or refused (a 409 `spec_limit` included) — the owner's own answers
+ * still count: owner values always win (contract), so they are shown and sent
+ * whatever state the server's side is in.
  */
 export function currentSpecs(draft: ListingDraft): Spec[] {
   const id = draft.fields.category.value?.id;
   const { specs } = draft;
-  if (id == null || specs.categoryId !== id || specs.status !== "ready") return [];
-  return specs.items;
+  if (id == null || specs.categoryId !== id) return [];
+  return specs.status === "ready" ? specs.items : ownerSpecs(specs);
 }
 
 /** Whether the Specs card shows its skeleton. */

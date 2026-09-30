@@ -240,6 +240,83 @@ describe("specs across requests and re-runs", () => {
   });
 });
 
+describe("the owner's spec values survive a changed-photos re-run", () => {
+  const contact = { name: "Asha", phone: "+919800000000" };
+  const photo = (id: string) => ({
+    id,
+    localUri: `file:///${id}.jpg`,
+    remoteUrl: `https://cdn.test/${id}.jpg`,
+    source: "camera" as const,
+    status: "done" as const,
+  });
+  const then = (d: ListingDraft, ...actions: DraftAction[]) =>
+    actions.reduce<ListingDraft>((x, a) => draftReducer(x, a) as ListingDraft, d);
+
+  /** Owner-chosen category, specs in, the owner set Brand, then new photos were read. */
+  const afterRerun = () =>
+    loaded(
+      { type: "setSpec", key: "brand", value: "LG" },
+      { type: "addPhoto", photo: photo("b") },
+      { type: "serverRunCounted", clearStaleAi: true, sentPhotoIds: ["b"] }
+    );
+
+  it("keeps them shown and sent before the re-ask is made", () => {
+    const d = afterRerun();
+    expect(d.specs.status).toBe("idle");
+    expect(currentSpecs(d).map((s) => s.key)).toEqual(["brand"]);
+    expect(buildCreatePayload(d, contact).attributes).toEqual({ brand: "LG" });
+  });
+
+  it("keeps them while the re-ask is in flight", () => {
+    const d = then(afterRerun(), { type: "specsRequested", categoryId: 7, requestId: "r2" });
+    expect(specsLoading(d)).toBe(true);
+    expect(buildCreatePayload(d, contact).attributes).toEqual({ brand: "LG" });
+  });
+
+  it("keeps them after a failed re-ask", () => {
+    // The client turns every refusal, 409 spec_limit included, into
+    // specsUnavailable; the 409 itself is covered in the backend suite.
+    const d = then(
+      afterRerun(),
+      { type: "specsRequested", categoryId: 7, requestId: "r2" },
+      { type: "specsUnavailable", requestId: "r2" }
+    );
+    expect(d.specs.status).toBe("unavailable");
+    expect(currentSpecs(d).map((s) => [s.key, s.value, s.status])).toEqual([["brand", "LG", "user"]]);
+    expect(buildCreatePayload(d, contact).attributes).toEqual({ brand: "LG" });
+  });
+
+  it("keeps them when the re-run names no category and the owner's stands", () => {
+    const d = then(afterRerun(), {
+      type: "mergeAi",
+      event: { field: "category", status: "blank", value: null },
+    });
+    expect(d.fields.category.value).toEqual(AC);
+    expect(buildCreatePayload(d, contact).attributes).toEqual({ brand: "LG" });
+  });
+
+  it("brings them back when the model's category was cleared and the owner re-picks it", () => {
+    const d = build(
+      { type: "mergeAi", event: { field: "category", status: "filled", value: { parent: AC.parent, title: AC.title } } },
+      { type: "editField", field: "category", value: AC },
+      { type: "specsRequested", categoryId: 7, requestId: "r1" },
+      { type: "specsLoaded", requestId: "r1", specs: wire },
+      { type: "setSpec", key: "brand", value: "LG" },
+      { type: "addPhoto", photo: photo("b") },
+      { type: "serverRunCounted", clearStaleAi: true, sentPhotoIds: ["b"] },
+      // The re-run cannot place the item.
+      { type: "mergeAi", event: { field: "category", status: "blank", value: null } }
+    );
+    expect(d.fields.category.value).toBeNull();
+    expect(buildCreatePayload(d, contact)).not.toHaveProperty("attributes");
+    const repicked = then(d, { type: "editField", field: "category", value: AC });
+    expect(buildCreatePayload(repicked, contact).attributes).toEqual({ brand: "LG" });
+    // Another category still starts clean.
+    const other = then(d, { type: "editField", field: "category", value: FRIDGE });
+    expect(other.specs.items).toEqual([]);
+  });
+});
+
 describe("attributes in the create payload", () => {
   const contact = { name: "Asha", phone: "+919800000000" };
 

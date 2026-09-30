@@ -24,6 +24,7 @@ import {
   hasSpecValue,
   hydrateSpecs,
   mergeOwnerSpecs,
+  ownerSpecs,
   requestedSpecs,
   specsFromResponse,
   withoutStaleSpecs,
@@ -316,8 +317,12 @@ function editField(
   } as ListingDraft;
 
   // Specs belong to one sub-category: another one's would be wrong answers to
-  // different questions, and the owner was warned before choosing.
-  if (field === "category") return { ...next, specs: EMPTY_SPECS };
+  // different questions, and the owner was warned before choosing. Choosing
+  // the one they are for again — after a changed-photos run cleared the
+  // model's category — keeps them, and with them the owner's answers.
+  if (field === "category" && (nextValue as CategoryValue | null)?.id !== draft.specs.categoryId) {
+    return { ...next, specs: EMPTY_SPECS };
+  }
 
   if (field === "security_deposit") return { ...next, depositTouched: true };
   if (field === "rate") return withDerivedDeposit(next);
@@ -514,7 +519,8 @@ export function draftReducer(
                 status: "ready",
                 items: mergeOwnerSpecs(specsFromResponse(action.specs), specs.items),
               }
-            : { ...specs, status: "unavailable", items: [] },
+            : // No card from the server, but the owner's answers stand.
+              { ...specs, status: "unavailable", items: ownerSpecs(specs) },
       };
     }
 
