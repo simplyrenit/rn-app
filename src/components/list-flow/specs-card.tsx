@@ -7,8 +7,8 @@ import { Spec, SpecValue } from "@/lib/list-flow/types";
 import { foldForSearch } from "@/lib/taxonomy-search";
 import { useTheme } from "@/lib/theme";
 import { BottomSheetModal, BottomSheetScrollView, BottomSheetTextInput } from "@gorhom/bottom-sheet";
-import React, { forwardRef, useState } from "react";
-import { Platform, TextInput, TouchableOpacity, View } from "react-native";
+import React, { forwardRef, useEffect, useState } from "react";
+import { Keyboard, Platform, TextInput, TouchableOpacity, View } from "react-native";
 import { CheckIcon } from "react-native-heroicons/solid";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { MagnifyingGlassIcon } from "react-native-heroicons/outline";
@@ -93,6 +93,31 @@ function moreDetailHint(specs: Spec[]) {
   return specs.length > 3 ? `${labels.join(", ")} and more. Optional.` : `${labels.join(", ")}. Optional.`;
 }
 
+/**
+ * Whether the loading state should still be shown. The card sits above Title,
+ * Brand, Model and Description, so when the answer lands it resizes — and a
+ * failure removes it — which moves whichever of those fields the owner is
+ * typing in. While the keyboard is up the skeleton stays, and the card takes
+ * its real size once the keyboard goes down.
+ */
+function useSkeletonHeldWhileTyping(loading: boolean) {
+  const [typing, setTyping] = useState(() => Keyboard.isVisible());
+  const [held, setHeld] = useState(false);
+  useEffect(() => {
+    const shown = Keyboard.addListener("keyboardDidShow", () => setTyping(true));
+    const hidden = Keyboard.addListener("keyboardDidHide", () => setTyping(false));
+    return () => {
+      shown.remove();
+      hidden.remove();
+    };
+  }, []);
+  useEffect(() => {
+    if (!typing) setHeld(false);
+    else if (loading) setHeld(true);
+  }, [typing, loading]);
+  return loading || (held && typing);
+}
+
 export function SpecsCard({
   specs,
   loading,
@@ -105,8 +130,9 @@ export function SpecsCard({
   const { color } = useTheme();
   const feedback = usePressFeedback();
   const [expanded, setExpanded] = useState(false);
+  const skeleton = useSkeletonHeldWhileTyping(loading);
   // A sub-category with no specs, or a call that failed: no card at all.
-  if (!loading && specs.length === 0) return null;
+  if (!skeleton && specs.length === 0) return null;
 
   const primary = specs.filter((s) => s.facet === "default");
   const more = specs.filter((s) => s.facet !== "default");
@@ -124,9 +150,12 @@ export function SpecsCard({
           backgroundColor: color.surface,
           overflow: "hidden",
         }}
-        accessibilityLabel={loading ? "Loading specs" : undefined}
+        // One element while loading, so VoiceOver reads the label instead of
+        // skipping a box of unlabelled skeletons; the rows' own after that.
+        accessible={skeleton}
+        accessibilityLabel={skeleton ? "Loading specs" : undefined}
       >
-        {loading
+        {skeleton
           ? [0, 1, 2].map((i) => (
               <View
                 key={i}
@@ -152,7 +181,7 @@ export function SpecsCard({
                 onPress={() => onPressSpec(spec)}
               />
             ))}
-        {!loading && showMore ? (
+        {!skeleton && showMore ? (
           <TouchableOpacity
             activeOpacity={1}
             onPress={() => setExpanded(true)}

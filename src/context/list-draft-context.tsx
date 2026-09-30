@@ -1,5 +1,5 @@
 import { startExtraction as openExtraction, Transport } from "@/backend/list-flow/extraction";
-import { fetchSpecs } from "@/backend/list-flow/specs";
+import { ensureSpecs as requestSpecs } from "@/backend/list-flow/specs";
 import { uploadPhoto } from "@/backend/list-flow/upload";
 import { useGlobalContext } from "@/context/global-context";
 import { EventName, resetEvents, track as trackEvent } from "@/lib/events";
@@ -16,7 +16,6 @@ import {
   serializeDraft,
   uploadedPhotos,
 } from "@/lib/list-flow/draft";
-import { resolveCategoryId } from "@/lib/list-flow/specs";
 import {
   AI_FIELDS,
   AiFieldName,
@@ -344,43 +343,7 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // ---- Specs (ENG-34) ---------------------------------------------------------
 
   const ensureSpecs = useCallback(() => {
-    const current = draftRef.current;
-    const category = current?.fields.category.value ?? null;
-    if (!current || !category) return;
-    const categoryId = resolveCategoryId(categoriesRef.current, category);
-    // Not in the loaded taxonomy (or not loaded yet): no card rather than a
-    // guess. Review asks again once the categories arrive.
-    if (categoryId === null) return;
-    // The model names categories by title; keeping the id on the draft is what
-    // lets a late answer be matched to the category it was asked for. Same
-    // titles, so the reducer treats it as a confirmation, not an edit.
-    if (category.id == null) {
-      dispatch({ type: "editField", field: "category", value: { ...category, id: categoryId } });
-    }
-    const { specs } = current;
-    if (specs.categoryId === categoryId && specs.status !== "idle") return;
-
-    dispatch({ type: "specsRequested", categoryId });
-    const f = current.fields;
-    const text = (v: string | null) => v?.trim() || undefined;
-    void fetchSpecs({
-      attempt_id: current.attemptId,
-      category_id: categoryId,
-      title: text(f.title.value),
-      brand_name: text(f.brand_name.value),
-      model_name: text(f.model_name.value),
-      description: text(f.description.value),
-    }).then((result) => {
-      // Discarded or replaced by another listing while the call ran.
-      if (draftRef.current?.attemptId !== current.attemptId) return;
-      // An answer about some other category than the one asked for is no
-      // answer: the card goes rather than sitting on its skeleton.
-      if (result.ok && result.categoryId === categoryId) {
-        dispatch({ type: "specsLoaded", categoryId, specs: result.specs });
-      } else {
-        dispatch({ type: "specsUnavailable", categoryId });
-      }
-    });
+    void requestSpecs(() => draftRef.current, dispatch, categoriesRef.current);
   }, [dispatch]);
 
   // ---- Extraction -----------------------------------------------------------
@@ -467,6 +430,9 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               warning: { ...event, photo: toDraftPhoto(event.photo) },
             }),
           onDone: (done, transport) => {
+            // A re-run on new photos drops the old specs; if it named no
+            // category (the owner's stands), nothing else asks again.
+            ensureSpecs();
             const rule = parseDepositRule(done.deposit_rule ?? null);
             if (rule) dispatch({ type: "setDepositRule", rule });
             setRun((r) => ({ ...r, status: "done", transport, runId: done.run_id || r.runId }));

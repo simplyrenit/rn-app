@@ -7,7 +7,64 @@ import { CategoryValue, ListingDraft, Spec, SpecValue, SpecsState, WireSpec } fr
  * they depend on the sub-category. Pure, so the rules are unit-tested.
  */
 
-export const EMPTY_SPECS: SpecsState = { categoryId: null, status: "idle", items: [] };
+export const EMPTY_SPECS: SpecsState = { categoryId: null, requestId: null, status: "idle", items: [] };
+
+/** Only the owner's own answers; everything else came from the server. */
+function ownerSpecs(specs: SpecsState) {
+  return specs.items.filter((s) => s.status === "user");
+}
+
+/**
+ * Specs after a run on a changed photo set, like `withoutStaleAi` for fields:
+ * the server's values described the old photos, so they go and the specs are
+ * asked for again; what the owner set stays. The same object when there is
+ * nothing to drop.
+ */
+export function withoutStaleSpecs(specs: SpecsState): SpecsState {
+  if (specs.status === "idle" && specs.items.every((s) => s.status === "user")) return specs;
+  return { ...specs, requestId: null, status: "idle", items: ownerSpecs(specs) };
+}
+
+/** A new request for `categoryId`: the owner's answers carry over only within one category. */
+export function requestedSpecs(specs: SpecsState, categoryId: number, requestId: string): SpecsState {
+  return {
+    categoryId,
+    requestId,
+    status: "loading",
+    items: specs.categoryId === categoryId ? ownerSpecs(specs) : [],
+  };
+}
+
+/**
+ * The server's answer with the owner's earlier answers laid over it — the
+ * owner's values always win (contract, "Create and edit payload"). One that
+ * is no longer an option is dropped rather than sent.
+ */
+export function mergeOwnerSpecs(fresh: Spec[], owner: Spec[]): Spec[] {
+  return fresh.map((spec) => {
+    const mine = owner.find((o) => o.key === spec.key);
+    if (!mine) return spec;
+    const values = mine.value === null ? [] : Array.isArray(mine.value) ? mine.value : [mine.value];
+    if (!values.every((v) => spec.options.includes(v))) return spec;
+    return { ...spec, value: mine.value, status: "user" };
+  });
+}
+
+/**
+ * A stored draft's specs, or empty ones. A call cannot outlive the app, so one
+ * saved mid-flight is asked again (Review asks on open) rather than left
+ * loading for good.
+ */
+export function hydrateSpecs(stored: Partial<SpecsState> | undefined): SpecsState {
+  if (!stored || typeof stored !== "object") return EMPTY_SPECS;
+  const status = stored.status === "ready" || stored.status === "unavailable" ? stored.status : "idle";
+  return {
+    categoryId: typeof stored.categoryId === "number" ? stored.categoryId : null,
+    requestId: null,
+    status,
+    items: Array.isArray(stored.items) ? stored.items : [],
+  };
+}
 
 /**
  * The sub-category id for a category the model named by title. The extraction

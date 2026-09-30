@@ -19,7 +19,15 @@ import {
   WarningType,
   WireSpec,
 } from "./types";
-import { EMPTY_SPECS, hasSpecValue, specsFromResponse } from "./specs";
+import {
+  EMPTY_SPECS,
+  hasSpecValue,
+  hydrateSpecs,
+  mergeOwnerSpecs,
+  requestedSpecs,
+  specsFromResponse,
+  withoutStaleSpecs,
+} from "./specs";
 
 export const MAX_PHOTOS = 5;
 export const MAX_RUNS_PER_ATTEMPT = 3;
@@ -149,9 +157,9 @@ export type DraftAction =
   | { type: "prefillLocation"; value: FieldValues["location"] }
   | { type: "setDepositRule"; rule: DepositRule | null }
   | { type: "setReviewNote"; note: ListingDraft["reviewNote"] }
-  | { type: "specsRequested"; categoryId: number }
-  | { type: "specsLoaded"; categoryId: number; specs: WireSpec[] }
-  | { type: "specsUnavailable"; categoryId: number }
+  | { type: "specsRequested"; categoryId: number; requestId: string }
+  | { type: "specsLoaded"; requestId: string; specs: WireSpec[] }
+  | { type: "specsUnavailable"; requestId: string }
   | { type: "setSpec"; key: string; value: SpecValue | null };
 
 /** Recompute the deposit default while the owner has not overridden it. */
@@ -256,11 +264,15 @@ function withoutStaleAi(draft: ListingDraft): ListingDraft {
   const keepProposal =
     draft.conditionConfirmed && draft.fields.condition.value === draft.conditionProposal;
   const conditionProposal = keepProposal ? draft.conditionProposal : null;
-  if (!changed && conditionProposal === draft.conditionProposal) return draft;
+  // Specs read off the old photos go the same way (ENG-34), and are asked for
+  // again once the new run names the category.
+  const specs = withoutStaleSpecs(draft.specs);
+  if (!changed && conditionProposal === draft.conditionProposal && specs === draft.specs) return draft;
   return {
     ...draft,
     fields: fields as unknown as DraftFields,
     conditionProposal,
+    specs,
   };
 }
 
@@ -483,23 +495,28 @@ export function draftReducer(
       return draft.reviewNote === action.note ? draft : { ...draft, reviewNote: action.note };
 
     case "specsRequested":
-      // A fresh request replaces whatever was there, owner values included:
-      // it is only ever made for a category the specs do not already cover.
-      return { ...draft, specs: { categoryId: action.categoryId, status: "loading", items: [] } };
+      return { ...draft, specs: requestedSpecs(draft.specs, action.categoryId, action.requestId) };
 
     case "specsLoaded":
-    case "specsUnavailable":
-      // An answer for a category the owner has since left is dropped (the
-      // contract compares `category_id`), and so is a second answer to a
-      // request already settled.
-      if (draft.specs.categoryId !== action.categoryId || draft.specs.status !== "loading") return draft;
+    case "specsUnavailable": {
+      // Only the answer to the request the draft is waiting on. A category
+      // change or a stale-photo reset drops the request id, so an answer for
+      // a category the owner has left (the contract's `category_id` check)
+      // or for the old photos never lands.
+      const { specs } = draft;
+      if (specs.requestId !== action.requestId || specs.status !== "loading") return draft;
       return {
         ...draft,
         specs:
           action.type === "specsLoaded"
-            ? { categoryId: action.categoryId, status: "ready", items: specsFromResponse(action.specs) }
-            : { categoryId: action.categoryId, status: "unavailable", items: [] },
+            ? {
+                ...specs,
+                status: "ready",
+                items: mergeOwnerSpecs(specsFromResponse(action.specs), specs.items),
+              }
+            : { ...specs, status: "unavailable", items: [] },
       };
+    }
 
     case "setSpec": {
       const index = draft.specs.items.findIndex((spec) => spec.key === action.key);
@@ -631,10 +648,6 @@ export function hydrateDraft(raw: string | null, now: number): ListingDraft | nu
       return null;
     }
     const base = createDraft(parsed.attemptId, parsed.startedAt);
-    // A specs call cannot outlive the app, so one saved mid-flight is asked
-    // again when Review opens rather than left loading for good.
-    const specs =
-      parsed.specs && parsed.specs.status !== "loading" ? parsed.specs : base.specs;
     const draft = withUploadedPhotosOnly({
       ...base,
       ...parsed,
@@ -642,7 +655,7 @@ export function hydrateDraft(raw: string | null, now: number): ListingDraft | nu
       photos: parsed.photos ?? [],
       dismissedWarnings: parsed.dismissedWarnings ?? [],
       warnings: parsed.warnings ?? [],
-      specs,
+      specs: hydrateSpecs(parsed.specs),
     });
     return {
       ...draft,

@@ -137,6 +137,12 @@ export interface Spec {
 export interface SpecsState {
   /** The sub-category the specs were asked for; null before any request. */
   categoryId: number | null;
+  /**
+   * The request the draft is waiting on. Only its answer is taken: the same
+   * category can be asked for twice (B, A, B), and the first B's late failure
+   * must not land on the second B.
+   */
+  requestId: string | null;
   /** `unavailable` means the call failed: no card, and never a blocker. */
   status: "idle" | "loading" | "ready" | "unavailable";
   items: Spec[];

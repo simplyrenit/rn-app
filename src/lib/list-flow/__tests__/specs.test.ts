@@ -30,8 +30,8 @@ function build(...actions: DraftAction[]) {
 const loaded = (...more: DraftAction[]) =>
   build(
     { type: "editField", field: "category", value: AC },
-    { type: "specsRequested", categoryId: 7 },
-    { type: "specsLoaded", categoryId: 7, specs: wire },
+    { type: "specsRequested", categoryId: 7, requestId: "r7" },
+    { type: "specsLoaded", requestId: "r7", specs: wire },
     ...more
   );
 
@@ -66,7 +66,7 @@ describe("specs in the draft", () => {
   it("shows a skeleton while the request runs, then the specs", () => {
     const loading = build(
       { type: "editField", field: "category", value: AC },
-      { type: "specsRequested", categoryId: 7 }
+      { type: "specsRequested", categoryId: 7, requestId: "r7" }
     );
     expect(specsLoading(loading)).toBe(true);
     expect(currentSpecs(loading)).toEqual([]);
@@ -75,7 +75,7 @@ describe("specs in the draft", () => {
 
   it("clears the specs when the owner changes the category", () => {
     const d = loaded({ type: "editField", field: "category", value: FRIDGE });
-    expect(d.specs).toEqual({ categoryId: null, status: "idle", items: [] });
+    expect(d.specs).toEqual({ categoryId: null, requestId: null, status: "idle", items: [] });
   });
 
   it("keeps the specs when the owner re-picks the same category", () => {
@@ -86,10 +86,10 @@ describe("specs in the draft", () => {
   it("ignores a response for a category the owner has since left", () => {
     const d = build(
       { type: "editField", field: "category", value: AC },
-      { type: "specsRequested", categoryId: 7 },
+      { type: "specsRequested", categoryId: 7, requestId: "r7" },
       { type: "editField", field: "category", value: FRIDGE },
-      { type: "specsRequested", categoryId: 8 },
-      { type: "specsLoaded", categoryId: 7, specs: wire }
+      { type: "specsRequested", categoryId: 8, requestId: "r8" },
+      { type: "specsLoaded", requestId: "r7", specs: wire }
     );
     expect(d.specs.status).toBe("loading");
     expect(d.specs.categoryId).toBe(8);
@@ -100,8 +100,8 @@ describe("specs in the draft", () => {
       { type: "mergeAi", event: { field: "category", status: "filled", value: { parent: AC.parent, title: AC.title } } },
       // The id the app resolves for the model's titles: a confirmation.
       { type: "editField", field: "category", value: AC },
-      { type: "specsRequested", categoryId: 7 },
-      { type: "specsLoaded", categoryId: 7, specs: wire },
+      { type: "specsRequested", categoryId: 7, requestId: "r7" },
+      { type: "specsLoaded", requestId: "r7", specs: wire },
       // A later run re-reads the category: titles only, no id yet.
       { type: "mergeAi", event: { field: "category", status: "filled", value: { parent: "Appliances", title: "Refrigerator" } } }
     );
@@ -113,8 +113,8 @@ describe("specs in the draft", () => {
   it("hides the card when the call failed", () => {
     const d = build(
       { type: "editField", field: "category", value: AC },
-      { type: "specsRequested", categoryId: 7 },
-      { type: "specsUnavailable", categoryId: 7 }
+      { type: "specsRequested", categoryId: 7, requestId: "r7" },
+      { type: "specsUnavailable", requestId: "r7" }
     );
     expect(d.specs.status).toBe("unavailable");
     expect(currentSpecs(d)).toEqual([]);
@@ -139,7 +139,7 @@ describe("specs in the draft", () => {
   it("asks again after a resume that was saved mid-request", () => {
     const d = build(
       { type: "editField", field: "category", value: AC },
-      { type: "specsRequested", categoryId: 7 }
+      { type: "specsRequested", categoryId: 7, requestId: "r7" }
     );
     expect(hydrateDraft(serializeDraft(d), 0)?.specs.status).toBe("idle");
     expect(hydrateDraft(serializeDraft(loaded()), 0)?.specs.status).toBe("ready");
@@ -148,7 +148,95 @@ describe("specs in the draft", () => {
   it("gives a draft saved before ENG-34 empty specs", () => {
     const { specs, ...old } = createDraft("attempt-1", 0);
     expect(specs.status).toBe("idle");
-    expect(hydrateDraft(JSON.stringify(old), 0)?.specs).toEqual({ categoryId: null, status: "idle", items: [] });
+    expect(hydrateDraft(JSON.stringify(old), 0)?.specs).toEqual({ categoryId: null, requestId: null, status: "idle", items: [] });
+  });
+});
+
+describe("specs across requests and re-runs", () => {
+  const photo = (id: string) => ({
+    id,
+    localUri: `file:///${id}.jpg`,
+    remoteUrl: `https://cdn.test/${id}.jpg`,
+    source: "camera" as const,
+    status: "done" as const,
+  });
+
+  it("takes only the answer to the latest request for the same category (B, A, B)", () => {
+    const d = build(
+      { type: "editField", field: "category", value: AC },
+      { type: "specsRequested", categoryId: 7, requestId: "b1" },
+      { type: "editField", field: "category", value: FRIDGE },
+      { type: "specsRequested", categoryId: 8, requestId: "a" },
+      { type: "editField", field: "category", value: AC },
+      { type: "specsRequested", categoryId: 7, requestId: "b2" },
+      // The first B's timeout lands late; the second B's answer after it.
+      { type: "specsUnavailable", requestId: "b1" },
+      { type: "specsLoaded", requestId: "b2", specs: wire }
+    );
+    expect(d.specs.status).toBe("ready");
+    expect(currentSpecs(d)).toHaveLength(4);
+  });
+
+  it("drops the old photos' specs on a changed-photos run and keeps the owner's", () => {
+    const d = build(
+      { type: "addPhoto", photo: photo("a") },
+      { type: "serverRunCounted", clearStaleAi: true, sentPhotoIds: ["a"] },
+      { type: "mergeAi", event: { field: "category", status: "filled", value: { parent: AC.parent, title: AC.title } } },
+      { type: "editField", field: "category", value: AC },
+      { type: "specsRequested", categoryId: 7, requestId: "r1" },
+      { type: "specsLoaded", requestId: "r1", specs: wire },
+      { type: "setSpec", key: "brand", value: "LG" },
+      // New photos, and the run on them is accepted.
+      { type: "addPhoto", photo: photo("b") },
+      { type: "serverRunCounted", clearStaleAi: true, sentPhotoIds: ["a", "b"] }
+    );
+    expect(d.specs.status).toBe("idle");
+    expect(d.specs.items.map((s) => [s.key, s.value, s.status])).toEqual([["brand", "LG", "user"]]);
+    expect(specAttributes(d)).toEqual({});
+
+    // The re-run names the same category; the new answer comes under the owner's brand.
+    const again = [
+      { type: "mergeAi", event: { field: "category", status: "filled", value: { parent: AC.parent, title: AC.title } } },
+      { type: "editField", field: "category", value: AC },
+      { type: "specsRequested", categoryId: 7, requestId: "r2" },
+      {
+        type: "specsLoaded",
+        requestId: "r2",
+        specs: [
+          { ...wire[0], value: "Window", status: "check" },
+          { ...wire[2], value: "Daikin", status: "filled" },
+        ],
+      },
+    ] as DraftAction[];
+    const next = again.reduce<ListingDraft>((x, a) => draftReducer(x, a) as ListingDraft, d);
+    expect(specAttributes(next)).toEqual({ ac_type: "Window", brand: "LG" });
+  });
+
+  it("does not touch specs on a same-photo re-run", () => {
+    const d = loaded({ type: "serverRunCounted", clearStaleAi: false });
+    expect(d.specs.status).toBe("ready");
+  });
+
+  it("ignores an answer that arrives after a stale-photo reset", () => {
+    const d = build(
+      { type: "editField", field: "category", value: AC },
+      { type: "specsRequested", categoryId: 7, requestId: "r1" },
+      { type: "serverRunCounted", clearStaleAi: true, sentPhotoIds: [] },
+      { type: "specsLoaded", requestId: "r1", specs: wire }
+    );
+    expect(d.specs.status).toBe("idle");
+  });
+
+  it("hydrates a stored specs object with missing parts", () => {
+    const d = build({ type: "editField", field: "category", value: AC });
+    const raw = JSON.parse(serializeDraft(d));
+    raw.specs = { categoryId: 7, status: "ready" };
+    expect(hydrateDraft(JSON.stringify(raw), 0)?.specs).toEqual({
+      categoryId: 7,
+      requestId: null,
+      status: "ready",
+      items: [],
+    });
   });
 });
 
