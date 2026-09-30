@@ -16,6 +16,7 @@ import { ConditionFilter } from "@/components/search/condition-filter";
 import { PriceFilter } from "@/components/search/price-filter";
 import { RatingFilter } from "@/components/search/rating-filter";
 import { SortFilter } from "@/components/search/sort-filter";
+import { SpecFilter } from "@/components/search/spec-filter";
 import SubCategoryFilter from "@/components/search/sub-category-filter";
 import { useGlobalContext } from "@/context/global-context";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
@@ -33,7 +34,7 @@ import {
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { AdjustmentsVerticalIcon } from "react-native-heroicons/outline";
-import { useSearch } from "@/backend/search";
+import { SpecFilterPanel, useSearch } from "@/backend/search";
 import { Disclaimer } from "@/components/home/disclaimer";
 import { SCREEN_GUTTER, colors, density, ink, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -58,6 +59,8 @@ function sheetHeightForTab(tab: string, showSubCategory: boolean) {
       return "52%";
     case "Category":
       return showSubCategory ? "70%" : "62%";
+    case "Specs":
+      return "75%";
     default:
       return "60%";
   }
@@ -76,6 +79,8 @@ function tabHasValue(tab: string, filters: any) {
       return Boolean(filters?.ratings?.product || filters?.ratings?.owner);
     case "Condition":
       return Boolean(filters?.condition);
+    case "Specs":
+      return Object.keys(filters?.specs ?? {}).length > 0;
     default:
       return false;
   }
@@ -93,6 +98,8 @@ const createDefaultFilters = (category = "") => ({
   price: { min: "", max: "" },
   ratings: { product: 0, owner: 0 },
   condition: "",
+  /** Chosen options per spec key; they belong to one sub-category (ENG-31). */
+  specs: {} as Record<string, string[]>,
 });
 
 /** The range arrives as an ISO string, because navigation params must be
@@ -170,7 +177,7 @@ export default function SearchResults() {
     products: fetchedProducts,
     category,
   } = route.params;
-  const { searchProducts } = useSearch();
+  const { searchProducts, fetchSpecFilters } = useSearch();
   const [products, setProducts] = useState<BackendProduct[]>(fetchedProducts);
   const didBootstrapSearchRef = useRef(false);
 
@@ -199,9 +206,10 @@ export default function SearchResults() {
   } | null>(null);
 
   const isFilterActive = () => {
-    const { sort, category, subCategory, price, ratings, condition } = filters;
+    const { sort, category, subCategory, price, ratings, condition, specs } = filters;
 
     return (
+      Object.keys(specs).length > 0 ||
       sort !== "" ||
       category !== "" ||
       subCategory !== "" ||
@@ -220,13 +228,29 @@ export default function SearchResults() {
     setFilters((prevFilters) => ({
       ...prevFilters,
       [filterType]: prevFilters[filterType] === value ? null : value,
+      // Specs are keys of one sub-category; another one has other keys.
+      ...(filterType === "subCategory" ? { specs: {} } : {}),
     }));
+  };
+
+  const handleSpecToggle = (key: string, option: string) => {
+    setFilters((prevFilters) => {
+      const current = prevFilters.specs[key] ?? [];
+      const next = current.includes(option)
+        ? current.filter((o) => o !== option)
+        : [...current, option];
+      const specs = { ...prevFilters.specs, [key]: next };
+      if (next.length === 0) delete specs[key];
+      return { ...prevFilters, specs };
+    });
   };
 
   const handleCategorySelect = (category: string) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
       category,
+      // Back out of the sub-category list and tap the same parent: keep them.
+      specs: prevFilters.category === category ? prevFilters.specs : {},
     }));
     setSelectedCategory(category);
     setShowSubCategory(true);
@@ -266,6 +290,7 @@ export default function SearchResults() {
         product_rating: nextFilters.ratings.product,
         owner_rating: nextFilters.ratings.owner,
         condition: nextFilters.condition,
+        specs: nextFilters.specs,
       }
     );
 
@@ -314,6 +339,68 @@ export default function SearchResults() {
     };
   }, [filtersKey, appliedKey, preview?.key]);
 
+  /**
+   * The chosen sub-category's spec filters, counted against the filters as
+   * entered (not yet applied), so every count is what tapping it would give.
+   * Kept while the next count loads, so the tab doesn't flicker away.
+   */
+  const [specPanel, setSpecPanel] = useState<{
+    subCategory: string;
+    panel: SpecFilterPanel;
+  } | null>(null);
+  useEffect(() => {
+    if (!filters.subCategory) {
+      setSpecPanel(null);
+      return;
+    }
+    const subCategory = filters.subCategory;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const panel = await fetchSpecFilters(
+          selectedItem,
+          coords.lat != null && coords.lng != null
+            ? { lat: coords.lat, lng: coords.lng }
+            : undefined,
+          { start_date: range.startDate ?? undefined, end_date: range.endDate ?? undefined },
+          {
+            sort: filters.sort,
+            category: filters.category,
+            subcategory: filters.subCategory,
+            min_price: filters.price.min,
+            max_price: filters.price.max,
+            product_rating: filters.ratings.product,
+            owner_rating: filters.ratings.owner,
+            condition: filters.condition,
+            specs: filters.specs,
+          }
+        );
+        if (!cancelled) setSpecPanel({ subCategory, panel });
+      } catch {
+        // No spec filters is a usable sheet; the rest of it still works.
+      }
+    }, COUNT_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [filtersKey]);
+
+  // Only the chosen sub-category's own panel: a previous one's keys would
+  // filter the new sub-category to nothing, with no chip left to undo them.
+  const specs =
+    specPanel && specPanel.subCategory === filters.subCategory
+      ? specPanel.panel.filters
+      : [];
+  const tabs = [
+    "Sort",
+    "Category",
+    ...(specs.length > 0 ? ["Specs"] : []),
+    "Price",
+    "Ratings",
+    "Condition",
+  ];
+
   const pendingCount =
     filtersKey === appliedKey
       ? products.length
@@ -342,6 +429,12 @@ export default function SearchResults() {
   };
 
   const [selectedTab, setSelectedTab] = useState("Sort");
+  // The Specs tab goes when its sub-category does; don't leave the sheet blank,
+  // and don't jump back to Specs when a later panel arrives.
+  const activeTab = tabs.includes(selectedTab) ? selectedTab : "Category";
+  useEffect(() => {
+    if (activeTab !== selectedTab) setSelectedTab(activeTab);
+  }, [activeTab, selectedTab]);
 
   const [showSubCategory, setShowSubCategory] = useState(false);
 
@@ -604,13 +697,13 @@ export default function SearchResults() {
           asks for the height it actually needs. */}
       <CustomBottomSheetModal
         ref={bottomSheetRef}
-        snapPoints={[sheetHeightForTab(selectedTab, showSubCategory)]}
+        snapPoints={[sheetHeightForTab(activeTab, showSubCategory)]}
         isDark={isDark}
         scrollView={false}
       >
         <StyledBottomView className="w-full py-2 flex flex-col justify-between flex-1 ">
           <View className="flex-1 w-full ">
-            <View className="flex w-full " style={{ marginBottom: selectedTab === 'Category' && !showSubCategory ? 0 : 12 }}>
+            <View className="flex w-full " style={{ marginBottom: activeTab === 'Category' && !showSubCategory ? 0 : 12 }}>
               <Text
                 accessibilityRole="header"
                 role="sectionTitle"
@@ -636,7 +729,7 @@ export default function SearchResults() {
                     right: 0,
                   }}
                 />
-                {["Sort", "Category", "Price", "Ratings", "Condition"].map(
+                {tabs.map(
                   (tab) => (
                     <TouchableOpacity
                       key={tab}
@@ -650,19 +743,19 @@ export default function SearchResults() {
                       <View
                         style={{
                           position: "relative",
-                          paddingBottom: selectedTab === tab ? 2 : 0,
+                          paddingBottom: activeTab === tab ? 2 : 0,
                         }}
                       >
                         <Text
                           fontSize="text-sm"
-                          fontWeight={selectedTab === tab ? "font-semibold" : "font-medium"}
-                          tone={selectedTab === tab ? "default" : "body"}
+                          fontWeight={activeTab === tab ? "font-semibold" : "font-medium"}
+                          tone={activeTab === tab ? "default" : "body"}
                         >
                           {tab}
                           {tabHasValue(tab, filters) ? " •" : ""}
                         </Text>
                         {/* Border for the selected tab */}
-                        {selectedTab === tab && (
+                        {activeTab === tab && (
                           <View
                             style={{
                               position: "absolute",
@@ -681,7 +774,7 @@ export default function SearchResults() {
               </ScrollView>
             </View>
             <View className="flex-1 px-1">
-              {selectedTab === "Sort" && (
+              {activeTab === "Sort" && (
                 <SortFilter
                   selectedFilter={filters.sort}
                   onSelect={(option) => handleFilterSelect("sort", option)}
@@ -690,7 +783,7 @@ export default function SearchResults() {
                   hasLocation={coords.lat != null && coords.lng != null}
                 />
               )}
-              {selectedTab === "Category" && !showSubCategory && (
+              {activeTab === "Category" && !showSubCategory && (
                 // The picker every other screen uses, so the search across
                 // sub-categories behaves the same here as there.
                 <TaxonomyList
@@ -702,12 +795,12 @@ export default function SearchResults() {
                   // no check mark to warn it would clear an existing pick.
                   onSearchSelect={(parent, child) => {
                     handleCategorySelect(parent.title);
-                    setFilters((prev) => ({ ...prev, subCategory: child.title }));
+                    setFilters((prev) => ({ ...prev, subCategory: child.title, specs: {} }));
                   }}
                 />
               )}
 
-              {selectedTab === "Category" &&
+              {activeTab === "Category" &&
                 showSubCategory &&
                 selectedCategoryData && (
                   <SubCategoryFilter
@@ -723,7 +816,14 @@ export default function SearchResults() {
                     closeSheet={closeSheet}
                   />
                 )}
-              {selectedTab === "Price" && (
+              {activeTab === "Specs" && (
+                <SpecFilter
+                  specs={specs}
+                  selected={filters.specs}
+                  onToggle={handleSpecToggle}
+                />
+              )}
+              {activeTab === "Price" && (
                 <PriceFilter
                   minPrice={filters.price.min}
                   maxPrice={filters.price.max}
@@ -732,7 +832,7 @@ export default function SearchResults() {
                   isLoading={isLoading}
                 />
               )}
-              {selectedTab === "Ratings" && (
+              {activeTab === "Ratings" && (
                 <RatingFilter
                   productRating={filters.ratings.product}
                   ownerRating={filters.ratings.owner}
@@ -741,7 +841,7 @@ export default function SearchResults() {
                   isLoading={isLoading}
                 />
               )}
-              {selectedTab === "Condition" && (
+              {activeTab === "Condition" && (
                 <ConditionFilter
                   selectedFilter={filters.condition}
                   onSelect={(option) => handleFilterSelect("condition", option)}

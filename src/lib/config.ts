@@ -162,6 +162,9 @@ export const ALL_PRODUCTS = SERVERURL + "product-title/";
 
 export const SEARCH_PRODUCTS = SERVERURL + "search/";
 
+/** Spec filters with counts for a search narrowed to one sub-category (ENG-31). */
+export const SEARCH_SPEC_FILTERS = SERVERURL + "search/filters/";
+
 export const GET_PRODUCT_DETAILS = SERVERURL + "products/";
 
 export const OWNER_DETAILS = SERVERURL + "owner-details/";
