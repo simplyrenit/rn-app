@@ -67,6 +67,27 @@ describe("keySpecLine", () => {
     expect(keySpecLine("Blackstone cooler", specs)).toBe("AC");
   });
 
+  it("does not read a hyphenated word as its parts", () => {
+    const specs = [main("ac", "AC / non-AC", "AC")];
+    expect(keySpecLine("Non-AC tempo traveller", specs)).toBe("AC");
+    expect(keySpecLine("AC tempo traveller", specs)).toBe("");
+  });
+
+  it("needs the range's whole unit, not its first word", () => {
+    const specs = [main("room", "Room size", "120 – 200 sq ft")];
+    expect(keySpecLine("Cooler for 200 sq m halls", specs)).toBe("120 – 200 sq ft");
+    expect(keySpecLine("Cooler for 200 sq ft rooms", specs)).toBe("");
+  });
+
+  it("survives values that are not strings", () => {
+    const specs = [
+      main("bee_rating", "BEE star rating", 5 as unknown as string),
+      main("smart", "Smart", true as unknown as string),
+    ];
+    expect(keySpecLine("Voltas 5 star", specs)).toBe("true");
+    expect(keySpecLine("Voltas", specs)).toBe("5 · true");
+  });
+
   it("is empty with no specs (older API)", () => {
     expect(keySpecLine("Anything", [])).toBe("");
   });
@@ -90,6 +111,11 @@ describe("specMatchesFilters", () => {
     expect(specMatchesFilters(acType, { ac_type: ["Window"] })).toBe(false);
     expect(specMatchesFilters(acType, undefined)).toBe(false);
     expect(specMatchesFilters(acType, {})).toBe(false);
+  });
+
+  it("compares a non-string value as its string", () => {
+    const rating = main("bee_rating", "BEE star rating", 5 as unknown as string);
+    expect(specMatchesFilters(rating, { bee_rating: ["5"] })).toBe(true);
   });
 
   it("matches a multi-value spec on any of its values", () => {

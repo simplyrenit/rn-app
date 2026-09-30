@@ -29,8 +29,14 @@ function SpecRow({
   divider: boolean;
 }) {
   const { color } = useTheme();
+  const value = specValueText(spec.value);
   return (
+    // One stop for a screen reader: label, value and match, not three.
     <View
+      accessible
+      accessibilityLabel={`${spec.label}, ${value}${
+        matched ? ", matches your filter" : ""
+      }`}
       style={{
         ...ROW_PAD,
         minHeight: MIN_TOUCH_TARGET,
@@ -46,15 +52,11 @@ function SpecRow({
       </Text>
       <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 4 }}>
         <Text fontSize="text-md" style={{ flexShrink: 1 }}>
-          {specValueText(spec.value)}
+          {value}
         </Text>
         {/* A check, no banner or tint (PDP-03): the renter chose this value,
             so it only has to be findable, not announced. */}
-        {matched ? (
-          <View accessible accessibilityLabel="Matches your filter">
-            <CheckIcon size={GLYPH} color={color.brandText} />
-          </View>
-        ) : null}
+        {matched ? <CheckIcon size={GLYPH} color={color.brandText} /> : null}
       </View>
     </View>
   );

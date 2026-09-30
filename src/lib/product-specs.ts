@@ -8,19 +8,29 @@ import { ProductSpec } from "@/lib/types";
 
 /** A spec's value as one line: a multi-value spec lists its values. */
 export function specValueText(value: ProductSpec["value"]): string {
-  return Array.isArray(value) ? value.join(", ") : value;
+  return valuesOf(value).join(", ");
 }
 
 /**
- * Words and numbers only, lower case, so "1.5-Ton", "1.5ton" and "1.5 ton"
- * compare equal, and "12,000" is the number 12000 on both sides.
+ * A spec's values as strings. The type says strings, but a stored value is
+ * JSON: a number or boolean that slipped past the server must not crash the
+ * page (`.toLowerCase` of 5) or silently fail to match.
+ */
+function valuesOf(value: ProductSpec["value"]): string[] {
+  return (Array.isArray(value) ? value : [value]).map(String);
+}
+
+/**
+ * Tokens only, lower case, so "1.5-Ton", "1.5ton" and "1.5 ton" compare equal,
+ * and "12,000" is the number 12000 on both sides. A hyphenated word stays one
+ * token, so "Non-AC" is not the word "AC" and "USB-C" is not "USB".
  */
 function normalise(text: string): string {
   return (
-    text
+    String(text)
       .toLowerCase()
       .replace(/(\d),(?=\d)/g, "$1")
-      .match(/\d+(?:\.\d+)?|[a-z]+/g)
+      .match(/\d+(?:\.\d+)?|[a-z]+(?:-[a-z]+)*/g)
       ?.join(" ") ?? ""
   );
 }
@@ -31,9 +41,10 @@ const RANGE = /\d\s*[-–—]\s*\d/;
 /**
  * Whether the title already says this value.
  *
- * Whole words, so "AC" is not found inside "Black". A range counts as stated
- * when the title gives one of its ends in the same unit: "1.1 – 1.5 Ton" is
- * stated by "Daikin 1.5 Ton …". A number inside the range is not — that would
+ * Whole tokens, so "AC" is not found inside "Black" or "Non-AC". A range
+ * counts as stated when the title gives one of its ends followed by the whole
+ * unit: "1.1 – 1.5 Ton" is stated by "Daikin 1.5 Ton …", and "120 – 200 sq ft"
+ * is not stated by "200 sq m". A number inside the range is not — that would
  * be the page guessing the listing's exact value.
  */
 function titleStates(title: string, value: string): boolean {
@@ -44,11 +55,12 @@ function titleStates(title: string, value: string): boolean {
   if (!RANGE.test(value)) return false;
 
   const tokens = needle.split(" ");
-  const numbers = tokens.filter((t) => /^\d/.test(t));
-  const lastNumber = tokens.map((t) => /^\d/.test(t)).lastIndexOf(true);
-  const unit = tokens[lastNumber + 1];
+  const isNumber = tokens.map((t) => /^\d/.test(t));
+  const unit = tokens.slice(isNumber.lastIndexOf(true) + 1).join(" ");
   if (!unit) return false;
-  return numbers.some((n) => haystack.includes(` ${n} ${unit} `));
+  return tokens
+    .filter((_, i) => isNumber[i])
+    .some((n) => haystack.includes(` ${n} ${unit} `));
 }
 
 /** At most this many facts under the title. */
@@ -62,10 +74,7 @@ const KEY_SPEC_LIMIT = 3;
 export function keySpecLine(title: string, specs: ProductSpec[]): string {
   return specs
     .filter((spec) => spec.facet === "default")
-    .filter((spec) => {
-      const values = Array.isArray(spec.value) ? spec.value : [spec.value];
-      return !values.every((v) => titleStates(title, v));
-    })
+    .filter((spec) => !valuesOf(spec.value).every((v) => titleStates(title, v)))
     .slice(0, KEY_SPEC_LIMIT)
     .map((spec) => specValueText(spec.value))
     .join(" · ");
@@ -82,6 +91,5 @@ export function specMatchesFilters(
 ): boolean {
   const chosen = filters?.[spec.key];
   if (!chosen?.length) return false;
-  const values = Array.isArray(spec.value) ? spec.value : [spec.value];
-  return values.some((v) => chosen.includes(v));
+  return valuesOf(spec.value).some((v) => chosen.includes(v));
 }

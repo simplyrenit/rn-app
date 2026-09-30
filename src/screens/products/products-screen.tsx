@@ -31,15 +31,17 @@ import { useGlobalContext } from "@/context/global-context";
 import {
   BackendProduct,
   BackendReview,
+  RootStackParamList,
   RouteProps,
   useTypedNavigation,
 } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import {
-  StackActions,
   useFocusEffect,
+  useNavigation,
   useRoute,
 } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { CategoryIcon } from "@/lib/category-icons";
 import { useDistanceTo } from "@/lib/distance";
@@ -190,6 +192,13 @@ export default function DetailsScreen() {
   const [reviews, setReviews] = useState<BackendReview[]>([]);
   const { id, isFavorite, specFilters } = route.params;
   const allSpecsRef = React.useRef<BottomSheetModal>(null);
+  // The root native stack, for its typed `push`; `useTypedNavigation` is the
+  // generic navigation prop, which has no `push`.
+  const stack =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  // The breadcrumb awaits a location lookup before it pushes; a second tap in
+  // that window would push the results twice.
+  const openingSubCategory = React.useRef(false);
   const { startChat } = useChat();
   const [startingChat, setStartingChat] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -382,10 +391,11 @@ export default function DetailsScreen() {
    * `navigate` would pop back to it with its old filters still applied.
    */
   const openSubCategory = async () => {
-    if (!subCategory) return;
-    const locationData = await getDiscoveryLocationData();
-    navigation.dispatch(
-      StackActions.push("SearchResults", {
+    if (!subCategory || openingSubCategory.current) return;
+    openingSubCategory.current = true;
+    try {
+      const locationData = await getDiscoveryLocationData();
+      stack.push("SearchResults", {
         category: subCategory.parent,
         subCategory: subCategory.child,
         selectedItem: subCategory.child,
@@ -398,8 +408,10 @@ export default function DetailsScreen() {
           : { lat: undefined, lng: undefined },
         range: { startDate: undefined, endDate: undefined },
         products: [],
-      })
-    );
+      });
+    } finally {
+      openingSubCategory.current = false;
+    }
   };
 
   /**
@@ -645,7 +657,15 @@ export default function DetailsScreen() {
                   gap: 4,
                 }}
               >
-                <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+                {/* Shrinks and wraps rather than pushing the chevron out of
+                    the row on a 360pt screen. */}
+                <Text
+                  fontSize="text-sm"
+                  fontWeight="font-bold"
+                  tone="brand"
+                  numberOfLines={2}
+                  style={{ flexShrink: 1 }}
+                >
                   {`${subCategory.parent} › ${subCategory.child}`}
                 </Text>
                 <ChevronRightIcon size={GLYPH_SIZE} color={color.brandText} />
