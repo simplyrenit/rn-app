@@ -9,7 +9,7 @@ import { ScrollView, View } from "react-native";
 // Measured off the Figma Home frame: 163pt cards (the photo is 176 tall, so the
 // tile's 163:176 ratio holds) with a 16pt gap, under a heading that sits 24pt
 // above them. Each section carries 16pt above and below, which is what makes
-// 16pt after the category rail and 32pt between two rails.
+// 16pt after the category grid and 32pt between two rails.
 const CARD_WIDTH = 163;
 const GAP = 16;
 const SECTION_PADDING = 16;

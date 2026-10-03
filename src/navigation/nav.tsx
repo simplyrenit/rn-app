@@ -23,6 +23,7 @@ import ReviewsScreen from "../screens/products/reviews-screen";
 import WriteReviewsScreen from "../screens/products/write-review";
 import SearchScreen from "../screens/search";
 import SearchResultsScreen from "../screens/search-results";
+import AllCategoriesScreen from "../screens/all-categories";
 import ChatScreen from "../screens/tabs/chat";
 import HomeScreen from "../screens/tabs/index";
 import PostScreen from "../screens/tabs/post";
@@ -403,6 +404,12 @@ export default function Navigation() {
         <Stack.Screen
           name="SearchResults"
           component={SearchResultsScreen}
+        />
+        {/* Category browsing (ENG-80) sits on the root stack beside the
+            results it leads to, so the tab bar hides as it does there. */}
+        <Stack.Screen
+          name="AllCategories"
+          component={AllCategoriesScreen}
         />
         <Stack.Screen
           name="Email"

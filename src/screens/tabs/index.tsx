@@ -16,7 +16,7 @@ import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 
 export default function Home() {
-  const { isAuthenticated } = useGlobalContext();
+  const { isAuthenticated, fetchCategories } = useGlobalContext();
   const { getUser } = useAuthContext();
   const { getNotifications } = useNotifications();
   const { color } = useTheme();
@@ -29,11 +29,15 @@ export default function Home() {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setRefreshKey((key) => key + 1);
+    // The category list is otherwise fetched once per launch, so this is how a
+    // category admin has just added (or the list a cold start missed offline)
+    // reaches Home without a restart.
+    void fetchCategories();
     if (isAuthenticated) void getNotifications();
     // The rails resolve independently; release the control once they have all
     // had a chance to start rather than tying it to the slowest one.
     setTimeout(() => setRefreshing(false), 600);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchCategories]);
 
   useEffect(() => {
     void getUser();
@@ -55,8 +59,8 @@ export default function Home() {
           list. Without the header's material the scroll view's top edge cut
           card titles and price lines through the middle of the letterforms and
           read as a rendering fault rather than as content passing behind. */}
-      {/* 16 above the field; the 8 below is what remains of the design's 16
-          once the category rail's -8 overlap is taken out. The design draws no
+      {/* 16 above the field and 8 below it; the category block adds its own 16
+          above its heading, which makes the v3 frame's 24. The design draws no
           rule under the topbar, so the hairline is off. */}
       <PinnedHeader
         gutter={false}
