@@ -17,8 +17,13 @@ import { View } from "react-native";
  */
 export const CategorySheet = forwardRef<
   BottomSheetModal,
-  { categories: Category[]; onSelect: (value: CategoryValue) => void }
->(({ categories, onSelect }, ref) => {
+  {
+    categories: Category[];
+    onSelect: (value: CategoryValue) => void;
+    /** A line under the title: what choosing will cost, when it costs something. */
+    note?: string | null;
+  }
+>(({ categories, onSelect, note }, ref) => {
   const { isDark } = useTheme();
   const [parent, setParent] = useState<Category | null>(null);
 
@@ -36,20 +41,32 @@ export const CategorySheet = forwardRef<
           <Text role="sectionTitle" accessibilityRole="header">
             Choose a category
           </Text>
+          {note ? (
+            <Text fontSize="text-sm" tone="body" style={{ marginTop: space.xs }}>
+              {note}
+            </Text>
+          ) : null}
         </View>
         {parent ? (
           <TaxonomyList
             inBottomSheet
             items={parent.subcategories}
-            contextLabel={categoryDisplayName(parent.title)}
+            contextLabel={categoryDisplayName(parent.title, parent.slug)}
             onContextPress={() => setParent(null)}
             onSelect={(child) => {
-              onSelect({ parent: parent.title, title: child.title });
+              onSelect({ id: child.id, parent: parent.title, title: child.title });
               setParent(null);
             }}
           />
         ) : (
-          <TaxonomyList inBottomSheet items={categories} onSelect={(item) => setParent(item)} />
+          <TaxonomyList
+            inBottomSheet
+            items={categories}
+            onSelect={(item) => setParent(item)}
+            onSearchSelect={(match, child) =>
+              onSelect({ id: child.id, parent: match.title, title: child.title })
+            }
+          />
         )}
       </View>
     </CustomBottomSheetModal>

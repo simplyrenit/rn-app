@@ -102,12 +102,19 @@ docker compose --env-file config/environments/qa.env -f docker-compose.server.ym
 
 Then retry chat in the app — the `firebase-token` POST should return 200 with a token.
 
-### Longer-term fix (not yet done)
+### Longer-term fix — DONE 2026-10-02
 
-Replace the user ADC with a dedicated **Firebase service-account JSON key**
-(`GOOGLE_APPLICATION_CREDENTIALS` pointing at it). A service-account key has a
-private key, so `create_custom_token` signs locally and never needs reauth or the
-IAM API. This removes the weekly-expiry failure mode entirely.
+QA no longer uses the user ADC. `FIREBASE_SECRETS_FILE` in
+`config/environments/qa.env` now points at a service-account key,
+`/home/yash/.config/renit/firebase-signer-key.json` (mode 600, SA
+`firebase-adminsdk-fbsvc@renit-uat.iam.gserviceaccount.com`). Chat verified
+working after the container was recreated with
+`APP_ENV_FILE=config/environments/qa.env docker compose --env-file config/environments/qa.env -f docker-compose.server.yml up -d --no-deps web`
+(a plain restart keeps the old mount). **The weekly reauth fix above should no
+longer be needed.** If this 503 returns, check the key was not deleted/rotated in
+the GCP console and that `docker exec rn-api-web-1 printenv GOOGLE_APPLICATION_CREDENTIALS`
+still resolves to a `service_account` file. Pre-change env backup: `~/qa.env.bak`
+on the host. Production should use an attached service identity, not a key file.
 
 ---
 

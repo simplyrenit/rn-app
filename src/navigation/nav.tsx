@@ -445,9 +445,15 @@ export default function Navigation() {
           component={SearchScreen}
         />
         {/* <Stack.Screen name="SearchResults" component={SearchResultsScreen} /> */}
+        {/* Keyed by listing: without an id, `navigate("ProductDetail")` found
+            any product page in the stack, popped everything above it and
+            reused it for a different listing — which threw away the results a
+            product page's breadcrumb had just pushed (ENG-35). Now a listing
+            already in the stack is returned to, and any other is pushed. */}
         <Stack.Screen
           name="ProductDetail"
           component={ProductDetailScreen}
+          getId={({ params }) => params?.id}
         />
         <Stack.Screen
           name="ReviewsScreen"

@@ -1,9 +1,19 @@
 import { parseRate } from "./deposit";
-import { FieldName, ListingDraft } from "./types";
+import { specAttributes } from "./specs";
+import { CategoryValue, FieldName, ListingDraft } from "./types";
 
 export interface ContactDetails {
   name: string;
   phone: string;
+}
+
+/**
+ * The `category` key for create and edit. Titles always go: a server without
+ * taxonomy ids resolves by them, and one with ids lets `id` win and ignores
+ * them. A value with no id (AI extraction, an old draft) still resolves.
+ */
+export function categoryPayload({ id, parent, title }: CategoryValue) {
+  return id == null ? { parent, title } : { id, parent, title };
 }
 
 /**
@@ -31,6 +41,7 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
   const rate = parseRate(f.rate.value);
   const deposit = Number(f.security_deposit.value);
   const location = f.location.value;
+  const attributes = specAttributes(draft);
 
   return {
     title: f.title.value?.trim() ?? "",
@@ -38,9 +49,7 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
     rate,
     security_deposit: Number.isFinite(deposit) ? deposit : 0,
     currency: "INR",
-    category: f.category.value
-      ? { parent: f.category.value.parent, title: f.category.value.title }
-      : null,
+    category: f.category.value ? categoryPayload(f.category.value) : null,
     condition: f.condition.value ? f.condition.value.toLowerCase() : null,
     brand_name: f.brand_name.value?.trim() ?? "",
     model_name: f.model_name.value?.trim() ?? "",
@@ -56,6 +65,10 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
     extraction_attempt_id: draft.attemptId,
     field_sources: fieldSources,
     photo_sources: photos.map((p) => p.source),
+    // ENG-34: only specs with a value; the server fills blanks after publish
+    // and never overwrites these. Left out entirely when there are none, so a
+    // listing without specs sends exactly what it did before.
+    ...(Object.keys(attributes).length > 0 ? { attributes } : {}),
   };
 }
 

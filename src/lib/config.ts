@@ -162,6 +162,9 @@ export const ALL_PRODUCTS = SERVERURL + "product-title/";
 
 export const SEARCH_PRODUCTS = SERVERURL + "search/";
 
+/** Spec filters with counts for a search narrowed to one sub-category (ENG-31). */
+export const SEARCH_SPEC_FILTERS = SERVERURL + "search/filters/";
+
 export const GET_PRODUCT_DETAILS = SERVERURL + "products/";
 
 export const OWNER_DETAILS = SERVERURL + "owner-details/";
@@ -186,6 +189,9 @@ export const GET_REFRESH_TOKEN = SERVERURL + "token/refresh/";
 export const LISTING_EXTRACTION_STREAM = SERVERURL + "listing-extractions/stream/";
 
 export const LISTING_EXTRACTION = SERVERURL + "listing-extractions/";
+
+// ENG-34: the sub-category's specs, asked for apart from the stream.
+export const LISTING_EXTRACTION_SPECS = SERVERURL + "listing-extractions/specs/";
 
 export const DEPOSIT_RULES = SERVERURL + "deposit-rules/";
 

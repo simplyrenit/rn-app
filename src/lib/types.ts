@@ -21,6 +21,8 @@ export interface PhoneVerificationResponse {
 
 export interface CategoryItem {
   name: string;
+  /** The taxonomy v2 parent slug this Home tile opens. */
+  slug: string;
   image: ImageSourcePropType;
 }
 
@@ -199,7 +201,16 @@ export type RootStackParamList = {
     verificationType: "otp" | "password" | "phone";
   };
   Phone: undefined;
-  ProductDetail: { id: string; isFavorite?: boolean };
+  ProductDetail: {
+    id: string;
+    isFavorite?: boolean;
+    /**
+     * The spec filters of the search the renter came from (ENG-35), as the
+     * search sent them: options per spec key. The page marks the values that
+     * match. Absent from every other entry point.
+     */
+    specFilters?: Record<string, string[]>;
+  };
   ReviewsScreen: {
     reviews: BackendReview[];
     product: BackendProduct;
@@ -249,6 +260,11 @@ export type RootStackParamList = {
     coords: { lat: number | undefined; lng: number | undefined };
     products: BackendProduct[];
     category?: string;
+    /**
+     * A sub-category title of `category`, chosen before the screen opens — the
+     * product page's breadcrumb (ENG-35). Needs `category` alongside it.
+     */
+    subCategory?: string;
   };
   myProducts: undefined;
   editProduct: { id: string };
@@ -288,7 +304,13 @@ export type RootStackParamList = {
   [key: string]: object | undefined;
 };
 
+/**
+ * `id` and `slug` arrive with taxonomy v2 (ENG-28). QA servers built before it
+ * omit both, so every reader has to work without them.
+ */
 export interface Subcategory {
+  id?: number;
+  slug?: string;
   dark_icon: string | null;
   light_icon: string | null;
   main_icon: string;
@@ -297,6 +319,8 @@ export interface Subcategory {
 }
 
 export interface Category {
+  id?: number;
+  slug?: string;
   dark_icon: string | null;
   light_icon: string | null;
   main_icon: string;
@@ -426,13 +450,29 @@ export interface AuthUser {
   };
 }
 
+/** One of a listing's specs on the product page (ENG-35). */
+export interface ProductSpec {
+  key: string;
+  /** Already display-cased by the server: "AC type", "BEE star rating". */
+  label: string;
+  /** As stored; a range stays a range. Multi-value specs are a list. */
+  value: string | string[];
+  /** "default" specs are the main ones; "expanded" only in the full list. */
+  facet: "default" | "expanded";
+}
+
 export interface BackendProduct {
   name: string;
   title: string;
   description: string;
   security_deposit: string;
   category: {
+    // Optional for the same reason as on `Category`: older servers omit them.
+    id?: number;
+    slug?: string;
     parent: {
+      id?: number;
+      slug?: string;
       title: string;
       parent?: string | null;
       main_icon?: string | null;
@@ -445,6 +485,11 @@ export interface BackendProduct {
     dark_icon?: string | null;
   };
   moderation_labels: string[];
+  /**
+   * Only the specs the listing has, in display order (ENG-35). Product page
+   * only, and absent from servers built before it — read as `?? []`.
+   */
+  specs?: ProductSpec[];
   // Only returned on the owner-facing endpoint; public catalogue responses omit it.
   admin_approved?: boolean | null;
   condition: string;

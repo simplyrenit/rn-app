@@ -1,4 +1,5 @@
 import { startExtraction as openExtraction, Transport } from "@/backend/list-flow/extraction";
+import { ensureSpecs as requestSpecs } from "@/backend/list-flow/specs";
 import { uploadPhoto } from "@/backend/list-flow/upload";
 import { useGlobalContext } from "@/context/global-context";
 import { EventName, resetEvents, track as trackEvent } from "@/lib/events";
@@ -100,6 +101,11 @@ interface ListDraftContextValue {
   waitForUploads: (timeoutMs?: number) => Promise<void>;
   startExtraction: (options?: { categoryHint?: CategoryValue | null }) => void;
   cancelExtraction: () => void;
+  /**
+   * Ask for the draft's sub-category specs unless they are already here or on
+   * the way. Safe to call whenever the category may have changed.
+   */
+  ensureSpecs: () => void;
   /** `track()` with this draft's attempt id attached. */
   track: (name: EventName, props?: Record<string, unknown>) => void;
 }
@@ -107,7 +113,7 @@ interface ListDraftContextValue {
 const ListDraftContext = createContext<ListDraftContextValue | undefined>(undefined);
 
 export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useGlobalContext();
+  const { isAuthenticated, categories } = useGlobalContext();
   const [draft, rawDispatch] = useReducer(draftReducer, null);
   const [hydrated, setHydrated] = useState(false);
   const [stored, setStored] = useState<ListingDraft | null>(null);
@@ -118,6 +124,9 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const draftRef = useRef<ListingDraft | null>(null);
   draftRef.current = draft;
   const runHandle = useRef<{ cancel: () => void } | null>(null);
+  // Read from stream callbacks, which outlive the render that made them.
+  const categoriesRef = useRef(categories);
+  categoriesRef.current = categories;
   const savedAttempts = useRef(new Set<string>());
 
   const dispatch = useCallback((action: DraftAction) => {
@@ -331,6 +340,12 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   }, []);
 
+  // ---- Specs (ENG-34) ---------------------------------------------------------
+
+  const ensureSpecs = useCallback(() => {
+    void requestSpecs(() => draftRef.current, dispatch, categoriesRef.current);
+  }, [dispatch]);
+
   // ---- Extraction -----------------------------------------------------------
 
   const cancelExtraction = useCallback(() => {
@@ -396,6 +411,10 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               trackForDraft("extraction_first_field", { ms: Date.now() - startedAt });
             }
             dispatch({ type: "mergeAi", event });
+            // Specs hang off the sub-category, so they are asked for the
+            // moment it is known, beside the rest of the stream: `done` and
+            // the move to Review never wait on them.
+            if (event.field === "category" && event.status === "filled") ensureSpecs();
             const row: ChecklistRow = { field: event.field as AiFieldName, status: event.status };
             setRun((r) => {
               const at = r.checklist.findIndex((c) => c.field === row.field);
@@ -411,6 +430,9 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               warning: { ...event, photo: toDraftPhoto(event.photo) },
             }),
           onDone: (done, transport) => {
+            // A re-run on new photos drops the old specs; if it named no
+            // category (the owner's stands), nothing else asks again.
+            ensureSpecs();
             const rule = parseDepositRule(done.deposit_rule ?? null);
             if (rule) dispatch({ type: "setDepositRule", rule });
             setRun((r) => ({ ...r, status: "done", transport, runId: done.run_id || r.runId }));
@@ -449,7 +471,7 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
       );
     },
-    [dispatch, trackForDraft]
+    [dispatch, trackForDraft, ensureSpecs]
   );
 
   const clearSubmitted = useCallback(() => {
@@ -480,6 +502,7 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     waitForUploads,
     startExtraction,
     cancelExtraction,
+    ensureSpecs,
     track: trackForDraft,
   };
 

@@ -14,9 +14,21 @@ import {
   ListingDraft,
   ListingWarning,
   PhotoItem,
+  SpecValue,
   WarningEvent,
   WarningType,
+  WireSpec,
 } from "./types";
+import {
+  EMPTY_SPECS,
+  hasSpecValue,
+  hydrateSpecs,
+  mergeOwnerSpecs,
+  ownerSpecs,
+  requestedSpecs,
+  specsFromResponse,
+  withoutStaleSpecs,
+} from "./specs";
 
 export const MAX_PHOTOS = 5;
 export const MAX_RUNS_PER_ATTEMPT = 3;
@@ -58,6 +70,7 @@ export function createDraft(attemptId: string, now: number): ListingDraft {
     extractionRuns: 0,
     lastRunPhotoIds: null,
     reviewNote: null,
+    specs: EMPTY_SPECS,
   };
 }
 
@@ -144,7 +157,11 @@ export type DraftAction =
   | { type: "confirmCondition"; value: Condition }
   | { type: "prefillLocation"; value: FieldValues["location"] }
   | { type: "setDepositRule"; rule: DepositRule | null }
-  | { type: "setReviewNote"; note: ListingDraft["reviewNote"] };
+  | { type: "setReviewNote"; note: ListingDraft["reviewNote"] }
+  | { type: "specsRequested"; categoryId: number; requestId: string }
+  | { type: "specsLoaded"; requestId: string; specs: WireSpec[] }
+  | { type: "specsUnavailable"; requestId: string }
+  | { type: "setSpec"; key: string; value: SpecValue | null };
 
 /** Recompute the deposit default while the owner has not overridden it. */
 function withDerivedDeposit(draft: ListingDraft): ListingDraft {
@@ -248,12 +265,23 @@ function withoutStaleAi(draft: ListingDraft): ListingDraft {
   const keepProposal =
     draft.conditionConfirmed && draft.fields.condition.value === draft.conditionProposal;
   const conditionProposal = keepProposal ? draft.conditionProposal : null;
-  if (!changed && conditionProposal === draft.conditionProposal) return draft;
+  // Specs read off the old photos go the same way (ENG-34), and are asked for
+  // again once the new run names the category.
+  const specs = withoutStaleSpecs(draft.specs);
+  if (!changed && conditionProposal === draft.conditionProposal && specs === draft.specs) return draft;
   return {
     ...draft,
     fields: fields as unknown as DraftFields,
     conditionProposal,
+    specs,
   };
+}
+
+/** Same parent and title; `id` is ignored because only the picker supplies it. */
+function sameCategory(a: unknown, b: unknown) {
+  const x = a as CategoryValue | null;
+  const y = b as CategoryValue | null;
+  return Boolean(x && y && x.parent === y.parent && x.title === y.title);
 }
 
 function isBlankValue(value: unknown) {
@@ -269,6 +297,16 @@ function editField(
   const nextValue = isBlankValue(value) ? null : value;
   if (JSON.stringify(current.value) === JSON.stringify(nextValue)) return draft;
 
+  // The AI proposes titles only; the sheet adds the id. Picking the category
+  // the AI proposed is a confirmation, not an edit: keep the source (so a
+  // changed-photos run still clears it) and just take the id.
+  if (field === "category" && sameCategory(current.value, nextValue)) {
+    return {
+      ...draft,
+      fields: { ...draft.fields, category: { ...draft.fields.category, value: nextValue as CategoryValue } },
+    };
+  }
+
   // Clearing keeps the edited source, so a later run cannot refill the field.
   const next = {
     ...draft,
@@ -277,6 +315,14 @@ function editField(
       [field]: { ...current, value: nextValue, source: editedSource(current.source) },
     },
   } as ListingDraft;
+
+  // Specs belong to one sub-category: another one's would be wrong answers to
+  // different questions, and the owner was warned before choosing. Choosing
+  // the one they are for again — after a changed-photos run cleared the
+  // model's category — keeps them, and with them the owner's answers.
+  if (field === "category" && (nextValue as CategoryValue | null)?.id !== draft.specs.categoryId) {
+    return { ...next, specs: EMPTY_SPECS };
+  }
 
   if (field === "security_deposit") return { ...next, depositTouched: true };
   if (field === "rate") return withDerivedDeposit(next);
@@ -453,6 +499,45 @@ export function draftReducer(
     case "setReviewNote":
       return draft.reviewNote === action.note ? draft : { ...draft, reviewNote: action.note };
 
+    case "specsRequested":
+      return { ...draft, specs: requestedSpecs(draft.specs, action.categoryId, action.requestId) };
+
+    case "specsLoaded":
+    case "specsUnavailable": {
+      // Only the answer to the request the draft is waiting on. A category
+      // change or a stale-photo reset drops the request id, so an answer for
+      // a category the owner has left (the contract's `category_id` check)
+      // or for the old photos never lands.
+      const { specs } = draft;
+      if (specs.requestId !== action.requestId || specs.status !== "loading") return draft;
+      return {
+        ...draft,
+        specs:
+          action.type === "specsLoaded"
+            ? {
+                ...specs,
+                status: "ready",
+                items: mergeOwnerSpecs(specsFromResponse(action.specs), specs.items),
+              }
+            : // No card from the server, but the owner's answers stand.
+              { ...specs, status: "unavailable", items: ownerSpecs(specs) },
+      };
+    }
+
+    case "setSpec": {
+      const index = draft.specs.items.findIndex((spec) => spec.key === action.key);
+      if (index < 0) return draft;
+      const items = draft.specs.items.slice();
+      // Saving the value a Check tag was on is the owner confirming it, so it
+      // is theirs now and the tag goes, same as for a changed value.
+      items[index] = {
+        ...items[index],
+        value: hasSpecValue(action.value) ? action.value : null,
+        status: "user",
+      };
+      return { ...draft, specs: { ...draft.specs, items } };
+    }
+
     default:
       return draft;
   }
@@ -576,6 +661,7 @@ export function hydrateDraft(raw: string | null, now: number): ListingDraft | nu
       photos: parsed.photos ?? [],
       dismissedWarnings: parsed.dismissedWarnings ?? [],
       warnings: parsed.warnings ?? [],
+      specs: hydrateSpecs(parsed.specs),
     });
     return {
       ...draft,

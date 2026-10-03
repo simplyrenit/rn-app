@@ -184,6 +184,27 @@ describe("edit transitions", () => {
     expect(d.fields.title.source).toBe("ai");
   });
 
+  it("picking the AI's category from the sheet takes the id but is not an edit", () => {
+    const ai = { parent: "Gaming", title: "Consoles" };
+    let d = apply(fresh(), filled("category", ai), {
+      type: "editField",
+      field: "category",
+      value: { id: 42, ...ai },
+    });
+    expect(d.fields.category).toMatchObject({ value: { id: 42, ...ai }, source: "ai" });
+
+    // Still the model's, so a run on changed photos clears it as before.
+    d = apply(d, { type: "runStarted" }, { type: "serverRunCounted", clearStaleAi: true });
+    expect(d.fields.category).toMatchObject({ value: null, source: "empty" });
+
+    const other = apply(fresh(), filled("category", ai), {
+      type: "editField",
+      field: "category",
+      value: { id: 7, parent: "Gaming", title: "VR Headsets" },
+    });
+    expect(other.fields.category.source).toBe("ai_edited");
+  });
+
   it("recomputes the deposit from the rate until the owner overrides it", () => {
     let d = apply(fresh(), { type: "editField", field: "rate", value: "610" });
     expect(d.fields.security_deposit.value).toBe("3050");

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { createDraft, draftReducer, DraftAction } from "../draft";
-import { buildCreatePayload } from "../payload";
+import { buildCreatePayload, categoryPayload } from "../payload";
 import { ListingDraft, PhotoItem } from "../types";
 
 const photo = (id: string, source: PhotoItem["source"], status: PhotoItem["status"] = "done"): PhotoItem => ({
@@ -96,5 +96,36 @@ describe("buildCreatePayload", () => {
       { type: "addPhoto", photo: photo("b", "camera") }
     );
     expect(buildCreatePayload(d, contact).cover_image).toBe("https://cdn.example.com/b.jpg");
+  });
+});
+
+describe("category payload", () => {
+  it("sends the id alongside the titles when the picker had one", () => {
+    const d = build({
+      type: "editField",
+      field: "category",
+      value: { id: 42, parent: "Gaming", title: "Consoles" },
+    });
+    expect(buildCreatePayload(d, contact).category).toEqual({
+      id: 42,
+      parent: "Gaming",
+      title: "Consoles",
+    });
+  });
+
+  it("sends titles only when there is no id (AI value, pre-ENG-28 draft)", () => {
+    // A draft saved before ENG-28, round-tripped through storage as the app does.
+    const saved: ListingDraft = JSON.parse(
+      JSON.stringify(
+        build({ type: "editField", field: "category", value: { parent: "Gaming", title: "Consoles" } })
+      )
+    );
+    const category = buildCreatePayload(saved, contact).category;
+    expect(category).toEqual({ parent: "Gaming", title: "Consoles" });
+    expect(category).not.toHaveProperty("id");
+  });
+
+  it("leaves the key out rather than sending an undefined id", () => {
+    expect(categoryPayload({ id: undefined, parent: "Books", title: "Novels" })).not.toHaveProperty("id");
   });
 });

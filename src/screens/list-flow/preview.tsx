@@ -14,6 +14,7 @@ import { SCREEN_GUTTER, duration, radius, space } from "@/lib/design-tokens";
 import { formatNumber } from "@/lib/format";
 import { commitFeedback, successFeedback } from "@/lib/haptics";
 import { uploadedPhotos } from "@/lib/list-flow/draft";
+import { currentSpecs, specDisplayValue } from "@/lib/list-flow/specs";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
@@ -120,6 +121,11 @@ export default function ListPreviewScreen() {
   const cover = coverPhoto?.remoteUrl ?? images[0] ?? null;
   const location = f.location.value;
   const deposit = f.security_deposit.value;
+  // What a renter will see: the specs with a value, however they got it.
+  const specs = currentSpecs(draft).flatMap((spec) => {
+    const value = specDisplayValue(spec.value);
+    return value ? [{ key: spec.key, label: spec.label, value }] : [];
+  });
 
   const onSubmit = async () => {
     if (state !== "idle" || submitting.current) return;
@@ -217,6 +223,27 @@ export default function ListPreviewScreen() {
             <Text tone="body" fontSize="text-md">
               {f.description.value}
             </Text>
+          </View>
+        ) : null}
+
+        {specs.length > 0 ? (
+          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.lg }}>
+            <Text role="sectionTitle" style={{ marginBottom: space.xs }}>
+              Specs
+            </Text>
+            {specs.map((spec) => (
+              <View
+                key={spec.key}
+                style={{ flexDirection: "row", gap: space.md, paddingVertical: space.xs }}
+              >
+                <Text fontSize="text-sm" tone="body" style={{ width: 120 }}>
+                  {spec.label}
+                </Text>
+                <Text fontSize="text-sm" style={{ flex: 1 }}>
+                  {spec.value}
+                </Text>
+              </View>
+            ))}
           </View>
         ) : null}
 
