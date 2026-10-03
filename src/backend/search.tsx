@@ -36,6 +36,36 @@ export type SpecFilterPanel = {
 };
 
 /**
+ * The spec whose options are the results screen's quick chips (ENG-78): the
+ * first "default" one, in the sub-category's definition order, which is the
+ * order the server lists them in. Null leaves the chips off.
+ */
+export function quickChipSpec(filters: SpecFilter[]): SpecFilter | null {
+  return filters.find((f) => f.facet === "default") ?? null;
+}
+
+/**
+ * One option turned on or off, for the filter sheet and the quick chips alike,
+ * so a chip and the sheet can never disagree about what a tap does. Options of
+ * one spec are ORed by the server (ENG-31) whatever the spec's type, so a tap
+ * toggles membership for enum specs too; an emptied spec goes, as an empty
+ * list would still send the key.
+ */
+export function toggleSpecOption(
+  specs: Record<string, string[]>,
+  key: string,
+  option: string
+): Record<string, string[]> {
+  const current = specs[key] ?? [];
+  const next = current.includes(option)
+    ? current.filter((o) => o !== option)
+    : [...current, option];
+  const result = { ...specs, [key]: next };
+  if (next.length === 0) delete result[key];
+  return result;
+}
+
+/**
  * The search query string. Built by hand rather than through axios `params`:
  * a spec with two options must go as `attr.ac_type=Split&attr.ac_type=Window`
  * (options can contain commas, e.g. "Up to 12,000"), and axios would send an
