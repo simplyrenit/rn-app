@@ -171,7 +171,14 @@ export function SegmentedChoice<T extends string>({
                 {option.label}
               </Text>
               {option.hint ? (
-                <Text fontSize="text-xs" tone={option.disabled ? "dim" : "body"}>
+                // One line: "Already saved" wrapped in a third-width chip at 360 dp.
+                <Text
+                  fontSize="text-xs"
+                  tone={option.disabled ? "dim" : "body"}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                >
                   {option.hint}
                 </Text>
               ) : null}

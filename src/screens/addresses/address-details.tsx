@@ -388,7 +388,7 @@ export default function AddressDetailsScreen() {
                     </TouchableOpacity>
                   </View>
                 )}
-                {mapAddress ? (
+                {mapAddress && mapAddress !== locality ? (
                   <Text fontSize="text-sm" tone="body">
                     {mapAddress}
                   </Text>

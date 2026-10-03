@@ -679,6 +679,8 @@ const LocationModal = ({}) => {
                   initialRegion={mapRegion}
                   customMapStyle={isDarkMode ? darkModeMapStyle : []}
                   onPress={handleMapPress}
+                  // A tap on a labelled place arrives here, not in onPress.
+                  onPoiClick={handleMapPress}
                 >
                   {location && (
                     <Marker
@@ -830,10 +832,10 @@ const LocationModal = ({}) => {
                           />
                         </View>
 
-                        {hasPermission === false ? (
-                          // No GPS address to show. Once a point is chosen the
-                          // "Selected Address" block below takes over.
-                          !selectedLocation && (
+                        {/* One address at a time. Stacked, "Your Address" and
+                            "Selected Address" pushed "Use current location"
+                            below this fixed-height panel on a 360 dp phone. */}
+                        {selectedLocation ? null : hasPermission === false ? (
                             <>
                               <Text fontSize="text-md" fontWeight="font-bold">
                                 No location chosen yet
@@ -849,7 +851,6 @@ const LocationModal = ({}) => {
                                 Search or tap the map to choose a spot.
                               </Text>
                             </>
-                          )
                         ) : (
                           <>
                         <Text
@@ -878,7 +879,6 @@ const LocationModal = ({}) => {
                             <Text
                               fontSize="text-md"
                               fontWeight="font-bold"
-                              className="mt-4"
                             >
                               Selected Address:
                             </Text>

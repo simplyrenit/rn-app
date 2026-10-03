@@ -170,12 +170,12 @@ export const AddressPickerSheet = forwardRef<AddressPickerSheetHandle, Props>(
       addAddress();
     };
 
-    const selectedId =
-      (selected &&
-        addresses.find(
+    // A one-off point matches no row, and then no row is marked.
+    const selectedId = selected
+      ? addresses.find(
           (a) => samePoint(a.coordinates.lat, selected.lat) && samePoint(a.coordinates.long, selected.long)
-        )?.id) ??
-      addresses.find((a) => a.is_default)?.id;
+        )?.id
+      : addresses.find((a) => a.is_default)?.id;
     const full = addresses.length >= MAX_ADDRESSES;
 
     const card = {
