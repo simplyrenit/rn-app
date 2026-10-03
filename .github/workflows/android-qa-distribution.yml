@@ -73,7 +73,12 @@ jobs:
       - name: Install JS dependencies
         run: npm ci
 
+      # Its default packages are "tools platform-tools". Google removed the
+      # legacy `tools` package, so sdkmanager failed with "Failed to find
+      # package 'tools'" and every run stopped here (2026-09-26 to 10-03).
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       # Matches ndkVersion / buildToolsVersion / compileSdk in
       # android/build.gradle — keep these three in step with that file.
