@@ -617,8 +617,10 @@ export default function SearchResults() {
   const openLanding = (slug: string, title: string) => {
     if (openingLandingRef.current) return;
     openingLandingRef.current = true;
-    const { routes, index } = stack.getState();
-    const previous = routes[index - 1];
+    // The screen under this one, not under the top: a push still animating
+    // would make the top's neighbour this very screen.
+    const { routes } = stack.getState();
+    const previous = routes[routes.findIndex((r) => r.key === route.key) - 1];
     if (
       previous?.name === "CategoryLanding" &&
       (previous.params as RootStackParamList["CategoryLanding"] | undefined)?.slug === slug

@@ -175,6 +175,7 @@ export default function CategoryLandingScreen() {
           sortActive={false}
           datesLabel="Dates"
           datesActive={false}
+          hint={`Opens all results in ${title}`}
           onFilters={() => openResults()}
           onSort={() => openResults()}
           onDates={() => openResults()}

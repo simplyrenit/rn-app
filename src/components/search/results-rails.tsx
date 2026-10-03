@@ -30,12 +30,13 @@ interface PillProps {
   icon?: React.ReactNode;
   role?: "button" | "radio" | "checkbox";
   accessibilityLabel?: string;
+  accessibilityHint?: string;
   onPress: () => void;
   onLayout?: (layout: LayoutRectangle) => void;
 }
 
 /** The sheet's spec chip (spec-filter.tsx), at the row's 44pt height. */
-function Pill({ label, selected = false, strong = false, icon, role = "button", accessibilityLabel, onPress, onLayout }: PillProps) {
+function Pill({ label, selected = false, strong = false, icon, role = "button", accessibilityLabel, accessibilityHint, onPress, onLayout }: PillProps) {
   const { color } = useTheme();
   return (
     <TouchableOpacity
@@ -43,6 +44,7 @@ function Pill({ label, selected = false, strong = false, icon, role = "button", 
       accessibilityRole={role}
       accessibilityState={role === "button" ? { selected } : { checked: selected }}
       accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityHint={accessibilityHint}
       onPress={() => {
         selectionFeedback();
         onPress();
@@ -173,6 +175,11 @@ interface FilterBarProps {
   onFilters: () => void;
   onSort: () => void;
   onDates: () => void;
+  /**
+   * Where the bar's pills lead, for the screen reader, when it is not where
+   * their names suggest: on the category landing they all open the results.
+   */
+  hint?: string;
   /** The quick chips' spec label, for the screen reader. */
   chipSpecLabel?: string;
   chips: { value: string; on: boolean }[];
@@ -185,6 +192,7 @@ export function FilterBar(props: FilterBarProps) {
     <Row>
       <Pill
         label="Filters"
+        accessibilityHint={props.hint}
         selected={props.filtersActive}
         icon={
           <AdjustmentsHorizontalIcon
@@ -194,11 +202,12 @@ export function FilterBar(props: FilterBarProps) {
         }
         onPress={props.onFilters}
       />
-      <Pill label="Sort" selected={props.sortActive} onPress={props.onSort} />
+      <Pill label="Sort" selected={props.sortActive} accessibilityHint={props.hint} onPress={props.onSort} />
       <Pill
         label={props.datesLabel}
         selected={props.datesActive}
         accessibilityLabel={props.datesActive ? `Dates, ${props.datesLabel}` : "Dates"}
+        accessibilityHint={props.hint}
         onPress={props.onDates}
       />
       {props.chips.length > 0 && (
