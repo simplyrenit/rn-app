@@ -15,20 +15,15 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { useRailData } from "@/components/home/sections/use-rail-data";
 import { useGlobalContext } from "@/context/global-context";
 import { CategoryIcon } from "@/lib/category-icons";
-import {
-  MIN_TOUCH_TARGET,
-  SCREEN_GUTTER,
-  density,
-  radius,
-  space,
-} from "@/lib/design-tokens";
+import { FilterBar } from "@/components/search/results-rails";
+import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
 import { getDiscoveryLocationData } from "@/lib/location";
 import { useTheme } from "@/lib/theme";
 import { BackendProduct, RootStackParamList, RouteProps } from "@/lib/types";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useRef } from "react";
-import { FlatList, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import React, { useCallback, useRef } from "react";
+import { FlatList, View, useWindowDimensions } from "react-native";
 
 // Measured off the v3 Appliances landing frame (C-09): 16 under the header, four
 // 78 x 64 sub-category tiles 12 apart and 12 between rows, 24 down to "Near you"
@@ -40,11 +35,8 @@ const ROW_GAP = 12;
 const RATIO = 78 / 64;
 const SECTION_GAP = 24;
 const BLOCK_GAP = 16;
-const PILL_GAP = 8;
 const COLUMN_GAP = 16;
 const RESULTS_GAP = 24;
-
-const PILLS = ["Filters", "Sort", "Dates"];
 
 /**
  * One category: its sub-categories as tiles, then listings in it near the
@@ -131,10 +123,19 @@ export default function CategoryLandingScreen() {
         range: { startDate: undefined, endDate: undefined },
         products: [],
       });
-    } finally {
+    } catch (caught) {
+      // Nothing was pushed, so nothing will refocus this screen to free it.
       opening.current = false;
+      throw caught;
     }
   };
+  // Let go once this screen is back in view, not straight after the push: a
+  // second tap during the push animation would otherwise push a second copy.
+  useFocusEffect(
+    useCallback(() => {
+      opening.current = false;
+    }, [])
+  );
 
   const header = (
     <View style={{ paddingTop: TOP_INSET, paddingBottom: BLOCK_GAP }}>
@@ -167,27 +168,19 @@ export default function CategoryLandingScreen() {
         <Text accessibilityRole="header" fontSize="text-sm" fontWeight="font-bold">
           Near you
         </Text>
-        <View style={{ flexDirection: "row", gap: PILL_GAP }}>
-          {PILLS.map((pill) => (
-            <TouchableOpacity
-              key={pill}
-              accessibilityRole="button"
-              accessibilityHint={`Opens all results in ${title}`}
-              activeOpacity={0.7}
-              onPress={() => openResults()}
-              style={{
-                minHeight: MIN_TOUCH_TARGET,
-                paddingHorizontal: space.md,
-                borderRadius: radius.full,
-                borderWidth: 1,
-                borderColor: color.line,
-                justifyContent: "center",
-              }}
-            >
-              <Text fontSize="text-md">{pill}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* The results screen's own bar, so the two match; each pill opens
+            the full results, which own filtering, sorting and dates. */}
+        <FilterBar
+          filtersActive={false}
+          sortActive={false}
+          datesLabel="Dates"
+          datesActive={false}
+          onFilters={() => openResults()}
+          onSort={() => openResults()}
+          onDates={() => openResults()}
+          chips={[]}
+          onChip={() => {}}
+        />
       </View>
     </View>
   );

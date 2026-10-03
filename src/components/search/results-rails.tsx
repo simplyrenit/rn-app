@@ -2,8 +2,14 @@ import { Text } from "@/components/core";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { selectionFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
-import React from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import React, { forwardRef, useEffect, useRef } from "react";
+import {
+  LayoutRectangle,
+  ScrollView,
+  ScrollViewProps,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { AdjustmentsHorizontalIcon } from "react-native-heroicons/outline";
 
 /**
@@ -25,13 +31,15 @@ interface PillProps {
   role?: "button" | "radio" | "checkbox";
   accessibilityLabel?: string;
   onPress: () => void;
+  onLayout?: (layout: LayoutRectangle) => void;
 }
 
 /** The sheet's spec chip (spec-filter.tsx), at the row's 44pt height. */
-function Pill({ label, selected = false, strong = false, icon, role = "button", accessibilityLabel, onPress }: PillProps) {
+function Pill({ label, selected = false, strong = false, icon, role = "button", accessibilityLabel, onPress, onLayout }: PillProps) {
   const { color } = useTheme();
   return (
     <TouchableOpacity
+      onLayout={onLayout && ((event) => onLayout(event.nativeEvent.layout))}
       accessibilityRole={role}
       accessibilityState={role === "button" ? { selected } : { checked: selected }}
       accessibilityLabel={accessibilityLabel ?? label}
@@ -64,9 +72,11 @@ function Pill({ label, selected = false, strong = false, icon, role = "button", 
   );
 }
 
-function Row({ children, style }: { children: React.ReactNode; style?: object }) {
+const Row = forwardRef<ScrollView, ScrollViewProps>(function Row({ children, style, ...rest }, ref) {
   return (
     <ScrollView
+      ref={ref}
+      {...rest}
       horizontal
       showsHorizontalScrollIndicator={false}
       // Out to the screen edge through the screen's gutter, and back in for
@@ -77,7 +87,7 @@ function Row({ children, style }: { children: React.ReactNode; style?: object })
       {children}
     </ScrollView>
   );
-}
+});
 
 interface CategoryRailProps {
   parentLabel: string;
@@ -91,13 +101,40 @@ interface CategoryRailProps {
 
 export function CategoryRail({ parentLabel, onOpenParent, items, selectedKey, onSelect }: CategoryRailProps) {
   const { color } = useTheme();
+  // The chosen chip is often off-screen: the product page's breadcrumb and the
+  // landing open a sub-category far down the rail, and the sheet's Category tab
+  // can pick one too. Scroll just far enough to show it whole.
+  const scrollRef = useRef<ScrollView>(null);
+  const layouts = useRef<Record<string, LayoutRectangle>>({});
+  const viewport = useRef({ x: 0, width: 0 });
+  const reveal = (key: string) => {
+    const chip = layouts.current[key];
+    const { x, width } = viewport.current;
+    if (!chip || !width) return;
+    if (chip.x + chip.width > x + width - SCREEN_GUTTER) {
+      scrollRef.current?.scrollTo({ x: chip.x + chip.width - width + SCREEN_GUTTER });
+    } else if (chip.x < x + SCREEN_GUTTER) {
+      scrollRef.current?.scrollTo({ x: Math.max(0, chip.x - SCREEN_GUTTER) });
+    }
+  };
+  useEffect(() => reveal(selectedKey), [selectedKey]);
   const crumb = (
     <Text fontSize="text-md" style={{ color: color.textDim }} numberOfLines={1}>
       {parentLabel} ›
     </Text>
   );
   return (
-    <Row>
+    <Row
+      ref={scrollRef}
+      scrollEventThrottle={16}
+      onScroll={(event) => {
+        viewport.current.x = event.nativeEvent.contentOffset.x;
+      }}
+      onLayout={(event) => {
+        viewport.current.width = event.nativeEvent.layout.width;
+        reveal(selectedKey);
+      }}
+    >
       {onOpenParent ? (
         <TouchableOpacity
           accessibilityRole="link"
@@ -118,6 +155,10 @@ export function CategoryRail({ parentLabel, onOpenParent, items, selectedKey, on
           selected={item.key === selectedKey}
           // A second tap on the chosen chip would re-run the same search.
           onPress={() => item.key !== selectedKey && onSelect(item.key)}
+          onLayout={(layout) => {
+            layouts.current[item.key] = layout;
+            if (item.key === selectedKey) reveal(item.key);
+          }}
         />
       ))}
     </Row>

@@ -483,6 +483,15 @@ export default function SearchResults() {
         (c) => c.title === filters.category || c.slug === filters.category
       )
     : undefined;
+  // A browse names what is on screen, so it follows the rail: the label the
+  // screen opened with ("Refrigerator") went stale after a tap on "All". A
+  // typed search keeps its words.
+  const headerLabel =
+    searchText ||
+    filters.subCategory ||
+    railParent?.title ||
+    selectedItem ||
+    "Everything on Renit";
   /** Re-scope to one of the parent's children, or the whole parent (""). */
   const selectRailSubCategory = (subCategory: string) =>
     // As the sheet's Category tab: the specs were the old sub-category's keys.
@@ -595,9 +604,10 @@ export default function SearchResults() {
     bottomSheetRef.current?.present();
   };
 
-  // Pushed, not navigated: a landing already below (the one this browse came
-  // from) may be another category's once the sheet changed it. The ref stops
-  // a double tap pushing two; it is let go when this screen is back in view.
+  // Back to the landing this browse came from when it is the same category;
+  // pushing another copy made Back walk every hop. Otherwise pushed, not
+  // navigated: a landing further down may be another category's once the sheet
+  // changed it. The ref stops a double tap; it is let go back in view.
   const openingLandingRef = useRef(false);
   useFocusEffect(
     useCallback(() => {
@@ -607,6 +617,15 @@ export default function SearchResults() {
   const openLanding = (slug: string, title: string) => {
     if (openingLandingRef.current) return;
     openingLandingRef.current = true;
+    const { routes, index } = stack.getState();
+    const previous = routes[index - 1];
+    if (
+      previous?.name === "CategoryLanding" &&
+      (previous.params as RootStackParamList["CategoryLanding"] | undefined)?.slug === slug
+    ) {
+      stack.goBack();
+      return;
+    }
     stack.push("CategoryLanding", { slug, title });
   };
 
@@ -669,7 +688,7 @@ export default function SearchResults() {
               style={{ width: '100%' }}
               numberOfLines={1}
             >
-              {selectedItem || "Everything on Renit"}
+              {headerLabel}
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, width: "100%" }}>
               {!!range.startDate || !!range.endDate ? <Text
@@ -717,7 +736,9 @@ export default function SearchResults() {
         {railParent && (
           <View style={{ marginTop: 8 }}>
             <CategoryRail
-              parentLabel={categoryDisplayName(railParent.title, railParent.slug)}
+              // The API's own titles, as the landing's header and tiles use
+              // and the frame draws ("Appliances ›", "Air cooler").
+              parentLabel={railParent.title}
               onOpenParent={
                 railParent.slug
                   ? () => openLanding(railParent.slug!, railParent.title)
@@ -725,7 +746,7 @@ export default function SearchResults() {
               }
               items={railParent.subcategories.map((sub) => ({
                 key: sub.title,
-                label: categoryDisplayName(sub.title, sub.slug),
+                label: sub.title,
               }))}
               selectedKey={filters.subCategory ?? ""}
               onSelect={selectRailSubCategory}
