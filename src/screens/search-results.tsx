@@ -618,7 +618,11 @@ export default function SearchResults() {
     setDatesOpen(false);
     // ISO strings: navigation params must stay serializable.
     const dates = { startDate: startDate.toISOString(), endDate: endDate.toISOString() };
-    if (await applyFilterAndSearch(filters, dates)) {
+    const seq = searchSeqRef.current + 1;
+    const ok = await applyFilterAndSearch(filters, dates);
+    // A rail or chip tap that overtook it searched the old range; that grid
+    // is what is on screen, so the header keeps the old range too.
+    if (ok && searchSeqRef.current === seq) {
       setPreview(null); // counted for the old range
       stack.setParams({ range: dates });
     }
