@@ -483,6 +483,41 @@ describe("requirements", () => {
   });
 });
 
+describe("save-this-address intent", () => {
+  it("starts unset, takes a type, and clears on null", () => {
+    expect(fresh().saveAddressAs).toBeUndefined();
+    const chosen = apply(fresh(), { type: "setSaveAddressAs", value: "home" });
+    expect(chosen.saveAddressAs).toBe("home");
+    expect(apply(chosen, { type: "setSaveAddressAs", value: "work" }).saveAddressAs).toBe("work");
+    expect(apply(chosen, { type: "setSaveAddressAs", value: null }).saveAddressAs).toBeUndefined();
+  });
+
+  it("returns the same draft when nothing changes, so it is not re-saved", () => {
+    const d = fresh();
+    expect(draftReducer(d, { type: "setSaveAddressAs", value: null })).toBe(d);
+    const chosen = apply(d, { type: "setSaveAddressAs", value: "other" });
+    expect(draftReducer(chosen, { type: "setSaveAddressAs", value: "other" })).toBe(chosen);
+  });
+
+  it("survives a save and resume", () => {
+    const d = apply(fresh(), { type: "setSaveAddressAs", value: "work" });
+    expect(hydrateDraft(serializeDraft(d), NOW + 1000)!.saveAddressAs).toBe("work");
+  });
+
+  it("hydrates a draft stored before the field existed", () => {
+    const stored = JSON.parse(serializeDraft(fresh()));
+    expect("saveAddressAs" in stored).toBe(false);
+    const restored = hydrateDraft(JSON.stringify(stored), NOW + 1000)!;
+    expect(restored).not.toBeNull();
+    expect(restored.saveAddressAs).toBeUndefined();
+  });
+
+  it("drops a stored value that is not an address type", () => {
+    const stored = { ...JSON.parse(serializeDraft(fresh())), saveAddressAs: "office" };
+    expect(hydrateDraft(JSON.stringify(stored), NOW + 1000)!.saveAddressAs).toBeUndefined();
+  });
+});
+
 describe("persistence", () => {
   it("stores only uploaded photos and keeps the cover pointing at the same photo", () => {
     const d = apply(

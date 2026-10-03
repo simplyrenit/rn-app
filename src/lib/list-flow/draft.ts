@@ -35,6 +35,8 @@ export const MAX_RUNS_PER_ATTEMPT = 3;
 export const DRAFT_STORAGE_KEY = "listing-draft-v1";
 export const DRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 
+const SAVE_ADDRESS_TYPES: string[] = ["home", "work", "other"];
+
 const FIELD_NAMES: FieldName[] = [
   "category",
   "title",
@@ -161,7 +163,9 @@ export type DraftAction =
   | { type: "specsRequested"; categoryId: number; requestId: string }
   | { type: "specsLoaded"; requestId: string; specs: WireSpec[] }
   | { type: "specsUnavailable"; requestId: string }
-  | { type: "setSpec"; key: string; value: SpecValue | null };
+  | { type: "setSpec"; key: string; value: SpecValue | null }
+  /** `null` clears it: tapping the selected chip again. */
+  | { type: "setSaveAddressAs"; value: NonNullable<ListingDraft["saveAddressAs"]> | null };
 
 /** Recompute the deposit default while the owner has not overridden it. */
 function withDerivedDeposit(draft: ListingDraft): ListingDraft {
@@ -538,6 +542,11 @@ export function draftReducer(
       return { ...draft, specs: { ...draft.specs, items } };
     }
 
+    case "setSaveAddressAs":
+      return (draft.saveAddressAs ?? null) === action.value
+        ? draft
+        : { ...draft, saveAddressAs: action.value ?? undefined };
+
     default:
       return draft;
   }
@@ -662,6 +671,11 @@ export function hydrateDraft(raw: string | null, now: number): ListingDraft | nu
       dismissedWarnings: parsed.dismissedWarnings ?? [],
       warnings: parsed.warnings ?? [],
       specs: hydrateSpecs(parsed.specs),
+      // Absent on drafts stored before ENG-25; anything else unknown is dropped
+      // rather than sent to the address API as a type.
+      saveAddressAs: SAVE_ADDRESS_TYPES.includes(parsed.saveAddressAs as string)
+        ? parsed.saveAddressAs
+        : undefined,
     });
     return {
       ...draft,

@@ -1,3 +1,4 @@
+import { SavedAddress, toLocationValue } from "@/lib/addresses";
 import { MY_PRODUCTS_ENDPOINT } from "@/lib/config";
 import { LocationValue } from "@/lib/list-flow/types";
 import { getDiscoveryCoordinates } from "@/lib/location";
@@ -64,7 +65,21 @@ export async function gpsLocation(): Promise<LocationValue | null> {
   return { locality, fullAddress: "", lat: coords.lat, long: coords.long };
 }
 
-/** §8.5 in order (ENG-25's saved address slots in first once that API exists). */
-export async function defaultPickupLocation(): Promise<LocationValue | null> {
+/**
+ * §8.5 in order: the owner's default saved address (ENG-25), then the last
+ * listing, then GPS. The caller passes the default once the address query has
+ * settled; null or nothing means there is none.
+ */
+export async function defaultPickupLocation(
+  saved?: SavedAddress | null
+): Promise<LocationValue | null> {
+  if (saved) {
+    const value = toLocationValue(saved);
+    // A row from before the `locality` column existed comes back blank, and a
+    // blank locality would reach the listing as an empty public `location`.
+    const locality =
+      value.locality || (await localityFor(value.lat, value.long));
+    if (locality) return { ...value, locality };
+  }
   return (await lastListingLocation()) ?? (await gpsLocation());
 }

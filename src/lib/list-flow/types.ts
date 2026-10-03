@@ -181,6 +181,13 @@ export interface ListingDraft {
    */
   reviewNote: "failed" | "quota" | null;
   specs: SpecsState;
+  /**
+   * ENG-25 §8.8: the owner asked, on Review, to save the pickup location as
+   * this kind of address. Only the intent: the address is created after the
+   * listing is submitted, from the location as it stands then. Absent on
+   * drafts stored before the field existed.
+   */
+  saveAddressAs?: "home" | "work" | "other";
 }
 
 // ---- Wire shapes (IMPLEMENTATION.md §4.6) ----------------------------------

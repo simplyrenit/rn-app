@@ -15,6 +15,7 @@ import {
   FlagIcon,
   InboxArrowDownIcon,
   LockClosedIcon,
+  MapPinIcon,
   QuestionMarkCircleIcon,
   UsersIcon,
 } from "react-native-heroicons/outline";
@@ -139,6 +140,13 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               label="My products"
               onPress={() => {
                 router.navigate("myProducts");
+              }}
+            />
+            <ProfileRow
+              icon={MapPinIcon}
+              label="Saved addresses"
+              onPress={() => {
+                router.navigate("SavedAddresses");
               }}
             />
           </ProfileSection>

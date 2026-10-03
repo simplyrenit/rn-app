@@ -1,6 +1,10 @@
+import type { SavedAddress } from "@/lib/addresses";
+
 type LocationResult = (
   coordinates: { latitude: number; longitude: number } | null,
-  address: string | null
+  address: string | null,
+  /** Set only when the request was answered by saving an address (the add flow). */
+  saved?: SavedAddress
 ) => void;
 
 const requests = new Map<string, LocationResult>();
@@ -15,7 +19,8 @@ export const createLocationRequest = (callback: LocationResult) => {
 export const resolveLocationRequest = (
   requestId: string | undefined,
   coordinates: { latitude: number; longitude: number } | null,
-  address: string | null
+  address: string | null,
+  saved?: SavedAddress
 ) => {
   if (!requestId) {
     return;
@@ -23,7 +28,7 @@ export const resolveLocationRequest = (
 
   const callback = requests.get(requestId);
   requests.delete(requestId);
-  callback?.(coordinates, address);
+  callback?.(coordinates, address, saved);
 };
 
 export const cancelLocationRequest = (requestId: string | undefined) => {

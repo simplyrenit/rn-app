@@ -61,6 +61,11 @@ interface Option<T extends string> {
   value: T;
   label: string;
   hint?: string;
+  /**
+   * Cannot be chosen — a Home address when one is already saved. Drawn muted
+   * and not pressable; `hint` is where the reason goes ("Already saved").
+   */
+  disabled?: boolean;
 }
 
 interface Props<T extends string> {
@@ -109,7 +114,8 @@ export function SegmentedChoice<T extends string>({
           <TouchableOpacity
             key={option.value}
             accessibilityRole="radio"
-            accessibilityState={{ selected }}
+            accessibilityState={{ selected, disabled: option.disabled }}
+            disabled={option.disabled}
             accessibilityLabel={
               isSuggested && suggestedLabel
                 ? `${option.label}, ${suggestedLabel}`
@@ -133,8 +139,10 @@ export function SegmentedChoice<T extends string>({
               // filled check (SelectionLayer). Unselected is visibly a
               // control, not an input. The border itself never changes width.
               borderWidth: 1,
-              borderColor: color.inputLine,
-              backgroundColor: color.surface,
+              borderColor: option.disabled ? color.line : color.inputLine,
+              backgroundColor: option.disabled
+                ? color.surfaceRaised
+                : color.surface,
             }}
           >
             <SelectionLayer selected={selected} />
@@ -158,11 +166,12 @@ export function SegmentedChoice<T extends string>({
               <Text
                 fontSize="text-md"
                 fontWeight={selected ? "font-bold" : "font-normal"}
+                tone={option.disabled ? "dim" : "default"}
               >
                 {option.label}
               </Text>
               {option.hint ? (
-                <Text fontSize="text-xs" tone="body">
+                <Text fontSize="text-xs" tone={option.disabled ? "dim" : "body"}>
                   {option.hint}
                 </Text>
               ) : null}

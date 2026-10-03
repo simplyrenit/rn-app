@@ -1,7 +1,5 @@
-import { Image } from "expo-image";
 import * as Location from "expo-location";
 import { StatusBar } from "expo-status-bar";
-import { styled } from "nativewind";
 import React, {
   useCallback,
   useEffect,
@@ -11,7 +9,6 @@ import React, {
 } from "react";
 import {
   ActivityIndicator,
-  Alert,
   AppState,
   FlatList,
   Keyboard,
@@ -25,7 +22,6 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Button,
-  StaticContainer,
   Text,
   useButtonLabelColor,
 } from "@/components/core";
@@ -51,12 +47,12 @@ import {
 import { useAuthContext } from "@/context/auth-context";
 import { useAuth } from "@/backend/auth";
 
-const StyledImage = styled(Image);
 import { Modal, View, StyleSheet } from "react-native";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { EditStepHeader } from "@/components/post/edit-step-header";
 import { useRoute } from "@react-navigation/native";
 import { ink, colors, radius, SCREEN_GUTTER, density } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 
 const SEARCH_HEIGHT = 48;
 /** The field's height inside its 1pt border, so the input fills it and centres its text. */
@@ -70,6 +66,65 @@ const DEFAULT_MAP_REGION = {
   latitudeDelta: 0.0922,
   longitudeDelta: 0.0421,
 };
+/**
+ * Where the map opens with no GPS fix and no pin handed in. It used to open on
+ * DEFAULT_MAP_REGION's centre, which is open sea west of Mumbai: a blue square
+ * with nothing to tap. The whole country gives search and pinch somewhere to start.
+ */
+const INDIA_REGION = {
+  latitude: 22.5,
+  longitude: 79,
+  latitudeDelta: 30,
+  longitudeDelta: 30,
+};
+
+/**
+ * What the picker hands back as the address when the geocoder has nothing or
+ * fails. Exported so a caller that stores the address can tell them from a real one.
+ */
+export const ADDRESS_NOT_FOUND = "Address not found";
+export const ADDRESS_UNAVAILABLE = "Unable to retrieve address";
+
+/**
+ * Shown above the search field when location permission is denied. The screen
+ * used to render no map and no search at all in that state, so a denied user
+ * could not choose a place by hand.
+ */
+function LocationOffBanner({ onTurnOn }: { onTurnOn: () => void }) {
+  const { color } = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        padding: 12,
+        marginBottom: 16,
+        borderRadius: radius.button,
+        backgroundColor: color.brandWash,
+      }}
+    >
+      <View style={{ flex: 1 }}>
+        <Text fontSize="text-sm" fontWeight="font-bold">
+          Location is off
+        </Text>
+        <Text fontSize="text-xs" tone="body">
+          Turn it on to jump to where you are, or search and tap the map.
+        </Text>
+      </View>
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel="Turn on location"
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        onPress={onTurnOn}
+      >
+        <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+          Turn on
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 /**
  * The "Confirm location" button's loading spinner. Has to be its own
@@ -102,7 +157,7 @@ const LocationModal = ({}) => {
   const [selectedLocation, setSelectedLocation] = useState<{
     latitude: number;
     longitude: number;
-  } | null>(null);
+  } | null>(route.params?.initial ?? null);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
   const [loading, setLoading] = useState(false);
@@ -171,11 +226,11 @@ const LocationModal = ({}) => {
         setAddress(formattedAddress);
         // console.log("Formatted Address:", formattedAddress);
       } else {
-        setAddress("Address not found");
+        setAddress(ADDRESS_NOT_FOUND);
       }
     } catch (error) {
       console.error("Failed to fetch address:", error);
-      setAddress("Unable to retrieve address");
+      setAddress(ADDRESS_UNAVAILABLE);
     }
   }, []);
 
@@ -249,22 +304,12 @@ const LocationModal = ({}) => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       console.log(`${LOCATION_LOG_PREFIX} permission request result`, { status });
 
+      // No alert: a denied user keeps the map and search, and the banner
+      // above the search field says how to turn location on.
       if (status !== "granted") {
         setHasPermission(false);
         setLocation(null);
         setAddress(null);
-        setLocationError("Location access is required to continue.");
-        Alert.alert(
-          "Permission Denied",
-          "Location access is required to continue. Please enable it in your device settings.",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Open Settings",
-              onPress: openLocationSettings,
-            },
-          ]
-        );
         return;
       }
 
@@ -281,12 +326,21 @@ const LocationModal = ({}) => {
       setLocationError(
         "We couldn’t request location access. Please try again."
       );
-      Alert.alert(
-        "Location error",
-        "We couldn’t request location access. Please try again."
-      );
     }
-  }, [openLocationSettings, resolveCurrentLocation]);
+  }, [resolveCurrentLocation]);
+
+  // The banner's "Turn on" and "Use current location" while permission is
+  // denied. Once the system will not show its prompt again, Settings is the
+  // only place the permission can change.
+  const turnOnLocation = useCallback(async () => {
+    const { status, canAskAgain } =
+      await Location.getForegroundPermissionsAsync();
+    if (status !== "granted" && !canAskAgain) {
+      openLocationSettings();
+      return;
+    }
+    await requestLocationPermission();
+  }, [openLocationSettings, requestLocationPermission]);
 
   const fetchSelectedAddress = useCallback(
     async (latitude: number, longitude: number) => {
@@ -338,11 +392,11 @@ const LocationModal = ({}) => {
           setSelectedAddress(formattedAddress);
           // console.log("Formatted Address:", formattedAddress);
         } else {
-          setSelectedAddress("Address not found");
+          setSelectedAddress(ADDRESS_NOT_FOUND);
         }
       } catch (error) {
         console.error("Failed to fetch address:", error);
-        setSelectedAddress("Unable to retrieve address");
+        setSelectedAddress(ADDRESS_UNAVAILABLE);
       }
     },
     []
@@ -356,14 +410,15 @@ const LocationModal = ({}) => {
           status,
         });
 
-        if (status !== "granted") {
-          setHasPermission(false);
-          if (Platform.OS === "ios") {
-            await requestLocationPermission();
-          }
-        } else {
+        if (status === "granted") {
           setHasPermission(true);
           await resolveCurrentLocation();
+        } else if (status === "undetermined") {
+          // Ask only someone who has never been asked. iOS used to be asked on
+          // every open, and alerted each time the answer was still no.
+          await requestLocationPermission();
+        } else {
+          setHasPermission(false);
         }
       } catch (error) {
         console.error(
@@ -382,7 +437,15 @@ const LocationModal = ({}) => {
       void (async () => {
         const { status } = await Location.getForegroundPermissionsAsync();
         setHasPermission(status === "granted");
-        if (status === "granted") await resolveCurrentLocation();
+        if (status === "granted") {
+          await resolveCurrentLocation();
+        } else {
+          // Revoked in Settings while the picker was open: the old GPS fix
+          // must not stay confirmable under "No location chosen yet". A point
+          // chosen by tap or search is the user's own and stays.
+          setLocation(null);
+          setAddress(null);
+        }
       })();
     });
 
@@ -409,9 +472,15 @@ const LocationModal = ({}) => {
     };
   }, []);
 
-  const handleSubmit = useCallback(() => {
-    void requestLocationPermission();
-  }, [requestLocationPermission]);
+  // A pin handed in (Address details' "Change") arrives without its address.
+  useEffect(() => {
+    const initial = route.params?.initial;
+    if (initial) {
+      void fetchSelectedAddress(initial.latitude, initial.longitude);
+    }
+    // Once, for the pin the screen opened with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMapPress = useCallback(
     (event: any) => {
@@ -495,8 +564,10 @@ const LocationModal = ({}) => {
     }
 
     if (coordinates) {
-      resolveLocationRequest(route.params?.requestId, coordinates, addressToSend);
+      // Back first: a caller that navigates from its callback (map, then
+      // Address details) would otherwise have its new screen popped.
       navigation.goBack();
+      resolveLocationRequest(route.params?.requestId, coordinates, addressToSend);
     }
   };
 
@@ -532,6 +603,10 @@ const LocationModal = ({}) => {
 
   const handleCurrentLocation = () => {
     console.log(`${LOCATION_LOG_PREFIX} use current location pressed`);
+    if (hasPermission === false) {
+      void turnOnLocation();
+      return;
+    }
     setSelectedAddress(null);
     setSelectedLocation(null);
     void getCurrentLocation();
@@ -556,7 +631,7 @@ const LocationModal = ({}) => {
       };
     }
 
-    return DEFAULT_MAP_REGION;
+    return INDIA_REGION;
   }, [location, selectedLocation]);
 
   const canConfirmLocation = Boolean(location || selectedLocation);
@@ -585,33 +660,8 @@ const LocationModal = ({}) => {
           />
 
           <View className="flex-1">
-            {!hasPermission && (
-              <>
-                <StaticContainer>
-                  <View className="flex">
-                    <Text role="screenTitle">
-                      Allow location
-                    </Text>
-                    <Text tone="body"
-                      fontSize="text-lg"
-                    >
-                      This allows Renit to fetch products near you
-                    </Text>
-                  </View>
-
-                  <StyledImage
-                    source={
-                      isDarkMode
-                        ? require("assets/auth/allow-location-dark.png")
-                        : require("assets/auth/allow-location-light.png")
-                    }
-                    className="w-full flex-1"
-                  />
-                </StaticContainer>
-              </>
-            )}
-
-            {hasPermission ? (
+            {/* Not gated on permission: a denied user still gets the map and
+                the search, and chooses a place by hand. */}
               <>
                 {/* <NonScrollableContainer> */}
                 <MapView
@@ -671,7 +721,13 @@ const LocationModal = ({}) => {
                     backgroundColor: ink.canvas(isDarkMode),
                     borderTopWidth: 2,
                     borderColor: ink.line(isDarkMode),
-                    height: keyboardVisible ? "92%" : "55%",
+                    // The banner needs the extra room, or the last row of
+                    // the panel is pushed out of view on a short phone.
+                    height: keyboardVisible
+                      ? "92%"
+                      : hasPermission === false
+                      ? "62%"
+                      : "55%",
                   }}
                 >
                   <KeyboardAvoidingView
@@ -702,6 +758,12 @@ const LocationModal = ({}) => {
                               {locationError}
                             </Text>
                           </View>
+                        )}
+
+                        {hasPermission === false && (
+                          <LocationOffBanner
+                            onTurnOn={() => void turnOnLocation()}
+                          />
                         )}
 
                         <View
@@ -763,6 +825,28 @@ const LocationModal = ({}) => {
                           />
                         </View>
 
+                        {hasPermission === false ? (
+                          // No GPS address to show. Once a point is chosen the
+                          // "Selected Address" block below takes over.
+                          !selectedLocation && (
+                            <>
+                              <Text fontSize="text-md" fontWeight="font-bold">
+                                No location chosen yet
+                              </Text>
+                              <Text
+                                fontSize="text-sm"
+                                className={`${
+                                  isDarkMode
+                                    ? "text-muted-dark"
+                                    : "text-muted-light"
+                                }`}
+                              >
+                                Search or tap the map to choose a spot.
+                              </Text>
+                            </>
+                          )
+                        ) : (
+                          <>
                         <Text
                           fontSize="text-md"
                           fontWeight="font-bold"
@@ -781,6 +865,8 @@ const LocationModal = ({}) => {
                             ? "Fetching address..."
                             : "Search for an address or tap on the map to choose one."}
                         </Text>
+                          </>
+                        )}
 
                         {selectedLocation && (
                           <>
@@ -903,16 +989,6 @@ const LocationModal = ({}) => {
                   </KeyboardAvoidingView>
                 </View>
               </>
-            ) : (
-              <View className="w-[90%] mx-auto py-5">
-                <Button
-                  variant="primary"
-                  onPress={handleSubmit}
-                >
-                  Provide location access
-                </Button>
-              </View>
-            )}
           </View>
         </View>
       </GestureHandlerRootView>

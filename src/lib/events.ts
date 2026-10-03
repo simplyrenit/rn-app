@@ -29,6 +29,7 @@ export type EventName =
   | "preview_opened"
   | "listing_submitted"
   | "listing_submit_failed"
+  | "address_save_failed"
   | "draft_saved"
   | "draft_resumed"
   | "draft_discarded";

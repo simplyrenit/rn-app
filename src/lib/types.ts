@@ -4,6 +4,7 @@ import {
   useNavigation,
 } from "@react-navigation/native";
 import { DimensionValue, FlexAlignType, ImageSourcePropType } from "react-native";
+import type { SavedAddress } from "@/lib/addresses";
 
 export interface OTPResponse {
   access: string | null;
@@ -110,7 +111,6 @@ export interface BackendReview {
   moderation_labels: string[];
   user: {
     username: string;
-    email: string;
     image: {
       name: string;
       image_url: string;
@@ -128,7 +128,6 @@ export interface OwnerReview {
   name: string;
   owner: {
     username: string;
-    email: string;
     first_name: string;
     last_name: string;
     image: string;
@@ -136,7 +135,6 @@ export interface OwnerReview {
   rating: number;
   reviewer: {
     username: string;
-    email: string;
     first_name: string;
     last_name: string;
     /**
@@ -216,7 +214,6 @@ export type RootStackParamList = {
     product: BackendProduct;
     owner: {
       username: string;
-      email: string;
       first_name: string;
       last_name: string;
     };
@@ -225,7 +222,6 @@ export type RootStackParamList = {
     product: BackendProduct;
     owner: {
       username: string;
-      email: string;
       first_name: string;
       last_name: string;
     };
@@ -299,6 +295,19 @@ export type RootStackParamList = {
   };
   LocationModal: {
     requestId: string;
+    /** A pin to open on — Address details' "Change". */
+    initial?: { latitude: number; longitude: number };
+  };
+  SavedAddresses: undefined;
+  /**
+   * `address` edits it; `pin` (fresh from the map) adds one. `requestId` is a
+   * `location-request` the saved address is handed back through, for a caller
+   * that is waiting on the add flow.
+   */
+  AddressDetails: {
+    address?: SavedAddress;
+    pin?: { lat: number; long: number; address: string | null };
+    requestId?: string;
   };
   // The photo-first listing flow (ENG-10, IMPLEMENTATION.md §8.1).
   ListAddPhotos: { focusPhoto?: number } | undefined;
@@ -533,21 +542,13 @@ export interface BackendProduct {
   owner?: {
     username: string;
     firebase_uid: string;
-    email: string;
     first_name: string;
     last_name: string;
-    phone: string;
-    country: string;
     image: {
       image_url: string;
       name: string;
     };
-    address: string[];
     business_name: string;
-    coordinates: {
-      lat: number;
-      long: number;
-    };
     average_rating?: number;
     number_of_products?: number;
   };
