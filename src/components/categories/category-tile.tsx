@@ -1,10 +1,8 @@
 import { Text } from "@/components/core";
-import { useGlobalContext } from "@/context/global-context";
 import { CATEGORIES } from "@/lib/categories";
 import { CategoryIcon } from "@/lib/category-icons";
 import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import type { BrowseCategory } from "@/lib/home-categories";
-import { getDiscoveryLocationData } from "@/lib/location";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
@@ -200,26 +198,13 @@ export function ParentCategoryTile({
 /** Where a category tile goes, from Home and from All categories alike. */
 export function useOpenCategory() {
   const navigation = useTypedNavigation();
-  const { categories } = useGlobalContext();
 
-  return async (category: BrowseCategory) => {
-    // A tile from the API carries the server title. A bundled tile (no list:
-    // cold start, offline) has only the design's name, so send its slug, which
-    // search also matches (ENG-29).
-    const loaded = categories.length > 0;
-    const locationData = await getDiscoveryLocationData();
-    navigation.navigate("SearchResults", {
-      category: loaded ? category.title : category.slug ?? category.title,
-      address: locationData?.address ?? "",
-      coords: locationData?.coordinates
-        ? {
-            lat: locationData.coordinates.lat,
-            lng: locationData.coordinates.long,
-          }
-        : { lat: undefined, lng: undefined },
-      range: { startDate: undefined, endDate: undefined },
-      products: [],
-      selectedItem: category.title,
+  return (category: BrowseCategory) =>
+    // A tile from the API carries the v2 slug. A bundled tile (no list: cold
+    // start, offline) does too; the landing matches on it once the list loads
+    // and searches by it until then. A server from before slugs gets the title.
+    navigation.navigate("CategoryLanding", {
+      slug: category.slug ?? category.title,
+      title: category.title,
     });
-  };
 }

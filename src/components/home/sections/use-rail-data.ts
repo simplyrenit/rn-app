@@ -12,17 +12,19 @@ interface Coordinates {
 }
 
 /**
- * Shared fetch/refresh state for the home rails.
+ * Shared fetch/refresh state for the home rails, and for the category
+ * landing's "Near you" grid (ENG-77), which wants the same near-the-user
+ * coordinates and the same loading/error/retry contract.
  *
  * The three sections used to carry three copies of this — one of which swallowed
  * its error entirely (`} catch (error) {}`), which is why "Popular near you" and
  * "Recently added" rendered as headings over nothing whenever the request failed.
  */
-export function useRailData(
-  fetcher: (lat: number, long: number) => Promise<{ results: RailProduct[] }>
+export function useRailData<T = RailProduct>(
+  fetcher: (lat: number, long: number) => Promise<{ results: T[] }>
 ) {
   const { isAuthenticated } = useGlobalContext();
-  const [products, setProducts] = useState<RailProduct[]>([]);
+  const [products, setProducts] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [coordinates, setCoordinates] = useState<Coordinates>(
