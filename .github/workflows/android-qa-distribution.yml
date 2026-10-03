@@ -82,10 +82,12 @@ jobs:
 
       # Matches ndkVersion / buildToolsVersion / compileSdk in
       # android/build.gradle — keep these three in step with that file.
+      # setup-android has already accepted the licences. A `yes |` pipe here
+      # failed the step under pipefail: `yes` exits on SIGPIPE once
+      # sdkmanager is done.
       - name: Install the Android SDK components this project pins
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null
           sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125"
 
       - name: Cache Gradle
