@@ -520,8 +520,11 @@ export default function SearchResults() {
     // Commit exactly the set that was counted, so the number cannot change
     // between reading it and tapping it.
     if (preview?.key === filtersKey) {
-      // Supersedes a rail or chip search still in flight.
+      // Supersedes a rail or chip search still in flight. Its `finally` is
+      // gated on the sequence, so release its key here or a later preview of
+      // that same set would be skipped.
       searchSeqRef.current++;
+      searchingKeyRef.current = null;
       setIsLoading(false);
       setProducts(preview.products);
       setAppliedKey(filtersKey);
