@@ -1,5 +1,6 @@
 import { SavedAddress, toLocationValue } from "@/lib/addresses";
-import { MY_PRODUCTS_ENDPOINT } from "@/lib/config";
+import { MY_ADDRESSES_ENDPOINT, MY_PRODUCTS_ENDPOINT } from "@/lib/config";
+import { googleReverseGeocode, joinLocality } from "@/lib/geocode";
 import { LocationValue } from "@/lib/list-flow/types";
 import { getDiscoveryCoordinates } from "@/lib/location";
 import axiosInstance from "@/lib/networkUtils";
@@ -14,16 +15,32 @@ import * as Location from "expo-location";
 export async function localityFor(lat: number, long: number): Promise<string | null> {
   try {
     const [place] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: long });
-    if (!place) return null;
-    const locality = place.district || place.subregion || place.name;
-    const city = place.city || place.region;
-    const parts = [locality, city].filter(
-      (part, index, all): part is string => Boolean(part) && all.indexOf(part) === index
-    );
-    return parts.length ? parts.join(", ") : null;
+    const named =
+      place &&
+      joinLocality([place.district || place.subregion || place.name, place.city || place.region]);
+    if (named) return named;
   } catch {
-    return null;
+    // Android's geocoder throws without location permission, so a user who
+    // denied it could pick a spot by hand and then never name it.
   }
+  // The phone could not name the point; Google can, with or without permission.
+  return (await googleReverseGeocode(lat, long))?.locality ?? null;
+}
+
+/**
+ * A saved address's locality. A row from before the `locality` column existed
+ * comes back blank; it is named here and written back, so the row is repaired
+ * the first time it is read instead of being geocoded on every read.
+ */
+export async function localityOfSaved(saved: SavedAddress): Promise<string | null> {
+  if (saved.locality) return saved.locality;
+  const named = await localityFor(saved.coordinates.lat, saved.coordinates.long);
+  if (named) {
+    void axiosInstance
+      .patch(`${MY_ADDRESSES_ENDPOINT}${saved.id}/`, { locality: named })
+      .catch(() => {});
+  }
+  return named;
 }
 
 /** §8.5 step 2: the location of the owner's most recent listing. */
@@ -74,12 +91,11 @@ export async function defaultPickupLocation(
   saved?: SavedAddress | null
 ): Promise<LocationValue | null> {
   if (saved) {
-    const value = toLocationValue(saved);
-    // A row from before the `locality` column existed comes back blank, and a
-    // blank locality would reach the listing as an empty public `location`.
-    const locality =
-      value.locality || (await localityFor(value.lat, value.long));
-    if (locality) return { ...value, locality };
+    // A blank locality (a row older than the column) would reach the listing
+    // as an empty public `location`, so an address that cannot be named is
+    // passed over.
+    const locality = await localityOfSaved(saved);
+    if (locality) return { ...toLocationValue(saved), locality };
   }
   return (await lastListingLocation()) ?? (await gpsLocation());
 }

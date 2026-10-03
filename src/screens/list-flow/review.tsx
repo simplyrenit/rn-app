@@ -28,7 +28,7 @@ import { SpecSheet, SpecsCard } from "@/components/list-flow/specs-card";
 import { AiValueFade, PulseOnce, useAppear } from "@/components/list-flow/motion";
 import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
-import { AddressType, PickedAddress, fullAddressForNewPin } from "@/lib/addresses";
+import { AddressType, PickedAddress, flatAndLandmark, fullAddressForNewPin } from "@/lib/addresses";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import {
   SCREEN_GUTTER,
@@ -391,9 +391,7 @@ export default function ListReviewScreen() {
   const onPickAddress = (picked: PickedAddress) => {
     edit("location", {
       locality: picked.locality,
-      fullAddress: picked.saved
-        ? [picked.addressLine1, picked.addressLine2].filter(Boolean).join(", ")
-        : fullAddressForUnsavedPin(),
+      fullAddress: picked.saved ? flatAndLandmark(picked.saved) : fullAddressForUnsavedPin(),
       lat: picked.lat,
       long: picked.long,
     });

@@ -66,7 +66,7 @@ export default function AddressDetailsScreen() {
   const { address: editing, requestId } = route.params;
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { addresses, loading, create, update, remove } = useAddresses();
+  const { addresses, loading, isError, create, update, remove } = useAddresses();
 
   // One of the two always arrives: the list passes `address`, the add flow `pin`.
   const [pin, setPin] = useState(
@@ -126,7 +126,10 @@ export default function AddressDetailsScreen() {
     if (type !== "other" && taken.has(type)) setType("other");
   }, [taken, type]);
 
-  const isFirst = !editing && !loading && addresses.length === 0;
+  // Only a list that loaded and is empty makes this the first address. A list
+  // that failed to load is unknown, not empty: treating it as empty forced the
+  // new address to be the default and took the default off the owner's Home.
+  const isFirst = !editing && !loading && !isError && addresses.length === 0;
   const forcedDefault = isFirst || Boolean(editing?.is_default);
   const [makeDefault, setMakeDefault] = useState(false);
   const isDefault = forcedDefault || makeDefault;
@@ -194,7 +197,9 @@ export default function AddressDetailsScreen() {
     inFlight.current = true;
     setSaving(true);
     const payload: AddressPayload = {
-      address: displayAddress,
+      // The column is 255 characters, and a long geocoder line was a 400 that
+      // no retry could fix.
+      address: displayAddress.slice(0, 255),
       address_line_1: line1.trim(),
       address_line_2: line2.trim(),
       locality,
@@ -229,7 +234,10 @@ export default function AddressDetailsScreen() {
     } catch (error: any) {
       const status = error?.response?.status;
       const typeMessage = error?.response?.data?.address_type?.[0];
-      if (status === 404) {
+      // Only an edit can find its address gone. A 404 on create means the
+      // server has no such route, and telling the owner their address "no
+      // longer exists" would be wrong.
+      if (status === 404 && editing) {
         // Deleted somewhere else: there is nothing left here to retry.
         toast.error(GONE_MESSAGE);
         leave();

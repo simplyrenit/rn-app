@@ -1,3 +1,4 @@
+import { addressesQueryKey, createAddress, fetchAddresses } from "@/backend/addresses-api";
 import { useGlobalContext } from "@/context/global-context";
 import { AddressPayload, SavedAddress } from "@/lib/addresses";
 import { MY_ADDRESSES_ENDPOINT } from "@/lib/config";
@@ -7,23 +8,6 @@ import axios from "axios";
 import { useTypedNavigation } from "@/lib/types";
 import { useCallback, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-
-/**
- * The username is part of the key because the React Query cache is not
- * cleared on logout: without it the next account to sign in on this phone
- * would be shown the previous one's addresses until the refetch landed.
- */
-export const addressesQueryKey = (username: string | undefined) => ["addresses", username];
-
-export async function fetchAddresses(): Promise<SavedAddress[]> {
-  return (await axiosInstance.get<SavedAddress[]>(MY_ADDRESSES_ENDPOINT)).data;
-}
-
-/** Not a hook: Preview saves the inline offer's address after the listing is submitted. */
-export async function createAddress(payload: AddressPayload): Promise<SavedAddress> {
-  const response = await axiosInstance.post<SavedAddress>(MY_ADDRESSES_ENDPOINT, payload);
-  return response.data;
-}
 
 const useAddresses = () => {
   const { authTokens, isAuthenticated, userDetails, userDetailsFailed, fetchUserDetails } =

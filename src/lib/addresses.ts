@@ -1,6 +1,7 @@
 import type { LocationValue } from "@/lib/list-flow/types";
 
-export type AddressType = "home" | "work" | "other";
+export const ADDRESS_TYPES = ["home", "work", "other"] as const;
+export type AddressType = (typeof ADDRESS_TYPES)[number];
 
 /** One row of `GET /api/my/addresses/` (ENG-25 §4). */
 export interface SavedAddress {
@@ -56,11 +57,20 @@ export function addressLine(
   return [a.address_line_1, a.address_line_2, a.locality].filter(Boolean).join(", ");
 }
 
+/**
+ * Flat and landmark as one line: what a listing stores as `full_address`. The
+ * one place this is spelled, because `fullAddressForNewPin` recognises a saved
+ * address's text by comparing against exactly this.
+ */
+export function flatAndLandmark(a: Pick<SavedAddress, "address_line_1" | "address_line_2">): string {
+  return [a.address_line_1, a.address_line_2].filter(Boolean).join(", ");
+}
+
 /** A saved address as the listing draft holds a pickup location. */
 export function toLocationValue(a: SavedAddress): LocationValue {
   return {
     locality: a.locality,
-    fullAddress: [a.address_line_1, a.address_line_2].filter(Boolean).join(", "),
+    fullAddress: flatAndLandmark(a),
     lat: a.coordinates.lat,
     long: a.coordinates.long,
   };
@@ -75,10 +85,7 @@ export function fullAddressForNewPin(
   current: string,
   saved: Pick<SavedAddress, "address_line_1" | "address_line_2">[]
 ): string {
-  const fromSaved = saved.some(
-    (a) => [a.address_line_1, a.address_line_2].filter(Boolean).join(", ") === current
-  );
-  return fromSaved ? "" : current;
+  return saved.some((a) => flatAndLandmark(a) === current) ? "" : current;
 }
 
 /**

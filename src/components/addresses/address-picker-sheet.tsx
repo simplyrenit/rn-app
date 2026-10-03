@@ -1,4 +1,4 @@
-import { localityFor } from "@/backend/list-flow/pickup-location";
+import { localityFor, localityOfSaved } from "@/backend/list-flow/pickup-location";
 import useAddresses, { useAddAddress } from "@/backend/useAddresses";
 import { Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
@@ -131,7 +131,7 @@ export const AddressPickerSheet = forwardRef<AddressPickerSheetHandle, Props>(
       sheet.current?.dismiss();
       const { lat, long } = saved.coordinates;
       // A row from before the `locality` column existed comes back blank.
-      const locality = saved.locality || (await localityFor(lat, long)) || "";
+      const locality = (await localityOfSaved(saved)) ?? "";
       onPickRef.current({
         lat,
         long,

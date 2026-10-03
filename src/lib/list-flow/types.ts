@@ -5,6 +5,8 @@
  * be unit-tested without React, storage or the network.
  */
 
+import type { AddressType } from "@/lib/addresses";
+
 export type FieldName =
   | "category"
   | "title"
@@ -187,7 +189,7 @@ export interface ListingDraft {
    * listing is submitted, from the location as it stands then. Absent on
    * drafts stored before the field existed.
    */
-  saveAddressAs?: "home" | "work" | "other";
+  saveAddressAs?: AddressType;
 }
 
 // ---- Wire shapes (IMPLEMENTATION.md §4.6) ----------------------------------

@@ -1,5 +1,5 @@
 import { buildCreatePayload, submitListing } from "@/backend/list-flow/submit";
-import { addressesQueryKey, createAddress, fetchAddresses } from "@/backend/useAddresses";
+import { saveFirstAddress } from "@/backend/addresses-api";
 import { Button, Text, useButtonLabelColor, useReduceMotion } from "@/components/core";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -154,29 +154,10 @@ export default function ListPreviewScreen() {
       // address save must not hold up or fail the flow (D8).
       if (draft.saveAddressAs && location) {
         const addressPayload = inlineOfferPayload(location, draft.saveAddressAs);
-        const key = addressesQueryKey(userDetails?.username);
-        // The offer is for an owner with no saved address (D14), and the
-        // intent can outlive that: chosen, then an address added from Profile
-        // before the draft was resumed. So the list is read fresh, here in the
-        // chain — what this screen happened to have cached at the tap could be
-        // loading or failed, and the save was then skipped without a word.
-        // Without a username there is no key to read under, so the list cannot
-        // be known: that counts as a failed save, like a failed read.
-        void (userDetails?.username
-          ? queryClient.fetchQuery(key, fetchAddresses)
-          : Promise.reject(new Error("no profile"))
-        )
-          .then((saved) => {
-            // One or more already saved: the offer no longer applies.
-            if (saved.length > 0) return;
-            return createAddress(addressPayload).then(() => {
-              void queryClient.invalidateQueries(key);
-            });
-          })
-          .catch(() => {
-            flow.track("address_save_failed");
-            toast.warning("Your listing is live. We couldn't save the address.");
-          });
+        void saveFirstAddress(queryClient, userDetails?.username, addressPayload).catch(() => {
+          flow.track("address_save_failed");
+          toast.warning("Your listing is live. We couldn't save the address.");
+        });
       }
 
       // The listing exists now, so the draft goes whatever happens to this

@@ -29,6 +29,7 @@ import AddressChoiceModal from "@/components/modals/AddressChoiceModalProps";
 import { useGlobalContext } from "@/context/global-context";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
+import { googleReverseGeocode } from "@/lib/geocode";
 import {
   cancelLocationRequest,
   resolveLocationRequest,
@@ -392,11 +393,15 @@ const LocationModal = ({}) => {
           setSelectedAddress(formattedAddress);
           // console.log("Formatted Address:", formattedAddress);
         } else {
-          setSelectedAddress(ADDRESS_NOT_FOUND);
+          const place = await googleReverseGeocode(latitude, longitude);
+          setSelectedAddress(place?.address ?? ADDRESS_NOT_FOUND);
         }
       } catch (error) {
-        console.error("Failed to fetch address:", error);
-        setSelectedAddress(ADDRESS_UNAVAILABLE);
+        // Android's geocoder throws without location permission, which is
+        // exactly when a user is choosing a point by hand: ask Google instead
+        // of showing "Unable to retrieve address" for every point they tap.
+        const place = await googleReverseGeocode(latitude, longitude);
+        setSelectedAddress(place?.address ?? ADDRESS_UNAVAILABLE);
       }
     },
     []

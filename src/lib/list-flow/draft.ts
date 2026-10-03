@@ -1,3 +1,4 @@
+import { ADDRESS_TYPES } from "@/lib/addresses";
 import { computeDepositDefault, parseRate } from "./deposit";
 import {
   AI_FIELDS,
@@ -34,8 +35,6 @@ export const MAX_PHOTOS = 5;
 export const MAX_RUNS_PER_ATTEMPT = 3;
 export const DRAFT_STORAGE_KEY = "listing-draft-v1";
 export const DRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
-
-const SAVE_ADDRESS_TYPES: string[] = ["home", "work", "other"];
 
 const FIELD_NAMES: FieldName[] = [
   "category",
@@ -673,7 +672,7 @@ export function hydrateDraft(raw: string | null, now: number): ListingDraft | nu
       specs: hydrateSpecs(parsed.specs),
       // Absent on drafts stored before ENG-25; anything else unknown is dropped
       // rather than sent to the address API as a type.
-      saveAddressAs: SAVE_ADDRESS_TYPES.includes(parsed.saveAddressAs as string)
+      saveAddressAs: (ADDRESS_TYPES as readonly string[]).includes(parsed.saveAddressAs ?? "")
         ? parsed.saveAddressAs
         : undefined,
     });
