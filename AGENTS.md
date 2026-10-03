@@ -48,11 +48,25 @@ release operation.
 
 ### Skill routing
 
-Skills live in `plugins/renit-agentic-dev/skills/` (and are mirrored under
-`.claude/skills/`); feature-area subagents live in `.claude/agents/`.
+Claude Code loads the skills, the `renit-reviewer` agent and the hooks from the
+`renit-agentic-dev` plugin (source: the `claude-plugins` repo, marketplace
+`yash-plugins`) — edit them there. `plugins/renit-agentic-dev/skills/` in this
+repo is the Codex copy. Feature-area subagents live in `.claude/agents/`.
+
+- `renit-ticket` — a Jira key as the whole message (or `/renit-agentic-dev:renit-ticket ENG-123`)
+  runs the ticket end to end: worktrees and branch in rn-app and rn-api, plan
+  if large, build, independent review, QA deploy, simulator test, PR, final
+  review. It stops only for a large plan's review and for the merge. Inside it,
+  committing, pushing the ticket branch, opening the PR and deploying that
+  branch to QA are pre-approved; the Human approval gates below still hold.
 
 - `renit-dev-bootstrap` — before local QA work. Owns QA runtime, native
   workspace, and device readiness checks.
+- `renit-commit` — every `git commit`. Adds the Jira `ENG-123:` prefix (asks if
+  unknown; skipped only if the user says so) and never adds Claude/AI
+  attribution.
+- `renit-reviewer` (agent) — the independent review inside `renit-ticket`, for
+  either repo: once on the finished code, once on the open PR. Read-only.
 - `renit-quality-gate` — after delivery and before device QA. Independent and
   read-only.
 - `renit-push-diagnostics` — for a QA push failure. Traces the full
