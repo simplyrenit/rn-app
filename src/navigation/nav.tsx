@@ -78,6 +78,8 @@ import ReportAProblemScreen from "@/screens/profileScreens/report-a-problem";
 import NetworkDiagnosticsScreen from "@/screens/profileScreens/network-diagnostics";
 import OwnersReviewScreen from "@/screens/users/owners-review";
 import LocationModal from "@/screens/post-screens/location-modal";
+import SavedAddressesScreen from "@/screens/addresses/saved-addresses";
+import AddressDetailsScreen from "@/screens/addresses/address-details";
 import ListAddPhotosScreen from "@/screens/list-flow/add-photos";
 import ListReadingScreen from "@/screens/list-flow/reading";
 import ListReviewScreen from "@/screens/list-flow/review";
@@ -525,6 +527,14 @@ export default function Navigation() {
         <Stack.Screen
           name="myProducts"
           component={MyProductScreen}
+        />
+        <Stack.Screen
+          name="SavedAddresses"
+          component={SavedAddressesScreen}
+        />
+        <Stack.Screen
+          name="AddressDetails"
+          component={AddressDetailsScreen}
         />
         <Stack.Screen
           name="editProduct"

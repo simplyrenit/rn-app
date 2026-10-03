@@ -1,5 +1,10 @@
 import { defaultPickupLocation, localityFor } from "@/backend/list-flow/pickup-location";
 import { ruleForParent, useDepositRules } from "@/backend/list-flow/deposit-rules";
+import useAddresses from "@/backend/useAddresses";
+import {
+  AddressPickerSheet,
+  AddressPickerSheetHandle,
+} from "@/components/addresses/address-picker-sheet";
 import {
   Button,
   FieldFrame,
@@ -23,6 +28,7 @@ import { SpecSheet, SpecsCard } from "@/components/list-flow/specs-card";
 import { AiValueFade, PulseOnce, useAppear } from "@/components/list-flow/motion";
 import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
+import { AddressType, PickedAddress, flatAndLandmark, fullAddressForNewPin } from "@/lib/addresses";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import {
   SCREEN_GUTTER,
@@ -63,13 +69,24 @@ import { Pressable, ScrollView, TextInput, TouchableOpacity, View } from "react-
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Animated from "react-native-reanimated";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
-import { MapPinIcon, PlusIcon } from "react-native-heroicons/outline";
+import { CheckIcon, MapPinIcon, PlusIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type TextFieldName = "title" | "brand_name" | "model_name" | "description" | "usage_description";
 type SectionKey = Requirement["key"];
 
 const THUMB = 56;
+/**
+ * How long the pickup prefill waits for the saved addresses. They need the
+ * profile to have loaded first; if either never arrives, the older sources
+ * (last listing, GPS) must still get their turn.
+ */
+const ADDRESS_WAIT_MS = 4000;
+const SAVE_AS: { value: AddressType; label: string }[] = [
+  { value: "home", label: "Home" },
+  { value: "work", label: "Work" },
+  { value: "other", label: "Other" },
+];
 
 /** An "Rs" amount input on the shared field surface. */
 function AmountInput({
@@ -192,6 +209,12 @@ export default function ListReviewScreen() {
   const categorySheet = useRef<BottomSheetModal>(null);
   const specSheet = useRef<BottomSheetModal>(null);
   const [openSpec, setOpenSpec] = useState<Spec | null>(null);
+  const addressSheet = useRef<AddressPickerSheetHandle>(null);
+  const {
+    addresses,
+    loading: addressesLoading,
+    isError: addressesFailed,
+  } = useAddresses();
   const sectionY = useRef<Partial<Record<SectionKey | "deposit", number>>>({});
   const editedOnce = useRef(new Set<FieldName>());
   const [showMissing, setShowMissing] = useState(false);
@@ -220,18 +243,53 @@ export default function ListReviewScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // §8.5: fill the pickup location from the best source we have, once.
+  // §8.5: fill the pickup location from the best source we have, once. The
+  // default saved address comes first, so this waits for the address query to
+  // settle. A failed query settles too, and simply has no default to offer.
+  const [addressWaitOver, setAddressWaitOver] = useState(false);
   useEffect(() => {
-    if (!draft || draft.fields.location.source !== "empty") return;
-    let active = true;
-    void defaultPickupLocation().then((location) => {
-      if (active && location) flow.dispatch({ type: "prefillLocation", value: location });
-    });
-    return () => {
-      active = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const timer = setTimeout(() => setAddressWaitOver(true), ADDRESS_WAIT_MS);
+    return () => clearTimeout(timer);
   }, []);
+  const addressesSettled = !addressesLoading || addressWaitOver;
+  // Which passes have run: `early` is the one the wait gave up on, without the
+  // addresses; `loaded` is the one that had them.
+  const prefillPass = useRef({ early: false, loaded: false });
+  const onScreen = useRef(true);
+  useEffect(
+    () => () => {
+      onScreen.current = false;
+    },
+    []
+  );
+  useEffect(() => {
+    if (!addressesSettled) return;
+    const pass = addressesLoading ? "early" : "loaded";
+    if (prefillPass.current.loaded || prefillPass.current[pass]) return;
+    const afterEarly = prefillPass.current.early;
+    prefillPass.current[pass] = true;
+    const saved = addresses.find((a) => a.is_default) ?? null;
+    // Addresses that arrive after the wait get a second pass, but only to
+    // bring the default in: the older sources have had their turn.
+    if (afterEarly && !saved) return;
+    if (!draft || draft.fields.location.source !== "empty") return;
+    void defaultPickupLocation(saved).then((location) => {
+      // `prefillLocation` only fills a field nobody has set, so a late default
+      // never replaces a location that is already there.
+      if (onScreen.current && location) flow.dispatch({ type: "prefillLocation", value: location });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addressesSettled, addressesLoading]);
+
+  // §8.8, D14: the "save this address" intent belongs to an owner with no
+  // saved address. A resumed draft can carry it past that point (an address
+  // added from Profile in between), so it is dropped once the list says so.
+  const staleSaveIntent =
+    !addressesLoading && addresses.length > 0 && Boolean(draft?.saveAddressAs);
+  useEffect(() => {
+    if (staleSaveIntent) flow.dispatch({ type: "setSaveAddressAs", value: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staleSaveIntent]);
 
   // Specs for a category that arrived before this screen could ask — a
   // resumed draft, or a taxonomy that loaded after the stream named the
@@ -320,7 +378,34 @@ export default function ListReviewScreen() {
     flow.startExtraction({ categoryHint: { parent: hint.parent, title: hint.title } });
   };
 
+  // The flat/landmark text when the pin moves to a point that is not a saved
+  // address — one rule for the sheet's "Use current location" and for the map
+  // opened directly: text a saved address supplied stays behind, text the
+  // owner typed comes along.
+  const fullAddressForUnsavedPin = () =>
+    fullAddressForNewPin(flow.draft?.fields.location.value?.fullAddress ?? "", addresses);
+
+  // What the address sheet hands back: a saved address with its own flat and
+  // landmark, or a one-off spot with none. Editing the field afterwards
+  // changes this listing only, never the saved address.
+  const onPickAddress = (picked: PickedAddress) => {
+    edit("location", {
+      locality: picked.locality,
+      fullAddress: picked.saved ? flatAndLandmark(picked.saved) : fullAddressForUnsavedPin(),
+      lat: picked.lat,
+      long: picked.long,
+    });
+  };
+
   const openLocationPicker = () => {
+    // The map opens directly, as it always has, only for an owner known to
+    // have nothing saved (D16) or whose list failed to load. While the list
+    // is still loading the sheet opens and shows that; treating "not loaded
+    // yet" as "none" sent owners with saved addresses to the map.
+    if (addressesLoading || addresses.length > 0) {
+      addressSheet.current?.present();
+      return;
+    }
     navigation.navigate("LocationModal", {
       requestId: createLocationRequest(async (coords) => {
         // The picker's "skip" is not a request to forget a location.
@@ -331,7 +416,7 @@ export default function ListReviewScreen() {
         const locality = (await localityFor(coords.latitude, coords.longitude)) ?? "";
         edit("location", {
           locality,
-          fullAddress: flow.draft?.fields.location.value?.fullAddress ?? "",
+          fullAddress: fullAddressForUnsavedPin(),
           lat: coords.latitude,
           long: coords.longitude,
         });
@@ -371,6 +456,10 @@ export default function ListReviewScreen() {
   const categoryLabel = f.category.value
     ? `${categoryDisplayName(f.category.value.title)} · ${categoryDisplayName(f.category.value.parent)}`
     : null;
+  // §8.8: offered only to an owner who is known to have no saved address
+  // (D14) — not while the list is loading, and not when it failed to load.
+  const showSaveOffer =
+    !addressesLoading && !addressesFailed && addresses.length === 0 && Boolean(f.location.value);
   const showFillRest =
     aiMissedItem &&
     run.status === "done" &&
@@ -632,6 +721,72 @@ export default function ListReviewScreen() {
             />
           ) : null}
 
+          {showSaveOffer ? (
+            <View
+              style={{
+                marginBottom: density.fieldGap,
+                padding: space.md,
+                gap: space.sm,
+                borderRadius: radius.group,
+                backgroundColor: color.surfaceRaised,
+              }}
+            >
+              <Text fontSize="text-sm" fontWeight="font-bold">
+                Save this address for next time
+              </Text>
+              <View style={{ flexDirection: "row", gap: space.sm }}>
+                {SAVE_AS.map((option) => {
+                  const selected = draft.saveAddressAs === option.value;
+                  return (
+                    <TouchableOpacity
+                      key={option.value}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={`Save as ${option.label}`}
+                      activeOpacity={0.6}
+                      // The chip is drawn 36 pt tall; this brings the target to 44.
+                      hitSlop={{ top: 4, bottom: 4 }}
+                      // Only the intent is kept: the address is created after
+                      // the listing is submitted (Preview), from the location
+                      // as it stands then. Tapping the chosen chip clears it.
+                      onPress={() =>
+                        flow.dispatch({
+                          type: "setSaveAddressAs",
+                          value: selected ? null : option.value,
+                        })
+                      }
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: space.xs,
+                        minHeight: density.chip,
+                        paddingHorizontal: space.md,
+                        borderRadius: radius.full,
+                        borderWidth: 1,
+                        borderColor: selected ? color.brand : color.inputLine,
+                        backgroundColor: selected ? color.brandWash : color.surface,
+                      }}
+                    >
+                      {selected ? <CheckIcon size={16} color={color.brandText} /> : null}
+                      <Text
+                        fontSize="text-sm"
+                        fontWeight={selected ? "font-bold" : "font-normal"}
+                        tone={selected ? "brand" : "default"}
+                      >
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {draft.saveAddressAs ? (
+                <Text fontSize="text-xs" tone="body" accessibilityLiveRegion="polite">
+                  Saved to your addresses when you publish.
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+
           {/* Also set for you */}
           <View
             onLayout={onLayoutSection("deposit")}
@@ -711,6 +866,11 @@ export default function ListReviewScreen() {
         spec={openSpec}
         onSave={onSaveSpec}
         onCancel={() => specSheet.current?.dismiss()}
+      />
+      <AddressPickerSheet
+        ref={addressSheet}
+        selected={f.location.value ? { lat: f.location.value.lat, long: f.location.value.long } : undefined}
+        onPick={onPickAddress}
       />
     </NonScrollableContainer>
   );

@@ -143,6 +143,8 @@ export const MY_PRODUCTS_ENDPOINT = SERVERURL + "my/products/";
 
 export const REPORT_PROBLEM_ENDPOINT = SERVERURL + "platform-feedback/";
 
+export const MY_ADDRESSES_ENDPOINT = SERVERURL + "my/addresses/";
+
 export const MY_PRODUCT_DETAILS_ENDPOINT = SERVERURL + "my/products/";
 
 export const MY_DETAILS_ENDPOINT = SERVERURL + "users/me/";
