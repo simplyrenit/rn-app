@@ -93,8 +93,10 @@ export function CategoryTile({
   onPress: () => void;
 }) {
   const { color } = useTheme();
-  const [remoteFailed, setRemoteFailed] = useState(false);
-  const remote = uri && !remoteFailed ? uri : null;
+  // Which URI failed, not whether one did: a tile handed a new picture (admin
+  // replaced it, or the theme flipped to the other one) gets to try it.
+  const [failedUri, setFailedUri] = useState<string | null>(null);
+  const remote = uri && uri !== failedUri ? uri : null;
   const source = remote ? { uri: remote } : image ?? null;
   // A label with nowhere to wrap ("Mountaineering", 92pt) shrinks to fit its one
   // line instead of breaking mid-word; anything with a space wraps as it needs.
@@ -132,7 +134,7 @@ export function CategoryTile({
             source={source}
             style={{ width: "100%", height: "100%" }}
             contentFit="cover"
-            onError={remote ? () => setRemoteFailed(true) : undefined}
+            onError={remote ? () => setFailedUri(remote) : undefined}
             accessible={false}
           />
         ) : (
@@ -200,9 +202,11 @@ export function useOpenCategory() {
   const navigation = useTypedNavigation();
 
   return (category: BrowseCategory) =>
-    // A tile from the API carries the v2 slug. A bundled tile (no list: cold
-    // start, offline) does too; the landing matches on it once the list loads
-    // and searches by it until then. A server from before slugs gets the title.
+    // A tile from the API carries the v2 slug, and so does a bundled one (no
+    // list: cold start, offline). The landing finds its sub-categories by it once
+    // the list is loaded, and the search's category filter accepts a slug as well
+    // as a title. A server from before slugs gets the title, which the landing
+    // matches the same way.
     navigation.navigate("CategoryLanding", {
       slug: category.slug ?? category.title,
       title: category.title,

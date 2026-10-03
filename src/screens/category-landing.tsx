@@ -24,9 +24,10 @@ import {
 } from "@/lib/design-tokens";
 import { getDiscoveryLocationData } from "@/lib/location";
 import { useTheme } from "@/lib/theme";
-import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
-import { useRoute } from "@react-navigation/native";
-import React from "react";
+import { BackendProduct, RootStackParamList, RouteProps } from "@/lib/types";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import React, { useRef } from "react";
 import { FlatList, TouchableOpacity, View, useWindowDimensions } from "react-native";
 
 // Measured off the v3 Appliances landing frame (C-09): 16 under the header, four
@@ -49,13 +50,19 @@ const PILLS = ["Filters", "Sort", "Dates"];
  * One category: its sub-categories as tiles, then listings in it near the
  * customer (ENG-77).
  *
- * The sub-categories come from the list the app loads at launch, matched by
- * slug, so admin adding or archiving one changes this screen with no release.
+ * The sub-categories come from the category list (loaded at launch and again on
+ * Home's pull-to-refresh), matched by slug, so admin adding or archiving one
+ * changes this screen with no release.
  * The listings are the search endpoint's, nearest first; the pills hand over to
  * the full results screen, which owns filtering, rather than rebuilding it here.
  */
 export default function CategoryLandingScreen() {
-  const navigation = useTypedNavigation();
+  // The root native stack, for its typed `push`; `useTypedNavigation` is the
+  // generic navigation prop, which has no `push`.
+  const stack = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  // A tap awaits a location lookup before it pushes; a second tap in that
+  // window would push the results twice.
+  const opening = useRef(false);
   const { params } = useRoute<RouteProps<"CategoryLanding">>();
   const { categories } = useGlobalContext();
   const { color } = useTheme();
@@ -69,8 +76,8 @@ export default function CategoryLandingScreen() {
     (category) => (category.slug ?? category.title) === params.slug
   );
   const title = parent?.title ?? params.title;
-  // Without the loaded list (cold start, offline) the tile only knew the slug,
-  // which search also matches (ENG-29).
+  // Without the loaded list (cold start, offline) there is only the slug, which
+  // the search's category filter also matches (ENG-29).
   const searchCategory = parent?.title ?? params.slug;
 
   const { products, loading, error, reload } = useRailData<BackendProduct>(
@@ -90,26 +97,43 @@ export default function CategoryLandingScreen() {
           condition: "",
         }
       ),
-    })
+    }),
+    // A landing reused for another category must not keep the last one's.
+    params.slug
   );
 
-  /** The full results for this category, or one sub-category of it. */
+  /**
+   * The full results for this category, or one sub-category of it. Pushed, not
+   * navigated: `navigate` returns to any SearchResults already in the stack,
+   * and that screen keeps the filters and results it opened with, so it showed
+   * the previous sub-category's listings under the new one's name.
+   *
+   * `selectedItem` is also the search text. On a cold start it is the bundled
+   * tile's name ("Sports"), which the server's text search matches against the
+   * v2 parent's title ("Fitness & Sports"), so it does not narrow the results.
+   */
   const openResults = async (subCategory?: string) => {
-    const locationData = await getDiscoveryLocationData();
-    navigation.navigate("SearchResults", {
-      category: searchCategory,
-      subCategory,
-      selectedItem: subCategory ?? title,
-      address: locationData?.address ?? "",
-      coords: locationData?.coordinates
-        ? {
-            lat: locationData.coordinates.lat,
-            lng: locationData.coordinates.long,
-          }
-        : { lat: undefined, lng: undefined },
-      range: { startDate: undefined, endDate: undefined },
-      products: [],
-    });
+    if (opening.current) return;
+    opening.current = true;
+    try {
+      const locationData = await getDiscoveryLocationData();
+      stack.push("SearchResults", {
+        category: searchCategory,
+        subCategory,
+        selectedItem: subCategory ?? title,
+        address: locationData?.address ?? "",
+        coords: locationData?.coordinates
+          ? {
+              lat: locationData.coordinates.lat,
+              lng: locationData.coordinates.long,
+            }
+          : { lat: undefined, lng: undefined },
+        range: { startDate: undefined, endDate: undefined },
+        products: [],
+      });
+    } finally {
+      opening.current = false;
+    }
   };
 
   const header = (
