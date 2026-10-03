@@ -46,8 +46,8 @@ export function quickChipSpec(filters: SpecFilter[]): SpecFilter | null {
 
 /**
  * Whether the results' search text is only the name of what is being browsed:
- * Home's tiles, the product page's breadcrumb and the category landing all
- * send the category's name as the text. The server ORs each word of `title`
+ * the category landing and the product page's breadcrumb send the category or
+ * sub-category's name as the text. The server ORs each word of `title`
  * into the match, so once the rail moves to a sibling ("Washing machine" text
  * under Refrigerator) that name alone filters everything out. Such a label is
  * not sent as text; the category and sub-category params already scope it.
