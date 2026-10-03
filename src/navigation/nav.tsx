@@ -24,6 +24,7 @@ import WriteReviewsScreen from "../screens/products/write-review";
 import SearchScreen from "../screens/search";
 import SearchResultsScreen from "../screens/search-results";
 import AllCategoriesScreen from "../screens/all-categories";
+import CategoryLandingScreen from "../screens/category-landing";
 import ChatScreen from "../screens/tabs/chat";
 import HomeScreen from "../screens/tabs/index";
 import PostScreen from "../screens/tabs/post";
@@ -410,6 +411,10 @@ export default function Navigation() {
         <Stack.Screen
           name="AllCategories"
           component={AllCategoriesScreen}
+        />
+        <Stack.Screen
+          name="CategoryLanding"
+          component={CategoryLandingScreen}
         />
         <Stack.Screen
           name="Email"
