@@ -1,6 +1,8 @@
 # Build a QA-configured Renit Android APK and push it to Firebase App
-# Distribution's `qa-testers` group on every merge to main. Same trigger
-# pattern as testflight-qa.yml; that workflow stays iOS-only.
+# Distribution's `qa-testers` group. Same trigger pattern as
+# testflight-qa.yml: only when asked for (ENG-92), by a `qa-*` git tag, which
+# qa-build-on-tag.yml turns into a run of this workflow, or by a manual run.
+# A merge to main no longer builds anything.
 #
 # QA ONLY. The backend host and app env are pinned in the `env:` block below.
 # A production build is a separate, deliberate workflow — do not point this
@@ -25,23 +27,20 @@
 # Store) but would need a real secret-held key before any Play Store release.
 name: Android QA Distribution
 
+# The commit being built, in the Actions list.
+run-name: Android QA Distribution (${{ inputs.ref || github.ref_name }})
+
 on:
-  push:
-    branches: [main]
-    # Nothing under these paths can change the Android binary or its JS
-    # bundle, so a merge that only touches them should not burn a build.
-    paths-ignore:
-      - "docs/**"
-      - "design/**"
-      - "functions/**"
-      - "ios/**"
-      - "plugins/**"
-      - ".claude/**"
-      - "**/*.md"
   workflow_dispatch:
     inputs:
-      # For measuring or debugging the build on a branch without sending
-      # testers a build. A merge to main always distributes.
+      # What to build. A tag run always starts this workflow on main, so its
+      # caches are main's and shared by every build, and names the tagged
+      # commit here (see testflight-qa.yml).
+      ref:
+        description: Commit, tag or branch to build (default, the selected branch)
+        type: string
+        default: ""
+      # For measuring or debugging the build without sending testers a build.
       dry_run:
         description: Build only; do not distribute to testers
         type: boolean
@@ -65,6 +64,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       - uses: actions/setup-java@v4
         with:
@@ -146,7 +147,7 @@ jobs:
           {
             echo "### Android QA distribution"
             echo "- Build: \`$GITHUB_RUN_NUMBER\`"
-            echo "- Commit: \`${GITHUB_SHA::7}\`"
+            echo "- Commit: \`$(git rev-parse --short HEAD)\`"
             echo "- Backend: \`$EXPO_PUBLIC_QA_API_HOST\` (QA)"
             echo "- Testers: the \`qa-testers\` Firebase App Distribution group"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -1,5 +1,10 @@
-# Archive a QA-configured Renit iOS build and upload it to TestFlight on every
-# merge to main. Local Xcode toolchain on a macOS runner; no EAS.
+# Archive a QA-configured Renit iOS build and upload it to TestFlight. Local
+# Xcode toolchain on a macOS runner; no EAS.
+#
+# Runs only when asked for (ENG-92): a `qa-*` git tag, which
+# qa-build-on-tag.yml turns into a run of this workflow, or a manual run. A
+# merge to main no longer builds anything; it used to, at about 30 macOS
+# minutes a merge.
 #
 # QA ONLY. The backend host and app env are pinned in the `env:` block below and
 # re-checked by scripts/inspect-ios-release.sh, which fails the run if the
@@ -20,23 +25,21 @@
 # group setting, not a CI step.
 name: TestFlight QA
 
+# The commit being built, in the Actions list.
+run-name: TestFlight QA (${{ inputs.ref || github.ref_name }})
+
 on:
-  push:
-    branches: [main]
-    # Nothing under these paths can change the iOS binary or its JS bundle, so
-    # a merge that only touches them should not burn a 20-minute macOS build.
-    paths-ignore:
-      - "docs/**"
-      - "design/**"
-      - "functions/**"
-      - "android/**"
-      - "plugins/**"
-      - ".claude/**"
-      - "**/*.md"
   workflow_dispatch:
     inputs:
-      # For measuring or debugging the build on a branch without uploading a
-      # build to TestFlight. A merge to main always uploads.
+      # What to build. A tag run always starts this workflow on main, so its
+      # caches are main's and shared by every build (a cache saved by a run on
+      # a tag is invisible to the next tag), and names the tagged commit here.
+      ref:
+        description: Commit, tag or branch to build (default, the selected branch)
+        type: string
+        default: ""
+      # For measuring or debugging the build without uploading it to
+      # TestFlight.
       dry_run:
         description: Archive only; do not upload to TestFlight
         type: boolean
@@ -68,6 +71,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       # Apple rejects uploads built with an SDK older than the current
       # requirement, so track the newest stable Xcode rather than pinning one.
@@ -247,7 +252,7 @@ jobs:
           {
             echo "### TestFlight QA upload"
             echo "- Version: \`$VERSION\` (build \`$BUILD_NUMBER\`)"
-            echo "- Commit: \`${GITHUB_SHA::7}\`"
+            echo "- Commit: \`$(git rev-parse --short HEAD)\`"
             echo "- Backend: \`$EXPO_PUBLIC_QA_API_HOST\` (QA)"
             echo "- Next, in App Store Connect: wait for processing, then answer export compliance for this build if prompted."
           } >> "$GITHUB_STEP_SUMMARY"
