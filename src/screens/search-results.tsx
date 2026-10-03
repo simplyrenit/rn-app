@@ -37,6 +37,7 @@ import {
 import { ScrollView } from "react-native-gesture-handler";
 import {
   SpecFilterPanel,
+  isBrowseLabel,
   quickChipSpec,
   toggleSpecOption,
   useSearch,
@@ -185,6 +186,23 @@ export default function SearchResults() {
     subCategory,
   } = route.params;
   const { searchProducts, fetchSpecFilters } = useSearch();
+  // Browse entry points send the category's name as the text; the pill still
+  // shows it, but it is not searched for (see isBrowseLabel).
+  const routeParent = category
+    ? categories.find((c) => c.title === category || c.slug === category)
+    : undefined;
+  const searchText = isBrowseLabel(selectedItem, [
+    category,
+    // Home with no category list loaded sends the slug as `category` and the
+    // tile's display name as the text.
+    category && categoryDisplayName(category),
+    routeParent?.title,
+    routeParent?.slug,
+    routeParent && categoryDisplayName(routeParent.title, routeParent.slug),
+    subCategory,
+  ])
+    ? ""
+    : selectedItem;
   const [products, setProducts] = useState<BackendProduct[]>(fetchedProducts);
   const didBootstrapSearchRef = useRef(false);
 
@@ -238,7 +256,9 @@ export default function SearchResults() {
   ) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
-      [filterType]: prevFilters[filterType] === value ? null : value,
+      // A second tap clears to "", the empty value everything else checks for;
+      // null left isFilterActive() true with nothing set.
+      [filterType]: prevFilters[filterType] === value ? "" : value,
       // Specs are keys of one sub-category; another one has other keys.
       ...(filterType === "subCategory" ? { specs: {} } : {}),
     }));
@@ -279,7 +299,7 @@ export default function SearchResults() {
   /** One query for both the applied search and the live count on the button. */
   const runSearch = (nextFilters: typeof filters) =>
     searchProducts(
-      selectedItem,
+      searchText,
       coords.lat != null && coords.lng != null
         ? { lat: coords.lat, lng: coords.lng }
         : undefined,
@@ -376,7 +396,7 @@ export default function SearchResults() {
     const timer = setTimeout(async () => {
       try {
         const panel = await fetchSpecFilters(
-          selectedItem,
+          searchText,
           coords.lat != null && coords.lng != null
             ? { lat: coords.lat, lng: coords.lng }
             : undefined,

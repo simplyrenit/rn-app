@@ -45,6 +45,23 @@ export function quickChipSpec(filters: SpecFilter[]): SpecFilter | null {
 }
 
 /**
+ * Whether the results' search text is only the name of what is being browsed:
+ * Home's tiles, the product page's breadcrumb and the category landing all
+ * send the category's name as the text. The server ORs each word of `title`
+ * into the match, so once the rail moves to a sibling ("Washing machine" text
+ * under Refrigerator) that name alone filters everything out. Such a label is
+ * not sent as text; the category and sub-category params already scope it.
+ */
+export function isBrowseLabel(
+  item: string | null | undefined,
+  labels: (string | null | undefined)[]
+): boolean {
+  const fold = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
+  const text = fold(item);
+  return text !== "" && labels.some((label) => fold(label) === text);
+}
+
+/**
  * One option turned on or off, for the filter sheet and the quick chips alike,
  * so a chip and the sheet can never disagree about what a tap does. Options of
  * one spec are ORed by the server (ENG-31) whatever the spec's type, so a tap

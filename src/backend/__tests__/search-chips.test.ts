@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { SpecFilter, quickChipSpec, toggleSpecOption } from "../search";
+import { SpecFilter, isBrowseLabel, quickChipSpec, toggleSpecOption } from "../search";
 
 jest.mock("@/lib/config", () => ({ SEARCH_PRODUCTS: "", SEARCH_SPEC_FILTERS: "" }));
 jest.mock("@/lib/networkUtils", () => ({ __esModule: true, default: {} }));
@@ -43,5 +43,20 @@ describe("toggleSpecOption", () => {
     const specs = { type: ["Desert"] };
     toggleSpecOption(specs, "type", "Tower");
     expect(specs).toEqual({ type: ["Desert"] });
+  });
+});
+
+describe("isBrowseLabel", () => {
+  const labels = ["Appliances", "appliances", "Washing machine", undefined];
+
+  it("matches a category or sub-category name, trimmed and in any case", () => {
+    expect(isBrowseLabel(" washing MACHINE ", labels)).toBe(true);
+    expect(isBrowseLabel("Appliances", labels)).toBe(true);
+  });
+
+  it("leaves typed searches and empty text alone", () => {
+    expect(isBrowseLabel("cooler", labels)).toBe(false);
+    expect(isBrowseLabel("", ["", undefined])).toBe(false);
+    expect(isBrowseLabel(undefined, labels)).toBe(false);
   });
 });
