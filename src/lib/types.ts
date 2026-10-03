@@ -266,6 +266,13 @@ export type RootStackParamList = {
      */
     subCategory?: string;
   };
+  /** Every active category, as tiles (ENG-76). */
+  AllCategories: undefined;
+  /**
+   * One category's sub-categories plus listings near the user (ENG-77).
+   * `slug` is the v2 parent's; `title` is shown while the list loads.
+   */
+  CategoryLanding: { slug: string; title: string };
   myProducts: undefined;
   editProduct: { id: string };
   unavailabilityForm: undefined;
@@ -321,6 +328,8 @@ export interface Subcategory {
 export interface Category {
   id?: number;
   slug?: string;
+  /** 0 keeps a category off Home; otherwise Home's tile order (ENG-76). */
+  homepage_order_id?: number;
   dark_icon: string | null;
   light_icon: string | null;
   main_icon: string;

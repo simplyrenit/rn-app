@@ -36,6 +36,53 @@ export type SpecFilterPanel = {
 };
 
 /**
+ * The spec whose options are the results screen's quick chips (ENG-78): the
+ * first "default" one, in the sub-category's definition order, which is the
+ * order the server lists them in. Null leaves the chips off.
+ */
+export function quickChipSpec(filters: SpecFilter[]): SpecFilter | null {
+  return filters.find((f) => f.facet === "default") ?? null;
+}
+
+/**
+ * Whether the results' search text is only the name of what is being browsed:
+ * the category landing and the product page's breadcrumb send the category or
+ * sub-category's name as the text. The server ORs each word of `title`
+ * into the match, so once the rail moves to a sibling ("Washing machine" text
+ * under Refrigerator) that name alone filters everything out. Such a label is
+ * not sent as text; the category and sub-category params already scope it.
+ */
+export function isBrowseLabel(
+  item: string | null | undefined,
+  labels: (string | null | undefined)[]
+): boolean {
+  const fold = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
+  const text = fold(item);
+  return text !== "" && labels.some((label) => fold(label) === text);
+}
+
+/**
+ * One option turned on or off, for the filter sheet and the quick chips alike,
+ * so a chip and the sheet can never disagree about what a tap does. Options of
+ * one spec are ORed by the server (ENG-31) whatever the spec's type, so a tap
+ * toggles membership for enum specs too; an emptied spec goes, as an empty
+ * list would still send the key.
+ */
+export function toggleSpecOption(
+  specs: Record<string, string[]>,
+  key: string,
+  option: string
+): Record<string, string[]> {
+  const current = specs[key] ?? [];
+  const next = current.includes(option)
+    ? current.filter((o) => o !== option)
+    : [...current, option];
+  const result = { ...specs, [key]: next };
+  if (next.length === 0) delete result[key];
+  return result;
+}
+
+/**
  * The search query string. Built by hand rather than through axios `params`:
  * a spec with two options must go as `attr.ac_type=Split&attr.ac_type=Window`
  * (options can contain commas, e.g. "Up to 12,000"), and axios would send an

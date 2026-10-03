@@ -10,6 +10,7 @@ import {
   Text,
 } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
+import DateRangePicker from "@/components/core/date-range-picker";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { TaxonomyList } from "@/components/post/taxonomy-list";
 import { ConditionFilter } from "@/components/search/condition-filter";
@@ -18,13 +19,27 @@ import { RatingFilter } from "@/components/search/rating-filter";
 import { SortFilter } from "@/components/search/sort-filter";
 import { SpecFilter } from "@/components/search/spec-filter";
 import SubCategoryFilter from "@/components/search/sub-category-filter";
+import { CategoryRail, FilterBar } from "@/components/search/results-rails";
 import { useGlobalContext } from "@/context/global-context";
-import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
+import { categoryDisplayName } from "@/lib/category-icons";
+import { toast } from "@/lib/toast";
+import {
+  BackendProduct,
+  RootStackParamList,
+  RouteProps,
+  useTypedNavigation,
+} from "@/lib/types";
 import { BottomSheetView } from "@gorhom/bottom-sheet";
-import { StackActions, useRoute } from "@react-navigation/native";
+import {
+  StackActions,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
 import { styled } from "nativewind";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useCallback, useRef, useState, useEffect } from "react";
 import {
   FlatList,
   Pressable,
@@ -33,8 +48,13 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { AdjustmentsVerticalIcon } from "react-native-heroicons/outline";
-import { SpecFilterPanel, useSearch } from "@/backend/search";
+import {
+  SpecFilterPanel,
+  isBrowseLabel,
+  quickChipSpec,
+  toggleSpecOption,
+  useSearch,
+} from "@/backend/search";
 import { Disclaimer } from "@/components/home/disclaimer";
 import { SCREEN_GUTTER, colors, density, ink, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -119,8 +139,8 @@ const formatDate = (date: string | undefined) => {
 const COUNT_DEBOUNCE_MS = 350;
 
 // Measured off the Figma results frame: a 64pt search bar with 16 above and below it,
-// a 21pt count 24 below the frame's topbar (the bar's 16 bottom inset plus this 24 is 40
-// from the bar to the count: margins do not collapse), then a two-column grid of the Home tile with 16
+// the category rail and Filters bar (ENG-78), a 21pt count 12 below them (the v3 frame
+// drops the count; it stays, as it carries Clear Filters), then a two-column grid of the Home tile with 16
 // between columns and 24 between rows. A column is half of what the gutters and the
 // gap leave, so it is 163 on the 390pt frame and shrinks on a narrower phone.
 const SUMMARY_HEIGHT = 64;
@@ -149,6 +169,9 @@ function ResultsSkeleton({ width }: { width: number }) {
 
 export default function SearchResults() {
   const navigation = useTypedNavigation();
+  /** For `push` and `setParams`, which the shared navigation type lacks. */
+  const stack =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, "SearchResults">>();
   const route = useRoute<RouteProps<"SearchResults">>();
 
   const { theme, categories } = useGlobalContext();
@@ -179,20 +202,42 @@ export default function SearchResults() {
     subCategory,
   } = route.params;
   const { searchProducts, fetchSpecFilters } = useSearch();
+  // The category landing and the product page's breadcrumb send the
+  // category's name as the text; the pill still shows it, but it is not
+  // searched for (see isBrowseLabel).
+  const routeParent = category
+    ? categories.find((c) => c.title === category || c.slug === category)
+    : undefined;
+  const searchText = isBrowseLabel(selectedItem, [
+    category,
+    // A caller without the category list (a cold start) can send a slug as
+    // `category` and the bundled display name as the text.
+    category && categoryDisplayName(category),
+    routeParent?.title,
+    routeParent?.slug,
+    routeParent && categoryDisplayName(routeParent.title, routeParent.slug),
+    subCategory,
+  ])
+    ? ""
+    : selectedItem;
   const [products, setProducts] = useState<BackendProduct[]>(fetchedProducts);
   const didBootstrapSearchRef = useRef(false);
 
-  const handleOpenBottomSheet = () => {
-    bottomSheetRef.current?.present();
-  };
-
-  const [filters, setFilters] = useState(() =>
-    createDefaultFilters(category || "", (category && subCategory) || "")
-  );
+  /**
+   * The scope the route opened with: a browse keeps its category and
+   * sub-category through Clear Filters, a typed search has neither. Clearing
+   * a browse to nothing searched the whole catalogue, the label no longer
+   * being sent as text.
+   */
+  const routeFilters = () =>
+    createDefaultFilters(category || "", (category && subCategory) || "");
+  const [filters, setFilters] = useState(routeFilters);
 
   const filtersKey = keyOf(filters);
   /** The filter set the products on screen were actually fetched with. */
   const [appliedKey, setAppliedKey] = useState(filtersKey);
+  const appliedKeyRef = useRef(appliedKey);
+  appliedKeyRef.current = appliedKey;
   /**
    * The spec filters behind the grid on screen, for the product page to mark
    * (ENG-35). The applied set, not the entered one: a spec picked in the sheet
@@ -214,21 +259,9 @@ export default function SearchResults() {
     products: BackendProduct[];
   } | null>(null);
 
-  const isFilterActive = () => {
-    const { sort, category, subCategory, price, ratings, condition, specs } = filters;
-
-    return (
-      Object.keys(specs).length > 0 ||
-      sort !== "" ||
-      category !== "" ||
-      subCategory !== "" ||
-      price.min !== "" ||
-      price.max !== "" ||
-      ratings.product !== 0 ||
-      ratings.owner !== 0 ||
-      condition !== ""
-    );
-  };
+  // Anything Clear Filters would undo. Against the route's own scope, so a
+  // browse does not show Clear Filters for the category it opened on.
+  const isFilterActive = () => filtersKey !== keyOf(routeFilters());
 
   const handleFilterSelect = (
     filterType: keyof typeof filters,
@@ -236,22 +269,19 @@ export default function SearchResults() {
   ) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
-      [filterType]: prevFilters[filterType] === value ? null : value,
+      // A second tap clears to "", the empty value everything else checks for;
+      // null left isFilterActive() true with nothing set.
+      [filterType]: prevFilters[filterType] === value ? "" : value,
       // Specs are keys of one sub-category; another one has other keys.
       ...(filterType === "subCategory" ? { specs: {} } : {}),
     }));
   };
 
   const handleSpecToggle = (key: string, option: string) => {
-    setFilters((prevFilters) => {
-      const current = prevFilters.specs[key] ?? [];
-      const next = current.includes(option)
-        ? current.filter((o) => o !== option)
-        : [...current, option];
-      const specs = { ...prevFilters.specs, [key]: next };
-      if (next.length === 0) delete specs[key];
-      return { ...prevFilters, specs };
-    });
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      specs: toggleSpecOption(prevFilters.specs, key, option),
+    }));
   };
 
   const handleCategorySelect = (category: string) => {
@@ -280,15 +310,15 @@ export default function SearchResults() {
   };
 
   /** One query for both the applied search and the live count on the button. */
-  const runSearch = (nextFilters: typeof filters) =>
+  const runSearch = (nextFilters: typeof filters, dates = range) =>
     searchProducts(
-      selectedItem,
+      searchText,
       coords.lat != null && coords.lng != null
         ? { lat: coords.lat, lng: coords.lng }
         : undefined,
       {
-        start_date: range.startDate ?? undefined,
-        end_date: range.endDate ?? undefined,
+        start_date: dates.startDate ?? undefined,
+        end_date: dates.endDate ?? undefined,
       },
       {
         sort: nextFilters.sort,
@@ -303,34 +333,67 @@ export default function SearchResults() {
       }
     );
 
+  /** The latest search; the rail and chips make several in quick succession. */
+  const searchSeqRef = useRef(0);
+  /** The filter set a search is running for, so it is not counted twice. */
+  const searchingKeyRef = useRef<string | null>(null);
+  /** False when the search failed; a superseded one counts as done. */
   const applyFilterAndSearch = async (
-    nextFilters: typeof filters = filters
-  ) => {
+    nextFilters: typeof filters = filters,
+    dates = range
+  ): Promise<boolean> => {
+    const seq = ++searchSeqRef.current;
+    searchingKeyRef.current = keyOf(nextFilters);
     setIsLoading(true);
     try {
-      const filteredProducts = await runSearch(nextFilters);
+      const filteredProducts = await runSearch(nextFilters, dates);
+      // Air cooler then Water cooler tapped quickly: an Air cooler answer
+      // arriving second must not fill the grid under the Water cooler chip.
+      if (seq !== searchSeqRef.current) return true;
       setProducts(filteredProducts.filter(prod => !prod?.moderation_labels?.length));
       setAppliedKey(keyOf(nextFilters));
+      return true;
     } catch (error) {
       console.error(error);
+      if (seq !== searchSeqRef.current) return true;
+      toast.error("We couldn't update these results.", {
+        message: "Check your connection and try again.",
+      });
+      return false;
     } finally {
-      setIsLoading(false);
+      if (seq === searchSeqRef.current) {
+        searchingKeyRef.current = null;
+        setIsLoading(false);
+      }
+    }
+  };
+
+  /** Rail and chip taps: applied at once, as the sheet's "Show results" would. */
+  const applyNow = async (nextFilters: typeof filters) => {
+    setFilters(nextFilters);
+    // Back to the set behind the grid, so the rail and chips do not claim a
+    // scope whose results never arrived. The ref, not the tap's closure: an
+    // earlier tap may have applied since.
+    if (!(await applyFilterAndSearch(nextFilters))) {
+      setFilters(JSON.parse(appliedKeyRef.current));
     }
   };
 
   const clearFiltersAndSearch = async () => {
-    const resetFilters = createDefaultFilters();
-    setSelectedCategory(null);
-    setShowSubCategory(false);
+    const resetFilters = routeFilters();
+    setSelectedCategory(category || null);
+    setShowSubCategory(Boolean(category && subCategory));
     setFilters(resetFilters);
     await applyFilterAndSearch(resetFilters);
   };
 
   // Re-count whenever the entered filters drift from the applied ones. Debounced
-  // so a price typed digit by digit is one request, not four.
+  // so a price typed digit by digit is one request, not four. Not while that
+  // very set is being searched (a rail or chip tap): the search is the count.
   useEffect(() => {
     if (filtersKey === appliedKey) return;
     if (preview?.key === filtersKey) return;
+    if (searchingKeyRef.current === filtersKey) return;
 
     let cancelled = false;
     const timer = setTimeout(async () => {
@@ -367,7 +430,7 @@ export default function SearchResults() {
     const timer = setTimeout(async () => {
       try {
         const panel = await fetchSpecFilters(
-          selectedItem,
+          searchText,
           coords.lat != null && coords.lng != null
             ? { lat: coords.lat, lng: coords.lng }
             : undefined,
@@ -393,7 +456,8 @@ export default function SearchResults() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [filtersKey]);
+    // The dates too: the counts are for this range (the Dates pill moves it).
+  }, [filtersKey, range.startDate, range.endDate]);
 
   // Only the chosen sub-category's own panel: a previous one's keys would
   // filter the new sub-category to nothing, with no chip left to undo them.
@@ -401,6 +465,50 @@ export default function SearchResults() {
     specPanel && specPanel.subCategory === filters.subCategory
       ? specPanel.panel.filters
       : [];
+
+  // ENG-78 quick chips: the options of the sub-category's first default spec,
+  // from the same panel the Specs tab shows, so a chip only offers what the
+  // sheet would. None on "All", where no panel loads.
+  const chipSpec = quickChipSpec(specs);
+  const quickChips = chipSpec
+    ? chipSpec.options.map((option) => ({
+        value: option.value,
+        on: (filters.specs[chipSpec.key] ?? []).includes(option.value),
+      }))
+    : [];
+
+  // The rail's parent, by title or slug: search accepts either as `category`.
+  const railParent = filters.category
+    ? categories.find(
+        (c) => c.title === filters.category || c.slug === filters.category
+      )
+    : undefined;
+  // A browse names what is on screen, so it follows the rail: the label the
+  // screen opened with ("Refrigerator") went stale after a tap on "All". A
+  // typed search keeps its words.
+  const headerLabel =
+    searchText ||
+    filters.subCategory ||
+    railParent?.title ||
+    selectedItem ||
+    "Everything on Renit";
+  /** Re-scope to one of the parent's children, or the whole parent (""). */
+  const selectRailSubCategory = (subCategory: string) =>
+    // As the sheet's Category tab: the specs were the old sub-category's keys.
+    // The text, dates and place are route params, untouched here.
+    applyNow({ ...filters, subCategory, specs: {} });
+
+  const hasDates = !!range.startDate || !!range.endDate;
+  // The rail already shows the category, so it does not light Filters up too.
+  const refined =
+    !!filters.sort ||
+    !!filters.price.min ||
+    !!filters.price.max ||
+    filters.ratings.product !== 0 ||
+    filters.ratings.owner !== 0 ||
+    !!filters.condition ||
+    Object.keys(filters.specs).length > 0;
+
   const tabs = [
     "Sort",
     "Category",
@@ -421,6 +529,12 @@ export default function SearchResults() {
     // Commit exactly the set that was counted, so the number cannot change
     // between reading it and tapping it.
     if (preview?.key === filtersKey) {
+      // Supersedes a rail or chip search still in flight. Its `finally` is
+      // gated on the sequence, so release its key here or a later preview of
+      // that same set would be skipped.
+      searchSeqRef.current++;
+      searchingKeyRef.current = null;
+      setIsLoading(false);
       setProducts(preview.products);
       setAppliedKey(filtersKey);
       bottomSheetRef.current?.dismiss();
@@ -471,23 +585,79 @@ export default function SearchResults() {
     );
   }, [category, fetchedProducts.length]);
 
+  /** Back to the search form with these criteria, to change the words or place. */
+  const editSearch = () => {
+    navigation.dispatch(
+      StackActions.replace("Search", {
+        what: selectedItem,
+        where: address,
+        coords: {
+          lat: coords?.lat,
+          lng: coords?.lng,
+        },
+      })
+    );
+  };
+
+  const openSheetOn = (tab: string) => {
+    setSelectedTab(tab);
+    bottomSheetRef.current?.present();
+  };
+
+  // Back to the landing this browse came from when it is the same category;
+  // pushing another copy made Back walk every hop. Otherwise pushed, not
+  // navigated: a landing further down may be another category's once the sheet
+  // changed it. The ref stops a double tap; it is let go back in view.
+  const openingLandingRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      openingLandingRef.current = false;
+    }, [])
+  );
+  const openLanding = (slug: string, title: string) => {
+    if (openingLandingRef.current) return;
+    openingLandingRef.current = true;
+    // The screen under this one, not under the top: a push still animating
+    // would make the top's neighbour this very screen.
+    const { routes } = stack.getState();
+    const previous = routes[routes.findIndex((r) => r.key === route.key) - 1];
+    if (
+      previous?.name === "CategoryLanding" &&
+      (previous.params as RootStackParamList["CategoryLanding"] | undefined)?.slug === slug
+    ) {
+      stack.goBack();
+      return;
+    }
+    stack.push("CategoryLanding", { slug, title });
+  };
+
+  /**
+   * The Dates pill picks dates here rather than back on the search form,
+   * which replaced this screen and lost the category, sub-category and specs.
+   * The range becomes a param only once its search has landed, so the header
+   * never names dates the grid was not searched for.
+   */
+  const [datesOpen, setDatesOpen] = useState(false);
+  const confirmDates = async ({ startDate, endDate }: { startDate: Date; endDate: Date }) => {
+    setDatesOpen(false);
+    // ISO strings: navigation params must stay serializable.
+    const dates = { startDate: startDate.toISOString(), endDate: endDate.toISOString() };
+    const seq = searchSeqRef.current + 1;
+    const ok = await applyFilterAndSearch(filters, dates);
+    // A rail or chip tap that overtook it searched the old range; that grid
+    // is what is on screen, so the header keeps the old range too.
+    if (ok && searchSeqRef.current === seq) {
+      setPreview(null); // counted for the old range
+      stack.setParams({ range: dates });
+    }
+  };
+
   return (
     <NonScrollableContainer>
       <View style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER }}>
         {/* Header */}
         <Pressable
-          onPress={() => {
-            navigation.dispatch(
-              StackActions.replace("Search", {
-                what: selectedItem,
-                where: address,
-                coords: {
-                  lat: coords?.lat,
-                  lng: coords?.lng,
-                },
-              })
-            );
-          }}
+          onPress={editSearch}
           accessibilityRole="button"
           accessibilityLabel="Edit this search"
           accessibilityHint="Reopens the search screen with these criteria"
@@ -520,7 +690,7 @@ export default function SearchResults() {
               style={{ width: '100%' }}
               numberOfLines={1}
             >
-              {selectedItem || "Everything on Renit"}
+              {headerLabel}
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, width: "100%" }}>
               {!!range.startDate || !!range.endDate ? <Text
@@ -560,52 +730,63 @@ export default function SearchResults() {
               </Text>
             </View>
           </View>
-
-          {/* The design carries the filter control inside the search pill, not
-              down on the results row: 36pt visually at x=294 of a 342pt bar.
-              Rendered at 36 with hit slop back out to the 44pt floor. */}
-          <TouchableOpacity
-            onPress={handleOpenBottomSheet}
-            accessibilityRole="button"
-            accessibilityLabel="Filters"
-            accessibilityHint="Refine these results by price, dates and location"
-            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: radius.full,
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 1,
-              borderColor: color.line,
-              // The frame fills the button with the hairline tone it borders it in.
-              backgroundColor: color.line,
-            }}
-          >
-            <AdjustmentsVerticalIcon color={color.textDim} size={20} />
-            {isFilterActive() && (
-              <View
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  right: 0,
-                  width: 8,
-                  height: 8,
-                  borderRadius: radius.full,
-                  backgroundColor: color.brand,
-                }}
-              />
-            )}
-          </TouchableOpacity>
         </Pressable>
 
-        {/* Filters and Results */}
+        {/* C-12 v3 moved the filter control out of the search pill into the
+            Filters / Sort / Dates bar, under the category rail (ENG-78). The
+            rail is 24 below the bar, the bar 12 below the rail. */}
+        {railParent && (
+          <View style={{ marginTop: 8 }}>
+            <CategoryRail
+              // The API's own titles, as the landing's header and tiles use
+              // and the frame draws ("Appliances ›", "Air cooler").
+              parentLabel={railParent.title}
+              onOpenParent={
+                railParent.slug
+                  ? () => openLanding(railParent.slug!, railParent.title)
+                  : undefined
+              }
+              items={railParent.subcategories.map((sub) => ({
+                key: sub.title,
+                label: sub.title,
+              }))}
+              selectedKey={filters.subCategory ?? ""}
+              onSelect={selectRailSubCategory}
+            />
+          </View>
+        )}
+        <View style={{ marginTop: railParent ? 12 : 0 }}>
+          <FilterBar
+            filtersActive={refined}
+            sortActive={!!filters.sort}
+            datesLabel={
+              hasDates
+                ? `${formatDate(range.startDate)} - ${formatDate(range.endDate)}`
+                : "Dates"
+            }
+            datesActive={hasDates}
+            onFilters={() => openSheetOn(specs.length > 0 ? "Specs" : "Category")}
+            onSort={() => openSheetOn("Sort")}
+            onDates={() => setDatesOpen(true)}
+            chipSpecLabel={chipSpec?.label}
+            chips={quickChips}
+            onChip={(value) =>
+              chipSpec &&
+              applyNow({
+                ...filters,
+                specs: toggleSpecOption(filters.specs, chipSpec.key, value),
+              })
+            }
+          />
+        </View>
+
+        {/* Results */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
-            marginTop: RESULTS_GAP,
+            marginTop: 12,
             marginBottom: RESULTS_GAP,
           }}
         >
@@ -902,6 +1083,15 @@ export default function SearchResults() {
           </View>
         </StyledBottomView>
       </CustomBottomSheetModal>
+
+      {datesOpen && (
+        <DateRangePicker
+          startDate={range.startDate ? new Date(range.startDate) : undefined}
+          endDate={range.endDate ? new Date(range.endDate) : undefined}
+          onConfirm={confirmDates}
+          onCancel={() => setDatesOpen(false)}
+        />
+      )}
     </NonScrollableContainer>
   );
 }

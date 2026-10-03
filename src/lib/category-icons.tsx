@@ -1,4 +1,5 @@
 import React from "react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import {
   AcademicCapIcon,
   HomeIcon,
@@ -36,13 +37,20 @@ import { foldForSearch } from "./taxonomy-search";
 type IconComponent = typeof CubeIcon;
 
 /**
- * One glyph family for the whole taxonomy.
+ * Two glyph families, split by tier.
  *
- * The same categories were being presented three different ways: photorealistic
- * stock shots on Home (different lighting, different shadow directions, nothing
- * optically normalised), twelve identical cube glyphs in the listing flow, and
- * no icons at all in the request form. A single-weight outline set makes shape
- * usable for scanning, which is the only reason to reserve an icon column.
+ * Parent categories keep the single-weight Heroicons outline set: the same
+ * categories were being presented three different ways (photorealistic stock
+ * shots on Home, twelve identical cube glyphs in the listing flow, no icons in
+ * the request form), and one outline weight makes shape usable for scanning.
+ *
+ * Sub-categories use Material Community outline glyphs instead. Heroicons has
+ * nothing at item level (fridge, air conditioner, washing machine, excavator...),
+ * so all 210 sub-category tiles on the Category landing fell through to the same
+ * cube. Material Community Icons is already installed via @expo/vector-icons and
+ * has a line glyph for nearly every item (Yash chose it on 2026-10-03). Where
+ * nothing fits, a sub-category gets a generic glyph rather than a misleading
+ * specific one.
  *
  * Keys are matched case-insensitively and ignore punctuation and accents, so
  * "Art & Craft", "Arts & Crafts" and "arts and crafts" all land on the same
@@ -112,6 +120,248 @@ const ICONS: Record<string, IconComponent> = {
   traveloutdooroffice: BriefcaseIcon,
 };
 
+/**
+ * Taxonomy v2 sub-categories (ENG-77), keyed by slug, to a Material Community
+ * glyph. Only the slug is used: sub-category titles repeat across parents
+ * ("Accessories", "Drone"), the slug does not.
+ */
+export const SUB_ICONS: Record<string, string> = {
+  appliancesairconditionerac: "air-conditioner",
+  appliancesaircooler: "fan",
+  applianceswatercooler: "cup-water",
+  appliancesairpurifier: "air-purifier",
+  appliancescoffeemachine: "coffee-maker-outline",
+  applianceskitchenware: "pot-steam-outline",
+  appliancesmicrowave: "microwave",
+  appliancesrefrigerator: "fridge-outline",
+  appliancessmarthomedevices: "home-automation",
+  appliancestelevision: "television",
+  appliancesvacuumcleaner: "vacuum-outline",
+  applianceswashingmachine: "washing-machine",
+  applianceswaterpurifier: "water-check-outline",
+  appliancesbarbecuegrill: "grill-outline",
+  appliancesfan: "fan",
+  appliancesfloorcleaningmachine: "robot-vacuum",
+  appliancesheater: "radiator",
+  applianceskitchenappliances: "toaster-oven",
+  appliancesother: "dots-horizontal-circle-outline",
+  furniturebarcabinet: "glass-cocktail",
+  furniturebed: "bed-outline",
+  furniturebookshelves: "bookshelf",
+  furniturechair: "seat-outline",
+  furniturediningorcentretable: "table-furniture",
+  furnituredresser: "dresser-outline",
+  furnituremattress: "bed-double-outline",
+  furnitureshoerack: "shoe-sneaker",
+  furnituresidetablebedstand: "table-furniture",
+  furnituresofarecliner: "sofa-outline",
+  furniturewardrobe: "wardrobe-outline",
+  furniturebeanbagpouf: "sofa-single-outline",
+  furniturebedding: "bed-king-outline",
+  furniturefurnitureset: "table-chair",
+  furnitureoutdoorfurniture: "table-picnic",
+  furniturestoragecabinetrack: "cupboard-outline",
+  furniturestudytabledesk: "desk",
+  furnituretvunit: "television-classic",
+  furnitureother: "dots-horizontal-circle-outline",
+  electronicscomputingelectronicaccessories: "cable-data",
+  electronicscomputinglaptopdesktop: "laptop",
+  electronicscomputingphone: "cellphone",
+  electronicscomputingprinterscanner: "printer-outline",
+  electronicscomputingprojector: "projector",
+  electronicscomputingsecuritysurveillance: "cctv",
+  electronicscomputingtablet: "tablet",
+  electronicscomputingwearables: "watch",
+  electronicscomputingdisplayledwall: "billboard",
+  electronicscomputingprojectorscreen: "projector-screen-outline",
+  electronicscomputingwalkietalkie: "radio-handheld",
+  electronicscomputingwifinetworking: "router-wireless",
+  electronicscomputingother: "dots-horizontal-circle-outline",
+  photovideoproductionantiques: "image-frame",
+  photovideoproductionstudiogear: "spotlight-beam",
+  photovideoproductioncameralens: "camera-outline",
+  photovideoproductiondrone: "drone",
+  photovideoproductionphotobooth: "camera-party-mode",
+  photovideoproductionpropssetpieces: "theater",
+  photovideoproductiontripodgimbal: "video-stabilization",
+  photovideoproductionother: "dots-horizontal-circle-outline",
+  audiomusicdjaudiodevice: "speaker",
+  audiomusicdjdjgear: "disc-player",
+  audiomusicdjdrumspercussion: "music-note-outline",
+  audiomusicdjflutewoodwind: "saxophone",
+  audiomusicdjguitar: "guitar-acoustic",
+  audiomusicdjmicrophonemic: "microphone-outline",
+  audiomusicdjmusicaccessories: "guitar-pick-outline",
+  audiomusicdjpianokeyboard: "piano",
+  audiomusicdjsitarindianstrings: "music-clef-treble",
+  audiomusicdjtrumpetbrass: "trumpet",
+  audiomusicdjviolincello: "violin",
+  audiomusicdjmixeramplifier: "amplifier",
+  audiomusicdjother: "dots-horizontal-circle-outline",
+  automobilesmobilityaccessories: "car-settings",
+  automobilesmobilitybus: "bus",
+  automobilesmobilitycar: "car-outline",
+  automobilesmobilitygolfcart: "golf-cart",
+  automobilesmobilityminibus: "van-passenger",
+  automobilesmobilitymotorcycle: "motorbike",
+  automobilesmobilitypickupminitruck: "car-pickup",
+  automobilesmobilityscooter: "scooter",
+  automobilesmobilitythreewheeler: "rickshaw",
+  automobilesmobilitytoolsequipmentautomobile: "car-wrench",
+  automobilesmobilitytruck: "truck-outline",
+  automobilesmobilityvan: "van-utility",
+  automobilesmobilitywatercraft: "sail-boat",
+  automobilesmobilityatvgokart: "go-kart",
+  automobilesmobilitycaravancampervan: "caravan",
+  automobilesmobilityother: "dots-horizontal-circle-outline",
+  fitnesssportsboardgames: "chess-knight",
+  fitnesssportscricket: "cricket",
+  fitnesssportsfootball: "soccer",
+  fitnesssportsgym: "dumbbell",
+  fitnesssportskayaking: "kayaking",
+  fitnesssportsbilliardspool: "billiards",
+  fitnesssportsskating: "roller-skate",
+  fitnesssportssurfing: "surfing",
+  fitnesssportstabletennis: "table-tennis",
+  fitnesssportstennis: "tennis",
+  fitnesssportsbadminton: "badminton",
+  fitnesssportsbaseball: "baseball",
+  fitnesssportscycle: "bike",
+  fitnesssportsgolf: "golf",
+  fitnesssportspickleball: "racquetball",
+  fitnesssportsbasketball: "basketball",
+  fitnesssportsvolleyball: "volleyball",
+  fitnesssportsboxingmartialarts: "boxing-glove",
+  fitnesssportsdivingsnorkeling: "diving-snorkel",
+  fitnesssportshockey: "hockey-sticks",
+  fitnesssportskickscooterhoverboard: "human-scooter",
+  fitnesssportspoolhottubsauna: "hot-tub",
+  fitnesssportsskisnowgear: "ski",
+  fitnesssportssportsgroundequipment: "soccer-field",
+  fitnesssportsother: "dots-horizontal-circle-outline",
+  gamingvremergingtechgamingconsole: "controller-classic-outline",
+  gamingvremergingtecharcademachine: "space-invaders",
+  gamingvremergingtechvrheadset: "virtual-reality",
+  gamingvremergingtechother: "dots-horizontal-circle-outline",
+  machinestoolsequipmentbulldozer: "bulldozer",
+  machinestoolsequipmentcrane: "crane",
+  machinestoolsequipmentdieselgeneratordg: "engine-outline",
+  machinestoolsequipmentfarmseeder: "seed-outline",
+  machinestoolsequipmentfarmspreadersprayer: "sprinkler-variant",
+  machinestoolsequipmentforklift: "forklift",
+  machinestoolsequipmentharvester: "tractor-variant",
+  machinestoolsequipmentindustrialequipment: "factory",
+  machinestoolsequipmentroadroller: "hammer-wrench",
+  machinestoolsequipmenttractor: "tractor",
+  machinestoolsequipmentconstructionequipment: "hard-hat",
+  machinestoolsequipmentexcavatorloader: "excavator",
+  machinestoolsequipmentladderscaffolding: "ladder",
+  machinestoolsequipmentlawngardenmachine: "mower",
+  machinestoolsequipmentportablecabincontainer: "truck-cargo-container",
+  machinestoolsequipmentpowertools: "hammer-screwdriver",
+  machinestoolsequipmentpressurewasher: "spray-bottle",
+  machinestoolsequipmentrotavatortillage: "tractor-variant",
+  machinestoolsequipmentscissorboomlift: "elevator-up",
+  machinestoolsequipmentsurveyingmeasuringinstruments: "tape-measure",
+  machinestoolsequipmentwaterpump: "water-pump",
+  machinestoolsequipmentweldingmachine: "flash-outline",
+  machinestoolsequipmentother: "dots-horizontal-circle-outline",
+  fashionaccessoriesaccessories: "sunglasses",
+  fashionaccessoriesbottomwear: "hanger",
+  fashionaccessoriescostumes: "drama-masks",
+  fashionaccessoriesdresses: "human-female",
+  fashionaccessoriesethnicwear: "tshirt-v-outline",
+  fashionaccessoriesfootwear: "shoe-sneaker",
+  fashionaccessorieshandbags: "purse-outline",
+  fashionaccessoriesjewellery: "diamond-stone",
+  fashionaccessorieswatches: "watch",
+  fashionaccessorieskidswear: "human-child",
+  fashionaccessoriessuitsblazers: "tie",
+  fashionaccessorieswinterwear: "snowflake",
+  fashionaccessoriesother: "dots-horizontal-circle-outline",
+  artdecorhobbyhandicrafts: "scissors-cutting",
+  artdecorhobbypaintings: "palette-outline",
+  artdecorhobbypottery: "pot-outline",
+  artdecorhobbysculptures: "palette-swatch-outline",
+  artdecorhobbyrugs: "rug",
+  artdecorhobbyplants: "sprout-outline",
+  artdecorhobbysewingcraftmachine: "needle",
+  artdecorhobbytelescopebinoculars: "telescope",
+  artdecorhobbyother: "dots-horizontal-circle-outline",
+  booksbiography: "book-account-outline",
+  booksfiction: "book-open-page-variant-outline",
+  bookskids: "book-alphabet",
+  booksnonfiction: "book-open-variant",
+  booksselfhelp: "head-lightbulb-outline",
+  bookstextbookexamprep: "book-education-outline",
+  booksother: "dots-horizontal-circle-outline",
+  eventscelebrationspartysuppliesdecoration: "party-popper",
+  eventscelebrationsbarricadecrowdcontrol: "fence",
+  eventscelebrationscateringequipment: "silverware-fork-knife",
+  eventscelebrationscrockerytableware: "silverware-variant",
+  eventscelebrationseventlighting: "spotlight",
+  eventscelebrationsexhibitiondisplay: "presentation",
+  eventscelebrationsfogeffectsmachine: "weather-fog",
+  eventscelebrationsmandapceremonydecor: "flower-outline",
+  eventscelebrationspandalshamiana: "tent",
+  eventscelebrationspartycasinogames: "cards-playing-outline",
+  eventscelebrationspartyfoodmachines: "popcorn",
+  eventscelebrationsstagetruss: "podium",
+  eventscelebrationsportabletoiletshower: "toilet",
+  eventscelebrationsweddingbaggicarriage: "horse",
+  eventscelebrationsdanceflooreventflooring: "dance-ballroom",
+  eventscelebrationsother: "dots-horizontal-circle-outline",
+  babykidscribbabybed: "bed-single-outline",
+  babykidsbabycarrier: "baby",
+  babykidsbouncerwalkerplaygym: "baby-face-outline",
+  babykidsbreastpumpfeeding: "baby-bottle-outline",
+  babykidscarseat: "car-seat",
+  babykidshighchair: "chair-school",
+  babykidskidsfurniture: "bunk-bed-outline",
+  babykidskidsplayequipment: "slide",
+  babykidsrideontoy: "horse-variant",
+  babykidsstroller: "baby-buggy",
+  babykidstoys: "teddy-bear",
+  babykidsother: "dots-horizontal-circle-outline",
+  healthmedicalmedicalequipment: "stethoscope",
+  healthmedicalmassageequipment: "spa-outline",
+  healthmedicalmortuaryfreezerbox: "coffin",
+  healthmedicalother: "dots-horizontal-circle-outline",
+  traveloutdoorofficebackpacks: "bag-personal-outline",
+  traveloutdoorofficeluggagesuitcases: "bag-suitcase-outline",
+  traveloutdoorofficetravelgear: "bag-carry-on",
+  traveloutdoorofficemountaineering: "image-filter-hdr",
+  traveloutdoorofficecampinggear: "campfire",
+  traveloutdoorofficepresentationconferencegear: "presentation",
+  traveloutdoorofficesleepingbagmat: "sleep",
+  traveloutdoorofficetentcanopy: "tent",
+  traveloutdoorofficeother: "dots-horizontal-circle-outline",
+};
+
+type SubGlyph = React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+
+/**
+ * One component per glyph, built once. Creating these inside categoryIconFor
+ * would hand React a new component type on every render and remount every tile.
+ * strokeWidth is accepted and ignored: these glyphs have a fixed weight.
+ */
+const subComponents = new Map<string, IconComponent>();
+
+function subIconFor(glyph: string): IconComponent {
+  let Icon = subComponents.get(glyph);
+  if (!Icon) {
+    Icon = (({ size, color }: { size?: number | string; color?: string }) => (
+      <MaterialCommunityIcons
+        name={glyph as SubGlyph}
+        size={Number(size ?? 24)}
+        color={color}
+      />
+    )) as unknown as IconComponent;
+    subComponents.set(glyph, Icon);
+  }
+  return Icon;
+}
+
 function keyOf(name: string) {
   return foldForSearch(name).replace(/[^a-z]/g, "");
 }
@@ -125,6 +375,8 @@ function lookup<T>(table: Record<string, T>, name: string, slug?: string | null)
 }
 
 export function categoryIconFor(name: string, slug?: string | null): IconComponent {
+  const glyph = slug ? SUB_ICONS[keyOf(slug)] : undefined;
+  if (glyph) return subIconFor(glyph);
   return lookup(ICONS, name, slug) ?? CubeIcon;
 }
 
