@@ -1,0 +1,36 @@
+# Pushing a `qa-*` git tag starts both QA builds for the tagged commit (ENG-92):
+#
+#   git tag qa-2026-10-04 && git push origin qa-2026-10-04
+#
+# This only starts testflight-qa.yml and android-qa-distribution.yml; it builds
+# nothing itself. They are started on main, with the tagged commit as their
+# `ref` input, rather than triggered by the tag directly: a cache saved by a
+# run on one tag cannot be read by a run on the next, so every tagged build
+# would compile from scratch. On main they share one set of caches.
+#
+# To build one platform only, or without distributing, run that workflow by
+# hand from the Actions tab instead.
+name: QA builds on tag
+
+on:
+  push:
+    tags: ["qa-*"]
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Start both QA builds for the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for workflow in testflight-qa.yml android-qa-distribution.yml; do
+            gh workflow run "$workflow" --repo "$GITHUB_REPOSITORY" --ref main -f ref="$GITHUB_SHA"
+          done
+          echo "Started both QA builds for \`$GITHUB_REF_NAME\` (\`${GITHUB_SHA::7}\`)." >> "$GITHUB_STEP_SUMMARY"

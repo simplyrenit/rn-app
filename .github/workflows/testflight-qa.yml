@@ -1,5 +1,10 @@
-# Archive a QA-configured Renit iOS build and upload it to TestFlight on every
-# merge to main. Local Xcode toolchain on a macOS runner; no EAS.
+# Archive a QA-configured Renit iOS build and upload it to TestFlight. Local
+# Xcode toolchain on a macOS runner; no EAS.
+#
+# Runs only when asked for (ENG-92): a `qa-*` git tag, which
+# qa-build-on-tag.yml turns into a run of this workflow, or a manual run. A
+# merge to main no longer builds anything; it used to, at about 30 macOS
+# minutes a merge.
 #
 # QA ONLY. The backend host and app env are pinned in the `env:` block below and
 # re-checked by scripts/inspect-ios-release.sh, which fails the run if the
@@ -20,20 +25,25 @@
 # group setting, not a CI step.
 name: TestFlight QA
 
+# The commit being built, in the Actions list.
+run-name: TestFlight QA (${{ inputs.ref || github.ref_name }})
+
 on:
-  push:
-    branches: [main]
-    # Nothing under these paths can change the iOS binary or its JS bundle, so
-    # a merge that only touches them should not burn a 20-minute macOS build.
-    paths-ignore:
-      - "docs/**"
-      - "design/**"
-      - "functions/**"
-      - "android/**"
-      - "plugins/**"
-      - ".claude/**"
-      - "**/*.md"
   workflow_dispatch:
+    inputs:
+      # What to build. A tag run always starts this workflow on main, so its
+      # caches are main's and shared by every build (a cache saved by a run on
+      # a tag is invisible to the next tag), and names the tagged commit here.
+      ref:
+        description: Commit, tag or branch to build (default, the selected branch)
+        type: string
+        default: ""
+      # For measuring or debugging the build without uploading it to
+      # TestFlight.
+      dry_run:
+        description: Archive only; do not upload to TestFlight
+        type: boolean
+        default: false
 
 # One build at a time, and never cancel an upload that is already in flight.
 concurrency:
@@ -52,6 +62,8 @@ env:
   LC_ALL: en_US.UTF-8
   BUNDLE_ID: com.renit.app
   TEAM_ID: 43Q57TAAAQ
+  # Bounds the compiler cache saved between runs (see "Cache ccache").
+  CCACHE_MAXSIZE: 2G
 
 jobs:
   testflight:
@@ -59,6 +71,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       # Apple rejects uploads built with an SDK older than the current
       # requirement, so track the newest stable Xcode rather than pinning one.
@@ -81,6 +95,33 @@ jobs:
           path: ios/Pods
           key: pods-${{ runner.os }}-${{ hashFiles('ios/Podfile.lock') }}
           restore-keys: pods-${{ runner.os }}-
+
+      # Compiler cache (ENG-92). The archive recompiled every C, C++ and
+      # Objective-C file on every run (gRPC, Firestore, BoringSSL, React
+      # Native), about 24 of the run's 29 minutes, although most merges change
+      # only JavaScript. ccache keeps the object files between runs. Swift is
+      # not cached. It has to be installed before `pod install`, which records
+      # its path in the build settings.
+      - name: Install ccache
+        run: brew install ccache
+
+      # A new key every run so the cache is always saved; the newest earlier
+      # one is restored through the prefix.
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/ccache
+          key: ccache-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: ccache-${{ runner.os }}-
+
+      # The Podfile reads this switch from Podfile.properties.json. Set here,
+      # in the runner's checkout only, so local builds are untouched.
+      - name: Turn on ccache for this build
+        run: |
+          set -euo pipefail
+          jq '. + {"apple.ccacheEnabled": "true"}' ios/Podfile.properties.json > "$RUNNER_TEMP/Podfile.properties.json"
+          mv "$RUNNER_TEMP/Podfile.properties.json" ios/Podfile.properties.json
+          ccache --zero-stats >/dev/null
 
       - name: Install pods
         working-directory: ios
@@ -183,10 +224,13 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/Renit.xcarchive" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+          # Hit rate for this run, to see the cache is doing its job.
+          ccache --show-stats
 
       # destination=upload in the export options makes this export and upload to
       # App Store Connect in one step, authenticated by the API key.
       - name: Export and upload to TestFlight
+        if: ${{ !inputs.dry_run }}
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
@@ -202,12 +246,13 @@ jobs:
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
       - name: Summary
+        if: ${{ !inputs.dry_run }}
         run: |
           VERSION="$(plutil -extract CFBundleShortVersionString raw ios/Renit/Info.plist)"
           {
             echo "### TestFlight QA upload"
             echo "- Version: \`$VERSION\` (build \`$BUILD_NUMBER\`)"
-            echo "- Commit: \`${GITHUB_SHA::7}\`"
+            echo "- Commit: \`$(git rev-parse --short HEAD)\`"
             echo "- Backend: \`$EXPO_PUBLIC_QA_API_HOST\` (QA)"
             echo "- Next, in App Store Connect: wait for processing, then answer export compliance for this build if prompted."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -85,18 +85,22 @@ to App Store Connect, declaring export compliance, assigning a tester group,
 submitting Beta App Review, creating an EAS build, or releasing to production.
 
 Standing exception: `.github/workflows/testflight-qa.yml` archives and uploads
-a QA build to TestFlight on every merge to `main` with no per-run approval. The
-user authorised this durably; merging to `main` is the approval. It covers only
-that workflow, only QA (`qa-api.toratora.site`), and only the archive/upload
-step. Agents still ask before any *local* archive or upload, and before
-changing the workflow's signing, secrets, or QA pinning. Export compliance and
-tester-group assignment stay human even for CI builds.
+a QA build to TestFlight when it is started: by a `qa-*` git tag (through
+`.github/workflows/qa-build-on-tag.yml`) or by a manual run. Since 2026-10-04
+(ENG-92) a merge to `main` no longer builds anything. Pushing the tag or
+starting the run is the approval, and it is the user's to give, so agents ask
+before pushing a `qa-*` tag or starting a run. It covers only that workflow,
+only QA (`qa-api.toratora.site`), and only the archive/upload step. Agents
+still ask before any *local* archive or upload, and before changing the
+workflow's signing, secrets, or QA pinning. Export compliance and tester-group
+assignment stay human even for CI builds.
 
 Second standing exception, same shape: `.github/workflows/android-qa-distribution.yml`
 builds a QA APK and pushes it to the Firebase App Distribution `qa-testers`
-group on every merge to `main`, no per-run approval (user authorised
-2026-09-22; merging to `main` is the approval). Covers only that workflow,
-only QA, and only the build/distribute step. Agents still ask before any
+group when started by the same `qa-*` tag or by a manual run (user authorised
+2026-09-22; trigger changed 2026-10-04, ENG-92). Agents ask before pushing the
+tag or starting a run. Covers only that workflow, only QA, and only the
+build/distribute step. Agents still ask before any
 *local* Android release build or distribution, and before changing the
 workflow's signing, secrets, or QA pinning. Who is in `qa-testers` stays a
 human decision, made in the Firebase console, not in the workflow.

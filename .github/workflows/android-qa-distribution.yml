@@ -1,6 +1,8 @@
 # Build a QA-configured Renit Android APK and push it to Firebase App
-# Distribution's `qa-testers` group on every merge to main. Same trigger
-# pattern as testflight-qa.yml; that workflow stays iOS-only.
+# Distribution's `qa-testers` group. Same trigger pattern as
+# testflight-qa.yml: only when asked for (ENG-92), by a `qa-*` git tag, which
+# qa-build-on-tag.yml turns into a run of this workflow, or by a manual run.
+# A merge to main no longer builds anything.
 #
 # QA ONLY. The backend host and app env are pinned in the `env:` block below.
 # A production build is a separate, deliberate workflow — do not point this
@@ -25,20 +27,24 @@
 # Store) but would need a real secret-held key before any Play Store release.
 name: Android QA Distribution
 
+# The commit being built, in the Actions list.
+run-name: Android QA Distribution (${{ inputs.ref || github.ref_name }})
+
 on:
-  push:
-    branches: [main]
-    # Nothing under these paths can change the Android binary or its JS
-    # bundle, so a merge that only touches them should not burn a build.
-    paths-ignore:
-      - "docs/**"
-      - "design/**"
-      - "functions/**"
-      - "ios/**"
-      - "plugins/**"
-      - ".claude/**"
-      - "**/*.md"
   workflow_dispatch:
+    inputs:
+      # What to build. A tag run always starts this workflow on main, so its
+      # caches are main's and shared by every build, and names the tagged
+      # commit here (see testflight-qa.yml).
+      ref:
+        description: Commit, tag or branch to build (default, the selected branch)
+        type: string
+        default: ""
+      # For measuring or debugging the build without sending testers a build.
+      dry_run:
+        description: Build only; do not distribute to testers
+        type: boolean
+        default: false
 
 concurrency:
   group: android-qa-distribution
@@ -58,6 +64,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       - uses: actions/setup-java@v4
         with:
@@ -90,17 +98,17 @@ jobs:
           set -euo pipefail
           sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125"
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
+      # Keeps the Gradle home between runs: dependencies, the wrapper and the
+      # local build cache that --build-cache below fills. The plain
+      # actions/cache it replaces never re-saved on a key hit, so compiled
+      # output from later runs was thrown away (ENG-92).
+      - uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: gradle-${{ runner.os }}-
+          cache-read-only: false
 
-      # Testers are on physical phones, never an emulator, so armeabi-v7a and
-      # arm64-v8a cover them; skipping x86/x86_64 keeps the download smaller.
+      # Testers are on physical 64-bit phones, never an emulator, so arm64-v8a
+      # alone covers them. Building armeabi-v7a too compiled the native code
+      # twice; a 32-bit-only phone cannot install this APK (ENG-92).
       # The run number always increases, so it is always installable over
       # whatever CI shipped last — see the comment on versionCode in
       # android/app/build.gradle.
@@ -108,11 +116,13 @@ jobs:
         working-directory: android
         run: |
           ./gradlew :app:assembleQa \
-            -PreactNativeArchitectures=armeabi-v7a,arm64-v8a \
+            -PreactNativeArchitectures=arm64-v8a \
             -PVERSION_CODE="$GITHUB_RUN_NUMBER" \
+            --build-cache \
             --no-daemon
 
       - name: Write the Firebase service account key
+        if: ${{ !inputs.dry_run }}
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: |
@@ -123,6 +133,7 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$KEY_PATH" >> "$GITHUB_ENV"
 
       - name: Distribute to the qa-testers group
+        if: ${{ !inputs.dry_run }}
         run: |
           npx --yes firebase-tools@15 appdistribution:distribute \
             android/app/build/outputs/apk/qa/app-qa.apk \
@@ -131,11 +142,12 @@ jobs:
             --release-notes "$(git log -1 --format='%h %s')"
 
       - name: Summary
+        if: ${{ !inputs.dry_run }}
         run: |
           {
             echo "### Android QA distribution"
             echo "- Build: \`$GITHUB_RUN_NUMBER\`"
-            echo "- Commit: \`${GITHUB_SHA::7}\`"
+            echo "- Commit: \`$(git rev-parse --short HEAD)\`"
             echo "- Backend: \`$EXPO_PUBLIC_QA_API_HOST\` (QA)"
             echo "- Testers: the \`qa-testers\` Firebase App Distribution group"
           } >> "$GITHUB_STEP_SUMMARY"
