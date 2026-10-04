@@ -40,7 +40,7 @@ import {
   setupChatNotifications,
   setupNotificationListeners,
 } from "@/backend/notifications";
-import { useKycRefresh } from "@/backend/kyc";
+import { useKycRefetch, useKycRefresh, useKycReturnLinking } from "@/backend/kyc";
 import ContactUsScreen from "@/screens/profileScreens/contactUs";
 import EditProductScreen from "@/screens/profileScreens/edit-product";
 import FAQScreen from "@/screens/profileScreens/faqs";
@@ -363,6 +363,14 @@ export default function Navigation() {
   // A merchant's verification status and badge are read again whenever the app comes back to
   // the foreground: a reviewer may have decided while it was away.
   useKycRefresh();
+  const refetchKyc = useKycRefetch();
+
+  // A return link only opens the status screen, which reads the real status from the server.
+  useKycReturnLinking(() => {
+    if (navigationRef.isReady()) {
+      navigationRef.navigate("KycStatus", { justReturned: true });
+    }
+  });
 
   React.useEffect(() => {
     if (!isAuthenticated) {
@@ -370,12 +378,17 @@ export default function Navigation() {
     }
 
     setupChatNotifications();
-    return setupNotificationListeners((conversationId) => {
-      if (navigationRef.isReady()) {
-        navigationRef.navigate("ChatDetails", { id: conversationId });
+    return setupNotificationListeners((route) => {
+      // What a status push says is a hint: the status is read again, never taken from the push.
+      if (route.kind === "kyc") refetchKyc();
+      if (!navigationRef.isReady()) return;
+      if (route.kind === "kyc") {
+        navigationRef.navigate("KycStatus");
+      } else {
+        navigationRef.navigate("ChatDetails", { id: route.conversationId });
       }
-    });
-  }, [isAuthenticated]);
+    }, refetchKyc);
+  }, [isAuthenticated, refetchKyc]);
 
   React.useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
