@@ -173,6 +173,8 @@ interface TextFieldProps extends TextInputProps {
   hint?: string;
   required?: boolean;
   error?: string;
+  /** The underlying input, for a screen that has to move focus to it (a server-side field error). */
+  inputRef?: React.Ref<TextInput>;
 }
 
 /**
@@ -187,6 +189,7 @@ export function TextField({
   hint,
   required,
   error,
+  inputRef,
   style,
   multiline,
   onFocus,
@@ -207,6 +210,7 @@ export function TextField({
         <FieldLabel label={label} hint={hint} required={required} />
       ) : null}
       <TextInput
+        ref={inputRef}
         placeholderTextColor={color.placeholder}
         accessibilityLabel={label}
         onFocus={(event) => {

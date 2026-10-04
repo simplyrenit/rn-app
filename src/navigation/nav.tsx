@@ -40,6 +40,7 @@ import {
   setupChatNotifications,
   setupNotificationListeners,
 } from "@/backend/notifications";
+import { useKycRefresh } from "@/backend/kyc";
 import ContactUsScreen from "@/screens/profileScreens/contactUs";
 import EditProductScreen from "@/screens/profileScreens/edit-product";
 import FAQScreen from "@/screens/profileScreens/faqs";
@@ -83,6 +84,9 @@ import ListReadingScreen from "@/screens/list-flow/reading";
 import ListReviewScreen from "@/screens/list-flow/review";
 import ListPreviewScreen from "@/screens/list-flow/preview";
 import ListSubmittedScreen from "@/screens/list-flow/submitted";
+import KycDetailsScreen from "@/screens/kyc/details";
+import KycIntroScreen from "@/screens/kyc/intro";
+import KycStatusScreen from "@/screens/kyc/status";
 import OwnersProductsScreen from "@/screens/users/owners-products";
 import UnavailabilitySubCatScreen from "@/screens/profileScreens/unavailability_subCat";
 
@@ -356,6 +360,10 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function Navigation() {
   const { loading, hasSeenWelcome, theme, isAuthenticated } = useGlobalContext();
 
+  // A merchant's verification status and badge are read again whenever the app comes back to
+  // the foreground: a reviewer may have decided while it was away.
+  useKycRefresh();
+
   React.useEffect(() => {
     if (!isAuthenticated) {
       return;
@@ -518,6 +526,10 @@ export default function Navigation() {
           component={ListSubmittedScreen}
           options={{ gestureEnabled: false }}
         />
+        {/* Merchant verification (ENG-12): on the root stack, so the tab bar hides. */}
+        <Stack.Screen name="KycIntro" component={KycIntroScreen} />
+        <Stack.Screen name="KycDetails" component={KycDetailsScreen} />
+        <Stack.Screen name="KycStatus" component={KycStatusScreen} />
         <Stack.Screen
           name="profile"
           component={ProfileScreen}

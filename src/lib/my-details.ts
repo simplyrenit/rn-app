@@ -39,6 +39,8 @@ export interface MyDetailsResponse {
   timezone: string;
   email_verified: boolean;
   phone_verified: boolean;
+  /** The "Verified business" badge. Absent from an API older than merchant verification. */
+  business_verified?: boolean;
   date_joined?: string;
   currency?: string;
 }

@@ -1,5 +1,6 @@
 import { Button, Text, useReduceMotion } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
+import { KycNudge } from "@/components/kyc/kyc-nudge";
 import { FLOW_SPRING } from "@/components/list-flow/motion";
 import { ListingStatusPill } from "@/components/product/listing-status";
 import { useListDraft } from "@/context/list-draft-context";
@@ -111,6 +112,9 @@ export default function ListSubmittedScreen() {
             <ListingStatusPill status="pending" />
           </View>
         </View>
+
+        {/* Once per account per device, and only for a business account with nothing on file. */}
+        <KycNudge />
       </ScrollView>
 
       <View

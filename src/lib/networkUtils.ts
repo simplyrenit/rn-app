@@ -44,6 +44,10 @@ const REDACTED_KEYS = new Set([
   "token",
   "id_token",
   "identityToken",
+  // Merchant verification: identity numbers, and the one-time verification link.
+  "pan",
+  "gstin",
+  "next_action",
 ]);
 
 const summarizeArray = (value: unknown[]) => {

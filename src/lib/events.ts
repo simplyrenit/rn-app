@@ -31,7 +31,22 @@ export type EventName =
   | "listing_submit_failed"
   | "draft_saved"
   | "draft_resumed"
-  | "draft_discarded";
+  | "draft_discarded"
+  // Merchant verification (ENG-12). rn-api's catalogue lists the same thirteen names and their
+  // props; one missing there is dropped. None carries a PAN, GSTIN, name, case reference or link.
+  | "kyc_intro_viewed"
+  | "kyc_consent_accepted"
+  | "kyc_started"
+  | "kyc_start_failed"
+  | "kyc_digilocker_opened"
+  | "kyc_digilocker_returned"
+  | "kyc_resumed"
+  | "kyc_start_over"
+  | "kyc_status_viewed"
+  | "kyc_poll_timeout"
+  | "kyc_withdrawn"
+  | "kyc_nudge"
+  | "kyc_badge_filter_toggled";
 
 export interface QueuedEvent {
   name: EventName;
