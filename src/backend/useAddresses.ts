@@ -63,7 +63,21 @@ const useAddresses = () => {
     if (status === 400 || status === 404) void queryClient.invalidateQueries(queryKey);
   };
 
-  const create = useMutation(createAddress, { onSuccess, onError });
+  const create = useMutation(createAddress, {
+    // The server's own row goes into the list at once, ahead of the refetch:
+    // a caller that uses the new address straight away (the picker sheet's
+    // "Add new address") has to find it there, or Review drew it as an
+    // unsaved spot and offered to save it again until the refetch landed.
+    onSuccess: (created) => {
+      queryClient.setQueryData<SavedAddress[]>(queryKey, (list = []) =>
+        [created, ...list.map((a) => (created.is_default ? { ...a, is_default: false } : a))].sort(
+          (a, b) => Number(b.is_default) - Number(a.is_default) || b.id - a.id
+        )
+      );
+      onSuccess();
+    },
+    onError,
+  });
 
   const update = useMutation(
     async ({ id, ...patch }: Partial<AddressPayload> & { id: number }) =>

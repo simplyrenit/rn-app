@@ -29,13 +29,7 @@ import { SpecSheet, SpecsCard } from "@/components/list-flow/specs-card";
 import { AiValueFade, PulseOnce, useAppear } from "@/components/list-flow/motion";
 import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
-import {
-  PickedAddress,
-  addressAtPoint,
-  canSaveOffered,
-  flatAndLandmark,
-  fullAddressForNewPin,
-} from "@/lib/addresses";
+import { PickedAddress, canSaveOffered, flatForPickedSpot } from "@/lib/addresses";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import {
   SCREEN_GUTTER,
@@ -288,14 +282,14 @@ export default function ListReviewScreen() {
   // between), or the pickup may now be a saved address. It is dropped once
   // the list says so.
   const pickup = draft?.fields.location.value;
-  const staleSaveIntent =
-    !addressesLoading &&
-    !addressesFailed &&
-    Boolean(draft?.saveAddressAs && pickup) &&
-    !canSaveOffered(addresses, {
-      address_type: draft?.saveAddressAs ?? "other",
-      coordinates: { lat: pickup?.lat ?? 0, long: pickup?.long ?? 0 },
-    });
+  const saveAs = draft?.saveAddressAs;
+  const staleSaveIntent = Boolean(
+    saveAs &&
+      pickup &&
+      !addressesLoading &&
+      !addressesFailed &&
+      !canSaveOffered(addresses, { address_type: saveAs, coordinates: pickup })
+  );
   useEffect(() => {
     if (staleSaveIntent) flow.dispatch({ type: "setSaveAddressAs", value: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -388,27 +382,14 @@ export default function ListReviewScreen() {
     flow.startExtraction({ categoryHint: { parent: hint.parent, title: hint.title } });
   };
 
-  // The flat/landmark text when the pin moves to a point that is not a saved
-  // address — one rule for the sheet's "Use current location" and for the map
-  // opened directly: text written for a saved address stays behind, edited
-  // for this listing or not, and text the owner typed for a one-off spot
-  // comes along.
-  const fullAddressForUnsavedPin = () => {
-    const current = flow.draft?.fields.location.value;
-    if (!current || addressAtPoint(addresses, current)) return "";
-    return fullAddressForNewPin(current.fullAddress, addresses);
-  };
-
   // What the address sheet hands back: a saved address with its own flat and
-  // landmark, or a one-off spot with none. A map spot that lands exactly on a
-  // saved address is that address: without this the block showed it as
-  // "edited for this listing" with an empty flat line. Editing the field
+  // landmark, or a one-off spot with none. `flatForPickedSpot` is the one rule
+  // for the flat line, here and for the map opened directly. Editing the field
   // afterwards changes this listing only, never the saved address.
   const onPickAddress = (picked: PickedAddress) => {
-    const saved = picked.saved ?? addressAtPoint(addresses, picked);
     edit("location", {
       locality: picked.locality,
-      fullAddress: saved ? flatAndLandmark(saved) : fullAddressForUnsavedPin(),
+      fullAddress: flatForPickedSpot(flow.draft?.fields.location.value, picked, addresses),
       lat: picked.lat,
       long: picked.long,
     });
@@ -433,7 +414,11 @@ export default function ListReviewScreen() {
         const locality = (await localityFor(coords.latitude, coords.longitude)) ?? "";
         edit("location", {
           locality,
-          fullAddress: fullAddressForUnsavedPin(),
+          fullAddress: flatForPickedSpot(
+            flow.draft?.fields.location.value,
+            { lat: coords.latitude, long: coords.longitude },
+            addresses
+          ),
           lat: coords.latitude,
           long: coords.longitude,
         });
@@ -807,7 +792,7 @@ export default function ListReviewScreen() {
       />
       <AddressPickerSheet
         ref={addressSheet}
-        selected={f.location.value ? { lat: f.location.value.lat, long: f.location.value.long } : undefined}
+        selected={f.location.value ?? undefined}
         onPick={onPickAddress}
       />
     </NonScrollableContainer>

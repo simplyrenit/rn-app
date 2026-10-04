@@ -6,8 +6,10 @@ import {
   addressLine,
   addressTitle,
   canSaveOffered,
+  flatForPickedSpot,
   fullAddressForNewPin,
   inlineOfferPayload,
+  showsSaveOffer,
   takenTypes,
   toLocationValue,
 } from "../addresses";
@@ -139,6 +141,14 @@ describe("addressAtPoint", () => {
     expect(addressAtPoint([home, work], { lat: 19.2437 + 1e-9, long: 72.9781 })?.id).toBe(1);
   });
 
+  it("tells two addresses on one pin apart by the flat line in use", () => {
+    const neighbour = address({ id: 3, address_type: "other", address_line_1: "Flat 904, Tower B", address_line_2: "" });
+    expect(addressAtPoint([home, neighbour], home.coordinates, "Flat 904, Tower B")?.id).toBe(3);
+    // Edited for this listing, the text matches neither: the first one stands.
+    expect(addressAtPoint([home, neighbour], home.coordinates, "Gate 2")?.id).toBe(1);
+    expect(addressAtPoint([home, neighbour], home.coordinates)?.id).toBe(1);
+  });
+
   it("finds nothing for a spot that is not saved", () => {
     expect(addressAtPoint([home, work], { lat: 19.2437, long: 72.9791 })).toBeUndefined();
     expect(addressAtPoint([], { lat: 19.2437, long: 72.9781 })).toBeUndefined();
@@ -163,10 +173,70 @@ describe("canSaveOffered", () => {
     expect(canSaveOffered([home], { address_type: "other", coordinates: home.coordinates })).toBe(false);
   });
 
+  it("refuses a spot a few metres from a saved one, and allows one down the road", () => {
+    // About 11 m north of Home: the same place through GPS jitter.
+    const jitter = { lat: home.coordinates.lat + 0.0001, long: home.coordinates.long };
+    // About 220 m north: somewhere else.
+    const downTheRoad = { lat: home.coordinates.lat + 0.002, long: home.coordinates.long };
+    expect(canSaveOffered([home], { address_type: "other", coordinates: jitter })).toBe(false);
+    expect(canSaveOffered([home], { address_type: "other", coordinates: downTheRoad })).toBe(true);
+  });
+
   it("refuses when the list is full", () => {
     const full = Array.from({ length: MAX_ADDRESSES }, (_, i) =>
       address({ id: i + 1, address_type: "other", coordinates: { lat: 10 + i, long: 70 } })
     );
     expect(canSaveOffered(full, { address_type: "other", coordinates: elsewhere })).toBe(false);
+  });
+});
+
+describe("showsSaveOffer", () => {
+  const home = address({ id: 1 });
+  const spot = { lat: 19.07, long: 72.87, fullAddress: "Flat 2, Sea View" };
+
+  it("offers once a flat line is typed for a spot that is not saved", () => {
+    expect(showsSaveOffer(spot, [home], true)).toBe(true);
+    expect(showsSaveOffer(spot, [], true)).toBe(true);
+  });
+
+  it("waits for the flat line, and for the address list", () => {
+    expect(showsSaveOffer({ ...spot, fullAddress: "  " }, [home], true)).toBe(false);
+    expect(showsSaveOffer(spot, [home], false)).toBe(false);
+    expect(showsSaveOffer(null, [home], true)).toBe(false);
+  });
+
+  it("does not offer a saved address, or a spot beside one", () => {
+    expect(showsSaveOffer({ ...spot, ...home.coordinates }, [home], true)).toBe(false);
+    expect(showsSaveOffer({ ...spot, lat: home.coordinates.lat + 0.0001, long: home.coordinates.long }, [home], true)).toBe(false);
+  });
+});
+
+describe("flatForPickedSpot", () => {
+  const home = address({ id: 1 });
+  const atHome = { ...home.coordinates, fullAddress: "Flat 1203, Tower B, Near the clubhouse" };
+  const elsewhere = { lat: 19.07, long: 72.87 };
+
+  it("takes a picked saved address's own lines", () => {
+    expect(flatForPickedSpot(null, { ...home.coordinates, saved: home }, [home])).toBe(
+      "Flat 1203, Tower B, Near the clubhouse"
+    );
+  });
+
+  it("treats a map spot that lands on a saved address as that address", () => {
+    expect(flatForPickedSpot({ ...elsewhere, fullAddress: "typed" }, home.coordinates, [home])).toBe(
+      "Flat 1203, Tower B, Near the clubhouse"
+    );
+  });
+
+  it("leaves a saved address's text behind when the pin moves away, edited or not", () => {
+    expect(flatForPickedSpot(atHome, elsewhere, [home])).toBe("");
+    expect(flatForPickedSpot({ ...atHome, fullAddress: "Flat 1203, Tower B, gate 2" }, elsewhere, [home])).toBe("");
+  });
+
+  it("carries what the owner typed from one unsaved spot to another", () => {
+    expect(flatForPickedSpot({ lat: 19.1, long: 72.9, fullAddress: "Flat 2, Sea View" }, elsewhere, [home])).toBe(
+      "Flat 2, Sea View"
+    );
+    expect(flatForPickedSpot(null, elsewhere, [home])).toBe("");
   });
 });

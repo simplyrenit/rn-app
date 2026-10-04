@@ -95,19 +95,46 @@ export function fullAddressForNewPin(
 /** Saved coordinates come back through a float round trip; ~0.1 m is "the same point". */
 const samePoint = (a: number, b: number) => Math.abs(a - b) < 1e-6;
 
-/** The saved address that sits at this point, if one does. */
-export function addressAtPoint<T extends Pick<SavedAddress, "coordinates">>(
+/**
+ * The saved address that sits at this point, if one does. Two can share a pin
+ * (a Home and a neighbour's flat in one building); `flat`, the flat line in
+ * use, picks between them. Without it, or without a match, the first one.
+ */
+export function addressAtPoint<
+  T extends Pick<SavedAddress, "coordinates" | "address_line_1" | "address_line_2">,
+>(list: T[], point: { lat: number; long: number }, flat?: string): T | undefined {
+  const here = list.filter(
+    (a) => samePoint(a.coordinates.lat, point.lat) && samePoint(a.coordinates.long, point.long)
+  );
+  return here.find((a) => flatAndLandmark(a) === flat) ?? here[0];
+}
+
+// ponytail: one fixed radius for "the same place". A second address in the
+// next building cannot be saved from the Review offer (Profile still can);
+// make it a choice in the offer if owners ask for that.
+const SAME_PLACE_METRES = 50;
+
+/** A saved address within a few doors of this point: GPS never repeats exactly. */
+export function addressNear<T extends Pick<SavedAddress, "coordinates">>(
   list: T[],
   point: { lat: number; long: number }
 ): T | undefined {
+  // Flat-earth metres: exact enough at this scale.
+  const east = Math.cos((point.lat * Math.PI) / 180) * 111_320;
   return list.find(
-    (a) => samePoint(a.coordinates.lat, point.lat) && samePoint(a.coordinates.long, point.long)
+    (a) =>
+      Math.hypot(
+        (a.coordinates.lat - point.lat) * 111_320,
+        (a.coordinates.long - point.long) * east
+      ) <= SAME_PLACE_METRES
   );
 }
 
 /**
  * Whether the Review offer's address can be saved against this list: there is
- * room, the spot is not saved already, and a Home or Work is not taken.
+ * room, the place is not saved already, and a Home or Work is not taken.
+ * "Already" is by distance, not by the exact point: an owner who saved "use
+ * current location" on every listing collected an address every few metres.
  */
 export function canSaveOffered(
   saved: Pick<SavedAddress, "id" | "address_type" | "coordinates">[],
@@ -115,9 +142,45 @@ export function canSaveOffered(
 ): boolean {
   return (
     saved.length < MAX_ADDRESSES &&
-    !addressAtPoint(saved, offered.coordinates) &&
+    !addressNear(saved, offered.coordinates) &&
     (offered.address_type === "other" || !takenTypes(saved).has(offered.address_type))
   );
+}
+
+/**
+ * Whether Review offers to save the pickup spot. Only once there is a flat
+ * line: Profile will not save an address without one, and neither should this.
+ */
+export function showsSaveOffer(
+  location: Pick<LocationValue, "lat" | "long" | "fullAddress"> | null,
+  addresses: Pick<SavedAddress, "coordinates">[],
+  addressesKnown: boolean
+): boolean {
+  return (
+    location !== null &&
+    addressesKnown &&
+    addresses.length < MAX_ADDRESSES &&
+    Boolean(location.fullAddress.trim()) &&
+    !addressNear(addresses, location)
+  );
+}
+
+/**
+ * The flat/landmark text a listing's pickup takes when it moves to `picked`.
+ * A saved address brings its own, and a map spot that lands exactly on a
+ * saved address is that address. Any other spot keeps what the owner typed
+ * for a one-off spot, and drops text written for a saved address, edited for
+ * this listing or not: one address's flat number must not follow the pin.
+ */
+export function flatForPickedSpot(
+  current: Pick<LocationValue, "lat" | "long" | "fullAddress"> | null | undefined,
+  picked: { lat: number; long: number; saved?: SavedAddress },
+  addresses: SavedAddress[]
+): string {
+  const saved = picked.saved ?? addressAtPoint(addresses, picked);
+  if (saved) return flatAndLandmark(saved);
+  if (!current || addressAtPoint(addresses, current)) return "";
+  return fullAddressForNewPin(current.fullAddress, addresses);
 }
 
 /**

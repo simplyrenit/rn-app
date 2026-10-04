@@ -21,8 +21,11 @@ export interface AddressPickerSheetHandle {
 }
 
 interface Props {
-  /** The point in use now; its row carries the tick. With no point, the default does. */
-  selected?: { lat: number; long: number };
+  /**
+   * The point in use now; its row carries the tick. With no point, the default
+   * does. The flat line in use tells apart two addresses on one pin.
+   */
+  selected?: { lat: number; long: number; fullAddress?: string };
   onPick: (picked: PickedAddress) => void;
   title?: string;
   description?: string;
@@ -169,7 +172,7 @@ export const AddressPickerSheet = forwardRef<AddressPickerSheetHandle, Props>(
 
     // A one-off point matches no row, and then no row is marked.
     const selectedId = selected
-      ? addressAtPoint(addresses, selected)?.id
+      ? addressAtPoint(addresses, selected, selected.fullAddress)?.id
       : addresses.find((a) => a.is_default)?.id;
     const full = addresses.length >= MAX_ADDRESSES;
 

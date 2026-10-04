@@ -4,11 +4,11 @@ import { CheckBox } from "@/components/core/checkbox";
 import {
   ADDRESS_TYPES,
   AddressType,
-  MAX_ADDRESSES,
   SavedAddress,
   addressAtPoint,
   addressTitle,
   flatAndLandmark,
+  showsSaveOffer,
   takenTypes,
 } from "@/lib/addresses";
 import { density, fontFamily, fontSize, radius, space } from "@/lib/design-tokens";
@@ -17,7 +17,7 @@ import { useTheme } from "@/lib/theme";
 import React, { useEffect, useState } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
-import { CheckIcon, MapPinIcon } from "react-native-heroicons/outline";
+import { MapPinIcon } from "react-native-heroicons/outline";
 
 // The checkbox draws its 22 pt box inside a 44 pt target pulled 12 pt left, so
 // the label beside it starts here. The chips line up under the label.
@@ -102,7 +102,7 @@ export function PickupField({
 }: Props) {
   const { color } = useTheme();
   const feedback = usePressFeedback();
-  const saved = location ? addressAtPoint(addresses, location) : undefined;
+  const saved = location ? addressAtPoint(addresses, location, location.fullAddress) : undefined;
   const savedFlat = saved ? flatAndLandmark(saved) : "";
   const area = location?.locality || saved?.locality || "";
 
@@ -112,13 +112,7 @@ export function PickupField({
   const editing = Boolean(saved) && (editingFlat || location?.fullAddress !== savedFlat);
 
   const taken = takenTypes(addresses);
-  // Only once there is a flat line: Profile will not save an address without
-  // one, and neither should this.
-  const offerSave =
-    !saved &&
-    addressesKnown &&
-    addresses.length < MAX_ADDRESSES &&
-    Boolean(location?.fullAddress.trim());
+  const offerSave = showsSaveOffer(location, addresses, addressesKnown);
 
   return (
     <View style={{ marginBottom: density.fieldGap }}>
@@ -259,10 +253,12 @@ export function PickupField({
                         backgroundColor: selected ? color.brandWash : color.surface,
                       }}
                     >
-                      {selected ? <CheckIcon size={16} color={color.brandText} /> : null}
+                      {/* Selected is colour only. A check mark and a heavier
+                          weight made the chip grow and pushed its neighbours
+                          sideways, out from under the next tap. */}
                       <Text
                         fontSize="text-sm"
-                        fontWeight={selected ? "font-bold" : "font-normal"}
+                        fontWeight="font-bold"
                         tone={selected ? "brand" : isTaken ? "dim" : "default"}
                       >
                         {label}
