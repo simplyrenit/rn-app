@@ -196,14 +196,20 @@ export async function registerBackgroundFetchAsync() {
   });
 }
 
-// Listener for notification response to navigate to conversation
+export type NotificationRoute = { kind: "chat"; conversationId: string } | { kind: "kyc" };
+
+// Listener for a notification tap: tells the caller where it leads. A verification-status push
+// that arrives while the app is open is not a tap; it only asks for the status to be read again.
 export function setupNotificationListeners(
-  onNotificationResponse: (conversationId: string) => void
+  onRoute: (route: NotificationRoute) => void,
+  onKycPush?: () => void
 ) {
   const handleResponse = (response: Notifications.NotificationResponse | null) => {
     const data = response?.notification.request.content.data as any;
-    if (data?.conversationId) {
-      onNotificationResponse(data.conversationId);
+    if (data?.type === "kyc_status") {
+      onRoute({ kind: "kyc" });
+    } else if (data?.conversationId) {
+      onRoute({ kind: "chat", conversationId: data.conversationId });
     }
   };
 
@@ -213,10 +219,10 @@ export function setupNotificationListeners(
 
   void Notifications.getLastNotificationResponseAsync().then(handleResponse);
 
-  // Also add a notification received listener for when the app is in the foreground
   const foregroundSubscription = Notifications.addNotificationReceivedListener(
     (notification) => {
-      // Handle foreground notifications if needed
+      const data = notification.request.content.data as any;
+      if (data?.type === "kyc_status") onKycPush?.();
     }
   );
 

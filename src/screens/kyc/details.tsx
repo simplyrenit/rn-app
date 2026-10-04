@@ -62,7 +62,7 @@ export default function KycDetailsScreen() {
   const [gstinError, setGstinError] = useState<string | undefined>();
   const [banner, setBanner] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<Blocked>(null);
-  // Stays true from the request until the browser has been opened, so a second tap does nothing.
+  // Stays true from the request until the DigiLocker session has closed, so a second tap does nothing.
   const [busy, setBusy] = useState(false);
   const panInput = useRef<TextInput>(null);
   const gstinInput = useRef<TextInput>(null);
@@ -102,8 +102,8 @@ export default function KycDetailsScreen() {
       });
       track("kyc_started", { gst_declared: gst === "yes", supersede });
       if (status.next_action?.type === "digilocker") {
-        await openDigiLocker(status.next_action);
-        toStatus(true);
+        // The case exists now, so the status screen is next even if the browser never opened.
+        toStatus(await openDigiLocker(status.next_action));
       } else {
         toStatus();
       }

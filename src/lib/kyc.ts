@@ -234,3 +234,14 @@ export function parseKycReturn(url: string): { result: "success" | "cancelled" |
     result: claimed === "success" || claimed === "cancelled" || claimed === "failed" ? claimed : "unknown",
   };
 }
+
+/**
+ * What a closed DigiLocker session amounts to, for the analytics event and nothing else: the
+ * result the return link claimed, or how the browser was closed without one.
+ */
+export function sessionClaim(session: { type: string; url?: string }) {
+  if (session.type === "success" && session.url) return parseKycReturn(session.url).result;
+  if (session.type === "cancel") return "cancelled" as const;
+  if (session.type === "locked") return "locked" as const;
+  return "dismissed" as const;
+}

@@ -11,6 +11,7 @@ import {
   PAN_PATTERN,
   parseKycReturn,
   retryLimitBody,
+  sessionClaim,
 } from "@/lib/kyc";
 import { consentSections, KYC_CONSENT_TEXTS, KYC_CONSENT_VERSION } from "@/lib/kyc-consent";
 import type { KycStatus, KycStatusResponse } from "@/lib/types";
@@ -154,6 +155,14 @@ describe("the return link", () => {
     expect(parseKycReturn("renit://kyc/return?result=cancelled")).toEqual({ result: "cancelled" });
     expect(parseKycReturn("renit://kyc/return?result=verified")).toEqual({ result: "unknown" });
     expect(parseKycReturn("renit://kyc/return")).toEqual({ result: "unknown" });
+  });
+
+  it("names how a DigiLocker session ended, for analytics only", () => {
+    expect(sessionClaim({ type: "success", url: "renit://kyc/return?result=failed" })).toBe("failed");
+    expect(sessionClaim({ type: "success", url: "renit://kyc/return" })).toBe("unknown");
+    expect(sessionClaim({ type: "cancel" })).toBe("cancelled");
+    expect(sessionClaim({ type: "dismiss" })).toBe("dismissed");
+    expect(sessionClaim({ type: "locked" })).toBe("locked");
   });
 });
 
