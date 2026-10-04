@@ -44,6 +44,10 @@ const REDACTED_KEYS = new Set([
   "token",
   "id_token",
   "identityToken",
+  // Merchant verification: identity numbers, and the one-time verification link.
+  "pan",
+  "gstin",
+  "next_action",
 ]);
 
 const summarizeArray = (value: unknown[]) => {
@@ -89,7 +93,13 @@ const sanitizeValue = (value: unknown): unknown => {
   return value;
 };
 
-const summarizeValue = (value: unknown): unknown => {
+export const summarizeValue = (value: unknown): unknown => {
+  // A string cannot be redacted by key. A retried request carries its body as serialised
+  // JSON, password or PAN included, so a string is described and never printed.
+  if (typeof value === "string") {
+    return { type: "string", length: value.length };
+  }
+
   const sanitizedValue = sanitizeValue(value);
 
   if (Array.isArray(sanitizedValue)) {

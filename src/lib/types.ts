@@ -307,6 +307,10 @@ export type RootStackParamList = {
   ListPreview: undefined;
   // `coverUrl` is additive to §8.1: the draft is cleared before L-17 opens.
   ListSubmitted: { productName: string; coverUrl?: string | null };
+  // Merchant verification (ENG-12). Params are flags only: a PAN or GSTIN never goes in one.
+  KycIntro: { source?: "profile" | "post_listing" | "push"; supersede?: boolean } | undefined;
+  KycDetails: { supersede?: boolean } | undefined;
+  KycStatus: { justReturned?: boolean } | undefined;
   OwnersProducts: { products: BackendProduct[]; name: string };
   [key: string]: object | undefined;
 };
@@ -568,3 +572,72 @@ export type RouteProps<T extends keyof RootStackParamList> = RouteProp<
 export function useTypedNavigation() {
   return useNavigation<NavigationUseType>();
 }
+
+// Merchant verification (ENG-12). Names, enums and codes are rn-api's contract.
+
+export type KycStatus =
+  | "none"
+  | "pending"
+  | "action_required"
+  | "in_review"
+  | "verified"
+  | "rejected";
+
+export type KycReasonCode =
+  // set by a reviewer on `rejected`
+  | "pan_invalid"
+  | "pan_name_mismatch"
+  | "gstin_inactive"
+  | "gstin_name_mismatch"
+  | "aadhaar_signature_invalid"
+  | "aadhaar_name_mismatch"
+  | "duplicate_identity"
+  | "business_name_unverifiable"
+  | "other"
+  // set by the system, and kept when the status falls back to `none`
+  | "case_expired";
+
+export type KycNextAction =
+  // only `start/` and `resume/` answer with a link; it is never stored
+  | { type: "digilocker"; url: string; expires_at: string }
+  | { type: "resume" }
+  | { type: "start" }
+  | { type: "wait" };
+
+/** Returned by all four KYC endpoints. */
+export interface KycStatusResponse {
+  kyc_status: KycStatus;
+  case_ref: string | null;
+  business_verified: boolean;
+  business_verified_at: string | null;
+  reason_code: KycReasonCode | null;
+  /** null when verified */
+  next_action: KycNextAction | null;
+  updated_at: string | null;
+  /** Present, as true, only when the server could not refresh and served its cached fields. */
+  stale?: boolean;
+}
+
+export interface StartKycBody {
+  pan: string;
+  gst_declared: boolean;
+  gstin?: string | null;
+  consent_version: string;
+  supersede?: boolean;
+}
+
+export type KycErrorCode =
+  | "validation_error"
+  | "pan_unverifiable"
+  | "gstin_unverifiable"
+  | "consent_outdated"
+  | "profile_incomplete"
+  | "not_merchant"
+  | "case_in_progress"
+  | "already_verified"
+  | "erasure_pending"
+  | "invalid_state"
+  | "retry_limit"
+  | "rate_limited"
+  | "provider_unavailable"
+  | "kyc_unavailable";
