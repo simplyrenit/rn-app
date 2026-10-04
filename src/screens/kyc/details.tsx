@@ -93,7 +93,7 @@ export default function KycDetailsScreen() {
 
     setBusy(true);
     try {
-      const status = await start.mutateAsync({
+      const status = await start({
         pan,
         gst_declared: gst === "yes",
         ...(gst === "yes" ? { gstin } : {}),
@@ -102,7 +102,6 @@ export default function KycDetailsScreen() {
       });
       track("kyc_started", { gst_declared: gst === "yes", supersede });
       if (status.next_action?.type === "digilocker") {
-        track("kyc_digilocker_opened");
         await openDigiLocker(status.next_action);
         toStatus(true);
       } else {

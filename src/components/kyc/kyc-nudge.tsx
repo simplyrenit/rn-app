@@ -75,7 +75,6 @@ export function KycNudge() {
         </View>
       </View>
       <Button
-        size="compact"
         onPress={() => {
           track("kyc_nudge", { action: "opened" });
           navigation.navigate("KycIntro", { source: "post_listing" });
@@ -84,7 +83,6 @@ export function KycNudge() {
         Verify my business
       </Button>
       <Button
-        size="compact"
         variant="ghost"
         onPress={() => {
           track("kyc_nudge", { action: "dismissed" });

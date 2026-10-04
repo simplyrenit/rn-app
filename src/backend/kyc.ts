@@ -13,6 +13,7 @@ import {
   KYC_STATUS_ENDPOINT,
   KYC_WITHDRAW_ENDPOINT,
 } from "@/lib/config";
+import { track } from "@/lib/events";
 import { kycError } from "@/lib/kyc";
 import axiosInstance from "@/lib/networkUtils";
 import type { KycNextAction, KycStatusResponse, StartKycBody } from "@/lib/types";
@@ -51,44 +52,54 @@ export function useKycStatus() {
   });
 }
 
-/** `start/`: checks the PAN and GSTIN, then answers with the verification link. */
-export function useStartKyc() {
+/**
+ * Writes an answer from the server into the status cache. A status read still in flight is
+ * older than this answer, so it is cancelled rather than left to overwrite it.
+ */
+function useStoreStatus() {
   const queryClient = useQueryClient();
   const key = useStatusKey();
-  return useMutation<KycStatusResponse, unknown, StartKycBody>(
-    (body) => axiosInstance.post<KycStatusResponse>(KYC_START_ENDPOINT, body).then((r) => r.data),
-    {
-      onSuccess: (data) => {
-        queryClient.setQueryData(key, withoutLink(data));
-      },
-    }
-  );
+  return async (data: KycStatusResponse) => {
+    await queryClient.cancelQueries(key);
+    queryClient.setQueryData(key, withoutLink(data));
+  };
+}
+
+/**
+ * `start/`: checks the PAN and GSTIN, then answers with the verification link.
+ *
+ * Deliberately not a React Query mutation, and neither is resume: the mutation cache keeps a
+ * request's body and its answer for the life of the app, and these carry the PAN, the GSTIN
+ * and the link.
+ */
+export function useStartKyc() {
+  const store = useStoreStatus();
+  return async (body: StartKycBody) => {
+    const { data } = await axiosInstance.post<KycStatusResponse>(KYC_START_ENDPOINT, body);
+    await store(data);
+    return data;
+  };
 }
 
 /** `resume/`: a fresh verification link for a case that is waiting for the merchant. */
 export function useResumeKyc() {
-  const queryClient = useQueryClient();
-  const key = useStatusKey();
-  return useMutation<KycStatusResponse, unknown, void>(
-    () => axiosInstance.post<KycStatusResponse>(KYC_RESUME_ENDPOINT).then((r) => r.data),
-    {
-      onSuccess: (data) => {
-        queryClient.setQueryData(key, withoutLink(data));
-      },
-    }
-  );
+  const store = useStoreStatus();
+  return async () => {
+    const { data } = await axiosInstance.post<KycStatusResponse>(KYC_RESUME_ENDPOINT);
+    await store(data);
+    return data;
+  };
 }
 
 /** `withdraw/`: removes the verification data. The badge is gone as soon as this answers. */
 export function useWithdrawKyc() {
-  const queryClient = useQueryClient();
-  const key = useStatusKey();
+  const store = useStoreStatus();
   const { fetchUserDetails } = useGlobalContext();
   return useMutation<KycStatusResponse, unknown, void>(
     () => axiosInstance.post<KycStatusResponse>(KYC_WITHDRAW_ENDPOINT).then((r) => r.data),
     {
-      onSuccess: (data) => {
-        queryClient.setQueryData(key, data);
+      onSuccess: async (data) => {
+        await store(data);
         void fetchUserDetails(); // so `business_verified` drops everywhere
       },
     }
@@ -96,8 +107,8 @@ export function useWithdrawKyc() {
 }
 
 /**
- * The cache never holds the verification link: it is a one-time capability, used once and
- * dropped. What is cached is what `status/` itself would say for this state.
+ * The status cache never holds the verification link: it is a one-time capability, used once
+ * and dropped. What is cached is what `status/` itself would say for this state.
  */
 function withoutLink(data: KycStatusResponse): KycStatusResponse {
   if (data.next_action?.type !== "digilocker") return data;
@@ -113,6 +124,7 @@ export async function openDigiLocker(action: KycNextAction | null): Promise<bool
   if (action?.type !== "digilocker") return false;
   try {
     await Linking.openURL(action.url);
+    track("kyc_digilocker_opened");
     return true;
   } catch {
     return false;

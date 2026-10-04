@@ -9,7 +9,7 @@ import { successFeedback } from "@/lib/haptics";
 import { hasVerificationData, kycError, kycStateCopy } from "@/lib/kyc";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -49,12 +49,14 @@ export default function KycStatusScreen() {
   const status = data?.kyc_status;
   const reason = data?.reason_code ?? null;
   const previous = useRef<string | undefined>();
+  const focused = useIsFocused();
+  // Counted each time the screen comes into view, and again when the status changes under it.
   useEffect(() => {
-    if (!status) return;
+    if (!status || !focused) return;
     track("kyc_status_viewed", reason ? { status, reason_code: reason } : { status });
     if (status === "verified" && previous.current && previous.current !== "verified") successFeedback();
     previous.current = status;
-  }, [status, reason]);
+  }, [status, reason, focused]);
 
   const toProfile = () => navigation.navigate("MainTabs", { screen: "Profile" });
   const support = () => navigation.navigate("contactUs");
@@ -72,13 +74,14 @@ export default function KycStatusScreen() {
     if (resuming) return;
     setResuming(true);
     try {
-      const answer = await resume.mutateAsync();
+      const answer = await resume();
       track("kyc_resumed");
       if (answer.next_action?.type === "digilocker") {
-        track("kyc_digilocker_opened");
         await openDigiLocker(answer.next_action);
+      } else {
+        // No link means the consent has already reached us: the status will move on by itself.
+        toast.info("We've got your DigiLocker details", { message: "This page will update shortly." });
       }
-      // No link means the consent has already reached us: the status will move on by itself.
     } catch (failure) {
       const { status: http, code } = kycError(failure);
       if (code === "invalid_state" || code === "not_merchant") {

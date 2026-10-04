@@ -2,7 +2,7 @@ import { useKycBadgeSync, useKycStatus } from "@/backend/kyc";
 import { Button, Skeleton, Text } from "@/components/core";
 import { useGlobalContext } from "@/context/global-context";
 import { MIN_TOUCH_TARGET, space } from "@/lib/design-tokens";
-import { kycStateCopy } from "@/lib/kyc";
+import { hasVerificationData, kycStateCopy } from "@/lib/kyc";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
@@ -20,11 +20,14 @@ const CARD_HEIGHT = 76;
 export function KycCard({ isDark }: { isDark: boolean }) {
   const navigation = useTypedNavigation();
   const { userDetails } = useGlobalContext();
-  const { data, isLoading, isError } = useKycStatus();
+  const { data, errorUpdatedAt } = useKycStatus();
   useKycBadgeSync(data);
 
-  if (userDetails?.account_type !== "merchant" || isError) return null;
-  if (isLoading || !data) {
+  if (userDetails?.account_type !== "merchant") return null;
+  if (!data) {
+    // Absent once a read has failed (and it stays absent while that read is retried); a card
+    // that has shown a status keeps showing it through a failed refresh.
+    if (errorUpdatedAt) return null;
     return (
       <View className="px-gutter">
         <Skeleton height={CARD_HEIGHT} borderRadius={16} style={{ marginBottom: 16 }} />
@@ -33,11 +36,12 @@ export function KycCard({ isDark }: { isDark: boolean }) {
   }
 
   const copy = kycStateCopy(data.kyc_status, data.reason_code);
-  // A merchant with nothing on file starts at the explanation; anyone else sees where it stands.
+  // A merchant with nothing on file starts at the explanation. Anyone else sees where it stands,
+  // which is also where a timed-out verification's data can be removed.
   const open = () =>
-    data.kyc_status === "none"
-      ? navigation.navigate("KycIntro", { source: "profile" })
-      : navigation.navigate("KycStatus");
+    hasVerificationData(data)
+      ? navigation.navigate("KycStatus")
+      : navigation.navigate("KycIntro", { source: "profile" });
 
   return (
     <View className="px-gutter">
