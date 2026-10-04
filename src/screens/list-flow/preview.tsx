@@ -1,4 +1,5 @@
 import { buildCreatePayload, submitListing } from "@/backend/list-flow/submit";
+import { saveOfferedAddress } from "@/backend/addresses-api";
 import { Button, Text, useButtonLabelColor, useReduceMotion } from "@/components/core";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -9,6 +10,7 @@ import { ProductMap } from "@/components/product/product-map";
 import { SpecStrip } from "@/components/product/spec-strip";
 import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
+import { inlineOfferPayload } from "@/lib/addresses";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import { SCREEN_GUTTER, duration, radius, space } from "@/lib/design-tokens";
 import { formatNumber } from "@/lib/format";
@@ -21,6 +23,7 @@ import { useTypedNavigation } from "@/lib/types";
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, View } from "react-native";
+import { useQueryClient } from "react-query";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { BanknotesIcon, CheckIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -81,6 +84,7 @@ export default function ListPreviewScreen() {
   const { userDetails } = useGlobalContext();
   const flow = useListDraft();
   const { draft } = flow;
+  const queryClient = useQueryClient();
   const [state, setState] = useState<SubmitState>("idle");
   const mounted = useRef(true);
   /**
@@ -143,6 +147,19 @@ export default function ListPreviewScreen() {
         photos: payload.images.length,
       });
       successFeedback();
+
+      // ENG-25 §8.8: the "Save this address" offer from Review. Built here,
+      // from this render's draft, because `finish` below clears it. Not
+      // awaited and never thrown: the listing is already live, and a failed
+      // address save must not hold up or fail the flow (D8).
+      // No flat line, no address: Profile's form will not save one either.
+      if (draft.saveAddressAs && location?.fullAddress.trim()) {
+        const addressPayload = inlineOfferPayload(location, draft.saveAddressAs);
+        void saveOfferedAddress(queryClient, userDetails?.username, addressPayload).catch(() => {
+          flow.track("address_save_failed");
+          toast.warning("Your listing is live. We couldn't save the address.");
+        });
+      }
 
       // The listing exists now, so the draft goes whatever happens to this
       // screen — the context outlives it. The stack is reset so Back from

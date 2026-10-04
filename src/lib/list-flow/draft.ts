@@ -1,3 +1,4 @@
+import { ADDRESS_TYPES } from "@/lib/addresses";
 import { computeDepositDefault, parseRate } from "./deposit";
 import {
   AI_FIELDS,
@@ -161,7 +162,9 @@ export type DraftAction =
   | { type: "specsRequested"; categoryId: number; requestId: string }
   | { type: "specsLoaded"; requestId: string; specs: WireSpec[] }
   | { type: "specsUnavailable"; requestId: string }
-  | { type: "setSpec"; key: string; value: SpecValue | null };
+  | { type: "setSpec"; key: string; value: SpecValue | null }
+  /** `null` clears it: the "Save this address" checkbox unticked. */
+  | { type: "setSaveAddressAs"; value: NonNullable<ListingDraft["saveAddressAs"]> | null };
 
 /** Recompute the deposit default while the owner has not overridden it. */
 function withDerivedDeposit(draft: ListingDraft): ListingDraft {
@@ -538,6 +541,11 @@ export function draftReducer(
       return { ...draft, specs: { ...draft.specs, items } };
     }
 
+    case "setSaveAddressAs":
+      return (draft.saveAddressAs ?? null) === action.value
+        ? draft
+        : { ...draft, saveAddressAs: action.value ?? undefined };
+
     default:
       return draft;
   }
@@ -662,6 +670,11 @@ export function hydrateDraft(raw: string | null, now: number): ListingDraft | nu
       dismissedWarnings: parsed.dismissedWarnings ?? [],
       warnings: parsed.warnings ?? [],
       specs: hydrateSpecs(parsed.specs),
+      // Absent on drafts stored before ENG-25; anything else unknown is dropped
+      // rather than sent to the address API as a type.
+      saveAddressAs: (ADDRESS_TYPES as readonly string[]).includes(parsed.saveAddressAs ?? "")
+        ? parsed.saveAddressAs
+        : undefined,
     });
     return {
       ...draft,

@@ -1,5 +1,11 @@
 import { defaultPickupLocation, localityFor } from "@/backend/list-flow/pickup-location";
 import { ruleForParent, useDepositRules } from "@/backend/list-flow/deposit-rules";
+import useAddresses from "@/backend/useAddresses";
+import {
+  AddressPickerSheet,
+  AddressPickerSheetHandle,
+} from "@/components/addresses/address-picker-sheet";
+import { PickupField } from "@/components/addresses/pickup-field";
 import {
   Button,
   FieldFrame,
@@ -23,6 +29,7 @@ import { SpecSheet, SpecsCard } from "@/components/list-flow/specs-card";
 import { AiValueFade, PulseOnce, useAppear } from "@/components/list-flow/motion";
 import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
+import { PickedAddress, canSaveOffered, flatForPickedSpot } from "@/lib/addresses";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import {
   SCREEN_GUTTER,
@@ -63,13 +70,19 @@ import { Pressable, ScrollView, TextInput, TouchableOpacity, View } from "react-
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Animated from "react-native-reanimated";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
-import { MapPinIcon, PlusIcon } from "react-native-heroicons/outline";
+import { PlusIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type TextFieldName = "title" | "brand_name" | "model_name" | "description" | "usage_description";
 type SectionKey = Requirement["key"];
 
 const THUMB = 56;
+/**
+ * How long the pickup prefill waits for the saved addresses. They need the
+ * profile to have loaded first; if either never arrives, the older sources
+ * (last listing, GPS) must still get their turn.
+ */
+const ADDRESS_WAIT_MS = 4000;
 
 /** An "Rs" amount input on the shared field surface. */
 function AmountInput({
@@ -108,7 +121,7 @@ function AmountInput({
   );
 }
 
-/** A tappable row on the field surface: category and pickup location. */
+/** A tappable row on the field surface: the category. */
 function PickerRow({
   icon,
   value,
@@ -192,6 +205,12 @@ export default function ListReviewScreen() {
   const categorySheet = useRef<BottomSheetModal>(null);
   const specSheet = useRef<BottomSheetModal>(null);
   const [openSpec, setOpenSpec] = useState<Spec | null>(null);
+  const addressSheet = useRef<AddressPickerSheetHandle>(null);
+  const {
+    addresses,
+    loading: addressesLoading,
+    isError: addressesFailed,
+  } = useAddresses();
   const sectionY = useRef<Partial<Record<SectionKey | "deposit", number>>>({});
   const editedOnce = useRef(new Set<FieldName>());
   const [showMissing, setShowMissing] = useState(false);
@@ -220,18 +239,61 @@ export default function ListReviewScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // §8.5: fill the pickup location from the best source we have, once.
+  // §8.5: fill the pickup location from the best source we have, once. The
+  // default saved address comes first, so this waits for the address query to
+  // settle. A failed query settles too, and simply has no default to offer.
+  const [addressWaitOver, setAddressWaitOver] = useState(false);
   useEffect(() => {
-    if (!draft || draft.fields.location.source !== "empty") return;
-    let active = true;
-    void defaultPickupLocation().then((location) => {
-      if (active && location) flow.dispatch({ type: "prefillLocation", value: location });
-    });
-    return () => {
-      active = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const timer = setTimeout(() => setAddressWaitOver(true), ADDRESS_WAIT_MS);
+    return () => clearTimeout(timer);
   }, []);
+  const addressesSettled = !addressesLoading || addressWaitOver;
+  // Which passes have run: `early` is the one the wait gave up on, without the
+  // addresses; `loaded` is the one that had them.
+  const prefillPass = useRef({ early: false, loaded: false });
+  const onScreen = useRef(true);
+  useEffect(
+    () => () => {
+      onScreen.current = false;
+    },
+    []
+  );
+  useEffect(() => {
+    if (!addressesSettled) return;
+    const pass = addressesLoading ? "early" : "loaded";
+    if (prefillPass.current.loaded || prefillPass.current[pass]) return;
+    const afterEarly = prefillPass.current.early;
+    prefillPass.current[pass] = true;
+    const saved = addresses.find((a) => a.is_default) ?? null;
+    // Addresses that arrive after the wait get a second pass, but only to
+    // bring the default in: the older sources have had their turn.
+    if (afterEarly && !saved) return;
+    if (!draft || draft.fields.location.source !== "empty") return;
+    void defaultPickupLocation(saved).then((location) => {
+      // `prefillLocation` only fills a field nobody has set, so a late default
+      // never replaces a location that is already there.
+      if (onScreen.current && location) flow.dispatch({ type: "prefillLocation", value: location });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addressesSettled, addressesLoading]);
+
+  // §8.8: the "save this address" intent can outlive what made it valid. A
+  // resumed draft may find its Home taken (one added from Profile in
+  // between), or the pickup may now be a saved address. It is dropped once
+  // the list says so.
+  const pickup = draft?.fields.location.value;
+  const saveAs = draft?.saveAddressAs;
+  const staleSaveIntent = Boolean(
+    saveAs &&
+      pickup &&
+      !addressesLoading &&
+      !addressesFailed &&
+      !canSaveOffered(addresses, { address_type: saveAs, coordinates: pickup })
+  );
+  useEffect(() => {
+    if (staleSaveIntent) flow.dispatch({ type: "setSaveAddressAs", value: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staleSaveIntent]);
 
   // Specs for a category that arrived before this screen could ask — a
   // resumed draft, or a taxonomy that loaded after the stream named the
@@ -320,7 +382,28 @@ export default function ListReviewScreen() {
     flow.startExtraction({ categoryHint: { parent: hint.parent, title: hint.title } });
   };
 
+  // What the address sheet hands back: a saved address with its own flat and
+  // landmark, or a one-off spot with none. `flatForPickedSpot` is the one rule
+  // for the flat line, here and for the map opened directly. Editing the field
+  // afterwards changes this listing only, never the saved address.
+  const onPickAddress = (picked: PickedAddress) => {
+    edit("location", {
+      locality: picked.locality,
+      fullAddress: flatForPickedSpot(flow.draft?.fields.location.value, picked, addresses),
+      lat: picked.lat,
+      long: picked.long,
+    });
+  };
+
   const openLocationPicker = () => {
+    // The map opens directly, as it always has, only for an owner known to
+    // have nothing saved (D16) or whose list failed to load. While the list
+    // is still loading the sheet opens and shows that; treating "not loaded
+    // yet" as "none" sent owners with saved addresses to the map.
+    if (addressesLoading || addresses.length > 0) {
+      addressSheet.current?.present();
+      return;
+    }
     navigation.navigate("LocationModal", {
       requestId: createLocationRequest(async (coords) => {
         // The picker's "skip" is not a request to forget a location.
@@ -331,7 +414,11 @@ export default function ListReviewScreen() {
         const locality = (await localityFor(coords.latitude, coords.longitude)) ?? "";
         edit("location", {
           locality,
-          fullAddress: flow.draft?.fields.location.value?.fullAddress ?? "",
+          fullAddress: flatForPickedSpot(
+            flow.draft?.fields.location.value,
+            { lat: coords.latitude, long: coords.longitude },
+            addresses
+          ),
           lat: coords.latitude,
           long: coords.longitude,
         });
@@ -607,30 +694,21 @@ export default function ListReviewScreen() {
             multiline
           />
 
-          {/* Pickup location */}
-          <View onLayout={onLayoutSection("location")} style={{ marginBottom: density.fieldGap }}>
-            <FieldLabel label="Pickup location" required />
-            <PickerRow
-              icon={<MapPinIcon size={20} color={f.location.value ? color.text : color.textDim} />}
-              value={f.location.value?.locality || null}
-              placeholder="Set pickup location"
-              onPress={openLocationPicker}
-              accessibilityLabel={
-                f.location.value?.locality ? `Pickup location, ${f.location.value.locality}` : "Set pickup location"
-              }
-            />
-          </View>
-          {f.location.value ? (
-            <TextField
-              label="Flat, building and landmark"
-              hint="Shared only once a booking is confirmed"
-              placeholder="e.g. Flat 1203, Lodha Amara, near the clubhouse"
-              value={f.location.value.fullAddress}
-              onChangeText={(v) =>
+          {/* Pickup */}
+          <View onLayout={onLayoutSection("location")}>
+            <PickupField
+              location={f.location.value}
+              addresses={addresses}
+              addressesKnown={!addressesLoading && !addressesFailed}
+              addressesSettled={addressesSettled}
+              saveAs={draft.saveAddressAs ?? null}
+              onChange={openLocationPicker}
+              onChangeFlat={(v) =>
                 f.location.value && edit("location", { ...f.location.value, fullAddress: v })
               }
+              onSaveAs={(value) => flow.dispatch({ type: "setSaveAddressAs", value })}
             />
-          ) : null}
+          </View>
 
           {/* Also set for you */}
           <View
@@ -711,6 +789,11 @@ export default function ListReviewScreen() {
         spec={openSpec}
         onSave={onSaveSpec}
         onCancel={() => specSheet.current?.dismiss()}
+      />
+      <AddressPickerSheet
+        ref={addressSheet}
+        selected={f.location.value ?? undefined}
+        onPick={onPickAddress}
       />
     </NonScrollableContainer>
   );

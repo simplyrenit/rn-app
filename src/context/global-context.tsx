@@ -56,6 +56,12 @@ interface GlobalContextType {
   loadUserDataFromStorage: () => Promise<void>;
   userDetails: UserDetails | null;
   fetchUserDetails: () => Promise<void>;
+  /**
+   * The last profile fetch failed, and nothing has replaced it. `userDetails`
+   * being null cannot say this on its own: it is also null while the first
+   * fetch after sign-in is still in flight.
+   */
+  userDetailsFailed: boolean;
 }
 
 interface UserData {
@@ -92,6 +98,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   const [theme, setTheme] = useState<string>("device");
   const [categories, setCategories] = useState<Category[]>([]);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [userDetailsFailed, setUserDetailsFailed] = useState(false);
 
   const [userData, setUserData] = useState<UserData | null>(null);
 
@@ -132,9 +139,11 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchUserDetails = async () => {
     if (!isAuthenticated || !authTokens?.access_token) {
       setUserDetails(null);
+      setUserDetailsFailed(false);
       return;
     }
 
+    setUserDetailsFailed(false);
     try {
       const details = await getMyDetails();
       setUserDetails({
@@ -156,6 +165,9 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!(axios.isAxiosError(error) && !error.response)) {
         console.error("Failed to fetch user details:", error);
       }
+      // Not a request logout cancelled: that is not a failure, and the flag
+      // would still be set when the next account signs in.
+      if (!axios.isCancel(error)) setUserDetailsFailed(true);
     }
   };
 
@@ -337,6 +349,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     loadUserDataFromStorage,
     userDetails,
     fetchUserDetails,
+    userDetailsFailed,
     themePreference: theme,
   };
 
