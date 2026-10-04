@@ -16,26 +16,42 @@ interface Props {
   /** The first row of a group draws no rule above itself. */
   first: boolean;
   onPress: () => void;
-  /** `chevron` opens the address (the list); `radio` picks it (the picker sheet). */
-  trailing?: "chevron" | "radio";
+  /**
+   * `chevron` opens the address (the list); `radio` picks it (the picker
+   * sheet); `change` is the address in use on a form, with a "Change" action.
+   */
+  trailing?: "chevron" | "radio" | "change";
   /** With `radio`: this is the one in use. */
   selected?: boolean;
+  /** The address line to show instead of the list's own. */
+  line?: string;
 }
 
-/** One saved address: type icon, title, "Default" tag, one-line address. */
-export function AddressRow({ address, first, onPress, trailing = "chevron", selected = false }: Props) {
+/** One saved address: type icon, title, "Default" tag and its address line. */
+export function AddressRow({
+  address,
+  first,
+  onPress,
+  trailing = "chevron",
+  selected = false,
+  line = addressLine(address),
+}: Props) {
   const { color } = useTheme();
   const Icon = TYPE_ICON[address.address_type] ?? MapPinIcon;
   const title = addressTitle(address);
-  const line = addressLine(address);
   const picks = trailing === "radio";
+  // In use on a form: the whole address is read, not scanned, and whether it
+  // is the default says nothing about this listing.
+  const inUse = trailing === "change";
 
   return (
     <TouchableOpacity
       accessibilityRole={picks ? "radio" : "button"}
       accessibilityState={picks ? { selected } : undefined}
-      accessibilityLabel={`${title}${address.is_default ? ", default" : ""}. ${line}`}
-      accessibilityHint={picks ? undefined : "Opens this address to edit it"}
+      accessibilityLabel={`${title}${address.is_default && !inUse ? ", default" : ""}. ${line}${inUse ? ". Change" : ""}`}
+      accessibilityHint={
+        picks ? undefined : inUse ? "Opens your addresses to choose another" : "Opens this address to edit it"
+      }
       activeOpacity={0.6}
       onPress={onPress}
       style={{
@@ -66,7 +82,7 @@ export function AddressRow({ address, first, onPress, trailing = "chevron", sele
           <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={1} style={{ flexShrink: 1 }}>
             {title}
           </Text>
-          {address.is_default ? (
+          {address.is_default && !inUse ? (
             <View
               style={{
                 paddingHorizontal: 8,
@@ -82,7 +98,9 @@ export function AddressRow({ address, first, onPress, trailing = "chevron", sele
           ) : null}
         </View>
         {line ? (
-          <Text fontSize="text-sm" tone="body" numberOfLines={1}>
+          // In use, the whole line shows: capped at two lines, a long flat
+          // line cut off the locality on a 360 dp phone.
+          <Text fontSize="text-sm" tone="body" numberOfLines={inUse ? undefined : 1}>
             {line}
           </Text>
         ) : null}
@@ -110,6 +128,10 @@ export function AddressRow({ address, first, onPress, trailing = "chevron", sele
             />
           ) : null}
         </View>
+      ) : inUse ? (
+        <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+          Change
+        </Text>
       ) : (
         <ChevronRightIcon size={20} color={color.text} />
       )}

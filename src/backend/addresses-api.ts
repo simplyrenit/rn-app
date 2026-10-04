@@ -1,4 +1,4 @@
-import { AddressPayload, SavedAddress } from "@/lib/addresses";
+import { AddressPayload, SavedAddress, canSaveOffered } from "@/lib/addresses";
 import { MY_ADDRESSES_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import type { QueryClient } from "react-query";
@@ -25,16 +25,16 @@ export async function createAddress(payload: AddressPayload): Promise<SavedAddre
 
 /**
  * The Review screen's "Save this address" offer (ENG-25 §8.8), carried out
- * after the listing exists. The offer is for an owner with no saved address
- * (D14), and the intent can outlive that — chosen, then an address added from
- * Profile before the draft was resumed — so the list is read fresh here rather
- * than trusted from whatever a screen had cached.
+ * after the listing exists. The intent can outlive what made it valid — a Home
+ * chosen, then a Home added from Profile before the draft was resumed — so the
+ * list is read fresh here rather than trusted from whatever a screen had cached.
  *
- * Resolves "saved", or "skipped" when the owner already has an address.
+ * Resolves "saved", or "skipped" when the list no longer has room for it: the
+ * spot is already saved, its Home or Work is taken, or the list is full.
  * Rejects when the list cannot be read or the save fails; the caller reports
  * that and carries on, because the listing is already live.
  */
-export async function saveFirstAddress(
+export async function saveOfferedAddress(
   queryClient: QueryClient,
   username: string | undefined,
   payload: AddressPayload
@@ -43,7 +43,7 @@ export async function saveFirstAddress(
   if (!username) throw new Error("no profile");
   const key = addressesQueryKey(username);
   const saved = await queryClient.fetchQuery(key, fetchAddresses);
-  if (saved.length > 0) return "skipped";
+  if (!canSaveOffered(saved, payload)) return "skipped";
   await createAddress(payload);
   void queryClient.invalidateQueries(key);
   return "saved";

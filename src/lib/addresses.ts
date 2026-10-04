@@ -50,11 +50,15 @@ export function addressTitle(a: Pick<SavedAddress, "address_type" | "label">): s
   return a.label || "Other";
 }
 
-/** The one-line address a list row shows. */
+/**
+ * The one-line address a list row shows. Locality first: the row truncates,
+ * and flat-first cut off the area ("…12B, Andh…"), the part an owner tells
+ * two addresses apart by.
+ */
 export function addressLine(
   a: Pick<SavedAddress, "address_line_1" | "address_line_2" | "locality">
 ): string {
-  return [a.address_line_1, a.address_line_2, a.locality].filter(Boolean).join(", ");
+  return [a.locality, flatAndLandmark(a)].filter(Boolean).join(" · ");
 }
 
 /**
@@ -86,6 +90,34 @@ export function fullAddressForNewPin(
   saved: Pick<SavedAddress, "address_line_1" | "address_line_2">[]
 ): string {
   return saved.some((a) => flatAndLandmark(a) === current) ? "" : current;
+}
+
+/** Saved coordinates come back through a float round trip; ~0.1 m is "the same point". */
+const samePoint = (a: number, b: number) => Math.abs(a - b) < 1e-6;
+
+/** The saved address that sits at this point, if one does. */
+export function addressAtPoint<T extends Pick<SavedAddress, "coordinates">>(
+  list: T[],
+  point: { lat: number; long: number }
+): T | undefined {
+  return list.find(
+    (a) => samePoint(a.coordinates.lat, point.lat) && samePoint(a.coordinates.long, point.long)
+  );
+}
+
+/**
+ * Whether the Review offer's address can be saved against this list: there is
+ * room, the spot is not saved already, and a Home or Work is not taken.
+ */
+export function canSaveOffered(
+  saved: Pick<SavedAddress, "id" | "address_type" | "coordinates">[],
+  offered: Pick<AddressPayload, "address_type" | "coordinates">
+): boolean {
+  return (
+    saved.length < MAX_ADDRESSES &&
+    !addressAtPoint(saved, offered.coordinates) &&
+    (offered.address_type === "other" || !takenTypes(saved).has(offered.address_type))
+  );
 }
 
 /**

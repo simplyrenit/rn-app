@@ -5,6 +5,7 @@ import {
   AddressPickerSheet,
   AddressPickerSheetHandle,
 } from "@/components/addresses/address-picker-sheet";
+import { PickupField } from "@/components/addresses/pickup-field";
 import {
   Button,
   FieldFrame,
@@ -28,7 +29,13 @@ import { SpecSheet, SpecsCard } from "@/components/list-flow/specs-card";
 import { AiValueFade, PulseOnce, useAppear } from "@/components/list-flow/motion";
 import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
-import { AddressType, PickedAddress, flatAndLandmark, fullAddressForNewPin } from "@/lib/addresses";
+import {
+  PickedAddress,
+  addressAtPoint,
+  canSaveOffered,
+  flatAndLandmark,
+  fullAddressForNewPin,
+} from "@/lib/addresses";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import {
   SCREEN_GUTTER,
@@ -69,7 +76,7 @@ import { Pressable, ScrollView, TextInput, TouchableOpacity, View } from "react-
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Animated from "react-native-reanimated";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
-import { CheckIcon, MapPinIcon, PlusIcon } from "react-native-heroicons/outline";
+import { PlusIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type TextFieldName = "title" | "brand_name" | "model_name" | "description" | "usage_description";
@@ -82,11 +89,6 @@ const THUMB = 56;
  * (last listing, GPS) must still get their turn.
  */
 const ADDRESS_WAIT_MS = 4000;
-const SAVE_AS: { value: AddressType; label: string }[] = [
-  { value: "home", label: "Home" },
-  { value: "work", label: "Work" },
-  { value: "other", label: "Other" },
-];
 
 /** An "Rs" amount input on the shared field surface. */
 function AmountInput({
@@ -125,7 +127,7 @@ function AmountInput({
   );
 }
 
-/** A tappable row on the field surface: category and pickup location. */
+/** A tappable row on the field surface: the category. */
 function PickerRow({
   icon,
   value,
@@ -281,11 +283,19 @@ export default function ListReviewScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addressesSettled, addressesLoading]);
 
-  // §8.8, D14: the "save this address" intent belongs to an owner with no
-  // saved address. A resumed draft can carry it past that point (an address
-  // added from Profile in between), so it is dropped once the list says so.
+  // §8.8: the "save this address" intent can outlive what made it valid. A
+  // resumed draft may find its Home taken (one added from Profile in
+  // between), or the pickup may now be a saved address. It is dropped once
+  // the list says so.
+  const pickup = draft?.fields.location.value;
   const staleSaveIntent =
-    !addressesLoading && addresses.length > 0 && Boolean(draft?.saveAddressAs);
+    !addressesLoading &&
+    !addressesFailed &&
+    Boolean(draft?.saveAddressAs && pickup) &&
+    !canSaveOffered(addresses, {
+      address_type: draft?.saveAddressAs ?? "other",
+      coordinates: { lat: pickup?.lat ?? 0, long: pickup?.long ?? 0 },
+    });
   useEffect(() => {
     if (staleSaveIntent) flow.dispatch({ type: "setSaveAddressAs", value: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -380,18 +390,25 @@ export default function ListReviewScreen() {
 
   // The flat/landmark text when the pin moves to a point that is not a saved
   // address — one rule for the sheet's "Use current location" and for the map
-  // opened directly: text a saved address supplied stays behind, text the
-  // owner typed comes along.
-  const fullAddressForUnsavedPin = () =>
-    fullAddressForNewPin(flow.draft?.fields.location.value?.fullAddress ?? "", addresses);
+  // opened directly: text written for a saved address stays behind, edited
+  // for this listing or not, and text the owner typed for a one-off spot
+  // comes along.
+  const fullAddressForUnsavedPin = () => {
+    const current = flow.draft?.fields.location.value;
+    if (!current || addressAtPoint(addresses, current)) return "";
+    return fullAddressForNewPin(current.fullAddress, addresses);
+  };
 
   // What the address sheet hands back: a saved address with its own flat and
-  // landmark, or a one-off spot with none. Editing the field afterwards
-  // changes this listing only, never the saved address.
+  // landmark, or a one-off spot with none. A map spot that lands exactly on a
+  // saved address is that address: without this the block showed it as
+  // "edited for this listing" with an empty flat line. Editing the field
+  // afterwards changes this listing only, never the saved address.
   const onPickAddress = (picked: PickedAddress) => {
+    const saved = picked.saved ?? addressAtPoint(addresses, picked);
     edit("location", {
       locality: picked.locality,
-      fullAddress: picked.saved ? flatAndLandmark(picked.saved) : fullAddressForUnsavedPin(),
+      fullAddress: saved ? flatAndLandmark(saved) : fullAddressForUnsavedPin(),
       lat: picked.lat,
       long: picked.long,
     });
@@ -456,10 +473,6 @@ export default function ListReviewScreen() {
   const categoryLabel = f.category.value
     ? `${categoryDisplayName(f.category.value.title)} · ${categoryDisplayName(f.category.value.parent)}`
     : null;
-  // §8.8: offered only to an owner who is known to have no saved address
-  // (D14) — not while the list is loading, and not when it failed to load.
-  const showSaveOffer =
-    !addressesLoading && !addressesFailed && addresses.length === 0 && Boolean(f.location.value);
   const showFillRest =
     aiMissedItem &&
     run.status === "done" &&
@@ -696,96 +709,21 @@ export default function ListReviewScreen() {
             multiline
           />
 
-          {/* Pickup location */}
-          <View onLayout={onLayoutSection("location")} style={{ marginBottom: density.fieldGap }}>
-            <FieldLabel label="Pickup location" required />
-            <PickerRow
-              icon={<MapPinIcon size={20} color={f.location.value ? color.text : color.textDim} />}
-              value={f.location.value?.locality || null}
-              placeholder="Set pickup location"
-              onPress={openLocationPicker}
-              accessibilityLabel={
-                f.location.value?.locality ? `Pickup location, ${f.location.value.locality}` : "Set pickup location"
-              }
-            />
-          </View>
-          {f.location.value ? (
-            <TextField
-              label="Flat, building and landmark"
-              hint="Shared only once a booking is confirmed"
-              placeholder="e.g. Flat 1203, Lodha Amara, near the clubhouse"
-              value={f.location.value.fullAddress}
-              onChangeText={(v) =>
+          {/* Pickup */}
+          <View onLayout={onLayoutSection("location")}>
+            <PickupField
+              location={f.location.value}
+              addresses={addresses}
+              addressesKnown={!addressesLoading && !addressesFailed}
+              addressesSettled={addressesSettled}
+              saveAs={draft.saveAddressAs ?? null}
+              onChange={openLocationPicker}
+              onChangeFlat={(v) =>
                 f.location.value && edit("location", { ...f.location.value, fullAddress: v })
               }
+              onSaveAs={(value) => flow.dispatch({ type: "setSaveAddressAs", value })}
             />
-          ) : null}
-
-          {showSaveOffer ? (
-            <View
-              style={{
-                marginBottom: density.fieldGap,
-                padding: space.md,
-                gap: space.sm,
-                borderRadius: radius.group,
-                backgroundColor: color.surfaceRaised,
-              }}
-            >
-              <Text fontSize="text-sm" fontWeight="font-bold">
-                Save this address for next time
-              </Text>
-              <View style={{ flexDirection: "row", gap: space.sm }}>
-                {SAVE_AS.map((option) => {
-                  const selected = draft.saveAddressAs === option.value;
-                  return (
-                    <TouchableOpacity
-                      key={option.value}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      accessibilityLabel={`Save as ${option.label}`}
-                      activeOpacity={0.6}
-                      // The chip is drawn 36 pt tall; this brings the target to 44.
-                      hitSlop={{ top: 4, bottom: 4 }}
-                      // Only the intent is kept: the address is created after
-                      // the listing is submitted (Preview), from the location
-                      // as it stands then. Tapping the chosen chip clears it.
-                      onPress={() =>
-                        flow.dispatch({
-                          type: "setSaveAddressAs",
-                          value: selected ? null : option.value,
-                        })
-                      }
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: space.xs,
-                        minHeight: density.chip,
-                        paddingHorizontal: space.md,
-                        borderRadius: radius.full,
-                        borderWidth: 1,
-                        borderColor: selected ? color.brand : color.inputLine,
-                        backgroundColor: selected ? color.brandWash : color.surface,
-                      }}
-                    >
-                      {selected ? <CheckIcon size={16} color={color.brandText} /> : null}
-                      <Text
-                        fontSize="text-sm"
-                        fontWeight={selected ? "font-bold" : "font-normal"}
-                        tone={selected ? "brand" : "default"}
-                      >
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-              {draft.saveAddressAs ? (
-                <Text fontSize="text-xs" tone="body" accessibilityLiveRegion="polite">
-                  Saved to your addresses when you publish.
-                </Text>
-              ) : null}
-            </View>
-          ) : null}
+          </View>
 
           {/* Also set for you */}
           <View

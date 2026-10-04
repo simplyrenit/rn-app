@@ -2,7 +2,7 @@ import { localityFor, localityOfSaved } from "@/backend/list-flow/pickup-locatio
 import useAddresses, { useAddAddress } from "@/backend/useAddresses";
 import { Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
-import { MAX_ADDRESSES, PickedAddress, SavedAddress } from "@/lib/addresses";
+import { MAX_ADDRESSES, PickedAddress, SavedAddress, addressAtPoint } from "@/lib/addresses";
 import { SCREEN_GUTTER, density, radius, space } from "@/lib/design-tokens";
 import { createLocationRequest } from "@/lib/location-request";
 import { useTheme } from "@/lib/theme";
@@ -21,15 +21,12 @@ export interface AddressPickerSheetHandle {
 }
 
 interface Props {
-  /** The point in use now; its row carries the tick. Without a match, the default does. */
+  /** The point in use now; its row carries the tick. With no point, the default does. */
   selected?: { lat: number; long: number };
   onPick: (picked: PickedAddress) => void;
   title?: string;
   description?: string;
 }
-
-/** Saved coordinates come back through a float round trip; ~0.1 m is "the same point". */
-const samePoint = (a: number, b: number) => Math.abs(a - b) < 1e-6;
 
 function ActionRow({
   icon,
@@ -172,9 +169,7 @@ export const AddressPickerSheet = forwardRef<AddressPickerSheetHandle, Props>(
 
     // A one-off point matches no row, and then no row is marked.
     const selectedId = selected
-      ? addresses.find(
-          (a) => samePoint(a.coordinates.lat, selected.lat) && samePoint(a.coordinates.long, selected.long)
-        )?.id
+      ? addressAtPoint(addresses, selected)?.id
       : addresses.find((a) => a.is_default)?.id;
     const full = addresses.length >= MAX_ADDRESSES;
 

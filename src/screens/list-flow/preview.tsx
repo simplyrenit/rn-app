@@ -1,5 +1,5 @@
 import { buildCreatePayload, submitListing } from "@/backend/list-flow/submit";
-import { saveFirstAddress } from "@/backend/addresses-api";
+import { saveOfferedAddress } from "@/backend/addresses-api";
 import { Button, Text, useButtonLabelColor, useReduceMotion } from "@/components/core";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -152,9 +152,10 @@ export default function ListPreviewScreen() {
       // from this render's draft, because `finish` below clears it. Not
       // awaited and never thrown: the listing is already live, and a failed
       // address save must not hold up or fail the flow (D8).
-      if (draft.saveAddressAs && location) {
+      // No flat line, no address: Profile's form will not save one either.
+      if (draft.saveAddressAs && location?.fullAddress.trim()) {
         const addressPayload = inlineOfferPayload(location, draft.saveAddressAs);
-        void saveFirstAddress(queryClient, userDetails?.username, addressPayload).catch(() => {
+        void saveOfferedAddress(queryClient, userDetails?.username, addressPayload).catch(() => {
           flow.track("address_save_failed");
           toast.warning("Your listing is live. We couldn't save the address.");
         });

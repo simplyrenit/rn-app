@@ -163,7 +163,7 @@ export type DraftAction =
   | { type: "specsLoaded"; requestId: string; specs: WireSpec[] }
   | { type: "specsUnavailable"; requestId: string }
   | { type: "setSpec"; key: string; value: SpecValue | null }
-  /** `null` clears it: tapping the selected chip again. */
+  /** `null` clears it: the "Save this address" checkbox unticked. */
   | { type: "setSaveAddressAs"; value: NonNullable<ListingDraft["saveAddressAs"]> | null };
 
 /** Recompute the deposit default while the owner has not overridden it. */
