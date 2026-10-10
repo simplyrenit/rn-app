@@ -10,6 +10,7 @@ import {
   GET_CATEGORIES,
   MY_DETAILS_ENDPOINT,
 } from "@/lib/config";
+import { signOutCurrentDevice } from "@/lib/device";
 import { authenticateFirebase, signOutFirebase } from "@/lib/firebase";
 import axiosInstance, {
   resetSessionExpiryNotice,
@@ -104,6 +105,9 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = useCallback(async () => {
     cancelMyDetailsRequest();
+    // First, while the token is still in place: ends this phone's session so it
+    // stops ringing (ENG-146). Best effort; it cannot fail the sign-out.
+    await signOutCurrentDevice();
     try {
       await signOutFirebase();
     } catch (error) {
