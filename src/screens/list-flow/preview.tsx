@@ -12,12 +12,13 @@ import { SpecStrip } from "@/components/product/spec-strip";
 import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
 import { inlineOfferPayload } from "@/lib/addresses";
-import { hasApiCode } from "@/lib/api-error";
+import { apiError } from "@/lib/api-error";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import { SCREEN_GUTTER, duration, radius, space } from "@/lib/design-tokens";
 import { formatNumber } from "@/lib/format";
 import { commitFeedback, successFeedback } from "@/lib/haptics";
 import { uploadedPhotos } from "@/lib/list-flow/draft";
+import { lockedItems, needsOwnerTerms, publishLockedMessage } from "@/lib/list-flow/publish-locked";
 import { currentSpecs, specDisplayValue } from "@/lib/list-flow/specs";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -193,14 +194,23 @@ export default function ListPreviewScreen() {
       flow.track("listing_submit_failed", { status });
       submitting.current = false;
       if (mounted.current) setState("idle");
-      // The owner terms moved on, or were never accepted (ENG-122). The tick is
-      // on the first step of the flow; the draft stays as it is.
-      if (hasApiCode(error, "owner_terms_required")) {
+      // The owner terms moved on, or were never accepted (ENG-122). An individual
+      // is told `owner_terms_required`; a merchant `publish_locked`, which lists
+      // everything in the way. Either way the tick is on the first step of the
+      // flow and the draft stays as it is.
+      const failure = apiError(error);
+      const locked = failure?.code === "publish_locked" ? lockedItems(failure.details) : [];
+      if (failure?.code === "owner_terms_required" || needsOwnerTerms(locked)) {
         void queryClient.invalidateQueries(termsQueryKey(userDetails?.username));
         toast.warning("Accept the owner terms to submit", {
           message: "The tick is on the first step. Your listing is saved.",
         });
         navigation.navigate("ListAddPhotos");
+        return;
+      }
+      // A merchant who may not publish yet for another reason: say which.
+      if (failure?.code === "publish_locked") {
+        toast.warning("You can't publish yet", { message: publishLockedMessage(locked) });
         return;
       }
       // The draft is untouched, so the owner can simply try again.
