@@ -46,6 +46,9 @@ import EditProductScreen from "@/screens/profileScreens/edit-product";
 import FAQScreen from "@/screens/profileScreens/faqs";
 import FeedbackNReviewScreen from "@/screens/profileScreens/feedback-review";
 import MyProductScreen from "@/screens/profileScreens/my-product";
+import RentalDeliveryScreen from "@/screens/profileScreens/rental-delivery";
+import RentalHoursScreen from "@/screens/profileScreens/rental-hours";
+import RentalSettingsScreen from "@/screens/profileScreens/rental-settings";
 import NotificationScreen from "@/screens/profileScreens/notification";
 import WhoWeAreScreen from "@/screens/profileScreens/who-we-are";
 import { BackHandler, PixelRatio, Platform, View } from "react-native";
@@ -532,6 +535,18 @@ export default function Navigation() {
         <Stack.Screen
           name="BankAccount"
           component={BankAccountScreen}
+        />
+        <Stack.Screen
+          name="RentalSettings"
+          component={RentalSettingsScreen}
+        />
+        <Stack.Screen
+          name="RentalHours"
+          component={RentalHoursScreen}
+        />
+        <Stack.Screen
+          name="RentalDelivery"
+          component={RentalDeliveryScreen}
         />
         <Stack.Screen
           name="SavedAddresses"

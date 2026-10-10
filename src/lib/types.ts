@@ -321,6 +321,10 @@ export type RootStackParamList = {
   OwnersProducts: { products: BackendProduct[]; name: string };
   /** The owner's bank account: add, verify, change (ENG-135). */
   BankAccount: undefined;
+  /** The owner's hours, Open switch, notice and delivery (ENG-146). */
+  RentalSettings: undefined;
+  RentalHours: undefined;
+  RentalDelivery: undefined;
   [key: string]: object | undefined;
 };
 

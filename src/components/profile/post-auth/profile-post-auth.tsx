@@ -6,6 +6,7 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import {
+  AdjustmentsHorizontalIcon,
   ArrowRightOnRectangleIcon,
   BuildingLibraryIcon,
   ChatBubbleLeftEllipsisIcon,
@@ -141,6 +142,13 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               label="My products"
               onPress={() => {
                 router.navigate("myProducts");
+              }}
+            />
+            <ProfileRow
+              icon={AdjustmentsHorizontalIcon}
+              label="Rental settings"
+              onPress={() => {
+                router.navigate("RentalSettings");
               }}
             />
             <ProfileRow

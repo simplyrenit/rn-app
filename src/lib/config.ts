@@ -210,3 +210,11 @@ export const BANK_ACCOUNT_VERIFY_ENDPOINT = SERVERURL + "shop/bank-account/verif
 
 /** The code step before a bank account is added or changed (T-10). */
 export const ACCESS_UNLOCK_ENDPOINT = SERVERURL + "access/unlock/";
+
+export const SHOP_ENDPOINT = SERVERURL + "shop/";
+
+export const SHOP_OPEN_ENDPOINT = SERVERURL + "shop/open/";
+
+export const SHOP_DELIVERY_EXAMPLE_ENDPOINT = SERVERURL + "shop/delivery-example/";
+
+export const ACCESS_DEVICES_ENDPOINT = SERVERURL + "access/devices/";
