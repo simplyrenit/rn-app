@@ -7,6 +7,7 @@ import { Platform } from "react-native";
 import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
 import axiosInstance from "@/lib/networkUtils";
 import { REGISTER_PUSH_TOKEN_ENDPOINT } from "@/lib/config";
+import { getDeviceInfo } from "@/lib/device";
 import { colors } from "@/lib/design-tokens";
 
 // Task name for background fetch
@@ -100,8 +101,12 @@ export async function registerForPushNotificationsAsync() {
 // Keep both chat transports supplied with the current Expo token.
 export async function updateUserPushToken(firebaseUid: string, pushToken: string) {
   try {
+    // With the device fields (ENG-146): the server files the token under this
+    // phone's session, and fills the platform of a session an older build started
+    // so that it stops being asked for a fresh code.
     await axiosInstance.post(REGISTER_PUSH_TOKEN_ENDPOINT, {
       expo_push_token: pushToken,
+      ...(await getDeviceInfo()),
     });
   } catch (error) {
   }
