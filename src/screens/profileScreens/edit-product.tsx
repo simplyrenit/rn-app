@@ -1,6 +1,9 @@
-import { BackButton, EmptyState, Text } from "@/components/core";
+import { BackButton, Button, EmptyState, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import IconButton from "@/components/profile/post-auth/profile-icon-button";
+import { ListingStatusPill } from "@/components/product/listing-status";
+import { apiError } from "@/lib/api-error";
+import { openBookingMessage, resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
@@ -13,7 +16,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { TrashIcon } from "react-native-heroicons/outline";
+import { ArchiveBoxIcon } from "react-native-heroicons/outline";
 import * as React from "react";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
@@ -37,10 +40,13 @@ const EditProductScreen: React.FC = () => {
   const { width: winW } = useWindowDimensions();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const openBottomSheet = () => {
+    setArchiveError(null);
     bottomSheetRef.current?.present();
   };
   const [product, setProduct] = useState<BackendProduct | null>(null);
-  const { getMyProductDetails, deleteMyProduct, loading } = useProfile();
+  // Why the last archive attempt failed, shown in the sheet it was made from.
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+  const { getMyProductDetails, archiveMyProduct, loading } = useProfile();
   const { data: userData } = useGetMyDetails()
   const getProductDetails = async () => {
     const product = await getMyProductDetails(id);
@@ -53,11 +59,29 @@ const EditProductScreen: React.FC = () => {
     }, [])
   );
 
-  const handleDelete = async () => {
-    await deleteMyProduct(id);
-    toast.success("Your product was deleted!");
+  // Archiving keeps the product on record but takes it off search and off My
+  // products. The server refuses while a booking on it is still open, and says
+  // which ones.
+  const handleArchive = async () => {
+    setArchiveError(null);
+    try {
+      await archiveMyProduct(id);
+    } catch (error) {
+      const failure = apiError(error);
+      setArchiveError(
+        failure?.code === "open_booking"
+          ? openBookingMessage(failure.details?.bookings as string[] | undefined)
+          : failure?.message ??
+              "We couldn't archive this product. Check your connection and try again."
+      );
+      return;
+    }
+    bottomSheetRef.current?.dismiss();
+    toast.success("Your product was archived.");
     navigation.navigate("myProducts");
   };
+
+  const status = resolveListingStatus(product?.status);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -119,6 +143,13 @@ const EditProductScreen: React.FC = () => {
                       </Text>
                       <Text tone="body">per day</Text>
                     </View>
+                    {/* A flagged owner opens this screen to fix the listing, so
+                        the reason is shown where they will fix it. */}
+                    {status ? (
+                      <View style={{ marginTop: 4 }}>
+                        <ListingStatusPill status={status} reasons={product.flag_reasons} />
+                      </View>
+                    ) : null}
                   </View>
                   <View>
                     <TouchableOpacity
@@ -128,12 +159,12 @@ const EditProductScreen: React.FC = () => {
                         : "border-line-light bg-surface-light"
                         }`}
                     >
-                      <TrashIcon
+                      <ArchiveBoxIcon
                         size={20}
                         color={ink.danger(isDarkMode)}
                       />
                       <Text fontSize="text-sm" fontWeight="font-bold">
-                        Delete
+                        Archive
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -194,7 +225,7 @@ const EditProductScreen: React.FC = () => {
 
       <CustomBottomSheetModal
         ref={bottomSheetRef}
-        snapPoints={["40%"]}
+        snapPoints={["55%"]}
         isDark={isDarkMode}
       >
         <View className="flex items-center mb-4">
@@ -202,7 +233,7 @@ const EditProductScreen: React.FC = () => {
             fontSize="text-xl"
             fontWeight="font-bold"
           >
-            Delete product
+            Archive product
           </Text>
         </View>
         {product && (
@@ -243,44 +274,37 @@ const EditProductScreen: React.FC = () => {
             </View>
           </>
         )}
-        <View className="flex-row justify-between mt-6 space-x-2 px-2">
-          <TouchableOpacity
-            onPress={() => bottomSheetRef.current?.close()}
-            className={`border rounded-card flex-1 items-center justify-center p-3  ${isDarkMode
-              ? "border-line-dark bg-surface-dark"
-              : "border-line-light bg-surface-light"
-              }`}
-          >
+        <View className="px-gutter" style={{ gap: 8, marginTop: 8 }}>
+          <Text tone="body" fontSize="text-md">
+            Archiving takes this product out of search and out of My products.
+            We keep it on record. You can’t archive a product while a booking
+            on it is still open.
+          </Text>
+          {archiveError ? (
             <Text
-              fontWeight="font-bold"
-              fontSize="text-base"
-              className="text-center"
+              tone="danger"
+              fontSize="text-sm"
+              accessibilityLiveRegion="polite"
+            >
+              {archiveError}
+            </Text>
+          ) : null}
+        </View>
+        <View className="flex-row justify-between mt-6 space-x-2 px-2">
+          <View style={{ flex: 1 }}>
+            <Button
+              variant="outline"
+              disabled={loading}
+              onPress={() => bottomSheetRef.current?.close()}
             >
               Cancel
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => {
-              handleDelete();
-            }}
-            className="bg-danger-light p-3 rounded-card flex-1  flex-row items-center justify-center"
-          >
-            {loading ? (
-              // No `onDanger` token exists yet; `onBrand` is the nearest
-              // available (theme-invariant white), same as the label it
-              // stands in for below.
-              <ActivityIndicator size="small" color={ink.onBrand()} />
-            ) : (
-              <Text
-                fontWeight="font-bold"
-                fontSize="text-base"
-                className="text-center"
-              >
-                Delete
-              </Text>
-            )}
-          </TouchableOpacity>
+            </Button>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button variant="warning" loading={loading} onPress={handleArchive}>
+              Archive
+            </Button>
+          </View>
         </View>
       </CustomBottomSheetModal>
     </GestureHandlerRootView>

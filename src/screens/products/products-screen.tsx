@@ -13,11 +13,7 @@ import {
 import { DetailSection } from "@/components/product/detail-section";
 import { ExpandableText } from "@/components/product/expandable-text";
 import { ModerationBanner } from "@/components/product/moderation-banner";
-import {
-  ListingStatus,
-  ListingStatusPill,
-  resolveListingStatus,
-} from "@/components/product/listing-status";
+import { ListingStatusPill } from "@/components/product/listing-status";
 import { ProductHero } from "@/components/product/product-hero";
 import { SpecStrip } from "@/components/product/spec-strip";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
@@ -46,6 +42,7 @@ import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { CategoryIcon } from "@/lib/category-icons";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
+import { FlagReason, ListingStatus, resolveListingStatus } from "@/lib/listing-status";
 import { getDiscoveryLocationData } from "@/lib/location";
 import { keySpecLine, specMatchesFilters } from "@/lib/product-specs";
 import { useTheme } from "@/lib/theme";
@@ -215,9 +212,12 @@ export default function DetailsScreen() {
   // True once the pinned band, not the hero, owns the top of the screen. It is
   // what decides which of the two back controls takes a tap.
   const [heroCovered, setHeroCovered] = useState(false);
-  // Only the owner-facing endpoint knows whether a listing is approved, so this
+  // Only the owner-facing endpoint knows what state a listing is in, so this
   // is fetched separately and only for the owner.
-  const [ownerStatus, setOwnerStatus] = useState<ListingStatus | null>(null);
+  const [ownerStatus, setOwnerStatus] = useState<{
+    status: ListingStatus;
+    reasons: FlagReason[];
+  } | null>(null);
   const distanceLabel = useDistanceTo(product?.coordinates);
   // The similar-products rail draws the Home tile, whose heart has to start in
   // the right state. One shared, cached query — the same one every
@@ -288,9 +288,9 @@ export default function DetailsScreen() {
   }
 
   /**
-   * The public listing payload carries no approval state, so an owner looking
-   * at their own listing could not tell whether renters could see it. Failure
-   * here is silent: the status is additive and must not take the page down.
+   * The public listing payload carries no status, so an owner looking at their
+   * own listing could not tell whether renters could see it. Failure here is
+   * silent: the status is additive and must not take the page down.
    */
   async function loadOwnerStatus(data: BackendProduct | null) {
     if (!data || !userDetails?.username) return;
@@ -300,12 +300,8 @@ export default function DetailsScreen() {
     }
     try {
       const owned = await getMyProductDetails(data.name);
-      setOwnerStatus(
-        resolveListingStatus({
-          moderationLabels: owned?.moderation_labels,
-          adminApproved: owned?.admin_approved,
-        })
-      );
+      const status = resolveListingStatus(owned?.status);
+      setOwnerStatus(status ? { status, reasons: owned?.flag_reasons ?? [] } : null);
     } catch {
       setOwnerStatus(null);
     }
@@ -638,7 +634,11 @@ export default function DetailsScreen() {
             {/* Your own listing said nothing about whether renters could see
                 it. "Live" is a fact the owner needs stated, not inferred. */}
             {isOwner && ownerStatus ? (
-              <ListingStatusPill status={ownerStatus} withDetail />
+              <ListingStatusPill
+                status={ownerStatus.status}
+                reasons={ownerStatus.reasons}
+                withDetail
+              />
             ) : null}
 
             {/* Shown with or without specs: "more like this" is useful either

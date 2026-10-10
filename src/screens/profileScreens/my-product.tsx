@@ -2,11 +2,9 @@ import { useProfile } from "@/backend/profile";
 import { StaticContainer, SubpageHeader, Text } from "@/components/core";
 import { MyProductCard } from "@/components/core/my-product-card";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import {
-  ListingStatusPill,
-  resolveListingStatus,
-} from "@/components/product/listing-status";
+import { ListingStatusPill } from "@/components/product/listing-status";
 import { useGlobalContext } from "@/context/global-context";
+import { resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
@@ -194,10 +192,7 @@ const MyProductScreen: React.FC = () => {
           // Only the failing states were ever labelled, so a published listing
           // was told apart from a broken one by the absence of a badge. Every
           // row now says what state it is in, in one place and one language.
-          const status = resolveListingStatus({
-            moderationLabels: item.moderation_labels,
-            adminApproved: item.admin_approved,
-          });
+          const status = resolveListingStatus(item.status);
           return (
             <View style={{ width: COLUMN_WIDTH }}>
               <MyProductCard
@@ -207,13 +202,12 @@ const MyProductScreen: React.FC = () => {
                 location={item.location}
                 price={item.rate}
                 isDarkMode={isDark}
-                moderationLabels={item.moderation_labels}
-                adminApproved={item.admin_approved}
+                status={status}
                 width="100%"
               />
               {status ? (
                 <View style={{ marginTop: 6 }}>
-                  <ListingStatusPill status={status} />
+                  <ListingStatusPill status={status} reasons={item.flag_reasons} />
                 </View>
               ) : null}
               {/* The frame's Edit button. The card already opens the editor on

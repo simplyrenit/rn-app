@@ -251,17 +251,15 @@ export function useProfile() {
     }
   }
 
-  async function deleteMyProduct(name: string) {
+  /**
+   * Archives, not erases: the row stays with `status: "archived"` and drops off
+   * search and My products. `409 open_booking` when a booking on it is open —
+   * the caller reads the error, so it is thrown as it came.
+   */
+  async function archiveMyProduct(name: string) {
     setLoading(true);
     try {
-      const response = await axiosInstance.delete(
-        `${MY_PRODUCT_DETAILS_ENDPOINT}${name}/`,
-      );
-
-      return response.data;
-    } catch (error: any) {
-      console.error("Error deleting product:", error.response.data);
-      throw error;
+      await axiosInstance.delete(`${MY_PRODUCT_DETAILS_ENDPOINT}${name}/`);
     } finally {
       setLoading(false);
     }
@@ -328,7 +326,7 @@ export function useProfile() {
     reportAProblem,
     giveFeedback,
     getMyProductDetails,
-    deleteMyProduct,
+    archiveMyProduct,
     updateMyProductDetails,
     updateProductImages,
     updateProductDetails,

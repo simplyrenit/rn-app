@@ -79,9 +79,9 @@ export default function ListSubmittedScreen() {
             {"Submitted.\nIt's with our team now."}
           </Text>
           <Text tone="body" fontSize="text-md">
-            We check every new listing before renters can see it. Until then it sits in My listings as{" "}
+            We check every new listing before renters can see it. Until then it sits in My products as{" "}
             <Text fontSize="text-md" fontWeight="font-bold">
-              Pending review
+              Checking
             </Text>
             , and you can still edit it.
           </Text>
@@ -108,7 +108,7 @@ export default function ListSubmittedScreen() {
             <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={2}>
               {route.params?.productName}
             </Text>
-            <ListingStatusPill status="pending" />
+            <ListingStatusPill status="checking" />
           </View>
         </View>
       </ScrollView>

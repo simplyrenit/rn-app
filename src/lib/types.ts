@@ -5,6 +5,7 @@ import {
 } from "@react-navigation/native";
 import { DimensionValue, FlexAlignType, ImageSourcePropType } from "react-native";
 import type { SavedAddress } from "@/lib/addresses";
+import type { FlagReason, ListingStatus } from "@/lib/listing-status";
 
 export interface OTPResponse {
   access: string | null;
@@ -52,8 +53,9 @@ export interface ItemCard {
   price: string;
   isFavorite?: boolean;
   isDarkMode?: boolean;
-  moderationLabels?: string[];
-  adminApproved?: boolean | null;
+  /** The owner's own shelf only: what state the listing is in (ENG-124). */
+  status?: ListingStatus | null;
+  flagReasons?: FlagReason[];
   width?: DimensionValue;
   alignItems?: FlexAlignType;
 }
@@ -515,6 +517,13 @@ export interface BackendProduct {
   specs?: ProductSpec[];
   // Only returned on the owner-facing endpoint; public catalogue responses omit it.
   admin_approved?: boolean | null;
+  /**
+   * One of the six statuses (ENG-124), and why it is Flagged. Owner-facing
+   * endpoint only (`/api/my/products/`): a public one never carries them,
+   * because it only ever returns Live listings.
+   */
+  status?: ListingStatus;
+  flag_reasons?: FlagReason[];
   condition: string;
   rate: string;
   currency: string;
