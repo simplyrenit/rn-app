@@ -530,6 +530,22 @@ export interface BackendProduct {
    */
   status?: ListingStatus;
   flag_reasons?: FlagReason[];
+  /**
+   * ENG-155. Units the owner has to rent out, what the item costs to replace
+   * (rupees as a string, null until set), the owner's own code, and the one
+   * per-product exception to the shop's delivery. Owner endpoint only for
+   * `worth`, `shop_code`, `rate_needs_confirming` and `needs_worth`; `quantity`,
+   * `not_delivered` and `rate_unit` are on public products too.
+   */
+  quantity?: number;
+  worth?: string | null;
+  shop_code?: string;
+  not_delivered?: boolean;
+  rate_unit?: "day";
+  /** A moved listing's price is treated as per day until the owner saves `rate`. */
+  rate_needs_confirming?: boolean;
+  /** True while `worth` is null. */
+  needs_worth?: boolean;
   condition: string;
   rate: string;
   currency: string;

@@ -183,7 +183,9 @@ export function useProfile() {
       );
       return response.data;
     } catch (error: any) {
-      console.error("Error updating product details:", error.response.data);
+      // `response` is missing when there was no answer at all (offline); reading
+      // `.data` off it threw a TypeError that hid the real failure from callers.
+      console.error("Error updating product details:", error?.response?.data ?? error?.message);
       throw error;
     } finally {
       setLoading(false);

@@ -8,6 +8,7 @@ import {
   useFieldSurfaceStyle,
 } from "@/components/core";
 import { SegmentedChoice } from "@/components/core/segmented-choice";
+import { parseQuantity, parseWorth, MAX_QUANTITY_DIGITS } from "@/lib/list-flow/stock";
 import { createLocationRequest } from "@/lib/location-request";
 import {
   MIN_TOUCH_TARGET,
@@ -24,7 +25,7 @@ import { useTypedNavigation } from "@/lib/types";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Platform, Pressable, TextInput, TouchableOpacity, View } from "react-native";
+import { Platform, Pressable, Switch, TextInput, TouchableOpacity, View } from "react-native";
 import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -60,6 +61,10 @@ export interface AboutProductValues {
   usageDescription: string;
   pricePerDay: string;
   securityDeposit: string;
+  /** ENG-155: units the owner has, what the item costs to replace, and the one per-product delivery exception. */
+  quantity: string;
+  worth: string;
+  notDelivered: boolean;
   /** Flat/building/landmark — the part a map cannot tell a renter. */
   address: string;
   /** The pin the customer chose, else the device, else the owner's saved point. */
@@ -81,6 +86,11 @@ export interface AboutProductValues {
 interface Props {
   /** Pre-fill. Absent keys start empty, which is what the create flow wants. */
   initialValues?: Partial<AboutProductValues>;
+  /**
+   * What the owner still has to do here (ENG-155): a moved listing's price wants
+   * confirming (saving the form does it), and one with no worth needs one.
+   */
+  prompts?: { confirmPrice?: boolean; needsWorth?: boolean };
   submitLabel: string;
   /**
    * Rendered to the right of the submit label. Receives the colour the label
@@ -146,6 +156,7 @@ const digitsOnly = (value: string) => value.replace(/[^\d.]/g, "");
  */
 export function AboutProductForm({
   initialValues,
+  prompts,
   submitLabel,
   submitAccessory,
   onSubmit,
@@ -173,6 +184,9 @@ export function AboutProductForm({
     initialValues?.securityDeposit ?? ""
   );
   const [address, setAddress] = useState(initialValues?.address ?? "");
+  const [quantity, setQuantity] = useState(initialValues?.quantity ?? "1");
+  const [worth, setWorth] = useState(initialValues?.worth ?? "");
+  const [notDelivered, setNotDelivered] = useState(initialValues?.notDelivered ?? false);
 
   // Condition is a select, not a TextInput, so it tracks its own focus rather
   // than getting one for free from TextField. Same for the two currency fields
@@ -180,6 +194,8 @@ export function AboutProductForm({
   const [conditionFocus, setConditionFocus] = useState(false);
   const [priceFocus, setPriceFocus] = useState(false);
   const [depositFocus, setDepositFocus] = useState(false);
+  const [worthFocus, setWorthFocus] = useState(false);
+  const [quantityFocus, setQuantityFocus] = useState(false);
   const [phoneFocus, setPhoneFocus] = useState(false);
 
   const [contactPerson, setContactPerson] = useState<ContactPerson | null>(
@@ -380,6 +396,8 @@ export function AboutProductForm({
     !productDescription.trim() && "a description",
     !isPositiveAmount(pricePerDay) && "a price per day",
     !isNonNegativeAmount(securityDeposit) && "a security deposit",
+    parseWorth(worth) === null && "what it is worth",
+    parseQuantity(quantity) === null && "how many you have",
     !address.trim() && "a landmark",
     !pinnedLocation && "a location on the map",
     !(
@@ -421,6 +439,9 @@ export function AboutProductForm({
         usageDescription,
         pricePerDay,
         securityDeposit,
+        quantity,
+        worth,
+        notDelivered,
         address: address.trim(),
         coordinates: pinnedLocation,
         locationName,
@@ -463,6 +484,36 @@ export function AboutProductForm({
         paddingBottom: insets.bottom + space.xl,
       }}
     >
+      {prompts?.confirmPrice || prompts?.needsWorth ? (
+        <View
+          accessibilityLiveRegion="polite"
+          style={{
+            marginBottom: density.fieldGap,
+            padding: space.md,
+            borderRadius: radius.group,
+            backgroundColor: color.warningWash,
+            gap: 2,
+          }}
+        >
+          {prompts?.confirmPrice ? (
+            <Text fontSize="text-sm" tone="warning">
+              <Text fontSize="text-sm" fontWeight="font-bold" tone="warning">
+                Confirm your price.{" "}
+              </Text>
+              Check it is what a renter pays per day, then update the product.
+            </Text>
+          ) : null}
+          {prompts?.needsWorth ? (
+            <Text fontSize="text-sm" tone="warning">
+              <Text fontSize="text-sm" fontWeight="font-bold" tone="warning">
+                Needs worth.{" "}
+              </Text>
+              Add what it would cost to replace. It is needed to publish.
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+
       <TextField
         label="Product name"
         required
@@ -667,6 +718,86 @@ export function AboutProductForm({
             }}
           />
         </FieldShell>
+      </View>
+
+      <View style={{ marginBottom: density.fieldGap }}>
+        <FieldLabel
+          label="Worth"
+          required
+          hint="What it would cost to replace. It decides the customer's ID check."
+        />
+        <FieldShell focused={worthFocus}>
+          {currencyAdornment}
+          <TextInput
+            accessibilityLabel="Worth"
+            placeholder="e.g. 45000"
+            placeholderTextColor={color.placeholder}
+            keyboardType="numeric"
+            value={worth}
+            onChangeText={(value) => setWorth(digitsOnly(value))}
+            onFocus={() => setWorthFocus(true)}
+            onBlur={() => setWorthFocus(false)}
+            style={{
+              flex: 1,
+              color: color.text,
+              fontFamily: fontFamily.regular,
+              fontSize: fontSize.md,
+            }}
+          />
+        </FieldShell>
+      </View>
+
+      <View style={{ marginBottom: density.fieldGap }}>
+        <FieldLabel
+          label="In stock"
+          required
+          hint="How many of this item you have to rent out"
+        />
+        <FieldShell focused={quantityFocus}>
+          <TextInput
+            accessibilityLabel="In stock"
+            placeholder="1"
+            placeholderTextColor={color.placeholder}
+            keyboardType="number-pad"
+            maxLength={MAX_QUANTITY_DIGITS}
+            value={quantity}
+            onChangeText={(value) => setQuantity(value.replace(/\D/g, ""))}
+            onFocus={() => setQuantityFocus(true)}
+            onBlur={() => setQuantityFocus(false)}
+            style={{
+              flex: 1,
+              color: color.text,
+              fontFamily: fontFamily.regular,
+              fontSize: fontSize.md,
+            }}
+          />
+        </FieldShell>
+      </View>
+
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: space.md,
+          marginBottom: density.fieldGap,
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <Text fontSize="text-md" fontWeight="font-bold">
+            This product is not delivered
+          </Text>
+          <Text fontSize="text-xs" tone="body">
+            Even if you deliver, this one is for pickup only.
+          </Text>
+        </View>
+        <Switch
+          accessibilityLabel="This product is not delivered"
+          value={notDelivered}
+          onValueChange={setNotDelivered}
+          trackColor={{ true: color.brand, false: color.inputLine }}
+          thumbColor="#FFFFFF"
+        />
       </View>
 
       <View style={{ marginBottom: density.fieldGap }}>

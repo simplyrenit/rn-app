@@ -7,6 +7,9 @@ import {
 } from "@/components/post/about-product-form";
 import { EditStepHeader } from "@/components/post/edit-step-header";
 import { useGlobalContext } from "@/context/global-context";
+import { apiError } from "@/lib/api-error";
+import { listingPrompts } from "@/lib/listing-status";
+import { parseQuantity, quantityInUseMessage } from "@/lib/list-flow/stock";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React from "react";
@@ -75,6 +78,10 @@ export default function EditAboutProduct() {
         usage_description: values.usageDescription,
         rate: `${parseFloat(values.pricePerDay)}`,
         security_deposit: `${parseFloat(values.securityDeposit)}`,
+        // The form will not submit without a valid quantity and worth.
+        quantity: parseQuantity(values.quantity) ?? 1,
+        worth: `${parseFloat(values.worth)}`,
+        not_delivered: values.notDelivered,
         coordinates: {
           lat: values.coordinates?.lat ?? 0,
           long: values.coordinates?.long ?? 0,
@@ -93,6 +100,14 @@ export default function EditAboutProduct() {
       console.error("Error updating product details:", error);
       // The previous version swallowed this: the spinner stopped, the screen
       // stayed put and nothing said the save had failed.
+      const failure = apiError(error);
+      if (failure?.code === "quantity_in_use") {
+        // Some units are booked or blocked: the server names the day and the bookings.
+        toast.error("You can't have that few in stock", {
+          message: quantityInUseMessage(failure.details),
+        });
+        return;
+      }
       toast.error("We couldn't update your product", {
         message: "Check your connection and try again.",
       });
@@ -123,11 +138,19 @@ export default function EditAboutProduct() {
             usageDescription: data.usage_description || "",
             pricePerDay: data.rate?.toString() || "",
             securityDeposit: data.security_deposit?.toString() || "",
+            quantity: String(data.quantity ?? 1),
+            // "45000.00" from the server, "45000" in the box; empty while there is none.
+            worth: data.worth ? String(Number(data.worth)) : "",
+            notDelivered: Boolean(data.not_delivered),
             address: data.location || "",
             coordinates: savedCoordinates,
             contactPerson: initialContactPerson,
             otherName: data.contact_name || "",
             otherPhoneNumber: savedLocalNumber,
+          }}
+          prompts={{
+            confirmPrice: Boolean(data.rate_needs_confirming),
+            needsWorth: listingPrompts(data).includes("Needs worth"),
           }}
           submitLabel="Update product"
           onSubmit={handleSubmit}

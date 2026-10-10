@@ -5,6 +5,7 @@ import {
   ListingStatus,
   STATUS_COPY,
   flagReasonText,
+  listingPrompts,
   statusDetail,
 } from "@/lib/listing-status";
 import { useTheme } from "@/lib/theme";
@@ -80,6 +81,28 @@ export function ListingStatusPill({ status, reasons, withDetail = false }: PillP
           {reason}
         </Text>
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * What the owner still has to do on a listing: "Confirm your price" on a moved
+ * one, "Needs worth" on one with none (ENG-155). Draws nothing when there is none.
+ */
+export function ListingPrompts({
+  product,
+}: {
+  product: { rate_needs_confirming?: boolean; needs_worth?: boolean; worth?: string | null };
+}) {
+  const prompts = listingPrompts(product);
+  if (prompts.length === 0) return null;
+  return (
+    <View style={{ gap: 2 }}>
+      {prompts.map((prompt) => (
+        <Text key={prompt} fontSize="text-xs" fontWeight="font-bold" tone="warning">
+          {prompt}
+        </Text>
+      ))}
     </View>
   );
 }

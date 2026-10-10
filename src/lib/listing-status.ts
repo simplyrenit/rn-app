@@ -78,3 +78,21 @@ export function openBookingMessage(bookings: string[] | null | undefined): strin
 export function hasPrice(rate: string | number | null | undefined): boolean {
   return rate !== null && rate !== undefined && String(rate).trim() !== "";
 }
+
+/**
+ * What an owner still has to do on a listing, in the words the shelf shows
+ * (ENG-155): a moved listing's price was treated as per day and wants
+ * confirming; a listing with no worth cannot be published.
+ */
+export function listingPrompts(product: {
+  rate_needs_confirming?: boolean;
+  needs_worth?: boolean;
+  worth?: string | null;
+}): string[] {
+  const prompts: string[] = [];
+  if (product.rate_needs_confirming) prompts.push("Confirm your price");
+  // `needs_worth` is the server's word; a payload that only has `worth` says the same.
+  const needsWorth = product.needs_worth ?? (product.worth !== undefined && !product.worth);
+  if (needsWorth) prompts.push("Needs worth");
+  return prompts;
+}

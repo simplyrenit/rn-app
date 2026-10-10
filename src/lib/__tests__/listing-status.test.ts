@@ -4,6 +4,8 @@ import {
   STATUS_COPY,
   flagReasonText,
   hasPrice,
+
+  listingPrompts,
   openBookingMessage,
   resolveListingStatus,
   statusDetail,
@@ -91,5 +93,33 @@ describe("hasPrice", () => {
     expect(hasPrice("610.00")).toBe(true);
     expect(hasPrice(610)).toBe(true);
     expect(hasPrice("0.00")).toBe(true);
+  });
+});
+
+describe("listingPrompts", () => {
+  it("asks to confirm the price of a moved listing", () => {
+    expect(listingPrompts({ rate_needs_confirming: true, needs_worth: false })).toEqual(["Confirm your price"]);
+  });
+
+  it("says a listing without a worth needs one", () => {
+    expect(listingPrompts({ rate_needs_confirming: false, needs_worth: true })).toEqual(["Needs worth"]);
+  });
+
+  it("gives both, price first", () => {
+    expect(listingPrompts({ rate_needs_confirming: true, needs_worth: true })).toEqual([
+      "Confirm your price",
+      "Needs worth",
+    ]);
+  });
+
+  it("is quiet for a listing that is in order", () => {
+    expect(listingPrompts({ rate_needs_confirming: false, needs_worth: false, worth: "45000.00" })).toEqual([]);
+  });
+
+  it("reads a missing worth when the server sent only that", () => {
+    expect(listingPrompts({ worth: null })).toEqual(["Needs worth"]);
+    expect(listingPrompts({ worth: "100.00" })).toEqual([]);
+    // Neither field in the payload (a server without ENG-155): say nothing.
+    expect(listingPrompts({})).toEqual([]);
   });
 });

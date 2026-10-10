@@ -2,7 +2,7 @@ import { useProfile } from "@/backend/profile";
 import { StaticContainer, SubpageHeader, Text } from "@/components/core";
 import { MyProductCard } from "@/components/core/my-product-card";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { ListingStatusPill } from "@/components/product/listing-status";
+import { ListingPrompts, ListingStatusPill } from "@/components/product/listing-status";
 import { useGlobalContext } from "@/context/global-context";
 import { resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
@@ -210,6 +210,11 @@ const MyProductScreen: React.FC = () => {
                   <ListingStatusPill status={status} reasons={item.flag_reasons} />
                 </View>
               ) : null}
+              {/* "Confirm your price" and "Needs worth": the two things an old
+                  listing still wants from its owner. */}
+              <View style={{ marginTop: 4 }}>
+                <ListingPrompts product={item} />
+              </View>
               {/* The frame's Edit button. The card already opens the editor on
                   tap; this says so in words, at the size of a button. */}
               <TouchableOpacity

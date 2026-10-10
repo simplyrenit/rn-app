@@ -1,7 +1,7 @@
 import { BackButton, Button, EmptyState, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import IconButton from "@/components/profile/post-auth/profile-icon-button";
-import { ListingStatusPill } from "@/components/product/listing-status";
+import { ListingPrompts, ListingStatusPill } from "@/components/product/listing-status";
 import { apiError } from "@/lib/api-error";
 import { hasPrice, openBookingMessage, resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
@@ -154,6 +154,9 @@ const EditProductScreen: React.FC = () => {
                         <ListingStatusPill status={status} reasons={product.flag_reasons} />
                       </View>
                     ) : null}
+                    <View style={{ marginTop: 4 }}>
+                      <ListingPrompts product={product} />
+                    </View>
                   </View>
                   <View>
                     <TouchableOpacity
