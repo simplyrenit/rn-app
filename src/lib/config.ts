@@ -207,3 +207,6 @@ export const TERMS_ACCEPT_ENDPOINT = SERVERURL + "terms/accept/";
 export const BANK_ACCOUNT_ENDPOINT = SERVERURL + "shop/bank-account/";
 
 export const BANK_ACCOUNT_VERIFY_ENDPOINT = SERVERURL + "shop/bank-account/verify/";
+
+/** The code step before a bank account is added or changed (T-10). */
+export const ACCESS_UNLOCK_ENDPOINT = SERVERURL + "access/unlock/";

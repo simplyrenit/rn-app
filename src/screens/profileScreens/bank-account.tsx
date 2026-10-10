@@ -5,6 +5,8 @@ import {
   useBankAccount,
   verifyBankAccount,
 } from "@/backend/bank";
+import { fetchUnlock } from "@/backend/unlock";
+import { UnlockSheet } from "@/components/bank/unlock-sheet";
 import {
   Button,
   EmptyState,
@@ -36,8 +38,10 @@ import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
+import { isUnlocked } from "@/lib/unlock";
 import { uuidv4 } from "@/lib/uuid";
-import React, { useEffect, useState } from "react";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import React, { useEffect, useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import {
@@ -115,6 +119,13 @@ export default function BankAccountScreen() {
   const [rechecking, setRechecking] = useState(false);
   const [waitedLong, setWaitedLong] = useState(false);
 
+  // The code step (T-10): adding, changing or checking again needs this phone's
+  // session unlocked, which takes a code sent to the shop's number. Reading the
+  // account needs nothing.
+  const unlockSheet = useRef<BottomSheetModal>(null);
+  const afterUnlock = useRef<(() => void) | null>(null);
+  const [codeGoesTo, setCodeGoesTo] = useState("");
+
   // A check that has been "Checking" for a minute gets a "Check again" button.
   const status = account?.status;
   useEffect(() => {
@@ -132,6 +143,26 @@ export default function BankAccountScreen() {
     borderRadius: radius.card,
     backgroundColor: color.surface,
   } as const;
+
+  /**
+   * Runs `then` once this phone is unlocked: at once if it already is, else after
+   * the code sheet. `force` is for when the server has just said it is locked
+   * (403 `fresh_code_required`), whatever the last answer said.
+   */
+  const askForCode = async (then: () => void, force = false) => {
+    try {
+      const state = await fetchUnlock();
+      if (!force && isUnlocked(state)) {
+        then();
+        return;
+      }
+      setCodeGoesTo(state.phone_masked);
+      afterUnlock.current = then;
+      unlockSheet.current?.present();
+    } catch {
+      toast.error("We couldn't check your code", { message: "Check your connection and try again." });
+    }
+  };
 
   const openForm = (from: BankAccount | undefined) => {
     setForm({ ...EMPTY_FORM, holderName: from?.holder_name ?? "" });
@@ -167,7 +198,10 @@ export default function BankAccountScreen() {
       setMode("view");
     } catch (error) {
       const failure = apiError(error);
-      if (failure?.code === "validation_error") {
+      if (failure?.code === "fresh_code_required") {
+        // The unlock ran out while the form was open: confirm again, then send it.
+        void askForCode(() => void submit(), true);
+      } else if (failure?.code === "validation_error") {
         const fields = bankFieldErrors(fieldErrors(failure));
         setErrors(fields);
         if (Object.keys(fields).length === 0) {
@@ -193,7 +227,9 @@ export default function BankAccountScreen() {
       queryClient.setQueryData(queryKey, await verifyBankAccount());
     } catch (error) {
       const failure = apiError(error);
-      if (failure?.code === "stage_not_allowed") {
+      if (failure?.code === "fresh_code_required") {
+        void askForCode(() => void recheck(), true);
+      } else if (failure?.code === "stage_not_allowed") {
         toast.info("Still checking", {
           message: "Banks can take a few minutes. This page updates by itself.",
         });
@@ -219,6 +255,20 @@ export default function BankAccountScreen() {
   };
 
   const header = <SubpageHeader title="Bank account" onBack={onBack} />;
+
+  const codeSheet = (
+    <UnlockSheet
+      ref={unlockSheet}
+      phoneMasked={codeGoesTo}
+      phone={userDetails?.phone}
+      onUnlocked={() => {
+        unlockSheet.current?.dismiss();
+        const next = afterUnlock.current;
+        afterUnlock.current = null;
+        next?.();
+      }}
+    />
+  );
 
   // ---- Not ready: loading, not an owner, could not load ---------------------------
 
@@ -366,6 +416,7 @@ export default function BankAccountScreen() {
             </Button>
           </KeyboardAwareScrollView>
         </FieldFrame>
+        {codeSheet}
       </NonScrollableContainer>
     );
   }
@@ -385,7 +436,7 @@ export default function BankAccountScreen() {
             You need this before you can accept a booking
           </Text>
         </View>
-        <Button onPress={() => openForm(account)}>Add account</Button>
+        <Button onPress={() => void askForCode(() => openForm(account))}>Add account</Button>
       </View>
     );
   } else {
@@ -449,7 +500,12 @@ export default function BankAccountScreen() {
               </Text>
             ) : null}
             {again ? (
-              <Button variant="outline" size="compact" loading={rechecking} onPress={recheck}>
+              <Button
+                variant="outline"
+                size="compact"
+                loading={rechecking}
+                onPress={() => void askForCode(recheck)}
+              >
                 Check again
               </Button>
             ) : null}
@@ -458,14 +514,14 @@ export default function BankAccountScreen() {
 
         {account.status === "failed" ? (
           <View style={{ marginTop: space.md }}>
-            <Button onPress={() => openForm(account)}>Try different details</Button>
+            <Button onPress={() => void askForCode(() => openForm(account))}>Try different details</Button>
           </View>
         ) : (
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Change account. Payouts pause until the new account is verified."
             activeOpacity={0.7}
-            onPress={() => openForm(account)}
+            onPress={() => void askForCode(() => openForm(account))}
             style={[
               card,
               {
@@ -509,6 +565,7 @@ export default function BankAccountScreen() {
         </Text>
         {body}
       </KeyboardAwareScrollView>
+      {codeSheet}
     </NonScrollableContainer>
   );
 }

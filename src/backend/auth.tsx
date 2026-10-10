@@ -140,8 +140,10 @@ export function useAuth() {
 
   // Confirm the OTP. Unlike verifyPhoneOTP (the login variant) this never calls
   // PHONE_LOGIN — it only proves the user controls the number so the caller can
-  // PATCH the profile. Throws on an invalid or expired code.
-  async function verifyPhoneNumberChange(otp: string): Promise<void> {
+  // PATCH the profile, or unlock the bank account (ENG-135). Throws on an invalid
+  // or expired code. Resolves the Firebase ID token the confirmation made, which
+  // is what `POST /api/access/unlock/` wants; the profile sheet ignores it.
+  async function verifyPhoneNumberChange(otp: string): Promise<string> {
     setLoading(true);
     try {
       if (!phoneChangeConfirmation) {
@@ -152,10 +154,13 @@ export function useAuth() {
       // stays quiet, then re-mint the real session right after.
       setPhoneReauthInProgress(true);
       let confirmed = false;
+      let idToken = "";
       try {
-        await phoneChangeConfirmation.confirm(otp);
+        const credential = await phoneChangeConfirmation.confirm(otp);
         phoneChangeConfirmation = null;
         confirmed = true;
+        // Read before the phone identity is signed out again below.
+        idToken = (await credential?.user?.getIdToken?.()) ?? "";
       } finally {
         if (confirmed) {
           try {
@@ -173,6 +178,7 @@ export function useAuth() {
         }
         setPhoneReauthInProgress(false);
       }
+      return idToken;
     } catch (error: any) {
       throw toRequestError(
         error,
