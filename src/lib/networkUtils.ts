@@ -44,6 +44,8 @@ const REDACTED_KEYS = new Set([
   "token",
   "id_token",
   "identityToken",
+  // The owner's bank account (ENG-135). The server never stores it either.
+  "account_number",
 ]);
 
 const summarizeArray = (value: unknown[]) => {

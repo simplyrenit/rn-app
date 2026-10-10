@@ -319,6 +319,8 @@ export type RootStackParamList = {
   // `coverUrl` is additive to §8.1: the draft is cleared before L-17 opens.
   ListSubmitted: { productName: string; coverUrl?: string | null };
   OwnersProducts: { products: BackendProduct[]; name: string };
+  /** The owner's bank account: add, verify, change (ENG-135). */
+  BankAccount: undefined;
   [key: string]: object | undefined;
 };
 

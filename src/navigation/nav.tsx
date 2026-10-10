@@ -40,6 +40,7 @@ import {
   setupChatNotifications,
   setupNotificationListeners,
 } from "@/backend/notifications";
+import BankAccountScreen from "@/screens/profileScreens/bank-account";
 import ContactUsScreen from "@/screens/profileScreens/contactUs";
 import EditProductScreen from "@/screens/profileScreens/edit-product";
 import FAQScreen from "@/screens/profileScreens/faqs";
@@ -527,6 +528,10 @@ export default function Navigation() {
         <Stack.Screen
           name="myProducts"
           component={MyProductScreen}
+        />
+        <Stack.Screen
+          name="BankAccount"
+          component={BankAccountScreen}
         />
         <Stack.Screen
           name="SavedAddresses"

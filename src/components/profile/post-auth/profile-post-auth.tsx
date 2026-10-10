@@ -7,6 +7,7 @@ import React, { useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import {
   ArrowRightOnRectangleIcon,
+  BuildingLibraryIcon,
   ChatBubbleLeftEllipsisIcon,
   CubeIcon,
   DevicePhoneMobileIcon,
@@ -140,6 +141,13 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               label="My products"
               onPress={() => {
                 router.navigate("myProducts");
+              }}
+            />
+            <ProfileRow
+              icon={BuildingLibraryIcon}
+              label="Bank account"
+              onPress={() => {
+                router.navigate("BankAccount");
               }}
             />
             <ProfileRow

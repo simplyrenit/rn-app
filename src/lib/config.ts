@@ -203,3 +203,7 @@ export const EVENTS = SERVERURL + "events/";
 export const TERMS_ENDPOINT = SERVERURL + "terms/";
 
 export const TERMS_ACCEPT_ENDPOINT = SERVERURL + "terms/accept/";
+
+export const BANK_ACCOUNT_ENDPOINT = SERVERURL + "shop/bank-account/";
+
+export const BANK_ACCOUNT_VERIFY_ENDPOINT = SERVERURL + "shop/bank-account/verify/";
