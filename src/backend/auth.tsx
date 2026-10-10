@@ -2,6 +2,7 @@ import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
 import { DEV_MODE, LOGIN, OTP, PHONE_LOGIN, SIGN_UP } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
+import { acceptOwnerTermsAtSignup } from "@/backend/terms";
 import {
   authenticateFirebase,
   initializeAppCheck,
@@ -270,6 +271,18 @@ export function useAuth() {
 
       const response: { data: AuthTokens } = await axios.post(SIGN_UP, payload);
       setAuthTokens(response.data);
+
+      // The merchant ticked the owner terms on the About step (ENG-122). The
+      // account exists now, so the acceptance can be recorded. It is not worth
+      // failing a finished sign-up for: if this does not land, the tick comes
+      // up again at the start of the first listing.
+      if (accountType === "merchant" && mergedUser.owner_terms_accepted) {
+        try {
+          await acceptOwnerTermsAtSignup(response.data.access_token);
+        } catch (termsError) {
+          console.warn("Owner terms acceptance after sign-up failed", termsError);
+        }
+      }
 
       return response.data;
     } catch (error: any) {

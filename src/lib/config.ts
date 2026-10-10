@@ -198,3 +198,8 @@ export const LISTING_EXTRACTION_SPECS = SERVERURL + "listing-extractions/specs/"
 export const DEPOSIT_RULES = SERVERURL + "deposit-rules/";
 
 export const EVENTS = SERVERURL + "events/";
+
+// Order execution (ENG-94). Paths are API-CONTRACT.md's; every one ends in "/".
+export const TERMS_ENDPOINT = SERVERURL + "terms/";
+
+export const TERMS_ACCEPT_ENDPOINT = SERVERURL + "terms/accept/";

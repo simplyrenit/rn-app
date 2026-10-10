@@ -11,6 +11,7 @@ import {
   ChevronDownIcon,
 } from "react-native-heroicons/outline";
 import { CheckBox } from "@/components/core/checkbox";
+import { OwnerTermsTick } from "@/components/terms/owner-terms-tick";
 import { ink } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
@@ -441,6 +442,9 @@ export default function AboutYourself() {
   });
   const [dobError, setDobError] = useState("");
   const [agreementChecked, setAgreementChecked] = useState(false);
+  // A merchant also accepts the owner terms (ENG-122). The account does not exist
+  // yet, so the tick is kept on the sign-up draft and sent once it does.
+  const [ownerTermsChecked, setOwnerTermsChecked] = useState(false);
 
   const { color } = useTheme();
   const { theme } = useGlobalContext();
@@ -562,10 +566,11 @@ export default function AboutYourself() {
         account_type: isMerchant ? "merchant" : "user",
         business_name: isMerchant ? businessName.trim() : "",
         date_of_birth: !isMerchant ? formattedDob || "" : "",
+        owner_terms_accepted: isMerchant && ownerTermsChecked,
       });
       router.navigate("Password");
     }
-  }, [isMerchant, dob, firstName, lastName, businessName, validateForm, saveUser, router]);
+  }, [isMerchant, dob, firstName, lastName, businessName, ownerTermsChecked, validateForm, saveUser, router]);
 
   return (
     <StaticContainer>
@@ -671,6 +676,15 @@ export default function AboutYourself() {
         </ScrollContainer>
 
         <View className="py-5">
+          {isMerchant && (
+            <View className="mb-1">
+              <OwnerTermsTick
+                checked={ownerTermsChecked}
+                onChange={setOwnerTermsChecked}
+                onOpenTerms={() => router.navigate("Terms")}
+              />
+            </View>
+          )}
           <View className="flex-row items-center mb-4">
             <CheckBox
               checked={agreementChecked}
@@ -686,7 +700,7 @@ export default function AboutYourself() {
           <Button
             variant="primary"
             onPress={handleSubmit}
-            disabled={!agreementChecked}
+            disabled={!agreementChecked || (isMerchant && !ownerTermsChecked)}
           >
             Continue
           </Button>

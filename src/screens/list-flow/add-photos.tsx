@@ -1,4 +1,6 @@
+import { acceptOwnerTerms, termsQueryKey, useTerms } from "@/backend/terms";
 import { Button, Text } from "@/components/core";
+import { OwnerTermsTick } from "@/components/terms/owner-terms-tick";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { RETAKE_WARNINGS, WARNING_TAG, warningHeadline } from "@/components/list-flow/copy";
 import { FlowHeader } from "@/components/list-flow/flow-header";
@@ -6,6 +8,7 @@ import { useAppear } from "@/components/list-flow/motion";
 import { pickPhotos } from "@/components/list-flow/pick-photos";
 import { AddPhotoTile, PhotoTile } from "@/components/list-flow/photo-tile";
 import { AddPhotoSheet, ResumeDraftSheet } from "@/components/list-flow/sheets";
+import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import {
@@ -18,11 +21,13 @@ import {
 } from "@/lib/list-flow/draft";
 import { ListingWarning, PhotoSource } from "@/lib/list-flow/types";
 import { useTheme } from "@/lib/theme";
+import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
-import { Alert, ScrollView, useWindowDimensions, View } from "react-native";
+import { Alert, Linking, ScrollView, useWindowDimensions, View } from "react-native";
+import { useQueryClient } from "react-query";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -52,6 +57,17 @@ export default function ListAddPhotosScreen() {
   const replaceIndex = useRef<number | null>(null);
   const [continuing, setContinuing] = useState(false);
   const [resumeTitle, setResumeTitle] = useState("last");
+
+  // The owner terms (ENG-122): asked at the start of a listing until accepted.
+  // While the terms are loading, or if they cannot be read, nothing is held back:
+  // the server refuses a submit without them (`owner_terms_required`) and Preview
+  // brings the owner back here.
+  const { data: terms } = useTerms();
+  const { userDetails } = useGlobalContext();
+  const queryClient = useQueryClient();
+  const [ownerTermsTick, setOwnerTermsTick] = useState(false);
+  const ownerTerms = terms?.owner;
+  const needsOwnerTerms = ownerTerms?.accepted === false;
   const shownWarnings = useRef(new Set<string>());
 
   // ---- Opening: fresh draft or the resume sheet ------------------------------
@@ -170,9 +186,36 @@ export default function ListAddPhotosScreen() {
     }
   };
 
+  /** Sends the tick if one is owed. False means stay here: the owner has been told why. */
+  const recordOwnerTerms = async () => {
+    if (!needsOwnerTerms || !ownerTerms) return true;
+    try {
+      const updated = await acceptOwnerTerms(ownerTerms.version);
+      queryClient.setQueryData(termsQueryKey(userDetails?.username), updated);
+      // A later version asks again, with an empty box.
+      setOwnerTermsTick(false);
+      return true;
+    } catch {
+      toast.error("We couldn't save your acceptance", {
+        message: "Check your connection and try again.",
+      });
+      return false;
+    }
+  };
+
+  const openOwnerTerms = () => {
+    if (!ownerTerms?.url) {
+      navigation.navigate("Terms");
+      return;
+    }
+    // The in-app Terms page is the fallback if the phone cannot open the link.
+    Linking.openURL(ownerTerms.url).catch(() => navigation.navigate("Terms"));
+  };
+
   const onContinue = async () => {
     setContinuing(true);
     try {
+      if (!(await recordOwnerTerms())) return;
       await flow.waitForUploads();
     } finally {
       setContinuing(false);
@@ -180,7 +223,13 @@ export default function ListAddPhotosScreen() {
     proceed();
   };
 
-  const onManual = () => {
+  const onManual = async () => {
+    setContinuing(true);
+    try {
+      if (!(await recordOwnerTerms())) return;
+    } finally {
+      setContinuing(false);
+    }
     flow.track("manual_path_chosen", { from: "L-12" });
     navigation.navigate("ListReview", { manual: true });
   };
@@ -316,10 +365,25 @@ export default function ListAddPhotosScreen() {
           </>
         ) : (
           <>
-            <Button disabled={doneCount === 0} loading={continuing} onPress={onContinue}>
+            {needsOwnerTerms ? (
+              <OwnerTermsTick
+                checked={ownerTermsTick}
+                onChange={setOwnerTermsTick}
+                onOpenTerms={openOwnerTerms}
+              />
+            ) : null}
+            <Button
+              disabled={doneCount === 0 || (needsOwnerTerms && !ownerTermsTick)}
+              loading={continuing}
+              onPress={onContinue}
+            >
               Continue
             </Button>
-            <Button variant="ghost" onPress={onManual}>
+            <Button
+              variant="ghost"
+              disabled={continuing || (needsOwnerTerms && !ownerTermsTick)}
+              onPress={onManual}
+            >
               I'll fill it in myself
             </Button>
           </>

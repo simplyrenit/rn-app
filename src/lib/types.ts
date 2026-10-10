@@ -460,6 +460,11 @@ export interface AuthUser {
   business_name?: string;
   account_type?: AccountType;
   merchant_approval_status?: MerchantApprovalStatus;
+  /**
+   * A merchant ticked the owner terms at sign-up (ENG-122). Not part of the
+   * sign-up payload: it is sent to the terms endpoint once the account exists.
+   */
+  owner_terms_accepted?: boolean;
   password: string;
   date_of_birth?: string;
   coordinates: {

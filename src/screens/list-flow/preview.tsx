@@ -1,5 +1,6 @@
 import { buildCreatePayload, submitListing } from "@/backend/list-flow/submit";
 import { saveOfferedAddress } from "@/backend/addresses-api";
+import { termsQueryKey } from "@/backend/terms";
 import { Button, Text, useButtonLabelColor, useReduceMotion } from "@/components/core";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -11,6 +12,7 @@ import { SpecStrip } from "@/components/product/spec-strip";
 import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
 import { inlineOfferPayload } from "@/lib/addresses";
+import { hasApiCode } from "@/lib/api-error";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import { SCREEN_GUTTER, duration, radius, space } from "@/lib/design-tokens";
 import { formatNumber } from "@/lib/format";
@@ -191,6 +193,16 @@ export default function ListPreviewScreen() {
       flow.track("listing_submit_failed", { status });
       submitting.current = false;
       if (mounted.current) setState("idle");
+      // The owner terms moved on, or were never accepted (ENG-122). The tick is
+      // on the first step of the flow; the draft stays as it is.
+      if (hasApiCode(error, "owner_terms_required")) {
+        void queryClient.invalidateQueries(termsQueryKey(userDetails?.username));
+        toast.warning("Accept the owner terms to submit", {
+          message: "The tick is on the first step. Your listing is saved.",
+        });
+        navigation.navigate("ListAddPhotos");
+        return;
+      }
       // The draft is untouched, so the owner can simply try again.
       toast.error("We couldn't submit your listing", {
         message: typeof serverMessage === "string" ? serverMessage : "Check your connection and try again.",
