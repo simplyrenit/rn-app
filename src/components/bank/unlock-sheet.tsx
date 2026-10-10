@@ -27,6 +27,8 @@ interface Props {
   phone: string | null | undefined;
   /** This phone's session is unlocked: carry on with what was asked for. */
   onUnlocked: () => void;
+  /** The account has no phone number (409 `phone_required`): the screen sends them to add one. */
+  onPhoneRequired: () => void;
 }
 
 /**
@@ -39,7 +41,7 @@ interface Props {
  * point payouts at another account.
  */
 export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
-  ({ phoneMasked, minutes, phone, onUnlocked }, ref) => {
+  ({ phoneMasked, minutes, phone, onUnlocked, onPhoneRequired }, ref) => {
     const { color, isDark } = useTheme();
     const { requestPhoneNumberChangeOtp, verifyPhoneNumberChange } = useAuth();
     const modal = useRef<BottomSheetModal>(null);
@@ -106,8 +108,14 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
         setBusy(false);
         onUnlocked();
       } catch (failure) {
-        setError(unlockErrorMessage(apiError(failure)?.code));
+        const code = apiError(failure)?.code;
         setBusy(false);
+        if (code === "phone_required") {
+          modal.current?.dismiss();
+          onPhoneRequired();
+          return;
+        }
+        setError(unlockErrorMessage(code));
       }
     };
 

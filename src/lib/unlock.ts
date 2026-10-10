@@ -52,6 +52,8 @@ export function unlockErrorMessage(code: string | null | undefined): string {
       return "That code didn't work, or it has expired. Send a new one and try again.";
     case "wrong_phone":
       return "The code went to a number that isn't the one on your account.";
+    case "phone_required":
+      return "Your account has no phone number yet. Add and verify one in your profile first.";
     case "unlock_unavailable":
       return "Confirming your number isn't available right now. Try again later.";
     default:

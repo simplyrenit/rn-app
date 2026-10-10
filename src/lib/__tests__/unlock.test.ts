@@ -63,8 +63,8 @@ describe("isCode", () => {
 
 describe("unlockErrorMessage", () => {
   it("has a line for each code the server names", () => {
-    const lines = ["code_invalid", "wrong_phone", "unlock_unavailable", null].map(unlockErrorMessage);
-    expect(new Set(lines).size).toBe(4);
+    const lines = ["code_invalid", "wrong_phone", "phone_required", "unlock_unavailable", null].map(unlockErrorMessage);
+    expect(new Set(lines).size).toBe(5);
   });
 });
 

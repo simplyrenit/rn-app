@@ -38,10 +38,10 @@ import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
-import { isUnlocked } from "@/lib/unlock";
+import { e164, isUnlocked } from "@/lib/unlock";
 import { uuidv4 } from "@/lib/uuid";
 import React, { useEffect, useRef, useState } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Alert, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import {
   BuildingLibraryIcon,
@@ -143,12 +143,30 @@ export default function BankAccountScreen() {
     backgroundColor: color.surface,
   } as const;
 
+  /** 409 `phone_required`: the account has no number, so the profile is where to go. */
+  const sendToAddNumber = () => {
+    Alert.alert(
+      "Add your phone number first",
+      "We send a code to your number before you change where you're paid. Add and verify it in your profile.",
+      [
+        { text: "Not now", style: "cancel" },
+        { text: "Go to profile", onPress: () => navigation.navigate("MainTabs", { screen: "Profile" }) },
+      ]
+    );
+  };
+
   /**
    * Runs `then` once this phone is unlocked: at once if it already is, else after
    * the code sheet. `force` is for when the server has just said it is locked
    * (403 `fresh_code_required`), whatever the last answer said.
    */
   const askForCode = async (then: () => void, force = false) => {
+    // No number on the account (someone who joined with Google or Apple): no code
+    // can be sent, so they add and verify one first.
+    if (e164(userDetails?.phone) === null) {
+      sendToAddNumber();
+      return;
+    }
     try {
       const state = await fetchUnlock();
       if (!force && isUnlocked(state)) {
@@ -159,7 +177,11 @@ export default function BankAccountScreen() {
       afterUnlock.current = then;
       // Sends the code as it opens.
       unlockSheet.current?.open();
-    } catch {
+    } catch (error) {
+      if (apiError(error)?.code === "phone_required") {
+        sendToAddNumber();
+        return;
+      }
       toast.error("We couldn't check your code", { message: "Check your connection and try again." });
     }
   };
@@ -262,6 +284,7 @@ export default function BankAccountScreen() {
       phoneMasked={codeGoesTo.phoneMasked}
       minutes={codeGoesTo.minutes}
       phone={userDetails?.phone}
+      onPhoneRequired={sendToAddNumber}
       onUnlocked={() => {
         unlockSheet.current?.close();
         const next = afterUnlock.current;
