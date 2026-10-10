@@ -2,6 +2,7 @@ import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
 import { DEV_MODE, LOGIN, OTP, PHONE_LOGIN, SIGN_UP } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
+import { getDeviceInfo } from "@/lib/device";
 import { acceptOwnerTermsAtSignup } from "@/backend/terms";
 import {
   authenticateFirebase,
@@ -234,8 +235,11 @@ export function useAuth() {
       const credential = await phoneConfirmation.confirm(otp);
       phoneConfirmation = null;
       const idToken = await credential.user.getIdToken();
+      // Every sign-in says which phone it is (ENG-146): the server lists the
+      // devices and refuses a booking between two accounts on one device.
       const response = await axios.post<PhoneVerificationResponse>(PHONE_LOGIN, {
         id_token: idToken,
+        ...(await getDeviceInfo()),
       });
       return response.data;
     } catch (error: any) {
@@ -269,11 +273,14 @@ export function useAuth() {
         date_of_birth: mergedUser.date_of_birth,
         email_verified: mergedUser.email_verified,
       };
-      const payload = Object.fromEntries(
-        Object.entries(signupPayload).filter(
-          ([, value]) => value !== undefined && value !== null && value !== ""
-        )
-      );
+      const payload = {
+        ...Object.fromEntries(
+          Object.entries(signupPayload).filter(
+            ([, value]) => value !== undefined && value !== null && value !== ""
+          )
+        ),
+        ...(await getDeviceInfo()),
+      };
 
       const response: { data: AuthTokens } = await axios.post(SIGN_UP, payload);
       setAuthTokens(response.data);
@@ -309,6 +316,7 @@ export function useAuth() {
       const response: { data: AuthTokens } = await axios.post(LOGIN, {
         email,
         password,
+        ...(await getDeviceInfo()),
       });
       setAuthTokens(response.data);
       return response?.data;

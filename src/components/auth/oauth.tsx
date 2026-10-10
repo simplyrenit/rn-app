@@ -15,6 +15,7 @@ import { AuthTokens, useTypedNavigation } from "@/lib/types";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useProfile } from "@/backend/profile";
 import axiosInstance from "@/lib/networkUtils";
+import { getDeviceInfo } from "@/lib/device";
 
 /** Which provider is mid-sign-in, or null. */
 export type OAuthProvider = "google" | "apple";
@@ -50,6 +51,7 @@ export function useOAuth() {
         try {
           const res = await axios.post<AuthTokens>(GOOGLE_SIGN_IN_ENDPOINT, {
             access_token: googleToken,
+            ...(await getDeviceInfo()),
           });
 
 
@@ -92,6 +94,7 @@ export function useOAuth() {
           data: {
             identityToken: credential.identityToken,
           },
+          ...(await getDeviceInfo()),
         });
 
         if (res.data.access_token !== null && res.data.refresh_token !== null) {
