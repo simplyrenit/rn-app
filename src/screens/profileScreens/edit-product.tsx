@@ -3,7 +3,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import IconButton from "@/components/profile/post-auth/profile-icon-button";
 import { ListingStatusPill } from "@/components/product/listing-status";
 import { apiError } from "@/lib/api-error";
-import { openBookingMessage, resolveListingStatus } from "@/lib/listing-status";
+import { hasPrice, openBookingMessage, resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
@@ -134,15 +134,19 @@ const EditProductScreen: React.FC = () => {
                     >
                       {product.location}
                     </Text>
-                    <View className="flex-row space-x-1">
-                      <Text
-                        fontSize="text-sm"
-                        fontWeight="font-bold"
-                      >
-                        ₹{Number(product.rate).toFixed(0)}
-                      </Text>
-                      <Text tone="body">per day</Text>
-                    </View>
+                    {hasPrice(product.rate) ? (
+                      <View className="flex-row space-x-1">
+                        <Text
+                          fontSize="text-sm"
+                          fontWeight="font-bold"
+                        >
+                          ₹{Number(product.rate).toFixed(0)}
+                        </Text>
+                        <Text tone="body">per day</Text>
+                      </View>
+                    ) : (
+                      <Text tone="body" fontSize="text-sm">No price yet</Text>
+                    )}
                     {/* A flagged owner opens this screen to fix the listing, so
                         the reason is shown where they will fix it. */}
                     {status ? (
@@ -207,7 +211,9 @@ const EditProductScreen: React.FC = () => {
                 <IconButton
                   onPress={() =>
                     navigation.navigate("EditProductAvailability", {
-                      dates_blocked: product.booked!,
+                      // `blocked_dates`, never `booked`: the contract keeps `booked`
+                      // for the old meaning and the editor writes `blocked_dates`.
+                      dates_blocked: product.blocked_dates ?? [],
                       name: product.name,
                     })
                   }
@@ -260,15 +266,17 @@ const EditProductScreen: React.FC = () => {
                   >
                     {product.location}
                   </Text>
-                  <View className="flex-row items-center mt-1 space-x-1">
-                    <Text
-                      fontSize="text-base"
-                      fontWeight="font-bold"
-                    >
-                      ₹{Number(product.rate).toFixed(0)}
-                    </Text>
-                    <Text tone="body">per day</Text>
-                  </View>
+                  {hasPrice(product.rate) ? (
+                    <View className="flex-row items-center mt-1 space-x-1">
+                      <Text
+                        fontSize="text-base"
+                        fontWeight="font-bold"
+                      >
+                        ₹{Number(product.rate).toFixed(0)}
+                      </Text>
+                      <Text tone="body">per day</Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
             </View>

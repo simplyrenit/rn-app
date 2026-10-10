@@ -70,3 +70,11 @@ export function openBookingMessage(bookings: string[] | null | undefined): strin
   if (list.length === 1) return `Booking ${list[0]} is still open. Archive this product once it is over.`;
   return `Bookings ${list.join(", ")} are still open. Archive this product once they are over.`;
 }
+
+/**
+ * A draft made on the dashboard may have no price yet (`rate` is null,
+ * ARCHITECTURE 2.3). `Number(null)` is 0, which would show it as "₹0 per day".
+ */
+export function hasPrice(rate: string | number | null | undefined): boolean {
+  return rate !== null && rate !== undefined && String(rate).trim() !== "";
+}

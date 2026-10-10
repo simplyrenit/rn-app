@@ -3,6 +3,7 @@ import {
   LISTING_STATUSES,
   STATUS_COPY,
   flagReasonText,
+  hasPrice,
   openBookingMessage,
   resolveListingStatus,
   statusDetail,
@@ -75,5 +76,20 @@ describe("openBookingMessage", () => {
 
   it("still says something when the list is missing", () => {
     expect(openBookingMessage(undefined)).toContain("open booking");
+  });
+});
+
+describe("hasPrice", () => {
+  it("is false for a draft with no price, never reading it as zero", () => {
+    expect(hasPrice(null)).toBe(false);
+    expect(hasPrice(undefined)).toBe(false);
+    expect(hasPrice("")).toBe(false);
+    expect(hasPrice("  ")).toBe(false);
+  });
+
+  it("is true for a price, even one that reads as a small number", () => {
+    expect(hasPrice("610.00")).toBe(true);
+    expect(hasPrice(610)).toBe(true);
+    expect(hasPrice("0.00")).toBe(true);
   });
 });
