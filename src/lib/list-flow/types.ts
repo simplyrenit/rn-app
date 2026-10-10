@@ -17,7 +17,9 @@ export type FieldName =
   | "usage_description"
   | "rate"
   | "security_deposit"
-  | "location";
+  | "location"
+  | "quantity"
+  | "worth";
 
 /** The fields the extraction service reports on (§4.3). Anything else is ignored. */
 export const AI_FIELDS = [
@@ -66,6 +68,10 @@ export interface FieldValues {
   rate: string;
   security_deposit: string;
   location: LocationValue;
+  /** How many units the owner has to rent out. Typed text; parsed when used. */
+  quantity: string;
+  /** What the item would cost to replace, in rupees. Typed text. */
+  worth: string;
 }
 
 export interface FieldState<T> {
@@ -190,6 +196,12 @@ export interface ListingDraft {
    * drafts stored before the field existed.
    */
   saveAddressAs?: AddressType;
+  /**
+   * ENG-155: "This product is not delivered" — the one exception to the shop's
+   * delivery settings. Absent on drafts stored before the field existed, which
+   * reads as false.
+   */
+  notDelivered?: boolean;
 }
 
 // ---- Wire shapes (IMPLEMENTATION.md §4.6) ----------------------------------

@@ -320,6 +320,9 @@ export default function ListPreviewScreen() {
             Filled by AI · checked by you
           </Text>
           <DefaultRow label="Deposit" value={deposit ? `Rs ${formatNumber(deposit)}` : "—"} />
+          <DefaultRow label="Worth" value={f.worth.value ? `Rs ${formatNumber(f.worth.value)}` : "—"} />
+          <DefaultRow label="In stock" value={f.quantity.value ?? "1"} />
+          {draft.notDelivered ? <DefaultRow label="Delivery" value="Not delivered · pickup only" /> : null}
           <DefaultRow label="Availability" value="Available now · block dates after you submit" />
           <DefaultRow label="Contact" value="You · from your profile" />
         </View>

@@ -6,6 +6,7 @@ import {
   createDraft,
   draftReducer,
   hydrateDraft,
+  isDraftWorthResuming,
   missingRequirements,
   photosChangedSinceRun,
   serializeDraft,
@@ -439,6 +440,7 @@ describe("requirements", () => {
       "title",
       "description",
       "location",
+      "worth",
     ]);
     expect(stillNeededLabel([{ key: "condition", label: "condition" }])).toBe(
       "Still needed: condition"
@@ -460,6 +462,7 @@ describe("requirements", () => {
       filled("description", "My PS5."),
       { type: "confirmCondition", value: "good" },
       { type: "editField", field: "rate", value: "500" },
+      { type: "editField", field: "worth", value: "45000" },
       {
         type: "prefillLocation",
         value: { locality: "Thane West, Thane", fullAddress: "", lat: 19.2, long: 72.97 },
@@ -559,5 +562,91 @@ describe("persistence", () => {
     expect(hydrateDraft("{not json", NOW)).toBeNull();
     expect(hydrateDraft(JSON.stringify({ hello: 1 }), NOW)).toBeNull();
     expect(hydrateDraft(null, NOW)).toBeNull();
+  });
+});
+
+describe("quantity and worth (ENG-155)", () => {
+  it("starts at one unit, as the owner's own answer", () => {
+    const d = fresh();
+    expect(d.fields.quantity).toEqual({ value: "1", source: "user" });
+    expect(missingRequirements(d).map((m) => m.key)).not.toContain("quantity");
+  });
+
+  it("asks again when the owner clears the quantity or types 0", () => {
+    for (const value of ["", "0", "1.5"]) {
+      const d = apply(fresh(), { type: "editField", field: "quantity", value });
+      expect(missingRequirements(d).map((m) => m.key)).toContain("quantity");
+    }
+    const five = apply(fresh(), { type: "editField", field: "quantity", value: "5" });
+    expect(five.fields.quantity.value).toBe("5");
+    expect(missingRequirements(five).map((m) => m.key)).not.toContain("quantity");
+  });
+
+  it("fills an untouched worth from the stream as a suggestion that still needs confirming", () => {
+    const d = apply(fresh(), filled("worth", 45000, { confidence: 0.6 }));
+    expect(d.fields.worth).toMatchObject({ value: "45000", source: "ai", confidence: 0.6 });
+    expect(missingRequirements(d).map((m) => m.key)).toContain("worth");
+  });
+
+  it("counts a confirmed suggestion, and keeps it the owner's afterwards", () => {
+    const d = apply(fresh(), filled("worth", 45000), { type: "confirmWorth" });
+    expect(d.fields.worth).toMatchObject({ value: "45000", source: "user" });
+    expect(missingRequirements(d).map((m) => m.key)).not.toContain("worth");
+    // A later run cannot replace what the owner has confirmed.
+    expect(apply(d, filled("worth", 99000)).fields.worth.value).toBe("45000");
+  });
+
+  it("counts a suggestion the owner changed", () => {
+    const d = apply(fresh(), filled("worth", 45000), { type: "editField", field: "worth", value: "52000" });
+    expect(d.fields.worth).toMatchObject({ value: "52000", source: "ai_edited" });
+    expect(missingRequirements(d).map((m) => m.key)).not.toContain("worth");
+  });
+
+  it("never lets the model overwrite a worth the owner typed", () => {
+    const d = apply(fresh(), { type: "editField", field: "worth", value: "30000" }, filled("worth", 45000));
+    expect(d.fields.worth).toMatchObject({ value: "30000", source: "user" });
+  });
+
+  it("ignores a blank, an unusable figure and a suggestion of zero", () => {
+    expect(apply(fresh(), blank("worth")).fields.worth).toEqual({ value: null, source: "empty" });
+    expect(apply(fresh(), filled("worth", "a lot")).fields.worth.value).toBeNull();
+    expect(apply(fresh(), filled("worth", 0)).fields.worth.value).toBeNull();
+  });
+
+  it("does not confirm a worth that is not a suggestion", () => {
+    const empty = apply(fresh(), { type: "confirmWorth" });
+    expect(empty.fields.worth).toEqual({ value: null, source: "empty" });
+  });
+
+  it("drops a suggestion made from photos that have since changed, and keeps a confirmed one", () => {
+    const suggested = apply(fresh(), filled("worth", 45000));
+    const rerun = apply(suggested, { type: "serverRunCounted", clearStaleAi: true });
+    expect(rerun.fields.worth).toEqual({ value: null, source: "empty" });
+
+    const confirmed = apply(suggested, { type: "confirmWorth" }, { type: "serverRunCounted", clearStaleAi: true });
+    expect(confirmed.fields.worth.value).toBe("45000");
+  });
+
+  it("remembers the not-delivered choice, and survives storage", () => {
+    const d = apply(fresh(), { type: "setNotDelivered", value: true });
+    expect(d.notDelivered).toBe(true);
+    const back = hydrateDraft(serializeDraft(d), NOW);
+    expect(back?.notDelivered).toBe(true);
+    expect(apply(d, { type: "setNotDelivered", value: false }).notDelivered).toBe(false);
+  });
+
+  it("gives a draft stored before the fields existed one unit and no worth", () => {
+    const old = JSON.parse(serializeDraft(fresh()));
+    delete old.fields.quantity;
+    delete old.fields.worth;
+    const back = hydrateDraft(JSON.stringify(old), NOW);
+    expect(back?.fields.quantity).toEqual({ value: "1", source: "user" });
+    expect(back?.fields.worth).toEqual({ value: null, source: "empty" });
+  });
+
+  it("is not worth resuming just because the quantity starts at one", () => {
+    expect(isDraftWorthResuming(fresh())).toBe(false);
+    expect(isDraftWorthResuming(apply(fresh(), { type: "editField", field: "quantity", value: "3" }))).toBe(true);
+    expect(isDraftWorthResuming(apply(fresh(), { type: "editField", field: "worth", value: "100" }))).toBe(true);
   });
 });
