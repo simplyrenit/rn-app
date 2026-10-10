@@ -6,7 +6,7 @@ import {
   verifyBankAccount,
 } from "@/backend/bank";
 import { fetchUnlock } from "@/backend/unlock";
-import { UnlockSheet } from "@/components/bank/unlock-sheet";
+import { UnlockSheet, UnlockSheetHandle } from "@/components/bank/unlock-sheet";
 import {
   Button,
   EmptyState,
@@ -40,7 +40,6 @@ import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { isUnlocked } from "@/lib/unlock";
 import { uuidv4 } from "@/lib/uuid";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { useEffect, useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -122,9 +121,9 @@ export default function BankAccountScreen() {
   // The code step (T-10): adding, changing or checking again needs this phone's
   // session unlocked, which takes a code sent to the shop's number. Reading the
   // account needs nothing.
-  const unlockSheet = useRef<BottomSheetModal>(null);
+  const unlockSheet = useRef<UnlockSheetHandle>(null);
   const afterUnlock = useRef<(() => void) | null>(null);
-  const [codeGoesTo, setCodeGoesTo] = useState("");
+  const [codeGoesTo, setCodeGoesTo] = useState({ phoneMasked: "", minutes: 30 });
 
   // A check that has been "Checking" for a minute gets a "Check again" button.
   const status = account?.status;
@@ -156,9 +155,10 @@ export default function BankAccountScreen() {
         then();
         return;
       }
-      setCodeGoesTo(state.phone_masked);
+      setCodeGoesTo({ phoneMasked: state.phone_masked, minutes: state.minutes });
       afterUnlock.current = then;
-      unlockSheet.current?.present();
+      // Sends the code as it opens.
+      unlockSheet.current?.open();
     } catch {
       toast.error("We couldn't check your code", { message: "Check your connection and try again." });
     }
@@ -259,10 +259,11 @@ export default function BankAccountScreen() {
   const codeSheet = (
     <UnlockSheet
       ref={unlockSheet}
-      phoneMasked={codeGoesTo}
+      phoneMasked={codeGoesTo.phoneMasked}
+      minutes={codeGoesTo.minutes}
       phone={userDetails?.phone}
       onUnlocked={() => {
-        unlockSheet.current?.dismiss();
+        unlockSheet.current?.close();
         const next = afterUnlock.current;
         afterUnlock.current = null;
         next?.();

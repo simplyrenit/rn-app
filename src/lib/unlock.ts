@@ -58,3 +58,12 @@ export function unlockErrorMessage(code: string | null | undefined): string {
       return "We couldn't confirm that code. Check your connection and try again.";
   }
 }
+
+/** "Send again in 0:24": the line under the code boxes while a new code is not yet allowed. */
+export function resendLabel(secondsLeft: number): string {
+  const total = Math.max(0, Math.ceil(secondsLeft));
+  return `Send again in ${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+/** Seconds before another code can be asked for, as the frame's countdown starts. */
+export const RESEND_SECONDS = 30;

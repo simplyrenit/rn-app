@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { e164, isCode, isUnlocked, unlockErrorMessage } from "../unlock";
+import { e164, isCode, isUnlocked, resendLabel, unlockErrorMessage } from "../unlock";
 
 const NOW = new Date("2026-10-12T05:00:00Z");
 
@@ -65,5 +65,16 @@ describe("unlockErrorMessage", () => {
   it("has a line for each code the server names", () => {
     const lines = ["code_invalid", "wrong_phone", "unlock_unavailable", null].map(unlockErrorMessage);
     expect(new Set(lines).size).toBe(4);
+  });
+});
+
+describe("resendLabel", () => {
+  it("counts down as the frame draws it", () => {
+    expect(resendLabel(24)).toBe("Send again in 0:24");
+    expect(resendLabel(30)).toBe("Send again in 0:30");
+    expect(resendLabel(5)).toBe("Send again in 0:05");
+    expect(resendLabel(0)).toBe("Send again in 0:00");
+    expect(resendLabel(65)).toBe("Send again in 1:05");
+    expect(resendLabel(-3)).toBe("Send again in 0:00");
   });
 });
