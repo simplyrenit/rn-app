@@ -58,7 +58,11 @@ export function useProfile() {
     }
   }
 
-  async function updateMyDetails(username: string, data: Partial<MyDetails>) {
+  /**
+   * `phone_id_token` is the Firebase ID token of the NEW number, which the backend wants
+   * with any change of phone number (decision T-14); no other field takes it.
+   */
+  async function updateMyDetails(username: string, data: Partial<MyDetails> & { phone_id_token?: string }) {
     setLoading(true);
     try {
       const response = await axiosInstance.patch<MyDetails>(

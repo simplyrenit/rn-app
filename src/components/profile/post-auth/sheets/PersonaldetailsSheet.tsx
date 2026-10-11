@@ -1,6 +1,8 @@
 
 import { useAuth } from "@/backend/auth";
 import { useProfile } from "@/backend/profile";
+import { fetchUnlock } from "@/backend/unlock";
+import { UnlockSheet, UnlockSheetHandle } from "@/components/bank/unlock-sheet";
 import { Button, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
@@ -39,8 +41,11 @@ import {
   space,
   SCREEN_GUTTER,
 } from "@/lib/design-tokens";
+import { apiError } from "@/lib/api-error";
+import { needsCurrentNumberCode, phoneChangeBody, phoneChangeOutcome } from "@/lib/phone-change";
 import { toast } from "@/lib/toast";
 import { useTheme } from "@/lib/theme";
+import { isUnlocked } from "@/lib/unlock";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // A fixed-length mask so the field never leaks the real password's length —
@@ -185,7 +190,61 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
   const openEditNameModal = () => editNameModalRef.current?.present();
   const openEditEmailModal = () => editEmailModalRef.current?.present();
-  const openEditPhoneModal = () => editPhoneModalRef.current?.present();
+  // Changing the number needs two proofs (decision T-14): a code sent to the CURRENT number
+  // first, when the account has one (it unlocks this phone for a while, as for the bank
+  // account), and the code sent to the NEW number, whose ID token goes with the change.
+  const unlockSheet = useRef<UnlockSheetHandle>(null);
+  const afterUnlock = useRef<(() => void) | null>(null);
+  // True while the unlock is being read, so a second tap does not open the sheet and send a second text.
+  const askingForCode = useRef(false);
+  const [codeGoesTo, setCodeGoesTo] = useState({ phoneMasked: "", minutes: 30 });
+  /** The Firebase ID token of the new number, kept after the code is spent so a failed save is repeated alone. */
+  const phoneToken = useRef("");
+  const savingPhone = useRef(false);
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+
+  /**
+   * Runs `then` once this phone is unlocked: at once if it already is, and with no
+   * code at all when the account has no number yet (a first number is the save alone).
+   * `force` is for when the server has just said it is locked (403 `fresh_code_required`).
+   */
+  const askForCode = async (then: () => void, force = false) => {
+    if (askingForCode.current) return;
+    if (!needsCurrentNumberCode(details.phone)) {
+      then();
+      return;
+    }
+    askingForCode.current = true;
+    try {
+      const state = await fetchUnlock();
+      if (!force && isUnlocked(state)) {
+        then();
+        return;
+      }
+      setCodeGoesTo({ phoneMasked: state.phone_masked, minutes: state.minutes });
+      afterUnlock.current = then;
+      // Sends the code to the number the account has, as it opens.
+      unlockSheet.current?.open();
+    } catch (error) {
+      // The server says the account has no number after all: nothing to confirm first.
+      if (apiError(error)?.code === "phone_required") {
+        then();
+        return;
+      }
+      toast.error("We couldn't check your code", { message: "Check your connection and try again." });
+    } finally {
+      askingForCode.current = false;
+    }
+  };
+
+  const openEditPhoneModal = () => {
+    // The real number is needed to know whether a code comes first: not before the details have loaded.
+    if (!nameId) {
+      toast.info("Still loading your details", { message: "Try again in a moment." });
+      return;
+    }
+    void askForCode(() => editPhoneModalRef.current?.present());
+  };
   const openEditPasswordModal = () => editPasswordModalRef.current?.present();
   const openProfileImageSheet = () => profileImageSheetRef.current?.present();
 
@@ -263,6 +322,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     setPhoneOtpError("");
     setIsIncorrect(false);
     setIsPhoneOtpLoading(true);
+    // A new code makes the one that was confirmed before it worthless.
+    phoneToken.current = "";
     try {
       await requestPhoneNumberChangeOtp(fullPhone);
       setIsMobileOtpSent(true);
@@ -334,30 +395,64 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   //     setIsMobileOtpSent(false);
   //   }
   // };
-  const handleSubmitOtpForMobile = async () => {
-    if (mobileOtpVerificationCode.length !== 6) {
-      return;
-    }
-
-    setIsIncorrect(false);
+  /**
+   * Sends the new number with the proof that this person holds it (decision T-14). The
+   * backend refuses a number another account has (`phone_taken`), a code confirmed more
+   * than five minutes ago, and a phone that has not been unlocked with its current number.
+   * Each is said in plain words, and the proof is kept for the answers that leave it good,
+   * so a lost answer is repeated alone and does not ask for another text.
+   */
+  const savePhone = async () => {
     try {
-      // Throws on a wrong/expired code. Runs on an isolated Firebase app, so it
-      // does not touch the login/chat session.
-      await verifyPhoneNumberChange(mobileOtpVerificationCode);
-
-      const nextPhone = "+" + country.callingCode + "-" + updatedPhone;
-      await updateMyDetails(nameId, { phone: nextPhone });
-
-      setDetails((prevDetails) => ({
-        ...prevDetails,
-        phone: nextPhone,
-      }));
-
+      const saved = await updateMyDetails(nameId, phoneChangeBody(fullPhone, phoneToken.current));
+      phoneToken.current = "";
+      setDetails((prevDetails) => ({ ...prevDetails, phone: saved?.phone || fullPhone }));
       editPhoneModalRef.current?.close();
       setIsMobileOtpSent(false);
-    } catch (error: any) {
-      console.error("Error verifying phone number:", error);
-      setIsIncorrect(true);
+    } catch (error) {
+      const outcome = phoneChangeOutcome(apiError(error));
+      setPhoneOtpError(outcome.text);
+      if (outcome.next === "unlock") {
+        // The unlock ran out while the code was being typed: confirm the current number again, then save.
+        void askForCode(() => void savePhone(), true);
+      } else if (outcome.next === "new_code") {
+        phoneToken.current = "";
+      } else if (outcome.next === "new_number") {
+        // Another number is needed: back to typing one, with the reason under the box.
+        phoneToken.current = "";
+        setIsMobileOtpSent(false);
+      }
+    }
+  };
+
+  const handleSubmitOtpForMobile = async () => {
+    if (mobileOtpVerificationCode.length !== 6 || savingPhone.current) {
+      return;
+    }
+    savingPhone.current = true;
+    setIsSavingPhone(true);
+    setIsIncorrect(false);
+    setPhoneOtpError("");
+    try {
+      if (!phoneToken.current) {
+        try {
+          // Throws on a wrong/expired code. Runs on an isolated Firebase app, so it
+          // does not touch the login/chat session. Gives the ID token of the new number.
+          phoneToken.current = await verifyPhoneNumberChange(mobileOtpVerificationCode);
+        } catch (error: any) {
+          console.error("Error verifying phone number:", error);
+          setIsIncorrect(true);
+          return;
+        }
+        if (!phoneToken.current) {
+          setPhoneOtpError("We couldn't confirm that code. Send a new one and try again.");
+          return;
+        }
+      }
+      await savePhone();
+    } finally {
+      savingPhone.current = false;
+      setIsSavingPhone(false);
     }
   };
 
@@ -847,6 +942,25 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         </View>
       </CustomBottomSheetModal>
 
+      {/* The code to the number the account has now, before a new one is taken (decision T-14). */}
+      <UnlockSheet
+        ref={unlockSheet}
+        phoneMasked={codeGoesTo.phoneMasked}
+        minutes={codeGoesTo.minutes}
+        phone={details.phone}
+        // The server says the account has no number: a first number needs no code first.
+        onPhoneRequired={() => {
+          afterUnlock.current = null;
+          editPhoneModalRef.current?.present();
+        }}
+        onUnlocked={() => {
+          unlockSheet.current?.close();
+          const next = afterUnlock.current;
+          afterUnlock.current = null;
+          next?.();
+        }}
+      />
+
       {/* Phone Modal */}
       <CustomBottomSheetModal
         ref={editPhoneModalRef}
@@ -863,6 +977,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               setPhoneOtpError("");
               setIsIncorrect(false);
               setIsMobileOtpSent(false);
+              phoneToken.current = "";
               editPhoneModalRef.current?.close();
             }}
           >
@@ -1037,7 +1152,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   </Button>
                 </View>
                 <View className="flex-1">
-                  <Button onPress={handleSubmitOtpForMobile}>
+                  <Button onPress={handleSubmitOtpForMobile} loading={isSavingPhone}>
                     <Text
                       fontSize="text-sm"
                       fontWeight="font-bold"
