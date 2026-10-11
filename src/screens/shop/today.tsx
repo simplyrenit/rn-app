@@ -3,11 +3,14 @@ import { setOpenState, shopQueryKey, useShop } from "@/backend/shop";
 import { Notice, Panel } from "@/components/booking/parts";
 import { Button, EmptyState, Skeleton, Text } from "@/components/core";
 import { useButtonLabelColor } from "@/components/core/button";
+import { useRingPermission } from "@/backend/ring-permission";
 import { DayPickerModal } from "@/components/shop/day-picker-modal";
+import { RingPermissionCard } from "@/components/shop/ring-permission-card";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
 import { dayShort } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { OPEN_BUT_QUIET, quietBody, ringCaption, ringsHere } from "@/lib/ring-permission";
 import { cannotOpenMessage } from "@/lib/shop";
 import { isQuiet } from "@/lib/shop-today";
 import { BookingShop } from "@/lib/shop-booking";
@@ -239,6 +242,11 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   const shop = shopQuery.data;
   const feed = today.data;
   const quickBlock = useRef<BottomSheetModal>(null);
+  // Whether this phone will ring for a request: the system's notification permission. Only a
+  // shop whose requests will ring has anything to say about it (review round 1, finding 2).
+  const ringPerm = useRingPermission();
+  const canTake = shop?.can_take_bookings === true;
+  const phone = canTake ? ringPerm.state : null;
   const [refreshing, setRefreshing] = useState(false);
   const [openBusy, setOpenBusy] = useState(false);
   const [blockBusy, setBlockBusy] = useState<number | null>(null);
@@ -259,6 +267,8 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
       const open = await setOpenState(state);
       queryClient.setQueryData(shopQueryKey(userDetails?.username), { ...shop, open });
       refreshShop(queryClient);
+      // Open, but this phone cannot ring: the owner must not go on believing it will.
+      if (open.is_open && ringsHere(phone) === false) toast.warning(OPEN_BUT_QUIET.title, { message: OPEN_BUT_QUIET.message });
     } catch (error) {
       const failure = apiError(error);
       if (failure?.code === "cannot_open") {
@@ -388,7 +398,7 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
               />
             </View>
             <Text fontSize="text-sm" tone="body" style={{ maxWidth: 190, textAlign: "right" }}>
-              {copy.line}
+              {ringCaption(copy.line, open.is_open, phone)}
             </Text>
             {open.reason === "manual" ? (
               <Text
@@ -406,6 +416,8 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
         </View>
 
         {copy.hint ? <Notice tone="warning" icon="warning">{copy.hint}</Notice> : null}
+
+        <RingPermissionCard enabled={canTake} permission={ringPerm} />
 
         <Button accessibilityLabel="Rented at the counter" onPress={() => quickBlock.current?.present()}>
           <CounterLabel />
@@ -512,7 +524,7 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
             compact
             icon={<BellIcon size={26} color={color.brandText} />}
             title="Nothing needs you right now"
-            body="New requests ring this phone. What goes out and comes back today shows up here."
+            body={quietBody(phone)}
           />
         ) : null}
       </ScrollView>

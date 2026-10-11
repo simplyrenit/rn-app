@@ -11,7 +11,9 @@ import {
 } from "@/backend/shop";
 import { SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
+import { useRingPermission } from "@/backend/ring-permission";
 import { DayPickerModal } from "@/components/shop/day-picker-modal";
+import { RingPermissionCard } from "@/components/shop/ring-permission-card";
 import { DevicesSheet } from "@/components/shop/devices-sheet";
 import { NoticeSheet } from "@/components/shop/pick-sheets";
 import { ShopLoadError, ShopLoading } from "@/components/shop/states";
@@ -113,6 +115,7 @@ export default function RentalSettingsScreen() {
   const { userDetails, userDetailsFailed, fetchUserDetails } = useGlobalContext();
   const query = useShop();
   const devices = useDevices();
+  const ringPerm = useRingPermission();
   const shop = query.data;
   const shopKey = shopQueryKey(userDetails?.username);
 
@@ -285,6 +288,9 @@ export default function RentalSettingsScreen() {
             thumbColor="#FFFFFF"
           />
         </View>
+
+        {/* The Open switch above only means something if this phone can ring. */}
+        <RingPermissionCard enabled={shop.can_take_bookings === true} permission={ringPerm} />
 
         <View style={[card, { padding: space.md, gap: space.sm }]}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>

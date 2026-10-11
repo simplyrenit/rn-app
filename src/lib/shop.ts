@@ -62,6 +62,8 @@ export interface Shop {
   delivery_max_km: string;
   /** A merchant has the dashboard; an individual owner does not. */
   is_merchant: boolean;
+  /** Nothing in the shop's `missing` list stops it taking bookings, so its requests will ring. */
+  can_take_bookings?: boolean;
 }
 
 // ---- Times and days -------------------------------------------------------------
