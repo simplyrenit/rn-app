@@ -185,6 +185,24 @@ describe("edit transitions", () => {
     expect(d.fields.title.source).toBe("ai");
   });
 
+  it("keeps the sub-category's id when the extraction names it, and still takes the titles alone (P3-8)", () => {
+    const named = apply(
+      fresh(),
+      filled("category", { parent: "Gaming", title: "Gaming Console", id: 41, slug: "gaming-vr-emerging-tech-gaming-console" })
+    );
+    // The id rides along; the slug is not kept.
+    expect(named.fields.category).toMatchObject({ source: "ai" });
+    expect(named.fields.category.value).toEqual({ id: 41, parent: "Gaming", title: "Gaming Console" });
+    // The old shape: two titles, no id.
+    const old = apply(fresh(), filled("category", { parent: "Gaming", title: "Gaming Console" }));
+    expect(old.fields.category.value).toEqual({ parent: "Gaming", title: "Gaming Console" });
+    // An id that is not a whole positive number is dropped, never trusted.
+    for (const id of ["41", 0, -3, 4.5, null]) {
+      const odd = apply(fresh(), filled("category", { parent: "Gaming", title: "Gaming Console", id }));
+      expect(odd.fields.category.value).toEqual({ parent: "Gaming", title: "Gaming Console" });
+    }
+  });
+
   it("picking the AI's category from the sheet takes the id but is not an edit", () => {
     const ai = { parent: "Gaming", title: "Consoles" };
     let d = apply(fresh(), filled("category", ai), {
@@ -580,6 +598,15 @@ describe("quantity and worth (ENG-155)", () => {
     const five = apply(fresh(), { type: "editField", field: "quantity", value: "5" });
     expect(five.fields.quantity.value).toBe("5");
     expect(missingRequirements(five).map((m) => m.key)).not.toContain("quantity");
+  });
+
+  it("reads the worth as a number of rupees, and still as the old money string (P3-8)", () => {
+    expect(apply(fresh(), filled("worth", 45000)).fields.worth.value).toBe("45000");
+    expect(apply(fresh(), filled("worth", "45000.00")).fields.worth.value).toBe("45000");
+    expect(apply(fresh(), filled("worth", "45000")).fields.worth.value).toBe("45000");
+    // No usable figure: nothing is suggested.
+    expect(apply(fresh(), filled("worth", 0)).fields.worth.value).toBeNull();
+    expect(apply(fresh(), filled("worth", "about fifty thousand")).fields.worth.value).toBeNull();
   });
 
   it("fills an untouched worth from the stream as a suggestion that still needs confirming", () => {

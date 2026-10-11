@@ -39,8 +39,9 @@ export const CONDITIONS: Condition[] = ["excellent", "good", "fair"];
 
 export interface CategoryValue {
   /**
-   * The sub-category's server id, when the picker had one. AI extraction and
-   * drafts saved before ENG-28 carry only the titles.
+   * The sub-category's server id: from the picker, or from the extraction, which
+   * names it since P3-8. An older extraction answer and drafts saved before
+   * ENG-28 carry only the titles.
    */
   id?: number;
   parent: string;

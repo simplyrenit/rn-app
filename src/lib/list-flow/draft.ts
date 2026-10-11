@@ -115,7 +115,11 @@ function coerceAiValue(field: AiFieldName, value: unknown) {
   if (field === "category") {
     const v = value as Partial<CategoryValue> | null;
     if (v && typeof v.parent === "string" && typeof v.title === "string" && v.parent && v.title) {
-      return { parent: v.parent, title: v.title };
+      // The extraction now names the sub-category by `id` as well (and `slug`, which
+      // nothing here reads): kept, so the specs and the create call need no match by
+      // title. An answer without it (an older server) still gives the two titles (P3-8).
+      const id = typeof v.id === "number" && Number.isInteger(v.id) && v.id > 0 ? v.id : null;
+      return id === null ? { parent: v.parent, title: v.title } : { id, parent: v.parent, title: v.title };
     }
     return null;
   }
