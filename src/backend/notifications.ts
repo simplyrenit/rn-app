@@ -231,6 +231,54 @@ export function setupNotificationListeners(
   };
 }
 
+/** The booking a customer's push is about, or null (ARCHITECTURE 7.1: `data.booking`, `data.role`). */
+function customerBookingOf(notification: Notifications.Notification): string | null {
+  const data = notification.request.content.data as
+    | { booking?: unknown; role?: unknown }
+    | null
+    | undefined;
+  return data?.role === "customer" && typeof data.booking === "string" && data.booking
+    ? data.booking
+    : null;
+}
+
+// A response is answered once: the last one is handed out again every time the
+// listeners are set up (each sign-in), and must not reopen a booking each time.
+let lastOpenedPush: string | null = null;
+
+/**
+ * Booking pushes for a customer (ENG-173): "accepted", "refused", "no_answer"
+ * and the rest all carry the booking's number. One that arrives while the app
+ * is open says the booking has changed (`onArrive`: read it again); a tap on
+ * one opens the booking (`onOpen`). The owner's pushes are not handled here.
+ */
+export function setupBookingNotifications(handlers: {
+  onArrive: (number: string) => void;
+  onOpen: (number: string) => void;
+}) {
+  const open = (response: Notifications.NotificationResponse | null) => {
+    if (!response) return;
+    const number = customerBookingOf(response.notification);
+    const id = response.notification.request.identifier;
+    if (!number || id === lastOpenedPush) return;
+    lastOpenedPush = id;
+    handlers.onOpen(number);
+  };
+
+  const arrived = Notifications.addNotificationReceivedListener((notification) => {
+    const number = customerBookingOf(notification);
+    if (number) handlers.onArrive(number);
+  });
+  const opened = Notifications.addNotificationResponseReceivedListener(open);
+  // The app was started by the tap.
+  void Notifications.getLastNotificationResponseAsync().then(open);
+
+  return () => {
+    arrived.remove();
+    opened.remove();
+  };
+}
+
 export async function checkForNewMessagesOrConversations() {
   try {
     const firestore = getFirestoreDb();

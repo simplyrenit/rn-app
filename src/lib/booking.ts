@@ -747,3 +747,275 @@ export function payButtonLabel(phase: PayPhase, first: string): string {
   return first;
 }
 
+
+// ---- Which screen a booking is on (ENG-173) -------------------------------------------------
+
+/**
+ * The views of the `Booking` route. The booking's stage on the server picks one;
+ * the phone keeps no stage of its own.
+ */
+export type BookingView = "pay_booking_amount" | "confirming" | "outcome" | "pay_rent" | "details";
+
+/** The request ended before a handover and other dates or owners are on offer (N2, N8). */
+export function endedByOwner(booking: Pick<BookingCustomer, "exit" | "exit_reason">): boolean {
+  return (
+    booking.exit === "refused" ||
+    booking.exit === "no_answer" ||
+    booking.exit === "cancelled_by_owner" ||
+    (booking.exit === "no_show" && booking.exit_reason === "owner")
+  );
+}
+
+export function bookingView(
+  booking: Pick<BookingCustomer, "stage" | "ring_state" | "exit" | "exit_reason">
+): BookingView {
+  if (endedByOwner(booking)) return "outcome";
+  // Any other ending (the customer cancelled, the rent lapsed) is told on the booking screen.
+  if (booking.exit) return "details";
+  if (booking.stage === "ringing") {
+    return booking.ring_state === "awaiting_payment" ? "pay_booking_amount" : "confirming";
+  }
+  return booking.stage === "accepted" ? "pay_rent" : "details";
+}
+
+/**
+ * True while the answer can still arrive at any second: the screen asks the
+ * server every 3 seconds, and stops the moment this turns false.
+ */
+export function isRinging(booking: Pick<BookingCustomer, "stage" | "exit">): boolean {
+  return booking.stage === "ringing" && !booking.exit;
+}
+
+export interface RingStep {
+  label: string;
+  sub?: string;
+  state: "done" | "active" | "todo";
+}
+
+export interface RingCopy {
+  icon: "bell" | "phone" | "clock";
+  title: string;
+  steps: RingStep[];
+  body: string;
+}
+
+/**
+ * The confirming screen (BK-04, BK-05), from `ring_state`. It shows what is
+ * happening and never how long is left: no countdown and no number of minutes.
+ */
+export function ringCopy(
+  booking: Pick<BookingCustomer, "ring_state" | "shop" | "money">,
+  now: Date = new Date()
+): RingCopy {
+  const shop = booking.shop.name;
+  const usual = "This usually takes a few minutes. You can leave the app and we'll tell you the moment they answer.";
+  switch (booking.ring_state) {
+    case "waiting_to_open": {
+      const opens = booking.shop.opens_at ? timeAndDay(booking.shop.opens_at, now) : null;
+      return {
+        icon: "clock",
+        title: `${shop} is closed now`,
+        steps: [
+          {
+            label: opens ? `Asked at ${opens.time} ${opens.day}` : "Asked when they open",
+            sub: "The owner is closed and will be asked when they open.",
+            state: "active",
+          },
+          { label: "Ringing the owner", state: "todo" },
+        ],
+        body: `We'll tell you the moment they answer. You can cancel any time before they open and the ${money(
+          booking.money.booking_amount
+        )} comes back.`,
+      };
+    }
+    case "calling":
+      return {
+        icon: "phone",
+        title: `Asking ${shop}`,
+        steps: [
+          { label: "Ringing the owner", state: "done" },
+          { label: "Calling the owner", sub: "Renit is phoning the shop for you.", state: "active" },
+        ],
+        body: usual,
+      };
+    case "ringing_again":
+      return {
+        icon: "bell",
+        title: `Asking ${shop}`,
+        steps: [
+          { label: "Ringing the owner", state: "done" },
+          { label: "Ringing again", state: "active" },
+        ],
+        body: usual,
+      };
+    default:
+      return {
+        icon: "bell",
+        title: `Asking ${shop}`,
+        steps: [
+          { label: "Ringing the owner", state: "active" },
+          { label: "Calling the owner", state: "todo" },
+        ],
+        body: usual,
+      };
+  }
+}
+
+// ---- Cancelling (A-33) ------------------------------------------------------------------------
+
+export interface CancelMoney {
+  what: PaymentPurpose;
+  amount: string;
+  text: string | null;
+  expected_days_min?: number | null;
+  expected_days_max?: number | null;
+}
+
+/** `GET /api/bookings/{number}/cancel/`: what cancelling would cost, before it is done. */
+export interface CancelOutcome {
+  case: "ringing" | "after_accept" | "free" | "inside_24h";
+  back: CancelMoney[];
+  kept: CancelMoney[];
+  to_owner: string;
+  free_until: string | null;
+}
+
+const daysText = (min?: number | null, max?: number | null) =>
+  min && max ? ` Expect it in ${min === max ? min : `${min} to ${max}`} working days.` : "";
+
+/** The cancel sheet: its heading, each thing that happens to the money, and the button. */
+export function cancelCopy(outcome: CancelOutcome): { title: string; lines: string[]; confirm: string } {
+  const ringing = outcome.case === "ringing";
+  const lines = [
+    ...outcome.back.map(
+      (row) =>
+        `${money(row.amount)} goes back${row.text ? ` to ${row.text}` : " the way you paid"}.${daysText(
+          row.expected_days_min,
+          row.expected_days_max
+        )}`
+    ),
+    ...outcome.kept.map((row) => row.text || `${money(row.amount)} is not returned.`),
+    ...(isPositive(outcome.to_owner) ? [`${money(outcome.to_owner)} goes to the owner.`] : []),
+  ];
+  return {
+    title: ringing ? "Cancel this request?" : "Cancel this booking?",
+    lines: lines.length ? lines : ["Nothing has been paid, so there is nothing to refund."],
+    confirm: ringing ? "Cancel request" : "Cancel booking",
+  };
+}
+
+/** What to say when the cancel call is refused. */
+export function cancelErrorText(error: ApiError | null): string {
+  switch (error?.code) {
+    case "outcome_changed":
+      return "This changed while you were deciding. Nothing was cancelled. Check what cancelling does now.";
+    case "cancel_limit": {
+      const perDay = Number(error.details?.per_day);
+      return `You have cancelled ${Number.isFinite(perDay) && perDay > 0 ? perDay : "too many"} requests today, so this one can't be cancelled while it rings.`;
+    }
+    case "claim_open":
+      return "A report on this booking is with Renit. You can cancel once it is decided.";
+    case "stage_not_allowed":
+      return "This booking can no longer be cancelled.";
+    default:
+      return error?.message ?? "We couldn't cancel this. Check your connection and try again.";
+  }
+}
+
+// ---- Refused, no answer, cancelled by the owner (BK-09, BK-10) --------------------------------
+
+export interface OutcomeCopy {
+  icon: "calendar" | "clock";
+  title: string;
+  body: string;
+}
+
+/**
+ * The plain reason a request ended. Always about the item and the dates, never
+ * about the customer.
+ */
+export function outcomeCopy(
+  booking: Pick<BookingCustomer, "exit" | "exit_reason" | "shop" | "product" | "first_day" | "last_day">
+): OutcomeCopy {
+  const shop = booking.shop.name;
+  const range = rangeLabel(booking.first_day, booking.last_day);
+  if (booking.exit === "no_answer") {
+    return {
+      icon: "clock",
+      title: `${shop} did not answer in time`,
+      body: "We rang the shop and nobody answered, so this request has ended.",
+    };
+  }
+  if (booking.exit === "cancelled_by_owner") {
+    return {
+      icon: "calendar",
+      title: `${shop} cancelled this booking`,
+      body: "Everything you paid is going back to you.",
+    };
+  }
+  if (booking.exit === "no_show") {
+    return {
+      icon: "clock",
+      title: `${shop} did not come`,
+      body: "Everything you paid is going back to you.",
+    };
+  }
+  const reason: Record<string, string> = {
+    not_available: `The owner told us the ${booking.product.title} is not available on ${range}.`,
+    no_unit: `The last one was booked by someone else for ${range} a moment ago.`,
+    cannot_accept: "The owner can't take bookings right now.",
+    too_late: `The shop opened too late for a rental starting ${dayShort(booking.first_day)}.`,
+  };
+  return {
+    icon: "calendar",
+    title: `${shop} can't do these dates`,
+    body: reason[booking.exit_reason] ?? `The owner can't do ${range}.`,
+  };
+}
+
+/** Where a payment was made, for "it goes back to …": the first payment of this kind. */
+function paidWith(booking: Pick<BookingCustomer, "payments">, what: PaymentPurpose): string | null {
+  return booking.payments.find((row) => row.kind === "payment" && row.what === what)?.text ?? null;
+}
+
+/**
+ * The "Your ₹99" card after a refusal or silence (N2): it moves with the
+ * customer if they pick another option in time, else it goes back. `moves` is
+ * the alternatives' own answer; unknown while they load.
+ */
+export function bookingAmountCopy(
+  booking: Pick<BookingCustomer, "money" | "payments" | "pick_deadline_at" | "exit">,
+  moves: boolean | undefined
+): { title: string; body: string } {
+  const amount = money(booking.money.booking_amount);
+  const source = paidWith(booking, "booking_amount");
+  const to = source ? `to ${source}` : "the way you paid";
+  const refund = booking.payments.find((row) => row.kind === "refund" && row.what === "booking_amount");
+  const days =
+    daysText(refund?.expected_days_min, refund?.expected_days_max) || " Refunds take 5 to 7 working days.";
+  const title = `Your ${amount}`;
+  switch (booking.money.booking_amount_state) {
+    case "paid":
+      if (booking.exit !== "refused" && booking.exit !== "no_answer") {
+        return { title, body: `It is going back ${to}.${days}` };
+      }
+      return moves === false || !booking.pick_deadline_at
+        ? { title, body: `It goes back ${to}.${days}` }
+        : {
+            title,
+            body: `It moves with you if you pick one of these. Pick nothing by ${clock(
+              booking.pick_deadline_at
+            )} and it goes back ${to}.${days}`,
+          };
+    case "refund_requested":
+      return { title, body: `It is going back ${to}.${days}` };
+    case "refunded":
+      return { title, body: `It was refunded ${to}.` };
+    case "moved":
+      return { title, body: "It moved to your new booking." };
+    case "kept":
+      return { title, body: "It was not returned." };
+    default:
+      return { title, body: "Nothing was paid." };
+  }
+}

@@ -1,5 +1,12 @@
 import { useGlobalContext } from "@/context/global-context";
-import { BookingCustomer, DeliveryMode, PaymentStart, Quote } from "@/lib/booking";
+import {
+  BookingCustomer,
+  CancelOutcome,
+  DeliveryMode,
+  PaymentStart,
+  Quote,
+  isRinging,
+} from "@/lib/booking";
 import { BOOKINGS_ENDPOINT, GET_PRODUCT_DETAILS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { BackendProduct } from "@/lib/types";
@@ -76,15 +83,59 @@ export function useQuote(input: QuoteInput | null) {
   });
 }
 
+/** The contract's rhythm for the confirming screen (API-CONTRACT, App notes for OE-C). */
+export const BOOKING_POLL_MS = 3000;
+
 /**
  * One booking, read from the server every time the screen needs it: its stage
- * there is the truth, not what this phone remembers. `pollMs` asks again on a
- * timer (the confirming screen); false stops.
+ * there is the truth, not what this phone remembers.
+ *
+ * While the owner is being asked it is read again every 3 seconds, but only
+ * when `watching` (the screen is in front and the app is active). The asking
+ * stops by itself the moment the booking is no longer ringing.
  */
-export function useBooking(number: string, pollMs: number | false = false) {
+export function useBooking(number: string, watching = false) {
   return useQuery(bookingQueryKey(number), () => fetchBooking(number), {
     staleTime: 0,
-    refetchInterval: pollMs,
+    refetchInterval: (data) => (watching && data && isRinging(data) ? BOOKING_POLL_MS : false),
     retry: 1,
   });
+}
+
+// ---- When the request ends (ENG-173) ------------------------------------------------------
+
+/** What cancelling would cost. Changes nothing. */
+export async function fetchCancelOutcome(number: string): Promise<CancelOutcome> {
+  return (await axiosInstance.get<{ outcome: CancelOutcome }>(bookingUrl(number, "cancel/"))).data.outcome;
+}
+
+/**
+ * Cancels, saying which outcome the customer was shown (A-33). If the booking
+ * has moved on since (the owner accepted a second ago), the server cancels
+ * nothing and answers `409 outcome_changed` with the new outcome.
+ */
+export async function cancelBooking(number: string, shownCase: CancelOutcome["case"]): Promise<BookingCustomer> {
+  return (
+    await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "cancel/"), { case: shownCase })
+  ).data.booking;
+}
+
+/** `GET …/alternatives/`: other dates for this item, and the same item from other owners. */
+export interface Alternatives {
+  pick_deadline_at: string | null;
+  /** The ₹99 can still move to a new request (send `moved_from` to Book now). */
+  booking_amount_moves: boolean;
+  other_dates: { first_day: string; last_day: string }[];
+  other_owners: BackendProduct[];
+}
+
+export async function fetchAlternatives(number: string): Promise<Alternatives> {
+  return (await axiosInstance.get<Alternatives>(bookingUrl(number, "alternatives/"))).data;
+}
+
+/** "No thanks, refund my ₹99": takes it back now instead of after the pick-by time. */
+export async function refundBookingAmount(number: string): Promise<BookingCustomer> {
+  return (
+    await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "refund-booking-amount/"), {})
+  ).data.booking;
 }

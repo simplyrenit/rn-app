@@ -36,7 +36,9 @@ import UserDetailScreen from "../screens/users/users-screen";
 import { HomeIcon, HomeIconSolid } from "@/icons/home";
 import { PlusSquareIcon } from "@/icons/plus-square";
 import { RootStackParamList } from "@/lib/types";
+import { bookingQueryKey } from "@/backend/bookings";
 import {
+  setupBookingNotifications,
   setupChatNotifications,
   setupNotificationListeners,
 } from "@/backend/notifications";
@@ -67,6 +69,7 @@ import {
   UserIcon as UserIconSolid,
 } from "react-native-heroicons/solid";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQueryClient } from "react-query";
 import { darkColors, lightColors, radius } from "@/lib/design-tokens";
 import { fontFamily, fontSize, lineHeight } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -365,6 +368,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function Navigation() {
   const { loading, hasSeenWelcome, theme, isAuthenticated } = useGlobalContext();
+  const queryClient = useQueryClient();
 
   React.useEffect(() => {
     if (!isAuthenticated) {
@@ -372,12 +376,25 @@ export default function Navigation() {
     }
 
     setupChatNotifications();
-    return setupNotificationListeners((conversationId) => {
+    const stopChat = setupNotificationListeners((conversationId) => {
       if (navigationRef.isReady()) {
         navigationRef.navigate("ChatDetails", { id: conversationId });
       }
     });
-  }, [isAuthenticated]);
+    // A booking push for a customer: the answer came, the rent is due, a refund
+    // went out. Arriving, it makes the open booking read itself again; tapped,
+    // it opens that booking, which shows whatever stage the server says (ENG-173).
+    const stopBookings = setupBookingNotifications({
+      onArrive: (number) => void queryClient.invalidateQueries(bookingQueryKey(number)),
+      onOpen: (number) => {
+        if (navigationRef.isReady()) navigationRef.navigate("Booking", { number });
+      },
+    });
+    return () => {
+      stopChat();
+      stopBookings();
+    };
+  }, [isAuthenticated, queryClient]);
 
   // A payment can finish while the app is closed (the customer was in the
   // browser or a UPI app). On start, ask rn-api about the one that was in

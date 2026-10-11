@@ -1,7 +1,15 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  BookingCustomer,
   Quote,
   bookErrorText,
+  bookingAmountCopy,
+  bookingView,
+  cancelCopy,
+  cancelErrorText,
+  isRinging,
+  outcomeCopy,
+  ringCopy,
   bookLabel,
   bookedDays,
   blockerText,
@@ -59,6 +67,83 @@ const quote = (over: Partial<Quote> = {}): Quote => ({
   blockers: ["terms_not_accepted"],
   ...over,
 });
+
+/** The contract's example booking (RN-24831), moved to wherever a test needs it. */
+const booking = (over: Partial<BookingCustomer> = {}, moneyOver: Partial<BookingCustomer["money"]> = {}): BookingCustomer => ({
+  number: "RN-24831",
+  stage: "confirmed",
+  ring_state: "",
+  exit: "",
+  exit_reason: "",
+  is_open: true,
+  product: { name: "PRO_8fk2Lq", title: "Sony PS5", cover_image: null },
+  shop: {
+    name: "SoundBox Rentals",
+    locality: "Andheri West, Mumbai",
+    hours_first_day: { open: "10:00", close: "20:00" },
+    hours_last_day: { open: "10:00", close: "20:00" },
+    opens_at: null,
+    address: null,
+    coordinates: null,
+  },
+  first_day: "2026-10-24",
+  last_day: "2026-10-26",
+  days: 3,
+  delivery_mode: "pickup",
+  distance_km: "3.2",
+  delivery_address: null,
+  money: {
+    rate: "610.00",
+    rent: "1830.00",
+    delivery_fee: "0.00",
+    fee_shown: "92.00",
+    fee_charged: "0.00",
+    total: "1830.00",
+    booking_amount: "99.00",
+    booking_amount_state: "paid",
+    pay_after_accept: "1731.00",
+    rent_due_at: null,
+    rent_paid: true,
+    deposit: "3000.00",
+    deposit_with_rent: false,
+    deposit_state: "not_due",
+    deposit_ask_at: "2026-10-23T04:30:00Z",
+    deposit_due_at: "2026-10-24T02:30:00Z",
+    deposit_refund_due_at: null,
+    late_days: 0,
+    late_fee: "0.00",
+    damage_deduction: "0.00",
+    ...moneyOver,
+  },
+  pay_now: null,
+  payments: [
+    {
+      id: "pay_01",
+      kind: "payment",
+      what: "booking_amount",
+      amount: "99.00",
+      status: "paid",
+      text: "UPI asha@okhdfcbank",
+      expected_days_min: null,
+      expected_days_max: null,
+      expected_by: null,
+      at: "2026-10-13T04:11:00Z",
+    },
+  ],
+  pick_deadline_at: null,
+  cancels_left_today: 3,
+  window: { start: "2026-10-24T04:30:00Z", end: "2026-10-24T05:30:00Z" },
+  window_request: null,
+  return_by: "2026-10-26T14:30:00Z",
+  id_match_required: false,
+  can: ["cancel", "request_window_change", "get_help"],
+  timeline: [],
+  created_at: "2026-10-13T04:11:00Z",
+  ...over,
+});
+
+const ringing = (ring_state: BookingCustomer["ring_state"], over: Partial<BookingCustomer> = {}) =>
+  booking({ stage: "ringing", ring_state, window: null, ...over });
 
 /** Tuesday 13 October 2026, 9:41 am in India. */
 const NOW = new Date("2026-10-13T04:11:00Z");
@@ -484,5 +569,215 @@ describe("the payment hand-off's words", () => {
     expect(payButtonLabel("idle", "Pay ₹99")).toBe("Pay ₹99");
     expect(payButtonLabel("failed", "Pay ₹99")).toBe("Try again");
     expect(payButtonLabel("pending", "Pay ₹99")).toBe("Open the pay page again");
+  });
+});
+
+describe("which screen a booking is on", () => {
+  it("follows the stage table, from the customer's side", () => {
+    expect(bookingView(ringing("awaiting_payment"))).toBe("pay_booking_amount");
+    for (const state of ["waiting_to_open", "ringing", "calling", "ringing_again"] as const) {
+      expect(bookingView(ringing(state))).toBe("confirming");
+    }
+    expect(bookingView(booking({ stage: "accepted" }))).toBe("pay_rent");
+    for (const stage of ["confirmed", "ready", "out", "returned", "closed"] as const) {
+      expect(bookingView(booking({ stage }))).toBe("details");
+    }
+  });
+
+  it("shows the outcome, with other options, when the owner's side ended it", () => {
+    expect(bookingView(ringing("ringing", { exit: "refused", exit_reason: "not_available" }))).toBe("outcome");
+    expect(bookingView(ringing("ringing", { exit: "no_answer" }))).toBe("outcome");
+    expect(bookingView(booking({ stage: "confirmed", exit: "cancelled_by_owner", exit_reason: "owner" }))).toBe("outcome");
+    expect(bookingView(booking({ stage: "ready", exit: "no_show", exit_reason: "owner" }))).toBe("outcome");
+  });
+
+  it("shows the booking screen for an ending of the customer's own", () => {
+    expect(bookingView(ringing("ringing", { exit: "cancelled_by_customer", exit_reason: "while_ringing" }))).toBe("details");
+    // The 99 was never paid and the request was dropped: not a payment screen any more.
+    expect(bookingView(ringing("awaiting_payment", { exit: "cancelled_by_customer", exit_reason: "booking_amount_unpaid" }))).toBe("details");
+    expect(bookingView(booking({ stage: "accepted", exit: "lapsed_unpaid" }))).toBe("details");
+    expect(bookingView(booking({ stage: "ready", exit: "no_show", exit_reason: "customer" }))).toBe("details");
+  });
+
+  it("asks the server on a timer only while the answer can still come", () => {
+    expect(isRinging(ringing("ringing"))).toBe(true);
+    expect(isRinging(ringing("waiting_to_open"))).toBe(true);
+    expect(isRinging(ringing("awaiting_payment"))).toBe(true);
+    expect(isRinging(ringing("ringing", { exit: "no_answer" }))).toBe(false);
+    expect(isRinging(booking({ stage: "accepted" }))).toBe(false);
+    expect(isRinging(booking({ stage: "confirmed" }))).toBe(false);
+  });
+});
+
+describe("the confirming screen", () => {
+  const labels = (state: BookingCustomer["ring_state"]) =>
+    ringCopy(ringing(state), NOW).steps.map((step) => `${step.label}:${step.state}`);
+
+  it("reads Ringing the owner at first", () => {
+    expect(ringCopy(ringing("ringing"), NOW)).toMatchObject({ icon: "bell", title: "Asking SoundBox Rentals" });
+    expect(labels("ringing")).toEqual(["Ringing the owner:active", "Calling the owner:todo"]);
+  });
+
+  it("reads Calling the owner once the staff call starts", () => {
+    const copy = ringCopy(ringing("calling"), NOW);
+    expect(copy.icon).toBe("phone");
+    expect(labels("calling")).toEqual(["Ringing the owner:done", "Calling the owner:active"]);
+    expect(copy.steps[1].sub).toBe("Renit is phoning the shop for you.");
+  });
+
+  it("reads Ringing again outside the desk's hours", () => {
+    expect(labels("ringing_again")).toEqual(["Ringing the owner:done", "Ringing again:active"]);
+  });
+
+  it("says a closed shop is asked when it opens, with the opening time", () => {
+    const waiting = ringing("waiting_to_open");
+    waiting.shop.opens_at = OPENS;
+    const copy = ringCopy(waiting, NOW);
+    expect(copy.title).toBe("SoundBox Rentals is closed now");
+    expect(copy.steps[0]).toMatchObject({ label: "Asked at 10:00 am tomorrow", state: "active" });
+    expect(copy.body).toMatch(/cancel any time before they open and the ₹99 comes back/);
+  });
+
+  it("never shows a countdown or a number of minutes", () => {
+    for (const state of ["ringing", "calling", "ringing_again"] as const) {
+      const copy = ringCopy(ringing(state), NOW);
+      const words = [copy.title, copy.body, ...copy.steps.flatMap((s) => [s.label, s.sub ?? ""])].join(" ");
+      expect(words).not.toMatch(/\d/);
+      expect(words).toMatch(/a few minutes/);
+    }
+  });
+});
+
+describe("cancelling", () => {
+  it("says the 99 comes back for a request that is still ringing", () => {
+    expect(
+      cancelCopy({
+        case: "ringing",
+        back: [{ what: "booking_amount", amount: "99.00", text: "UPI asha@okhdfcbank", expected_days_min: 5, expected_days_max: 7 }],
+        kept: [],
+        to_owner: "0.00",
+        free_until: null,
+      })
+    ).toEqual({
+      title: "Cancel this request?",
+      lines: ["₹99 goes back to UPI asha@okhdfcbank. Expect it in 5 to 7 working days."],
+      confirm: "Cancel request",
+    });
+  });
+
+  it("lists what comes back, what is kept and what the owner gets", () => {
+    const free = cancelCopy({
+      case: "free",
+      back: [{ what: "rent", amount: "1731.00", text: "UPI asha@okhdfcbank", expected_days_min: 5, expected_days_max: 7 }],
+      kept: [{ what: "booking_amount", amount: "99.00", text: "The ₹99 is not returned" }],
+      to_owner: "0.00",
+      free_until: "2026-10-23T04:30:00Z",
+    });
+    expect(free.title).toBe("Cancel this booking?");
+    expect(free.lines).toEqual([
+      "₹1,731 goes back to UPI asha@okhdfcbank. Expect it in 5 to 7 working days.",
+      "The ₹99 is not returned",
+    ]);
+    const inside = cancelCopy({
+      case: "inside_24h",
+      back: [{ what: "rent", amount: "1220.00", text: null }],
+      kept: [],
+      to_owner: "610.00",
+      free_until: null,
+    });
+    expect(inside.lines).toEqual(["₹1,220 goes back the way you paid.", "₹610 goes to the owner."]);
+  });
+
+  it("says so when there is no money to move", () => {
+    expect(cancelCopy({ case: "after_accept", back: [], kept: [], to_owner: "0.00", free_until: null }).lines).toEqual([
+      "Nothing has been paid, so there is nothing to refund.",
+    ]);
+  });
+
+  it("explains each refusal of the cancel call", () => {
+    const error = (code: string, details: Record<string, unknown> | null = null) => ({ status: 409, code, message: null, details });
+    expect(cancelErrorText(error("outcome_changed"))).toMatch(/Nothing was cancelled/);
+    expect(cancelErrorText(error("cancel_limit", { per_day: 3 }))).toMatch(/cancelled 3 requests today/);
+    expect(cancelErrorText(error("claim_open"))).toMatch(/report/);
+    expect(cancelErrorText(error("stage_not_allowed"))).toMatch(/no longer/);
+    expect(cancelErrorText(null)).toMatch(/Check your connection/);
+  });
+});
+
+describe("refused, no answer, cancelled by the owner", () => {
+  it("gives a refusal its plain reason, about the dates", () => {
+    expect(outcomeCopy(ringing("ringing", { exit: "refused", exit_reason: "not_available" }))).toEqual({
+      icon: "calendar",
+      title: "SoundBox Rentals can't do these dates",
+      body: "The owner told us the Sony PS5 is not available on Sat 24 – Mon 26 Oct.",
+    });
+    expect(outcomeCopy(ringing("ringing", { exit: "refused", exit_reason: "other" })).body).toBe(
+      "The owner can't do Sat 24 – Mon 26 Oct."
+    );
+  });
+
+  it("words the system's refusals without blaming the shop", () => {
+    expect(outcomeCopy(ringing("ringing", { exit: "refused", exit_reason: "no_unit" })).body).toMatch(/booked by someone else/);
+    expect(outcomeCopy(ringing("waiting_to_open", { exit: "refused", exit_reason: "too_late" })).body).toMatch(/opened too late/);
+  });
+
+  it("gives silence the other message", () => {
+    expect(outcomeCopy(ringing("ringing", { exit: "no_answer" }))).toMatchObject({
+      icon: "clock",
+      title: "SoundBox Rentals did not answer in time",
+    });
+  });
+
+  it("says everything comes back when the owner cancels or does not come", () => {
+    expect(outcomeCopy(booking({ exit: "cancelled_by_owner", exit_reason: "owner" }))).toMatchObject({
+      title: "SoundBox Rentals cancelled this booking",
+      body: "Everything you paid is going back to you.",
+    });
+    expect(outcomeCopy(booking({ stage: "ready", exit: "no_show", exit_reason: "owner" })).title).toBe(
+      "SoundBox Rentals did not come"
+    );
+  });
+
+  const refused = (state: string, over: Partial<BookingCustomer> = {}) =>
+    ringing("ringing", { exit: "refused", exit_reason: "not_available", pick_deadline_at: "2026-10-13T04:28:00Z", ...over, money: { ...booking().money, booking_amount_state: state } });
+
+  it("says the 99 moves with the customer until the pick-by time", () => {
+    expect(bookingAmountCopy(refused("paid"), true)).toEqual({
+      title: "Your ₹99",
+      body: "It moves with you if you pick one of these. Pick nothing by 9:58 am and it goes back to UPI asha@okhdfcbank. Refunds take 5 to 7 working days.",
+    });
+  });
+
+  it("says it goes back once it can no longer move, or was asked back", () => {
+    expect(bookingAmountCopy(refused("paid"), false).body).toBe(
+      "It goes back to UPI asha@okhdfcbank. Refunds take 5 to 7 working days."
+    );
+    expect(bookingAmountCopy(refused("refund_requested"), false).body).toMatch(/^It is going back to UPI/);
+    expect(bookingAmountCopy(refused("refunded"), false).body).toBe("It was refunded to UPI asha@okhdfcbank.");
+    expect(bookingAmountCopy(refused("moved"), false).body).toBe("It moved to your new booking.");
+  });
+
+  it("uses the refund's own days once the refund exists", () => {
+    const withRefund = refused("refund_requested");
+    withRefund.payments.push({
+      id: "rfd_01",
+      kind: "refund",
+      what: "booking_amount",
+      amount: "99.00",
+      status: "pending",
+      text: "UPI asha@okhdfcbank",
+      expected_days_min: 3,
+      expected_days_max: 5,
+      expected_by: "2026-10-20",
+      at: "2026-10-13T04:30:00Z",
+    });
+    expect(bookingAmountCopy(withRefund, false).body).toBe(
+      "It is going back to UPI asha@okhdfcbank. Expect it in 3 to 5 working days."
+    );
+  });
+
+  it("never offers to move the 99 after an owner's cancellation", () => {
+    const cancelled = booking({ exit: "cancelled_by_owner", exit_reason: "owner" });
+    expect(bookingAmountCopy(cancelled, true).body).toMatch(/^It is going back/);
   });
 });

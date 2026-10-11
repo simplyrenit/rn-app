@@ -1,10 +1,10 @@
 import { EmptyState, Skeleton, Text } from "@/components/core";
 import { apiError } from "@/lib/api-error";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { Image } from "expo-image";
 import React from "react";
-import { StyleProp, View, ViewStyle } from "react-native";
+import { StyleProp, TouchableOpacity, View, ViewStyle } from "react-native";
 import {
   CameraIcon,
   ClockIcon,
@@ -201,6 +201,34 @@ export function Pill({ label, tone }: { label: string; tone: PillTone }) {
         {label}
       </Text>
     </View>
+  );
+}
+
+/** A quiet action written as words: "Cancel request · ₹99 comes back", "No thanks, refund my ₹99". */
+export function TextButton({
+  label,
+  onPress,
+  tone = "brand",
+  disabled = false,
+}: {
+  label: string;
+  onPress: () => void;
+  tone?: "brand" | "danger";
+  disabled?: boolean;
+}) {
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      activeOpacity={0.6}
+      disabled={disabled}
+      onPress={onPress}
+      style={{ minHeight: MIN_TOUCH_TARGET, alignItems: "center", justifyContent: "center", opacity: disabled ? 0.5 : 1 }}
+    >
+      <Text fontSize="text-md" fontWeight="font-bold" tone={tone} style={{ textAlign: "center" }}>
+        {label}
+      </Text>
+    </TouchableOpacity>
   );
 }
 

@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import axiosInstance from "@/lib/networkUtils";
-import { bookNow, fetchBooking, fetchQuote } from "../bookings";
+import {
+  bookNow,
+  cancelBooking,
+  fetchAlternatives,
+  fetchBooking,
+  fetchCancelOutcome,
+  fetchQuote,
+  refundBookingAmount,
+} from "../bookings";
 
 jest.mock("@/context/global-context", () => ({ useGlobalContext: jest.fn() }));
 jest.mock("@/lib/config", () => ({
@@ -70,5 +78,33 @@ describe("fetchBooking", () => {
   it("reads one booking by its number", async () => {
     await fetchBooking("RN-24831");
     expect(api.get).toHaveBeenCalledWith("https://api.test/bookings/RN-24831/");
+  });
+});
+
+describe("cancelling", () => {
+  it("asks what cancelling would cost without changing anything", async () => {
+    api.get.mockResolvedValue({ data: { outcome: { case: "ringing", back: [], kept: [], to_owner: "0.00" } } });
+    await expect(fetchCancelOutcome("RN-24831")).resolves.toMatchObject({ case: "ringing" });
+    expect(api.get).toHaveBeenCalledWith("https://api.test/bookings/RN-24831/cancel/");
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it("cancels saying which outcome the customer saw", async () => {
+    api.post.mockResolvedValue({ data: { booking: { number: "RN-24831", exit: "cancelled_by_customer" } } });
+    await expect(cancelBooking("RN-24831", "free")).resolves.toMatchObject({ exit: "cancelled_by_customer" });
+    expect(api.post).toHaveBeenCalledWith("https://api.test/bookings/RN-24831/cancel/", { case: "free" });
+  });
+});
+
+describe("after a refusal or silence", () => {
+  it("reads the other dates and owners", async () => {
+    await fetchAlternatives("RN-24831");
+    expect(api.get).toHaveBeenCalledWith("https://api.test/bookings/RN-24831/alternatives/");
+  });
+
+  it("asks for the booking amount back now", async () => {
+    api.post.mockResolvedValue({ data: { booking: { number: "RN-24831" } } });
+    await refundBookingAmount("RN-24831");
+    expect(api.post).toHaveBeenCalledWith("https://api.test/bookings/RN-24831/refund-booking-amount/", {});
   });
 });
