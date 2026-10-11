@@ -178,18 +178,27 @@ export function answerSettlesKey(failure: { status: number; code: string | null 
   return true;
 }
 
+/** A name as the bank compares it: no case, no doubled or edge spaces. */
+const nameKey = (name: string | null | undefined) => (name ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+
 /**
  * Whether an earlier press with these details got through although its answer was
- * lost: the account the server now holds ends in the same four digits and has the
- * same IFSC.
+ * lost: the account the server now holds ends in the same four digits, has the same
+ * IFSC and the same holder name. The name counts because a check that failed with
+ * `name_mismatch` leaves exactly this account behind, and the owner's next press
+ * (the same digits, the name as the bank has it) must go out, not be read as the old
+ * press. A server answer without a name cannot confirm anything, so it is "not landed":
+ * the press is sent again under the same `submit_id`, which the server repeats safely.
  */
 export function landed(
-  account: Pick<BankAccount, "status" | "account_last4" | "ifsc"> | null | undefined,
-  form: Pick<BankForm, "accountNumber" | "ifsc">
+  account: Pick<BankAccount, "status" | "account_last4" | "ifsc" | "holder_name"> | null | undefined,
+  form: Pick<BankForm, "holderName" | "accountNumber" | "ifsc">
 ): boolean {
   if (!account || account.status === "none") return false;
   return (
     account.account_last4 === form.accountNumber.slice(-4) &&
-    (account.ifsc ?? "").toUpperCase() === form.ifsc.toUpperCase()
+    (account.ifsc ?? "").toUpperCase() === form.ifsc.toUpperCase() &&
+    nameKey(account.holder_name) !== "" &&
+    nameKey(account.holder_name) === nameKey(form.holderName)
   );
 }

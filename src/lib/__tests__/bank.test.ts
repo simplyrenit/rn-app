@@ -185,17 +185,30 @@ describe("answerSettlesKey", () => {
 });
 
 describe("landed", () => {
-  const form = { accountNumber: "50100123456789", ifsc: "HDFC0001234" };
+  const form = { holderName: "SoundBox Rentals", accountNumber: "50100123456789", ifsc: "HDFC0001234" };
+  const held = { status: "pending" as const, account_last4: "6789", ifsc: "HDFC0001234", holder_name: "SoundBox Rentals" };
 
-  it("is true when the server holds an account ending the same with the same IFSC", () => {
-    expect(landed({ status: "pending", account_last4: "6789", ifsc: "HDFC0001234" }, form)).toBe(true);
-    expect(landed({ status: "verified", account_last4: "6789", ifsc: "hdfc0001234" }, form)).toBe(true);
+  it("is true when the server holds an account ending the same with the same IFSC and name", () => {
+    expect(landed(held, form)).toBe(true);
+    expect(landed({ ...held, status: "verified", ifsc: "hdfc0001234" }, form)).toBe(true);
+  });
+
+  it("reads the name as the bank does: no case, no doubled or edge spaces", () => {
+    expect(landed({ ...held, holder_name: " soundbox  RENTALS " }, form)).toBe(true);
+  });
+
+  it("is false when only the name changed (a check that failed with name_mismatch is still there)", () => {
+    expect(landed({ ...held, status: "failed", holder_name: "Sound Box" }, { ...form, holderName: "SOUNDBOX RENTALS" })).toBe(false);
+  });
+
+  it("is false when the answer has no name to compare", () => {
+    expect(landed({ ...held, holder_name: null }, form)).toBe(false);
   });
 
   it("is false for another account, or none", () => {
-    expect(landed({ status: "pending", account_last4: "4471", ifsc: "HDFC0001234" }, form)).toBe(false);
-    expect(landed({ status: "pending", account_last4: "6789", ifsc: "SBIN0000001" }, form)).toBe(false);
-    expect(landed({ status: "none", account_last4: null, ifsc: null }, form)).toBe(false);
+    expect(landed({ ...held, account_last4: "4471" }, form)).toBe(false);
+    expect(landed({ ...held, ifsc: "SBIN0000001" }, form)).toBe(false);
+    expect(landed({ status: "none", account_last4: null, ifsc: null, holder_name: null }, form)).toBe(false);
     expect(landed(null, form)).toBe(false);
   });
 });
