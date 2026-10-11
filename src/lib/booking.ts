@@ -699,6 +699,19 @@ export function reviewBlocker(quote: Quote | null | undefined): { code: string; 
   return null;
 }
 
+/**
+ * Whether a failed Book now is known to have made nothing, so the next tap is a
+ * new tap with a new `client_key`. A refusal the server chose (any 4xx, or the
+ * 503 the contract gives for rn-pay being down) is final. No answer at all, or
+ * a fault on the way (a 500, a gateway's 502 or 504), is not: the booking may
+ * exist with its reply lost, so the same key is sent again and the server
+ * answers with that first booking instead of making a second.
+ */
+export function bookRefusalIsFinal(error: ApiError | null): boolean {
+  if (!error) return false;
+  return (error.status >= 400 && error.status < 500) || error.code === "payments_unavailable";
+}
+
 /** What to say when Book now is refused. */
 export function bookErrorText(error: ApiError | null): string {
   const known = error?.code ? blockerText(error.code, error.details) : null;

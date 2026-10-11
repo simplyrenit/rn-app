@@ -3,6 +3,7 @@ import {
   BookingCustomer,
   Quote,
   bookErrorText,
+  bookRefusalIsFinal,
   bookingAmountCopy,
   bookingBanner,
   bookingView,
@@ -495,6 +496,27 @@ describe("what is in the way", () => {
     // A code this build does not know: the server's own words.
     expect(bookErrorText(error("something_new"))).toBe("Server words.");
     expect(bookErrorText(null)).toMatch(/Check your connection/);
+  });
+});
+
+describe("the key of a Book now tap", () => {
+  const error = (status: number, code: string | null = null) => ({ status, code, message: null, details: null });
+
+  it("is spent by a refusal the server chose", () => {
+    expect(bookRefusalIsFinal(error(409, "no_unit_free"))).toBe(true);
+    expect(bookRefusalIsFinal(error(403, "id_check_needed"))).toBe(true);
+    expect(bookRefusalIsFinal(error(400, "validation_error"))).toBe(true);
+    // rn-pay was down: the contract says nothing was created.
+    expect(bookRefusalIsFinal(error(503, "payments_unavailable"))).toBe(true);
+  });
+
+  it("is kept when the booking may exist with its reply lost", () => {
+    expect(bookRefusalIsFinal(error(0))).toBe(false);
+    expect(bookRefusalIsFinal(error(500))).toBe(false);
+    expect(bookRefusalIsFinal(error(502))).toBe(false);
+    expect(bookRefusalIsFinal(error(503))).toBe(false);
+    expect(bookRefusalIsFinal(error(504))).toBe(false);
+    expect(bookRefusalIsFinal(null)).toBe(false);
   });
 });
 

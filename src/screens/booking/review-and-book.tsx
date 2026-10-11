@@ -16,6 +16,7 @@ import { apiError } from "@/lib/api-error";
 import {
   bookErrorText,
   bookLabel,
+  bookRefusalIsFinal,
   daysLabel,
   howLabel,
   idCheckCopy,
@@ -164,9 +165,9 @@ export default function ReviewAndBookScreen() {
       });
     } catch (error) {
       const failure = apiError(error);
-      // An answer ends this tap. No answer at all may mean the booking was made
-      // and its reply lost, so the next tap asks with the same key.
-      if (failure && failure.status > 0) clientKey.current = null;
+      // A refusal ends this tap. No answer, or a fault on the way, may mean the
+      // booking was made and its reply lost, so the next tap asks with the same key.
+      if (bookRefusalIsFinal(failure)) clientKey.current = null;
       if (failure?.code === "move_not_allowed") setMovedFrom(null);
       // The terms moved on while the screen was open: the box empties and is asked for again.
       if (failure?.code === "terms_not_accepted") setTickedFor(null);
