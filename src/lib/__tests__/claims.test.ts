@@ -7,6 +7,12 @@ import {
   amountLines,
   claimBookingLine,
   claimRowSub,
+  damageBlocked,
+  damageErrorText,
+  damageHold,
+  damageMax,
+  damageMaxLine,
+  damageNotice,
   deadlineLabel,
   decideLine,
   effectRows,
@@ -20,12 +26,15 @@ import {
   isVideoUrl,
   kindLabel,
   otherName,
+  parseRupees,
   raisedByLine,
   readClaim,
   replyAlreadyIn,
   replyErrorText,
   replyHold,
   replyView,
+  reportUntilLine,
+  rupeesBody,
   statusBanner,
   takesDecision,
   waitsForReturn,
@@ -320,6 +329,74 @@ describe("the customer's fault report", () => {
     expect(faultErrorText(err({ code: "claim_exists" }))).toBe("You have already reported a fault on this booking. It is with Renit.");
     expect(faultErrorText(err({ code: "validation_error", details: { fields: { photos: ["Add at least one photo or video."] } } }))).toBe("Add at least one photo or video.");
     expect(faultErrorText(err({ status: 0 }))).toBe("We couldn't reach Renit. Check your connection and try again.");
+  });
+});
+
+describe("the shop's damage report", () => {
+  it("reads whole rupees from what was typed", () => {
+    expect(parseRupees("650")).toBe(650);
+    expect(parseRupees("₹1,200")).toBe(1200);
+    expect(parseRupees("12.50")).toBe(1250);
+    expect(parseRupees("")).toBeNull();
+    expect(parseRupees("abc")).toBeNull();
+    expect(rupeesBody(650)).toBe("650.00");
+  });
+
+  it("allows at most the deposit less the late fee", () => {
+    expect(damageMax({ deposit: "3000.00", late_fee: "0.00" })).toBe(3000);
+    expect(damageMax({ deposit: "3000.00", late_fee: "1220.00" })).toBe(1780);
+    expect(damageMax({ deposit: "3000.00", late_fee: "3000.00" })).toBe(0);
+    expect(damageMax({ deposit: "0.00" })).toBe(0);
+    expect(damageMax({ deposit: "abc" })).toBe(0);
+    expect(damageMaxLine({ deposit: "3000.00", late_fee: "0.00" })).toBe("Up to the deposit of ₹3,000");
+    expect(damageMaxLine({ deposit: "3000.00", late_fee: "1220.00" })).toBe("Up to ₹1,780: the deposit of ₹3,000 less ₹1,220 for late days");
+  });
+
+  it("holds Send for each thing that is missing, in the order the form asks", () => {
+    expect(damageHold("", "650", 1, 3000)).toBe("Say what happened.");
+    expect(damageHold("A broken stick", "", 1, 3000)).toBe("Say how much you are asking for.");
+    expect(damageHold("A broken stick", "0", 1, 3000)).toBe("Say how much you are asking for.");
+    expect(damageHold("A broken stick", "3001", 1, 3000)).toBe("The most you can ask for is ₹3,000: the deposit less any late fee.");
+    expect(damageHold("A broken stick", "650", 0, 3000)).toBe("Add at least one photo of the damage.");
+    expect(damageHold("A broken stick", "650", 1, 3000)).toBeNull();
+    expect(damageHold("A broken stick", "3000", 1, 3000)).toBeNull();
+    expect(damageHold("A broken stick", "1", 1, 0)).toBe("The most you can ask for is ₹0: the deposit less any late fee.");
+  });
+
+  const shop = (over = {}) => ({
+    can: ["report_problem"],
+    stage: "returned" as const,
+    claim_open: false,
+    report_problem_until: "2026-10-10T05:12:00Z",
+    money: { deposit: "3000.00", late_fee: "0.00" } as never,
+    ...over,
+  });
+
+  it("is offered when the server says so", () => {
+    expect(damageBlocked(shop(), NOW)).toBeNull();
+  });
+
+  it("says which of the reasons it is not offered, and points to Get help where nothing can be claimed (A-50)", () => {
+    expect(damageBlocked(shop({ can: [], claim_open: true }), NOW)).toContain("already with Renit");
+    expect(damageBlocked(shop({ can: [], stage: "out" }), NOW)).toContain("once the item is back");
+    expect(damageBlocked(shop({ can: [], money: { deposit: "3000.00", late_fee: "3000.00" } as never }), NOW)).toBe(
+      "Nothing is left of the deposit, so a damage claim can't be made. Use Get help to talk to Renit's desk."
+    );
+    expect(damageBlocked(shop({ can: [] }), new Date("2026-10-10T06:00:00Z"))).toBe("The 24 hours to report a problem have passed. Use Get help to talk to Renit's desk.");
+  });
+
+  it("says what Renit does with the report", () => {
+    expect(damageNotice("Aarav")).toBe("Renit decides from the two sets of photos within three working days. Aarav can reply once.");
+    expect(reportUntilLine("2026-10-10T05:12:00Z", NOW)).toBe("You have until 10:42 am tomorrow.");
+    expect(reportUntilLine(null, NOW)).toBeNull();
+  });
+
+  it("says why a report was refused, with the server's own ceiling", () => {
+    expect(damageErrorText(err({ code: "too_late" }))).toContain("24 hours to report a problem have passed");
+    expect(damageErrorText(err({ code: "amount_too_large", details: { max: "1780.00" } }))).toBe("The most you can ask for is ₹1,780: the deposit less any late fee.");
+    expect(damageErrorText(err({ code: "amount_too_large", details: { max: "0.00" } }))).toContain("Nothing is left of the deposit");
+    expect(damageErrorText(err({ code: "claim_exists" }))).toBe("You have already reported a problem on this booking. It is with Renit.");
+    expect(damageErrorText(err({ code: "validation_error", details: { fields: { amount: ["A valid number is required."] } } }))).toBe("A valid number is required.");
   });
 });
 

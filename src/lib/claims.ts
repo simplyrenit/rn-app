@@ -1,4 +1,5 @@
 import { ApiError, fieldErrors } from "@/lib/api-error";
+import type { BookingShop } from "@/lib/shop-booking";
 import { BookingCustomer, addDays, dayOf, dayShort, money, rangeLabel, timeAndDay, todayIst } from "@/lib/booking";
 import { Side } from "@/lib/capture";
 import { reached } from "@/lib/day-of";
@@ -405,4 +406,95 @@ export function faultErrorText(error: ApiError | null): string {
     default:
       return error.message ?? "Something went wrong on our side. Try again.";
   }
+}
+
+// ---- The shop's damage report (SH-11, N12) --------------------------------------------------------
+
+/** Whole rupees from what was typed: digits only. Null for nothing typed. */
+export function parseRupees(input: string): number | null {
+  const digits = input.replace(/[^\d]/g, "");
+  return digits ? Number(digits) : null;
+}
+
+/** The request's `amount`: money is a string with two decimals. */
+export const rupeesBody = (rupees: number) => `${rupees}.00`;
+
+/** The most that can be asked for: the deposit less any late fee (the server refuses more with `amount_too_large`). */
+export function damageMax(money_: { deposit: string; late_fee?: string | null }): number {
+  const left = Number(money_.deposit) - Number(money_.late_fee ?? 0);
+  return Number.isFinite(left) && left > 0 ? Math.floor(left) : 0;
+}
+
+/** Why "Send to Renit" is off, or null. */
+export function damageHold(statement: string, amount: string, photos: number, max: number): string | null {
+  if (!statement.trim()) return "Say what happened.";
+  const rupees = parseRupees(amount);
+  if (rupees === null || rupees <= 0) return "Say how much you are asking for.";
+  if (rupees > max) return `The most you can ask for is ${money(max)}: the deposit less any late fee.`;
+  return photos > 0 ? null : "Add at least one photo of the damage.";
+}
+
+/**
+ * Why the damage form is not offered, or null when it is. `can` has `report_problem`
+ * only once the item is back, while the 24 hours last, and while something is left of
+ * the deposit (A-50): when it does not, the words say which, and point to Get help
+ * where nothing can be claimed.
+ */
+export function damageBlocked(
+  booking: Pick<BookingShop, "can" | "stage" | "claim_open" | "report_problem_until" | "money">,
+  now: Date
+): string | null {
+  if (booking.can.includes("report_problem")) return null;
+  if (booking.claim_open) return "A problem is already with Renit on this booking. Open the booking to see where it stands.";
+  if (booking.stage === "out") return "A problem can be reported once the item is back and the customer has typed your code.";
+  if (booking.stage === "returned" && damageMax(booking.money) <= 0) {
+    return "Nothing is left of the deposit, so a damage claim can't be made. Use Get help to talk to Renit's desk.";
+  }
+  if (booking.report_problem_until && reached(booking.report_problem_until, now)) {
+    return "The 24 hours to report a problem have passed. Use Get help to talk to Renit's desk.";
+  }
+  return "A problem can't be reported on this booking now.";
+}
+
+/** SH-11's line under the box: "Up to the deposit of ₹3,000". With late days the deposit is less. */
+export function damageMaxLine(money_: { deposit: string; late_fee?: string | null }): string {
+  const max = damageMax(money_);
+  return Number(money_.late_fee ?? 0) > 0
+    ? `Up to ${money(max)}: the deposit of ${money(money_.deposit)} less ${money(money_.late_fee)} for late days`
+    : `Up to the deposit of ${money(money_.deposit)}`;
+}
+
+/** SH-11's notice. */
+export function damageNotice(name: string): string {
+  return `Renit decides from the two sets of photos within three working days. ${name} can reply once.`;
+}
+
+export function damageErrorText(error: ApiError | null): string {
+  if (!error || error.status === 0) return "We couldn't reach Renit. Check your connection and try again.";
+  switch (error.code) {
+    case "too_late":
+      return "The 24 hours to report a problem have passed. Use Get help to talk to Renit's desk.";
+    case "amount_too_large": {
+      const max = typeof error.details?.max === "string" ? Number(error.details.max) : NaN;
+      return max > 0
+        ? `The most you can ask for is ${money(max)}: the deposit less any late fee.`
+        : "Nothing is left of the deposit, so a damage claim can't be made. Use Get help to talk to Renit's desk.";
+    }
+    case "claim_exists":
+      return "You have already reported a problem on this booking. It is with Renit.";
+    case "stage_not_allowed":
+      return "A problem can be reported once the item is back. This booking is not at that stage.";
+    case "validation_error": {
+      const fields = fieldErrors(error);
+      return fields.amount ?? fields.statement ?? fields.photos ?? "Check the words, the amount and the photos, then try again.";
+    }
+    default:
+      return error.message ?? "Something went wrong on our side. Try again.";
+  }
+}
+
+/** "You have until Tue 27 Oct, 6:40 pm." from `report_problem_until`, said against the server's day. */
+export function reportUntilLine(until: string | null | undefined, now: Date): string | null {
+  const by = deadlineLabel(until, now);
+  return by ? `You have until ${by}.` : null;
 }

@@ -2,6 +2,7 @@ import { answerCustomerWindowChange } from "@/backend/shop-bookings";
 import { shopBookingQueryKey, useShopBooking } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
 import { GetHelp } from "@/components/booking/get-help";
+import { ClaimRows } from "@/components/claims/claim-rows";
 import { BookingLoadError, BookingLoading, MoneyLine, Notice, Panel, Pill, SummaryCard } from "@/components/booking/parts";
 import { Records } from "@/components/capture/record-card";
 import { Timeline } from "@/components/booking/timeline";
@@ -275,6 +276,9 @@ function BookingPage({ booking, now, receivedAt }: { booking: BookingShop; now: 
 
         <CustomerCard booking={booking} now={now} />
         <MoneyCard booking={booking} />
+
+        {/* A damage claim the shop made, a fault report or a "not as described" report against it. */}
+        <ClaimRows ids={booking.claims} role="owner" />
 
         {can("request_window_change") ? (
           <Panel>

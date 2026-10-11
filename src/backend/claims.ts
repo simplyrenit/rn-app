@@ -1,8 +1,9 @@
 import { BookingCustomer } from "@/lib/booking";
-import { Claim, readClaim } from "@/lib/claims";
+import { Claim, rupeesBody, readClaim } from "@/lib/claims";
 import { BOOKINGS_ENDPOINT, CLAIMS_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { serverTimeFromHeaders } from "@/lib/server-clock";
+import type { BookingShop } from "@/lib/shop-booking";
 import { useQuery } from "react-query";
 
 /** API-CONTRACT OE-K. Claims are read by either party of the booking; the fault and damage reports are booking actions. */
@@ -44,6 +45,21 @@ export async function reportFault(
   photos: string[]
 ): Promise<{ claim: Claim; booking: BookingCustomer }> {
   const { data } = await axiosInstance.post<{ claim: unknown; booking: BookingCustomer }>(bookingUrl(number, "claims/fault/"), {
+    statement: statement.trim(),
+    photos,
+  });
+  return { claim: need(data?.claim), booking: data.booking };
+}
+
+/** The shop reports a problem at the return: an amount up to the deposit, the words, the photos. `409 too_late`, `amount_too_large`, `claim_exists`. */
+export async function reportDamage(
+  number: string,
+  rupees: number,
+  statement: string,
+  photos: string[]
+): Promise<{ claim: Claim; booking: BookingShop }> {
+  const { data } = await axiosInstance.post<{ claim: unknown; booking: BookingShop }>(bookingUrl(number, "claims/damage/"), {
+    amount: rupeesBody(rupees),
     statement: statement.trim(),
     photos,
   });

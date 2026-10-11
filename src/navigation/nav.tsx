@@ -59,6 +59,7 @@ import { endingFromPush, ringTakesScreen } from "@/lib/shop-ring";
 import ShopBookingScreen from "@/screens/shop/booking";
 import ShopHandoverScreen from "@/screens/shop/handover";
 import ShopReturnScreen from "@/screens/shop/return";
+import ShopReportProblemScreen from "@/screens/shop/report-problem";
 import DraftPhotosScreen from "@/screens/shop/draft-photos";
 import CaptureScreen from "@/screens/capture/capture";
 import { captureQueue, useCaptureUploads } from "@/backend/capture-jobs";
@@ -855,6 +856,11 @@ export default function Navigation() {
         <Stack.Screen
           name="ShopReturn"
           component={ShopReturnScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="ShopReportProblem"
+          component={ShopReportProblemScreen}
           getId={({ params }) => params?.number}
         />
         {/* The photo walk-through for drafts (ENG-192), on the root stack so the tab

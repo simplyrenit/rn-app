@@ -3,14 +3,16 @@ import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoadError, BookingLoading, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { useServerNow } from "@/components/booking/use-server-now";
+import { ClaimRows } from "@/components/claims/claim-rows";
 import { CodeBoxes } from "@/components/capture/code";
 import { ReturnSets } from "@/components/capture/moment-sets";
 import { RecordCardBody, Records, useRecord } from "@/components/capture/record-card";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { Block, StepList } from "@/components/handover/parts";
+import { Block, LinkRow, StepList } from "@/components/handover/parts";
 import { SLOW_POLL_MS } from "@/lib/booking";
 import { otherSetOffered, recordWanted } from "@/lib/capture";
+import { reportUntilLine } from "@/lib/claims";
 import { captured, dayBlock } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { BookingShop } from "@/lib/shop-booking";
@@ -147,8 +149,19 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
         </View>
       ) : null}
 
-      {/* Reporting the problem itself (the form, the evidence, the amount) is ENG-253's
-          screen; it opens from here once the booking is `returned` and `can` has `report_problem`. */}
+      {/* The problem itself (SH-11): once the customer has typed the code the booking is `returned`, and
+          the server's `can` offers `report_problem` for 24 hours, while something is left of the deposit. */}
+      {booking.stage === "returned" && booking.can.includes("report_problem") ? (
+        <Panel>
+          <LinkRow
+            title="Report a problem"
+            sub={reportUntilLine(booking.report_problem_until, now) ?? "Something damaged or missing, with photos and an amount."}
+            onPress={() => navigation.navigate("ShopReportProblem", { number })}
+          />
+        </Panel>
+      ) : null}
+
+      <ClaimRows ids={booking.claims} role="owner" />
 
       <Panel>
         <GetHelp booking={booking} />

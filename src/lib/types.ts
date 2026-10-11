@@ -403,6 +403,8 @@ export type RootStackParamList = {
   ShopHandover: { number: string };
   /** SH-10: the shop's return, with the handover set beside the return set and the code to show. */
   ShopReturn: { number: string };
+  /** SH-11: the shop reports a problem once the item is back: what happened, how much, photos (ENG-253). */
+  ShopReportProblem: { number: string };
   /** The photo walk-through for drafts that need photos (ENG-192, SH-12). */
   DraftPhotos: undefined;
   /**
