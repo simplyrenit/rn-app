@@ -16,6 +16,7 @@ import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tok
 import { selectionFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
+import ShopHome from "@/screens/shop/home";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useMemo, useState } from "react";
@@ -70,7 +71,7 @@ function RentalCard({ booking, onPress }: { booking: BookingCustomer; onPress: (
  * read again every time the tab comes into view, so a booking that moved on
  * while the customer was elsewhere is never shown at its old stage.
  */
-export default function Rentals() {
+function MyRentals() {
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useTypedNavigation();
   const { color, isDark } = useTheme();
@@ -244,4 +245,14 @@ export default function Rentals() {
       </View>
     </NonScrollableContainer>
   );
+}
+
+/**
+ * The Rentals tab. A merchant's phone opens it on the shop (Today and Bookings,
+ * ENG-210) with their own rentals one tap away; everyone else sees their rentals
+ * as before. An owner who is not a merchant reaches the shop from Profile.
+ */
+export default function Rentals() {
+  const { userDetails } = useGlobalContext();
+  return userDetails?.account_type === "merchant" ? <ShopHome mine={<MyRentals />} /> : <MyRentals />;
 }

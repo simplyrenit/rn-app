@@ -365,6 +365,10 @@ export type RootStackParamList = {
    * holds: drawn at once, then checked against the live answer, which decides.
    */
   ShopRing: { number: string; ring?: Ring };
+  /** The shop's Today and Bookings for an owner who has no Rentals tab view of them (ENG-210). */
+  ShopToday: undefined;
+  /** One booking as its shop sees it (SH-07). */
+  ShopBooking: { number: string };
   [key: string]: object | undefined;
 };
 

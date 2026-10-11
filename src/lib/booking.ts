@@ -1395,7 +1395,7 @@ export function bookingBanner(booking: BookingCustomer): Banner {
 }
 
 /** A past moment: the time when it was today, else the day and the time. */
-function momentLabel(iso: string, now: Date): string {
+export function momentLabel(iso: string, now: Date = new Date()): string {
   const day = dayOf(iso);
   if (!day) return "";
   return day === todayIst(now) ? clock(iso) : `${dayShort(day)}, ${clock(iso)}`;

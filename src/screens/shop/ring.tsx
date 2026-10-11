@@ -1,10 +1,10 @@
-import { liveQueryKey, shopBookingQueryKey, acceptBooking, refuseBooking, useLive, useShopBooking } from "@/backend/shop-ring";
+import { acceptBooking, refuseBooking, useLive, useShopBooking } from "@/backend/shop-ring";
+import { refreshShop } from "@/backend/shop-today";
 import { dismissRingNotifications } from "@/backend/notifications";
 import { BottomBar, Panel, Thumb } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { Button, EmptyState, Skeleton, Text } from "@/components/core";
 import { RefuseSheet } from "@/components/shop/refuse-sheet";
-import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { errorFeedback, successFeedback } from "@/lib/haptics";
@@ -35,7 +35,7 @@ import {
 import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useIsFocused, useRoute } from "@react-navigation/native";
+import { StackActions, useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { BellIcon, CheckCircleIcon, ExclamationTriangleIcon, MapPinIcon } from "react-native-heroicons/outline";
@@ -233,11 +233,14 @@ function EndedView({
   summary,
   here,
   onDone,
+  onSee,
 }: {
   ending: RingEnding;
   summary: RingSummary | null;
   here: boolean;
   onDone: () => void;
+  /** An accepted request has a booking to go and see. */
+  onSee?: () => void;
 }) {
   const { color } = useTheme();
   const copy = endingCopy(ending, summary?.firstName ?? null, here);
@@ -304,7 +307,16 @@ function EndedView({
         ) : null}
       </ScrollView>
       <BottomBar>
-        <Button onPress={onDone}>Done</Button>
+        {accepted && onSee ? (
+          <>
+            <Button onPress={onSee}>See booking</Button>
+            <Button variant="ghost" onPress={onDone}>
+              Done
+            </Button>
+          </>
+        ) : (
+          <Button onPress={onDone}>Done</Button>
+        )}
       </BottomBar>
     </View>
   );
@@ -355,7 +367,6 @@ export default function ShopRingScreen() {
   const queryClient = useQueryClient();
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { userDetails } = useGlobalContext();
   const focused = useIsFocused();
   const active = useAppActive();
   const pushed = useMemo(() => parseRing(params.ring), [params.ring]);
@@ -386,10 +397,12 @@ export default function ShopRingScreen() {
   );
 
   const close = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"));
+  // The booking takes this screen's place, so "back" from it is not a ring that is over.
+  const see = () => navigation.dispatch(StackActions.replace("ShopBooking", { number: params.number }));
   const settle = () => {
     void dismissRingNotifications(params.number);
-    void queryClient.invalidateQueries(liveQueryKey(userDetails?.username));
-    void queryClient.invalidateQueries(shopBookingQueryKey(params.number));
+    // Today, the bookings lists and their counts, and the live answer all moved with this answer.
+    refreshShop(queryClient);
   };
 
   /** One answer at a time. A failed tap shows what the server said, or reads the server when it cannot say. */
@@ -450,14 +463,14 @@ export default function ShopRingScreen() {
       />
     );
   } else if (view.kind === "here") {
-    body = <EndedView ending={view.ending} summary={summary} here onDone={close} />;
+    body = <EndedView ending={view.ending} summary={summary} here onDone={close} onSee={see} />;
   } else if (view.kind === "ended") {
-    body = <EndedView ending={view.ending} summary={summary} here={false} onDone={close} />;
+    body = <EndedView ending={view.ending} summary={summary} here={false} onDone={close} onSee={see} />;
   } else if (view.kind === "unknown") {
     const finished = booking.data ? endingFromBooking(booking.data) : null;
     body = booking.data ? (
       finished ? (
-        <EndedView ending={finished} summary={summary} here={false} onDone={close} />
+        <EndedView ending={finished} summary={summary} here={false} onDone={close} onSee={see} />
       ) : (
         <View style={{ flex: 1, justifyContent: "center" }}>
           <EmptyState

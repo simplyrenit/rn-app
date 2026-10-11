@@ -15,14 +15,29 @@ interface Props {
   /** Present when a day is set: clears it. */
   onClear?: () => void;
   onCancel: () => void;
+  /** The heading. "Closed until" is what this was made for. */
+  title?: string;
+  /** The line under it, from the day now picked. */
+  line?: (picked: string | null) => string;
 }
+
+const closedUntilLine = (picked: string | null) =>
+  picked ? `You open again on ${dayLabel(picked)}.` : "Pick the day you open again.";
 
 /**
  * One day, for "Closed until". The range picker next door picks two; this is the
  * same modal surface with a single selected day, because Closed until is a day
  * the shop opens on, not a stretch.
  */
-export function DayPickerModal({ value, minDate, onPick, onClear, onCancel }: Props) {
+export function DayPickerModal({
+  value,
+  minDate,
+  onPick,
+  onClear,
+  onCancel,
+  title = "Closed until",
+  line = closedUntilLine,
+}: Props) {
   const { color } = useTheme();
   const [picked, setPicked] = useState<string | null>(value);
 
@@ -40,12 +55,10 @@ export function DayPickerModal({ value, minDate, onPick, onClear, onCancel }: Pr
           onPress={() => {}}
         >
           <Text fontSize="text-md" fontWeight="font-bold" style={styles.heading}>
-            Closed until
+            {title}
           </Text>
           <Text fontSize="text-sm" tone="body" style={styles.sub}>
-            {picked
-              ? `You open again on ${dayLabel(picked)}.`
-              : "Pick the day you open again."}
+            {line(picked)}
           </Text>
           <Calendar
             current={picked ?? minDate}

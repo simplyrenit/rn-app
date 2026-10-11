@@ -2,11 +2,11 @@ import { answerWindowChange, bookingQueryKey, fetchCancelOutcome } from "@/backe
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
 import { Panel, SummaryCard } from "@/components/booking/parts";
 import { PaymentsList } from "@/components/booking/payments-list";
+import { Timeline } from "@/components/booking/timeline";
 import { Button, Text } from "@/components/core";
 import { apiError } from "@/lib/api-error";
 import {
   BookingCustomer,
-  TimelineRow,
   bookingBanner,
   bookingHow,
   cancelHint,
@@ -26,62 +26,8 @@ import React, { useRef, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { CheckCircleIcon, ClockIcon, MapPinIcon, XCircleIcon } from "react-native-heroicons/outline";
-import { CheckIcon } from "react-native-heroicons/solid";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "react-query";
-
-const MARK = 20;
-
-/** One line of the timeline: a tick for what happened, a ring for what is next, an empty ring after. */
-function TimelineLine({ row, last }: { row: TimelineRow; last: boolean }) {
-  const { color } = useTheme();
-  const done = row.state === "done";
-  const next = row.state === "next";
-  return (
-    <View
-      style={{ flexDirection: "row", gap: space.md }}
-      accessible
-      accessibilityLabel={`${row.label}, ${row.when}${done ? ", done" : next ? ", next" : ""}`}
-    >
-      <View style={{ alignItems: "center" }}>
-        <View
-          style={{
-            width: MARK,
-            height: MARK,
-            borderRadius: radius.full,
-            borderWidth: 2,
-            borderColor: done || next ? color.brand : color.inputLine,
-            backgroundColor: done ? color.brand : "transparent",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {done ? (
-            <CheckIcon size={12} color={color.onBrand} />
-          ) : next ? (
-            <View style={{ width: 8, height: 8, borderRadius: radius.full, backgroundColor: color.brand }} />
-          ) : null}
-        </View>
-        {last ? null : (
-          <View style={{ width: 2, flex: 1, minHeight: space.md, backgroundColor: done ? color.brand : color.inputLine }} />
-        )}
-      </View>
-      <View style={{ flex: 1, flexDirection: "row", gap: space.sm, paddingBottom: last ? 0 : space.md }}>
-        <Text
-          fontSize="text-md"
-          fontWeight={next ? "font-bold" : "font-normal"}
-          tone={row.state === "todo" ? "body" : "default"}
-          style={{ flex: 1 }}
-        >
-          {row.label}
-        </Text>
-        <Text fontSize="text-sm" fontWeight={next ? "font-bold" : "font-normal"} tone={next ? "brand" : "body"}>
-          {row.when}
-        </Text>
-      </View>
-    </View>
-  );
-}
 
 /**
  * BK-08, the booking screen: where the booking stands, what happened and what
@@ -256,9 +202,7 @@ export function BookingDetails({ booking }: { booking: BookingCustomer }) {
             Timeline
           </Text>
           <Panel style={{ padding: space.md }}>
-            {rows.map((row, index) => (
-              <TimelineLine key={`${row.label}-${index}`} row={row} last={index === rows.length - 1} />
-            ))}
+            <Timeline rows={rows} />
           </Panel>
         </View>
       ) : null}

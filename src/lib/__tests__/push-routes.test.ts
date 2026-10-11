@@ -1,5 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
-import { pushRoute } from "../push-routes";
+import { PushRoute, pushRoute } from "../push-routes";
+
+const numberOf = (route: PushRoute | null) => (route && "number" in route ? route.number : undefined);
 
 const push = (type: string, over: Record<string, unknown> = {}) => ({
   type,
@@ -34,9 +36,9 @@ describe("pushRoute", () => {
   });
 
   it("reads the extra fields of a type without needing them", () => {
-    expect(pushRoute(push("refused", { reason: "not_available" }))?.number).toBe("RN-24831");
-    expect(pushRoute(push("window", { what: "request" }))?.number).toBe("RN-24831");
-    expect(pushRoute(push("refund", { amount: "99.00", destination: "UPI asha@okhdfcbank" }))?.number).toBe("RN-24831");
+    expect(numberOf(pushRoute(push("refused", { reason: "not_available" })))).toBe("RN-24831");
+    expect(numberOf(pushRoute(push("window", { what: "request" })))).toBe("RN-24831");
+    expect(numberOf(pushRoute(push("refund", { amount: "99.00", destination: "UPI asha@okhdfcbank" })))).toBe("RN-24831");
   });
 
   it("ignores a type this build does not know", () => {
@@ -85,10 +87,28 @@ describe("pushRoute", () => {
     });
   });
 
-  it("leaves the owner's other pushes to ENG-210", () => {
-    // Types both sides get are routed by who this copy is for.
-    expect(pushRoute(push("confirmed", { role: "owner" }))).toBeNull();
-    expect(pushRoute(push("cancelled", { role: "owner" }))).toBeNull();
+  it("opens the shop's page for every owner type that is about one booking", () => {
+    for (const type of ["lapsed", "confirmed", "window", "deposit_paid", "cancelled", "started", "returned", "closed", "claim"]) {
+      expect(pushRoute(push(type, { role: "owner" }))).toEqual({ screen: "ShopBooking", number: "RN-24831" });
+    }
+    // The same type to the customer opens their own booking.
+    expect(pushRoute(push("confirmed", { role: "customer" }))).toEqual({ screen: "Booking", number: "RN-24831" });
+  });
+
+  it("sends the owner's other types where the contract says", () => {
+    expect(pushRoute(push("shop_closed", { role: "owner", booking: null, reason: "missed_requests" }))).toEqual({ screen: "ShopToday" });
+    expect(pushRoute(push("bank_account", { role: "owner", booking: null, status: "verified" }))).toEqual({ screen: "BankAccount" });
+    expect(pushRoute(push("product_checked", { role: "owner", booking: null, live: 3, flagged: 1 }))).toEqual({ screen: "myProducts" });
+  });
+
+  it("has no phone screen for a payout, and ignores an owner type it does not know", () => {
+    expect(pushRoute(push("payout", { role: "owner", booking: null, payout: "pout_1", amount: "1830.00" }))).toBeNull();
+    expect(pushRoute(push("something_new", { role: "owner" }))).toBeNull();
+  });
+
+  it("does not guess the role of a push that has none", () => {
+    const { role: _role, ...noRole } = push("confirmed");
+    expect(pushRoute(noRole)).toBeNull();
   });
 
   it("opens nothing without a booking number", () => {

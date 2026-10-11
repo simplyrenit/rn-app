@@ -49,7 +49,9 @@ import {
   setupRingChannel,
 } from "@/backend/notifications";
 import { PushRoute } from "@/lib/push-routes";
-import { shopBookingQueryKey } from "@/backend/shop-ring";
+import { refreshShop } from "@/backend/shop-today";
+import ShopBookingScreen from "@/screens/shop/booking";
+import { ShopTodayScreen } from "@/screens/shop/home";
 import ShopRingScreen from "@/screens/shop/ring";
 import ArrivalWindowScreen from "@/screens/booking/arrival-window";
 import BookingScreen from "@/screens/booking/booking";
@@ -412,6 +414,18 @@ export default function Navigation() {
         // Keyed by booking: a ring for one that is already open comes back to it.
         navigationRef.navigate("ShopRing", { number: route.number, ring: route.ring ?? undefined });
         break;
+      case "ShopBooking":
+        navigationRef.navigate("ShopBooking", { number: route.number });
+        break;
+      case "ShopToday":
+        navigationRef.navigate("ShopToday");
+        break;
+      case "BankAccount":
+        navigationRef.navigate("BankAccount");
+        break;
+      case "myProducts":
+        navigationRef.navigate("myProducts");
+        break;
     }
   }, []);
   const openBooking = React.useCallback(
@@ -462,14 +476,15 @@ export default function Navigation() {
           void queryClient.invalidateQueries("bookings");
           return;
         }
+        // Whatever the shop's push was about, what its screens show is now out of date.
+        refreshShop(queryClient);
         // A ring that arrives with the app open takes over the screen, as it does
         // from the tray. When it ends, wherever it was answered, the ring screen
         // that is open reads that and says so, and the tray forgets the ring.
-        // Every account's copy of the live answer starts with this key.
-        void queryClient.invalidateQueries("shop-live");
-        void queryClient.invalidateQueries(shopBookingQueryKey(route.number));
-        if (route.ended) void dismissRingNotifications(route.number);
-        else openRoute(route);
+        if (route.screen === "ShopRing") {
+          if (route.ended) void dismissRingNotifications(route.number);
+          else openRoute(route);
+        }
       },
       onOpen: (route) => {
         openRoute(route);
@@ -697,6 +712,17 @@ export default function Navigation() {
         <Stack.Screen
           name="ShopRing"
           component={ShopRingScreen}
+          getId={({ params }) => params?.number}
+        />
+        {/* The shop's Today and Bookings for an owner who is not a merchant, and one
+            booking as its shop sees it (ENG-210). Keyed by booking, like the customer's. */}
+        <Stack.Screen
+          name="ShopToday"
+          component={ShopTodayScreen}
+        />
+        <Stack.Screen
+          name="ShopBooking"
+          component={ShopBookingScreen}
           getId={({ params }) => params?.number}
         />
         <Stack.Screen

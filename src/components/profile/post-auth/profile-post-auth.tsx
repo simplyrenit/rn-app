@@ -9,6 +9,7 @@ import {
   AdjustmentsHorizontalIcon,
   ArrowRightOnRectangleIcon,
   BuildingLibraryIcon,
+  CalendarDaysIcon,
   ChatBubbleLeftEllipsisIcon,
   CubeIcon,
   DevicePhoneMobileIcon,
@@ -137,6 +138,13 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
             inside a section run edge to edge with nothing between them. */}
         <View style={{ paddingVertical: PROFILE_LIST_GAP }}>
           <ProfileSection title="Account">
+            <ProfileRow
+              icon={CalendarDaysIcon}
+              label="Today and bookings"
+              onPress={() => {
+                router.navigate("ShopToday");
+              }}
+            />
             <ProfileRow
               icon={CubeIcon}
               label="My products"
