@@ -678,7 +678,7 @@ export default function CaptureScreen() {
             />
           ) : null}
 
-          {(state === "code" || state === "stuck") && (draft.desk === "dead" || draft.desk === "files") ? (
+          {(state === "code" && (draft.desk === "dead" || draft.desk === "files")) || (state === "stuck" && needsDesk(draft)) ? (
             <Panel style={{ padding: space.md, gap: space.md }}>
               <Text fontSize="text-md" fontWeight="font-bold">
                 Renit's desk has to finish this record

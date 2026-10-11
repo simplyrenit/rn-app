@@ -477,6 +477,31 @@ describe("the capture queue", () => {
     expect(queue.hasWork()).toBe(false);
   });
 
+  it("Try again after the stop sends the record once more, and a good answer lifts the stop", async () => {
+    let lacking = true;
+    const { queue, deps } = setup({
+      send: jest.fn(async () => (lacking ? ({ complete: false, missing: ["back"] } as unknown as Capture) : complete)),
+    });
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+    for (let kick = 0; kick < 6; kick += 1) {
+      queue.kick();
+      await queue.idle();
+    }
+    expect(queue.getDrafts()[0].desk).toBe("files");
+    lacking = false;
+    queue.retry(ID);
+    await queue.idle();
+    const after = queue.getDrafts()[0];
+    expect(after).toMatchObject({ done: true, error: null });
+    expect(after.desk).toBeUndefined();
+    expect(after.lost).toBeUndefined();
+    // The server has it all: the files go.
+    expect(deps.discard).toHaveBeenCalled();
+  });
+
   it("a file the phone no longer holds that the server misses goes back to the person", async () => {
     const { queue } = setup({
       send: jest.fn(async () => ({ complete: false, missing: ["side"] }) as unknown as Capture),

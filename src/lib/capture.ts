@@ -407,11 +407,11 @@ export function captureBody(draft: CaptureDraft): CaptureBody {
  * phone no longer holds, or the ID tick, goes back to the person.
  */
 export function applyAnswer(draft: CaptureDraft, capture: Pick<Capture, "complete" | "missing">): CaptureDraft {
-  if (capture.complete) return { ...draft, done: true, awaitingCode: false, error: null };
+  if (capture.complete) return { ...stopLifted(draft), done: true, awaitingCode: false, error: null };
   const missing = capture.missing ?? [];
   const beyondCode = missing.filter((m) => m !== "confirmation_code");
   if (beyondCode.length === 0 && missing.includes("confirmation_code")) {
-    return { ...draft, done: true, awaitingCode: true, error: null };
+    return { ...stopLifted(draft), done: true, awaitingCode: true, error: null };
   }
   // Not complete and nothing named: sent again by itself it would only be refused again. The person finishes it again.
   if (beyondCode.length === 0) return { ...draft, sealed: false, error: STILL_NEEDS };
@@ -492,6 +492,16 @@ export function reopenForMissing(draft: CaptureDraft, missing: string[]): Captur
   }
   return next.sealed ? next : { ...next, error: STILL_NEEDS };
 }
+
+/**
+ * A send the server took, with nothing of the record missing but possibly its code: the phone's stop on a file the server
+ * kept losing (`desk: "files"`, and the count behind it) is over. The marks about the codes stay: they are about the codes.
+ */
+const stopLifted = (draft: CaptureDraft): CaptureDraft => {
+  if (draft.desk !== "files" && !draft.lost) return draft;
+  const { lost: _lost, ...rest } = draft;
+  return draft.desk === "files" ? (({ desk: _desk, ...kept }) => kept)(rest) : rest;
+};
 
 /** The words when the phone has stopped sending a file the server keeps taking out. */
 export const FILES_KEPT =

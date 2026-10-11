@@ -618,6 +618,9 @@ describe("the record's card", () => {
     // The same after a send the server refused because the code had run out.
     const refused = markCodeDead(markNoMoreCodes({ ...theirs, done: false, awaitingCode: false, error: { text: "x", retry: false } }));
     expect(card({ state: "stuck", forOther: true, draft: refused })).toMatchObject({ text: DESK_FINISHES, button: null, help: true });
+    // Stuck with no more codes (the last one may not be spent yet): the desk panel and Get help, as before.
+    const stuckNoMore = markNoMoreCodes({ ...theirs, done: false, awaitingCode: false, error: { text: "x", retry: false } });
+    expect(card({ state: "stuck", forOther: true, draft: stuckNoMore })).toMatchObject({ text: DESK_FINISHES, button: null, help: true });
     // A record that never waited for a code has nothing to run out.
     expect(card({ state: "stuck", draft: { ...start(), error: { text: "x", retry: false } } })?.help).toBeUndefined();
     expect(fallbackErrorText(err("rate_limited", 429))).toMatch(/desk has to finish/);
@@ -641,6 +644,16 @@ describe("the record's card", () => {
     expect(nextWork([stopped])).toBeNull();
     expect(localUris(stopped)).toContain("file:///captures/back.jpg");
     expect(card({ state: "stuck", draft: stopped })).toMatchObject({ text: FILES_KEPT, button: null, help: true });
+    // The stop is lifted when a send is taken: complete, or with only the code missing. The count starts over.
+    expect(applyAnswer(stopped, { complete: true, missing: [] })).toMatchObject({ done: true, awaitingCode: false });
+    expect(applyAnswer(stopped, { complete: true, missing: [] }).desk).toBeUndefined();
+    expect(applyAnswer(stopped, { complete: true, missing: [] }).lost).toBeUndefined();
+    const codeOnly = applyAnswer({ ...stopped, forOther: true }, { complete: false, missing: ["confirmation_code"] });
+    expect(codeOnly).toMatchObject({ done: true, awaitingCode: true });
+    expect(codeOnly.desk).toBeUndefined();
+    expect(card({ state: "code", forOther: true, draft: codeOnly })).toMatchObject({ button: { label: "Type the code" } });
+    // The marks about the codes are not the stop's: they stay.
+    expect(applyAnswer({ ...stopped, desk: "codes", forOther: true }, { complete: false, missing: ["confirmation_code"] }).desk).toBe("codes");
     // A file the phone does not hold goes back to the person and is not counted.
     expect(applyAnswer(seal(uploaded(taken())), { complete: false, missing: ["window"] }).lost).toBeUndefined();
   });
