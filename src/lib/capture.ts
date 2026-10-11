@@ -497,21 +497,6 @@ export function uploadProgress(draft: CaptureDraft): UploadProgress {
   };
 }
 
-/** The line a day-of screen shows about a record that is not on the server yet. Null when there is nothing to say. */
-export function uploadLine(draft: CaptureDraft | null | undefined): { text: string; tone: "info" | "warning" } | null {
-  if (!draft) return null;
-  switch (draftState(draft)) {
-    case "uploading":
-      return { text: `Your photos and video are uploading. ${uploadProgress(draft).text}.`, tone: "info" };
-    case "waiting":
-      return { text: `${uploadProgress(draft).text}. ${draft.error?.text ?? OFFLINE}`, tone: "warning" };
-    case "stuck":
-      return { text: draft.error?.text ?? "This record needs you.", tone: "warning" };
-    default:
-      return null;
-  }
-}
-
 /** A file's size as a person reads it: "38 MB", "850 KB". */
 export function sizeLabel(bytes: number | null | undefined): string {
   const n = Number(bytes);

@@ -53,7 +53,6 @@ import {
   staleRefusal,
   startDraft,
   tick,
-  uploadLine,
   uploadProgress,
   videoLabel,
   videoProblem,
@@ -345,17 +344,11 @@ describe("what the screens say", () => {
     expect(uploadProgress({ ...d, done: true })).toMatchObject({ uploaded: 4, text: "All uploaded", fraction: 1 });
   });
 
-  it("the line on a day-of screen: nothing while recording or once it is up", () => {
-    expect(uploadLine(null)).toBeNull();
-    expect(uploadLine(taken())).toBeNull();
-    expect(uploadLine({ ...seal(taken()), done: true })).toBeNull();
-    expect(uploadLine(seal(taken()))).toEqual({
-      text: "Your photos and video are uploading. 0 of 4 uploaded.",
-      tone: "info",
-    });
+  it("a record waiting for a connection is in the waiting state", () => {
     const waiting = { ...seal(taken()), error: { text: "Waiting for a connection.", retry: true } };
-    expect(uploadLine(waiting)).toEqual({ text: "0 of 4 uploaded. Waiting for a connection.", tone: "warning" });
     expect(draftState(waiting)).toBe("waiting");
+    expect(draftState(seal(taken()))).toBe("uploading");
+    expect(draftState(taken())).toBe("recording");
   });
 
   it("the notice: what is recorded, who can see it, how long it is kept", () => {
