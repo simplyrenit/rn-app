@@ -34,6 +34,16 @@ export function makeDeviceInfo({ id, modelName, deviceName, os }: DeviceFacts): 
   return { device_id: id.slice(0, 64), device_name: name.slice(0, 100), platform };
 }
 
+/**
+ * The body of `POST /api/register-push-token/`: the device fields always, and the
+ * push token when the phone has one. A phone with notifications off has none, and
+ * the call is still made without it (API-CONTRACT, register-push-token), so its
+ * session is filled all the same.
+ */
+export function sessionBody(token: string | null | undefined, info: DeviceInfo) {
+  return token ? { expo_push_token: token, ...info } : { ...info };
+}
+
 let cached: Promise<DeviceInfo> | null = null;
 
 async function readOrMakeId(): Promise<string> {

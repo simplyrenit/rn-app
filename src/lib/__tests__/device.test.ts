@@ -12,7 +12,7 @@ jest.mock("../networkUtils", () => ({
 }));
 
 import axiosInstance from "../networkUtils";
-import { makeDeviceInfo, signOutCurrentDevice } from "../device";
+import { makeDeviceInfo, sessionBody, signOutCurrentDevice } from "../device";
 
 const post = (axiosInstance as unknown as { post: jest.MockedFunction<(...args: unknown[]) => Promise<unknown>> }).post;
 
@@ -61,5 +61,20 @@ describe("signOutCurrentDevice", () => {
   it("never throws, so a phone with no network still signs out", async () => {
     post.mockRejectedValue(new Error("offline"));
     await expect(signOutCurrentDevice()).resolves.toBeUndefined();
+  });
+});
+
+describe("sessionBody", () => {
+  const info = { device_id: "dev-1", device_name: "iPhone 15", platform: "ios" as const };
+
+  it("carries the token with the device fields when the phone has one", () => {
+    expect(sessionBody("ExponentPushToken[abc]", info)).toEqual({ expo_push_token: "ExponentPushToken[abc]", ...info });
+  });
+
+  it("carries the device fields alone when it has none", () => {
+    expect(sessionBody(undefined, info)).toEqual(info);
+    expect(sessionBody(null, info)).toEqual(info);
+    expect(sessionBody("", info)).toEqual(info);
+    expect(sessionBody(undefined, info)).not.toHaveProperty("expo_push_token");
   });
 });

@@ -40,6 +40,7 @@ import { CHAT_ENABLED } from "@/lib/config";
 import { RootStackParamList } from "@/lib/types";
 import { bookingQueryKey } from "@/backend/bookings";
 import {
+  registerDeviceSession,
   setupBookingNotifications,
   setupChatNotifications,
   setupNotificationListeners,
@@ -393,6 +394,9 @@ export default function Navigation() {
     }
 
     setupChatNotifications();
+    // Every start, once signed in: say which phone this session is, with the push
+    // token if the phone has one and without it if not (ENG-146).
+    void registerDeviceSession();
     const stopChat = setupNotificationListeners((conversationId) => {
       if (navigationRef.isReady()) {
         navigationRef.navigate("ChatDetails", { id: conversationId });

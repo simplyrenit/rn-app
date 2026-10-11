@@ -7,7 +7,7 @@ import { Platform } from "react-native";
 import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
 import axiosInstance from "@/lib/networkUtils";
 import { REGISTER_PUSH_TOKEN_ENDPOINT } from "@/lib/config";
-import { getDeviceInfo } from "@/lib/device";
+import { getDeviceInfo, sessionBody } from "@/lib/device";
 import { colors } from "@/lib/design-tokens";
 
 // Task name for background fetch
@@ -16,6 +16,25 @@ const MESSAGE_NOTIFICATION_TASK = "MESSAGE_NOTIFICATION_TASK";
 // Renit registers tokens with its authenticated API; Expo's persisted
 // auto-registration retries while offline before app code can handle it.
 void Notifications.setAutoServerRegistrationEnabledAsync(false);
+
+function expoProjectId(): string | undefined {
+  return Constants.easConfig?.projectId ?? Constants.expoConfig?.extra?.eas?.projectId;
+}
+
+/** The Expo push token, or undefined when it cannot be had (offline, no Expo answer). */
+async function fetchExpoToken(projectId: string): Promise<string | undefined> {
+  try {
+    await fetch("https://exp.host");
+    return (
+      await Notifications.getExpoPushTokenAsync({
+        projectId,
+        baseUrl: "https://exp.host/--/api/v2/",
+      })
+    ).data;
+  } catch {
+    return undefined;
+  }
+}
 
 // Function to register for push notifications
 export async function registerForPushNotificationsAsync() {
@@ -38,26 +57,15 @@ export async function registerForPushNotificationsAsync() {
       return;
     }
 
-    const projectId =
-      Constants.easConfig?.projectId ??
-      Constants.expoConfig?.extra?.eas?.projectId;
+    const projectId = expoProjectId();
 
     if (!projectId) {
       throw new Error("Missing EAS project ID for push notifications");
     }
 
-    try {
-      await fetch("https://exp.host");
-      token = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId,
-          baseUrl: "https://exp.host/--/api/v2/",
-        })
-      ).data;
-    } catch {
-      return;
-    }
-
+    token = await fetchExpoToken(projectId);
+    // As before: no token from Expo, nothing more to set up.
+    if (!token) return;
   } else {
     // Simulators and emulators cannot register for push. This is a developer
     // diagnostic, so it must not surface as a blocking alert over the UI.
@@ -98,16 +106,42 @@ export async function registerForPushNotificationsAsync() {
   return token;
 }
 
+/**
+ * Tells the server which phone this session is, at every start once signed in
+ * (ENG-146; API-CONTRACT `register-push-token`). The push token goes too when the
+ * phone already has one, and the call is made without it when it has none: with
+ * notifications off, on a simulator, or while Expo does not answer. That is what
+ * fills a session an older build started, so it stops being asked for a fresh
+ * code the phone has no screen for.
+ *
+ * It never asks for notification permission: that prompt stays where it was, with
+ * the chat subscription. A failure is not shown; the next start tries again.
+ */
+export async function registerDeviceSession(): Promise<void> {
+  let token: string | undefined;
+  try {
+    if (Device.isDevice) {
+      const { status } = await Notifications.getPermissionsAsync();
+      const projectId = expoProjectId();
+      if (status === "granted" && projectId) token = await fetchExpoToken(projectId);
+    }
+  } catch {
+    // No token this time; the device fields still go.
+  }
+  try {
+    await axiosInstance.post(REGISTER_PUSH_TOKEN_ENDPOINT, sessionBody(token, await getDeviceInfo()));
+  } catch {
+    // Quietly: tried again at the next start.
+  }
+}
+
 // Keep both chat transports supplied with the current Expo token.
 export async function updateUserPushToken(firebaseUid: string, pushToken: string) {
   try {
     // With the device fields (ENG-146): the server files the token under this
     // phone's session, and fills the platform of a session an older build started
     // so that it stops being asked for a fresh code.
-    await axiosInstance.post(REGISTER_PUSH_TOKEN_ENDPOINT, {
-      expo_push_token: pushToken,
-      ...(await getDeviceInfo()),
-    });
+    await axiosInstance.post(REGISTER_PUSH_TOKEN_ENDPOINT, sessionBody(pushToken, await getDeviceInfo()));
   } catch (error) {
   }
 
