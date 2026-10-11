@@ -239,7 +239,7 @@ export function ringingRow(ring: Ring): { title: string; sub: string; earn: stri
 
 // ---- Needs you ----------------------------------------------------------------------------
 
-export type NeedsIcon = "warning" | "clock" | "info";
+export type NeedsIcon = "warning" | "clock" | "info" | "camera";
 
 export type NeedsAction =
   /** Opens a booking. */
@@ -249,7 +249,9 @@ export type NeedsAction =
   /** My products, where flagged listings and prices to confirm are. */
   | { kind: "products" }
   /** The handover hours screen. */
-  | { kind: "hours" };
+  | { kind: "hours" }
+  /** "42 drafts need photos": the photo walk-through (ENG-192). */
+  | { kind: "photos" };
 
 export interface NeedsRow {
   key: string;
@@ -278,6 +280,8 @@ export function needsRow(item: NeedsYou, index: number): NeedsRow {
       return { key, icon: "warning", text: item.text, action: { kind: "products" } };
     case "no_hours":
       return { key, icon: "warning", text: item.text, action: { kind: "hours" } };
+    case "drafts_need_photos":
+      return { key, icon: "camera", text: item.text, action: { kind: "photos" } };
     default:
       return { key, icon: "info", text: item.text, action: null };
   }

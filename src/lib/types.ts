@@ -369,6 +369,8 @@ export type RootStackParamList = {
   ShopToday: undefined;
   /** One booking as its shop sees it (SH-07). */
   ShopBooking: { number: string };
+  /** The photo walk-through for drafts that need photos (ENG-192, SH-12). */
+  DraftPhotos: undefined;
   [key: string]: object | undefined;
 };
 

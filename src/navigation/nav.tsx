@@ -51,6 +51,7 @@ import {
 import { PushRoute } from "@/lib/push-routes";
 import { refreshShop } from "@/backend/shop-today";
 import ShopBookingScreen from "@/screens/shop/booking";
+import DraftPhotosScreen from "@/screens/shop/draft-photos";
 import { ShopTodayScreen } from "@/screens/shop/home";
 import ShopRingScreen from "@/screens/shop/ring";
 import ArrivalWindowScreen from "@/screens/booking/arrival-window";
@@ -724,6 +725,12 @@ export default function Navigation() {
           name="ShopBooking"
           component={ShopBookingScreen}
           getId={({ params }) => params?.number}
+        />
+        {/* The photo walk-through for drafts (ENG-192), on the root stack so the tab
+            bar is hidden while the camera is the point of the screen. */}
+        <Stack.Screen
+          name="DraftPhotos"
+          component={DraftPhotosScreen}
         />
         <Stack.Screen
           name="SavedAddresses"

@@ -190,6 +190,15 @@ describe("needsRow: what each item offers", () => {
     expect(needsRow({ kind: "no_hours", text: "Set your hours" }, 0).action).toEqual({ kind: "hours" });
   });
 
+  it("starts the photo walk-through from '42 drafts need photos'", () => {
+    expect(needsRow({ kind: "drafts_need_photos", count: 42, text: "42 drafts need photos" }, 0)).toEqual({
+      key: "drafts_need_photos-0",
+      icon: "camera",
+      text: "42 drafts need photos",
+      action: { kind: "photos" },
+    });
+  });
+
   it("shows a claim, an address to confirm and a kind it does not know as their words alone", () => {
     for (const kind of ["claim_deadline", "address_unconfirmed", "something_new"]) {
       expect(needsRow({ kind, text: "Some words" }, 4)).toMatchObject({ icon: "info", text: "Some words", action: null });

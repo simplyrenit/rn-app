@@ -32,7 +32,14 @@ import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useRef, useState } from "react";
 import { RefreshControl, ScrollView, Switch, TouchableOpacity, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
-import { BellIcon, ClockIcon, ExclamationTriangleIcon, InformationCircleIcon, PlusIcon } from "react-native-heroicons/outline";
+import {
+  BellIcon,
+  CameraIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  PlusIcon,
+} from "react-native-heroicons/outline";
 import { useQueryClient } from "react-query";
 import { QuickBlockSheet } from "./quick-block";
 
@@ -114,7 +121,12 @@ function CounterLabel() {
   );
 }
 
-const NEEDS_ICON = { warning: ExclamationTriangleIcon, clock: ClockIcon, info: InformationCircleIcon } as const;
+const NEEDS_ICON = {
+  warning: ExclamationTriangleIcon,
+  clock: ClockIcon,
+  info: InformationCircleIcon,
+  camera: CameraIcon,
+} as const;
 
 /** One item of "Needs you": the server's words, and what the phone can do about it. */
 function NeedsItem({
@@ -124,6 +136,7 @@ function NeedsItem({
   onBooking,
   onProducts,
   onHours,
+  onPhotos,
   onReturned,
   onExtend,
 }: {
@@ -133,14 +146,24 @@ function NeedsItem({
   onBooking: (number: string) => void;
   onProducts: () => void;
   onHours: () => void;
+  onPhotos: () => void;
   onReturned: (block: Block) => void;
   onExtend: (block: Block) => void;
 }) {
   const { color } = useTheme();
   const Icon = NEEDS_ICON[row.icon];
-  const tint = row.icon === "warning" ? color.danger : row.icon === "clock" ? color.warning : color.textBody;
-  const wash = row.icon === "warning" ? color.dangerWash : row.icon === "clock" ? color.warningWash : color.surfaceRaised;
+  const tint =
+    row.icon === "warning" ? color.danger : row.icon === "clock" ? color.warning : row.icon === "camera" ? color.brandText : color.textBody;
+  const wash =
+    row.icon === "warning"
+      ? color.dangerWash
+      : row.icon === "clock"
+      ? color.warningWash
+      : row.icon === "camera"
+      ? color.brandWash
+      : color.surfaceRaised;
   const action = row.action;
+  // The photos row has its own button ("Start"), so the row itself is not one.
   const open =
     action?.kind === "booking"
       ? () => onBooking(action.number)
@@ -159,7 +182,13 @@ function NeedsItem({
       <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
         {row.text}
       </Text>
-      {open ? <ChevronRightIcon size={20} color={color.textBody} /> : null}
+      {action?.kind === "photos" ? (
+        <Button size="compact" variant="outline" accessibilityLabel="Start taking photos" onPress={onPhotos}>
+          Start
+        </Button>
+      ) : open ? (
+        <ChevronRightIcon size={20} color={color.textBody} />
+      ) : null}
     </View>
   );
   return (
@@ -438,6 +467,7 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
                     onBooking={openBooking}
                     onProducts={() => navigation.navigate("myProducts")}
                     onHours={() => navigation.navigate("RentalHours")}
+                    onPhotos={() => navigation.navigate("DraftPhotos")}
                     onReturned={(block) =>
                       void blockAction(block, () => blockReturned(block.id), `${block.product.title} is back`)
                     }
