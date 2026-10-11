@@ -486,6 +486,23 @@ describe("the customer's fault report", () => {
       });
     });
 
+    it("one time, not two, when the extension is due inside the report's 24 hours: it is not the end of the extension by itself", () => {
+      // Reported at 6 pm (UTC 12:30), the extension is due back at noon the next day (UTC 06:30): inside the 24 hours.
+      const evening = claim({ kind: "fault", created_at: "2026-10-09T12:30:00Z", return_by: "2026-10-10T12:30:00Z", extensions: ["RN-24900"] });
+      const target = faultReturnTarget(evening, b({ stage: "closed" }), b({ number: "RN-24900", return_by: "2026-10-10T06:30:00Z" }));
+      // The claim's return_by is the later of the two (the server's rule), so `by` equals the report's time.
+      expect(target).toMatchObject({ by: "2026-10-10T12:30:00Z", extended: true });
+      expect(faultReturnLine(evening, target, NOW)).toBe("Bring the item back by 6:00 pm tomorrow. Any refund is paid once it is back.");
+    });
+
+    it("once Renit has decided, 'if Renit does not agree' is gone: the extension's return alone", () => {
+      const decided = { ...fault, status: "decided" as const, money_pending: true };
+      const target = faultReturnTarget(decided, b({ stage: "closed", extensions: ["RN-24900"] }), extension);
+      const line = faultReturnLine(decided, target, NOW);
+      expect(line).toBe("The item goes back at the end of your extension: bring it back by 8:00 pm on Wed 14 Oct. Any refund is paid once it is back.");
+      expect(line).not.toMatch(/does not agree/);
+    });
+
     it("an answer without the field is read from the bookings: the claim's return_by is not taken for the chain's", () => {
       const old = { ...fault, extensions: null };
       expect(faultReturnTarget(old, b({ stage: "closed", extensions: ["RN-24900"] }), extension)).toEqual({

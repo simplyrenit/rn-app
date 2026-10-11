@@ -321,11 +321,18 @@ export function faultReturnLine(
     return `The item was due back by ${when}. Bring it back as soon as you can: any refund is paid once it is back.`;
   }
   if (!target.extended) return `The item goes back first: bring it back by ${when}. Any refund is paid once it is back.`;
-  // Extended: the 24 hours after the report still decide the refund if Renit does not agree, while they are ahead.
-  if (target.early && !reached(target.early, now)) {
+  // Extended. The report's own time (the 24 hours after it) still decides the refund if Renit does not agree, while it is
+  // ahead, undecided, and earlier than the extension's return: only then are there two times to say. When the extension is
+  // due inside those hours there is one time, and it is not "the end of the extension" by itself.
+  const twoTimes =
+    claim.status !== "decided" && target.early !== null && !reached(target.early, now) && new Date(target.by).getTime() > new Date(target.early).getTime();
+  if (twoTimes && target.early) {
     return `Bring the item back by ${deadlineLabel(target.early, now)} to keep a refund if Renit does not agree. The latest it can come back is ${when}, the end of your extension. Any refund is paid once it is back.`;
   }
-  return `The item goes back at the end of your extension: bring it back by ${when}. Any refund is paid once it is back.`;
+  const inside = target.early !== null && new Date(target.by).getTime() <= new Date(target.early).getTime();
+  return inside
+    ? `Bring the item back by ${when}. Any refund is paid once it is back.`
+    : `The item goes back at the end of your extension: bring it back by ${when}. Any refund is paid once it is back.`;
 }
 
 // ---- What the screen says about where the claim stands --------------------------------------------
