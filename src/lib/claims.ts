@@ -220,23 +220,78 @@ export function faultReturnBy(claim: Pick<Claim, "kind" | "created_at" | "return
   return Number.isFinite(at) ? new Date(at + FAULT_RETURN_HOURS * 3_600_000).toISOString() : null;
 }
 
+/** The bookings of a chain the "bring it back" line reads: what the claim's booking and its last live extension say. */
+type ChainBooking = Pick<BookingCustomer, "number" | "stage" | "exit" | "extensions" | "return_by">;
+
+/**
+ * The last booking of the chain a fault report sits on that is still live: the claim's own booking when no extension
+ * of it is (an extension that was cancelled or refused takes no item on), else the last live extension, and on from
+ * that one. Decision T-33: a fault report on a rental that was extended is settled when the item comes back at the end
+ * of the last extension, and the claim's own booking is `closed` once its extension has started, so it cannot say
+ * whether the item is out. `read` fetches a booking by its number; a chain is two or three bookings.
+ */
+export async function chainEnd<B extends ChainBooking>(first: B, read: (number: string) => Promise<B>): Promise<B> {
+  let current = first;
+  for (let step = 0; step < 8; step += 1) {
+    let next: B | null = null;
+    for (const number of current.extensions) {
+      const extension = await read(number);
+      if (!extension.exit) next = extension;
+    }
+    if (!next) return current;
+    current = next;
+  }
+  return current;
+}
+
+/** Where the item is to come back, and whether it still has to: from the claim and the chain's two ends. */
+export interface ReturnTarget {
+  stillOut: boolean;
+  /** When it is due back: the claim's `return_by`, or the last extension's return when the rental was extended. */
+  by: string | null;
+  /** The rental was extended: the item goes back at the end of the last extension (T-33). */
+  extended: boolean;
+}
+
+/**
+ * `first` is the claim's own booking and `end` the last live booking of its chain (`chainEnd`; the same booking when
+ * nothing extends it). Null while the chain is still being read, so nothing is said from the closed booking meanwhile.
+ */
+export function faultReturnTarget(
+  claim: Pick<Claim, "kind" | "created_at" | "return_by">,
+  first: ChainBooking | null | undefined,
+  end: ChainBooking | null | undefined
+): ReturnTarget | null {
+  if (!first) return null;
+  const out = (b: ChainBooking) => b.stage === "out" && !b.exit;
+  const plain = { stillOut: out(first), by: faultReturnBy(claim), extended: false };
+  if (first.extensions.length === 0) return plain;
+  if (!end) return null;
+  // Every extension was cancelled or refused: the item is back on its first booking's terms.
+  if (end.number === first.number) return plain;
+  return { stillOut: out(first) || out(end), by: end.return_by, extended: true };
+}
+
 /**
  * What the customer is told about bringing the item back, for a fault report that is
  * open or decided with its money waiting on the return (`money_pending`): the item goes
- * back first (A-32, N14). Only while the booking still says the item is out (`stillOut`):
- * once it is back there is nothing to bring. Null for anything else.
+ * back first (A-32, N14). Only while the chain still says the item is out (`target.stillOut`):
+ * once it is back there is nothing to bring. When the rental was extended the line points at the end of the
+ * last extension (T-33), not at the 24 hours after the report. Null for anything else.
  */
 export function faultReturnLine(
-  claim: Pick<Claim, "kind" | "created_at" | "return_by" | "status" | "money_pending">,
-  stillOut: boolean,
+  claim: Pick<Claim, "kind" | "status" | "money_pending">,
+  target: ReturnTarget | null,
   now: Date
 ): string | null {
-  if (!stillOut || (claim.status === "decided" && !claim.money_pending)) return null;
-  const by = faultReturnBy(claim);
-  if (!by) return null;
-  const when = deadlineLabel(by, now);
-  return reached(by, now)
-    ? `The item was due back by ${when}. Bring it back as soon as you can: any refund is paid once it is back.`
+  if (!target || !target.stillOut || claim.kind !== "fault" || (claim.status === "decided" && !claim.money_pending)) return null;
+  if (!target.by) return null;
+  const when = deadlineLabel(target.by, now);
+  if (reached(target.by, now)) {
+    return `The item was due back by ${when}. Bring it back as soon as you can: any refund is paid once it is back.`;
+  }
+  return target.extended
+    ? `The item goes back at the end of your extension: bring it back by ${when}. Any refund is paid once it is back.`
     : `The item goes back first: bring it back by ${when}. Any refund is paid once it is back.`;
 }
 

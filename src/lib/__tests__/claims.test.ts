@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, jest } from "@jest/globals";
 import type { ApiError } from "../api-error";
 import {
   Claim,
@@ -21,7 +21,9 @@ import {
   faultHold,
   faultNotice,
   faultReturnBy,
+  chainEnd,
   faultReturnLine,
+  faultReturnTarget,
   forfeitLine,
   isMyReport,
   newClaimIds,
@@ -398,17 +400,84 @@ describe("the customer's fault report", () => {
 
   it("tells the customer the item goes back first, only while the booking says it is still out", () => {
     const fault = claim({ kind: "fault", created_at: "2026-10-09T05:10:00Z" });
-    expect(faultReturnLine(fault, true, NOW)).toBe("The item goes back first: bring it back by 10:40 am tomorrow. Any refund is paid once it is back.");
-    expect(faultReturnLine(fault, true, new Date("2026-10-10T06:00:00Z"))).toBe(
+    const out = { stillOut: true, by: faultReturnBy(fault), extended: false };
+    const back = { ...out, stillOut: false };
+    expect(faultReturnLine(fault, out, NOW)).toBe("The item goes back first: bring it back by 10:40 am tomorrow. Any refund is paid once it is back.");
+    expect(faultReturnLine(fault, out, new Date("2026-10-10T06:00:00Z"))).toBe(
       "The item was due back by 10:40 am today. Bring it back as soon as you can: any refund is paid once it is back."
     );
     // The item is back (reported 10 am Saturday, returned that evening, decided Sunday night): nothing to bring.
-    expect(faultReturnLine(fault, false, NOW)).toBeNull();
-    expect(faultReturnLine({ ...fault, status: "decided", money_pending: true }, false, NOW)).toBeNull();
+    expect(faultReturnLine(fault, back, NOW)).toBeNull();
+    expect(faultReturnLine({ ...fault, status: "decided", money_pending: true }, back, NOW)).toBeNull();
     // Decided and the money waits, the item still out: still to bring back. Decided and nothing waits: nothing to say.
-    expect(faultReturnLine({ ...fault, status: "decided", money_pending: true }, true, NOW)).not.toBeNull();
-    expect(faultReturnLine({ ...fault, status: "decided", money_pending: false }, true, NOW)).toBeNull();
-    expect(faultReturnLine(claim(), true, NOW)).toBeNull();
+    expect(faultReturnLine({ ...fault, status: "decided", money_pending: true }, out, NOW)).not.toBeNull();
+    expect(faultReturnLine({ ...fault, status: "decided", money_pending: false }, out, NOW)).toBeNull();
+    expect(faultReturnLine(claim(), out, NOW)).toBeNull();
+    // Nothing is said while the chain is still being read.
+    expect(faultReturnLine(fault, null, NOW)).toBeNull();
+  });
+
+  describe("a fault report on a rental that was extended (T-33): the item comes back at the end of the last extension", () => {
+    const fault = claim({ kind: "fault", created_at: "2026-10-09T05:10:00Z", return_by: "2026-10-10T05:10:00Z" });
+    const b = (over: Partial<Parameters<typeof faultReturnTarget>[1] & object> & { number?: string } = {}) => ({
+      number: "RN-24831",
+      stage: "out" as const,
+      exit: "" as const,
+      extensions: [] as string[],
+      return_by: "2026-10-09T14:30:00Z",
+      ...over,
+    });
+    const extension = b({ number: "RN-24900", return_by: "2026-10-14T14:30:00Z" });
+
+    it("the claim's own booking is closed once its extension has started, and the line still points at the extension's return", () => {
+      const first = b({ stage: "closed", extensions: ["RN-24900"] });
+      const target = faultReturnTarget(fault, first, extension);
+      expect(target).toEqual({ stillOut: true, by: "2026-10-14T14:30:00Z", extended: true });
+      expect(faultReturnLine(fault, target, NOW)).toBe(
+        "The item goes back at the end of your extension: bring it back by 8:00 pm on Wed 14 Oct. Any refund is paid once it is back."
+      );
+    });
+
+    it("an extension accepted but not started: the item is still out on the first booking, and the line points at the extension's return", () => {
+      const first = b({ extensions: ["RN-24900"] });
+      expect(faultReturnTarget(fault, first, b({ number: "RN-24900", stage: "ready", return_by: "2026-10-14T14:30:00Z" }))).toEqual({
+        stillOut: true,
+        by: "2026-10-14T14:30:00Z",
+        extended: true,
+      });
+    });
+
+    it("says nothing once the extension is back, and nothing while the chain is still being read", () => {
+      const first = b({ stage: "closed", extensions: ["RN-24900"] });
+      const returned = faultReturnTarget(fault, first, { ...extension, stage: "returned" });
+      expect(returned?.stillOut).toBe(false);
+      expect(faultReturnLine(fault, returned, NOW)).toBeNull();
+      expect(faultReturnTarget(fault, first, null)).toBeNull();
+      expect(faultReturnTarget(fault, undefined, null)).toBeNull();
+    });
+
+    it("an extension that was cancelled or refused changes nothing: the item goes back on the first booking's terms", () => {
+      const first = b({ extensions: ["RN-24900"] });
+      expect(faultReturnTarget(fault, first, first)).toEqual({ stillOut: true, by: "2026-10-10T05:10:00Z", extended: false });
+    });
+
+    it("a rental that was never extended reads the claim's own return_by", () => {
+      expect(faultReturnTarget(fault, b(), null)).toEqual({ stillOut: true, by: "2026-10-10T05:10:00Z", extended: false });
+    });
+
+    it("finds the last live booking of the chain, a cancelled extension passed over, and walks on from an extension that was itself extended", async () => {
+      const all: Record<string, ReturnType<typeof b>> = {
+        "RN-24900": b({ number: "RN-24900", exit: "cancelled" as never }),
+        "RN-24901": b({ number: "RN-24901", stage: "closed", extensions: ["RN-24902"] }),
+        "RN-24902": b({ number: "RN-24902", return_by: "2026-10-20T14:30:00Z" }),
+      };
+      const read = jest.fn(async (number: string) => all[number]);
+      const first = b({ stage: "closed", extensions: ["RN-24900", "RN-24901"] });
+      expect((await chainEnd(first, read)).number).toBe("RN-24902");
+      // Nothing extends it, or every extension is cancelled: the booking itself.
+      expect(await chainEnd(b(), read)).toMatchObject({ number: "RN-24831" });
+      expect((await chainEnd(b({ extensions: ["RN-24900"] }), read)).number).toBe("RN-24831");
+    });
   });
 
   it("says why a report was refused", () => {

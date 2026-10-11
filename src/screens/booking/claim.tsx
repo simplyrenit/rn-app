@@ -12,7 +12,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { EvidencePhoto, PhotoRow, discardEvidence, uploadPhotos } from "@/components/handover/photo-row";
 import { useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
-import { SLOW_POLL_MS, momentLabel } from "@/lib/booking";
+import { BookingCustomer, SLOW_POLL_MS, momentLabel } from "@/lib/booking";
 import {
   Claim,
   againstMe,
@@ -20,7 +20,9 @@ import {
   claimBookingLine,
   deadlineLabel,
   effectRows,
+  chainEnd,
   faultReturnLine,
+  faultReturnTarget,
   kindLabel,
   otherName,
   raisedByLine,
@@ -186,9 +188,16 @@ function ClaimBody({ read, receivedAt }: { read: ClaimRead; receivedAt: number }
     staleTime: 0,
     retry: 1,
   });
-  // A fault report sends the item back first: "bring it back by…" only while the booking still says it is out.
-  const stillOut = booking.data?.stage === "out" && !booking.data.exit;
-  const returnLine = role === "customer" ? faultReturnLine(claim, stillOut, now) : null;
+  // A fault report sends the item back first. On a rental that was extended the claim's own booking is closed once its
+  // extension has started, so the chain is read to its last live booking, and the line points at that return (T-33).
+  const first = booking.data;
+  const extensions = first?.extensions.join(",") ?? "";
+  const chain = useQuery([...bookingQueryKey(bookingNumber), "chain", extensions], () => chainEnd(first as BookingCustomer, fetchBooking), {
+    enabled: role === "customer" && claim.kind === "fault" && extensions !== "",
+    staleTime: 0,
+    retry: 1,
+  });
+  const returnLine = role === "customer" ? faultReturnLine(claim, faultReturnTarget(claim, first, chain.data), now) : null;
   const raised = claim.created_at ? momentLabel(claim.created_at, now) : "";
 
   return (
