@@ -41,6 +41,9 @@ function Deposit({
   const [changed, setChanged] = useState(false);
   const shown = useRef(depositCharge(booking).amount);
   shown.current = depositCharge(booking).amount;
+  // The tap's work reads the booking as it is at the tap, not as it was when this was drawn.
+  const latest = useRef(booking);
+  latest.current = booking;
 
   const openBooking = () => navigation.navigate("Booking", { number: booking.number });
 
@@ -57,9 +60,14 @@ function Deposit({
     setChanged(false);
     void pay(async () => {
       const named = shown.current;
+      // The one rule for resuming any payment (P2-1): the booking carries the pay page of
+      // the payment that is open and can still be paid. Only when there is none is a new
+      // one asked for. After a page has run out the booking is read again and carries none.
+      const now = latest.current;
+      const open = now.pay_now?.purpose === "deposit" ? now.pay_now.payment : null;
+      if (open) return open;
       let answer;
       try {
-        // The same payment comes back while it can still be paid, and a new one once that has run out.
         answer = await payDeposit(booking.number);
       } catch (error) {
         const failure = apiError(error);
@@ -68,9 +76,6 @@ function Deposit({
           await refresh();
           return null;
         }
-        // rn-api could not reach the payments service to make a page. One that was already made may still open.
-        const open = booking.pay_now?.purpose === "deposit" ? booking.pay_now.payment : null;
-        if (failure?.code === "payments_unavailable" && open) return open;
         throw error;
       }
       queryClient.setQueryData(bookingQueryKey(booking.number), answer.booking);
@@ -228,9 +233,10 @@ function Deposit({
 /**
  * BK-13, "Deposit due". The deposit is asked for 24 hours before the handover
  * and must be paid 2 hours before it (N3b); paying it makes the booking `ready`,
- * which shows the address and the handover code. It is paid like the rent: every
- * tap asks rn-api for the payment (`pay-deposit` gives back the open one while it
- * can still be paid), and `usePay` opens the pay page and asks what happened.
+ * which shows the address and the handover code. It is paid with the same hook as
+ * the ₹99 and the rent: an open payment is resumed from the booking's own
+ * `pay_now.payment`, a new one comes from `pay-deposit`, and `usePay` opens the
+ * pay page and asks rn-api what happened.
  * The screen draws what the booking says, so opening it from a reminder after the
  * deposit was paid shows "Deposit paid".
  */
