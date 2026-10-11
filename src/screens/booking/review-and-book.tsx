@@ -16,6 +16,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
 import {
   bookErrorText,
+  daysRefusal,
   bookLabel,
   bookRefusalIsFinal,
   daysLabel,
@@ -114,7 +115,17 @@ export default function ReviewAndBookScreen() {
     return (
       <NonScrollableContainer>
         {header}
-        {quoteQuery.isError ? (
+        {quoteQuery.isError && daysRefusal(apiError(quoteQuery.error)) ? (
+          // The server refused the days themselves: its own sentence, with the way back to the dates.
+          <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: SCREEN_GUTTER, gap: space.md }}>
+            <Notice tone="warning" icon="warning">
+              {daysRefusal(apiError(quoteQuery.error))}
+            </Notice>
+            <Button variant="outline" onPress={() => navigation.goBack()}>
+              Change the dates
+            </Button>
+          </View>
+        ) : quoteQuery.isError ? (
           <BookingLoadError error={quoteQuery.error} what="the price" onRetry={() => void quoteQuery.refetch()} />
         ) : (
           <BookingLoading label="Working out the price" />

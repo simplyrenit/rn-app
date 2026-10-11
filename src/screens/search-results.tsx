@@ -11,6 +11,8 @@ import {
 } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import DateRangePicker from "@/components/core/date-range-picker";
+import { apiError } from "@/lib/api-error";
+import { BOOKING_DAYS_AHEAD, daysRefusal } from "@/lib/booking";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { TaxonomyList } from "@/components/post/taxonomy-list";
 import { ConditionFilter } from "@/components/search/condition-filter";
@@ -357,8 +359,10 @@ export default function SearchResults() {
     } catch (error) {
       console.error(error);
       if (seq !== searchSeqRef.current) return true;
-      toast.error("We couldn't update these results.", {
-        message: "Check your connection and try again.",
+      // Days the server will not search (beyond 180 days ahead): its own sentence, not "check your connection".
+      const refusal = daysRefusal(apiError(error));
+      toast.error(refusal ? "These dates can't be searched." : "We couldn't update these results.", {
+        message: refusal ?? "Check your connection and try again.",
       });
       return false;
     } finally {
@@ -1093,6 +1097,7 @@ export default function SearchResults() {
           endDate={range.endDate ? new Date(range.endDate) : undefined}
           onConfirm={confirmDates}
           onCancel={() => setDatesOpen(false)}
+          maxDaysAhead={BOOKING_DAYS_AHEAD}
         />
       )}
     </NonScrollableContainer>

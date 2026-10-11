@@ -31,7 +31,10 @@ import {
   ringCopy,
   bookLabel,
   bookedDays,
+  BOOKING_DAYS_AHEAD,
   blockerText,
+  daysRefusal,
+  lastBookableDay,
   clock,
   datesBlocker,
   datesLine,
@@ -1450,5 +1453,26 @@ describe("an owner delivery's address", () => {
       "Lodha Bellissimo, Mahalaxmi, Mumbai"
     );
     expect(deliveryPlace(null)).toBeNull();
+  });
+});
+
+describe("how far ahead days can reach (T-25)", () => {
+  const refusal = (fields: Record<string, string[]>) => ({ status: 400, code: "validation_error", message: "A field is missing or wrong.", details: { fields } });
+
+  it("a booking or a search reaches at most 180 days ahead: the last day the pickers offer", () => {
+    expect(BOOKING_DAYS_AHEAD).toBe(180);
+    expect(lastBookableDay("2026-10-12")).toBe("2027-04-10");
+    // The server accepts today + 180 and refuses the day after: the picker stops on the first.
+    expect(lastBookableDay("2026-10-12") < "2027-04-11").toBe(true);
+  });
+
+  it("shows the server's own sentence when it still refuses the days (the quote, Book now, a search)", () => {
+    expect(daysRefusal(refusal({ last_day: ["You can book up to 180 days ahead."] }))).toBe("You can book up to 180 days ahead.");
+    expect(daysRefusal(refusal({ end_date: ["Pick days within the next 180 days."] }))).toBe("Pick days within the next 180 days.");
+    expect(daysRefusal(refusal({ first_day: ["The first day is in the past."] }))).toBe("The first day is in the past.");
+    expect(daysRefusal(refusal({ address_id: ["Delivery needs one of your saved addresses."] }))).toBeNull();
+    expect(daysRefusal({ status: 409, code: "no_unit_free", message: null, details: null })).toBeNull();
+    expect(daysRefusal(null)).toBeNull();
+    expect(bookErrorText(refusal({ last_day: ["You can book up to 180 days ahead."] }))).toBe("You can book up to 180 days ahead.");
   });
 });

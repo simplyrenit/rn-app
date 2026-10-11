@@ -6,12 +6,15 @@ import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { SavedAddress, addressTitle } from "@/lib/addresses";
+import { apiError } from "@/lib/api-error";
 import {
   DeliveryMode,
   PickedDays,
   addDays,
   bookedDays,
   datesBlocker,
+  daysRefusal,
+  lastBookableDay,
   dayCount,
   daysLabel,
   deliveryOption,
@@ -163,7 +166,12 @@ export default function BookingDatesScreen() {
   const taken = useMemo(() => bookedDays(product?.booked), [product?.booked]);
 
   const [picked, setPicked] = useState<PickedDays | null>(() =>
-    params.first_day && params.last_day && params.first_day >= today && params.last_day >= params.first_day
+    params.first_day &&
+    params.last_day &&
+    params.first_day >= today &&
+    params.last_day >= params.first_day &&
+    // Days a search or an earlier request carried that the server would refuse (more than 180 days ahead) are not kept.
+    params.last_day <= lastBookableDay(today)
       ? { first: params.first_day, last: params.last_day }
       : null
   );
@@ -349,6 +357,8 @@ export default function BookingDatesScreen() {
           <Calendar
             current={first ?? today}
             minDate={today}
+            // Days past the limit (T-25) are greyed and cannot be tapped: the server refuses them.
+            maxDate={lastBookableDay(today)}
             firstDay={1}
             hideExtraDays
             markedDates={markedDates}
@@ -424,6 +434,11 @@ export default function BookingDatesScreen() {
         {blocker ? (
           <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
             {blocker}
+          </Text>
+        ) : active.isError && first && daysRefusal(apiError(active.error)) ? (
+          // The server refused the days themselves: its own sentence, and trying again would not change it.
+          <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
+            {daysRefusal(apiError(active.error))}
           </Text>
         ) : active.isError && first ? (
           <Text fontSize="text-sm" tone="body">

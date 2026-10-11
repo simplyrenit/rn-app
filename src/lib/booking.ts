@@ -8,7 +8,7 @@
  * nothing here adds money up, it only says what the server sent.
  */
 import { SavedAddress, addressLine, addressTitle } from "@/lib/addresses";
-import { ApiError } from "@/lib/api-error";
+import { ApiError, fieldErrors } from "@/lib/api-error";
 import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
 import { DayHours, Hours, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
@@ -298,6 +298,28 @@ export function dayCount(firstDay: string, lastDay: string): number {
 }
 
 export const daysLabel = (n: number) => (n === 1 ? "1 day" : `${n} days`);
+
+/**
+ * How far ahead a search or a booking may reach: 180 days (decision T-25; the limit the product page already uses for
+ * the days it shows as taken). The server refuses a last day beyond it with 400 `validation_error`.
+ * Workaround, no contract field: the number is held here; the date pickers stop at it, and a refusal that still comes
+ * is shown in the server's own sentence (`daysRefusal`).
+ */
+export const BOOKING_DAYS_AHEAD = 180;
+
+/** The last day a booking or a search may name, from today. */
+export const lastBookableDay = (today: string): string => addDays(today, BOOKING_DAYS_AHEAD);
+
+/**
+ * The server's own sentence for days it refused ("You can book up to 180 days ahead.", "Pick days within the next 180
+ * days.", "The first day is in the past."): the first message of a 400 `validation_error` on the days, or null for any
+ * other failure.
+ */
+export function daysRefusal(error: ApiError | null | undefined): string | null {
+  if (error?.code !== "validation_error") return null;
+  const fields = fieldErrors(error);
+  return fields.last_day ?? fields.end_date ?? fields.first_day ?? fields.start_date ?? null;
+}
 
 /** Today in India: the first day anyone can book. */
 export const todayIst = (now: Date = new Date()) => istDay(now);
@@ -811,6 +833,9 @@ export function bookErrorText(error: ApiError | null): string {
       return "The rental terms have changed. Read them and tick the box again.";
     case "price_changed":
       return "The price changed. Check the new total, then book again.";
+    case "validation_error":
+      // Days the server will not take (more than 180 days ahead, in the past): its own sentence.
+      return daysRefusal(error) ?? error?.message ?? "We couldn't book this. Check the dates and try again.";
     case "move_not_allowed":
       return "Your earlier payment can no longer move to this booking. It is being refunded. Book again to pay now.";
     case "payments_unavailable":
