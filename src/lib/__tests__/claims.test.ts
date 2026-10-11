@@ -465,6 +465,28 @@ describe("the shop's damage report", () => {
     expect(problemLine("after_code")).toBeNull();
   });
 
+  it("a forfeited deposit: `can` has no report_problem and the time is null, and nothing crashes on either", () => {
+    const forfeited = shop({
+      can: [],
+      stage: "closed" as never,
+      report_problem_until: null,
+      money: { deposit: "3000.00", late_fee: "0.00", deposit_state: "forfeited" } as never,
+    });
+    expect(problemState(forfeited, NOW)).toBe("forfeited");
+    expect(damageBlocked(forfeited, NOW)).toBe(
+      "The deposit has already come to you, because the item was not back in time, so there is nothing to claim against. Use Get help if something is wrong."
+    );
+    // Also while the item is still out (the 72 hours passed, the item not back yet).
+    expect(problemState({ ...forfeited, stage: "out" as never }, NOW)).toBe("forfeited");
+    // A null time, whatever the state: the lines that read it say nothing instead of failing.
+    expect(reportUntilLine(null, NOW)).toBeNull();
+    expect(reportUntilLine(undefined, NOW)).toBeNull();
+    for (const stage of ["out", "returned", "closed"] as const) {
+      expect(() => problemState(shop({ can: [], stage: stage as never, report_problem_until: null }), NOW)).not.toThrow();
+      expect(() => damageBlocked(shop({ can: [], stage: stage as never, report_problem_until: null }), NOW)).not.toThrow();
+    }
+  });
+
   it("says `reported` only for a damage claim: a customer's fault report does not (review app-5 r2 #8)", () => {
     const later = new Date("2026-10-10T06:00:00Z");
     // The customer's fault report is a claim on the booking, open or decided; the shop reported nothing; the time is over.

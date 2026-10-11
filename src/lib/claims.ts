@@ -488,13 +488,15 @@ export function damageHold(statement: string, amount: string, photos: number, ma
  * deposit. The phone does not work those out; it only says which one is missing when `can` lacks it.
  *  - `open`: the form is offered. `after_code`: not yet, the customer has still to type the return code.
  *  - `none_left`: nothing is left of the deposit to claim against (A-50): say so, and point to Get help.
+ *  - `forfeited`: the item was not back in time and the deposit already came to the shop (`deposit_state` `forfeited`):
+ *    `can` has no `report_problem` then, and `report_problem_until` is null (it is only set while the stage is `returned`).
  *  - `reported`: a damage claim is already made. `passed`: the time is over. `unavailable`: none of those.
  *
  * `claimKinds` are the kinds of the booking's claims, once read: only a damage claim stops a second one, so a
  * customer's fault report (also a claim on the booking) does not make the shop's time that has passed read as
  * "already reported". While they are not known the booking's own `claim_open` and `claims` stand in (review app-5 r2 #8).
  */
-export type ProblemState = "open" | "after_code" | "none_left" | "reported" | "passed" | "unavailable";
+export type ProblemState = "open" | "after_code" | "none_left" | "forfeited" | "reported" | "passed" | "unavailable";
 
 export function problemState(
   booking: Pick<BookingShop, "can" | "stage" | "exit" | "claim_open" | "claims" | "report_problem_until" | "money">,
@@ -503,6 +505,7 @@ export function problemState(
 ): ProblemState {
   if (booking.can.includes("report_problem")) return "open";
   if (booking.exit) return "unavailable";
+  if (booking.money?.deposit_state === "forfeited") return "forfeited";
   // What is left of the deposit, as the server counts it (deposit less late fees); none when none was taken.
   if (damageMax(booking.money) <= 0) return "none_left";
   if (booking.stage === "out") return "after_code";
@@ -517,6 +520,8 @@ export function problemLine(state: ProblemState): string | null {
   switch (state) {
     case "none_left":
       return "Nothing is left of the deposit to claim against, so a problem can't be reported here. Use Get help to tell Renit's desk what is wrong.";
+    case "forfeited":
+      return "The deposit has already come to you, because the item was not back in time, so there is nothing to claim against. Use Get help if something is wrong.";
     case "reported":
       return "A problem has already been reported on this booking. Its claim is listed on the booking.";
     case "passed":

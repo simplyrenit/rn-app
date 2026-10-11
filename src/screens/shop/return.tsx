@@ -46,7 +46,8 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
   const kinds = useClaimKinds(booking.claims);
   const copy = returnCopy(booking, now, kinds);
   // Nothing left of the deposit to claim against (A-50): the way on is Get help, shown beside the words, not at the foot of the page.
-  const nothingLeft = problemState(booking, now, kinds) === "none_left";
+  const problem = problemState(booking, now, kinds);
+  const nothingLeft = problem === "none_left" || problem === "forfeited";
   const out = booking.stage === "out" && !booking.exit;
   const recorded = flags.mine || Boolean(record.draft?.sealed);
   const code = "return_code" in day ? day.return_code : null;

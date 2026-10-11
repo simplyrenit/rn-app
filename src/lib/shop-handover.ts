@@ -162,7 +162,7 @@ export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly stri
   // the lines below say so, they do not promise 24 hours the booking does not offer.
   const problem = problemState(b, now, claimKinds);
   const open = problem === "open";
-  const nothingLeft = problem === "none_left";
+  const nothingLeft = problem === "none_left" || problem === "forfeited";
   const until = open ? b.report_problem_until : null;
   // Late days come out of the deposit to the shop (N11): neither line may say the whole deposit goes back (review r1 #3).
   const late = depositAfterLate(b.money);
@@ -183,7 +183,9 @@ export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly stri
       ? [
           `${first} types it to finish the return.`,
           lateShare ? `${lateShare}.` : null,
-          "Nothing is left of the deposit to claim against: if something is wrong, use Get help.",
+          problem === "forfeited"
+            ? "The deposit has already come to you, so there is nothing to claim against: if something is wrong, use Get help."
+            : "Nothing is left of the deposit to claim against: if something is wrong, use Get help.",
         ]
           .filter(Boolean)
           .join(" ")
@@ -233,6 +235,7 @@ export function shopReturnSteps(b: BookingShop, recorded: boolean): Step[] {
 export function reportFirstNote(b: BookingShop, now: Date = new Date(), claimKinds?: readonly string[] | null): string {
   const first = `Finish the return first: show ${b.customer.first_name} the code.`;
   // Nothing left to claim against (A-50): say so now, not after the code, and point to Get help.
-  if (problemState(b, now, claimKinds) === "none_left") return `${first} ${problemLine("none_left")}`;
+  const state = problemState(b, now, claimKinds);
+  if (state === "none_left" || state === "forfeited") return `${first} ${problemLine(state)}`;
   return `${first} You then have 24 hours to report the problem, with these photos as the record.`;
 }

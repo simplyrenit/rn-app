@@ -294,6 +294,19 @@ describe("SH-10, the return", () => {
     expect(returnCopy(returned, new Date("2026-10-26T13:11:00Z")).returned?.body).toBe("Nothing is left of the deposit to claim against, so a problem can't be reported here. Use Get help to tell Renit's desk what is wrong. This rental is finished.");
   });
 
+  it("after a forfeited deposit (`report_problem_until` null, no report_problem in `can`) the return says so and does not fail", () => {
+    const money = { ...booking().money, deposit_state: "forfeited" };
+    // The item is still out and the 72 hours have passed: the code line says the deposit already came to the shop.
+    expect(returnCopy(out({ money, can: ["get_help"] }), BACK).codeSub).toBe(
+      "Aarav types it to finish the return. The deposit has already come to you, so there is nothing to claim against: if something is wrong, use Get help."
+    );
+    expect(reportFirstNote(out({ money, can: ["get_help"] }))).toContain("The deposit has already come to you");
+    // Closed once the item came back: no time, no report, and the card still draws.
+    const closed = out({ stage: "closed", money, can: ["get_help"], report_problem_until: null });
+    expect(() => returnCopy(closed, new Date("2026-10-29T10:00:00Z"))).not.toThrow();
+    expect(returnCopy(closed, new Date("2026-10-29T10:00:00Z")).returned?.body).toContain("The deposit has already come to you");
+  });
+
   it("after the code, the card says which reason it is when the server does not offer the report, and never promises the 24 hours", () => {
     const base = { stage: "returned", can: ["get_help"] as string[], report_problem_until: "2026-10-27T13:10:00Z" };
     const body = (over: Record<string, unknown>, now = new Date("2026-10-26T13:11:00Z")) => returnCopy(out({ ...base, ...over }), now).returned?.body;
