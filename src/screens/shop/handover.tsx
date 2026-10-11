@@ -231,6 +231,9 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
               Start the rental
             </Button>
           )}
+          <Text fontSize="text-xs" tone="body" style={{ textAlign: "center" }}>
+            {`If ${first}'s phone is off and the code can't be shown, Renit's desk can finish the handover by phone.`}
+          </Text>
         </Block>
       ) : null}
 
