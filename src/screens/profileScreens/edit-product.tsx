@@ -3,7 +3,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import IconButton from "@/components/profile/post-auth/profile-icon-button";
 import { ListingPrompts, ListingStatusPill } from "@/components/product/listing-status";
 import { apiError } from "@/lib/api-error";
-import { hasPrice, openBookingMessage, resolveListingStatus } from "@/lib/listing-status";
+import { blockedDatesOf, hasPrice, openBookingMessage, resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
@@ -212,14 +212,24 @@ const EditProductScreen: React.FC = () => {
                   isDarkMode={isDarkMode}
                 />
                 <IconButton
-                  onPress={() =>
+                  onPress={() => {
+                    // `blocked_dates`, never `booked`: the contract keeps `booked`
+                    // for the old meaning and the editor writes `blocked_dates`.
+                    const dates = blockedDatesOf(product);
+                    if (!dates) {
+                      // Update sends the whole list and replaces the server's, so an
+                      // answer without the field must not open the editor as "none".
+                      toast.error("We couldn't load your unavailable dates", {
+                        message: "Check your connection and try again.",
+                      });
+                      void getProductDetails();
+                      return;
+                    }
                     navigation.navigate("EditProductAvailability", {
-                      // `blocked_dates`, never `booked`: the contract keeps `booked`
-                      // for the old meaning and the editor writes `blocked_dates`.
-                      dates_blocked: product.blocked_dates ?? [],
+                      dates_blocked: dates,
                       name: product.name,
-                    })
-                  }
+                    });
+                  }}
                   leftIcon="CalendarIcon"
                   text="Unavailability"
                   isDarkMode={isDarkMode}

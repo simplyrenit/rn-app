@@ -96,3 +96,17 @@ export function listingPrompts(product: {
   if (needsWorth) prompts.push("Needs worth");
   return prompts;
 }
+
+/**
+ * The owner's unavailable dates, or null when the answer does not carry them.
+ *
+ * The editor's Update sends its whole list and the server replaces its own with
+ * it, so an answer without the field (an API not yet redeployed, or a serializer
+ * that dropped it) must not read as "no dates": opening the editor on that and
+ * pressing Update would clear the real ones.
+ */
+export function blockedDatesOf(product: {
+  blocked_dates?: { start_date: string; end_date: string }[] | null;
+}): { start_date: string; end_date: string }[] | null {
+  return Array.isArray(product.blocked_dates) ? product.blocked_dates : null;
+}

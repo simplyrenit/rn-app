@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   LISTING_STATUSES,
   STATUS_COPY,
+  blockedDatesOf,
   flagReasonText,
   hasPrice,
 
@@ -121,5 +122,19 @@ describe("listingPrompts", () => {
     expect(listingPrompts({ worth: "100.00" })).toEqual([]);
     // Neither field in the payload (a server without ENG-155): say nothing.
     expect(listingPrompts({})).toEqual([]);
+  });
+});
+
+describe("blockedDatesOf", () => {
+  it("returns the dates the answer carries, an empty list included", () => {
+    const dates = [{ start_date: "2026-10-20", end_date: "2026-10-22" }];
+    expect(blockedDatesOf({ blocked_dates: dates })).toBe(dates);
+    expect(blockedDatesOf({ blocked_dates: [] })).toEqual([]);
+  });
+
+  it("is null when the field is missing, so it is never read as no dates", () => {
+    expect(blockedDatesOf({})).toBeNull();
+    expect(blockedDatesOf({ blocked_dates: undefined })).toBeNull();
+    expect(blockedDatesOf({ blocked_dates: null })).toBeNull();
   });
 });
