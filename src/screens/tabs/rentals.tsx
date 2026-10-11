@@ -71,7 +71,17 @@ function RentalCard({ booking, onPress }: { booking: BookingCustomer; onPress: (
  * read again every time the tab comes into view, so a booking that moved on
  * while the customer was elsewhere is never shown at its old stage.
  */
-function MyRentals() {
+/**
+ * The screen's frame: a safe-area container of its own, or, inside the shop's own
+ * container (a merchant's third segment), none. Two safe-area views on top of each
+ * other each pad for the status bar, which left a blank band under the segments
+ * (review round 1, finding 8).
+ */
+function Frame({ embedded, children }: { embedded?: boolean; children: React.ReactNode }) {
+  return embedded ? <View style={{ flex: 1 }}>{children}</View> : <NonScrollableContainer>{children}</NonScrollableContainer>;
+}
+
+function MyRentals({ embedded = false }: { embedded?: boolean }) {
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useTypedNavigation();
   const { color, isDark } = useTheme();
@@ -102,12 +112,12 @@ function MyRentals() {
 
   if (!authTokens || !isAuthenticated) {
     return (
-      <NonScrollableContainer>
+      <Frame embedded={embedded}>
         <View style={{ flex: 1 }}>
           <View style={{ paddingHorizontal: SCREEN_GUTTER }}>{heading}</View>
           <ProfilePreAuth isDarkMode={isDark} />
         </View>
-      </NonScrollableContainer>
+      </Frame>
     );
   }
 
@@ -120,7 +130,7 @@ function MyRentals() {
   const empty = rentalsEmpty(list);
 
   return (
-    <NonScrollableContainer>
+    <Frame embedded={embedded}>
       <View style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER }}>
         {heading}
 
@@ -243,7 +253,7 @@ function MyRentals() {
           />
         )}
       </View>
-    </NonScrollableContainer>
+    </Frame>
   );
 }
 
@@ -254,5 +264,5 @@ function MyRentals() {
  */
 export default function Rentals() {
   const { userDetails } = useGlobalContext();
-  return userDetails?.account_type === "merchant" ? <ShopHome mine={<MyRentals />} /> : <MyRentals />;
+  return userDetails?.account_type === "merchant" ? <ShopHome mine={<MyRentals embedded />} /> : <MyRentals />;
 }
