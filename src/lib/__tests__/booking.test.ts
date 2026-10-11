@@ -495,6 +495,17 @@ describe("what is in the way", () => {
       expect(blockerText(code)).toBeTruthy();
     }
     expect(blockerText("something_new")).toBeNull();
+    // An extension's own blockers (ENG-220, T-30) have words too, so the price screen never greys the button with no reason.
+    for (const code of ["listing_unavailable", "claim_open", "already_extending", "shop_closed", "too_late_to_extend"]) {
+      expect(blockerText(code)).toBeTruthy();
+    }
+    expect(blockerText("listing_unavailable")).toBe("This item is not taking bookings right now. Ask the owner.");
+    expect(blockerText("claim_open")).toBe("A report on this booking is waiting for Renit's decision. It cannot be extended until then.");
+    expect(reviewBlocker(quote({ blockers: ["claim_open"] }))).toEqual({
+      code: "claim_open",
+      text: "A report on this booking is waiting for Renit's decision. It cannot be extended until then.",
+    });
+    expect(reviewBlocker(quote({ blockers: ["listing_unavailable", "shop_closed"] }))?.code).toBe("listing_unavailable");
   });
 
   it("names the shop's notice when the server gives it", () => {

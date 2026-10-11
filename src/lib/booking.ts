@@ -755,6 +755,17 @@ export function blockerText(code: string, details?: Record<string, unknown> | nu
       return "Add a phone number to your account to book. The pay page needs it.";
     case "linked_account":
       return "You can't book from this owner: your accounts share a phone number, a device or a bank account.";
+    // Only an extension has these (ENG-220, T-30): the quote lists them as codes, and the price screen says each in words.
+    case "listing_unavailable":
+      return "This item is not taking bookings right now. Ask the owner.";
+    case "claim_open":
+      return "A report on this booking is waiting for Renit's decision. It cannot be extended until then.";
+    case "already_extending":
+      return "You have already asked to extend this rental.";
+    case "shop_closed":
+      return "The shop is closed now. An extension can be asked for while it is open.";
+    case "too_late_to_extend":
+      return "It is too close to the return time for the shop to answer. Return the item, then book it again.";
     default:
       return null;
   }
