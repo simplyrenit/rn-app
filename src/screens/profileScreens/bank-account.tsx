@@ -1,6 +1,7 @@
 import {
   BankAccountInput,
   bankQueryKey,
+  fetchBankAccount,
   saveBankAccount,
   useBankAccount,
   verifyBankAccount,
@@ -22,14 +23,17 @@ import {
   BankAccount,
   BankForm,
   BankFormErrors,
-  PENDING_RECHECK_MS,
+  SubmitKey,
   accountTitle,
+  answerSettlesKey,
   attemptLimitMessage,
   bankFieldErrors,
   canCheckAgain,
   cleanAccountNumber,
   cleanIfsc,
   failureMessage,
+  landed,
+  submitKeyFor,
   validateBankForm,
   verifiedChip,
 } from "@/lib/bank";
@@ -40,7 +44,7 @@ import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { e164, isUnlocked } from "@/lib/unlock";
 import { uuidv4 } from "@/lib/uuid";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Alert, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import {
@@ -116,7 +120,6 @@ export default function BankAccountScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [rechecking, setRechecking] = useState(false);
-  const [waitedLong, setWaitedLong] = useState(false);
 
   // The code step (T-10): adding, changing or checking again needs this phone's
   // session unlocked, which takes a code sent to the shop's number. Reading the
@@ -128,17 +131,6 @@ export default function BankAccountScreen() {
   // buttons does not open the sheet again and send a second text.
   const askingForCode = useRef(false);
   const [checkingCode, setCheckingCode] = useState(false);
-
-  // A check that has been "Checking" for a minute gets a "Check again" button.
-  const status = account?.status;
-  useEffect(() => {
-    if (status !== "pending") {
-      setWaitedLong(false);
-      return;
-    }
-    const timer = setTimeout(() => setWaitedLong(true), PENDING_RECHECK_MS);
-    return () => clearTimeout(timer);
-  }, [status]);
 
   const card = {
     borderWidth: 1,
@@ -210,26 +202,58 @@ export default function BankAccountScreen() {
     setFormError(null);
   };
 
+  // One `submit_id` for one set of details, kept until the form changes or the
+  // server answers (API-CONTRACT OE-D). After a press that got no answer the POST may
+  // have gone through, so the next press reads the account first.
+  const submitKey = useRef<SubmitKey | null>(null);
+  const outcomeUnknown = useRef(false);
+
   const submit = async () => {
     const found = validateBankForm(form);
     setErrors(found);
     if (Object.keys(found).length > 0) return;
     setSubmitting(true);
     setFormError(null);
+    const key = submitKeyFor(submitKey.current, form, uuidv4);
+    submitKey.current = key;
     const input: BankAccountInput = {
       holderName: form.holderName,
       accountNumber: form.accountNumber,
       ifsc: form.ifsc,
-      // One id for this press: if the answer is lost, pressing again is a new press.
-      submitId: uuidv4(),
+      submitId: key.id,
     };
+    let sent = false;
     try {
+      if (outcomeUnknown.current) {
+        const read = await fetchBankAccount();
+        queryClient.setQueryData(queryKey, read);
+        if (landed(read, form)) {
+          // The earlier press did reach the server: these details are already being checked.
+          outcomeUnknown.current = false;
+          submitKey.current = null;
+          setForm(EMPTY_FORM);
+          setMode("view");
+          return;
+        }
+      }
+      sent = true;
       const saved = await saveBankAccount(input);
+      outcomeUnknown.current = false;
+      submitKey.current = null;
       queryClient.setQueryData(queryKey, saved);
       setForm(EMPTY_FORM);
       setMode("view");
     } catch (error) {
       const failure = apiError(error);
+      if (sent) {
+        // An answer settles the key; no answer leaves it, and the next press reads first.
+        if (answerSettlesKey(failure)) {
+          submitKey.current = null;
+          outcomeUnknown.current = false;
+        } else {
+          outcomeUnknown.current = true;
+        }
+      }
       if (failure?.code === "fresh_code_required") {
         // The unlock ran out while the form was open: confirm again, then send it.
         void askForCode(() => void submit(), true);
@@ -243,6 +267,10 @@ export default function BankAccountScreen() {
         setFormError(attemptLimitMessage(Number(failure.details?.retry_after_s)));
       } else if (failure?.code === "payments_unavailable") {
         setFormError("Payments aren't available right now. Nothing was changed. Try again in a moment.");
+      } else if (sent && !answerSettlesKey(failure)) {
+        setFormError(
+          "We didn't get an answer, so we can't tell if your details went through. Press again: we'll look first."
+        );
       } else {
         setFormError(
           failure?.message ?? "We couldn't save the account. Check your connection and try again."
@@ -500,7 +528,7 @@ export default function BankAccountScreen() {
         ? "We're checking this account with your bank. It usually takes a few seconds."
         : failureMessage(account);
 
-    const again = canCheckAgain(account, waitedLong ? PENDING_RECHECK_MS : 0);
+    const again = canCheckAgain(account);
 
     body = (
       <>

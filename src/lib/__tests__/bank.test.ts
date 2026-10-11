@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import {
-  PENDING_RECHECK_MS,
   accountTitle,
+  answerSettlesKey,
   attemptLimitMessage,
   bankFieldErrors,
   canCheckAgain,
@@ -9,6 +9,8 @@ import {
   cleanIfsc,
   failureMessage,
   istDayLabel,
+  landed,
+  submitKeyFor,
   validateBankForm,
   verifiedChip,
   waitText,
@@ -127,21 +129,73 @@ describe("words", () => {
 });
 
 describe("canCheckAgain", () => {
-  it("offers it for a bank that could not be reached", () => {
-    expect(canCheckAgain({ status: "failed", failure_code: "provider_error" }, 0)).toBe(true);
+  it("follows the server's can_verify_again and nothing else", () => {
+    expect(canCheckAgain({ can_verify_again: true })).toBe(true);
+    expect(canCheckAgain({ can_verify_again: false })).toBe(false);
   });
 
-  it("does not offer it for a check that failed on the details", () => {
-    expect(canCheckAgain({ status: "failed", failure_code: "name_mismatch" }, 0)).toBe(false);
+  it("is false for an answer that does not carry the flag", () => {
+    expect(canCheckAgain({} as { can_verify_again: boolean })).toBe(false);
+  });
+});
+
+describe("submitKeyFor", () => {
+  const details = { holderName: "SoundBox Rentals", accountNumber: "50100123456789", ifsc: "HDFC0001234" };
+  let n = 0;
+  const makeId = () => `id-${++n}`;
+
+  it("makes one key for one set of details and keeps it for the next press", () => {
+    n = 0;
+    const first = submitKeyFor(null, details, makeId);
+    const again = submitKeyFor(first, { ...details }, makeId);
+    expect(again).toBe(first);
+    expect(n).toBe(1);
   });
 
-  it("offers it for a pending check only after a wait", () => {
-    expect(canCheckAgain({ status: "pending", failure_code: null }, PENDING_RECHECK_MS - 1)).toBe(false);
-    expect(canCheckAgain({ status: "pending", failure_code: null }, PENDING_RECHECK_MS)).toBe(true);
+  it("ignores spaces around the name", () => {
+    n = 0;
+    const first = submitKeyFor(null, details, makeId);
+    expect(submitKeyFor(first, { ...details, holderName: "  SoundBox Rentals " }, makeId)).toBe(first);
   });
 
-  it("never offers it for none or verified", () => {
-    expect(canCheckAgain({ status: "none", failure_code: null }, 10 * PENDING_RECHECK_MS)).toBe(false);
-    expect(canCheckAgain({ status: "verified", failure_code: null }, 10 * PENDING_RECHECK_MS)).toBe(false);
+  it("makes a new key when any of the details changes", () => {
+    n = 0;
+    const first = submitKeyFor(null, details, makeId);
+    expect(submitKeyFor(first, { ...details, accountNumber: "50100123456780" }, makeId).id).toBe("id-2");
+    expect(submitKeyFor(first, { ...details, ifsc: "HDFC0001235" }, makeId).id).not.toBe(first.id);
+    expect(submitKeyFor(first, { ...details, holderName: "Sound Box" }, makeId).id).not.toBe(first.id);
+  });
+});
+
+describe("answerSettlesKey", () => {
+  it("is settled by any answer that says what happened", () => {
+    for (const status of [200, 201, 400, 403, 409, 429]) {
+      expect(answerSettlesKey({ status, code: null })).toBe(true);
+    }
+    expect(answerSettlesKey({ status: 503, code: "payments_unavailable" })).toBe(true);
+  });
+
+  it("is not settled by no answer, or by a server fault the call may have got past", () => {
+    expect(answerSettlesKey(null)).toBe(false);
+    expect(answerSettlesKey({ status: 0, code: null })).toBe(false);
+    expect(answerSettlesKey({ status: 500, code: null })).toBe(false);
+    expect(answerSettlesKey({ status: 502, code: null })).toBe(false);
+    expect(answerSettlesKey({ status: 504, code: null })).toBe(false);
+  });
+});
+
+describe("landed", () => {
+  const form = { accountNumber: "50100123456789", ifsc: "HDFC0001234" };
+
+  it("is true when the server holds an account ending the same with the same IFSC", () => {
+    expect(landed({ status: "pending", account_last4: "6789", ifsc: "HDFC0001234" }, form)).toBe(true);
+    expect(landed({ status: "verified", account_last4: "6789", ifsc: "hdfc0001234" }, form)).toBe(true);
+  });
+
+  it("is false for another account, or none", () => {
+    expect(landed({ status: "pending", account_last4: "4471", ifsc: "HDFC0001234" }, form)).toBe(false);
+    expect(landed({ status: "pending", account_last4: "6789", ifsc: "SBIN0000001" }, form)).toBe(false);
+    expect(landed({ status: "none", account_last4: null, ifsc: null }, form)).toBe(false);
+    expect(landed(null, form)).toBe(false);
   });
 });

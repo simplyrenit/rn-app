@@ -20,6 +20,12 @@ export interface BankAccount {
   verified_at: string | null;
   /** The owner has a payout waiting for the account to be verified. */
   payouts_paused: boolean;
+  /**
+   * `POST …/verify/` would be accepted now: the check failed with `provider_error`,
+   * or has been pending over ten minutes (rn-pay's rule). "Check again" is offered
+   * only while this is true, so nobody is asked for a code and then refused.
+   */
+  can_verify_again: boolean;
 }
 
 export interface BankForm {
@@ -30,9 +36,6 @@ export interface BankForm {
 }
 
 export type BankFormErrors = Partial<Record<keyof BankForm, string>>;
-
-/** How long the screen waits on "Checking" before it offers "Check again". */
-export const PENDING_RECHECK_MS = 60_000;
 
 export const cleanAccountNumber = (value: string) => value.replace(/\D/g, "").slice(0, 18);
 
@@ -136,17 +139,57 @@ export function attemptLimitMessage(retryAfterSeconds: number | null | undefined
     : "Too many tries. Try again later.";
 }
 
+/** Whether to offer "Check again": only while the server says a re-check would be accepted. */
+export function canCheckAgain(account: Pick<BankAccount, "can_verify_again">): boolean {
+  return account.can_verify_again === true;
+}
+
+// ---- One `submit_id` for one set of details ----------------------------------------
+
+export interface SubmitKey {
+  id: string;
+  /** The details the id was made for. */
+  content: string;
+}
+
 /**
- * Whether to offer "Check again" (`POST …/verify/`). The server allows it for a
- * check that failed with `provider_error`, or one that has been pending over ten
- * minutes; the screen cannot tell how long a pending check has been pending, so
- * it offers the button after it has watched one for `PENDING_RECHECK_MS` and
- * answers a 409 kindly.
+ * The idempotency key for the add/change call: made once for one set of details and
+ * kept until the form's content changes or the server answers (API-CONTRACT OE-D). A
+ * second press after a lost answer sends the same key, so it cannot start a second
+ * ₹1 check or use up another of the three checks a day.
  */
-export function canCheckAgain(
-  account: Pick<BankAccount, "status" | "failure_code">,
-  waitedMs: number
+export function submitKeyFor(
+  current: SubmitKey | null,
+  form: Pick<BankForm, "holderName" | "accountNumber" | "ifsc">,
+  makeId: () => string
+): SubmitKey {
+  const content = `${form.holderName.trim()}|${form.accountNumber}|${form.ifsc}`;
+  return current && current.content === content ? current : { id: makeId(), content };
+}
+
+/**
+ * Whether the server's failure settles the key, so the next press is a new one. Any
+ * answer does, bar the ones where the call may still have gone through: no answer
+ * at all, and a 5xx other than `payments_unavailable` (which says nothing was saved).
+ */
+export function answerSettlesKey(failure: { status: number; code: string | null } | null): boolean {
+  if (!failure || failure.status === 0) return false;
+  if (failure.status >= 500) return failure.code === "payments_unavailable";
+  return true;
+}
+
+/**
+ * Whether an earlier press with these details got through although its answer was
+ * lost: the account the server now holds ends in the same four digits and has the
+ * same IFSC.
+ */
+export function landed(
+  account: Pick<BankAccount, "status" | "account_last4" | "ifsc"> | null | undefined,
+  form: Pick<BankForm, "accountNumber" | "ifsc">
 ): boolean {
-  if (account.status === "failed") return account.failure_code === "provider_error";
-  return account.status === "pending" && waitedMs >= PENDING_RECHECK_MS;
+  if (!account || account.status === "none") return false;
+  return (
+    account.account_last4 === form.accountNumber.slice(-4) &&
+    (account.ifsc ?? "").toUpperCase() === form.ifsc.toUpperCase()
+  );
 }
