@@ -1,10 +1,10 @@
-import { BottomBar, SummaryCard } from "@/components/booking/parts";
+import { BottomBar, SummaryCard, TextButton } from "@/components/booking/parts";
 import { usePay } from "@/components/booking/use-pay";
 import { Button, Text } from "@/components/core";
 import {
   BookingCustomer,
+  bookingHow,
   datesLine,
-  howLabel,
   money,
   payButtonLabel,
   payPhaseText,
@@ -12,63 +12,71 @@ import {
 } from "@/lib/booking";
 import { apiError } from "@/lib/api-error";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
-import { rememberedPayment } from "@/lib/payments";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { ScrollView, View } from "react-native";
 
 /**
  * A booking whose ₹99 is not paid yet. The owner is rung only once it is
  * (ARCHITECTURE A-05), so until then nobody has been asked anything.
  *
- * The pay page is the one Book now answered with, kept on this phone. rn-api has
- * no call that hands it out again, so on a phone that does not have it (or once
- * it has run out) the way on is to book again; the server drops the unpaid
- * booking by itself.
+ * The pay page comes from the booking itself (`pay_now.payment`), which the
+ * server keeps there for exactly as long as the booking waits for the ₹99. So
+ * any phone can pay or pay again, and nothing about the payment is taken from
+ * this phone's memory or clock. When the server says the page is over, the
+ * booking is read again and shows what became of the request.
  */
 export function PayBookingAmount({
   booking,
   autoStart,
-  onChanged,
+  refresh,
 }: {
   booking: BookingCustomer;
   /** Book now was tapped a moment ago: open the pay page without a second tap. */
   autoStart: boolean;
-  /** The payment moved: read the booking again. */
-  onChanged: () => void;
+  /** Reads the booking again and returns it. */
+  refresh: () => Promise<BookingCustomer | undefined>;
 }) {
   const navigation = useTypedNavigation();
-  const [gone, setGone] = useState(false);
+  // The payment settles minutes after the tap; it must see the booking as it is then.
+  const latest = useRef(booking);
+  latest.current = booking;
+
   const { phase, pay } = usePay(booking.number, {
-    onPaid: onChanged,
+    // Whatever the answer, the booking on the server is what the screen draws next.
+    onResult: () => void refresh(),
     onError: (error) =>
       toast.error("We couldn't start the payment", {
         message: apiError(error)?.message ?? "Check your connection and try again.",
       }),
   });
 
-  const open = () => void pay(() => rememberedPayment(booking.number));
+  const open = () =>
+    void pay(async () => {
+      const kept = latest.current.pay_now?.payment;
+      if (kept) return kept;
+      // Not on the copy in hand (it should always be while the ₹99 is awaited): read again.
+      const fresh = await refresh();
+      const payment = fresh?.pay_now?.payment ?? null;
+      if (!payment) toast.info("Checking this request again", { haptic: false });
+      return payment;
+    });
 
   const started = useRef(false);
   useEffect(() => {
-    if (started.current) return;
+    if (started.current || !autoStart) return;
     started.current = true;
-    if (autoStart) {
-      open();
-      // Spent: coming back to this screen later must not open the page by itself.
-      navigation.setParams({ pay: false });
-    } else {
-      void rememberedPayment(booking.number).then((payment) => setGone(!payment));
-    }
+    open();
+    // Spent: coming back to this screen later must not open the page by itself.
+    navigation.setParams({ pay: false });
     // Once, on arrival.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const ended = gone || phase === "ended";
   const amount = money(booking.money.booking_amount);
   const opens = booking.shop.opens_at ? timeAndDay(booking.shop.opens_at) : null;
-  const note = ended ? "This payment has ended. Nothing was taken. Book again from the listing." : payPhaseText(phase);
+  const note = payPhaseText(phase);
 
   return (
     <View style={{ flex: 1 }}>
@@ -87,7 +95,7 @@ export function PayBookingAmount({
         <SummaryCard
           title={booking.product.title}
           image={booking.product.cover_image}
-          lines={[datesLine(booking), `${howLabel(booking.delivery_mode)} · ${booking.shop.name}`]}
+          lines={[datesLine(booking), `${bookingHow(booking)} · ${booking.shop.name}`]}
         />
       </ScrollView>
       <BottomBar>
@@ -96,15 +104,15 @@ export function PayBookingAmount({
             {note}
           </Text>
         ) : null}
-        {ended ? (
-          <Button onPress={() => navigation.navigate("ProductDetail", { id: booking.product.name })}>
-            Back to the listing
-          </Button>
-        ) : (
-          <Button onPress={open} loading={phase === "working"} disabled={phase === "working"}>
-            {payButtonLabel(phase, `Pay ${amount}`)}
-          </Button>
-        )}
+        <Button onPress={open} loading={phase === "working"} disabled={phase === "working"}>
+          {payButtonLabel(phase === "ended" ? "idle" : phase, `Pay ${amount}`)}
+        </Button>
+        {phase === "ended" ? (
+          <TextButton
+            label="Back to the listing"
+            onPress={() => navigation.navigate("ProductDetail", { id: booking.product.name })}
+          />
+        ) : null}
       </BottomBar>
     </View>
   );

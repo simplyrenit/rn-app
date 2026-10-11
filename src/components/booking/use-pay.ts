@@ -1,28 +1,32 @@
+import { useGlobalContext } from "@/context/global-context";
 import { PayPhase } from "@/lib/booking";
-import { PaymentHandoff, forgetPayment, rememberPayment, startPayment } from "@/lib/payments";
+import { PayResult, PaymentHandoff, forgetPayment, notePayment, startPayment } from "@/lib/payments";
 import { useCallback, useRef, useState } from "react";
 
 /**
  * One payment button's state around `startPayment`: the ₹99 and the rent use it,
  * and the deposit will.
  *
- * `pay(getPayment)` asks for the payment to take (a fresh call to rn-api, or the
- * one this phone remembers), keeps it on the phone in case the app is closed
- * while the customer is away paying, and hands over to `startPayment`. A second
- * tap while one is running does nothing, so the page is never opened twice.
+ * `pay(getPayment)` asks the screen for the payment to take: the booking's own
+ * open payment (`pay_now.payment`), or a fresh answer from rn-api. Returning
+ * null means "do not open a page" (the screen has something to show first).
+ * A second tap while one is running does nothing, so the page is never opened
+ * twice.
  *
- * `onPaid` only means "ask the server again": the booking's stage there is what
- * the screen draws, not this hook's answer.
+ * `onResult` only means "read the booking again": its stage on the server is
+ * what the screen draws, not this hook's answer.
  */
 export function usePay(
   booking: string,
-  { onPaid, onError }: { onPaid: () => void; onError: (error: unknown) => void }
+  { onResult, onError }: { onResult: (result: PayResult) => void; onError: (error: unknown) => void }
 ) {
+  const { userDetails } = useGlobalContext();
+  const username = userDetails?.username;
   const [phase, setPhase] = useState<PayPhase>("idle");
   const busy = useRef(false);
   // A payment settles minutes after the tap; it must reach the screen's current callbacks.
-  const callbacks = useRef({ onPaid, onError });
-  callbacks.current = { onPaid, onError };
+  const callbacks = useRef({ onResult, onError });
+  callbacks.current = { onResult, onError };
 
   const pay = useCallback(
     async (getPayment: () => Promise<PaymentHandoff | null>) => {
@@ -32,22 +36,20 @@ export function usePay(
       try {
         const payment = await getPayment();
         if (!payment) {
-          setPhase("ended");
+          setPhase("idle");
           return;
         }
-        await rememberPayment(booking, payment);
+        // So a restarted app can ask about it. The pay page itself is never read back from the phone.
+        if (username) await notePayment(username, booking, payment.payment_id);
         const result = await startPayment(payment);
-        if (result === "paid") {
-          await forgetPayment();
-          setPhase("idle");
-          callbacks.current.onPaid();
-        } else if (result === "failed" || result === "pending") {
-          // Kept on the phone: "Try again" opens the same pay page.
+        if (result === "failed" || result === "pending") {
           setPhase(result);
         } else {
+          // Paid, or rn-api says the page is over: nothing is in flight any more.
           await forgetPayment();
-          setPhase("ended");
+          setPhase(result === "paid" ? "idle" : "ended");
         }
+        callbacks.current.onResult(result);
       } catch (error) {
         setPhase("idle");
         callbacks.current.onError(error);
@@ -55,7 +57,7 @@ export function usePay(
         busy.current = false;
       }
     },
-    [booking]
+    [booking, username]
   );
 
   return { phase, pay };

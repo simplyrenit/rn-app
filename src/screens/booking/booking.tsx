@@ -56,6 +56,8 @@ export default function BookingScreen() {
     if (watching) void refetch();
   }, [watching, refetch]);
 
+  const refresh = async () => (await refetch()).data;
+
   if (!booking) {
     return (
       <NonScrollableContainer>
@@ -75,13 +77,13 @@ export default function BookingScreen() {
     <NonScrollableContainer>
       <SubpageHeader title={TITLE[view](booking.number)} />
       {view === "pay_booking_amount" ? (
-        <PayBookingAmount booking={booking} autoStart={Boolean(params.pay)} onChanged={() => void refetch()} />
+        <PayBookingAmount booking={booking} autoStart={Boolean(params.pay)} refresh={refresh} />
       ) : view === "confirming" ? (
         <Confirming booking={booking} />
       ) : view === "outcome" ? (
         <Outcome booking={booking} />
       ) : view === "pay_rent" ? (
-        <PayRent booking={booking} refresh={async () => (await refetch()).data} />
+        <PayRent booking={booking} refresh={refresh} />
       ) : (
         <BookingDetails booking={booking} />
       )}

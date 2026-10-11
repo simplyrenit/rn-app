@@ -13,9 +13,8 @@ import axiosInstance from "../networkUtils";
 import {
   PaymentStatus,
   askUntilSettled,
+  notePayment,
   parsePayReturn,
-  rememberPayment,
-  rememberedPayment,
   resumePayment,
   startPayment,
 } from "../payments";
@@ -171,9 +170,24 @@ describe("startPayment", () => {
     await expect(Promise.all([first, second])).resolves.toEqual(["paid", "paid"]);
   });
 
-  it("does not open a pay page that has run out", async () => {
-    await expect(startPayment(payment({ expires_at: "2020-01-01T00:00:00Z" }))).resolves.toBe("expired");
-    expect(openURL).not.toHaveBeenCalled();
+  it("opens a page the phone's clock thinks has run out: the server just handed it out", async () => {
+    // A phone set twenty minutes ahead sees a 15-minute page as already over.
+    post.mockResolvedValue(answer("paid"));
+    const result = startPayment(payment({ expires_at: "2020-01-01T00:00:00Z" }));
+    await away();
+    expect(openURL).toHaveBeenCalledWith(CHECKOUT);
+    onState("background");
+    onState("active");
+    await expect(result).resolves.toBe("paid");
+  });
+
+  it("says a page has run out only when rn-api does", async () => {
+    post.mockResolvedValue(answer("expired"));
+    const result = startPayment(payment());
+    await away();
+    onState("background");
+    onState("active");
+    await expect(result).resolves.toBe("expired");
   });
 
   it("answers failed when the page cannot be opened", async () => {
@@ -183,53 +197,62 @@ describe("startPayment", () => {
   });
 });
 
-describe("a payment in flight, kept on the phone", () => {
+describe("the note of a payment in flight", () => {
+  const note = (over: Record<string, unknown> = {}) =>
+    JSON.stringify({ user: "asha", booking: "RN-24831", payment_id: PAY_ID, at: Date.now(), ...over });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("keeps the booking and its pay page", async () => {
-    const p = payment();
-    await rememberPayment("RN-24831", p);
-    expect(storage.setItem).toHaveBeenCalledWith(
-      "renit-pending-payment",
-      JSON.stringify({ booking: "RN-24831", payment: p })
-    );
-  });
-
-  it("hands it back for its own booking only", async () => {
-    const p = payment();
-    storage.getItem.mockResolvedValue(JSON.stringify({ booking: "RN-24831", payment: p }));
-    await expect(rememberedPayment("RN-24831")).resolves.toEqual(p);
-    await expect(rememberedPayment("RN-99999")).resolves.toBeNull();
-  });
-
-  it("forgets a pay page that has run out", async () => {
-    storage.getItem.mockResolvedValue(
-      JSON.stringify({ booking: "RN-24831", payment: payment({ expires_at: "2020-01-01T00:00:00Z" }) })
-    );
-    await expect(rememberedPayment("RN-24831")).resolves.toBeNull();
-    expect(storage.removeItem).toHaveBeenCalledWith("renit-pending-payment");
+  it("keeps whose payment it is, the booking and the payment id, and no pay page", async () => {
+    await notePayment("asha", "RN-24831", PAY_ID);
+    const [key, value] = storage.setItem.mock.calls[0];
+    expect(key).toBe("renit-pending-payment");
+    expect(JSON.parse(value)).toMatchObject({ user: "asha", booking: "RN-24831", payment_id: PAY_ID });
+    expect(value).not.toMatch(/checkout|expires/);
   });
 
   it("on app start asks rn-api once and names the booking to open", async () => {
-    storage.getItem.mockResolvedValue(JSON.stringify({ booking: "RN-24831", payment: payment() }));
+    storage.getItem.mockResolvedValue(note());
     post.mockResolvedValue(answer("paid"));
-    await expect(resumePayment()).resolves.toBe("RN-24831");
+    await expect(resumePayment("asha")).resolves.toBe("RN-24831");
     expect(post).toHaveBeenCalledTimes(1);
+    expect(post).toHaveBeenCalledWith(`https://api.test/payments/${PAY_ID}/confirm/`, {});
     expect(storage.removeItem).toHaveBeenCalled();
   });
 
-  it("keeps a payment that is still open, for Try again", async () => {
-    storage.getItem.mockResolvedValue(JSON.stringify({ booking: "RN-24831", payment: payment() }));
+  it("keeps the note while the payment is still open", async () => {
+    storage.getItem.mockResolvedValue(note());
     post.mockResolvedValue(answer("created"));
-    await expect(resumePayment()).resolves.toBe("RN-24831");
+    await expect(resumePayment("asha")).resolves.toBe("RN-24831");
     expect(storage.removeItem).not.toHaveBeenCalled();
+  });
+
+  it("never sends another account on this phone to someone else's booking", async () => {
+    storage.getItem.mockResolvedValue(note());
+    await expect(resumePayment("ravi")).resolves.toBeNull();
+    expect(post).not.toHaveBeenCalled();
+    // Left for its owner.
+    expect(storage.removeItem).not.toHaveBeenCalled();
+  });
+
+  it("tidies away a note a day old without asking about it", async () => {
+    storage.getItem.mockResolvedValue(note({ at: Date.now() - 25 * 60 * 60 * 1000 }));
+    await expect(resumePayment("asha")).resolves.toBeNull();
+    expect(post).not.toHaveBeenCalled();
+    expect(storage.removeItem).toHaveBeenCalledWith("renit-pending-payment");
+  });
+
+  it("still opens the booking when rn-api cannot be reached", async () => {
+    storage.getItem.mockResolvedValue(note());
+    post.mockRejectedValue(new Error("Network Error"));
+    await expect(resumePayment("asha")).resolves.toBe("RN-24831");
   });
 
   it("does nothing on app start when no payment was in flight", async () => {
     storage.getItem.mockResolvedValue(null);
-    await expect(resumePayment()).resolves.toBeNull();
+    await expect(resumePayment("asha")).resolves.toBeNull();
     expect(post).not.toHaveBeenCalled();
   });
 });

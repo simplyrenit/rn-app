@@ -8,6 +8,7 @@ import { useState } from "react";
 import { appleLogin, googleLogin } from "@/backend/sign-in-calls";
 import { useGlobalContext } from "@/context/global-context";
 import { AuthTokens, useTypedNavigation } from "@/lib/types";
+import { goAfterSignIn } from "@/lib/return-to";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useProfile } from "@/backend/profile";
 import axiosInstance from "@/lib/networkUtils";
@@ -51,7 +52,7 @@ export function useOAuth() {
             axiosInstance.defaults.headers.Authorization = `Bearer ${res.data.access_token}`;
             setAuthTokens(res.data);
             await getMyDetails(res.data.access_token);
-            router.navigate("MainTabs");
+            goAfterSignIn(router);
             return;
           }
         } catch (backendError) {
@@ -88,7 +89,7 @@ export function useOAuth() {
           axiosInstance.defaults.headers.Authorization = `Bearer ${res.data.access_token}`;
           setAuthTokens(res.data);
           await getMyDetails(res.data.access_token);
-          router.navigate("MainTabs");
+          goAfterSignIn(router);
           return;
         }
       } else {

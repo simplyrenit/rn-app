@@ -386,7 +386,8 @@ function MainTabs() {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function Navigation() {
-  const { loading, hasSeenWelcome, theme, isAuthenticated } = useGlobalContext();
+  const { loading, hasSeenWelcome, theme, isAuthenticated, userDetails } = useGlobalContext();
+  const username = userDetails?.username;
   const queryClient = useQueryClient();
 
   // A sign-out that could not reach the server is repeated when the app starts and
@@ -433,12 +434,13 @@ export default function Navigation() {
   }, [isAuthenticated, queryClient]);
 
   // A payment can finish while the app is closed (the customer was in the
-  // browser or a UPI app). On start, ask rn-api about the one that was in
-  // flight and open its booking, which shows where things stand (ENG-172).
+  // browser or a UPI app). On start, once it is known who is signed in, ask
+  // rn-api about the one of theirs that was in flight and open its booking,
+  // which shows where things stand (ENG-172).
   React.useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !username) return;
     let stale = false;
-    void resumePayment().then((number) => {
+    void resumePayment(username).then((number) => {
       if (number && !stale && navigationRef.isReady()) {
         navigationRef.navigate("Booking", { number });
       }
@@ -446,7 +448,7 @@ export default function Navigation() {
     return () => {
       stale = true;
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, username]);
 
   React.useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {

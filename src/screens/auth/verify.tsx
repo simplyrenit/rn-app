@@ -5,6 +5,7 @@ import { ScrollContainer } from "@/components/core/scroll-container";
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
+import { goAfterSignIn } from "@/lib/return-to";
 import { useRoute } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import {
@@ -58,7 +59,7 @@ export default function VerifyEmail() {
                 access_token: data.access_token,
                 refresh_token: data.refresh_token,
               });
-              router.navigate("MainTabs");
+              goAfterSignIn(router);
               return;
             }
             if (data.onboarding_required) {
@@ -81,7 +82,7 @@ export default function VerifyEmail() {
               access_token: data.access,
               refresh_token: data.refresh,
             });
-            router.navigate("MainTabs");
+            goAfterSignIn(router);
             return;
           }
           if (data?.is_verified) {
@@ -114,7 +115,7 @@ export default function VerifyEmail() {
           access_token: data.access_token,
           refresh_token: data.refresh_token,
         });
-        router.navigate("MainTabs");
+        goAfterSignIn(router);
         return;
       } else {
         setIsIncorrect(true);

@@ -32,7 +32,7 @@ import {
 } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { startIdCheck } from "@/lib/id-check";
-import { rememberPayment } from "@/lib/payments";
+import { rememberReturnTo } from "@/lib/return-to";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -135,7 +135,12 @@ export default function ReviewAndBookScreen() {
   const book = async () => {
     if (busy.current) return;
     if (!signedIn) {
-      toast.info("Sign in to book");
+      // The session ended while this screen was open: signing in returns to the listing, dates kept.
+      rememberReturnTo({
+        name: "ProductDetail",
+        params: { id: params.item.name, dates: { first_day: params.first_day, last_day: params.last_day } },
+      });
+      toast.info("Sign in to book", { message: "You'll come back to this listing." });
       navigation.navigate("Welcome");
       return;
     }
@@ -153,8 +158,16 @@ export default function ReviewAndBookScreen() {
         client_key: clientKey.current,
       });
       clientKey.current = null;
-      if (answer.payment) await rememberPayment(answer.booking.number, answer.payment);
-      queryClient.setQueryData(bookingQueryKey(answer.booking.number), answer.booking);
+      // The booking carries its own pay page (`pay_now.payment`) and the next screen
+      // pays from it. This answer's `payment` is that same page, so it stands in if
+      // the booking beside it came without one.
+      const { booking: booked, payment } = answer;
+      queryClient.setQueryData(
+        bookingQueryKey(booked.number),
+        payment && booked.pay_now && !booked.pay_now.payment
+          ? { ...booked, pay_now: { ...booked.pay_now, payment } }
+          : booked
+      );
       // The booking exists now, so the way back is to the Rentals tab, not to the price screen.
       navigation.reset({
         index: 1,

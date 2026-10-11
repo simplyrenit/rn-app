@@ -48,6 +48,7 @@ import { formatCurrency } from "@/lib/format";
 import { FlagReason, ListingStatus, resolveListingStatus } from "@/lib/listing-status";
 import { getDiscoveryLocationData } from "@/lib/location";
 import { keySpecLine, specMatchesFilters } from "@/lib/product-specs";
+import { rememberReturnTo } from "@/lib/return-to";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { IconButton } from "@/components/core/icon-button";
@@ -323,12 +324,14 @@ export default function DetailsScreen() {
   /**
    * Book now opens the dates (BK-02), on the dates of the search when there was
    * one. Signed out, the customer is sent to sign in first: the booking, its
-   * payment and the saved address all belong to an account.
+   * payment and the saved address all belong to an account. Signing in brings
+   * them back to this listing with the same dates (`goAfterSignIn`).
    */
   const handleBook = () => {
     if (!product) return;
     if (!isAuthenticated) {
-      toast.info("Sign in to book", { message: "It takes a moment." });
+      rememberReturnTo({ name: "ProductDetail", params: { id: product.name, dates } });
+      toast.info("Sign in to book", { message: "You'll come back to this listing." });
       navigation.navigate("Welcome");
       return;
     }

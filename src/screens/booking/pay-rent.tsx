@@ -44,7 +44,8 @@ export function PayRent({
   const copy = payRentCopy(booking);
 
   const { phase, pay } = usePay(booking.number, {
-    onPaid: async () => {
+    onResult: async (result) => {
+      if (result !== "paid") return;
       // The rent is in. The arrival window is the next thing, one tap away.
       const fresh = await refresh();
       if (fresh?.can.includes("set_window")) navigation.navigate("BookingWindow", { number: booking.number });

@@ -7,6 +7,7 @@
  * instant is UTC and is shown in India time. The server works every amount out;
  * nothing here adds money up, it only says what the server sent.
  */
+import { SavedAddress, addressLine, addressTitle } from "@/lib/addresses";
 import { ApiError } from "@/lib/api-error";
 import { formatCurrency } from "@/lib/format";
 import { DayHours, Hours, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
@@ -61,6 +62,8 @@ export interface Quote {
   total: string;
   pay_now: string;
   pay_after_accept: string;
+  /** How long the customer will have to pay the rest once the owner accepts. The server's setting. */
+  rent_pay_minutes: number;
   deposit: { amount: string; with_rent: boolean; due_on: string | null; refundable: boolean };
   units_free: number;
   shop: {
@@ -131,6 +134,9 @@ export type BookingExit =
   | "cancelled_by_owner"
   | "no_show";
 
+/** A saved address as a booking carries it. */
+export type BookingAddress = Omit<SavedAddress, "is_default">;
+
 export interface TimeWindow {
   start: string;
   end: string;
@@ -159,7 +165,11 @@ export interface BookingCustomer {
   days: number;
   delivery_mode: DeliveryMode;
   distance_km: string | null;
-  delivery_address: unknown;
+  /**
+   * Owner delivery only: the address the customer chose at Book now, copied
+   * then (the saved-address shape without `is_default`). Null for self pickup.
+   */
+  delivery_address: BookingAddress | null;
   money: {
     rate: string;
     rent: string;
@@ -171,6 +181,8 @@ export interface BookingCustomer {
     /** unpaid, paid, moved, refund_requested, refunded, kept */
     booking_amount_state: string;
     pay_after_accept: string;
+    /** How long the customer has to pay the rent once the owner accepts; the deadline is `rent_due_at`. */
+    rent_pay_minutes: number;
     rent_due_at: string | null;
     rent_paid: boolean;
     deposit: string;
@@ -184,9 +196,23 @@ export interface BookingCustomer {
     late_fee: string;
     damage_deduction: string;
   };
-  pay_now: { purpose: PaymentPurpose; amount: string; deposit_part: string; due_at: string | null } | null;
+  /**
+   * The one payment the customer should make now. `payment` is the pay page of
+   * the payment already started and still payable, or null when none is open:
+   * the one way any payment is resumed, on any phone. For the booking amount it
+   * is never null while `ring_state` is `awaiting_payment`.
+   */
+  pay_now: {
+    purpose: PaymentPurpose;
+    amount: string;
+    deposit_part: string;
+    due_at: string | null;
+    payment: PaymentStart | null;
+  } | null;
   payments: MoneyRow[];
   pick_deadline_at: string | null;
+  /** What Renit really did to reach the owner, so "no answer" says only what is true. */
+  tried?: { ring: boolean; second_ring: boolean; staff_call: boolean } | null;
   cancels_left_today: number;
   window: TimeWindow | null;
   window_request: { by: "owner" | "customer"; start: string; end: string; asked_at: string } | null;
@@ -307,6 +333,17 @@ export const money = (value: string | number | null | undefined) => formatCurren
 export function howLabel(mode: DeliveryMode, addressName?: string | null): string {
   if (mode === "pickup") return "Self pickup";
   return addressName ? `Delivery to ${addressName}` : "Delivery";
+}
+
+/** The same for a booking, which carries the address it is delivered to. */
+export function bookingHow(booking: Pick<BookingCustomer, "delivery_mode" | "delivery_address">): string {
+  return howLabel(booking.delivery_mode, booking.delivery_address ? addressTitle(booking.delivery_address) : null);
+}
+
+/** Where an owner delivery goes, for the booking screen: "Home" and its one-line address. */
+export function deliveryPlace(address: BookingAddress | null | undefined): { title: string; line: string } | null {
+  if (!address) return null;
+  return { title: addressTitle(address), line: addressLine(address) || address.address };
 }
 
 /** A booking's dates as the summary line: "Sat 24 – Mon 26 Oct 2026 · 3 days". */
@@ -498,11 +535,16 @@ export const totalLabel = (quote: Quote) => (isPositive(quote.delivery.fee) ? "T
 export const isForMorning = (quote: Pick<Quote, "shop">) => !quote.shop.is_open && quote.shop.book_for_morning;
 
 /**
- * The plan's rent rule (N3), as BK-03 writes it. It is the one stated length of
+ * "Within 30 minutes", as BK-03 writes it, with the server's own number
+ * (`rent_pay_minutes`): no client holds the 30. It is the one stated length of
  * time the customer reads, and it is about their own payment, never about how
  * long the owner takes.
  */
-const RENT_WINDOW = "Within 30 minutes";
+function rentWindow(minutes: number | null | undefined): string {
+  const n = Number(minutes);
+  if (!Number.isFinite(n) || n <= 0) return "Soon after they accept";
+  return n === 1 ? "Within 1 minute" : `Within ${n} minutes`;
+}
 
 export interface PayStep {
   title: string;
@@ -523,7 +565,7 @@ export function paySteps(quote: Quote, moved = false, now: Date = new Date()): P
     const opens = isForMorning(quote) && quote.shop.opens_at ? timeAndDay(quote.shop.opens_at, now) : null;
     steps.push({
       title: "After the owner accepts",
-      sub: opens ? `They are asked ${opens.day} at ${opens.time}` : RENT_WINDOW,
+      sub: opens ? `They are asked ${opens.day} at ${opens.time}` : rentWindow(quote.rent_pay_minutes),
       amount: money(quote.pay_after_accept),
     });
   }
@@ -736,7 +778,7 @@ export function bookErrorText(error: ApiError | null): string {
 
 // ---- The payment hand-off's words ---------------------------------------------------------
 
-/** Where a payment stands on screen. `ended`: its pay page has run out or was closed. */
+/** Where a payment stands on screen. `ended`: rn-api said its pay page has run out or was closed. */
 export type PayPhase = "idle" | "working" | "failed" | "pending" | "ended";
 
 /** PAYMENTS-DESIGN 5.2 steps 8 and 9, in its words. */
@@ -749,7 +791,8 @@ export function payPhaseText(phase: PayPhase): string | null {
     case "pending":
       return "We are still waiting for your bank. We will tell you as soon as it is through.";
     case "ended":
-      return "This payment has ended.";
+      // Only what is known: the page is over. Whether money moved is the bank's to say.
+      return "This payment has ended. If money left your account, it comes back by itself.";
     default:
       return null;
   }
@@ -1184,10 +1227,22 @@ export function bookingBanner(booking: BookingCustomer): Banner {
   switch (booking.exit) {
     case "cancelled_by_customer":
       if (booking.exit_reason === "booking_amount_unpaid") {
+        // Said from what the server shows, never assumed: a payment can land at the
+        // bank after the request was dropped, and is then sent back.
+        const arrived =
+          m.booking_amount_state === "refund_requested" ||
+          m.booking_amount_state === "refunded" ||
+          booking.payments.some(
+            (row) => row.kind === "payment" && row.what === "booking_amount" && row.status === "paid"
+          );
         return {
           tone: "neutral",
           title: "Request dropped",
-          sub: `The ${money(m.booking_amount)} was not paid, so the owner was never asked.`,
+          sub: arrived
+            ? `The ${money(m.booking_amount)} arrived after this request had ended, so the owner was not asked. ${
+                m.booking_amount_state === "refunded" ? "It has been refunded." : "It is going back to you."
+              }`
+            : "The payment did not arrive in time, so the owner was not asked. If money left your account, it comes back by itself.",
         };
       }
       if (booking.exit_reason === "before_opening" || booking.exit_reason === "while_ringing") {

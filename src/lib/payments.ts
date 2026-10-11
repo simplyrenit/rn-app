@@ -4,13 +4,20 @@
  * page in the phone's own browser, waits for the customer to come back, then asks
  * rn-api what happened.
  *
- * Three rules this file keeps:
+ * Four rules this file keeps:
  *  - the pay page's `checkout_url` is opened as given, never built or changed;
  *  - it is opened with `Linking.openURL`, never in a WebView (UPI apps do not open
  *    from one, and rn-app has no in-app browser module);
  *  - nothing is ever marked paid from the return link. The link and the app coming
  *    to the front are only the nudge to ask rn-api, whose answer is the only one
- *    that counts.
+ *    that counts;
+ *  - the phone's clock decides nothing. A pay page the server has just handed out
+ *    is opened whatever the phone thinks of its `expires_at`; whether it has run
+ *    out is the server's to say (the page itself, or `confirm` answering `expired`).
+ *
+ * The pay page of an open payment is not kept on the phone: it rides on the
+ * booking (`pay_now.payment`), so any phone can resume it. What is kept is one
+ * small note of the payment in flight, only so a restarted app can ask about it.
  */
 import { PAYMENTS_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
@@ -151,9 +158,9 @@ function listenForReturn(paymentId: string) {
 }
 
 async function pay(payment: PaymentHandoff): Promise<PayResult> {
-  // A pay page past its time only says "This payment has ended"; the caller asks
-  // rn-api for a new payment instead.
-  if (new Date(payment.expires_at).getTime() <= Date.now()) return "expired";
+  // `expires_at` is not looked at: a phone whose clock runs ahead would refuse a
+  // payment the server just said can be paid. If the page really has run out it
+  // says so itself, and `confirm` answers `expired`.
 
   // Listening starts before the page opens, so a fast return is not missed.
   const { back, stop } = listenForReturn(payment.payment_id);
@@ -182,28 +189,37 @@ export function startPayment(payment: PaymentHandoff): Promise<PayResult> {
   return run;
 }
 
-// ---- A payment in flight, kept on the phone ------------------------------------------
+// ---- The payment in flight: a note for the next app start --------------------------------
 
 const PENDING_KEY = "renit-pending-payment";
 
-interface PendingPayment<P extends PaymentHandoff = PaymentHandoff> {
+/** Tidying only: a note this old is about a payment nobody is in the middle of. */
+const NOTE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+interface PaymentNote {
+  /** Whose payment it is: another account on this phone must not be sent to it. */
+  user: string;
   /** The booking number. */
   booking: string;
-  payment: P;
+  payment_id: string;
+  /** When it was noted, by this phone's clock. Used for tidying, never to refuse a payment. */
+  at: number;
 }
 
 /**
- * Remembers the payment a booking is waiting on, because the phone may close the
- * app while the customer is in the browser or a UPI app. With it, the app can ask
- * rn-api again when it next starts, and "Try again" can open the same pay page.
- * ponytail: one payment at a time; a second one in flight replaces the first,
- * which the booking screen then reads from the server. Keep a list if that bites.
+ * Notes which payment was handed to the pay page, because the phone may close
+ * the app while the customer is in the browser or a UPI app. Nothing is read
+ * back from it but "which payment to ask rn-api about, and which booking to
+ * open": the pay page itself always comes from the booking.
+ * ponytail: one note; a second payment in flight replaces the first, whose
+ * booking still shows the truth when opened. Keep a list if that ever bites.
  */
-export async function rememberPayment(booking: string, payment: PaymentHandoff): Promise<void> {
+export async function notePayment(user: string, booking: string, paymentId: string): Promise<void> {
+  const note: PaymentNote = { user, booking, payment_id: paymentId, at: Date.now() };
   try {
-    await AsyncStorage.setItem(PENDING_KEY, JSON.stringify({ booking, payment }));
+    await AsyncStorage.setItem(PENDING_KEY, JSON.stringify(note));
   } catch {
-    // Only a convenience: the server still knows the payment.
+    // Only a convenience: the server knows the payment.
   }
 }
 
@@ -215,41 +231,31 @@ export async function forgetPayment(): Promise<void> {
   }
 }
 
-async function readPending(): Promise<PendingPayment | null> {
+/**
+ * For app start, once it is known who is signed in: if this person had a
+ * payment in flight when the app last closed, ask rn-api about it once (which
+ * also moves the booking on if it was paid) and return the booking's number so
+ * the app can open it. Null when there is nothing of theirs to ask about.
+ */
+export async function resumePayment(user: string): Promise<string | null> {
+  let note: PaymentNote | null = null;
   try {
-    const stored = JSON.parse((await AsyncStorage.getItem(PENDING_KEY)) ?? "null") as PendingPayment | null;
-    if (!stored?.booking || !stored.payment?.payment_id || !stored.payment.checkout_url) return null;
-    if (new Date(stored.payment.expires_at).getTime() <= Date.now()) {
-      await forgetPayment();
-      return null;
-    }
-    return stored;
+    note = JSON.parse((await AsyncStorage.getItem(PENDING_KEY)) ?? "null") as PaymentNote | null;
   } catch {
     return null;
   }
-}
-
-/** The pay page this booking can still be paid on, if the phone remembers one. */
-export async function rememberedPayment<P extends PaymentHandoff = PaymentHandoff>(
-  booking: string
-): Promise<P | null> {
-  const stored = await readPending();
-  return stored?.booking === booking ? (stored.payment as P) : null;
-}
-
-/**
- * For app start: if a payment was in flight when the app last closed, ask rn-api
- * about it once (which also moves the booking on if it was paid) and return the
- * booking's number so the app can open it. Null when nothing was in flight.
- */
-export async function resumePayment(): Promise<string | null> {
-  const stored = await readPending();
-  if (!stored) return null;
+  if (!note?.booking || !note.payment_id) return null;
+  if (!(Date.now() - note.at < NOTE_MAX_AGE_MS)) {
+    await forgetPayment();
+    return null;
+  }
+  // Someone else's: left alone, for when they sign back in (or until it is a day old).
+  if (note.user !== user) return null;
   try {
-    const { payment } = await confirmPayment(stored.payment.payment_id);
+    const { payment } = await confirmPayment(note.payment_id);
     if (payment.status !== "created" && payment.status !== "failed") await forgetPayment();
   } catch {
     // The booking screen asks the server itself when it opens.
   }
-  return stored.booking;
+  return note.booking;
 }

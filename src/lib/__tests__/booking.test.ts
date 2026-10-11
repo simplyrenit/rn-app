@@ -6,6 +6,7 @@ import {
   bookRefusalIsFinal,
   bookingAmountCopy,
   bookingBanner,
+  bookingHow,
   bookingView,
   cancelCopy,
   cancelErrorText,
@@ -33,6 +34,7 @@ import {
   dayLong,
   dayShort,
   deliveryOption,
+  deliveryPlace,
   getItLine,
   handoverLine,
   howLabel,
@@ -76,6 +78,7 @@ const quote = (over: Partial<Quote> = {}): Quote => ({
   total: "1830.00",
   pay_now: "99.00",
   pay_after_accept: "1731.00",
+  rent_pay_minutes: 30,
   deposit: { amount: "3000.00", with_rent: false, due_on: "2026-10-23", refundable: true },
   units_free: 3,
   shop: { is_open: true, opens_at: null, book_for_morning: false, hours_first_day: { open: "10:00", close: "20:00" } },
@@ -120,6 +123,7 @@ const booking = (over: Partial<BookingCustomer> = {}, moneyOver: Partial<Booking
     booking_amount: "99.00",
     booking_amount_state: "paid",
     pay_after_accept: "1731.00",
+    rent_pay_minutes: 30,
     rent_due_at: null,
     rent_paid: true,
     deposit: "3000.00",
@@ -149,6 +153,7 @@ const booking = (over: Partial<BookingCustomer> = {}, moneyOver: Partial<Booking
     },
   ],
   pick_deadline_at: null,
+  tried: { ring: true, second_ring: false, staff_call: false },
   cancels_left_today: 3,
   window: { start: "2026-10-24T04:30:00Z", end: "2026-10-24T05:30:00Z" },
   window_request: null,
@@ -370,6 +375,15 @@ describe("the price before Book now", () => {
       { title: "After the owner accepts", sub: "Within 30 minutes", amount: "₹1,731" },
       { title: "Deposit", sub: "Refundable · due Fri 23 Oct", amount: "₹3,000" },
     ]);
+  });
+
+  it("takes the rent window from the quote: no 30 is written in the app (P2-2)", () => {
+    expect(paySteps(quote({ rent_pay_minutes: 45 }), false, NOW)[1].sub).toBe("Within 45 minutes");
+    expect(paySteps(quote({ rent_pay_minutes: 1 }), false, NOW)[1].sub).toBe("Within 1 minute");
+    // A server that does not send it yet: no number is made up.
+    expect(paySteps(quote({ rent_pay_minutes: undefined as unknown as number }), false, NOW)[1].sub).toBe(
+      "Soon after they accept"
+    );
   });
 
   it("says when a closed shop is asked, in place of the rent window", () => {
@@ -604,6 +618,12 @@ describe("the payment hand-off's words", () => {
     expect(payPhaseText("idle")).toBeNull();
   });
 
+  it("does not claim that no money was taken when a pay page has ended", () => {
+    expect(payPhaseText("ended")).toBe(
+      "This payment has ended. If money left your account, it comes back by itself."
+    );
+  });
+
   it("offers Try again after a failed try", () => {
     expect(payButtonLabel("idle", "Pay ₹99")).toBe("Pay ₹99");
     expect(payButtonLabel("failed", "Pay ₹99")).toBe("Try again");
@@ -828,7 +848,7 @@ describe("pay the rent", () => {
       {
         stage: "accepted",
         window: null,
-        pay_now: { purpose: "rent", amount: "1731.00", deposit_part: "0.00", due_at: "2026-10-13T04:43:00Z" },
+        pay_now: { purpose: "rent", amount: "1731.00", deposit_part: "0.00", due_at: "2026-10-13T04:43:00Z", payment: null },
         ...over,
       },
       { rent_paid: false, rent_due_at: "2026-10-13T04:43:00Z", ...moneyOver }
@@ -856,14 +876,14 @@ describe("pay the rent", () => {
 
   it("names the day when the deadline is not today", () => {
     const late = accepted({
-      pay_now: { purpose: "rent", amount: "1731.00", deposit_part: "0.00", due_at: "2026-10-13T18:45:00Z" },
+      pay_now: { purpose: "rent", amount: "1731.00", deposit_part: "0.00", due_at: "2026-10-13T18:45:00Z", payment: null },
     });
     expect(payRentCopy(late, NOW).sub).toBe("Pay ₹1,731 by 12:15 am tomorrow to confirm your booking.");
   });
 
   it("shows the delivery fee, and the deposit when it joins the rent", () => {
     const soon = accepted(
-      { pay_now: { purpose: "rent_and_deposit", amount: "4901.00", deposit_part: "3000.00", due_at: "2026-10-13T04:43:00Z" } },
+      { pay_now: { purpose: "rent_and_deposit", amount: "4901.00", deposit_part: "3000.00", due_at: "2026-10-13T04:43:00Z", payment: null } },
       { delivery_fee: "170.00", total: "2000.00", pay_after_accept: "1901.00" }
     );
     const copy = payRentCopy(soon, NOW);
@@ -963,6 +983,30 @@ describe("the booking screen", () => {
     );
     expect(bookingBanner(booking({ exit: "cancelled_by_customer", exit_reason: "free" })).title).toBe("Booking cancelled");
     expect(bookingBanner(booking({ stage: "ready", exit: "no_show", exit_reason: "customer" })).title).toBe("Booking ended");
+  });
+
+  const dropped = (state: string, payments: BookingCustomer["payments"] = []) =>
+    ringing("awaiting_payment", {
+      exit: "cancelled_by_customer",
+      exit_reason: "booking_amount_unpaid",
+      payments,
+      money: { ...booking().money, booking_amount_state: state },
+    });
+
+  it("does not say a dropped request was unpaid when it cannot know", () => {
+    expect(bookingBanner(dropped("unpaid")).sub).toBe(
+      "The payment did not arrive in time, so the owner was not asked. If money left your account, it comes back by itself."
+    );
+  });
+
+  it("says the money is going back when it arrived after the request was dropped", () => {
+    // The bank was slow: paid after the 15 minutes, and rn-api sends it back.
+    expect(bookingBanner(dropped("refund_requested", booking().payments)).sub).toBe(
+      "The ₹99 arrived after this request had ended, so the owner was not asked. It is going back to you."
+    );
+    expect(bookingBanner(dropped("refunded", booking().payments)).sub).toMatch(/It has been refunded\.$/);
+    // The payment row says paid before the state has moved: still not "was not paid".
+    expect(bookingBanner(dropped("unpaid", booking().payments)).sub).toMatch(/It is going back to you\.$/);
   });
 
   const timeline = [
@@ -1143,7 +1187,7 @@ describe("the Rentals tab", () => {
     expect(
       rentalNextLine(
         booking(
-          { stage: "accepted", pay_now: { purpose: "rent", amount: "1731.00", deposit_part: "0.00", due_at: "2026-10-13T04:43:00Z" } },
+          { stage: "accepted", pay_now: { purpose: "rent", amount: "1731.00", deposit_part: "0.00", due_at: "2026-10-13T04:43:00Z", payment: null } },
           { rent_paid: false }
         ),
         NOW
@@ -1168,5 +1212,39 @@ describe("the Rentals tab", () => {
     expect(rentalsEmpty("upcoming").title).toBe("No upcoming rentals");
     expect(rentalsEmpty("active").title).toBe("Nothing out right now");
     expect(rentalsEmpty("past").title).toBe("No past rentals yet");
+  });
+});
+
+describe("an owner delivery's address", () => {
+  const home = {
+    id: 17,
+    address: "Lodha Bellissimo, Mahalaxmi, Mumbai",
+    address_line_1: "Flat 12B",
+    address_line_2: "Opposite the race course",
+    locality: "Mahalaxmi, Mumbai",
+    address_type: "home" as const,
+    label: "",
+    coordinates: { lat: 18.9827, long: 72.8205 },
+  };
+
+  it("names the address in the summary line", () => {
+    expect(bookingHow(booking())).toBe("Self pickup");
+    expect(bookingHow(booking({ delivery_mode: "owner_delivery", delivery_address: home }))).toBe("Delivery to Home");
+    expect(
+      bookingHow(booking({ delivery_mode: "owner_delivery", delivery_address: { ...home, address_type: "other", label: "Studio" } }))
+    ).toBe("Delivery to Studio");
+    // A server that does not send the address yet.
+    expect(bookingHow(booking({ delivery_mode: "owner_delivery", delivery_address: null }))).toBe("Delivery");
+  });
+
+  it("writes where it is delivered, as it was chosen at Book now", () => {
+    expect(deliveryPlace(home)).toEqual({
+      title: "Home",
+      line: "Mahalaxmi, Mumbai · Flat 12B, Opposite the race course",
+    });
+    expect(deliveryPlace({ ...home, locality: "", address_line_1: "", address_line_2: "" })?.line).toBe(
+      "Lodha Bellissimo, Mahalaxmi, Mumbai"
+    );
+    expect(deliveryPlace(null)).toBeNull();
   });
 });
