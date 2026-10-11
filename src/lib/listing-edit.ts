@@ -129,6 +129,14 @@ const SENT_BACK = "staff_rejected";
 const CHANGED_SINCE = "changed_after_sent_back";
 
 /**
+ * The owner changed a listing staff had sent back: it carries `changed_after_sent_back` whatever its status. A save answers
+ * `checking` with the reason already in place and the check job flags it seconds later (or minutes, if it is behind), and in
+ * between the listing must not read as one that is about to go live.
+ */
+export const changedSinceSentBack = (reasons: readonly FlagReason[] | null | undefined): boolean =>
+  (reasons ?? []).some((r) => r.code === CHANGED_SINCE);
+
+/**
  * Why a listing is flagged, in words an owner can act on:
  *  - sent back by staff (`staff_rejected`): "needs a change: <the staff's reason>. Edit it and we will look again.";
  *  - changed since (`changed_after_sent_back`): "Renit will look at it again" (what was changed, and what was asked);
@@ -263,7 +271,7 @@ export function saveOutcome(input: {
   }
   // A listing staff sent back, changed by its owner: the save sends it to the check again (so the answer says `checking`),
   // and the staff's reason is already "changed since it was sent back". It never goes live on the check alone.
-  if (reasons.some((r) => r.code === CHANGED_SINCE) && (answer.status === "flagged" || answer.status === "checking")) {
+  if (changedSinceSentBack(reasons) && (answer.status === "flagged" || answer.status === "checking")) {
     return { kind: "sent_back_again", title: "Renit will look at it again", message: "It is not live until Renit approves it." };
   }
   if (answer.status === "flagged") {

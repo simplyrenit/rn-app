@@ -1,6 +1,6 @@
 import { Text } from "@/components/core";
 import { radius, space } from "@/lib/design-tokens";
-import { PendingEdit, flagLine, pendingLine } from "@/lib/listing-edit";
+import { PendingEdit, changedSinceSentBack, flagLine, pendingLine } from "@/lib/listing-edit";
 import {
   FlagReason,
   ListingStatus,
@@ -46,7 +46,7 @@ export function ListingStatusPill({ status, reasons, withDetail = false, fullRea
     archived: { fg: color.textBody, bg: color.surfaceRaised },
   }[status];
 
-  const reason = status === "flagged" ? flagLine(reasons) : null;
+  const reason = status === "flagged" || (status === "checking" && changedSinceSentBack(reasons)) ? flagLine(reasons) : null;
 
   const pill = (
     <View

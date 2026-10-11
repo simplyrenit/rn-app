@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { fieldsLine, flagLine, ownerView, pendingLine, readPendingEdit, readReasons, saveOutcome, submittedCopy } from "../listing-edit";
+import { changedSinceSentBack, fieldsLine, flagLine, ownerView, pendingLine, readPendingEdit, readReasons, saveOutcome, submittedCopy } from "../listing-edit";
 import { statusDetail } from "../listing-status";
 
 /** The server's own shapes (ENG-100-api.md, review rounds 1 and 2, "Contract changes"). */
@@ -69,6 +69,19 @@ describe("the words", () => {
     expect(flagLine([depositZero, { code: "price_high", text: "The price looks too high" }])).toBe("The deposit is zero · The price looks too high");
     expect(flagLine([])).toBeNull();
     expect(flagLine(undefined)).toBeNull();
+  });
+
+  it("a sent-back listing the owner has changed says Renit will look again while it is still `checking`, never 'usually takes seconds'", () => {
+    const again = statusDetail("checking", [changedSince]);
+    expect(again).toContain("Renit will look at it again. It is not live until Renit approves it.");
+    expect(again).not.toMatch(/seconds/);
+    // A listing in the ordinary check keeps its own line; one flagged by the job says the same as while it was checking.
+    expect(statusDetail("checking", [])).toBe("Not visible to renters yet · usually takes seconds");
+    expect(statusDetail("checking", [depositZero])).toBe("Not visible to renters yet · usually takes seconds");
+    expect(statusDetail("flagged", [changedSince])).toBe(again);
+    expect(changedSinceSentBack([sentBack, changedSince])).toBe(true);
+    expect(changedSinceSentBack([sentBack])).toBe(false);
+    expect(changedSinceSentBack(undefined)).toBe(false);
   });
 
   it("the status line of a flagged listing uses them", () => {

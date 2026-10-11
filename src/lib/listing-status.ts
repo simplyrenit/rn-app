@@ -1,4 +1,4 @@
-import { flagLine } from "@/lib/listing-edit";
+import { changedSinceSentBack, flagLine } from "@/lib/listing-edit";
 
 /**
  * The six statuses a listing can have (API-CONTRACT, ShopProduct; ARCHITECTURE
@@ -67,7 +67,10 @@ export function statusDetail(
   status: ListingStatus,
   reasons?: FlagReason[] | null
 ): string {
-  return (status === "flagged" ? flagLine(reasons) : null) ?? STATUS_COPY[status].detail;
+  // A sent-back listing the owner has changed says Renit will look again whatever its status: while it is `checking` it is
+  // not about to go live ("usually takes seconds" would say it is).
+  const again = status === "checking" && changedSinceSentBack(reasons);
+  return (status === "flagged" || again ? flagLine(reasons) : null) ?? STATUS_COPY[status].detail;
 }
 
 /**
