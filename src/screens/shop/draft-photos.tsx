@@ -6,7 +6,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { pickPhotos } from "@/components/list-flow/pick-photos";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, darkColors, radius, space } from "@/lib/design-tokens";
 import {
   NeedingDraft,
   Walk,
@@ -89,7 +89,8 @@ function Viewfinder({ title, disabled, onPress }: { title: string; disabled: boo
       style={{
         height: 280,
         borderRadius: radius.card,
-        backgroundColor: "#161616",
+        // A camera is dark in both themes, as the frame draws it.
+        backgroundColor: darkColors.surface,
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
