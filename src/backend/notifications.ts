@@ -7,7 +7,9 @@ import { Platform } from "react-native";
 import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
 import axiosInstance from "@/lib/networkUtils";
 import { REGISTER_PUSH_TOKEN_ENDPOINT } from "@/lib/config";
+import { getAuthTokens } from "@/lib/auth-fns";
 import { getDeviceInfo, sessionBody } from "@/lib/device";
+import { shouldDropPush } from "@/lib/sign-out";
 import { colors } from "@/lib/design-tokens";
 
 // Task name for background fetch
@@ -362,6 +364,13 @@ export function setupChatNotifications() {
   Notifications.setNotificationHandler({
     handleNotification: async (notification) => {
       const data = notification.request.content.data;
+
+      // A `ring` for a shop reaches this phone only because the server still holds
+      // its session, which happens while a sign-out waits to be repeated (ENG-146).
+      // Nobody is signed in to answer it, so it is not shown and does not sound.
+      if (shouldDropPush(data, Boolean(await getAuthTokens()))) {
+        return { shouldShowAlert: false, shouldPlaySound: false, shouldSetBadge: false };
+      }
 
       return {
         shouldShowAlert: true,

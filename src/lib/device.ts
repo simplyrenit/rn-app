@@ -1,8 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
-import { ACCESS_DEVICES_ENDPOINT } from "./config";
-import axiosInstance from "./networkUtils";
 import { uuidv4 } from "./uuid";
 
 /**
@@ -68,26 +66,4 @@ export function getDeviceInfo(): Promise<DeviceInfo> {
     makeDeviceInfo({ id, modelName: Device.modelName, deviceName: Device.deviceName, os: Platform.OS })
   );
   return cached;
-}
-
-/**
- * Ends this phone's session on the server when the person signs out, so it stops
- * ringing and drops off "Signed-in devices" (`POST /api/access/devices/current/sign-out/`;
- * API-CONTRACT OE-B). Never needs a fresh code, never throws and never holds the
- * sign-out up for long: offline, or with a session the server has already ended,
- * the phone signs out all the same and the server's own 90-day rule tidies up.
- *
- * `validateStatus` keeps a 401 from reaching the client's refresh-and-retry, which
- * would try to refresh a session that is being closed.
- */
-export async function signOutCurrentDevice(): Promise<void> {
-  try {
-    await axiosInstance.post(
-      `${ACCESS_DEVICES_ENDPOINT}current/sign-out/`,
-      {},
-      { timeout: 3000, validateStatus: () => true }
-    );
-  } catch {
-    // As above: signing out of the phone must not depend on the network.
-  }
 }

@@ -5,16 +5,8 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
   default: { getItem: jest.fn(), setItem: jest.fn() },
 }));
 jest.mock("expo-device", () => ({ modelName: "iPhone 15", deviceName: "Asha's iPhone" }));
-jest.mock("../config", () => ({ ACCESS_DEVICES_ENDPOINT: "https://api.test/access/devices/" }));
-jest.mock("../networkUtils", () => ({
-  __esModule: true,
-  default: { post: jest.fn() },
-}));
 
-import axiosInstance from "../networkUtils";
-import { makeDeviceInfo, sessionBody, signOutCurrentDevice } from "../device";
-
-const post = (axiosInstance as unknown as { post: jest.MockedFunction<(...args: unknown[]) => Promise<unknown>> }).post;
+import { makeDeviceInfo, sessionBody } from "../device";
 
 describe("makeDeviceInfo", () => {
   it("reports the model name, the id and ios", () => {
@@ -42,25 +34,6 @@ describe("makeDeviceInfo", () => {
     const info = makeDeviceInfo({ id: "x".repeat(80), modelName: "m".repeat(150), os: "ios" });
     expect(info.device_id).toHaveLength(64);
     expect(info.device_name).toHaveLength(100);
-  });
-});
-
-describe("signOutCurrentDevice", () => {
-  it("posts to the current device's sign-out without letting a 401 reach the refresh retry", async () => {
-    post.mockResolvedValue({ status: 204 });
-    await signOutCurrentDevice();
-    expect(post).toHaveBeenCalledTimes(1);
-    const [url, body, config] = post.mock.calls[0] as [string, unknown, { timeout: number; validateStatus: (s: number) => boolean }];
-    expect(url).toBe("https://api.test/access/devices/current/sign-out/");
-    expect(body).toEqual({});
-    expect(config.timeout).toBeLessThanOrEqual(5000);
-    // Every status, a 401 included, counts as an answer.
-    expect(config.validateStatus(401)).toBe(true);
-  });
-
-  it("never throws, so a phone with no network still signs out", async () => {
-    post.mockRejectedValue(new Error("offline"));
-    await expect(signOutCurrentDevice()).resolves.toBeUndefined();
   });
 });
 

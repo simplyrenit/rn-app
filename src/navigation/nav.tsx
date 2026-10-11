@@ -37,6 +37,7 @@ import UserDetailScreen from "../screens/users/users-screen";
 import { HomeIcon, HomeIconSolid } from "@/icons/home";
 import { PlusSquareIcon } from "@/icons/plus-square";
 import { CHAT_ENABLED } from "@/lib/config";
+import { retryPendingSignOut } from "@/lib/sign-out";
 import { RootStackParamList } from "@/lib/types";
 import { bookingQueryKey } from "@/backend/bookings";
 import {
@@ -61,7 +62,7 @@ import RentalHoursScreen from "@/screens/profileScreens/rental-hours";
 import RentalSettingsScreen from "@/screens/profileScreens/rental-settings";
 import NotificationScreen from "@/screens/profileScreens/notification";
 import WhoWeAreScreen from "@/screens/profileScreens/who-we-are";
-import { BackHandler, PixelRatio, Platform, View } from "react-native";
+import { AppState, BackHandler, PixelRatio, Platform, View } from "react-native";
 import {
   CalendarIcon,
   ChatBubbleLeftIcon,
@@ -387,6 +388,16 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function Navigation() {
   const { loading, hasSeenWelcome, theme, isAuthenticated } = useGlobalContext();
   const queryClient = useQueryClient();
+
+  // A sign-out that could not reach the server is repeated when the app starts and
+  // each time it comes to the front, signed in or not (ENG-146). A no-op when none waits.
+  React.useEffect(() => {
+    void retryPendingSignOut();
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void retryPendingSignOut();
+    });
+    return () => subscription.remove();
+  }, []);
 
   React.useEffect(() => {
     if (!isAuthenticated) {
