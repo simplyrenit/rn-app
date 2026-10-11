@@ -494,6 +494,16 @@ export function shouldReadBooking(view: RingView, hasRing: boolean): boolean {
   }
 }
 
+/**
+ * Whether a ring that arrives with the app open may take the screen over. Not while a ring
+ * screen is already open: the owner may be about to tap Accept there, and the same button
+ * sits in the same place on the next ring (review round 1, finding 6). The new request
+ * waits as "1 more request" on the open screen.
+ */
+export function ringTakesScreen(currentRoute: string | null | undefined): boolean {
+  return currentRoute !== "ShopRing";
+}
+
 /** The other requests that are ringing now, for "1 more request is waiting" on the one on screen. */
 export function otherRings(live: LiveAnswer | null | undefined, number: string): Ring[] {
   return (live?.ringing ?? []).filter((r) => r.number !== number);

@@ -2,6 +2,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
   createNavigationContainerRef,
   NavigationContainer,
+  StackActions,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
@@ -52,7 +53,7 @@ import {
 import { PushRoute } from "@/lib/push-routes";
 import { ringEndedQueryKey } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
-import { endingFromPush } from "@/lib/shop-ring";
+import { endingFromPush, ringTakesScreen } from "@/lib/shop-ring";
 import ShopBookingScreen from "@/screens/shop/booking";
 import ShopHandoverScreen from "@/screens/shop/handover";
 import ShopReturnScreen from "@/screens/shop/return";
@@ -430,8 +431,10 @@ export default function Navigation() {
         navigationRef.navigate("BookingDeposit", { number: route.number });
         break;
       case "ShopRing":
-        // Keyed by booking: a ring for one that is already open comes back to it.
-        navigationRef.navigate("ShopRing", { number: route.number, ring: route.ring ?? undefined });
+        // Pushed, not navigated to: with the screens keyed by booking, `navigate` to a ring
+        // that is already open pops every screen above it, and a newer ring on top would be
+        // thrown away. `push` brings an existing one to the front and leaves the others.
+        navigationRef.dispatch(StackActions.push("ShopRing", { number: route.number, ring: route.ring ?? undefined }));
         break;
       case "ShopBooking":
         navigationRef.navigate("ShopBooking", { number: route.number });
@@ -516,6 +519,10 @@ export default function Navigation() {
             }
           } else {
             queryClient.removeQueries(ringEndedQueryKey(route.number));
+            // A ring screen is open: the owner may be about to tap Accept on it, and Accept sits in
+            // the same place on the next one. The new request waits as "1 more request" on that
+            // screen (it reads the live answer) and opens when this one is answered.
+            if (navigationRef.isReady() && !ringTakesScreen(navigationRef.getCurrentRoute()?.name)) return;
             openRoute(route);
           }
         }

@@ -22,6 +22,8 @@ import {
   endingFromError,
   feeText,
   hereEnding,
+  moreText,
+  otherRings,
   outcomeUnknown,
   parseRing,
   rentByLabel,
@@ -39,7 +41,7 @@ import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { StackActions, useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { BellIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, MapPinIcon } from "react-native-heroicons/outline";
 import { CheckCircleIcon as CheckCircleMini } from "react-native-heroicons/mini";
 import { BellIcon as BellSolid } from "react-native-heroicons/solid";
@@ -95,12 +97,17 @@ function RingingView({
   note,
   onAccept,
   onCantDoIt,
+  more,
+  onNext,
 }: {
   ring: Ring;
   working: "accept" | "refuse" | null;
   note: string | null;
   onAccept: () => void;
   onCantDoIt: () => void;
+  /** Other requests that are ringing too. They wait: this screen is not swapped from under the owner's finger. */
+  more: number;
+  onNext: () => void;
 }) {
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
@@ -118,6 +125,31 @@ function RingingView({
           gap: space.md,
         }}
       >
+        {more > 0 ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={`${moreText(more)}. See the next one.`}
+            activeOpacity={0.7}
+            onPress={onNext}
+            style={{
+              alignSelf: "stretch",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingHorizontal: space.md,
+              paddingVertical: space.sm,
+              borderRadius: radius.button,
+              backgroundColor: color.brandWash,
+            }}
+          >
+            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+              {moreText(more)}
+            </Text>
+            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+              See next
+            </Text>
+          </TouchableOpacity>
+        ) : null}
         <RingBell />
         <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
           New booking
@@ -235,12 +267,17 @@ function EndedView({
   summary,
   onDone,
   onSee,
+  more = 0,
+  onNext,
 }: {
   ending: RingEnding;
   summary: RingSummary | null;
   onDone: () => void;
   /** An accepted request has a booking to go and see. */
   onSee?: () => void;
+  /** Other requests are still ringing: the next one is one tap away. */
+  more?: number;
+  onNext?: () => void;
 }) {
   const { color } = useTheme();
   const copy = endingCopy(ending, summary?.firstName ?? null);
@@ -307,15 +344,20 @@ function EndedView({
         ) : null}
       </ScrollView>
       <BottomBar>
+        {more > 0 && onNext ? <Button onPress={onNext}>{`Next request (${more} waiting)`}</Button> : null}
         {accepted && onSee ? (
           <>
-            <Button onPress={onSee}>See booking</Button>
+            <Button variant={more > 0 ? "outline" : "primary"} onPress={onSee}>
+              See booking
+            </Button>
             <Button variant="ghost" onPress={onDone}>
               Done
             </Button>
           </>
         ) : (
-          <Button onPress={onDone}>Done</Button>
+          <Button variant={more > 0 ? "ghost" : "primary"} onPress={onDone}>
+            Done
+          </Button>
         )}
       </BottomBar>
     </View>
@@ -450,6 +492,14 @@ export default function ShopRingScreen() {
       ? { ...ending, rentBy: rentByLabel(booking.data, booking.dataUpdatedAt) }
       : ending;
 
+  // Other requests ringing at the same time wait behind this one: they are shown as a count, and
+  // opened by the owner (or after this one is answered), never swapped in under a tap.
+  const others = otherRings(live.data, params.number);
+  const next = others[0];
+  const goNext = () => {
+    if (next) navigation.dispatch(StackActions.replace("ShopRing", { number: next.number, ring: next }));
+  };
+
   const close = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"));
   // The booking takes this screen's place, so "back" from it is not a ring that is over.
   const see = () => navigation.dispatch(StackActions.replace("ShopBooking", { number: params.number }));
@@ -518,17 +568,19 @@ export default function ShopRingScreen() {
         note={note}
         onAccept={() => void accept()}
         onCantDoIt={() => sheet.current?.present()}
+        more={others.length}
+        onNext={goNext}
       />
     );
   } else if (view.kind === "here") {
-    body = <EndedView ending={withRent(view.ending)} summary={summary} onDone={close} onSee={see} />;
+    body = <EndedView ending={withRent(view.ending)} summary={summary} onDone={close} onSee={see} more={others.length} onNext={goNext} />;
   } else if (view.kind === "ended") {
-    body = <EndedView ending={withRent(view.ending)} summary={summary} onDone={close} onSee={see} />;
+    body = <EndedView ending={withRent(view.ending)} summary={summary} onDone={close} onSee={see} more={others.length} onNext={goNext} />;
   } else if (view.kind === "unknown") {
     const finished = booking.data ? endingFromBooking(booking.data, booking.dataUpdatedAt) : null;
     body = booking.data ? (
       finished ? (
-        <EndedView ending={finished} summary={summary} onDone={close} onSee={see} />
+        <EndedView ending={finished} summary={summary} onDone={close} onSee={see} more={others.length} onNext={goNext} />
       ) : (
         <View style={{ flex: 1, justifyContent: "center" }}>
           <EmptyState

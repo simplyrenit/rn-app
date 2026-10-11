@@ -26,6 +26,7 @@ import {
   rentByLabel,
   refuseBody,
   ringDates,
+  ringTakesScreen,
   ringView,
   ringWhere,
   shouldReadBooking,
@@ -541,6 +542,13 @@ describe("other requests ringing at the same time (review round 1, finding 6)", 
     expect(otherRings(live({ ringing: [ring, other] }), "RN-24831").map((r) => r.number)).toEqual(["RN-24900"]);
     expect(otherRings(live({ ringing: [ring] }), "RN-24831")).toEqual([]);
     expect(otherRings(undefined, "RN-24831")).toEqual([]);
+  });
+
+  it("a ring that arrives with the app open does not take the screen from an open ring, and takes any other", () => {
+    expect(ringTakesScreen("ShopRing")).toBe(false);
+    expect(ringTakesScreen("MainTabs")).toBe(true);
+    expect(ringTakesScreen("ShopBooking")).toBe(true);
+    expect(ringTakesScreen(undefined)).toBe(true);
   });
 
   it("says how many", () => {
