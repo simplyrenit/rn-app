@@ -139,7 +139,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const { getMyDetails, updateMyProfileImage, updateMyDetails, loading, deleteMyAccount } =
     useProfile();
 
-  const fetchDetails = async () => {
+  /**
+   * Reads the account. With `accountOnly` only what the sheet shows of the account is refreshed (the rows, and the
+   * number the code goes to): the boxes a change is being typed in keep what the person typed, so a new address with
+   * its proof held is never overwritten by the account's current one (review app-6 r2 #5).
+   */
+  const fetchDetails = async (accountOnly = false) => {
     const details = await getMyDetails();
     // setDetails(details);
 
@@ -153,6 +158,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       phone: details.phone,
       password: PASSWORD_MASK,
     });
+    if (accountOnly) return;
     setUpdatedName(details.first_name + " " + details.last_name);
     setUpdatedEmail(details.email);
     setUpdatedPhone(details.phone.slice(-10));
@@ -255,7 +261,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       if (next === "stale_copy") {
         // The server has a number this phone's copy of the account does not (set on another phone): the copy is read
         // again, and the person tries once more with it, instead of a save that would be refused again.
-        void fetchDetails();
+        void fetchDetails(true).catch(() => undefined);
         onFail?.("Your account has a phone number this phone didn't know about. Your details are updated: try again.");
         return;
       }
