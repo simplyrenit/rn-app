@@ -5,6 +5,8 @@ import {
   DateRange,
   UnavailabilityEditor,
 } from "@/components/post/unavailability-editor";
+import { ListingAnswer, saveOutcome } from "@/lib/listing-edit";
+import { toastSave } from "@/lib/save-toast";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
@@ -45,14 +47,15 @@ export default function EditProductAvailability() {
     // and its context are gone (ENG-10); new listings start with no blocked
     // dates and have their own draft (`list-draft-context`).
     try {
-      await updateMyProductDetails(name, {
+      const body = {
         blocked_dates: normalised.map((range) => ({
           start_date: range.startDate,
           end_date: range.endDate,
         })),
-      });
+      };
+      const answer = await updateMyProductDetails(name, body);
 
-      toast.success("Your product was updated!");
+      toastSave(saveOutcome({ sent: body, answer: answer as unknown as ListingAnswer }));
       navigation.navigate("editProduct", { id: name });
     } catch (error) {
       console.error("Failed to update product details:", error);

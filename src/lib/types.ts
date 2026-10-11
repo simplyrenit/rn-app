@@ -8,6 +8,7 @@ import type { SavedAddress } from "@/lib/addresses";
 import type { BookItem, DeliveryMode, ProductShop } from "@/lib/booking";
 import type { Moment, Side } from "@/lib/capture";
 import type { ReportKind } from "@/lib/day-of";
+import type { PendingEdit } from "@/lib/listing-edit";
 import type { FlagReason, ListingStatus } from "@/lib/listing-status";
 import type { Ring } from "@/lib/shop-ring";
 
@@ -641,6 +642,11 @@ export interface BackendProduct {
    */
   status?: ListingStatus;
   flag_reasons?: FlagReason[];
+  /**
+   * A change to a live listing that waits over the version customers still see (decisions T-34, T-35): which fields,
+   * and why. Owner endpoint only; null or absent when nothing waits (`readPendingEdit`).
+   */
+  pending_edit?: PendingEdit | null;
   /**
    * ENG-155. Units the owner has to rent out, what the item costs to replace
    * (rupees as a string, null until set), the owner's own code, and the one

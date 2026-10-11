@@ -1,3 +1,5 @@
+import { flagLine } from "@/lib/listing-edit";
+
 /**
  * The six statuses a listing can have (API-CONTRACT, ShopProduct; ARCHITECTURE
  * 2.3). Kept free of React so the wording can be tested.
@@ -28,6 +30,11 @@ export const LISTING_STATUSES: readonly ListingStatus[] = [
 export interface FlagReason {
   code: string;
   text: string;
+  /** A check of this could not run (the photo service was down): staff look at it. */
+  unchecked?: boolean;
+  /** `changed_after_sent_back` only: the reason staff gave when they sent the listing back, and what the owner changed since. */
+  sent_back_for?: string;
+  changed?: string[];
 }
 
 /** The status the server sent, or null when it is missing or one this app does not know. */
@@ -52,12 +59,15 @@ export function flagReasonText(reasons: FlagReason[] | null | undefined): string
   return texts.length > 0 ? texts.join(" · ") : null;
 }
 
-/** The pill's explanation line: the reason for a flagged listing, else the status's own words. */
+/**
+ * The pill's explanation line: the reason for a flagged listing (a listing staff sent back says "needs a change: …", one
+ * changed since says Renit will look again: `flagLine`), else the status's own words.
+ */
 export function statusDetail(
   status: ListingStatus,
   reasons?: FlagReason[] | null
 ): string {
-  return (status === "flagged" ? flagReasonText(reasons) : null) ?? STATUS_COPY[status].detail;
+  return (status === "flagged" ? flagLine(reasons) : null) ?? STATUS_COPY[status].detail;
 }
 
 /**

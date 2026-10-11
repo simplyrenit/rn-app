@@ -1,7 +1,8 @@
 import { BackButton, Button, EmptyState, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import IconButton from "@/components/profile/post-auth/profile-icon-button";
-import { ListingPrompts, ListingStatusPill } from "@/components/product/listing-status";
+import { HeldChange, ListingPrompts, ListingStatusPill } from "@/components/product/listing-status";
+import { readPendingEdit } from "@/lib/listing-edit";
 import { apiError } from "@/lib/api-error";
 import { blockedDatesOf, hasPrice, openBookingMessage, resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
@@ -151,7 +152,13 @@ const EditProductScreen: React.FC = () => {
                         the reason is shown where they will fix it. */}
                     {status ? (
                       <View style={{ marginTop: 4 }}>
-                        <ListingStatusPill status={status} reasons={product.flag_reasons} />
+                        <ListingStatusPill status={status} reasons={product.flag_reasons} fullReason />
+                      </View>
+                    ) : null}
+                    {/* A change of theirs that waits: which fields, and what to change. */}
+                    {product.pending_edit ? (
+                      <View style={{ marginTop: 6 }}>
+                        <HeldChange pending={readPendingEdit(product.pending_edit)} />
                       </View>
                     ) : null}
                     <View style={{ marginTop: 4 }}>

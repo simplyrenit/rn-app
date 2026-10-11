@@ -14,7 +14,8 @@ import { BookingFacts } from "@/components/booking/booking-facts";
 import { DetailSection } from "@/components/product/detail-section";
 import { ExpandableText } from "@/components/product/expandable-text";
 import { ModerationBanner } from "@/components/product/moderation-banner";
-import { ListingStatusPill } from "@/components/product/listing-status";
+import { HeldChange, ListingStatusPill } from "@/components/product/listing-status";
+import { PendingEdit, readPendingEdit } from "@/lib/listing-edit";
 import { ProductHero } from "@/components/product/product-hero";
 import { SpecStrip } from "@/components/product/spec-strip";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
@@ -221,6 +222,7 @@ export default function DetailsScreen() {
   const [ownerStatus, setOwnerStatus] = useState<{
     status: ListingStatus;
     reasons: FlagReason[];
+    pending: PendingEdit | null;
   } | null>(null);
   const distanceLabel = useDistanceTo(product?.coordinates);
   // The similar-products rail draws the Home tile, whose heart has to start in
@@ -305,7 +307,7 @@ export default function DetailsScreen() {
     try {
       const owned = await getMyProductDetails(data.name);
       const status = resolveListingStatus(owned?.status);
-      setOwnerStatus(status ? { status, reasons: owned?.flag_reasons ?? [] } : null);
+      setOwnerStatus(status ? { status, reasons: owned?.flag_reasons ?? [], pending: readPendingEdit(owned?.pending_edit) } : null);
     } catch {
       setOwnerStatus(null);
     }
@@ -664,6 +666,7 @@ export default function DetailsScreen() {
                 withDetail
               />
             ) : null}
+            {isOwner && ownerStatus?.pending ? <HeldChange pending={ownerStatus.pending} /> : null}
 
             {/* Shown with or without specs: "more like this" is useful either
                 way. The label sits at the top of its 44pt target (PDP-01). */}

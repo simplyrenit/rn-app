@@ -1,10 +1,10 @@
 import { Text } from "@/components/core";
-import { radius } from "@/lib/design-tokens";
+import { radius, space } from "@/lib/design-tokens";
+import { PendingEdit, flagLine, pendingLine } from "@/lib/listing-edit";
 import {
   FlagReason,
   ListingStatus,
   STATUS_COPY,
-  flagReasonText,
   listingPrompts,
   statusDetail,
 } from "@/lib/listing-status";
@@ -22,6 +22,8 @@ interface PillProps {
   reasons?: FlagReason[] | null;
   /** Adds the one-line explanation beside the pill. */
   withDetail?: boolean;
+  /** The reason in full, not cut to two lines: for the screen where the owner fixes the listing. */
+  fullReason?: boolean;
 }
 
 /**
@@ -32,7 +34,7 @@ interface PillProps {
  * Flagged says why, as the frame does ("Flagged · price"): under the pill on
  * the narrow shelf tile, in the detail line where there is room for one.
  */
-export function ListingStatusPill({ status, reasons, withDetail = false }: PillProps) {
+export function ListingStatusPill({ status, reasons, withDetail = false, fullReason = false }: PillProps) {
   const { color } = useTheme();
 
   const tint = {
@@ -44,7 +46,7 @@ export function ListingStatusPill({ status, reasons, withDetail = false }: PillP
     archived: { fg: color.textBody, bg: color.surfaceRaised },
   }[status];
 
-  const reason = status === "flagged" ? flagReasonText(reasons) : null;
+  const reason = status === "flagged" ? flagLine(reasons) : null;
 
   const pill = (
     <View
@@ -77,7 +79,7 @@ export function ListingStatusPill({ status, reasons, withDetail = false }: PillP
     <View style={{ gap: 2 }}>
       {pill}
       {reason ? (
-        <Text fontSize="text-xs" tone="body" numberOfLines={2}>
+        <Text fontSize={fullReason ? "text-sm" : "text-xs"} tone="body" numberOfLines={fullReason ? undefined : 2}>
           {reason}
         </Text>
       ) : null}
@@ -103,6 +105,44 @@ export function ListingPrompts({
           {prompt}
         </Text>
       ))}
+    </View>
+  );
+}
+
+/**
+ * A change that waits over the version customers still see (decision T-34): which fields, and why. Draws nothing when
+ * no change waits. `compact` is one small line, for a tile on the shelf.
+ */
+export function HeldChange({ pending, compact = false }: { pending: PendingEdit | null | undefined; compact?: boolean }) {
+  const { color } = useTheme();
+  const line = pendingLine(pending);
+  if (!pending || !line) return null;
+  if (compact) {
+    return (
+      <Text fontSize="text-xs" tone="warning" numberOfLines={3}>
+        {line}
+      </Text>
+    );
+  }
+  return (
+    <View
+      accessible
+      accessibilityLabel={`A change is waiting. ${line}`}
+      style={{
+        gap: space.xs,
+        padding: space.md,
+        borderRadius: radius.card,
+        borderWidth: 1,
+        borderColor: color.warning,
+        backgroundColor: color.warningWash,
+      }}
+    >
+      <Text fontSize="text-md" fontWeight="font-bold">
+        {pending.state === "checking" ? "Your change is being checked" : "A change of yours is on hold"}
+      </Text>
+      <Text fontSize="text-sm" tone="body">
+        {line}
+      </Text>
     </View>
   );
 }

@@ -2,7 +2,8 @@ import { useProfile } from "@/backend/profile";
 import { StaticContainer, SubpageHeader, Text } from "@/components/core";
 import { MyProductCard } from "@/components/core/my-product-card";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { ListingPrompts, ListingStatusPill } from "@/components/product/listing-status";
+import { HeldChange, ListingPrompts, ListingStatusPill } from "@/components/product/listing-status";
+import { readPendingEdit } from "@/lib/listing-edit";
 import { useGlobalContext } from "@/context/global-context";
 import { resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
@@ -210,6 +211,8 @@ const MyProductScreen: React.FC = () => {
                   <ListingStatusPill status={status} reasons={item.flag_reasons} />
                 </View>
               ) : null}
+              {/* A change that waits over the version customers see: which fields, and why. */}
+              <HeldChange pending={readPendingEdit(item.pending_edit)} compact />
               {/* "Confirm your price" and "Needs worth": the two things an old
                   listing still wants from its owner. */}
               <View style={{ marginTop: 4 }}>

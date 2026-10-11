@@ -8,6 +8,8 @@ import {
 import { EditStepHeader } from "@/components/post/edit-step-header";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
+import { ListingAnswer, saveOutcome } from "@/lib/listing-edit";
+import { toastSave } from "@/lib/save-toast";
 import { listingPrompts } from "@/lib/listing-status";
 import { parseQuantity, quantityInUseMessage } from "@/lib/list-flow/stock";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -68,7 +70,7 @@ export default function EditAboutProduct() {
 
   const handleSubmit = async (values: AboutProductValues) => {
     try {
-      await updateMyProductDetails(data.name, {
+      const body = {
         title: values.productName,
         brand_name: values.brandName,
         model_name: values.modelName,
@@ -92,9 +94,11 @@ export default function EditAboutProduct() {
           values.contactPerson === "Other"
             ? contactNumberToSend(values.otherPhoneNumber)
             : userDetails?.phone,
-      });
+      };
+      const answer = await updateMyProductDetails(data.name, body);
 
-      toast.success("Your product was updated!");
+      // The save may have changed nothing the customers see (the change waits, or was already so): say which.
+      toastSave(saveOutcome({ before: data as unknown as ListingAnswer, sent: body, answer: answer as unknown as ListingAnswer }));
       navigation.goBack();
     } catch (error) {
       console.error("Error updating product details:", error);

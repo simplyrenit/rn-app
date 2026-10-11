@@ -4,6 +4,8 @@ import { EditStepHeader } from "@/components/post/edit-step-header";
 import { TaxonomyList } from "@/components/post/taxonomy-list";
 import { categoryDisplayName } from "@/lib/category-icons";
 import { categoryPayload } from "@/lib/list-flow/payload";
+import { ListingAnswer, saveOutcome } from "@/lib/listing-edit";
+import { toastSave } from "@/lib/save-toast";
 import { toast } from "@/lib/toast";
 import { RouteProps, Subcategory, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
@@ -26,15 +28,16 @@ export function useSaveSubcategory(name: string) {
     setSaving(busyKey);
 
     try {
-      await updateMyProductDetails(name, {
+      const body = {
         category: categoryPayload({
           id: subcategory.id,
           parent: category,
           title: subcategory.title,
         }),
-      });
+      };
+      const answer = await updateMyProductDetails(name, body);
 
-      toast.success("Your product was updated!");
+      toastSave(saveOutcome({ sent: body, answer: answer as unknown as ListingAnswer }));
       navigation.navigate("editProduct", { id: name });
     } catch (error) {
       console.error("Failed to update product details:", error);
