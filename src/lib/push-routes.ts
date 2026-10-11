@@ -27,6 +27,8 @@ export type PushRoute =
   | { screen: "ShopRing"; number: string; ring: Ring | null; ended: boolean; end: RingEndPush | null }
   /** The shop's page for a booking (ENG-210). */
   | { screen: "ShopBooking"; number: string }
+  /** The shop's handover (ENG-223): the customer tapped a preset button on the day. */
+  | { screen: "ShopHandover"; number: string }
   /** The shop's Today, for "Closed after two missed requests". */
   | { screen: "ShopToday" }
   /** The bank check passed or failed, the account was changed, or a payout waits for it. */
@@ -93,10 +95,14 @@ export function pushRoute(data: unknown): PushRoute | null {
 
   if (data.role === "owner") {
     switch (data.type) {
+      // A preset tap on the day ("On my way", "I am here"): the handover screen, where the
+      // shop answers it. Every other word about the window is the booking's.
+      case "window":
+        if (!number) return null;
+        return data.what === "status" ? { screen: "ShopHandover", number } : { screen: "ShopBooking", number };
       // The booking, as it now stands.
       case "lapsed":
       case "confirmed":
-      case "window":
       case "deposit_paid":
       case "cancelled":
       case "started":

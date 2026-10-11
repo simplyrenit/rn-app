@@ -10,6 +10,8 @@ import { dayShort } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { cannotOpenMessage } from "@/lib/shop";
 import { isQuiet } from "@/lib/shop-today";
+import { BookingShop } from "@/lib/shop-booking";
+import { dayScreen } from "@/lib/shop-handover";
 import {
   Block,
   NeedsRow,
@@ -288,6 +290,10 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   };
 
   const openBooking = (number: string) => navigation.navigate("ShopBooking", { number });
+  // A row of today's lists opens the day's own screen once there is one: the handover
+  // for a booking that is ready, the return for one that is out (ENG-223).
+  const openDay = (number: string, stage: string | undefined) =>
+    navigation.navigate(dayScreen({ stage: stage as BookingShop["stage"], exit: "" }) ?? "ShopBooking", { number });
 
   if (!feed) {
     // An account with nothing to rent out has no shop: that is not a fault to retry.
@@ -459,13 +465,19 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
 
         {feed.going_out.length > 0 ? (
           <Section title="Going out today">
-            <RowList rows={feed.going_out.map(goingOutRow)} onOpen={openBooking} />
+            <RowList
+              rows={feed.going_out.map(goingOutRow)}
+              onOpen={(number) => openDay(number, feed.going_out.find((item) => item.number === number)?.stage)}
+            />
           </Section>
         ) : null}
 
         {feed.coming_back.length > 0 ? (
           <Section title="Coming back today">
-            <RowList rows={feed.coming_back.map((item) => comingBackRow(item, now))} onOpen={openBooking} />
+            <RowList
+              rows={feed.coming_back.map((item) => comingBackRow(item, now))}
+              onOpen={(number) => openDay(number, feed.coming_back.find((item) => item.number === number)?.stage)}
+            />
           </Section>
         ) : null}
 

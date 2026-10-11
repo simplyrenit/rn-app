@@ -1,4 +1,5 @@
-import type { BookingExit, BookingStage, DeliveryMode, RingState, TimeWindow } from "@/lib/booking";
+import type { BookingDay, BookingExit, BookingStage, DeliveryMode, RingState, TimeWindow } from "@/lib/booking";
+import type { CaptureFlags } from "@/lib/capture";
 import type { ApiError } from "@/lib/api-error";
 import {
   TimelineRow,
@@ -84,6 +85,7 @@ export interface BookingShop {
     distance_km: string | null;
     /** One line of text; null until the stage is `ready`. Owner delivery only. */
     address: string | null;
+    coordinates?: { lat: number; long: number } | null;
   };
   first_day: string;
   last_day: string;
@@ -104,12 +106,22 @@ export interface BookingShop {
   window: TimeWindow | null;
   window_request: ShopWindowRequest | null;
   return_by: string | null;
-  day: {
-    /** The customer's phone: only from `call_from` until the handover. */
-    call_number: string | null;
-    call_from: string | null;
-    no_show_from: string | null;
-  };
+  /** The owner looks at the customer's ID at the handover and ticks that the name matches. */
+  id_match_required?: boolean;
+  /**
+   * The day of the handover (`call_number` is the customer's phone). The shop's
+   * `handover_code` is null until the handover is done: the owner types it and is
+   * never shown it first. `return_code` is six digits while the stage is `out`:
+   * the owner shows it and the customer types it.
+   */
+  day: BookingDay & { return_code: string | null };
+  /** Whether each capture has finished uploading. */
+  captures: CaptureFlags;
+  /** `returned_at` plus 24 hours while the stage is `returned`, else null. */
+  report_problem_until?: string | null;
+  /** A "Not as described" or fault report waits for Renit's decision. */
+  claim_open?: boolean;
+  claims?: number[];
   can: string[];
   timeline: ShopTimelineEntry[];
   created_at: string;

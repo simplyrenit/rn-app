@@ -24,6 +24,7 @@ import {
   shopPill,
   shopTimeline,
 } from "@/lib/shop-booking";
+import { dayButton, dayScreen } from "@/lib/shop-handover";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -165,6 +166,8 @@ function BookingPage({ booking, now }: { booking: BookingShop; now: Date }) {
   const request = customerRequest(booking);
   const mine = ownRequest(booking);
   const ringing = booking.stage === "ringing" && !booking.exit;
+  const day = dayScreen(booking);
+  const dayLabel = dayButton(booking);
 
   const answer = async (accept: boolean) => {
     if (busy.current) return;
@@ -210,6 +213,11 @@ function BookingPage({ booking, now }: { booking: BookingShop; now: Date }) {
             </Notice>
             <Button onPress={() => navigation.navigate("ShopRing", { number: booking.number })}>Answer this request</Button>
           </View>
+        ) : null}
+
+        {/* The day's own screen: the handover while the booking is ready, the return once it is out (ENG-223). */}
+        {day && dayLabel ? (
+          <Button onPress={() => navigation.navigate(day, { number: booking.number })}>{dayLabel}</Button>
         ) : null}
 
         <SummaryCard
@@ -302,7 +310,8 @@ function BookingPage({ booking, now }: { booking: BookingShop; now: Date }) {
  * next, who asked, the money, and what the shop can do now. What is offered follows
  * the server's `can` list. The booking is read again each time the screen or the
  * app comes back to the front, so a stage that moved while the shop was away is
- * never shown as it was. Day-of buttons and the camera are the handover's screens.
+ * never shown as it was. The day-of buttons, the camera and the codes are on the
+ * handover and return screens, which this page opens.
  */
 export default function ShopBookingScreen() {
   const { params } = useRoute<RouteProps<"ShopBooking">>();

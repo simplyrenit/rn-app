@@ -54,6 +54,8 @@ import { ringEndedQueryKey } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
 import { endingFromPush } from "@/lib/shop-ring";
 import ShopBookingScreen from "@/screens/shop/booking";
+import ShopHandoverScreen from "@/screens/shop/handover";
+import ShopReturnScreen from "@/screens/shop/return";
 import DraftPhotosScreen from "@/screens/shop/draft-photos";
 import CaptureScreen from "@/screens/capture/capture";
 import { useCaptureUploads } from "@/backend/capture-jobs";
@@ -433,6 +435,9 @@ export default function Navigation() {
       case "ShopBooking":
         navigationRef.navigate("ShopBooking", { number: route.number });
         break;
+      case "ShopHandover":
+        navigationRef.navigate("ShopHandover", { number: route.number });
+        break;
       case "ShopToday":
         navigationRef.navigate("ShopToday");
         break;
@@ -789,6 +794,17 @@ export default function Navigation() {
         <Stack.Screen
           name="ShopBooking"
           component={ShopBookingScreen}
+          getId={({ params }) => params?.number}
+        />
+        {/* The shop's handover and return (ENG-223), keyed by booking. */}
+        <Stack.Screen
+          name="ShopHandover"
+          component={ShopHandoverScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="ShopReturn"
+          component={ShopReturnScreen}
           getId={({ params }) => params?.number}
         />
         {/* The photo walk-through for drafts (ENG-192), on the root stack so the tab

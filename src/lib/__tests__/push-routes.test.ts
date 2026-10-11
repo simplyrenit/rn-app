@@ -138,4 +138,14 @@ describe("pushRoute", () => {
     expect(pushRoute(undefined)).toBeNull();
     expect(pushRoute("accepted")).toBeNull();
   });
+  it("opens the shop's handover when the customer taps a preset button on the day (ENG-223)", () => {
+    const owner = (over: Record<string, unknown>) => pushRoute(push("window", { role: "owner", ...over }));
+    expect(owner({ what: "status", status: "on_my_way" })).toEqual({ screen: "ShopHandover", number: "RN-24831" });
+    // Anything else about the window is the booking's page.
+    for (const what of ["set", "request", "answer"]) {
+      expect(owner({ what })).toEqual({ screen: "ShopBooking", number: "RN-24831" });
+    }
+    expect(owner({})).toEqual({ screen: "ShopBooking", number: "RN-24831" });
+    expect(owner({ what: "status", booking: null })).toBeNull();
+  });
 });

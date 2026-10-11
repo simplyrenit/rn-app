@@ -391,6 +391,10 @@ export type RootStackParamList = {
   ShopToday: undefined;
   /** One booking as its shop sees it (SH-07). */
   ShopBooking: { number: string };
+  /** SH-08 and SH-09: the shop's handover, up to typing the customer's code (ENG-223). */
+  ShopHandover: { number: string };
+  /** SH-10: the shop's return, with the handover set beside the return set and the code to show. */
+  ShopReturn: { number: string };
   /** The photo walk-through for drafts that need photos (ENG-192, SH-12). */
   DraftPhotos: undefined;
   /**
