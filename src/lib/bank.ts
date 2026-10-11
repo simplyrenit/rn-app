@@ -125,6 +125,9 @@ export function failureMessage(
   }
 }
 
+/** 409 `payments_error`: rn-pay refused a bank account call for a reason the app has no word for. Nothing was changed. */
+export const PAYMENTS_REFUSED = "Payments did not accept this just now. Nothing was changed. Try again in a moment.";
+
 /** "1 hour", "5 minutes": how long until the next try is allowed. */
 export function waitText(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds <= 60) return "a minute";

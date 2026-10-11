@@ -7,6 +7,7 @@ import {
   canCheckAgain,
   cleanAccountNumber,
   cleanIfsc,
+  PAYMENTS_REFUSED,
   failureMessage,
   istDayLabel,
   landed,
@@ -210,5 +211,11 @@ describe("landed", () => {
     expect(landed({ ...held, ifsc: "SBIN0000001" }, form)).toBe(false);
     expect(landed({ status: "none", account_last4: null, ifsc: null, holder_name: null }, form)).toBe(false);
     expect(landed(null, form)).toBe(false);
+  });
+});
+
+describe("a refusal from payments with no word of its own (409 payments_error)", () => {
+  it("says plainly that nothing was changed, not the server's \"Payments refused this.\"", () => {
+    expect(PAYMENTS_REFUSED).toBe("Payments did not accept this just now. Nothing was changed. Try again in a moment.");
   });
 });

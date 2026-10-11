@@ -29,6 +29,7 @@ import {
   SubmitKey,
   accountTitle,
   answerSettlesKey,
+  PAYMENTS_REFUSED,
   attemptLimitMessage,
   bankFieldErrors,
   canCheckAgain,
@@ -274,6 +275,8 @@ export default function BankAccountScreen() {
         setFormError(attemptLimitMessage(Number(failure.details?.retry_after_s)));
       } else if (failure?.code === "payments_unavailable") {
         setFormError("Payments aren't available right now. Nothing was changed. Try again in a moment.");
+      } else if (failure?.code === "payments_error") {
+        setFormError(PAYMENTS_REFUSED);
       } else if (sent && !answerSettlesKey(failure)) {
         setFormError(
           "We didn't get an answer, so we can't tell if your details went through. Press again: we'll look first."
@@ -302,6 +305,8 @@ export default function BankAccountScreen() {
         });
       } else if (failure?.code === "attempt_limit") {
         toast.error(attemptLimitMessage(Number(failure.details?.retry_after_s)));
+      } else if (failure?.code === "payments_error") {
+        toast.error("We couldn't run the check again", { message: PAYMENTS_REFUSED });
       } else {
         toast.error("We couldn't run the check again", {
           message: "Check your connection and try again.",
