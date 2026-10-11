@@ -289,6 +289,19 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   const openBooking = (number: string) => navigation.navigate("ShopBooking", { number });
 
   if (!feed) {
+    // An account with nothing to rent out has no shop: that is not a fault to retry.
+    const notOwner = today.isError && ["not_owner", "not_shop_owner"].includes(apiError(today.error)?.code ?? "");
+    if (notOwner) {
+      return (
+        <View style={{ flex: 1, justifyContent: "center" }}>
+          <EmptyState
+            icon={<BellIcon size={28} color={color.brandText} />}
+            title="Nothing here yet"
+            body="Today and bookings show up here once you have listed something to rent out."
+          />
+        </View>
+      );
+    }
     return today.isError ? (
       <View style={{ flex: 1, justifyContent: "center" }}>
         <EmptyState
