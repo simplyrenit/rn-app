@@ -1,5 +1,6 @@
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
 import { BottomBar, MoneyLine, Panel, SummaryCard, TextButton } from "@/components/booking/parts";
+import { useServerNow } from "@/components/booking/use-server-now";
 import { Text } from "@/components/core";
 import { BookingCustomer, RingStep, bookingHow, datesLine, money, ringCopy } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
@@ -72,10 +73,11 @@ function Step({ step, last }: { step: RingStep; last: boolean }) {
  * It holds nothing. The parent reads the booking from the server every 3
  * seconds while it rings, and this view is replaced the moment the answer is in.
  */
-export function Confirming({ booking }: { booking: BookingCustomer }) {
+export function Confirming({ booking, receivedAt }: { booking: BookingCustomer; receivedAt: number }) {
   const { color } = useTheme();
   const cancelSheet = useRef<CancelSheetHandle>(null);
-  const copy = ringCopy(booking);
+  // "Asked at 10:00 am tomorrow" is said against the server's day, not this phone's (P3-17).
+  const copy = ringCopy(booking, useServerNow(booking.server_time, receivedAt));
   const Icon = ICONS[copy.icon];
   const amount = money(booking.money.booking_amount);
   const canCancel = booking.can.includes("cancel");

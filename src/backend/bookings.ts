@@ -10,6 +10,7 @@ import {
 } from "@/lib/booking";
 import { BOOKINGS_ENDPOINT, GET_PRODUCT_DETAILS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
+import { correctedNow } from "@/lib/server-clock";
 import { BackendProduct } from "@/lib/types";
 import { useInfiniteQuery, useQuery } from "react-query";
 
@@ -96,7 +97,9 @@ export function useQuote(input: QuoteInput | null) {
 export function useBooking(number: string, watching = false) {
   return useQuery(bookingQueryKey(number), () => fetchBooking(number), {
     staleTime: 0,
-    refetchInterval: (data) => (watching && data ? pollEveryMs(data) : false),
+    // The rule's "now" is the server's: the answer's own time, moved on by the phone's seconds (P3-17).
+    refetchInterval: (data, query) =>
+      watching && data ? pollEveryMs(data, correctedNow(data.server_time, query.state.dataUpdatedAt)) : false,
     retry: 1,
   });
 }

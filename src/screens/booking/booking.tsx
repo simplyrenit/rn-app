@@ -5,6 +5,7 @@ import { useReadAt } from "@/components/booking/use-read-at";
 import { SubpageHeader } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { BookingView, bookingView } from "@/lib/booking";
+import { clockSkewMs } from "@/lib/server-clock";
 import { RouteProps } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect } from "react";
@@ -36,6 +37,9 @@ const TITLE: Record<BookingView, (number: string) => string> = {
  *
  * A request waiting for a closed shop is not read on a timer; it is read once
  * when the shop is due to open, and the ringing rhythm takes over from there.
+ *
+ * Every time shown or counted down is against the server's clock: the booking's
+ * `server_time` and the moment that answer arrived (P3-17).
  */
 export default function BookingScreen() {
   const { params } = useRoute<RouteProps<"Booking">>();
@@ -51,7 +55,12 @@ export default function BookingScreen() {
   }, [watching, refetch]);
 
   const refresh = async () => (await refetch()).data;
-  useReadAt(booking?.ring_state === "waiting_to_open" ? booking.shop.opens_at : null, () => void refetch());
+  const receivedAt = query.dataUpdatedAt;
+  useReadAt(
+    booking?.ring_state === "waiting_to_open" ? booking.shop.opens_at : null,
+    () => void refetch(),
+    clockSkewMs(booking?.server_time, receivedAt)
+  );
 
   if (!booking) {
     return (
@@ -72,9 +81,9 @@ export default function BookingScreen() {
     <NonScrollableContainer>
       <SubpageHeader title={TITLE[view](booking.number)} />
       {view === "pay_booking_amount" ? (
-        <PayBookingAmount booking={booking} autoStart={Boolean(params.pay)} refresh={refresh} />
+        <PayBookingAmount booking={booking} receivedAt={receivedAt} autoStart={Boolean(params.pay)} refresh={refresh} />
       ) : view === "confirming" ? (
-        <Confirming booking={booking} />
+        <Confirming booking={booking} receivedAt={receivedAt} />
       ) : view === "outcome" ? (
         <Outcome booking={booking} />
       ) : view === "pay_rent" ? (

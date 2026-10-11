@@ -1,5 +1,6 @@
 import { BottomBar, SummaryCard, TextButton } from "@/components/booking/parts";
 import { usePay } from "@/components/booking/use-pay";
+import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, Text } from "@/components/core";
 import {
   BookingCustomer,
@@ -29,16 +30,20 @@ import { ScrollView, View } from "react-native";
  */
 export function PayBookingAmount({
   booking,
+  receivedAt,
   autoStart,
   refresh,
 }: {
   booking: BookingCustomer;
+  /** When this booking's answer arrived: with its `server_time`, the server's clock. */
+  receivedAt: number;
   /** Book now was tapped a moment ago: open the pay page without a second tap. */
   autoStart: boolean;
   /** Reads the booking again and returns it. */
   refresh: () => Promise<BookingCustomer | undefined>;
 }) {
   const navigation = useTypedNavigation();
+  const now = useServerNow(booking.server_time, receivedAt);
   // The payment settles minutes after the tap; it must see the booking as it is then.
   const latest = useRef(booking);
   latest.current = booking;
@@ -75,7 +80,8 @@ export function PayBookingAmount({
   }, []);
 
   const amount = money(booking.money.booking_amount);
-  const opens = booking.shop.opens_at ? timeAndDay(booking.shop.opens_at) : null;
+  // "Today" and "tomorrow" by the server's day, not this phone's (P3-17).
+  const opens = booking.shop.opens_at ? timeAndDay(booking.shop.opens_at, now) : null;
   const note = payPhaseText(phase);
 
   return (

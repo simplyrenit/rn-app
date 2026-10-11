@@ -221,6 +221,12 @@ export interface BookingCustomer {
   can: string[];
   timeline: { event: string; label: string; at: string; by: string }[];
   created_at: string;
+  /**
+   * The server's clock when the answer was made. Every time left on screen is
+   * counted against it (`correctedNow`), so a phone with a wrong clock still
+   * shows the right time (P3-17).
+   */
+  server_time?: string;
 }
 
 // ---- Days and times ---------------------------------------------------------------
