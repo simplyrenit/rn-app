@@ -18,6 +18,8 @@ import {
   hereEnding,
   liveStillMatters,
   missingText,
+  moreText,
+  otherRings,
   outcomeUnknown,
   parseRing,
   parseRingEnd,
@@ -26,6 +28,7 @@ import {
   ringDates,
   ringView,
   ringWhere,
+  shouldReadBooking,
   summaryOfBooking,
   summaryOfRing,
   unitDots,
@@ -493,5 +496,55 @@ describe("a pay-by time in the accepted copy", () => {
     const base = hereEnding("accepted", "2026-10-12T04:13:00Z", null, "10:13 am");
     expect(endingCopy(base, "Aarav").sub).toBe("Aarav has been asked to pay the rent by 10:13 am.");
     expect(endingCopy({ ...base, rentBy: null }, "Aarav").sub).toBe("Aarav has been asked to pay the rent.");
+  });
+});
+
+describe("shouldReadBooking: an old tap must end in words, not a skeleton (review round 1, finding 1)", () => {
+  const base = { number: "RN-24831", pushed: ring, live: undefined, liveFailed: false, here: null, ended: null };
+
+  it("reads the booking when the live answer knows nothing of the request, even with the pushed ring in hand", () => {
+    const view = ringView({ ...base, live: live() });
+    expect(view.kind).toBe("unknown");
+    expect(shouldReadBooking(view, true)).toBe(true);
+    expect(shouldReadBooking(view, false)).toBe(true);
+  });
+
+  it("an ended screen left open that drops out of the live answer falls back to the booking, not to nothing", () => {
+    // First: remembered by `recent`. Six minutes on: forgotten. The second view must read the booking.
+    expect(ringView({ ...base, live: live({ recent: [recent()] }) }).kind).toBe("ended");
+    const later = ringView({ ...base, live: live() });
+    expect(later.kind).toBe("unknown");
+    expect(shouldReadBooking(later, true)).toBe(true);
+  });
+
+  it("does not read it while the request is ringing or the live answer is still coming", () => {
+    expect(shouldReadBooking(ringView({ ...base, live: live({ ringing: [ring] }) }), true)).toBe(false);
+    expect(shouldReadBooking(ringView(base), true)).toBe(false);
+    expect(shouldReadBooking(ringView({ ...base, pushed: null }), false)).toBe(false);
+    expect(shouldReadBooking(ringView({ ...base, pushed: null, liveFailed: true }), false)).toBe(false);
+  });
+
+  it("reads it for an ended view with no ring to draw the card from, and for an accepted one with no pay-by time", () => {
+    const ended = ringView({ ...base, pushed: null, live: live({ recent: [recent({ outcome: "refused" })] }) });
+    expect(shouldReadBooking(ended, false)).toBe(true);
+    expect(shouldReadBooking(ended, true)).toBe(false);
+    const accepted = ringView({ ...base, live: live({ recent: [recent()] }) });
+    expect(shouldReadBooking(accepted, true)).toBe(true);
+    const here = ringView({ ...base, here: hereEnding("accepted", null, null, "10:13 am") });
+    expect(shouldReadBooking(here, true)).toBe(false);
+  });
+});
+
+describe("other requests ringing at the same time (review round 1, finding 6)", () => {
+  it("lists the rings other than the one on screen", () => {
+    const other = { ...ring, number: "RN-24900" };
+    expect(otherRings(live({ ringing: [ring, other] }), "RN-24831").map((r) => r.number)).toEqual(["RN-24900"]);
+    expect(otherRings(live({ ringing: [ring] }), "RN-24831")).toEqual([]);
+    expect(otherRings(undefined, "RN-24831")).toEqual([]);
+  });
+
+  it("says how many", () => {
+    expect(moreText(1)).toBe("1 more request is waiting");
+    expect(moreText(3)).toBe("3 more requests are waiting");
   });
 });

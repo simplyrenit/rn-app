@@ -28,6 +28,7 @@ import {
   ringDates,
   ringView,
   ringWhere,
+  shouldReadBooking,
   summaryOfBooking,
   summaryOfRing,
   unitDots,
@@ -321,33 +322,60 @@ function EndedView({
   );
 }
 
-/** What stands in for the request while it is read, or when it cannot be. */
-function Waiting({ failed, onRetry, onDone }: { failed: boolean; onRetry: () => void; onDone: () => void }) {
+/**
+ * What stands in for the request while it is read, or when it cannot be. No state of
+ * this screen is a dead end: while it reads there is a way to close it, and a request
+ * the server does not know is said to be one.
+ */
+function Waiting({
+  failed,
+  missing,
+  onRetry,
+  onDone,
+}: {
+  failed: boolean;
+  /** The server answered 404: this request is not this account's, or is gone. */
+  missing?: boolean;
+  onRetry: () => void;
+  onDone: () => void;
+}) {
   const { color } = useTheme();
-  return failed ? (
+  return failed || missing ? (
     <View style={{ flex: 1, justifyContent: "center" }}>
       <EmptyState
         variant="error"
         icon={<ExclamationTriangleIcon size={28} color={color.danger} />}
-        title="We couldn't load this request"
-        body="Check your connection and try again."
-        actionLabel="Try again"
-        onAction={onRetry}
-        secondaryActionLabel="Close"
-        onSecondaryAction={onDone}
+        title={missing ? "We couldn't find this request" : "We couldn't load this request"}
+        body={missing ? "It may belong to another account, or have been removed." : "Check your connection and try again."}
+        actionLabel={missing ? "Close" : "Try again"}
+        onAction={missing ? onDone : onRetry}
+        secondaryActionLabel={missing ? undefined : "Close"}
+        onSecondaryAction={missing ? undefined : onDone}
       />
     </View>
   ) : (
-    <View
-      accessible
-      accessibilityRole="progressbar"
-      accessibilityLabel="Loading the request"
-      accessibilityState={{ busy: true }}
-      style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.xl, gap: space.md }}
-    >
-      <Skeleton width="100%" height={148} />
-      <Skeleton width="100%" height={120} />
-      <Skeleton width="100%" height={80} />
+    <View style={{ flex: 1 }}>
+      <View
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel="Loading the request"
+        accessibilityState={{ busy: true }}
+        style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.xl, gap: space.md }}
+      >
+        <Skeleton width="100%" height={148} />
+        <Skeleton width="100%" height={120} />
+        <Skeleton width="100%" height={80} />
+      </View>
+      <Text
+        fontSize="text-md"
+        fontWeight="font-bold"
+        tone="brand"
+        accessibilityRole="button"
+        onPress={onDone}
+        style={{ textAlign: "center", paddingVertical: space.lg }}
+      >
+        Close
+      </Text>
     </View>
   );
 }
@@ -401,17 +429,21 @@ export default function ShopRingScreen() {
 
   // The request as it was seen ringing, for the card on the ended views.
   const known = live.data?.ringing.find((r) => r.number === params.number) ?? pushed;
-  // Neither ringing nor remembered (an old tap): the booking itself says what became of it.
-  // An accepted request also reads it, for the time the customer has been given to pay.
-  const acceptedElsewhere =
-    (view.kind === "ended" || view.kind === "here") &&
-    view.ending.outcome === "accepted" &&
-    !view.ending.system &&
-    !view.ending.rentBy;
-  const booking = useShopBooking(
-    params.number,
-    acceptedElsewhere || (!known && view.kind !== "ringing" && view.kind !== "loading" && view.kind !== "failed")
-  );
+  // Neither ringing nor remembered (an old tap, a screen left open): the booking itself
+  // says what became of it, whether or not a ring was carried in. An accepted request
+  // also reads it, for the time the customer has been given to pay.
+  const booking = useShopBooking(params.number, shouldReadBooking(view, Boolean(known)));
+  // The booking says it is ringing though the live answer did not list it (the two were read
+  // a moment apart): read the live answer again instead of saying it is not ringing.
+  const ringingPerBooking =
+    booking.data?.stage === "ringing" &&
+    !booking.data.exit &&
+    ["ringing", "calling", "ringing_again"].includes(booking.data.ring_state);
+  useEffect(() => {
+    if (view.kind === "unknown" && ringingPerBooking) void refetchLive();
+    // Read once per answer of the booking.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view.kind, ringingPerBooking, booking.dataUpdatedAt]);
   /** The ending with the pay-by time filled in from the booking, when it has one. */
   const withRent = (ending: RingEnding): RingEnding =>
     ending.outcome === "accepted" && !ending.rentBy && booking.data
@@ -509,7 +541,12 @@ export default function ShopRingScreen() {
         </View>
       )
     ) : (
-      <Waiting failed={booking.isError} onRetry={() => void booking.refetch()} onDone={close} />
+      <Waiting
+        failed={booking.isError && apiError(booking.error)?.status !== 404}
+        missing={apiError(booking.error)?.status === 404}
+        onRetry={() => void booking.refetch()}
+        onDone={close}
+      />
     );
   } else {
     body = <Waiting failed={view.kind === "failed"} onRetry={() => void live.refetch()} onDone={close} />;

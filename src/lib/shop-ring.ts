@@ -476,6 +476,34 @@ export function ringView(input: {
 }
 
 /**
+ * Whether the booking itself must be read to draw this view. Always for `unknown`
+ * (the request is neither ringing nor remembered by the live answer): whether or not
+ * a ring was carried in, the carried ring is old news then, and only the booking says
+ * what became of the request (review round 1, finding 1). Also for an ended view with
+ * no ring to draw the card from, and for an accepted one still without its pay-by time.
+ */
+export function shouldReadBooking(view: RingView, hasRing: boolean): boolean {
+  switch (view.kind) {
+    case "unknown":
+      return true;
+    case "ended":
+    case "here":
+      return !hasRing || (view.ending.outcome === "accepted" && !view.ending.system && !view.ending.rentBy);
+    default:
+      return false;
+  }
+}
+
+/** The other requests that are ringing now, for "1 more request is waiting" on the one on screen. */
+export function otherRings(live: LiveAnswer | null | undefined, number: string): Ring[] {
+  return (live?.ringing ?? []).filter((r) => r.number !== number);
+}
+
+export function moreText(count: number): string {
+  return count === 1 ? "1 more request is waiting" : `${count} more requests are waiting`;
+}
+
+/**
  * Whether the live answer is still worth reading for this request: until it is
  * seen, and while it is ringing. Once it has ended or dropped out of the ring
  * the screen has what it came for (an unknown one is settled by the booking itself).
