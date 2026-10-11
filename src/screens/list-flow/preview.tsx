@@ -316,13 +316,19 @@ export default function ListPreviewScreen() {
           <Text role="groupHeader" tone="brand">
             Only you see this part
           </Text>
+          {/* Worth, stock and delivery are the owner's own figures: typed, or confirmed
+              before Preview unlocked. They are not under the AI heading, which would
+              say where a confirmed figure came from. */}
           <Text fontSize="text-md" fontWeight="font-bold" style={{ marginTop: space.xs, marginBottom: space.sm }}>
-            Filled by AI · checked by you
+            Confirmed by you
           </Text>
-          <DefaultRow label="Deposit" value={deposit ? `Rs ${formatNumber(deposit)}` : "—"} />
           <DefaultRow label="Worth" value={f.worth.value ? `Rs ${formatNumber(f.worth.value)}` : "—"} />
           <DefaultRow label="In stock" value={f.quantity.value ?? "1"} />
           {draft.notDelivered ? <DefaultRow label="Delivery" value="Not delivered · pickup only" /> : null}
+          <Text fontSize="text-md" fontWeight="font-bold" style={{ marginTop: space.md, marginBottom: space.sm }}>
+            Filled by AI · checked by you
+          </Text>
+          <DefaultRow label="Deposit" value={deposit ? `Rs ${formatNumber(deposit)}` : "—"} />
           <DefaultRow label="Availability" value="Available now · block dates after you submit" />
           <DefaultRow label="Contact" value="You · from your profile" />
         </View>
