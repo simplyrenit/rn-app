@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
+// No type package for it is installed (it comes with jest-expo); the tests only need create, update and act.
+// @ts-ignore
 import TestRenderer, { act } from "react-test-renderer";
 
 jest.mock("@react-native-async-storage/async-storage", () => ({
@@ -27,10 +29,11 @@ function Probe() {
   return null;
 }
 
-const storage = AsyncStorage as unknown as { setItem: jest.Mock; removeItem: jest.Mock; getItem: jest.Mock };
+type AnyMock = jest.Mock<(...args: any[]) => Promise<any>>;
+const storage = AsyncStorage as unknown as { setItem: AnyMock; removeItem: AnyMock; getItem: AnyMock };
 
 async function mount() {
-  let renderer: TestRenderer.ReactTestRenderer;
+  let renderer: any;
   await act(async () => {
     renderer = TestRenderer.create(
       <AuthProvider>
@@ -38,10 +41,10 @@ async function mount() {
       </AuthProvider>
     );
   });
-  return renderer!;
+  return renderer;
 }
 
-const rerender = async (renderer: TestRenderer.ReactTestRenderer) => {
+const rerender = async (renderer: any) => {
   await act(async () => {
     renderer.update(
       <AuthProvider>
