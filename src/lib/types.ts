@@ -353,6 +353,8 @@ export type RootStackParamList = {
    * page for the ₹99 on arrival: set only by Book now, a moment after the tap.
    */
   Booking: { number: string; pay?: boolean };
+  /** BK-07: picks the first arrival window, or asks to change the one that is set. */
+  BookingWindow: { number: string };
   [key: string]: object | undefined;
 };
 

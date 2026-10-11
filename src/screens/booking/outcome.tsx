@@ -5,6 +5,7 @@ import {
   refundBookingAmount,
 } from "@/backend/bookings";
 import { Notice, Panel, Pill, TextButton, Thumb } from "@/components/booking/parts";
+import { PaymentsList } from "@/components/booking/payments-list";
 import { Button, Skeleton, Text } from "@/components/core";
 import { apiError } from "@/lib/api-error";
 import {
@@ -260,6 +261,9 @@ export function Outcome({ booking }: { booking: BookingCustomer }) {
           ) : null}
         </>
       )}
+
+      {/* Each payment and each refund, with where it is going and when to expect it (N16). */}
+      <PaymentsList booking={booking} />
 
       {booking.can.includes("refund_now") ? (
         <TextButton

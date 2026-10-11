@@ -1,16 +1,17 @@
 import { useBooking } from "@/backend/bookings";
-import { BookingLoadError, BookingLoading, MoneyLine, SummaryCard } from "@/components/booking/parts";
+import { BookingLoadError, BookingLoading } from "@/components/booking/parts";
 import { SubpageHeader } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { BookingView, bookingView, datesLine, howLabel, money } from "@/lib/booking";
-import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
+import { BookingView, bookingView } from "@/lib/booking";
 import { RouteProps } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { AppState, View } from "react-native";
+import { AppState } from "react-native";
+import { BookingDetails } from "./booking-details";
 import { Confirming } from "./confirming";
 import { Outcome } from "./outcome";
 import { PayBookingAmount } from "./pay-booking-amount";
+import { PayRent } from "./pay-rent";
 
 /** True while the app is in front. A screen that asks the server on a timer stops when it is not. */
 function useAppActive() {
@@ -27,7 +28,7 @@ const TITLE: Record<BookingView, (number: string) => string> = {
   pay_booking_amount: () => "",
   confirming: () => "",
   outcome: () => "Your request",
-  pay_rent: (number) => `Booking ${number}`,
+  pay_rent: () => "",
   details: (number) => `Booking ${number}`,
 };
 
@@ -79,17 +80,10 @@ export default function BookingScreen() {
         <Confirming booking={booking} />
       ) : view === "outcome" ? (
         <Outcome booking={booking} />
+      ) : view === "pay_rent" ? (
+        <PayRent booking={booking} refresh={async () => (await refetch()).data} />
       ) : (
-        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.md }}>
-          <SummaryCard
-            title={booking.product.title}
-            image={booking.product.cover_image}
-            lines={[datesLine(booking), `${howLabel(booking.delivery_mode)} · ${booking.shop.name}`]}
-            footer={
-              <MoneyLine label="Paid now · counts toward the rent" amount={money(booking.money.booking_amount)} />
-            }
-          />
-        </View>
+        <BookingDetails booking={booking} />
       )}
     </NonScrollableContainer>
   );

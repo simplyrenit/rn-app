@@ -42,6 +42,7 @@ import {
   setupChatNotifications,
   setupNotificationListeners,
 } from "@/backend/notifications";
+import ArrivalWindowScreen from "@/screens/booking/arrival-window";
 import BookingScreen from "@/screens/booking/booking";
 import BookingDatesScreen from "@/screens/booking/choose-dates";
 import ReviewAndBookScreen from "@/screens/booking/review-and-book";
@@ -601,6 +602,10 @@ export default function Navigation() {
           name="Booking"
           component={BookingScreen}
           getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="BookingWindow"
+          component={ArrivalWindowScreen}
         />
         <Stack.Screen
           name="SavedAddresses"

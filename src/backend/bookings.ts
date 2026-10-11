@@ -2,6 +2,7 @@ import { useGlobalContext } from "@/context/global-context";
 import {
   BookingCustomer,
   CancelOutcome,
+  TimeWindow,
   DeliveryMode,
   PaymentStart,
   Quote,
@@ -137,5 +138,42 @@ export async function fetchAlternatives(number: string): Promise<Alternatives> {
 export async function refundBookingAmount(number: string): Promise<BookingCustomer> {
   return (
     await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "refund-booking-amount/"), {})
+  ).data.booking;
+}
+
+// ---- After the owner accepts (ENG-174) -------------------------------------------------------
+
+/**
+ * The rent's payment. Asked on every tap of Pay: the server answers with the
+ * same payment while it can still be paid, and a new one once that has run out.
+ */
+export async function payRent(number: string): Promise<{ payment: PaymentStart; booking: BookingCustomer }> {
+  return (
+    await axiosInstance.post<{ payment: PaymentStart; booking: BookingCustomer }>(bookingUrl(number, "pay-rent/"), {})
+  ).data;
+}
+
+/** The one-hour windows left on the first day, inside the shop's hours. */
+export async function fetchWindows(number: string): Promise<{ day: string; windows: TimeWindow[] }> {
+  return (await axiosInstance.get<{ day: string; windows: TimeWindow[] }>(bookingUrl(number, "windows/"))).data;
+}
+
+/** The first pick, one tap. A later change is a request (`requestWindowChange`). */
+export async function setWindow(number: string, start: string): Promise<BookingCustomer> {
+  return (await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "window/"), { start })).data
+    .booking;
+}
+
+/** Asks the shop to move the window. Nothing moves until they accept. */
+export async function requestWindowChange(number: string, start: string): Promise<BookingCustomer> {
+  return (
+    await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "window-change/"), { start })
+  ).data.booking;
+}
+
+/** Answers the shop's request to move the window. */
+export async function answerWindowChange(number: string, accept: boolean): Promise<BookingCustomer> {
+  return (
+    await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "window-change/answer/"), { accept })
   ).data.booking;
 }

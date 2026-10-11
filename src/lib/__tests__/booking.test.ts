@@ -4,9 +4,21 @@ import {
   Quote,
   bookErrorText,
   bookingAmountCopy,
+  bookingBanner,
   bookingView,
   cancelCopy,
   cancelErrorText,
+  cancelHint,
+  moneyRowView,
+  payRentCopy,
+  payRentErrorText,
+  paymentRows,
+  timelineRows,
+  windowErrorText,
+  windowHeading,
+  windowLabel,
+  windowRequestCopy,
+  windowSummary,
   isRinging,
   outcomeCopy,
   ringCopy,
@@ -779,5 +791,271 @@ describe("refused, no answer, cancelled by the owner", () => {
   it("never offers to move the 99 after an owner's cancellation", () => {
     const cancelled = booking({ exit: "cancelled_by_owner", exit_reason: "owner" });
     expect(bookingAmountCopy(cancelled, true).body).toMatch(/^It is going back/);
+  });
+});
+
+describe("pay the rent", () => {
+  /** Accepted at 9:43 am; the rent is due at 10:13 am. */
+  const accepted = (over: Partial<BookingCustomer> = {}, moneyOver: Partial<BookingCustomer["money"]> = {}) =>
+    booking(
+      {
+        stage: "accepted",
+        window: null,
+        pay_now: { purpose: "rent", amount: "1731.00", deposit_part: "0.00", due_at: "2026-10-13T04:43:00Z" },
+        ...over,
+      },
+      { rent_paid: false, rent_due_at: "2026-10-13T04:43:00Z", ...moneyOver }
+    );
+
+  it("writes BK-06: who accepted, what is left, and by what time", () => {
+    expect(payRentCopy(accepted(), NOW)).toEqual({
+      title: "SoundBox Rentals accepted",
+      sub: "Pay ₹1,731 by 10:13 am to confirm your booking.",
+      lines: [
+        { label: "Rent", amount: "₹1,830" },
+        { label: "Already paid", amount: "₹99", amountTone: "success" },
+      ],
+      total: { label: "To pay now", amount: "₹1,731" },
+      note: "Deposit ₹3,000 is due later, on Fri 23 Oct.",
+      small: "If it isn't paid in time, the booking lapses and the ₹99 is kept.",
+      button: "Pay ₹1,731",
+    });
+  });
+
+  it("gives the deadline as a clock time, never as a number of minutes", () => {
+    const copy = payRentCopy(accepted(), NOW);
+    expect(`${copy.sub} ${copy.small} ${copy.note}`).not.toMatch(/minute/);
+  });
+
+  it("names the day when the deadline is not today", () => {
+    const late = accepted({
+      pay_now: { purpose: "rent", amount: "1731.00", deposit_part: "0.00", due_at: "2026-10-13T18:45:00Z" },
+    });
+    expect(payRentCopy(late, NOW).sub).toBe("Pay ₹1,731 by 12:15 am tomorrow to confirm your booking.");
+  });
+
+  it("shows the delivery fee, and the deposit when it joins the rent", () => {
+    const soon = accepted(
+      { pay_now: { purpose: "rent_and_deposit", amount: "4901.00", deposit_part: "3000.00", due_at: "2026-10-13T04:43:00Z" } },
+      { delivery_fee: "170.00", total: "2000.00", pay_after_accept: "1901.00" }
+    );
+    const copy = payRentCopy(soon, NOW);
+    expect(copy.lines.map((l) => l.label)).toEqual(["Rent", "Delivery", "Already paid", "Deposit · refundable"]);
+    expect(copy.total.amount).toBe("₹4,901");
+    expect(copy.note).toMatch(/paid with the rent/);
+  });
+
+  it("says nothing about a deposit there is none of", () => {
+    expect(payRentCopy(accepted({}, { deposit: "0.00", deposit_state: "none" }), NOW).note).toBeNull();
+  });
+
+  it("explains why a payment could not be started", () => {
+    expect(payRentErrorText({ status: 409, code: "stage_not_allowed", message: null, details: null })).toMatch(/no longer waiting/);
+    expect(payRentErrorText({ status: 503, code: "payments_unavailable", message: null, details: null })).toMatch(/Nothing was charged/);
+  });
+});
+
+describe("the arrival window", () => {
+  const ten = { start: "2026-10-24T04:30:00Z", end: "2026-10-24T05:30:00Z" };
+
+  it("writes a window as the frame does", () => {
+    expect(windowLabel(ten)).toBe("10:00 – 11:00 am");
+    expect(windowLabel({ start: "2026-10-24T05:30:00Z", end: "2026-10-24T06:30:00Z" })).toBe("11:00 am – 12:00 pm");
+    expect(windowLabel({ start: "2026-10-24T13:30:00Z", end: "2026-10-24T14:30:00Z" })).toBe("7:00 – 8:00 pm");
+    expect(windowSummary(ten)).toBe("Sat 24 Oct, 10:00 – 11:00 am");
+  });
+
+  it("heads the picker with the day and the shop's hours on it", () => {
+    expect(windowHeading(booking(), "2026-10-24")).toEqual({
+      title: "When will you collect it?",
+      sub: "Sat 24 October · the shop hands over between 10 am and 8 pm",
+    });
+    expect(windowHeading(booking({ delivery_mode: "owner_delivery" }), null).title).toBe("When should it arrive?");
+  });
+
+  it("explains each refusal", () => {
+    const error = (code: string) => ({ status: 409, code, message: null, details: null });
+    expect(windowErrorText(error("window_outside_hours"))).toMatch(/Pick another/);
+    expect(windowErrorText(error("window_already_set"))).toMatch(/ask to change/);
+    expect(windowErrorText(error("request_open"))).toMatch(/already waiting/);
+  });
+
+  it("shows a change the shop asked for, with the answer buttons when allowed", () => {
+    const asked = booking({
+      window_request: { by: "owner", start: "2026-10-24T06:30:00Z", end: "2026-10-24T07:30:00Z", asked_at: "2026-10-13T05:00:00Z" },
+      can: ["answer_window_change", "cancel"],
+    });
+    expect(windowRequestCopy(asked)).toEqual({
+      title: "The shop asked to move your arrival",
+      body: "New time: Sat 24 Oct, 12:00 – 1:00 pm. Your time stays as it is unless you accept.",
+      canAnswer: true,
+    });
+  });
+
+  it("shows the customer's own request as waiting, with nothing to answer", () => {
+    const mine = booking({
+      window_request: { by: "customer", start: "2026-10-24T06:30:00Z", end: "2026-10-24T07:30:00Z", asked_at: "2026-10-13T05:00:00Z" },
+    });
+    expect(windowRequestCopy(mine)).toMatchObject({ canAnswer: false });
+    expect(windowRequestCopy(booking())).toBeNull();
+  });
+});
+
+describe("the booking screen", () => {
+  it("says where a confirmed booking stands", () => {
+    expect(bookingBanner(booking())).toEqual({
+      tone: "success",
+      title: "Booking confirmed",
+      sub: "Collect Sat 24 Oct, 10:00 – 11:00 am",
+    });
+    expect(bookingBanner(booking({ window: null })).sub).toBe("Pick your arrival window.");
+    expect(bookingBanner(booking({ delivery_mode: "owner_delivery" })).sub).toBe("Arrives Sat 24 Oct, 10:00 – 11:00 am");
+  });
+
+  it("follows the later stages", () => {
+    expect(bookingBanner(booking({ stage: "ready" })).title).toBe("Ready for handover");
+    expect(bookingBanner(booking({ stage: "out" }))).toMatchObject({
+      title: "Rental active",
+      sub: "Return by Mon 26 Oct, 8:00 pm",
+    });
+    expect(bookingBanner(booking({ stage: "returned" })).sub).toMatch(/within 48 hours/);
+    expect(bookingBanner(booking({ stage: "closed" })).title).toBe("Rental complete");
+  });
+
+  it("tells each ending plainly", () => {
+    expect(bookingBanner(booking({ stage: "accepted", exit: "lapsed_unpaid" }, { booking_amount_state: "kept" }))).toEqual({
+      tone: "warning",
+      title: "Booking lapsed",
+      sub: "The rent was not paid in time. The ₹99 was kept.",
+    });
+    expect(
+      bookingBanner(ringing("awaiting_payment", { exit: "cancelled_by_customer", exit_reason: "booking_amount_unpaid" })).title
+    ).toBe("Request dropped");
+    expect(bookingBanner(ringing("ringing", { exit: "cancelled_by_customer", exit_reason: "while_ringing" })).title).toBe(
+      "Request cancelled"
+    );
+    expect(bookingBanner(booking({ exit: "cancelled_by_customer", exit_reason: "free" })).title).toBe("Booking cancelled");
+    expect(bookingBanner(booking({ stage: "ready", exit: "no_show", exit_reason: "customer" })).title).toBe("Booking ended");
+  });
+
+  const timeline = [
+    { event: "book", label: "Booked", at: "2026-10-13T04:11:00Z", by: "customer" },
+    { event: "accept", label: "The owner accepted", at: "2026-10-13T04:13:00Z", by: "owner" },
+    { event: "rent_paid", label: "Rent paid", at: "2026-10-13T04:22:00Z", by: "system" },
+    { event: "set_window", label: "Arrival window picked", at: "2026-10-13T04:23:00Z", by: "customer" },
+  ];
+
+  it("lists what happened, then what comes next (BK-08)", () => {
+    expect(timelineRows(booking({ timeline }), NOW)).toEqual([
+      { label: "Booked", when: "9:41 am", state: "done" },
+      { label: "The owner accepted", when: "9:43 am", state: "done" },
+      { label: "Rent paid", when: "9:52 am", state: "done" },
+      { label: "Arrival window picked", when: "Sat 24 Oct, 10:00 – 11:00 am", state: "done" },
+      { label: "Deposit ₹3,000", when: "due Fri 23 Oct", state: "next" },
+      { label: "Collect it", when: "Sat 24 Oct", state: "todo" },
+      { label: "Return by", when: "Mon 26 Oct, 8:00 pm", state: "todo" },
+    ]);
+  });
+
+  it("puts the arrival window first while it is not picked", () => {
+    const rows = timelineRows(booking({ timeline: timeline.slice(0, 3), window: null }), NOW);
+    expect(rows[3]).toEqual({ label: "Arrival window", when: "Not picked yet", state: "next" });
+    expect(rows[4].state).toBe("todo");
+  });
+
+  it("dates a moment from another day", () => {
+    const later = new Date("2026-10-20T06:00:00Z");
+    expect(timelineRows(booking({ timeline }), later)[0].when).toBe("Tue 13 Oct, 9:41 am");
+  });
+
+  it("shows only what happened once a booking has ended", () => {
+    const ended = booking({ timeline: timeline.slice(0, 2), stage: "accepted", exit: "lapsed_unpaid" });
+    expect(timelineRows(ended, NOW).map((r) => r.state)).toEqual(["done", "done"]);
+  });
+
+  it("drops the steps already behind a rental that is out", () => {
+    const out = booking({ stage: "out", timeline }, { deposit_state: "paid" });
+    expect(timelineRows(out, NOW).slice(4)).toEqual([{ label: "Return by", when: "Mon 26 Oct, 8:00 pm", state: "next" }]);
+  });
+
+  it("shows a payment with how it was paid", () => {
+    expect(moneyRowView(booking().payments[0], NOW)).toEqual({
+      key: "pay_01",
+      title: "₹99",
+      sub: "Book now · 9:41 am",
+      status: "Paid · UPI",
+      tone: "success",
+    });
+  });
+
+  it("shows a refund with its amount, where it is going and the days (N16)", () => {
+    expect(
+      moneyRowView(
+        {
+          id: "rfd_01JA2M0C5R8W2Y6N4H9K3G7TQA",
+          kind: "refund",
+          what: "booking_amount",
+          amount: "99.00",
+          status: "processed",
+          text: "UPI asha@okhdfcbank",
+          expected_days_min: 5,
+          expected_days_max: 7,
+          expected_by: "2026-10-21",
+          at: "2026-10-12T10:47:09Z",
+        },
+        NOW
+      )
+    ).toEqual({
+      key: "rfd_01JA2M0C5R8W2Y6N4H9K3G7TQA",
+      title: "₹99 refund",
+      sub: "Booking amount · to UPI asha@okhdfcbank · 5 to 7 working days · by Wed 21 Oct",
+      status: "Sent",
+      tone: "success",
+    });
+  });
+
+  it("marks a refund still on its way, and one that failed", () => {
+    const refund = { ...booking().payments[0], id: "rfd_02", kind: "refund" as const };
+    expect(moneyRowView({ ...refund, status: "pending" }, NOW)).toMatchObject({ status: "On its way", tone: "warning" });
+    expect(moneyRowView({ ...refund, status: "failed" }, NOW)).toMatchObject({ tone: "danger" });
+  });
+
+  it("lists the deposit as due while it is still to be paid", () => {
+    const rows = paymentRows(booking(), NOW);
+    expect(rows[rows.length - 1]).toEqual({
+      key: "deposit-to-pay",
+      title: "Deposit ₹3,000",
+      sub: "Refundable · due Fri 23 Oct",
+      status: "Due later",
+      tone: "neutral",
+    });
+    expect(paymentRows(booking({}, { deposit_state: "due" }), NOW).pop()?.status).toBe("Due now");
+    // Paid, none, or a booking that has ended: no such row.
+    expect(paymentRows(booking({}, { deposit_state: "paid" }), NOW)).toHaveLength(1);
+    expect(paymentRows(booking({ exit: "cancelled_by_customer" }), NOW)).toHaveLength(1);
+  });
+
+  it("says under Cancel booking what cancelling costs now", () => {
+    expect(
+      cancelHint({
+        case: "free",
+        back: [],
+        kept: [{ what: "booking_amount", amount: "99.00", text: "The ₹99 is not returned" }],
+        to_owner: "0.00",
+        free_until: "2026-10-23T04:30:00Z",
+      })
+    ).toBe("Free until Fri 23 Oct, 10:00 am. The ₹99 is not returned.");
+    expect(cancelHint({ case: "inside_24h", back: [], kept: [], to_owner: "610.00", free_until: null })).toBe(
+      "₹610 goes to the owner. The rest is refunded."
+    );
+    expect(
+      cancelHint({
+        case: "after_accept",
+        back: [],
+        kept: [{ what: "booking_amount", amount: "99.00", text: null }],
+        to_owner: "0.00",
+        free_until: null,
+      })
+    ).toBe("₹99 is not returned.");
   });
 });

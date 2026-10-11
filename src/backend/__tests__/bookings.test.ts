@@ -6,8 +6,13 @@ import {
   fetchAlternatives,
   fetchBooking,
   fetchCancelOutcome,
+  answerWindowChange,
   fetchQuote,
+  fetchWindows,
+  payRent,
   refundBookingAmount,
+  requestWindowChange,
+  setWindow,
 } from "../bookings";
 
 jest.mock("@/context/global-context", () => ({ useGlobalContext: jest.fn() }));
@@ -106,5 +111,35 @@ describe("after a refusal or silence", () => {
     api.post.mockResolvedValue({ data: { booking: { number: "RN-24831" } } });
     await refundBookingAmount("RN-24831");
     expect(api.post).toHaveBeenCalledWith("https://api.test/bookings/RN-24831/refund-booking-amount/", {});
+  });
+});
+
+describe("after the owner accepts", () => {
+  it("asks for the rent's payment with an empty body", async () => {
+    api.post.mockResolvedValue({ data: { payment: { payment_id: "pay_02" }, booking: {} } });
+    await expect(payRent("RN-24831")).resolves.toMatchObject({ payment: { payment_id: "pay_02" } });
+    expect(api.post).toHaveBeenCalledWith("https://api.test/bookings/RN-24831/pay-rent/", {});
+  });
+
+  it("reads the windows, sets the first one, and asks to change it", async () => {
+    api.post.mockResolvedValue({ data: { booking: { number: "RN-24831" } } });
+    await fetchWindows("RN-24831");
+    expect(api.get).toHaveBeenCalledWith("https://api.test/bookings/RN-24831/windows/");
+    await setWindow("RN-24831", "2026-10-24T04:30:00Z");
+    expect(api.post).toHaveBeenLastCalledWith("https://api.test/bookings/RN-24831/window/", {
+      start: "2026-10-24T04:30:00Z",
+    });
+    await requestWindowChange("RN-24831", "2026-10-24T06:30:00Z");
+    expect(api.post).toHaveBeenLastCalledWith("https://api.test/bookings/RN-24831/window-change/", {
+      start: "2026-10-24T06:30:00Z",
+    });
+  });
+
+  it("answers the shop's request to move the window", async () => {
+    api.post.mockResolvedValue({ data: { booking: { number: "RN-24831" } } });
+    await answerWindowChange("RN-24831", false);
+    expect(api.post).toHaveBeenCalledWith("https://api.test/bookings/RN-24831/window-change/answer/", {
+      accept: false,
+    });
   });
 });

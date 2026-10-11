@@ -9,7 +9,7 @@
  */
 import { ApiError } from "@/lib/api-error";
 import { formatCurrency } from "@/lib/format";
-import { DayHours, Hours, hoursRows, istDay, kmText } from "@/lib/shop";
+import { DayHours, Hours, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
 
 export type DeliveryMode = "pickup" | "owner_delivery";
 
@@ -476,6 +476,8 @@ export interface PriceLine {
   amount: string;
   /** Shown crossed out before the amount: Renit's fee, charged at zero. */
   struck?: string;
+  /** Green: money already paid. */
+  amountTone?: "success";
 }
 
 /** The three lines above the total. The fee is always shown, crossed out when less is charged. */
@@ -1017,5 +1019,381 @@ export function bookingAmountCopy(
       return { title, body: "It was not returned." };
     default:
       return { title, body: "Nothing was paid." };
+  }
+}
+
+// ---- Pay the rent (BK-06, ENG-174) -------------------------------------------------------------
+
+/** "by 10:13 am", and the day when it is not today. The server's own time: no length of time is written. */
+function byWhen(iso: string | null | undefined, now: Date): string {
+  const when = iso ? timeAndDay(iso, now) : null;
+  if (!when) return "";
+  return when.day === "today" ? ` by ${when.time}` : ` by ${when.time} ${when.day}`;
+}
+
+export interface PayRentCopy {
+  title: string;
+  sub: string;
+  lines: PriceLine[];
+  total: PriceLine;
+  /** About the deposit: due later, or paid with the rent. */
+  note: string | null;
+  small: string;
+  button: string;
+}
+
+/** The screen after the owner accepts: what is left to pay, and by when. */
+export function payRentCopy(booking: BookingCustomer, now: Date = new Date()): PayRentCopy {
+  const m = booking.money;
+  const amount = money(booking.pay_now?.amount ?? m.pay_after_accept);
+  const withDeposit = booking.pay_now?.purpose === "rent_and_deposit" || m.deposit_with_rent;
+  const depositPart = booking.pay_now?.deposit_part ?? "0";
+  const lines: PriceLine[] = [{ label: "Rent", amount: money(m.rent) }];
+  if (isPositive(m.delivery_fee)) lines.push({ label: "Delivery", amount: money(m.delivery_fee) });
+  if (isPositive(m.fee_charged)) lines.push({ label: "Renit's fee", amount: money(m.fee_charged) });
+  lines.push({ label: "Already paid", amount: money(m.booking_amount), amountTone: "success" });
+  if (isPositive(depositPart)) lines.push({ label: "Deposit · refundable", amount: money(depositPart) });
+
+  const askDay = dayOf(m.deposit_ask_at);
+  const note = withDeposit
+    ? "The handover is less than a day away, so the deposit is paid with the rent. It is refundable."
+    : isPositive(m.deposit) && (m.deposit_state === "not_due" || m.deposit_state === "due")
+      ? `Deposit ${money(m.deposit)} is due later${askDay ? `, on ${dayShort(askDay)}` : ""}.`
+      : null;
+
+  return {
+    title: `${booking.shop.name} accepted`,
+    sub: `Pay ${amount}${byWhen(booking.pay_now?.due_at ?? m.rent_due_at, now)} to confirm your booking.`,
+    lines,
+    total: { label: "To pay now", amount },
+    note,
+    small: `If it isn't paid in time, the booking lapses and the ${money(m.booking_amount)} is kept.`,
+    button: `Pay ${amount}`,
+  };
+}
+
+/** What to say when the rent payment cannot be started. */
+export function payRentErrorText(error: ApiError | null): string {
+  switch (error?.code) {
+    case "stage_not_allowed":
+      return "This booking is no longer waiting for the rent.";
+    case "payments_unavailable":
+      return "Payments are not working for a moment. Nothing was charged. Try again.";
+    default:
+      return error?.message ?? "We couldn't start the payment. Check your connection and try again.";
+  }
+}
+
+// ---- The arrival window (BK-07) ------------------------------------------------------------------
+
+/** "10:00 – 11:00 am", and "11:00 am – 12:00 pm" when the hour crosses noon. */
+export function windowLabel(window: TimeWindow): string {
+  const [start, startHalf] = clock(window.start).split(" ");
+  const [end, endHalf] = clock(window.end).split(" ");
+  if (!start || !end) return "";
+  return startHalf === endHalf ? `${start} – ${end} ${endHalf}` : `${start} ${startHalf} – ${end} ${endHalf}`;
+}
+
+/** "Sat 24 Oct, 10:00 – 11:00 am". */
+export function windowSummary(window: TimeWindow): string {
+  const day = dayOf(window.start);
+  return day ? `${dayShort(day)}, ${windowLabel(window)}` : "";
+}
+
+/** The picker's heading: the question, then the day and the shop's hours on it. */
+export function windowHeading(
+  booking: Pick<BookingCustomer, "delivery_mode" | "shop" | "first_day">,
+  day: string | null | undefined
+): { title: string; sub: string } {
+  const hours = booking.shop.hours_first_day;
+  const on = dayLong(day || booking.first_day);
+  return {
+    title: booking.delivery_mode === "pickup" ? "When will you collect it?" : "When should it arrive?",
+    sub: hours
+      ? `${on} · the shop hands over between ${time12(hours.open)} and ${time12(hours.close)}`
+      : on,
+  };
+}
+
+/** What to say when a window call is refused. */
+export function windowErrorText(error: ApiError | null): string {
+  switch (error?.code) {
+    case "window_outside_hours":
+      return "That time is no longer open. Pick another.";
+    case "window_already_set":
+      return "Your arrival time is already set. You can ask to change it.";
+    case "request_open":
+      return "A change is already waiting for an answer.";
+    case "no_request":
+      return "That request is no longer open.";
+    case "own_request":
+      return "You asked for this change. The shop answers it.";
+    case "stage_not_allowed":
+      return "The arrival time can no longer be changed for this booking.";
+    default:
+      return error?.message ?? "We couldn't save that. Check your connection and try again.";
+  }
+}
+
+/** A request to move the window that is waiting for an answer. */
+export function windowRequestCopy(
+  booking: Pick<BookingCustomer, "window_request" | "can">
+): { title: string; body: string; canAnswer: boolean } | null {
+  const request = booking.window_request;
+  if (!request) return null;
+  const to = windowSummary(request);
+  return request.by === "owner"
+    ? {
+        title: "The shop asked to move your arrival",
+        body: `New time: ${to}. Your time stays as it is unless you accept.`,
+        canAnswer: booking.can.includes("answer_window_change"),
+      }
+    : {
+        title: "You asked to change your arrival time",
+        body: `To ${to}. Your time stays as it is until the shop accepts.`,
+        canAnswer: false,
+      };
+}
+
+// ---- The booking screen (BK-08) ---------------------------------------------------------------------
+
+export interface Banner {
+  tone: "success" | "brand" | "warning" | "neutral";
+  title: string;
+  sub: string | null;
+}
+
+/** The top of the booking screen: where the booking stands, in a line or two. */
+export function bookingBanner(booking: BookingCustomer): Banner {
+  const m = booking.money;
+  const arrive = booking.delivery_mode === "pickup" ? "Collect" : "Arrives";
+  const windowLine = booking.window ? `${arrive} ${windowSummary(booking.window)}` : "Pick your arrival window.";
+  switch (booking.exit) {
+    case "cancelled_by_customer":
+      if (booking.exit_reason === "booking_amount_unpaid") {
+        return {
+          tone: "neutral",
+          title: "Request dropped",
+          sub: `The ${money(m.booking_amount)} was not paid, so the owner was never asked.`,
+        };
+      }
+      if (booking.exit_reason === "before_opening" || booking.exit_reason === "while_ringing") {
+        return { tone: "neutral", title: "Request cancelled", sub: "You cancelled before the owner answered." };
+      }
+      if (booking.exit_reason === "deposit_unpaid") {
+        return { tone: "warning", title: "Booking cancelled", sub: "The deposit was not paid in time." };
+      }
+      if (booking.exit_reason === "claim_not_upheld") {
+        return { tone: "neutral", title: "Booking cancelled", sub: "Renit looked at your report and did not uphold it." };
+      }
+      return { tone: "neutral", title: "Booking cancelled", sub: "You cancelled this booking." };
+    case "lapsed_unpaid":
+      return {
+        tone: "warning",
+        title: "Booking lapsed",
+        sub:
+          m.booking_amount_state === "kept"
+            ? `The rent was not paid in time. The ${money(m.booking_amount)} was kept.`
+            : "The rent was not paid in time.",
+      };
+    case "no_show":
+      return { tone: "warning", title: "Booking ended", sub: "You did not arrive in your window." };
+    case "":
+      break;
+    default:
+      return { tone: "neutral", title: "Booking ended", sub: null };
+  }
+  switch (booking.stage) {
+    case "confirmed":
+      return { tone: "success", title: "Booking confirmed", sub: windowLine };
+    case "ready":
+      return { tone: "success", title: "Ready for handover", sub: windowLine };
+    case "out": {
+      const day = dayOf(booking.return_by);
+      return {
+        tone: "brand",
+        title: "Rental active",
+        sub: day ? `Return by ${dayShort(day)}, ${clock(booking.return_by)}` : null,
+      };
+    }
+    case "returned":
+      return {
+        tone: "brand",
+        title: "Returned",
+        sub: isPositive(m.deposit)
+          ? "Your deposit comes back within 48 hours, less any late days or agreed damage."
+          : null,
+      };
+    case "closed":
+      return { tone: "neutral", title: "Rental complete", sub: null };
+    case "accepted":
+      return { tone: "brand", title: "Accepted", sub: "Pay the rent to confirm your booking." };
+    default:
+      return { tone: "neutral", title: "Asking the owner", sub: null };
+  }
+}
+
+/** A past moment: the time when it was today, else the day and the time. */
+function momentLabel(iso: string, now: Date): string {
+  const day = dayOf(iso);
+  if (!day) return "";
+  return day === todayIst(now) ? clock(iso) : `${dayShort(day)}, ${clock(iso)}`;
+}
+
+export interface TimelineRow {
+  label: string;
+  when: string;
+  /** `done` has happened; `next` is the one thing to do now; `todo` comes after. */
+  state: "done" | "next" | "todo";
+}
+
+/**
+ * The booking's timeline: what happened (the server's own entries, oldest
+ * first), then what is still to come, worked out from where the booking stands.
+ * A booking that has ended shows only what happened.
+ */
+export function timelineRows(booking: BookingCustomer, now: Date = new Date()): TimelineRow[] {
+  const done: TimelineRow[] = booking.timeline.map((entry) => ({
+    label: entry.label,
+    when:
+      entry.event === "set_window" && booking.window
+        ? windowSummary(booking.window)
+        : momentLabel(entry.at, now),
+    state: "done",
+  }));
+  if (booking.exit) return done;
+
+  const m = booking.money;
+  const stage = booking.stage;
+  const before = (...stages: BookingStage[]) => stages.includes(stage);
+  const ahead: Omit<TimelineRow, "state">[] = [];
+  if (stage === "confirmed" && !booking.window) ahead.push({ label: "Arrival window", when: "Not picked yet" });
+  if (m.deposit_state === "not_due" || m.deposit_state === "due") {
+    const day = dayOf(m.deposit_ask_at);
+    ahead.push({ label: `Deposit ${money(m.deposit)}`, when: day ? `due ${dayShort(day)}` : "due before handover" });
+  }
+  if (before("confirmed", "ready")) {
+    ahead.push({
+      label: booking.delivery_mode === "pickup" ? "Collect it" : "Delivery",
+      when: dayShort(booking.first_day),
+    });
+  }
+  if (before("confirmed", "ready", "out")) {
+    const day = dayOf(booking.return_by);
+    ahead.push({
+      label: "Return by",
+      when: day ? `${dayShort(day)}, ${clock(booking.return_by)}` : dayShort(booking.last_day),
+    });
+  }
+  if (stage === "returned" && m.deposit_state === "paid") {
+    const day = dayOf(m.deposit_refund_due_at);
+    ahead.push({ label: "Deposit comes back", when: day ? `by ${dayShort(day)}` : "within 48 hours" });
+  }
+  return [...done, ...ahead.map((row, index): TimelineRow => ({ ...row, state: index === 0 ? "next" : "todo" }))];
+}
+
+export interface MoneyRowView {
+  key: string;
+  title: string;
+  sub: string;
+  status: string;
+  tone: "success" | "warning" | "danger" | "neutral";
+}
+
+const PAID_FOR: Record<PaymentPurpose, string> = {
+  booking_amount: "Book now",
+  rent: "After the owner accepted",
+  rent_and_deposit: "Rent and deposit",
+  deposit: "Deposit · refundable",
+};
+
+const REFUND_OF: Record<PaymentPurpose, string> = {
+  booking_amount: "Booking amount",
+  rent: "Rent",
+  rent_and_deposit: "Rent and deposit",
+  deposit: "Deposit",
+};
+
+/**
+ * One payment or refund as a row (N16). A refund always says the amount, where
+ * it is going and how many days to expect, so nobody thinks Renit kept it.
+ */
+export function moneyRowView(row: MoneyRow, now: Date = new Date()): MoneyRowView {
+  if (row.kind === "refund") {
+    const days =
+      row.expected_days_min && row.expected_days_max
+        ? `${row.expected_days_min === row.expected_days_max ? row.expected_days_min : `${row.expected_days_min} to ${row.expected_days_max}`} working days`
+        : null;
+    const by = row.expected_by ? `by ${dayShort(row.expected_by)}` : null;
+    const status: Pick<MoneyRowView, "status" | "tone"> =
+      row.status === "processed"
+        ? { status: "Sent", tone: "success" }
+        : row.status === "failed"
+          ? { status: "Failed · Renit is on it", tone: "danger" }
+          : { status: "On its way", tone: "warning" };
+    return {
+      key: row.id,
+      title: `${money(row.amount)} refund`,
+      sub: [`${REFUND_OF[row.what] ?? "Refund"} · to ${row.text || "the way you paid"}`, days, by]
+        .filter(Boolean)
+        .join(" · "),
+      ...status,
+    };
+  }
+  // "UPI asha@okhdfcbank" → "UPI": the frame's "Paid · UPI".
+  const method = (row.text ?? "").split(" ")[0];
+  const status: Pick<MoneyRowView, "status" | "tone"> =
+    row.status === "paid"
+      ? { status: method ? `Paid · ${method}` : "Paid", tone: "success" }
+      : row.status === "created"
+        ? { status: "Not paid yet", tone: "warning" }
+        : row.status === "failed"
+          ? { status: "Failed", tone: "danger" }
+          : { status: row.status === "expired" ? "Expired" : "Cancelled", tone: "neutral" };
+  return {
+    key: row.id,
+    title: money(row.amount),
+    sub: `${PAID_FOR[row.what] ?? "Payment"} · ${momentLabel(row.at, now)}`,
+    ...status,
+  };
+}
+
+/** Every payment and refund, oldest first, then the deposit while it is still to be paid. */
+export function paymentRows(booking: BookingCustomer, now: Date = new Date()): MoneyRowView[] {
+  const rows = booking.payments.map((row) => moneyRowView(row, now));
+  const m = booking.money;
+  if (!booking.exit && (m.deposit_state === "not_due" || m.deposit_state === "due")) {
+    const day = dayOf(m.deposit_ask_at);
+    rows.push({
+      key: "deposit-to-pay",
+      title: `Deposit ${money(m.deposit)}`,
+      sub: day ? `Refundable · due ${dayShort(day)}` : "Refundable",
+      ...(m.deposit_state === "due"
+        ? { status: "Due now", tone: "warning" as const }
+        : { status: "Due later", tone: "neutral" as const }),
+    });
+  }
+  return rows;
+}
+
+const sentence = (text: string) => (/[.!?]$/.test(text.trim()) ? text.trim() : `${text.trim()}.`);
+
+/** The line under "Cancel booking": what cancelling costs right now. */
+export function cancelHint(outcome: CancelOutcome): string {
+  const kept = outcome.kept[0] ? sentence(outcome.kept[0].text || `${money(outcome.kept[0].amount)} is not returned`) : "";
+  switch (outcome.case) {
+    case "ringing":
+      return "The booking amount comes back.";
+    case "free": {
+      const day = dayOf(outcome.free_until);
+      const until = day ? `Free until ${dayShort(day)}, ${clock(outcome.free_until)}.` : "Free to cancel now.";
+      return [until, kept].filter(Boolean).join(" ");
+    }
+    case "inside_24h":
+      return isPositive(outcome.to_owner)
+        ? `${money(outcome.to_owner)} goes to the owner. The rest is refunded.`
+        : "The rest of what you paid is refunded.";
+    default:
+      return kept || "Nothing is refunded.";
   }
 }
