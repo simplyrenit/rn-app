@@ -42,6 +42,7 @@ import {
   SCREEN_GUTTER,
 } from "@/lib/design-tokens";
 import { apiError } from "@/lib/api-error";
+import { DeleteProblem, deleteProblem } from "@/lib/delete-account";
 import { needsCurrentNumberCode, noNumberStep, phoneChangeBody, phoneChangeOutcome, unlockNext, unlockStart } from "@/lib/phone-change";
 import { EMAIL_HAS_ACCOUNT, emailChangeBody, emailChangeOutcome, emailCodeText, emailProof, sameEmail } from "@/lib/sign-in-proof";
 import { toast } from "@/lib/toast";
@@ -686,14 +687,32 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     profileImageSheetRef.current?.close();
   };
 
-  const handleDeleteAccount = () => {
-    deleteMyAccount(nameId);
-  }
+  // A delete the server refused (T-20: something is still open) or that failed: the person stays signed in and is told why.
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteIssue, setDeleteIssue] = useState<DeleteProblem | null>(null);
+  const deleting = useRef(false);
+
+  const handleDeleteAccount = async () => {
+    if (deleting.current) return;
+    deleting.current = true;
+    setDeleteBusy(true);
+    setDeleteIssue(null);
+    try {
+      // Signs out and goes to Welcome only when the account was closed.
+      await deleteMyAccount(nameId);
+    } catch (error) {
+      setDeleteIssue(deleteProblem(apiError(error)));
+    } finally {
+      deleting.current = false;
+      setDeleteBusy(false);
+    }
+  };
 
   return (
     <>
-      {deleteAccountModal && <DeleteAccountModal open={deleteAccountModal} onDelete={handleDeleteAccount} onCancel={() => {
+      {deleteAccountModal && <DeleteAccountModal open={deleteAccountModal} busy={deleteBusy} problem={deleteIssue} onDelete={() => void handleDeleteAccount()} onCancel={() => {
         setDeleteAccountModal(false);
+        setDeleteIssue(null);
       }} />}
       {!deleteAccountModal && <CustomBottomSheetModal
         ref={bottomSheetModalRef}

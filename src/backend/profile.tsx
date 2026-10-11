@@ -22,6 +22,7 @@ import { usePost } from "./post";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { apiError } from "@/lib/api-error";
 import axiosInstance from "@/lib/networkUtils";
 import {
   fetchMyDetailsRequest,
@@ -98,21 +99,25 @@ export function useProfile() {
     }
   }
 
+  /**
+   * Deletes the account. Signs out and goes to Welcome only when the server closed it (204): a refusal
+   * (409 `open_bookings`: something is still open, T-20) or any failure rethrows and leaves the person signed in.
+   */
   async function deleteMyAccount(username: string) {
     setLoading(true);
     try {
-      const response = await axiosInstance.delete(`${DELETE_MY_ACCOUNT_ENDPOINT}${username}/`)
+      await axiosInstance.delete(`${DELETE_MY_ACCOUNT_ENDPOINT}${username}/`);
     } catch (error) {
-      console.error("Error deleting user account:", `${DELETE_MY_ACCOUNT_ENDPOINT}${username}`, error);
+      console.warn("Account was not deleted:", apiError(error)?.code ?? "no answer");
       throw error;
     } finally {
       setLoading(false);
-      await logout();
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Welcome" }],
-      });
     }
+    await logout();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Welcome" }],
+    });
   }
 
   async function updateMyProfileImage(username: string, image: string) {
