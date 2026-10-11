@@ -11,6 +11,7 @@ import {
   localUris,
   nextWork,
   removedUris,
+  resendLater,
   sendFailure,
   setUrl,
   staleRefusal,
@@ -111,6 +112,8 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
   async function run() {
     // A draft that fails is left alone for the rest of this run; the next kick tries it again.
     const failed = new Set<string>();
+    // How often the server took a file out of a record in this run: it is sent again once by itself, then left for the next try.
+    const missed = new Map<string, number>();
     for (let work = nextWork(drafts, failed); work; work = nextWork(drafts, failed)) {
       const { draft } = work;
       if (work.kind === "upload") {
@@ -133,6 +136,15 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
       try {
         const capture = await deps.send(draft, captureBody(draft));
         change(draft.id, (d) => applyAnswer(d, capture));
+        const reopened = drafts.find((d) => d.id === draft.id);
+        if (reopened && !reopened.done && reopened.sealed) {
+          const times = (missed.get(draft.id) ?? 0) + 1;
+          missed.set(draft.id, times);
+          if (times >= 2) {
+            failed.add(draft.id);
+            change(draft.id, (d) => ({ ...d, error: resendLater() }));
+          }
+        }
       } catch (error) {
         const out = sendFailure(apiError(error), { forOther: draft.forOther });
         if ("done" in out) {

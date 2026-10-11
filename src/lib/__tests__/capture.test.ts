@@ -5,6 +5,7 @@ import {
   CaptureDraft,
   RecordBooking,
   ShotList,
+  PHOTO_MAX_BYTES,
   VIDEO_MAX_BYTES,
   addShot,
   applyAnswer,
@@ -33,6 +34,7 @@ import {
   orphanFiles,
   otherSetOffered,
   otherSide,
+  overPhotoLimit,
   photoCount,
   readyToSend,
   recordCard,
@@ -317,15 +319,44 @@ describe("the server's answer", () => {
     expect(draftState(d)).toBe("done");
   });
 
-  it("something missing goes back to the person", () => {
+  it("a file the server lists as missing, and the phone still holds, is sent again from the kept copy: sealed, address cleared", () => {
     const d = applyAnswer(seal(uploaded(taken())), answer({ missing: ["serial", "video"] }));
     expect(d.done).toBe(false);
-    expect(d.sealed).toBe(false);
-    expect(d.shots.serial).toBeUndefined();
-    expect(d.video).toBeNull();
+    expect(d.sealed).toBe(true);
+    expect(d.error).toBeNull();
+    // The local copy is still there, with no address: nothing is taken again.
+    expect(d.shots.serial).toMatchObject({ uri: "file:///captures/serial.jpg", url: null });
+    expect(d.video).toMatchObject({ uri: "file:///captures/video.mp4", url: null });
     expect(d.shots.front?.url).toBeTruthy();
-    expect(draftState(d)).toBe("stuck");
-    expect(nextStep(d)).toEqual({ kind: "shot", index: 2 });
+    expect(draftState(d)).toBe("uploading");
+    expect(readyToSend(d)).toBe(false);
+    // The queue's next job is that upload, then the send.
+    expect(nextWork([d])).toMatchObject({ kind: "upload", slot: { shot: "serial" } });
+    expect(localUris(d)).toEqual(expect.arrayContaining(["file:///captures/serial.jpg", "file:///captures/video.mp4"]));
+  });
+
+  it("a file the phone no longer holds, or the ID tick, goes back to the person", () => {
+    const sealed = seal(uploaded(taken(start({ side: "owner", list: list({ id_match_required: true }) }))));
+    const gone = applyAnswer(sealed, answer({ missing: ["window"] }));
+    expect(gone).toMatchObject({ sealed: false, done: false });
+    expect(gone.error).toMatchObject({ retry: false });
+    expect(draftState(gone)).toBe("stuck");
+    const noTick = applyAnswer(sealed, answer({ missing: ["id_match"] }));
+    expect(noTick).toMatchObject({ sealed: false, idMatch: false });
+    expect(nextStep(noTick)).toEqual({ kind: "checklist" });
+  });
+
+  it("not complete with nothing named is not sent again by itself", () => {
+    const d = applyAnswer(seal(uploaded(taken())), answer({ missing: [] }));
+    expect(d).toMatchObject({ sealed: false, done: false });
+    expect(d.error).toMatchObject({ retry: false });
+  });
+
+  it("a photo over the server's limit is made smaller first; one at the limit or of unknown size is sent as it is", () => {
+    expect(overPhotoLimit(PHOTO_MAX_BYTES + 1)).toBe(true);
+    expect(overPhotoLimit(PHOTO_MAX_BYTES)).toBe(false);
+    expect(overPhotoLimit(null)).toBe(false);
+    expect(overPhotoLimit(undefined)).toBe(false);
   });
 
   it("the other person's set is up when only their code is missing", () => {
@@ -473,7 +504,8 @@ describe("when a record can be made and finished (review r1 #1, #2): one rule fo
     // Finished by the person, then a photo was lost or the server asked for more: open again, after the code too.
     const reopened = dropFile(seal(taken()), { shot: "back" }, "file:///captures/back.jpg");
     expect(state("handover", at("out"), { draft: reopened })).toBe("continue");
-    const asked = applyAnswer(seal(uploaded(taken())), { complete: false, missing: ["serial"] });
+    // A file the phone does not hold is asked for from the person (one it holds is sent again by itself).
+    const asked = applyAnswer(seal(uploaded(taken())), { complete: false, missing: ["window"] });
     expect(state("handover", at("returned"), { draft: asked })).toBe("continue");
   });
 

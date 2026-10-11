@@ -391,8 +391,9 @@ export function captureBody(draft: CaptureDraft): CaptureBody {
 /**
  * The server's answer to the send. Complete: done. For the other person's set,
  * "only the code is missing" also ends the upload: the code is the next step.
- * Anything else still missing goes back to the person: the shots are asked for
- * again, and the draft is open for them.
+ * A file the server lists under `missing` was not on the bucket, or was too big, and is out of its record: the phone
+ * still holds it, so it is sent again from the kept copy (`reopenForMissing`, as on the confirm); only a file the
+ * phone no longer holds, or the ID tick, goes back to the person.
  */
 export function applyAnswer(draft: CaptureDraft, capture: Pick<Capture, "complete" | "missing">): CaptureDraft {
   if (capture.complete) return { ...draft, done: true, awaitingCode: false, error: null };
@@ -401,17 +402,21 @@ export function applyAnswer(draft: CaptureDraft, capture: Pick<Capture, "complet
   if (beyondCode.length === 0 && missing.includes("confirmation_code")) {
     return { ...draft, done: true, awaitingCode: true, error: null };
   }
-  let next: CaptureDraft = { ...draft, sealed: false };
-  for (const what of beyondCode) {
-    if (what === "video") next = { ...next, video: null };
-    else if (what === "id_match") next = { ...next, idMatch: false };
-    else if (next.shots[what]) next = withFile(next, { shot: what }, null);
-  }
-  return {
-    ...next,
-    error: { text: "Renit still needs something for this record. Add what is missing and finish again.", retry: false },
-  };
+  // Not complete and nothing named: sent again by itself it would only be refused again. The person finishes it again.
+  if (beyondCode.length === 0) return { ...draft, sealed: false, error: STILL_NEEDS };
+  return reopenForMissing(draft, beyondCode);
 }
+
+const STILL_NEEDS: NonNullable<CaptureDraft["error"]> = {
+  text: "Renit still needs something for this record. Add what is missing and finish again.",
+  retry: false,
+};
+
+/** The photo size the server takes (API-CONTRACT Common); it takes a larger one out of the record and asks for it again. */
+export const PHOTO_MAX_BYTES = 15 * 1024 * 1024;
+
+/** A photo that must be made smaller before it is sent: the server would refuse it. Unknown size: sent as it is. */
+export const overPhotoLimit = (bytes: number | null | undefined): boolean => typeof bytes === "number" && bytes > PHOTO_MAX_BYTES;
 
 /** What a refused confirm of the other person's set lists as still missing, other than the code itself. */
 function missingBeyondCode(error: ApiError | null): string[] {
@@ -455,8 +460,14 @@ export function reopenForMissing(draft: CaptureDraft, missing: string[]): Captur
   }
   return next.sealed
     ? next
-    : { ...next, error: { text: "Renit still needs something for this record. Add what is missing and finish again.", retry: false } };
+    : { ...next, error: STILL_NEEDS };
 }
+
+/** The server did not find a file after it was sent, twice in one run: it is sent again on the next try, with nothing lost. */
+export const resendLater = (): NonNullable<CaptureDraft["error"]> => ({
+  text: "Renit did not find a file after it was sent. It is sent again soon.",
+  retry: true,
+});
 
 /** The other person read out the code and the server took it. */
 export const codeConfirmed = (draft: CaptureDraft): CaptureDraft => ({ ...draft, awaitingCode: false });

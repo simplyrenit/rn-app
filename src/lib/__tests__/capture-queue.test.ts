@@ -379,17 +379,108 @@ describe("the capture queue", () => {
     expect(queue.getDrafts()[0].done).toBe(true);
   });
 
-  it("what the server still misses goes back to the person", async () => {
-    const { queue } = setup({
+  it("a photo the server did not find is sent again from the kept copy, and nothing is deleted from the phone before the record is complete", async () => {
+    let sends = 0;
+    const { queue, deps } = setup({
+      send: jest.fn(async () => {
+        sends += 1;
+        return (sends === 1 ? { complete: false, missing: ["back"] } : complete) as unknown as Capture;
+      }),
+    });
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+    const uploads = (deps.upload as jest.Mock).mock.calls.map((c) => c[0]);
+    // front, back, video, then back again, from the same file.
+    expect(uploads).toEqual([
+      "file:///captures/front.jpg",
+      "file:///captures/back.jpg",
+      "file:///captures/video.mp4",
+      "file:///captures/back.jpg",
+    ]);
+    expect(deps.send).toHaveBeenCalledTimes(2);
+    expect((deps.send as jest.Mock).mock.calls[1][1]).toMatchObject({ shots: expect.arrayContaining([expect.objectContaining({ key: "back" })]) });
+    expect(queue.getDrafts()[0]).toMatchObject({ done: true, error: null });
+    // The files go when the server has the whole record, and not before: the one discard comes after the second send.
+    expect(deps.discard).toHaveBeenCalledTimes(1);
+    expect((deps.discard as jest.Mock).mock.invocationCallOrder[0]).toBeGreaterThan((deps.send as jest.Mock).mock.invocationCallOrder[1]);
+  });
+
+  it("the video the server did not find is sent again from the kept copy too", async () => {
+    let sends = 0;
+    const { queue, deps } = setup({
+      send: jest.fn(async () => {
+        sends += 1;
+        return (sends === 1 ? { complete: false, missing: ["video"] } : complete) as unknown as Capture;
+      }),
+    });
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+    expect((deps.upload as jest.Mock).mock.calls.filter((c) => c[1] === "video").map((c) => c[0])).toEqual([
+      "file:///captures/video.mp4",
+      "file:///captures/video.mp4",
+    ]);
+    expect(queue.getDrafts()[0].done).toBe(true);
+    // Nothing was cleared while the video was missing.
+    expect((deps.discard as jest.Mock).mock.calls.flat(2)).toEqual(expect.arrayContaining(["file:///captures/video.mp4"]));
+    expect((deps.discard as jest.Mock).mock.invocationCallOrder[0]).toBeGreaterThan((deps.send as jest.Mock).mock.invocationCallOrder[1]);
+  });
+
+  it("a file the server keeps losing is sent again by itself only twice in a run, then left for the next try, with the copy still on the phone", async () => {
+    const { queue, deps } = setup({
       send: jest.fn(async () => ({ complete: false, missing: ["back"] }) as unknown as Capture),
     });
     await queue.init("asha");
     queue.start(draft());
     record(queue);
     await queue.idle();
+    // The run ended (no endless loop) and the record is waiting, not stuck: nothing was lost.
     const d = queue.getDrafts()[0];
-    expect(d).toMatchObject({ done: false, sealed: false });
-    expect(d.shots.back).toBeUndefined();
+    expect(d).toMatchObject({ done: false, sealed: true, error: { retry: true } });
+    expect(d.shots.back.uri).toBe("file:///captures/back.jpg");
+    expect(deps.discard).not.toHaveBeenCalled();
+    // The next kick tries again, twice, and stops again.
+    const before = (deps.send as jest.Mock).mock.calls.length;
+    queue.kick();
+    await queue.idle();
+    expect((deps.send as jest.Mock).mock.calls.length).toBe(before + 2);
+  });
+
+  it("a file the phone no longer holds that the server misses goes back to the person", async () => {
+    const { queue } = setup({
+      send: jest.fn(async () => ({ complete: false, missing: ["side"] }) as unknown as Capture),
+    });
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+    expect(queue.getDrafts()[0]).toMatchObject({ done: false, sealed: false, error: { retry: false } });
+  });
+
+  it("a 503 storage_unavailable on the send saves nothing, and the same body goes again on the next try", async () => {
+    let down = true;
+    const { queue, deps } = setup({
+      send: jest.fn(async () => {
+        if (down) throw answer(503, "storage_unavailable");
+        return complete;
+      }),
+    });
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+    expect(queue.getDrafts()[0]).toMatchObject({ done: false, sealed: true, error: { retry: true } });
+    expect(deps.discard).not.toHaveBeenCalled();
+    down = false;
+    queue.kick();
+    await queue.idle();
+    const bodies = (deps.send as jest.Mock).mock.calls.map((c) => c[1]);
+    expect(bodies.length).toBeGreaterThanOrEqual(2);
+    expect(bodies[bodies.length - 1]).toEqual(bodies[0]);
+    expect(queue.getDrafts()[0].done).toBe(true);
   });
 
   it("one bad record does not hold up another", async () => {
