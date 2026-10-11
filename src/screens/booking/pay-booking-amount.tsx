@@ -1,4 +1,5 @@
-import { BottomBar, SummaryCard, TextButton } from "@/components/booking/parts";
+import { GetHelp } from "@/components/booking/get-help";
+import { BottomBar, Panel, SummaryCard, TextButton } from "@/components/booking/parts";
 import { usePay } from "@/components/booking/use-pay";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, Text } from "@/components/core";
@@ -103,6 +104,9 @@ export function PayBookingAmount({
           image={booking.product.cover_image}
           lines={[datesLine(booking), `${bookingHow(booking)} · ${booking.shop.name}`]}
         />
+        <Panel>
+          <GetHelp booking={booking} />
+        </Panel>
       </ScrollView>
       <BottomBar>
         {note ? (
