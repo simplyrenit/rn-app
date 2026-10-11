@@ -125,6 +125,28 @@ describe("the photo queue", () => {
     expect(attach).toHaveBeenCalledTimes(2);
   });
 
+  it("503 photo_not_checked means nothing was added: the photo is kept with its address and sent again, with no second upload and no read of the draft", async () => {
+    const attach = jest.fn<QueueDeps["attach"]>().mockRejectedValueOnce(answer(503, "photo_not_checked")).mockResolvedValue(undefined);
+    const { queue, deps } = setup({ attach });
+    await queue.init("shop1");
+    const { id } = await queue.enqueue(photo("PRO_1"));
+    await queue.idle();
+    expect(queue.getJobs()[0]).toMatchObject({
+      status: "failed",
+      attachSent: false,
+      url: "https://bucket.test/uploads/PRO_1.jpg",
+      error: "Renit could not look at this photo just now. Send it again.",
+    });
+    queue.retry(id);
+    await queue.idle();
+    expect(queue.getJobs()[0].status).toBe("done");
+    expect(deps.upload).toHaveBeenCalledTimes(1);
+    expect(deps.images).not.toHaveBeenCalled();
+    expect(attach).toHaveBeenCalledTimes(2);
+    // The photo's file went only when it was on its draft.
+    expect(deps.discard).toHaveBeenLastCalledWith(["file:///kept/PRO_1.jpg"]);
+  });
+
   it("drops a photo whose draft is no longer a draft", async () => {
     const attach = jest.fn<QueueDeps["attach"]>().mockRejectedValue(answer(409, "wrong_status"));
     const { queue } = setup({ attach });

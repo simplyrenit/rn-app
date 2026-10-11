@@ -178,6 +178,32 @@ describe("classifyFailure: what a failure means for a photo", () => {
     });
   });
 
+  it("a 400 shows the server's plain reason for the photo, and the photo is made and sent again", () => {
+    const refused = (text: string) => ({ status: 400, code: "validation_error", message: null, details: { fields: { url: [text] } } });
+    for (const text of [
+      "This photo is over 15 MB. Save a smaller copy and add it again.",
+      "This file is not a photo Renit can open. Save it as a JPEG and add it again.",
+      "That file belongs to a booking's record.",
+      "Upload the photo to Renit first.",
+    ]) {
+      expect(classifyFailure("attach", refused(text))).toEqual({ status: "failed", message: text, keepUrl: false, attachSent: false });
+    }
+  });
+
+  it("503 storage_unavailable and photo_not_checked mean nothing was added: the photo and its address are kept to send again", () => {
+    for (const code of ["storage_unavailable", "photo_not_checked"]) {
+      expect(classifyFailure("attach", { status: 503, code, message: "Renit could not look at this photo just now. Send it again.", details: null })).toEqual({
+        status: "failed",
+        message: "Renit could not look at this photo just now. Send it again.",
+        keepUrl: true,
+        // Not "may have gone through": the retry sends it again without reading the draft first.
+        attachSent: false,
+      });
+    }
+    // Any other 5xx may have gone through.
+    expect(classifyFailure("attach", { status: 503, code: "payments_unavailable", message: null, details: null })).toMatchObject({ attachSent: true });
+  });
+
   it("any other refusal shows the server's words and keeps the address", () => {
     expect(classifyFailure("attach", failure(403, "forbidden", "Not yours."))).toMatchObject({
       status: "failed",

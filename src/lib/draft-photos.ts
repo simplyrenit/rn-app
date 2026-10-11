@@ -1,4 +1,4 @@
-import type { ApiError } from "@/lib/api-error";
+import { type ApiError, fieldErrors } from "@/lib/api-error";
 
 /**
  * The phone's photo walk-through for drafts (SH-12; API-CONTRACT OE-G2). Plain
@@ -226,6 +226,16 @@ export function classifyFailure(stage: "upload" | "attach" | "file", error: ApiE
   if (stage === "upload") {
     return { status: "failed", message: "It did not upload. Check your connection.", keepUrl: false, attachSent: false };
   }
+  // The server could not look at the photo just now (`storage_unavailable`: the bucket did not answer; `photo_not_checked`: it
+  // could not store or check it and took it off again). Nothing was added: the photo is kept, with its address, to send again.
+  if (error?.status === 503 && (error.code === "storage_unavailable" || error.code === "photo_not_checked")) {
+    return {
+      status: "failed",
+      message: error.message ?? "Renit could not look at this photo just now. Send it again.",
+      keepUrl: true,
+      attachSent: false,
+    };
+  }
   if (!error || error.status === 0 || error.status >= 500) {
     return { status: "failed", message: "We couldn't reach Renit. It will go through when you retry.", keepUrl: true, attachSent: true };
   }
@@ -235,7 +245,14 @@ export function classifyFailure(stage: "upload" | "attach" | "file", error: ApiE
     case "too_many_photos":
       return { status: "done", message: null, keepUrl: false, attachSent: false };
     case "validation_error":
-      return { status: "failed", message: "Renit couldn't accept that photo. It is sent again.", keepUrl: false, attachSent: false };
+      // The server's plain reason for the photo (over 15 MB, not a photo Renit can open, not uploaded to Renit, a record's
+      // file); a retry makes the photo again and sends it.
+      return {
+        status: "failed",
+        message: fieldErrors(error).url ?? error.message ?? "Renit couldn't accept that photo. It is sent again.",
+        keepUrl: false,
+        attachSent: false,
+      };
     case "not_found":
       return { status: "gone", message: null, keepUrl: false, attachSent: false };
     default:
