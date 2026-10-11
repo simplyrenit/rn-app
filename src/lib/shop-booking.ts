@@ -41,6 +41,10 @@ export interface ShopMoney {
   rent_pay_minutes: number | null;
   /** The deadline, set at Accept; null before it (P3-13). */
   rent_due_at: string | null;
+  /** Late days so far (set each night), fixed when the return code is typed; one day's rent each, from the deposit. */
+  late_days?: number;
+  late_fee?: string;
+  damage_deduction?: string;
   payout: {
     status: string;
     status_reason: string | null;

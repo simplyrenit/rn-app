@@ -1,4 +1,4 @@
-import { clock, dayOf, dayShort, money, todayIst, windowLabel } from "@/lib/booking";
+import { clock, dayOf, dayShort, depositAfterLate, lateDaysLabel, money, todayIst, windowLabel } from "@/lib/booking";
 import { captured, dayBlock, theirStatusLine, whenShort } from "@/lib/day-of";
 import { BookingShop, howLine, moneyView } from "@/lib/shop-booking";
 import { customerName } from "@/lib/shop-ring";
@@ -114,10 +114,20 @@ export function startedCopy(b: BookingShop, now: Date): StartedCopy {
   };
 }
 
-/** Why the payout waits, when it does: the owner's own record is not on the server yet. */
+/**
+ * True while the owner's payout waits for the owner's own handover record: the
+ * code is typed, the record is not on the server, and no payout has been asked
+ * for yet (staff can release one by hand, decision A-46). It is what keeps the
+ * record button on the shop's screens after the code, on a closed booking too.
+ */
+export function payoutPending(b: BookingShop): boolean {
+  if (b.stage === "ready" || b.exit || captured(b, "handover").mine) return false;
+  return (b.money.payout?.status ?? "none") === "none";
+}
+
+/** Why the payout waits, when it does, said on the "Rental started" card. */
 export function payoutWaits(b: BookingShop): string | null {
-  if (b.stage === "ready" || captured(b, "handover").mine) return null;
-  return "You are paid once your photos and video of the handover have uploaded.";
+  return payoutPending(b) ? "You are paid once your photos and video of the handover have uploaded." : null;
 }
 
 // ---- SH-10, the return -----------------------------------------------------------------------------
@@ -148,6 +158,14 @@ export function returnCopy(b: BookingShop, now: Date): ReturnCopy {
   const overdue = b.stage === "out" && Boolean(due) && now.getTime() > new Date(due ?? "").getTime();
   const held = Number(b.money.deposit) > 0 && b.money.deposit_state !== "none";
   const until = b.report_problem_until;
+  // Late days come out of the deposit to the shop (N11): neither line may say the whole deposit goes back (review r1 #3).
+  const late = depositAfterLate(b.money);
+  const lateShare =
+    late.kept <= 0
+      ? null
+      : late.back > 0
+        ? `${money(late.kept)} of the deposit comes to you for ${lateDaysLabel(late.days)}`
+        : `The whole ${money(late.deposit)} deposit comes to you for ${lateDaysLabel(late.days)}`;
   return {
     title: b.stage === "out" ? `Take the ${b.product.title} back` : `${b.product.title} is back`,
     sub: [b.number, customerName(b.customer), dayShort(backDay)].join(" · "),
@@ -155,19 +173,34 @@ export function returnCopy(b: BookingShop, now: Date): ReturnCopy {
     handoverDay: shortDay(dayOf(handoverAt) ?? b.first_day),
     returnDay: shortDay(backDay),
     codeTitle: `Show ${first} this code`,
-    codeSub: held
-      ? `${first} types it to finish the return. The deposit goes back to ${first} within 48 hours unless you report a problem in the next 24 hours.`
-      : `${first} types it to finish the return. You then have 24 hours to report a problem.`,
+    codeSub: !held
+      ? `${first} types it to finish the return. You then have 24 hours to report a problem.`
+      : !lateShare
+        ? `${first} types it to finish the return. The deposit goes back to ${first} within 48 hours unless you report a problem in the next 24 hours.`
+        : late.back > 0
+          ? `${first} types it to finish the return. ${lateShare}; the rest goes back to ${first} within 48 hours unless you report a problem in the next 24 hours.`
+          : `${first} types it to finish the return. ${lateShare}. You then have 24 hours to report a problem.`,
     returned:
       b.stage === "out"
         ? null
         : {
             title: returnAt ? `Returned · ${whenShort(returnAt, now)}` : "Returned",
-            body: until
-              ? `You can report a problem until ${whenShort(until, now)}.${held ? ` After that the deposit goes back to ${first}.` : ""}`
-              : held
-                ? `The deposit is settled with ${first} once both return records are in.`
-                : "This rental is finished.",
+            body: [
+              until ? `You can report a problem until ${whenShort(until, now)}.` : null,
+              !held
+                ? until
+                  ? null
+                  : "This rental is finished."
+                : lateShare
+                  ? late.back > 0
+                    ? `${lateShare}. The rest (${money(late.back)}) goes back to ${first}${until ? " after that" : ""}.`
+                    : `${lateShare}. Nothing goes back to ${first}.`
+                  : until
+                    ? `After that the deposit goes back to ${first}.`
+                    : `The deposit is settled with ${first} once both return records are in.`,
+            ]
+              .filter(Boolean)
+              .join(" "),
           },
   };
 }

@@ -2,6 +2,7 @@ import { answerCustomerWindowChange } from "@/backend/shop-bookings";
 import { shopBookingQueryKey, useShopBooking } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
 import { BookingLoadError, BookingLoading, MoneyLine, Notice, Panel, Pill, SummaryCard } from "@/components/booking/parts";
+import { Records } from "@/components/capture/record-card";
 import { Timeline } from "@/components/booking/timeline";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { Button, SubpageHeader, Text } from "@/components/core";
@@ -24,7 +25,7 @@ import {
   shopPill,
   shopTimeline,
 } from "@/lib/shop-booking";
-import { dayButton, dayScreen } from "@/lib/shop-handover";
+import { dayButton, dayScreen, payoutPending } from "@/lib/shop-handover";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -151,7 +152,7 @@ function ActionRow({ label, onPress, first }: { label: string; onPress: () => vo
   );
 }
 
-function BookingPage({ booking, now }: { booking: BookingShop; now: Date }) {
+function BookingPage({ booking, now, receivedAt }: { booking: BookingShop; now: Date; receivedAt: number }) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
@@ -219,6 +220,18 @@ function BookingPage({ booking, now }: { booking: BookingShop; now: Date }) {
         {day && dayLabel ? (
           <Button onPress={() => navigation.navigate(day, { number: booking.number })}>{dayLabel}</Button>
         ) : null}
+
+        {/* A record that is not finished is never out of sight: it can be made or carried on
+            from the booking for as long as the server takes it, and the card says when the
+            payout waits for it (review r1 #1). */}
+        <Records
+          role="owner"
+          booking={booking}
+          receivedAt={receivedAt}
+          title={`${booking.product.title} · ${booking.customer.first_name}`}
+          other={booking.customer.first_name}
+          stake={payoutPending(booking)}
+        />
 
         <SummaryCard
           title={booking.product.title}
@@ -329,7 +342,7 @@ export default function ShopBookingScreen() {
     <NonScrollableContainer>
       <SubpageHeader title="Booking" />
       {booking ? (
-        <BookingPage booking={booking} now={correctedNow(booking.server_time, query.dataUpdatedAt)} />
+        <BookingPage booking={booking} now={correctedNow(booking.server_time, query.dataUpdatedAt)} receivedAt={query.dataUpdatedAt} />
       ) : query.isError ? (
         <BookingLoadError error={query.error} what="this booking" onRetry={() => void refetch()} />
       ) : (

@@ -5,6 +5,7 @@ import {
   dayScreen,
   handoverCopy,
   handoverSteps,
+  payoutPending,
   payoutWaits,
   reportFirstNote,
   returnCopy,
@@ -188,6 +189,19 @@ describe("SH-09, after the code", () => {
     // Before the code there is no payout to wait for.
     expect(payoutWaits(booking())).toBeNull();
   });
+
+  it("the payout is pending, and so the record is still asked for, until the record is in or a payout exists (review r1 #1)", () => {
+    const noRecord = { captures: flags(false, true) };
+    // The code was typed before anything was recorded: pending while out, returned and closed.
+    for (const stage of ["out", "returned", "closed"]) expect(payoutPending(out({ stage, ...noRecord }))).toBe(true);
+    expect(payoutPending(out())).toBe(false);
+    // Renit's desk released the payout by hand (A-46): nothing waits on the record any more.
+    const released = out({ ...noRecord, money: { ...booking().money, payout: { ...booking().money.payout, status: "scheduled" } } });
+    expect(payoutPending(released)).toBe(false);
+    // Before the code, and on a booking that ended early, there is no payout.
+    expect(payoutPending(booking())).toBe(false);
+    expect(payoutPending(out({ ...noRecord, exit: "no_show", exit_reason: "customer" }))).toBe(false);
+  });
 });
 
 describe("SH-10, the return", () => {
@@ -237,6 +251,34 @@ describe("SH-10, the return", () => {
       title: "Returned · 6:40 pm",
       body: "You can report a problem until 6:40 pm on Tue 27 Oct. After that the deposit goes back to Aarav.",
     });
+  });
+
+  it("after late days neither line says the whole deposit goes back: the late days' rent is the shop's (review r1 #3)", () => {
+    const lateMoney = { ...booking().money, late_days: 2, late_fee: "1220.00" };
+    const late = out({ money: lateMoney });
+    expect(returnCopy(late, new Date("2026-10-28T13:00:00Z")).codeSub).toBe(
+      "Aarav types it to finish the return. ₹1,220 of the deposit comes to you for 2 late days; the rest goes back to Aarav within 48 hours unless you report a problem in the next 24 hours."
+    );
+    const returned = out({
+      stage: "returned",
+      money: lateMoney,
+      report_problem_until: "2026-10-29T13:10:00Z",
+      timeline: [
+        { event: "handover", label: "Rental started", at: "2026-10-24T05:12:00Z", by: "owner" },
+        { event: "return", label: "Returned", at: "2026-10-28T13:10:00Z", by: "customer" },
+      ],
+    });
+    expect(returnCopy(returned, new Date("2026-10-28T13:11:00Z")).returned?.body).toBe(
+      "You can report a problem until 6:40 pm on Thu 29 Oct. ₹1,220 of the deposit comes to you for 2 late days. The rest (₹1,780) goes back to Aarav after that."
+    );
+    // The late days took all of it.
+    const all = out({ stage: "returned", money: { ...booking().money, late_days: 6, late_fee: "3000.00" }, report_problem_until: null });
+    expect(returnCopy(all, new Date("2026-11-02T13:11:00Z")).returned?.body).toBe(
+      "The whole ₹3,000 deposit comes to you for 6 late days. Nothing goes back to Aarav."
+    );
+    expect(returnCopy(out({ money: { ...booking().money, late_days: 6, late_fee: "3000.00" } }), BACK).codeSub).toBe(
+      "Aarav types it to finish the return. The whole ₹3,000 deposit comes to you for 6 late days. You then have 24 hours to report a problem."
+    );
   });
 
   it("with no deposit, the code line does not promise one back", () => {

@@ -1,4 +1,3 @@
-import { useCaptureDraft } from "@/backend/capture-jobs";
 import { setDayStatus, startRental } from "@/backend/handover";
 import { shopBookingQueryKey, useShopBooking } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
@@ -7,12 +6,13 @@ import { useAppActive } from "@/components/booking/use-app-active";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { CODE_LENGTH, CodeInput } from "@/components/capture/code";
 import { MomentSets } from "@/components/capture/moment-sets";
-import { UploadNote } from "@/components/capture/upload-note";
+import { RecordCardBody, useRecord } from "@/components/capture/record-card";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { Block, CallButton, LinkRow, StatusButtons, StepList, useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
 import { SLOW_POLL_MS } from "@/lib/booking";
+import { otherSetOffered, recordWanted } from "@/lib/capture";
 import {
   callCopy,
   captured,
@@ -29,9 +29,8 @@ import {
 } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { successFeedback } from "@/lib/haptics";
-import { clockSkewMs } from "@/lib/server-clock";
 import { BookingShop } from "@/lib/shop-booking";
-import { handoverCopy, handoverSteps, payoutWaits, startedCopy } from "@/lib/shop-handover";
+import { handoverCopy, handoverSteps, payoutPending, payoutWaits, startedCopy } from "@/lib/shop-handover";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useKeyboardInset } from "@/lib/use-keyboard-inset";
@@ -54,7 +53,12 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
   const first = booking.customer.first_name;
   const day = dayBlock(booking);
   const flags = captured(booking, "handover");
-  const draft = useCaptureDraft(number, "handover", "owner");
+  // The shop's own handover record and, if the customer's phone failed, theirs. One rule
+  // (`recordState`): it can be made and finished for as long as the server takes it, so
+  // after the code too. The payout waits for the shop's own, and the card says so.
+  const names = { title: `${booking.product.title} · ${first}`, other: first };
+  const record = useRecord({ moment: "handover", role: "owner", booking, receivedAt, stake: payoutPending(booking), ...names });
+  const theirRecord = useRecord({ moment: "handover", role: "owner", forOther: true, booking, receivedAt, ...names });
   const [code, setCode] = useState("");
   const [round, setRound] = useState(0);
   const [codeError, setCodeError] = useState<string | null>(null);
@@ -64,7 +68,7 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
   const copy = handoverCopy(booking, now);
   const ready = booking.stage === "ready" && !booking.exit;
   const started = booking.stage !== "ready" && !booking.exit;
-  const recorded = Boolean(draft?.sealed) || flags.mine;
+  const recorded = flags.mine || Boolean(record.draft?.sealed);
   const noShow = noShowCopy("owner", day, first, now);
   const key = shopBookingQueryKey(number);
   const map = mapsUrl(booking.customer.coordinates, first, Platform.OS === "ios");
@@ -84,17 +88,6 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
         toast.error("That didn't go through", { message: dayErrorText(failure, now) });
         reread(failure);
       }
-    });
-
-  const record = (forOther: boolean) =>
-    navigation.navigate("Capture", {
-      number,
-      moment: "handover",
-      role: "owner",
-      forOther,
-      title: `${booking.product.title} · ${first}`,
-      other: first,
-      skew_ms: clockSkewMs(booking.server_time, receivedAt),
     });
 
   const start = () =>
@@ -189,11 +182,10 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
         </Notice>
       ) : null}
 
-      {ready && !recorded && (can("capture_handover") || draft) ? (
-        <Button onPress={() => record(false)}>{draft ? "Continue recording the condition" : "Start recording the condition"}</Button>
-      ) : null}
-
-      <UploadNote number={number} moment="handover" side="owner" />
+      {/* Not tied to the stage: after the code the record is still taken, and the payout
+          waits for it (review r1 #1). */}
+      <RecordCardBody record={record} />
+      <RecordCardBody record={theirRecord} />
 
       {recorded || flags.theirs ? (
         <MomentSets
@@ -202,12 +194,13 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
           side="owner"
           otherName={first}
           otherTitle={`${first}'s`}
-          poll={watching && !(flags.mine && flags.theirs)}
+          // Read again only while a set is still to come and the server still takes one.
+          poll={watching && recordWanted("handover", booking) && !(flags.mine && flags.theirs)}
         />
       ) : null}
 
-      {ready && recorded && !flags.theirs ? (
-        <TextButton label={`${first}'s phone can't record?`} onPress={() => record(true)} />
+      {recorded && otherSetOffered("handover", booking, flags.theirs, theirRecord.draft) ? (
+        <TextButton label={`${first}'s phone can't record?`} onPress={theirRecord.open} />
       ) : null}
 
       {ready && can("enter_handover_code") && !booking.claim_open ? (
@@ -220,7 +213,18 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
               Record the condition first. You are paid only once your photos and video have uploaded.
             </Notice>
           ) : null}
-          {closed ? null : <CodeInput round={round} disabled={running === "code"} onChange={(value) => (setCode(value), setCodeError(null))} />}
+          {closed ? (
+            // Renit's desk can issue a new code while the two people are still at the counter (review r1 #10).
+            <TextButton
+              label={`${first} has a new code? Type it`}
+              onPress={() => {
+                setClosed(false);
+                setCodeError(null);
+              }}
+            />
+          ) : (
+            <CodeInput round={round} disabled={running === "code"} onChange={(value) => (setCode(value), setCodeError(null))} />
+          )}
           {codeError ? (
             <Text fontSize="text-sm" tone="danger" accessibilityRole="alert" style={{ textAlign: "center" }}>
               {codeError}

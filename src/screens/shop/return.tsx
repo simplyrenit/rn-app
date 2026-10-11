@@ -1,20 +1,19 @@
-import { useCaptureDraft } from "@/backend/capture-jobs";
 import { useShopBooking } from "@/backend/shop-ring";
 import { BookingLoadError, BookingLoading, Notice, TextButton } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { CodeBoxes } from "@/components/capture/code";
 import { ReturnSets } from "@/components/capture/moment-sets";
-import { UploadNote } from "@/components/capture/upload-note";
+import { RecordCardBody, Records, useRecord } from "@/components/capture/record-card";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { Block, StepList } from "@/components/handover/parts";
 import { SLOW_POLL_MS } from "@/lib/booking";
+import { otherSetOffered, recordWanted } from "@/lib/capture";
 import { captured, dayBlock } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
-import { clockSkewMs } from "@/lib/server-clock";
 import { BookingShop } from "@/lib/shop-booking";
-import { reportFirstNote, returnCopy, shopReturnSteps } from "@/lib/shop-handover";
+import { payoutPending, reportFirstNote, returnCopy, shopReturnSteps } from "@/lib/shop-handover";
 import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
@@ -30,26 +29,19 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
   const first = booking.customer.first_name;
   const day = dayBlock(booking);
   const flags = captured(booking, "return");
-  const draft = useCaptureDraft(number, "return", "owner");
+  // The shop's return record and, if the customer's phone failed, theirs: one rule
+  // (`recordState`). Both stay open after the customer's code, while the booking is
+  // `returned`: it is the record a damage report rests on (review r1 #2).
+  const names = { title: `${booking.product.title} · ${first}`, other: first };
+  const record = useRecord({ moment: "return", role: "owner", booking, receivedAt, ...names });
+  const theirRecord = useRecord({ moment: "return", role: "owner", forOther: true, booking, receivedAt, ...names });
   // What the shop tapped: "All good" or "Report a problem". Both show the code (decision A-35).
   const [verdict, setVerdict] = useState<"good" | "problem" | null>(null);
 
-  const can = (action: string) => booking.can.includes(action);
   const copy = returnCopy(booking, now);
   const out = booking.stage === "out" && !booking.exit;
-  const recorded = Boolean(draft?.sealed) || flags.mine;
+  const recorded = flags.mine || Boolean(record.draft?.sealed);
   const code = "return_code" in day ? day.return_code : null;
-
-  const record = (forOther: boolean) =>
-    navigation.navigate("Capture", {
-      number,
-      moment: "return",
-      role: "owner",
-      forOther,
-      title: `${booking.product.title} · ${first}`,
-      other: first,
-      skew_ms: clockSkewMs(booking.server_time, receivedAt),
-    });
 
   return (
     <ScrollView
@@ -91,11 +83,12 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
         </Block>
       )}
 
-      {out && !recorded && (can("capture_return") || draft) ? (
-        <Button onPress={() => record(false)}>{draft ? "Continue recording" : "Record its condition"}</Button>
-      ) : null}
+      {/* A handover record that was never made or finished: the payout still waits for it,
+          and an `out` booking lands here, so this is where it is found (review r1 #1). */}
+      <Records role="owner" moments={["handover"]} booking={booking} receivedAt={receivedAt} stake={payoutPending(booking)} {...names} />
 
-      <UploadNote number={number} moment="return" side="owner" />
+      <RecordCardBody record={record} />
+      <RecordCardBody record={theirRecord} />
 
       <ReturnSets
         number={number}
@@ -103,11 +96,12 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
         otherName={first}
         handoverDay={copy.handoverDay}
         returnDay={copy.returnDay}
-        poll={watching && out && !(flags.mine && flags.theirs)}
+        // Read again only while a set is still to come and the server still takes one.
+        poll={watching && recordWanted("return", booking) && !(flags.mine && flags.theirs)}
       />
 
-      {out && recorded && !flags.theirs ? (
-        <TextButton label={`${first}'s phone can't record?`} onPress={() => record(true)} />
+      {recorded && otherSetOffered("return", booking, flags.theirs, theirRecord.draft) ? (
+        <TextButton label={`${first}'s phone can't record?`} onPress={theirRecord.open} />
       ) : null}
 
       {out && verdict === null ? (
