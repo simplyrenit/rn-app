@@ -1,5 +1,6 @@
 import { captureQueue, useCaptureDraft } from "@/backend/capture-jobs";
 import { capturesQueryKey, confirmPhoneFallback, readKeptShotList, startPhoneFallback, useShotList } from "@/backend/captures";
+import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoading, BottomBar, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { placeNow, recordVideo, recoverLostShot, takePhoto } from "@/components/capture/camera";
 import { CODE_LENGTH, CodeInput } from "@/components/capture/code";
@@ -11,6 +12,7 @@ import { apiError } from "@/lib/api-error";
 import {
   CAMERA_ONLY,
   CaptureDraft,
+  DESK_FINISHES,
   FRAME_NOTE,
   PhoneFallback,
   ShotList,
@@ -18,6 +20,7 @@ import {
   videoHintText,
   addShot,
   reopenForMissing,
+  reopenedText,
   canSeal,
   captureHeading,
   captureId,
@@ -28,6 +31,8 @@ import {
   durationLabel,
   fallbackErrorText,
   listSourceNote,
+  markDesk,
+  needsDesk,
   needsIdMatch,
   nextStep,
   noticeRows,
@@ -480,6 +485,8 @@ export default function CaptureScreen() {
       const failure = apiError(error);
       const text = fallbackErrorText(failure);
       setCodeError(text);
+      // Three codes have gone for this booking: this record can never be confirmed from here, and the desk finishes it.
+      if (failure?.code === "rate_limited") update(markDesk);
       const offline = !failure || failure.status === 0;
       if (!offline) toast.error("We couldn't send the code", { message: text });
       return offline ? "offline" : "refused";
@@ -523,8 +530,9 @@ export default function CaptureScreen() {
         void queryClient.invalidateQueries(capturesQueryKey(number));
       } else if (result.kind === "reopened") {
         // A file never reached Renit's storage: the record is open again for exactly those, and the code is asked for after.
+        // What the phone does decides the words: a file it still holds is sent again by itself; one it does not is taken again.
         update((d) => reopenForMissing(d, result.missing));
-        setCodeError("A file of this record did not upload. Take what is missing again, then finish.");
+        setCodeError(reopenedText(draft ? reopenForMissing(draft, result.missing) : { sealed: false }));
       } else {
         setCodeError(result.text);
       }
@@ -653,7 +661,7 @@ export default function CaptureScreen() {
             </Button>
           ) : null}
 
-          {state === "stuck" && draft.forOther ? (
+          {state === "stuck" && draft.forOther && !needsDesk(draft) ? (
             // Saving the other person's set is allowed only while a code is out for it: a new code opens it again.
             <TextButton
               label="Send a new code and try again"
@@ -662,7 +670,17 @@ export default function CaptureScreen() {
             />
           ) : null}
 
-          {state === "code" ? (
+          {(state === "code" || state === "stuck") && needsDesk(draft) ? (
+            <Panel style={{ padding: space.md, gap: space.md }}>
+              <Text fontSize="text-md" fontWeight="font-bold">
+                Renit's desk has to finish this record
+              </Text>
+              <Text fontSize="text-sm" tone="body">
+                {DESK_FINISHES}
+              </Text>
+              <GetHelp booking={{ number, can: ["get_help"] }} />
+            </Panel>
+          ) : state === "code" ? (
             <Panel style={{ padding: space.md, gap: space.md }}>
               <View style={{ gap: 2 }}>
                 <Text fontSize="text-md" fontWeight="font-bold">

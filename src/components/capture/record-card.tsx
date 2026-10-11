@@ -1,5 +1,6 @@
 import { captureQueue, useCaptureDraft } from "@/backend/capture-jobs";
 import { useShotList } from "@/backend/captures";
+import { GetHelp } from "@/components/booking/get-help";
 import { Button, Text } from "@/components/core";
 import {
   CaptureDraft,
@@ -63,6 +64,8 @@ export interface RecordProps {
 }
 
 export interface RecordHandle {
+  /** The booking's number, for Get help on a card that says the desk has to finish the record. */
+  number: string;
   state: RecordState;
   view: RecordCardView | null;
   draft: CaptureDraft | null;
@@ -99,6 +102,7 @@ export function useRecord({ moment, role, forOther = false, booking, receivedAt,
   }, [release, draftId]);
 
   return {
+    number,
     state,
     view: recordCard({ state, moment, role, forOther, otherName: other, stage: booking.stage, draft, stake }),
     draft,
@@ -154,6 +158,7 @@ export function RecordCardBody({ record, skip = [] }: { record: RecordHandle; sk
       {view.progress && (view.state === "uploading" || view.state === "waiting") ? (
         <UploadBar fraction={view.progress.fraction} />
       ) : null}
+      {view.help ? <GetHelp booking={{ number: record.number, can: ["get_help"] }} /> : null}
       {view.button ? (
         <Button
           variant={view.button.action === "open" ? "primary" : "outline"}

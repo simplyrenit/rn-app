@@ -143,6 +143,11 @@ export interface CaptureDraft {
   shooting?: Slot | null;
   /** When the server first refused this record as not taken at the booking's stage. Kept a while, never deleted on one answer. */
   refusedAt?: string | null;
+  /**
+   * No more codes can be sent for this record's other person (the server allows three for a booking and moment): it can
+   * never be confirmed from the phone, and Renit's desk has to finish it. Set when a code is refused as `rate_limited`.
+   */
+  desk?: boolean;
   /** Started from the general list the app carries, because the booking's own list could not be read. */
   generic?: boolean;
   /**
@@ -469,6 +474,23 @@ export const resendLater = (): NonNullable<CaptureDraft["error"]> => ({
   retry: true,
 });
 
+/** No more codes can be sent for this record: the desk finishes it (`rate_limited`). The files stay until it has. */
+export const needsDesk = (draft: CaptureDraft): draft is CaptureDraft & { desk: true } => draft.desk === true;
+export const markDesk = (draft: CaptureDraft): CaptureDraft => (draft.desk ? draft : { ...draft, desk: true });
+
+/** The words when a record's code can never be confirmed from the phone, with Get help beside them. */
+export const DESK_FINISHES = "No more codes can be sent for this record, so Renit's desk has to finish it. Tell the desk through Get help and it will be done by phone.";
+
+/**
+ * What to tell the person after a confirm said files were missing and the record was opened again for them
+ * (`reopenForMissing`): the words follow what the phone does. Every file still held is sent again by itself, with
+ * nothing to do but wait; only a file the phone no longer holds, or the ID tick, is asked for from the person.
+ */
+export const reopenedText = (reopened: Pick<CaptureDraft, "sealed">): string =>
+  reopened.sealed
+    ? "A file of this record did not reach Renit. It is being sent again by itself. Ask for the code again once it is up."
+    : "A file of this record did not upload. Take what is missing again, then finish.";
+
 /** The other person read out the code and the server took it. */
 export const codeConfirmed = (draft: CaptureDraft): CaptureDraft => ({ ...draft, awaitingCode: false });
 
@@ -745,6 +767,8 @@ export interface RecordCardView {
   /** What hangs on it, said plainly: the owner's payout, the rental closing. */
   stake: string | null;
   button: { label: string; action: "open" | "retry" } | null;
+  /** The card offers Get help (the desk has to finish this record). */
+  help?: boolean;
   progress: UploadProgress | null;
   tone: "info" | "warning";
 }
@@ -780,6 +804,10 @@ export function recordCard(input: {
           ? "Your deposit comes back sooner once both return records are in."
           : "The rental closes once both return records are in."
         : null;
+  // A set whose code can never be confirmed from here: the desk finishes it, so no "Type the code" and no new code.
+  if (draft && needsDesk(draft) && forOther && (state === "code" || state === "stuck")) {
+    return { state, title, text: DESK_FINISHES, stake: null, button: null, help: true, progress: null, tone: "warning" };
+  }
   switch (state) {
     case "start":
       return {
@@ -1140,7 +1168,7 @@ export function fallbackErrorText(error: ApiError | null): string {
   if (!error || error.status === 0) return "We couldn't reach Renit. Check your connection and try again.";
   switch (error.code) {
     case "rate_limited":
-      return "No more codes can be sent for this booking. Renit's desk can finish it by phone.";
+      return "No more codes can be sent for this booking. Renit's desk has to finish this record: use Get help.";
     case "sms_unavailable":
       return "The code could not be sent just now. Try again in a moment.";
     case "wrong_code": {

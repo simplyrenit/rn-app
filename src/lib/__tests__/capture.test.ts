@@ -63,6 +63,10 @@ import {
   confirmFailure,
   pendingList,
   reopenForMissing,
+  reopenedText,
+  markDesk,
+  needsDesk,
+  DESK_FINISHES,
   videoHintText,
   withShooting,
 } from "../capture";
@@ -587,6 +591,34 @@ describe("the record's card", () => {
     );
     expect(card({ moment: "return", stage: "returned" })?.stake).toBe("The rental closes once both return records are in.");
     expect(card({ moment: "return", stage: "out" })).toMatchObject({ stake: null, tone: "info" });
+  });
+
+  it("a record whose code can never be confirmed (no more codes) says the desk finishes it and offers Get help, not a card for ever", () => {
+    const theirs = { ...seal(uploaded(taken(start({ side: "owner", forOther: true })))), done: true, awaitingCode: true };
+    expect(card({ state: "code", forOther: true, draft: theirs })).toMatchObject({
+      text: "It is uploaded. Type the code Aarav reads out to confirm it.",
+      button: { label: "Type the code" },
+    });
+    const dead = markDesk(theirs);
+    expect(needsDesk(dead)).toBe(true);
+    expect(card({ state: "code", forOther: true, draft: dead })).toMatchObject({ text: DESK_FINISHES, button: null, help: true });
+    // The same after a send the server refused because the code had run out.
+    const refused = markDesk({ ...theirs, done: false, awaitingCode: false, error: { text: "x", retry: false } });
+    expect(card({ state: "stuck", forOther: true, draft: refused })).toMatchObject({ text: DESK_FINISHES, button: null, help: true });
+    // Only the other person's set: a person's own record has no code to run out.
+    expect(card({ state: "stuck", draft: markDesk({ ...start(), error: { text: "x", retry: false } }) })?.help).toBeUndefined();
+    expect(markDesk(dead)).toBe(dead);
+    expect(fallbackErrorText(err("rate_limited", 429))).toMatch(/desk has to finish/);
+  });
+
+  it("after a confirm said a file is missing, the words follow what the phone does", () => {
+    const sealedUp = { ...seal(uploaded(taken(start({ side: "owner", forOther: true })))), done: true, awaitingCode: true };
+    // Every file still held: it is sent again by itself, nothing to take again.
+    expect(reopenedText(reopenForMissing(sealedUp, ["serial"]))).toBe(
+      "A file of this record did not reach Renit. It is being sent again by itself. Ask for the code again once it is up."
+    );
+    // A file the phone does not hold: it is asked for from the person.
+    expect(reopenedText(reopenForMissing(sealedUp, ["window"]))).toBe("A file of this record did not upload. Take what is missing again, then finish.");
   });
 
   it("a record that needs a photo opens the capture; it is not a Try again", () => {
