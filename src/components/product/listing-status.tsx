@@ -1,6 +1,6 @@
 import { Text } from "@/components/core";
 import { radius, space } from "@/lib/design-tokens";
-import { PendingEdit, changedSinceSentBack, flagLine, pendingLine } from "@/lib/listing-edit";
+import { PendingEdit, changedSinceSentBack, flagLine, pendingLine, waitsForStaff } from "@/lib/listing-edit";
 import {
   FlagReason,
   ListingStatus,
@@ -138,7 +138,11 @@ export function HeldChange({ pending, compact = false }: { pending: PendingEdit 
       }}
     >
       <Text fontSize="text-md" fontWeight="font-bold">
-        {pending.state === "checking" ? "Your change is being checked" : "A change of yours is on hold"}
+        {pending.state === "checking"
+          ? "Your change is being checked"
+          : waitsForStaff(pending)
+            ? "Renit's staff will look at your change"
+            : "A change of yours is on hold"}
       </Text>
       <Text fontSize="text-sm" tone="body">
         {line}

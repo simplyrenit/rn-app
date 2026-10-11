@@ -125,6 +125,12 @@ function reasonsText(reasons: readonly FlagReason[]): string {
 /** A reason a check could not run for: staff look at it, whatever it would have found. */
 const couldNotRun = (reasons: readonly FlagReason[]) => reasons.some((r) => r.unchecked);
 
+/** The reasons that ask something of the owner: the findings, not the marks for a check that could not run. */
+const askedOfOwner = (reasons: readonly FlagReason[]) => reasons.filter((r) => !r.unchecked);
+
+/** What a check that could not run means for the owner: nothing to do, staff look. */
+const STAFF_LOOK = "Renit's staff will look at it: a check could not run.";
+
 const SENT_BACK = "staff_rejected";
 const CHANGED_SINCE = "changed_after_sent_back";
 
@@ -163,21 +169,30 @@ export function flagLine(reasons: readonly FlagReason[] | null | undefined): str
   return couldNotRun(list) ? `${sentence(text)} A check could not run, so Renit's staff will look at it.` : text;
 }
 
-/** The held change as a line: "Waiting: price and deposit. Needs a change: The deposit is zero. Customers still see the earlier version." */
+/**
+ * The held change as a line: "Waiting: price and deposit. Needs a change: The deposit is zero. Customers still see the earlier
+ * version." A check that could not run asks nothing of the owner and is not "needs a change": it has its own sentence,
+ * "Renit's staff will look at it: a check could not run."
+ */
 export function pendingLine(pending: PendingEdit | null | undefined): string | null {
   if (!pending) return null;
   const fields = fieldsLine(pending.fields);
   const lead = pending.state === "checking" ? "Being checked" : "Waiting";
-  const why = pending.state === "flagged" ? reasonsText(pending.flag_reasons) : "";
+  const reasons = pending.state === "flagged" ? pending.flag_reasons : [];
+  const asked = reasonsText(askedOfOwner(reasons));
   return [
     fields ? `${lead}: ${fields}.` : `${lead}.`,
-    why ? `Needs a change: ${sentence(why)}` : null,
-    why && couldNotRun(pending.flag_reasons) ? "A check could not run, so Renit's staff will look at it." : null,
+    asked ? `Needs a change: ${sentence(asked)}` : null,
+    couldNotRun(reasons) ? STAFF_LOOK : null,
     "Customers still see the earlier version.",
   ]
     .filter(Boolean)
     .join(" ");
 }
+
+/** A held change that waits only because a check could not run: nothing is asked of the owner. */
+export const waitsForStaff = (pending: PendingEdit | null | undefined): boolean =>
+  Boolean(pending && pending.flag_reasons.length > 0 && askedOfOwner(pending.flag_reasons).length === 0 && couldNotRun(pending.flag_reasons));
 
 // ---- What a save said ---------------------------------------------------------------------------
 
@@ -267,7 +282,12 @@ export function saveOutcome(input: {
   if (pending && heldNow.length > 0) {
     return pending.state === "checking"
       ? { kind: "checking", title: "Your change is being checked", message: "Customers still see the earlier version until it passes." }
-      : { kind: "held", title: "Your change is on hold", message: pendingLine(pending) ?? "It needs a change." };
+      : {
+          kind: "held",
+          // A check that could not run asks nothing of the owner: staff look.
+          title: waitsForStaff(pending) ? "Renit's staff will look at your change" : "Your change is on hold",
+          message: pendingLine(pending) ?? "It needs a change.",
+        };
   }
   // A listing staff sent back, changed by its owner: the save sends it to the check again (so the answer says `checking`),
   // and the staff's reason is already "changed since it was sent back". It never goes live on the check alone.
@@ -307,23 +327,32 @@ export interface SubmittedCopy {
 }
 
 /**
- * What the screen after posting says, from the status the post answered. Every photo of a new listing is checked, not
- * only the cover, and the check runs after the post: the answer is nearly always `checking`, and the result arrives by
- * push. An answer that already says more is told in plain words: live (a retry of a post that was already through),
- * flagged with the check's reasons, or held because a check could not run.
+ * What the screen after posting says, from the status the post answered and its reasons. Every photo of a new listing is
+ * checked, not only the cover, and the check runs after the post: the answer is nearly always `checking`, and the result
+ * arrives by push. But the reasons are read whatever the status: when the photo or text check could not run, the server stores
+ * that mark and still answers `checking`, and the one thing to tell the owner is that staff will look (nothing is asked of
+ * them). A status that already says more is told in plain words: live (a repeated post of a listing already through), or
+ * flagged with the check's reasons.
  */
 export function submittedCopy(status: string | null | undefined, reasons: readonly FlagReason[] | null | undefined): SubmittedCopy {
+  const list = reasons ?? [];
   if (status === "live") {
     return { title: "Your listing is live.", body: "Renters can see it now. You can still edit it from My products.", status: "live" };
   }
+  const asked = askedOfOwner(list);
+  const shown: SubmittedCopy["status"] = status === "flagged" ? "flagged" : "checking";
+  if (couldNotRun(list) && (status === "flagged" || status === "checking") && asked.length === 0) {
+    return {
+      title: "Submitted.\nRenit's staff will look at it.",
+      body: "A check could not run on your listing just now, so a person at Renit will look at it before renters can see it. You do not need to do anything: we tell you when they have looked.",
+      status: shown,
+    };
+  }
   if (status === "flagged") {
-    const why = flagLine(reasons);
+    const why = flagLine(asked);
     return {
       title: "Submitted, but it needs a change.",
-      // A check that could not run is not the owner's to fix: staff look, and the owner is told.
-      body: `${why ? `${sentence(why)} ` : ""}${
-        couldNotRun(reasons ?? []) ? "You do not need to do anything: we tell you when they have looked." : "Open it from My products to change it, and we will look again."
-      }`,
+      body: `${why ? `${sentence(why)} ` : ""}${couldNotRun(list) ? "A check also could not run, so Renit's staff will look at it. " : ""}Open it from My products to change it, and we will look again.`,
       status: "flagged",
     };
   }

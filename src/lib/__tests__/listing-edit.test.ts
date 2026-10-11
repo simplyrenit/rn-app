@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { changedSinceSentBack, fieldsLine, flagLine, ownerView, pendingLine, readPendingEdit, readReasons, saveOutcome, submittedCopy } from "../listing-edit";
+import { changedSinceSentBack, fieldsLine, flagLine, ownerView, pendingLine, readPendingEdit, waitsForStaff, readReasons, saveOutcome, submittedCopy } from "../listing-edit";
 import { statusDetail } from "../listing-status";
 
 /** The server's own shapes (ENG-100-api.md, review rounds 1 and 2, "Contract changes"). */
@@ -94,7 +94,16 @@ describe("the words", () => {
       "Waiting: deposit. Needs a change: The deposit is zero. Customers still see the earlier version."
     );
     expect(pendingLine(readPendingEdit({ ...held, state: "checking" }))).toBe("Being checked: deposit. Customers still see the earlier version.");
-    expect(pendingLine(readPendingEdit({ ...held, flag_reasons: [needsALook] }))).toContain("A check could not run, so Renit's staff will look at it.");
+    // A check that could not run asks nothing of the owner: its own sentence, never "Needs a change".
+    expect(pendingLine(readPendingEdit({ ...held, flag_reasons: [needsALook] }))).toBe(
+      "Waiting: deposit. Renit's staff will look at it: a check could not run. Customers still see the earlier version."
+    );
+    expect(pendingLine(readPendingEdit({ ...held, flag_reasons: [depositZero, needsALook] }))).toBe(
+      "Waiting: deposit. Needs a change: The deposit is zero. Renit's staff will look at it: a check could not run. Customers still see the earlier version."
+    );
+    expect(waitsForStaff(readPendingEdit({ ...held, flag_reasons: [needsALook] }))).toBe(true);
+    expect(waitsForStaff(readPendingEdit(held))).toBe(false);
+    expect(waitsForStaff(readPendingEdit({ ...held, flag_reasons: [depositZero, needsALook] }))).toBe(false);
     expect(pendingLine(null)).toBeNull();
   });
 });
@@ -135,6 +144,14 @@ describe("what a save says (T-34, T-35, T-36)", () => {
       kind: "checking",
       title: "Your change is being checked",
     });
+  });
+
+  it("a change that waits only because a check could not run is 'Renit's staff will look at your change', not on hold", () => {
+    const unchecked = { ...held, flag_reasons: [needsALook] };
+    const out = saveOutcome({ before, sent: { security_deposit: "0" }, answer: { ...before, pending_edit: unchecked } });
+    expect(out.kind).toBe("held");
+    expect(out.title).toBe("Renit's staff will look at your change");
+    expect(out.message).not.toMatch(/Needs a change/);
   });
 
   it("a held change that was there before and a new one are told apart", () => {
@@ -185,10 +202,25 @@ describe("the screen after posting from the phone (every photo is checked, not o
     });
   });
 
-  it("a post held because a check could not run says staff will look, not that anything is wrong with the listing", () => {
-    expect(submittedCopy("flagged", [needsALook]).body).toBe(
-      "A photo or the text needs a look. A check could not run, so Renit's staff will look at it. You do not need to do anything: we tell you when they have looked."
-    );
+  it("a check that could not run is read whatever the status the post answers: its own heading, staff will look, nothing asked of the owner", () => {
+    const staff = {
+      title: "Submitted.\nRenit's staff will look at it.",
+      body: "A check could not run on your listing just now, so a person at Renit will look at it before renters can see it. You do not need to do anything: we tell you when they have looked.",
+    };
+    // A new post: the server stores the mark and still answers `checking`.
+    expect(submittedCopy("checking", [needsALook])).toEqual({ ...staff, status: "checking" });
+    expect(submittedCopy("flagged", [needsALook])).toEqual({ ...staff, status: "flagged" });
+    expect(submittedCopy("flagged", [needsALook]).title).not.toMatch(/needs a change/);
+  });
+
+  it("a finding and a check that could not run together: needs a change for the finding, and staff will look for the other", () => {
+    expect(submittedCopy("flagged", [depositZero, needsALook])).toEqual({
+      title: "Submitted, but it needs a change.",
+      body: "The deposit is zero. A check also could not run, so Renit's staff will look at it. Open it from My products to change it, and we will look again.",
+      status: "flagged",
+    });
+    // While the answer still says checking, a finding is not yet something to change: the job flags it seconds later.
+    expect(submittedCopy("checking", [depositZero]).title).toBe("Submitted.\nIt's with our team now.");
   });
 
   it("a flagged answer with no reasons still says what to do; a live one says it is live", () => {
