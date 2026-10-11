@@ -15,6 +15,7 @@ import {
   getItLine,
   handoverLine,
   howLabel,
+  idCheckCopy,
   liveCopy,
   morningNotice,
   payButtonLabel,
@@ -419,6 +420,54 @@ describe("the terms tick", () => {
     expect(
       bookErrorText({ status: 409, code: "terms_not_accepted", message: null, details: { version: "2026-11" } })
     ).toBe("The rental terms have changed. Read them and tick the box again.");
+  });
+});
+
+describe("the ID check", () => {
+  const withCheck = (needed: "none" | "id" | "id_and_match", passed: boolean, blockers: string[] = []) =>
+    quote({ id_check: { needed, passed }, blockers });
+
+  it("says nothing for an item that needs none (the 4,000 rupee item)", () => {
+    expect(idCheckCopy(withCheck("none", true))).toBeNull();
+    // A check the customer happens to hold is not asked about either.
+    expect(idCheckCopy(withCheck("none", false))).toBeNull();
+  });
+
+  it("asks for the check when the item needs one the customer has not passed (the 40,000 rupee item)", () => {
+    expect(idCheckCopy(withCheck("id", false, ["id_check_needed"]))).toMatchObject({
+      state: "needed",
+      title: "This item needs an ID check",
+    });
+    // Either signal alone is enough.
+    expect(idCheckCopy(withCheck("id", false))?.state).toBe("needed");
+    expect(idCheckCopy(quote({ id_check: null, blockers: ["id_check_needed"] }))?.state).toBe("needed");
+  });
+
+  it("asks for it when Book now was refused for it, whatever the quote said", () => {
+    expect(idCheckCopy(withCheck("id", true), "id")?.state).toBe("needed");
+  });
+
+  it("shows the check as passed once it is", () => {
+    expect(idCheckCopy(withCheck("id", true))).toEqual({ state: "passed", title: "ID check passed", body: null });
+  });
+
+  it("adds the same-ID line when the owner matches it at handover", () => {
+    expect(idCheckCopy(withCheck("id_and_match", true))?.body).toMatch(/same ID/);
+    expect(idCheckCopy(withCheck("id_and_match", false))?.body).toMatch(/same ID/);
+  });
+
+  it("says nothing signed out, where the quote cannot know", () => {
+    expect(idCheckCopy(quote({ id_check: null, blockers: [] }))).toBeNull();
+  });
+
+  it("writes no rupee figure: where the line falls is the server's setting", () => {
+    expect(`${idCheckCopy(withCheck("id", false))?.body}`).not.toMatch(/₹|\d/);
+  });
+
+  it("explains a Book now refused for it", () => {
+    expect(
+      bookErrorText({ status: 403, code: "id_check_needed", message: null, details: { needed: "id" } })
+    ).toBe("This item needs an ID check before you can book it.");
   });
 });
 

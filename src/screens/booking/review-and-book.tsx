@@ -18,6 +18,7 @@ import {
   bookLabel,
   daysLabel,
   howLabel,
+  idCheckCopy,
   money,
   morningNotice,
   paySteps,
@@ -29,6 +30,7 @@ import {
   totalLabel,
 } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { startIdCheck } from "@/lib/id-check";
 import { rememberPayment } from "@/lib/payments";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -37,6 +39,7 @@ import { uuidv4 } from "@/lib/uuid";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Linking, ScrollView, View } from "react-native";
+import { CheckBadgeIcon, IdentificationIcon } from "react-native-heroicons/outline";
 import { useQueryClient } from "react-query";
 
 /**
@@ -78,12 +81,18 @@ export default function ReviewAndBookScreen() {
   const clientKey = useRef<string | null>(null);
   // The terms version the box was ticked for (ENG-175); null while it is empty.
   const [tickedFor, setTickedFor] = useState<string | null>(null);
+  // Book now answered `id_check_needed` (ENG-176): the level it named. The quote usually says so first.
+  const [idRefused, setIdRefused] = useState<string | null>(null);
 
   // Coming back to this screen (from the profile, from a sign-in) asks for the price again.
   const seen = useRef(false);
   useFocusEffect(
     useCallback(() => {
-      if (seen.current) void quoteQuery.refetch();
+      if (seen.current) {
+        // Back from the ID check (or anywhere else): the quote says afresh whether it is passed.
+        setIdRefused(null);
+        void quoteQuery.refetch();
+      }
       seen.current = true;
       // `refetch` is stable for the life of the query.
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,6 +119,17 @@ export default function ReviewAndBookScreen() {
   const notice = morningNotice(quote, params.item.shop_name);
   const terms = quote.terms;
   const ticked = termsTicked(terms, tickedFor);
+  const idCheck = idCheckCopy(quote, idRefused);
+  const idNeeded = idCheck?.state === "needed";
+
+  const openIdCheck = () => {
+    // The check is ENG-12's and has no customer flow in this build; see `startIdCheck`.
+    if (!startIdCheck(navigation)) {
+      toast.info("The ID check isn't open in the app yet", {
+        message: "Contact Renit from your profile and we will help.",
+      });
+    }
+  };
 
   const book = async () => {
     if (busy.current) return;
@@ -150,6 +170,9 @@ export default function ReviewAndBookScreen() {
       if (failure?.code === "move_not_allowed") setMovedFrom(null);
       // The terms moved on while the screen was open: the box empties and is asked for again.
       if (failure?.code === "terms_not_accepted") setTickedFor(null);
+      if (failure?.code === "id_check_needed") {
+        setIdRefused(typeof failure.details?.needed === "string" ? failure.details.needed : "id");
+      }
       setBookError(bookErrorText(failure));
       // Whatever refused it (the price, the last unit, the shop closing) is in a fresh quote.
       if (failure && failure.status > 0) void quoteQuery.refetch();
@@ -247,6 +270,37 @@ export default function ReviewAndBookScreen() {
           ))}
         </View>
 
+        {idCheck?.state === "needed" ? (
+          <Panel style={{ padding: space.md, gap: space.sm }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+              <IdentificationIcon size={24} color={color.brandText} />
+              <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
+                {idCheck.title}
+              </Text>
+            </View>
+            <Text fontSize="text-sm" tone="body">
+              {idCheck.body}
+            </Text>
+            <Button variant="outline" onPress={openIdCheck}>
+              Start ID check
+            </Button>
+          </Panel>
+        ) : idCheck ? (
+          <View style={{ gap: 2 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+              <CheckBadgeIcon size={20} color={color.success} />
+              <Text fontSize="text-sm" fontWeight="font-bold" tone="success">
+                {idCheck.title}
+              </Text>
+            </View>
+            {idCheck.body ? (
+              <Text fontSize="text-sm" tone="body">
+                {idCheck.body}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+
         {terms ? (
           <RentalTermsTick
             checked={ticked}
@@ -283,7 +337,9 @@ export default function ReviewAndBookScreen() {
           onPress={book}
           loading={booking}
           // Signed out there are no terms in the quote: the tap asks to sign in instead.
-          disabled={booking || Boolean(blocker) || quoteQuery.isFetching || (terms !== null && !ticked)}
+          disabled={
+            booking || Boolean(blocker) || idNeeded || quoteQuery.isFetching || (terms !== null && !ticked)
+          }
         >
           {bookLabel(quote, moved)}
         </Button>

@@ -588,6 +588,50 @@ export function termsTicked(terms: Quote["terms"], tickedFor: string | null): bo
   return terms !== null && tickedFor !== null && tickedFor === terms.version;
 }
 
+// ---- The ID check (ENG-176) ---------------------------------------------------------------
+
+export interface IdCheckCopy {
+  state: "needed" | "passed";
+  title: string;
+  body: string | null;
+}
+
+const SAME_ID = "Bring the same ID to the handover. The owner checks that it matches.";
+
+/**
+ * What the price screen says about the ID check, or null when the item needs
+ * none (or the customer is signed out and the quote cannot say).
+ *
+ * "Needed" comes from any of three places: the quote's `id_check`, its
+ * `blockers`, or Book now answering `403 id_check_needed`, whose `details.needed`
+ * is passed as `refused`. No rupee figure is written: where the line falls is
+ * the server's setting.
+ */
+export function idCheckCopy(
+  quote: Pick<Quote, "id_check" | "blockers">,
+  refused: string | null = null
+): IdCheckCopy | null {
+  const level = refused ?? quote.id_check?.needed ?? "none";
+  const notPassed =
+    refused !== null ||
+    quote.blockers.includes("id_check_needed") ||
+    (quote.id_check !== null && quote.id_check.needed !== "none" && !quote.id_check.passed);
+  if (notPassed) {
+    return {
+      state: "needed",
+      title: "This item needs an ID check",
+      body:
+        level === "id_and_match"
+          ? `Renit checks your ID once, before you book an item like this. ${SAME_ID}`
+          : "Renit checks your ID once, before you book an item like this. It then covers every booking.",
+    };
+  }
+  if (quote.id_check && quote.id_check.needed !== "none") {
+    return { state: "passed", title: "ID check passed", body: level === "id_and_match" ? SAME_ID : null };
+  }
+  return null;
+}
+
 // ---- Why Book now would fail ------------------------------------------------------------
 
 /** Blockers with their own place on the screen (the tick, the ID check card). */
@@ -658,6 +702,8 @@ export function bookErrorText(error: ApiError | null): string {
   const known = error?.code ? blockerText(error.code, error.details) : null;
   if (known) return known;
   switch (error?.code) {
+    case "id_check_needed":
+      return "This item needs an ID check before you can book it.";
     case "terms_not_accepted":
       return "The rental terms have changed. Read them and tick the box again.";
     case "price_changed":
