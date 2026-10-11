@@ -43,6 +43,7 @@ import { RootStackParamList } from "@/lib/types";
 import { bookingQueryKey } from "@/backend/bookings";
 import {
   dismissRingNotifications,
+  ignoreTapsWhileSignedOut,
   ownSessionId,
   registerDeviceSession,
   setupChatNotifications,
@@ -475,6 +476,12 @@ export default function Navigation() {
 
   React.useEffect(() => {
     if (!isAuthenticated) {
+      // Signed out (not merely not known yet): a tap on a notification now is dropped, and rings
+      // still in the tray are cleared, so nobody who signs in next is shown a request that was not theirs.
+      if (isAuthenticated === false) {
+        void dismissRingNotifications();
+        return ignoreTapsWhileSignedOut();
+      }
       return;
     }
 

@@ -10,6 +10,7 @@ import { REGISTER_PUSH_TOKEN_ENDPOINT } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
 import { getDeviceInfo, sessionBody } from "@/lib/device";
 import { PushRoute, pushRoute } from "@/lib/push-routes";
+import { createTapLedger } from "@/lib/push-taps";
 import { sessionIdFromToken } from "@/lib/session";
 import { shouldDropPush } from "@/lib/sign-out";
 import { colors } from "@/lib/design-tokens";
@@ -325,7 +326,23 @@ export function setupNotificationListeners(
 
 // A tap is answered once: the last one is handed out again every time the
 // listeners are set up (each sign-in), and must not reopen a booking each time.
-let lastOpenedPush: string | null = null;
+const taps = createTapLedger();
+
+/**
+ * While nobody is signed in the router is not listening, and a tap on a notification
+ * (a ring still in the tray, say) must not wait to open after the next sign-in for
+ * whoever signs in. So a tap made signed out, and the one the app was started by, are
+ * counted as dealt with. The tray's rings are cleared too (`dismissRingNotifications`).
+ * Returns what stops it.
+ */
+export function ignoreTapsWhileSignedOut() {
+  const drop = (response: Notifications.NotificationResponse | null) => {
+    if (response) taps.mark(response.notification.request.identifier);
+  };
+  void Notifications.getLastNotificationResponseAsync().then(drop);
+  const subscription = Notifications.addNotificationResponseReceivedListener(drop);
+  return () => subscription.remove();
+}
 
 /**
  * The app's push router (ENG-173 owns it; API-CONTRACT, Common › Push
@@ -347,8 +364,8 @@ export function setupPushRouter(handlers: {
     if (!response) return;
     const route = pushRoute(response.notification.request.content.data);
     const id = response.notification.request.identifier;
-    if (!route || id === lastOpenedPush) return;
-    if (handlers.onOpen(route)) lastOpenedPush = id;
+    if (!route || taps.handled(id)) return;
+    if (handlers.onOpen(route)) taps.mark(id);
   };
 
   const arrived = Notifications.addNotificationReceivedListener((notification) => {
