@@ -84,6 +84,8 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
         changed = true;
         // A shot taken again, a shot the list dropped, a file the server asked for anew.
         left.push(...removedUris(d, next));
+        // The code was confirmed: the server's record is complete now, so the copies kept for it are done with.
+        if (d.done && d.awaitingCode && next.done && !next.awaitingCode) left.push(...localUris(next));
       }
       return next;
     });
@@ -143,8 +145,10 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
         }
       }
       const after = drafts.find((d) => d.id === draft.id);
-      // The server has it all: the copies on this phone have done their work.
-      if (after?.done) clear(localUris(after));
+      // The server has it all: the copies on this phone have done their work. A record that still waits for the
+      // other person's code is not complete: its files stay on the phone until the code is confirmed (so a file that
+      // turns out missing is sent again, not taken again).
+      if (after?.done && !after.awaitingCode) clear(localUris(after));
     }
   }
 

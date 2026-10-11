@@ -439,10 +439,24 @@ export function confirmFailure(error: ApiError | null): ConfirmResult {
 
 /**
  * The record opened again for what a refused confirm said was missing: it was uploaded and waiting for its code
- * (`done`), and is now not; the missing shots, the video or the ID tick are asked for as for any send.
+ * (`done`), and is now not. A file the phone still holds (it is kept while the record waits for its code) is simply
+ * sent again, by itself; one it no longer holds, or the ID tick, is asked for from the person.
  */
-export const reopenForMissing = (draft: CaptureDraft, missing: string[]): CaptureDraft =>
-  applyAnswer({ ...draft, done: false, awaitingCode: false }, { complete: false, missing });
+export function reopenForMissing(draft: CaptureDraft, missing: string[]): CaptureDraft {
+  let next: CaptureDraft = { ...draft, done: false, awaitingCode: false, error: null };
+  for (const what of missing) {
+    if (what === "confirmation_code") continue;
+    if (what === "id_match") next = { ...next, idMatch: false, sealed: false };
+    else if (what === "video") next = next.video ? { ...next, video: { ...next.video, url: null } } : { ...next, sealed: false };
+    else {
+      const file = next.shots[what];
+      next = file ? withFile(next, { shot: what }, { ...file, url: null }) : { ...next, sealed: false };
+    }
+  }
+  return next.sealed
+    ? next
+    : { ...next, error: { text: "Renit still needs something for this record. Add what is missing and finish again.", retry: false } };
+}
 
 /** The other person read out the code and the server took it. */
 export const codeConfirmed = (draft: CaptureDraft): CaptureDraft => ({ ...draft, awaitingCode: false });

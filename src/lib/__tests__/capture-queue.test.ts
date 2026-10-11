@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { AxiosError } from "axios";
-import { Capture, CaptureDraft, ShotList, addShot, seal, setVideo, startDraft, tick } from "../capture";
+import { Capture, CaptureDraft, ShotList, addShot, codeConfirmed, reopenForMissing, seal, setVideo, startDraft, tick } from "../capture";
 import { CaptureQueueDeps, FileGone, createCaptureQueue } from "../capture-queue";
 
 /** An axios error with an answer, the way the server's errors come. */
@@ -458,5 +458,76 @@ describe("the capture queue", () => {
     queue.update(ID, (d) => addShot(d, "front", photo("front")));
     await queue.idle();
     expect(listener).not.toHaveBeenCalled();
+  });
+});
+
+describe("a record that still waits for the other person's code is not complete (review: keep the files until the server says so)", () => {
+  const theirs = () => startDraft({ number: "RN-24831", moment: "handover", side: "owner", forOther: true, list });
+  const THEIRS = "RN-24831:handover:owner";
+  const waitingForCode = { complete: false, missing: ["confirmation_code"] } as unknown as Capture;
+
+  it("keeps the local files while the answer lists confirmation_code, and tells the draft what it waits for", async () => {
+    const { queue, deps } = setup({ send: jest.fn(async () => waitingForCode) });
+    await queue.init("asha");
+    queue.start(theirs());
+    record(queue, THEIRS);
+    await queue.idle();
+    const held = queue.getDrafts()[0];
+    // Sent and uploaded, and waiting for the code: not complete.
+    expect(held).toMatchObject({ done: true, awaitingCode: true });
+    expect(deps.discard).not.toHaveBeenCalled();
+    // Still kept on disk with the record, files and all.
+    expect(held.shots.front.uri).toBe("file:///captures/front.jpg");
+  });
+
+  it("clears them when the code is confirmed and the record is complete", async () => {
+    const { queue, deps } = setup({ send: jest.fn(async () => waitingForCode) });
+    await queue.init("asha");
+    queue.start(theirs());
+    record(queue, THEIRS);
+    await queue.idle();
+    queue.update(THEIRS, codeConfirmed);
+    await queue.idle();
+    expect(queue.getDrafts()[0]).toMatchObject({ done: true, awaitingCode: false });
+    expect(deps.discard).toHaveBeenCalledWith(
+      expect.arrayContaining(["file:///captures/front.jpg", "file:///captures/back.jpg", "file:///captures/video.mp4"])
+    );
+  });
+
+  it("a complete answer clears them at once, as before", async () => {
+    const { queue, deps } = setup();
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+    expect(deps.discard).toHaveBeenCalledWith(expect.arrayContaining(["file:///captures/front.jpg"]));
+  });
+
+  it("a file the server turns out to lack is sent again from the kept copy, not taken again", async () => {
+    const send = jest.fn(async () => waitingForCode);
+    const { queue, deps } = setup({ send });
+    await queue.init("asha");
+    queue.start(theirs());
+    record(queue, THEIRS);
+    await queue.idle();
+    (deps.upload as jest.Mock).mockClear();
+    // The confirm said "capture_incomplete: back": the record opens again for exactly that file.
+    queue.update(THEIRS, (d) => reopenForMissing(d, ["back"]));
+    await queue.idle();
+    expect((deps.upload as jest.Mock).mock.calls.map((c) => c[0])).toEqual(["file:///captures/back.jpg"]);
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(queue.getDrafts()[0]).toMatchObject({ done: true, awaitingCode: true });
+    expect(deps.discard).not.toHaveBeenCalled();
+  });
+
+  it("is kept on disk with its files, so a restart still has them", async () => {
+    const { queue, saved } = setup({ send: jest.fn(async () => waitingForCode) });
+    await queue.init("asha");
+    queue.start(theirs());
+    record(queue, THEIRS);
+    await queue.idle();
+    const last = saved[saved.length - 1];
+    expect(last).toHaveLength(1);
+    expect(last[0]).toMatchObject({ id: THEIRS, awaitingCode: true });
   });
 });

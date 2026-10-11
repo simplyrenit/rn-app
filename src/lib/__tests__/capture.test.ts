@@ -932,13 +932,25 @@ describe("the new answers of the capture calls (lane I, T-23)", () => {
     expect(fallbackErrorText(e("capture_locked"))).toBe("This record is already complete.");
   });
 
-  it("a record opened again for what was missing is no longer waiting for its code, and asks for those files", () => {
+  it("a record opened again for a file the server lacks sends that file again from the copy the phone kept, and asks for nothing", () => {
     const waiting = { ...seal(uploaded(taken())), done: true, awaitingCode: true };
-    const next = reopenForMissing(waiting, ["back"]);
+    const next = reopenForMissing(waiting, ["back", "confirmation_code"]);
     expect(next.done).toBe(false);
     expect(next.awaitingCode).toBe(false);
-    expect(next.sealed).toBe(false);
-    expect(next.shots.back).toBeUndefined();
-    expect(nextStep(next)).toEqual({ kind: "shot", index: 1 });
+    // Still finished by the person; the file is kept and its address cleared, so the queue puts it up again.
+    expect(next.sealed).toBe(true);
+    expect(next.shots.back).toMatchObject({ uri: "file:///captures/back.jpg", url: null });
+    expect(next.shots.front.url).not.toBeNull();
+    expect(nextWork([next], new Set())).toMatchObject({ kind: "upload" });
+  });
+
+  it("a file the phone no longer holds, and the ID tick, are asked for from the person", () => {
+    const waiting = { ...seal(uploaded(taken())), done: true, awaitingCode: true };
+    const gone = reopenForMissing({ ...waiting, shots: { front: waiting.shots.front } }, ["back"]);
+    expect(gone.sealed).toBe(false);
+    expect(gone.error?.text).toMatch(/still needs something/);
+    expect(nextStep(gone)).toEqual({ kind: "shot", index: 1 });
+    expect(reopenForMissing(waiting, ["id_match"]).sealed).toBe(false);
+    expect(reopenForMissing({ ...waiting, video: null }, ["video"]).sealed).toBe(false);
   });
 });
