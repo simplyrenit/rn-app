@@ -1,7 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
 import type { ApiError } from "../api-error";
 import {
-  TOO_MANY_TRIES,
+  retryAfterSeconds,
+  tooManyTries,
   emailChangeBody,
   emailChangeOutcome,
   emailCodeText,
@@ -113,8 +114,9 @@ describe("what a refused email change says and what to do next", () => {
     expect(emailChangeOutcome(err({ status: 403, code: "email_change_in_app" })).next).toBe("stop");
   });
 
-  it("says too many tries plainly and never repeats by itself", () => {
-    expect(emailChangeOutcome(err({ status: 429 }))).toEqual({ text: "Too many tries. Wait a few minutes.", next: "stop" });
+  it("says too many tries with the wait the server gives, and never repeats by itself", () => {
+    expect(emailChangeOutcome(err({ status: 429, details: { retry_after_s: 1800 } }))).toEqual({ text: "Too many tries. Try again in 30 minutes.", next: "stop" });
+    expect(emailChangeOutcome(err({ status: 429 }))).toEqual({ text: "Too many tries. Try again later.", next: "stop" });
   });
 
   it("repeats only the save when the proof is fine but the answer was not", () => {
@@ -125,10 +127,25 @@ describe("what a refused email change says and what to do next", () => {
 });
 
 describe("the emailed code can be refused for asking or trying too often", () => {
-  it("says it plainly, for a send and for a check", () => {
-    expect(TOO_MANY_TRIES).toBe("Too many tries. Wait a few minutes.");
-    expect(emailCodeText({ status: 429 }, "send")).toBe("Too many tries. Wait a few minutes.");
-    expect(emailCodeText({ status: 429 }, "check")).toBe("Too many tries. Wait a few minutes.");
+  it("says it with the wait, for a send and for a check (the limits are by the hour, not a few minutes)", () => {
+    expect(tooManyTries(3000)).toBe("Too many tries. Try again in 50 minutes.");
+    expect(tooManyTries(3600)).toBe("Too many tries. Try again in 1 hour.");
+    expect(tooManyTries(null)).toBe("Too many tries. Try again later.");
+    // The failure has been through `requestErrorFrom`, so its message already carries the wait.
+    expect(emailCodeText({ status: 429, message: "Too many tries. Try again in 50 minutes." }, "send")).toBe("Too many tries. Try again in 50 minutes.");
+    expect(emailCodeText({ status: 429, message: "Too many tries. Try again in 50 minutes." }, "check")).toBe("Too many tries. Try again in 50 minutes.");
+    expect(emailCodeText({ status: 429 }, "check")).toBe("Too many tries. Try again later.");
+  });
+
+  it("reads the wait from Retry-After, else from the detail, else says nothing", () => {
+    // axios's header object, a plain one, and a header that is not a number.
+    expect(retryAfterSeconds({ get: (n: string) => (n === "retry-after" ? "3000" : undefined) }, {})).toBe(3000);
+    expect(retryAfterSeconds({ "retry-after": "120" }, {})).toBe(120);
+    expect(retryAfterSeconds({ "Retry-After": 90 }, null)).toBe(90);
+    expect(retryAfterSeconds({}, { detail: "Request was throttled. Expected available in 2417 seconds." })).toBe(2417);
+    expect(retryAfterSeconds({ "retry-after": "soon" }, { detail: "Request was throttled. Expected available in 60 seconds." })).toBe(60);
+    expect(retryAfterSeconds({}, { detail: "Request was throttled." })).toBeNull();
+    expect(retryAfterSeconds(undefined, undefined)).toBeNull();
   });
 
   it("keeps the server's words otherwise, and a wrong code offers a new one", () => {
@@ -145,12 +162,17 @@ describe("the emailed code can be refused for asking or trying too often", () =>
 describe("a failed sign-in call, as the screens read it", () => {
   const failure = (status: number, data: Record<string, unknown>) => ({ response: { status, data } });
 
-  it("says too many tries for a 429, whatever the body holds, and keeps the status so nothing retries it", () => {
+  it("says too many tries with the wait for a 429, whatever else the body holds, and keeps the status so nothing retries it", () => {
     expect(requestErrorFrom(failure(429, { detail: "Request was throttled. Expected available in 3000 seconds." }), "fallback")).toEqual({
       status: 429,
       code: undefined,
-      message: "Too many tries. Wait a few minutes.",
+      message: "Too many tries. Try again in 50 minutes.",
     });
+    // The header wins over the sentence.
+    expect(requestErrorFrom({ response: { status: 429, headers: { "retry-after": "7200" }, data: { detail: "…in 5 seconds." } } }, "x").message).toBe(
+      "Too many tries. Try again in 2 hours."
+    );
+    expect(requestErrorFrom(failure(429, {}), "x").message).toBe("Too many tries. Try again later.");
   });
 
   it("keeps the endpoint's own sentence and code, including the retired phone code's", () => {

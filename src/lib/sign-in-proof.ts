@@ -1,4 +1,5 @@
 import { ApiError } from "@/lib/api-error";
+import { attemptLimitMessage } from "@/lib/bank";
 import type { AuthUser, OTPResponse, PhoneVerificationResponse } from "@/lib/types";
 
 /**
@@ -20,17 +21,35 @@ import type { AuthUser, OTPResponse, PhoneVerificationResponse } from "@/lib/typ
  * 400 `phone_code_retired`). Plain functions, so the rules can be tested.
  */
 
-/** What any call made too often is answered with (`429`): said plainly, and never repeated by the app by itself. */
-export const TOO_MANY_TRIES = "Too many tries. Wait a few minutes.";
+/**
+ * How long a refused call must wait, in seconds: the `Retry-After` header of the 429 (DRF sets it), else the number in
+ * its `detail` ("…Expected available in 3000 seconds."). Null when the answer says neither. The limits are by the hour,
+ * so "a few minutes" would be wrong (review app-6 r1 #3).
+ */
+export function retryAfterSeconds(headers: unknown, data: unknown): number | null {
+  const bag = (typeof headers === "object" && headers !== null ? headers : {}) as { get?: (name: string) => unknown } & Record<string, unknown>;
+  const raw = typeof bag.get === "function" ? bag.get("retry-after") : (bag["retry-after"] ?? bag["Retry-After"]);
+  const fromHeader = Number(raw);
+  if (raw !== undefined && raw !== null && raw !== "" && Number.isFinite(fromHeader) && fromHeader > 0) return fromHeader;
+  const detail = typeof data === "object" && data !== null ? (data as { detail?: unknown }).detail : null;
+  const fromDetail = typeof detail === "string" ? /(\d+)\s*seconds?/i.exec(detail) : null;
+  return fromDetail ? Number(fromDetail[1]) : null;
+}
+
+/** What any call made too often is answered with (`429`): said with the wait, and never repeated by the app by itself. */
+export const tooManyTries = (seconds: number | null | undefined): string => attemptLimitMessage(seconds);
 
 /**
  * A failed sign-in call as `{status, code, message}`: the endpoint's own sentence (`error` or `message`), or the
- * fallback. A call made too often is answered `429` (`{"detail": …}`): it says "Too many tries. Wait a few minutes."
- * whatever else it holds, and nothing repeats it by itself. `/api/otp/` also answers 400 `phone_code_retired` with its
+ * fallback. A call made too often is answered `429` (`{"detail": …}`): it says "Too many tries. Try again in 50
+ * minutes." (the wait from `Retry-After`) whatever else it holds, and nothing repeats it by itself. `/api/otp/` also answers 400 `phone_code_retired` with its
  * own plain sentence for an old build that still sends a number there; that sentence is shown as it is.
  */
 export function requestErrorFrom(
-  error: { response?: { status?: number; data?: { code?: string; error?: string; message?: string } }; message?: string } | null | undefined,
+  error:
+    | { response?: { status?: number; headers?: unknown; data?: { code?: string; error?: string; message?: string; detail?: unknown } }; message?: string }
+    | null
+    | undefined,
   fallbackMessage: string
 ): { status?: number; code?: string; message: string } {
   const response = error?.response;
@@ -38,7 +57,10 @@ export function requestErrorFrom(
     return {
       status: response.status,
       code: response.data?.code,
-      message: response.status === 429 ? TOO_MANY_TRIES : response.data?.error || response.data?.message || fallbackMessage,
+      message:
+        response.status === 429
+          ? tooManyTries(retryAfterSeconds(response.headers, response.data))
+          : response.data?.error || response.data?.message || fallbackMessage,
     };
   }
   return { message: error?.message || fallbackMessage };
@@ -110,7 +132,10 @@ export function emailChangeOutcome(error: ApiError | null): { text: string; next
   if (!error || error.status === 0) {
     return { text: "We couldn't reach Renit. Press Done again: your code is kept for a few minutes.", next: "same" };
   }
-  if (error.status === 429) return { text: TOO_MANY_TRIES, next: "stop" };
+  if (error.status === 429) {
+    const wait = Number(error.details?.retry_after_s);
+    return { text: tooManyTries(Number.isFinite(wait) && wait > 0 ? wait : null), next: "stop" };
+  }
   switch (error.code) {
     case "email_taken":
       return { text: "Another Renit account already uses that email address. Use a different one.", next: "new_email" };
@@ -128,7 +153,8 @@ export function emailChangeOutcome(error: ApiError | null): { text: string; next
 
 /** Why the emailed code could not be sent or checked, in the words the sheet shows under the box. */
 export function emailCodeText(failure: { status?: number; code?: string; message?: string } | null | undefined, step: "send" | "check"): string {
-  if (failure?.status === 429) return TOO_MANY_TRIES;
+  // The failure came through `requestErrorFrom`, so a 429's message already carries the wait.
+  if (failure?.status === 429) return failure.message || tooManyTries(null);
   if (step === "check" && failure?.status === 401) return "That code didn't work. Send a new one and try again.";
   return failure?.message || (step === "send" ? "We couldn't send the code. Try again in a moment." : "We couldn't check that code. Try again.");
 }
