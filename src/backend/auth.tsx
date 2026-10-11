@@ -1,9 +1,9 @@
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
-import { DEV_MODE, LOGIN, OTP, PHONE_LOGIN, SIGN_UP } from "@/lib/config";
+import { DEV_MODE, OTP } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
-import { getDeviceInfo } from "@/lib/device";
 import { acceptOwnerTermsAtSignup } from "@/backend/terms";
+import { emailLogin, otpCheck, phoneLogin, signUp } from "@/backend/sign-in-calls";
 import {
   authenticateFirebase,
   initializeAppCheck,
@@ -81,9 +81,8 @@ export function useAuth() {
   async function verifyOTP(email: string, otp: string): Promise<OTPResponse> {
     setLoading(true);
     try {
-      const response = await axios.get<OTPResponse>(OTP, {
-        params: { email, otp },
-      });
+      // Signs an existing account in too, so it says which phone it is (ENG-146).
+      const response = await otpCheck(email, otp);
       return response.data;
     } catch (error: any) {
       throw toRequestError(
@@ -235,12 +234,7 @@ export function useAuth() {
       const credential = await phoneConfirmation.confirm(otp);
       phoneConfirmation = null;
       const idToken = await credential.user.getIdToken();
-      // Every sign-in says which phone it is (ENG-146): the server lists the
-      // devices and refuses a booking between two accounts on one device.
-      const response = await axios.post<PhoneVerificationResponse>(PHONE_LOGIN, {
-        id_token: idToken,
-        ...(await getDeviceInfo()),
-      });
+      const response = await phoneLogin(idToken);
       return response.data;
     } catch (error: any) {
       throw toRequestError(
@@ -273,16 +267,13 @@ export function useAuth() {
         date_of_birth: mergedUser.date_of_birth,
         email_verified: mergedUser.email_verified,
       };
-      const payload = {
-        ...Object.fromEntries(
-          Object.entries(signupPayload).filter(
-            ([, value]) => value !== undefined && value !== null && value !== ""
-          )
-        ),
-        ...(await getDeviceInfo()),
-      };
+      const payload = Object.fromEntries(
+        Object.entries(signupPayload).filter(
+          ([, value]) => value !== undefined && value !== null && value !== ""
+        )
+      );
 
-      const response: { data: AuthTokens } = await axios.post(SIGN_UP, payload);
+      const response: { data: AuthTokens } = await signUp(payload);
       setAuthTokens(response.data);
 
       // The merchant ticked the owner terms on the About step (ENG-122). The
@@ -313,11 +304,7 @@ export function useAuth() {
   ): Promise<AuthTokens | null> {
     setLoading(true);
     try {
-      const response: { data: AuthTokens } = await axios.post(LOGIN, {
-        email,
-        password,
-        ...(await getDeviceInfo()),
-      });
+      const response: { data: AuthTokens } = await emailLogin(email, password);
       setAuthTokens(response.data);
       return response?.data;
     } catch (error: any) {
