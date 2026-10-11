@@ -87,7 +87,7 @@ export default function BookingScreen() {
       ) : view === "outcome" ? (
         <Outcome booking={booking} />
       ) : view === "pay_rent" ? (
-        <PayRent booking={booking} watching={watching} refresh={refresh} />
+        <PayRent booking={booking} receivedAt={receivedAt} watching={watching} refresh={refresh} />
       ) : (
         <BookingDetails booking={booking} />
       )}

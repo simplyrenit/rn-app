@@ -3,6 +3,7 @@ import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-shee
 import { BottomBar, MoneyLine, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { usePay } from "@/components/booking/use-pay";
 import { useReadAt } from "@/components/booking/use-read-at";
+import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, Text } from "@/components/core";
 import { apiError } from "@/lib/api-error";
 import {
@@ -18,6 +19,7 @@ import {
   timeLeft,
 } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { clockSkewMs } from "@/lib/server-clock";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
@@ -25,16 +27,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { CheckCircleIcon, ClockIcon } from "react-native-heroicons/outline";
 import { useQueryClient } from "react-query";
-
-/** The current time, moved on every second while the screen shows a countdown. */
-function useNow(everyMs: number) {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), everyMs);
-    return () => clearInterval(timer);
-  }, [everyMs]);
-  return now;
-}
 
 /**
  * BK-06, "<shop> accepted": pay the rest of the rent to confirm the booking.
@@ -46,17 +38,21 @@ function useNow(everyMs: number) {
  * only when its amount is the one the button showed. If not, the card redraws
  * with the new sum and the customer taps again knowing it.
  *
- * The deadline is the server's (`rent_due_at`). The countdown to it is for the
- * eye only and stops nothing: this phone's clock may be wrong. When the
- * deadline passes, or the bank is slow, the booking is read again on a slow
- * timer until the server says what happened.
+ * The deadline is the server's (`rent_due_at`), and the countdown to it runs
+ * against the server's clock (`server_time`, P3-17), so a phone with a wrong
+ * clock still shows the right time left. It is for the eye and stops nothing.
+ * When the deadline passes, or the bank is slow, the booking is read again on a
+ * slow timer until the server says what happened.
  */
 export function PayRent({
   booking,
+  receivedAt,
   watching,
   refresh,
 }: {
   booking: BookingCustomer;
+  /** When this booking's answer arrived: with its `server_time`, the server's clock. */
+  receivedAt: number;
   /** The screen is in front of an active app: the only time it reads on a timer. */
   watching: boolean;
   /** Reads the booking again and returns it. */
@@ -66,7 +62,7 @@ export function PayRent({
   const { color } = useTheme();
   const queryClient = useQueryClient();
   const cancelSheet = useRef<CancelSheetHandle>(null);
-  const now = useNow(1000);
+  const now = useServerNow(booking.server_time, receivedAt, 1000);
   // A payment rn-api answered a tap with that was not the one on the button. It
   // is what the screen shows from then on, whatever the booking's copy says.
   const [offered, setOffered] = useState<Charge | null>(null);
@@ -118,7 +114,7 @@ export function PayRent({
 
   const dueAt = booking.pay_now?.due_at ?? booking.money.rent_due_at;
   const left = timeLeft(dueAt, now);
-  useReadAt(dueAt, () => void refresh());
+  useReadAt(dueAt, () => void refresh(), clockSkewMs(booking.server_time, receivedAt));
 
   // Nothing else reads an accepted booking by itself. While the bank is slow, or
   // once the deadline has passed by this phone's clock, ask until the server answers.
