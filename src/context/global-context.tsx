@@ -10,6 +10,7 @@ import {
   GET_CATEGORIES,
   MY_DETAILS_ENDPOINT,
 } from "@/lib/config";
+import { sessionEndText } from "@/lib/session-end";
 import { endSessionOnServer } from "@/lib/sign-out";
 import { authenticateFirebase, signOutFirebase } from "@/lib/firebase";
 import axiosInstance, {
@@ -129,8 +130,10 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   // tokens stayed in storage: the app still looked signed in while every
   // authenticated request failed, with no way back to the sign-in screen.
   useEffect(() => {
-    setSessionExpiredHandler(() => {
-      toast.error("Your session expired. Please sign in again.");
+    setSessionExpiredHandler((end) => {
+      // One message, once (the interceptor lets only the first of several failing requests through).
+      const said = sessionEndText(end);
+      toast.error(said.title, { message: said.message });
       void logout();
     });
 

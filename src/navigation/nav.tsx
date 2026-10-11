@@ -55,6 +55,7 @@ import {
 import { PushRoute } from "@/lib/push-routes";
 import { ringEndedQueryKey } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
+import { shouldGoToWelcome } from "@/lib/session-end";
 import { endingFromPush, ringTakesScreen } from "@/lib/shop-ring";
 import ShopBookingScreen from "@/screens/shop/booking";
 import ShopHandoverScreen from "@/screens/shop/handover";
@@ -481,6 +482,19 @@ export default function Navigation() {
     });
     return () => subscription.remove();
   }, []);
+
+  // A sign-out the person did not choose (the session ended: another device signed this phone out, T-26) arrives from
+  // whatever screen is on top, a ring or a booking in the middle of a flow. The stack is cleared to Welcome so nothing
+  // of the old account stays on screen; a sign-out the person chose resets the stack itself, and this does the same.
+  const wasAuthenticated = React.useRef<boolean | undefined>(undefined);
+  React.useEffect(() => {
+    const was = wasAuthenticated.current;
+    wasAuthenticated.current = isAuthenticated;
+    if (!navigationRef.isReady()) return;
+    if (shouldGoToWelcome(was, isAuthenticated, navigationRef.getCurrentRoute()?.name)) {
+      navigationRef.reset({ index: 0, routes: [{ name: "Welcome" }] });
+    }
+  }, [isAuthenticated]);
 
   React.useEffect(() => {
     if (!isAuthenticated) {
