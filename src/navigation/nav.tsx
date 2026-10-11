@@ -60,7 +60,8 @@ import ShopHandoverScreen from "@/screens/shop/handover";
 import ShopReturnScreen from "@/screens/shop/return";
 import DraftPhotosScreen from "@/screens/shop/draft-photos";
 import CaptureScreen from "@/screens/capture/capture";
-import { useCaptureUploads } from "@/backend/capture-jobs";
+import { captureQueue, useCaptureUploads } from "@/backend/capture-jobs";
+import { recoverLostShot } from "@/components/capture/camera";
 import { useDraftPhotoUploads } from "@/backend/draft-photo-jobs";
 import { ShopTodayScreen } from "@/screens/shop/home";
 import ShopRingScreen from "@/screens/shop/ring";
@@ -548,6 +549,11 @@ export default function Navigation() {
   // Photos and video of a handover or a return that are not on the server yet keep
   // uploading from wherever the app is, and start again after a restart (ENG-221).
   useCaptureUploads(isAuthenticated ? username : null);
+  // On Android the system may close the app while its camera is in front. The photo is
+  // handed back at this start, and goes into the record that was waiting for it.
+  React.useEffect(() => {
+    if (isAuthenticated && username) void captureQueue.init(username).then(() => recoverLostShot());
+  }, [isAuthenticated, username]);
   // Photos of drafts that are not on their drafts yet carry on from here too (ENG-192).
   useDraftPhotoUploads(isAuthenticated ? username : null);
 

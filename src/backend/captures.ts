@@ -1,7 +1,8 @@
-import { Capture, CaptureBody, Captures, Moment, PhoneFallback, ShotList, Side } from "@/lib/capture";
+import { Capture, CaptureBody, Captures, Moment, PhoneFallback, ShotList, Side, isShotList } from "@/lib/capture";
 import { BOOKINGS_ENDPOINT, GENERATE_SIGNED_URLS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { uuidv4 } from "@/lib/uuid";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import { useQuery } from "react-query";
 
@@ -11,12 +12,34 @@ const url = (number: string, action: string) => `${BOOKINGS_ENDPOINT}${encodeURI
 export const shotListQueryKey = (number: string) => ["shot-list", number];
 export const capturesQueryKey = (number: string) => ["captures", number];
 
-/** What to shoot for this booking's item, the checklist, and whether the ID tick is asked for. */
+const keptListKey = (number: string) => `renit-shot-list:${number}`;
+
+/**
+ * What to shoot for this booking's item, the checklist, and whether the ID tick
+ * is asked for. Each answer is also kept on the phone under the booking's number,
+ * so a capture can begin at a door with no signal (review round 1, finding 5).
+ */
 export async function fetchShotList(number: string): Promise<ShotList> {
-  return (await axiosInstance.get<ShotList>(url(number, "shot-list/"))).data;
+  const list = (await axiosInstance.get<ShotList>(url(number, "shot-list/"))).data;
+  if (isShotList(list)) void AsyncStorage.setItem(keptListKey(number), JSON.stringify(list)).catch(() => undefined);
+  return list;
 }
 
-/** The list changes rarely (staff edit it in the admin), so one read serves the whole handover. */
+/** The copy of a booking's list this phone kept from an earlier read, or null. */
+export async function readKeptShotList(number: string): Promise<ShotList | null> {
+  try {
+    const kept: unknown = JSON.parse((await AsyncStorage.getItem(keptListKey(number))) ?? "null");
+    return isShotList(kept) ? kept : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The list changes rarely (staff edit it in the admin), so one read serves the
+ * whole handover. The day-of, rental, handover and return screens read it as soon
+ * as they open, before anyone taps Record, which is what puts the copy on the phone.
+ */
 export function useShotList(number: string, enabled = true) {
   return useQuery(shotListQueryKey(number), () => fetchShotList(number), { enabled, staleTime: 5 * 60_000, retry: 1 });
 }

@@ -7,10 +7,13 @@ import {
   captureBody,
   draftsToKeep,
   dropFile,
+  files,
   localUris,
   nextWork,
+  removedUris,
   sendFailure,
   setUrl,
+  staleRefusal,
   uploadFailure,
 } from "@/lib/capture";
 
@@ -31,8 +34,10 @@ export interface CaptureQueueDeps {
   /** The drafts kept for this account, and keeping them. */
   load: (account: string) => Promise<CaptureDraft[]>;
   save: (account: string, drafts: CaptureDraft[]) => Promise<void>;
-  /** Clears the local files of a record the server now has. */
+  /** Clears local files: of a record the server now has, and any file that has left a record. */
   discard: (uris: string[]) => Promise<void>;
+  /** The time now; handed in so a test can move it. */
+  now?: () => number;
 }
 
 /**
@@ -43,6 +48,11 @@ export interface CaptureQueueDeps {
  * the drafts are kept on the phone, so a dead connection, a closed app or a
  * restart only delays them. `kick` runs it again (the app came back to the front,
  * the timer, Retry).
+ *
+ * A file is deleted from the phone at the moment it leaves a record: when the
+ * server has the whole record, when a shot is taken again or dropped, and when a
+ * record is let go of. A record the server refuses is not one of those: it stays,
+ * with its files, until the booking shows it is not wanted or some days have passed.
  */
 export function createCaptureQueue(deps: CaptureQueueDeps) {
   let account: string | null = null;
@@ -58,16 +68,42 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
     if (account) void deps.save(account, draftsToKeep(drafts)).catch(() => undefined);
   };
 
+  const now = () => (deps.now ? deps.now() : Date.now());
+  const clear = (uris: string[]) => {
+    if (uris.length > 0) void deps.discard(uris).catch(() => undefined);
+  };
+
   /** Changes one draft from what it is now; a draft that was removed meanwhile stays removed. */
   const change = (id: string, fn: (draft: CaptureDraft) => CaptureDraft) => {
     let changed = false;
+    const left: string[] = [];
     drafts = drafts.map((d) => {
       if (d.id !== id) return d;
       const next = fn(d);
-      if (next !== d) changed = true;
+      if (next !== d) {
+        changed = true;
+        // A shot taken again, a shot the list dropped, a file the server asked for anew.
+        left.push(...removedUris(d, next));
+      }
       return next;
     });
     if (changed) publish();
+    clear(left);
+  };
+
+  /** Takes drafts out of the queue and clears every file they hold. */
+  const drop = (gone: CaptureDraft[]) => {
+    if (gone.length === 0) return;
+    const ids = new Set(gone.map((d) => d.id));
+    drafts = drafts.filter((d) => !ids.has(d.id));
+    publish();
+    clear(gone.flatMap(localUris));
+  };
+
+  /** Whether a slot of a draft still holds the file that was being sent. */
+  const stillHolds = (id: string, uri: string) => {
+    const held = drafts.find((d) => d.id === id);
+    return Boolean(held && files(held).some(({ file }) => file.uri === uri));
   };
 
   async function run() {
@@ -81,7 +117,9 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
           const url = await deps.upload(file.uri, slot === "video" ? "video" : "photo", draft);
           change(draft.id, (d) => ({ ...setUrl(d, slot, file.uri, url), error: d.error?.retry ? null : d.error }));
         } catch (error) {
-          if (error instanceof FileGone) {
+          if (!stillHolds(draft.id, file.uri)) {
+            // The shot was taken again (and its first file cleared) while this one was going up: not a failure.
+          } else if (error instanceof FileGone) {
             change(draft.id, (d) => dropFile(d, slot, file.uri));
           } else {
             failed.add(draft.id);
@@ -97,20 +135,16 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
         const out = sendFailure(apiError(error));
         if ("done" in out) {
           change(draft.id, (d) => ({ ...d, done: true, error: null }));
-        } else if ("gone" in out) {
-          // The booking no longer takes this record: nothing on this phone can change that.
-          drafts = drafts.filter((d) => d.id !== draft.id);
-          publish();
-          void deps.discard(localUris(draft)).catch(() => undefined);
-          continue;
         } else {
           failed.add(draft.id);
-          change(draft.id, (d) => ({ ...d, error: out.error }));
+          // Refused as not taken now: the sending stops, the files stay. The first refusal's time is kept.
+          const refusedAt = out.refused ? new Date(now()).toISOString() : null;
+          change(draft.id, (d) => ({ ...d, error: out.error, refusedAt: d.refusedAt ?? refusedAt }));
         }
       }
       const after = drafts.find((d) => d.id === draft.id);
       // The server has it all: the copies on this phone have done their work.
-      if (after?.done) void deps.discard(localUris(after)).catch(() => undefined);
+      if (after?.done) clear(localUris(after));
     }
   }
 
@@ -157,6 +191,8 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
         // What was started in this run before the load came back wins over the copy on disk.
         drafts = [...kept.filter((k) => !drafts.some((d) => d.id === k.id)), ...drafts];
         publish();
+        // A record the server refused days ago will never be taken: it is let go of now.
+        drop(drafts.filter((d) => staleRefusal(d, now())));
         void pump();
       })();
       return loaded;
@@ -177,13 +213,18 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
       void pump();
     },
 
-    /** Lets go of a record (it was sent and seen, or the booking is over). */
+    /** Lets go of one record and its files. */
     remove(id: string) {
-      const gone = drafts.find((d) => d.id === id);
-      if (!gone) return;
-      drafts = drafts.filter((d) => d.id !== id);
-      publish();
-      if (gone.done) void deps.discard(localUris(gone)).catch(() => undefined);
+      drop(drafts.filter((d) => d.id === id));
+    },
+
+    /**
+     * A screen has read a booking: the records held for it that `keep` says no to
+     * are let go of, with their files (the server has the complete one, or the
+     * booking shows the record is not wanted any more).
+     */
+    release(number: string, keep: (draft: CaptureDraft) => boolean) {
+      drop(drafts.filter((d) => d.number === number && !keep(d)));
     },
 
     /** Runs the queue again: whatever was waiting for a connection gets its next try. */
@@ -191,9 +232,13 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
       void pump();
     },
 
-    /** "Try again" on one record: also sends again what the server refused last time. */
+    /**
+     * "Try again" on a record the person has finished: also sends again what the
+     * server refused last time. A record that still needs a photo is not helped by
+     * this; its card opens the capture instead.
+     */
     retry(id: string) {
-      change(id, (d) => (d.error ? { ...d, error: null } : d));
+      change(id, (d) => (d.error && d.sealed ? { ...d, error: null } : d));
       void pump();
     },
 

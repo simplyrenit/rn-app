@@ -1,9 +1,9 @@
 import { captureQueue, useCaptureDraft } from "@/backend/capture-jobs";
-import { capturesQueryKey, confirmPhoneFallback, startPhoneFallback, useShotList } from "@/backend/captures";
-import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel, TextButton } from "@/components/booking/parts";
-import { placeNow, recordVideo, takePhoto } from "@/components/capture/camera";
+import { capturesQueryKey, confirmPhoneFallback, readKeptShotList, startPhoneFallback, useShotList } from "@/backend/captures";
+import { BookingLoading, BottomBar, Notice, Panel, TextButton } from "@/components/booking/parts";
+import { placeNow, recordVideo, recoverLostShot, takePhoto } from "@/components/capture/camera";
 import { CODE_LENGTH, CodeInput } from "@/components/capture/code";
-import { UploadBar } from "@/components/capture/upload-note";
+import { UploadBar } from "@/components/capture/record-card";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
@@ -19,10 +19,12 @@ import {
   canSeal,
   captureHeading,
   captureId,
+  chooseList,
   codeConfirmed,
   draftState,
   durationLabel,
   fallbackErrorText,
+  listSourceNote,
   needsIdMatch,
   nextStep,
   noticeRows,
@@ -34,7 +36,9 @@ import {
   startDraft,
   tick,
   uploadProgress,
+  videoLabel,
   withList,
+  withShooting,
 } from "@/lib/capture";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, darkColors, radius, space } from "@/lib/design-tokens";
 import { commitFeedback, tapFeedback } from "@/lib/haptics";
@@ -373,7 +377,29 @@ export default function CaptureScreen() {
 
   const draft = useCaptureDraft(number, moment, side);
   const listQuery = useShotList(number);
-  const list = ready ? draft?.list ?? listQuery.data ?? null : null;
+  // The copy of this booking's list the phone kept from an earlier read: undefined until looked for, null when there is none.
+  const [kept, setKept] = useState<ShotList | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    void readKeptShotList(number).then((found) => live && setKept(found));
+    return () => {
+      live = false;
+    };
+  }, [number]);
+  // The person will not wait for a read that is not answering.
+  const [noWait, setNoWait] = useState(false);
+  // A new record begins from the server's list, else the kept copy, else (with no
+  // connection) the general list the app carries: a capture can always begin.
+  const chosen =
+    ready && !draft
+      ? chooseList({
+          fetched: listQuery.data,
+          kept,
+          offline: listQuery.isError || noWait,
+          idMatch: Boolean(params.id_match),
+        })
+      : null;
+  const list = draft?.list ?? chosen?.list ?? null;
 
   // A shot picked to be taken again; null follows the walk.
   const [target, setTarget] = useState<number | null>(null);
@@ -412,12 +438,19 @@ export default function CaptureScreen() {
   const dropped = had.current && !draft;
   useEffect(() => {
     if (!dropped) return;
-    toast.info("This booking has moved on", { message: "The record is no longer needed." });
+    toast.info("This record is no longer needed", { message: "Renit already has it, or the booking has moved on." });
     leave();
     // Once, when the record goes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dropped]);
   const stamp = () => new Date(Date.now() + (params.skew_ms ?? 0)).toISOString();
+
+  // Android may close the app while its camera is in front; the photo is handed back at the next start.
+  useEffect(() => {
+    if (ready) void recoverLostShot(stamp);
+    // Once, when the queue has what an earlier run left.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
 
   /** One go at the camera at a time: a second tap while it opens does nothing. */
   const withCamera = async (work: () => Promise<void>) => {
@@ -432,28 +465,39 @@ export default function CaptureScreen() {
     }
   };
 
-  const sendCode = async () => {
-    if (working) return false;
+  /** Sends the code to the other person. `offline`: the call got no answer at all. */
+  const sendCode = async (): Promise<"sent" | "offline" | "refused"> => {
+    if (working) return "refused";
     setWorking(true);
     setCodeError(null);
     try {
       setFallback(await startPhoneFallback(number, moment));
-      return true;
+      return "sent";
     } catch (error) {
-      const text = fallbackErrorText(apiError(error));
+      const failure = apiError(error);
+      const text = fallbackErrorText(failure);
       setCodeError(text);
-      toast.error("We couldn't send the code", { message: text });
-      return false;
+      const offline = !failure || failure.status === 0;
+      if (!offline) toast.error("We couldn't send the code", { message: text });
+      return offline ? "offline" : "refused";
     } finally {
       setWorking(false);
     }
   };
 
   const start = async () => {
-    if (!list) return;
-    // Recording the other person's set is allowed only once the code has gone to their phone.
-    if (forOther && !(await sendCode())) return;
-    captureQueue.start(startDraft({ number, moment, side, forOther, list }));
+    if (!chosen) return;
+    if (forOther) {
+      // The server takes the other person's set only once the code has gone to their phone.
+      // With no connection the record is still made now; the code is sent before it is.
+      const sent = await sendCode();
+      if (sent === "refused") return;
+      if (sent === "offline") {
+        setCodeError(null);
+        toast.info("No connection: record now", { message: `The code goes to ${otherName} when you are back online.` });
+      }
+    }
+    captureQueue.start(startDraft({ number, moment, side, forOther, list: chosen.list, generic: chosen.source === "generic" }));
   };
 
   const confirmCode = async () => {
@@ -480,12 +524,16 @@ export default function CaptureScreen() {
     return (
       <NonScrollableContainer>
         <SubpageHeader title={heading.header} />
-        {!list ? (
-          ready && listQuery.isError ? (
-            <BookingLoadError error={listQuery.error} what="what to record" onRetry={() => void listQuery.refetch()} />
-          ) : (
+        {!list || !chosen ? (
+          <View style={{ flex: 1 }}>
             <BookingLoading label="Loading what to record" />
-          )
+            {ready ? (
+              // Never a dead end at a door with no signal: the general list is always on the phone.
+              <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.lg }}>
+                <TextButton label="No signal? Use Renit's general list" onPress={() => setNoWait(true)} />
+              </View>
+            ) : null}
+          </View>
         ) : (
           <>
             <ScrollView
@@ -502,6 +550,11 @@ export default function CaptureScreen() {
                   </Text>
                 ) : null}
               </View>
+              {listSourceNote(chosen.source) ? (
+                <Notice tone="warning" icon="info">
+                  {listSourceNote(chosen.source)}
+                </Notice>
+              ) : null}
               <Intro
                 list={list}
                 side={role}
@@ -572,7 +625,8 @@ export default function CaptureScreen() {
           <View style={{ gap: space.sm }}>
             <UploadBar fraction={progress.fraction} />
             <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
-              {progress.text}
+              {/* The video's own size, so nobody is surprised by what a slow connection has to carry. */}
+              {up ? progress.text : `${progress.text} · ${videoLabel(draft.video)}`}
             </Text>
           </View>
 
@@ -587,7 +641,7 @@ export default function CaptureScreen() {
             <TextButton
               label="Send a new code and try again"
               disabled={working}
-              onPress={() => void sendCode().then((sent) => sent && captureQueue.retry(draft.id))}
+              onPress={() => void sendCode().then((sent) => sent === "sent" && captureQueue.retry(draft.id))}
             />
           ) : null}
 
@@ -637,8 +691,14 @@ export default function CaptureScreen() {
   const shoot = () =>
     withCamera(async () => {
       if (!shot) return;
+      // Which slot the camera is open for is kept with the record first: if the
+      // system closes the app under the camera, the photo still finds its place.
+      update((d) => withShooting(d, { shot: shot.key }));
       const [uri, place] = await Promise.all([takePhoto(), placeNow()]);
-      if (!uri) return;
+      if (!uri) {
+        update((d) => withShooting(d, null));
+        return;
+      }
       update((d) => addShot(d, shot.key, { uri, taken_at: stamp(), ...(place ?? {}) }));
       commitFeedback();
       setTarget(null);
@@ -646,9 +706,13 @@ export default function CaptureScreen() {
 
   const record = () =>
     withCamera(async () => {
+      update((d) => withShooting(d, "video"));
       const video = await recordVideo();
-      if (!video) return;
-      update((d) => setVideo(d, { uri: video.uri, seconds: video.seconds, taken_at: stamp() }));
+      if (!video) {
+        update((d) => withShooting(d, null));
+        return;
+      }
+      update((d) => setVideo(d, { uri: video.uri, seconds: video.seconds, bytes: video.bytes, taken_at: stamp() }));
       commitFeedback();
     });
 
@@ -723,7 +787,7 @@ export default function CaptureScreen() {
             <Shutter kind="video" disabled={launching} onPress={() => void record()} label="Record the video" />
           </View>
           <Text fontSize="text-xs" tone="body" style={{ textAlign: "center" }}>
-            {`Recording stops by itself at ${durationLabel(VIDEO_SECONDS)}.`}
+            {`Recording stops by itself at ${durationLabel(VIDEO_SECONDS)}. It is sent when you have a connection.`}
           </Text>
         </View>
       ) : (
@@ -775,11 +839,10 @@ export default function CaptureScreen() {
               Your photos and video
             </Text>
             <ShotTiles draft={draft} current={null} onPick={setTarget} />
-            <TextButton
-              label={`Record the video again${draft.video?.seconds ? ` · ${durationLabel(draft.video.seconds)}` : ""}`}
-              disabled={launching}
-              onPress={() => void record()}
-            />
+            <Text fontSize="text-sm" tone="body">
+              {videoLabel(draft.video)}
+            </Text>
+            <TextButton label="Record the video again" disabled={launching} onPress={() => void record()} />
           </ScrollView>
           <BottomBar>
             {!canSeal(draft) ? (

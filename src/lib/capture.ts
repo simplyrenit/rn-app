@@ -17,8 +17,20 @@ export type Side = "owner" | "customer";
 
 export const otherSide = (side: Side): Side => (side === "owner" ? "customer" : "owner");
 
-/** How long the video may run. The system camera stops by itself at this length. */
-export const VIDEO_SECONDS = 20;
+/**
+ * How long the video may run, on both platforms (decision T-18). The system camera
+ * is asked to stop by itself at this length; a camera app that ignores the limit is
+ * caught afterwards (`videoProblem`).
+ */
+export const VIDEO_SECONDS = 15;
+/** A camera stops a moment after the limit, not on it. */
+export const VIDEO_GRACE_SECONDS = 2;
+/**
+ * The largest video the app sends. A 15-second clip is far below this at any usual
+ * setting; it stops a 4K, high-frame-rate clip from holding up every other upload.
+ * ponytail: no compression on Android (T-18); this ceiling and the length are the only bounds.
+ */
+export const VIDEO_MAX_BYTES = 250 * 1024 * 1024;
 
 // ---- The contract's objects ---------------------------------------------------------------
 
@@ -91,8 +103,10 @@ export interface LocalFile {
   taken_at: string;
   lat?: number;
   long?: number;
-  /** The video's length. */
+  /** The video's real length, when the camera said; never a rounded-down guess. */
   seconds?: number;
+  /** The file's size, when the phone could read it. Shown before it is sent. */
+  bytes?: number;
   /** Its address on Renit's bucket, once it is up. */
   url: string | null;
 }
@@ -121,6 +135,16 @@ export interface CaptureDraft {
   awaitingCode: boolean;
   /** Why it is not moving. `retry`: it goes again by itself; otherwise the person has to act. */
   error: { text: string; retry: boolean } | null;
+  /**
+   * The slot the camera was opened for and has not answered yet. On Android the
+   * system may close the app while its camera is in front; the photo is then
+   * handed back at the next start, and this says where it belongs.
+   */
+  shooting?: Slot | null;
+  /** When the server first refused this record as not taken at the booking's stage. Kept a while, never deleted on one answer. */
+  refusedAt?: string | null;
+  /** Started from the general list the app carries, because the booking's own list could not be read. */
+  generic?: boolean;
 }
 
 export const captureId = (number: string, moment: Moment, side: Side) => `${number}:${moment}:${side}`;
@@ -139,6 +163,7 @@ export function startDraft(input: {
   side: Side;
   forOther?: boolean;
   list: ShotList;
+  generic?: boolean;
 }): CaptureDraft {
   return {
     id: captureId(input.number, input.moment, input.side),
@@ -155,6 +180,9 @@ export function startDraft(input: {
     done: false,
     awaitingCode: false,
     error: null,
+    shooting: null,
+    refusedAt: null,
+    generic: Boolean(input.generic),
   };
 }
 
@@ -172,7 +200,14 @@ export function withList(draft: CaptureDraft, list: ShotList): CaptureDraft {
   if (same) return draft;
   const asked = new Set(list.shots.map((shot) => shot.key));
   const shots = Object.fromEntries(Object.entries(draft.shots).filter(([key]) => asked.has(key)));
-  const next: CaptureDraft = { ...draft, list, shots, checklist: untickedList(list.included_items, draft.checklist) };
+  const next: CaptureDraft = {
+    ...draft,
+    list,
+    shots,
+    checklist: untickedList(list.included_items, draft.checklist),
+    // The booking's own list has arrived: the record is no longer on the general one.
+    generic: false,
+  };
   // A shot was added, or the ID tick is now asked for: the person has something left to do.
   return canSeal(next) ? next : { ...next, sealed: false };
 }
@@ -193,11 +228,27 @@ export function nextStep(draft: CaptureDraft): CaptureStep {
 
 /** A photo was taken (or taken again) for one shot of the list. */
 export function addShot(draft: CaptureDraft, key: string, file: Omit<LocalFile, "url">): CaptureDraft {
-  return { ...draft, shots: { ...draft.shots, [key]: { ...file, url: null } }, error: null };
+  return { ...draft, shots: { ...draft.shots, [key]: { ...file, url: null } }, error: null, shooting: null };
 }
 
 export function setVideo(draft: CaptureDraft, file: Omit<LocalFile, "url">): CaptureDraft {
-  return { ...draft, video: { ...file, url: null }, error: null };
+  return { ...draft, video: { ...file, url: null }, error: null, shooting: null };
+}
+
+/** The camera is about to open for this slot (or, with null, has come back with nothing). */
+export function withShooting(draft: CaptureDraft, slot: Slot | null): CaptureDraft {
+  return { ...draft, shooting: slot };
+}
+
+/** A photo or a video the camera handed back after the app was closed under it: it goes into the slot that was waiting. */
+export function recoverShot(
+  draft: CaptureDraft,
+  taken: { kind: "photo" | "video"; file: Omit<LocalFile, "url"> }
+): CaptureDraft {
+  const slot = draft.shooting;
+  if (!slot) return draft;
+  if (slot === "video") return taken.kind === "video" ? setVideo(draft, taken.file) : withShooting(draft, null);
+  return taken.kind === "photo" ? addShot(draft, slot.shot, taken.file) : withShooting(draft, null);
 }
 
 export function tick(draft: CaptureDraft, item: string): CaptureDraft {
@@ -357,27 +408,56 @@ const OFFLINE = "Waiting for a connection. It uploads by itself when you are bac
 export const uploadFailure = (): NonNullable<CaptureDraft["error"]> => ({ text: OFFLINE, retry: true });
 
 /**
- * What a refused send means. `capture_locked`: the server already has a complete
- * record (an earlier send whose answer was lost), so this one is done. No answer
- * or a fault: tried again. `gone`: the booking no longer takes this record (it
- * ended, or closed without it), so it is let go of. Anything else needs a person.
+ * What a refused send means.
+ *  - `capture_locked`: the server already has a complete record (an earlier send
+ *    whose answer was lost), so this one is done.
+ *  - No answer, a fault, too many calls, or a 401 (the access token ran out and its
+ *    refresh did not get through, which is a network failure and not a verdict):
+ *    tried again, by itself.
+ *  - `stage_not_allowed`, `not_found`: the server says it does not take this record
+ *    now. `refused`: the sending stops and the screen says so, but the files stay on
+ *    the phone. Evidence is not deleted on one answer; it goes when the booking
+ *    itself shows the record is not wanted (`recordWanted`), or after some days.
+ *  - Anything else needs a person.
  */
 export function sendFailure(
   error: ApiError | null
-): { done: true } | { gone: true } | { error: NonNullable<CaptureDraft["error"]> } {
+): { done: true } | { error: NonNullable<CaptureDraft["error"]>; refused?: true } {
   if (error?.code === "capture_locked") return { done: true };
-  if (!error || error.status === 0 || error.status >= 500 || error.status === 429) {
+  if (
+    !error ||
+    error.status === 0 ||
+    error.status >= 500 ||
+    error.status === 429 ||
+    error.status === 408 ||
+    error.status === 401
+  ) {
     return { error: { text: OFFLINE, retry: true } };
   }
   switch (error.code) {
     case "stage_not_allowed":
     case "not_found":
-      return { gone: true };
+      return {
+        error: {
+          text: "Renit did not take this record for the booking as it stands. It is kept on this phone; try again, or ask Renit's desk.",
+          retry: false,
+        },
+        refused: true,
+      };
     case "forbidden":
       return { error: { text: "This record can't be saved from this phone right now.", retry: false } };
     default:
       return { error: { text: error.message ?? "Renit couldn't accept this record. Try again.", retry: false } };
   }
+}
+
+/** How long a record the server refused is kept on the phone before it is let go of. */
+export const REFUSED_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** True for a record the server refused long enough ago that it will never be taken. */
+export function staleRefusal(draft: Pick<CaptureDraft, "refusedAt">, nowMs: number): boolean {
+  const at = Date.parse(draft.refusedAt ?? "");
+  return Number.isFinite(at) && nowMs - at > REFUSED_KEEP_MS;
 }
 
 /** The drafts worth keeping on the phone: everything the server does not have yet, or that waits for a code. */
@@ -430,6 +510,348 @@ export function uploadLine(draft: CaptureDraft | null | undefined): { text: stri
     default:
       return null;
   }
+}
+
+/** A file's size as a person reads it: "38 MB", "850 KB". */
+export function sizeLabel(bytes: number | null | undefined): string {
+  const n = Number(bytes);
+  if (!Number.isFinite(n) || n <= 0) return "";
+  const mb = n / (1024 * 1024);
+  if (mb >= 10) return `${Math.round(mb)} MB`;
+  if (mb >= 1) return `${mb.toFixed(1).replace(/\.0$/, "")} MB`;
+  return `${Math.max(1, Math.round(n / 1024))} KB`;
+}
+
+/**
+ * Why a video just recorded cannot be used, or null. The length and the size are
+ * the file's own: a camera app that ignored the limit is asked again, and a clip
+ * is never labelled shorter than it is.
+ */
+export function videoProblem(video: { seconds?: number | null; bytes?: number | null }): string | null {
+  const seconds = Number(video.seconds);
+  if (Number.isFinite(seconds) && seconds > VIDEO_SECONDS + VIDEO_GRACE_SECONDS) {
+    return `That video is ${durationLabel(seconds)} long. Record it again, up to ${durationLabel(VIDEO_SECONDS)}.`;
+  }
+  const bytes = Number(video.bytes);
+  if (Number.isFinite(bytes) && bytes > VIDEO_MAX_BYTES) {
+    return `That video is ${sizeLabel(bytes)}, too large to send. Set the camera to 1080p or lower and record it again.`;
+  }
+  return null;
+}
+
+/** "Video · 0:14 · 38 MB": the video as the checklist and the upload step name it. */
+export function videoLabel(video: Pick<LocalFile, "seconds" | "bytes"> | null | undefined): string {
+  return ["Video", video?.seconds ? durationLabel(video.seconds) : "", sizeLabel(video?.bytes)].filter(Boolean).join(" · ");
+}
+
+// ---- When a record can still be made (one rule for every screen) --------------------------------
+
+/**
+ * The stages in which the server takes a capture for each moment (API-CONTRACT
+ * OE-I, `PUT …/captures/{moment}/{side}/`; A-3, A2-3). A capture stays writable
+ * after the code is typed: the handover's through `out`, `returned` and `closed`
+ * (the owner's payout waits for it), the return's through `returned`. After
+ * `closed` a missing return record has been settled without (decision A-28).
+ */
+const TAKEN_IN: Record<Moment, readonly string[]> = {
+  handover: ["ready", "out", "returned", "closed"],
+  return: ["out", "returned"],
+};
+
+/** What the rule needs of a booking, either side's. */
+export interface RecordBooking {
+  stage: string;
+  exit: string;
+  can: readonly string[];
+}
+
+/**
+ * Whether a record for this moment is still of use to the booking: it has not
+ * ended early, and it is at a stage in which the server takes the capture. A draft
+ * on the phone is let go of only when this says no: the booking itself, not one
+ * refused call, decides that evidence is not wanted.
+ */
+export function recordWanted(moment: Moment, booking: Pick<RecordBooking, "stage" | "exit">): boolean {
+  return !booking.exit && TAKEN_IN[moment].includes(booking.stage);
+}
+
+/** The server takes a record now: its own `can` list says so, or the contract's stages do. */
+export function serverTakes(moment: Moment, booking: RecordBooking): boolean {
+  return booking.can.includes(`capture_${moment}`) || recordWanted(moment, booking);
+}
+
+export type RecordState = "none" | "start" | "continue" | "uploading" | "waiting" | "stuck" | "code";
+
+export interface RecordInput {
+  moment: Moment;
+  booking: RecordBooking;
+  /** The booking's flag for this side: the server has the complete record. */
+  onServer: boolean;
+  /** The record this phone holds for this side, if any. */
+  draft: CaptureDraft | null | undefined;
+  /** Money still waits on this record (the owner's payout on the handover record). */
+  stake?: boolean;
+  /** The other person's set, recorded here because their phone failed: carried on from a card, never begun from one. */
+  forOther?: boolean;
+}
+
+/**
+ * Where one side's record stands, and so what every screen offers. The one rule
+ * (review round 1, findings 1 and 2): a record can be made and finished for as
+ * long as the server takes it, whatever the stage and whichever code has been
+ * typed, and a record that is not finished is never out of sight.
+ *
+ *  - `start`: nothing on this phone, nothing complete on the server, and the
+ *    server still takes it. On a closed booking only while money waits on it.
+ *  - `continue`: a record was begun here and the person has something left to do
+ *    (the walk is unfinished, a file was lost, or the server asked for more).
+ *  - `uploading`, `waiting`, `stuck`: finished by the person, not yet on the server.
+ *  - `code`: the other person's set is up and waits for the code they read out.
+ *  - `none`: the server has it, or it is no longer taken and nothing is held here.
+ */
+export function recordState(input: RecordInput): RecordState {
+  const { draft, moment, booking } = input;
+  if (draft?.done) return draft.awaitingCode && !input.onServer ? "code" : "none";
+  if (input.onServer) return "none";
+  if (draft) {
+    if (!draft.sealed) return "continue";
+    return draft.error ? (draft.error.retry ? "waiting" : "stuck") : "uploading";
+  }
+  if (input.forOther || !serverTakes(moment, booking)) return "none";
+  if (booking.stage === "closed" && !input.stake) return "none";
+  return "start";
+}
+
+/** True when a screen should offer the button that opens the capture: to begin the record, or to carry it on. */
+export const recordOpens = (state: RecordState) => state === "start" || state === "continue";
+
+/**
+ * Whether this phone should let go of a record it holds: the server has the
+ * complete one (another phone made it), or the booking shows it is not wanted any
+ * more (it ended early, or closed without a return record).
+ */
+export function shouldRelease(draft: Pick<CaptureDraft, "moment">, booking: RecordBooking, onServer: boolean): boolean {
+  return onServer || !serverTakes(draft.moment, booking);
+}
+
+export interface RecordCardView {
+  state: Exclude<RecordState, "none">;
+  title: string;
+  text: string;
+  /** What hangs on it, said plainly: the owner's payout, the rental closing. */
+  stake: string | null;
+  button: { label: string; action: "open" | "retry" } | null;
+  progress: UploadProgress | null;
+  tone: "info" | "warning";
+}
+
+/**
+ * One side's record as a card on a booking's screens: its state in words, what
+ * waits on it, and the one button that moves it on. Null when there is nothing to
+ * show. `role` is whose phone this is; `stage` is the booking's.
+ */
+export function recordCard(input: {
+  state: RecordState;
+  moment: Moment;
+  role: Side;
+  forOther?: boolean;
+  otherName: string;
+  stage: string;
+  draft: CaptureDraft | null | undefined;
+}): RecordCardView | null {
+  const { state, moment, role, draft } = input;
+  if (state === "none") return null;
+  const forOther = Boolean(input.forOther);
+  const title = forOther ? `${input.otherName}'s ${moment} record` : `Your ${moment} record`;
+  const progress = draft ? uploadProgress(draft) : null;
+  const size = draft?.video?.bytes ? ` The video is ${sizeLabel(draft.video.bytes)}.` : "";
+  const stake = forOther
+    ? null
+    : role === "owner" && moment === "handover" && input.stage !== "ready"
+      ? "Your payout for this rental waits for it: you are paid once it has uploaded."
+      : moment === "return" && input.stage === "returned"
+        ? role === "customer"
+          ? "Your deposit comes back sooner once both return records are in."
+          : "The rental closes once both return records are in."
+        : null;
+  switch (state) {
+    case "start":
+      return {
+        state,
+        title,
+        text:
+          moment === "handover"
+            ? "Not recorded yet. Take the photos and the video of the item now."
+            : "Not recorded yet. Take the photos and the video of the item as it came back.",
+        stake,
+        button: { label: "Record its condition", action: "open" },
+        progress: null,
+        // At the moment itself it is simply the next thing to do; after the code it is overdue.
+        tone: input.stage === (moment === "handover" ? "ready" : "out") ? "info" : "warning",
+      };
+    case "continue": {
+      const taken = draft ? files(draft).length : 0;
+      const total = draft ? draft.list.shots.length + 1 : 0;
+      return {
+        state,
+        title,
+        text: draft?.error?.text ?? `Started, not finished: ${taken} of ${total} taken.`,
+        stake,
+        button: { label: "Continue recording", action: "open" },
+        progress: null,
+        tone: "warning",
+      };
+    }
+    case "uploading":
+      return {
+        state,
+        title,
+        text: `Uploading. ${progress?.text ?? ""}.${size} It carries on while the app is open.`,
+        stake,
+        button: null,
+        progress,
+        tone: "info",
+      };
+    case "waiting":
+      return {
+        state,
+        title,
+        text: `${progress?.text ?? ""}. ${draft?.error?.text ?? OFFLINE}${size}`,
+        stake,
+        button: { label: "Try again", action: "retry" },
+        progress,
+        tone: "warning",
+      };
+    case "stuck":
+      return {
+        state,
+        title,
+        text: draft?.error?.text ?? "This record needs you.",
+        stake,
+        button: { label: "Try again", action: "retry" },
+        progress,
+        tone: "warning",
+      };
+    default:
+      return {
+        state,
+        title,
+        text: `It is uploaded. Type the code ${input.otherName} reads out to confirm it.`,
+        stake: null,
+        button: { label: "Type the code", action: "open" },
+        progress: null,
+        tone: "warning",
+      };
+  }
+}
+
+// ---- Files that have left a record ---------------------------------------------------------------
+
+/** The local files a change took out of a record (a shot taken again, a list that dropped one, a lost file). */
+export function removedUris(before: CaptureDraft, after: CaptureDraft | null): string[] {
+  const kept = new Set(after ? localUris(after) : []);
+  return localUris(before).filter((uri) => !kept.has(uri));
+}
+
+/** The name of a file, without its folder: the part that is the same whatever the app's folder is today. */
+export const fileName = (uri: string) => uri.split("?")[0].split("/").pop() ?? "";
+
+/** How old a file nothing names must be before the sweep takes it: a photo just taken is not yet in any list. */
+export const ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * The files of the app's capture folder that nothing on this phone names any
+ * more and that are old enough to be sure of it. `named` holds the names every
+ * kept list still holds, for every account.
+ */
+export function orphanFiles(
+  found: readonly { name: string; modifiedMs: number }[],
+  named: ReadonlySet<string>,
+  nowMs: number,
+  minAgeMs: number = ORPHAN_AGE_MS
+): string[] {
+  return found
+    .filter((file) => !named.has(file.name) && Number.isFinite(file.modifiedMs) && nowMs - file.modifiedMs > minAgeMs)
+    .map((file) => file.name);
+}
+
+/** Every file name held anywhere inside something read back from storage, whatever its shape. */
+export function namesIn(value: unknown, folder: string, into: Set<string> = new Set()): Set<string> {
+  if (typeof value === "string") {
+    if (value.includes(`/${folder}`)) into.add(fileName(value));
+  } else if (Array.isArray(value)) {
+    for (const item of value) namesIn(item, folder, into);
+  } else if (value && typeof value === "object") {
+    for (const item of Object.values(value)) namesIn(item, folder, into);
+  }
+  return into;
+}
+
+// ---- The list to shoot from ------------------------------------------------------------------------
+
+/**
+ * The general list the app carries, for a capture that has to begin with no
+ * connection and no copy of the booking's own list (review round 1, finding 5).
+ * It is Renit's generic list (ops draft ENG-216), with the same keys, so the
+ * server's own generic list is met; a product whose sub-category has its own list
+ * is asked for the rest once the phone is back online.
+ */
+export function genericShotList(idMatch: boolean): ShotList {
+  return {
+    shots: [
+      { key: "front", label: "Front", hint: "The whole item from the front. Fill the frame with the item, not the room." },
+      { key: "back", label: "Back", hint: "The whole item from behind, at the same distance." },
+      { key: "left_side", label: "Left side", hint: "The whole left side, edge to edge." },
+      { key: "right_side", label: "Right side", hint: "The whole right side, edge to edge." },
+      { key: "marks", label: "Marks and wear", hint: "Close-up of every scratch, dent or crack. If there is none, show the most-used part." },
+      { key: "label", label: "Label or serial number", hint: "Brand label, model or serial number, sharp enough to read." },
+    ],
+    video_hint: "If the item switches on, show it working. If not, move slowly around every side.",
+    included_items: ["The item itself", "Charger or power cable", "Other cables", "Case, bag or box", "Manual and small parts"],
+    included_items_source: "generic",
+    id_match_required: idMatch,
+  };
+}
+
+/** A shot list read back from the phone is used only if it has the shape of one. */
+export function isShotList(value: unknown): value is ShotList {
+  const list = value as Partial<ShotList> | null;
+  return Boolean(
+    list &&
+      Array.isArray(list.shots) &&
+      list.shots.length > 0 &&
+      list.shots.every((shot) => shot && typeof shot.key === "string" && typeof shot.label === "string") &&
+      Array.isArray(list.included_items)
+  );
+}
+
+export type ListSource = "server" | "kept" | "generic";
+
+/**
+ * Which list a new record starts from: the server's answer; else the copy of it
+ * kept on the phone from an earlier read; else, when the read has failed or the
+ * person will not wait, the general list. Null while it is still worth waiting.
+ * `kept`: undefined until the phone's copy has been looked for, null when there is none.
+ */
+export function chooseList(input: {
+  fetched: ShotList | null | undefined;
+  kept: ShotList | null | undefined;
+  offline: boolean;
+  idMatch: boolean;
+}): { list: ShotList; source: ListSource } | null {
+  if (input.fetched) return { list: input.fetched, source: "server" };
+  if (input.kept) return { list: input.kept, source: "kept" };
+  if (input.kept === null && input.offline) return { list: genericShotList(input.idMatch), source: "generic" };
+  return null;
+}
+
+/** What the notice says about a list that did not come from the server just now. */
+export function listSourceNote(source: ListSource): string | null {
+  if (source === "kept") return "No connection just now. This is the list for this item as the phone last read it; your photos are sent when you are back online.";
+  if (source === "generic") {
+    return "No connection, so this is Renit's general list for any item. Shoot it now; your photos are sent when you are back online, and the app asks then if this item needs a shot more.";
+  }
+  return null;
 }
 
 // ---- The words -----------------------------------------------------------------------------

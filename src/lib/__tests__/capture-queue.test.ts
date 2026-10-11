@@ -207,23 +207,151 @@ describe("the capture queue", () => {
     expect(send).toHaveBeenCalledTimes(2);
   });
 
-  it("lets go of a record the booking no longer takes, and clears its files", async () => {
+  it("a record the server refuses as not taken is stopped and kept with its files: one answer deletes nothing (review r1 #6)", async () => {
+    const send = jest.fn(async () => {
+      throw answer(409, "stage_not_allowed");
+    });
     const { queue, deps, saved } = setup({
-      send: jest.fn(async () => {
-        throw answer(409, "stage_not_allowed");
-      }) as unknown as CaptureQueueDeps["send"],
+      send: send as unknown as CaptureQueueDeps["send"],
+      now: () => Date.parse("2026-10-24T05:00:00Z"),
     });
     await queue.init("asha");
     queue.start(draft());
     record(queue);
     await queue.idle();
-    expect(queue.getDrafts()).toEqual([]);
-    expect(saved[saved.length - 1]).toEqual([]);
-    expect(deps.discard).toHaveBeenCalledWith([
+    const kept = queue.getDrafts()[0];
+    expect(kept).toMatchObject({ done: false, sealed: true, refusedAt: "2026-10-24T05:00:00.000Z", error: { retry: false } });
+    expect(kept.shots.front.url).toBeTruthy();
+    expect(deps.discard).not.toHaveBeenCalled();
+    // Still on the phone after a restart, and not sent again by the timer.
+    expect(saved[saved.length - 1]).toHaveLength(1);
+    queue.kick();
+    await queue.idle();
+    expect(send).toHaveBeenCalledTimes(1);
+    // The person's Try again sends it once more; the first refusal's time stays.
+    queue.retry(ID);
+    await queue.idle();
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(queue.getDrafts()[0].refusedAt).toBe("2026-10-24T05:00:00.000Z");
+  });
+
+  it("a record refused more than a week ago is let go of at the next start", async () => {
+    const refused = (at: string): CaptureDraft => ({
+      ...seal(setVideo(addShot(addShot(draft(), "front", photo("front")), "back", photo("back")), video)),
+      refusedAt: at,
+      error: { text: "Renit did not take this record.", retry: false },
+    });
+    const week = setup({
+      load: jest.fn(async () => [refused("2026-10-10T05:00:00Z")]),
+      now: () => Date.parse("2026-10-24T05:00:00Z"),
+    });
+    await week.queue.init("asha");
+    expect(week.queue.getDrafts()).toEqual([]);
+    expect(week.deps.discard).toHaveBeenCalledWith([
       "file:///captures/front.jpg",
       "file:///captures/back.jpg",
       "file:///captures/video.mp4",
     ]);
+    const days = setup({
+      load: jest.fn(async () => [refused("2026-10-22T05:00:00Z")]),
+      now: () => Date.parse("2026-10-24T05:00:00Z"),
+    });
+    await days.queue.init("asha");
+    expect(days.queue.getDrafts()).toHaveLength(1);
+    expect(days.deps.discard).not.toHaveBeenCalled();
+  });
+
+  it("a 401 on the send is tried again by itself, like a lost connection (review r1 #7)", async () => {
+    let expired = true;
+    const { queue, deps } = setup({
+      send: jest.fn(async () => {
+        if (expired) throw answer(401, "not_authenticated");
+        return complete;
+      }),
+    });
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+    expect(queue.getDrafts()[0]).toMatchObject({ done: false, error: { retry: true } });
+    expect(queue.hasWork()).toBe(true);
+    expired = false;
+    // The timer's kick, with nobody tapping anything.
+    queue.kick();
+    await queue.idle();
+    expect(queue.getDrafts()[0]).toMatchObject({ done: true, error: null });
+    expect((deps.send as jest.Mock).mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("a file that leaves a record is deleted then: a shot taken again, and a record let go of (review r1 #8)", async () => {
+    const { queue, deps } = setup({ upload: jest.fn(async () => Promise.reject(new Error("offline"))) });
+    await queue.init("asha");
+    queue.start(draft());
+    queue.update(ID, (d) => addShot(d, "front", photo("front")));
+    queue.update(ID, (d) => addShot(d, "front", photo("front-2")));
+    await queue.idle();
+    expect(deps.discard).toHaveBeenCalledWith(["file:///captures/front.jpg"]);
+    expect(queue.getDrafts()[0].shots.front.uri).toBe("file:///captures/front-2.jpg");
+
+    // The booking was cancelled in the middle of the walk: the screen that reads it lets the record go.
+    (deps.discard as jest.Mock).mockClear();
+    queue.release("RN-24831", () => false);
+    expect(queue.getDrafts()).toEqual([]);
+    expect(deps.discard).toHaveBeenCalledWith(["file:///captures/front-2.jpg"]);
+  });
+
+  it("release leaves the records it is told to keep, and other bookings' records", async () => {
+    const { queue } = setup({ upload: jest.fn(async () => Promise.reject(new Error("offline"))) });
+    await queue.init("asha");
+    queue.start(draft());
+    queue.start(draft("return"));
+    queue.start(startDraft({ number: "RN-30000", moment: "handover", side: "customer", list }));
+    queue.release("RN-24831", (d) => d.moment === "handover");
+    expect(queue.getDrafts().map((d) => d.id)).toEqual(["RN-24831:handover:customer", "RN-30000:handover:customer"]);
+  });
+
+  it("a shot taken again while its first photo was going up is not a failed upload", async () => {
+    let release: () => void = () => undefined;
+    const { queue } = setup({
+      upload: jest.fn(async (uri: string) => {
+        if (uri.endsWith("front.jpg")) {
+          await new Promise<void>((resolve) => (release = resolve));
+          // Its file was cleared when the shot was taken again.
+          throw new Error("no such file");
+        }
+        return `https://bucket.test/${uri.split("/").pop()}`;
+      }),
+    });
+    await queue.init("asha");
+    queue.start(draft());
+    queue.update(ID, (d) => addShot(d, "front", photo("front")));
+    await Promise.resolve();
+    queue.update(ID, (d) => addShot(d, "front", photo("front-2")));
+    release();
+    await queue.idle();
+    const d = queue.getDrafts()[0];
+    expect(d.error).toBeNull();
+    expect(d.shots.front).toMatchObject({ uri: "file:///captures/front-2.jpg", url: "https://bucket.test/front-2.jpg" });
+  });
+
+  it("Try again does nothing for a record that still needs a photo: its card opens the capture instead (review r1 #1)", async () => {
+    const { queue, deps } = setup({
+      upload: jest.fn(async (uri: string) => {
+        if (uri.endsWith("back.jpg")) throw new FileGone();
+        return `https://bucket.test/${uri.split("/").pop()}`;
+      }),
+    });
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+    const before = queue.getDrafts()[0];
+    expect(before).toMatchObject({ sealed: false, error: { retry: false } });
+    queue.retry(ID);
+    await queue.idle();
+    // The reason stays on screen, and nothing was sent.
+    expect(queue.getDrafts()[0].error).toEqual(before.error);
+    expect(deps.send).not.toHaveBeenCalled();
   });
 
   it("a file the phone no longer has is asked for again, and the rest still goes up", async () => {

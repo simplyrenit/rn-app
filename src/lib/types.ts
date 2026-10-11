@@ -412,6 +412,8 @@ export type RootStackParamList = {
     title?: string;
     other?: string;
     skew_ms?: number;
+    /** The booking asks the owner to check the customer's ID: for the general list, when the booking's own cannot be read. */
+    id_match?: boolean;
   };
   [key: string]: object | undefined;
 };

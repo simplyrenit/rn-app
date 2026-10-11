@@ -1,4 +1,4 @@
-import { CaptureDraft, LocalFile, Moment, Side, captureId } from "@/lib/capture";
+import { CaptureDraft, LocalFile, Moment, Side, captureId, namesIn, orphanFiles } from "@/lib/capture";
 import { FileGone, createCaptureQueue } from "@/lib/capture-queue";
 import { uuidv4 } from "@/lib/uuid";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -42,6 +42,54 @@ export const reroot = (uri: string): string => {
 
 const rerootFile = <T extends LocalFile | null>(file: T): T => (file ? { ...file, uri: reroot(file.uri) } : file);
 
+/** Deletes files from the phone. A file that is already gone, or cannot be deleted, is passed over. */
+export async function discardFiles(uris: string[]): Promise<void> {
+  await Promise.all(uris.map((uri) => FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => undefined)));
+}
+
+/** A file's size in bytes, or null when the phone cannot say. */
+export async function fileBytes(uri: string): Promise<number | null> {
+  try {
+    const info = await FileSystem.getInfoAsync(uri, { size: true });
+    return info.exists && typeof info.size === "number" ? info.size : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The lists on this phone that name files in the folder: the capture drafts of
+ * every account, and the draft-photo jobs of every account, which share it
+ * (`draft-photo-jobs.ts` keeps its photos with `keepFile`).
+ */
+const NAMING_KEYS = ["renit-capture-drafts:", "renit-draft-photo-jobs:"];
+
+/**
+ * Clears the folder of files nothing names any more: a photo taken for a report
+ * that was never sent, a file left by a crash between the camera and the record.
+ * Every delete at the moment a file leaves a record is done by the queue; this is
+ * the net under it. It takes only files older than a day, and does nothing at all
+ * if the folder or any list cannot be read: a file is never deleted on a guess.
+ */
+export async function sweepCaptureFolder(nowMs: number = Date.now()): Promise<void> {
+  try {
+    const folder = await FileSystem.getInfoAsync(dir());
+    if (!folder.exists) return;
+    const keys = (await AsyncStorage.getAllKeys()).filter((key) => NAMING_KEYS.some((prefix) => key.startsWith(prefix)));
+    const named = new Set<string>();
+    for (const [, raw] of await AsyncStorage.multiGet(keys)) namesIn(JSON.parse(raw ?? "null"), FOLDER, named);
+    for (const draft of captureQueue.getDrafts()) namesIn(draft, FOLDER, named);
+    const found: { name: string; modifiedMs: number }[] = [];
+    for (const name of await FileSystem.readDirectoryAsync(dir())) {
+      const info = await FileSystem.getInfoAsync(`${dir()}${name}`);
+      if (info.exists && !info.isDirectory) found.push({ name, modifiedMs: info.modificationTime * 1000 });
+    }
+    await discardFiles(orphanFiles(found, named, nowMs).map((name) => `${dir()}${name}`));
+  } catch {
+    // Nothing is deleted when anything about the folder or the lists is unsure.
+  }
+}
+
 /** The app's one capture queue. */
 export const captureQueue = createCaptureQueue({
   async upload(uri, kind, draft) {
@@ -64,9 +112,7 @@ export const captureQueue = createCaptureQueue({
     if (drafts.length === 0) await AsyncStorage.removeItem(keyFor(account));
     else await AsyncStorage.setItem(keyFor(account), JSON.stringify(drafts));
   },
-  async discard(uris) {
-    await Promise.all(uris.map((uri) => FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => undefined)));
-  },
+  discard: discardFiles,
 });
 
 /** The records on this phone, read live: a screen redraws as files go up. */
@@ -94,7 +140,7 @@ const RETRY_EVERY_MS = 20_000;
 export function useCaptureUploads(account: string | null | undefined) {
   useEffect(() => {
     if (!account) return;
-    void captureQueue.init(account);
+    void captureQueue.init(account).then(() => sweepCaptureFolder());
     const state = AppState.addEventListener("change", (next) => {
       if (next === "active") captureQueue.kick();
     });
