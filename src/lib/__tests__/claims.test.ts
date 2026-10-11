@@ -273,6 +273,16 @@ describe("the reply, once", () => {
     expect(replyView(damage(), "owner", after).kind).toBe("none");
   });
 
+  it("lets `can_reply` decide when the answer had no readable server time, instead of this phone's own clock", () => {
+    const after = new Date("2026-10-12T12:30:00Z");
+    // A phone whose clock runs ahead would hide the form; with no server time the server's `can_reply` stands.
+    expect(replyView(damage({ can_reply: true }), "customer", after, false).kind).toBe("form");
+    expect(replyView(damage({ can_reply: false }), "customer", after, false).kind).toBe("none");
+    expect(claimRowSub(damage({ can_reply: true }), "customer", after, false)).toContain("Reply by");
+    // With the server's time the deadline is still counted.
+    expect(replyView(damage({ can_reply: true }), "customer", after, true).kind).toBe("late");
+  });
+
   it("shows the reply that was sent, and never a form after it", () => {
     const reply = { text: "In the side pocket.", evidence: [], at: "2026-10-09T09:00:00Z" };
     expect(replyView(damage({ reply, can_reply: false }), "customer", NOW)).toEqual({ kind: "sent", reply });

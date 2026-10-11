@@ -20,7 +20,7 @@ function ClaimRow({ id, role, first }: { id: number; role: Side; first: boolean 
     <LinkRow
       first={first}
       title={claim ? kindLabel(claim.kind) : "A report on this booking"}
-      sub={claim ? claimRowSub(claim, role, now) : query.isError ? "Open it to see where it stands." : "Loading…"}
+      sub={claim ? claimRowSub(claim, role, now, Boolean(query.data?.serverTime)) : query.isError ? "Open it to see where it stands." : "Loading…"}
       onPress={() => navigation.navigate("Claim", { id, role })}
     />
   );

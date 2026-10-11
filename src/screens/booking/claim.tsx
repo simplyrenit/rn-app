@@ -168,7 +168,7 @@ function ClaimBody({ read, receivedAt, role }: { read: ClaimRead; receivedAt: nu
   const now = useServerNow(read.serverTime, receivedAt, 30_000);
   const { claim } = read;
   const banner = statusBanner(claim, role, now);
-  const reply = replyView(claim, role, now);
+  const reply = replyView(claim, role, now, Boolean(read.serverTime));
   const rows = effectRows(claim);
   const amounts = amountLines(claim);
   const other = otherName(claim, role);

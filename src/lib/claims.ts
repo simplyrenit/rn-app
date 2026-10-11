@@ -320,22 +320,24 @@ export type ReplyView =
  * a form left open past the deadline closes by itself instead of failing with
  * `reply_late` when sent.
  */
-export function replyView(claim: Claim, role: Side, now: Date): ReplyView {
+export function replyView(claim: Claim, role: Side, now: Date, clockKnown = true): ReplyView {
   if (claim.reply) return { kind: "sent", reply: claim.reply };
   const mine = againstMe(claim, role);
   if (!takesDecision(claim.kind) || !claim.reply_due_at) return { kind: "none" };
   const due = claim.reply_due_at;
   if (claim.status === "decided") return mine ? { kind: "none_sent" } : { kind: "none" };
-  if (reached(due, now)) return mine ? { kind: "late", due } : { kind: "none" };
+  // Without a readable server time (the answer had no `Date`), this phone's own clock must not hide a form the server
+  // would still take: `can_reply` decides, as it does for every other refusal (review app-5 r2).
+  if (clockKnown && reached(due, now)) return mine ? { kind: "late", due } : { kind: "none" };
   if (!mine) return { kind: "waiting", due };
   if (!claim.can_reply) return { kind: "none" };
   return { kind: "form", due };
 }
 
 /** The line under a claim on a list of claims, or a booking. */
-export function claimRowSub(claim: Claim, role: Side, now: Date): string {
+export function claimRowSub(claim: Claim, role: Side, now: Date, clockKnown = true): string {
   if (claim.status === "decided") return DECISION_TITLE[claim.decision] ?? "Decided by Renit";
-  const view = replyView(claim, role, now);
+  const view = replyView(claim, role, now, clockKnown);
   if (view.kind === "form") return `Waiting for Renit's decision. Reply by ${deadlineLabel(view.due, now)}.`;
   return statusBanner(claim, role, now).title;
 }
