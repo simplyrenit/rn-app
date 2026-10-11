@@ -63,8 +63,8 @@ function Deposit({
       // The one rule for resuming any payment (P2-1): the booking carries the pay page of
       // the payment that is open and can still be paid. Only when there is none is a new
       // one asked for. After a page has run out the booking is read again and carries none.
-      const now = latest.current;
-      const open = now.pay_now?.purpose === "deposit" ? now.pay_now.payment : null;
+      const current = latest.current;
+      const open = current.pay_now?.purpose === "deposit" ? current.pay_now.payment : null;
       if (open) return open;
       let answer;
       try {
