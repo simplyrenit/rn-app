@@ -189,6 +189,7 @@ const EditProductScreen: React.FC = () => {
                   onPress={() =>
                     navigation.navigate("EditCategory", {
                       name: product.name,
+                      categoryId: product.category?.id ?? null,
                     })
                   }
                   leftIcon="ClipboardDocumentIcon"

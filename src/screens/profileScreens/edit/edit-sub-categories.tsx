@@ -16,7 +16,7 @@ import { View } from "react-native";
  * The PATCH that re-files a product, shared with the category screen's search
  * so a search result saves exactly as picking the row here does.
  */
-export function useSaveSubcategory(name: string) {
+export function useSaveSubcategory(name: string, currentCategoryId?: number | null) {
   const navigation = useTypedNavigation();
   const { updateMyProductDetails } = useProfile();
   // Which row is saving. `useProfile`'s own `loading` is shared by every call
@@ -37,7 +37,9 @@ export function useSaveSubcategory(name: string) {
       };
       const answer = await updateMyProductDetails(name, body);
 
-      toastSave(saveOutcome({ sent: body, answer: answer as unknown as ListingAnswer }));
+      // What the screen opened with: choosing the category the listing already has changes nothing.
+      const before = currentCategoryId ? ({ category: { id: currentCategoryId } } as ListingAnswer) : null;
+      toastSave(saveOutcome({ before, sent: body, answer: answer as unknown as ListingAnswer }));
       navigation.navigate("editProduct", { id: name });
     } catch (error) {
       console.error("Failed to update product details:", error);
@@ -59,8 +61,8 @@ export function useSaveSubcategory(name: string) {
 export default function EditSubCategories() {
   const route = useRoute<RouteProps<"EditSubCategories">>();
   const navigation = useTypedNavigation();
-  const { name, category, subcategories } = route.params;
-  const { save, saving } = useSaveSubcategory(name);
+  const { name, category, subcategories, categoryId } = route.params;
+  const { save, saving } = useSaveSubcategory(name, categoryId);
 
   return (
     <NonScrollableContainer>

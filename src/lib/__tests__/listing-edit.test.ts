@@ -327,3 +327,61 @@ describe("the details form saved over a change that waits (review app-e2e-3 r1, 
     });
   });
 });
+
+describe("a save is 'on hold' only for a change of its own (review app-e2e-3 r1, finding 2)", () => {
+  const heldTitle = {
+    state: "flagged",
+    fields: ["title"],
+    changes: { title: "Gamo air rifle" },
+    flag_reasons: [{ code: "not_allowed", text: "Renit does not allow this item" }],
+  };
+  const listing = { name: "ps5-1", title: "Sony PS5", quantity: 1, status: "live", flag_reasons: [], pending_edit: heldTitle, blocked_dates: [{ start_date: "2026-10-24", end_date: "2026-10-26" }] };
+
+  it("the dates are saved at once while a title waits: updated, with a word on the title that still waits, not 'on hold'", () => {
+    const sent = { blocked_dates: [{ start_date: "2026-10-24", end_date: "2026-10-26" }, { start_date: "2026-11-07", end_date: "2026-11-08" }] };
+    const answer = { ...listing, blocked_dates: sent.blocked_dates };
+    expect(saveOutcome({ before: { blocked_dates: listing.blocked_dates }, sent, answer })).toEqual({
+      kind: "updated",
+      title: "Your product was updated!",
+      message: "An earlier change still waits: title.",
+    });
+  });
+
+  it("a quantity changed beside a held title in the details form is applied at once: updated, the title still waits", () => {
+    const sent = { title: "Gamo air rifle", quantity: 2 };
+    expect(saveOutcome({ before: listing, sent, answer: { ...listing, quantity: 2 } })).toEqual({
+      kind: "updated",
+      title: "Your product was updated!",
+      message: "An earlier change still waits: title.",
+    });
+  });
+
+  it("a new held value in this save is this save's: on hold", () => {
+    const more = { ...heldTitle, fields: ["title", "rate"], changes: { title: "Gamo air rifle", rate: "9999.00" }, flag_reasons: [{ code: "price_high", text: "The price looks too high" }] };
+    const sent = { title: "Gamo air rifle", rate: "9999" };
+    expect(saveOutcome({ before: { ...listing, rate: "610.00" }, sent, answer: { ...listing, rate: "610.00", pending_edit: more } }).kind).toBe("held");
+    // And a held title changed again to another waiting title.
+    const other = { ...heldTitle, changes: { title: "Another" } };
+    expect(saveOutcome({ before: listing, sent: { title: "Another" }, answer: { ...listing, pending_edit: other } }).kind).toBe("held");
+  });
+
+  it("the same dates again, in any order, say nothing was changed", () => {
+    const dates = [{ start_date: "2026-11-07", end_date: "2026-11-08" }, { start_date: "2026-10-24", end_date: "2026-10-26" }];
+    expect(
+      saveOutcome({
+        before: { blocked_dates: dates },
+        sent: { blocked_dates: [...dates].reverse() },
+        answer: { ...listing, blocked_dates: [dates[1], dates[0]] },
+      })
+    ).toEqual({ kind: "nothing", title: "Nothing was changed" });
+  });
+
+  it("choosing the category the listing has says nothing was changed; another one is updated", () => {
+    const sent = (id: number) => ({ category: { id, parent: "Gaming", title: "Consoles" } });
+    const answer = (id: number) => ({ ...listing, pending_edit: null, category: { id, title: "Consoles" } });
+    expect(saveOutcome({ before: { category: { id: 7 } }, sent: sent(7), answer: answer(7) })).toEqual({ kind: "nothing", title: "Nothing was changed" });
+    expect(saveOutcome({ before: { category: { id: 7 } }, sent: sent(9), answer: answer(9) }).kind).toBe("updated");
+    // A screen that does not know what the listing has cannot say nothing changed.
+    expect(saveOutcome({ sent: sent(7), answer: answer(7) }).kind).toBe("updated");
+  });
+});

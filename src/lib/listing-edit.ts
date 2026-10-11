@@ -199,6 +199,12 @@ function same(key: string, a: unknown, b: unknown): boolean {
     const y = Number(b);
     return Number.isFinite(x) && Number.isFinite(y) && Math.abs(x - y) < 1e-6;
   }
+  // The unavailable dates are the same dates in any order, whatever time of day an answer gives them.
+  if (key === "blocked_dates" && Array.isArray(a) && Array.isArray(b)) {
+    const days = (list: unknown[]) =>
+      list.map((r) => (isRecord(r) ? `${String(r.start_date).slice(0, 10)}/${String(r.end_date).slice(0, 10)}` : "")).sort();
+    return JSON.stringify(days(a)) === JSON.stringify(days(b));
+  }
   // A category is the same category when its id is (the listing carries an object, a change an id, a save an object with one).
   if (key === "category") {
     const id = (v: unknown) => (isRecord(v) ? v.id : v);

@@ -55,7 +55,8 @@ export default function EditProductAvailability() {
       };
       const answer = await updateMyProductDetails(name, body);
 
-      toastSave(saveOutcome({ sent: body, answer: answer as unknown as ListingAnswer }));
+      // What the screen opened with: saving the same dates changes nothing.
+      toastSave(saveOutcome({ before: { blocked_dates: dates_blocked }, sent: body, answer: answer as unknown as ListingAnswer }));
       navigation.navigate("editProduct", { id: name });
     } catch (error) {
       console.error("Failed to update product details:", error);

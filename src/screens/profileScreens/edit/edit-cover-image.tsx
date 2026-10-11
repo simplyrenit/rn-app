@@ -25,7 +25,14 @@ export default function EditCoverImage() {
         cover_image: croppedImage,
       });
 
-      toastSave(saveOutcome({ sent: { images, cover_image: croppedImage }, answer: response.data as unknown as ListingAnswer }));
+      // Every photo is uploaded again, so a save here is never the same photos: the opening values are for the earlier change.
+      toastSave(
+        saveOutcome({
+          before: { images, cover_image: coverImage },
+          sent: { images, cover_image: croppedImage },
+          answer: response.data as unknown as ListingAnswer,
+        })
+      );
       navigation.navigate("editProduct", { id: name });
     } catch (error) {
       console.error("Error updating product images:", error);
