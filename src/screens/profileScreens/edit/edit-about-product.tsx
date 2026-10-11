@@ -8,7 +8,8 @@ import {
 import { EditStepHeader } from "@/components/post/edit-step-header";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
-import { ListingAnswer, saveOutcome } from "@/lib/listing-edit";
+import { ListingAnswer, ownerView, readPendingEdit, saveOutcome } from "@/lib/listing-edit";
+import { HeldFormNotice } from "@/components/product/listing-status";
 import { toastSave } from "@/lib/save-toast";
 import { listingPrompts } from "@/lib/listing-status";
 import { parseQuantity, quantityInUseMessage } from "@/lib/list-flow/stock";
@@ -27,7 +28,11 @@ import { toast } from "@/lib/toast";
 export default function EditAboutProduct() {
   const navigation = useTypedNavigation();
   const route = useRoute<RouteProps<"EditAboutProduct">>();
-  const { data } = route.params;
+  // The form starts from the listing as its owner sees it: a waiting change laid over what customers see. The server
+  // compares a save with that, so a value left alone goes back as it was, and a held one is not taken out of the change.
+  const listing = route.params.data;
+  const data = ownerView(listing);
+  const waiting = readPendingEdit(listing.pending_edit);
 
   const { updateMyProductDetails } = useProfile();
   const { userDetails } = useGlobalContext();
@@ -98,7 +103,7 @@ export default function EditAboutProduct() {
       const answer = await updateMyProductDetails(data.name, body);
 
       // The save may have changed nothing the customers see (the change waits, or was already so): say which.
-      toastSave(saveOutcome({ before: data as unknown as ListingAnswer, sent: body, answer: answer as unknown as ListingAnswer }));
+      toastSave(saveOutcome({ before: listing as unknown as ListingAnswer, sent: body, answer: answer as unknown as ListingAnswer }));
       navigation.goBack();
     } catch (error) {
       console.error("Error updating product details:", error);
@@ -130,6 +135,8 @@ export default function EditAboutProduct() {
           reserved a percentage of screen width, so the scroll container never
           made room for the home indicator and the CTA was clipped. */}
       <View className="flex-1 justify-between">
+        {/* Which of these values are waiting: they are shown here, and customers still see the earlier ones. */}
+        <HeldFormNotice pending={waiting} />
         <AboutProductForm
           initialValues={{
             productName: data.title || "",

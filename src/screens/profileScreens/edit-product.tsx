@@ -2,7 +2,7 @@ import { BackButton, Button, EmptyState, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import IconButton from "@/components/profile/post-auth/profile-icon-button";
 import { HeldChange, ListingPrompts, ListingStatusPill } from "@/components/product/listing-status";
-import { readPendingEdit } from "@/lib/listing-edit";
+import { ownerView, readPendingEdit } from "@/lib/listing-edit";
 import { apiError } from "@/lib/api-error";
 import { blockedDatesOf, hasPrice, openBookingMessage, resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
@@ -198,7 +198,12 @@ const EditProductScreen: React.FC = () => {
                 <IconButton
                   onPress={() =>
                     navigation.navigate("EditAboutProduct", {
-                      data: { ...product, isOwnerContact: `${userData?.first_name} ${userData?.last_name}` === product.contact_name && userData?.phone === product.contact_number },
+                      // The listing as the server has it (the screen lays a waiting change over it, `ownerView`); the owner is
+                      // the contact when the contact the owner sees is theirs.
+                      data: (() => {
+                        const view = ownerView(product);
+                        return { ...product, isOwnerContact: `${userData?.first_name} ${userData?.last_name}` === view.contact_name && userData?.phone === view.contact_number };
+                      })(),
                     })
                   }
                   leftIcon="DocumentTextIcon"
@@ -207,10 +212,12 @@ const EditProductScreen: React.FC = () => {
                 />
                 <IconButton
                   onPress={() => {
+                    // The photos as their owner sees them: waiting ones, if a change of photos waits.
+                    const view = ownerView(product);
                     navigation.navigate("EditProductImages", {
-                      images: product.images,
+                      images: view.images,
                       name: product.name,
-                      coverImage: product.cover_image,
+                      coverImage: view.cover_image,
                     })
                   }
                   }

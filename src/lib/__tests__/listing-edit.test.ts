@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { fieldsLine, flagLine, pendingLine, readPendingEdit, readReasons, saveOutcome, submittedCopy } from "../listing-edit";
+import { fieldsLine, flagLine, ownerView, pendingLine, readPendingEdit, readReasons, saveOutcome, submittedCopy } from "../listing-edit";
 import { statusDetail } from "../listing-status";
 
 /** The server's own shapes (ENG-100-api.md, review rounds 1 and 2, "Contract changes"). */
@@ -181,5 +181,149 @@ describe("the screen after posting from the phone (every photo is checked, not o
   it("a flagged answer with no reasons still says what to do; a live one says it is live", () => {
     expect(submittedCopy("flagged", []).body).toBe("Open it from My products to change it, and we will look again.");
     expect(submittedCopy("live", []).status).toBe("live");
+  });
+});
+
+describe("the details form saved over a change that waits (review app-e2e-3 r1, finding 1)", () => {
+  // The owner's object as the phone's list and detail answer it, a live listing with a change waiting. The top-level values
+  // are the ones customers see; the waiting ones are only in `pending_edit.changes` (product/publish.py `pending_edit`).
+  const live = {
+    name: "ps5-1",
+    title: "Sony PS5",
+    description: "Console with two controllers.",
+    condition: "good",
+    brand_name: "Sony",
+    model_name: "CFI-1200",
+    usage_description: "Gaming",
+    location: "Andheri West",
+    contact_name: "Meera J",
+    contact_number: "+919876543210",
+    rate: "610.00",
+    security_deposit: "3000.00",
+    worth: "45000.00",
+    quantity: 1,
+    status: "live",
+    flag_reasons: [],
+    pending_edit: null,
+  };
+  /** What the details form sends: the twelve checked fields from the boxes, the amounts as the box holds them. */
+  const wholeForm = (view: Record<string, any>, over: Record<string, unknown> = {}) => ({
+    title: view.title,
+    brand_name: view.brand_name,
+    model_name: view.model_name,
+    condition: view.condition,
+    description: view.description,
+    location: view.location,
+    usage_description: view.usage_description,
+    rate: `${parseFloat(view.rate)}`,
+    security_deposit: `${parseFloat(view.security_deposit)}`,
+    worth: `${parseFloat(view.worth)}`,
+    contact_name: view.contact_name,
+    contact_number: view.contact_number,
+    quantity: view.quantity,
+    ...over,
+  });
+
+  it("lays the waiting values over the listing for the form, and leaves everything else and the object itself alone", () => {
+    const held = { state: "flagged", fields: ["title", "security_deposit"], changes: { title: "Gamo air rifle", security_deposit: "0.00" }, flag_reasons: [depositZero] };
+    const waiting = { ...live, pending_edit: held };
+    const view = ownerView(waiting);
+    expect(view).toMatchObject({ title: "Gamo air rifle", security_deposit: "0.00", rate: "610.00", description: live.description });
+    expect(waiting.title).toBe("Sony PS5");
+    expect(ownerView(view)).toEqual(view);
+    expect(ownerView(live)).toBe(live);
+    // A category is an object on the listing and an id in a change: never laid over.
+    expect(ownerView({ ...waiting, category: { id: 7 }, pending_edit: { ...held, fields: ["category"], changes: { category: 9 } } }).category).toEqual({ id: 7 });
+  });
+
+  describe("case a: a title waits and the owner taps Update product with nothing changed", () => {
+    const held = { state: "flagged", fields: ["title"], changes: { title: "Gamo air rifle" }, flag_reasons: [{ code: "not_allowed", text: "Renit does not allow this item" }] };
+    const waiting = { ...live, pending_edit: held };
+
+    it("the form sends the held title back: the server reads it as no change and answers the same, so nothing was changed", () => {
+      const sent = wholeForm(ownerView(waiting));
+      expect(sent.title).toBe("Gamo air rifle");
+      // The server's answer (publish.py `current` is the held value; the held change is kept as it was): the same listing.
+      expect(saveOutcome({ before: waiting, sent, answer: { ...waiting } })).toEqual({ kind: "nothing", title: "Nothing was changed" });
+    });
+
+    it("the form as it was (the title customers see sent back) takes the waiting title out: that is a withdrawal, never 'updated'", () => {
+      const sent = wholeForm(live);
+      // The server's answer (publish.py:375-386, :490-491): the held title is put back, the held change is deleted.
+      const out = saveOutcome({ before: waiting, sent, answer: { ...live } });
+      expect(out).toEqual({
+        kind: "withdrawn",
+        title: "Your waiting change was withdrawn",
+        message: "The title you had waiting went back to what customers see.",
+      });
+    });
+  });
+
+  describe("case b: a price and a deposit wait, and the owner fixes the deposit", () => {
+    const held = {
+      state: "flagged",
+      fields: ["rate", "security_deposit"],
+      changes: { rate: "700.00", security_deposit: "500.00" },
+      flag_reasons: [{ code: "deposit_low", text: "The deposit is less than one day's rent" }],
+    };
+    const waiting = { ...live, pending_edit: held };
+
+    it("the form shows the waiting 700 and 500, the deposit is set to 800 and the price goes back as 700", () => {
+      const view = ownerView(waiting);
+      expect([view.rate, view.security_deposit]).toEqual(["700.00", "500.00"]);
+      const sent = wholeForm(view, { security_deposit: "800" });
+      expect(sent.rate).toBe("700");
+      // The server's answer: the price is the held one sent again (no change), the deposit is new; the group passes as a
+      // whole, so both are applied and nothing waits (publish.py: held group re-checked, `passed`).
+      const answer = { ...live, rate: "700.00", security_deposit: "800.00", pending_edit: null };
+      expect(saveOutcome({ before: waiting, sent, answer })).toEqual({ kind: "updated", title: "Your product was updated!" });
+    });
+
+    it("with the price sent as customers see it (the old form) the held 700 would have been dropped, and that is said", () => {
+      const sent = wholeForm(live, { security_deposit: "800" });
+      // The server's answer: the price is put back at 610, the deposit passes and is applied.
+      const answer = { ...live, rate: "610.00", security_deposit: "800.00", pending_edit: null };
+      const out = saveOutcome({ before: waiting, sent, answer });
+      expect(out.kind).toBe("updated");
+      expect(out.message).toBe("The price you had waiting went back to what customers see.");
+    });
+  });
+
+  describe("case c: a title and a description wait together and the owner types a new title", () => {
+    const held = {
+      state: "flagged",
+      fields: ["title", "description"],
+      changes: { title: "Gamo air rifle", description: "A new description." },
+      flag_reasons: [{ code: "not_allowed", text: "Renit does not allow this item" }],
+    };
+    const waiting = { ...live, pending_edit: held };
+
+    it("the description goes back as the waiting one and is not lost: the new title passes and both are applied", () => {
+      const sent = wholeForm(ownerView(waiting), { title: "Sony PlayStation 5" });
+      expect(sent.description).toBe("A new description.");
+      const answer = { ...live, title: "Sony PlayStation 5", description: "A new description.", pending_edit: null };
+      expect(saveOutcome({ before: waiting, sent, answer })).toEqual({ kind: "updated", title: "Your product was updated!" });
+    });
+  });
+
+  describe("case d: a text change waits only because a check could not run", () => {
+    const held = { state: "flagged", fields: ["description"], changes: { description: "Edited." }, flag_reasons: [needsALook] };
+    const waiting = { ...live, pending_edit: held };
+
+    it("a later save of the quantity sends the waiting description back as it is, and the server decides it again by its rules", () => {
+      const sent = wholeForm(ownerView(waiting), { quantity: 2 });
+      expect(sent.description).toBe("Edited.");
+      // The server's answer once the text check can run (the next save "decides each group by its own rules again"): the
+      // description is clean, so it is applied; the quantity is saved at once. Nothing is thrown away.
+      const applied = { ...live, description: "Edited.", quantity: 2, pending_edit: null };
+      expect(saveOutcome({ before: waiting, sent, answer: applied })).toEqual({ kind: "updated", title: "Your product was updated!" });
+      // And if the check still cannot run, the change keeps waiting and the quantity is saved: said so.
+      const still = { ...live, quantity: 2, pending_edit: held };
+      expect(saveOutcome({ before: waiting, sent, answer: still })).toEqual({
+        kind: "updated",
+        title: "Your product was updated!",
+        message: "An earlier change still waits: description.",
+      });
+    });
   });
 });

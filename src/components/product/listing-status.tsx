@@ -146,3 +146,36 @@ export function HeldChange({ pending, compact = false }: { pending: PendingEdit 
     </View>
   );
 }
+
+/**
+ * Over a form that is filled with a listing: the values of a waiting change are the ones in the boxes (the server compares a
+ * save with them), so the owner is told which, and that customers still see the earlier ones. Nothing when none waits.
+ */
+export function HeldFormNotice({ pending }: { pending: PendingEdit | null | undefined }) {
+  const { color } = useTheme();
+  const line = pendingLine(pending);
+  if (!pending || !line) return null;
+  return (
+    <View
+      accessible
+      accessibilityLabel={`Some of these values are waiting. ${line}`}
+      style={{
+        marginHorizontal: space.md,
+        marginTop: space.sm,
+        gap: space.xs,
+        padding: space.md,
+        borderRadius: radius.card,
+        borderWidth: 1,
+        borderColor: color.warning,
+        backgroundColor: color.warningWash,
+      }}
+    >
+      <Text fontSize="text-md" fontWeight="font-bold">
+        Some of these values are waiting
+      </Text>
+      <Text fontSize="text-sm" tone="body">
+        {`${line} The boxes show the waiting values. Leave them as they are to keep the change waiting, or change them to try again.`}
+      </Text>
+    </View>
+  );
+}

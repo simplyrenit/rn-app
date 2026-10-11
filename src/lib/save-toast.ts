@@ -13,6 +13,7 @@ export function toastSave(outcome: SaveOutcome) {
       break;
     case "held":
     case "flagged":
+    case "withdrawn":
     case "sent_back_again":
       toast.warning(outcome.title, options);
       break;

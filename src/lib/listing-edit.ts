@@ -74,6 +74,43 @@ export function fieldsLine(fields: readonly string[]): string {
   return joinWords([...new Set(fields.map((f) => FIELD_WORDS[f] ?? f.replace(/_/g, " ")))]);
 }
 
+/**
+ * The fields of the listing the owner's own screens show and send, as plain values: what a waiting change names for them
+ * can be laid over the listing. The category (an object on the listing, an id in a change), the details and the included
+ * items are shaped differently and are not laid over.
+ */
+const OWNER_FIELDS = [
+  "title",
+  "description",
+  "condition",
+  "brand_name",
+  "model_name",
+  "usage_description",
+  "contact_name",
+  "contact_number",
+  "rate",
+  "security_deposit",
+  "worth",
+  "location",
+  "images",
+  "cover_image",
+];
+
+/**
+ * The listing as its owner sees it, which is what the server compares a save against: the version customers see with the
+ * values of a waiting change laid over it (`pending_edit.changes`). The server reads a held field sent back as its
+ * held value as no change, and sent back as the value customers see as "put back", which takes it out of the waiting
+ * change; so every screen that fills a form from a listing, and sends the form whole, starts from this and not from the
+ * top-level values. Idempotent.
+ */
+export function ownerView<T extends Record<string, any>>(product: T): T {
+  const pending = readPendingEdit(product.pending_edit);
+  if (!pending) return product;
+  const over: Record<string, unknown> = {};
+  for (const field of OWNER_FIELDS) if (field in pending.changes) over[field] = pending.changes[field];
+  return { ...product, ...over };
+}
+
 const trimmed = (text: string | null | undefined) => (text ?? "").trim();
 const sentence = (text: string) => (/[.!?]$/.test(text) ? text : `${text}.`);
 
@@ -144,7 +181,7 @@ export interface ListingAnswer {
   [field: string]: unknown;
 }
 
-export type SaveKind = "updated" | "nothing" | "checking" | "held" | "sent_back_again" | "flagged";
+export type SaveKind = "updated" | "nothing" | "checking" | "held" | "sent_back_again" | "flagged" | "withdrawn";
 
 export interface SaveOutcome {
   kind: SaveKind;
@@ -162,6 +199,11 @@ function same(key: string, a: unknown, b: unknown): boolean {
     const y = Number(b);
     return Number.isFinite(x) && Number.isFinite(y) && Math.abs(x - y) < 1e-6;
   }
+  // A category is the same category when its id is (the listing carries an object, a change an id, a save an object with one).
+  if (key === "category") {
+    const id = (v: unknown) => (isRecord(v) ? v.id : v);
+    return id(a) === id(b);
+  }
   if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((v, i) => same(key, v, b[i]));
   if (isRecord(a) && isRecord(b)) {
     const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
@@ -172,12 +214,15 @@ function same(key: string, a: unknown, b: unknown): boolean {
 
 /**
  * What a save of a listing did, from the answer: `sent` is the body that was sent and `before` the listing as the screen
- * had it (null when the screen has not got it all, as the photo screens, which always send new files). In this order:
- *  1. nothing was changed: every field sent comes back as it was, the status is the same, and no change newly waits;
- *  2. a change waits (`pending_edit`): "being checked", or "needs a change: <the server's reason>";
+ * had it (null when the screen has not got it); both the listing and the answer are read as the owner sees them
+ * (`ownerView`), which is how the server compares. In this order:
+ *  1. nothing was changed: every field sent comes back as it was, the status is the same, and the waiting change is the same;
+ *  2. a change of this save waits (a field that was sent, is named in `pending_edit.fields`, and is held with a value it
+ *     was not held with before): "being checked", or "needs a change: <the server's reason>";
  *  3. the listing is flagged because of a change since staff sent it back: "Renit will look at it again";
  *  4. the listing is flagged, or being checked, after the save: said so;
- *  5. otherwise it was updated.
+ *  5. a waiting change went away and nothing else changed: it was withdrawn (never "updated");
+ *  6. otherwise it was updated, with a word on an earlier change that still waits, or one that was withdrawn.
  */
 export function saveOutcome(input: {
   before?: ListingAnswer | null;
@@ -185,35 +230,35 @@ export function saveOutcome(input: {
   answer: ListingAnswer | null | undefined;
 }): SaveOutcome {
   const { before, sent, answer } = input;
-  const updated: SaveOutcome = { kind: "updated", title: "Your product was updated!" };
-  if (!answer) return updated;
+  if (!answer) return { kind: "updated", title: "Your product was updated!" };
   const pending = readPendingEdit(answer.pending_edit);
   const reasons = readReasons(answer.flag_reasons);
-  if (before) {
-    const heldBefore = readPendingEdit(before.pending_edit);
-    const unchanged = Object.keys(sent).every((key) => same(key, before[key], answer[key]));
-    const samePending = JSON.stringify(heldBefore) === JSON.stringify(pending);
-    if (unchanged && samePending && (before.status ?? null) === (answer.status ?? null)) {
-      return { kind: "nothing", title: "Nothing was changed" };
-    }
+  const sentKeys = Object.keys(sent);
+  // What waited before this save: null when nothing did, undefined when the screen cannot say.
+  const heldBefore = before && "pending_edit" in before ? readPendingEdit(before.pending_edit) : before ? null : undefined;
+  const was = before ? ownerView(before) : null;
+  const now = ownerView(answer);
+
+  if (was) {
+    const unchanged = sentKeys.every((key) => same(key, was[key], now[key]));
+    const samePending = heldBefore === undefined || !("pending_edit" in (before ?? {})) || JSON.stringify(heldBefore) === JSON.stringify(pending);
+    const sameStatus = !before || before.status === undefined || before.status === answer.status;
+    if (unchanged && samePending && sameStatus) return { kind: "nothing", title: "Nothing was changed" };
   }
-  if (pending) {
+
+  // This save's own held fields: sent, named as waiting, and not waiting with that value before.
+  const heldNow = (pending?.fields ?? []).filter(
+    (field) => sentKeys.includes(field) && !(heldBefore && heldBefore.fields.includes(field) && same(field, heldBefore.changes[field], pending?.changes[field]))
+  );
+  if (pending && heldNow.length > 0) {
     return pending.state === "checking"
       ? { kind: "checking", title: "Your change is being checked", message: "Customers still see the earlier version until it passes." }
-      : {
-          kind: "held",
-          title: "Your change is on hold",
-          message: pendingLine(pending) ?? "It needs a change.",
-        };
+      : { kind: "held", title: "Your change is on hold", message: pendingLine(pending) ?? "It needs a change." };
   }
   // A listing staff sent back, changed by its owner: the save sends it to the check again (so the answer says `checking`),
   // and the staff's reason is already "changed since it was sent back". It never goes live on the check alone.
   if (reasons.some((r) => r.code === CHANGED_SINCE) && (answer.status === "flagged" || answer.status === "checking")) {
-    return {
-      kind: "sent_back_again",
-      title: "Renit will look at it again",
-      message: "It is not live until Renit approves it.",
-    };
+    return { kind: "sent_back_again", title: "Renit will look at it again", message: "It is not live until Renit approves it." };
   }
   if (answer.status === "flagged") {
     return { kind: "flagged", title: "Saved, but it needs a change", message: flagLine(reasons) ?? "Open it to see what to change." };
@@ -221,7 +266,21 @@ export function saveOutcome(input: {
   if (answer.status === "checking") {
     return { kind: "checking", title: "Your change is being checked", message: "It is saved. It is not live until the check is done." };
   }
-  return updated;
+
+  // A held field that is no longer held: its held value passed and is live now (applied), or it was put back as customers
+  // see it (the listing's own value stays), or the owner sent another value that passed (applied).
+  const withdrawn = (heldBefore?.fields ?? []).filter(
+    (field) =>
+      !(pending?.fields ?? []).includes(field) &&
+      !same(field, answer[field], heldBefore?.changes[field]) &&
+      same(field, answer[field], before?.[field])
+  );
+  const others = was ? sentKeys.some((key) => !withdrawn.includes(key) && !same(key, was[key], now[key])) : true;
+  const gone = withdrawn.length > 0 ? `The ${fieldsLine(withdrawn)} you had waiting went back to what customers see.` : "";
+  if (withdrawn.length > 0 && !others) return { kind: "withdrawn", title: "Your waiting change was withdrawn", message: gone };
+  const still = pending ? `An earlier change still waits: ${fieldsLine(pending.fields) || "see the listing"}.` : "";
+  const message = [gone, still].filter(Boolean).join(" ");
+  return { kind: "updated", title: "Your product was updated!", ...(message ? { message } : {}) };
 }
 
 // ---- A listing just posted from the phone -------------------------------------------------------
