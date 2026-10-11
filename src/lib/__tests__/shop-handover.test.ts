@@ -301,6 +301,11 @@ describe("SH-10, the return", () => {
     expect(body({ claim_open: true, claims: [12] })).toBe(
       "A problem has already been reported on this booking. Its claim is listed on the booking. The part of the deposit that is not claimed goes back to Aarav."
     );
+    // The customer's fault report is a claim too, but not the shop's: with the kinds known, the time that has passed reads as passed.
+    const faultOnly = returnCopy(out({ ...base, claim_open: true, claims: [12] }), new Date("2026-10-28T00:00:00Z"), ["fault"]).returned?.body;
+    expect(faultOnly).toBe(
+      "The time to report a problem has passed. Use Get help to talk to Renit's desk. The deposit is settled with Aarav once both return records are in."
+    );
     // The time is over.
     expect(body({}, new Date("2026-10-28T00:00:00Z"))).toBe(
       "The time to report a problem has passed. Use Get help to talk to Renit's desk. The deposit is settled with Aarav once both return records are in."

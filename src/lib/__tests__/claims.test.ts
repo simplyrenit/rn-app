@@ -455,6 +455,21 @@ describe("the shop's damage report", () => {
     expect(problemLine("after_code")).toBeNull();
   });
 
+  it("says `reported` only for a damage claim: a customer's fault report does not (review app-5 r2 #8)", () => {
+    const later = new Date("2026-10-10T06:00:00Z");
+    // The customer's fault report is a claim on the booking, open or decided; the shop reported nothing; the time is over.
+    expect(problemState(shop({ can: [], claim_open: true, claims: [12] }), later, ["fault"])).toBe("passed");
+    expect(problemState(shop({ can: [], claims: [12] }), later, ["fault", "not_as_described"])).toBe("passed");
+    expect(damageBlocked(shop({ can: [], claims: [12] }), later, ["fault"])).toBe("The time to report a problem has passed. Use Get help to talk to Renit's desk.");
+    // A damage claim among them is still "already reported".
+    expect(problemState(shop({ can: [], claims: [12, 13] }), later, ["fault", "damage"])).toBe("reported");
+    // Before the kinds are read, the booking's own flags stand in.
+    expect(problemState(shop({ can: [], claims: [12] }), later, undefined)).toBe("reported");
+    expect(problemState(shop({ can: [], claims: [12] }), later, null)).toBe("reported");
+    // No claims at all.
+    expect(problemState(shop({ can: [], claims: [] }), later, [])).toBe("passed");
+  });
+
   it("says what Renit does with the report", () => {
     expect(damageNotice("Aarav")).toBe("Renit decides from the two sets of photos within three working days. Aarav can reply once.");
     expect(reportUntilLine("2026-10-10T05:12:00Z", NOW)).toBe("You have until 10:42 am tomorrow.");

@@ -32,8 +32,9 @@ export type PushRoute =
   | { screen: "ShopHandover"; number: string }
   /**
    * A claim was raised, replied to or decided (`claim`: its id). The screen reads the claim from the API;
-   * `number` is its booking, for the screens behind it. For the shop it is read only: replies are made on
-   * the dashboard. A `claim` push with no id opens the booking it is about.
+   * `number` is its booking, for the screens behind it. Either side opens the same screen and the side the claim
+   * is against replies there, once (an owner who is not a merchant has no dashboard). A `claim` push with no id
+   * opens the booking it is about.
    */
   | { screen: "Claim"; id: number; number: string; role: Side }
   /** The shop's Today, for "Closed after two missed requests". */
@@ -125,7 +126,7 @@ export function pushRoute(data: unknown): PushRoute | null {
       case "returned":
       case "closed":
         return number ? { screen: "ShopBooking", number } : null;
-      // The claim, read only on the phone: a customer's reply or Renit's decision (ENG-253).
+      // The claim: a customer's reply or Renit's decision, where the shop may reply too (ENG-253).
       case "claim": {
         if (!number) return null;
         const id = claimId(data.claim);

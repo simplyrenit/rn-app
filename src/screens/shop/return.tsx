@@ -13,6 +13,7 @@ import { Block, LinkRow, StepList } from "@/components/handover/parts";
 import { SLOW_POLL_MS } from "@/lib/booking";
 import { otherSetOffered, recordWanted } from "@/lib/capture";
 import { problemState, reportUntilLine } from "@/lib/claims";
+import { useClaimKinds } from "@/backend/claims";
 import { captured, dayBlock } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { BookingShop } from "@/lib/shop-booking";
@@ -41,9 +42,11 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
   // What the shop tapped: "All good" or "Report a problem". Both show the code (decision A-35).
   const [verdict, setVerdict] = useState<"good" | "problem" | null>(null);
 
-  const copy = returnCopy(booking, now);
+  // Only a damage claim stops a second report: the kinds of the booking's claims are read (the claim rows read the same ones).
+  const kinds = useClaimKinds(booking.claims);
+  const copy = returnCopy(booking, now, kinds);
   // Nothing left of the deposit to claim against (A-50): the way on is Get help, shown beside the words, not at the foot of the page.
-  const nothingLeft = problemState(booking, now) === "none_left";
+  const nothingLeft = problemState(booking, now, kinds) === "none_left";
   const out = booking.stage === "out" && !booking.exit;
   const recorded = flags.mine || Boolean(record.draft?.sealed);
   const code = "return_code" in day ? day.return_code : null;
@@ -131,7 +134,7 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
 
       {out && verdict === "problem" ? (
         <Notice tone="warning" icon="warning">
-          {reportFirstNote(booking, now)}
+          {reportFirstNote(booking, now, kinds)}
         </Notice>
       ) : null}
 

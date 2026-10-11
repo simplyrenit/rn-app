@@ -1,4 +1,4 @@
-import { findMyReport, reportDamage } from "@/backend/claims";
+import { findMyReport, reportDamage, useClaimKinds } from "@/backend/claims";
 import { shopBookingQueryKey, fetchShopBooking, useShopBooking } from "@/backend/shop-ring";
 import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/components/booking/parts";
@@ -59,6 +59,7 @@ export default function ShopReportProblemScreen() {
   const now = useServerNow(booking?.server_time, query.dataUpdatedAt);
   const confirm = useRef<BottomSheetModal>(null);
   const { running, run } = useGuardedTap();
+  const kinds = useClaimKinds(booking?.claims);
   const [statement, setStatement] = useState("");
   // Whole rupees, as digits: money is whole rupees at launch.
   const [amount, setAmount] = useState("");
@@ -81,7 +82,7 @@ export default function ShopReportProblemScreen() {
   const first = booking.customer.first_name;
   const name = customerName(booking.customer);
   const max = damageMax(booking.money);
-  const blocked = damageBlocked(booking, now);
+  const blocked = damageBlocked(booking, now, kinds);
   const hold = damageHold(statement, amount, photos.length, max);
   const sending = running !== null;
   const rupees = parseRupees(amount);

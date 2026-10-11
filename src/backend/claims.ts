@@ -4,10 +4,19 @@ import { BOOKINGS_ENDPOINT, CLAIMS_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { serverTimeFromHeaders } from "@/lib/server-clock";
 import type { BookingShop } from "@/lib/shop-booking";
-import { useQuery } from "react-query";
+import { useQueries, useQuery } from "react-query";
 
 /** API-CONTRACT OE-K. Claims are read by either party of the booking; the fault and damage reports are booking actions. */
 export const claimQueryKey = (id: number) => ["claim", id];
+
+/**
+ * The kinds of a booking's claims, once every one has been read (the same queries the claim rows use, so nothing is read
+ * twice); undefined while any is still being read or could not be, and the booking's own flags stand in then.
+ */
+export function useClaimKinds(ids: readonly number[] | null | undefined): string[] | undefined {
+  const results = useQueries((ids ?? []).map((id) => ({ queryKey: claimQueryKey(id), queryFn: () => fetchClaim(id), staleTime: 15_000, retry: 1 })));
+  return results.every((r) => r.data) ? results.map((r) => (r.data as ClaimRead).claim.kind) : undefined;
+}
 
 /** A claim, and the server's time when the answer was made (the claim carries none of its own). */
 export interface ClaimRead {

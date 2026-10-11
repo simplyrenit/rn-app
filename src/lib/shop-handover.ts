@@ -149,7 +149,7 @@ export interface ReturnCopy {
 /** "Sat 24": a column title's day. */
 const shortDay = (day: string | null) => (day ? dayShort(day).split(" ").slice(0, 2).join(" ") : "");
 
-export function returnCopy(b: BookingShop, now: Date): ReturnCopy {
+export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly string[] | null): ReturnCopy {
   const first = b.customer.first_name;
   const handoverAt = b.timeline.find((entry) => entry.event === "handover")?.at;
   const returnAt = b.timeline.find((entry) => entry.event === "return")?.at;
@@ -160,7 +160,7 @@ export function returnCopy(b: BookingShop, now: Date): ReturnCopy {
   const held = Number(b.money.deposit) > 0 && b.money.deposit_state !== "none";
   // Whether a problem can be reported is the server's (`can`, P4-10), and what is left of the deposit to claim against (A-50):
   // the lines below say so, they do not promise 24 hours the booking does not offer.
-  const problem = problemState(b, now);
+  const problem = problemState(b, now, claimKinds);
   const open = problem === "open";
   const nothingLeft = problem === "none_left";
   const until = open ? b.report_problem_until : null;
@@ -230,9 +230,9 @@ export function shopReturnSteps(b: BookingShop, recorded: boolean): Step[] {
 }
 
 /** What "Report a problem" says before the return is finished: the code comes first (decision A-35). */
-export function reportFirstNote(b: BookingShop, now: Date = new Date()): string {
+export function reportFirstNote(b: BookingShop, now: Date = new Date(), claimKinds?: readonly string[] | null): string {
   const first = `Finish the return first: show ${b.customer.first_name} the code.`;
   // Nothing left to claim against (A-50): say so now, not after the code, and point to Get help.
-  if (problemState(b, now) === "none_left") return `${first} ${problemLine("none_left")}`;
+  if (problemState(b, now, claimKinds) === "none_left") return `${first} ${problemLine("none_left")}`;
   return `${first} You then have 24 hours to report the problem, with these photos as the record.`;
 }

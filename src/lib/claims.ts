@@ -486,20 +486,26 @@ export function damageHold(statement: string, amount: string, photos: number, ma
  * deposit. The phone does not work those out; it only says which one is missing when `can` lacks it.
  *  - `open`: the form is offered. `after_code`: not yet, the customer has still to type the return code.
  *  - `none_left`: nothing is left of the deposit to claim against (A-50): say so, and point to Get help.
- *  - `reported`: a claim is already made. `passed`: the time is over. `unavailable`: none of those.
+ *  - `reported`: a damage claim is already made. `passed`: the time is over. `unavailable`: none of those.
+ *
+ * `claimKinds` are the kinds of the booking's claims, once read: only a damage claim stops a second one, so a
+ * customer's fault report (also a claim on the booking) does not make the shop's time that has passed read as
+ * "already reported". While they are not known the booking's own `claim_open` and `claims` stand in (review app-5 r2 #8).
  */
 export type ProblemState = "open" | "after_code" | "none_left" | "reported" | "passed" | "unavailable";
 
 export function problemState(
   booking: Pick<BookingShop, "can" | "stage" | "exit" | "claim_open" | "claims" | "report_problem_until" | "money">,
-  now: Date
+  now: Date,
+  claimKinds?: readonly string[] | null
 ): ProblemState {
   if (booking.can.includes("report_problem")) return "open";
   if (booking.exit) return "unavailable";
   // What is left of the deposit, as the server counts it (deposit less late fees); none when none was taken.
   if (damageMax(booking.money) <= 0) return "none_left";
   if (booking.stage === "out") return "after_code";
-  if (booking.claim_open || (booking.claims?.length ?? 0) > 0) return "reported";
+  const claimed = claimKinds ? claimKinds.includes("damage") : booking.claim_open || (booking.claims?.length ?? 0) > 0;
+  if (claimed) return "reported";
   if (booking.stage === "closed" || (booking.report_problem_until && reached(booking.report_problem_until, now))) return "passed";
   return "unavailable";
 }
@@ -523,9 +529,10 @@ export function problemLine(state: ProblemState): string | null {
 /** Why the damage form is not offered, or null when it is. */
 export function damageBlocked(
   booking: Pick<BookingShop, "can" | "stage" | "exit" | "claim_open" | "claims" | "report_problem_until" | "money">,
-  now: Date
+  now: Date,
+  claimKinds?: readonly string[] | null
 ): string | null {
-  const state = problemState(booking, now);
+  const state = problemState(booking, now, claimKinds);
   if (state === "open") return null;
   if (state === "after_code") return "A problem can be reported once the item is back and the customer has typed your code.";
   return problemLine(state);

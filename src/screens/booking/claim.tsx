@@ -60,8 +60,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /**
- * The customer's one reply (N12: "the customer sees the claim and the evidence and
- * can reply once"). The form shows only while the server says the caller may reply
+ * The one reply, by the side the claim is against, the customer or the shop (N12: "the customer sees the claim
+ * and the evidence and can reply once"; an owner who is not a merchant has no dashboard, so the phone replies for
+ * both). The form shows only while the server says the caller may reply
  * and the deadline, counted against the server's clock, has not passed. Sending is
  * asked about first, because there is no second try, and is held while it goes. If
  * the answer never comes, the claim is read again: a reply that is there means it
