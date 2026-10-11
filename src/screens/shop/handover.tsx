@@ -25,6 +25,7 @@ import {
   reached,
   statusButtons,
   statusNote,
+  whenShort,
 } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { successFeedback } from "@/lib/haptics";
@@ -231,6 +232,14 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
             </Button>
           )}
         </Block>
+      ) : null}
+
+      {ready && !can("enter_handover_code") && !booking.claim_open && !reached(day.call_from, now) ? (
+        <Notice icon="clock">
+          {day.call_from
+            ? `${first}'s code can be typed from ${whenShort(day.call_from, now)}: a rental can't be started before its day.`
+            : `${first}'s code can be typed once an arrival window is picked.`}
+        </Notice>
       ) : null}
 
       {after ? (
