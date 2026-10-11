@@ -93,6 +93,16 @@ export interface TodayFeed {
   needs_you: NeedsYou[];
 }
 
+/**
+ * "Now" for the words on Today ("today", "yesterday", "tomorrow"): midday in India on
+ * the server's own date for the feed (`date`), so a phone with a wrong clock still says
+ * the right day (API-CONTRACT P3-17). Only the day is used from it.
+ */
+export function feedNow(feed: Pick<TodayFeed, "date"> | null | undefined, phoneNow: Date = new Date()): Date {
+  const anchor = new Date(`${feed?.date ?? ""}T12:00:00+05:30`);
+  return Number.isNaN(anchor.getTime()) ? phoneNow : anchor;
+}
+
 /** True when there is nothing at all to show under the button: a quiet day. */
 export function isQuiet(feed: TodayFeed): boolean {
   return (

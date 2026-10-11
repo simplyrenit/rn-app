@@ -3,6 +3,7 @@ import { Panel, Pill, Thumb } from "@/components/booking/parts";
 import { EmptyState, Skeleton, Text } from "@/components/core";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { selectionFeedback } from "@/lib/haptics";
+import { correctedNow } from "@/lib/server-clock";
 import { BookingCard, SHOP_TABS, ShopTab, bookingCard, defaultTab, emptyTab } from "@/lib/shop-booking";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
@@ -106,6 +107,9 @@ export function ShopBookingsView({ bottomPad }: { bottomPad: number }) {
   );
 
   const rows = useMemo(() => (list.data?.pages ?? []).flatMap((page) => page.results), [list.data]);
+  // Day words on the cards ("Collects today") by the server's clock as the last page said it (P3-17).
+  const lastPage = list.data?.pages[list.data.pages.length - 1];
+  const now = correctedNow(lastPage?.results[0]?.server_time, list.dataUpdatedAt);
   const empty = emptyTab(tab);
   const loading = (list.isLoading || list.isIdle) && !list.data;
   const failed = !list.data && list.isError;
@@ -199,7 +203,7 @@ export function ShopBookingsView({ bottomPad }: { bottomPad: number }) {
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <BookingRow
-              card={bookingCard(item)}
+              card={bookingCard(item, now)}
               onPress={() =>
                 item.stage === "ringing" && !item.exit
                   ? navigation.navigate("ShopRing", { number: item.number })

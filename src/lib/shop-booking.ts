@@ -204,7 +204,10 @@ export function cardNote(b: BookingShop, now: Date = new Date()): string | null 
     return `${b.delivery_mode === "pickup" ? "Collects" : "Deliver"} ${when}, ${windowLabel(b.window)}`;
   }
   if (b.stage === "confirmed" && !b.window) return "Waiting for the customer to pick an arrival time";
-  if (b.stage === "accepted") return "Waiting for the customer to pay the rent";
+  if (b.stage === "accepted") {
+    const due = b.money.rent_due_at;
+    return due ? `Waiting for the customer to pay the rent by ${momentLabel(due, now)}` : "Waiting for the customer to pay the rent";
+  }
   if (b.stage === "out" && b.return_by) {
     const day = dayOf(b.return_by);
     return `Back by ${day === today ? "" : `${dayShort(day ?? "")}, `}${clock(b.return_by)}`;
@@ -260,7 +263,7 @@ export function shopTimeline(b: BookingShop, now: Date = new Date()): TimelineRo
     let when = momentLabel(entry.at, now);
     if (entry.event === "set_window" && b.window) when = windowSummary(b.window);
     if (entry.event === "accept" && b.answered) {
-      const where = whereText(b.answered.via, b.answered.device_name);
+      const where = whereText(b.answered.via, b.answered.device_name, b.answered.this_device);
       if (where) when = `${when} on ${where}`;
     }
     return { label: entry.label, when, state: "done" };
@@ -270,7 +273,10 @@ export function shopTimeline(b: BookingShop, now: Date = new Date()): TimelineRo
   const ahead: Omit<TimelineRow, "state">[] = [];
   const stage = b.stage;
   const before = (...stages: BookingShop["stage"][]) => stages.includes(stage);
-  if (stage === "accepted") ahead.push({ label: "Rent", when: "Waiting for the customer" });
+  if (stage === "accepted") {
+    const due = b.money.rent_due_at;
+    ahead.push({ label: "Rent", when: due ? `customer pays by ${momentLabel(due, now)}` : "Waiting for the customer" });
+  }
   if (stage === "confirmed" && !b.window) ahead.push({ label: "Arrival window", when: "Not picked yet" });
   if (b.money.deposit_state === "not_due" || b.money.deposit_state === "due") {
     const day = dayOf(b.money.deposit_ask_at);

@@ -56,9 +56,18 @@ function booking(over: Record<string, unknown> = {}): BookingShop {
       deposit_state: "not_due",
       deposit_ask_at: "2026-10-23T04:30:00Z",
       deposit_due_at: "2026-10-24T02:30:00Z",
+      rent_pay_minutes: 30,
+      rent_due_at: null,
       payout: { status: "none", status_reason: null, text: "Sent on the day of handover", amount: "1830.00", due_at: null, paid_at: null, more: 0 },
     },
-    answered: { at: "2026-10-12T04:13:00Z", via: "dashboard", device_name: "Chrome on Windows", seconds: 118 },
+    answered: {
+      at: "2026-10-12T04:13:00Z",
+      via: "dashboard",
+      device_name: "Chrome on Windows",
+      seconds: 118,
+      this_device: false,
+      session_id: 31,
+    },
     window: { start: "2026-10-24T04:30:00Z", end: "2026-10-24T05:30:00Z" },
     window_request: null,
     return_by: "2026-10-26T14:30:00Z",
@@ -71,6 +80,7 @@ function booking(over: Record<string, unknown> = {}): BookingShop {
       { event: "set_window", label: "Arrival window picked", at: "2026-10-12T04:23:00Z", by: "customer" },
     ],
     created_at: "2026-10-12T04:11:00Z",
+    server_time: "2026-10-13T04:30:00Z",
     ...over,
   } as BookingShop;
 }
@@ -157,6 +167,13 @@ describe("a booking's timeline", () => {
     ]);
   });
 
+  it("says 'on this phone' when this phone's own session accepted (P3-9)", () => {
+    const mine = booking({ answered: { ...booking().answered, via: "phone", device_name: "Owner's phone", this_device: true } });
+    expect(shopTimeline(mine, NOW)[1].when).toBe("Mon 12 Oct, 9:43 am on this phone");
+    const staff = booking({ answered: { ...booking().answered, via: "admin", device_name: "Renit staff (Meera)" } });
+    expect(shopTimeline(staff, NOW)[1].when).toBe("Mon 12 Oct, 9:43 am on Renit staff (Meera)");
+  });
+
   it("an ended booking shows only what happened", () => {
     const rows = shopTimeline(booking({ exit: "cancelled_by_owner", exit_reason: "owner" }), NOW);
     expect(rows.every((r) => r.state === "done")).toBe(true);
@@ -165,6 +182,16 @@ describe("a booking's timeline", () => {
   it("says an arrival time is not picked yet", () => {
     const rows = shopTimeline(booking({ window: null, timeline: [] }), NOW);
     expect(rows[0]).toEqual({ label: "Arrival window", when: "Not picked yet", state: "next" });
+  });
+
+  it("an accepted booking says by when the customer must pay (P3-13)", () => {
+    const accepted = booking({
+      stage: "accepted",
+      timeline: [],
+      money: { ...booking().money, deposit_state: "none", rent_due_at: "2026-10-13T05:00:00Z" },
+    });
+    expect(shopTimeline(accepted, NOW)[0]).toEqual({ label: "Rent", when: "customer pays by 10:30 am", state: "next" });
+    expect(cardNote(accepted, NOW)).toBe("Waiting for the customer to pay the rent by 10:30 am");
   });
 
   it("an accepted booking is waiting for the rent", () => {
