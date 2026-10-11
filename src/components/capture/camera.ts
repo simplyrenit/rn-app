@@ -1,7 +1,7 @@
 import { captureQueue, discardFiles, fileBytes, keepFile } from "@/backend/capture-jobs";
 import { prepareImage } from "@/backend/list-flow/images";
 import { permissionDenied } from "@/components/list-flow/pick-photos";
-import { LocalFile, VIDEO_SECONDS, recoverShot, videoProblem } from "@/lib/capture";
+import { LocalFile, VIDEO_SECONDS, pendingList, recoverShot, videoProblem } from "@/lib/capture";
 import { toast } from "@/lib/toast";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
@@ -123,7 +123,8 @@ export async function recoverLostShot(stamp: () => string = () => new Date().toI
   let taken: { kind: "photo" | "video"; file: Omit<LocalFile, "url"> } | null = null;
   if (Platform.OS === "android") {
     try {
-      for (const pending of await ImagePicker.getPendingResultAsync()) {
+      type Pending = ImagePicker.ImagePickerResult | ImagePicker.ImagePickerErrorResult;
+      for (const pending of pendingList<Pending>(await ImagePicker.getPendingResultAsync())) {
         const asset = "assets" in pending && !pending.canceled ? pending.assets?.[0] : null;
         if (!asset) continue;
         if (asset.type === "video") {

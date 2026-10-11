@@ -145,6 +145,12 @@ export interface CaptureDraft {
   refusedAt?: string | null;
   /** Started from the general list the app carries, because the booking's own list could not be read. */
   generic?: boolean;
+  /**
+   * Photos of a record begun on the general list that the booking's own list does not ask for. They are not
+   * required and not sent (the `PUT` carries the list's shots), but they are evidence of what the item looked
+   * like at the door, so they stay on the phone until the record is let go of (app-4 review r2, finding 16).
+   */
+  spare?: Record<string, LocalFile>;
 }
 
 export const captureId = (number: string, moment: Moment, side: Side) => `${number}:${moment}:${side}`;
@@ -200,10 +206,13 @@ export function withList(draft: CaptureDraft, list: ShotList): CaptureDraft {
   if (same) return draft;
   const asked = new Set(list.shots.map((shot) => shot.key));
   const shots = Object.fromEntries(Object.entries(draft.shots).filter(([key]) => asked.has(key)));
+  // The general list is a stand-in for the booking's own: what it took and the real list does not ask for is kept, not deleted.
+  const dropped = draft.generic ? Object.fromEntries(Object.entries(draft.shots).filter(([key]) => !asked.has(key))) : {};
   const next: CaptureDraft = {
     ...draft,
     list,
     shots,
+    ...(Object.keys(dropped).length > 0 ? { spare: { ...draft.spare, ...dropped } } : {}),
     checklist: untickedList(list.included_items, draft.checklist),
     // The booking's own list has arrived: the record is no longer on the general one.
     generic: false,
@@ -468,8 +477,11 @@ export function staleRefusal(draft: Pick<CaptureDraft, "refusedAt">, nowMs: numb
 /** The drafts worth keeping on the phone: everything the server does not have yet, or that waits for a code. */
 export const draftsToKeep = (drafts: readonly CaptureDraft[]) => drafts.filter((d) => !d.done || d.awaitingCode);
 
-/** Every local file of a draft, to clear away once the server has them. */
-export const localUris = (draft: CaptureDraft) => files(draft).map(({ file }) => file.uri);
+/** Every local file of a draft, to clear away once the server has them (the spare photos too, with the record). */
+export const localUris = (draft: CaptureDraft) => [
+  ...files(draft).map(({ file }) => file.uri),
+  ...Object.values(draft.spare ?? {}).map((file) => file.uri),
+];
 
 export type DraftState = "recording" | "uploading" | "waiting" | "stuck" | "code" | "done";
 
@@ -553,6 +565,12 @@ export interface RecordBooking {
   stage: string;
   exit: string;
   can: readonly string[];
+  /**
+   * The booking this one extends. An extension is `out` with no handover of its own (the item is
+   * already with the customer, and its payout waits for no capture), so no handover record is
+   * offered on it (review app-4 r2, finding 14). The shop's booking carries no such field.
+   */
+  extends?: string | null;
 }
 
 /**
@@ -583,6 +601,12 @@ export interface RecordInput {
   stake?: boolean;
   /** The other person's set, recorded here because their phone failed: carried on from a card, never begun from one. */
   forOther?: boolean;
+  /**
+   * A screen about the booking as a whole (its details, the shop's booking page): a return record is not offered
+   * from it until it is begun or the booking is `returned`, so the first tap is on the return screens, at the
+   * return, and not on day one of a rental (review app-4 r2, finding 17).
+   */
+  begunOnly?: boolean;
 }
 
 /**
@@ -608,6 +632,8 @@ export function recordState(input: RecordInput): RecordState {
     return draft.error ? (draft.error.retry ? "waiting" : "stuck") : "uploading";
   }
   if (input.forOther || !serverTakes(moment, booking)) return "none";
+  if (moment === "handover" && booking.extends) return "none";
+  if (input.begunOnly && moment === "return" && booking.stage === "out") return "none";
   if (booking.stage === "closed" && !input.stake) return "none";
   return "start";
 }
@@ -623,7 +649,7 @@ export function otherSetOffered(
   theirsOnServer: boolean,
   draft: CaptureDraft | null | undefined
 ): boolean {
-  return !theirsOnServer && !draft && booking.stage !== "closed" && serverTakes(moment, booking);
+  return !theirsOnServer && !draft && booking.stage !== "closed" && serverTakes(moment, booking) && !(moment === "handover" && booking.extends);
 }
 
 /** True when a screen should offer the button that opens the capture: to begin the record, or to carry it on. */
@@ -662,6 +688,8 @@ export function recordCard(input: {
   otherName: string;
   stage: string;
   draft: CaptureDraft | null | undefined;
+  /** The owner's payout really waits on this record (`payoutPending`): the card says so only then. */
+  stake?: boolean;
 }): RecordCardView | null {
   const { state, moment, role, draft } = input;
   if (state === "none") return null;
@@ -671,7 +699,7 @@ export function recordCard(input: {
   const size = draft?.video?.bytes ? ` The video is ${sizeLabel(draft.video.bytes)}.` : "";
   const stake = forOther
     ? null
-    : role === "owner" && moment === "handover" && input.stage !== "ready"
+    : role === "owner" && moment === "handover" && input.stake
       ? "Your payout for this rental waits for it: you are paid once it has uploaded."
       : moment === "return" && input.stage === "returned"
         ? role === "customer"
@@ -732,7 +760,11 @@ export function recordCard(input: {
         title,
         text: draft?.error?.text ?? "This record needs you.",
         stake,
-        button: { label: "Try again", action: "retry" },
+        // The other person's set is saved only while a code is out for it, and the capture screen is where a new one is sent:
+        // "Try again" here would get the same answer for ever (review app-4 r2, finding 15).
+        button: draft?.forOther
+          ? { label: `Send ${input.otherName} a new code`, action: "open" }
+          : { label: "Try again", action: "retry" },
         progress,
         tone: "warning",
       };
@@ -900,6 +932,27 @@ export const CAMERA_ONLY = "Camera only. Photos from your gallery can't be used.
 export function shotChip(list: Pick<ShotList, "shots">, index: number): string {
   const shot = list.shots[index];
   return shot ? `Photo ${index + 1} of ${list.shots.length} · ${shot.label}` : "";
+}
+
+/**
+ * The shot lists' `video_hint` texts (ops draft ENG-216) still begin "About 20 seconds", and the limit is 15
+ * (decision T-18): the chip under it says "up to 0:15" and a clip of 20 is refused. So the hint is shown with
+ * the limit the app enforces, whatever number the list names.
+ * ponytail: remove once the lists say 15 themselves; the pattern touches only "about N seconds".
+ */
+export function videoHintText(hint: string): string {
+  return hint.replace(/\b(about|around|roughly)\s+\d+\s*(?:seconds?|secs?)\b/gi, (match) =>
+    `${match[0] === match[0].toUpperCase() ? "Up" : "up"} to ${VIDEO_SECONDS} seconds`
+  );
+}
+
+/**
+ * What the picker's `getPendingResultAsync()` gave back, as a list. The installed picker returns one result or null on
+ * Android although its type says a list; any of the three is read (review app-4 r2, finding 13).
+ */
+export function pendingList<T>(value: T | readonly T[] | null | undefined): T[] {
+  if (Array.isArray(value)) return [...value] as T[];
+  return value ? [value as T] : [];
 }
 
 /** A length as the frames write it: "0:20". */

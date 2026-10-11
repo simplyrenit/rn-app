@@ -21,6 +21,7 @@ import {
   fileName,
   files,
   genericShotList,
+  localUris,
   includedRows,
   isShotList,
   listSourceNote,
@@ -57,6 +58,8 @@ import {
   videoLabel,
   videoProblem,
   withList,
+  pendingList,
+  videoHintText,
   withShooting,
 } from "../capture";
 
@@ -514,8 +517,8 @@ describe("the record's card", () => {
   const card = (over: Partial<Parameters<typeof recordCard>[0]>) =>
     recordCard({ state: "start", moment: "handover", role: "owner", otherName: "Aarav", stage: "out", draft: null, ...over });
 
-  it("tells the owner plainly that the payout waits for the handover record", () => {
-    const view = card({});
+  it("tells the owner plainly that the payout waits for the handover record, only while it really does", () => {
+    const view = card({ stake: true });
     expect(view).toMatchObject({
       title: "Your handover record",
       text: "Not recorded yet. Take the photos and the video of the item now.",
@@ -526,7 +529,10 @@ describe("the record's card", () => {
     // Before the code there is no payout to wait for, and recording is simply the next step.
     expect(card({ stage: "ready" })).toMatchObject({ stake: null, tone: "info" });
     // The customer's handover record has no payout on it.
-    expect(card({ role: "customer" })?.stake).toBeNull();
+    expect(card({ role: "customer", stake: true })?.stake).toBeNull();
+    // Staff paid by hand (no stake), or an extension (its payout waits for no capture): the line is not written from the stage.
+    expect(card({ stake: false })?.stake).toBeNull();
+    expect(card({})?.stake).toBeNull();
   });
 
   it("says what waits on a return record after the code", () => {
@@ -564,6 +570,13 @@ describe("the record's card", () => {
     expect(card({ state: "stuck", draft: { ...sealed, error: { text: "Renit did not take this record.", retry: false } } })).toMatchObject({
       text: "Renit did not take this record.",
       button: { label: "Try again", action: "retry" },
+    });
+  });
+
+  it("a stuck set recorded for the other person opens the capture screen, where a new code is sent (review app-4 r2 #15)", () => {
+    const theirs = { ...seal(taken(startDraft({ number: "RN-24831", moment: "handover", side: "customer", forOther: true, list: list() }))), error: { text: "Renit did not take this record.", retry: false } };
+    expect(card({ state: "stuck", forOther: true, draft: theirs })).toMatchObject({
+      button: { label: "Send Aarav a new code", action: "open" },
     });
   });
 
@@ -780,5 +793,80 @@ describe("the two sets side by side", () => {
       { item: "HDMI cable", ticked: false, note: "Not ticked by the shop" },
     ]);
     expect(includedRows(null, null, "the shop")).toEqual([]);
+  });
+});
+
+describe("a record shot on the general list keeps what the booking's own list does not ask for (review app-4 r2 #16)", () => {
+  const general = () => seal(taken(startDraft({ number: "RN-24831", moment: "handover", side: "customer", list: genericShotList(false), generic: true })));
+
+  it("puts the photos the real list drops aside instead of deleting them", () => {
+    const d = general();
+    const next = withList(d, list());
+    expect(Object.keys(next.shots).sort()).toEqual(["back", "front"]);
+    expect(Object.keys(next.spare ?? {}).sort()).toEqual(Object.keys(d.shots).filter((key) => !["front", "back"].includes(key)).sort());
+    // Nothing leaves the phone: the dropped photos are still named, so neither the list change nor the sweep deletes them.
+    expect(Object.keys(next.spare ?? {}).length).toBeGreaterThan(0);
+    expect(removedUris(d, next)).toEqual([]);
+    expect(localUris(next)).toEqual(expect.arrayContaining(Object.values(next.spare ?? {}).map((f) => f.uri)));
+  });
+
+  it("clears them with the record, and never sends them", () => {
+    const next = withList(general(), list());
+    expect(removedUris(next, null).length).toBe(localUris(next).length);
+    expect(files(next).map((f) => f.file.uri)).not.toEqual(expect.arrayContaining(Object.values(next.spare ?? {}).map((f) => f.uri)));
+  });
+
+  it("is only for a record begun on the general list: a staff edit of a real list still drops and deletes", () => {
+    const d = taken();
+    const next = withList(d, list({ shots: [{ key: "front", label: "Front", hint: "" }] }));
+    expect(next.spare).toBeUndefined();
+    expect(removedUris(d, next).sort()).toEqual(["file:///captures/back.jpg", "file:///captures/serial.jpg"]);
+  });
+});
+
+describe("an extension has no handover record, and the booking pages leave the return to its own screens (review app-4 r2 #14, #17)", () => {
+  const at = (stage: string, over: Partial<RecordBooking> = {}): RecordBooking => ({ stage, exit: "", can: [], ...over });
+  const state = (moment: "handover" | "return", booking: RecordBooking, over: Partial<Parameters<typeof recordState>[0]> = {}) =>
+    recordState({ moment, booking, onServer: false, draft: null, ...over });
+
+  it("offers no handover record on an extension, though it is out", () => {
+    expect(state("handover", at("out", { extends: "RN-24831" }))).toBe("none");
+    expect(state("handover", at("out", { extends: null }))).toBe("start");
+    // The return record is still its own to make.
+    expect(state("return", at("out", { extends: "RN-24831" }))).toBe("start");
+    expect(otherSetOffered("handover", at("out", { extends: "RN-24831" }), false, null)).toBe(false);
+    expect(otherSetOffered("handover", at("out"), false, null)).toBe(true);
+  });
+
+  it("a record begun on an extension is still carried on", () => {
+    expect(state("handover", at("out", { extends: "RN-24831" }), { draft: addShot(start(), "front", file("front.jpg")) })).toBe("continue");
+  });
+
+  it("a booking page offers the return record only once it is begun or the item is back", () => {
+    expect(state("return", at("out"), { begunOnly: true })).toBe("none");
+    expect(state("return", at("returned"), { begunOnly: true })).toBe("start");
+    expect(state("return", at("out"), { begunOnly: true, draft: addShot(start({ moment: "return" }), "front", file("front.jpg")) })).toBe("continue");
+    // The return screens themselves are not held back.
+    expect(state("return", at("out"))).toBe("start");
+    // The handover record is not held back on a booking page.
+    expect(state("handover", at("out"), { begunOnly: true })).toBe("start");
+  });
+});
+
+describe("the video hint and the picker's pending result", () => {
+  it("shows the limit the app enforces in place of a longer one the list names", () => {
+    expect(videoHintText("About 20 seconds. If the item switches on, show it working.")).toBe("Up to 15 seconds. If the item switches on, show it working.");
+    expect(videoHintText("About 20 seconds with the console switched on. Show the power light.")).toBe("Up to 15 seconds with the console switched on. Show the power light.");
+    expect(videoHintText("Keep it to about 30 seconds.")).toBe("Keep it to up to 15 seconds.");
+    expect(videoHintText("If the item switches on, show it working.")).toBe("If the item switches on, show it working.");
+    expect(videoHintText("")).toBe("");
+  });
+
+  it("reads one result, a list of them, or none", () => {
+    expect(pendingList(null)).toEqual([]);
+    expect(pendingList(undefined)).toEqual([]);
+    expect(pendingList({ canceled: false })).toEqual([{ canceled: false }]);
+    expect(pendingList([{ canceled: false }, { canceled: true }])).toEqual([{ canceled: false }, { canceled: true }]);
+    expect(pendingList([])).toEqual([]);
   });
 });

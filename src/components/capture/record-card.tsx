@@ -40,6 +40,8 @@ export interface RecordBookingProps {
   captures?: CaptureFlags | null;
   id_match_required?: boolean;
   server_time?: string;
+  /** The customer's booking: the booking this one extends. An extension has no handover record. */
+  extends?: string | null;
 }
 
 export interface RecordProps {
@@ -56,6 +58,8 @@ export interface RecordProps {
   other: string;
   /** Money still waits on this record (the owner's payout on the handover record). */
   stake?: boolean;
+  /** A screen about the whole booking: the return record is offered from it only once begun, or after the return. */
+  begunOnly?: boolean;
 }
 
 export interface RecordHandle {
@@ -75,7 +79,7 @@ export interface RecordHandle {
  * that the booking no longer wants, is let go of; and the booking's shot list is
  * read while there is a connection, so the walk can begin later without one.
  */
-export function useRecord({ moment, role, forOther = false, booking, receivedAt, title, other, stake }: RecordProps): RecordHandle {
+export function useRecord({ moment, role, forOther = false, booking, receivedAt, title, other, stake, begunOnly }: RecordProps): RecordHandle {
   const navigation = useTypedNavigation();
   const { number } = booking;
   const side = forOther ? otherSide(role) : role;
@@ -83,7 +87,7 @@ export function useRecord({ moment, role, forOther = false, booking, receivedAt,
   // A record for the other side is on this phone only when it was begun here for them.
   const draft = held && held.forOther === forOther ? held : null;
   const onServer = Boolean(booking.captures?.[moment]?.[forOther ? "theirs" : "mine"]);
-  const state = recordState({ moment, booking, onServer, draft, stake, forOther });
+  const state = recordState({ moment, booking, onServer, draft, stake, forOther, begunOnly });
 
   // Read, and so kept on the phone, while the booking can still take a record.
   useShotList(number, recordWanted(moment, booking));
@@ -96,7 +100,7 @@ export function useRecord({ moment, role, forOther = false, booking, receivedAt,
 
   return {
     state,
-    view: recordCard({ state, moment, role, forOther, otherName: other, stage: booking.stage, draft }),
+    view: recordCard({ state, moment, role, forOther, otherName: other, stage: booking.stage, draft, stake }),
     draft,
     open: () =>
       navigation.navigate("Capture", {
@@ -179,7 +183,7 @@ export function Records(props: Omit<RecordProps, "moment" | "forOther"> & { mome
     <>
       {moments.map((moment) => (
         <React.Fragment key={moment}>
-          <RecordCard {...props} moment={moment} stake={moment === "handover" ? props.stake : false} />
+          <RecordCard {...props} moment={moment} stake={moment === "handover" ? props.stake : false} begunOnly={moment === "return"} />
           <RecordCard {...props} moment={moment} forOther stake={false} />
         </React.Fragment>
       ))}

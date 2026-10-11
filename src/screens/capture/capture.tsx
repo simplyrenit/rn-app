@@ -15,6 +15,7 @@ import {
   PhoneFallback,
   ShotList,
   VIDEO_SECONDS,
+  videoHintText,
   addShot,
   canSeal,
   captureHeading,
@@ -494,7 +495,10 @@ export default function CaptureScreen() {
       if (sent === "refused") return;
       if (sent === "offline") {
         setCodeError(null);
-        toast.info("No connection: record now", { message: `The code goes to ${otherName} when you are back online.` });
+        // Nothing sends the code later: say so, and where to send it once there is a connection.
+        toast.info("No connection: record now", {
+          message: `${otherName} has not been sent the code yet. When you are back online, open this record and send it.`,
+        });
       }
     }
     captureQueue.start(startDraft({ number, moment, side, forOther, list: chosen.list, generic: chosen.source === "generic" }));
@@ -776,7 +780,7 @@ export default function CaptureScreen() {
         <View style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.md, gap: space.md }}>
           <Viewfinder
             chip={`Video · up to ${durationLabel(VIDEO_SECONDS)}`}
-            hint={draft.list.video_hint}
+            hint={videoHintText(draft.list.video_hint)}
             photo={null}
             label="Record the video"
             disabled={launching}
