@@ -13,7 +13,7 @@ export const todayQueryKey = (username: string | undefined) => ["shop-today", us
  * the shop (the open switch and the live answer included).
  */
 export function refreshShop(queryClient: QueryClient) {
-  for (const key of ["shop", "shop-live", "shop-today", "shop-bookings", "shop-counts", "shop-booking"]) {
+  for (const key of ["shop", "shop-live", "shop-today", "shop-bookings", "shop-counts", "shop-booking", "shop-open-blocks"]) {
     void queryClient.invalidateQueries(key);
   }
 }
@@ -56,6 +56,31 @@ export async function makeBlock(call: BlockCall): Promise<Block> {
 export async function extendBlock(id: number, lastDay: string): Promise<Block> {
   return (await axiosInstance.patch<{ block: Block }>(`${SHOP_BLOCKS_ENDPOINT}${id}/`, { last_day: lastDay })).data
     .block;
+}
+
+/** "Take it off": a block made by mistake goes as if it had never been made, also after it has begun (`DELETE` allows it). 204. */
+export async function removeBlock(id: number): Promise<void> {
+  await axiosInstance.delete(`${SHOP_BLOCKS_ENDPOINT}${id}/`);
+}
+
+/** The shop's blocks that are not over, or are waiting for "Is it back?": every page (the list is short). */
+export async function fetchOpenBlocks(): Promise<Block[]> {
+  const out: Block[] = [];
+  for (let page = 1; page <= 5; page += 1) {
+    const { data } = await axiosInstance.get<{ results: Block[]; links?: { next?: string | null } }>(SHOP_BLOCKS_ENDPOINT, {
+      params: { open: true, page, page_size: 100 },
+    });
+    out.push(...data.results);
+    if (!data.links?.next) break;
+  }
+  return out;
+}
+
+export function useOpenBlocks() {
+  const { authTokens, isAuthenticated, userDetails } = useGlobalContext();
+  const username = userDetails?.username;
+  const signedIn = Boolean(isAuthenticated && authTokens?.access_token && username);
+  return useQuery(["shop-open-blocks", username], fetchOpenBlocks, { enabled: signedIn, staleTime: 0, retry: 1 });
 }
 
 /** "Returned": the unit is back; the block ends today. */

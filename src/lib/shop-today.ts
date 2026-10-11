@@ -1,4 +1,4 @@
-import type { ApiError } from "@/lib/api-error";
+import { type ApiError, fieldErrors } from "@/lib/api-error";
 import {
   TimeWindow,
   addDays,
@@ -432,6 +432,52 @@ export function extendFrom(block: Pick<Block, "last_day">, now: Date = new Date(
   return addDays(block.last_day > today ? block.last_day : today, 1);
 }
 
+/**
+ * What is said after "Returned" (lane F: the block ends today if it ran longer). A block that has not ended yet
+ * (its last day is today or later, as when it began today) keeps today's unit taken, so the unit is free again from
+ * tomorrow, not from today; one already past its last day has nothing left to hold. `block` is the server's answer
+ * (its `last_day` as it is now) and `today` is the server's day.
+ */
+export function returnedNotice(block: Pick<Block, "product" | "last_day">, today: string): { title: string; message: string } {
+  return {
+    title: `${block.product.title} is back`,
+    message: block.last_day >= today ? "Today's unit stays blocked. It can be booked again from tomorrow." : "It can be booked again.",
+  };
+}
+
+/** The open blocks the shop made itself (a quick block), soonest first: the ones it can take off. A listing's own dates are edited in the listing. */
+export function removableBlocks(blocks: readonly Block[] | null | undefined): Block[] {
+  return (blocks ?? []).filter((b) => b.source === "quick").sort((a, b) => a.first_day.localeCompare(b.first_day) || a.id - b.id);
+}
+
+const REASON_LABEL: Record<string, string> = { walk_in: "Rented at the counter", repair: "Repair", other: "Other" };
+
+/** "2 units · Rented at the counter · from today until Thu 15 Oct". */
+export function blockRowLine(block: Block, today: string): string {
+  const units = block.quantity === 1 ? "1 unit" : `${block.quantity} units`;
+  const from = block.first_day <= today ? "from today" : `from ${dayShort(block.first_day)}`;
+  const reason = REASON_LABEL[block.reason] ?? "Blocked";
+  const span = block.waiting_back ? `ended ${dayShort(block.last_day)}, waiting for you` : `${from} until ${dayShort(block.last_day)}`;
+  return [units, reason, span].join(" · ");
+}
+
+/**
+ * What the confirm sheet says before a block is taken off. A block that has begun can be removed too (a block made by
+ * mistake): it is taken off as if it had never been made, so every day it held, today's included, is open again.
+ */
+export function removeBlockCopy(block: Block, today: string): { title: string; body: string; confirm: string } {
+  const began = block.first_day <= today;
+  return {
+    title: "Take this block off?",
+    body: `${block.product.title}: ${blockRowLine(block, today)}. ${
+      began
+        ? "It has begun. Taking it off is for a block made by mistake: it goes as if it had never been made, and every day it held, today included, can be booked again straight away."
+        : "It goes as if it had never been made, and its days can be booked again."
+    }`,
+    confirm: "Take it off",
+  };
+}
+
 /** What a refused block or block change says. `only_n_free` carries how many are free. */
 export function blockErrorText(error: ApiError | null): string {
   if (!error || error.status === 0) return "We couldn't reach Renit. Check your connection and try again.";
@@ -445,7 +491,10 @@ export function blockErrorText(error: ApiError | null): string {
         : "Fewer units are free than that.";
     }
     case "validation_error":
-      return "Check the day and the number of units, then try again.";
+      // The server's own sentence for the field: "This product is paused, so nobody can book it. Resume it to block
+      // days.", "A block can reach at most 365 days ahead.", the day before the first. The fixed line is for a
+      // refusal that names no field.
+      return Object.values(fieldErrors(error))[0] ?? "Check the day and the number of units, then try again.";
     case "not_found":
       return "That block is no longer there.";
     case "not_owner":

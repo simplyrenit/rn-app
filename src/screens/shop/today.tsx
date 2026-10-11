@@ -1,14 +1,15 @@
-import { blockReturned, extendBlock, refreshShop, useToday } from "@/backend/shop-today";
+import { blockReturned, extendBlock, refreshShop, removeBlock, useOpenBlocks, useToday } from "@/backend/shop-today";
 import { setOpenState, shopQueryKey, useShop } from "@/backend/shop";
 import { Notice, Panel } from "@/components/booking/parts";
 import { Button, EmptyState, Skeleton, Text } from "@/components/core";
+import { ConfirmSheet } from "@/components/core/confirm-sheet";
 import { useButtonLabelColor } from "@/components/core/button";
 import { useRingPermission } from "@/backend/ring-permission";
 import { DayPickerModal } from "@/components/shop/day-picker-modal";
 import { RingPermissionCard } from "@/components/shop/ring-permission-card";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
-import { dayShort } from "@/lib/booking";
+import { dayShort, todayIst } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { OPEN_BUT_QUIET, quietBody, ringCaption, ringsHere } from "@/lib/ring-permission";
 import { cannotOpenMessage } from "@/lib/shop";
@@ -21,12 +22,16 @@ import {
   RowPill,
   TodayRow,
   blockErrorText,
+  blockRowLine,
   comingBackRow,
   extendFrom,
   feedNow,
   goingOutRow,
   needsRow,
   openLine,
+  removableBlocks,
+  removeBlockCopy,
+  returnedNotice,
   ringingRow,
   waitingLine,
 } from "@/lib/shop-today";
@@ -251,6 +256,10 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   const [openBusy, setOpenBusy] = useState(false);
   const [blockBusy, setBlockBusy] = useState<number | null>(null);
   const [extending, setExtending] = useState<Block | null>(null);
+  // A block made by mistake, taken off after the shop has confirmed (it can have begun already).
+  const [removing, setRemoving] = useState<Block | null>(null);
+  const removeSheet = useRef<BottomSheetModal>(null);
+  const blocks = useOpenBlocks();
   const busy = useRef(false);
 
   const { refetch } = today;
@@ -282,13 +291,21 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   };
 
   /** One block call at a time; its answer is the server's, and everything is read again. */
-  const blockAction = async (block: Block, run: () => Promise<unknown>, done: string) => {
+  const blockAction = async (
+    block: Block,
+    run: () => Promise<unknown>,
+    done: string | ((answer: unknown) => { title: string; message?: string })
+  ) => {
     if (busy.current) return;
     busy.current = true;
     setBlockBusy(block.id);
     try {
-      await run();
-      toast.success(done);
+      const answer = await run();
+      if (typeof done === "string") toast.success(done);
+      else {
+        const said = done(answer);
+        toast.success(said.title, said.message ? { message: said.message } : undefined);
+      }
       refreshShop(queryClient);
     } catch (error) {
       toast.error("We couldn't do that", { message: blockErrorText(apiError(error)) });
@@ -423,6 +440,49 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
           <CounterLabel />
         </Button>
 
+        {/* The blocks the shop has made that are not over: one made by mistake is taken off here, also after it began. */}
+        {removableBlocks(blocks.data).length > 0 ? (
+          <Section title="Blocked now">
+            <Panel>
+              {removableBlocks(blocks.data).map((block, index) => (
+                <View
+                  key={block.id}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: space.md,
+                    padding: space.md,
+                    borderTopWidth: index === 0 ? 0 : 1,
+                    borderTopColor: color.line,
+                  }}
+                >
+                  <View style={{ flex: 1, gap: 2 }} accessible accessibilityLabel={`${block.product.title}. ${blockRowLine(block, todayIst(now))}`}>
+                    <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={1}>
+                      {block.product.title}
+                    </Text>
+                    <Text fontSize="text-sm" tone="body">
+                      {blockRowLine(block, todayIst(now))}
+                    </Text>
+                  </View>
+                  <Button
+                    size="compact"
+                    variant="outline"
+                    accessibilityLabel={`Take off the block on ${block.product.title}`}
+                    loading={blockBusy === block.id}
+                    disabled={blockBusy !== null}
+                    onPress={() => {
+                      setRemoving(block);
+                      removeSheet.current?.present();
+                    }}
+                  >
+                    Take off
+                  </Button>
+                </View>
+              ))}
+            </Panel>
+          </Section>
+        ) : null}
+
         {feed.ringing.length > 0 ? (
           <Section title="Ringing now">
             <Panel>
@@ -509,7 +569,10 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
                     onHours={() => navigation.navigate("RentalHours")}
                     onPhotos={() => navigation.navigate("DraftPhotos")}
                     onReturned={(block) =>
-                      void blockAction(block, () => blockReturned(block.id), `${block.product.title} is back`)
+                      // What is said after follows the server's answer: a block that has not ended keeps today's unit taken.
+                      void blockAction(block, () => blockReturned(block.id), (answer) =>
+                        returnedNotice(answer as Block, feed?.date ?? todayIst())
+                      )
                     }
                     onExtend={setExtending}
                   />
@@ -530,6 +593,21 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
       </ScrollView>
 
       <QuickBlockSheet ref={quickBlock} />
+      {/* Always mounted, so its ref is there when a row asks for it; the words are the block's that was asked about. */}
+      <ConfirmSheet
+        ref={removeSheet}
+        title={removing ? removeBlockCopy(removing, todayIst(now)).title : "Take this block off?"}
+        body={removing ? removeBlockCopy(removing, todayIst(now)).body : ""}
+        confirmLabel="Take it off"
+        tone="danger"
+        loading={removing !== null && blockBusy === removing.id}
+        onConfirm={() => {
+          const block = removing;
+          removeSheet.current?.dismiss();
+          setRemoving(null);
+          if (block) void blockAction(block, () => removeBlock(block.id), "Block taken off");
+        }}
+      />
       {extending ? (
         <DayPickerModal
           title="Extend until"

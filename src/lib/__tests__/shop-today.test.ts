@@ -8,6 +8,7 @@ import {
   blockCall,
   blockErrorText,
   blockHold,
+  blockRowLine,
   blockLabel,
   clampQuantity,
   comingBackRow,
@@ -19,6 +20,9 @@ import {
   goingOutRow,
   isQuiet,
   needsRow,
+  removableBlocks,
+  removeBlockCopy,
+  returnedNotice,
   openLine,
   pickerProductFrom,
   reasonNote,
@@ -360,5 +364,72 @@ describe("the item picker reads the owner's own listings (review round 1, findin
     expect(filterPicker(products, " TRIPOD ").map((p) => p.name)).toEqual(["c", "a"]);
     expect(filterPicker(products, "cam-0").map((p) => p.name)).toEqual(["b"]);
     expect(filterPicker(products, "nothing")).toEqual([]);
+  });
+});
+
+describe("blocks: the server's sentences, what follows Returned, and taking one off (lane F)", () => {
+  const failure = (status: number, code: string | null, details: Record<string, unknown> | null = null): ApiError => ({
+    status,
+    code,
+    message: null,
+    details,
+  });
+  const block = (over: Partial<import("../shop-today").Block> = {}): import("../shop-today").Block => ({
+    id: 88,
+    product: { name: "PRO_tr1p0d", title: "Manfrotto tripod", shop_code: "TRI-04" },
+    quantity: 1,
+    first_day: "2026-10-13",
+    last_day: "2026-10-15",
+    reason: "walk_in",
+    source: "quick",
+    returned_at: null,
+    waiting_back: false,
+    created_at: "2026-10-13T06:00:00Z",
+    ...over,
+  });
+
+  it("a refused block shows the server's own sentence for the field, not fixed words", () => {
+    const paused = failure(400, "validation_error", { fields: { product: ["This product is paused, so nobody can book it. Resume it to block days."] } });
+    expect(blockErrorText(paused)).toBe("This product is paused, so nobody can book it. Resume it to block days.");
+    const far = failure(400, "validation_error", { fields: { last_day: ["A block can reach at most 365 days ahead."] } });
+    expect(blockErrorText(far)).toBe("A block can reach at most 365 days ahead.");
+    // No field named: the fixed line.
+    expect(blockErrorText(failure(400, "validation_error"))).toBe("Check the day and the number of units, then try again.");
+  });
+
+  it("after Returned, a block that has not ended keeps today's unit taken: free from tomorrow, not from today", () => {
+    // Began today, ends today (a counter rental returned the same day): the answer's last day is today.
+    expect(returnedNotice(block({ first_day: "2026-10-13", last_day: "2026-10-13" }), "2026-10-13")).toEqual({
+      title: "Manfrotto tripod is back",
+      message: "Today's unit stays blocked. It can be booked again from tomorrow.",
+    });
+    // One that ran on past today ends today when returned: the answer's last day is today too.
+    expect(returnedNotice(block({ last_day: "2026-10-13" }), "2026-10-13").message).toBe("Today's unit stays blocked. It can be booked again from tomorrow.");
+    // A walk-in already past its last day has nothing left to hold.
+    expect(returnedNotice(block({ first_day: "2026-10-10", last_day: "2026-10-12" }), "2026-10-13").message).toBe("It can be booked again.");
+  });
+
+  it("offers to take off the shop's own blocks, soonest first, and leaves a listing's own dates to the listing", () => {
+    const listed = [block({ id: 3, first_day: "2026-10-20" }), block({ id: 2, source: "listing" }), block({ id: 1, first_day: "2026-10-11" })];
+    expect(removableBlocks(listed).map((b) => b.id)).toEqual([1, 3]);
+    expect(removableBlocks(undefined)).toEqual([]);
+  });
+
+  it("describes a block in a line, and a walk-in that waits for 'Is it back?'", () => {
+    expect(blockRowLine(block(), "2026-10-13")).toBe("1 unit · Rented at the counter · from today until Thu 15 Oct");
+    expect(blockRowLine(block({ quantity: 2, reason: "repair", first_day: "2026-10-20", last_day: "2026-10-22" }), "2026-10-13")).toBe(
+      "2 units · Repair · from Tue 20 Oct until Thu 22 Oct"
+    );
+    expect(blockRowLine(block({ waiting_back: true, last_day: "2026-10-12" }), "2026-10-13")).toBe("1 unit · Rented at the counter · ended Mon 12 Oct, waiting for you");
+  });
+
+  it("says plainly what taking off a block that has begun does", () => {
+    const began = removeBlockCopy(block(), "2026-10-13");
+    expect(began.title).toBe("Take this block off?");
+    expect(began.body).toContain("It has begun. Taking it off is for a block made by mistake");
+    expect(began.body).toContain("every day it held, today included, can be booked again straight away");
+    const future = removeBlockCopy(block({ first_day: "2026-10-20", last_day: "2026-10-22" }), "2026-10-13");
+    expect(future.body).toContain("It goes as if it had never been made, and its days can be booked again.");
+    expect(future.body).not.toContain("It has begun");
   });
 });
