@@ -331,16 +331,21 @@ export type Work =
   | { kind: "send"; draft: CaptureDraft };
 
 /**
- * The next thing the queue does: a file to put on the bucket (in the order the
- * drafts were started and the files were taken), or a finished record to send.
- * `skip` holds the drafts that have just failed, so one bad draft does not hold
- * up the rest of a run.
+ * The next thing the queue does: a file to put on the bucket, or a finished
+ * record to send. Photos go first, across every record on the phone, so a small
+ * file is never stuck behind a large video (review r1 #4); then, record by record
+ * in the order they were started, its video and its send. `skip` holds the drafts
+ * that have just failed, so one bad draft does not hold up the rest of a run.
  */
 export function nextWork(drafts: readonly CaptureDraft[], skip: ReadonlySet<string> = new Set()): Work | null {
-  for (const draft of drafts) {
-    if (draft.done || skip.has(draft.id)) continue;
-    const waiting = files(draft).find(({ file }) => file.url === null);
-    if (waiting) return { kind: "upload", draft, ...waiting };
+  const live = drafts.filter((draft) => !draft.done && !skip.has(draft.id));
+  for (const draft of live) {
+    const photo = files(draft).find(({ slot, file }) => slot !== "video" && file.url === null);
+    if (photo) return { kind: "upload", draft, ...photo };
+  }
+  for (const draft of live) {
+    const video = files(draft).find(({ slot, file }) => slot === "video" && file.url === null);
+    if (video) return { kind: "upload", draft, ...video };
     // A send the server refused for a reason only a person can fix is not sent again by itself.
     if (readyToSend(draft) && !(draft.error && !draft.error.retry)) return { kind: "send", draft };
   }

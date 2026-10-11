@@ -199,6 +199,36 @@ describe("what goes up, and in which order", () => {
     expect(nextWork([d])).toEqual({ kind: "send", draft: d });
   });
 
+  it("photos go first across every record, so none waits behind another record's video (review r1 #4)", () => {
+    let a = seal(taken());
+    let b = seal(taken(start({ moment: "return" })));
+    const order: string[] = [];
+    for (let work = nextWork([a, b]); work; work = nextWork([a, b])) {
+      const which = work.draft.id === a.id ? "a" : "b";
+      if (work.kind === "send") {
+        order.push(`${which}:send`);
+        if (which === "a") a = { ...a, done: true };
+        else b = { ...b, done: true };
+        continue;
+      }
+      order.push(`${which}:${work.slot === "video" ? "video" : work.slot.shot}`);
+      if (which === "a") a = setUrl(a, work.slot, work.file.uri, "https://bucket.test/x");
+      else b = setUrl(b, work.slot, work.file.uri, "https://bucket.test/x");
+    }
+    expect(order).toEqual([
+      "a:front",
+      "a:back",
+      "a:serial",
+      "b:front",
+      "b:back",
+      "b:serial",
+      "a:video",
+      "a:send",
+      "b:video",
+      "b:send",
+    ]);
+  });
+
   it("uploads before the person has finished, but sends only once they have", () => {
     const d = uploaded(taken());
     expect(readyToSend(d)).toBe(false);
