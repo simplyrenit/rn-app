@@ -664,8 +664,11 @@ export const recordOpens = (state: RecordState) => state === "start" || state ==
  * complete one (another phone made it), or the booking shows it is not wanted any
  * more (it ended early, or closed without a return record).
  */
-export function shouldRelease(draft: Pick<CaptureDraft, "moment">, booking: RecordBooking, onServer: boolean): boolean {
-  return onServer || !serverTakes(draft.moment, booking);
+export function shouldRelease(draft: Pick<CaptureDraft, "moment" | "sealed" | "done">, booking: RecordBooking, onServer: boolean): boolean {
+  if (onServer || !serverTakes(draft.moment, booking)) return true;
+  // The booking has closed (P4-9 keeps the return's door open): a return record the person finished is kept until it is
+  // sent, but one begun and never finished is let go of, or its "Continue recording" card and photos would stay for good.
+  return draft.moment === "return" && booking.stage === "closed" && !draft.sealed && !draft.done;
 }
 
 export interface RecordCardView {

@@ -509,7 +509,15 @@ describe("when a record can be made and finished (review r1 #1, #2): one rule fo
     expect(shouldRelease(d, at("returned"), false)).toBe(false);
     expect(shouldRelease(d, at("returned"), true)).toBe(true);
     // The booking closed while it was still uploading: it is sent, not let go of (P4-9).
-    expect(shouldRelease(d, at("closed"), false)).toBe(false);
+    const uploading = seal(taken(start({ moment: "return" })));
+    expect(shouldRelease(uploading, at("closed"), false)).toBe(false);
+    // One begun and never finished is let go of on a closed booking (review app-5 r2 #9), but not while the booking is open.
+    expect(shouldRelease(d, at("closed"), false)).toBe(true);
+    expect(shouldRelease(d, at("returned"), false)).toBe(false);
+    // A finished record that has been sent and is waiting only for its code is not touched.
+    expect(shouldRelease({ ...uploading, done: true }, at("closed"), false)).toBe(false);
+    // The handover's unfinished record is not let go of: the owner's payout waits for it.
+    expect(shouldRelease(addShot(start(), "front", file("front.jpg")), at("closed"), false)).toBe(false);
     // A handover record is still taken on a closed booking.
     expect(shouldRelease(start(), at("closed"), false)).toBe(false);
     // The booking ended before a handover: nothing to record.
