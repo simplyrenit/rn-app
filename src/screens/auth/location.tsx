@@ -513,7 +513,7 @@ export default function LocationScreen() {
       if (signUpError.code === "otp_verification_required") {
         Alert.alert(
           "Verification required",
-          "Please verify your email OTP before completing signup.",
+          "Please confirm your email or phone number again before completing signup. A confirmation lasts an hour.",
           [{ text: "Go to verification", onPress: () => navigation.navigate("Email") }]
         );
         return;
@@ -541,7 +541,7 @@ export default function LocationScreen() {
       if (signUpError.code === "otp_verification_required") {
         Alert.alert(
           "Verification required",
-          "Please verify your email OTP before completing signup.",
+          "Please confirm your email or phone number again before completing signup. A confirmation lasts an hour.",
           [{ text: "Go to verification", onPress: () => navigation.navigate("Email") }]
         );
         return;

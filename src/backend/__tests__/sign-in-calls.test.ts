@@ -87,3 +87,28 @@ describe("every sign-in says which phone it is", () => {
     expect(body.platform).toBe("ios");
   });
 });
+
+describe("the proof tokens (T-19)", () => {
+  it("the emailed-code check is for email only: it never carries a number", async () => {
+    await otpCheck("asha@example.com", "123456");
+    const [, config] = http.get.mock.calls[0] as [string, { params: Record<string, unknown> }];
+    expect(Object.keys(config.params).sort()).toEqual(["device_id", "device_name", "email", "otp", "platform"]);
+    expect(config.params).not.toHaveProperty("phone");
+  });
+
+  it("sign-up carries the proof token it was given, beside the device fields", async () => {
+    await signUp({ email: "asha@example.com", first_name: "Asha", proof_token: "signed.token" });
+    expect(http.post).toHaveBeenCalledWith("https://api.test/signup/", {
+      email: "asha@example.com",
+      first_name: "Asha",
+      proof_token: "signed.token",
+      ...DEVICE,
+    });
+  });
+
+  it("phone sign-in sends no token of its own: it only receives one", async () => {
+    await phoneLogin("firebase-id-token");
+    const [, body] = http.post.mock.calls[0] as [string, Record<string, unknown>];
+    expect(body).not.toHaveProperty("proof_token");
+  });
+});

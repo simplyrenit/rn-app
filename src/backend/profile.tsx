@@ -60,9 +60,10 @@ export function useProfile() {
 
   /**
    * `phone_id_token` is the Firebase ID token of the NEW number, which the backend wants
-   * with any change of phone number (decision T-14); no other field takes it.
+   * with any change of phone number (decision T-14); `proof_token` is the token of the emailed-code
+   * check of the NEW address, which it wants with any change of email (decision T-19). No other field takes them.
    */
-  async function updateMyDetails(username: string, data: Partial<MyDetails> & { phone_id_token?: string }) {
+  async function updateMyDetails(username: string, data: Partial<MyDetails> & { phone_id_token?: string; proof_token?: string }) {
     setLoading(true);
     try {
       const response = await axiosInstance.patch<MyDetails>(

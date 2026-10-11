@@ -16,11 +16,15 @@ export interface OTPResponse {
   refresh: string | null;
   is_verified: boolean;
   message: string;
+  /** For an account not finished yet: proof that this address was just confirmed, sent on with sign-up or an email change (T-19). */
+  proof_token?: string;
 }
 
 export interface PhoneVerificationResponse {
   onboarding_required?: boolean;
   phone?: string;
+  /** For an account with no name yet: proof that this number was just confirmed, sent on with sign-up (T-19). */
+  proof_token?: string;
   access_token?: string;
   refresh_token?: string;
 }
@@ -577,6 +581,11 @@ export interface AuthUser {
   /** The version of the owner terms the person was shown when they ticked (ENG-122). */
   owner_terms_version?: string;
   password: string;
+  /**
+   * Proof that the address or number being signed up was just confirmed: the token of the emailed-code check or of
+   * the phone check. Kept with the rest of the sign-up and sent with `POST /api/signup/` (T-19).
+   */
+  proof_token?: string;
   date_of_birth?: string;
   coordinates: {
     type: string;

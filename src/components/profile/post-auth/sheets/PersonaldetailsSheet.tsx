@@ -43,6 +43,7 @@ import {
 } from "@/lib/design-tokens";
 import { apiError } from "@/lib/api-error";
 import { needsCurrentNumberCode, phoneChangeBody, phoneChangeOutcome } from "@/lib/phone-change";
+import { EMAIL_HAS_ACCOUNT, emailChangeBody, emailChangeOutcome, emailCodeText, emailProof, sameEmail } from "@/lib/sign-in-proof";
 import { toast } from "@/lib/toast";
 import { useTheme } from "@/lib/theme";
 import { isUnlocked } from "@/lib/unlock";
@@ -107,7 +108,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const { theme } = useGlobalContext();
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
-  const { sendOTP, requestPhoneNumberChangeOtp, verifyPhoneNumberChange } =
+  const { sendOTP, verifyOTP, requestPhoneNumberChangeOtp, verifyPhoneNumberChange } =
     useAuth();
   const isDark = theme === "dark";
   const { width: winW, height: winH } = useWindowDimensions();
@@ -189,7 +190,22 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const allValid = Object.values(validatePassword).every(Boolean);
 
   const openEditNameModal = () => editNameModalRef.current?.present();
-  const openEditEmailModal = () => editEmailModalRef.current?.present();
+  // Changing the email needs the same two proofs as the number (decisions T-14, T-19): the code to the
+  // CURRENT number first, when the account has one, and then the emailed code to the NEW address, whose
+  // proof token goes with the change. It is below, with the number's: they share the one unlock sheet.
+  const openEditEmailModal = () => {
+    if (!nameId) {
+      toast.info("Still loading your details", { message: "Try again in a moment." });
+      return;
+    }
+    void askForCode(() => {
+      setEmailError("");
+      setIsIncorrect(false);
+      setIsOtpSent(false);
+      emailToken.current = "";
+      editEmailModalRef.current?.present();
+    });
+  };
   // Changing the number needs two proofs (decision T-14): a code sent to the CURRENT number
   // first, when the account has one (it unlocks this phone for a while, as for the bank
   // account), and the code sent to the NEW number, whose ID token goes with the change.
@@ -300,10 +316,33 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const [isMobileOtpSent, setIsMobileOtpSent] = useState(false);
   const [isIncorrect, setIsIncorrect] = useState(false);
 
+  const [emailError, setEmailError] = useState("");
+  const [isEmailBusy, setIsEmailBusy] = useState(false);
+  /** The proof token of the emailed code, kept after the code is spent so a failed save is repeated alone. */
+  const emailToken = useRef("");
+  const savingEmail = useRef(false);
+
+  /** Sends (or sends again) the code to the NEW address. A new code makes the one confirmed before it worthless. */
   const handleSendOtp = async () => {
-    if (updatedEmail) {
+    if (!updatedEmail.trim() || savingEmail.current) return;
+    if (sameEmail(updatedEmail, details.email)) {
+      setEmailError("That is already your email address.");
+      return;
+    }
+    savingEmail.current = true;
+    setIsEmailBusy(true);
+    setEmailError("");
+    setIsIncorrect(false);
+    emailToken.current = "";
+    try {
+      // The server limits how often codes are asked for (429): said plainly, never retried by itself.
+      await sendOTP(updatedEmail.trim());
       setIsOtpSent(true);
-      // await sendOTP(updatedEmail);
+    } catch (error: any) {
+      setEmailError(emailCodeText(error, "send"));
+    } finally {
+      savingEmail.current = false;
+      setIsEmailBusy(false);
     }
   };
 
@@ -353,30 +392,66 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   //     setIsOtpSent(false);
   //   }
   // };
-  const handleSubmitOtp = async () => {
-    if (verificationCode.length === 6) {
-      if (verificationCode !== "111111") {
-        setIsIncorrect(true);
-        return;
-      }
-
-      try {
-        // Call the API to update the email
-        await updateMyDetails(nameId, { email: updatedEmail });
-
-        // Update local state with the new email
-        setDetails((prevDetails) => ({
-          ...prevDetails,
-          email: updatedEmail,
-        }));
-
-        // Close the modal and reset OTP state
-        editEmailModalRef.current?.close();
+  /**
+   * Sends the new address with the proof that this person reads its mail (decision T-19). The answers are said
+   * in plain words; the proof is kept for the ones that leave it good, so a lost answer is repeated alone.
+   */
+  const saveEmail = async () => {
+    try {
+      const saved = await updateMyDetails(nameId, emailChangeBody(updatedEmail, emailToken.current));
+      emailToken.current = "";
+      setDetails((prevDetails) => ({ ...prevDetails, email: saved?.email || updatedEmail.trim() }));
+      editEmailModalRef.current?.close();
+      setIsOtpSent(false);
+    } catch (error) {
+      const outcome = emailChangeOutcome(apiError(error));
+      setEmailError(outcome.text);
+      if (outcome.next === "unlock") {
+        // The unlock ran out while the code was typed: confirm the current number again, then save.
+        void askForCode(() => void saveEmail(), true);
+      } else if (outcome.next === "new_code") {
+        emailToken.current = "";
+      } else if (outcome.next === "new_email") {
+        // Another address is needed: back to typing one, with the reason under the box.
+        emailToken.current = "";
         setIsOtpSent(false);
-      } catch (error) {
-        console.error("Error updating email:", error);
-        toast.error("Could not update your email. Please try again.");
       }
+    }
+  };
+
+  const handleSubmitOtp = async () => {
+    if (verificationCode.length !== 6 || savingEmail.current) return;
+    savingEmail.current = true;
+    setIsEmailBusy(true);
+    setIsIncorrect(false);
+    setEmailError("");
+    try {
+      if (!emailToken.current) {
+        let proof;
+        try {
+          // The check answers `proof_token` for an address that has no account of its own. If it answers tokens
+          // instead, the address already belongs to an account: say so and stop, and keep nothing.
+          proof = emailProof(await verifyOTP(updatedEmail.trim(), verificationCode));
+        } catch (error: any) {
+          if (error?.status === 401) setIsIncorrect(true);
+          else setEmailError(emailCodeText(error, "check"));
+          return;
+        }
+        if (proof.kind === "has_account") {
+          setEmailError(EMAIL_HAS_ACCOUNT);
+          setIsOtpSent(false);
+          return;
+        }
+        if (proof.kind === "none") {
+          setEmailError("We couldn't confirm that code. Send a new one and try again.");
+          return;
+        }
+        emailToken.current = proof.token;
+      }
+      await saveEmail();
+    } finally {
+      savingEmail.current = false;
+      setIsEmailBusy(false);
     }
   };
 
@@ -861,10 +936,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 keyboardType="email-address"
               />
 
-              <TouchableOpacity
-                onPress={handleSendOtp}
-                style={styles.saveButton}
-              >
+              <Button onPress={handleSendOtp} loading={isEmailBusy} disabled={isEmailBusy}>
                 <Text
                   fontSize="text-sm"
                   fontWeight="font-bold"
@@ -872,7 +944,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 >
                   Verify
                 </Text>
-              </TouchableOpacity>
+              </Button>
+              {emailError ? (
+                <Text tone="danger" fontSize="text-sm" fontWeight="font-bold" accessibilityRole="alert">
+                  {emailError}
+                </Text>
+              ) : null}
             </>
           ) : (
             <>
@@ -913,9 +990,15 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </View>
               )}
 
+              {emailError ? (
+                <Text tone="danger" fontSize="text-sm" fontWeight="font-bold" accessibilityRole="alert">
+                  {emailError}
+                </Text>
+              ) : null}
+
               <View className=" flex-row space-x-3 ">
                 <View className="flex-1">
-                  <Button variant="outline">
+                  <Button variant="outline" onPress={handleSendOtp} disabled={isEmailBusy}>
                     <Text
                       fontSize="text-sm"
                       fontWeight="font-bold"
@@ -926,7 +1009,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   </Button>
                 </View>
                 <View className="flex-1">
-                  <Button onPress={handleSubmitOtp}>
+                  <Button onPress={handleSubmitOtp} loading={isEmailBusy} disabled={isEmailBusy}>
                     <Text
                       fontSize="text-sm"
                       fontWeight="font-bold"

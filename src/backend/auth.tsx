@@ -4,6 +4,7 @@ import { DEV_MODE, OTP } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
 import { acceptOwnerTerms } from "@/backend/terms";
 import { emailLogin, otpCheck, phoneLogin, signUp } from "@/backend/sign-in-calls";
+import { requestErrorFrom, signUpBody } from "@/lib/sign-in-proof";
 import {
   authenticateFirebase,
   initializeAppCheck,
@@ -44,22 +45,8 @@ export function useAuth() {
   const { user } = useAuthContext();
   const { setAuthTokens } = useGlobalContext();
 
-  const toRequestError = (error: any, fallbackMessage: string): SignUpError => {
-    if (error?.response) {
-      return {
-        status: error.response.status,
-        code: error.response.data?.code,
-        message:
-          error.response.data?.error ||
-          error.response.data?.message ||
-          fallbackMessage,
-      };
-    }
-
-    return {
-      message: error?.message || fallbackMessage,
-    };
-  };
+  // A call made too often (429) says "Too many tries. Wait a few minutes." and is never repeated by itself (T-19).
+  const toRequestError = (error: any, fallbackMessage: string): SignUpError => requestErrorFrom(error, fallbackMessage);
 
   async function sendOTP(email: string): Promise<OTPResponseMessage> {
     setLoading(true);
@@ -253,25 +240,9 @@ export function useAuth() {
     try {
       const mergedUser = { ...(user ?? {}), ...(overrides ?? {}) };
       const accountType = mergedUser.account_type ?? "user";
-      const signupPayload = {
-        email: mergedUser.email,
-        first_name: mergedUser.first_name,
-        last_name: mergedUser.last_name,
-        password: mergedUser.password,
-        phone: mergedUser.phone,
-        country: mergedUser.country,
-        account_type: accountType,
-        business_name:
-          accountType === "merchant" ? mergedUser.business_name : undefined,
-        coordinates: mergedUser.coordinates,
-        date_of_birth: mergedUser.date_of_birth,
-        email_verified: mergedUser.email_verified,
-      };
-      const payload = Object.fromEntries(
-        Object.entries(signupPayload).filter(
-          ([, value]) => value !== undefined && value !== null && value !== ""
-        )
-      );
+      // The proof token of the emailed code or the phone check goes with it (T-19): without it the server answers
+      // 403 `otp_verification_required`, which the sign-up screen turns into "verify again".
+      const payload = signUpBody(mergedUser);
 
       const response: { data: AuthTokens } = await signUp(payload);
       setAuthTokens(response.data);
