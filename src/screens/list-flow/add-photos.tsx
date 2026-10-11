@@ -9,6 +9,7 @@ import { pickPhotos } from "@/components/list-flow/pick-photos";
 import { AddPhotoTile, PhotoTile } from "@/components/list-flow/photo-tile";
 import { AddPhotoSheet, ResumeDraftSheet } from "@/components/list-flow/sheets";
 import { useGlobalContext } from "@/context/global-context";
+import { termsGate, termsHold } from "@/lib/list-flow/terms-gate";
 import { useListDraft } from "@/context/list-draft-context";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import {
@@ -59,15 +60,27 @@ export default function ListAddPhotosScreen() {
   const [resumeTitle, setResumeTitle] = useState("last");
 
   // The owner terms (ENG-122): asked at the start of a listing until accepted.
-  // While the terms are loading, or if they cannot be read, nothing is held back:
-  // the server refuses a submit without them (`owner_terms_required`) and Preview
-  // brings the owner back here.
-  const { data: terms } = useTerms();
+  // Ordinarily, while the terms are loading, or if they cannot be read, nothing is
+  // held back: the server refuses a submit without them and Preview brings the
+  // owner back here. Once it has (`termsNeeded`), this step holds Continue until the
+  // terms have been read, and says so while they cannot be.
+  const termsQuery = useTerms();
+  const { data: terms } = termsQuery;
+  const termsRefused = Boolean(route.params?.termsNeeded);
   const { userDetails } = useGlobalContext();
   const queryClient = useQueryClient();
   const [ownerTermsTick, setOwnerTermsTick] = useState(false);
   const ownerTerms = terms?.owner;
-  const needsOwnerTerms = ownerTerms?.accepted === false;
+  const gate = termsGate({
+    accepted: ownerTerms?.accepted,
+    read: Boolean(ownerTerms),
+    failed: termsQuery.isError && !ownerTerms,
+    fetching: termsQuery.isFetching,
+    refused: termsRefused,
+  });
+  const needsOwnerTerms = gate === "tick";
+  const termsFailed = gate === "failed";
+  const termsHeld = termsHold(gate, ownerTermsTick, termsRefused);
   const shownWarnings = useRef(new Set<string>());
 
   // ---- Opening: fresh draft or the resume sheet ------------------------------
@@ -194,6 +207,7 @@ export default function ListAddPhotosScreen() {
       queryClient.setQueryData(termsQueryKey(userDetails?.username), updated);
       // A later version asks again, with an empty box.
       setOwnerTermsTick(false);
+      navigation.setParams({ termsNeeded: undefined });
       return true;
     } catch (error) {
       if (isTermsVersionOld(error)) {
@@ -379,9 +393,26 @@ export default function ListAddPhotosScreen() {
                 onChange={setOwnerTermsTick}
                 onOpenTerms={openOwnerTerms}
               />
+            ) : termsFailed ? (
+              // The read failed: say so, with a way to try again, rather than showing
+              // nothing about terms at all.
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.sm }}>
+                <Text tone={termsRefused ? "danger" : "dim"} fontSize="text-sm" style={{ flex: 1 }}>
+                  {termsRefused
+                    ? "We couldn't load the owner terms, and they are needed to submit."
+                    : "We couldn't check the owner terms."}
+                </Text>
+                <Button variant="outline" size="compact" loading={termsQuery.isFetching} onPress={() => void termsQuery.refetch()}>
+                  Try again
+                </Button>
+              </View>
+            ) : gate === "checking" ? (
+              <Text tone="dim" fontSize="text-sm" accessibilityLiveRegion="polite">
+                Checking the owner terms…
+              </Text>
             ) : null}
             <Button
-              disabled={doneCount === 0 || (needsOwnerTerms && !ownerTermsTick)}
+              disabled={doneCount === 0 || termsHeld}
               loading={continuing}
               onPress={onContinue}
             >
@@ -389,7 +420,7 @@ export default function ListAddPhotosScreen() {
             </Button>
             <Button
               variant="ghost"
-              disabled={continuing || (needsOwnerTerms && !ownerTermsTick)}
+              disabled={continuing || termsHeld}
               onPress={onManual}
             >
               I'll fill it in myself

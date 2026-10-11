@@ -205,7 +205,7 @@ export default function ListPreviewScreen() {
         toast.warning("Accept the owner terms to submit", {
           message: "The tick is on the first step. Your listing is saved.",
         });
-        navigation.navigate("ListAddPhotos");
+        navigation.navigate("ListAddPhotos", { termsNeeded: true });
         return;
       }
       // A merchant who may not publish yet for another reason: say which.

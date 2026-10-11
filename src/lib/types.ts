@@ -318,7 +318,11 @@ export type RootStackParamList = {
     requestId?: string;
   };
   // The photo-first listing flow (ENG-10, IMPLEMENTATION.md §8.1).
-  ListAddPhotos: { focusPhoto?: number } | undefined;
+  /**
+   * `termsNeeded`: the server refused a submit for the owner terms (ENG-122), so
+   * this first step holds Continue until the terms have been read and ticked.
+   */
+  ListAddPhotos: { focusPhoto?: number; termsNeeded?: boolean } | undefined;
   ListReading: undefined;
   ListReview: { manual?: boolean } | undefined;
   ListPreview: undefined;
