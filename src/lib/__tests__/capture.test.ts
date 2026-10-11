@@ -64,9 +64,13 @@ import {
   pendingList,
   reopenForMissing,
   reopenedText,
-  markDesk,
+  markNoMoreCodes,
+  markCodeDead,
   needsDesk,
   DESK_FINISHES,
+  NO_MORE_CODES,
+  FILES_KEPT,
+  MAX_LOST,
   videoHintText,
   withShooting,
 } from "../capture";
@@ -593,22 +597,52 @@ describe("the record's card", () => {
     expect(card({ moment: "return", stage: "out" })).toMatchObject({ stake: null, tone: "info" });
   });
 
-  it("a record whose code can never be confirmed (no more codes) says the desk finishes it and offers Get help, not a card for ever", () => {
+  it("no more codes can be sent: the box for the last code stays, with Get help; once it is spent, only the desk is left", () => {
     const theirs = { ...seal(uploaded(taken(start({ side: "owner", forOther: true })))), done: true, awaitingCode: true };
     expect(card({ state: "code", forOther: true, draft: theirs })).toMatchObject({
       text: "It is uploaded. Type the code Aarav reads out to confirm it.",
       button: { label: "Type the code" },
     });
-    const dead = markDesk(theirs);
-    expect(needsDesk(dead)).toBe(true);
+    const noMore = markNoMoreCodes(theirs);
+    expect(noMore.desk).toBe("codes");
+    expect(needsDesk(noMore)).toBe(true);
+    // The last code sent may still be valid: the person can still type it, and Get help is beside it.
+    expect(card({ state: "code", forOther: true, draft: noMore })).toMatchObject({ text: NO_MORE_CODES, button: { label: "Type the code" }, help: true });
+    // Spent or run out: no box, no new code, the desk.
+    const dead = markCodeDead(noMore);
+    expect(dead.desk).toBe("dead");
     expect(card({ state: "code", forOther: true, draft: dead })).toMatchObject({ text: DESK_FINISHES, button: null, help: true });
+    // A code spent before the limit was known marks nothing.
+    expect(markCodeDead(theirs)).toBe(theirs);
+    expect(markNoMoreCodes(dead)).toBe(dead);
     // The same after a send the server refused because the code had run out.
-    const refused = markDesk({ ...theirs, done: false, awaitingCode: false, error: { text: "x", retry: false } });
+    const refused = markCodeDead(markNoMoreCodes({ ...theirs, done: false, awaitingCode: false, error: { text: "x", retry: false } }));
     expect(card({ state: "stuck", forOther: true, draft: refused })).toMatchObject({ text: DESK_FINISHES, button: null, help: true });
-    // Only the other person's set: a person's own record has no code to run out.
-    expect(card({ state: "stuck", draft: markDesk({ ...start(), error: { text: "x", retry: false } }) })?.help).toBeUndefined();
-    expect(markDesk(dead)).toBe(dead);
+    // A record that never waited for a code has nothing to run out.
+    expect(card({ state: "stuck", draft: { ...start(), error: { text: "x", retry: false } } })?.help).toBeUndefined();
     expect(fallbackErrorText(err("rate_limited", 429))).toMatch(/desk has to finish/);
+  });
+
+  it("the server keeps taking the same file out: counted, and after a few the phone stops, keeps the files and says so with Get help", () => {
+    let d = seal(uploaded(taken()));
+    for (let round = 1; round < MAX_LOST; round += 1) {
+      d = applyAnswer(d, { complete: false, missing: ["back"] });
+      expect(d.lost).toBe(round);
+      expect(d.desk).toBeUndefined();
+      // Sent again: the address is cleared, the file stays, the record stays sealed.
+      expect(d.shots.back).toMatchObject({ uri: "file:///captures/back.jpg", url: null });
+      expect(d.sealed).toBe(true);
+      d = setUrl(d, { shot: "back" }, "file:///captures/back.jpg", "https://bucket.test/uploads/back.jpg");
+    }
+    // The last time it is the same: stopped. Addresses as they were, nothing to upload, nothing sent by itself.
+    const stopped = applyAnswer(d, { complete: false, missing: ["back"] });
+    expect(stopped).toMatchObject({ desk: "files", lost: MAX_LOST, sealed: true, done: false, error: { text: FILES_KEPT, retry: false } });
+    expect(stopped.shots.back.url).toBe("https://bucket.test/uploads/back.jpg");
+    expect(nextWork([stopped])).toBeNull();
+    expect(localUris(stopped)).toContain("file:///captures/back.jpg");
+    expect(card({ state: "stuck", draft: stopped })).toMatchObject({ text: FILES_KEPT, button: null, help: true });
+    // A file the phone does not hold goes back to the person and is not counted.
+    expect(applyAnswer(seal(uploaded(taken())), { complete: false, missing: ["window"] }).lost).toBeUndefined();
   });
 
   it("after a confirm said a file is missing, the words follow what the phone does", () => {

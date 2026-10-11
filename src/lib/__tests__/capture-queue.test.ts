@@ -442,11 +442,39 @@ describe("the capture queue", () => {
     expect(d).toMatchObject({ done: false, sealed: true, error: { retry: true } });
     expect(d.shots.back.uri).toBe("file:///captures/back.jpg");
     expect(deps.discard).not.toHaveBeenCalled();
-    // The next kick tries again, twice, and stops again.
+    // The next kick tries again, at most twice, and stops again (and for good after a few kicks: see the next test).
     const before = (deps.send as jest.Mock).mock.calls.length;
     queue.kick();
     await queue.idle();
-    expect((deps.send as jest.Mock).mock.calls.length).toBe(before + 2);
+    const after = (deps.send as jest.Mock).mock.calls.length;
+    expect(after).toBeGreaterThan(before);
+    expect(after).toBeLessThanOrEqual(before + 2);
+  });
+
+  it("a file the server keeps losing across runs stops being sent after a few, with the copy kept and no upload every 20 seconds", async () => {
+    const { queue, deps } = setup({
+      send: jest.fn(async () => ({ complete: false, missing: ["back"] }) as unknown as Capture),
+    });
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+    for (let kick = 0; kick < 6; kick += 1) {
+      queue.kick();
+      await queue.idle();
+    }
+    const stopped = queue.getDrafts()[0];
+    expect(stopped).toMatchObject({ done: false, desk: "files", error: { retry: false } });
+    expect(stopped.shots.back.uri).toBe("file:///captures/back.jpg");
+    expect(deps.discard).not.toHaveBeenCalled();
+    // Stopped: another kick uploads and sends nothing.
+    const sends = (deps.send as jest.Mock).mock.calls.length;
+    const uploads = (deps.upload as jest.Mock).mock.calls.length;
+    queue.kick();
+    await queue.idle();
+    expect((deps.send as jest.Mock).mock.calls.length).toBe(sends);
+    expect((deps.upload as jest.Mock).mock.calls.length).toBe(uploads);
+    expect(queue.hasWork()).toBe(false);
   });
 
   it("a file the phone no longer holds that the server misses goes back to the person", async () => {

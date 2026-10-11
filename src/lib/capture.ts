@@ -144,10 +144,16 @@ export interface CaptureDraft {
   /** When the server first refused this record as not taken at the booking's stage. Kept a while, never deleted on one answer. */
   refusedAt?: string | null;
   /**
-   * No more codes can be sent for this record's other person (the server allows three for a booking and moment): it can
-   * never be confirmed from the phone, and Renit's desk has to finish it. Set when a code is refused as `rate_limited`.
+   * Why Renit's desk has to finish this record, once the phone cannot:
+   *  - `codes`: no more codes can be sent for the other person (the server allows three for a booking and moment,
+   *    and refused a fourth as `rate_limited`); the last one sent may still be valid, so the box for it stays;
+   *  - `dead`: and the last code is spent or has run out, so it can never be confirmed from the phone;
+   *  - `files`: the server took the same file out of the record again and again, and the phone stopped sending it.
+   * The files stay on the phone until the desk has finished the record.
    */
-  desk?: boolean;
+  desk?: "codes" | "dead" | "files";
+  /** How many times the server answered that it lacked a file the phone holds (the file is sent again each time). */
+  lost?: number;
   /** Started from the general list the app carries, because the booking's own list could not be read. */
   generic?: boolean;
   /**
@@ -447,26 +453,49 @@ export function confirmFailure(error: ApiError | null): ConfirmResult {
   return { kind: "error", text: fallbackErrorText(error) };
 }
 
+/** After this many times the server has taken a file out of the same record, the phone stops sending it again. */
+export const MAX_LOST = 5;
+
 /**
  * The record opened again for what a refused confirm said was missing: it was uploaded and waiting for its code
  * (`done`), and is now not. A file the phone still holds (it is kept while the record waits for its code) is simply
- * sent again, by itself; one it no longer holds, or the ID tick, is asked for from the person.
+ * sent again, by itself; one it no longer holds, or the ID tick, is asked for from the person. The same for a send
+ * whose answer lists a file under `missing` (`applyAnswer`).
+ *
+ * The times the server takes a held file out are counted (`lost`). After `MAX_LOST` the phone stops: the files stay on
+ * the phone, nothing is sent again by itself, and the card says Renit's desk has to look (`desk: "files"`).
  */
 export function reopenForMissing(draft: CaptureDraft, missing: string[]): CaptureDraft {
   let next: CaptureDraft = { ...draft, done: false, awaitingCode: false, error: null };
+  let held = false;
   for (const what of missing) {
     if (what === "confirmation_code") continue;
     if (what === "id_match") next = { ...next, idMatch: false, sealed: false };
-    else if (what === "video") next = next.video ? { ...next, video: { ...next.video, url: null } } : { ...next, sealed: false };
-    else {
+    else if (what === "video") {
+      if (next.video) {
+        held = true;
+        next = { ...next, video: { ...next.video, url: null } };
+      } else next = { ...next, sealed: false };
+    } else {
       const file = next.shots[what];
+      if (file) held = true;
       next = file ? withFile(next, { shot: what }, { ...file, url: null }) : { ...next, sealed: false };
     }
   }
-  return next.sealed
-    ? next
-    : { ...next, error: STILL_NEEDS };
+  if (held) {
+    const lost = (draft.lost ?? 0) + 1;
+    if (lost >= MAX_LOST) {
+      // Stopped: addresses stay as they were, so nothing is uploaded or sent again by itself; the files are kept.
+      return { ...draft, lost, desk: "files", error: { text: FILES_KEPT, retry: false } };
+    }
+    next = { ...next, lost };
+  }
+  return next.sealed ? next : { ...next, error: STILL_NEEDS };
 }
+
+/** The words when the phone has stopped sending a file the server keeps taking out. */
+export const FILES_KEPT =
+  "Renit keeps losing a file of this record after it is sent. Nothing is lost: the photos and video are kept on this phone. Tell Renit's desk through Get help and they will sort it out.";
 
 /** The server did not find a file after it was sent, twice in one run: it is sent again on the next try, with nothing lost. */
 export const resendLater = (): NonNullable<CaptureDraft["error"]> => ({
@@ -474,12 +503,17 @@ export const resendLater = (): NonNullable<CaptureDraft["error"]> => ({
   retry: true,
 });
 
-/** No more codes can be sent for this record: the desk finishes it (`rate_limited`). The files stay until it has. */
-export const needsDesk = (draft: CaptureDraft): draft is CaptureDraft & { desk: true } => draft.desk === true;
-export const markDesk = (draft: CaptureDraft): CaptureDraft => (draft.desk ? draft : { ...draft, desk: true });
+/** Renit's desk has to finish this record (`desk`): no more codes, or a file the server keeps losing. */
+export const needsDesk = (draft: CaptureDraft): boolean => Boolean(draft.desk);
+/** No more codes can be sent (`rate_limited`): the last one sent may still be valid, so the box for it stays. */
+export const markNoMoreCodes = (draft: CaptureDraft): CaptureDraft => (draft.desk ? draft : { ...draft, desk: "codes" });
+/** And the last code is spent or has run out: it can never be confirmed from here. */
+export const markCodeDead = (draft: CaptureDraft): CaptureDraft => (draft.desk === "codes" ? { ...draft, desk: "dead" } : draft);
 
 /** The words when a record's code can never be confirmed from the phone, with Get help beside them. */
 export const DESK_FINISHES = "No more codes can be sent for this record, so Renit's desk has to finish it. Tell the desk through Get help and it will be done by phone.";
+/** While the last code sent may still work. */
+export const NO_MORE_CODES = "No more codes can be sent for this record. If the last one has not run out, type it. If it has, tell Renit's desk through Get help and they will finish it by phone.";
 
 /**
  * What to tell the person after a confirm said files were missing and the record was opened again for them
@@ -804,8 +838,15 @@ export function recordCard(input: {
           ? "Your deposit comes back sooner once both return records are in."
           : "The rental closes once both return records are in."
         : null;
-  // A set whose code can never be confirmed from here: the desk finishes it, so no "Type the code" and no new code.
-  if (draft && needsDesk(draft) && forOther && (state === "code" || state === "stuck")) {
+  // The desk has to finish this record (`desk`): no new code, or no more sending of a file the server keeps losing.
+  if (draft?.desk && (state === "code" || state === "stuck")) {
+    if (draft.desk === "files") {
+      return { state, title, text: FILES_KEPT, stake: null, button: null, help: true, progress, tone: "warning" };
+    }
+    // The last code may still be valid: the box for it stays.
+    if (draft.desk === "codes" && state === "code") {
+      return { state, title, text: NO_MORE_CODES, stake: null, button: { label: "Type the code", action: "open" }, help: true, progress: null, tone: "warning" };
+    }
     return { state, title, text: DESK_FINISHES, stake: null, button: null, help: true, progress: null, tone: "warning" };
   }
   switch (state) {

@@ -29,6 +29,7 @@ import {
   replyAlreadyIn,
   replyErrorText,
   replyHold,
+  ReplyView,
   replyView,
   sideOf,
   statusBanner,
@@ -171,13 +172,14 @@ function ClaimBody({ read, receivedAt }: { read: ClaimRead; receivedAt: number }
   // Every deadline is counted against the claim's own `server_time`.
   const now = useServerNow(read.serverTime, receivedAt, 30_000);
   const { claim } = read;
-  // Which side the person is on: the claim says (`my_side`), the screen that opened it does not have to.
+  // Which side the person is on: the claim says (`my_side`). Without it the side is not guessed: the claim is read in the
+  // third person, with no reply form and no way to the booking (`sideOf`).
   const role = sideOf(claim);
   const banner = statusBanner(claim, role, now);
-  const reply = replyView(claim, role, now, Boolean(read.serverTime));
+  const reply: ReplyView = role ? replyView(claim, role, now, Boolean(read.serverTime)) : claim.reply ? { kind: "sent", reply: claim.reply } : { kind: "none" };
   const rows = effectRows(claim);
   const amounts = amountLines(claim);
-  const other = otherName(claim, role);
+  const other = role ? otherName(claim, role) : "the other side";
   // What a refund did and where it went (N16): the customer's payments list says so, with the days to expect.
   const refunded = role === "customer" && claim.effects.some((e) => e.kind === "refund");
   const bookingNumber = claim.booking.number;
@@ -261,7 +263,7 @@ function ClaimBody({ read, receivedAt }: { read: ClaimRead; receivedAt: number }
       ) : null}
 
       {reply.kind === "sent" ? (
-        <Section title={againstMe(claim, role) ? "Your reply" : `${other[0].toUpperCase()}${other.slice(1)}'s reply`}>
+        <Section title={role === null ? "The reply" : againstMe(claim, role) ? "Your reply" : `${other[0].toUpperCase()}${other.slice(1)}'s reply`}>
           <Text fontSize="text-md">{reply.reply.text}</Text>
           {reply.reply.at ? (
             <Text fontSize="text-xs" tone="body">
@@ -337,12 +339,14 @@ function ClaimBody({ read, receivedAt }: { read: ClaimRead; receivedAt: number }
         <GetHelp booking={{ number: bookingNumber, can: ["get_help"] }} />
       </Panel>
 
-      <Button
-        variant="outline"
-        onPress={() => navigation.navigate(role === "customer" ? "Booking" : "ShopBooking", { number: bookingNumber })}
-      >
-        Open the booking
-      </Button>
+      {role ? (
+        <Button
+          variant="outline"
+          onPress={() => navigation.navigate(role === "customer" ? "Booking" : "ShopBooking", { number: bookingNumber })}
+        >
+          Open the booking
+        </Button>
+      ) : null}
     </ScrollView>
   );
 }

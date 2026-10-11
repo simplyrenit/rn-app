@@ -31,7 +31,10 @@ import {
   durationLabel,
   fallbackErrorText,
   listSourceNote,
-  markDesk,
+  FILES_KEPT,
+  NO_MORE_CODES,
+  markCodeDead,
+  markNoMoreCodes,
   needsDesk,
   needsIdMatch,
   nextStep,
@@ -485,8 +488,8 @@ export default function CaptureScreen() {
       const failure = apiError(error);
       const text = fallbackErrorText(failure);
       setCodeError(text);
-      // Three codes have gone for this booking: this record can never be confirmed from here, and the desk finishes it.
-      if (failure?.code === "rate_limited") update(markDesk);
+      // Three codes have gone for this booking and no more can be sent: the desk finishes it if the last one fails.
+      if (failure?.code === "rate_limited") update(markNoMoreCodes);
       const offline = !failure || failure.status === 0;
       if (!offline) toast.error("We couldn't send the code", { message: text });
       return offline ? "offline" : "refused";
@@ -523,7 +526,12 @@ export default function CaptureScreen() {
       void queryClient.invalidateQueries(capturesQueryKey(number));
       toast.success("Confirmed");
     } catch (error) {
-      const result = confirmFailure(apiError(error));
+      const failure = apiError(error);
+      const result = confirmFailure(failure);
+      // No more codes can be sent and this one is spent or has run out: it can never be confirmed from here.
+      if (failure?.code === "code_expired" || (failure?.code === "wrong_code" && failure.details?.tries_left === 0)) {
+        update(markCodeDead);
+      }
       if (result.kind === "confirmed") {
         // Already complete: a confirm whose answer was lost got through.
         update(codeConfirmed);
@@ -670,13 +678,13 @@ export default function CaptureScreen() {
             />
           ) : null}
 
-          {(state === "code" || state === "stuck") && needsDesk(draft) ? (
+          {(state === "code" || state === "stuck") && (draft.desk === "dead" || draft.desk === "files") ? (
             <Panel style={{ padding: space.md, gap: space.md }}>
               <Text fontSize="text-md" fontWeight="font-bold">
                 Renit's desk has to finish this record
               </Text>
               <Text fontSize="text-sm" tone="body">
-                {DESK_FINISHES}
+                {draft.desk === "files" ? FILES_KEPT : DESK_FINISHES}
               </Text>
               <GetHelp booking={{ number, can: ["get_help"] }} />
             </Panel>
@@ -699,7 +707,17 @@ export default function CaptureScreen() {
               <Button onPress={() => void confirmCode()} loading={working} disabled={working || code.length !== CODE_LENGTH}>
                 Confirm their set
               </Button>
-              <TextButton label="Send a new code" disabled={working} onPress={() => void sendCode()} />
+              {draft.desk === "codes" ? (
+                // The last code sent may still work, so the box above stays; if it does not, the desk finishes the record.
+                <>
+                  <Text fontSize="text-sm" tone="body">
+                    {NO_MORE_CODES}
+                  </Text>
+                  <GetHelp booking={{ number, can: ["get_help"] }} />
+                </>
+              ) : (
+                <TextButton label="Send a new code" disabled={working} onPress={() => void sendCode()} />
+              )}
             </Panel>
           ) : null}
 

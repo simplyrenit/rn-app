@@ -137,7 +137,7 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
         const capture = await deps.send(draft, captureBody(draft));
         change(draft.id, (d) => applyAnswer(d, capture));
         const reopened = drafts.find((d) => d.id === draft.id);
-        if (reopened && !reopened.done && reopened.sealed) {
+        if (reopened && !reopened.done && reopened.sealed && !reopened.desk) {
           const times = (missed.get(draft.id) ?? 0) + 1;
           missed.set(draft.id, times);
           if (times >= 2) {

@@ -393,14 +393,21 @@ describe("the customer's fault report", () => {
     const gone = claim({ kind: "not_returned", against: "customer", raised_by_role: "system", my_side: "other" });
     expect(sideOf(gone)).toBe("owner");
     expect(sideOf({ ...gone, my_side: "against" })).toBe("customer");
-    // An answer without my_side: the side it is against, which is the one that may reply.
-    expect(sideOf(claim({ my_side: null }))).toBe("owner");
+    // An answer without my_side is not guessed at: the one the server lets reply is the side it is against; else unknown.
+    expect(sideOf(claim({ my_side: null, can_reply: true }))).toBe("owner");
+    expect(sideOf(claim({ my_side: null, can_reply: false }))).toBeNull();
+    // Told in the third person, with nothing said of "you".
+    expect(raisedByLine(claim({ raised_by_role: "customer" }), null)).toBe("Meera J. raised this.");
+    expect(raisedByLine(damage(), null)).toBe("The shop raised this.");
+    expect(forfeitLine(claim({ kind: "not_returned", status: "open", forfeit_at: "2026-10-12T04:30:00Z" }), null, NOW)).toBe(
+      "If the item is still out at 10:00 am on Mon 12 Oct, the deposit goes to the shop."
+    );
     expect(readClaim({ ...claim(), my_side: "someone" })?.my_side).toBeNull();
   });
 
   it("tells the customer the item goes back first, only while the booking says it is still out", () => {
     const fault = claim({ kind: "fault", created_at: "2026-10-09T05:10:00Z" });
-    const out = { stillOut: true, by: faultReturnBy(fault), extended: false };
+    const out = { stillOut: true, by: faultReturnBy(fault), early: null, extended: false };
     const back = { ...out, stillOut: false };
     expect(faultReturnLine(fault, out, NOW)).toBe("The item goes back first: bring it back by 10:40 am tomorrow. Any refund is paid once it is back.");
     expect(faultReturnLine(fault, out, new Date("2026-10-10T06:00:00Z"))).toBe(
@@ -429,12 +436,20 @@ describe("the customer's fault report", () => {
     });
     const extension = b({ number: "RN-24900", return_by: "2026-10-14T14:30:00Z" });
 
-    it("the claim's own booking is closed once its extension has started, and the line still points at the extension's return", () => {
+    it("the claim's own booking is closed once its extension has started, and the line points at the extension's return", () => {
       const first = b({ stage: "closed", extensions: ["RN-24900"] });
       const target = faultReturnTarget(fault, first, extension);
-      expect(target).toEqual({ stillOut: true, by: "2026-10-14T14:30:00Z", extended: true });
-      expect(faultReturnLine(fault, target, NOW)).toBe(
+      expect(target).toEqual({ stillOut: true, by: "2026-10-14T14:30:00Z", early: "2026-10-10T05:10:00.000Z", extended: true });
+      // After the 24 hours after the report: the extension's return alone.
+      expect(faultReturnLine(fault, target, new Date("2026-10-10T06:00:00Z"))).toBe(
         "The item goes back at the end of your extension: bring it back by 8:00 pm on Wed 14 Oct. Any refund is paid once it is back."
+      );
+    });
+
+    it("while the 24 hours after the report are still ahead, they are said too: they decide the refund if Renit does not agree", () => {
+      const target = faultReturnTarget(fault, b({ stage: "closed", extensions: ["RN-24900"] }), extension);
+      expect(faultReturnLine(fault, target, NOW)).toBe(
+        "Bring the item back by 10:40 am tomorrow to keep a refund if Renit does not agree. The latest it can come back is 8:00 pm on Wed 14 Oct, the end of your extension. Any refund is paid once it is back."
       );
     });
 
@@ -443,6 +458,7 @@ describe("the customer's fault report", () => {
       expect(faultReturnTarget(fault, first, b({ number: "RN-24900", stage: "ready", return_by: "2026-10-14T14:30:00Z" }))).toEqual({
         stillOut: true,
         by: "2026-10-14T14:30:00Z",
+        early: "2026-10-10T05:10:00.000Z",
         extended: true,
       });
     });
@@ -458,11 +474,11 @@ describe("the customer's fault report", () => {
 
     it("an extension that was cancelled or refused changes nothing: the item goes back on the first booking's terms", () => {
       const first = b({ extensions: ["RN-24900"] });
-      expect(faultReturnTarget(fault, first, first)).toEqual({ stillOut: true, by: "2026-10-10T05:10:00Z", extended: false });
+      expect(faultReturnTarget(fault, first, first)).toEqual({ stillOut: true, by: "2026-10-10T05:10:00Z", early: null, extended: false });
     });
 
     it("a rental that was never extended reads the claim's own return_by", () => {
-      expect(faultReturnTarget(fault, b(), null)).toEqual({ stillOut: true, by: "2026-10-10T05:10:00Z", extended: false });
+      expect(faultReturnTarget(fault, b(), null)).toEqual({ stillOut: true, by: "2026-10-10T05:10:00Z", early: null, extended: false });
     });
 
     it("finds the last live booking of the chain, a cancelled extension passed over, and walks on from an extension that was itself extended", async () => {

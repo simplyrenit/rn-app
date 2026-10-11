@@ -148,31 +148,32 @@ export function otherName(claim: Pick<Claim, "booking">, role: Side): string {
 }
 
 /** Who raised it, exactly as the server says (`raised_by_role`). */
-export function raisedByLine(claim: Pick<Claim, "raised_by_role" | "booking">, role: Side): string {
+export function raisedByLine(claim: Pick<Claim, "raised_by_role" | "booking">, role: Side | null): string {
   if (claim.raised_by_role === "system") return "Renit raised this.";
-  if (claim.raised_by_role === role) return "You raised this.";
+  if (role && claim.raised_by_role === role) return "You raised this.";
   const name = claim.raised_by_role === "owner" ? "The shop" : otherName(claim, "owner");
   return `${name[0].toUpperCase()}${name.slice(1)} raised this.`;
 }
 
 /**
  * Which side of the booking the caller is on, read from the claim's `my_side` (P5-4) and not from the screen that opened it:
- * `against` is the side the claim is against, `raised` the side that raised it, `other` the one that neither raised it nor
- * answers it (a claim Renit raised). A claim without `my_side` (an answer from before the field) is read as the side it is
- * against, the one that may reply: `can_reply` still decides whether the form shows.
+ * `against` is the side the claim is against, `raised` the side that raised it (`raised_by_role`), `other` the one that
+ * neither raised it nor answers it (a claim Renit raised). An answer without `my_side` is not guessed at: if the server
+ * lets the caller reply (`can_reply`), the caller is the side it is against; otherwise the side is unknown (null), and the
+ * claim is shown in the third person, with no reply form.
  */
-export function sideOf(claim: Pick<Claim, "my_side" | "against" | "raised_by_role">): Side {
+export function sideOf(claim: Pick<Claim, "my_side" | "against" | "raised_by_role" | "can_reply">): Side | null {
   const against: Side = claim.against === "customer" ? "customer" : "owner";
   const other: Side = against === "customer" ? "owner" : "customer";
   switch (claim.my_side) {
     case "against":
       return against;
     case "raised":
-      return claim.raised_by_role === "owner" ? "owner" : claim.raised_by_role === "customer" ? "customer" : other;
+      return claim.raised_by_role === "owner" ? "owner" : claim.raised_by_role === "customer" ? "customer" : null;
     case "other":
       return other;
     default:
-      return against;
+      return claim.can_reply ? against : null;
   }
 }
 
@@ -212,12 +213,20 @@ export function decideLine(claim: Pick<Claim, "kind" | "decide_by">, now: Date):
  */
 export const FAULT_RETURN_HOURS = 24;
 
+/**
+ * The report plus the return hours: the time that decides the part-refund of a report Renit does not uphold (A-32),
+ * measured to the item's return even on an extended rental (T-33). The claim does not carry it once its `return_by`
+ * follows the chain, so it is counted here from the report's time.
+ */
+export function faultReportDeadline(claim: Pick<Claim, "kind" | "created_at">): string | null {
+  const at = new Date(claim.created_at).getTime();
+  return claim.kind === "fault" && Number.isFinite(at) ? new Date(at + FAULT_RETURN_HOURS * 3_600_000).toISOString() : null;
+}
+
 /** When the item must be back for a fault report that is not upheld still to give a part-refund (A-32): the server's `return_by`. */
 export function faultReturnBy(claim: Pick<Claim, "kind" | "created_at" | "return_by">): string | null {
   if (claim.kind !== "fault") return null;
-  if (claim.return_by) return claim.return_by;
-  const at = new Date(claim.created_at).getTime();
-  return Number.isFinite(at) ? new Date(at + FAULT_RETURN_HOURS * 3_600_000).toISOString() : null;
+  return claim.return_by ?? faultReportDeadline(claim);
 }
 
 /** The bookings of a chain the "bring it back" line reads: what the claim's booking and its last live extension say. */
@@ -249,6 +258,8 @@ export interface ReturnTarget {
   stillOut: boolean;
   /** When it is due back: the claim's `return_by`, or the last extension's return when the rental was extended. */
   by: string | null;
+  /** On an extended rental: the report plus 24 hours, which still decides the refund of a report Renit does not uphold. */
+  early: string | null;
   /** The rental was extended: the item goes back at the end of the last extension (T-33). */
   extended: boolean;
 }
@@ -264,12 +275,12 @@ export function faultReturnTarget(
 ): ReturnTarget | null {
   if (!first) return null;
   const out = (b: ChainBooking) => b.stage === "out" && !b.exit;
-  const plain = { stillOut: out(first), by: faultReturnBy(claim), extended: false };
+  const plain = { stillOut: out(first), by: faultReturnBy(claim), early: null, extended: false };
   if (first.extensions.length === 0) return plain;
   if (!end) return null;
   // Every extension was cancelled or refused: the item is back on its first booking's terms.
   if (end.number === first.number) return plain;
-  return { stillOut: out(first) || out(end), by: end.return_by, extended: true };
+  return { stillOut: out(first) || out(end), by: end.return_by, early: faultReportDeadline(claim), extended: true };
 }
 
 /**
@@ -290,9 +301,12 @@ export function faultReturnLine(
   if (reached(target.by, now)) {
     return `The item was due back by ${when}. Bring it back as soon as you can: any refund is paid once it is back.`;
   }
-  return target.extended
-    ? `The item goes back at the end of your extension: bring it back by ${when}. Any refund is paid once it is back.`
-    : `The item goes back first: bring it back by ${when}. Any refund is paid once it is back.`;
+  if (!target.extended) return `The item goes back first: bring it back by ${when}. Any refund is paid once it is back.`;
+  // Extended: the 24 hours after the report still decide the refund if Renit does not agree, while they are ahead.
+  if (target.early && !reached(target.early, now)) {
+    return `Bring the item back by ${deadlineLabel(target.early, now)} to keep a refund if Renit does not agree. The latest it can come back is ${when}, the end of your extension. Any refund is paid once it is back.`;
+  }
+  return `The item goes back at the end of your extension: bring it back by ${when}. Any refund is paid once it is back.`;
 }
 
 // ---- What the screen says about where the claim stands --------------------------------------------
@@ -319,16 +333,17 @@ export const waitsForReturn = (claim: Pick<Claim, "status" | "money_pending">) =
  * An "item not returned" claim says when the deposit goes to the owner if the item is still out (`forfeit_at`,
  * P4-10), by the same clock as every other deadline. Null for any other kind and once the claim is decided.
  */
-export function forfeitLine(claim: Pick<Claim, "kind" | "status" | "forfeit_at">, role: Side, now: Date): string | null {
+export function forfeitLine(claim: Pick<Claim, "kind" | "status" | "forfeit_at">, role: Side | null, now: Date): string | null {
   if (claim.kind !== "not_returned" || claim.status !== "open" || !claim.forfeit_at) return null;
   const when = deadlineLabel(claim.forfeit_at, now);
-  const to = role === "customer" ? "the shop" : "you";
+  // The deposit goes to the shop: "you" only to the shop itself, and in the third person when the side is not known.
+  const to = role === "owner" ? "you" : "the shop";
   return reached(claim.forfeit_at, now)
     ? `The deposit was due to go to ${to} at ${when}, if the item was still out.`
     : `If the item is still out at ${when}, ${role === "customer" ? "your" : "the"} deposit goes to ${to}.`;
 }
 
-export function statusBanner(claim: Claim, role: Side, now: Date): Banner {
+export function statusBanner(claim: Claim, role: Side | null, now: Date): Banner {
   if (claim.status === "open") {
     return takesDecision(claim.kind)
       ? { tone: "brand", title: "Waiting for Renit's decision", sub: decideLine(claim, now) }
