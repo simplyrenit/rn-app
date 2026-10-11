@@ -206,14 +206,16 @@ export function saveOutcome(input: {
           message: pendingLine(pending) ?? "It needs a change.",
         };
   }
+  // A listing staff sent back, changed by its owner: the save sends it to the check again (so the answer says `checking`),
+  // and the staff's reason is already "changed since it was sent back". It never goes live on the check alone.
+  if (reasons.some((r) => r.code === CHANGED_SINCE) && (answer.status === "flagged" || answer.status === "checking")) {
+    return {
+      kind: "sent_back_again",
+      title: "Renit will look at it again",
+      message: "It is not live until Renit approves it.",
+    };
+  }
   if (answer.status === "flagged") {
-    if (reasons.some((r) => r.code === CHANGED_SINCE)) {
-      return {
-        kind: "sent_back_again",
-        title: "Renit will look at it again",
-        message: "It is not live until Renit approves it.",
-      };
-    }
     return { kind: "flagged", title: "Saved, but it needs a change", message: flagLine(reasons) ?? "Open it to see what to change." };
   }
   if (answer.status === "checking") {

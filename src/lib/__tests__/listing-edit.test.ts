@@ -131,12 +131,13 @@ describe("what a save says (T-34, T-35, T-36)", () => {
   });
 
   it("a listing changed after staff sent it back: Renit will look at it again, and it is not suggested to be live", () => {
-    const answer = { ...before, status: "flagged", flag_reasons: [changedSince], title: "PS5 console" };
-    expect(saveOutcome({ before: { ...before, status: "flagged", flag_reasons: [sentBack] }, sent: { title: "PS5 console" }, answer })).toEqual({
-      kind: "sent_back_again",
-      title: "Renit will look at it again",
-      message: "It is not live until Renit approves it.",
-    });
+    const sentOn = { kind: "sent_back_again", title: "Renit will look at it again", message: "It is not live until Renit approves it." };
+    const was = { ...before, status: "flagged", flag_reasons: [sentBack] };
+    // The save sends it to the check again, so the answer says `checking` with the reason already rewritten (publish.py `resubmit`).
+    expect(saveOutcome({ before: was, sent: { title: "PS5 console" }, answer: { ...was, status: "checking", flag_reasons: [changedSince], title: "PS5 console" } })).toEqual(sentOn);
+    expect(saveOutcome({ before: was, sent: { title: "PS5 console" }, answer: { ...was, status: "flagged", flag_reasons: [changedSince], title: "PS5 console" } })).toEqual(sentOn);
+    // Saved with nothing changed it is still sent back, and the screen says nothing was changed.
+    expect(saveOutcome({ before: was, sent: { title: "Sony PS5" }, answer: { ...was } })).toEqual({ kind: "nothing", title: "Nothing was changed" });
   });
 
   it("a flagged listing saved with other reasons says it needs a change; one in the check says it is being checked", () => {
