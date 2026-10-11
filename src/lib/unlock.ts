@@ -48,8 +48,11 @@ export function isCode(value: string): boolean {
 /** What went wrong confirming the code, by the server's `code`. */
 export function unlockErrorMessage(code: string | null | undefined): string {
   switch (code) {
+    case "verification_expired":
+      // The code was confirmed more than five minutes before the unlock call (W2-1). The contract's words.
+      return "That code has expired. Send a new one.";
     case "code_invalid":
-      return "That code didn't work, or it has expired. Send a new one and try again.";
+      return "That code didn't work. Send a new one and try again.";
     case "wrong_phone":
       return "The code went to a number that isn't the one on your account.";
     case "phone_required":

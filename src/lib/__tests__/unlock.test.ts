@@ -63,8 +63,19 @@ describe("isCode", () => {
 
 describe("unlockErrorMessage", () => {
   it("has a line for each code the server names", () => {
-    const lines = ["code_invalid", "wrong_phone", "phone_required", "unlock_unavailable", null].map(unlockErrorMessage);
-    expect(new Set(lines).size).toBe(5);
+    const lines = [
+      "code_invalid",
+      "verification_expired",
+      "wrong_phone",
+      "phone_required",
+      "unlock_unavailable",
+      null,
+    ].map(unlockErrorMessage);
+    expect(new Set(lines).size).toBe(6);
+  });
+
+  it("says a code confirmed too long ago has expired, in the contract's words (W2-1)", () => {
+    expect(unlockErrorMessage("verification_expired")).toBe("That code has expired. Send a new one.");
   });
 });
 

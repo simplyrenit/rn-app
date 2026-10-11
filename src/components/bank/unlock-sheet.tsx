@@ -131,9 +131,12 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
           onPhoneRequired();
           return;
         }
-        // The server refusing the token (too old, or for another number) ends it;
-        // anything else is the call failing, and pressing Unlock repeats just that.
-        if (reason === "code_invalid" || reason === "wrong_phone") idToken.current = "";
+        // The server refusing the token (not valid, confirmed too long ago, or for
+        // another number) ends it; anything else is the call failing, and pressing
+        // Unlock repeats just that with the same token.
+        if (reason === "code_invalid" || reason === "verification_expired" || reason === "wrong_phone") {
+          idToken.current = "";
+        }
         setError(unlockErrorMessage(reason));
       }
     };
