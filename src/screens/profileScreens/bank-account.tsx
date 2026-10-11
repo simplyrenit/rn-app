@@ -96,9 +96,9 @@ function StatusChip({
  * SH-14, Bank account: where Renit pays the owner.
  *
  * Four states of one account (none, checking, verified, failed) and one form for
- * adding or changing it, all on this screen. The phone is never asked for a fresh
- * code (API-CONTRACT OE-D). The full account number is typed here, sent once and
- * kept nowhere.
+ * adding or changing it, all on this screen. Reading the account needs no code;
+ * adding, changing and checking again do, on the phone too (T-10, below). The full
+ * account number is typed here, sent once and kept nowhere.
  */
 export default function BankAccountScreen() {
   const navigation = useTypedNavigation();
@@ -124,6 +124,10 @@ export default function BankAccountScreen() {
   const unlockSheet = useRef<UnlockSheetHandle>(null);
   const afterUnlock = useRef<(() => void) | null>(null);
   const [codeGoesTo, setCodeGoesTo] = useState({ phoneMasked: "", minutes: 30 });
+  // True while the unlock is being read, so a second tap on any of the four
+  // buttons does not open the sheet again and send a second text.
+  const askingForCode = useRef(false);
+  const [checkingCode, setCheckingCode] = useState(false);
 
   // A check that has been "Checking" for a minute gets a "Check again" button.
   const status = account?.status;
@@ -161,12 +165,15 @@ export default function BankAccountScreen() {
    * (403 `fresh_code_required`), whatever the last answer said.
    */
   const askForCode = async (then: () => void, force = false) => {
+    if (askingForCode.current) return;
     // No number on the account (someone who joined with Google or Apple): no code
     // can be sent, so they add and verify one first.
     if (e164(userDetails?.phone) === null) {
       sendToAddNumber();
       return;
     }
+    askingForCode.current = true;
+    setCheckingCode(true);
     try {
       const state = await fetchUnlock();
       if (!force && isUnlocked(state)) {
@@ -183,6 +190,9 @@ export default function BankAccountScreen() {
         return;
       }
       toast.error("We couldn't check your code", { message: "Check your connection and try again." });
+    } finally {
+      askingForCode.current = false;
+      setCheckingCode(false);
     }
   };
 
@@ -460,7 +470,9 @@ export default function BankAccountScreen() {
             You need this before you can accept a booking
           </Text>
         </View>
-        <Button onPress={() => void askForCode(() => openForm(account))}>Add account</Button>
+        <Button loading={checkingCode} onPress={() => void askForCode(() => openForm(account))}>
+          Add account
+        </Button>
       </View>
     );
   } else {
@@ -527,7 +539,7 @@ export default function BankAccountScreen() {
               <Button
                 variant="outline"
                 size="compact"
-                loading={rechecking}
+                loading={rechecking || checkingCode}
                 onPress={() => void askForCode(recheck)}
               >
                 Check again
@@ -538,13 +550,16 @@ export default function BankAccountScreen() {
 
         {account.status === "failed" ? (
           <View style={{ marginTop: space.md }}>
-            <Button onPress={() => void askForCode(() => openForm(account))}>Try different details</Button>
+            <Button loading={checkingCode} onPress={() => void askForCode(() => openForm(account))}>
+              Try different details
+            </Button>
           </View>
         ) : (
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Change account. Payouts pause until the new account is verified."
             activeOpacity={0.7}
+            disabled={checkingCode}
             onPress={() => void askForCode(() => openForm(account))}
             style={[
               card,

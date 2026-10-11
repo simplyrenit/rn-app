@@ -52,6 +52,12 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [secondsLeft, setSecondsLeft] = useState(0);
+    // The ID token Firebase made once the code was confirmed. The code is spent
+    // then, so if the unlock call fails (no signal, a 503) the token is kept and
+    // only that call is repeated; a new code, or the server calling the token
+    // invalid or for another number, drops it.
+    const idToken = useRef("");
+    const sendingNow = useRef(false);
 
     useEffect(() => {
       if (secondsLeft <= 0) return;
@@ -60,27 +66,34 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
     }, [secondsLeft]);
 
     const sendCode = async () => {
+      // One text at a time: a second call while one is on its way would make the
+      // first code dead.
+      if (sendingNow.current) return;
       const number = e164(phone);
       if (!number) {
         setError("We don't have a valid phone number on your account. Add one in your profile first.");
         return;
       }
+      sendingNow.current = true;
       setSending(true);
       setError(null);
       try {
         await requestPhoneNumberChangeOtp(number);
+        idToken.current = "";
         setCode("");
         setRound((r) => r + 1);
         setSecondsLeft(RESEND_SECONDS);
       } catch (failure: any) {
         setError(failure?.message || "We couldn't send the code. Try again in a moment.");
       } finally {
+        sendingNow.current = false;
         setSending(false);
       }
     };
 
     useImperativeHandle(ref, () => ({
       open: () => {
+        idToken.current = "";
         setCode("");
         setError(null);
         setBusy(false);
@@ -92,30 +105,36 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
     }));
 
     const unlock = async () => {
-      if (!isCode(code)) return;
+      if (!isCode(code) || busy) return;
       setBusy(true);
       setError(null);
-      let idToken: string;
-      try {
-        idToken = await verifyPhoneNumberChange(code);
-      } catch {
-        setError("That code didn't match, or it has expired. Check it, or send a new one.");
-        setBusy(false);
-        return;
+      if (!idToken.current) {
+        try {
+          idToken.current = await verifyPhoneNumberChange(code);
+        } catch {
+          setError("That code didn't match, or it has expired. Check it, or send a new one.");
+          setBusy(false);
+          return;
+        }
       }
       try {
-        await postUnlock(idToken);
+        await postUnlock(idToken.current);
+        idToken.current = "";
         setBusy(false);
         onUnlocked();
       } catch (failure) {
-        const code = apiError(failure)?.code;
+        const reason = apiError(failure)?.code;
         setBusy(false);
-        if (code === "phone_required") {
+        if (reason === "phone_required") {
+          idToken.current = "";
           modal.current?.dismiss();
           onPhoneRequired();
           return;
         }
-        setError(unlockErrorMessage(code));
+        // The server refusing the token (too old, or for another number) ends it;
+        // anything else is the call failing, and pressing Unlock repeats just that.
+        if (reason === "code_invalid" || reason === "wrong_phone") idToken.current = "";
+        setError(unlockErrorMessage(reason));
       }
     };
 
