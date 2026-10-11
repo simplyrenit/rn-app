@@ -226,12 +226,16 @@ export default function ListAddPhotosScreen() {
   };
 
   const openOwnerTerms = () => {
+    // The owner terms page and nothing else, as at sign-up: what is recorded with the
+    // tick is an acceptance of this page, so the app's general Terms screen is no
+    // stand-in for it. If the page cannot be opened, the owner is told so.
+    const couldNotOpen = () =>
+      toast.error("We couldn't open the owner terms", { message: "Check your connection and try again." });
     if (!ownerTerms?.url) {
-      navigation.navigate("Terms");
+      couldNotOpen();
       return;
     }
-    // The in-app Terms page is the fallback if the phone cannot open the link.
-    Linking.openURL(ownerTerms.url).catch(() => navigation.navigate("Terms"));
+    Linking.openURL(ownerTerms.url).catch(couldNotOpen);
   };
 
   const onContinue = async () => {
