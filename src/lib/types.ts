@@ -6,6 +6,7 @@ import {
 import { DimensionValue, FlexAlignType, ImageSourcePropType } from "react-native";
 import type { SavedAddress } from "@/lib/addresses";
 import type { BookItem, DeliveryMode, ProductShop } from "@/lib/booking";
+import type { Moment, Side } from "@/lib/capture";
 import type { FlagReason, ListingStatus } from "@/lib/listing-status";
 import type { Ring } from "@/lib/shop-ring";
 
@@ -371,6 +372,22 @@ export type RootStackParamList = {
   ShopBooking: { number: string };
   /** The photo walk-through for drafts that need photos (ENG-192, SH-12). */
   DraftPhotos: undefined;
+  /**
+   * The capture (ENG-221, BK-15 to BK-17): one person's photos, video and ticks at
+   * the handover or the return. `role` is who holds the phone. `forOther`: the
+   * other person's phone failed and this one records their set too. `title` and
+   * `other` are the item and the other person, for the words on screen; `skew_ms`
+   * is how far the server's clock is ahead of this phone's, for the time on each shot.
+   */
+  Capture: {
+    number: string;
+    moment: Moment;
+    role: Side;
+    forOther?: boolean;
+    title?: string;
+    other?: string;
+    skew_ms?: number;
+  };
   [key: string]: object | undefined;
 };
 

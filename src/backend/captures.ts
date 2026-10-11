@@ -1,0 +1,90 @@
+import { Capture, CaptureBody, Captures, Moment, PhoneFallback, ShotList, Side } from "@/lib/capture";
+import { BOOKINGS_ENDPOINT, GENERATE_SIGNED_URLS } from "@/lib/config";
+import axiosInstance from "@/lib/networkUtils";
+import { uuidv4 } from "@/lib/uuid";
+import * as FileSystem from "expo-file-system";
+import { useQuery } from "react-query";
+
+/** API-CONTRACT OE-I: the capture endpoints. Both sides call the same paths. */
+const url = (number: string, action: string) => `${BOOKINGS_ENDPOINT}${encodeURIComponent(number)}/${action}`;
+
+export const shotListQueryKey = (number: string) => ["shot-list", number];
+export const capturesQueryKey = (number: string) => ["captures", number];
+
+/** What to shoot for this booking's item, the checklist, and whether the ID tick is asked for. */
+export async function fetchShotList(number: string): Promise<ShotList> {
+  return (await axiosInstance.get<ShotList>(url(number, "shot-list/"))).data;
+}
+
+/** The list changes rarely (staff edit it in the admin), so one read serves the whole handover. */
+export function useShotList(number: string, enabled = true) {
+  return useQuery(shotListQueryKey(number), () => fetchShotList(number), { enabled, staleTime: 5 * 60_000, retry: 1 });
+}
+
+/** Both sides' captures, at the handover and at the return. */
+export async function fetchCaptures(number: string): Promise<Captures> {
+  return (await axiosInstance.get<Captures>(url(number, "captures/"))).data;
+}
+
+/** How often the two sets are read again while one of them is still on its way. */
+export const CAPTURES_POLL_MS = 5000;
+
+/**
+ * The two sets. Read again every few seconds while `waitingFor` says a set is
+ * still to come and the screen is in front: the other person is standing there.
+ */
+export function useCaptures(number: string, poll: boolean) {
+  return useQuery(capturesQueryKey(number), () => fetchCaptures(number), {
+    staleTime: 0,
+    refetchInterval: poll ? CAPTURES_POLL_MS : false,
+    retry: 1,
+  });
+}
+
+/** Saves or adds to a capture. `409 capture_locked` once it is complete. */
+export async function putCapture(number: string, moment: Moment, side: Side, body: CaptureBody): Promise<Capture> {
+  return (await axiosInstance.put<{ capture: Capture }>(url(number, `captures/${moment}/${side}/`), body)).data.capture;
+}
+
+/** One phone failed: a code goes by SMS to the other person, and this phone may record their set. */
+export async function startPhoneFallback(number: string, moment: Moment): Promise<PhoneFallback> {
+  return (await axiosInstance.post<PhoneFallback>(url(number, "phone-fallback/"), { moment })).data;
+}
+
+/** The person whose phone failed reads out the code; this confirms the set recorded for them. */
+export async function confirmPhoneFallback(number: string, moment: Moment, code: string): Promise<Capture> {
+  return (await axiosInstance.post<{ capture: Capture }>(url(number, "phone-fallback/confirm/"), { moment, code })).data
+    .capture;
+}
+
+// ---- One file to the bucket ---------------------------------------------------------------------
+
+/** The iPhone's camera records QuickTime; everything else here is MP4 or JPEG. */
+function typeOf(uri: string, kind: "photo" | "video"): { ext: string; type: string } {
+  if (kind === "photo") return { ext: "jpg", type: "image/jpeg" };
+  return /\.mov$/i.test(uri.split("?")[0]) ? { ext: "mov", type: "video/quicktime" } : { ext: "mp4", type: "video/mp4" };
+}
+
+/**
+ * Puts one file on Renit's bucket through the existing presigned path and
+ * resolves to its address (the presigned URL without its signature). The file is
+ * streamed from disk, so a video is never held in memory. `what` names the file:
+ * every upload gets its own name, so two never overwrite each other.
+ */
+export async function uploadCaptureFile(uri: string, kind: "photo" | "video", what: string): Promise<string> {
+  const { ext, type } = typeOf(uri, kind);
+  const safe = what.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const { data } = await axiosInstance.post<{ presigned_urls: string[] }>(GENERATE_SIGNED_URLS, {
+    filenames: [`capture-${safe}-${uuidv4()}.${ext}`],
+    file_types: [type],
+  });
+  const presigned = data.presigned_urls?.[0];
+  if (!presigned) throw new Error("No presigned URL returned");
+  const result = await FileSystem.uploadAsync(presigned, uri, {
+    httpMethod: "PUT",
+    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+    headers: { "Content-Type": type },
+  });
+  if (result.status < 200 || result.status >= 300) throw new Error(`Upload failed: ${result.status}`);
+  return presigned.split("?")[0];
+}

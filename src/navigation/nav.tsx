@@ -55,6 +55,8 @@ import { refreshShop } from "@/backend/shop-today";
 import { endingFromPush } from "@/lib/shop-ring";
 import ShopBookingScreen from "@/screens/shop/booking";
 import DraftPhotosScreen from "@/screens/shop/draft-photos";
+import CaptureScreen from "@/screens/capture/capture";
+import { useCaptureUploads } from "@/backend/capture-jobs";
 import { ShopTodayScreen } from "@/screens/shop/home";
 import ShopRingScreen from "@/screens/shop/ring";
 import ArrivalWindowScreen from "@/screens/booking/arrival-window";
@@ -513,6 +515,10 @@ export default function Navigation() {
     };
   }, [isAuthenticated, queryClient, openRoute]);
 
+  // Photos and video of a handover or a return that are not on the server yet keep
+  // uploading from wherever the app is, and start again after a restart (ENG-221).
+  useCaptureUploads(isAuthenticated ? username : null);
+
   // A payment can finish while the app is closed (the customer was in the
   // browser or a UPI app). On start, once it is known who is signed in, ask
   // rn-api about the one of theirs that was in flight and open its booking,
@@ -746,6 +752,15 @@ export default function Navigation() {
         <Stack.Screen
           name="DraftPhotos"
           component={DraftPhotosScreen}
+        />
+        {/* The capture at a handover or a return (ENG-221). Keyed by whose record
+            it is, so one booking's two sets are two screens. */}
+        <Stack.Screen
+          name="Capture"
+          component={CaptureScreen}
+          getId={({ params }) =>
+            `${params?.number}:${params?.moment}:${params?.role}:${params?.forOther ? "other" : "own"}`
+          }
         />
         <Stack.Screen
           name="SavedAddresses"
