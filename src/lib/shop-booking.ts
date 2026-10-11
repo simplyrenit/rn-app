@@ -121,6 +121,9 @@ export interface BookingShop {
   day: BookingDay & { return_code: string | null };
   /** Whether each capture has finished uploading. */
   captures: CaptureFlags;
+  /** When the handover code and the return code were typed. The timeline has the same two moments. */
+  handover_at?: string | null;
+  returned_at?: string | null;
   /** `returned_at` plus 24 hours while the stage is `returned`, else null. */
   report_problem_until?: string | null;
   /** A "Not as described" or fault report waits for Renit's decision. */

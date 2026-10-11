@@ -544,6 +544,9 @@ describe("what is in the way", () => {
       "Your first payment can't move to this booking, so it is refunded to you, and this booking needs its own. Tap Book now again to pay for it."
     );
     expect(bookErrorText({ ...error("payments_unavailable"), status: 503 })).toMatch(/Nothing was booked/);
+    // A second guard behind the 180-day check: the last day that can be booked comes with it.
+    expect(bookErrorText(error("days_too_far", { until: "2027-04-09" }))).toBe("Bookings can be made up to Fri 9 Apr. Pick earlier days.");
+    expect(bookErrorText(error("days_too_far"))).toBe("Bookings can be made up to 180 days ahead. Pick earlier days.");
     // A code this build does not know: the server's own words.
     expect(bookErrorText(error("something_new"))).toBe("Server words.");
     expect(bookErrorText(null)).toMatch(/Check your connection/);

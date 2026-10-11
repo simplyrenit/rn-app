@@ -58,7 +58,7 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
   const day = dayBlock(booking);
   const can = (action: string) => booking.can.includes(action);
   const copy = dayOfCopy(booking, now);
-  const their = theirStatusLine("customer", booking.delivery_mode, day.their_status, "The shop");
+  const their = theirStatusLine("customer", booking.delivery_mode, day.their_status, "The shop", { at: day.their_status_at, now });
   const noShow = noShowCopy("customer", day, "The shop", now);
   // Nothing left for the customer to shoot: the next thing is to compare the two sets.
   const recorded = !recordOpens(record.state);

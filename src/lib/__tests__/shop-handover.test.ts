@@ -181,6 +181,10 @@ describe("SH-09, after the code", () => {
     });
   });
 
+  it("takes the time from the booking's own handover_at, the timeline only as the fallback", () => {
+    expect(startedCopy(out({ handover_at: "2026-10-24T05:20:00Z" }), new Date("2026-10-24T05:25:00Z")).title).toBe("Rental started · 10:50 am");
+  });
+
   it("the payout waits for the owner's own record", () => {
     expect(payoutWaits(out())).toBeNull();
     expect(payoutWaits(out({ captures: flags(false, true) }))).toBe(

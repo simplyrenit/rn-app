@@ -153,7 +153,10 @@ export interface BookingDay {
   /** When the preset buttons, Call and the handover code open: 2 hours before the window. Null until a window is picked. */
   call_from: string | null;
   my_status: DayStatus;
+  /** When each side last tapped a preset button; null while the button is unset. Absent in an answer from before the fields. */
+  my_status_at?: string | null;
   their_status: DayStatus;
+  their_status_at?: string | null;
   /** When "They did not come" opens: the window's end plus 30 minutes. */
   no_show_from: string | null;
   /** Six digits. On the customer's booking only while the stage is `ready`: they show it, the owner types it. */
@@ -247,6 +250,9 @@ export interface BookingCustomer {
   /** The booking this one extends, and the bookings that extend this one. */
   extends: string | null;
   extensions: string[];
+  /** When the handover code and the return code were typed. The timeline has the same two moments. */
+  handover_at?: string | null;
+  returned_at?: string | null;
   can: string[];
   timeline: { event: string; label: string; at: string; by: string }[];
   created_at: string;
@@ -841,6 +847,11 @@ export function bookErrorText(error: ApiError | null): string {
       // asks for at Book now: a booking under ₹99 asks for less), the first payment goes back to the customer by itself
       // and this booking needs a payment of its own.
       return "Your first payment can't move to this booking, so it is refunded to you, and this booking needs its own. Tap Book now again to pay for it.";
+    case "days_too_far": {
+      // A second guard behind the 180-day check: the last day that can be booked is in `details.until`.
+      const until = typeof error.details?.until === "string" ? dayShort(error.details.until) : "";
+      return until ? `Bookings can be made up to ${until}. Pick earlier days.` : "Bookings can be made up to 180 days ahead. Pick earlier days.";
+    }
     case "payments_unavailable":
       return "Payments are not working for a moment. Nothing was booked. Try again.";
     case "rate_limited":

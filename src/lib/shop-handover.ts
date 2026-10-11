@@ -1,6 +1,6 @@
 import { problemLine, problemState } from "@/lib/claims";
 import { clock, dayOf, dayShort, depositAfterLate, lateDaysLabel, money, todayIst, windowLabel } from "@/lib/booking";
-import { captured, dayBlock, theirStatusLine, whenShort } from "@/lib/day-of";
+import { captured, dayBlock, handoverAt, returnedAt, theirStatusLine, whenShort } from "@/lib/day-of";
 import { BookingShop, howLine, moneyView } from "@/lib/shop-booking";
 import { customerName } from "@/lib/shop-ring";
 import { depositPill } from "@/lib/shop-today";
@@ -61,7 +61,7 @@ export function handoverCopy(b: BookingShop, now: Date): HandoverCopy {
   const pickup = b.delivery_mode === "pickup";
   const day = dayBlock(b);
   const windowDay = dayOf(b.window?.start) ?? b.first_day;
-  const their = theirStatusLine("owner", b.delivery_mode, day.their_status, first);
+  const their = theirStatusLine("owner", b.delivery_mode, day.their_status, first, { at: day.their_status_at, now });
   const deposit = depositPill(b.money.deposit_state);
   return {
     title: `${pickup ? "Hand over" : "Deliver"} the ${b.product.title}`,
@@ -103,7 +103,7 @@ export interface StartedCopy {
 
 /** SH-09's green card, once the code is typed and the rental has started. */
 export function startedCopy(b: BookingShop, now: Date): StartedCopy {
-  const at = b.timeline.find((entry) => entry.event === "handover")?.at;
+  const at = handoverAt(b);
   const m = moneyView(b);
   const payout = b.money.payout;
   const day = dayOf(b.return_by);
@@ -151,8 +151,8 @@ const shortDay = (day: string | null) => (day ? dayShort(day).split(" ").slice(0
 
 export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly string[] | null): ReturnCopy {
   const first = b.customer.first_name;
-  const handoverAt = b.timeline.find((entry) => entry.event === "handover")?.at;
-  const returnAt = b.timeline.find((entry) => entry.event === "return")?.at;
+  const handedAt = handoverAt(b);
+  const returnAt = returnedAt(b);
   const today = todayIst(now);
   const backDay = dayOf(returnAt) ?? today;
   const due = b.return_by;
@@ -176,7 +176,7 @@ export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly stri
     title: b.stage === "out" ? `Take the ${b.product.title} back` : `${b.product.title} is back`,
     sub: [b.number, customerName(b.customer), dayShort(backDay)].join(" · "),
     late: overdue && due ? `It was due back ${whenShort(due, now)}. Each late day's rent comes to you from the deposit.` : null,
-    handoverDay: shortDay(dayOf(handoverAt) ?? b.first_day),
+    handoverDay: shortDay(dayOf(handedAt) ?? b.first_day),
     returnDay: shortDay(backDay),
     codeTitle: `Show ${first} this code`,
     codeSub: nothingLeft

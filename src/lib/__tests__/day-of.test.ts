@@ -29,6 +29,8 @@ import {
   returnedCopy,
   statusButtons,
   statusNote,
+  handoverAt,
+  returnedAt,
   telUrl,
   theirStatusLine,
   travels,
@@ -164,6 +166,30 @@ describe("the three preset buttons (A-36)", () => {
     expect(theirStatusLine("owner", "owner_delivery", "i_am_here", "Aarav")).toBe("Aarav is ready for you");
     expect(theirStatusLine("customer", "pickup", "running_late", "The shop")).toBe("The shop is running late");
     expect(theirStatusLine("customer", "pickup", "", "The shop")).toBeNull();
+  });
+
+  it("says when the other side tapped, from their_status_at, and nothing when the answer has no time", () => {
+    const now = new Date("2026-10-24T05:00:00Z");
+    expect(theirStatusLine("customer", "pickup", "i_am_here", "The shop", { at: "2026-10-24T04:40:00Z", now })).toBe(
+      "The shop is ready for you, 10:10 am"
+    );
+    expect(theirStatusLine("customer", "pickup", "on_my_way", "The shop", { at: "2026-10-23T04:40:00Z", now })).toBe(
+      "The shop is on the way, 10:10 am on Fri 23 Oct"
+    );
+    expect(theirStatusLine("customer", "pickup", "i_am_here", "The shop", { at: null, now })).toBe("The shop is ready for you");
+    expect(theirStatusLine("customer", "pickup", "", "The shop", { at: "2026-10-24T04:40:00Z", now })).toBeNull();
+  });
+
+  it("reads when the codes were typed from the booking's own fields, and from the timeline for an answer without them", () => {
+    const timeline = [
+      { event: "handover", label: "Rental started", at: "2026-10-24T05:12:00Z", by: "owner" },
+      { event: "return", label: "Returned", at: "2026-10-26T14:30:00Z", by: "owner" },
+    ];
+    expect(handoverAt({ handover_at: "2026-10-24T05:13:00Z", timeline })).toBe("2026-10-24T05:13:00Z");
+    expect(returnedAt({ returned_at: "2026-10-26T14:31:00Z", timeline })).toBe("2026-10-26T14:31:00Z");
+    expect(handoverAt({ timeline })).toBe("2026-10-24T05:12:00Z");
+    expect(returnedAt({ returned_at: null, timeline })).toBe("2026-10-26T14:30:00Z");
+    expect(handoverAt({ timeline: [] })).toBeNull();
   });
 
   it("open from two hours before the window, by the server's time", () => {

@@ -99,13 +99,40 @@ export function statusButtons(role: Side, mode: DeliveryMode): StatusButton[] {
       ];
 }
 
-/** The other side's last tap, as a line: "The shop is ready for you", "Aarav is on the way". Null when they have not tapped. */
-export function theirStatusLine(role: Side, mode: DeliveryMode, status: DayStatus, name: string): string | null {
+/**
+ * The other side's last tap, as a line: "The shop is ready for you", "Aarav is on the way". Null when they have not
+ * tapped. With `since` (the day block's `their_status_at` and the server's time) it says when: "…, 4:10 pm".
+ */
+export function theirStatusLine(
+  role: Side,
+  mode: DeliveryMode,
+  status: DayStatus,
+  name: string,
+  since?: { at: string | null | undefined; now: Date }
+): string | null {
   if (!status) return null;
-  if (status === "running_late") return `${name} is running late`;
-  if (status === "on_my_way") return `${name} is on the way`;
-  // The other side waits when this one travels: their "I am here" is "Ready for you".
-  return travels(role, mode) ? `${name} is ready for you` : `${name} is here`;
+  const line =
+    status === "running_late"
+      ? `${name} is running late`
+      : status === "on_my_way"
+        ? `${name} is on the way`
+        : // The other side waits when this one travels: their "I am here" is "Ready for you".
+          travels(role, mode)
+          ? `${name} is ready for you`
+          : `${name} is here`;
+  const when = since?.at ? whenShort(since.at, since.now) : "";
+  return when ? `${line}, ${when}` : line;
+}
+
+/**
+ * When the handover code was typed and when the return code was: the booking's own `handover_at` and `returned_at`, else
+ * the timeline's entry (an answer from before the fields). Both objects carry them (P5-4 era).
+ */
+export function handoverAt(b: { handover_at?: string | null; timeline: { event: string; at: string }[] }): string | null {
+  return b.handover_at ?? b.timeline.find((entry) => entry.event === "handover")?.at ?? null;
+}
+export function returnedAt(b: { returned_at?: string | null; timeline: { event: string; at: string }[] }): string | null {
+  return b.returned_at ?? b.timeline.find((entry) => entry.event === "return")?.at ?? null;
 }
 
 /** Under the buttons while they are not open yet. */
@@ -493,7 +520,7 @@ export function returnSteps(booking: Pick<BookingCustomer, "captures" | "stage">
  * whole deposit when part of it is already the shop's (review r1 #3; N11, N16).
  */
 export function returnedCopy(booking: BookingCustomer): { title: string; body: string } {
-  const at = booking.timeline.find((entry) => entry.event === "return")?.at;
+  const at = returnedAt(booking);
   const day = dayOf(at);
   const m = booking.money;
   const held = Number(m.deposit) > 0 && m.deposit_state !== "forfeited" && m.deposit_state !== "none";
