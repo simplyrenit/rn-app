@@ -1,4 +1,4 @@
-import { PickerProduct, fetchFree, makeBlock, refreshShop } from "@/backend/shop-today";
+import { fetchFree, makeBlock, refreshShop } from "@/backend/shop-today";
 import { Button, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { DayPickerModal } from "@/components/shop/day-picker-modal";
@@ -10,6 +10,7 @@ import { dayLabel } from "@/lib/shop";
 import {
   BLOCK_REASONS,
   Block,
+  PickerProduct,
   QuickBlockForm,
   blockCall,
   blockErrorText,

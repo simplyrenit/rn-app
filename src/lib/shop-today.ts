@@ -299,6 +299,46 @@ export function needsRow(item: NeedsYou, index: number): NeedsRow {
 
 // ---- The quick block (SH-05) ------------------------------------------------------------------
 
+/** What the item picker needs of a product. */
+export interface PickerProduct {
+  name: string;
+  title: string;
+  shop_code: string;
+  quantity: number;
+  status: string;
+}
+
+/** The statuses a unit can be blocked on: a live listing, or one the shop has paused. */
+const BLOCKABLE = ["live", "paused"];
+
+/**
+ * One of the owner's own listings (`GET /api/my/products/`) as the picker's row, or null
+ * when it cannot be blocked (a draft, one in the check, flagged, archived). A server that
+ * sends no `status` or `quantity` is read as live, and as one unit.
+ */
+export function pickerProductFrom(raw: unknown): PickerProduct | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const p = raw as Record<string, unknown>;
+  if (typeof p.name !== "string" || typeof p.title !== "string") return null;
+  const status = typeof p.status === "string" ? p.status : "live";
+  if (!BLOCKABLE.includes(status)) return null;
+  return {
+    name: p.name,
+    title: p.title,
+    shop_code: typeof p.shop_code === "string" ? p.shop_code : "",
+    quantity: typeof p.quantity === "number" && p.quantity > 0 ? p.quantity : 1,
+    status,
+  };
+}
+
+/** The picker's search: the title or the owner's code, any case, anywhere in the text; by title. */
+export function filterPicker(products: readonly PickerProduct[], q: string): PickerProduct[] {
+  const needle = q.trim().toLowerCase();
+  return products
+    .filter((p) => !needle || p.title.toLowerCase().includes(needle) || p.shop_code.toLowerCase().includes(needle))
+    .sort((a, b) => a.title.localeCompare(b.title));
+}
+
 export const BLOCK_REASONS: readonly { key: BlockReason; label: string }[] = [
   { key: "walk_in", label: "Walk-in rental" },
   { key: "repair", label: "Repair" },

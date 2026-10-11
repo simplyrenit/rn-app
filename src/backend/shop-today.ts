@@ -1,7 +1,7 @@
 import { useGlobalContext } from "@/context/global-context";
-import { SHOP_BLOCKS_ENDPOINT, SHOP_PRODUCTS_ENDPOINT, SHOP_TODAY_ENDPOINT } from "@/lib/config";
+import { MY_PRODUCTS_ENDPOINT, SHOP_BLOCKS_ENDPOINT, SHOP_TODAY_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
-import { Block, BlockCall, TodayFeed } from "@/lib/shop-today";
+import { Block, BlockCall, PickerProduct, TodayFeed, pickerProductFrom } from "@/lib/shop-today";
 import { QueryClient, useQuery } from "react-query";
 
 /** Keyed on the username: the cache outlives a logout. */
@@ -63,20 +63,26 @@ export async function blockReturned(id: number): Promise<Block> {
   return (await axiosInstance.post<{ block: Block }>(`${SHOP_BLOCKS_ENDPOINT}${id}/returned/`, {})).data.block;
 }
 
-/** What the item picker needs of a product. */
-export interface PickerProduct {
-  name: string;
-  title: string;
-  shop_code: string;
-  quantity: number;
-  status: string;
-}
-
-/** The shop's products that can be blocked: live ones and paused ones, by title. */
-export async function fetchPickerProducts(q: string): Promise<PickerProduct[]> {
-  return (
-    await axiosInstance.get<{ results: PickerProduct[] }>(SHOP_PRODUCTS_ENDPOINT, {
-      params: { q: q.trim() || undefined, status: "live,paused", ordering: "title", page_size: 30 },
-    })
-  ).data.results;
+/**
+ * The items the quick block can pick, from the owner's own listings: `GET
+ * /api/my/products/`, which any owner may call. The merchants-only `GET /api/shop/products/`
+ * is not used on the phone: a person renting out their own things gets 403 from it
+ * and could not block a unit at all (review round 1, finding 3). Every page is read
+ * (a hundred at a time, up to a thousand listings) and searched on the phone.
+ */
+export async function fetchPickerProducts(): Promise<PickerProduct[]> {
+  const found: PickerProduct[] = [];
+  for (let page = 1; page <= 10; page++) {
+    const { data } = await axiosInstance.get<{ results?: unknown[]; total_pages?: number } | unknown[]>(
+      MY_PRODUCTS_ENDPOINT,
+      { params: { page, page_size: 100 } }
+    );
+    const results = Array.isArray(data) ? data : data.results ?? [];
+    for (const raw of results) {
+      const product = pickerProductFrom(raw);
+      if (product) found.push(product);
+    }
+    if (Array.isArray(data) || !data.total_pages || page >= data.total_pages) break;
+  }
+  return found;
 }

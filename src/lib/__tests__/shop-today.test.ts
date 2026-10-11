@@ -14,11 +14,13 @@ import {
   depositPill,
   extendFrom,
   feedNow,
+  filterPicker,
   freeText,
   goingOutRow,
   isQuiet,
   needsRow,
   openLine,
+  pickerProductFrom,
   reasonNote,
   ringingRow,
   startForm,
@@ -321,5 +323,42 @@ describe("feedNow: the day words come from the server's date (P3-17)", () => {
     const phone = new Date("2026-10-13T04:30:00Z");
     expect(feedNow(null, phone)).toBe(phone);
     expect(feedNow({ date: "" }, phone)).toBe(phone);
+  });
+});
+
+describe("the item picker reads the owner's own listings (review round 1, finding 3)", () => {
+  it("takes a live or paused listing, with its code and units", () => {
+    expect(pickerProductFrom({ name: "PRO_1", title: "Canon R6 body", status: "live", quantity: 2, shop_code: "CAM-01" })).toEqual({
+      name: "PRO_1",
+      title: "Canon R6 body",
+      shop_code: "CAM-01",
+      quantity: 2,
+      status: "live",
+    });
+    expect(pickerProductFrom({ name: "PRO_2", title: "Tripod", status: "paused" })?.quantity).toBe(1);
+  });
+
+  it("reads a server that sends no status as live, and no units as one", () => {
+    expect(pickerProductFrom({ name: "PRO_3", title: "Lens" })).toMatchObject({ status: "live", quantity: 1, shop_code: "" });
+  });
+
+  it("leaves out what cannot be blocked: a draft, a listing in the check, a flagged or an archived one", () => {
+    for (const status of ["draft", "checking", "flagged", "archived"]) {
+      expect(pickerProductFrom({ name: "PRO_4", title: "X", status })).toBeNull();
+    }
+    expect(pickerProductFrom(null)).toBeNull();
+    expect(pickerProductFrom({ title: "No name" })).toBeNull();
+  });
+
+  it("searches the title or the code, any case, and lists by title", () => {
+    const products = [
+      { name: "a", title: "Tripod", shop_code: "TRI-04", quantity: 1, status: "live" },
+      { name: "b", title: "Canon R6 body", shop_code: "CAM-01", quantity: 2, status: "live" },
+      { name: "c", title: "Manfrotto tripod", shop_code: "", quantity: 1, status: "paused" },
+    ];
+    expect(filterPicker(products, "").map((p) => p.name)).toEqual(["b", "c", "a"]);
+    expect(filterPicker(products, " TRIPOD ").map((p) => p.name)).toEqual(["c", "a"]);
+    expect(filterPicker(products, "cam-0").map((p) => p.name)).toEqual(["b"]);
+    expect(filterPicker(products, "nothing")).toEqual([]);
   });
 });

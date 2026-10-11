@@ -16,7 +16,7 @@ jest.mock("@/lib/config", () => ({
   SHOP_BOOKINGS_ENDPOINT: "https://api.test/shop/bookings/",
   SHOP_TODAY_ENDPOINT: "https://api.test/shop/today/",
   SHOP_BLOCKS_ENDPOINT: "https://api.test/shop/blocks/",
-  SHOP_PRODUCTS_ENDPOINT: "https://api.test/shop/products/",
+  MY_PRODUCTS_ENDPOINT: "https://api.test/my/products/",
   BOOKINGS_ENDPOINT: "https://api.test/bookings/",
 }));
 jest.mock("@/lib/networkUtils", () => ({
@@ -73,16 +73,32 @@ describe("Today and the quick block calls", () => {
     expect(api.post).toHaveBeenLastCalledWith("https://api.test/shop/blocks/88/returned/", {});
   });
 
-  it("lists live and paused products for the picker, by title", async () => {
-    api.get.mockResolvedValue({ data: { results: [{ name: "PRO_1" }] } });
-    expect(await fetchPickerProducts("  canon ")).toEqual([{ name: "PRO_1" }]);
-    expect(api.get).toHaveBeenCalledWith("https://api.test/shop/products/", {
-      params: { q: "canon", status: "live,paused", ordering: "title", page_size: 30 },
-    });
-    await fetchPickerProducts("");
-    expect(api.get).toHaveBeenLastCalledWith("https://api.test/shop/products/", {
-      params: { q: undefined, status: "live,paused", ordering: "title", page_size: 30 },
-    });
+  it("reads the picker's items from the owner's own list, which any owner may call, every page", async () => {
+    api.get
+      .mockResolvedValueOnce({
+        data: {
+          total_pages: 2,
+          results: [
+            { name: "PRO_1", title: "Canon R6 body", status: "live", quantity: 2, shop_code: "CAM-01" },
+            { name: "PRO_2", title: "A draft", status: "draft", quantity: 1 },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({ data: { total_pages: 2, results: [{ name: "PRO_3", title: "Tripod", status: "paused", quantity: 3 }] } });
+    const found = await fetchPickerProducts();
+    expect(found.map((p) => p.name)).toEqual(["PRO_1", "PRO_3"]);
+    expect(api.get).toHaveBeenNthCalledWith(1, "https://api.test/my/products/", { params: { page: 1, page_size: 100 } });
+    expect(api.get).toHaveBeenNthCalledWith(2, "https://api.test/my/products/", { params: { page: 2, page_size: 100 } });
+    // Never the merchants-only list: a person renting out their own things would get a 403 from it.
+    expect(api.get.mock.calls.every(([url]) => !String(url).includes("/shop/"))).toBe(true);
+  });
+
+  it("reads a list the server sends bare, and one with no pages", async () => {
+    api.get.mockResolvedValueOnce({ data: [{ name: "PRO_1", title: "Canon R6 body" }] });
+    expect((await fetchPickerProducts()).map((p) => p.name)).toEqual(["PRO_1"]);
+    api.get.mockResolvedValueOnce({ data: { results: [{ name: "PRO_2", title: "Tripod" }] } });
+    expect((await fetchPickerProducts()).map((p) => p.name)).toEqual(["PRO_2"]);
+    expect(api.get).toHaveBeenCalledTimes(2);
   });
 });
 

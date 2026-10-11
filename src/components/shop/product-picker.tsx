@@ -1,8 +1,9 @@
-import { PickerProduct, fetchPickerProducts } from "@/backend/shop-today";
+import { fetchPickerProducts } from "@/backend/shop-today";
 import { EmptyState, Skeleton, Text } from "@/components/core";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { PickerProduct, filterPicker } from "@/lib/shop-today";
 import { useTheme } from "@/lib/theme";
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FlatList, Modal, TextInput, TouchableOpacity, View } from "react-native";
 import { ExclamationTriangleIcon, MagnifyingGlassIcon, XMarkIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,13 +20,9 @@ export function ProductPicker({
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
   const [text, setText] = useState("");
-  const [q, setQ] = useState("");
-  // The server is asked once the owner stops typing.
-  useEffect(() => {
-    const timer = setTimeout(() => setQ(text), 300);
-    return () => clearTimeout(timer);
-  }, [text]);
-  const query = useQuery(["picker-products", q], () => fetchPickerProducts(q), { staleTime: 15_000, retry: 1 });
+  // The owner's listings are read once, and searched here as they type.
+  const query = useQuery(["picker-products"], fetchPickerProducts, { staleTime: 30_000, retry: 1 });
+  const shown = useMemo(() => filterPicker(query.data ?? [], text), [query.data, text]);
 
   return (
     <Modal visible animationType="slide" onRequestClose={onCancel}>
@@ -88,14 +85,14 @@ export function ProductPicker({
           />
         ) : (
           <FlatList
-            data={query.data}
+            data={shown}
             keyExtractor={(item) => item.name}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: insets.bottom + space.lg }}
             ListEmptyComponent={
               <EmptyState
-                title={q ? "No item matches that" : "You have no items to block yet"}
-                body={q ? "Try the name or the code you gave it." : "Items that are live or paused can be blocked."}
+                title={text.trim() ? "No item matches that" : "You have no items to block yet"}
+                body={text.trim() ? "Try the name or the code you gave it." : "Items that are live or paused can be blocked."}
               />
             }
             renderItem={({ item }) => (
