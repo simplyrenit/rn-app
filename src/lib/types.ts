@@ -335,7 +335,7 @@ export type RootStackParamList = {
   ListReview: { manual?: boolean } | undefined;
   ListPreview: undefined;
   // `coverUrl` is additive to §8.1: the draft is cleared before L-17 opens.
-  ListSubmitted: { productName: string; coverUrl?: string | null };
+  ListSubmitted: { productName: string; coverUrl?: string | null; status?: string | null; reasons?: FlagReason[] };
   OwnersProducts: { products: BackendProduct[]; name: string };
   /** The owner's bank account: add, verify, change (ENG-135). */
   BankAccount: undefined;

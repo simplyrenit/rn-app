@@ -25,6 +25,7 @@ import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
+import { readReasons } from "@/lib/listing-edit";
 import { ActivityIndicator, ScrollView, View } from "react-native";
 import { useQueryClient } from "react-query";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
@@ -144,7 +145,9 @@ export default function ListPreviewScreen() {
       phone: userDetails?.phone ?? "",
     });
     try {
-      await submitListing(payload);
+      const response = await submitListing(payload);
+      // The answer is the listing as its owner sees it: its status, and the reasons if the check has already flagged it.
+      const posted = response?.data as { status?: string | null; flag_reasons?: unknown } | undefined;
       flow.track("listing_submitted", {
         ms_since_start: Date.now() - draft.startedAt,
         photos: payload.images.length,
@@ -174,7 +177,15 @@ export default function ListPreviewScreen() {
           index: 1,
           routes: [
             { name: "MainTabs" },
-            { name: "ListSubmitted", params: { productName: payload.title, coverUrl: payload.cover_image } },
+            {
+              name: "ListSubmitted",
+              params: {
+                productName: payload.title,
+                coverUrl: payload.cover_image,
+                status: posted?.status ?? null,
+                reasons: readReasons(posted?.flag_reasons),
+              },
+            },
           ],
         });
       };

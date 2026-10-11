@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { fieldsLine, flagLine, pendingLine, readPendingEdit, readReasons, saveOutcome } from "../listing-edit";
+import { fieldsLine, flagLine, pendingLine, readPendingEdit, readReasons, saveOutcome, submittedCopy } from "../listing-edit";
 import { statusDetail } from "../listing-status";
 
 /** The server's own shapes (ENG-100-api.md, review rounds 1 and 2, "Contract changes"). */
@@ -151,5 +151,34 @@ describe("what a save says (T-34, T-35, T-36)", () => {
   it("with no before (the photo screens send new files) a save is updated, and with no answer too", () => {
     expect(saveOutcome({ sent: { images: ["a"] }, answer: { status: "live" } }).kind).toBe("updated");
     expect(saveOutcome({ sent: {}, answer: null }).kind).toBe("updated");
+  });
+});
+
+describe("the screen after posting from the phone (every photo is checked, not only the cover)", () => {
+  it("a post that is being checked says so and that it tells the owner when the check is done", () => {
+    const copy = submittedCopy("checking", []);
+    expect(copy).toMatchObject({ status: "checking", title: "Submitted.\nIt's with our team now." });
+    expect(copy.body).toContain("every photo on it");
+    // An answer with no status reads as the normal case.
+    expect(submittedCopy(undefined, undefined).status).toBe("checking");
+  });
+
+  it("a post that came back flagged says why in the check's words and what to do", () => {
+    expect(submittedCopy("flagged", [{ code: "photo_or_text", text: "A photo or the text needs a look" }, depositZero])).toEqual({
+      title: "Submitted, but it needs a change.",
+      body: "A photo or the text needs a look · The deposit is zero. Open it from My products to change it, and we will look again.",
+      status: "flagged",
+    });
+  });
+
+  it("a post held because a check could not run says staff will look, not that anything is wrong with the listing", () => {
+    expect(submittedCopy("flagged", [needsALook]).body).toBe(
+      "A photo or the text needs a look. A check could not run, so Renit's staff will look at it. You do not need to do anything: we tell you when they have looked."
+    );
+  });
+
+  it("a flagged answer with no reasons still says what to do; a live one says it is live", () => {
+    expect(submittedCopy("flagged", []).body).toBe("Open it from My products to change it, and we will look again.");
+    expect(submittedCopy("live", []).status).toBe("live");
   });
 });

@@ -221,3 +221,40 @@ export function saveOutcome(input: {
   }
   return updated;
 }
+
+// ---- A listing just posted from the phone -------------------------------------------------------
+
+export interface SubmittedCopy {
+  title: string;
+  body: string;
+  /** The status the pill shows beside the listing. */
+  status: "checking" | "live" | "flagged";
+}
+
+/**
+ * What the screen after posting says, from the status the post answered. Every photo of a new listing is checked, not
+ * only the cover, and the check runs after the post: the answer is nearly always `checking`, and the result arrives by
+ * push. An answer that already says more is told in plain words: live (a retry of a post that was already through),
+ * flagged with the check's reasons, or held because a check could not run.
+ */
+export function submittedCopy(status: string | null | undefined, reasons: readonly FlagReason[] | null | undefined): SubmittedCopy {
+  if (status === "live") {
+    return { title: "Your listing is live.", body: "Renters can see it now. You can still edit it from My products.", status: "live" };
+  }
+  if (status === "flagged") {
+    const why = flagLine(reasons);
+    return {
+      title: "Submitted, but it needs a change.",
+      // A check that could not run is not the owner's to fix: staff look, and the owner is told.
+      body: `${why ? `${sentence(why)} ` : ""}${
+        couldNotRun(reasons ?? []) ? "You do not need to do anything: we tell you when they have looked." : "Open it from My products to change it, and we will look again."
+      }`,
+      status: "flagged",
+    };
+  }
+  return {
+    title: "Submitted.\nIt's with our team now.",
+    body: "We check every new listing, and every photo on it, before renters can see it. Until then it sits in My products as Checking, and you can still edit it. We tell you when the check is done.",
+    status: "checking",
+  };
+}
