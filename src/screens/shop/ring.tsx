@@ -36,9 +36,9 @@ import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { StackActions, useIsFocused, useRoute } from "@react-navigation/native";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { BellIcon, CheckCircleIcon, ExclamationTriangleIcon, MapPinIcon } from "react-native-heroicons/outline";
+import { BellIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, MapPinIcon } from "react-native-heroicons/outline";
 import { CheckCircleIcon as CheckCircleMini } from "react-native-heroicons/mini";
 import { BellIcon as BellSolid } from "react-native-heroicons/solid";
 import { StatusBar } from "expo-status-bar";
@@ -245,7 +245,7 @@ function EndedView({
   const { color } = useTheme();
   const copy = endingCopy(ending, summary?.firstName ?? null, here);
   const accepted = ending.outcome === "accepted" && !ending.system;
-  const Icon = accepted ? CheckCircleIcon : ExclamationTriangleIcon;
+  const Icon = accepted ? CheckCircleIcon : InformationCircleIcon;
   const tone = accepted ? color.success : color.textBody;
   return (
     <View style={{ flex: 1 }}>
@@ -388,6 +388,14 @@ export default function ShopRingScreen() {
     here,
     ended,
   });
+  // Back in front (the app was away, or another screen was on top): the request may
+  // have ended meanwhile, and the timer was stopped while it was away.
+  const { refetch: refetchLive } = live;
+  const watching = focused && active && !here && !ended;
+  useEffect(() => {
+    if (watching) void refetchLive();
+  }, [watching, refetchLive]);
+
   // The request as it was seen ringing, for the card on the ended views.
   const known = live.data?.ringing.find((r) => r.number === params.number) ?? pushed;
   // Neither ringing nor remembered (an old tap): the booking itself says what became of it.
