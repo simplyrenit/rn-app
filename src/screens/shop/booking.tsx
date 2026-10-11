@@ -1,6 +1,7 @@
 import { answerCustomerWindowChange } from "@/backend/shop-bookings";
 import { shopBookingQueryKey, useShopBooking } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
+import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoadError, BookingLoading, MoneyLine, Notice, Panel, Pill, SummaryCard } from "@/components/booking/parts";
 import { Records } from "@/components/capture/record-card";
 import { Timeline } from "@/components/booking/timeline";
@@ -311,6 +312,10 @@ function BookingPage({ booking, now, receivedAt }: { booking: BookingShop; now: 
             </View>
           </View>
         ) : null}
+
+        <Panel>
+          <GetHelp booking={booking} />
+        </Panel>
       </ScrollView>
       <ShopCancelSheet ref={cancelSheet} number={booking.number} />
       <WindowChangeSheet ref={changeSheet} number={booking.number} firstName={booking.customer.first_name} />

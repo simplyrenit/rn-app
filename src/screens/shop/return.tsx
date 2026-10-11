@@ -1,5 +1,6 @@
 import { useShopBooking } from "@/backend/shop-ring";
-import { BookingLoadError, BookingLoading, Notice, TextButton } from "@/components/booking/parts";
+import { GetHelp } from "@/components/booking/get-help";
+import { BookingLoadError, BookingLoading, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { CodeBoxes } from "@/components/capture/code";
@@ -148,6 +149,10 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
 
       {/* Reporting the problem itself (the form, the evidence, the amount) is ENG-253's
           screen; it opens from here once the booking is `returned` and `can` has `report_problem`. */}
+
+      <Panel>
+        <GetHelp booking={booking} />
+      </Panel>
 
       <Button variant="outline" onPress={() => navigation.navigate("ShopBooking", { number })}>
         Booking details

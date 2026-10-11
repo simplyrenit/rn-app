@@ -1,5 +1,6 @@
 import { bookingQueryKey, useBooking } from "@/backend/bookings";
 import { payDeposit } from "@/backend/handover";
+import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { usePay } from "@/components/booking/use-pay";
@@ -214,6 +215,10 @@ function Deposit({
             {copy.warning}
           </Text>
         </View>
+
+        <Panel>
+          <GetHelp booking={booking} />
+        </Panel>
       </ScrollView>
 
       <BottomBar>

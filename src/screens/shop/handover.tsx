@@ -1,6 +1,7 @@
 import { setDayStatus, startRental } from "@/backend/handover";
 import { shopBookingQueryKey, useShopBooking } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
+import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoadError, BookingLoading, MoneyLine, Notice, Panel, Pill, TextButton } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { useServerNow } from "@/components/booking/use-server-now";
@@ -307,6 +308,10 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
           />
         </Panel>
       ) : null}
+
+      <Panel>
+        <GetHelp booking={booking} />
+      </Panel>
 
       <Button variant="outline" onPress={() => navigation.navigate("ShopBooking", { number })}>
         Booking details

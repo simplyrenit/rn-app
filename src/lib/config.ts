@@ -222,6 +222,9 @@ export const ACCESS_DEVICES_ENDPOINT = SERVERURL + "access/devices/";
 /** The customer's bookings: quote, Book now, and each booking's own actions (OE-C). */
 export const BOOKINGS_ENDPOINT = SERVERURL + "bookings/";
 
+/** Get help: the desk's hours and the caller's own requests (`GET`), and a new request (`POST`) (OE-L). */
+export const HELP_ENDPOINT = SERVERURL + "help/";
+
 /** `{payment_id}/confirm/`: what the app asks after the pay page (OE-D). */
 export const PAYMENTS_ENDPOINT = SERVERURL + "payments/";
 

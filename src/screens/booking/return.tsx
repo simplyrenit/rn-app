@@ -1,5 +1,6 @@
 import { bookingQueryKey, useBooking } from "@/backend/bookings";
 import { returnItem } from "@/backend/handover";
+import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoadError, BookingLoading, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { useServerNow } from "@/components/booking/use-server-now";
@@ -177,15 +178,17 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
       {/* A handover record that was never finished can still be finished from here. */}
       <Records role="customer" moments={["handover"]} booking={booking} receivedAt={receivedAt} {...names} />
 
-      {out && can("report_owner_absent") && !absentAt ? (
-        <Panel>
+      {/* Help is always here; the way to say the shop was not is here while it can still be said. */}
+      <Panel>
+        {out && can("report_owner_absent") && !absentAt ? (
           <LinkRow
             title="The shop isn't here?"
             sub="Tell us and late charges stop from that moment."
             onPress={() => navigation.navigate("BookingReport", { number, kind: "owner_absent", role: "customer" })}
           />
-        </Panel>
-      ) : null}
+        ) : null}
+        <GetHelp booking={booking} first={!(out && can("report_owner_absent") && !absentAt)} />
+      </Panel>
 
       {returned ? <Button onPress={() => navigation.navigate("Booking", { number })}>Open the booking</Button> : null}
     </ScrollView>

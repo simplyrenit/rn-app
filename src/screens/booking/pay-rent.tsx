@@ -1,5 +1,6 @@
 import { bookingQueryKey, payRent } from "@/backend/bookings";
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
+import { GetHelp } from "@/components/booking/get-help";
 import { BottomBar, MoneyLine, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { usePay } from "@/components/booking/use-pay";
 import { useReadAt } from "@/components/booking/use-read-at";
@@ -194,6 +195,10 @@ export function PayRent({
         </Panel>
 
         {copy.note ? <Notice>{copy.note}</Notice> : null}
+
+        <Panel>
+          <GetHelp booking={booking} />
+        </Panel>
       </ScrollView>
 
       <BottomBar>

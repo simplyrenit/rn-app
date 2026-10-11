@@ -1,3 +1,4 @@
+import { GetHelp } from "@/components/booking/get-help";
 import { BottomBar, Notice, Panel } from "@/components/booking/parts";
 import { Records } from "@/components/capture/record-card";
 import { useServerNow } from "@/components/booking/use-server-now";
@@ -116,6 +117,7 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
             sub="The timeline and your payments."
             onPress={() => navigation.navigate("BookingDetails", { number })}
           />
+          <GetHelp booking={booking} first={false} />
         </Panel>
 
         {copy.deposit ? (

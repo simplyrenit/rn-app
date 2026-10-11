@@ -1,5 +1,6 @@
 import { answerWindowChange, bookingQueryKey, fetchCancelOutcome } from "@/backend/bookings";
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
+import { GetHelp } from "@/components/booking/get-help";
 import { Records } from "@/components/capture/record-card";
 import { Panel, SummaryCard } from "@/components/booking/parts";
 import { PaymentsList } from "@/components/booking/payments-list";
@@ -285,6 +286,10 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
           ) : null}
         </Panel>
       ) : null}
+
+      <Panel>
+        <GetHelp booking={booking} />
+      </Panel>
 
       <CancelSheet ref={cancelSheet} number={booking.number} />
     </ScrollView>

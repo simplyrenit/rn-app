@@ -4,6 +4,7 @@ import {
   fetchAlternatives,
   refundBookingAmount,
 } from "@/backend/bookings";
+import { GetHelp } from "@/components/booking/get-help";
 import { Notice, Panel, Pill, TextButton, Thumb } from "@/components/booking/parts";
 import { PaymentsList } from "@/components/booking/payments-list";
 import { useReadAt } from "@/components/booking/use-read-at";
@@ -268,6 +269,10 @@ export function Outcome({ booking }: { booking: BookingCustomer }) {
           disabled={refunding}
         />
       ) : null}
+
+      <Panel>
+        <GetHelp booking={booking} />
+      </Panel>
     </ScrollView>
   );
 }

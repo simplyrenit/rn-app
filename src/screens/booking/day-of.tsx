@@ -1,5 +1,6 @@
 import { bookingQueryKey } from "@/backend/bookings";
 import { setDayStatus } from "@/backend/handover";
+import { GetHelp } from "@/components/booking/get-help";
 import { Notice, Panel, Pill } from "@/components/booking/parts";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { CodeBoxes } from "@/components/capture/code";
@@ -218,6 +219,7 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
           sub="The timeline, your payments, changing the time or cancelling."
           onPress={() => navigation.navigate("BookingDetails", { number })}
         />
+        <GetHelp booking={booking} first={false} />
       </Panel>
     </ScrollView>
   );
