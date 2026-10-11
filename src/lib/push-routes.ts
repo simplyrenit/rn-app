@@ -9,13 +9,15 @@ import { Ring, RingEndPush, parseRing, parseRingEnd } from "@/lib/shop-ring";
  *
  * This is the table the router in `src/backend/notifications.ts` reads. It
  * holds the customer's types (ENG-173), the ring (ENG-209) and the shop's other
- * types (ENG-210). Later sub-tasks add
- * their cases here and nowhere else: ENG-222 the day-of screens, ENG-252 the claim. A type this build does not know is
- * ignored, as the contract asks.
+ * types (ENG-210), and the deposit and the day-of screens (ENG-222, ENG-223).
+ * ENG-252 adds the claim here and nowhere else. A type this build does not know
+ * is ignored, as the contract asks.
  */
 export type PushRoute =
   /** The customer's booking, at whatever stage the server says it is in. */
   | { screen: "Booking"; number: string }
+  /** Pay the deposit (BK-13, ENG-222). The screen says "Deposit paid" if it already is. */
+  | { screen: "BookingDeposit"; number: string }
   /**
    * The shop's ring (ENG-209). `ring` is the request the push carried, so the screen
    * can show it before the server has answered; `ended` is a `ring_ended`, which says
@@ -58,14 +60,17 @@ export function pushRoute(data: unknown): PushRoute | null {
       case "late":
       // The booking's payments list.
       case "refund":
-      // Pay the deposit and the day of the handover: ENG-222 points these at its screens.
-      case "deposit_ask":
-      case "deposit_reminder":
+      // The day of the handover: `Booking` draws it while the stage is `ready` (ENG-222).
+      // A preset tap from the shop arrives as `window` with `what: "status"` and lands there too.
       case "ready":
       // The claim: ENG-252 points this at it. Until then, the booking it is about.
       case "claim":
         // One screen for all of them: `Booking` draws whatever the stage calls for.
         return { screen: "Booking", number };
+      // Pay the deposit (ENG-222).
+      case "deposit_ask":
+      case "deposit_reminder":
+        return { screen: "BookingDeposit", number };
       default:
         return null;
     }

@@ -1,0 +1,496 @@
+import type { ApiError } from "@/lib/api-error";
+import {
+  BookingCustomer,
+  BookingDay,
+  DayStatus,
+  DeliveryMode,
+  clock,
+  dayOf,
+  dayShort,
+  deliveryPlace,
+  money,
+  todayIst,
+  addDays,
+  windowLabel,
+  windowSummary,
+} from "@/lib/booking";
+import type { CaptureFlags, Moment, Side } from "@/lib/capture";
+
+/**
+ * The day of the handover and the return, for both sides (API-CONTRACT OE-I;
+ * ARCHITECTURE 4.1 rows 15 to 22; booking plan, "On the day"). Plain functions:
+ * which buttons a side sees, when Call and "They did not come" open, what a
+ * refused code says, and the words of BK-13, BK-14, BK-19, BK-20 and BK-21.
+ *
+ * Every `now` here is the server's time (`correctedNow`): these are the clocks
+ * that money hangs on, and a phone with a wrong clock must not open or close them.
+ * The server still decides; the phone only chooses what to offer.
+ */
+
+const NO_DAY: BookingDay = {
+  call_number: null,
+  call_from: null,
+  my_status: "",
+  their_status: "",
+  no_show_from: null,
+  handover_code: null,
+};
+
+/** A booking's day block; all empty if an answer came without one, so a screen never reads through nothing. */
+export function dayBlock<D extends BookingDay>(booking: { day?: D | null }): D | BookingDay {
+  return booking.day ?? NO_DAY;
+}
+
+/** Whether each side's capture for a moment is on the server. */
+export function captured(booking: { captures?: CaptureFlags | null }, moment: Moment): { mine: boolean; theirs: boolean } {
+  return booking.captures?.[moment] ?? { mine: false, theirs: false };
+}
+
+// ---- Times --------------------------------------------------------------------------------------
+
+/** True once the instant has come, by `now`. An instant that is missing has not. */
+export function reached(iso: string | null | undefined, now: Date): boolean {
+  const at = new Date(iso ?? "").getTime();
+  return Number.isFinite(at) && now.getTime() >= at;
+}
+
+/** "8:00 am" when it is today, else "8:00 am on Sat 24 Oct". */
+export function whenShort(iso: string | null | undefined, now: Date): string {
+  const day = dayOf(iso);
+  if (!day) return "";
+  return day === todayIst(now) ? clock(iso) : `${clock(iso)} on ${dayShort(day)}`;
+}
+
+/** "today", "tomorrow", or "on Sat 24 Oct". */
+function dayWord(day: string | null, now: Date): string {
+  if (!day) return "";
+  const today = todayIst(now);
+  if (day === today) return "today";
+  return day === addDays(today, 1) ? "tomorrow" : `on ${dayShort(day)}`;
+}
+
+// ---- The three preset buttons (decision A-36) ---------------------------------------------------------
+
+export interface StatusButton {
+  status: Exclude<DayStatus, "">;
+  label: string;
+}
+
+/** The side that travels: the customer on self pickup, the shop on owner delivery. */
+export const travels = (role: Side, mode: DeliveryMode) => (role === "customer") === (mode === "pickup");
+
+/**
+ * Which preset buttons a side sees. The one who travels sees all three. The one
+ * who waits sees two: `i_am_here`, labelled "Ready for you", and "Running late".
+ * No free text, and no fourth value.
+ */
+export function statusButtons(role: Side, mode: DeliveryMode): StatusButton[] {
+  return travels(role, mode)
+    ? [
+        { status: "on_my_way", label: "On my way" },
+        { status: "running_late", label: "Running late" },
+        { status: "i_am_here", label: "I am here" },
+      ]
+    : [
+        { status: "i_am_here", label: "Ready for you" },
+        { status: "running_late", label: "Running late" },
+      ];
+}
+
+/** The other side's last tap, as a line: "The shop is ready for you", "Aarav is on the way". Null when they have not tapped. */
+export function theirStatusLine(role: Side, mode: DeliveryMode, status: DayStatus, name: string): string | null {
+  if (!status) return null;
+  if (status === "running_late") return `${name} is running late`;
+  if (status === "on_my_way") return `${name} is on the way`;
+  // The other side waits when this one travels: their "I am here" is "Ready for you".
+  return travels(role, mode) ? `${name} is ready for you` : `${name} is here`;
+}
+
+/** Under the buttons while they are not open yet. */
+export function statusNote(day: Pick<BookingDay, "call_from">, now: Date): string | null {
+  if (reached(day.call_from, now)) return null;
+  return day.call_from ? `These open at ${whenShort(day.call_from, now)}.` : "These open once an arrival window is picked.";
+}
+
+// ---- Call (a direct dial) ---------------------------------------------------------------------------------
+
+export interface CallCopy {
+  label: string;
+  /** `+91…`, to dial; null while calls are not open. */
+  number: string | null;
+  note: string;
+}
+
+/** The Call button: open from two hours before the window until the handover, as the server says. */
+export function callCopy(role: Side, day: Pick<BookingDay, "call_number" | "call_from">, name: string, now: Date): CallCopy {
+  const until = role === "customer" ? "until you have the item" : "until the handover";
+  const number = typeof day.call_number === "string" && day.call_number ? day.call_number : null;
+  return {
+    label: role === "customer" ? "Call the shop" : `Call ${name}`,
+    number,
+    note: number
+      ? `Calls are open ${until}`
+      : day.call_from
+        ? `Calls open from ${whenShort(day.call_from, now)} ${until}`
+        : "Calls open shortly before the arrival window",
+  };
+}
+
+/** The link the phone dials. Only digits and a leading plus survive. */
+export const telUrl = (number: string) => `tel:${number.replace(/(?!^\+)[^\d]/g, "")}`;
+
+// ---- "They did not come" ------------------------------------------------------------------------------
+
+export interface NoShowCopy {
+  /** The clock has run: the report can be made. */
+  open: boolean;
+  title: string;
+  sub: string;
+}
+
+/** The row that opens the no-show report: thirty minutes after the window ends, by the server's time. */
+export function noShowCopy(
+  role: Side,
+  day: Pick<BookingDay, "no_show_from">,
+  name: string,
+  now: Date
+): NoShowCopy {
+  const open = reached(day.no_show_from, now);
+  const title = role === "customer" ? "The shop isn't here?" : `${name} hasn't come?`;
+  const gain = role === "customer" ? "You get everything back." : "One day's rent comes to you.";
+  return {
+    open,
+    title,
+    sub: open
+      ? `Report it with a photo taken on the spot. ${gain}`
+      : day.no_show_from
+        ? `You can report it from ${whenShort(day.no_show_from, now)}, once the window has ended. ${gain}`
+        : `You can report it once the arrival window has ended. ${gain}`,
+  };
+}
+
+export type ReportKind = "no_show" | "owner_absent";
+
+export interface ReportCopy {
+  header: string;
+  title: string;
+  body: string;
+  photo: string;
+  button: string;
+  done: string;
+}
+
+/** The screen that takes the photo and sends the report. */
+export function reportCopy(kind: ReportKind, role: Side, name: string, mode: DeliveryMode): ReportCopy {
+  if (kind === "owner_absent") {
+    return {
+      header: "Return",
+      title: "The shop isn't here",
+      body: "Take a photo of where you are, at the shop. Late charges stop from the moment you send this, and Renit's staff arrange the return. Keep the item safe until then.",
+      photo: "A photo of the shop, taken now",
+      button: "Tell Renit",
+      done: "Renit has been told. Late charges have stopped.",
+    };
+  }
+  if (role === "customer") {
+    return {
+      header: "Handover",
+      title: "The shop did not come",
+      body: "Take a photo of where you are. The booking ends and everything you paid comes back to you, the booking amount included.",
+      photo: "A photo of where you are, taken now",
+      button: "Report it",
+      done: "Reported. Your money is on its way back.",
+    };
+  }
+  return {
+    header: "Handover",
+    title: `${name} did not come`,
+    body: `Take a photo of where you are. The booking ends: one day's rent comes to you${
+      mode === "owner_delivery" ? ", with the delivery fee if you travelled," : ""
+    } and the rest goes back to ${name}.`,
+    photo: "A photo of where you are, taken now",
+    button: "Report it",
+    done: "Reported. The booking has ended.",
+  };
+}
+
+// ---- Codes ------------------------------------------------------------------------------------------
+
+/**
+ * What a refused code says (decision A-16): three wrong tries lock it for five
+ * minutes, and the third lock closes it for good. The times are the server's.
+ */
+export function codeErrorText(error: ApiError | null, now: Date): string {
+  if (!error || error.status === 0) return "We couldn't reach Renit. Check your connection and try again.";
+  switch (error.code) {
+    case "wrong_code": {
+      const left = error.details?.tries_left;
+      return typeof left === "number"
+        ? `That code is not right. ${left} ${left === 1 ? "try" : "tries"} left.`
+        : "That code is not right.";
+    }
+    case "code_locked": {
+      const until = typeof error.details?.until === "string" ? whenShort(error.details.until, now) : "";
+      return until ? `Too many wrong tries. Try again at ${until}.` : "Too many wrong tries. Try again in a few minutes.";
+    }
+    case "code_closed":
+      return "This code no longer works after too many wrong tries. Renit's desk has been told and will finish it by phone or send a new code.";
+    case "too_early": {
+      const from = typeof error.details?.from === "string" ? whenShort(error.details.from, now) : "";
+      return from ? `The rental can be started from ${from}.` : "It is too early to start this rental.";
+    }
+    case "claim_open":
+      return "A report is open on this booking. The code is paused until Renit decides.";
+    case "stage_not_allowed":
+      return "This booking has moved on, so the code is not needed now.";
+    case "validation_error":
+      return "Type all six digits.";
+    default:
+      return error.message ?? "Something went wrong on our side. Try again.";
+  }
+}
+
+/** True when the code can never work again: the screen stops asking for it. */
+export const codeIsClosed = (error: ApiError | null) => error?.code === "code_closed";
+
+/** What any other refused tap on the day says (status, no-show, refusing at the door, the deposit, extending). */
+export function dayErrorText(error: ApiError | null, now: Date): string {
+  if (!error || error.status === 0) return "We couldn't reach Renit. Check your connection and try again.";
+  switch (error.code) {
+    case "too_early": {
+      const from = typeof error.details?.from === "string" ? whenShort(error.details.from, now) : "";
+      return from ? `This opens at ${from}.` : "It is too early for this.";
+    }
+    case "claim_open":
+      return "A report is open on this booking. Renit's decision comes first.";
+    case "stage_not_allowed":
+      return "This booking has moved on, so that can't be done now.";
+    case "window_required":
+      return "Pick your arrival window first.";
+    case "nothing_to_pay":
+      return "There is no deposit left to pay.";
+    case "payments_unavailable":
+      return "Payments are not working for a moment. Nothing was charged. Try again.";
+    case "validation_error":
+      return "Something is missing. Check the photo and the words, then try again.";
+    case "already_extending":
+      return "An extension is already open for this rental.";
+    case "shop_closed":
+      return "The shop is closed now. An extension can be asked for while it is open.";
+    case "too_late_to_extend":
+      return "It is too close to the return time for the shop to answer. Return the item, then book it again.";
+    default:
+      return error.message ?? "Something went wrong on our side. Try again.";
+  }
+}
+
+// ---- BK-13, pay the deposit ---------------------------------------------------------------------------------
+
+export interface DepositCopy {
+  /** `to_pay`; `window_first` (no arrival window yet); `paid`; `none` (no deposit, or the booking has ended). */
+  state: "to_pay" | "window_first" | "paid" | "none";
+  sub: string;
+  amount: string;
+  refund: string;
+  payBy: string | null;
+  when: string | null;
+  unlocks: string;
+  warning: string;
+  button: string;
+}
+
+/** The deposit the customer is shown: what the pay page must take. */
+export function depositCharge(booking: Pick<BookingCustomer, "pay_now" | "money">): { amount: string } {
+  const open = booking.pay_now?.purpose === "deposit" ? booking.pay_now.payment ?? booking.pay_now : null;
+  return { amount: open?.amount ?? booking.money.deposit };
+}
+
+export function depositCopy(booking: BookingCustomer): DepositCopy {
+  const m = booking.money;
+  const pickup = booking.delivery_mode === "pickup";
+  const amount = money(depositCharge(booking).amount);
+  const due = m.deposit_due_at;
+  const dueDay = dayOf(due);
+  const state: DepositCopy["state"] =
+    booking.exit || m.deposit_state === "none" || m.deposit_state === "forfeited"
+      ? "none"
+      : m.deposit_state === "not_due" || m.deposit_state === "due"
+        ? booking.window
+          ? "to_pay"
+          : "window_first"
+        : "paid";
+  return {
+    state,
+    sub: `${booking.product.title} · ${booking.number}`,
+    amount,
+    refund: "Refundable. Back within 48 hours of closing.",
+    payBy: dueDay ? `Pay by ${dayShort(dueDay)}, ${clock(due)}` : null,
+    when: booking.window ? `${pickup ? "Collecting" : "Arriving"} ${windowSummary(booking.window)}` : null,
+    unlocks: pickup
+      ? "Paying the deposit shows you the shop's address and unlocks your handover code."
+      : "Paying the deposit unlocks your handover code.",
+    warning: `If it isn't paid by then, the booking is cancelled and one day's rent (${money(m.rate)}) goes to the shop.`,
+    button: `Pay ${amount}`,
+  };
+}
+
+// ---- BK-14, the day of the handover ---------------------------------------------------------------------------
+
+export interface DayOfCopy {
+  title: string;
+  place: { name: string; address: string | null };
+  window: string | null;
+  codeNote: string;
+}
+
+export function dayOfCopy(booking: BookingCustomer, now: Date): DayOfCopy {
+  const pickup = booking.delivery_mode === "pickup";
+  const item = booking.product.title;
+  const word = dayWord(booking.window ? dayOf(booking.window.start) : booking.first_day, now);
+  const delivery = deliveryPlace(booking.delivery_address);
+  // The address is on the booking only once the deposit is paid. Drawn only when it is text.
+  const address = typeof booking.shop.address === "string" && booking.shop.address ? booking.shop.address : null;
+  return {
+    title: pickup ? `Collect your ${item} ${word}` : `Your ${item} arrives ${word}`,
+    place: pickup
+      ? { name: booking.shop.name, address: address ?? booking.shop.locality }
+      : { name: delivery ? `${booking.shop.name} brings it to ${delivery.title}` : `${booking.shop.name} brings it to you`, address: delivery?.line ?? null },
+    window: booking.window ? windowLabel(booking.window) : null,
+    codeNote: booking.claim_open
+      ? "You reported this item as not as described. Renit decides within one day, and your code is paused until then."
+      : "Show this to the shop only after you have checked the item and both of you have recorded its condition.",
+  };
+}
+
+/** Where a maps app should open: the shop's pin for a pickup. Null when there is none. */
+export function mapsUrl(coordinates: { lat: number; long: number } | null | undefined, label: string, ios: boolean): string | null {
+  if (!coordinates || typeof coordinates.lat !== "number" || typeof coordinates.long !== "number") return null;
+  const at = `${coordinates.lat},${coordinates.long}`;
+  const q = encodeURIComponent(label);
+  return ios ? `http://maps.apple.com/?ll=${at}&q=${q}` : `geo:${at}?q=${at}(${q})`;
+}
+
+// ---- BK-19, not as described ---------------------------------------------------------------------------------------
+
+export function refuseCopy(booking: Pick<BookingCustomer, "money">, attached: number): { notice: string; attachedNote: string | null } {
+  const m = booking.money;
+  return {
+    notice: `Renit decides within one day. If we agree, you get everything back, including the ${money(
+      m.booking_amount
+    )}. If we don't, it counts as cancelling inside 24 hours and one day's rent (${money(m.rate)}) goes to the shop.`,
+    attachedNote: attached > 0 ? `The ${attached} you just took` : null,
+  };
+}
+
+/** Why "Send to Renit" is off, or null: the words and at least one photo are both needed. */
+export function refuseHold(statement: string, photos: number): string | null {
+  if (!statement.trim()) return "Say what is different from the listing.";
+  return photos > 0 ? null : "Add at least one photo.";
+}
+
+// ---- BK-20, the rental ---------------------------------------------------------------------------------------------
+
+export interface ActiveCopy {
+  title: string;
+  sub: string;
+  returnBy: string | null;
+  /** The line under "Return by": what a late day costs, or what being late has cost so far. */
+  late: { text: string; tone: "info" | "warning" };
+  deposit: { amount: string; sub: string } | null;
+  button: string;
+}
+
+export function activeCopy(booking: BookingCustomer): ActiveCopy {
+  const m = booking.money;
+  const day = dayOf(booking.return_by);
+  const held = Number(m.deposit) > 0;
+  const lateDays = Number(m.late_days) || 0;
+  return {
+    title: `You have the ${booking.product.title}`,
+    sub: `${booking.number} · ${booking.shop.name}`,
+    returnBy: day ? `Return by ${dayShort(day)}, ${clock(booking.return_by)}` : null,
+    late:
+      lateDays > 0
+        ? {
+            text: `${lateDays} ${lateDays === 1 ? "day" : "days"} late so far: ${money(m.late_fee)}${
+              held ? " comes off your deposit" : ""
+            }. Each more day costs ${money(m.rate)}.`,
+            tone: "warning",
+          }
+        : { text: `Each late day costs ${money(m.rate)}${held ? ", taken from your deposit" : ""}.`, tone: "info" },
+    deposit: held
+      ? {
+          amount: money(m.deposit),
+          sub:
+            m.deposit_state === "carried"
+              ? "Carried over from your first booking · back within 48 hours of closing"
+              : m.deposit_state === "forfeited"
+                ? "Kept, as the item was not returned in time"
+                : "Held by Renit · back within 48 hours of closing",
+        }
+      : null,
+    button: `Return the ${booking.product.title}`,
+  };
+}
+
+// ---- BK-21, the return ---------------------------------------------------------------------------------------------
+
+export interface ReturnStep {
+  label: string;
+  sub: string;
+  state: "done" | "next" | "todo";
+}
+
+/**
+ * The three steps of the return. `recorded`: this phone has finished its record
+ * (it may still be uploading). The code can be typed at any point: at a door with
+ * no signal the upload follows.
+ */
+export function returnSteps(booking: Pick<BookingCustomer, "captures" | "stage">, recorded: boolean): ReturnStep[] {
+  const returned = booking.stage === "returned" || booking.stage === "closed";
+  const flags = captured(booking, "return");
+  const mine = recorded || flags.mine;
+  const theirs = flags.theirs;
+  const steps: Omit<ReturnStep, "state">[] = [
+    { label: "Record its condition again", sub: mine ? "Done" : "The same photos and video as at the handover" },
+    { label: "The shop checks it against the handover", sub: theirs || returned ? "Done" : "They record it too, and compare" },
+    { label: "Type the shop's code", sub: returned ? "Done" : "The shop shows you a 6-digit code" },
+  ];
+  const done = [mine, theirs || returned, returned];
+  const next = done.indexOf(false);
+  return steps.map((step, i) => ({ ...step, state: done[i] ? "done" : i === next ? "next" : "todo" }));
+}
+
+/** "What happens next", once the code is in. */
+export function returnedCopy(booking: BookingCustomer): { title: string; body: string } {
+  const at = booking.timeline.find((entry) => entry.event === "return")?.at;
+  const day = dayOf(at);
+  const m = booking.money;
+  const held = Number(m.deposit) > 0 && m.deposit_state !== "forfeited" && m.deposit_state !== "none";
+  return {
+    title: day ? `Returned ${dayShort(day)}, ${clock(at)}.` : "Returned.",
+    body: held
+      ? `Your deposit of ${money(m.deposit)} comes back within 48 hours, unless the shop reports a problem in the next 24 hours.`
+      : "The shop has 24 hours to report a problem. After that the rental is closed.",
+  };
+}
+
+// ---- Extending -------------------------------------------------------------------------------------------------------
+
+/** The most extra days the stepper offers. The server's stock rule decides what is really free. */
+export const MAX_EXTRA_DAYS = 30;
+
+/** The extension's dates: it starts the day after the rental's last day. */
+export function extensionDays(lastDay: string, extra: number): { first_day: string; last_day: string } {
+  const n = Math.min(Math.max(1, Math.floor(extra)), MAX_EXTRA_DAYS);
+  return { first_day: addDays(lastDay, 1), last_day: addDays(lastDay, n) };
+}
+
+/** The plain lines under an extension's price. */
+export function extensionLines(bookingAmount: string): string[] {
+  return [
+    "The item stays with you and your deposit carries on. There is nothing more to pay for the deposit.",
+    `The shop has to accept the extra days. If they can't, the ${money(bookingAmount)} comes back and the item is due back on the original day.`,
+    "Each late day costs one day's rent.",
+  ];
+}

@@ -7,6 +7,7 @@ import { DimensionValue, FlexAlignType, ImageSourcePropType } from "react-native
 import type { SavedAddress } from "@/lib/addresses";
 import type { BookItem, DeliveryMode, ProductShop } from "@/lib/booking";
 import type { Moment, Side } from "@/lib/capture";
+import type { ReportKind } from "@/lib/day-of";
 import type { FlagReason, ListingStatus } from "@/lib/listing-status";
 import type { Ring } from "@/lib/shop-ring";
 
@@ -353,6 +354,8 @@ export type RootStackParamList = {
     /** "Home": the saved address the item is delivered to. */
     address_name?: string;
     moved_from?: string;
+    /** An extension (ENG-220): the booking these days follow. The request then goes to `extend`. */
+    extends?: string;
   };
   /**
    * One booking at whatever stage the server says it is in. `pay` opens the pay
@@ -361,6 +364,24 @@ export type RootStackParamList = {
   Booking: { number: string; pay?: boolean };
   /** BK-07: picks the first arrival window, or asks to change the one that is set. */
   BookingWindow: { number: string };
+  /** BK-13: pay the deposit. Opened from the booking and from the deposit pushes (ENG-222). */
+  BookingDeposit: { number: string };
+  /** BK-08 for a booking whose own screen is the day of the handover or the rental: the timeline, the payments, cancelling. */
+  BookingDetails: { number: string };
+  /** BK-18: both sets side by side, "All good · show my code", "Not as described". */
+  BookingCheck: { number: string };
+  /** BK-19: refusing at the door, with what is different and photos. */
+  BookingRefuse: { number: string };
+  /** BK-21: the return, where the customer types the shop's code. */
+  BookingReturn: { number: string };
+  /** Picks how many more days; the price screen then asks with `extends`. */
+  BookingExtend: { number: string };
+  /**
+   * "They did not come" (either side, `no_show`) and the customer's "Owner did not
+   * come" at the return (`owner_absent`), with a photo taken on the spot. `name` and
+   * `mode` are for the shop's words: the customer's first name and how the item changes hands.
+   */
+  BookingReport: { number: string; kind: ReportKind; role: Side; name?: string; mode?: DeliveryMode };
   /**
    * The shop's ring (ENG-209). `ring` is the request a push carried or Today
    * holds: drawn at once, then checked against the live answer, which decides.

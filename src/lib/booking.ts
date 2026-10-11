@@ -9,6 +9,7 @@
  */
 import { SavedAddress, addressLine, addressTitle } from "@/lib/addresses";
 import { ApiError } from "@/lib/api-error";
+import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
 import { DayHours, Hours, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
 
@@ -142,6 +143,23 @@ export interface TimeWindow {
   end: string;
 }
 
+/** One of the three preset taps on the day (`POST …/status/`), or none yet. */
+export type DayStatus = "" | "on_my_way" | "running_late" | "i_am_here";
+
+/** The day of the handover, as either side's booking carries it (the shop's adds `return_code`). */
+export interface BookingDay {
+  /** The other side's phone, `+91…`. Null except from `call_from` until the handover. */
+  call_number: string | null;
+  /** When the preset buttons, Call and the handover code open: 2 hours before the window. Null until a window is picked. */
+  call_from: string | null;
+  my_status: DayStatus;
+  their_status: DayStatus;
+  /** When "They did not come" opens: the window's end plus 30 minutes. */
+  no_show_from: string | null;
+  /** Six digits. On the customer's booking only while the stage is `ready`: they show it, the owner types it. */
+  handover_code: string | null;
+}
+
 /** A booking as its customer sees it (API-CONTRACT, BookingCustomer). */
 export interface BookingCustomer {
   number: string;
@@ -217,7 +235,18 @@ export interface BookingCustomer {
   window: TimeWindow | null;
   window_request: { by: "owner" | "customer"; start: string; end: string; asked_at: string } | null;
   return_by: string | null;
+  /** The handover time plus 24 hours while the stage is `out`, else null. */
+  report_fault_until?: string | null;
   id_match_required: boolean;
+  day: BookingDay;
+  /** Whether each capture has finished uploading. */
+  captures: CaptureFlags;
+  /** A "Not as described" or fault report waits for Renit's decision. */
+  claim_open: boolean;
+  claims: number[];
+  /** The booking this one extends, and the bookings that extend this one. */
+  extends: string | null;
+  extensions: string[];
   can: string[];
   timeline: { event: string; label: string; at: string; by: string }[];
   created_at: string;
@@ -818,7 +847,16 @@ export function payButtonLabel(phase: PayPhase, first: string): string {
  * The views of the `Booking` route. The booking's stage on the server picks one;
  * the phone keeps no stage of its own.
  */
-export type BookingView = "pay_booking_amount" | "confirming" | "outcome" | "pay_rent" | "details";
+export type BookingView =
+  | "pay_booking_amount"
+  | "confirming"
+  | "outcome"
+  | "pay_rent"
+  /** `ready`: the day of the handover (BK-14). */
+  | "day_of"
+  /** `out`: the customer has the item (BK-20). */
+  | "active"
+  | "details";
 
 /** The request ended before a handover and other dates or owners are on offer (N2, N8). */
 export function endedByOwner(booking: Pick<BookingCustomer, "exit" | "exit_reason">): boolean {
@@ -839,7 +877,9 @@ export function bookingView(
   if (booking.stage === "ringing") {
     return booking.ring_state === "awaiting_payment" ? "pay_booking_amount" : "confirming";
   }
-  return booking.stage === "accepted" ? "pay_rent" : "details";
+  if (booking.stage === "accepted") return "pay_rent";
+  if (booking.stage === "ready") return "day_of";
+  return booking.stage === "out" ? "active" : "details";
 }
 
 /** True while the request is still open: unpaid, waiting for the shop to open, or ringing. */
@@ -855,7 +895,7 @@ export const SLOW_POLL_MS = 15_000;
 /**
  * How often the booking screen reads the booking by itself, or false for not at
  * all. Every 3 seconds while the ₹99 is being paid or the owner is being asked,
- * and it stops the moment the ring ends.
+ * and it stops the moment the ring ends. Slowly on the day of the handover.
  *
  * A request waiting for a closed shop is not read on a timer: nothing can change
  * before `shop.opens_at` except the customer's own cancel, so the screen reads
@@ -863,9 +903,16 @@ export const SLOW_POLL_MS = 15_000;
  * opened and the server still says waiting, it is read slowly until they agree.
  */
 export function pollEveryMs(
-  booking: Pick<BookingCustomer, "stage" | "exit" | "ring_state" | "shop">,
+  booking: Pick<BookingCustomer, "stage" | "exit" | "ring_state" | "shop"> & { day?: Pick<BookingDay, "call_from"> | null },
   now: Date = new Date()
 ): number | false {
+  // On the day, from the time the buttons open: the other side's tap, or the owner
+  // typing the code, changes this screen while the two people stand together. A
+  // push says so too; this is for the phone that did not get it.
+  if (booking.stage === "ready" && !booking.exit) {
+    const from = new Date(booking.day?.call_from ?? "").getTime();
+    return Number.isFinite(from) && now.getTime() >= from ? SLOW_POLL_MS : false;
+  }
   if (!isRinging(booking)) return false;
   if (booking.ring_state !== "waiting_to_open") return RING_POLL_MS;
   const opens = new Date(booking.shop.opens_at ?? "").getTime();

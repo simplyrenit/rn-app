@@ -27,11 +27,13 @@ export interface QuoteInput {
   delivery_mode: DeliveryMode;
   /** One of the caller's saved addresses; needed for owner delivery. */
   address_id: number | null;
+  /** For an extension quote (ENG-220): the booking it extends. `first_day` is then the day after its last day. */
+  extends?: string | null;
 }
 
 /** The whole price before Book now. Writes nothing; works signed out too. */
 export async function fetchQuote(input: QuoteInput): Promise<Quote> {
-  return (await axiosInstance.post<Quote>(`${BOOKINGS_ENDPOINT}quote/`, { ...input, extends: null })).data;
+  return (await axiosInstance.post<Quote>(`${BOOKINGS_ENDPOINT}quote/`, { ...input, extends: input.extends ?? null })).data;
 }
 
 export interface BookInput extends QuoteInput {

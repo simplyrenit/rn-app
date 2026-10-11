@@ -11,9 +11,11 @@ import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect } from "react";
 import { BookingDetails } from "./booking-details";
 import { Confirming } from "./confirming";
+import { DayOf } from "./day-of";
 import { Outcome } from "./outcome";
 import { PayBookingAmount } from "./pay-booking-amount";
 import { PayRent } from "./pay-rent";
+import { RentalActive } from "./rental-active";
 
 /** The header's words for each view. The wait and the pay steps carry their own heading. */
 const TITLE: Record<BookingView, (number: string) => string> = {
@@ -21,6 +23,8 @@ const TITLE: Record<BookingView, (number: string) => string> = {
   confirming: () => "",
   outcome: () => "Your request",
   pay_rent: () => "",
+  day_of: (number) => `Booking ${number}`,
+  active: () => "Your rental",
   details: (number) => `Booking ${number}`,
 };
 
@@ -88,6 +92,10 @@ export default function BookingScreen() {
         <Outcome booking={booking} />
       ) : view === "pay_rent" ? (
         <PayRent booking={booking} receivedAt={receivedAt} watching={watching} refresh={refresh} />
+      ) : view === "day_of" ? (
+        <DayOf booking={booking} receivedAt={receivedAt} />
+      ) : view === "active" ? (
+        <RentalActive booking={booking} />
       ) : (
         <BookingDetails booking={booking} />
       )}

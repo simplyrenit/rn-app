@@ -1,4 +1,5 @@
 import { QuoteInput, bookNow, bookingQueryKey, useQuote } from "@/backend/bookings";
+import { extendBooking } from "@/backend/handover";
 import {
   BookingLoadError,
   BookingLoading,
@@ -30,6 +31,7 @@ import {
   termsTicked,
   totalLabel,
 } from "@/lib/booking";
+import { dayErrorText, extensionLines } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { startIdCheck } from "@/lib/id-check";
 import { rememberReturnTo } from "@/lib/return-to";
@@ -52,6 +54,10 @@ import { useQueryClient } from "react-query";
  * (`expected_total`), so a price that moved is refused instead of charged, and a
  * key made once per tap (`client_key`), so a double tap or a retry after a lost
  * answer returns the first booking instead of making a second.
+ *
+ * With `extends` it is the same screen for an extension (ENG-220): the quote is
+ * asked for the days after that booking, the request goes to `extend`, and the
+ * deposit is not asked for again because it carries on.
  */
 export default function ReviewAndBookScreen() {
   const { params } = useRoute<RouteProps<"ReviewAndBook">>();
@@ -68,9 +74,11 @@ export default function ReviewAndBookScreen() {
       last_day: params.last_day,
       delivery_mode: params.delivery_mode,
       address_id: params.address_id ?? null,
+      ...(params.extends ? { extends: params.extends } : {}),
     }),
-    [params.item.name, params.first_day, params.last_day, params.delivery_mode, params.address_id]
+    [params.item.name, params.first_day, params.last_day, params.delivery_mode, params.address_id, params.extends]
   );
+  const extending = params.extends ?? null;
   const quoteQuery = useQuote(input);
   const quote = quoteQuery.data;
 
@@ -100,7 +108,7 @@ export default function ReviewAndBookScreen() {
     }, [])
   );
 
-  const header = <SubpageHeader title="Review and book" />;
+  const header = <SubpageHeader title={extending ? "Extend your rental" : "Review and book"} />;
 
   if (!quote) {
     return (
@@ -149,14 +157,22 @@ export default function ReviewAndBookScreen() {
     setBookError(null);
     clientKey.current ??= uuidv4();
     try {
-      const answer = await bookNow({
-        ...input,
-        // The version on screen when the box was ticked; the server stores it with the booking.
-        terms_version: ticked && terms ? terms.version : null,
-        expected_total: quote.total,
-        moved_from: movedFrom,
-        client_key: clientKey.current,
-      });
+      // The version on screen when the box was ticked; the server stores it with the booking.
+      const terms_version = ticked && terms ? terms.version : null;
+      const answer = extending
+        ? await extendBooking(extending, {
+            last_day: quote.last_day,
+            terms_version,
+            expected_total: quote.total,
+            client_key: clientKey.current,
+          })
+        : await bookNow({
+            ...input,
+            terms_version,
+            expected_total: quote.total,
+            moved_from: movedFrom,
+            client_key: clientKey.current,
+          });
       clientKey.current = null;
       // The booking carries its own pay page (`pay_now.payment`) and the next screen
       // pays from it. This answer's `payment` is that same page, so it stands in if
@@ -187,7 +203,11 @@ export default function ReviewAndBookScreen() {
       if (failure?.code === "id_check_needed") {
         setIdRefused(typeof failure.details?.needed === "string" ? failure.details.needed : "id");
       }
-      setBookError(bookErrorText(failure));
+      setBookError(
+        failure?.code === "already_extending" || failure?.code === "shop_closed" || failure?.code === "too_late_to_extend"
+          ? dayErrorText(failure, new Date())
+          : bookErrorText(failure)
+      );
       // Whatever refused it (the price, the last unit, the shop closing) is in a fresh quote.
       if (failure && failure.status > 0) void quoteQuery.refetch();
     } finally {
@@ -233,7 +253,10 @@ export default function ReviewAndBookScreen() {
           What you pay, and when
         </Text>
         <Panel>
-          {paySteps(quote, moved).map((step, index) => (
+          {paySteps(quote, moved)
+            // An extension's deposit is the first booking's, carried on: there is no deposit step.
+            .filter((step) => !extending || step.title !== "Deposit")
+            .map((step, index) => (
             <View
               key={step.title}
               accessible
@@ -277,7 +300,7 @@ export default function ReviewAndBookScreen() {
         </Panel>
 
         <View style={{ gap: space.xs }}>
-          {plainLines(quote).map((line) => (
+          {(extending ? extensionLines(quote.pay_now) : plainLines(quote)).map((line) => (
             <Text key={line} fontSize="text-sm" tone="body">
               {line}
             </Text>
@@ -355,7 +378,7 @@ export default function ReviewAndBookScreen() {
             booking || Boolean(blocker) || idNeeded || quoteQuery.isFetching || (terms !== null && !ticked)
           }
         >
-          {bookLabel(quote, moved)}
+          {extending ? `Extend · Pay ${money(quote.pay_now)}` : bookLabel(quote, moved)}
         </Button>
       </BottomBar>
     </NonScrollableContainer>

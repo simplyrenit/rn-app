@@ -20,8 +20,6 @@ describe("pushRoute", () => {
       "lapsed",
       "confirmed",
       "window",
-      "deposit_ask",
-      "deposit_reminder",
       "ready",
       "cancelled",
       "started",
@@ -33,6 +31,19 @@ describe("pushRoute", () => {
     ]) {
       expect(pushRoute(push(type))).toEqual({ screen: "Booking", number: "RN-24831" });
     }
+  });
+
+  it("opens the deposit screen for the two deposit pushes (ENG-222)", () => {
+    for (const type of ["deposit_ask", "deposit_reminder"]) {
+      expect(pushRoute(push(type))).toEqual({ screen: "BookingDeposit", number: "RN-24831" });
+    }
+    // Without a booking number there is nowhere to go.
+    expect(pushRoute(push("deposit_ask", { booking: null }))).toBeNull();
+  });
+
+  it("opens the booking, which is the day-of screen then, for `ready` and a preset tap", () => {
+    expect(pushRoute(push("ready"))).toEqual({ screen: "Booking", number: "RN-24831" });
+    expect(pushRoute(push("window", { what: "status", status: "i_am_here" }))).toEqual({ screen: "Booking", number: "RN-24831" });
   });
 
   it("reads the extra fields of a type without needing them", () => {

@@ -1,0 +1,266 @@
+import { bookingQueryKey, useBooking } from "@/backend/bookings";
+import { payDeposit } from "@/backend/handover";
+import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/components/booking/parts";
+import { useAppActive } from "@/components/booking/use-app-active";
+import { usePay } from "@/components/booking/use-pay";
+import { useReadAt } from "@/components/booking/use-read-at";
+import { useServerNow } from "@/components/booking/use-server-now";
+import { Button, SubpageHeader, Text } from "@/components/core";
+import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
+import { apiError } from "@/lib/api-error";
+import { BookingCustomer, SLOW_POLL_MS, money, payButtonLabel, payPhaseText } from "@/lib/booking";
+import { dayErrorText, depositCharge, depositCopy } from "@/lib/day-of";
+import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { clockSkewMs } from "@/lib/server-clock";
+import { useTheme } from "@/lib/theme";
+import { toast } from "@/lib/toast";
+import { RouteProps, useTypedNavigation } from "@/lib/types";
+import { useIsFocused, useRoute } from "@react-navigation/native";
+import React, { useEffect, useRef, useState } from "react";
+import { ScrollView, View } from "react-native";
+import { CalendarDaysIcon, CheckCircleIcon, ClockIcon, ExclamationTriangleIcon } from "react-native-heroicons/outline";
+import { useQueryClient } from "react-query";
+
+function Deposit({
+  booking,
+  receivedAt,
+  watching,
+  refresh,
+}: {
+  booking: BookingCustomer;
+  receivedAt: number;
+  watching: boolean;
+  refresh: () => Promise<BookingCustomer | undefined>;
+}) {
+  const navigation = useTypedNavigation();
+  const { color } = useTheme();
+  const queryClient = useQueryClient();
+  const now = useServerNow(booking.server_time, receivedAt);
+  const copy = depositCopy(booking);
+  // rn-api answered a tap with a sum that was not the one on the button: shown, then asked for again.
+  const [changed, setChanged] = useState(false);
+  const shown = useRef(depositCharge(booking).amount);
+  shown.current = depositCharge(booking).amount;
+
+  const openBooking = () => navigation.navigate("Booking", { number: booking.number });
+
+  const { phase, pay } = usePay(booking.number, {
+    onResult: async (result) => {
+      const fresh = await refresh();
+      // The deposit is held: the address and the handover code are on the booking now.
+      if (result === "paid" && fresh?.stage === "ready") openBooking();
+    },
+    onError: (error) => toast.error("We couldn't start the payment", { message: dayErrorText(apiError(error), now) }),
+  });
+
+  const tapPay = () => {
+    setChanged(false);
+    void pay(async () => {
+      const named = shown.current;
+      let answer;
+      try {
+        // The same payment comes back while it can still be paid, and a new one once that has run out.
+        answer = await payDeposit(booking.number);
+      } catch (error) {
+        const failure = apiError(error);
+        // Paid meanwhile (a slow bank, another phone), no window yet, or the booking moved on: the booking says which.
+        if (failure?.code === "nothing_to_pay" || failure?.code === "stage_not_allowed" || failure?.code === "window_required") {
+          await refresh();
+          return null;
+        }
+        // rn-api could not reach the payments service to make a page. One that was already made may still open.
+        const open = booking.pay_now?.purpose === "deposit" ? booking.pay_now.payment : null;
+        if (failure?.code === "payments_unavailable" && open) return open;
+        throw error;
+      }
+      queryClient.setQueryData(bookingQueryKey(booking.number), answer.booking);
+      if (answer.payment.purpose !== "deposit" || Number(answer.payment.amount) !== Number(named)) {
+        // Not opened: the customer has not seen this sum.
+        setChanged(true);
+        return null;
+      }
+      return answer.payment;
+    });
+  };
+
+  // The due time passes, or the bank is slow: ask until the server says what happened.
+  const skew = clockSkewMs(booking.server_time, receivedAt);
+  useReadAt(copy.state === "to_pay" ? booking.money.deposit_due_at : null, () => void refresh(), skew);
+  const waiting = watching && phase === "pending" && copy.state === "to_pay";
+  useEffect(() => {
+    if (!waiting) return;
+    const timer = setInterval(() => void refresh(), SLOW_POLL_MS);
+    return () => clearInterval(timer);
+    // `refresh` is recreated each render; only the state matters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waiting]);
+
+  const note = payPhaseText(phase);
+  const working = phase === "working";
+
+  if (copy.state === "paid" || copy.state === "none") {
+    const paid = copy.state === "paid";
+    return (
+      <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: SCREEN_GUTTER, gap: space.md }}>
+          <View
+            style={{
+              width: 88,
+              height: 88,
+              borderRadius: radius.full,
+              backgroundColor: paid ? color.successWash : color.surfaceRaised,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {paid ? <CheckCircleIcon size={40} color={color.success} /> : <ExclamationTriangleIcon size={36} color={color.textBody} />}
+          </View>
+          <Text role="screenTitle" accessibilityRole="header" style={{ textAlign: "center" }}>
+            {paid ? "Deposit paid" : "No deposit to pay"}
+          </Text>
+          <Text fontSize="text-md" tone="body" style={{ textAlign: "center" }}>
+            {paid
+              ? booking.stage === "ready"
+                ? "Your handover code is ready."
+                : "Renit holds it until the rental closes."
+              : booking.exit
+                ? "This booking has ended."
+                : "This booking has no deposit."}
+          </Text>
+        </View>
+        <BottomBar>
+          <Button onPress={openBooking}>Open the booking</Button>
+        </BottomBar>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.lg }}
+      >
+        <View style={{ alignItems: "center", gap: space.xs }}>
+          <Text fontSize="text-sm" tone="body">
+            {copy.sub}
+          </Text>
+          <Text fontSize="text-3xl" fontWeight="font-bold" accessibilityRole="header" accessibilityLabel={`Deposit ${copy.amount}`}>
+            {copy.amount}
+          </Text>
+          <Text fontSize="text-md" tone="body" style={{ textAlign: "center" }}>
+            {copy.refund}
+          </Text>
+        </View>
+
+        {changed ? (
+          <Notice tone="warning" icon="warning">
+            The amount to pay has changed. Check it above, then tap Pay.
+          </Notice>
+        ) : null}
+
+        <Panel>
+          {copy.payBy ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md }}>
+              <ClockIcon size={20} color={color.brandText} />
+              <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
+                {copy.payBy}
+              </Text>
+            </View>
+          ) : null}
+          {copy.when ? (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: space.md,
+                padding: space.md,
+                borderTopWidth: copy.payBy ? 1 : 0,
+                borderTopColor: color.line,
+              }}
+            >
+              <CalendarDaysIcon size={20} color={color.text} />
+              <Text fontSize="text-md" style={{ flex: 1 }}>
+                {copy.when}
+              </Text>
+            </View>
+          ) : null}
+        </Panel>
+
+        {copy.state === "window_first" ? (
+          <Notice tone="warning" icon="clock">
+            Pick your arrival window first. The deposit can be paid once the shop knows when you are coming.
+          </Notice>
+        ) : (
+          <Notice tone="brand" icon="info">
+            {copy.unlocks}
+          </Notice>
+        )}
+
+        <View style={{ flexDirection: "row", gap: space.sm }}>
+          <ExclamationTriangleIcon size={18} color={color.warning} />
+          <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+            {copy.warning}
+          </Text>
+        </View>
+      </ScrollView>
+
+      <BottomBar>
+        {note ? (
+          <Text fontSize="text-sm" tone={phase === "failed" ? "danger" : "body"} accessibilityRole="alert">
+            {note}
+          </Text>
+        ) : null}
+        {copy.state === "window_first" ? (
+          <Button onPress={() => navigation.navigate("BookingWindow", { number: booking.number })}>
+            Pick your arrival window
+          </Button>
+        ) : (
+          <Button onPress={tapPay} loading={working} disabled={working} accessibilityLabel={`Pay the deposit, ${money(shown.current)}`}>
+            {payButtonLabel(phase === "ended" ? "idle" : phase, copy.button)}
+          </Button>
+        )}
+      </BottomBar>
+    </View>
+  );
+}
+
+/**
+ * BK-13, "Deposit due". The deposit is asked for 24 hours before the handover
+ * and must be paid 2 hours before it (N3b); paying it makes the booking `ready`,
+ * which shows the address and the handover code. It is paid like the rent: every
+ * tap asks rn-api for the payment (`pay-deposit` gives back the open one while it
+ * can still be paid), and `usePay` opens the pay page and asks what happened.
+ * The screen draws what the booking says, so opening it from a reminder after the
+ * deposit was paid shows "Deposit paid".
+ */
+export default function PayDepositScreen() {
+  const { params } = useRoute<RouteProps<"BookingDeposit">>();
+  const focused = useIsFocused();
+  const active = useAppActive();
+  const watching = focused && active;
+  const query = useBooking(params.number);
+  const { refetch } = query;
+
+  useEffect(() => {
+    if (watching) void refetch();
+  }, [watching, refetch]);
+
+  return (
+    <NonScrollableContainer>
+      <SubpageHeader title="Deposit due" />
+      {query.data ? (
+        <Deposit
+          booking={query.data}
+          receivedAt={query.dataUpdatedAt}
+          watching={watching}
+          refresh={async () => (await refetch()).data}
+        />
+      ) : query.isError ? (
+        <BookingLoadError error={query.error} what="this booking" onRetry={() => void refetch()} />
+      ) : (
+        <BookingLoading label="Loading your booking" />
+      )}
+    </NonScrollableContainer>
+  );
+}

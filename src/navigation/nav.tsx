@@ -61,6 +61,13 @@ import { ShopTodayScreen } from "@/screens/shop/home";
 import ShopRingScreen from "@/screens/shop/ring";
 import ArrivalWindowScreen from "@/screens/booking/arrival-window";
 import BookingScreen from "@/screens/booking/booking";
+import CheckCapturesScreen from "@/screens/booking/check-captures";
+import BookingDetailsScreen from "@/screens/booking/details";
+import ExtendScreen from "@/screens/booking/extend";
+import NotAsDescribedScreen from "@/screens/booking/not-as-described";
+import PayDepositScreen from "@/screens/booking/pay-deposit";
+import ReportScreen from "@/screens/booking/report";
+import ReturnScreen from "@/screens/booking/return";
 import BookingDatesScreen from "@/screens/booking/choose-dates";
 import ReviewAndBookScreen from "@/screens/booking/review-and-book";
 import { resumePayment } from "@/lib/payments";
@@ -416,6 +423,9 @@ export default function Navigation() {
       case "Booking":
         navigationRef.navigate("Booking", { number: route.number });
         break;
+      case "BookingDeposit":
+        navigationRef.navigate("BookingDeposit", { number: route.number });
+        break;
       case "ShopRing":
         // Keyed by booking: a ring for one that is already open comes back to it.
         navigationRef.navigate("ShopRing", { number: route.number, ring: route.ring ?? undefined });
@@ -476,7 +486,7 @@ export default function Navigation() {
     // says now (ENG-173, ENG-209).
     const stopPushes = setupPushRouter({
       onArrive: (route) => {
-        if (route.screen === "Booking") {
+        if (route.screen === "Booking" || route.screen === "BookingDeposit") {
           void queryClient.invalidateQueries(bookingQueryKey(route.number));
           // Both Rentals lists start with this key.
           void queryClient.invalidateQueries("bookings");
@@ -727,6 +737,40 @@ export default function Navigation() {
         <Stack.Screen
           name="BookingWindow"
           component={ArrivalWindowScreen}
+        />
+        {/* The deposit, the day of the handover and the return, the customer's
+            side (ENG-222). Each is keyed by booking, like the booking itself. */}
+        <Stack.Screen
+          name="BookingDeposit"
+          component={PayDepositScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="BookingDetails"
+          component={BookingDetailsScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="BookingCheck"
+          component={CheckCapturesScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="BookingRefuse"
+          component={NotAsDescribedScreen}
+        />
+        <Stack.Screen
+          name="BookingReturn"
+          component={ReturnScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="BookingExtend"
+          component={ExtendScreen}
+        />
+        <Stack.Screen
+          name="BookingReport"
+          component={ReportScreen}
         />
         {/* The shop's ring (ENG-209), on the root stack so the tab bar is hidden
             while a request rings. Keyed by booking, so a second push for the same

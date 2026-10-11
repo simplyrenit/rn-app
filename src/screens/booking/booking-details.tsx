@@ -1,5 +1,6 @@
 import { answerWindowChange, bookingQueryKey, fetchCancelOutcome } from "@/backend/bookings";
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
+import { UploadNote } from "@/components/capture/upload-note";
 import { Panel, SummaryCard } from "@/components/booking/parts";
 import { PaymentsList } from "@/components/booking/payments-list";
 import { Timeline } from "@/components/booking/timeline";
@@ -35,8 +36,9 @@ import { useQuery, useQueryClient } from "react-query";
  * customer can do now. What is offered follows the server's `can` list, so the
  * screen never shows a button the server would refuse.
  *
- * Paying the deposit and the day of the handover are the next story's screens;
- * here the deposit shows with its due date in the timeline and under Payments.
+ * The deposit is paid from here ("Pay the deposit", BK-13) whenever the server
+ * allows it, asked for or not. The day of the handover and the rental have their
+ * own screens (`day-of.tsx`, `rental-active.tsx`) and link back to this one.
  */
 export function BookingDetails({ booking }: { booking: BookingCustomer }) {
   const navigation = useTypedNavigation();
@@ -142,6 +144,19 @@ export function BookingDetails({ booking }: { booking: BookingCustomer }) {
           Pick your arrival window
         </Button>
       ) : null}
+
+      {can("pay_deposit") ? (
+        // Asked for (`due`): the next thing to do. Not asked for yet: it may still be paid early.
+        <Button
+          variant={booking.money.deposit_state === "due" && !can("set_window") ? "primary" : "outline"}
+          onPress={() => navigation.navigate("BookingDeposit", { number: booking.number })}
+        >
+          {`Pay the deposit · ${money(booking.money.deposit)}`}
+        </Button>
+      ) : null}
+
+      <UploadNote number={booking.number} moment="handover" side="customer" />
+      <UploadNote number={booking.number} moment="return" side="customer" />
 
       {request ? (
         <Panel style={{ padding: space.md, gap: space.sm, borderColor: color.brandPanelLine, backgroundColor: color.brandPanel }}>

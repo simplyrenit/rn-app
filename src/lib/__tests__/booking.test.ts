@@ -162,10 +162,25 @@ const booking = (over: Partial<BookingCustomer> = {}, moneyOver: Partial<Booking
   window: { start: "2026-10-24T04:30:00Z", end: "2026-10-24T05:30:00Z" },
   window_request: null,
   return_by: "2026-10-26T14:30:00Z",
+  report_fault_until: null,
   id_match_required: false,
+  day: {
+    call_number: null,
+    call_from: "2026-10-24T02:30:00Z",
+    my_status: "",
+    their_status: "",
+    no_show_from: "2026-10-24T06:00:00Z",
+    handover_code: null,
+  },
+  captures: { handover: { mine: false, theirs: false }, return: { mine: false, theirs: false } },
+  claim_open: false,
+  claims: [],
+  extends: null,
+  extensions: [],
   can: ["cancel", "request_window_change", "get_help"],
   timeline: [],
   created_at: "2026-10-13T04:11:00Z",
+  server_time: "2026-10-13T04:11:00Z",
   ...over,
 });
 
@@ -642,9 +657,12 @@ describe("which screen a booking is on", () => {
       expect(bookingView(ringing(state))).toBe("confirming");
     }
     expect(bookingView(booking({ stage: "accepted" }))).toBe("pay_rent");
-    for (const stage of ["confirmed", "ready", "out", "returned", "closed"] as const) {
+    for (const stage of ["confirmed", "returned", "closed"] as const) {
       expect(bookingView(booking({ stage }))).toBe("details");
     }
+    // The day of the handover, and the rental itself, have their own screens (ENG-222).
+    expect(bookingView(booking({ stage: "ready" }))).toBe("day_of");
+    expect(bookingView(booking({ stage: "out" }))).toBe("active");
   });
 
   it("shows the outcome, with other options, when the owner's side ended it", () => {
@@ -679,6 +697,15 @@ describe("which screen a booking is on", () => {
     expect(pollEveryMs(ringing("ringing", { exit: "refused" }), NOW)).toBe(false);
     expect(pollEveryMs(booking({ stage: "accepted" }), NOW)).toBe(false);
     expect(pollEveryMs(booking({ stage: "confirmed" }), NOW)).toBe(false);
+  });
+
+  it("reads slowly on the day of the handover, from the time the buttons open", () => {
+    const ready = booking({ stage: "ready" });
+    // Days ahead: nothing can change by itself.
+    expect(pollEveryMs(ready, NOW)).toBe(false);
+    expect(pollEveryMs(ready, new Date("2026-10-24T02:30:00Z"))).toBe(15_000);
+    expect(pollEveryMs(booking({ stage: "ready", exit: "no_show", exit_reason: "owner" }), new Date("2026-10-24T03:00:00Z"))).toBe(false);
+    expect(pollEveryMs(booking({ stage: "out" }), new Date("2026-10-24T05:00:00Z"))).toBe(false);
   });
 
   it("does not read a request on a timer while its shop is closed", () => {
