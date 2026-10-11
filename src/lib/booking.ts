@@ -1561,23 +1561,17 @@ export function cancelHint(outcome: CancelOutcome): string {
 
 // ---- The Rentals tab (BK-12, ENG-177) ----------------------------------------------------------------
 
-export type RentalsTab = "upcoming" | "active" | "past";
+/**
+ * The two lists the server keeps (`GET /api/bookings/?open=`): Active is every
+ * booking with no exit that is not closed, soonest first; Past is the rest.
+ * The phone asks for a page of each and never splits a list itself.
+ */
+export type RentalsList = "open" | "past";
 
-export const RENTALS_TABS: readonly { key: RentalsTab; label: string }[] = [
-  { key: "upcoming", label: "Upcoming" },
-  { key: "active", label: "Active" },
+export const RENTALS_LISTS: readonly { key: RentalsList; label: string }[] = [
+  { key: "open", label: "Active" },
   { key: "past", label: "Past" },
 ];
-
-/**
- * Which list a booking is in. Past: it ended early or closed. Active: the item
- * is with the customer, or back and the deposit not settled yet. Upcoming:
- * everything before the handover, a request still ringing included.
- */
-export function rentalsTab(booking: Pick<BookingCustomer, "stage" | "exit">): RentalsTab {
-  if (booking.exit || booking.stage === "closed") return "past";
-  return booking.stage === "out" || booking.stage === "returned" ? "active" : "upcoming";
-}
 
 export interface StagePill {
   label: string;
@@ -1585,7 +1579,9 @@ export interface StagePill {
 }
 
 /** The stage as the card's pill: "Asking the owner", "Accepted", "Confirmed", "Ready". */
-export function stagePill(booking: Pick<BookingCustomer, "stage" | "ring_state" | "exit">): StagePill {
+export function stagePill(
+  booking: Pick<BookingCustomer, "stage" | "ring_state" | "exit" | "exit_reason">
+): StagePill {
   switch (booking.exit) {
     case "refused":
       return { label: "Not available", tone: "neutral" };
@@ -1598,7 +1594,10 @@ export function stagePill(booking: Pick<BookingCustomer, "stage" | "ring_state" 
     case "lapsed_unpaid":
       return { label: "Lapsed", tone: "warning" };
     case "no_show":
-      return { label: "No-show", tone: "warning" };
+      // Whose no-show it was matters: the shop not coming is not a mark beside the customer's name.
+      return booking.exit_reason === "owner"
+        ? { label: "Owner did not come", tone: "neutral" }
+        : { label: "No-show", tone: "warning" };
     default:
       break;
   }
@@ -1672,13 +1671,8 @@ export function rentalNextLine(booking: BookingCustomer, now: Date = new Date())
 }
 
 /** What an empty list says. */
-export function rentalsEmpty(tab: RentalsTab): { title: string; body: string } {
-  switch (tab) {
-    case "active":
-      return { title: "Nothing out right now", body: "A rental shows here from the handover until it is returned." };
-    case "past":
-      return { title: "No past rentals yet", body: "Finished and cancelled bookings are kept here." };
-    default:
-      return { title: "No upcoming rentals", body: "Book something and it will wait for you here." };
-  }
+export function rentalsEmpty(list: RentalsList): { title: string; body: string } {
+  return list === "past"
+    ? { title: "No past rentals yet", body: "Finished and cancelled bookings are kept here." }
+    : { title: "No rentals yet", body: "Book something and it will wait for you here." };
 }

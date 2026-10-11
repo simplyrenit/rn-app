@@ -11,7 +11,7 @@ import {
 import { BOOKINGS_ENDPOINT, GET_PRODUCT_DETAILS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { BackendProduct } from "@/lib/types";
-import { useQuery } from "react-query";
+import { useInfiniteQuery, useQuery } from "react-query";
 
 /** API-CONTRACT OE-C: the customer's side of a booking. Every path ends in "/". */
 const bookingUrl = (number: string, action = "") =>
@@ -178,28 +178,53 @@ export async function answerWindowChange(number: string, accept: boolean): Promi
 
 // ---- The Rentals tab (ENG-177) -----------------------------------------------------------------
 
-/** Keyed on the username: the cache outlives a logout. `"bookings"` alone matches every such list. */
-export const bookingsQueryKey = (username: string | undefined) => ["bookings", username];
-
 /**
- * The caller's own rentals, newest first.
- * ponytail: one page of 100 (the server's largest), split into tabs on the phone.
- * Page it (and ask per tab with `open`) when a customer has more than that.
+ * Keyed on the username (the cache outlives a logout) and on the list.
+ * `"bookings"` alone matches both lists of everyone, for a refresh after a push.
  */
-export async function fetchBookings(): Promise<BookingCustomer[]> {
-  return (
-    await axiosInstance.get<{ results: BookingCustomer[] }>(BOOKINGS_ENDPOINT, { params: { page_size: 100 } })
-  ).data.results;
+export const bookingsQueryKey = (username: string | undefined, open: boolean) => ["bookings", username, open];
+
+/** One page of `GET /api/bookings/`: the paged list, plus the size of both lists. */
+export interface BookingsPage {
+  results: BookingCustomer[];
+  /** The same whatever the filter. */
+  counts: { open: number; past: number };
+  current_page: number;
+  total_pages: number;
 }
 
-/** The signed-in customer's bookings. Disabled while signed out. */
-export function useBookings() {
+const BOOKINGS_PAGE_SIZE = 20;
+
+/**
+ * A page of the caller's rentals. `open` is the server's own split: true for
+ * bookings with no exit that are not closed (soonest first day first), false
+ * for the rest (newest ending first). The phone never fetches everything and
+ * splits it.
+ */
+export async function fetchBookings(open: boolean, page = 1): Promise<BookingsPage> {
+  return (
+    await axiosInstance.get<BookingsPage>(BOOKINGS_ENDPOINT, {
+      params: { open, page, page_size: BOOKINGS_PAGE_SIZE },
+    })
+  ).data;
+}
+
+/**
+ * One of the signed-in customer's two lists, a page at a time. `shown` keeps
+ * the list that is not on screen from being asked for. Disabled while signed out.
+ */
+export function useBookings(open: boolean, shown: boolean) {
   const { authTokens, isAuthenticated, userDetails } = useGlobalContext();
   const username = userDetails?.username;
   const signedIn = Boolean(isAuthenticated && authTokens?.access_token);
-  return useQuery(bookingsQueryKey(username), fetchBookings, {
-    enabled: signedIn && Boolean(username),
-    staleTime: 0,
-    retry: 1,
-  });
+  return useInfiniteQuery(
+    bookingsQueryKey(username, open),
+    ({ pageParam = 1 }) => fetchBookings(open, pageParam as number),
+    {
+      enabled: signedIn && Boolean(username) && shown,
+      staleTime: 0,
+      retry: 1,
+      getNextPageParam: (last) => (last.current_page < last.total_pages ? last.current_page + 1 : undefined),
+    }
+  );
 }

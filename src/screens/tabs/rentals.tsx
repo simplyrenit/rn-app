@@ -5,12 +5,11 @@ import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { useGlobalContext } from "@/context/global-context";
 import {
   BookingCustomer,
-  RENTALS_TABS,
-  RentalsTab,
+  RENTALS_LISTS,
+  RentalsList,
   rentalNextLine,
   rentalSubLine,
   rentalsEmpty,
-  rentalsTab,
   stagePill,
 } from "@/lib/booking";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
@@ -65,17 +64,22 @@ function RentalCard({ booking, onPress }: { booking: BookingCustomer; onPress: (
  * It has the place the Chat tab had (decision T-01). Tapping a booking opens
  * the `Booking` screen, which draws whatever stage the server says it is in.
  *
- * The list is read again every time the tab comes into view, so a booking that
- * moved on while the customer was elsewhere is never shown at its old stage.
+ * Two lists, as the server keeps them: Active (every booking still open,
+ * soonest first) and Past. Each is asked for by itself, a page at a time; the
+ * phone never fetches everything and sorts it into lists. The one on screen is
+ * read again every time the tab comes into view, so a booking that moved on
+ * while the customer was elsewhere is never shown at its old stage.
  */
 export default function Rentals() {
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useTypedNavigation();
   const { color, isDark } = useTheme();
   const { authTokens, isAuthenticated, userDetailsFailed, fetchUserDetails } = useGlobalContext();
-  const query = useBookings();
+  const [list, setList] = useState<RentalsList>("open");
+  const open = useBookings(true, list === "open");
+  const past = useBookings(false, list === "past");
+  const query = list === "open" ? open : past;
   const { refetch } = query;
-  const [tab, setTab] = useState<RentalsTab>("upcoming");
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
@@ -85,11 +89,9 @@ export default function Rentals() {
     }, [isAuthenticated, refetch])
   );
 
-  const lists = useMemo(() => {
-    const out: Record<RentalsTab, BookingCustomer[]> = { upcoming: [], active: [], past: [] };
-    for (const booking of query.data ?? []) out[rentalsTab(booking)].push(booking);
-    return out;
-  }, [query.data]);
+  const shown = useMemo(() => (query.data?.pages ?? []).flatMap((page) => page.results), [query.data]);
+  // The same on every answer, whichever list it was for.
+  const counts = (open.data ?? past.data)?.pages[0]?.counts;
 
   const heading = (
     <Text accessibilityRole="header" role="screenTitle" style={{ paddingVertical: TOPBAR_PADDING }}>
@@ -114,8 +116,7 @@ export default function Rentals() {
   const loading = (query.isLoading || query.isIdle) && !profileFailed;
   const failed = !query.data && (query.isError || profileFailed);
   const retry = () => void (profileFailed ? fetchUserDetails() : refetch());
-  const shown = lists[tab];
-  const empty = rentalsEmpty(tab);
+  const empty = rentalsEmpty(list);
 
   return (
     <NonScrollableContainer>
@@ -132,18 +133,19 @@ export default function Rentals() {
             marginBottom: space.md,
           }}
         >
-          {RENTALS_TABS.map(({ key, label }) => {
-            const selected = key === tab;
+          {RENTALS_LISTS.map(({ key, label }) => {
+            const selected = key === list;
+            const count = counts?.[key];
             return (
               <TouchableOpacity
                 key={key}
                 accessibilityRole="tab"
                 accessibilityState={{ selected }}
-                accessibilityLabel={`${label}, ${lists[key].length}`}
+                accessibilityLabel={count === undefined ? label : `${label}, ${count}`}
                 activeOpacity={0.8}
                 onPress={() => {
                   if (!selected) selectionFeedback();
-                  setTab(key);
+                  setList(key);
                 }}
                 style={{
                   flex: 1,
@@ -199,6 +201,14 @@ export default function Rentals() {
               <RentalCard booking={item} onPress={() => navigation.navigate("Booking", { number: item.number })} />
             )}
             showsVerticalScrollIndicator={false}
+            // The next page, when the end of this one comes into view.
+            onEndReachedThreshold={0.4}
+            onEndReached={() => {
+              if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
+            }}
+            ListFooterComponent={
+              query.isFetchingNextPage ? <Skeleton width="100%" height={88} /> : null
+            }
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -219,8 +229,8 @@ export default function Rentals() {
                 icon={<CalendarIcon size={26} color={color.brandText} />}
                 title={empty.title}
                 body={empty.body}
-                actionLabel={tab === "upcoming" ? "Browse listings" : undefined}
-                onAction={tab === "upcoming" ? () => navigation.navigate("MainTabs", { screen: "Home" }) : undefined}
+                actionLabel={list === "open" ? "Browse listings" : undefined}
+                onAction={list === "open" ? () => navigation.navigate("MainTabs", { screen: "Home" }) : undefined}
               />
             }
             contentContainerStyle={{

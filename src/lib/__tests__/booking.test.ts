@@ -56,7 +56,6 @@ import {
   rentalNextLine,
   rentalSubLine,
   rentalsEmpty,
-  rentalsTab,
   stagePill,
   reviewBlocker,
   searchedDays,
@@ -1242,19 +1241,6 @@ describe("the booking screen", () => {
 });
 
 describe("the Rentals tab", () => {
-  it("files a booking under Upcoming, Active or Past", () => {
-    expect(rentalsTab(ringing("ringing"))).toBe("upcoming");
-    expect(rentalsTab(booking({ stage: "accepted" }))).toBe("upcoming");
-    expect(rentalsTab(booking({ stage: "confirmed" }))).toBe("upcoming");
-    expect(rentalsTab(booking({ stage: "ready" }))).toBe("upcoming");
-    expect(rentalsTab(booking({ stage: "out" }))).toBe("active");
-    expect(rentalsTab(booking({ stage: "returned" }))).toBe("active");
-    expect(rentalsTab(booking({ stage: "closed" }))).toBe("past");
-    // An early ending keeps its stage (A-11); the exit is what makes it past.
-    expect(rentalsTab(ringing("ringing", { exit: "refused" }))).toBe("past");
-    expect(rentalsTab(booking({ stage: "confirmed", exit: "cancelled_by_customer" }))).toBe("past");
-  });
-
   it("names each stage on its pill, as BK-12 does", () => {
     expect(stagePill(ringing("ringing"))).toEqual({ label: "Asking the owner", tone: "warning" });
     expect(stagePill(ringing("calling")).label).toBe("Asking the owner");
@@ -1274,7 +1260,14 @@ describe("the Rentals tab", () => {
     expect(stagePill(booking({ exit: "cancelled_by_customer" })).label).toBe("Cancelled");
     expect(stagePill(booking({ exit: "cancelled_by_owner" })).label).toBe("Cancelled by owner");
     expect(stagePill(booking({ stage: "accepted", exit: "lapsed_unpaid" })).label).toBe("Lapsed");
-    expect(stagePill(booking({ stage: "ready", exit: "no_show" })).label).toBe("No-show");
+    expect(stagePill(booking({ stage: "ready", exit: "no_show", exit_reason: "customer" })).label).toBe("No-show");
+  });
+
+  it("does not mark the customer when it was the owner who did not come", () => {
+    expect(stagePill(booking({ stage: "ready", exit: "no_show", exit_reason: "owner" }))).toEqual({
+      label: "Owner did not come",
+      tone: "neutral",
+    });
   });
 
   it("writes the shop and the dates under the name", () => {
@@ -1318,9 +1311,8 @@ describe("the Rentals tab", () => {
     expect(rentalNextLine(booking({ exit: "cancelled_by_customer" }), NOW)).toBeNull();
   });
 
-  it("has words for each empty list", () => {
-    expect(rentalsEmpty("upcoming").title).toBe("No upcoming rentals");
-    expect(rentalsEmpty("active").title).toBe("Nothing out right now");
+  it("has words for each of the server's two lists when it is empty", () => {
+    expect(rentalsEmpty("open").title).toBe("No rentals yet");
     expect(rentalsEmpty("past").title).toBe("No past rentals yet");
   });
 });

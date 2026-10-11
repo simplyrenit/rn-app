@@ -146,9 +146,21 @@ describe("after the owner accepts", () => {
 });
 
 describe("fetchBookings", () => {
-  it("reads the caller's rentals, one large page", async () => {
-    api.get.mockResolvedValue({ data: { results: [{ number: "RN-24831" }], total_results: 1 } });
-    await expect(fetchBookings()).resolves.toEqual([{ number: "RN-24831" }]);
-    expect(api.get).toHaveBeenCalledWith("https://api.test/bookings/", { params: { page_size: 100 } });
+  const page = { results: [{ number: "RN-24831" }], counts: { open: 1, past: 7 }, current_page: 1, total_pages: 1 };
+
+  it("asks the server for the open list, a page at a time", async () => {
+    api.get.mockResolvedValue({ data: page });
+    await expect(fetchBookings(true)).resolves.toEqual(page);
+    expect(api.get).toHaveBeenCalledWith("https://api.test/bookings/", {
+      params: { open: true, page: 1, page_size: 20 },
+    });
+  });
+
+  it("asks for the past list by itself, and for a later page", async () => {
+    api.get.mockResolvedValue({ data: page });
+    await fetchBookings(false, 3);
+    expect(api.get).toHaveBeenCalledWith("https://api.test/bookings/", {
+      params: { open: false, page: 3, page_size: 20 },
+    });
   });
 });
