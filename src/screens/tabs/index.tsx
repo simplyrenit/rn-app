@@ -7,7 +7,6 @@ import { Experiences } from "@/components/home/sections/experiences";
 import { Popular } from "@/components/home/sections/popular";
 import { RailDedupeProvider } from "@/components/home/sections/rail-dedupe";
 import { TopPicks } from "@/components/home/sections/top-picks";
-import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -17,7 +16,6 @@ import { RefreshControl, ScrollView, View } from "react-native";
 
 export default function Home() {
   const { isAuthenticated, fetchCategories } = useGlobalContext();
-  const { getUser } = useAuthContext();
   const { getNotifications } = useNotifications();
   const { color } = useTheme();
 
@@ -38,10 +36,6 @@ export default function Home() {
     // had a chance to start rather than tying it to the slowest one.
     setTimeout(() => setRefreshing(false), 600);
   }, [isAuthenticated, fetchCategories]);
-
-  useEffect(() => {
-    void getUser();
-  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {

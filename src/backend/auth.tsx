@@ -42,7 +42,7 @@ export interface OTPResponseMessage {
 
 export function useAuth() {
   const [loading, setLoading] = useState(false);
-  const { user } = useAuthContext();
+  const { user, clearUser } = useAuthContext();
   const { setAuthTokens } = useGlobalContext();
 
   // A call made too often (429) says "Too many tries. Wait a few minutes." and is never repeated by itself (T-19).
@@ -246,6 +246,8 @@ export function useAuth() {
 
       const response: { data: AuthTokens } = await signUp(payload);
       setAuthTokens(response.data);
+      // The sign-up is over: its details, the password and the proof token with them, are forgotten (T-19).
+      clearUser();
 
       // The merchant ticked the owner terms on the About step (ENG-122), against
       // the page and the version that screen read before there was an account.
