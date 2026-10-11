@@ -169,6 +169,55 @@ export async function updateUserPushToken(firebaseUid: string, pushToken: string
   }
 }
 
+/**
+ * The Android channel a `ring` push is sent on (API-CONTRACT; ARCHITECTURE 7.1,
+ * `channel_id "ring"`, `sound "ring.wav"`). A push to a channel the phone does not
+ * have falls back to the default one: quiet and easy to miss, which is the one
+ * thing a ring must not be. So it is made at every start once signed in; making
+ * it again changes nothing. The sound is `res/raw/ring.wav`, which the native
+ * build carries (`assets/sounds/ring.wav`, the `expo-notifications` plugin in
+ * `app.json`), and the importance is the highest, so it opens over a locked screen.
+ */
+export async function setupRingChannel() {
+  if (Platform.OS !== "android") return;
+  try {
+    await Notifications.setNotificationChannelAsync("ring", {
+      name: "New booking requests",
+      description: "Rings when a customer asks to book from you.",
+      importance: Notifications.AndroidImportance.MAX,
+      sound: "ring.wav",
+      vibrationPattern: [0, 600, 300, 600, 300, 600],
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      enableVibrate: true,
+      enableLights: true,
+      lightColor: colors.dark.brand,
+    });
+  } catch {
+    // The next start tries again; the ring still arrives on the default channel.
+  }
+}
+
+/**
+ * Takes a request's ring out of the notification tray once it is over (answered
+ * here, answered elsewhere, ended), so a tap on it later does not open a ring that
+ * is not ringing. All of them when no number is given.
+ */
+export async function dismissRingNotifications(number?: string) {
+  try {
+    const shown = await Notifications.getPresentedNotificationsAsync();
+    await Promise.all(
+      shown
+        .filter((n) => {
+          const data = n.request.content.data as { type?: unknown; booking?: unknown } | undefined;
+          return data?.type === "ring" && (!number || data.booking === number);
+        })
+        .map((n) => Notifications.dismissNotificationAsync(n.request.identifier))
+    );
+  } catch {
+    // The tray is only tidied; the ring screen says what became of the request.
+  }
+}
+
 // Notification settings for when the app is open
 export function setupNotifications() {
   Notifications.setNotificationHandler({

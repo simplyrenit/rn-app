@@ -41,11 +41,16 @@ import { retryPendingSignOut } from "@/lib/sign-out";
 import { RootStackParamList } from "@/lib/types";
 import { bookingQueryKey } from "@/backend/bookings";
 import {
+  dismissRingNotifications,
   registerDeviceSession,
   setupChatNotifications,
   setupPushRouter,
   setupNotificationListeners,
+  setupRingChannel,
 } from "@/backend/notifications";
+import { PushRoute } from "@/lib/push-routes";
+import { shopBookingQueryKey } from "@/backend/shop-ring";
+import ShopRingScreen from "@/screens/shop/ring";
 import ArrivalWindowScreen from "@/screens/booking/arrival-window";
 import BookingScreen from "@/screens/booking/booking";
 import BookingDatesScreen from "@/screens/booking/choose-dates";
@@ -390,19 +395,34 @@ export default function Navigation() {
   const username = userDetails?.username;
   const queryClient = useQueryClient();
 
-  // A booking to open, from a tapped push or a payment that was in flight. On a
+  // A screen to open, from a tapped push or a payment that was in flight. On a
   // start from a closed app the answer can arrive before the navigator is
   // mounted, so it waits here and `onReady` below opens it (ENG-173).
-  const bookingToOpen = React.useRef<string | null>(null);
-  const openBooking = React.useCallback((number: string) => {
-    if (navigationRef.isReady()) navigationRef.navigate("Booking", { number });
-    else bookingToOpen.current = number;
+  const toOpen = React.useRef<PushRoute | null>(null);
+  const openRoute = React.useCallback((route: PushRoute) => {
+    if (!navigationRef.isReady()) {
+      toOpen.current = route;
+      return;
+    }
+    switch (route.screen) {
+      case "Booking":
+        navigationRef.navigate("Booking", { number: route.number });
+        break;
+      case "ShopRing":
+        // Keyed by booking: a ring for one that is already open comes back to it.
+        navigationRef.navigate("ShopRing", { number: route.number, ring: route.ring ?? undefined });
+        break;
+    }
   }, []);
-  const openWaitingBooking = React.useCallback(() => {
-    const number = bookingToOpen.current;
-    bookingToOpen.current = null;
-    if (number) navigationRef.navigate("Booking", { number });
-  }, []);
+  const openBooking = React.useCallback(
+    (number: string) => openRoute({ screen: "Booking", number }),
+    [openRoute]
+  );
+  const openWaiting = React.useCallback(() => {
+    const route = toOpen.current;
+    toOpen.current = null;
+    if (route) openRoute(route);
+  }, [openRoute]);
 
   // A sign-out that could not reach the server is repeated when the app starts and
   // each time it comes to the front, signed in or not (ENG-146). A no-op when none waits.
@@ -420,6 +440,8 @@ export default function Navigation() {
     }
 
     setupChatNotifications();
+    // The channel a ring is sent on, before the first one can arrive (Android).
+    void setupRingChannel();
     // Every start, once signed in: say which phone this session is, with the push
     // token if the phone has one and without it if not (ENG-146).
     void registerDeviceSession();
@@ -428,17 +450,29 @@ export default function Navigation() {
         navigationRef.navigate("ChatDetails", { id: conversationId });
       }
     });
-    // The push router: the answer came, the rent is due, a refund went out.
-    // Arriving, a push makes the open booking read itself again; tapped, it
-    // opens that booking, which shows whatever stage the server says (ENG-173).
+    // The push router: the answer came, the rent is due, a refund went out; for a
+    // shop, a request is ringing. Arriving, a push makes the open screen read
+    // itself again; tapped, it opens its screen, which shows whatever the server
+    // says now (ENG-173, ENG-209).
     const stopPushes = setupPushRouter({
       onArrive: (route) => {
-        void queryClient.invalidateQueries(bookingQueryKey(route.number));
-        // Both Rentals lists start with this key.
-        void queryClient.invalidateQueries("bookings");
+        if (route.screen === "Booking") {
+          void queryClient.invalidateQueries(bookingQueryKey(route.number));
+          // Both Rentals lists start with this key.
+          void queryClient.invalidateQueries("bookings");
+          return;
+        }
+        // A ring that arrives with the app open takes over the screen, as it does
+        // from the tray. When it ends, wherever it was answered, the ring screen
+        // that is open reads that and says so, and the tray forgets the ring.
+        // Every account's copy of the live answer starts with this key.
+        void queryClient.invalidateQueries("shop-live");
+        void queryClient.invalidateQueries(shopBookingQueryKey(route.number));
+        if (route.ended) void dismissRingNotifications(route.number);
+        else openRoute(route);
       },
       onOpen: (route) => {
-        openBooking(route.number);
+        openRoute(route);
         return true;
       },
     });
@@ -446,7 +480,7 @@ export default function Navigation() {
       stopChat();
       stopPushes();
     };
-  }, [isAuthenticated, queryClient, openBooking]);
+  }, [isAuthenticated, queryClient, openRoute]);
 
   // A payment can finish while the app is closed (the customer was in the
   // browser or a UPI app). On start, once it is known who is signed in, ask
@@ -480,7 +514,7 @@ export default function Navigation() {
   }
 
   return (
-    <NavigationContainer ref={navigationRef} onReady={openWaitingBooking}>
+    <NavigationContainer ref={navigationRef} onReady={openWaiting}>
       <Stack.Navigator
         initialRouteName={isAuthenticated || hasSeenWelcome ? "MainTabs" : "Welcome"}
         screenOptions={{
@@ -656,6 +690,14 @@ export default function Navigation() {
         <Stack.Screen
           name="BookingWindow"
           component={ArrivalWindowScreen}
+        />
+        {/* The shop's ring (ENG-209), on the root stack so the tab bar is hidden
+            while a request rings. Keyed by booking, so a second push for the same
+            request opens the screen that is already there. */}
+        <Stack.Screen
+          name="ShopRing"
+          component={ShopRingScreen}
+          getId={({ params }) => params?.number}
         />
         <Stack.Screen
           name="SavedAddresses"

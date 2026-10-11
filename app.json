@@ -45,6 +45,12 @@
       ],
       [
         "expo-apple-authentication"
+      ],
+      [
+        "expo-notifications",
+        {
+          "sounds": ["./assets/sounds/ring.wav"]
+        }
       ]
     ],
     "extra": {

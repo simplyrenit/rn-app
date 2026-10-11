@@ -22,6 +22,7 @@
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		DB52224EBCE94F15B5CA6653 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 382558D5338C44DDADCEBFF6 /* noop-file.swift */; };
 		F1A2B3C4D5E6F70809101113 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F70809101112 /* GoogleService-Info.plist */; };
+		F1A2B3C4D5E6F70809101115 /* ring.wav in Resources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F70809101114 /* ring.wav */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,7 @@
 		D80B0E936EBB036B588D4566 /* Pods_Renit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Renit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F1A2B3C4D5E6F70809101112 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Renit/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		F1A2B3C4D5E6F70809101114 /* ring.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = ring.wav; path = Renit/ring.wav; sourceTree = "<group>"; };
 		F83593F80EED4553934FF6D9 /* PlusJakartaSans-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "PlusJakartaSans-Light.ttf"; path = "../assets/fonts/PlusJakartaSans-Light.ttf"; sourceTree = "<group>"; };
 		FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Renit/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -75,6 +77,7 @@
 				C0A75A08A93344F7B46CB6A2 /* Renit-Bridging-Header.h */,
 				802DA7E4E3484345BB8A89F6 /* PrivacyInfo.xcprivacy */,
 				F1A2B3C4D5E6F70809101112 /* GoogleService-Info.plist */,
+				F1A2B3C4D5E6F70809101114 /* ring.wav */,
 			);
 			name = Renit;
 			sourceTree = "<group>";
@@ -230,6 +233,7 @@
 			files = (
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				F1A2B3C4D5E6F70809101113 /* GoogleService-Info.plist in Resources */,
+				F1A2B3C4D5E6F70809101115 /* ring.wav in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				5BB88AF4ABB4432D8138BAC3 /* PlusJakartaSans-Bold.ttf in Resources */,

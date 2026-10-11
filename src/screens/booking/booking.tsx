@@ -1,28 +1,18 @@
 import { useBooking } from "@/backend/bookings";
 import { BookingLoadError, BookingLoading } from "@/components/booking/parts";
+import { useAppActive } from "@/components/booking/use-app-active";
 import { useReadAt } from "@/components/booking/use-read-at";
 import { SubpageHeader } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { BookingView, bookingView } from "@/lib/booking";
 import { RouteProps } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
-import { AppState } from "react-native";
+import React, { useEffect } from "react";
 import { BookingDetails } from "./booking-details";
 import { Confirming } from "./confirming";
 import { Outcome } from "./outcome";
 import { PayBookingAmount } from "./pay-booking-amount";
 import { PayRent } from "./pay-rent";
-
-/** True while the app is in front. A screen that asks the server on a timer stops when it is not. */
-function useAppActive() {
-  const [active, setActive] = useState(AppState.currentState !== "background");
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => setActive(state === "active"));
-    return () => subscription.remove();
-  }, []);
-  return active;
-}
 
 /** The header's words for each view. The wait and the pay steps carry their own heading. */
 const TITLE: Record<BookingView, (number: string) => string> = {

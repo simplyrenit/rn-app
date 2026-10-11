@@ -1,3 +1,5 @@
+import { Ring, parseRing } from "@/lib/shop-ring";
+
 /**
  * Where a push takes the app (API-CONTRACT, Common › Push notifications).
  *
@@ -6,12 +8,20 @@
  * only a nudge: the screen it opens reads the truth from the API.
  *
  * This is the table the router in `src/backend/notifications.ts` reads. It
- * holds the customer's types (ENG-173). Later sub-tasks add their cases here
- * and nowhere else: ENG-209 `ring` and `ring_ended`, ENG-210 the other owner
- * types, ENG-222 the day-of screens, ENG-252 the claim. A type this build does
- * not know is ignored, as the contract asks.
+ * holds the customer's types (ENG-173) and the ring (ENG-209). Later sub-tasks add
+ * their cases here and nowhere else: ENG-210 the other owner types, ENG-222 the
+ * day-of screens, ENG-252 the claim. A type this build does not know is
+ * ignored, as the contract asks.
  */
-export type PushRoute = { screen: "Booking"; number: string };
+export type PushRoute =
+  /** The customer's booking, at whatever stage the server says it is in. */
+  | { screen: "Booking"; number: string }
+  /**
+   * The shop's ring (ENG-209). `ring` is the request the push carried, so the screen
+   * can show it before the server has answered; `ended` is a `ring_ended`, which only
+   * says that the request is over, on this phone or on another device.
+   */
+  | { screen: "ShopRing"; number: string; ring: Ring | null; ended: boolean };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -52,6 +62,21 @@ export function pushRoute(data: unknown): PushRoute | null {
     }
   }
 
-  // `role: "owner"`: ENG-209 and ENG-210 add the shop's cases here.
+  // The shop's own pushes. `ring` and `ring_ended` exist only for owners, so they are
+  // routed unless the push says it is the customer's copy: a ring that is lost because a
+  // field was left out is the one failure that costs the shop a booking and a mark.
+  if (data.role !== "customer") {
+    switch (data.type) {
+      case "ring": {
+        const ring = parseRing(data.ring);
+        const ringNumber = number ?? ring?.number ?? null;
+        return ringNumber ? { screen: "ShopRing", number: ringNumber, ring, ended: false } : null;
+      }
+      case "ring_ended":
+        return number ? { screen: "ShopRing", number, ring: null, ended: true } : null;
+    }
+  }
+
+  // `role: "owner"`: ENG-210 adds the shop's other cases here.
   return null;
 }

@@ -43,9 +43,49 @@ describe("pushRoute", () => {
     expect(pushRoute(push("something_new"))).toBeNull();
   });
 
-  it("leaves the owner's pushes to the sub-tasks that build the shop's screens", () => {
-    expect(pushRoute(push("ring", { role: "owner" }))).toBeNull();
-    expect(pushRoute(push("ring_ended", { role: "owner" }))).toBeNull();
+  it("opens the ring on a `ring` push, with the request it carried", () => {
+    const ring = {
+      number: "RN-24831",
+      product: { name: "PRO_8fk2Lq", title: "Sony PS5", cover_image: null },
+      first_day: "2026-10-24",
+      last_day: "2026-10-26",
+      days: 3,
+      delivery_mode: "pickup",
+      customer: { first_name: "Aarav", last_initial: "M", id_checked: true, rentals_completed: 3, area: "Andheri East", distance_km: "3.2" },
+      units: { in_use: 2, quantity: 5 },
+      you_earn: "1830.00",
+    };
+    const route = pushRoute(push("ring", { role: "owner", ring }));
+    expect(route).toMatchObject({ screen: "ShopRing", number: "RN-24831", ended: false });
+    expect(route?.screen === "ShopRing" && route.ring?.you_earn).toBe("1830.00");
+    // The same, with the ring as text.
+    const asText = pushRoute(push("ring", { role: "owner", ring: JSON.stringify(ring) }));
+    expect(asText?.screen === "ShopRing" && asText.ring?.product.title).toBe("Sony PS5");
+  });
+
+  it("still opens the ring for a `ring` whose ring object is missing or broken: the screen reads the server", () => {
+    expect(pushRoute(push("ring", { role: "owner" }))).toEqual({ screen: "ShopRing", number: "RN-24831", ring: null, ended: false });
+    expect(pushRoute(push("ring", { role: "owner", ring: { number: "RN-1" } }))).toMatchObject({ ring: null });
+    // Nothing to open without a number from either place.
+    expect(pushRoute(push("ring", { role: "owner", booking: null, ring: { number: "RN-9" } }))).toBeNull();
+  });
+
+  it("does not drop a ring that left out the role: only a customer's copy is not the shop's", () => {
+    const { role: _role, ...noRole } = push("ring");
+    expect(pushRoute(noRole)).toMatchObject({ screen: "ShopRing", number: "RN-24831" });
+    expect(pushRoute(push("ring", { role: "customer" }))).toBeNull();
+  });
+
+  it("`ring_ended` closes the ring: it only says the request is over", () => {
+    expect(pushRoute(push("ring_ended", { role: "owner", outcome: "accepted", answered_via: "dashboard" }))).toEqual({
+      screen: "ShopRing",
+      number: "RN-24831",
+      ring: null,
+      ended: true,
+    });
+  });
+
+  it("leaves the owner's other pushes to ENG-210", () => {
     // Types both sides get are routed by who this copy is for.
     expect(pushRoute(push("confirmed", { role: "owner" }))).toBeNull();
     expect(pushRoute(push("cancelled", { role: "owner" }))).toBeNull();

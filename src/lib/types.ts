@@ -7,6 +7,7 @@ import { DimensionValue, FlexAlignType, ImageSourcePropType } from "react-native
 import type { SavedAddress } from "@/lib/addresses";
 import type { BookItem, DeliveryMode, ProductShop } from "@/lib/booking";
 import type { FlagReason, ListingStatus } from "@/lib/listing-status";
+import type { Ring } from "@/lib/shop-ring";
 
 export interface OTPResponse {
   access: string | null;
@@ -359,6 +360,11 @@ export type RootStackParamList = {
   Booking: { number: string; pay?: boolean };
   /** BK-07: picks the first arrival window, or asks to change the one that is set. */
   BookingWindow: { number: string };
+  /**
+   * The shop's ring (ENG-209). `ring` is the request a push carried or Today
+   * holds: drawn at once, then checked against the live answer, which decides.
+   */
+  ShopRing: { number: string; ring?: Ring };
   [key: string]: object | undefined;
 };
 

@@ -225,6 +225,20 @@ export const BOOKINGS_ENDPOINT = SERVERURL + "bookings/";
 /** `{payment_id}/confirm/`: what the app asks after the pay page (OE-D). */
 export const PAYMENTS_ENDPOINT = SERVERURL + "payments/";
 
+/** The shop's side of a booking: live ring, accept, refuse, bookings, today, blocks (OE-F). */
+export const SHOP_LIVE_ENDPOINT = SERVERURL + "shop/live/";
+
+export const SHOP_BOOKINGS_ENDPOINT = SERVERURL + "shop/bookings/";
+
+export const SHOP_TODAY_ENDPOINT = SERVERURL + "shop/today/";
+
+export const SHOP_BLOCKS_ENDPOINT = SERVERURL + "shop/blocks/";
+
+export const SHOP_PRODUCTS_ENDPOINT = SERVERURL + "shop/products/";
+
+/** The shop's drafts: the summary, the ones that need photos (OE-G1, OE-G2). */
+export const SHOP_DRAFTS_ENDPOINT = SERVERURL + "shop/drafts/";
+
 /**
  * Chat between customer and owner is off at launch (decision T-01, ENG-177). The
  * Rentals tab has the Chat tab's place, and "Chat with owner" on the product
