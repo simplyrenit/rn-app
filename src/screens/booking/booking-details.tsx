@@ -138,9 +138,11 @@ export function BookingDetails({ booking }: { booking: BookingCustomer }) {
   }[banner.tone];
 
   // The shop's exact address is on the booking only once the deposit is paid (stage `ready`).
+  // Drawn only when it is text: anything else from the server must not reach a <Text>.
+  const address = typeof booking.shop.address === "string" && booking.shop.address ? booking.shop.address : null;
   const where =
     booking.delivery_mode === "pickup"
-      ? booking.shop.address ??
+      ? address ??
         [
           booking.distance_km ? `${kmText(booking.distance_km)} away.` : null,
           booking.is_open ? "The full address shows once the deposit is paid." : null,
