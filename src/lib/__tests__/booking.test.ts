@@ -3,6 +3,7 @@ import {
   BookingCustomer,
   Quote,
   bookErrorText,
+  quoteRefusal,
   bookRefusalIsFinal,
   bookingAmountCopy,
   bookingBanner,
@@ -1479,5 +1480,29 @@ describe("how far ahead days can reach (T-25)", () => {
     expect(daysRefusal({ status: 409, code: "no_unit_free", message: null, details: null })).toBeNull();
     expect(daysRefusal(null)).toBeNull();
     expect(bookErrorText(refusal({ last_day: ["You can book up to 180 days ahead."] }))).toBe("You can book up to 180 days ahead.");
+  });
+});
+
+describe("an extension whose quote the server refuses outright (409)", () => {
+  const refused = (code: string | null, status = 409, message: string | null = null) => ({ status, code, message, details: null });
+
+  it("shows the server's sentence for a rental already past its last day", () => {
+    expect(quoteRefusal(refused("too_late_to_extend", 409, "It is too close to the time the item is due back to extend."))).toBe(
+      "It is too close to the time the item is due back to extend."
+    );
+  });
+
+  it("falls back to this app's words for the code when the answer carries none", () => {
+    expect(quoteRefusal(refused("too_late_to_extend"))).toBe(
+      "It is too close to the return time for the shop to answer. Return the item, then book it again."
+    );
+    expect(quoteRefusal(refused("claim_open"))).toMatch(/waiting for Renit's decision/);
+  });
+
+  it("is null for anything else: another code, another status, no answer", () => {
+    expect(quoteRefusal(refused("no_unit_free"))).toBeNull();
+    expect(quoteRefusal(refused("too_late_to_extend", 400))).toBeNull();
+    expect(quoteRefusal(refused(null))).toBeNull();
+    expect(quoteRefusal(null)).toBeNull();
   });
 });

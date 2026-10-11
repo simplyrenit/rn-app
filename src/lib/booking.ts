@@ -815,6 +815,19 @@ export function reviewBlocker(quote: Quote | null | undefined): { code: string; 
   return null;
 }
 
+/** The refusals only an extension has, each a 409 (`handover/extend.py`). */
+const EXTENSION_REFUSALS = new Set(["listing_unavailable", "claim_open", "already_extending", "shop_closed", "too_late_to_extend"]);
+
+/**
+ * The server's sentence when the quote itself was refused for an extension, not just held: 409 `too_late_to_extend` for a
+ * rental already past its last day (nothing can be priced then), and the like. Its own words, else this app's for the
+ * code. Null for any other failure.
+ */
+export function quoteRefusal(error: ApiError | null | undefined): string | null {
+  if (!error || error.status !== 409 || !error.code || !EXTENSION_REFUSALS.has(error.code)) return null;
+  return error.message ?? blockerText(error.code, error.details);
+}
+
 /**
  * Whether a failed Book now is known to have made nothing, so the next tap is a
  * new tap with a new `client_key`. A refusal the server chose (any 4xx, or the

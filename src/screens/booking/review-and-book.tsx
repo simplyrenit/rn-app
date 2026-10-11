@@ -17,6 +17,7 @@ import { apiError } from "@/lib/api-error";
 import {
   bookErrorText,
   daysRefusal,
+  quoteRefusal,
   bookLabel,
   bookRefusalIsFinal,
   daysLabel,
@@ -110,19 +111,21 @@ export default function ReviewAndBookScreen() {
   );
 
   const header = <SubpageHeader title={extending ? "Extend your rental" : "Review and book"} />;
+  const refusal = quoteQuery.isError ? daysRefusal(apiError(quoteQuery.error)) ?? quoteRefusal(apiError(quoteQuery.error)) : null;
 
   if (!quote) {
     return (
       <NonScrollableContainer>
         {header}
-        {quoteQuery.isError && daysRefusal(apiError(quoteQuery.error)) ? (
-          // The server refused the days themselves: its own sentence, with the way back to the dates.
+        {quoteQuery.isError && refusal ? (
+          // The server refused the days themselves, or an extension that cannot be priced (a rental past its last day):
+          // its own sentence, with the way back.
           <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: SCREEN_GUTTER, gap: space.md }}>
             <Notice tone="warning" icon="warning">
-              {daysRefusal(apiError(quoteQuery.error))}
+              {refusal}
             </Notice>
             <Button variant="outline" onPress={() => navigation.goBack()}>
-              Change the dates
+              {daysRefusal(apiError(quoteQuery.error)) ? "Change the dates" : "Go back"}
             </Button>
           </View>
         ) : quoteQuery.isError ? (
