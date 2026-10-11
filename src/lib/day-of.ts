@@ -8,6 +8,8 @@ import {
   dayOf,
   dayShort,
   deliveryPlace,
+  depositAfterLate,
+  lateDaysLabel,
   money,
   todayIst,
   addDays,
@@ -390,6 +392,25 @@ export function refuseHold(statement: string, photos: number): string | null {
 
 // ---- BK-20, the rental ---------------------------------------------------------------------------------------------
 
+/**
+ * When the customer told Renit the shop was not there for the return, or null.
+ * Read from the booking's timeline (the stage table's event, row 21), as the
+ * handover and return times are. `remembered` is this phone's own note of a
+ * report it has just sent, for a timeline that names the event otherwise.
+ */
+export function ownerAbsentAt(booking: Pick<BookingCustomer, "timeline">, remembered?: string | null): string | null {
+  return booking.timeline.find((entry) => entry.event === "report_owner_absent")?.at ?? remembered ?? null;
+}
+
+/** Where this phone notes a report it has just sent (in the query cache, for this run of the app). */
+export const ownerAbsentKey = (number: string) => ["owner-absent-reported", number];
+
+/** What the rental and return screens say once "Owner did not come" has been reported (review r1 #11). */
+export function ownerAbsentNote(at: string, now: Date): string {
+  const when = whenShort(at, now);
+  return `You told Renit the shop was not there${when ? ` (${when})` : ""}. Late charges stopped then, and Renit's staff will arrange the return. Keep the item safe until they call.`;
+}
+
 export interface ActiveCopy {
   title: string;
   sub: string;
@@ -400,7 +421,8 @@ export interface ActiveCopy {
   button: string;
 }
 
-export function activeCopy(booking: BookingCustomer): ActiveCopy {
+/** `absentAt`: when the customer reported that the shop did not come to the return; the late-day line then gives way to that. */
+export function activeCopy(booking: BookingCustomer, absentAt: string | null = null, now: Date = new Date()): ActiveCopy {
   const m = booking.money;
   const day = dayOf(booking.return_by);
   const held = Number(m.deposit) > 0;
@@ -409,8 +431,9 @@ export function activeCopy(booking: BookingCustomer): ActiveCopy {
     title: `You have the ${booking.product.title}`,
     sub: `${booking.number} · ${booking.shop.name}`,
     returnBy: day ? `Return by ${dayShort(day)}, ${clock(booking.return_by)}` : null,
-    late:
-      lateDays > 0
+    late: absentAt
+      ? { text: ownerAbsentNote(absentAt, now), tone: "info" }
+      : lateDays > 0
         ? {
             text: `${lateDays} ${lateDays === 1 ? "day" : "days"} late so far: ${money(m.late_fee)}${
               held ? " comes off your deposit" : ""
@@ -461,18 +484,35 @@ export function returnSteps(booking: Pick<BookingCustomer, "captures" | "stage">
   return steps.map((step, i) => ({ ...step, state: done[i] ? "done" : i === next ? "next" : "todo" }));
 }
 
-/** "What happens next", once the code is in. */
+/**
+ * "What happens next", once the code is in. The late days are fixed at that
+ * moment, so the line says what is kept for them and what comes back, never the
+ * whole deposit when part of it is already the shop's (review r1 #3; N11, N16).
+ */
 export function returnedCopy(booking: BookingCustomer): { title: string; body: string } {
   const at = booking.timeline.find((entry) => entry.event === "return")?.at;
   const day = dayOf(at);
   const m = booking.money;
   const held = Number(m.deposit) > 0 && m.deposit_state !== "forfeited" && m.deposit_state !== "none";
+  const late = depositAfterLate(m);
+  const unless = "unless the shop reports a problem in the next 24 hours";
   return {
     title: day ? `Returned ${dayShort(day)}, ${clock(at)}.` : "Returned.",
-    body: held
-      ? `Your deposit of ${money(m.deposit)} comes back within 48 hours, unless the shop reports a problem in the next 24 hours.`
-      : "The shop has 24 hours to report a problem. After that the rental is closed.",
+    body: !held
+      ? "The shop has 24 hours to report a problem. After that the rental is closed."
+      : late.kept <= 0
+        ? `Your deposit of ${money(m.deposit)} comes back within 48 hours, ${unless}.`
+        : late.back > 0
+          ? `Your deposit is ${money(late.deposit)}. ${money(late.kept)} is kept for ${lateDaysLabel(late.days)}, and ${money(
+              late.back
+            )} comes back within 48 hours, ${unless}.`
+          : `Your ${money(late.deposit)} deposit is kept for ${lateDaysLabel(late.days)}. Nothing comes back.`,
   };
+}
+
+/** True once the deposit's last moment has passed, by the server's clock: the booking is being cancelled or was just paid. */
+export function depositOverdue(booking: Pick<BookingCustomer, "money">, now: Date): boolean {
+  return reached(booking.money.deposit_due_at, now);
 }
 
 // ---- Extending -------------------------------------------------------------------------------------------------------

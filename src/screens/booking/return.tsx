@@ -1,21 +1,29 @@
 import { bookingQueryKey, useBooking } from "@/backend/bookings";
-import { useCaptureDraft } from "@/backend/capture-jobs";
 import { returnItem } from "@/backend/handover";
 import { BookingLoadError, BookingLoading, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { CODE_LENGTH, CodeInput } from "@/components/capture/code";
 import { MomentSets } from "@/components/capture/moment-sets";
-import { UploadNote } from "@/components/capture/upload-note";
+import { RecordCardBody, Records, useRecord } from "@/components/capture/record-card";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { Block, LinkRow, StepList, useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
 import { BookingCustomer, SLOW_POLL_MS } from "@/lib/booking";
-import { captured, codeErrorText, codeIsClosed, returnSteps, returnedCopy } from "@/lib/day-of";
+import { otherSetOffered, recordWanted } from "@/lib/capture";
+import {
+  captured,
+  codeErrorText,
+  codeIsClosed,
+  ownerAbsentAt,
+  ownerAbsentKey,
+  ownerAbsentNote,
+  returnSteps,
+  returnedCopy,
+} from "@/lib/day-of";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { successFeedback } from "@/lib/haptics";
-import { clockSkewMs } from "@/lib/server-clock";
 import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
@@ -30,30 +38,26 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
   const now = useServerNow(booking.server_time, receivedAt);
   const { running, run } = useGuardedTap();
   const { number } = booking;
-  const draft = useCaptureDraft(number, "return", "customer");
   const [code, setCode] = useState("");
   const [round, setRound] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [closed, setClosed] = useState(false);
 
+  // The customer's return record, and the shop's if this phone recorded it: one rule
+  // (`recordState`). Both stay open after the code, while the booking is `returned`.
+  const names = { title: `${booking.product.title} · ${booking.shop.name}`, other: "the shop" };
+  const record = useRecord({ moment: "return", role: "customer", booking, receivedAt, ...names });
+  const theirRecord = useRecord({ moment: "return", role: "customer", forOther: true, booking, receivedAt, ...names });
+
   const flags = captured(booking, "return");
-  const recorded = Boolean(draft?.sealed) || flags.mine;
+  const recorded = flags.mine || Boolean(record.draft?.sealed);
   const returned = booking.stage === "returned" || booking.stage === "closed";
   const out = booking.stage === "out" && !booking.exit;
   const can = (action: string) => booking.can.includes(action);
   const sending = running !== null;
   // The code is asked for only while the server says it can be typed.
   const typing = out && !closed && can("enter_return_code");
-
-  const record = () =>
-    navigation.navigate("Capture", {
-      number,
-      moment: "return",
-      role: "customer",
-      title: `${booking.product.title} · ${booking.shop.name}`,
-      other: "the shop",
-      skew_ms: clockSkewMs(booking.server_time, receivedAt),
-    });
+  const absentAt = ownerAbsentAt(booking, queryClient.getQueryData<string>(ownerAbsentKey(number)));
 
   const finish = () =>
     run("return", async () => {
@@ -93,11 +97,14 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
         </Text>
       </View>
 
+      {absentAt && out ? (
+        <Notice tone="brand" icon="info">
+          {ownerAbsentNote(absentAt, now)}
+        </Notice>
+      ) : null}
+
       <Panel style={{ padding: space.md, gap: space.md }}>
         <StepList steps={returnSteps(booking, recorded)} />
-        {out && !recorded && (can("capture_return") || draft) ? (
-          <Button onPress={record}>{draft ? "Continue recording" : "Record its condition"}</Button>
-        ) : null}
         {typing ? (
           <>
             <CodeInput round={round} disabled={sending} onChange={(value) => (setCode(value), setError(null))} />
@@ -111,9 +118,19 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
       </Panel>
 
       {out && closed ? (
-        <Notice tone="warning" icon="warning">
-          {error ?? "This code no longer works. Renit's desk will finish the return by phone or send a new code."}
-        </Notice>
+        <>
+          <Notice tone="warning" icon="warning">
+            {error ?? "This code no longer works. Renit's desk will finish the return by phone or send a new code."}
+          </Notice>
+          {/* The desk can issue a new code while the two people are still at the counter. */}
+          <TextButton
+            label="The shop has a new code? Type it"
+            onPress={() => {
+              setClosed(false);
+              setError(null);
+            }}
+          />
+        </>
       ) : null}
 
       {typing ? (
@@ -122,11 +139,13 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
         </Button>
       ) : null}
 
-      {out && !recorded ? (
+      {/* The record can be made before the code or after it: the server takes it while the
+          booking is out or returned, and the card is here in both (review r1 #2). */}
+      <RecordCardBody record={record} />
+      {out && record.state === "start" ? (
         <Notice icon="info">Record the item's condition before you hand it back. It is your proof of how you returned it.</Notice>
       ) : null}
-
-      <UploadNote number={number} moment="return" side="customer" />
+      <RecordCardBody record={theirRecord} />
 
       {after ? (
         <Block title="What happens next">
@@ -140,27 +159,25 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
       ) : null}
 
       {recorded ? (
-        <MomentSets number={number} moment="return" side="customer" otherName="the shop" otherTitle="The shop's" poll={watching && !(flags.mine && flags.theirs)} />
-      ) : null}
-
-      {out && !flags.theirs && recorded ? (
-        <TextButton
-          label="The shop's phone can't record?"
-          onPress={() =>
-            navigation.navigate("Capture", {
-              number,
-              moment: "return",
-              role: "customer",
-              forOther: true,
-              title: `${booking.product.title} · ${booking.shop.name}`,
-              other: "the shop",
-              skew_ms: clockSkewMs(booking.server_time, receivedAt),
-            })
-          }
+        <MomentSets
+          number={number}
+          moment="return"
+          side="customer"
+          otherName="the shop"
+          otherTitle="The shop's"
+          // Read again only while a set is still to come and the server still takes one.
+          poll={watching && recordWanted("return", booking) && !(flags.mine && flags.theirs)}
         />
       ) : null}
 
-      {out && can("report_owner_absent") ? (
+      {recorded && otherSetOffered("return", booking, flags.theirs, theirRecord.draft) ? (
+        <TextButton label="The shop's phone can't record?" onPress={theirRecord.open} />
+      ) : null}
+
+      {/* A handover record that was never finished can still be finished from here. */}
+      <Records role="customer" moments={["handover"]} booking={booking} receivedAt={receivedAt} {...names} />
+
+      {out && can("report_owner_absent") && !absentAt ? (
         <Panel>
           <LinkRow
             title="The shop isn't here?"

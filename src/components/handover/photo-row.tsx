@@ -1,3 +1,4 @@
+import { discardFiles } from "@/backend/capture-jobs";
 import { uploadCaptureFile } from "@/backend/captures";
 import { takePhoto } from "@/components/capture/camera";
 import { Text } from "@/components/core";
@@ -14,6 +15,15 @@ export interface EvidencePhoto {
   url: string | null;
   /** Taken for the capture a moment ago: it stays attached and cannot be removed here. */
   fixed?: boolean;
+}
+
+/**
+ * Clears the photos taken for a report from the phone: after it is sent, and when
+ * one is removed or replaced. A photo that belongs to a capture (`fixed`) is the
+ * capture queue's to keep and clear.
+ */
+export function discardEvidence(photos: EvidencePhoto[]): void {
+  void discardFiles(photos.filter((photo) => !photo.fixed && photo.uri.startsWith("file:")).map((photo) => photo.uri));
 }
 
 /** Puts every photo that is not up yet on the bucket and returns all the addresses, in order. */
@@ -73,7 +83,10 @@ export function PhotoRow({
                   accessibilityRole="button"
                   accessibilityLabel={`Remove photo ${index + 1}`}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  onPress={() => onChange(photos.filter((p) => p.uri !== photo.uri))}
+                  onPress={() => {
+                    discardEvidence([photo]);
+                    onChange(photos.filter((p) => p.uri !== photo.uri));
+                  }}
                   style={{
                     position: "absolute",
                     top: -6,

@@ -39,6 +39,8 @@ import {
   dayLong,
   dayShort,
   deliveryOption,
+  depositAfterLate,
+  lateDaysLabel,
   deliveryPlace,
   getItLine,
   handoverLine,
@@ -1264,6 +1266,68 @@ describe("the booking screen", () => {
         free_until: null,
       })
     ).toBe("₹99 is not returned.");
+  });
+});
+
+describe("the deposit after a late return (review r1 #3)", () => {
+  const late = { deposit: "3000.00", late_days: 2, late_fee: "1220.00" };
+
+  it("what is kept for the late days, and what comes back", () => {
+    expect(depositAfterLate(late)).toEqual({ deposit: 3000, days: 2, kept: 1220, back: 1780 });
+    expect(depositAfterLate({ deposit: "3000.00", late_days: 0, late_fee: "0.00" })).toEqual({ deposit: 3000, days: 0, kept: 0, back: 3000 });
+    // Never more than the deposit.
+    expect(depositAfterLate({ deposit: "3000.00", late_days: 9, late_fee: "5490.00" })).toMatchObject({ kept: 3000, back: 0 });
+    // A late fee with no late days on the booking is not counted, and missing fields are nothing.
+    expect(depositAfterLate({ deposit: "3000.00", late_fee: "610.00" })).toMatchObject({ kept: 0, back: 3000 });
+    expect(lateDaysLabel(1)).toBe("1 late day");
+    expect(lateDaysLabel(2)).toBe("2 late days");
+  });
+
+  it("the returned booking says what comes back, never the whole deposit", () => {
+    const returned = booking({ stage: "returned" }, { deposit_state: "paid", ...late });
+    expect(bookingBanner(returned).sub).toBe(
+      "₹1,780 of your ₹3,000 deposit comes back within 48 hours: ₹1,220 is kept for 2 late days, and any damage Renit agrees comes off too."
+    );
+    expect(timelineRows(returned, NOW).pop()).toMatchObject({ label: "₹1,780 of the deposit comes back" });
+    expect(rentalNextLine(returned, NOW)).toBe("₹1,780 of the deposit comes back within 48 hours");
+    // On time: the plain line.
+    const onTime = booking({ stage: "returned" }, { deposit_state: "paid" });
+    expect(bookingBanner(onTime).sub).toBe("Your deposit comes back within 48 hours, less any agreed damage.");
+    expect(timelineRows(onTime, NOW).pop()).toMatchObject({ label: "Deposit comes back" });
+    expect(rentalNextLine(onTime, NOW)).toBe("Deposit comes back within 48 hours");
+  });
+
+  it("says so when the late days took the whole deposit", () => {
+    const gone = booking({ stage: "returned" }, { deposit_state: "paid", late_days: 6, late_fee: "3000.00" });
+    expect(bookingBanner(gone).sub).toBe("Your ₹3,000 deposit is kept for 6 late days.");
+    expect(timelineRows(gone, NOW).pop()).toMatchObject({ label: "Deposit kept for 6 late days" });
+  });
+});
+
+describe("an extension's booking screen (review r1 #12)", () => {
+  const extension = (over: Partial<BookingCustomer> = {}) =>
+    booking({ extends: "RN-24831", first_day: "2026-10-27", last_day: "2026-10-29", window: null, ...over }, { deposit_state: "carried" });
+
+  it("does not ask for an arrival window or say to collect an item the customer is holding", () => {
+    const rows = timelineRows(extension(), NOW).map((row) => row.label);
+    expect(rows).not.toContain("Arrival window");
+    expect(rows).not.toContain("Collect it");
+    expect(rows).toContain("Starts, the item stays with you");
+    expect(bookingBanner(extension())).toEqual({
+      tone: "success",
+      title: "Extension confirmed",
+      sub: "Starts Tue 27 Oct. The item stays with you.",
+    });
+    expect(rentalNextLine(extension(), NOW)).toBe("Starts Tue 27 Oct · the item stays with you");
+  });
+
+  it("leaves a first booking as it was", () => {
+    const first = booking({ window: null });
+    expect(timelineRows(first, NOW).map((row) => row.label)).toEqual(
+      expect.arrayContaining(["Arrival window", "Collect it"])
+    );
+    expect(bookingBanner(first).sub).toBe("Pick your arrival window.");
+    expect(rentalNextLine(first, NOW)).toBe("Pick your arrival window");
   });
 });
 

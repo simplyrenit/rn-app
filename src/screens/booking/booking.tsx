@@ -95,9 +95,9 @@ export default function BookingScreen() {
       ) : view === "day_of" ? (
         <DayOf booking={booking} receivedAt={receivedAt} />
       ) : view === "active" ? (
-        <RentalActive booking={booking} />
+        <RentalActive booking={booking} receivedAt={receivedAt} />
       ) : (
-        <BookingDetails booking={booking} />
+        <BookingDetails booking={booking} receivedAt={receivedAt} />
       )}
     </NonScrollableContainer>
   );

@@ -30,6 +30,7 @@ import {
   nextWork,
   noticeRows,
   orphanFiles,
+  otherSetOffered,
   otherSide,
   photoCount,
   readyToSend,
@@ -460,6 +461,17 @@ describe("when a record can be made and finished (review r1 #1, #2): one rule fo
     // The code can still be typed after the handover code went in.
     expect(state("handover", at("out"), { forOther: true, draft: up })).toBe("code");
     expect(state("handover", at("out"), { forOther: true, draft: up, onServer: true })).toBe("none");
+  });
+
+  it("the other person's set may be begun here while the booking takes a record and theirs is not in", () => {
+    expect(otherSetOffered("handover", at("ready"), false, null)).toBe(true);
+    // After the code too: their phone may have died before they finished.
+    expect(otherSetOffered("handover", at("out"), false, null)).toBe(true);
+    expect(otherSetOffered("return", at("returned"), false, null)).toBe(true);
+    expect(otherSetOffered("handover", at("out"), true, null)).toBe(false);
+    expect(otherSetOffered("handover", at("out"), false, start({ side: "owner", forOther: true }))).toBe(false);
+    expect(otherSetOffered("return", at("closed"), false, null)).toBe(false);
+    expect(otherSetOffered("handover", at("closed"), false, null)).toBe(false);
   });
 
   it("a record on the phone is let go of only when the server has it or the booking shows it is not wanted", () => {

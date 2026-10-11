@@ -1,17 +1,16 @@
 import { useBooking } from "@/backend/bookings";
-import { useCaptureDraft } from "@/backend/capture-jobs";
 import { BookingLoadError, BookingLoading, BottomBar, Notice, TextButton } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { CodeBoxes } from "@/components/capture/code";
 import { MomentSets } from "@/components/capture/moment-sets";
-import { UploadNote } from "@/components/capture/upload-note";
+import { RecordCardBody, useRecord } from "@/components/capture/record-card";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { Block } from "@/components/handover/parts";
 import { BookingCustomer } from "@/lib/booking";
+import { otherSetOffered, recordOpens } from "@/lib/capture";
 import { captured, dayBlock } from "@/lib/day-of";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
-import { clockSkewMs } from "@/lib/server-clock";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
@@ -23,22 +22,14 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
   const { number } = booking;
   const day = dayBlock(booking);
   const flags = captured(booking, "handover");
-  const draft = useCaptureDraft(number, "handover", "customer");
   const [showCode, setShowCode] = useState(false);
-  const recorded = Boolean(draft?.sealed) || flags.mine;
+  // The customer's own record and, if the shop's phone failed, the shop's: one rule for both (`recordState`).
+  const names = { title: `${booking.product.title} · ${booking.shop.name}`, other: "the shop" };
+  const record = useRecord({ moment: "handover", role: "customer", booking, receivedAt, ...names });
+  const theirRecord = useRecord({ moment: "handover", role: "customer", forOther: true, booking, receivedAt, ...names });
+  const recorded = !recordOpens(record.state);
   const both = flags.mine && flags.theirs;
   const can = (action: string) => booking.can.includes(action);
-
-  const record = (forOther: boolean) =>
-    navigation.navigate("Capture", {
-      number,
-      moment: "handover",
-      role: "customer",
-      forOther,
-      title: `${booking.product.title} · ${booking.shop.name}`,
-      other: "the shop",
-      skew_ms: clockSkewMs(booking.server_time, receivedAt),
-    });
 
   return (
     <View style={{ flex: 1 }}>
@@ -61,7 +52,8 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
           </Text>
         </View>
 
-        <UploadNote number={number} moment="handover" side="customer" />
+        <RecordCardBody record={record} skip={["start"]} />
+        <RecordCardBody record={theirRecord} />
 
         <MomentSets
           number={number}
@@ -72,8 +64,8 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
           poll={watching && !both}
         />
 
-        {!flags.theirs ? (
-          <TextButton label="The shop's phone can't record?" onPress={() => record(true)} />
+        {otherSetOffered("handover", booking, flags.theirs, theirRecord.draft) ? (
+          <TextButton label="The shop's phone can't record?" onPress={theirRecord.open} />
         ) : null}
 
         {showCode && day.handover_code ? (
@@ -93,11 +85,9 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
       </ScrollView>
 
       <BottomBar>
-        {!recorded ? (
-          can("capture_handover") || draft ? (
-            <Button onPress={() => record(false)}>{draft ? "Continue recording the condition" : "Start recording the condition"}</Button>
-          ) : null
-        ) : booking.claim_open || !day.handover_code ? null : showCode ? (
+        {record.state === "start" ? (
+          <Button onPress={record.open}>Start recording the condition</Button>
+        ) : !recorded || booking.claim_open || !day.handover_code ? null : showCode ? (
           <Button variant="outline" onPress={() => setShowCode(false)}>
             Hide my code
           </Button>

@@ -29,7 +29,7 @@ export default function BookingDetailsScreen() {
     <NonScrollableContainer>
       <SubpageHeader title={`Booking ${params.number}`} />
       {query.data ? (
-        <BookingDetails booking={query.data} />
+        <BookingDetails booking={query.data} receivedAt={query.dataUpdatedAt} />
       ) : query.isError ? (
         <BookingLoadError error={query.error} what="this booking" onRetry={() => void refetch()} />
       ) : (

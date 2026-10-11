@@ -1357,6 +1357,34 @@ export function windowRequestCopy(
       };
 }
 
+// ---- The deposit after late days ---------------------------------------------------------------------
+
+export interface DepositAfterLate {
+  deposit: number;
+  /** The late days, fixed when the return code is typed. */
+  days: number;
+  /** What is kept for them: one day's rent each, never more than the deposit. */
+  kept: number;
+  /** What comes back, before any damage Renit's staff may still decide. */
+  back: number;
+}
+
+/**
+ * What a deposit comes to once late days are on the booking (N11; ARCHITECTURE
+ * 10.3, `deposit_settlement`). The server sends the deposit, the late days and
+ * the late fee; what comes back is the one sum this app works out, because no
+ * screen may promise the whole deposit when part of it is already spoken for.
+ */
+export function depositAfterLate(m: { deposit: string; late_days?: number | null; late_fee?: string | null }): DepositAfterLate {
+  const deposit = Math.max(Number(m.deposit) || 0, 0);
+  const days = Math.max(Number(m.late_days) || 0, 0);
+  const kept = days > 0 ? Math.min(Math.max(Number(m.late_fee) || 0, 0), deposit) : 0;
+  return { deposit, days, kept, back: deposit - kept };
+}
+
+/** "2 late days", "1 late day". */
+export const lateDaysLabel = (days: number) => `${days} late ${days === 1 ? "day" : "days"}`;
+
 // ---- The booking screen (BK-08) ---------------------------------------------------------------------
 
 export interface Banner {
@@ -1419,6 +1447,14 @@ export function bookingBanner(booking: BookingCustomer): Banner {
   }
   switch (booking.stage) {
     case "confirmed":
+      // An extension has no window and no handover of its own: the item is already with the customer.
+      if (booking.extends) {
+        return {
+          tone: "success",
+          title: "Extension confirmed",
+          sub: `Starts ${dayShort(booking.first_day)}. The item stays with you.`,
+        };
+      }
       return { tone: "success", title: "Booking confirmed", sub: windowLine };
     case "ready":
       return { tone: "success", title: "Ready for handover", sub: windowLine };
@@ -1430,14 +1466,23 @@ export function bookingBanner(booking: BookingCustomer): Banner {
         sub: day ? `Return by ${dayShort(day)}, ${clock(booking.return_by)}` : null,
       };
     }
-    case "returned":
+    case "returned": {
+      // The late days are fixed at the return: say what they cost, never the whole deposit (review r1 #3).
+      const late = depositAfterLate(m);
       return {
         tone: "brand",
         title: "Returned",
-        sub: isPositive(m.deposit)
-          ? "Your deposit comes back within 48 hours, less any late days or agreed damage."
-          : null,
+        sub: !isPositive(m.deposit)
+          ? null
+          : late.kept > 0
+            ? late.back > 0
+              ? `${money(late.back)} of your ${money(late.deposit)} deposit comes back within 48 hours: ${money(
+                  late.kept
+                )} is kept for ${lateDaysLabel(late.days)}, and any damage Renit agrees comes off too.`
+              : `Your ${money(late.deposit)} deposit is kept for ${lateDaysLabel(late.days)}.`
+            : "Your deposit comes back within 48 hours, less any agreed damage.",
       };
+    }
     case "closed":
       return { tone: "neutral", title: "Rental complete", sub: null };
     case "accepted":
@@ -1481,16 +1526,19 @@ export function timelineRows(booking: BookingCustomer, now: Date = new Date()): 
   const stage = booking.stage;
   const before = (...stages: BookingStage[]) => stages.includes(stage);
   const ahead: Omit<TimelineRow, "state">[] = [];
-  if (stage === "confirmed" && !booking.window) ahead.push({ label: "Arrival window", when: "Not picked yet" });
+  // An extension follows a rental the customer already holds: no window to pick, nothing to collect.
+  const extension = Boolean(booking.extends);
+  if (stage === "confirmed" && !booking.window && !extension) ahead.push({ label: "Arrival window", when: "Not picked yet" });
   if (m.deposit_state === "not_due" || m.deposit_state === "due") {
     const day = dayOf(m.deposit_ask_at);
     ahead.push({ label: `Deposit ${money(m.deposit)}`, when: day ? `due ${dayShort(day)}` : "due before handover" });
   }
   if (before("confirmed", "ready")) {
-    ahead.push({
-      label: booking.delivery_mode === "pickup" ? "Collect it" : "Delivery",
-      when: dayShort(booking.first_day),
-    });
+    ahead.push(
+      extension
+        ? { label: "Starts, the item stays with you", when: dayShort(booking.first_day) }
+        : { label: booking.delivery_mode === "pickup" ? "Collect it" : "Delivery", when: dayShort(booking.first_day) }
+    );
   }
   if (before("confirmed", "ready", "out")) {
     const day = dayOf(booking.return_by);
@@ -1501,7 +1549,16 @@ export function timelineRows(booking: BookingCustomer, now: Date = new Date()): 
   }
   if (stage === "returned" && m.deposit_state === "paid") {
     const day = dayOf(m.deposit_refund_due_at);
-    ahead.push({ label: "Deposit comes back", when: day ? `by ${dayShort(day)}` : "within 48 hours" });
+    const late = depositAfterLate(m);
+    ahead.push({
+      label:
+        late.kept > 0
+          ? late.back > 0
+            ? `${money(late.back)} of the deposit comes back`
+            : `Deposit kept for ${lateDaysLabel(late.days)}`
+          : "Deposit comes back",
+      when: day ? `by ${dayShort(day)}` : "within 48 hours",
+    });
   }
   return [...done, ...ahead.map((row, index): TimelineRow => ({ ...row, state: index === 0 ? "next" : "todo" }))];
 }
@@ -1703,6 +1760,7 @@ export function rentalNextLine(booking: BookingCustomer, now: Date = new Date())
         now
       )}`;
     case "confirmed": {
+      if (booking.extends) return `Starts ${dayShort(booking.first_day)} · the item stays with you`;
       if (!booking.window) return "Pick your arrival window";
       if (m.deposit_state === "not_due" || m.deposit_state === "due") {
         const day = dayOf(m.deposit_ask_at);
@@ -1716,8 +1774,13 @@ export function rentalNextLine(booking: BookingCustomer, now: Date = new Date())
       const day = dayOf(booking.return_by);
       return day ? `Return by ${dayShort(day)}, ${clock(booking.return_by)}` : null;
     }
-    case "returned":
-      return m.deposit_state === "paid" ? "Deposit comes back within 48 hours" : null;
+    case "returned": {
+      if (m.deposit_state !== "paid") return null;
+      const late = depositAfterLate(m);
+      return late.kept > 0
+        ? `${money(late.back)} of the deposit comes back within 48 hours`
+        : "Deposit comes back within 48 hours";
+    }
     default:
       return null;
   }

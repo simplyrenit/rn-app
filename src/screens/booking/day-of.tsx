@@ -1,17 +1,16 @@
 import { bookingQueryKey } from "@/backend/bookings";
-import { useCaptureDraft } from "@/backend/capture-jobs";
 import { setDayStatus } from "@/backend/handover";
 import { Notice, Panel, Pill } from "@/components/booking/parts";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { CodeBoxes } from "@/components/capture/code";
-import { UploadNote } from "@/components/capture/upload-note";
+import { RecordCard, RecordCardBody, useRecord } from "@/components/capture/record-card";
 import { Button, Text } from "@/components/core";
 import { Block, CallButton, LinkRow, StatusButtons, useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
 import { BookingCustomer } from "@/lib/booking";
+import { recordOpens } from "@/lib/capture";
 import {
   callCopy,
-  captured,
   dayBlock,
   dayErrorText,
   dayOfCopy,
@@ -23,7 +22,6 @@ import {
   theirStatusLine,
 } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
-import { clockSkewMs } from "@/lib/server-clock";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
@@ -50,7 +48,9 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
   // Moved on twice a minute: the buttons and the no-show row open by the clock.
   const now = useServerNow(booking.server_time, receivedAt, 30_000);
   const { running, run } = useGuardedTap();
-  const draft = useCaptureDraft(booking.number, "handover", "customer");
+  // The customer's own handover record: the one rule decides what is offered (`recordState`).
+  const names = { title: `${booking.product.title} · ${booking.shop.name}`, other: "the shop" };
+  const record = useRecord({ moment: "handover", role: "customer", booking, receivedAt, ...names });
 
   const { number } = booking;
   const day = dayBlock(booking);
@@ -58,7 +58,8 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
   const copy = dayOfCopy(booking, now);
   const their = theirStatusLine("customer", booking.delivery_mode, day.their_status, "The shop");
   const noShow = noShowCopy("customer", day, "The shop", now);
-  const recorded = Boolean(draft?.sealed) || captured(booking, "handover").mine;
+  // Nothing left for the customer to shoot: the next thing is to compare the two sets.
+  const recorded = !recordOpens(record.state);
   const map = booking.delivery_mode === "pickup" ? mapsUrl(booking.shop.coordinates, booking.shop.name, Platform.OS === "ios") : null;
 
   const tapStatus = (status: "on_my_way" | "running_late" | "i_am_here") =>
@@ -71,16 +72,6 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         // Whatever refused it, the booking on screen is out of date: the server's stage is the truth.
         if (failure && failure.status > 0) void queryClient.invalidateQueries(bookingQueryKey(number));
       }
-    });
-
-  const record = () =>
-    navigation.navigate("Capture", {
-      number,
-      moment: "handover",
-      role: "customer",
-      title: `${booking.product.title} · ${booking.shop.name}`,
-      other: "the shop",
-      skew_ms: clockSkewMs(booking.server_time, receivedAt),
     });
 
   return (
@@ -185,7 +176,9 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         </Text>
       </Block>
 
-      <UploadNote number={number} moment="handover" side="customer" />
+      {/* The record's own state while it uploads, waits or needs the customer; the first button is below. */}
+      <RecordCardBody record={record} skip={["start"]} />
+      <RecordCard moment="handover" role="customer" forOther booking={booking} receivedAt={receivedAt} {...names} />
 
       {booking.claim_open ? (
         <Notice tone="warning" icon="clock">
@@ -193,16 +186,16 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         </Notice>
       ) : recorded ? (
         <Button onPress={() => navigation.navigate("BookingCheck", { number })}>Check both sets of photos</Button>
-      ) : !can("capture_handover") && !draft ? null : (
-        <Button onPress={record} accessibilityLabel={draft ? "Continue recording the condition" : "Start recording the condition"}>
+      ) : record.state === "start" ? (
+        <Button onPress={record.open} accessibilityLabel="Start recording the condition">
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
             <CameraIcon size={20} color={color.onBrand} />
             <Text fontSize="text-md" fontWeight="font-bold" tone="onBrand">
-              {draft ? "Continue recording the condition" : "Start recording the condition"}
+              Start recording the condition
             </Text>
           </View>
         </Button>
-      )}
+      ) : null}
 
       <Panel>
         <LinkRow

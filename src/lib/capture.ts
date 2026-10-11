@@ -622,6 +622,20 @@ export function recordState(input: RecordInput): RecordState {
   return "start";
 }
 
+/**
+ * Whether this phone may begin the other person's set because their phone
+ * failed: the booking still takes a record for the moment, theirs is not on the
+ * server, and none was begun here already (that one is carried on from its card).
+ */
+export function otherSetOffered(
+  moment: Moment,
+  booking: RecordBooking,
+  theirsOnServer: boolean,
+  draft: CaptureDraft | null | undefined
+): boolean {
+  return !theirsOnServer && !draft && booking.stage !== "closed" && serverTakes(moment, booking);
+}
+
 /** True when a screen should offer the button that opens the capture: to begin the record, or to carry it on. */
 export const recordOpens = (state: RecordState) => state === "start" || state === "continue";
 

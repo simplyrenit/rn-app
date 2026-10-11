@@ -13,10 +13,14 @@ import {
   dayOfCopy,
   depositCharge,
   depositCopy,
+  depositOverdue,
   extensionDays,
   extensionLines,
   mapsUrl,
   noShowCopy,
+  ownerAbsentAt,
+  ownerAbsentKey,
+  ownerAbsentNote,
   reached,
   refuseCopy,
   refuseHold,
@@ -509,6 +513,69 @@ describe("BK-21, the return", () => {
       title: "Returned.",
       body: "The shop has 24 hours to report a problem. After that the rental is closed.",
     });
+  });
+});
+
+describe("after a late return (review r1 #3)", () => {
+  const returned = (m: Partial<BookingCustomer["money"]>) =>
+    booking(
+      { stage: "returned", timeline: [{ event: "return", label: "Returned", at: "2026-10-28T13:10:00Z", by: "customer" }] },
+      { deposit_state: "paid", ...m }
+    );
+
+  it("says what is kept for the late days and what comes back, not the whole deposit", () => {
+    expect(returnedCopy(returned({ late_days: 2, late_fee: "1220.00" })).body).toBe(
+      "Your deposit is ₹3,000. ₹1,220 is kept for 2 late days, and ₹1,780 comes back within 48 hours, unless the shop reports a problem in the next 24 hours."
+    );
+    expect(returnedCopy(returned({ late_days: 1, late_fee: "610.00" })).body).toMatch(/₹610 is kept for 1 late day, and ₹2,390 comes back/);
+  });
+
+  it("says so when nothing comes back", () => {
+    expect(returnedCopy(returned({ late_days: 5, late_fee: "3000.00" })).body).toBe(
+      "Your ₹3,000 deposit is kept for 5 late days. Nothing comes back."
+    );
+  });
+
+  it("keeps the plain line when the return was on time", () => {
+    expect(returnedCopy(returned({})).body).toBe(
+      "Your deposit of ₹3,000 comes back within 48 hours, unless the shop reports a problem in the next 24 hours."
+    );
+  });
+});
+
+describe("Owner did not come, once reported (review r1 #11)", () => {
+  const reported = booking({
+    stage: "out",
+    timeline: [{ event: "report_owner_absent", label: "Reported: the shop was not there", at: "2026-10-26T12:35:00Z", by: "customer" }],
+  });
+  /** That evening. */
+  const LATER = new Date("2026-10-26T15:00:00Z");
+
+  it("is read from the booking's timeline, or from this phone's note of a report just sent", () => {
+    expect(ownerAbsentAt(reported)).toBe("2026-10-26T12:35:00Z");
+    expect(ownerAbsentAt(booking({ stage: "out" }))).toBeNull();
+    expect(ownerAbsentAt(booking({ stage: "out" }), "2026-10-26T12:36:00Z")).toBe("2026-10-26T12:36:00Z");
+    expect(ownerAbsentKey("RN-24831")).toEqual(["owner-absent-reported", "RN-24831"]);
+  });
+
+  it("the rental screen says it was reported, in place of the late-day line", () => {
+    const copy = activeCopy(reported, ownerAbsentAt(reported), LATER);
+    expect(copy.late).toEqual({
+      text: "You told Renit the shop was not there (6:05 pm). Late charges stopped then, and Renit's staff will arrange the return. Keep the item safe until they call.",
+      tone: "info",
+    });
+    expect(ownerAbsentNote("2026-10-26T12:35:00Z", new Date("2026-10-27T05:00:00Z"))).toMatch(/\(6:05 pm on Mon 26 Oct\)/);
+    // Not reported: the late-day line as before.
+    expect(activeCopy(booking({ stage: "out" })).late.text).toBe("Each late day costs ₹610, taken from your deposit.");
+  });
+});
+
+describe("the deposit's last moment (review r1 #9)", () => {
+  it("has passed by the server's clock, or has not", () => {
+    const due = booking({ stage: "confirmed" }, { deposit_state: "due" });
+    expect(depositOverdue(due, new Date("2026-10-24T02:29:59Z"))).toBe(false);
+    expect(depositOverdue(due, new Date("2026-10-24T02:30:00Z"))).toBe(true);
+    expect(depositOverdue(booking({ stage: "confirmed" }, { deposit_due_at: null }), NOW)).toBe(false);
   });
 });
 

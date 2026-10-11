@@ -5,7 +5,7 @@ import { refuseAtDoor } from "@/backend/handover";
 import { BookingLoadError, BookingLoading, BottomBar, Notice } from "@/components/booking/parts";
 import { Button, SubpageHeader, Text, TextField } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { EvidencePhoto, PhotoRow, uploadEvidence } from "@/components/handover/photo-row";
+import { EvidencePhoto, PhotoRow, discardEvidence, uploadEvidence } from "@/components/handover/photo-row";
 import { useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
 import { dayErrorText, refuseCopy, refuseHold } from "@/lib/day-of";
@@ -78,6 +78,8 @@ export default function NotAsDescribedScreen() {
         const urls = await uploadEvidence(photos, `${number}-not-as-described`);
         const answer = await refuseAtDoor(number, statement.trim(), urls);
         queryClient.setQueryData(bookingQueryKey(number), answer.booking);
+        // The extra photos are on Renit's bucket now: their copies on the phone have done their work.
+        discardEvidence(extra);
         toast.success("Sent to Renit", { message: "You will hear by the end of tomorrow." });
         navigation.navigate("Booking", { number });
       } catch (failure) {

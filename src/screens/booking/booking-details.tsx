@@ -1,6 +1,6 @@
 import { answerWindowChange, bookingQueryKey, fetchCancelOutcome } from "@/backend/bookings";
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
-import { UploadNote } from "@/components/capture/upload-note";
+import { Records } from "@/components/capture/record-card";
 import { Panel, SummaryCard } from "@/components/booking/parts";
 import { PaymentsList } from "@/components/booking/payments-list";
 import { Timeline } from "@/components/booking/timeline";
@@ -40,7 +40,7 @@ import { useQuery, useQueryClient } from "react-query";
  * allows it, asked for or not. The day of the handover and the rental have their
  * own screens (`day-of.tsx`, `rental-active.tsx`) and link back to this one.
  */
-export function BookingDetails({ booking }: { booking: BookingCustomer }) {
+export function BookingDetails({ booking, receivedAt }: { booking: BookingCustomer; receivedAt: number }) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
@@ -96,7 +96,8 @@ export function BookingDetails({ booking }: { booking: BookingCustomer }) {
       ? address ??
         [
           booking.distance_km ? `${kmText(booking.distance_km)} away.` : null,
-          booking.is_open ? "The full address shows once the deposit is paid." : null,
+          // An extension has no handover: the item is already with the customer.
+          booking.extends ? "The item stays with you." : booking.is_open ? "The full address shows once the deposit is paid." : null,
         ]
           .filter(Boolean)
           .join(" ")
@@ -155,8 +156,15 @@ export function BookingDetails({ booking }: { booking: BookingCustomer }) {
         </Button>
       ) : null}
 
-      <UploadNote number={booking.number} moment="handover" side="customer" />
-      <UploadNote number={booking.number} moment="return" side="customer" />
+      {/* A record that is not finished is never out of sight: it can be made or carried on from
+          here for as long as the server takes it, after either code too (review r1 #2). */}
+      <Records
+        role="customer"
+        booking={booking}
+        receivedAt={receivedAt}
+        title={`${booking.product.title} · ${booking.shop.name}`}
+        other="the shop"
+      />
 
       {request ? (
         <Panel style={{ padding: space.md, gap: space.sm, borderColor: color.brandPanelLine, backgroundColor: color.brandPanel }}>

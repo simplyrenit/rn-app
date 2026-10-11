@@ -9,7 +9,7 @@ import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { apiError } from "@/lib/api-error";
 import { BookingCustomer, SLOW_POLL_MS, money, payButtonLabel, payPhaseText } from "@/lib/booking";
-import { dayErrorText, depositCharge, depositCopy } from "@/lib/day-of";
+import { dayErrorText, depositCharge, depositCopy, depositOverdue } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { clockSkewMs } from "@/lib/server-clock";
 import { useTheme } from "@/lib/theme";
@@ -35,8 +35,12 @@ function Deposit({
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const queryClient = useQueryClient();
-  const now = useServerNow(booking.server_time, receivedAt);
+  // Moved on four times a minute, so the screen notices the due time passing by itself.
+  const now = useServerNow(booking.server_time, receivedAt, SLOW_POLL_MS);
   const copy = depositCopy(booking);
+  // The due time has passed and the booking still says "to pay": the server is asking the
+  // bank and then cancels. Until it says which, nothing may be paid (review r1 #9).
+  const overdue = copy.state === "to_pay" && depositOverdue(booking, now);
   // rn-api answered a tap with a sum that was not the one on the button: shown, then asked for again.
   const [changed, setChanged] = useState(false);
   const shown = useRef(depositCharge(booking).amount);
@@ -88,10 +92,12 @@ function Deposit({
     });
   };
 
-  // The due time passes, or the bank is slow: ask until the server says what happened.
+  // The due time passes, or the bank is slow: ask, slowly, until the server says what
+  // happened (paid, or cancelled). One read at the due time is not enough: the server
+  // first asks the bank, which can take longer than that.
   const skew = clockSkewMs(booking.server_time, receivedAt);
   useReadAt(copy.state === "to_pay" ? booking.money.deposit_due_at : null, () => void refresh(), skew);
-  const waiting = watching && phase === "pending" && copy.state === "to_pay";
+  const waiting = watching && copy.state === "to_pay" && (phase === "pending" || overdue);
   useEffect(() => {
     if (!waiting) return;
     const timer = setInterval(() => void refresh(), SLOW_POLL_MS);
@@ -211,7 +217,11 @@ function Deposit({
       </ScrollView>
 
       <BottomBar>
-        {note ? (
+        {overdue ? (
+          <Text fontSize="text-sm" tone="body" accessibilityRole="alert">
+            The time to pay has passed. Checking what happened to this booking…
+          </Text>
+        ) : note ? (
           <Text fontSize="text-sm" tone={phase === "failed" ? "danger" : "body"} accessibilityRole="alert">
             {note}
           </Text>
@@ -221,7 +231,13 @@ function Deposit({
             Pick your arrival window
           </Button>
         ) : (
-          <Button onPress={tapPay} loading={working} disabled={working} accessibilityLabel={`Pay the deposit, ${money(shown.current)}`}>
+          <Button
+            onPress={tapPay}
+            loading={working}
+            // Held once the due time has passed: a payment made now could land on a booking already cancelled.
+            disabled={working || overdue}
+            accessibilityLabel={`Pay the deposit, ${money(shown.current)}`}
+          >
             {payButtonLabel(phase === "ended" ? "idle" : phase, copy.button)}
           </Button>
         )}

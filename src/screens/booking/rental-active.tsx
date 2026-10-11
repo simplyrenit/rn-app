@@ -1,9 +1,10 @@
 import { BottomBar, Notice, Panel } from "@/components/booking/parts";
-import { UploadNote } from "@/components/capture/upload-note";
+import { Records } from "@/components/capture/record-card";
+import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, Text } from "@/components/core";
 import { LinkRow } from "@/components/handover/parts";
 import { BookingCustomer } from "@/lib/booking";
-import { activeCopy } from "@/lib/day-of";
+import { activeCopy, ownerAbsentAt, ownerAbsentKey } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
@@ -11,19 +12,27 @@ import React from "react";
 import { ScrollView, View } from "react-native";
 import { ClockIcon, LockClosedIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQueryClient } from "react-query";
 
 /**
  * BK-20, "Your rental": the booking is `out`. When it is due back, what a late
  * day costs (and what being late has cost so far, N11), extending, the deposit
- * Renit holds, and the way into the return. A handover record still uploading is
- * said here too: the owner is not paid until it is up.
+ * Renit holds, and the way into the return.
+ *
+ * The customer's handover record is still taken after the code, so it can be
+ * made or finished from here (review r1 #2): the shop may have typed the code
+ * while the customer was still shooting. Once "Owner did not come" is reported,
+ * the late-day line gives way to what was reported (review r1 #11).
  */
-export function RentalActive({ booking }: { booking: BookingCustomer }) {
+export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer; receivedAt: number }) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+  const now = useServerNow(booking.server_time, receivedAt);
   const { number } = booking;
-  const copy = activeCopy(booking);
+  const absentAt = ownerAbsentAt(booking, queryClient.getQueryData<string>(ownerAbsentKey(number)));
+  const copy = activeCopy(booking, absentAt, now);
   const can = (action: string) => booking.can.includes(action);
   const late = copy.late.tone === "warning";
   const extension = booking.extensions?.[booking.extensions.length - 1] ?? null;
@@ -78,7 +87,14 @@ export function RentalActive({ booking }: { booking: BookingCustomer }) {
           </View>
         </View>
 
-        <UploadNote number={number} moment="handover" side="customer" />
+        <Records
+          role="customer"
+          moments={["handover"]}
+          booking={booking}
+          receivedAt={receivedAt}
+          title={`${booking.product.title} · ${booking.shop.name}`}
+          other="the shop"
+        />
 
         {extension ? (
           <Notice tone="brand" icon="clock">
