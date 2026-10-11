@@ -59,6 +59,7 @@ import ShopReturnScreen from "@/screens/shop/return";
 import DraftPhotosScreen from "@/screens/shop/draft-photos";
 import CaptureScreen from "@/screens/capture/capture";
 import { useCaptureUploads } from "@/backend/capture-jobs";
+import { useDraftPhotoUploads } from "@/backend/draft-photo-jobs";
 import { ShopTodayScreen } from "@/screens/shop/home";
 import ShopRingScreen from "@/screens/shop/ring";
 import ArrivalWindowScreen from "@/screens/booking/arrival-window";
@@ -533,6 +534,8 @@ export default function Navigation() {
   // Photos and video of a handover or a return that are not on the server yet keep
   // uploading from wherever the app is, and start again after a restart (ENG-221).
   useCaptureUploads(isAuthenticated ? username : null);
+  // Photos of drafts that are not on their drafts yet carry on from here too (ENG-192).
+  useDraftPhotoUploads(isAuthenticated ? username : null);
 
   // A payment can finish while the app is closed (the customer was in the
   // browser or a UPI app). On start, once it is known who is signed in, ask

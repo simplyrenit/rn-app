@@ -11,8 +11,10 @@ import {
   needPhotosText,
   nextJob,
   notAShopText,
+  onItsWay,
   pendingJobs,
   skip,
+  retakeWalk,
   startWalk,
   stripText,
   took,
@@ -134,12 +136,12 @@ describe("the uploads", () => {
 
   it("the strip counts what is going up and what did not", () => {
     const jobs = [job({ id: "a", status: "uploading" }), job({ id: "b" }), job({ id: "c", status: "failed" }), job({ id: "d", status: "done" })];
-    expect(jobCounts(jobs)).toEqual({ uploading: 2, failed: 1 });
-    expect(stripText({ uploading: 2, failed: 0 })).toEqual({ text: "2 photos uploading", tone: "info" });
-    expect(stripText({ uploading: 1, failed: 0 })?.text).toBe("1 photo uploading");
-    expect(stripText({ uploading: 0, failed: 1 })).toEqual({ text: "1 photo did not upload", tone: "warning" });
-    expect(stripText({ uploading: 2, failed: 3 })?.text).toBe("3 photos did not upload, 2 still going up");
-    expect(stripText({ uploading: 0, failed: 0 })).toBeNull();
+    expect(jobCounts(jobs)).toEqual({ uploading: 2, failed: 1, missing: 0 });
+    expect(stripText({ uploading: 2, failed: 0, missing: 0 })).toEqual({ text: "2 photos uploading", tone: "info" });
+    expect(stripText({ uploading: 1, failed: 0, missing: 0 })?.text).toBe("1 photo uploading");
+    expect(stripText({ uploading: 0, failed: 1, missing: 0 })).toEqual({ text: "1 photo did not upload", tone: "warning" });
+    expect(stripText({ uploading: 2, failed: 3, missing: 0 })?.text).toBe("3 photos did not upload, 2 still going up");
+    expect(stripText({ uploading: 0, failed: 0, missing: 0 })).toBeNull();
   });
 });
 
@@ -211,5 +213,59 @@ describe("notAShopText", () => {
     expect(notAShopText(failure(403, "not_owner"))).toMatch(/for shops/);
     expect(notAShopText(failure(500, null))).toBeNull();
     expect(notAShopText(null)).toBeNull();
+  });
+});
+
+describe("review round 1, finding 4: a failed photo does not hide its draft", () => {
+  it("only photos still going up keep their draft out of the walk", () => {
+    const jobs = [
+      job({ id: "a", name: "PRO_1", status: "queued" }),
+      job({ id: "b", name: "PRO_2", status: "uploading" }),
+      job({ id: "c", name: "PRO_3", status: "failed" }),
+      job({ id: "d", name: "PRO_4", status: "done" }),
+    ];
+    expect([...onItsWay(jobs)].sort()).toEqual(["PRO_1", "PRO_2"]);
+    const walk = startWalk(drafts, 5, onItsWay(jobs));
+    expect(walk.waiting.map((d) => d.name)).toEqual(["PRO_3", "PRO_4", "PRO_5"]);
+  });
+
+  it("'Take again' puts the drafts of the failed photos at the front, and they stop counting as taken", () => {
+    let walk = startWalk(drafts, 5);
+    walk = took(took(took(walk)));
+    expect(walk.taken).toBe(3);
+    const failed = [job({ id: "a", name: "PRO_1", title: "Item 1", shop_code: "LGT-01" }), job({ id: "b", name: "PRO_2", title: "Item 2" })];
+    const again = retakeWalk(walk, failed);
+    expect(again.waiting.map((d) => d.name)).toEqual(["PRO_1", "PRO_2", "PRO_4", "PRO_5"]);
+    expect(again.waiting[0]).toEqual({ name: "PRO_1", title: "Item 1", shop_code: "LGT-01" });
+    expect(again.waiting[1].shop_code).toBe("");
+    expect(again.taken).toBe(1);
+    expect(walkState(again)).toBe("walking");
+    expect(currentDraft(again)?.name).toBe("PRO_1");
+  });
+
+  it("brings a finished walk back to life, and takes a draft out of the skipped ones", () => {
+    let walk = startWalk([draft(1), draft(2)], 2);
+    walk = skip(walk);
+    walk = took(walk);
+    expect(walkState(walk)).toBe("skipped_left");
+    const again = retakeWalk(walk, [job({ name: "PRO_2", title: "Item 2" }), job({ id: "x", name: "PRO_1", title: "Item 1" })]);
+    expect(again.skipped).toEqual([]);
+    expect(again.waiting.map((d) => d.name)).toEqual(["PRO_2", "PRO_1"]);
+    expect(again.taken).toBe(0);
+  });
+
+  it("never lists a draft twice, and never goes below none taken", () => {
+    const walk = startWalk(drafts, 5);
+    const again = retakeWalk(walk, [job({ name: "PRO_1", title: "Item 1" }), job({ id: "y", name: "PRO_1", title: "Item 1" })]);
+    expect(again.waiting.filter((d) => d.name === "PRO_1")).toHaveLength(1);
+    expect(again.taken).toBe(0);
+  });
+
+  it("tells a photo whose file is gone from one that failed to upload", () => {
+    const jobs = [job({ id: "a", status: "failed" }), job({ id: "b", status: "failed", missing: true }), job({ id: "c", status: "failed", missing: true })];
+    expect(jobCounts(jobs)).toEqual({ uploading: 0, failed: 1, missing: 2 });
+    expect(stripText({ uploading: 0, failed: 0, missing: 2 })).toEqual({ text: "2 photos no longer on this phone", tone: "warning" });
+    expect(stripText({ uploading: 1, failed: 1, missing: 1 })?.text).toBe("1 photo did not upload, 1 photo no longer on this phone, 1 still going up");
+    expect(classifyFailure("file", null)).toMatchObject({ status: "failed", missing: true, keepUrl: false });
   });
 });

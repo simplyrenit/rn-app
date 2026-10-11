@@ -14,7 +14,8 @@ import {
   frameHint,
   jobCounts,
   notAShopText,
-  pendingJobs,
+  onItsWay,
+  retakeWalk,
   skip,
   startWalk,
   stripText,
@@ -33,13 +34,32 @@ import { CameraIcon, CheckCircleIcon, ExclamationTriangleIcon, PhotoIcon } from 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "react-query";
 
-/** The strip under the progress bar: photos going up, and the ones that did not, with Retry. */
-function UploadStrip() {
+/**
+ * The strip under the progress bar: photos going up, and the ones that did not. A
+ * photo that did not go up can be tried again (Retry) or let go of and shot again
+ * ("Take again"): one that can never upload, because its file is gone or the server
+ * will not take it, must not stay for ever, nor hide its draft (review round 1, finding 4).
+ */
+function UploadStrip({ onTakeAgain }: { onTakeAgain: () => void }) {
   const { color } = useTheme();
   const jobs = usePhotoJobs();
-  const strip = stripText(jobCounts(jobs));
+  const counts = jobCounts(jobs);
+  const strip = stripText(counts);
   if (!strip) return null;
   const warning = strip.tone === "warning";
+  const action = (label: string, onPress: () => void) => (
+    <Text
+      fontSize="text-sm"
+      fontWeight="font-bold"
+      tone="brand"
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={{ paddingVertical: space.xs, paddingLeft: space.sm }}
+    >
+      {label}
+    </Text>
+  );
   return (
     <View
       accessible={!warning}
@@ -58,19 +78,8 @@ function UploadStrip() {
       <Text fontSize="text-sm" style={{ flex: 1, color: warning ? color.warning : color.textBody }}>
         {strip.text}
       </Text>
-      {warning ? (
-        <Text
-          fontSize="text-sm"
-          fontWeight="font-bold"
-          tone="brand"
-          accessibilityRole="button"
-          accessibilityLabel="Try the photos again"
-          onPress={() => draftPhotoQueue.retryAll()}
-          style={{ paddingVertical: space.xs, paddingLeft: space.sm }}
-        >
-          Retry
-        </Text>
-      ) : null}
+      {counts.failed > 0 ? action("Retry", () => draftPhotoQueue.retryAll()) : null}
+      {warning ? action("Take again", onTakeAgain) : null}
     </View>
   );
 }
@@ -230,8 +239,7 @@ export default function DraftPhotosScreen() {
   // Worked out once, from the server's list; after that the walk is this screen's own.
   useEffect(() => {
     if (!query.data || walk) return;
-    const onItsWay = new Set(pendingJobs(jobs).map((j) => j.name));
-    setWalk(startWalk(query.data.drafts, query.data.total, onItsWay));
+    setWalk(startWalk(query.data.drafts, query.data.total, onItsWay(jobs)));
     // `jobs` is read once, as the walk begins.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query.data, walk]);
@@ -245,9 +253,10 @@ export default function DraftPhotosScreen() {
     try {
       const [photo] = await pickPhotos(source, 1);
       if (!photo) return;
-      draftPhotoQueue.enqueue({
+      await draftPhotoQueue.enqueue({
         name: draft.name,
         title: draft.title,
+        shop_code: draft.shop_code,
         uri: photo.uri,
         width: photo.width,
         height: photo.height,
@@ -258,6 +267,12 @@ export default function DraftPhotosScreen() {
       opening.current = false;
       setLaunching(false);
     }
+  };
+
+  /** Lets go of the photos that did not go up, files included, and offers their drafts again. */
+  const takeAgain = () => {
+    const removed = draftPhotoQueue.removeFailed();
+    if (removed.length > 0) setWalk((w) => (w ? retakeWalk(w, removed) : w));
   };
 
   const done = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"));
@@ -333,7 +348,7 @@ export default function DraftPhotosScreen() {
                 : "The photos are on their way to your drafts. Publish them from the dashboard."
             }
           />
-          <UploadStrip />
+          <UploadStrip onTakeAgain={takeAgain} />
           <View style={{ gap: space.sm, paddingBottom: insets.bottom + space.lg }}>
             {state === "skipped_left" ? (
               <Button onPress={() => setWalk((w) => (w ? walkSkipped(w) : w))}>Go through the skipped ones</Button>
@@ -386,7 +401,7 @@ export default function DraftPhotosScreen() {
           </View>
         </View>
 
-        <UploadStrip />
+        <UploadStrip onTakeAgain={takeAgain} />
 
         {draft ? (
           <>

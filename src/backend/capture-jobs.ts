@@ -35,7 +35,7 @@ export async function keepFile(uri: string): Promise<string> {
  * The folder's full path can change between app starts on an iPhone (an update
  * moves the app's container), so a kept path is put back under today's folder.
  */
-const reroot = (uri: string): string => {
+export const reroot = (uri: string): string => {
   const at = uri.lastIndexOf(`/${FOLDER}`);
   return at >= 0 ? `${dir()}${uri.slice(at + FOLDER.length + 1)}` : uri;
 };

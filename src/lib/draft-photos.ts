@@ -39,6 +39,34 @@ export function startWalk(drafts: NeedingDraft[], total: number, onItsWay: Reado
   return { waiting, skipped: [], taken: 0, total: Math.max(total - onItsWay.size, waiting.length) };
 }
 
+/**
+ * Drafts whose photo is on its way from this phone, so the walk does not ask for them
+ * again: those still queued or going up. A job that failed is not on its way (it may
+ * never be), so its draft is offered again (review round 1, finding 4).
+ */
+export function onItsWay(jobs: readonly PhotoJob[]): Set<string> {
+  return new Set(jobs.filter((j) => j.status === "queued" || j.status === "uploading").map((j) => j.name));
+}
+
+/**
+ * "Take again": the drafts of photos that did not go up come back to the front of
+ * the walk, and those photos stop counting as taken. A draft that is already waiting
+ * or was skipped is not listed twice.
+ */
+export function retakeWalk(walk: Walk, failed: readonly PhotoJob[]): Walk {
+  const back: NeedingDraft[] = [];
+  for (const job of failed) {
+    if (!back.some((d) => d.name === job.name)) back.push({ name: job.name, title: job.title, shop_code: job.shop_code ?? "" });
+  }
+  const names = new Set(back.map((d) => d.name));
+  return {
+    ...walk,
+    waiting: [...back, ...walk.waiting.filter((d) => !names.has(d.name))],
+    skipped: walk.skipped.filter((d) => !names.has(d.name)),
+    taken: Math.max(walk.taken - back.length, 0),
+  };
+}
+
 /** The draft being shot now. */
 export const currentDraft = (walk: Walk): NeedingDraft | null => walk.waiting[0] ?? null;
 
@@ -109,6 +137,8 @@ export interface PhotoJob {
   /** The draft's `name`. */
   name: string;
   title: string;
+  /** The draft's own code, kept so the draft can be offered again if the photo does not go up. */
+  shop_code?: string;
   /** The photo on this phone. */
   uri: string;
   width?: number;
@@ -117,8 +147,14 @@ export interface PhotoJob {
   url: string | null;
   status: JobStatus;
   error: string | null;
-  /** The attach call was sent and its answer never came: it may have gone through. */
+  /**
+   * The attach call is on its way, or was sent and its answer never came: it may have
+   * gone through. Saved before the call goes out, so a restart in the middle reads the
+   * draft first instead of attaching the photo a second time.
+   */
   attachSent: boolean;
+  /** The photo's file is no longer on this phone (the system cleared it): a retry cannot help, only a new photo. */
+  missing?: boolean;
 }
 
 /** The job that goes next: the first one waiting, in the order the photos were taken. */
@@ -129,23 +165,31 @@ export const pendingJobs = (jobs: readonly PhotoJob[]) => jobs.filter((j) => j.s
 
 export interface JobCounts {
   uploading: number;
+  /** Failed, and worth trying again. */
   failed: number;
+  /** Failed because the photo's file is gone: only taking it again helps. */
+  missing: number;
 }
 
-/** What the strip says: those still going up (queued or uploading), and those that did not. */
+/** What the strip says: those still going up (queued or uploading), those that did not, and those whose file is gone. */
 export function jobCounts(jobs: readonly PhotoJob[]): JobCounts {
+  const failed = jobs.filter((j) => j.status === "failed");
   return {
     uploading: jobs.filter((j) => j.status === "queued" || j.status === "uploading").length,
-    failed: jobs.filter((j) => j.status === "failed").length,
+    failed: failed.filter((j) => !j.missing).length,
+    missing: failed.filter((j) => j.missing).length,
   };
 }
 
 /** "2 photos uploading", "1 photo did not upload". Null when there is nothing to say. */
 export function stripText(counts: JobCounts): { text: string; tone: "info" | "warning" } | null {
   const photos = (n: number) => `${n} ${n === 1 ? "photo" : "photos"}`;
-  if (counts.failed > 0) {
+  const trouble: string[] = [];
+  if (counts.failed > 0) trouble.push(`${photos(counts.failed)} did not upload`);
+  if (counts.missing > 0) trouble.push(`${photos(counts.missing)} no longer on this phone`);
+  if (trouble.length > 0) {
     return {
-      text: `${photos(counts.failed)} did not upload${counts.uploading > 0 ? `, ${counts.uploading} still going up` : ""}`,
+      text: `${trouble.join(", ")}${counts.uploading > 0 ? `, ${counts.uploading} still going up` : ""}`,
       tone: "warning",
     };
   }
@@ -160,6 +204,8 @@ export interface JobOutcome {
   keepUrl: boolean;
   /** The attach may have gone through. */
   attachSent: boolean;
+  /** The photo's file is gone: a retry cannot help. */
+  missing?: boolean;
 }
 
 /**
@@ -172,7 +218,11 @@ export interface JobOutcome {
  * accepted, so the photo is made and sent again; or no answer came, in which case
  * the call may have gone through and the retry checks the draft first.
  */
-export function classifyFailure(stage: "upload" | "attach", error: ApiError | null): JobOutcome {
+export function classifyFailure(stage: "upload" | "attach" | "file", error: ApiError | null): JobOutcome {
+  if (stage === "file") {
+    // The file the camera left is gone (the system cleared the cache, or an update moved the app's folder).
+    return { status: "failed", message: "The photo is no longer on this phone. Take it again.", keepUrl: false, attachSent: false, missing: true };
+  }
   if (stage === "upload") {
     return { status: "failed", message: "It did not upload. Check your connection.", keepUrl: false, attachSent: false };
   }
