@@ -6,6 +6,7 @@ import {
 } from "@/backend/bookings";
 import { Notice, Panel, Pill, TextButton, Thumb } from "@/components/booking/parts";
 import { PaymentsList } from "@/components/booking/payments-list";
+import { useReadAt } from "@/components/booking/use-read-at";
 import { Button, Skeleton, Text } from "@/components/core";
 import { apiError } from "@/lib/api-error";
 import {
@@ -22,7 +23,7 @@ import { useDistanceTo } from "@/lib/distance";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { CalendarIcon, ClockIcon } from "react-native-heroicons/outline";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
@@ -81,15 +82,10 @@ export function Outcome({ booking }: { booking: BookingCustomer }) {
   const { refetch } = options;
 
   // When the pick-by time passes the ₹99 stops moving and is refunded: read both again then.
-  useEffect(() => {
-    const due = new Date(booking.pick_deadline_at ?? "").getTime() - Date.now();
-    if (!Number.isFinite(due) || due <= 0) return;
-    const timer = setTimeout(() => {
-      void refetch();
-      void queryClient.invalidateQueries(bookingQueryKey(booking.number));
-    }, due + 1000);
-    return () => clearTimeout(timer);
-  }, [booking.pick_deadline_at, booking.number, refetch, queryClient]);
+  useReadAt(booking.pick_deadline_at, () => {
+    void refetch();
+    void queryClient.invalidateQueries(bookingQueryKey(booking.number));
+  });
 
   const moves = options.data?.booking_amount_moves;
   const amountCard = bookingAmountCopy(booking, moves);

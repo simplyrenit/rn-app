@@ -6,7 +6,7 @@ import {
   DeliveryMode,
   PaymentStart,
   Quote,
-  isRinging,
+  pollEveryMs,
 } from "@/lib/booking";
 import { BOOKINGS_ENDPOINT, GET_PRODUCT_DETAILS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
@@ -84,21 +84,19 @@ export function useQuote(input: QuoteInput | null) {
   });
 }
 
-/** The contract's rhythm for the confirming screen (API-CONTRACT, App notes for OE-C). */
-export const BOOKING_POLL_MS = 3000;
-
 /**
  * One booking, read from the server every time the screen needs it: its stage
  * there is the truth, not what this phone remembers.
  *
- * While the owner is being asked it is read again every 3 seconds, but only
- * when `watching` (the screen is in front and the app is active). The asking
- * stops by itself the moment the booking is no longer ringing.
+ * While the ₹99 is being paid or the owner is being asked it is read again
+ * every 3 seconds (`pollEveryMs` has the whole rule), but only when `watching`:
+ * the screen is in front and the app is active. The asking stops by itself the
+ * moment the ring ends.
  */
 export function useBooking(number: string, watching = false) {
   return useQuery(bookingQueryKey(number), () => fetchBooking(number), {
     staleTime: 0,
-    refetchInterval: (data) => (watching && data && isRinging(data) ? BOOKING_POLL_MS : false),
+    refetchInterval: (data) => (watching && data ? pollEveryMs(data) : false),
     retry: 1,
   });
 }

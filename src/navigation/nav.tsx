@@ -42,8 +42,8 @@ import { RootStackParamList } from "@/lib/types";
 import { bookingQueryKey } from "@/backend/bookings";
 import {
   registerDeviceSession,
-  setupBookingNotifications,
   setupChatNotifications,
+  setupPushRouter,
   setupNotificationListeners,
 } from "@/backend/notifications";
 import ArrivalWindowScreen from "@/screens/booking/arrival-window";
@@ -390,6 +390,20 @@ export default function Navigation() {
   const username = userDetails?.username;
   const queryClient = useQueryClient();
 
+  // A booking to open, from a tapped push or a payment that was in flight. On a
+  // start from a closed app the answer can arrive before the navigator is
+  // mounted, so it waits here and `onReady` below opens it (ENG-173).
+  const bookingToOpen = React.useRef<string | null>(null);
+  const openBooking = React.useCallback((number: string) => {
+    if (navigationRef.isReady()) navigationRef.navigate("Booking", { number });
+    else bookingToOpen.current = number;
+  }, []);
+  const openWaitingBooking = React.useCallback(() => {
+    const number = bookingToOpen.current;
+    bookingToOpen.current = null;
+    if (number) navigationRef.navigate("Booking", { number });
+  }, []);
+
   // A sign-out that could not reach the server is repeated when the app starts and
   // each time it comes to the front, signed in or not (ENG-146). A no-op when none waits.
   React.useEffect(() => {
@@ -414,24 +428,25 @@ export default function Navigation() {
         navigationRef.navigate("ChatDetails", { id: conversationId });
       }
     });
-    // A booking push for a customer: the answer came, the rent is due, a refund
-    // went out. Arriving, it makes the open booking read itself again; tapped,
-    // it opens that booking, which shows whatever stage the server says (ENG-173).
-    const stopBookings = setupBookingNotifications({
-      onArrive: (number) => {
-        void queryClient.invalidateQueries(bookingQueryKey(number));
-        // Every customer's Rentals list starts with this key.
+    // The push router: the answer came, the rent is due, a refund went out.
+    // Arriving, a push makes the open booking read itself again; tapped, it
+    // opens that booking, which shows whatever stage the server says (ENG-173).
+    const stopPushes = setupPushRouter({
+      onArrive: (route) => {
+        void queryClient.invalidateQueries(bookingQueryKey(route.number));
+        // Both Rentals lists start with this key.
         void queryClient.invalidateQueries("bookings");
       },
-      onOpen: (number) => {
-        if (navigationRef.isReady()) navigationRef.navigate("Booking", { number });
+      onOpen: (route) => {
+        openBooking(route.number);
+        return true;
       },
     });
     return () => {
       stopChat();
-      stopBookings();
+      stopPushes();
     };
-  }, [isAuthenticated, queryClient]);
+  }, [isAuthenticated, queryClient, openBooking]);
 
   // A payment can finish while the app is closed (the customer was in the
   // browser or a UPI app). On start, once it is known who is signed in, ask
@@ -441,14 +456,12 @@ export default function Navigation() {
     if (!isAuthenticated || !username) return;
     let stale = false;
     void resumePayment(username).then((number) => {
-      if (number && !stale && navigationRef.isReady()) {
-        navigationRef.navigate("Booking", { number });
-      }
+      if (number && !stale) openBooking(number);
     });
     return () => {
       stale = true;
     };
-  }, [isAuthenticated, username]);
+  }, [isAuthenticated, username, openBooking]);
 
   React.useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -467,7 +480,7 @@ export default function Navigation() {
   }
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} onReady={openWaitingBooking}>
       <Stack.Navigator
         initialRouteName={isAuthenticated || hasSeenWelcome ? "MainTabs" : "Welcome"}
         screenOptions={{

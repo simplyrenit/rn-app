@@ -9,6 +9,7 @@ import axiosInstance from "@/lib/networkUtils";
 import { REGISTER_PUSH_TOKEN_ENDPOINT } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
 import { getDeviceInfo, sessionBody } from "@/lib/device";
+import { PushRoute, pushRoute } from "@/lib/push-routes";
 import { shouldDropPush } from "@/lib/sign-out";
 import { colors } from "@/lib/design-tokens";
 
@@ -267,43 +268,37 @@ export function setupNotificationListeners(
   };
 }
 
-/** The booking a customer's push is about, or null (ARCHITECTURE 7.1: `data.booking`, `data.role`). */
-function customerBookingOf(notification: Notifications.Notification): string | null {
-  const data = notification.request.content.data as
-    | { booking?: unknown; role?: unknown }
-    | null
-    | undefined;
-  return data?.role === "customer" && typeof data.booking === "string" && data.booking
-    ? data.booking
-    : null;
-}
-
-// A response is answered once: the last one is handed out again every time the
+// A tap is answered once: the last one is handed out again every time the
 // listeners are set up (each sign-in), and must not reopen a booking each time.
 let lastOpenedPush: string | null = null;
 
 /**
- * Booking pushes for a customer (ENG-173): "accepted", "refused", "no_answer"
- * and the rest all carry the booking's number. One that arrives while the app
- * is open says the booking has changed (`onArrive`: read it again); a tap on
- * one opens the booking (`onOpen`). The owner's pushes are not handled here.
+ * The app's push router (ENG-173 owns it; API-CONTRACT, Common › Push
+ * notifications). Every push carries `data.type`; `pushRoute` in
+ * `src/lib/push-routes.ts` is the table that says where each type goes, and
+ * later sub-tasks add their types there, not here.
+ *
+ * A push that arrives while the app is open says something changed
+ * (`onArrive`: read it again). A tap on one opens its screen (`onOpen`), which
+ * reads the truth from the API. `onOpen` answers whether it took the route: a
+ * tap is marked as handled only then, so one that could not be opened yet is
+ * offered again.
  */
-export function setupBookingNotifications(handlers: {
-  onArrive: (number: string) => void;
-  onOpen: (number: string) => void;
+export function setupPushRouter(handlers: {
+  onArrive: (route: PushRoute) => void;
+  onOpen: (route: PushRoute) => boolean;
 }) {
   const open = (response: Notifications.NotificationResponse | null) => {
     if (!response) return;
-    const number = customerBookingOf(response.notification);
+    const route = pushRoute(response.notification.request.content.data);
     const id = response.notification.request.identifier;
-    if (!number || id === lastOpenedPush) return;
-    lastOpenedPush = id;
-    handlers.onOpen(number);
+    if (!route || id === lastOpenedPush) return;
+    if (handlers.onOpen(route)) lastOpenedPush = id;
   };
 
   const arrived = Notifications.addNotificationReceivedListener((notification) => {
-    const number = customerBookingOf(notification);
-    if (number) handlers.onArrive(number);
+    const route = pushRoute(notification.request.content.data);
+    if (route) handlers.onArrive(route);
   });
   const opened = Notifications.addNotificationResponseReceivedListener(open);
   // The app was started by the tap.

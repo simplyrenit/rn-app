@@ -836,12 +836,34 @@ export function bookingView(
   return booking.stage === "accepted" ? "pay_rent" : "details";
 }
 
-/**
- * True while the answer can still arrive at any second: the screen asks the
- * server every 3 seconds, and stops the moment this turns false.
- */
+/** True while the request is still open: unpaid, waiting for the shop to open, or ringing. */
 export function isRinging(booking: Pick<BookingCustomer, "stage" | "exit">): boolean {
   return booking.stage === "ringing" && !booking.exit;
+}
+
+/** The contract's rhythm while an answer can arrive at any second. */
+export const RING_POLL_MS = 3000;
+/** For a state the phone only suspects has changed (its own clock says so; the server's decides). */
+export const SLOW_POLL_MS = 15_000;
+
+/**
+ * How often the booking screen reads the booking by itself, or false for not at
+ * all. Every 3 seconds while the ₹99 is being paid or the owner is being asked,
+ * and it stops the moment the ring ends.
+ *
+ * A request waiting for a closed shop is not read on a timer: nothing can change
+ * before `shop.opens_at` except the customer's own cancel, so the screen reads
+ * once at that time instead. If the phone's clock says the shop should have
+ * opened and the server still says waiting, it is read slowly until they agree.
+ */
+export function pollEveryMs(
+  booking: Pick<BookingCustomer, "stage" | "exit" | "ring_state" | "shop">,
+  now: Date = new Date()
+): number | false {
+  if (!isRinging(booking)) return false;
+  if (booking.ring_state !== "waiting_to_open") return RING_POLL_MS;
+  const opens = new Date(booking.shop.opens_at ?? "").getTime();
+  return Number.isFinite(opens) && now.getTime() < opens ? false : SLOW_POLL_MS;
 }
 
 export interface RingStep {
@@ -982,6 +1004,16 @@ export function cancelErrorText(error: ApiError | null): string {
 
 // ---- Refused, no answer, cancelled by the owner (BK-09, BK-10) --------------------------------
 
+/**
+ * What Renit did to reach the owner, said only as far as it is true (the
+ * contract's rule for `tried`): always "We rang the owner"; "twice" when they
+ * were rung a second time; "and phoned the shop" only when a member of staff
+ * marked that they phoned.
+ */
+export function triedText(tried: BookingCustomer["tried"]): string {
+  return `We rang the owner${tried?.second_ring ? " twice" : ""}${tried?.staff_call ? " and phoned the shop" : ""}.`;
+}
+
 export interface OutcomeCopy {
   icon: "calendar" | "clock";
   title: string;
@@ -993,7 +1025,10 @@ export interface OutcomeCopy {
  * about the customer.
  */
 export function outcomeCopy(
-  booking: Pick<BookingCustomer, "exit" | "exit_reason" | "shop" | "product" | "first_day" | "last_day">
+  booking: Pick<
+    BookingCustomer,
+    "exit" | "exit_reason" | "shop" | "product" | "first_day" | "last_day" | "tried"
+  >
 ): OutcomeCopy {
   const shop = booking.shop.name;
   const range = rangeLabel(booking.first_day, booking.last_day);
@@ -1001,7 +1036,7 @@ export function outcomeCopy(
     return {
       icon: "clock",
       title: `${shop} did not answer in time`,
-      body: "We rang the shop and nobody answered, so this request has ended.",
+      body: `${triedText(booking.tried)} Nobody answered, so this request has ended.`,
     };
   }
   if (booking.exit === "cancelled_by_owner") {

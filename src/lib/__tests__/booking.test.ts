@@ -15,6 +15,8 @@ import {
   payRentCopy,
   payRentErrorText,
   paymentRows,
+  pollEveryMs,
+  triedText,
   timelineRows,
   windowErrorText,
   windowHeading,
@@ -658,13 +660,34 @@ describe("which screen a booking is on", () => {
     expect(bookingView(booking({ stage: "ready", exit: "no_show", exit_reason: "customer" }))).toBe("details");
   });
 
-  it("asks the server on a timer only while the answer can still come", () => {
+  it("knows a request that is still open from one that has ended or moved on", () => {
     expect(isRinging(ringing("ringing"))).toBe(true);
     expect(isRinging(ringing("waiting_to_open"))).toBe(true);
     expect(isRinging(ringing("awaiting_payment"))).toBe(true);
     expect(isRinging(ringing("ringing", { exit: "no_answer" }))).toBe(false);
     expect(isRinging(booking({ stage: "accepted" }))).toBe(false);
     expect(isRinging(booking({ stage: "confirmed" }))).toBe(false);
+  });
+
+  it("reads every 3 seconds while the 99 is paid or the owner is asked, and stops when the ring ends", () => {
+    for (const state of ["awaiting_payment", "ringing", "calling", "ringing_again"] as const) {
+      expect(pollEveryMs(ringing(state), NOW)).toBe(3000);
+    }
+    expect(pollEveryMs(ringing("ringing", { exit: "no_answer" }), NOW)).toBe(false);
+    expect(pollEveryMs(ringing("ringing", { exit: "refused" }), NOW)).toBe(false);
+    expect(pollEveryMs(booking({ stage: "accepted" }), NOW)).toBe(false);
+    expect(pollEveryMs(booking({ stage: "confirmed" }), NOW)).toBe(false);
+  });
+
+  it("does not read a request on a timer while its shop is closed", () => {
+    const waiting = ringing("waiting_to_open");
+    waiting.shop.opens_at = OPENS;
+    // Booked the evening before: nothing can change until the shop opens.
+    expect(pollEveryMs(waiting, NOW)).toBe(false);
+    // The phone thinks the shop should have opened and the server still says waiting: slowly.
+    expect(pollEveryMs(waiting, new Date("2026-10-14T04:31:00Z"))).toBe(15_000);
+    // No opening time to wait for: slowly too, never the ringing rhythm.
+    expect(pollEveryMs(ringing("waiting_to_open"), NOW)).toBe(15_000);
   });
 });
 
@@ -781,10 +804,29 @@ describe("refused, no answer, cancelled by the owner", () => {
   });
 
   it("gives silence the other message", () => {
-    expect(outcomeCopy(ringing("ringing", { exit: "no_answer" }))).toMatchObject({
+    expect(outcomeCopy(ringing("ringing", { exit: "no_answer" }))).toEqual({
       icon: "clock",
       title: "SoundBox Rentals did not answer in time",
+      body: "We rang the owner. Nobody answered, so this request has ended.",
     });
+  });
+
+  it("says Renit phoned the shop only when a member of staff did (P2-3)", () => {
+    expect(triedText({ ring: true, second_ring: false, staff_call: false })).toBe("We rang the owner.");
+    expect(triedText({ ring: true, second_ring: false, staff_call: true })).toBe(
+      "We rang the owner and phoned the shop."
+    );
+    // Outside the desk's hours: rung a second time, nobody phoned.
+    expect(triedText({ ring: true, second_ring: true, staff_call: false })).toBe("We rang the owner twice.");
+    expect(triedText({ ring: true, second_ring: true, staff_call: true })).toBe(
+      "We rang the owner twice and phoned the shop."
+    );
+    // An answer without the field claims the least.
+    expect(triedText(undefined)).toBe("We rang the owner.");
+    const phoned = ringing("calling", { exit: "no_answer", tried: { ring: true, second_ring: false, staff_call: true } });
+    expect(outcomeCopy(phoned).body).toBe(
+      "We rang the owner and phoned the shop. Nobody answered, so this request has ended."
+    );
   });
 
   it("says everything comes back when the owner cancels or does not come", () => {

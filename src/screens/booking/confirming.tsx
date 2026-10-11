@@ -1,7 +1,7 @@
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
 import { BottomBar, MoneyLine, Panel, SummaryCard, TextButton } from "@/components/booking/parts";
 import { Text } from "@/components/core";
-import { BookingCustomer, RingStep, datesLine, howLabel, money, ringCopy } from "@/lib/booking";
+import { BookingCustomer, RingStep, bookingHow, datesLine, money, ringCopy } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import React, { useRef } from "react";
@@ -135,7 +135,7 @@ export function Confirming({ booking }: { booking: BookingCustomer }) {
         <SummaryCard
           title={booking.product.title}
           image={booking.product.cover_image}
-          lines={[datesLine(booking), `${howLabel(booking.delivery_mode)} · ${booking.shop.name}`]}
+          lines={[datesLine(booking), `${bookingHow(booking)} · ${booking.shop.name}`]}
           footer={<MoneyLine label="Paid now · counts toward the rent" amount={amount} />}
         />
       </ScrollView>

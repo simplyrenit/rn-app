@@ -1,5 +1,6 @@
 import { useBooking } from "@/backend/bookings";
 import { BookingLoadError, BookingLoading } from "@/components/booking/parts";
+import { useReadAt } from "@/components/booking/use-read-at";
 import { SubpageHeader } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { BookingView, bookingView } from "@/lib/booking";
@@ -42,6 +43,9 @@ const TITLE: Record<BookingView, (number: string) => string> = {
  * only while this screen is in front of an active app. It is also read again
  * each time the screen or the app comes back: a payment or an answer may have
  * landed while the customer was away.
+ *
+ * A request waiting for a closed shop is not read on a timer; it is read once
+ * when the shop is due to open, and the ringing rhythm takes over from there.
  */
 export default function BookingScreen() {
   const { params } = useRoute<RouteProps<"Booking">>();
@@ -57,6 +61,7 @@ export default function BookingScreen() {
   }, [watching, refetch]);
 
   const refresh = async () => (await refetch()).data;
+  useReadAt(booking?.ring_state === "waiting_to_open" ? booking.shop.opens_at : null, () => void refetch());
 
   if (!booking) {
     return (
