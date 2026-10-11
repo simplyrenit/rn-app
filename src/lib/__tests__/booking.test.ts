@@ -28,6 +28,7 @@ import {
   searchedDays,
   shopNameOf,
   tapDay,
+  termsTicked,
   timeAndDay,
   todayIst,
   totalLabel,
@@ -391,6 +392,33 @@ describe("what is in the way", () => {
     // A code this build does not know: the server's own words.
     expect(bookErrorText(error("something_new"))).toBe("Server words.");
     expect(bookErrorText(null)).toMatch(/Check your connection/);
+  });
+});
+
+describe("the terms tick", () => {
+  const terms = { version: "2026-10", url: "https://simplyrenit.com/terms/rental", accepted: false };
+
+  it("starts empty, even for someone who has accepted this version before", () => {
+    expect(termsTicked(terms, null)).toBe(false);
+    expect(termsTicked({ ...terms, accepted: true }, null)).toBe(false);
+  });
+
+  it("stands for the version it was ticked for", () => {
+    expect(termsTicked(terms, "2026-10")).toBe(true);
+  });
+
+  it("empties by itself when the terms change", () => {
+    expect(termsTicked({ ...terms, version: "2026-11" }, "2026-10")).toBe(false);
+  });
+
+  it("is never ticked without terms (signed out)", () => {
+    expect(termsTicked(null, "2026-10")).toBe(false);
+  });
+
+  it("says the terms changed when Book now is refused for them", () => {
+    expect(
+      bookErrorText({ status: 409, code: "terms_not_accepted", message: null, details: { version: "2026-11" } })
+    ).toBe("The rental terms have changed. Read them and tick the box again.");
   });
 });
 

@@ -6,24 +6,31 @@ import { View } from "react-native";
 interface Props {
   checked: boolean;
   onChange: (checked: boolean) => void;
-  /** Opens the terms. The words "owner terms" are the link. */
+  /** Opens the terms. The linked words are the link. */
   onOpenTerms: () => void;
 }
 
 /**
- * The owner's terms tick: at merchant sign-up and at the start of a listing.
- * One row so both places say the same words.
+ * A terms tick: a box and one sentence whose last words open the terms. One row
+ * for every tick in the app, so they all read and behave the same.
  */
-export function OwnerTermsTick({ checked, onChange, onOpenTerms }: Props) {
+export function TermsTick({
+  checked,
+  onChange,
+  onOpenTerms,
+  lead,
+  link,
+}: Props & {
+  /** The words before the link: "I accept the ". */
+  lead: string;
+  /** The linked words: "owner terms". */
+  link: string;
+}) {
   return (
     <View style={{ flexDirection: "row", alignItems: "center" }}>
-      <CheckBox
-        checked={checked}
-        onPress={() => onChange(!checked)}
-        accessibilityLabel="I accept the owner terms"
-      />
+      <CheckBox checked={checked} onPress={() => onChange(!checked)} accessibilityLabel={`${lead}${link}`} />
       <Text tone="body" style={{ flex: 1, marginLeft: 8 }}>
-        {"I accept the "}
+        {lead}
         <Text
           tone="brand"
           fontWeight="font-bold"
@@ -31,9 +38,19 @@ export function OwnerTermsTick({ checked, onChange, onOpenTerms }: Props) {
           style={{ textDecorationLine: "underline" }}
           onPress={onOpenTerms}
         >
-          owner terms
+          {link}
         </Text>
       </Text>
     </View>
   );
+}
+
+/** The owner's terms tick: at merchant sign-up and at the start of a listing. */
+export function OwnerTermsTick(props: Props) {
+  return <TermsTick lead="I accept the " link="owner terms" {...props} />;
+}
+
+/** The customer's tick on the price screen, before Book now (BK-03). */
+export function RentalTermsTick(props: Props) {
+  return <TermsTick lead="I agree to Renit's " link="rental terms" {...props} />;
 }

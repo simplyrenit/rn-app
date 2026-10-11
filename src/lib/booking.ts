@@ -576,6 +576,18 @@ export function bookLabel(quote: Quote, moved = false): string {
   return moved ? verb : `${verb} · Pay ${money(quote.pay_now)}`;
 }
 
+// ---- The terms tick (ENG-175) -------------------------------------------------------------
+
+/**
+ * Whether the tick stands. It is remembered with the version it was given for,
+ * so when the terms change under an open screen the box is empty again by
+ * itself. It always starts empty: the customer agrees for each booking, and the
+ * server stores that agreement with the booking.
+ */
+export function termsTicked(terms: Quote["terms"], tickedFor: string | null): boolean {
+  return terms !== null && tickedFor !== null && tickedFor === terms.version;
+}
+
 // ---- Why Book now would fail ------------------------------------------------------------
 
 /** Blockers with their own place on the screen (the tick, the ID check card). */
@@ -646,6 +658,8 @@ export function bookErrorText(error: ApiError | null): string {
   const known = error?.code ? blockerText(error.code, error.details) : null;
   if (known) return known;
   switch (error?.code) {
+    case "terms_not_accepted":
+      return "The rental terms have changed. Read them and tick the box again.";
     case "price_changed":
       return "The price changed. Check the new total, then book again.";
     case "move_not_allowed":

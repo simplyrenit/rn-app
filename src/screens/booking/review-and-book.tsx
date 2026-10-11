@@ -9,6 +9,7 @@ import {
   SummaryCard,
 } from "@/components/booking/parts";
 import { Button, SubpageHeader, Text } from "@/components/core";
+import { RentalTermsTick } from "@/components/terms/owner-terms-tick";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
@@ -24,6 +25,7 @@ import {
   priceLines,
   rangeLabel,
   reviewBlocker,
+  termsTicked,
   totalLabel,
 } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
@@ -34,13 +36,13 @@ import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { uuidv4 } from "@/lib/uuid";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { Linking, ScrollView, View } from "react-native";
 import { useQueryClient } from "react-query";
 
 /**
  * BK-03 "Review and book" (and BK-11, the same screen for a shop that is closed
  * now): the whole price before anything is paid, what is paid when, the three
- * plain lines, then Book now.
+ * plain lines, the terms tick, then Book now.
  *
  * Every number is the server's quote. Book now sends the total the customer saw
  * (`expected_total`), so a price that moved is refused instead of charged, and a
@@ -74,6 +76,8 @@ export default function ReviewAndBookScreen() {
   const [bookError, setBookError] = useState<string | null>(null);
   const busy = useRef(false);
   const clientKey = useRef<string | null>(null);
+  // The terms version the box was ticked for (ENG-175); null while it is empty.
+  const [tickedFor, setTickedFor] = useState<string | null>(null);
 
   // Coming back to this screen (from the profile, from a sign-in) asks for the price again.
   const seen = useRef(false);
@@ -104,6 +108,8 @@ export default function ReviewAndBookScreen() {
   const moved = movedFrom !== null;
   const blocker = reviewBlocker(quote);
   const notice = morningNotice(quote, params.item.shop_name);
+  const terms = quote.terms;
+  const ticked = termsTicked(terms, tickedFor);
 
   const book = async () => {
     if (busy.current) return;
@@ -119,7 +125,8 @@ export default function ReviewAndBookScreen() {
     try {
       const answer = await bookNow({
         ...input,
-        terms_version: null,
+        // The version on screen when the box was ticked; the server stores it with the booking.
+        terms_version: ticked && terms ? terms.version : null,
         expected_total: quote.total,
         moved_from: movedFrom,
         client_key: clientKey.current,
@@ -141,6 +148,8 @@ export default function ReviewAndBookScreen() {
       // and its reply lost, so the next tap asks with the same key.
       if (failure && failure.status > 0) clientKey.current = null;
       if (failure?.code === "move_not_allowed") setMovedFrom(null);
+      // The terms moved on while the screen was open: the box empties and is asked for again.
+      if (failure?.code === "terms_not_accepted") setTickedFor(null);
       setBookError(bookErrorText(failure));
       // Whatever refused it (the price, the last unit, the shop closing) is in a fresh quote.
       if (failure && failure.status > 0) void quoteQuery.refetch();
@@ -238,6 +247,14 @@ export default function ReviewAndBookScreen() {
           ))}
         </View>
 
+        {terms ? (
+          <RentalTermsTick
+            checked={ticked}
+            onChange={(next) => setTickedFor(next ? terms.version : null)}
+            onOpenTerms={() => void Linking.openURL(terms.url).catch(() => navigation.navigate("Terms"))}
+          />
+        ) : null}
+
         {blocker ? (
           <Notice tone="warning" icon="warning">
             {blocker.text}
@@ -265,7 +282,8 @@ export default function ReviewAndBookScreen() {
         <Button
           onPress={book}
           loading={booking}
-          disabled={booking || Boolean(blocker) || quoteQuery.isFetching}
+          // Signed out there are no terms in the quote: the tap asks to sign in instead.
+          disabled={booking || Boolean(blocker) || quoteQuery.isFetching || (terms !== null && !ticked)}
         >
           {bookLabel(quote, moved)}
         </Button>
