@@ -397,6 +397,12 @@ describe("blocks: the server's sentences, what follows Returned, and taking one 
     expect(blockErrorText(failure(400, "validation_error"))).toBe("Check the day and the number of units, then try again.");
   });
 
+  it("extending a block that has already ended says the server's sentence (409 block_ended)", () => {
+    const ended = { ...failure(409, "block_ended"), message: "This block has ended. Make a new one." };
+    expect(blockErrorText(ended)).toBe("This block has ended. Make a new one.");
+    expect(blockErrorText(failure(409, "block_ended"))).toBe("This block has ended. Make a new one.");
+  });
+
   it("after Returned, a block that has not ended keeps today's unit taken: free from tomorrow, not from today", () => {
     // Began today, ends today (a counter rental returned the same day): the answer's last day is today.
     expect(returnedNotice(block({ first_day: "2026-10-13", last_day: "2026-10-13" }), "2026-10-13")).toEqual({

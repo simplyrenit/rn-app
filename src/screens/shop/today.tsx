@@ -309,7 +309,9 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
       refreshShop(queryClient);
     } catch (error) {
       toast.error("We couldn't do that", { message: blockErrorText(apiError(error)) });
+      // The block may have moved on (ended on another phone): the lists, "Blocked now" too, are read again.
       void refetch();
+      void queryClient.invalidateQueries("shop-open-blocks");
     } finally {
       busy.current = false;
       setBlockBusy(null);

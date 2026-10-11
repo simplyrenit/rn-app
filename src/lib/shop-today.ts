@@ -495,6 +495,9 @@ export function blockErrorText(error: ApiError | null): string {
       // days.", "A block can reach at most 365 days ahead.", the day before the first. The fixed line is for a
       // refusal that names no field.
       return Object.values(fieldErrors(error))[0] ?? "Check the day and the number of units, then try again.";
+    case "block_ended":
+      // 409 on extending a block already marked Returned (on another phone): the server's own sentence.
+      return error.message ?? "This block has ended. Make a new one.";
     case "not_found":
       return "That block is no longer there.";
     case "not_owner":
