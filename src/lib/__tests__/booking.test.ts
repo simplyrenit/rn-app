@@ -45,6 +45,11 @@ import {
   priceLines,
   rangeIsFree,
   rangeLabel,
+  rentalNextLine,
+  rentalSubLine,
+  rentalsEmpty,
+  rentalsTab,
+  stagePill,
   reviewBlocker,
   searchedDays,
   shopNameOf,
@@ -1057,5 +1062,89 @@ describe("the booking screen", () => {
         free_until: null,
       })
     ).toBe("₹99 is not returned.");
+  });
+});
+
+describe("the Rentals tab", () => {
+  it("files a booking under Upcoming, Active or Past", () => {
+    expect(rentalsTab(ringing("ringing"))).toBe("upcoming");
+    expect(rentalsTab(booking({ stage: "accepted" }))).toBe("upcoming");
+    expect(rentalsTab(booking({ stage: "confirmed" }))).toBe("upcoming");
+    expect(rentalsTab(booking({ stage: "ready" }))).toBe("upcoming");
+    expect(rentalsTab(booking({ stage: "out" }))).toBe("active");
+    expect(rentalsTab(booking({ stage: "returned" }))).toBe("active");
+    expect(rentalsTab(booking({ stage: "closed" }))).toBe("past");
+    // An early ending keeps its stage (A-11); the exit is what makes it past.
+    expect(rentalsTab(ringing("ringing", { exit: "refused" }))).toBe("past");
+    expect(rentalsTab(booking({ stage: "confirmed", exit: "cancelled_by_customer" }))).toBe("past");
+  });
+
+  it("names each stage on its pill, as BK-12 does", () => {
+    expect(stagePill(ringing("ringing"))).toEqual({ label: "Asking the owner", tone: "warning" });
+    expect(stagePill(ringing("calling")).label).toBe("Asking the owner");
+    expect(stagePill(ringing("awaiting_payment")).label).toBe("Payment pending");
+    expect(stagePill(ringing("waiting_to_open")).label).toBe("Asked at opening");
+    expect(stagePill(booking({ stage: "accepted" }))).toEqual({ label: "Accepted", tone: "brand" });
+    expect(stagePill(booking())).toEqual({ label: "Confirmed", tone: "brand" });
+    expect(stagePill(booking({ stage: "ready" }))).toEqual({ label: "Ready", tone: "success" });
+    expect(stagePill(booking({ stage: "out" })).label).toBe("Active");
+    expect(stagePill(booking({ stage: "returned" })).label).toBe("Returned");
+    expect(stagePill(booking({ stage: "closed" })).label).toBe("Completed");
+  });
+
+  it("names how a booking ended, whatever stage it stopped at", () => {
+    expect(stagePill(ringing("ringing", { exit: "refused" })).label).toBe("Not available");
+    expect(stagePill(ringing("ringing", { exit: "no_answer" })).label).toBe("No answer");
+    expect(stagePill(booking({ exit: "cancelled_by_customer" })).label).toBe("Cancelled");
+    expect(stagePill(booking({ exit: "cancelled_by_owner" })).label).toBe("Cancelled by owner");
+    expect(stagePill(booking({ stage: "accepted", exit: "lapsed_unpaid" })).label).toBe("Lapsed");
+    expect(stagePill(booking({ stage: "ready", exit: "no_show" })).label).toBe("No-show");
+  });
+
+  it("writes the shop and the dates under the name", () => {
+    expect(rentalSubLine(booking())).toBe("SoundBox Rentals · Sat 24 – Mon 26 Oct");
+  });
+
+  it("says the next thing to do on a confirmed booking", () => {
+    // BK-12: the deposit, once the window is picked.
+    expect(rentalNextLine(booking(), NOW)).toBe("Deposit ₹3,000 due Fri 23 Oct");
+    expect(rentalNextLine(booking({ window: null }), NOW)).toBe("Pick your arrival window");
+    expect(rentalNextLine(booking({}, { deposit_state: "paid" }), NOW)).toBe("Collect Sat 24 Oct, 10:00 – 11:00 am");
+  });
+
+  it("says the next thing at every other stage", () => {
+    expect(rentalNextLine(ringing("awaiting_payment"), NOW)).toBe("Pay ₹99 to ask the owner");
+    expect(rentalNextLine(ringing("ringing"), NOW)).toBeNull();
+    const waiting = ringing("waiting_to_open");
+    waiting.shop.opens_at = OPENS;
+    expect(rentalNextLine(waiting, NOW)).toBe("Asked at 10:00 am tomorrow");
+    expect(
+      rentalNextLine(
+        booking(
+          { stage: "accepted", pay_now: { purpose: "rent", amount: "1731.00", deposit_part: "0.00", due_at: "2026-10-13T04:43:00Z" } },
+          { rent_paid: false }
+        ),
+        NOW
+      )
+    ).toBe("Pay ₹1,731 by 10:13 am");
+    expect(rentalNextLine(booking({ stage: "ready" }, { deposit_state: "paid" }), NOW)).toBe(
+      "Collect Sat 24 Oct, 10:00 – 11:00 am"
+    );
+    expect(rentalNextLine(booking({ stage: "out" }), NOW)).toBe("Return by Mon 26 Oct, 8:00 pm");
+    expect(rentalNextLine(booking({ stage: "closed" }), NOW)).toBeNull();
+  });
+
+  it("reminds of the pick-by time while the 99 can still move", () => {
+    const refused = ringing("ringing", { exit: "refused", pick_deadline_at: "2026-10-13T04:28:00Z" });
+    expect(rentalNextLine(refused, NOW)).toBe("Pick another option by 9:58 am");
+    refused.money.booking_amount_state = "refund_requested";
+    expect(rentalNextLine(refused, NOW)).toBeNull();
+    expect(rentalNextLine(booking({ exit: "cancelled_by_customer" }), NOW)).toBeNull();
+  });
+
+  it("has words for each empty list", () => {
+    expect(rentalsEmpty("upcoming").title).toBe("No upcoming rentals");
+    expect(rentalsEmpty("active").title).toBe("Nothing out right now");
+    expect(rentalsEmpty("past").title).toBe("No past rentals yet");
   });
 });

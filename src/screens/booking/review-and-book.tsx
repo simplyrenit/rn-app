@@ -154,11 +154,11 @@ export default function ReviewAndBookScreen() {
       clientKey.current = null;
       if (answer.payment) await rememberPayment(answer.booking.number, answer.payment);
       queryClient.setQueryData(bookingQueryKey(answer.booking.number), answer.booking);
-      // The booking exists now, so the way back is to the tabs, not to the price screen.
+      // The booking exists now, so the way back is to the Rentals tab, not to the price screen.
       navigation.reset({
         index: 1,
         routes: [
-          { name: "MainTabs" },
+          { name: "MainTabs", params: { screen: "Rentals" } },
           { name: "Booking", params: { number: answer.booking.number, pay: Boolean(answer.payment) } },
         ],
       });

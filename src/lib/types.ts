@@ -236,7 +236,7 @@ export type RootStackParamList = {
   };
   Welcome: undefined;
   MainTabs: {
-    screen?: "Home" | "Saved" | "Post" | "Chat" | "Profile";
+    screen?: "Home" | "Saved" | "Post" | "Rentals" | "Chat" | "Profile";
   } | undefined;
   Email: undefined;
   About: undefined;

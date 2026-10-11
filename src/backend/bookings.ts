@@ -177,3 +177,31 @@ export async function answerWindowChange(number: string, accept: boolean): Promi
     await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "window-change/answer/"), { accept })
   ).data.booking;
 }
+
+// ---- The Rentals tab (ENG-177) -----------------------------------------------------------------
+
+/** Keyed on the username: the cache outlives a logout. `"bookings"` alone matches every such list. */
+export const bookingsQueryKey = (username: string | undefined) => ["bookings", username];
+
+/**
+ * The caller's own rentals, newest first.
+ * ponytail: one page of 100 (the server's largest), split into tabs on the phone.
+ * Page it (and ask per tab with `open`) when a customer has more than that.
+ */
+export async function fetchBookings(): Promise<BookingCustomer[]> {
+  return (
+    await axiosInstance.get<{ results: BookingCustomer[] }>(BOOKINGS_ENDPOINT, { params: { page_size: 100 } })
+  ).data.results;
+}
+
+/** The signed-in customer's bookings. Disabled while signed out. */
+export function useBookings() {
+  const { authTokens, isAuthenticated, userDetails } = useGlobalContext();
+  const username = userDetails?.username;
+  const signedIn = Boolean(isAuthenticated && authTokens?.access_token);
+  return useQuery(bookingsQueryKey(username), fetchBookings, {
+    enabled: signedIn && Boolean(username),
+    staleTime: 0,
+    retry: 1,
+  });
+}

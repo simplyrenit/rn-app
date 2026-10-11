@@ -29,12 +29,14 @@ import ChatScreen from "../screens/tabs/chat";
 import HomeScreen from "../screens/tabs/index";
 import PostScreen from "../screens/tabs/post";
 import ProfileScreen from "../screens/tabs/profile";
+import RentalsScreen from "../screens/tabs/rentals";
 import SavedScreen from "../screens/tabs/saved";
 import TermsScreen from "../screens/terms";
 import UserDetailScreen from "../screens/users/users-screen";
 
 import { HomeIcon, HomeIconSolid } from "@/icons/home";
 import { PlusSquareIcon } from "@/icons/plus-square";
+import { CHAT_ENABLED } from "@/lib/config";
 import { RootStackParamList } from "@/lib/types";
 import { bookingQueryKey } from "@/backend/bookings";
 import {
@@ -60,11 +62,13 @@ import NotificationScreen from "@/screens/profileScreens/notification";
 import WhoWeAreScreen from "@/screens/profileScreens/who-we-are";
 import { BackHandler, PixelRatio, Platform, View } from "react-native";
 import {
+  CalendarIcon,
   ChatBubbleLeftIcon,
   HeartIcon,
   UserIcon,
 } from "react-native-heroicons/outline";
 import {
+  CalendarIcon as CalendarIconSolid,
   ChatBubbleLeftIcon as ChatBubbleLeftIconSolid,
   HeartIcon as HeartIconSolid,
   UserIcon as UserIconSolid,
@@ -285,6 +289,9 @@ function MainTabs() {
             case "Post":
               Icon = PlusSquareIcon;
               break;
+            case "Rentals":
+              Icon = focused ? CalendarIconSolid : CalendarIcon;
+              break;
             case "Chat":
               Icon = focused ? ChatBubbleLeftIconSolid : ChatBubbleLeftIcon;
               break;
@@ -354,10 +361,19 @@ function MainTabs() {
           },
         })}
       />
+      {/* Rentals has the place Chat had (ENG-177, decision T-01). The Chat tab
+          is only switched off: its screen, the thread route and the unread
+          badge above are all still here behind `CHAT_ENABLED`. */}
       <Tab.Screen
-        name="Chat"
-        component={ChatScreen}
+        name="Rentals"
+        component={RentalsScreen}
       />
+      {CHAT_ENABLED ? (
+        <Tab.Screen
+          name="Chat"
+          component={ChatScreen}
+        />
+      ) : null}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
@@ -386,7 +402,11 @@ export default function Navigation() {
     // went out. Arriving, it makes the open booking read itself again; tapped,
     // it opens that booking, which shows whatever stage the server says (ENG-173).
     const stopBookings = setupBookingNotifications({
-      onArrive: (number) => void queryClient.invalidateQueries(bookingQueryKey(number)),
+      onArrive: (number) => {
+        void queryClient.invalidateQueries(bookingQueryKey(number));
+        // Every customer's Rentals list starts with this key.
+        void queryClient.invalidateQueries("bookings");
+      },
       onOpen: (number) => {
         if (navigationRef.isReady()) navigationRef.navigate("Booking", { number });
       },

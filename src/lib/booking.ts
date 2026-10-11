@@ -1397,3 +1397,127 @@ export function cancelHint(outcome: CancelOutcome): string {
       return kept || "Nothing is refunded.";
   }
 }
+
+// ---- The Rentals tab (BK-12, ENG-177) ----------------------------------------------------------------
+
+export type RentalsTab = "upcoming" | "active" | "past";
+
+export const RENTALS_TABS: readonly { key: RentalsTab; label: string }[] = [
+  { key: "upcoming", label: "Upcoming" },
+  { key: "active", label: "Active" },
+  { key: "past", label: "Past" },
+];
+
+/**
+ * Which list a booking is in. Past: it ended early or closed. Active: the item
+ * is with the customer, or back and the deposit not settled yet. Upcoming:
+ * everything before the handover, a request still ringing included.
+ */
+export function rentalsTab(booking: Pick<BookingCustomer, "stage" | "exit">): RentalsTab {
+  if (booking.exit || booking.stage === "closed") return "past";
+  return booking.stage === "out" || booking.stage === "returned" ? "active" : "upcoming";
+}
+
+export interface StagePill {
+  label: string;
+  tone: "brand" | "success" | "warning" | "danger" | "neutral";
+}
+
+/** The stage as the card's pill: "Asking the owner", "Accepted", "Confirmed", "Ready". */
+export function stagePill(booking: Pick<BookingCustomer, "stage" | "ring_state" | "exit">): StagePill {
+  switch (booking.exit) {
+    case "refused":
+      return { label: "Not available", tone: "neutral" };
+    case "no_answer":
+      return { label: "No answer", tone: "neutral" };
+    case "cancelled_by_customer":
+      return { label: "Cancelled", tone: "neutral" };
+    case "cancelled_by_owner":
+      return { label: "Cancelled by owner", tone: "neutral" };
+    case "lapsed_unpaid":
+      return { label: "Lapsed", tone: "warning" };
+    case "no_show":
+      return { label: "No-show", tone: "warning" };
+    default:
+      break;
+  }
+  switch (booking.stage) {
+    case "ringing":
+      if (booking.ring_state === "awaiting_payment") return { label: "Payment pending", tone: "warning" };
+      if (booking.ring_state === "waiting_to_open") return { label: "Asked at opening", tone: "warning" };
+      return { label: "Asking the owner", tone: "warning" };
+    case "accepted":
+      return { label: "Accepted", tone: "brand" };
+    case "confirmed":
+      return { label: "Confirmed", tone: "brand" };
+    case "ready":
+      return { label: "Ready", tone: "success" };
+    case "out":
+      return { label: "Active", tone: "success" };
+    case "returned":
+      return { label: "Returned", tone: "brand" };
+    default:
+      return { label: "Completed", tone: "neutral" };
+  }
+}
+
+/** The card's second line: "SoundBox Rentals · Sat 24 – Mon 26 Oct". */
+export function rentalSubLine(booking: Pick<BookingCustomer, "shop" | "first_day" | "last_day">): string {
+  return `${booking.shop.name} · ${rangeLabel(booking.first_day, booking.last_day)}`;
+}
+
+/** The card's foot: the one thing to do or to expect next, or null when there is none. */
+export function rentalNextLine(booking: BookingCustomer, now: Date = new Date()): string | null {
+  const m = booking.money;
+  if (booking.exit) {
+    return (booking.exit === "refused" || booking.exit === "no_answer") &&
+      m.booking_amount_state === "paid" &&
+      booking.pick_deadline_at
+      ? `Pick another option by ${clock(booking.pick_deadline_at)}`
+      : null;
+  }
+  const arrive = booking.delivery_mode === "pickup" ? "Collect" : "Arrives";
+  switch (booking.stage) {
+    case "ringing": {
+      if (booking.ring_state === "awaiting_payment") return `Pay ${money(m.booking_amount)} to ask the owner`;
+      if (booking.ring_state !== "waiting_to_open") return null;
+      const opens = booking.shop.opens_at ? timeAndDay(booking.shop.opens_at, now) : null;
+      return opens ? `Asked at ${opens.time} ${opens.day}` : "Asked when they open";
+    }
+    case "accepted":
+      return `Pay ${money(booking.pay_now?.amount ?? m.pay_after_accept)}${byWhen(
+        booking.pay_now?.due_at ?? m.rent_due_at,
+        now
+      )}`;
+    case "confirmed": {
+      if (!booking.window) return "Pick your arrival window";
+      if (m.deposit_state === "not_due" || m.deposit_state === "due") {
+        const day = dayOf(m.deposit_ask_at);
+        return `Deposit ${money(m.deposit)} due${day ? ` ${dayShort(day)}` : " before handover"}`;
+      }
+      return `${arrive} ${windowSummary(booking.window)}`;
+    }
+    case "ready":
+      return booking.window ? `${arrive} ${windowSummary(booking.window)}` : null;
+    case "out": {
+      const day = dayOf(booking.return_by);
+      return day ? `Return by ${dayShort(day)}, ${clock(booking.return_by)}` : null;
+    }
+    case "returned":
+      return m.deposit_state === "paid" ? "Deposit comes back within 48 hours" : null;
+    default:
+      return null;
+  }
+}
+
+/** What an empty list says. */
+export function rentalsEmpty(tab: RentalsTab): { title: string; body: string } {
+  switch (tab) {
+    case "active":
+      return { title: "Nothing out right now", body: "A rental shows here from the handover until it is returned." };
+    case "past":
+      return { title: "No past rentals yet", body: "Finished and cancelled bookings are kept here." };
+    default:
+      return { title: "No upcoming rentals", body: "Book something and it will wait for you here." };
+  }
+}

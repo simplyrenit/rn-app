@@ -42,6 +42,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { liveCopy } from "@/lib/booking";
 import { CategoryIcon } from "@/lib/category-icons";
+import { CHAT_ENABLED } from "@/lib/config";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
 import { FlagReason, ListingStatus, resolveListingStatus } from "@/lib/listing-status";
@@ -903,6 +904,20 @@ export default function DetailsScreen() {
             products={product?.products_listed ?? 0}
             isDark={isDark}
           />
+          {/* Chat is off at launch (ENG-177, decision T-01): the bar's button is
+              Book now, and this entry point is not drawn. `handleStartChat` and
+              the chat screens are untouched, for the day it is switched back on. */}
+          {CHAT_ENABLED && !isOwner ? (
+            <Button
+              variant="outline"
+              onPress={handleStartChat}
+              loading={startingChat}
+              disabled={startingChat}
+              accessibilityLabel="Chat with owner"
+            >
+              Chat with owner
+            </Button>
+          ) : null}
         </DetailSection>
 
         {similarProducts.length > 0 && (

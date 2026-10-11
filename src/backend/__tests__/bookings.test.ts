@@ -5,6 +5,7 @@ import {
   cancelBooking,
   fetchAlternatives,
   fetchBooking,
+  fetchBookings,
   fetchCancelOutcome,
   answerWindowChange,
   fetchQuote,
@@ -141,5 +142,13 @@ describe("after the owner accepts", () => {
     expect(api.post).toHaveBeenCalledWith("https://api.test/bookings/RN-24831/window-change/answer/", {
       accept: false,
     });
+  });
+});
+
+describe("fetchBookings", () => {
+  it("reads the caller's rentals, one large page", async () => {
+    api.get.mockResolvedValue({ data: { results: [{ number: "RN-24831" }], total_results: 1 } });
+    await expect(fetchBookings()).resolves.toEqual([{ number: "RN-24831" }]);
+    expect(api.get).toHaveBeenCalledWith("https://api.test/bookings/", { params: { page_size: 100 } });
   });
 });

@@ -224,3 +224,12 @@ export const BOOKINGS_ENDPOINT = SERVERURL + "bookings/";
 
 /** `{payment_id}/confirm/`: what the app asks after the pay page (OE-D). */
 export const PAYMENTS_ENDPOINT = SERVERURL + "payments/";
+
+/**
+ * Chat between customer and owner is off at launch (decision T-01, ENG-177). The
+ * Rentals tab has the Chat tab's place, and "Chat with owner" on the product
+ * page and on the owner profile are not drawn. Nothing was deleted: the chat
+ * screens, routes, Firestore data and notifications are all still here, and
+ * `true` puts the entry points back.
+ */
+export const CHAT_ENABLED = false;
