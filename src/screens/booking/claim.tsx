@@ -193,12 +193,19 @@ function ClaimBody({ read, receivedAt }: { read: ClaimRead; receivedAt: number }
   // A fault report sends the item back first. On a rental that was extended the claim's own booking is closed once its
   // extension has started, so the chain is read to its last live booking, and the line points at that return (T-33).
   const first = booking.data;
-  const extensions = first?.extensions.join(",") ?? "";
-  const chain = useQuery([...bookingQueryKey(bookingNumber), "chain", extensions], () => chainEnd(first as BookingCustomer, fetchBooking), {
-    enabled: role === "customer" && claim.kind === "fault" && extensions !== "",
-    staleTime: 0,
-    retry: 1,
-  });
+  // The claim names the bookings that took the item on (`extensions`) and its `return_by` follows them: one read, of the
+  // last. An answer without the field is walked through the bookings, one call a link, as before.
+  const named = claim.extensions;
+  const chainKey = named ? named.join(",") : first?.extensions.join(",") ?? "";
+  const chain = useQuery(
+    [...bookingQueryKey(bookingNumber), "chain", named ? "claim" : "bookings", chainKey],
+    () => (named && named.length > 0 ? fetchBooking(named[named.length - 1]) : chainEnd(first as BookingCustomer, fetchBooking)),
+    {
+      enabled: role === "customer" && claim.kind === "fault" && chainKey !== "" && (Boolean(named) || Boolean(first)),
+      staleTime: 0,
+      retry: 1,
+    }
+  );
   const returnLine = role === "customer" ? faultReturnLine(claim, faultReturnTarget(claim, first, chain.data), now) : null;
   const raised = claim.created_at ? momentLabel(claim.created_at, now) : "";
 

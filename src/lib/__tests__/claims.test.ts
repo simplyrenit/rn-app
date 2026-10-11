@@ -81,6 +81,7 @@ const claim = (over: Partial<Claim> = {}): Claim => ({
   money_pending: false,
   forfeit_at: null,
   return_by: null,
+  extensions: [],
   my_side: "against",
   server_time: null,
   created_at: "2026-10-09T05:10:00Z",
@@ -403,6 +404,10 @@ describe("the customer's fault report", () => {
       "If the item is still out at 10:00 am on Mon 12 Oct, the deposit goes to the shop."
     );
     expect(readClaim({ ...claim(), my_side: "someone" })?.my_side).toBeNull();
+    // The bookings that took the item on: a list, `[]` for none, and null for an answer from before the field.
+    expect(readClaim({ ...claim(), extensions: ["RN-24900", 5, "RN-24901"] })?.extensions).toEqual(["RN-24900", "RN-24901"]);
+    expect(readClaim({ ...claim(), extensions: [] })?.extensions).toEqual([]);
+    expect(readClaim({ ...claim(), extensions: undefined })?.extensions).toBeNull();
   });
 
   it("tells the customer the item goes back first, only while the booking says it is still out", () => {
@@ -425,7 +430,8 @@ describe("the customer's fault report", () => {
   });
 
   describe("a fault report on a rental that was extended (T-33): the item comes back at the end of the last extension", () => {
-    const fault = claim({ kind: "fault", created_at: "2026-10-09T05:10:00Z", return_by: "2026-10-10T05:10:00Z" });
+    // An answer without `extensions` (null): the chain is read from the bookings, as before the field.
+    const fault = claim({ kind: "fault", created_at: "2026-10-09T05:10:00Z", return_by: "2026-10-10T05:10:00Z", extensions: null });
     const b = (over: Partial<Parameters<typeof faultReturnTarget>[1] & object> & { number?: string } = {}) => ({
       number: "RN-24831",
       stage: "out" as const,
@@ -451,6 +457,43 @@ describe("the customer's fault report", () => {
       expect(faultReturnLine(fault, target, NOW)).toBe(
         "Bring the item back by 10:40 am tomorrow to keep a refund if Renit does not agree. The latest it can come back is 8:00 pm on Wed 14 Oct, the end of your extension. Any refund is paid once it is back."
       );
+    });
+
+    describe("when the claim names its extensions (its return_by already follows the chain), one read of the last is enough", () => {
+      const chained = claim({ kind: "fault", created_at: "2026-10-09T05:10:00Z", return_by: "2026-10-14T14:30:00Z", extensions: ["RN-24900"] });
+
+      it("is read from the claim, not worked out from the bookings", () => {
+        const first = b({ stage: "closed" }); // the booking object here does not even name its extension
+        const target = faultReturnTarget(chained, first, extension);
+        expect(target).toEqual({ stillOut: true, by: "2026-10-14T14:30:00Z", early: "2026-10-10T05:10:00.000Z", extended: true });
+        expect(faultReturnLine(chained, target, new Date("2026-10-10T06:00:00Z"))).toContain("bring it back by 8:00 pm on Wed 14 Oct");
+      });
+
+      it("an empty list is a rental that was never extended, or whose extensions all fell through: nothing more to read", () => {
+        const none = claim({ kind: "fault", created_at: "2026-10-09T05:10:00Z", return_by: "2026-10-10T05:10:00Z", extensions: [] });
+        // Even if the booking still lists an extension, the claim says none took the item on.
+        expect(faultReturnTarget(none, b({ extensions: ["RN-24900"] }), null)).toEqual({
+          stillOut: true,
+          by: "2026-10-10T05:10:00Z",
+          early: null,
+          extended: false,
+        });
+      });
+
+      it("waits for the last extension to be read, and says nothing once it is back", () => {
+        expect(faultReturnTarget(chained, b({ stage: "closed" }), null)).toBeNull();
+        expect(faultReturnTarget(chained, b({ stage: "closed" }), { ...extension, stage: "returned" })?.stillOut).toBe(false);
+      });
+    });
+
+    it("an answer without the field is read from the bookings: the claim's return_by is not taken for the chain's", () => {
+      const old = { ...fault, extensions: null };
+      expect(faultReturnTarget(old, b({ stage: "closed", extensions: ["RN-24900"] }), extension)).toEqual({
+        stillOut: true,
+        by: "2026-10-14T14:30:00Z",
+        early: "2026-10-10T05:10:00.000Z",
+        extended: true,
+      });
     });
 
     it("an extension accepted but not started: the item is still out on the first booking, and the line points at the extension's return", () => {

@@ -60,8 +60,16 @@ export interface Claim {
   money_pending: boolean;
   /** `not_returned` only: when the deposit goes to the owner if the item is still out (P4-10). */
   forfeit_at: string | null;
-  /** `fault` only: when the item must be back, the report plus `FAULT_RETURN_HOURS` (P5-4). Null on every other kind. */
+  /**
+   * `fault` only: when the item must be back. The report plus `FAULT_RETURN_HOURS`, and on a rental that was extended the
+   * due time of the last booking of the chain when that is later (T-33). Null on every other kind.
+   */
   return_by: string | null;
+  /**
+   * The bookings that took the item on after this claim's booking, first to last (the last is where the item is now);
+   * `[]` when none did. Null for an answer from before the field: the chain is then read from the bookings.
+   */
+  extensions: string[] | null;
   /** Which side the caller is on: `raised` it, it is `against` the caller, or the caller is the `other` party of a claim Renit raised (P5-4). */
   my_side: "raised" | "against" | "other" | null;
   /** The server's clock when the answer was made: `reply_due_at`, `return_by` and `forfeit_at` are counted against it (P5-4). */
@@ -118,6 +126,7 @@ export function readClaim(value: unknown): Claim | null {
     money_pending: value.money_pending === true,
     forfeit_at: orNull(value.forfeit_at),
     return_by: orNull(value.return_by),
+    extensions: Array.isArray(value.extensions) ? strings(value.extensions) : null,
     my_side: value.my_side === "raised" || value.my_side === "against" || value.my_side === "other" ? value.my_side : null,
     server_time: orNull(value.server_time),
     created_at: text(value.created_at),
@@ -265,22 +274,32 @@ export interface ReturnTarget {
 }
 
 /**
- * `first` is the claim's own booking and `end` the last live booking of its chain (`chainEnd`; the same booking when
- * nothing extends it). Null while the chain is still being read, so nothing is said from the closed booking meanwhile.
+ * `first` is the claim's own booking and `end` the last live booking of its chain: the booking named last in the claim's
+ * `extensions` when the claim has them (its `return_by` already follows the chain), else what `chainEnd` found (the same
+ * booking when nothing extends it). Null while the chain is still being read, so nothing is said from the closed booking
+ * meanwhile.
  */
 export function faultReturnTarget(
-  claim: Pick<Claim, "kind" | "created_at" | "return_by">,
+  claim: Pick<Claim, "kind" | "created_at" | "return_by" | "extensions">,
   first: ChainBooking | null | undefined,
   end: ChainBooking | null | undefined
 ): ReturnTarget | null {
   if (!first) return null;
   const out = (b: ChainBooking) => b.stage === "out" && !b.exit;
   const plain = { stillOut: out(first), by: faultReturnBy(claim), early: null, extended: false };
-  if (first.extensions.length === 0) return plain;
+  // The claim says (`extensions`, and a `return_by` that follows the chain), else the bookings do.
+  const claimSays = Array.isArray(claim.extensions);
+  const extended = claimSays ? (claim.extensions?.length ?? 0) > 0 : first.extensions.length > 0;
+  if (!extended) return plain;
   if (!end) return null;
   // Every extension was cancelled or refused: the item is back on its first booking's terms.
   if (end.number === first.number) return plain;
-  return { stillOut: out(first) || out(end), by: end.return_by, early: faultReportDeadline(claim), extended: true };
+  return {
+    stillOut: out(first) || out(end),
+    by: claimSays ? (claim.return_by ?? end.return_by) : end.return_by,
+    early: faultReportDeadline(claim),
+    extended: true,
+  };
 }
 
 /**
