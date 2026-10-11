@@ -2,7 +2,7 @@ import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
 import { DEV_MODE, OTP } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
-import { acceptOwnerTermsAtSignup } from "@/backend/terms";
+import { acceptOwnerTerms } from "@/backend/terms";
 import { emailLogin, otpCheck, phoneLogin, signUp } from "@/backend/sign-in-calls";
 import {
   authenticateFirebase,
@@ -276,13 +276,19 @@ export function useAuth() {
       const response: { data: AuthTokens } = await signUp(payload);
       setAuthTokens(response.data);
 
-      // The merchant ticked the owner terms on the About step (ENG-122). The
-      // account exists now, so the acceptance can be recorded. It is not worth
-      // failing a finished sign-up for: if this does not land, the tick comes
-      // up again at the start of the first listing.
-      if (accountType === "merchant" && mergedUser.owner_terms_accepted) {
+      // The merchant ticked the owner terms on the About step (ENG-122), against
+      // the page and the version that screen read before there was an account.
+      // That kept version is what is recorded now that the tokens exist. Nothing
+      // is recorded without a tick. If it does not land (the version moved on in
+      // between, or no network) the sign-up still finishes, and the tick comes up
+      // again at the start of the first listing with the page as it now stands.
+      if (
+        accountType === "merchant" &&
+        mergedUser.owner_terms_accepted &&
+        mergedUser.owner_terms_version
+      ) {
         try {
-          await acceptOwnerTermsAtSignup(response.data.access_token);
+          await acceptOwnerTerms(mergedUser.owner_terms_version, response.data.access_token);
         } catch (termsError) {
           console.warn("Owner terms acceptance after sign-up failed", termsError);
         }

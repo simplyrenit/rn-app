@@ -2,6 +2,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { TERMS_ACCEPT_ENDPOINT, TERMS_ENDPOINT } from "@/lib/config";
 import { apiError } from "@/lib/api-error";
 import axiosInstance from "@/lib/networkUtils";
+import axios from "axios";
 import { useQuery } from "react-query";
 
 /** API-CONTRACT OE-A, `GET /api/terms/`. */
@@ -9,7 +10,8 @@ export interface TermsKind {
   version: string;
   /** The page the terms are written on; the link on every tick opens it. */
   url: string;
-  accepted: boolean;
+  /** `null` when the read was made signed out: the answer says nothing about a person. */
+  accepted: boolean | null;
 }
 
 export interface Terms {
@@ -32,40 +34,35 @@ export async function fetchTerms(accessToken?: string): Promise<Terms> {
 }
 
 /**
- * Send the owner's tick with the version they were shown.
- *
- * `409 terms_version_old` means the version moved on while the screen was open;
- * the server names the current one, and the tick is sent again once with it. The
- * owner ticked "the owner terms", whose link always opens the current page, so
- * the retry is the same acceptance, not a new question.
+ * The terms read with no sign-in (API-CONTRACT, `GET /api/terms/` is open to anyone):
+ * merchant sign-up needs the owner terms' address and version before any token
+ * exists. A plain call, so no stale header of an earlier account goes with it.
  */
-export async function acceptOwnerTerms(version: string, accessToken?: string): Promise<Terms> {
-  const send = async (v: string) =>
-    (
-      await axiosInstance.post<Terms>(
-        TERMS_ACCEPT_ENDPOINT,
-        { kind: "owner", version: v },
-        withToken(accessToken)
-      )
-    ).data;
-  try {
-    return await send(version);
-  } catch (error) {
-    const current = apiError(error);
-    const newer = current?.code === "terms_version_old" ? current.details?.version : null;
-    if (typeof newer !== "string" || newer === version) throw error;
-    return send(newer);
-  }
+export async function fetchPublicTerms(): Promise<Terms> {
+  return (await axios.get<Terms>(TERMS_ENDPOINT)).data;
 }
 
 /**
- * The tick given at merchant sign-up, sent now that the account exists. The
- * sign-up call carries no terms version, so this reads the current one first.
+ * Send the owner's tick with the version the person was shown.
+ *
+ * `409 terms_version_old` means that version is not the current one. It is not
+ * repeated with the newer version: the person ticked the page they saw, and an
+ * acceptance of a page they have not seen is not theirs. The caller asks the terms
+ * again and shows the tick again, with the new page.
  */
-export async function acceptOwnerTermsAtSignup(accessToken: string): Promise<Terms> {
-  const terms = await fetchTerms(accessToken);
-  if (terms.owner.accepted) return terms;
-  return acceptOwnerTerms(terms.owner.version, accessToken);
+export async function acceptOwnerTerms(version: string, accessToken?: string): Promise<Terms> {
+  return (
+    await axiosInstance.post<Terms>(
+      TERMS_ACCEPT_ENDPOINT,
+      { kind: "owner", version },
+      withToken(accessToken)
+    )
+  ).data;
+}
+
+/** True for the 409 that says the version sent is no longer the current one. */
+export function isTermsVersionOld(error: unknown): boolean {
+  return apiError(error)?.code === "terms_version_old";
 }
 
 /** The signed-in person's terms state. Disabled while signed out. */
@@ -77,4 +74,13 @@ export function useTerms() {
     enabled: signedIn && Boolean(username),
     staleTime: 60_000,
   });
+}
+
+/**
+ * The owner terms as merchant sign-up shows them, read before there is an account.
+ * The page's address and its version are kept with the tick: the version recorded
+ * once the account exists is the one this read gave.
+ */
+export function usePublicTerms() {
+  return useQuery(["terms", "public"], fetchPublicTerms, { staleTime: 60_000 });
 }

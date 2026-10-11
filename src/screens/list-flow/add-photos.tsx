@@ -1,4 +1,4 @@
-import { acceptOwnerTerms, termsQueryKey, useTerms } from "@/backend/terms";
+import { acceptOwnerTerms, isTermsVersionOld, termsQueryKey, useTerms } from "@/backend/terms";
 import { Button, Text } from "@/components/core";
 import { OwnerTermsTick } from "@/components/terms/owner-terms-tick";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -195,7 +195,15 @@ export default function ListAddPhotosScreen() {
       // A later version asks again, with an empty box.
       setOwnerTermsTick(false);
       return true;
-    } catch {
+    } catch (error) {
+      if (isTermsVersionOld(error)) {
+        // The terms moved on while the box was open. What was ticked was the old
+        // page, so the box is emptied and the new page is read again.
+        void queryClient.invalidateQueries(termsQueryKey(userDetails?.username));
+        setOwnerTermsTick(false);
+        toast.warning("The owner terms were updated", { message: "Read them and tick again." });
+        return false;
+      }
       toast.error("We couldn't save your acceptance", {
         message: "Check your connection and try again.",
       });

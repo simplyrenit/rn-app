@@ -503,6 +503,8 @@ export interface AuthUser {
    * sign-up payload: it is sent to the terms endpoint once the account exists.
    */
   owner_terms_accepted?: boolean;
+  /** The version of the owner terms the person was shown when they ticked (ENG-122). */
+  owner_terms_version?: string;
   password: string;
   date_of_birth?: string;
   coordinates: {
