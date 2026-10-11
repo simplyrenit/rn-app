@@ -10,6 +10,7 @@ import { REGISTER_PUSH_TOKEN_ENDPOINT } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
 import { getDeviceInfo, sessionBody } from "@/lib/device";
 import { PushRoute, pushRoute } from "@/lib/push-routes";
+import { sessionIdFromToken } from "@/lib/session";
 import { shouldDropPush } from "@/lib/sign-out";
 import { colors } from "@/lib/design-tokens";
 
@@ -195,6 +196,11 @@ export async function setupRingChannel() {
   } catch {
     // The next start tries again; the ring still arrives on the default channel.
   }
+}
+
+/** This phone's own session id, from its access token (API-CONTRACT P3-14); null when it cannot be read. */
+export async function ownSessionId(): Promise<number | null> {
+  return sessionIdFromToken((await getAuthTokens())?.access_token);
 }
 
 /**

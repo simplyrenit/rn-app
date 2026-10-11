@@ -36,6 +36,10 @@ export interface ShopMoney {
   deposit_state: string;
   deposit_ask_at: string | null;
   deposit_due_at: string | null;
+  /** How long the customer has to pay once the shop accepts; the deadline says it, so it is not written out (P3-13). */
+  rent_pay_minutes: number | null;
+  /** The deadline, set at Accept; null before it (P3-13). */
+  rent_due_at: string | null;
   payout: {
     status: string;
     status_reason: string | null;
@@ -88,7 +92,15 @@ export interface BookingShop {
   units: { in_use: number; quantity: number };
   money: ShopMoney;
   /** Null while ringing. */
-  answered: { at: string; via: AnsweredVia; device_name: string | null; seconds: number } | null;
+  answered: {
+    at: string;
+    via: AnsweredVia;
+    device_name: string | null;
+    seconds: number;
+    /** The session that answered is the caller's own (P3-9). */
+    this_device: boolean;
+    session_id: number | null;
+  } | null;
   window: TimeWindow | null;
   window_request: ShopWindowRequest | null;
   return_by: string | null;
@@ -101,6 +113,8 @@ export interface BookingShop {
   can: string[];
   timeline: ShopTimelineEntry[];
   created_at: string;
+  /** The server's clock when the answer was made; a wrong phone clock is corrected by it (P3-17). */
+  server_time: string;
 }
 
 // ---- The shop's bookings list (SH-06) and a booking's page (SH-07) -------------------------------

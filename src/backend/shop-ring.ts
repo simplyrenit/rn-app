@@ -15,6 +15,13 @@ export const liveQueryKey = (username: string | undefined) => ["shop-live", user
 
 export const shopBookingQueryKey = (number: string) => ["shop-booking", number];
 
+/**
+ * What a `ring_ended` push said about a request, as an ending, kept in the query
+ * cache so a ring screen that is open (or opened by a tap on that push) shows it
+ * at once. Nothing is fetched under this key: `nav.tsx` writes it, the screen reads it.
+ */
+export const ringEndedQueryKey = (number: string) => ["shop-ring-ended", number];
+
 /** The live channel: the bookings ringing now, and the last few answers (the ring screen reads it on open). */
 export async function fetchLive(): Promise<LiveAnswer> {
   return (await axiosInstance.get<LiveAnswer>(SHOP_LIVE_ENDPOINT)).data;

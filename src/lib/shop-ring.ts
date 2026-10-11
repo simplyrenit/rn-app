@@ -1,5 +1,6 @@
 import type { ApiError } from "@/lib/api-error";
-import { DeliveryMode, RingState, clock, daysLabel, money, rangeLabel } from "@/lib/booking";
+import { DeliveryMode, RingState, clock, daysLabel, momentLabel, money, rangeLabel } from "@/lib/booking";
+import { correctedNow } from "@/lib/server-clock";
 import type { OpenState } from "@/lib/shop";
 import type { AnsweredVia, BookingShop } from "@/lib/shop-booking";
 
@@ -49,8 +50,10 @@ export interface RecentRing {
   device_name: string | null;
   answered_at: string | null;
   ended_at: string;
-  /** This phone's own answer: it may have been given while the reply was lost. */
+  /** True when the session that answered is the one asking (P3-9): "You accepted". */
   this_device: boolean;
+  /** The session that answered; null when nobody did. */
+  session_id: number | null;
 }
 
 /** `GET /api/shop/live/`. */
@@ -177,6 +180,10 @@ export interface RingEnding {
   missing: string[];
   /** After "Can't do it": what became of the dates the shop asked to block. */
   block: "blocked" | "none_free" | "not_asked" | null;
+  /** This phone's own session gave the answer: "You accepted", not "Accepted on another device". */
+  thisDevice: boolean;
+  /** An accepted request: by when the customer has been asked to pay the rent ("4:31 pm"), if known. */
+  rentBy: string | null;
 }
 
 const ENDING: RingEnding = {
@@ -187,6 +194,8 @@ const ENDING: RingEnding = {
   reason: null,
   missing: [],
   block: null,
+  thisDevice: false,
+  rentBy: null,
 };
 
 /** Where an answer came from, in words. `this_device` beats the name, which may be this phone's own. */
@@ -198,15 +207,21 @@ export function whereText(via: AnsweredVia | null, deviceName: string | null, th
     case "phone":
       return deviceName || "another phone";
     case "admin":
-      return "Renit";
+      // Renit's staff answered from the admin (P3-6): the server names who ("Renit staff (Meera)").
+      return deviceName || "Renit";
     default:
       return null;
   }
 }
 
 /** This phone's own answer, from what the server sent back. */
-export function hereEnding(outcome: "accepted" | "refused", at: string | null, block: RingEnding["block"] = null): RingEnding {
-  return { ...ENDING, outcome, where: "this phone", at, block };
+export function hereEnding(
+  outcome: "accepted" | "refused",
+  at: string | null,
+  block: RingEnding["block"] = null,
+  rentBy: string | null = null
+): RingEnding {
+  return { ...ENDING, outcome, where: "this phone", at, block, thisDevice: true, rentBy };
 }
 
 /** A `recent` entry of the live answer. */
@@ -217,7 +232,67 @@ export function endingFromRecent(recent: RecentRing): RingEnding {
     where: whereText(recent.answered_via, recent.device_name, recent.this_device),
     at: recent.answered_at ?? recent.ended_at,
     system: recent.answered_via === "system",
+    thisDevice: recent.this_device,
   };
+}
+
+const OUTCOMES: readonly string[] = ["accepted", "refused", "cancelled", "no_answer"];
+
+/** What a `ring_ended` push carries in `data` (API-CONTRACT, Push notifications). */
+export interface RingEndPush {
+  outcome: RingOutcome;
+  answered_via: AnsweredVia | null;
+  device_name: string | null;
+  answered_at: string | null;
+  /** The session that answered. The push cannot know which phone reads it, so a phone compares this with its own. */
+  session_id: number | null;
+}
+
+/** The fields of a `ring_ended` push. A push that says nothing of the outcome is not read as one. */
+export function parseRingEnd(data: unknown): RingEndPush | null {
+  if (!isRecord(data) || typeof data.outcome !== "string" || !OUTCOMES.includes(data.outcome)) return null;
+  const text = (v: unknown) => (typeof v === "string" && v !== "" ? v : null);
+  const sid = typeof data.session_id === "string" && data.session_id !== "" ? Number(data.session_id) : data.session_id;
+  return {
+    outcome: data.outcome as RingOutcome,
+    answered_via: text(data.answered_via) as AnsweredVia | null,
+    device_name: text(data.device_name),
+    answered_at: text(data.answered_at),
+    session_id: typeof sid === "number" && Number.isInteger(sid) ? sid : null,
+  };
+}
+
+/**
+ * A `ring_ended` push as an ending, for a ring screen that is open: it is told at
+ * once, without waiting for the next read of the live answer. The push's `session_id`
+ * is compared with this phone's own (`ownSession`, from its sign-in) to say "You
+ * accepted" or "Accepted on …". With either unknown nothing is claimed for this phone.
+ */
+export function endingFromPush(push: RingEndPush, ownSession: number | null): RingEnding {
+  const thisDevice = ownSession !== null && push.session_id !== null && push.session_id === ownSession;
+  return {
+    ...ENDING,
+    outcome: push.outcome,
+    where: whereText(push.answered_via, push.device_name, thisDevice),
+    at: push.answered_at,
+    system: push.answered_via === "system",
+    thisDevice,
+  };
+}
+
+/**
+ * "4:31 pm": by when the customer has been asked to pay the rent (`money.rent_due_at`,
+ * set at Accept; API-CONTRACT P3-13), with the day when it is not today. Today is the
+ * server's today: the phone's clock is corrected by the booking's `server_time` (P3-17).
+ * Null before the accept. No number of minutes is written: the deadline says it.
+ */
+export function rentByLabel(
+  booking: Pick<BookingShop, "money" | "server_time">,
+  receivedAt: number = Date.now()
+): string | null {
+  const due = booking.money.rent_due_at;
+  if (!due) return null;
+  return momentLabel(due, correctedNow(booking.server_time, receivedAt)) || null;
 }
 
 const isSystemReason = (value: unknown): value is SystemReason =>
@@ -226,11 +301,13 @@ const isSystemReason = (value: unknown): value is SystemReason =>
 /**
  * A finished request read from the booking itself: an old push tapped long after
  * the five minutes `recent` remembers. Null when the booking is still ringing or
- * waiting for the shop to open (it is simply not ringing now).
+ * waiting for the shop to open (it is simply not ringing now). `receivedAt` is when
+ * the booking was read, for the clock the pay-by time is worked out on.
  */
-export function endingFromBooking(booking: BookingShop): RingEnding | null {
+export function endingFromBooking(booking: BookingShop, receivedAt: number = Date.now()): RingEnding | null {
   const answered = booking.answered;
-  const where = answered ? whereText(answered.via, answered.device_name) : null;
+  const where = answered ? whereText(answered.via, answered.device_name, answered.this_device) : null;
+  const mine = Boolean(answered?.this_device);
   switch (booking.exit) {
     case "refused":
       return {
@@ -240,6 +317,7 @@ export function endingFromBooking(booking: BookingShop): RingEnding | null {
         at: answered?.at ?? null,
         system: answered?.via === "system",
         reason: isSystemReason(booking.exit_reason) ? booking.exit_reason : null,
+        thisDevice: mine,
       };
     case "no_answer":
       return { ...ENDING, outcome: "no_answer" };
@@ -248,7 +326,9 @@ export function endingFromBooking(booking: BookingShop): RingEnding | null {
       if (!answered) return { ...ENDING, outcome: "cancelled" };
       break;
   }
-  if (answered) return { ...ENDING, outcome: "accepted", where, at: answered.at };
+  if (answered) {
+    return { ...ENDING, outcome: "accepted", where, at: answered.at, thisDevice: mine, rentBy: rentByLabel(booking, receivedAt) };
+  }
   return null;
 }
 
@@ -305,9 +385,11 @@ export interface EndingCopy {
 
 /**
  * The words for a request that is over, for another device's answer (SH-03) and
- * for the ones nobody answered. `here` is this phone's own answer.
+ * for the ones nobody answered. `here` is this phone's own answer: "You accepted",
+ * decided by the server (`this_device`) or by comparing the push's `session_id`
+ * with this phone's own (P3-14), never by the device's name.
  */
-export function endingCopy(ending: RingEnding, firstName: string | null, here = false): EndingCopy {
+export function endingCopy(ending: RingEnding, firstName: string | null, here: boolean = ending.thisDevice): EndingCopy {
   const who = firstName || "The customer";
   const at = clock(ending.at);
   const when = at ? ` at ${at}` : "";
@@ -328,7 +410,9 @@ export function endingCopy(ending: RingEnding, firstName: string | null, here = 
     case "accepted":
       return {
         title: here ? "You accepted this booking" : `Accepted on ${ending.where ?? "another device"}${when}`,
-        sub: `${who} has been asked to pay the rent.`,
+        sub: ending.rentBy
+          ? `${who} has been asked to pay the rent by ${ending.rentBy}.`
+          : `${who} has been asked to pay the rent.`,
       };
     case "refused": {
       const sub =

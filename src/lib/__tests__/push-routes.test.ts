@@ -66,7 +66,7 @@ describe("pushRoute", () => {
   });
 
   it("still opens the ring for a `ring` whose ring object is missing or broken: the screen reads the server", () => {
-    expect(pushRoute(push("ring", { role: "owner" }))).toEqual({ screen: "ShopRing", number: "RN-24831", ring: null, ended: false });
+    expect(pushRoute(push("ring", { role: "owner" }))).toEqual({ screen: "ShopRing", number: "RN-24831", ring: null, ended: false, end: null });
     expect(pushRoute(push("ring", { role: "owner", ring: { number: "RN-1" } }))).toMatchObject({ ring: null });
     // Nothing to open without a number from either place.
     expect(pushRoute(push("ring", { role: "owner", booking: null, ring: { number: "RN-9" } }))).toBeNull();
@@ -79,12 +79,17 @@ describe("pushRoute", () => {
   });
 
   it("`ring_ended` closes the ring: it only says the request is over", () => {
-    expect(pushRoute(push("ring_ended", { role: "owner", outcome: "accepted", answered_via: "dashboard" }))).toEqual({
+    expect(
+      pushRoute(push("ring_ended", { role: "owner", outcome: "accepted", answered_via: "dashboard", session_id: 31 }))
+    ).toEqual({
       screen: "ShopRing",
       number: "RN-24831",
       ring: null,
       ended: true,
+      end: { outcome: "accepted", answered_via: "dashboard", device_name: null, answered_at: null, session_id: 31 },
     });
+    // One that does not say how it ended still closes the ring: the screen reads the server.
+    expect(pushRoute(push("ring_ended", { role: "owner" }))).toMatchObject({ ended: true, end: null });
   });
 
   it("opens the shop's page for every owner type that is about one booking", () => {
