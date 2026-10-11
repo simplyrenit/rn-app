@@ -40,6 +40,10 @@ import {
   setupChatNotifications,
   setupNotificationListeners,
 } from "@/backend/notifications";
+import BookingScreen from "@/screens/booking/booking";
+import BookingDatesScreen from "@/screens/booking/choose-dates";
+import ReviewAndBookScreen from "@/screens/booking/review-and-book";
+import { resumePayment } from "@/lib/payments";
 import BankAccountScreen from "@/screens/profileScreens/bank-account";
 import ContactUsScreen from "@/screens/profileScreens/contactUs";
 import EditProductScreen from "@/screens/profileScreens/edit-product";
@@ -375,6 +379,22 @@ export default function Navigation() {
     });
   }, [isAuthenticated]);
 
+  // A payment can finish while the app is closed (the customer was in the
+  // browser or a UPI app). On start, ask rn-api about the one that was in
+  // flight and open its booking, which shows where things stand (ENG-172).
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+    let stale = false;
+    void resumePayment().then((number) => {
+      if (number && !stale && navigationRef.isReady()) {
+        navigationRef.navigate("Booking", { number });
+      }
+    });
+    return () => {
+      stale = true;
+    };
+  }, [isAuthenticated]);
+
   React.useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       if (navigationRef.isReady() && navigationRef.canGoBack()) {
@@ -547,6 +567,23 @@ export default function Navigation() {
         <Stack.Screen
           name="RentalDelivery"
           component={RentalDeliveryScreen}
+        />
+        {/* Live booking, the customer's side (ENG-99). On the root stack, so
+            the tab bar is hidden from the dates to the booking itself. */}
+        <Stack.Screen
+          name="BookingDates"
+          component={BookingDatesScreen}
+        />
+        <Stack.Screen
+          name="ReviewAndBook"
+          component={ReviewAndBookScreen}
+        />
+        {/* Keyed by booking, like the product page: a push for another
+            booking opens its own screen instead of rewriting this one. */}
+        <Stack.Screen
+          name="Booking"
+          component={BookingScreen}
+          getId={({ params }) => params?.number}
         />
         <Stack.Screen
           name="SavedAddresses"

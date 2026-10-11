@@ -10,6 +10,7 @@ import {
   Text,
   useButtonLabelColor,
 } from "@/components/core";
+import { BookingFacts } from "@/components/booking/booking-facts";
 import { DetailSection } from "@/components/product/detail-section";
 import { ExpandableText } from "@/components/product/expandable-text";
 import { ModerationBanner } from "@/components/product/moderation-banner";
@@ -39,6 +40,7 @@ import {
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import { liveCopy } from "@/lib/booking";
 import { CategoryIcon } from "@/lib/category-icons";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
@@ -187,7 +189,7 @@ export default function DetailsScreen() {
   const [similarProducts, setSimilarProducts] = useState<BackendProduct[]>([]);
   const [isModerated, setIsModerated] = useState(false);
   const [reviews, setReviews] = useState<BackendReview[]>([]);
-  const { id, isFavorite, specFilters } = route.params;
+  const { id, isFavorite, specFilters, dates } = route.params;
   const allSpecsRef = React.useRef<BottomSheetModal>(null);
   // The root native stack, for its typed `push`; `useTypedNavigation` is the
   // generic navigation prop, which has no `push`.
@@ -313,6 +315,24 @@ export default function DetailsScreen() {
   };
 
   const isOwner = userDetails?.username === product?.owner?.username;
+
+  // Whether the owner is asked now, at their next opening, or cannot be booked.
+  const booking = product ? liveCopy(product) : null;
+
+  /**
+   * Book now opens the dates (BK-02), on the dates of the search when there was
+   * one. Signed out, the customer is sent to sign in first: the booking, its
+   * payment and the saved address all belong to an account.
+   */
+  const handleBook = () => {
+    if (!product) return;
+    if (!isAuthenticated) {
+      toast.info("Sign in to book", { message: "It takes a moment." });
+      navigation.navigate("Welcome");
+      return;
+    }
+    navigation.navigate("BookingDates", { product: product.name, ...dates });
+  };
 
   const handleStartChat = async () => {
     if (startingChat) {
@@ -732,6 +752,16 @@ export default function DetailsScreen() {
           ]}
         />
 
+        {/* BK-01: "Live booking", how the item changes hands and the handover
+            hours, between the facts strip and the long sections (ENG-172). */}
+        <View style={{ paddingTop: 24 }}>
+          <BookingFacts
+            copy={booking}
+            shop={product.shop}
+            notDelivered={product.not_delivered}
+          />
+        </View>
+
         {/* Straight after the strip, where a renter decides (ENG-35); absent,
             dividers and all, when the listing has no specs (PDP-04b). */}
         {specs.length > 0 ? (
@@ -934,13 +964,21 @@ export default function DetailsScreen() {
           ...(isDark ? null : BAR_LIFT),
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
-          <Text fontWeight="font-bold" fontSize="text-lg">
-            {formatCurrency(product?.rate)}
-          </Text>
-          <Text fontSize="text-sm" tone="body">
-            per day
-          </Text>
+        {/* BK-01's bar: the day rate over the deposit. */}
+        <View>
+          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+            <Text fontWeight="font-bold" fontSize="text-lg">
+              {formatCurrency(product?.rate)}
+            </Text>
+            <Text fontSize="text-sm" tone="body">
+              a day
+            </Text>
+          </View>
+          {Number(product?.security_deposit) > 0 ? (
+            <Text fontSize="text-xs" tone="body">
+              {`Deposit ${formatCurrency(product.security_deposit)}`}
+            </Text>
+          ) : null}
         </View>
 
         <View style={{ flex: 1 }}>
@@ -955,16 +993,20 @@ export default function DetailsScreen() {
             >
               <CtaLabel>Edit product</CtaLabel>
             </Button>
-          ) : (
+          ) : booking ? (
+            // "Book now", or "Book for the morning" while the shop is closed.
             <Button
-              onPress={handleStartChat}
-              loading={startingChat}
-              disabled={startingChat}
+              onPress={handleBook}
               style={CTA_STYLE}
-              accessibilityLabel="Chat with owner"
+              accessibilityLabel={booking.button}
             >
-              <CtaLabel>Chat with owner</CtaLabel>
+              <CtaLabel>{booking.button}</CtaLabel>
             </Button>
+          ) : (
+            // Neither flag set: the contract says no Book now.
+            <Text fontSize="text-sm" tone="dim" style={{ textAlign: "right" }}>
+              Not taking bookings right now
+            </Text>
           )}
         </View>
       </View>

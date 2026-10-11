@@ -218,3 +218,9 @@ export const SHOP_OPEN_ENDPOINT = SERVERURL + "shop/open/";
 export const SHOP_DELIVERY_EXAMPLE_ENDPOINT = SERVERURL + "shop/delivery-example/";
 
 export const ACCESS_DEVICES_ENDPOINT = SERVERURL + "access/devices/";
+
+/** The customer's bookings: quote, Book now, and each booking's own actions (OE-C). */
+export const BOOKINGS_ENDPOINT = SERVERURL + "bookings/";
+
+/** `{payment_id}/confirm/`: what the app asks after the pay page (OE-D). */
+export const PAYMENTS_ENDPOINT = SERVERURL + "payments/";

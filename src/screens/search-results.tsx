@@ -22,6 +22,7 @@ import SubCategoryFilter from "@/components/search/sub-category-filter";
 import { CategoryRail, FilterBar } from "@/components/search/results-rails";
 import { useGlobalContext } from "@/context/global-context";
 import { categoryDisplayName } from "@/lib/category-icons";
+import { searchedDays } from "@/lib/booking";
 import { toast } from "@/lib/toast";
 import {
   BackendProduct,
@@ -858,6 +859,8 @@ export default function SearchResults() {
               // rental, and the results grid was the one place it was missing.
               coordinates={item.coordinates}
               specFilters={specFilters}
+              // The searched dates ride along, so Book now starts on them (ENG-172).
+              dates={searchedDays(range)}
             />
           )}
           // Searching and finding nothing are the same slot, so the skeleton

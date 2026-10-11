@@ -5,6 +5,7 @@ import {
 } from "@react-navigation/native";
 import { DimensionValue, FlexAlignType, ImageSourcePropType } from "react-native";
 import type { SavedAddress } from "@/lib/addresses";
+import type { BookItem, DeliveryMode, ProductShop } from "@/lib/booking";
 import type { FlagReason, ListingStatus } from "@/lib/listing-status";
 
 export interface OTPResponse {
@@ -210,6 +211,11 @@ export type RootStackParamList = {
      * match. Absent from every other entry point.
      */
     specFilters?: Record<string, string[]>;
+    /**
+     * The dates of the search the renter came from, as India days (ENG-172).
+     * Book now starts on them. Absent from every other entry point.
+     */
+    dates?: { first_day: string; last_day: string };
   };
   ReviewsScreen: {
     reviews: BackendReview[];
@@ -325,6 +331,28 @@ export type RootStackParamList = {
   RentalSettings: undefined;
   RentalHours: undefined;
   RentalDelivery: undefined;
+  /**
+   * Live booking, the customer's side (ENG-99). `BookingDates` is BK-02: the
+   * dates and how the item changes hands. `moved_from` is the customer's refused
+   * or unanswered booking whose ₹99 moves to the new one.
+   */
+  BookingDates: { product: string; first_day?: string; last_day?: string; moved_from?: string };
+  /** BK-03 and BK-11: the whole price, then Book now. */
+  ReviewAndBook: {
+    item: BookItem;
+    first_day: string;
+    last_day: string;
+    delivery_mode: DeliveryMode;
+    address_id?: number | null;
+    /** "Home": the saved address the item is delivered to. */
+    address_name?: string;
+    moved_from?: string;
+  };
+  /**
+   * One booking at whatever stage the server says it is in. `pay` opens the pay
+   * page for the ₹99 on arrival: set only by Book now, a moment after the tap.
+   */
+  Booking: { number: string; pay?: boolean };
   [key: string]: object | undefined;
 };
 
@@ -542,6 +570,16 @@ export interface BackendProduct {
   shop_code?: string;
   not_delivered?: boolean;
   rate_unit?: "day";
+  /**
+   * Public products only (ENG-172): the shop behind the listing, whether it can
+   * be booked now (`live_booking`) or for the next opening (`book_for_morning`),
+   * and the ID check a customer needs for it. `booked` on a public product is
+   * the runs of days with no unit free.
+   */
+  shop?: ProductShop | null;
+  live_booking?: boolean;
+  book_for_morning?: boolean;
+  id_check_needed?: "none" | "id" | "id_and_match";
   /** A moved listing's price is treated as per day until the owner saves `rate`. */
   rate_needs_confirming?: boolean;
   /** True while `worth` is null. */

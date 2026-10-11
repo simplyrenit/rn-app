@@ -33,6 +33,11 @@ export interface CardProps extends ItemCard {
    * the values that matched (ENG-35). Search results only.
    */
   specFilters?: Record<string, string[]>;
+  /**
+   * The search's dates as India days, handed on to the product page so Book
+   * now starts on them (ENG-172). Search results only.
+   */
+  dates?: { first_day: string; last_day: string };
 }
 
 export function Card({
@@ -48,6 +53,7 @@ export function Card({
   distance,
   tile = false,
   specFilters,
+  dates,
 }: CardProps) {
   const router = useTypedNavigation();
   const { color } = useTheme();
@@ -79,7 +85,7 @@ export function Card({
       onPressOut={onPressOut}
       activeOpacity={1}
       onPress={() =>
-        router.navigate("ProductDetail", { id, isFavorite: checked, specFilters })
+        router.navigate("ProductDetail", { id, isFavorite: checked, specFilters, dates })
       }
       style={[{ width: width ?? fallbackCardWidth, alignItems }, pressStyle]}
     >
