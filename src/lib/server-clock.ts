@@ -27,3 +27,17 @@ export function clockSkewMs(serverTime: string | null | undefined, receivedAt: n
   const server = Date.parse(serverTime ?? "");
   return Number.isFinite(server) ? server - receivedAt : 0;
 }
+
+/**
+ * The server's time from an answer's `Date` header, as an instant, for an answer
+ * that carries no `server_time` of its own (a claim: the contract gives it none).
+ * A phone reads the header where a browser cannot (API-CONTRACT P3-17). Null when
+ * the answer has none, and the phone's own clock is then all there is.
+ */
+export function serverTimeFromHeaders(headers: unknown): string | null {
+  if (typeof headers !== "object" || headers === null) return null;
+  const bag = headers as { get?: (name: string) => unknown } & Record<string, unknown>;
+  const raw = typeof bag.get === "function" ? bag.get("date") : (bag.date ?? bag.Date);
+  const at = typeof raw === "string" ? Date.parse(raw) : NaN;
+  return Number.isFinite(at) ? new Date(at).toISOString() : null;
+}

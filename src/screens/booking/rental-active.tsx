@@ -1,10 +1,12 @@
 import { GetHelp } from "@/components/booking/get-help";
 import { BottomBar, Notice, Panel } from "@/components/booking/parts";
+import { ClaimRows } from "@/components/claims/claim-rows";
 import { Records } from "@/components/capture/record-card";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, Text } from "@/components/core";
 import { LinkRow } from "@/components/handover/parts";
 import { BookingCustomer } from "@/lib/booking";
+import { faultRowSub } from "@/lib/claims";
 import { activeCopy, ownerAbsentAt, ownerAbsentKey } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -103,6 +105,9 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
           </Notice>
         ) : null}
 
+        {/* A fault report, a "not as described" report, a damage claim: each opens with where it stands. */}
+        <ClaimRows ids={booking.claims} role="customer" />
+
         <Panel>
           {can("extend") ? (
             <LinkRow
@@ -111,8 +116,17 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
               onPress={() => navigation.navigate("BookingExtend", { number })}
             />
           ) : null}
+          {/* BK-20: reported within 24 hours of the handover, by the server's clock. */}
+          {can("report_fault") ? (
+            <LinkRow
+              first={!can("extend")}
+              title="Something doesn't work?"
+              sub={faultRowSub(booking, now)}
+              onPress={() => navigation.navigate("BookingFault", { number })}
+            />
+          ) : null}
           <LinkRow
-            first={!can("extend")}
+            first={!can("extend") && !can("report_fault")}
             title="Booking details"
             sub="The timeline and your payments."
             onPress={() => navigation.navigate("BookingDetails", { number })}

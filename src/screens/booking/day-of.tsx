@@ -3,6 +3,7 @@ import { setDayStatus } from "@/backend/handover";
 import { GetHelp } from "@/components/booking/get-help";
 import { Notice, Panel, Pill } from "@/components/booking/parts";
 import { useServerNow } from "@/components/booking/use-server-now";
+import { ClaimRows } from "@/components/claims/claim-rows";
 import { CodeBoxes } from "@/components/capture/code";
 import { RecordCard, RecordCardBody, useRecord } from "@/components/capture/record-card";
 import { Button, Text } from "@/components/core";
@@ -197,6 +198,8 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
           </View>
         </Button>
       ) : null}
+
+      <ClaimRows ids={booking.claims} role="customer" />
 
       <Panel>
         <LinkRow

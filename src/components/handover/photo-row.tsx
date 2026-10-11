@@ -2,6 +2,7 @@ import { discardFiles } from "@/backend/capture-jobs";
 import { uploadCaptureFile } from "@/backend/captures";
 import { takePhoto } from "@/components/capture/camera";
 import { Text } from "@/components/core";
+import { uploadKeeping } from "@/lib/evidence";
 import { MIN_TOUCH_TARGET, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { Image } from "expo-image";
@@ -32,6 +33,15 @@ export async function uploadEvidence(photos: EvidencePhoto[], what: string): Pro
   for (const photo of photos) urls.push(photo.url ?? (await uploadCaptureFile(photo.uri, "photo", what)));
   return urls;
 }
+
+/**
+ * Puts every photo that is not up yet on the bucket, one at a time, going on past a
+ * failure: the photos that went up keep their address in the list it returns, and
+ * only the others are tried at the next press (a report's photos are never lost to
+ * one bad upload).
+ */
+export const uploadPhotos = (photos: EvidencePhoto[], what: string) =>
+  uploadKeeping(photos, (uri) => uploadCaptureFile(uri, "photo", what));
 
 /**
  * The photos of a report, and the button that takes another. Camera only, as for

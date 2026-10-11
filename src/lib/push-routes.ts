@@ -1,3 +1,4 @@
+import type { Side } from "@/lib/capture";
 import { Ring, RingEndPush, parseRing, parseRingEnd } from "@/lib/shop-ring";
 
 /**
@@ -9,9 +10,9 @@ import { Ring, RingEndPush, parseRing, parseRingEnd } from "@/lib/shop-ring";
  *
  * This is the table the router in `src/backend/notifications.ts` reads. It
  * holds the customer's types (ENG-173), the ring (ENG-209) and the shop's other
- * types (ENG-210), and the deposit and the day-of screens (ENG-222, ENG-223).
- * ENG-252 adds the claim here and nowhere else. A type this build does not know
- * is ignored, as the contract asks.
+ * types (ENG-210), the deposit and the day-of screens (ENG-222, ENG-223) and the
+ * claim (ENG-252, ENG-253). A type this build does not know is ignored, as the
+ * contract asks.
  */
 export type PushRoute =
   /** The customer's booking, at whatever stage the server says it is in. */
@@ -29,6 +30,12 @@ export type PushRoute =
   | { screen: "ShopBooking"; number: string }
   /** The shop's handover (ENG-223): the customer tapped a preset button on the day. */
   | { screen: "ShopHandover"; number: string }
+  /**
+   * A claim was raised, replied to or decided (`claim`: its id). The screen reads the claim from the API;
+   * `number` is its booking, for the screens behind it. For the shop it is read only: replies are made on
+   * the dashboard. A `claim` push with no id opens the booking it is about.
+   */
+  | { screen: "Claim"; id: number; number: string; role: Side }
   /** The shop's Today, for "Closed after two missed requests". */
   | { screen: "ShopToday" }
   /** The bank check passed or failed, the account was changed, or a payout waits for it. */
@@ -38,6 +45,12 @@ export type PushRoute =
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** The claim's id from a push: a whole number, sent as a number or as text. */
+function claimId(value: unknown): number | null {
+  const id = typeof value === "string" && /^\d+$/.test(value) ? Number(value) : value;
+  return typeof id === "number" && Number.isInteger(id) && id > 0 ? id : null;
+}
 
 export function pushRoute(data: unknown): PushRoute | null {
   if (!isRecord(data) || typeof data.type !== "string") return null;
@@ -65,10 +78,13 @@ export function pushRoute(data: unknown): PushRoute | null {
       // The day of the handover: `Booking` draws it while the stage is `ready` (ENG-222).
       // A preset tap from the shop arrives as `window` with `what: "status"` and lands there too.
       case "ready":
-      // The claim: ENG-252 points this at it. Until then, the booking it is about.
-      case "claim":
         // One screen for all of them: `Booking` draws whatever the stage calls for.
         return { screen: "Booking", number };
+      // The claim itself: where it stands, the reply, what was decided (ENG-252).
+      case "claim": {
+        const id = claimId(data.claim);
+        return id ? { screen: "Claim", id, number, role: "customer" } : { screen: "Booking", number };
+      }
       // Pay the deposit (ENG-222).
       case "deposit_ask":
       case "deposit_reminder":
@@ -108,9 +124,13 @@ export function pushRoute(data: unknown): PushRoute | null {
       case "started":
       case "returned":
       case "closed":
-      // The claim: ENG-252 points this at it. Until then, the booking it is about.
-      case "claim":
         return number ? { screen: "ShopBooking", number } : null;
+      // The claim, read only on the phone: a customer's reply or Renit's decision (ENG-253).
+      case "claim": {
+        if (!number) return null;
+        const id = claimId(data.claim);
+        return id ? { screen: "Claim", id, number, role: "owner" } : { screen: "ShopBooking", number };
+      }
       case "shop_closed":
         return { screen: "ShopToday" };
       case "bank_account":

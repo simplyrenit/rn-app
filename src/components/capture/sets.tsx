@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const TILE_HEIGHT = 60;
 
 /** One photo, large, over the screen: the way to look closely at a mark or a serial number. */
-function PhotoViewer({ tile, onClose }: { tile: Tile | null; onClose: () => void }) {
+export function PhotoViewer({ tile, onClose }: { tile: Tile | null; onClose: () => void }) {
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={Boolean(tile)} animationType="fade" transparent onRequestClose={onClose} statusBarTranslucent>

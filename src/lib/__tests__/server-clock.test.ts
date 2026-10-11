@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { clockSkewMs, correctedNow } from "../server-clock";
+import { clockSkewMs, correctedNow, serverTimeFromHeaders } from "../server-clock";
 
 describe("correctedNow", () => {
   it("is the server's time at the moment the answer arrived", () => {
@@ -40,5 +40,21 @@ describe("clockSkewMs", () => {
   it("is nothing when the answer had no server_time", () => {
     expect(clockSkewMs(undefined, 5)).toBe(0);
     expect(clockSkewMs("nonsense", 5)).toBe(0);
+  });
+});
+
+describe("serverTimeFromHeaders", () => {
+  it("reads the Date header as an instant, from axios's headers object or a plain one", () => {
+    const date = "Sat, 10 Oct 2026 04:30:00 GMT";
+    expect(serverTimeFromHeaders({ get: (name: string) => (name === "date" ? date : undefined) })).toBe("2026-10-10T04:30:00.000Z");
+    expect(serverTimeFromHeaders({ date })).toBe("2026-10-10T04:30:00.000Z");
+    expect(serverTimeFromHeaders({ Date: date })).toBe("2026-10-10T04:30:00.000Z");
+  });
+
+  it("is null when there is no header, or it is not a date", () => {
+    expect(serverTimeFromHeaders(undefined)).toBeNull();
+    expect(serverTimeFromHeaders({})).toBeNull();
+    expect(serverTimeFromHeaders({ date: "yesterday" })).toBeNull();
+    expect(serverTimeFromHeaders({ get: () => undefined })).toBeNull();
   });
 });

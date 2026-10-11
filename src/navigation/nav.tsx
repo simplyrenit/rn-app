@@ -41,6 +41,7 @@ import { CHAT_ENABLED } from "@/lib/config";
 import { retryPendingSignOut } from "@/lib/sign-out";
 import { RootStackParamList } from "@/lib/types";
 import { bookingQueryKey } from "@/backend/bookings";
+import { claimQueryKey } from "@/backend/claims";
 import {
   dismissRingNotifications,
   ignoreTapsWhileSignedOut,
@@ -69,7 +70,9 @@ import ArrivalWindowScreen from "@/screens/booking/arrival-window";
 import BookingScreen from "@/screens/booking/booking";
 import CheckCapturesScreen from "@/screens/booking/check-captures";
 import BookingDetailsScreen from "@/screens/booking/details";
+import ClaimScreen from "@/screens/booking/claim";
 import ExtendScreen from "@/screens/booking/extend";
+import FaultReportScreen from "@/screens/booking/fault-report";
 import NotAsDescribedScreen from "@/screens/booking/not-as-described";
 import PayDepositScreen from "@/screens/booking/pay-deposit";
 import ReportScreen from "@/screens/booking/report";
@@ -444,6 +447,9 @@ export default function Navigation() {
       case "ShopHandover":
         navigationRef.navigate("ShopHandover", { number: route.number });
         break;
+      case "Claim":
+        navigationRef.navigate("Claim", { id: route.id, role: route.role });
+        break;
       case "ShopToday":
         navigationRef.navigate("ShopToday");
         break;
@@ -508,6 +514,15 @@ export default function Navigation() {
           // Both Rentals lists start with this key.
           void queryClient.invalidateQueries("bookings");
           return;
+        }
+        // A claim moved: the claim itself, and the booking it holds or settles, are read afresh (ENG-252, ENG-253).
+        if (route.screen === "Claim") {
+          void queryClient.invalidateQueries(claimQueryKey(route.id));
+          if (route.role === "customer") {
+            void queryClient.invalidateQueries(bookingQueryKey(route.number));
+            void queryClient.invalidateQueries("bookings");
+            return;
+          }
         }
         // Whatever the shop's push was about, what its screens show is now out of date.
         refreshShop(queryClient);
@@ -799,6 +814,18 @@ export default function Navigation() {
         <Stack.Screen
           name="BookingReport"
           component={ReportScreen}
+        />
+        {/* The customer's fault report, and one claim for either side (ENG-252, ENG-253). A claim
+            is keyed by its id, so a push for it opens the one that is already open. */}
+        <Stack.Screen
+          name="BookingFault"
+          component={FaultReportScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="Claim"
+          component={ClaimScreen}
+          getId={({ params }) => String(params?.id)}
         />
         {/* The shop's ring (ENG-209), on the root stack so the tab bar is hidden
             while a request rings. Keyed by booking, so a second push for the same

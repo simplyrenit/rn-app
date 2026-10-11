@@ -376,6 +376,14 @@ export type RootStackParamList = {
   BookingReturn: { number: string };
   /** Picks how many more days; the price screen then asks with `extends`. */
   BookingExtend: { number: string };
+  /** BK-20's "Something doesn't work?": the customer's fault report, with photos, within 24 hours of the handover (ENG-252). */
+  BookingFault: { number: string };
+  /**
+   * One claim, for either side (ENG-252, ENG-253): who raised it, the amount, the deadline, the reply
+   * (the customer's one reply is sent here), what was decided and what it did to the money. `role` is
+   * which side of the booking the person is on; a claim carries no word for it.
+   */
+  Claim: { id: number; role: Side };
   /**
    * "They did not come" (either side, `no_show`) and the customer's "Owner did not
    * come" at the return (`owner_absent`), with a photo taken on the spot. `name` and

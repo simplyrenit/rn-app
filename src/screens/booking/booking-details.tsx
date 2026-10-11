@@ -1,6 +1,7 @@
 import { answerWindowChange, bookingQueryKey, fetchCancelOutcome } from "@/backend/bookings";
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
 import { GetHelp } from "@/components/booking/get-help";
+import { ClaimRows } from "@/components/claims/claim-rows";
 import { Records } from "@/components/capture/record-card";
 import { Panel, SummaryCard } from "@/components/booking/parts";
 import { PaymentsList } from "@/components/booking/payments-list";
@@ -166,6 +167,9 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
         title={`${booking.product.title} · ${booking.shop.name}`}
         other="the shop"
       />
+
+      {/* The reports and claims on this booking (a fault, the shop's damage claim), each with where it stands. */}
+      <ClaimRows ids={booking.claims} role="customer" />
 
       {request ? (
         <Panel style={{ padding: space.md, gap: space.sm, borderColor: color.brandPanelLine, backgroundColor: color.brandPanel }}>

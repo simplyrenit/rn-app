@@ -138,6 +138,28 @@ describe("pushRoute", () => {
     expect(pushRoute(undefined)).toBeNull();
     expect(pushRoute("accepted")).toBeNull();
   });
+  it("opens the claim itself when a `claim` push names one (ENG-252, ENG-253)", () => {
+    expect(pushRoute(push("claim", { role: "customer", claim: 12 }))).toEqual({
+      screen: "Claim",
+      id: 12,
+      number: "RN-24831",
+      role: "customer",
+    });
+    expect(pushRoute(push("claim", { role: "owner", claim: 12 }))).toEqual({ screen: "Claim", id: 12, number: "RN-24831", role: "owner" });
+    // An id sent as text still opens it.
+    expect(pushRoute(push("claim", { role: "customer", claim: "12" }))).toMatchObject({ screen: "Claim", id: 12 });
+  });
+
+  it("falls back to the booking when a `claim` push names no claim it can read", () => {
+    for (const claim of [undefined, null, 0, -3, 1.5, "x", "12a", {}, []]) {
+      expect(pushRoute(push("claim", { role: "customer", claim }))).toEqual({ screen: "Booking", number: "RN-24831" });
+      expect(pushRoute(push("claim", { role: "owner", claim }))).toEqual({ screen: "ShopBooking", number: "RN-24831" });
+    }
+    // With no booking there is nowhere behind the claim to put it.
+    expect(pushRoute(push("claim", { role: "owner", booking: null, claim: 12 }))).toBeNull();
+    expect(pushRoute(push("claim", { role: "customer", booking: null, claim: 12 }))).toBeNull();
+  });
+
   it("opens the shop's handover when the customer taps a preset button on the day (ENG-223)", () => {
     const owner = (over: Record<string, unknown>) => pushRoute(push("window", { role: "owner", ...over }));
     expect(owner({ what: "status", status: "on_my_way" })).toEqual({ screen: "ShopHandover", number: "RN-24831" });

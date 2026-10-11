@@ -225,6 +225,9 @@ export const BOOKINGS_ENDPOINT = SERVERURL + "bookings/";
 /** Get help: the desk's hours and the caller's own requests (`GET`), and a new request (`POST`) (OE-L). */
 export const HELP_ENDPOINT = SERVERURL + "help/";
 
+/** Claims: a claim, its one reply, and the list (OE-K). A fault or a damage report is a booking action, under `BOOKINGS_ENDPOINT`. */
+export const CLAIMS_ENDPOINT = SERVERURL + "claims/";
+
 /** `{payment_id}/confirm/`: what the app asks after the pay page (OE-D). */
 export const PAYMENTS_ENDPOINT = SERVERURL + "payments/";
 
