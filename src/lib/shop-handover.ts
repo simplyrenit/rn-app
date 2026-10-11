@@ -1,3 +1,4 @@
+import { problemLine, problemState } from "@/lib/claims";
 import { clock, dayOf, dayShort, depositAfterLate, lateDaysLabel, money, todayIst, windowLabel } from "@/lib/booking";
 import { captured, dayBlock, theirStatusLine, whenShort } from "@/lib/day-of";
 import { BookingShop, howLine, moneyView } from "@/lib/shop-booking";
@@ -157,7 +158,12 @@ export function returnCopy(b: BookingShop, now: Date): ReturnCopy {
   const due = b.return_by;
   const overdue = b.stage === "out" && Boolean(due) && now.getTime() > new Date(due ?? "").getTime();
   const held = Number(b.money.deposit) > 0 && b.money.deposit_state !== "none";
-  const until = b.report_problem_until;
+  // Whether a problem can be reported is the server's (`can`, P4-10), and what is left of the deposit to claim against (A-50):
+  // the lines below say so, they do not promise 24 hours the booking does not offer.
+  const problem = problemState(b, now);
+  const open = problem === "open";
+  const nothingLeft = problem === "none_left";
+  const until = open ? b.report_problem_until : null;
   // Late days come out of the deposit to the shop (N11): neither line may say the whole deposit goes back (review r1 #3).
   const late = depositAfterLate(b.money);
   const lateShare =
@@ -173,31 +179,37 @@ export function returnCopy(b: BookingShop, now: Date): ReturnCopy {
     handoverDay: shortDay(dayOf(handoverAt) ?? b.first_day),
     returnDay: shortDay(backDay),
     codeTitle: `Show ${first} this code`,
-    codeSub: !held
-      ? `${first} types it to finish the return. You then have 24 hours to report a problem.`
+    codeSub: nothingLeft
+      ? [
+          `${first} types it to finish the return.`,
+          lateShare ? `${lateShare}.` : null,
+          "Nothing is left of the deposit to claim against: if something is wrong, use Get help.",
+        ]
+          .filter(Boolean)
+          .join(" ")
       : !lateShare
         ? `${first} types it to finish the return. The deposit goes back to ${first} within 48 hours unless you report a problem in the next 24 hours.`
-        : late.back > 0
-          ? `${first} types it to finish the return. ${lateShare}; the rest goes back to ${first} within 48 hours unless you report a problem in the next 24 hours.`
-          : `${first} types it to finish the return. ${lateShare}. You then have 24 hours to report a problem.`,
+        : `${first} types it to finish the return. ${lateShare}; the rest goes back to ${first} within 48 hours unless you report a problem in the next 24 hours.`,
     returned:
       b.stage === "out"
         ? null
         : {
             title: returnAt ? `Returned · ${whenShort(returnAt, now)}` : "Returned",
             body: [
-              until ? `You can report a problem until ${whenShort(until, now)}.` : null,
+              until ? `You can report a problem until ${whenShort(until, now)}.` : problemLine(problem),
               !held
-                ? until
+                ? open
                   ? null
                   : "This rental is finished."
                 : lateShare
                   ? late.back > 0
-                    ? `${lateShare}. The rest (${money(late.back)}) goes back to ${first}${until ? " after that" : ""}.`
+                    ? `${lateShare}. The rest (${money(late.back)}) goes back to ${first}${open ? " after that" : ""}.`
                     : `${lateShare}. Nothing goes back to ${first}.`
-                  : until
-                    ? `After that the deposit goes back to ${first}.`
-                    : `The deposit is settled with ${first} once both return records are in.`,
+                  : problem === "reported"
+                    ? `The part of the deposit that is not claimed goes back to ${first}.`
+                    : open
+                      ? `After that the deposit goes back to ${first}.`
+                      : `The deposit is settled with ${first} once both return records are in.`,
             ]
               .filter(Boolean)
               .join(" "),
@@ -218,6 +230,9 @@ export function shopReturnSteps(b: BookingShop, recorded: boolean): Step[] {
 }
 
 /** What "Report a problem" says before the return is finished: the code comes first (decision A-35). */
-export function reportFirstNote(b: BookingShop): string {
-  return `Finish the return first: show ${b.customer.first_name} the code. You then have 24 hours to report the problem, with these photos as the record.`;
+export function reportFirstNote(b: BookingShop, now: Date = new Date()): string {
+  const first = `Finish the return first: show ${b.customer.first_name} the code.`;
+  // Nothing left to claim against (A-50): say so now, not after the code, and point to Get help.
+  if (problemState(b, now) === "none_left") return `${first} ${problemLine("none_left")}`;
+  return `${first} You then have 24 hours to report the problem, with these photos as the record.`;
 }

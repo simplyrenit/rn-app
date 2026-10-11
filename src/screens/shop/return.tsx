@@ -12,7 +12,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { Block, LinkRow, StepList } from "@/components/handover/parts";
 import { SLOW_POLL_MS } from "@/lib/booking";
 import { otherSetOffered, recordWanted } from "@/lib/capture";
-import { reportUntilLine } from "@/lib/claims";
+import { problemState, reportUntilLine } from "@/lib/claims";
 import { captured, dayBlock } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { BookingShop } from "@/lib/shop-booking";
@@ -42,6 +42,8 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
   const [verdict, setVerdict] = useState<"good" | "problem" | null>(null);
 
   const copy = returnCopy(booking, now);
+  // Nothing left of the deposit to claim against (A-50): the way on is Get help, shown beside the words, not at the foot of the page.
+  const nothingLeft = problemState(booking, now) === "none_left";
   const out = booking.stage === "out" && !booking.exit;
   const recorded = flags.mine || Boolean(record.draft?.sealed);
   const code = "return_code" in day ? day.return_code : null;
@@ -86,6 +88,12 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
         </Block>
       )}
 
+      {nothingLeft ? (
+        <Panel>
+          <GetHelp booking={booking} />
+        </Panel>
+      ) : null}
+
       {/* A handover record that was never made or finished: the payout still waits for it,
           and an `out` booking lands here, so this is where it is found (review r1 #1). */}
       <Records role="owner" moments={["handover"]} booking={booking} receivedAt={receivedAt} stake={payoutPending(booking)} {...names} />
@@ -123,7 +131,7 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
 
       {out && verdict === "problem" ? (
         <Notice tone="warning" icon="warning">
-          {reportFirstNote(booking)}
+          {reportFirstNote(booking, now)}
         </Notice>
       ) : null}
 
@@ -163,9 +171,11 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
 
       <ClaimRows ids={booking.claims} role="owner" />
 
-      <Panel>
-        <GetHelp booking={booking} />
-      </Panel>
+      {nothingLeft ? null : (
+        <Panel>
+          <GetHelp booking={booking} />
+        </Panel>
+      )}
 
       <Button variant="outline" onPress={() => navigation.navigate("ShopBooking", { number })}>
         Booking details

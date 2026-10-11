@@ -239,6 +239,8 @@ describe("SH-10, the return", () => {
   it("once the code is in: when, and until when a problem can be reported", () => {
     const returned = out({
       stage: "returned",
+      // The server's own rule (P4-10): `can` holds `report_problem` while the report is open.
+      can: ["report_problem", "get_help"],
       report_problem_until: "2026-10-27T13:10:00Z",
       timeline: [
         { event: "handover", label: "Rental started", at: "2026-10-24T05:12:00Z", by: "owner" },
@@ -261,6 +263,7 @@ describe("SH-10, the return", () => {
     );
     const returned = out({
       stage: "returned",
+      can: ["report_problem", "get_help"],
       money: lateMoney,
       report_problem_until: "2026-10-29T13:10:00Z",
       timeline: [
@@ -272,19 +275,39 @@ describe("SH-10, the return", () => {
       "You can report a problem until 6:40 pm on Thu 29 Oct. ₹1,220 of the deposit comes to you for 2 late days. The rest (₹1,780) goes back to Aarav after that."
     );
     // The late days took all of it.
-    const all = out({ stage: "returned", money: { ...booking().money, late_days: 6, late_fee: "3000.00" }, report_problem_until: null });
+    const all = out({ stage: "returned", can: ["get_help"], money: { ...booking().money, late_days: 6, late_fee: "3000.00" }, report_problem_until: null });
     expect(returnCopy(all, new Date("2026-11-02T13:11:00Z")).returned?.body).toBe(
-      "The whole ₹3,000 deposit comes to you for 6 late days. Nothing goes back to Aarav."
+      "Nothing is left of the deposit to claim against, so a problem can't be reported here. Use Get help to tell Renit's desk what is wrong. The whole ₹3,000 deposit comes to you for 6 late days. Nothing goes back to Aarav."
     );
     expect(returnCopy(out({ money: { ...booking().money, late_days: 6, late_fee: "3000.00" } }), BACK).codeSub).toBe(
-      "Aarav types it to finish the return. The whole ₹3,000 deposit comes to you for 6 late days. You then have 24 hours to report a problem."
+      "Aarav types it to finish the return. The whole ₹3,000 deposit comes to you for 6 late days. Nothing is left of the deposit to claim against: if something is wrong, use Get help."
     );
   });
 
-  it("with no deposit, the code line does not promise one back", () => {
-    const free = out({ money: { ...booking().money, deposit: "0.00", deposit_state: "none" } });
-    expect(returnCopy(free, BACK).codeSub).toBe(
-      "Aarav types it to finish the return. You then have 24 hours to report a problem."
+  it("with no deposit, the code line says nothing is left to claim against and points to Get help, before the code and after it (A-50)", () => {
+    const money = { ...booking().money, deposit: "0.00", deposit_state: "none" };
+    expect(returnCopy(out({ money }), BACK).codeSub).toBe(
+      "Aarav types it to finish the return. Nothing is left of the deposit to claim against: if something is wrong, use Get help."
+    );
+    // After the code: the same, in the returned card, not "You can report a problem until…".
+    const returned = out({ stage: "returned", money, can: ["get_help"], report_problem_until: "2026-10-27T13:10:00Z" });
+    expect(returnCopy(returned, new Date("2026-10-26T13:11:00Z")).returned?.body).toBe("Nothing is left of the deposit to claim against, so a problem can't be reported here. Use Get help to tell Renit's desk what is wrong. This rental is finished.");
+  });
+
+  it("after the code, the card says which reason it is when the server does not offer the report, and never promises the 24 hours", () => {
+    const base = { stage: "returned", can: ["get_help"] as string[], report_problem_until: "2026-10-27T13:10:00Z" };
+    const body = (over: Record<string, unknown>, now = new Date("2026-10-26T13:11:00Z")) => returnCopy(out({ ...base, ...over }), now).returned?.body;
+    // A damage claim is already made: its part of the deposit waits, the rest goes back.
+    expect(body({ claim_open: true, claims: [12] })).toBe(
+      "A problem has already been reported on this booking. Its claim is listed on the booking. The part of the deposit that is not claimed goes back to Aarav."
+    );
+    // The time is over.
+    expect(body({}, new Date("2026-10-28T00:00:00Z"))).toBe(
+      "The time to report a problem has passed. Use Get help to talk to Renit's desk. The deposit is settled with Aarav once both return records are in."
+    );
+    // Offered: the time, from the server's `report_problem_until`.
+    expect(body({ can: ["report_problem", "get_help"] })).toBe(
+      "You can report a problem until 6:40 pm on Tue 27 Oct. After that the deposit goes back to Aarav."
     );
   });
 
@@ -294,6 +317,10 @@ describe("SH-10, the return", () => {
     expect(shopReturnSteps(out({ stage: "returned", captures: flags(true, true, true, true) }), false).every((s) => s.state === "done")).toBe(true);
     expect(reportFirstNote(out())).toBe(
       "Finish the return first: show Aarav the code. You then have 24 hours to report the problem, with these photos as the record."
+    );
+    // Nothing left of the deposit: said before the code, with the way on.
+    expect(reportFirstNote(out({ money: { ...booking().money, deposit: "0.00", deposit_state: "none" } }))).toBe(
+      "Finish the return first: show Aarav the code. Nothing is left of the deposit to claim against, so a problem can't be reported here. Use Get help to tell Renit's desk what is wrong."
     );
   });
 });

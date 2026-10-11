@@ -1,6 +1,7 @@
-import { reportDamage } from "@/backend/claims";
+import { findMyReport, reportDamage } from "@/backend/claims";
 import { shopBookingQueryKey, fetchShopBooking, useShopBooking } from "@/backend/shop-ring";
-import { BookingLoadError, BookingLoading, BottomBar, Notice } from "@/components/booking/parts";
+import { GetHelp } from "@/components/booking/get-help";
+import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/components/booking/parts";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, SubpageHeader, Text, TextField } from "@/components/core";
 import { ConfirmSheet } from "@/components/core/confirm-sheet";
@@ -16,6 +17,7 @@ import {
   damageMax,
   damageMaxLine,
   damageNotice,
+  newClaimIds,
   parseRupees,
   reportUntilLine,
 } from "@/lib/claims";
@@ -101,6 +103,8 @@ export default function ShopReportProblemScreen() {
         setError(failedPhotosText(up.failed, up.photos.length));
         return;
       }
+      // What the booking held before the press: only a claim that was not there, with these words and this amount, is this report.
+      const before = booking.claims;
       try {
         const made = await reportDamage(number, rupees, statement, urlsOf(up.photos) ?? []);
         queryClient.setQueryData(shopBookingQueryKey(number), made.booking);
@@ -119,8 +123,7 @@ export default function ShopReportProblemScreen() {
         try {
           const fresh = await fetchShopBooking(number);
           queryClient.setQueryData(shopBookingQueryKey(number), fresh);
-          const claims = fresh.claims ?? [];
-          const claimId = fresh.claim_open ? claims[claims.length - 1] : undefined;
+          const claimId = await findMyReport(newClaimIds(before, fresh.claims), { kind: "damage", statement, amount: rupees });
           if (claimId) {
             discardEvidence(up.photos);
             opened(claimId);
@@ -190,6 +193,10 @@ export default function ShopReportProblemScreen() {
             </Notice>
           </>
         )}
+        {/* "Nothing is left of the deposit… use Get help" has its way on right under the words. */}
+        <Panel>
+          <GetHelp booking={booking} />
+        </Panel>
       </ScrollView>
       <BottomBar>
         {blocked ? (
