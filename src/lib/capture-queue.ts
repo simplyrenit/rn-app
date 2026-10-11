@@ -132,7 +132,7 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
         const capture = await deps.send(draft, captureBody(draft));
         change(draft.id, (d) => applyAnswer(d, capture));
       } catch (error) {
-        const out = sendFailure(apiError(error));
+        const out = sendFailure(apiError(error), { forOther: draft.forOther });
         if ("done" in out) {
           change(draft.id, (d) => ({ ...d, done: true, error: null }));
         } else {

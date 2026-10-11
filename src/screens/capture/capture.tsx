@@ -17,11 +17,13 @@ import {
   VIDEO_SECONDS,
   videoHintText,
   addShot,
+  reopenForMissing,
   canSeal,
   captureHeading,
   captureId,
   chooseList,
   codeConfirmed,
+  confirmFailure,
   draftState,
   durationLabel,
   fallbackErrorText,
@@ -514,7 +516,18 @@ export default function CaptureScreen() {
       void queryClient.invalidateQueries(capturesQueryKey(number));
       toast.success("Confirmed");
     } catch (error) {
-      setCodeError(fallbackErrorText(apiError(error)));
+      const result = confirmFailure(apiError(error));
+      if (result.kind === "confirmed") {
+        // Already complete: a confirm whose answer was lost got through.
+        update(codeConfirmed);
+        void queryClient.invalidateQueries(capturesQueryKey(number));
+      } else if (result.kind === "reopened") {
+        // A file never reached Renit's storage: the record is open again for exactly those, and the code is asked for after.
+        update((d) => reopenForMissing(d, result.missing));
+        setCodeError("A file of this record did not upload. Take what is missing again, then finish.");
+      } else {
+        setCodeError(result.text);
+      }
       setCode("");
       setRound((r) => r + 1);
     } finally {

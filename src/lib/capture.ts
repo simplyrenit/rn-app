@@ -1,4 +1,4 @@
-import type { ApiError } from "@/lib/api-error";
+import { ApiError, fieldErrors } from "@/lib/api-error";
 
 /**
  * The capture: the photos, the video and the ticks both people record at the
@@ -413,9 +413,41 @@ export function applyAnswer(draft: CaptureDraft, capture: Pick<Capture, "complet
   };
 }
 
+/** What a refused confirm of the other person's set lists as still missing, other than the code itself. */
+function missingBeyondCode(error: ApiError | null): string[] {
+  const missing = error?.details?.missing;
+  return Array.isArray(missing) ? missing.filter((m): m is string => typeof m === "string" && m !== "confirmation_code") : [];
+}
+
+/**
+ * What a refused confirm of the other person's set means (`POST …/phone-fallback/confirm/`):
+ *  - `confirmed`: 409 `capture_locked`, the set is already complete (a confirm whose answer was lost).
+ *  - `reopened`: 409 `capture_incomplete` with files still missing (one never reached the bucket and was taken out of
+ *    the record): the draft is opened again for exactly those, as for a send (`applyAnswer`), and the code is asked again after.
+ *  - `error`: anything else, in words; a 503 `storage_unavailable` says to try again, and nothing is lost.
+ */
+export type ConfirmResult = { kind: "confirmed" } | { kind: "reopened"; missing: string[] } | { kind: "error"; text: string };
+
+export function confirmFailure(error: ApiError | null): ConfirmResult {
+  if (error?.code === "capture_locked") return { kind: "confirmed" };
+  if (error?.code === "capture_incomplete") {
+    const beyond = missingBeyondCode(error);
+    if (beyond.length > 0) return { kind: "reopened", missing: beyond };
+  }
+  return { kind: "error", text: fallbackErrorText(error) };
+}
+
+/**
+ * The record opened again for what a refused confirm said was missing: it was uploaded and waiting for its code
+ * (`done`), and is now not; the missing shots, the video or the ID tick are asked for as for any send.
+ */
+export const reopenForMissing = (draft: CaptureDraft, missing: string[]): CaptureDraft =>
+  applyAnswer({ ...draft, done: false, awaitingCode: false }, { complete: false, missing });
+
 /** The other person read out the code and the server took it. */
 export const codeConfirmed = (draft: CaptureDraft): CaptureDraft => ({ ...draft, awaitingCode: false });
 
+const STORAGE_UNAVAILABLE = "We could not check your photos just now. Try again.";
 const OFFLINE = "Waiting for a connection. It uploads by itself when you are back online.";
 
 /** A file did not go up: it is tried again, by itself. */
@@ -435,9 +467,12 @@ export const uploadFailure = (): NonNullable<CaptureDraft["error"]> => ({ text: 
  *  - Anything else needs a person.
  */
 export function sendFailure(
-  error: ApiError | null
+  error: ApiError | null,
+  record: { forOther?: boolean } = {}
 ): { done: true } | { error: NonNullable<CaptureDraft["error"]>; refused?: true } {
   if (error?.code === "capture_locked") return { done: true };
+  // Renit's storage could not be asked about the photos (503): nothing is lost, and it is tried again, by itself or on Try again.
+  if (error?.code === "storage_unavailable") return { error: { text: STORAGE_UNAVAILABLE, retry: true } };
   if (
     !error ||
     error.status === 0 ||
@@ -459,7 +494,14 @@ export function sendFailure(
         refused: true,
       };
     case "forbidden":
-      return { error: { text: "This record can't be saved from this phone right now.", retry: false } };
+      // The other person's set is taken only while a code for it can still be typed: when it has run out the way on
+      // is a new code, not a dead end (the card and the capture screen both offer "Send a new code").
+      return record.forOther
+        ? { error: { text: "The code for the other person has run out. Send a new one, then try again.", retry: false } }
+        : { error: { text: "This record can't be saved from this phone right now.", retry: false } };
+    case "validation_error":
+      // The server's own sentence for the field: a capture holds at most 40 photos, and the like.
+      return { error: { text: Object.values(fieldErrors(error))[0] ?? error.message ?? "Renit couldn't accept this record. Try again.", retry: false } };
     default:
       return { error: { text: error.message ?? "Renit couldn't accept this record. Try again.", retry: false } };
   }
@@ -1084,6 +1126,14 @@ export function fallbackErrorText(error: ApiError | null): string {
     }
     case "code_expired":
       return "That code has run out. Send a new one.";
+    case "storage_unavailable":
+      return STORAGE_UNAVAILABLE;
+    case "capture_incomplete":
+      return missingBeyondCode(error).length > 0
+        ? "A file of this record did not upload. Send it again."
+        : "Finish recording first. The code confirms the whole record.";
+    case "capture_locked":
+      return "This record is already complete.";
     case "stage_not_allowed":
       return "This booking has moved on, so this can't be done now.";
     default:

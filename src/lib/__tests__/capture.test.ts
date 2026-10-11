@@ -58,7 +58,9 @@ import {
   videoLabel,
   videoProblem,
   withList,
+  confirmFailure,
   pendingList,
+  reopenForMissing,
   videoHintText,
   withShooting,
 } from "../capture";
@@ -880,5 +882,63 @@ describe("the video hint and the picker's pending result", () => {
     expect(pendingList({ canceled: false })).toEqual([{ canceled: false }]);
     expect(pendingList([{ canceled: false }, { canceled: true }])).toEqual([{ canceled: false }, { canceled: true }]);
     expect(pendingList([])).toEqual([]);
+  });
+});
+
+describe("the new answers of the capture calls (lane I, T-23)", () => {
+  const e = (code: string, status = 409, details: Record<string, unknown> | null = null): ApiError => ({ status, code, message: null, details });
+
+  it("503 storage_unavailable on a send says it plainly, loses nothing and is tried again", () => {
+    expect(sendFailure(e("storage_unavailable", 503))).toEqual({
+      error: { text: "We could not check your photos just now. Try again.", retry: true },
+    });
+  });
+
+  it("409 capture_locked on a send means it is already complete", () => {
+    expect(sendFailure(e("capture_locked"))).toEqual({ done: true });
+  });
+
+  it("400 beyond 40 shots shows the server's own sentence for the field", () => {
+    const error: ApiError = { status: 400, code: "validation_error", message: "Check the fields.", details: { fields: { shots: ["A capture holds at most 40 photos."] } } };
+    expect(sendFailure(error)).toEqual({ error: { text: "A capture holds at most 40 photos.", retry: false } });
+    expect(sendFailure({ ...error, details: null })).toEqual({ error: { text: "Check the fields.", retry: false } });
+  });
+
+  it("403 on the other person's set, when its code ran out, is a new code and not a dead end", () => {
+    const out = sendFailure(e("forbidden", 403), { forOther: true });
+    expect(out).toEqual({ error: { text: "The code for the other person has run out. Send a new one, then try again.", retry: false } });
+    // The person's own record keeps its plain line.
+    expect(sendFailure(e("forbidden", 403))).toEqual({ error: { text: "This record can't be saved from this phone right now.", retry: false } });
+  });
+
+  it("the confirm of the other person's set: complete already, a file missing, or only words", () => {
+    // A repeated confirm after a lost answer learns the set is complete.
+    expect(confirmFailure(e("capture_locked"))).toEqual({ kind: "confirmed" });
+    // A file never reached the bucket: the record opens again for exactly that.
+    expect(confirmFailure(e("capture_incomplete", 409, { missing: ["serial", "confirmation_code"] }))).toEqual({ kind: "reopened", missing: ["serial"] });
+    // Recording is not finished at all: only the code is missing is the one thing it does not list.
+    expect(confirmFailure(e("capture_incomplete"))).toEqual({ kind: "error", text: "Finish recording first. The code confirms the whole record." });
+    expect(confirmFailure(e("capture_incomplete", 409, { missing: ["confirmation_code"] }))).toEqual({
+      kind: "error",
+      text: "Finish recording first. The code confirms the whole record.",
+    });
+    expect(confirmFailure(e("storage_unavailable", 503))).toEqual({ kind: "error", text: "We could not check your photos just now. Try again." });
+    expect(confirmFailure(e("wrong_code", 409, { tries_left: 2 }))).toEqual({ kind: "error", text: "That code is not right. 2 tries left." });
+  });
+
+  it("says each in words on the fallback calls", () => {
+    expect(fallbackErrorText(e("capture_incomplete", 409, { missing: ["front"] }))).toBe("A file of this record did not upload. Send it again.");
+    expect(fallbackErrorText(e("storage_unavailable", 503))).toBe("We could not check your photos just now. Try again.");
+    expect(fallbackErrorText(e("capture_locked"))).toBe("This record is already complete.");
+  });
+
+  it("a record opened again for what was missing is no longer waiting for its code, and asks for those files", () => {
+    const waiting = { ...seal(uploaded(taken())), done: true, awaitingCode: true };
+    const next = reopenForMissing(waiting, ["back"]);
+    expect(next.done).toBe(false);
+    expect(next.awaitingCode).toBe(false);
+    expect(next.sealed).toBe(false);
+    expect(next.shots.back).toBeUndefined();
+    expect(nextStep(next)).toEqual({ kind: "shot", index: 1 });
   });
 });
