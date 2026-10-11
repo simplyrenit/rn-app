@@ -13,6 +13,7 @@ import {
   comingBackRow,
   depositPill,
   extendFrom,
+  feedNow,
   freeText,
   goingOutRow,
   isQuiet,
@@ -291,5 +292,34 @@ describe("the quick block", () => {
     expect(blockErrorText(failure(400, "validation_error"))).toMatch(/Check the day/);
     expect(blockErrorText(failure(0, null))).toMatch(/couldn't reach Renit/);
     expect(blockErrorText(failure(500, null))).toMatch(/Something went wrong/);
+  });
+});
+
+describe("feedNow: the day words come from the server's date (P3-17)", () => {
+  it("is midday in India on the feed's date, whatever the phone's clock says", () => {
+    const phoneWrong = new Date("2026-10-20T01:00:00Z");
+    expect(feedNow({ date: "2026-10-13" }, phoneWrong).toISOString()).toBe("2026-10-13T06:30:00.000Z");
+  });
+
+  it("makes yesterday and tomorrow right on a phone a week out", () => {
+    const now = feedNow({ date: "2026-10-13" }, new Date("2026-10-20T04:30:00Z"));
+    const back: ComingBack = {
+      number: "RN-1",
+      product_title: "Sony PS5",
+      customer_first_name: "Isha",
+      customer_last_initial: "T",
+      stage: "out",
+      return_by: "2026-10-12T14:30:00Z",
+      late_days: 1,
+      deposit_state: "paid",
+    };
+    expect(comingBackRow(back, now).sub).toBe("Was due yesterday, 8:00 pm");
+    expect(waitingLine({ ring_at: "2026-10-14T04:30:00Z", count: 2 }, now)).toBe("Ringing tomorrow 10 am: 2 bookings");
+  });
+
+  it("falls back to the phone's clock without a date", () => {
+    const phone = new Date("2026-10-13T04:30:00Z");
+    expect(feedNow(null, phone)).toBe(phone);
+    expect(feedNow({ date: "" }, phone)).toBe(phone);
   });
 });

@@ -42,6 +42,7 @@ import { RootStackParamList } from "@/lib/types";
 import { bookingQueryKey } from "@/backend/bookings";
 import {
   dismissRingNotifications,
+  ownSessionId,
   registerDeviceSession,
   setupChatNotifications,
   setupPushRouter,
@@ -49,7 +50,9 @@ import {
   setupRingChannel,
 } from "@/backend/notifications";
 import { PushRoute } from "@/lib/push-routes";
+import { ringEndedQueryKey } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
+import { endingFromPush } from "@/lib/shop-ring";
 import ShopBookingScreen from "@/screens/shop/booking";
 import DraftPhotosScreen from "@/screens/shop/draft-photos";
 import { ShopTodayScreen } from "@/screens/shop/home";
@@ -483,8 +486,20 @@ export default function Navigation() {
         // from the tray. When it ends, wherever it was answered, the ring screen
         // that is open reads that and says so, and the tray forgets the ring.
         if (route.screen === "ShopRing") {
-          if (route.ended) void dismissRingNotifications(route.number);
-          else openRoute(route);
+          if (route.ended) {
+            void dismissRingNotifications(route.number);
+            // The push says which session answered; this phone's own session says whether
+            // that was this phone ("You accepted") or another device (P3-14).
+            const end = route.end;
+            if (end) {
+              void ownSessionId().then((own) =>
+                queryClient.setQueryData(ringEndedQueryKey(route.number), endingFromPush(end, own))
+              );
+            }
+          } else {
+            queryClient.removeQueries(ringEndedQueryKey(route.number));
+            openRoute(route);
+          }
         }
       },
       onOpen: (route) => {

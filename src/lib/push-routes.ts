@@ -1,4 +1,4 @@
-import { Ring, parseRing } from "@/lib/shop-ring";
+import { Ring, RingEndPush, parseRing, parseRingEnd } from "@/lib/shop-ring";
 
 /**
  * Where a push takes the app (API-CONTRACT, Common › Push notifications).
@@ -18,10 +18,11 @@ export type PushRoute =
   | { screen: "Booking"; number: string }
   /**
    * The shop's ring (ENG-209). `ring` is the request the push carried, so the screen
-   * can show it before the server has answered; `ended` is a `ring_ended`, which only
-   * says that the request is over, on this phone or on another device.
+   * can show it before the server has answered; `ended` is a `ring_ended`, which says
+   * that the request is over, on this phone or on another device, and `end` is what it
+   * says about it (the session that answered, to compare with this phone's own).
    */
-  | { screen: "ShopRing"; number: string; ring: Ring | null; ended: boolean }
+  | { screen: "ShopRing"; number: string; ring: Ring | null; ended: boolean; end: RingEndPush | null }
   /** The shop's page for a booking (ENG-210). */
   | { screen: "ShopBooking"; number: string }
   /** The shop's Today, for "Closed after two missed requests". */
@@ -78,10 +79,10 @@ export function pushRoute(data: unknown): PushRoute | null {
       case "ring": {
         const ring = parseRing(data.ring);
         const ringNumber = number ?? ring?.number ?? null;
-        return ringNumber ? { screen: "ShopRing", number: ringNumber, ring, ended: false } : null;
+        return ringNumber ? { screen: "ShopRing", number: ringNumber, ring, ended: false, end: null } : null;
       }
       case "ring_ended":
-        return number ? { screen: "ShopRing", number, ring: null, ended: true } : null;
+        return number ? { screen: "ShopRing", number, ring: null, ended: true, end: parseRingEnd(data) } : null;
     }
   }
 

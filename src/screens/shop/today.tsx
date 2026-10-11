@@ -18,6 +18,7 @@ import {
   blockErrorText,
   comingBackRow,
   extendFrom,
+  feedNow,
   goingOutRow,
   needsRow,
   openLine,
@@ -331,7 +332,9 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   // The switch reads the shop's own answer, which is the one the settings screen and
   // the dashboard share; the feed's copy fills in until that has loaded.
   const open = shop?.open ?? feed.open;
-  const copy = openLine(open, shop?.closed_until ?? null);
+  // Day words ("today", "yesterday") from the server's date, not the phone's clock (P3-17).
+  const now = feedNow(feed);
+  const copy = openLine(open, shop?.closed_until ?? null, now);
   const quiet = isQuiet(feed);
 
   return (
@@ -448,7 +451,7 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
           <View style={{ gap: space.sm }}>
             {feed.waiting_to_ring.map((group) => (
               <Notice key={group.ring_at} tone="brand" icon="clock">
-                {waitingLine(group)}
+                {waitingLine(group, now)}
               </Notice>
             ))}
           </View>
@@ -462,7 +465,7 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
 
         {feed.coming_back.length > 0 ? (
           <Section title="Coming back today">
-            <RowList rows={feed.coming_back.map((item) => comingBackRow(item))} onOpen={openBooking} />
+            <RowList rows={feed.coming_back.map((item) => comingBackRow(item, now))} onOpen={openBooking} />
           </Section>
         ) : null}
 
@@ -510,7 +513,7 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
             picked ? `${extending.product.title} stays blocked through ${dayShort(picked)}.` : "Pick the new last day."
           }
           value={null}
-          minDate={extendFrom(extending)}
+          minDate={extendFrom(extending, now)}
           onCancel={() => setExtending(null)}
           onPick={(day) => {
             const block = extending;

@@ -1,4 +1,4 @@
-import { acceptBooking, refuseBooking, useLive, useShopBooking } from "@/backend/shop-ring";
+import { acceptBooking, refuseBooking, ringEndedQueryKey, useLive, useShopBooking } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
 import { dismissRingNotifications } from "@/backend/notifications";
 import { BottomBar, Panel, Thumb } from "@/components/booking/parts";
@@ -24,6 +24,7 @@ import {
   hereEnding,
   outcomeUnknown,
   parseRing,
+  rentByLabel,
   ringDates,
   ringView,
   ringWhere,
@@ -43,7 +44,7 @@ import { CheckCircleIcon as CheckCircleMini } from "react-native-heroicons/mini"
 import { BellIcon as BellSolid } from "react-native-heroicons/solid";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 
 /** The bell inside two rings, as SH-01 draws it. */
 function RingBell() {
@@ -231,19 +232,17 @@ function RingingView({
 function EndedView({
   ending,
   summary,
-  here,
   onDone,
   onSee,
 }: {
   ending: RingEnding;
   summary: RingSummary | null;
-  here: boolean;
   onDone: () => void;
   /** An accepted request has a booking to go and see. */
   onSee?: () => void;
 }) {
   const { color } = useTheme();
-  const copy = endingCopy(ending, summary?.firstName ?? null, here);
+  const copy = endingCopy(ending, summary?.firstName ?? null);
   const accepted = ending.outcome === "accepted" && !ending.system;
   const Icon = accepted ? CheckCircleIcon : InformationCircleIcon;
   const tone = accepted ? color.success : color.textBody;
@@ -379,19 +378,23 @@ export default function ShopRingScreen() {
   const sending = useRef(false);
   const sheet = useRef<BottomSheetModal>(null);
 
-  const live = useLive(focused && active && !here && !ended, params.number);
+  // What a `ring_ended` push said, when one arrived (written by the router in `nav.tsx`).
+  const pushedEnd =
+    useQuery<RingEnding | null>(ringEndedQueryKey(params.number), () => null, { enabled: false }).data ?? null;
+
+  const live = useLive(focused && active && !here && !ended && !pushedEnd, params.number);
   const view = ringView({
     number: params.number,
     pushed,
     live: live.data,
     liveFailed: live.isError,
     here,
-    ended,
+    ended: ended ?? pushedEnd,
   });
   // Back in front (the app was away, or another screen was on top): the request may
   // have ended meanwhile, and the timer was stopped while it was away.
   const { refetch: refetchLive } = live;
-  const watching = focused && active && !here && !ended;
+  const watching = focused && active && !here && !ended && !pushedEnd;
   useEffect(() => {
     if (watching) void refetchLive();
   }, [watching, refetchLive]);
@@ -399,10 +402,21 @@ export default function ShopRingScreen() {
   // The request as it was seen ringing, for the card on the ended views.
   const known = live.data?.ringing.find((r) => r.number === params.number) ?? pushed;
   // Neither ringing nor remembered (an old tap): the booking itself says what became of it.
+  // An accepted request also reads it, for the time the customer has been given to pay.
+  const acceptedElsewhere =
+    (view.kind === "ended" || view.kind === "here") &&
+    view.ending.outcome === "accepted" &&
+    !view.ending.system &&
+    !view.ending.rentBy;
   const booking = useShopBooking(
     params.number,
-    !known && view.kind !== "ringing" && view.kind !== "loading" && view.kind !== "failed"
+    acceptedElsewhere || (!known && view.kind !== "ringing" && view.kind !== "loading" && view.kind !== "failed")
   );
+  /** The ending with the pay-by time filled in from the booking, when it has one. */
+  const withRent = (ending: RingEnding): RingEnding =>
+    ending.outcome === "accepted" && !ending.rentBy && booking.data
+      ? { ...ending, rentBy: rentByLabel(booking.data, booking.dataUpdatedAt) }
+      : ending;
 
   const close = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"));
   // The booking takes this screen's place, so "back" from it is not a ring that is over.
@@ -445,7 +459,11 @@ export default function ShopRingScreen() {
   };
 
   const accept = () =>
-    answer("accept", async () => hereEnding("accepted", (await acceptBooking(params.number)).answered?.at ?? null));
+    answer("accept", async () => {
+      const booking = await acceptBooking(params.number);
+      // The server's clock as it answered: the pay-by time is its, not the phone's.
+      return hereEnding("accepted", booking.answered?.at ?? null, null, rentByLabel(booking));
+    });
 
   const refuse = (reason: RefuseReason, blockDates: boolean) =>
     answer("refuse", async () => {
@@ -471,14 +489,14 @@ export default function ShopRingScreen() {
       />
     );
   } else if (view.kind === "here") {
-    body = <EndedView ending={view.ending} summary={summary} here onDone={close} onSee={see} />;
+    body = <EndedView ending={withRent(view.ending)} summary={summary} onDone={close} onSee={see} />;
   } else if (view.kind === "ended") {
-    body = <EndedView ending={view.ending} summary={summary} here={false} onDone={close} onSee={see} />;
+    body = <EndedView ending={withRent(view.ending)} summary={summary} onDone={close} onSee={see} />;
   } else if (view.kind === "unknown") {
-    const finished = booking.data ? endingFromBooking(booking.data) : null;
+    const finished = booking.data ? endingFromBooking(booking.data, booking.dataUpdatedAt) : null;
     body = booking.data ? (
       finished ? (
-        <EndedView ending={finished} summary={summary} here={false} onDone={close} onSee={see} />
+        <EndedView ending={finished} summary={summary} onDone={close} onSee={see} />
       ) : (
         <View style={{ flex: 1, justifyContent: "center" }}>
           <EmptyState

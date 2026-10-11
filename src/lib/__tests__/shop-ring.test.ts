@@ -12,6 +12,7 @@ import {
   endingCopy,
   endingFromBooking,
   endingFromError,
+  endingFromPush,
   endingFromRecent,
   feeText,
   hereEnding,
@@ -19,6 +20,8 @@ import {
   missingText,
   outcomeUnknown,
   parseRing,
+  parseRingEnd,
+  rentByLabel,
   refuseBody,
   ringDates,
   ringView,
@@ -73,6 +76,7 @@ const recent = (over: Partial<RecentRing> = {}): RecentRing => ({
   answered_at: "2026-10-12T04:13:00Z",
   ended_at: "2026-10-12T04:13:00Z",
   this_device: false,
+  session_id: 27,
   ...over,
 });
 
@@ -263,10 +267,13 @@ describe("what became of a request, in words", () => {
     expect(copy.sub).toBe("Aarav has been asked to pay the rent.");
   });
 
-  it("this phone's own device wins the name, whatever the server called it", () => {
+  it("this phone's own session wins over the name, whatever the server called it (P3-9)", () => {
     expect(whereText("phone", "iPhone 15", true)).toBe("this phone");
-    expect(endingCopy(endingFromRecent(recent({ answered_via: "phone", this_device: true })), "Aarav").title).toBe(
-      "Accepted on this phone at 9:43 am"
+    const mine = endingFromRecent(recent({ answered_via: "phone", this_device: true, session_id: 31 }));
+    expect(mine).toMatchObject({ thisDevice: true, where: "this phone" });
+    expect(endingCopy(mine, "Aarav").title).toBe("You accepted this booking");
+    expect(endingCopy(endingFromRecent(recent({ answered_via: "phone", device_name: "iPhone 15" })), "Aarav").title).toBe(
+      "Accepted on iPhone 15 at 9:43 am"
     );
   });
 
@@ -313,8 +320,23 @@ describe("what became of a request, in words", () => {
 
 describe("endingFromBooking: an old tap, long after the five minutes the live answer remembers", () => {
   const booking = (over: Record<string, unknown>) =>
-    ({ exit: "", exit_reason: "", stage: "accepted", answered: null, ...over }) as unknown as BookingShop;
-  const answered = { at: "2026-10-12T04:13:00Z", via: "phone", device_name: "Owner's phone", seconds: 118 };
+    ({
+      exit: "",
+      exit_reason: "",
+      stage: "accepted",
+      answered: null,
+      money: { rent_due_at: null },
+      server_time: "2026-10-12T04:14:00Z",
+      ...over,
+    }) as unknown as BookingShop;
+  const answered = {
+    at: "2026-10-12T04:13:00Z",
+    via: "phone",
+    device_name: "Owner's phone",
+    seconds: 118,
+    this_device: false,
+    session_id: 27,
+  };
 
   it("an accepted booking is an accepted request, with where and when", () => {
     expect(endingFromBooking(booking({ answered }))).toMatchObject({
@@ -326,6 +348,25 @@ describe("endingFromBooking: an old tap, long after the five minutes the live an
     expect(endingFromBooking(booking({ answered, exit: "cancelled_by_customer", exit_reason: "free" }))?.outcome).toBe(
       "accepted"
     );
+  });
+
+  it("says whether this phone's own session answered (P3-9), and by when the customer must pay (P3-13)", () => {
+    const due = { rent_due_at: "2026-10-12T04:43:00Z" };
+    const ending = endingFromBooking(booking({ answered: { ...answered, this_device: true }, money: due }))!;
+    expect(ending).toMatchObject({ outcome: "accepted", thisDevice: true, where: "this phone" });
+    expect(endingCopy(ending, "Aarav")).toEqual({
+      title: "You accepted this booking",
+      sub: "Aarav has been asked to pay the rent by 10:13 am.",
+    });
+    // Another session's accept is another device's, whatever its name.
+    expect(endingFromBooking(booking({ answered, money: due }))).toMatchObject({ thisDevice: false, where: "Owner's phone" });
+  });
+
+  it("a request Renit's staff answered says so (P3-6)", () => {
+    const staff = endingFromBooking(
+      booking({ answered: { ...answered, via: "admin", device_name: "Renit staff (Meera)" } })
+    );
+    expect(staff?.where).toBe("Renit staff (Meera)");
   });
 
   it("a refusal keeps its reason, and a system one is marked as the system's", () => {
@@ -359,5 +400,98 @@ describe("Can't do it", () => {
     expect(blockResult(true, { id: 88 })).toBe("blocked");
     expect(blockResult(true, null)).toBe("none_free");
     expect(blockResult(false, null)).toBe("not_asked");
+  });
+});
+
+describe("the ring_ended push and this phone's own session (P3-14)", () => {
+  const data = {
+    type: "ring_ended",
+    booking: "RN-24831",
+    role: "owner",
+    outcome: "accepted",
+    answered_via: "phone",
+    device_name: "Owner's phone",
+    answered_at: "2026-10-12T04:13:00Z",
+    session_id: 27,
+  };
+
+  it("reads what the push says about the end", () => {
+    expect(parseRingEnd(data)).toEqual({
+      outcome: "accepted",
+      answered_via: "phone",
+      device_name: "Owner's phone",
+      answered_at: "2026-10-12T04:13:00Z",
+      session_id: 27,
+    });
+    // A session id that arrives as text is still a number; nobody answering leaves the fields null.
+    expect(parseRingEnd({ ...data, session_id: "27" })?.session_id).toBe(27);
+    expect(parseRingEnd({ type: "ring_ended", outcome: "no_answer" })).toEqual({
+      outcome: "no_answer",
+      answered_via: null,
+      device_name: null,
+      answered_at: null,
+      session_id: null,
+    });
+  });
+
+  it("is null for a push that does not say how the ring ended", () => {
+    expect(parseRingEnd({ type: "ring_ended" })).toBeNull();
+    expect(parseRingEnd({ outcome: "exploded" })).toBeNull();
+    expect(parseRingEnd(null)).toBeNull();
+  });
+
+  it("is 'You accepted' when the session that answered is this phone's own", () => {
+    const ending = endingFromPush(parseRingEnd(data)!, 27);
+    expect(ending.thisDevice).toBe(true);
+    expect(endingCopy(ending, "Aarav").title).toBe("You accepted this booking");
+  });
+
+  it("is 'Accepted on …' when another session answered", () => {
+    const ending = endingFromPush(parseRingEnd(data)!, 31);
+    expect(ending.thisDevice).toBe(false);
+    expect(endingCopy(ending, "Aarav").title).toBe("Accepted on Owner's phone at 9:43 am");
+  });
+
+  it("claims nothing for this phone when its own session, or the answering one, is unknown", () => {
+    expect(endingFromPush(parseRingEnd(data)!, null).thisDevice).toBe(false);
+    expect(endingFromPush(parseRingEnd({ ...data, session_id: null })!, 27).thisDevice).toBe(false);
+  });
+
+  it("a refusal from this phone, and one nobody answered", () => {
+    const refused = endingFromPush(parseRingEnd({ ...data, outcome: "refused" })!, 27);
+    expect(endingCopy(refused, "Aarav").title).toBe("You said you can't do it");
+    const silent = endingFromPush(parseRingEnd({ type: "ring_ended", outcome: "no_answer" })!, 27);
+    expect(endingCopy(silent, "Aarav")).toEqual({ title: "This request has ended", sub: "It wasn't answered in time." });
+  });
+
+  it("a ring the system ended is not this phone's, even with a session id", () => {
+    const ending = endingFromPush(parseRingEnd({ ...data, outcome: "refused", answered_via: "system", device_name: null })!, 27);
+    expect(ending.system).toBe(true);
+    expect(endingCopy(ending, "Aarav").title).toBe("This request has ended");
+  });
+});
+
+describe("rentByLabel: by when the customer must pay (P3-13), on the server's clock (P3-17)", () => {
+  const b = (due: string | null, serverTime: string) =>
+    ({ money: { rent_due_at: due }, server_time: serverTime }) as unknown as BookingShop;
+
+  it("says the time when the deadline is today", () => {
+    expect(rentByLabel(b("2026-10-12T04:43:00Z", "2026-10-12T04:13:30Z"))).toBe("10:13 am");
+  });
+
+  it("says the day too when it is not today by the server's clock", () => {
+    expect(rentByLabel(b("2026-10-13T04:43:00Z", "2026-10-12T04:13:30Z"))).toBe("Tue 13 Oct, 10:13 am");
+  });
+
+  it("is null before the accept", () => {
+    expect(rentByLabel(b(null, "2026-10-12T04:13:30Z"))).toBeNull();
+  });
+});
+
+describe("a pay-by time in the accepted copy", () => {
+  it("is written when known, and the request is still plainly accepted when not", () => {
+    const base = hereEnding("accepted", "2026-10-12T04:13:00Z", null, "10:13 am");
+    expect(endingCopy(base, "Aarav").sub).toBe("Aarav has been asked to pay the rent by 10:13 am.");
+    expect(endingCopy({ ...base, rentBy: null }, "Aarav").sub).toBe("Aarav has been asked to pay the rent.");
   });
 });

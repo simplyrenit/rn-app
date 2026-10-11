@@ -36,6 +36,10 @@ export interface ShopMoney {
   deposit_state: string;
   deposit_ask_at: string | null;
   deposit_due_at: string | null;
+  /** How long the customer has to pay once the shop accepts; the deadline says it, so it is not written out (P3-13). */
+  rent_pay_minutes: number | null;
+  /** The deadline, set at Accept; null before it (P3-13). */
+  rent_due_at: string | null;
   payout: {
     status: string;
     status_reason: string | null;
@@ -88,7 +92,15 @@ export interface BookingShop {
   units: { in_use: number; quantity: number };
   money: ShopMoney;
   /** Null while ringing. */
-  answered: { at: string; via: AnsweredVia; device_name: string | null; seconds: number } | null;
+  answered: {
+    at: string;
+    via: AnsweredVia;
+    device_name: string | null;
+    seconds: number;
+    /** The session that answered is the caller's own (P3-9). */
+    this_device: boolean;
+    session_id: number | null;
+  } | null;
   window: TimeWindow | null;
   window_request: ShopWindowRequest | null;
   return_by: string | null;
@@ -101,6 +113,8 @@ export interface BookingShop {
   can: string[];
   timeline: ShopTimelineEntry[];
   created_at: string;
+  /** The server's clock when the answer was made; a wrong phone clock is corrected by it (P3-17). */
+  server_time: string;
 }
 
 // ---- The shop's bookings list (SH-06) and a booking's page (SH-07) -------------------------------
@@ -190,7 +204,10 @@ export function cardNote(b: BookingShop, now: Date = new Date()): string | null 
     return `${b.delivery_mode === "pickup" ? "Collects" : "Deliver"} ${when}, ${windowLabel(b.window)}`;
   }
   if (b.stage === "confirmed" && !b.window) return "Waiting for the customer to pick an arrival time";
-  if (b.stage === "accepted") return "Waiting for the customer to pay the rent";
+  if (b.stage === "accepted") {
+    const due = b.money.rent_due_at;
+    return due ? `Waiting for the customer to pay the rent by ${momentLabel(due, now)}` : "Waiting for the customer to pay the rent";
+  }
   if (b.stage === "out" && b.return_by) {
     const day = dayOf(b.return_by);
     return `Back by ${day === today ? "" : `${dayShort(day ?? "")}, `}${clock(b.return_by)}`;
@@ -246,7 +263,7 @@ export function shopTimeline(b: BookingShop, now: Date = new Date()): TimelineRo
     let when = momentLabel(entry.at, now);
     if (entry.event === "set_window" && b.window) when = windowSummary(b.window);
     if (entry.event === "accept" && b.answered) {
-      const where = whereText(b.answered.via, b.answered.device_name);
+      const where = whereText(b.answered.via, b.answered.device_name, b.answered.this_device);
       if (where) when = `${when} on ${where}`;
     }
     return { label: entry.label, when, state: "done" };
@@ -256,7 +273,10 @@ export function shopTimeline(b: BookingShop, now: Date = new Date()): TimelineRo
   const ahead: Omit<TimelineRow, "state">[] = [];
   const stage = b.stage;
   const before = (...stages: BookingShop["stage"][]) => stages.includes(stage);
-  if (stage === "accepted") ahead.push({ label: "Rent", when: "Waiting for the customer" });
+  if (stage === "accepted") {
+    const due = b.money.rent_due_at;
+    ahead.push({ label: "Rent", when: due ? `customer pays by ${momentLabel(due, now)}` : "Waiting for the customer" });
+  }
   if (stage === "confirmed" && !b.window) ahead.push({ label: "Arrival window", when: "Not picked yet" });
   if (b.money.deposit_state === "not_due" || b.money.deposit_state === "due") {
     const day = dayOf(b.money.deposit_ask_at);

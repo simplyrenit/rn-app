@@ -10,6 +10,7 @@ import { ShopCancelSheet, ShopCancelSheetHandle } from "@/components/shop/shop-c
 import { WindowChangeSheet, WindowChangeSheetHandle } from "@/components/shop/window-change-sheet";
 import { apiError } from "@/lib/api-error";
 import { datesLine } from "@/lib/booking";
+import { correctedNow } from "@/lib/server-clock";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import {
   BookingShop,
@@ -35,9 +36,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
 
 /** The Customer card: first name, ID and rentals, the area, never a number or an address before `ready`. */
-function CustomerCard({ booking }: { booking: BookingShop }) {
+function CustomerCard({ booking, now }: { booking: BookingShop; now: Date }) {
   const { color } = useTheme();
-  const c = customerBlock(booking);
+  const c = customerBlock(booking, now);
   return (
     <Panel style={{ padding: space.md, gap: space.md }}>
       <Text role="sectionTitle" accessibilityRole="header">
@@ -149,7 +150,7 @@ function ActionRow({ label, onPress, first }: { label: string; onPress: () => vo
   );
 }
 
-function BookingPage({ booking }: { booking: BookingShop }) {
+function BookingPage({ booking, now }: { booking: BookingShop; now: Date }) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
@@ -246,11 +247,11 @@ function BookingPage({ booking }: { booking: BookingShop }) {
             Timeline
           </Text>
           <View>
-            <Timeline rows={shopTimeline(booking)} />
+            <Timeline rows={shopTimeline(booking, now)} />
           </View>
         </Panel>
 
-        <CustomerCard booking={booking} />
+        <CustomerCard booking={booking} now={now} />
         <MoneyCard booking={booking} />
 
         {can("request_window_change") ? (
@@ -319,7 +320,7 @@ export default function ShopBookingScreen() {
     <NonScrollableContainer>
       <SubpageHeader title="Booking" />
       {booking ? (
-        <BookingPage booking={booking} />
+        <BookingPage booking={booking} now={correctedNow(booking.server_time, query.dataUpdatedAt)} />
       ) : query.isError ? (
         <BookingLoadError error={query.error} what="this booking" onRetry={() => void refetch()} />
       ) : (
