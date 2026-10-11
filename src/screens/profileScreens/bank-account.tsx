@@ -6,8 +6,11 @@ import {
   useBankAccount,
   verifyBankAccount,
 } from "@/backend/bank";
+import { useRingPermission } from "@/backend/ring-permission";
+import { useShop } from "@/backend/shop";
 import { fetchUnlock } from "@/backend/unlock";
 import { UnlockSheet, UnlockSheetHandle } from "@/components/bank/unlock-sheet";
+import { RingPermissionCard } from "@/components/shop/ring-permission-card";
 import {
   Button,
   EmptyState,
@@ -112,6 +115,10 @@ export default function BankAccountScreen() {
   const { userDetails, userDetailsFailed, fetchUserDetails } = useGlobalContext();
   const query = useBankAccount();
   const account = query.data;
+  // Once the account is verified the shop can take bookings, and a phone that will not ring misses every
+  // one of them. An owner who is not a merchant has no Rentals tab, so this is where they are told and asked (ENG-209).
+  const ringPerm = useRingPermission();
+  const canTake = useShop().data?.can_take_bookings === true;
   const queryKey = bankQueryKey(userDetails?.username);
 
   const [mode, setMode] = useState<"view" | "form">("view");
@@ -575,6 +582,12 @@ export default function BankAccountScreen() {
             ) : null}
           </View>
         </View>
+
+        {account.status === "verified" ? (
+          <View style={{ marginTop: space.md }}>
+            <RingPermissionCard enabled={canTake} permission={ringPerm} />
+          </View>
+        ) : null}
 
         {account.status === "failed" ? (
           <View style={{ marginTop: space.md }}>

@@ -22,6 +22,7 @@ import {
   endingFromError,
   feeText,
   hereEnding,
+  markAnswering,
   moreText,
   otherRings,
   outcomeUnknown,
@@ -461,6 +462,13 @@ export default function ShopRingScreen() {
     here,
     ended: ended ?? pushedEnd,
   });
+  // This screen is still waiting for an answer while it rings or a tap is in flight: a new ring then waits
+  // behind it as "1 more request". Once there is nothing left to answer here, the next ring may open over it.
+  const waitingForAnswer = view.kind === "ringing" || working !== null;
+  useEffect(() => {
+    markAnswering(params.number, waitingForAnswer);
+    return () => markAnswering(params.number, false);
+  }, [params.number, waitingForAnswer]);
   // Back in front (the app was away, or another screen was on top): the request may
   // have ended meanwhile, and the timer was stopped while it was away.
   const { refetch: refetchLive } = live;

@@ -1,7 +1,10 @@
+import { useRingPermission } from "@/backend/ring-permission";
+import { useShop } from "@/backend/shop";
 import { Button, Text, useReduceMotion } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { FLOW_SPRING } from "@/components/list-flow/motion";
 import { ListingStatusPill } from "@/components/product/listing-status";
+import { RingPermissionCard } from "@/components/shop/ring-permission-card";
 import { useListDraft } from "@/context/list-draft-context";
 import { SCREEN_GUTTER, duration, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -25,6 +28,10 @@ export default function ListSubmittedScreen() {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReduceMotion();
   const flow = useListDraft();
+  // A shop that can take bookings and a phone that will not ring is the one failure that costs a booking and a
+  // mark: an owner who is not a merchant has no Rentals tab, so the end of the listing flow is where they are told (ENG-209).
+  const ringPerm = useRingPermission();
+  const canTake = useShop().data?.can_take_bookings === true;
 
   const cover = route.params?.coverUrl ?? null;
 
@@ -111,6 +118,8 @@ export default function ListSubmittedScreen() {
             <ListingStatusPill status="checking" />
           </View>
         </View>
+
+        <RingPermissionCard enabled={canTake} permission={ringPerm} />
       </ScrollView>
 
       <View

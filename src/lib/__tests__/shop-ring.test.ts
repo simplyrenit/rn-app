@@ -26,6 +26,7 @@ import {
   rentByLabel,
   refuseBody,
   ringDates,
+  markAnswering,
   ringTakesScreen,
   ringView,
   ringWhere,
@@ -544,11 +545,30 @@ describe("other requests ringing at the same time (review round 1, finding 6)", 
     expect(otherRings(undefined, "RN-24831")).toEqual([]);
   });
 
-  it("a ring that arrives with the app open does not take the screen from an open ring, and takes any other", () => {
+  it("a ring that arrives with the app open does not take the screen from a ring that is waiting for an answer, and takes any other", () => {
+    const waiting = new Set(["RN-1"]);
+    expect(ringTakesScreen("ShopRing", "RN-1", waiting)).toBe(false);
+    expect(ringTakesScreen("MainTabs", undefined, waiting)).toBe(true);
+    expect(ringTakesScreen("ShopBooking", "RN-1", waiting)).toBe(true);
+    expect(ringTakesScreen(undefined, undefined, waiting)).toBe(true);
+    // With no number to say which ring it is, the screen is treated as waiting.
+    expect(ringTakesScreen("ShopRing", undefined, waiting)).toBe(false);
     expect(ringTakesScreen("ShopRing")).toBe(false);
-    expect(ringTakesScreen("MainTabs")).toBe(true);
-    expect(ringTakesScreen("ShopBooking")).toBe(true);
-    expect(ringTakesScreen(undefined)).toBe(true);
+  });
+
+  it("a ring screen with nothing left to answer is not held: the next request opens over it (review round 2, finding 1)", () => {
+    // "You accepted", "This request has ended", loading, failed: the screen says it is no longer waiting.
+    expect(ringTakesScreen("ShopRing", "RN-2", new Set(["RN-1"]))).toBe(true);
+    expect(ringTakesScreen("ShopRing", "RN-1", new Set())).toBe(true);
+  });
+
+  it("the registry follows what the ring screen says: waiting while it rings or a tap is in flight, free once it is over", () => {
+    markAnswering("RN-9", true);
+    expect(ringTakesScreen("ShopRing", "RN-9")).toBe(false);
+    markAnswering("RN-9", false);
+    expect(ringTakesScreen("ShopRing", "RN-9")).toBe(true);
+    markAnswering("RN-9", false);
+    expect(ringTakesScreen("ShopRing", "RN-9")).toBe(true);
   });
 
   it("says how many", () => {

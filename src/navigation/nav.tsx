@@ -546,7 +546,11 @@ export default function Navigation() {
             // A ring screen is open: the owner may be about to tap Accept on it, and Accept sits in
             // the same place on the next one. The new request waits as "1 more request" on that
             // screen (it reads the live answer) and opens when this one is answered.
-            if (navigationRef.isReady() && !ringTakesScreen(navigationRef.getCurrentRoute()?.name)) return;
+            if (navigationRef.isReady()) {
+              const top = navigationRef.getCurrentRoute();
+              const topNumber = (top?.params as { number?: string } | undefined)?.number;
+              if (!ringTakesScreen(top?.name, topNumber)) return;
+            }
             openRoute(route);
           }
         }

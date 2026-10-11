@@ -495,13 +495,33 @@ export function shouldReadBooking(view: RingView, hasRing: boolean): boolean {
 }
 
 /**
- * Whether a ring that arrives with the app open may take the screen over. Not while a ring
- * screen is already open: the owner may be about to tap Accept there, and the same button
- * sits in the same place on the next ring (review round 1, finding 6). The new request
- * waits as "1 more request" on the open screen.
+ * The requests whose ring screen is still waiting for an answer: it is in its ringing view,
+ * or a tap is in flight. The ring screen says so (`markAnswering`); nothing else reads it but
+ * `ringTakesScreen`.
  */
-export function ringTakesScreen(currentRoute: string | null | undefined): boolean {
-  return currentRoute !== "ShopRing";
+const answering = new Set<string>();
+
+export function markAnswering(number: string, on: boolean): void {
+  if (on) answering.add(number);
+  else answering.delete(number);
+}
+
+/**
+ * Whether a ring that arrives with the app open may take the screen over. Not while the ring
+ * on top is still waiting for an answer: the owner may be about to tap Accept there, and the
+ * same button sits in the same place on the next ring (review round 1, finding 6). The new
+ * request waits as "1 more request" on that screen. A ring screen that has nothing left to
+ * answer ("You accepted", "This request has ended", loading, failed) is not held: the next
+ * request opens over it (review round 2, finding 1). With no number to say which ring it is,
+ * the screen is treated as waiting, as it was.
+ */
+export function ringTakesScreen(
+  currentRoute: string | null | undefined,
+  number?: string | null,
+  waiting: ReadonlySet<string> = answering
+): boolean {
+  if (currentRoute !== "ShopRing") return true;
+  return number != null && !waiting.has(number);
 }
 
 /** The other requests that are ringing now, for "1 more request is waiting" on the one on screen. */
