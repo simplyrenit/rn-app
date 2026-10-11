@@ -359,7 +359,8 @@ export function replyErrorText(error: ApiError | null): string {
     case "forbidden":
       return "You can't reply to this claim.";
     case "validation_error":
-      return fieldErrors(error).text ?? "Write your reply, then try again.";
+      // The words first; a refused file (not on Renit's storage, too large, another booking's) is said as the server says it.
+      return fieldErrors(error).text ?? fieldErrors(error).evidence ?? "Write your reply, then try again.";
     default:
       return error.message ?? "Something went wrong on our side. Try again.";
   }

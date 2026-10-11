@@ -1,4 +1,4 @@
-import type { ApiError } from "@/lib/api-error";
+import { type ApiError, fieldErrors } from "@/lib/api-error";
 import {
   BookingCustomer,
   BookingDay,
@@ -273,8 +273,11 @@ export function dayErrorText(error: ApiError | null, now: Date): string {
       return "There is no deposit left to pay.";
     case "payments_unavailable":
       return "Payments are not working for a moment. Nothing was charged. Try again.";
-    case "validation_error":
-      return "Something is missing. Check the photo and the words, then try again.";
+    case "validation_error": {
+      // The server's sentence for the field when it names one (a file not on Renit's storage, the most photos).
+      const fields = fieldErrors(error);
+      return fields.photos ?? fields.photo ?? fields.statement ?? "Something is missing. Check the photo and the words, then try again.";
+    }
     case "already_extending":
       return "An extension is already open for this rental.";
     case "shop_closed":

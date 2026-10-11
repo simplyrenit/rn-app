@@ -9,6 +9,7 @@ import { EvidencePhoto, PhotoRow, discardEvidence, uploadEvidence } from "@/comp
 import { useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
 import { dayErrorText, refuseCopy, refuseHold } from "@/lib/day-of";
+import { MAX_EVIDENCE_PHOTOS } from "@/lib/evidence";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { toast } from "@/lib/toast";
@@ -67,7 +68,7 @@ export default function NotAsDescribedScreen() {
   }
 
   const photos = [...taken, ...extra];
-  const copy = refuseCopy(booking, taken.length);
+  const copy = refuseCopy(booking, Math.min(taken.length, MAX_EVIDENCE_PHOTOS));
   const hold = refuseHold(statement, photos.length);
   const sending = running !== null;
 
@@ -75,7 +76,8 @@ export default function NotAsDescribedScreen() {
     run("send", async () => {
       setError(null);
       try {
-        const urls = await uploadEvidence(photos, `${number}-not-as-described`);
+        // The server takes ten at most: the photos just taken for the capture first, then the ones added here.
+        const urls = await uploadEvidence(photos.slice(0, MAX_EVIDENCE_PHOTOS), `${number}-not-as-described`);
         const answer = await refuseAtDoor(number, statement.trim(), urls);
         queryClient.setQueryData(bookingQueryKey(number), answer.booking);
         // The extra photos are on Renit's bucket now: their copies on the phone have done their work.

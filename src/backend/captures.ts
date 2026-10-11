@@ -1,4 +1,5 @@
-import { Capture, CaptureBody, Captures, Moment, PhoneFallback, ShotList, Side, isShotList } from "@/lib/capture";
+import { prepareImage } from "@/backend/list-flow/images";
+import { Capture, CaptureBody, Captures, Moment, PhoneFallback, ShotList, Side, isShotList, overPhotoLimit } from "@/lib/capture";
 import { BOOKINGS_ENDPOINT, GENERATE_SIGNED_URLS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { uuidv4 } from "@/lib/uuid";
@@ -92,10 +93,13 @@ function typeOf(uri: string, kind: "photo" | "video"): { ext: string; type: stri
  * Puts one file on Renit's bucket through the existing presigned path and
  * resolves to its address (the presigned URL without its signature). The file is
  * streamed from disk, so a video is never held in memory. `what` names the file:
- * every upload gets its own name, so two never overwrite each other.
+ * every upload gets its own name, so two never overwrite each other. A photo over the size the server takes (it takes
+ * it out of the record and asks for it again) is made smaller first; the file kept on the phone stays as it was.
  */
 export async function uploadCaptureFile(uri: string, kind: "photo" | "video", what: string): Promise<string> {
-  const { ext, type } = typeOf(uri, kind);
+  const info = kind === "photo" ? await FileSystem.getInfoAsync(uri, { size: true }).catch(() => null) : null;
+  const file = info?.exists && overPhotoLimit(info.size) ? await prepareImage(uri) : uri;
+  const { ext, type } = typeOf(file, kind);
   const safe = what.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   const { data } = await axiosInstance.post<{ presigned_urls: string[] }>(GENERATE_SIGNED_URLS, {
     filenames: [`capture-${safe}-${uuidv4()}.${ext}`],
@@ -103,7 +107,7 @@ export async function uploadCaptureFile(uri: string, kind: "photo" | "video", wh
   });
   const presigned = data.presigned_urls?.[0];
   if (!presigned) throw new Error("No presigned URL returned");
-  const result = await FileSystem.uploadAsync(presigned, uri, {
+  const result = await FileSystem.uploadAsync(presigned, file, {
     httpMethod: "PUT",
     uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
     headers: { "Content-Type": type },

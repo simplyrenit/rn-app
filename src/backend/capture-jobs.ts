@@ -1,5 +1,4 @@
-import { prepareImage } from "@/backend/list-flow/images";
-import { CaptureDraft, LocalFile, Moment, Side, captureId, namesIn, orphanFiles, overPhotoLimit } from "@/lib/capture";
+import { CaptureDraft, LocalFile, Moment, Side, captureId, namesIn, orphanFiles } from "@/lib/capture";
 import { FileGone, createCaptureQueue } from "@/lib/capture-queue";
 import { uuidv4 } from "@/lib/uuid";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -94,12 +93,9 @@ export async function sweepCaptureFolder(nowMs: number = Date.now()): Promise<vo
 /** The app's one capture queue. */
 export const captureQueue = createCaptureQueue({
   async upload(uri, kind, draft) {
-    const info = await FileSystem.getInfoAsync(uri, { size: true });
+    const info = await FileSystem.getInfoAsync(uri);
     if (!info.exists) throw new FileGone();
-    // The server takes a photo out of the record when it is over its limit and asks for it again: a larger one is made
-    // smaller here, and sent. The copy kept on the phone stays as it was.
-    const sent = kind === "photo" && overPhotoLimit(typeof info.size === "number" ? info.size : null) ? await prepareImage(uri) : uri;
-    return uploadCaptureFile(sent, kind, `${draft.number}-${draft.moment}-${draft.side}`);
+    return uploadCaptureFile(uri, kind, `${draft.number}-${draft.moment}-${draft.side}`);
   },
   send: (draft, body) => putCapture(draft.number, draft.moment, draft.side, body),
   async load(account) {

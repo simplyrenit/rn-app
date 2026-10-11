@@ -22,7 +22,7 @@ import {
   reportUntilLine,
 } from "@/lib/claims";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
-import { failedPhotosText, urlsOf } from "@/lib/evidence";
+import { failedPhotosText, forgetAddresses, refusedFiles, urlsOf } from "@/lib/evidence";
 import { customerName } from "@/lib/shop-ring";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -116,6 +116,8 @@ export default function ShopReportProblemScreen() {
         const refused = apiError(failure);
         if (refused && refused.status > 0) {
           setError(damageErrorText(refused));
+          // A file the server did not take (not on Renit's storage, too large) is uploaded afresh at the next press.
+          if (refusedFiles(refused, "photos")) setPhotos(forgetAddresses(up.photos));
           // The booking may have moved on (the 24 hours ran out, a claim is already open): the server's state is the truth.
           void queryClient.invalidateQueries(shopBookingQueryKey(number));
           return;

@@ -290,6 +290,10 @@ describe("codes (A-16)", () => {
     expect(dayErrorText(err("too_early", 409, { from: "2026-10-24T06:00:00Z" }), NOW)).toBe("This opens at 11:30 am.");
     expect(dayErrorText(err("claim_open"), NOW)).toMatch(/Renit's decision comes first/);
     expect(dayErrorText(err("window_required"), NOW)).toBe("Pick your arrival window first.");
+    // "Not as described" sends ten photos at most; a refusal of its files is said as the server says it.
+    const refused = (fields: Record<string, string[]>) => err("validation_error", 400, { fields });
+    expect(dayErrorText(refused({ photos: ["Ensure this field has no more than 10 elements."] }), NOW)).toBe("Ensure this field has no more than 10 elements.");
+    expect(dayErrorText(refused({}), NOW)).toBe("Something is missing. Check the photo and the words, then try again.");
     expect(dayErrorText(err("nothing_to_pay"), NOW)).toMatch(/no deposit left/);
     expect(dayErrorText(err("payments_unavailable", 503), NOW)).toMatch(/Nothing was charged/);
     expect(dayErrorText(err("already_extending"), NOW)).toMatch(/already open/);

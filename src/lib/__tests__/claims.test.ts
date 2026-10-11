@@ -309,6 +309,13 @@ describe("the reply, once", () => {
     expect(replyErrorText(err({ code: "claim_decided" }))).toBe("Renit has already decided this claim.");
     expect(replyErrorText(err({ code: "reply_late" }))).toBe("The time to reply has passed.");
     expect(replyErrorText(err({ status: 403, code: "forbidden" }))).toBe("You can't reply to this claim.");
+    // A refused file is said as the server says it; the words come first.
+    const refused = (fields: Record<string, string[]>) => err({ status: 400, code: "validation_error", details: { fields } });
+    expect(replyErrorText(refused({ evidence: ["This file is not on Renit's storage. Upload it again."] }))).toBe(
+      "This file is not on Renit's storage. Upload it again."
+    );
+    expect(replyErrorText(refused({ text: ["This field may not be blank."], evidence: ["This file is too large."] }))).toBe("This field may not be blank.");
+    expect(replyErrorText(refused({}))).toBe("Write your reply, then try again.");
     expect(replyErrorText(err({ status: 0 }))).toBe("We couldn't reach Renit. Check your connection and try again.");
     expect(replyErrorText(null)).toBe("We couldn't reach Renit. Check your connection and try again.");
     expect(replyAlreadyIn(err({ code: "already_replied" }))).toBe(true);

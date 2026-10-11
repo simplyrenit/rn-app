@@ -2,7 +2,7 @@ import { discardFiles } from "@/backend/capture-jobs";
 import { uploadCaptureFile } from "@/backend/captures";
 import { takePhoto } from "@/components/capture/camera";
 import { Text } from "@/components/core";
-import { uploadKeeping } from "@/lib/evidence";
+import { MAX_EVIDENCE_PHOTOS, uploadKeeping } from "@/lib/evidence";
 import { MIN_TOUCH_TARGET, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { Image } from "expo-image";
@@ -52,12 +52,15 @@ export function PhotoRow({
   onChange,
   addLabel,
   disabled = false,
+  max = MAX_EVIDENCE_PHOTOS,
 }: {
   photos: EvidencePhoto[];
   onChange: (photos: EvidencePhoto[]) => void;
   /** "Take a photo", "Add another photo". */
   addLabel: string;
   disabled?: boolean;
+  /** The most photos the form takes; the server refuses more. */
+  max?: number;
 }) {
   const { color } = useTheme();
   const opening = useRef(false);
@@ -116,31 +119,37 @@ export function PhotoRow({
           ))}
         </View>
       ) : null}
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel={addLabel}
-        accessibilityState={{ disabled: disabled || launching }}
-        disabled={disabled || launching}
-        activeOpacity={0.7}
-        onPress={() => void add()}
-        style={{
-          minHeight: MIN_TOUCH_TARGET + 4,
-          borderRadius: radius.button,
-          borderWidth: 1,
-          borderStyle: "dashed",
-          borderColor: color.inputLine,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: space.sm,
-          opacity: disabled ? 0.5 : 1,
-        }}
-      >
-        <PlusIcon size={18} color={color.brandText} />
-        <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
-          {addLabel}
+      {photos.length >= max ? (
+        <Text fontSize="text-sm" tone="body">
+          {`That is the most: ${max} photos.`}
         </Text>
-      </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={addLabel}
+          accessibilityState={{ disabled: disabled || launching }}
+          disabled={disabled || launching}
+          activeOpacity={0.7}
+          onPress={() => void add()}
+          style={{
+            minHeight: MIN_TOUCH_TARGET + 4,
+            borderRadius: radius.button,
+            borderWidth: 1,
+            borderStyle: "dashed",
+            borderColor: color.inputLine,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: space.sm,
+            opacity: disabled ? 0.5 : 1,
+          }}
+        >
+          <PlusIcon size={18} color={color.brandText} />
+          <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
+            {addLabel}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

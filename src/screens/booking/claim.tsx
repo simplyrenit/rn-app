@@ -32,7 +32,7 @@ import {
   statusBanner,
 } from "@/lib/claims";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
-import { failedPhotosText, urlsOf } from "@/lib/evidence";
+import { failedPhotosText, forgetAddresses, refusedFiles, urlsOf } from "@/lib/evidence";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -101,6 +101,8 @@ function ReplyForm({ claim, due, now }: { claim: Claim; due: string; now: Date }
         const refused = apiError(failure);
         if (refused && refused.status > 0) {
           setError(replyErrorText(refused));
+          // A file the server did not take (not on Renit's storage, too large) is uploaded afresh at the next press.
+          if (refusedFiles(refused, "evidence")) setPhotos(forgetAddresses(up.photos));
           // The claim moved on (a reply is already in, it was decided, the time ran out): show it as it is.
           if (replyAlreadyIn(refused) || refused.code === "reply_late") void queryClient.invalidateQueries(claimQueryKey(claim.id));
           return;

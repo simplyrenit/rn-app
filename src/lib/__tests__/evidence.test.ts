@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { failedPhotosText, uploadKeeping, urlsOf } from "../evidence";
+import { MAX_EVIDENCE_PHOTOS, failedPhotosText, forgetAddresses, refusedFiles, uploadKeeping, urlsOf } from "../evidence";
 
 const photo = (n: number, url: string | null = null) => ({ uri: `file:///p${n}.jpg`, url });
 
@@ -61,5 +61,34 @@ describe("failedPhotosText", () => {
   it("says it plainly when all failed", () => {
     expect(failedPhotosText(1, 1)).toBe("The photo did not upload. Check your connection and try again.");
     expect(failedPhotosText(3, 3)).toBe("The 3 photos did not upload. Check your connection and try again.");
+  });
+});
+
+describe("a report whose files the server refused (T-23)", () => {
+  const refusal = (field: string, text: string) => ({
+    status: 400,
+    code: "validation_error",
+    message: null,
+    details: { fields: { [field]: [text] } },
+  });
+
+  it("says the server's sentence for the field, and nothing for another field or another error", () => {
+    const e = refusal("evidence", "This file is not on Renit's storage. Upload it again.");
+    expect(refusedFiles(e, "evidence")).toBe("This file is not on Renit's storage. Upload it again.");
+    expect(refusedFiles(e, "photos")).toBeNull();
+    expect(refusedFiles({ ...e, code: "reply_late" }, "evidence")).toBeNull();
+    expect(refusedFiles(null, "photos")).toBeNull();
+  });
+
+  it("forgets the address of every photo taken for the report, so the next press uploads it afresh; a capture's own photo keeps its address", () => {
+    const out = forgetAddresses([
+      { uri: "file:///a.jpg", url: "https://cdn/a" },
+      { uri: "https://cdn/shot", url: "https://cdn/shot", fixed: true },
+    ]);
+    expect(out.map((p) => p.url)).toEqual([null, "https://cdn/shot"]);
+  });
+
+  it("the form takes ten photos, the most the server takes", () => {
+    expect(MAX_EVIDENCE_PHOTOS).toBe(10);
   });
 });
