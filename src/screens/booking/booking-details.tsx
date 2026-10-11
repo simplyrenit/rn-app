@@ -8,9 +8,10 @@ import {
   BookingCustomer,
   TimelineRow,
   bookingBanner,
+  bookingHow,
   cancelHint,
   datesLine,
-  howLabel,
+  deliveryPlace,
   money,
   timelineRows,
   windowErrorText,
@@ -140,6 +141,8 @@ export function BookingDetails({ booking }: { booking: BookingCustomer }) {
   // The shop's exact address is on the booking only once the deposit is paid (stage `ready`).
   // Drawn only when it is text: anything else from the server must not reach a <Text>.
   const address = typeof booking.shop.address === "string" && booking.shop.address ? booking.shop.address : null;
+  // Owner delivery: the customer's own address, as it was chosen at Book now.
+  const delivery = deliveryPlace(booking.delivery_address);
   const where =
     booking.delivery_mode === "pickup"
       ? address ??
@@ -149,7 +152,9 @@ export function BookingDetails({ booking }: { booking: BookingCustomer }) {
         ]
           .filter(Boolean)
           .join(" ")
-      : "The shop brings it to your address.";
+      : delivery
+        ? `Delivered to ${delivery.title}: ${delivery.line}`
+        : "The shop brings it to your address.";
 
   return (
     <ScrollView
@@ -227,7 +232,7 @@ export function BookingDetails({ booking }: { booking: BookingCustomer }) {
       <SummaryCard
         title={booking.product.title}
         image={booking.product.cover_image}
-        lines={[datesLine(booking), `${howLabel(booking.delivery_mode)} · rent ${money(booking.money.rent)}`]}
+        lines={[datesLine(booking), `${bookingHow(booking)} · rent ${money(booking.money.rent)}`]}
         footer={
           <View style={{ flexDirection: "row", gap: space.sm }}>
             <MapPinIcon size={20} color={color.text} />

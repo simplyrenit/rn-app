@@ -1133,12 +1133,70 @@ export interface PayRentCopy {
   button: string;
 }
 
-/** The screen after the owner accepts: what is left to pay, and by when. */
-export function payRentCopy(booking: BookingCustomer, now: Date = new Date()): PayRentCopy {
+/** What one payment takes: the three things the customer is shown before the pay page opens. */
+export interface Charge {
+  purpose: PaymentPurpose;
+  amount: string;
+  deposit_part: string;
+}
+
+/**
+ * The rent payment as the screen shows it. From the open payment itself when
+ * one has been started (then the button and the pay page cannot differ), else
+ * from the booking's `pay_now`.
+ */
+export function rentCharge(booking: Pick<BookingCustomer, "pay_now" | "money">): Charge {
+  const from = booking.pay_now?.payment ?? booking.pay_now;
+  return {
+    purpose: from?.purpose ?? (booking.money.deposit_with_rent ? "rent_and_deposit" : "rent"),
+    amount: from?.amount ?? booking.money.pay_after_accept,
+    deposit_part: from?.deposit_part ?? "0.00",
+  };
+}
+
+/**
+ * True when the payment rn-api just answered with is the one the button named.
+ * The server decides at that call whether the deposit joins the rent (A-13:
+ * the first day's opening is now under 24 hours away), so the answer can be for
+ * more than the screen said a moment ago. Then the pay page is not opened: the
+ * screen shows the new sum and asks for the tap again.
+ */
+export function sameCharge(shown: Charge, payment: Charge): boolean {
+  return (
+    shown.purpose === payment.purpose &&
+    Number(shown.amount) === Number(payment.amount) &&
+    Number(shown.deposit_part) === Number(payment.deposit_part)
+  );
+}
+
+/**
+ * The time left to pay, "12:34", counting down to `rent_due_at`; null once it
+ * has passed or when there is none. For the eye only: it runs on the phone's
+ * clock, so it never stops a payment. The server decides the lapse.
+ */
+export function timeLeft(dueAt: string | null | undefined, now: Date = new Date()): string | null {
+  const left = Math.floor((new Date(dueAt ?? "").getTime() - now.getTime()) / 1000);
+  if (!Number.isFinite(left) || left <= 0) return null;
+  const hours = Math.floor(left / 3600);
+  const minutes = Math.floor((left % 3600) / 60);
+  const seconds = pad(left % 60);
+  return hours > 0 ? `${hours}:${pad(minutes)}:${seconds}` : `${minutes}:${seconds}`;
+}
+
+/**
+ * The screen after the owner accepts: what is left to pay, and by when.
+ * `charge` is what the button will name: the booking's own, unless rn-api has
+ * just answered a tap with a different payment, which then takes its place.
+ */
+export function payRentCopy(
+  booking: BookingCustomer,
+  now: Date = new Date(),
+  charge: Charge = rentCharge(booking)
+): PayRentCopy {
   const m = booking.money;
-  const amount = money(booking.pay_now?.amount ?? m.pay_after_accept);
-  const withDeposit = booking.pay_now?.purpose === "rent_and_deposit" || m.deposit_with_rent;
-  const depositPart = booking.pay_now?.deposit_part ?? "0";
+  const amount = money(charge.amount);
+  const withDeposit = charge.purpose === "rent_and_deposit";
+  const depositPart = charge.deposit_part;
   const lines: PriceLine[] = [{ label: "Rent", amount: money(m.rent) }];
   if (isPositive(m.delivery_fee)) lines.push({ label: "Delivery", amount: money(m.delivery_fee) });
   if (isPositive(m.fee_charged)) lines.push({ label: "Renit's fee", amount: money(m.fee_charged) });

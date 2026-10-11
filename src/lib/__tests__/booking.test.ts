@@ -16,6 +16,9 @@ import {
   payRentErrorText,
   paymentRows,
   pollEveryMs,
+  rentCharge,
+  sameCharge,
+  timeLeft,
   triedText,
   timelineRows,
   windowErrorText,
@@ -936,6 +939,71 @@ describe("pay the rent", () => {
 
   it("says nothing about a deposit there is none of", () => {
     expect(payRentCopy(accepted({}, { deposit: "0.00", deposit_state: "none" }), NOW).note).toBeNull();
+  });
+
+  const start = (over: Partial<{ purpose: "rent" | "rent_and_deposit"; amount: string; deposit_part: string }> = {}) => ({
+    payment_id: "pay_02",
+    purpose: "rent" as const,
+    amount: "1731.00",
+    deposit_part: "0.00",
+    checkout_url: "https://pay-qa.toratora.site/c/ckt_2",
+    expires_at: "2026-10-13T04:43:00Z",
+    return_url: "renit://pay/return",
+    ...over,
+  });
+
+  it("shows the open payment's own sum once one has been started", () => {
+    const open = accepted({
+      pay_now: {
+        purpose: "rent",
+        amount: "1731.00",
+        deposit_part: "0.00",
+        due_at: "2026-10-13T04:43:00Z",
+        payment: start({ purpose: "rent_and_deposit", amount: "4731.00", deposit_part: "3000.00" }),
+      },
+    });
+    expect(rentCharge(open)).toEqual({ purpose: "rent_and_deposit", amount: "4731.00", deposit_part: "3000.00" });
+    expect(payRentCopy(open, NOW).button).toBe("Pay ₹4,731");
+  });
+
+  it("opens the pay page only for the sum the button named", () => {
+    const shown = rentCharge(accepted());
+    expect(sameCharge(shown, start())).toBe(true);
+    // The same money written another way is the same money.
+    expect(sameCharge(shown, start({ amount: "1731", deposit_part: "0" }))).toBe(true);
+  });
+
+  it("does not open it when the deposit joined the rent between the screen and the tap (A-13)", () => {
+    // Read at 9:45 as rent only; at the tap the opening is under 24 hours away.
+    const shown = rentCharge(accepted());
+    const answered = start({ purpose: "rent_and_deposit", amount: "4731.00", deposit_part: "3000.00" });
+    expect(sameCharge(shown, answered)).toBe(false);
+    // The screen then shows what was answered, and the next tap is for that.
+    const copy = payRentCopy(accepted(), NOW, answered);
+    expect(copy.button).toBe("Pay ₹4,731");
+    expect(copy.lines.map((l) => l.label)).toContain("Deposit · refundable");
+    expect(copy.note).toMatch(/paid with the rent/);
+    expect(sameCharge(answered, answered)).toBe(true);
+  });
+
+  it("treats any other difference as a different charge", () => {
+    const shown = rentCharge(accepted());
+    expect(sameCharge(shown, start({ amount: "1901.00" }))).toBe(false);
+    expect(sameCharge(shown, start({ purpose: "rent_and_deposit" }))).toBe(false);
+  });
+
+  it("counts down to the rent's deadline", () => {
+    const due = "2026-10-13T04:43:00Z";
+    expect(timeLeft(due, new Date("2026-10-13T04:13:00Z"))).toBe("30:00");
+    expect(timeLeft(due, new Date("2026-10-13T04:30:26Z"))).toBe("12:34");
+    expect(timeLeft(due, new Date("2026-10-13T04:42:55Z"))).toBe("0:05");
+    expect(timeLeft("2026-10-13T06:13:09Z", new Date("2026-10-13T04:13:00Z"))).toBe("2:00:09");
+  });
+
+  it("shows no countdown once the deadline has passed, or without one", () => {
+    expect(timeLeft("2026-10-13T04:43:00Z", new Date("2026-10-13T04:43:00Z"))).toBeNull();
+    expect(timeLeft("2026-10-13T04:43:00Z", new Date("2026-10-13T05:00:00Z"))).toBeNull();
+    expect(timeLeft(null, NOW)).toBeNull();
   });
 
   it("explains why a payment could not be started", () => {
