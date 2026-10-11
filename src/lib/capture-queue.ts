@@ -97,6 +97,12 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
         const out = sendFailure(apiError(error));
         if ("done" in out) {
           change(draft.id, (d) => ({ ...d, done: true, error: null }));
+        } else if ("gone" in out) {
+          // The booking no longer takes this record: nothing on this phone can change that.
+          drafts = drafts.filter((d) => d.id !== draft.id);
+          publish();
+          void deps.discard(localUris(draft)).catch(() => undefined);
+          continue;
         } else {
           failed.add(draft.id);
           change(draft.id, (d) => ({ ...d, error: out.error }));

@@ -192,7 +192,7 @@ describe("what goes up, and in which order", () => {
   });
 
   it("does not send again by itself what only a person can fix", () => {
-    const d = { ...seal(uploaded(taken())), error: { text: "This booking has moved on.", retry: false } };
+    const d = { ...seal(uploaded(taken())), error: { text: "This record can't be saved from this phone right now.", retry: false } };
     expect(nextWork([d])).toBeNull();
     expect(nextWork([{ ...d, error: { text: "Waiting", retry: true } }])?.kind).toBe("send");
   });
@@ -286,8 +286,11 @@ describe("the server's answer", () => {
     expect(sendFailure(err(null, 0))).toMatchObject({ error: { retry: true } });
     expect(sendFailure(err(null, 503))).toMatchObject({ error: { retry: true } });
     expect(sendFailure(err("rate_limited", 429))).toMatchObject({ error: { retry: true } });
-    expect(sendFailure(err("stage_not_allowed"))).toMatchObject({ error: { retry: false } });
+    expect(sendFailure(err("forbidden", 403))).toMatchObject({ error: { retry: false } });
     expect(sendFailure(err("validation_error", 400))).toMatchObject({ error: { retry: false } });
+    // The booking ended or closed without it: the record is let go of.
+    expect(sendFailure(err("stage_not_allowed"))).toEqual({ gone: true });
+    expect(sendFailure(err("not_found", 404))).toEqual({ gone: true });
   });
 });
 

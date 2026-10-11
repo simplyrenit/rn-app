@@ -359,19 +359,22 @@ export const uploadFailure = (): NonNullable<CaptureDraft["error"]> => ({ text: 
 /**
  * What a refused send means. `capture_locked`: the server already has a complete
  * record (an earlier send whose answer was lost), so this one is done. No answer
- * or a fault: tried again. Anything else needs a person.
+ * or a fault: tried again. `gone`: the booking no longer takes this record (it
+ * ended, or closed without it), so it is let go of. Anything else needs a person.
  */
-export function sendFailure(error: ApiError | null): { done: true } | { error: NonNullable<CaptureDraft["error"]> } {
+export function sendFailure(
+  error: ApiError | null
+): { done: true } | { gone: true } | { error: NonNullable<CaptureDraft["error"]> } {
   if (error?.code === "capture_locked") return { done: true };
   if (!error || error.status === 0 || error.status >= 500 || error.status === 429) {
     return { error: { text: OFFLINE, retry: true } };
   }
   switch (error.code) {
     case "stage_not_allowed":
-      return { error: { text: "This booking has moved on, so the record can no longer be added.", retry: false } };
     case "not_found":
+      return { gone: true };
     case "forbidden":
-      return { error: { text: "This record can't be saved from this account.", retry: false } };
+      return { error: { text: "This record can't be saved from this phone right now.", retry: false } };
     default:
       return { error: { text: error.message ?? "Renit couldn't accept this record. Try again.", retry: false } };
   }

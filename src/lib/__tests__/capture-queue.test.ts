@@ -187,9 +187,9 @@ describe("the capture queue", () => {
     expect(queue.getDrafts()[0]).toMatchObject({ done: true, error: null });
   });
 
-  it("a send the server refuses for good is not repeated by the timer, only by the person", async () => {
+  it("a send the server refuses is not repeated by the timer, only by the person", async () => {
     const send = jest.fn(async () => {
-      throw answer(409, "stage_not_allowed");
+      throw answer(403, "forbidden");
     });
     const { queue } = setup({ send: send as unknown as CaptureQueueDeps["send"] });
     await queue.init("asha");
@@ -205,6 +205,25 @@ describe("the capture queue", () => {
     queue.retry(ID);
     await queue.idle();
     expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it("lets go of a record the booking no longer takes, and clears its files", async () => {
+    const { queue, deps, saved } = setup({
+      send: jest.fn(async () => {
+        throw answer(409, "stage_not_allowed");
+      }) as unknown as CaptureQueueDeps["send"],
+    });
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+    expect(queue.getDrafts()).toEqual([]);
+    expect(saved[saved.length - 1]).toEqual([]);
+    expect(deps.discard).toHaveBeenCalledWith([
+      "file:///captures/front.jpg",
+      "file:///captures/back.jpg",
+      "file:///captures/video.mp4",
+    ]);
   });
 
   it("a file the phone no longer has is asked for again, and the rest still goes up", async () => {
@@ -248,7 +267,7 @@ describe("the capture queue", () => {
   it("one bad record does not hold up another", async () => {
     const { queue } = setup({
       send: jest.fn(async (d: CaptureDraft) => {
-        if (d.moment === "handover") throw answer(409, "stage_not_allowed");
+        if (d.moment === "handover") throw answer(403, "forbidden");
         return complete;
       }),
     });

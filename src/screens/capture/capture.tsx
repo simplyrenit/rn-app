@@ -397,8 +397,26 @@ export default function CaptureScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fresh]);
 
+  // The place is asked for as the walk begins, so its permission prompt never lands on top of the camera.
+  const walking = Boolean(draft) && !draft?.sealed;
+  useEffect(() => {
+    if (walking) void placeNow();
+  }, [walking]);
+
   const heading = captureHeading(moment, forOther, otherName);
   const leave = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"));
+
+  // The queue lets go of a record the booking no longer takes (it ended, or closed without it).
+  const had = useRef(false);
+  if (draft) had.current = true;
+  const dropped = had.current && !draft;
+  useEffect(() => {
+    if (!dropped) return;
+    toast.info("This booking has moved on", { message: "The record is no longer needed." });
+    leave();
+    // Once, when the record goes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dropped]);
   const stamp = () => new Date(Date.now() + (params.skew_ms ?? 0)).toISOString();
 
   /** One go at the camera at a time: a second tap while it opens does nothing. */
@@ -562,6 +580,15 @@ export default function CaptureScreen() {
             <Button variant="outline" onPress={() => captureQueue.retry(draft.id)}>
               Try again
             </Button>
+          ) : null}
+
+          {state === "stuck" && draft.forOther ? (
+            // Saving the other person's set is allowed only while a code is out for it: a new code opens it again.
+            <TextButton
+              label="Send a new code and try again"
+              disabled={working}
+              onPress={() => void sendCode().then((sent) => sent && captureQueue.retry(draft.id))}
+            />
           ) : null}
 
           {state === "code" ? (
