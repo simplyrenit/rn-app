@@ -54,7 +54,8 @@ export default function ReportScreen() {
         // Both Rentals lists start with this key.
         void queryClient.invalidateQueries("bookings");
         toast.success(copy.done);
-        navigation.navigate(role === "customer" ? "Booking" : "ShopBooking", { number });
+        // Back to the screen this was opened from, which now draws what the booking has become.
+        navigation.navigate(role === "customer" ? "Booking" : "ShopHandover", { number });
       } catch (failure) {
         const refused = apiError(failure);
         setError(refused ? dayErrorText(refused, new Date()) : "The photo did not upload. Check your connection and try again.");
