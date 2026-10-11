@@ -540,7 +540,9 @@ describe("what is in the way", () => {
     });
     expect(bookErrorText(error("price_changed"))).toMatch(/price changed/);
     expect(bookErrorText(error("no_unit_free", { days: ["2026-10-25"] }))).toMatch(/no longer free/);
-    expect(bookErrorText(error("move_not_allowed"))).toMatch(/refunded/);
+    expect(bookErrorText(error("move_not_allowed"))).toBe(
+      "Your first payment can't move to this booking, so it is refunded to you, and this booking needs its own. Tap Book now again to pay for it."
+    );
     expect(bookErrorText({ ...error("payments_unavailable"), status: 503 })).toMatch(/Nothing was booked/);
     // A code this build does not know: the server's own words.
     expect(bookErrorText(error("something_new"))).toBe("Server words.");

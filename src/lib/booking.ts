@@ -837,7 +837,10 @@ export function bookErrorText(error: ApiError | null): string {
       // Days the server will not take (more than 180 days ahead, in the past): its own sentence.
       return daysRefusal(error) ?? error?.message ?? "We couldn't book this. Check the dates and try again.";
     case "move_not_allowed":
-      return "Your earlier payment can no longer move to this booking. It is being refunded. Book again to pay now.";
+      // Whatever the reason (the first booking's ₹99 is gone, its time is over, or it is not the amount this booking
+      // asks for at Book now: a booking under ₹99 asks for less), the first payment goes back to the customer by itself
+      // and this booking needs a payment of its own.
+      return "Your first payment can't move to this booking, so it is refunded to you, and this booking needs its own. Tap Book now again to pay for it.";
     case "payments_unavailable":
       return "Payments are not working for a moment. Nothing was booked. Try again.";
     case "rate_limited":
