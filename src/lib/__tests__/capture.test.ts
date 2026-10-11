@@ -422,16 +422,17 @@ describe("when a record can be made and finished (review r1 #1, #2): one rule fo
   const state = (moment: "handover" | "return", booking: RecordBooking, over: Partial<Parameters<typeof recordState>[0]> = {}) =>
     recordState({ moment, booking, onServer: false, draft: null, ...over });
 
-  it("the server takes a handover record from ready to closed, and a return record while out or returned", () => {
+  it("the server takes a handover record from ready to closed, and a return record while out, returned or closed (P4-9)", () => {
     for (const stage of ["ready", "out", "returned", "closed"]) expect(recordWanted("handover", at(stage))).toBe(true);
     for (const stage of ["ringing", "accepted", "confirmed"]) expect(recordWanted("handover", at(stage))).toBe(false);
     for (const stage of ["out", "returned"]) expect(recordWanted("return", at(stage))).toBe(true);
-    for (const stage of ["ready", "closed", "confirmed"]) expect(recordWanted("return", at(stage))).toBe(false);
+    for (const stage of ["ready", "confirmed"]) expect(recordWanted("return", at(stage))).toBe(false);
+    expect(recordWanted("return", at("closed"))).toBe(true);
     // A booking that ended early has nothing to record.
     expect(recordWanted("handover", at("ready", { exit: "no_show" }))).toBe(false);
     // The server's own list also says so.
     expect(serverTakes("return", at("closed", { can: ["capture_return"] }))).toBe(true);
-    expect(serverTakes("return", at("closed"))).toBe(false);
+    expect(serverTakes("return", at("closed"))).toBe(true);
   });
 
   it("the record can be begun after the code is typed: the handover's while out, the return's while returned", () => {
@@ -455,8 +456,11 @@ describe("when a record can be made and finished (review r1 #1, #2): one rule fo
   it("on a closed booking a new record is asked for only while money waits on it: the owner's payout", () => {
     expect(state("handover", at("closed"))).toBe("none");
     expect(state("handover", at("closed"), { stake: true })).toBe("start");
-    // A return record is not taken once the booking is closed, money or not (A-28).
+    // The server takes a return record through `closed` (P4-9), but none is begun on a closed booking, money or not (A-28).
     expect(state("return", at("closed"), { stake: true })).toBe("none");
+    expect(state("return", at("closed"))).toBe("none");
+    // One begun before it closed is carried on and sent.
+    expect(state("return", at("closed"), { draft: addShot(start({ moment: "return" }), "front", file("front.jpg")) })).toBe("continue");
   });
 
   it("a record begun here can always be carried on, whatever the stage", () => {
@@ -504,8 +508,8 @@ describe("when a record can be made and finished (review r1 #1, #2): one rule fo
     const d = start({ moment: "return" });
     expect(shouldRelease(d, at("returned"), false)).toBe(false);
     expect(shouldRelease(d, at("returned"), true)).toBe(true);
-    // Closed without a return record: settled without it.
-    expect(shouldRelease(d, at("closed"), false)).toBe(true);
+    // The booking closed while it was still uploading: it is sent, not let go of (P4-9).
+    expect(shouldRelease(d, at("closed"), false)).toBe(false);
     // A handover record is still taken on a closed booking.
     expect(shouldRelease(start(), at("closed"), false)).toBe(false);
     // The booking ended before a handover: nothing to record.

@@ -550,14 +550,16 @@ export function videoLabel(video: Pick<LocalFile, "seconds" | "bytes"> | null | 
 
 /**
  * The stages in which the server takes a capture for each moment (API-CONTRACT
- * OE-I, `PUT …/captures/{moment}/{side}/`; A-3, A2-3). A capture stays writable
+ * OE-I, `PUT …/captures/{moment}/{side}/`; A-3, A2-3, P4-9). A capture stays writable
  * after the code is typed: the handover's through `out`, `returned` and `closed`
- * (the owner's payout waits for it), the return's through `returned`. After
- * `closed` a missing return record has been settled without (decision A-28).
+ * (the owner's payout waits for it), the return's through `closed` too (P4-9). A
+ * return record begun and still uploading when the booking closes at 48 hours is
+ * therefore sent, not let go of; but no new return record is begun on a closed
+ * booking (`recordState`), since the booking was settled without it (decision A-28).
  */
 const TAKEN_IN: Record<Moment, readonly string[]> = {
   handover: ["ready", "out", "returned", "closed"],
-  return: ["out", "returned"],
+  return: ["out", "returned", "closed"],
 };
 
 /** What the rule needs of a booking, either side's. */
@@ -634,7 +636,9 @@ export function recordState(input: RecordInput): RecordState {
   if (input.forOther || !serverTakes(moment, booking)) return "none";
   if (moment === "handover" && booking.extends) return "none";
   if (input.begunOnly && moment === "return" && booking.stage === "out") return "none";
-  if (booking.stage === "closed" && !input.stake) return "none";
+  // A closed booking was settled without a return record (A-28): none is begun on it, though one begun is carried on.
+  // The handover's only while the owner's payout waits for it.
+  if (booking.stage === "closed" && (moment === "return" || !input.stake)) return "none";
   return "start";
 }
 
