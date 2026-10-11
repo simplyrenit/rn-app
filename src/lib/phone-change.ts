@@ -54,3 +54,32 @@ export function phoneChangeOutcome(error: ApiError | null): { text: string; next
       return { text: error.message ?? "We couldn't change your number. Try again.", next: "same" };
   }
 }
+
+// ---- The code step before a change of number or of email -----------------------------------------
+
+/**
+ * What to do about the code to the CURRENT number (the unlock), for a change of number or of email. `force` is a
+ * save the server has just refused with 403 `fresh_code_required`: then the shortcut is never taken, whatever this
+ * phone believes, because taking it is a save that is refused again, and again (review app-6 r1 #2).
+ *  - `carry_on`: no code is needed first. `ask_server`: read the unlock state.
+ */
+export function unlockStart(input: { force: boolean; believesNumber: boolean }): "carry_on" | "ask_server" {
+  return !input.force && !input.believesNumber ? "carry_on" : "ask_server";
+}
+
+/**
+ * After the server's unlock state is read: `carry_on` (already unlocked, and not forced), `stale_copy` (the server has
+ * a number this phone's copy of the account does not: refresh it and ask the person to try again, since the code
+ * cannot be sent to a number the phone does not know), or `open_sheet` (send the code).
+ */
+export function unlockNext(input: { force: boolean; believesNumber: boolean; unlocked: boolean }): "carry_on" | "stale_copy" | "open_sheet" {
+  if (!input.force && input.unlocked) return "carry_on";
+  return input.believesNumber ? "open_sheet" : "stale_copy";
+}
+
+/**
+ * The server says the account has no number (`phone_required`): a change that was not forced carries on (a first
+ * number needs no code first); one that was forced because the server wanted an unlock says what is wrong instead of
+ * saving again.
+ */
+export const noNumberStep = (force: boolean): "carry_on" | "tell" => (force ? "tell" : "carry_on");

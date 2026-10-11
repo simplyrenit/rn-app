@@ -42,7 +42,7 @@ import {
   SCREEN_GUTTER,
 } from "@/lib/design-tokens";
 import { apiError } from "@/lib/api-error";
-import { needsCurrentNumberCode, phoneChangeBody, phoneChangeOutcome } from "@/lib/phone-change";
+import { needsCurrentNumberCode, noNumberStep, phoneChangeBody, phoneChangeOutcome, unlockNext, unlockStart } from "@/lib/phone-change";
 import { EMAIL_HAS_ACCOUNT, emailChangeBody, emailChangeOutcome, emailCodeText, emailProof, sameEmail } from "@/lib/sign-in-proof";
 import { toast } from "@/lib/toast";
 import { useTheme } from "@/lib/theme";
@@ -68,11 +68,17 @@ function DetailField({
   value,
   accessibilityLabel,
   onEdit,
+  busy = false,
+  error = null,
 }: {
   label: string;
   value: string;
   accessibilityLabel: string;
   onEdit: () => void;
+  /** A change is being got ready (the unlock is read): the pencil waits, and a second tap does nothing. */
+  busy?: boolean;
+  /** Why the change could not open, said here in the sheet (a toast is drawn behind a sheet and cannot be seen). */
+  error?: string | null;
 }) {
   const { color } = useTheme();
   return (
@@ -83,14 +89,21 @@ function DetailField({
       <Text fontSize="text-md" numberOfLines={1} style={{ paddingRight: 32 }}>
         {value}
       </Text>
+      {error ? (
+        <Text fontSize="text-sm" tone="danger" accessibilityRole="alert">
+          {error}
+        </Text>
+      ) : null}
       <TouchableOpacity
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ busy, disabled: busy }}
+        disabled={busy}
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         onPress={onEdit}
         style={{ position: "absolute", top: ROW_PAD_V, right: SCREEN_GUTTER }}
       >
-        <PencilSquareIcon size={20} color={color.brandText} />
+        {busy ? <ActivityIndicator size="small" color={color.brandText} /> : <PencilSquareIcon size={20} color={color.brandText} />}
       </TouchableOpacity>
     </View>
   );
@@ -193,24 +206,20 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   // Changing the email needs the same two proofs as the number (decisions T-14, T-19): the code to the
   // CURRENT number first, when the account has one, and then the emailed code to the NEW address, whose
   // proof token goes with the change. It is below, with the number's: they share the one unlock sheet.
-  const openEditEmailModal = () => {
-    if (!nameId) {
-      toast.info("Still loading your details", { message: "Try again in a moment." });
-      return;
-    }
-    void askForCode(() => {
+  const openEditEmailModal = () =>
+    void openChange("email", () => {
       setEmailError("");
       setIsIncorrect(false);
       setIsOtpSent(false);
       emailToken.current = "";
       editEmailModalRef.current?.present();
     });
-  };
   // Changing the number needs two proofs (decision T-14): a code sent to the CURRENT number
   // first, when the account has one (it unlocks this phone for a while, as for the bank
   // account), and the code sent to the NEW number, whose ID token goes with the change.
   const unlockSheet = useRef<UnlockSheetHandle>(null);
-  const afterUnlock = useRef<(() => void) | null>(null);
+  /** What to do once the unlock is done, and what a forced one may do if it cannot be (never repeat a save on its own). */
+  const pending = useRef<{ then: () => void; force: boolean; onFail?: (text: string) => void } | null>(null);
   // True while the unlock is being read, so a second tap does not open the sheet and send a second text.
   const askingForCode = useRef(false);
   const [codeGoesTo, setCodeGoesTo] = useState({ phoneMasked: "", minutes: 30 });
@@ -221,46 +230,76 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
   /**
    * Runs `then` once this phone is unlocked: at once if it already is, and with no
-   * code at all when the account has no number yet (a first number is the save alone).
-   * `force` is for when the server has just said it is locked (403 `fresh_code_required`).
+   * code at all when this phone believes the account has no number yet (a first number is the save alone).
+   * `force` is for when the server has just said it is locked (403 `fresh_code_required`): the server is always
+   * asked, the shortcut is never taken, and nothing is done for the person if the unlock cannot be made; `onFail`
+   * says why, in the place the person is looking. A save is repeated only after a new unlock or a press, never
+   * on its own (review app-6 r1 #2).
    */
-  const askForCode = async (then: () => void, force = false) => {
+  const askForCode = async (then: () => void, opts: { force?: boolean; onFail?: (text: string) => void } = {}) => {
+    const { force = false, onFail } = opts;
     if (askingForCode.current) return;
-    if (!needsCurrentNumberCode(details.phone)) {
+    const believesNumber = needsCurrentNumberCode(details.phone);
+    if (unlockStart({ force, believesNumber }) === "carry_on") {
       then();
       return;
     }
     askingForCode.current = true;
     try {
       const state = await fetchUnlock();
-      if (!force && isUnlocked(state)) {
+      const next = unlockNext({ force, believesNumber, unlocked: isUnlocked(state) });
+      if (next === "carry_on") {
         then();
+        return;
+      }
+      if (next === "stale_copy") {
+        // The server has a number this phone's copy of the account does not (set on another phone): the copy is read
+        // again, and the person tries once more with it, instead of a save that would be refused again.
+        void fetchDetails();
+        onFail?.("Your account has a phone number this phone didn't know about. Your details are updated: try again.");
         return;
       }
       setCodeGoesTo({ phoneMasked: state.phone_masked, minutes: state.minutes });
-      afterUnlock.current = then;
+      pending.current = { then, force, onFail };
       // Sends the code to the number the account has, as it opens.
       unlockSheet.current?.open();
     } catch (error) {
-      // The server says the account has no number after all: nothing to confirm first.
       if (apiError(error)?.code === "phone_required") {
-        then();
+        // The server says the account has no number after all: nothing to confirm first, unless it has just asked for it.
+        if (noNumberStep(force) === "carry_on") {
+          then();
+          return;
+        }
+        onFail?.("Your account has no phone number to send a code to. Add one in your profile first.");
         return;
       }
-      toast.error("We couldn't check your code", { message: "Check your connection and try again." });
+      onFail?.("We couldn't check your code. Check your connection and try again.");
     } finally {
       askingForCode.current = false;
     }
   };
 
-  const openEditPhoneModal = () => {
+  /** Which row is being got ready (the unlock is read), and why it could not open: both shown on the row itself. */
+  const [opening, setOpening] = useState<"email" | "phone" | null>(null);
+  const [openError, setOpenError] = useState<{ field: "email" | "phone"; text: string } | null>(null);
+
+  const openChange = async (field: "email" | "phone", present: () => void) => {
+    if (opening) return;
+    setOpenError(null);
     // The real number is needed to know whether a code comes first: not before the details have loaded.
     if (!nameId) {
-      toast.info("Still loading your details", { message: "Try again in a moment." });
+      setOpenError({ field, text: "Still loading your details. Try again in a moment." });
       return;
     }
-    void askForCode(() => editPhoneModalRef.current?.present());
+    setOpening(field);
+    try {
+      await askForCode(present, { onFail: (text) => setOpenError({ field, text }) });
+    } finally {
+      setOpening(null);
+    }
   };
+
+  const openEditPhoneModal = () => void openChange("phone", () => editPhoneModalRef.current?.present());
   const openEditPasswordModal = () => editPasswordModalRef.current?.present();
   const openProfileImageSheet = () => profileImageSheetRef.current?.present();
 
@@ -408,7 +447,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       setEmailError(outcome.text);
       if (outcome.next === "unlock") {
         // The unlock ran out while the code was typed: confirm the current number again, then save.
-        void askForCode(() => void saveEmail(), true);
+        void askForCode(() => void saveEmail(), { force: true, onFail: setEmailError });
       } else if (outcome.next === "new_code") {
         emailToken.current = "";
       } else if (outcome.next === "new_email") {
@@ -489,7 +528,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       setPhoneOtpError(outcome.text);
       if (outcome.next === "unlock") {
         // The unlock ran out while the code was being typed: confirm the current number again, then save.
-        void askForCode(() => void savePhone(), true);
+        void askForCode(() => void savePhone(), { force: true, onFail: setPhoneOtpError });
       } else if (outcome.next === "new_code") {
         phoneToken.current = "";
       } else if (outcome.next === "new_number") {
@@ -699,8 +738,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         </View>
 
         <DetailField label="Full name" value={details.fullName} accessibilityLabel="Edit full name" onEdit={openEditNameModal} />
-        <DetailField label="Email address" value={details.email} accessibilityLabel="Edit email address" onEdit={openEditEmailModal} />
-        <DetailField label="Phone number" value={details.phone} accessibilityLabel="Edit phone number" onEdit={openEditPhoneModal} />
+        <DetailField label="Email address" value={details.email} accessibilityLabel="Edit email address" onEdit={openEditEmailModal} busy={opening === "email"} error={openError?.field === "email" ? openError.text : null} />
+        <DetailField label="Phone number" value={details.phone} accessibilityLabel="Edit phone number" onEdit={openEditPhoneModal} busy={opening === "phone"} error={openError?.field === "phone" ? openError.text : null} />
         <DetailField label="Password" value={details.password} accessibilityLabel="Edit password" onEdit={openEditPasswordModal} />
 
         {selectedImage && (
@@ -1031,16 +1070,19 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         phoneMasked={codeGoesTo.phoneMasked}
         minutes={codeGoesTo.minutes}
         phone={details.phone}
-        // The server says the account has no number: a first number needs no code first.
+        // The server says the account has no number: a first number needs no code first. Whichever change asked
+        // carries on as itself (not always the number's sheet); one that was told to unlock again does not carry on.
         onPhoneRequired={() => {
-          afterUnlock.current = null;
-          editPhoneModalRef.current?.present();
+          const next = pending.current;
+          pending.current = null;
+          if (next && noNumberStep(next.force) === "carry_on") next.then();
+          else next?.onFail?.("Your account has no phone number to send a code to. Add one in your profile first.");
         }}
         onUnlocked={() => {
           unlockSheet.current?.close();
-          const next = afterUnlock.current;
-          afterUnlock.current = null;
-          next?.();
+          const next = pending.current;
+          pending.current = null;
+          next?.then();
         }}
       />
 

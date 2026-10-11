@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import type { ApiError } from "../api-error";
-import { needsCurrentNumberCode, phoneChangeBody, phoneChangeOutcome } from "../phone-change";
+import { needsCurrentNumberCode, noNumberStep, phoneChangeBody, phoneChangeOutcome, unlockNext, unlockStart } from "../phone-change";
 
 const err = (over: Partial<ApiError> = {}): ApiError => ({ status: 400, code: null, message: null, details: null, ...over });
 
@@ -56,5 +56,33 @@ describe("what a refused change says and what to do next", () => {
 
   it("stops where the phone can do nothing", () => {
     expect(phoneChangeOutcome(err({ status: 403, code: "phone_change_in_app" })).next).toBe("stop");
+  });
+});
+
+describe("the code step before a change (review app-6 r1 #2): a refused save never repeats itself", () => {
+  it("skips the code only when the phone believes there is no number, and only when the save was not refused for it", () => {
+    expect(unlockStart({ force: false, believesNumber: false })).toBe("carry_on");
+    expect(unlockStart({ force: false, believesNumber: true })).toBe("ask_server");
+    // The server has just said `fresh_code_required`: never the shortcut, whatever this phone believes.
+    expect(unlockStart({ force: true, believesNumber: false })).toBe("ask_server");
+    expect(unlockStart({ force: true, believesNumber: true })).toBe("ask_server");
+  });
+
+  it("carries on at once only when unlocked and not forced", () => {
+    expect(unlockNext({ force: false, believesNumber: true, unlocked: true })).toBe("carry_on");
+    // Forced: an unlocked answer is not believed (the save was just refused as locked): the code is asked for.
+    expect(unlockNext({ force: true, believesNumber: true, unlocked: true })).toBe("open_sheet");
+    expect(unlockNext({ force: false, believesNumber: true, unlocked: false })).toBe("open_sheet");
+  });
+
+  it("stops, with the copy refreshed, when the server has a number this phone does not know of", () => {
+    // The scene of the review: the number was added on another phone, the sheet here was loaded before.
+    expect(unlockNext({ force: true, believesNumber: false, unlocked: false })).toBe("stale_copy");
+    expect(unlockNext({ force: true, believesNumber: false, unlocked: true })).toBe("stale_copy");
+  });
+
+  it("says what is wrong, instead of saving again, when a forced unlock finds the account has no number", () => {
+    expect(noNumberStep(false)).toBe("carry_on");
+    expect(noNumberStep(true)).toBe("tell");
   });
 });
