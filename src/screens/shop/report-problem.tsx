@@ -91,7 +91,7 @@ export default function ShopReportProblemScreen() {
   const opened = (claimId: number) => {
     toast.success("Sent to Renit", { message: `Renit decides within three working days. ${first} can reply once.` });
     // The claim replaces this form: back from it goes to the return, not to a form that would send again.
-    navigation.dispatch(StackActions.replace("Claim", { id: claimId, role: "owner" }));
+    navigation.dispatch(StackActions.replace("Claim", { id: claimId }));
   };
 
   const send = () =>

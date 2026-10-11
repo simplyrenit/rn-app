@@ -38,6 +38,7 @@ import {
   replyErrorText,
   replyHold,
   replyView,
+  sideOf,
   reportUntilLine,
   rupeesBody,
   statusBanner,
@@ -77,6 +78,9 @@ const claim = (over: Partial<Claim> = {}): Claim => ({
   effects: [],
   money_pending: false,
   forfeit_at: null,
+  return_by: null,
+  my_side: "against",
+  server_time: null,
   created_at: "2026-10-09T05:10:00Z",
   decided_at: null,
   ...over,
@@ -364,11 +368,32 @@ describe("the customer's fault report", () => {
     expect(faultHold("It will not switch on", 1)).toBeNull();
   });
 
-  it("works out when the item must be back: the report plus the return hours", () => {
+  it("reads when the item must be back from the claim's own return_by; only a claim without it is counted here (report plus the return hours)", () => {
     expect(FAULT_RETURN_HOURS).toBe(24);
-    expect(faultReturnBy({ kind: "fault", created_at: "2026-10-09T05:10:00Z" })).toBe("2026-10-10T05:10:00.000Z");
-    expect(faultReturnBy({ kind: "damage", created_at: "2026-10-09T05:10:00Z" })).toBeNull();
-    expect(faultReturnBy({ kind: "fault", created_at: "" })).toBeNull();
+    // The server's time wins, even when it is not 24 hours (a setting that moved).
+    expect(faultReturnBy({ kind: "fault", created_at: "2026-10-09T05:10:00Z", return_by: "2026-10-09T17:10:00Z" })).toBe("2026-10-09T17:10:00Z");
+    // An answer without the field: the report plus the return hours.
+    expect(faultReturnBy({ kind: "fault", created_at: "2026-10-09T05:10:00Z", return_by: null })).toBe("2026-10-10T05:10:00.000Z");
+    expect(faultReturnBy({ kind: "damage", created_at: "2026-10-09T05:10:00Z", return_by: null })).toBeNull();
+    expect(faultReturnBy({ kind: "fault", created_at: "", return_by: null })).toBeNull();
+  });
+
+  it("reads the caller's side from the claim's my_side, and the clock from its server_time", () => {
+    const read = readClaim({ ...claim(), my_side: "against", return_by: "2026-10-10T05:10:00Z", server_time: "2026-10-09T05:12:00Z" });
+    expect(read).toMatchObject({ my_side: "against", return_by: "2026-10-10T05:10:00Z", server_time: "2026-10-09T05:12:00Z" });
+    // A shop claim (the shop is the side it is against) read by the shop, and by the customer who raised it.
+    expect(sideOf(claim({ my_side: "against", against: "shop" }))).toBe("owner");
+    expect(sideOf(claim({ my_side: "raised", raised_by_role: "customer" }))).toBe("customer");
+    // A damage claim: the shop raised it, the customer answers.
+    expect(sideOf(damage({ my_side: "raised" }))).toBe("owner");
+    expect(sideOf(damage({ my_side: "against" }))).toBe("customer");
+    // A claim Renit raised: the one it is not against is the other party.
+    const gone = claim({ kind: "not_returned", against: "customer", raised_by_role: "system", my_side: "other" });
+    expect(sideOf(gone)).toBe("owner");
+    expect(sideOf({ ...gone, my_side: "against" })).toBe("customer");
+    // An answer without my_side: the side it is against, which is the one that may reply.
+    expect(sideOf(claim({ my_side: null }))).toBe("owner");
+    expect(readClaim({ ...claim(), my_side: "someone" })?.my_side).toBeNull();
   });
 
   it("tells the customer the item goes back first, only while the booking says it is still out", () => {

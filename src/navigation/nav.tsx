@@ -450,7 +450,7 @@ export default function Navigation() {
         navigationRef.navigate("ShopHandover", { number: route.number });
         break;
       case "Claim":
-        navigationRef.navigate("Claim", { id: route.id, role: route.role });
+        navigationRef.navigate("Claim", { id: route.id });
         break;
       case "ShopToday":
         navigationRef.navigate("ShopToday");

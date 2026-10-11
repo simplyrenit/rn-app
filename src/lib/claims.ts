@@ -60,6 +60,12 @@ export interface Claim {
   money_pending: boolean;
   /** `not_returned` only: when the deposit goes to the owner if the item is still out (P4-10). */
   forfeit_at: string | null;
+  /** `fault` only: when the item must be back, the report plus `FAULT_RETURN_HOURS` (P5-4). Null on every other kind. */
+  return_by: string | null;
+  /** Which side the caller is on: `raised` it, it is `against` the caller, or the caller is the `other` party of a claim Renit raised (P5-4). */
+  my_side: "raised" | "against" | "other" | null;
+  /** The server's clock when the answer was made: `reply_due_at`, `return_by` and `forfeit_at` are counted against it (P5-4). */
+  server_time: string | null;
   created_at: string;
   decided_at: string | null;
 }
@@ -111,6 +117,9 @@ export function readClaim(value: unknown): Claim | null {
     effects: Array.isArray(value.effects) ? value.effects.map(readEffect).filter((e): e is ClaimEffect => e !== null) : [],
     money_pending: value.money_pending === true,
     forfeit_at: orNull(value.forfeit_at),
+    return_by: orNull(value.return_by),
+    my_side: value.my_side === "raised" || value.my_side === "against" || value.my_side === "other" ? value.my_side : null,
+    server_time: orNull(value.server_time),
     created_at: text(value.created_at),
     decided_at: orNull(value.decided_at),
   };
@@ -146,6 +155,27 @@ export function raisedByLine(claim: Pick<Claim, "raised_by_role" | "booking">, r
   return `${name[0].toUpperCase()}${name.slice(1)} raised this.`;
 }
 
+/**
+ * Which side of the booking the caller is on, read from the claim's `my_side` (P5-4) and not from the screen that opened it:
+ * `against` is the side the claim is against, `raised` the side that raised it, `other` the one that neither raised it nor
+ * answers it (a claim Renit raised). A claim without `my_side` (an answer from before the field) is read as the side it is
+ * against, the one that may reply: `can_reply` still decides whether the form shows.
+ */
+export function sideOf(claim: Pick<Claim, "my_side" | "against" | "raised_by_role">): Side {
+  const against: Side = claim.against === "customer" ? "customer" : "owner";
+  const other: Side = against === "customer" ? "owner" : "customer";
+  switch (claim.my_side) {
+    case "against":
+      return against;
+    case "raised":
+      return claim.raised_by_role === "owner" ? "owner" : claim.raised_by_role === "customer" ? "customer" : other;
+    case "other":
+      return other;
+    default:
+      return against;
+  }
+}
+
 /** The claim is against the caller's side. */
 export const againstMe = (claim: Pick<Claim, "against">, role: Side) => (role === "customer" ? claim.against === "customer" : claim.against === "shop");
 
@@ -176,15 +206,18 @@ export function decideLine(claim: Pick<Claim, "kind" | "decide_by">, now: Date):
   return `Renit decides by the end of ${dayWord(claim.decide_by, now).replace(/^on /, "")}.`;
 }
 
-/** The fault report's item goes back first; the claim carries no return time, so it is the report's time plus this. */
-// Workaround, no contract field: the server's FAULT_RETURN_HOURS (24) is held here; read a `return_by` from the claim once it has one.
+/**
+ * The fault report's item goes back first, and the claim says by when (`return_by`, P5-4). Only a claim without that field
+ * (an answer from before it) is counted here: the report's time plus the server's FAULT_RETURN_HOURS.
+ */
 export const FAULT_RETURN_HOURS = 24;
 
-/** When the item must be back for a fault report that is not upheld still to give a part-refund (A-32): the report plus 24 hours. */
-export function faultReturnBy(claim: Pick<Claim, "kind" | "created_at">): string | null {
+/** When the item must be back for a fault report that is not upheld still to give a part-refund (A-32): the server's `return_by`. */
+export function faultReturnBy(claim: Pick<Claim, "kind" | "created_at" | "return_by">): string | null {
+  if (claim.kind !== "fault") return null;
+  if (claim.return_by) return claim.return_by;
   const at = new Date(claim.created_at).getTime();
-  if (claim.kind !== "fault" || !Number.isFinite(at)) return null;
-  return new Date(at + FAULT_RETURN_HOURS * 3_600_000).toISOString();
+  return Number.isFinite(at) ? new Date(at + FAULT_RETURN_HOURS * 3_600_000).toISOString() : null;
 }
 
 /**
@@ -194,7 +227,7 @@ export function faultReturnBy(claim: Pick<Claim, "kind" | "created_at">): string
  * once it is back there is nothing to bring. Null for anything else.
  */
 export function faultReturnLine(
-  claim: Pick<Claim, "kind" | "created_at" | "status" | "money_pending">,
+  claim: Pick<Claim, "kind" | "created_at" | "return_by" | "status" | "money_pending">,
   stillOut: boolean,
   now: Date
 ): string | null {

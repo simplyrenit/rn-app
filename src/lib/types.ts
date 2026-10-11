@@ -384,11 +384,10 @@ export type RootStackParamList = {
   BookingFault: { number: string };
   /**
    * One claim, for either side (ENG-252, ENG-253): who raised it, the amount, the deadline, the reply
-   * (the customer's one reply is sent here), what was decided and what it did to the money. `role` is
-   * which side of the booking the person is on; a claim carries no word for it.
-   * Workaround, no contract field: a `viewer` side on the Claim would replace this param.
+   * (the customer's one reply is sent here), what was decided and what it did to the money. Which side of the
+   * booking the person is on comes from the claim's own `my_side` (P5-4).
    */
-  Claim: { id: number; role: Side };
+  Claim: { id: number };
   /**
    * "They did not come" (either side, `no_show`) and the customer's "Owner did not
    * come" at the return (`owner_absent`), with a photo taken on the spot. `name` and

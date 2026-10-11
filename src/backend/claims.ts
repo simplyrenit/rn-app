@@ -18,7 +18,7 @@ export function useClaimKinds(ids: readonly number[] | null | undefined): string
   return results.every((r) => r.data) ? results.map((r) => (r.data as ClaimRead).claim.kind) : undefined;
 }
 
-/** A claim, and the server's time when the answer was made (the claim carries none of its own). */
+/** A claim, and the server's time when the answer was made (its own `server_time`; the answer's `Date` header only for an answer without it). */
 export interface ClaimRead {
   claim: Claim;
   serverTime: string | null;
@@ -30,10 +30,15 @@ const need = (value: unknown): Claim => {
   return claim;
 };
 
+/** A claim and its clock: the claim's own `server_time` (P5-4), else the answer's `Date` header. */
+const read = (value: unknown, headers: unknown): ClaimRead => {
+  const claim = need(value);
+  return { claim, serverTime: claim.server_time ?? serverTimeFromHeaders(headers) };
+};
+
 export async function fetchClaim(id: number): Promise<ClaimRead> {
   const response = await axiosInstance.get<{ claim: unknown }>(`${CLAIMS_ENDPOINT}${id}/`);
-  // Workaround, no contract field: the Claim has no `server_time`, so the answer's `Date` header is the server's clock.
-  return { claim: need(response.data?.claim), serverTime: serverTimeFromHeaders(response.headers) };
+  return read(response.data?.claim, response.headers);
 }
 
 export function useClaim(id: number, enabled = true) {
@@ -54,7 +59,7 @@ export async function findMyReport(ids: number[], sent: SentReport): Promise<num
 /** The one reply, by the side the claim is against. `409 already_replied`, `claim_decided`, `reply_late`. */
 export async function replyToClaim(id: number, text: string, evidence: string[]): Promise<ClaimRead> {
   const response = await axiosInstance.post<{ claim: unknown }>(`${CLAIMS_ENDPOINT}${id}/reply/`, { text: text.trim(), evidence });
-  return { claim: need(response.data?.claim), serverTime: serverTimeFromHeaders(response.headers) };
+  return read(response.data?.claim, response.headers);
 }
 
 const bookingUrl = (number: string, action: string) => `${BOOKINGS_ENDPOINT}${encodeURIComponent(number)}/${action}`;

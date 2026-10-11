@@ -72,7 +72,7 @@ export default function FaultReportScreen() {
   const opened = (claimId: number) => {
     toast.success("Sent to Renit", { message: "You will hear by the end of tomorrow." });
     // The claim replaces this form: back from it goes to the rental, not to a form that would send again.
-    navigation.dispatch(StackActions.replace("Claim", { id: claimId, role: "customer" }));
+    navigation.dispatch(StackActions.replace("Claim", { id: claimId }));
   };
 
   const send = () =>

@@ -13,7 +13,6 @@ import { EvidencePhoto, PhotoRow, discardEvidence, uploadPhotos } from "@/compon
 import { useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
 import { SLOW_POLL_MS, momentLabel } from "@/lib/booking";
-import { Side } from "@/lib/capture";
 import {
   Claim,
   againstMe,
@@ -29,6 +28,7 @@ import {
   replyErrorText,
   replyHold,
   replyView,
+  sideOf,
   statusBanner,
 } from "@/lib/claims";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
@@ -162,13 +162,15 @@ function ReplyForm({ claim, due, now }: { claim: Claim; due: string; now: Date }
   );
 }
 
-function ClaimBody({ read, receivedAt, role }: { read: ClaimRead; receivedAt: number; role: Side }) {
+function ClaimBody({ read, receivedAt }: { read: ClaimRead; receivedAt: number }) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
-  // The claim carries no `server_time`: the answer's `Date` header stands in, and every deadline is counted against it.
+  // Every deadline is counted against the claim's own `server_time`.
   const now = useServerNow(read.serverTime, receivedAt, 30_000);
   const { claim } = read;
+  // Which side the person is on: the claim says (`my_side`), the screen that opened it does not have to.
+  const role = sideOf(claim);
   const banner = statusBanner(claim, role, now);
   const reply = replyView(claim, role, now, Boolean(read.serverTime));
   const rows = effectRows(claim);
@@ -341,11 +343,11 @@ function ClaimBody({ read, receivedAt, role }: { read: ClaimRead; receivedAt: nu
  * was said and shown, the amount, the deadline, the reply and what was decided and
  * did to the money. It is read again each time the screen or the app comes to the
  * front, and every 15 seconds while it is still open, so a decision shows by itself.
- * A claim names no side, so `role` comes from the screen or the push that opened it.
+ * The side the person is on comes from the claim's own `my_side`.
  */
 export default function ClaimScreen() {
   const { params } = useRoute<RouteProps<"Claim">>();
-  const { id, role } = params;
+  const { id } = params;
   const focused = useIsFocused();
   const active = useAppActive();
   const watching = focused && active;
@@ -375,7 +377,7 @@ export default function ClaimScreen() {
     <NonScrollableContainer>
       <SubpageHeader title="Claim" />
       {query.data ? (
-        <ClaimBody read={query.data} receivedAt={query.dataUpdatedAt} role={role} />
+        <ClaimBody read={query.data} receivedAt={query.dataUpdatedAt} />
       ) : query.isError ? (
         <BookingLoadError error={query.error} what="this claim" onRetry={() => void refetch()} />
       ) : (
