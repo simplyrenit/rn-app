@@ -1,5 +1,6 @@
 import { bookingQueryKey, fetchBooking } from "@/backend/bookings";
 import { ClaimRead, claimQueryKey, fetchClaim, replyToClaim, useClaim } from "@/backend/claims";
+import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoadError, BookingLoading, Notice, Panel } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { PaymentsList } from "@/components/booking/payments-list";
@@ -165,18 +166,24 @@ function ClaimBody({ read, receivedAt, role }: { read: ClaimRead; receivedAt: nu
   // The claim carries no `server_time`: the answer's `Date` header stands in, and every deadline is counted against it.
   const now = useServerNow(read.serverTime, receivedAt, 30_000);
   const { claim } = read;
-  const banner = statusBanner(claim, now);
+  const banner = statusBanner(claim, role, now);
   const reply = replyView(claim, role, now);
   const rows = effectRows(claim);
   const amounts = amountLines(claim);
   const other = otherName(claim, role);
-  // A fault report sends the item back first, for the customer, until the money has run.
-  const returnLine = role === "customer" ? faultReturnLine(claim, now) : null;
   // What a refund did and where it went (N16): the customer's payments list says so, with the days to expect.
   const refunded = role === "customer" && claim.effects.some((e) => e.kind === "refund");
   const bookingNumber = claim.booking.number;
   // Only the customer's own read of the booking: the shop's booking is another endpoint, and the shop sees no payments list here.
-  const booking = useQuery(bookingQueryKey(bookingNumber), () => fetchBooking(bookingNumber), { enabled: refunded, staleTime: 0, retry: 1 });
+  // A fault report is also read against it, to know whether the item is still out.
+  const booking = useQuery(bookingQueryKey(bookingNumber), () => fetchBooking(bookingNumber), {
+    enabled: refunded || (role === "customer" && claim.kind === "fault"),
+    staleTime: 0,
+    retry: 1,
+  });
+  // A fault report sends the item back first: "bring it back by…" only while the booking still says it is out.
+  const stillOut = booking.data?.stage === "out" && !booking.data.exit;
+  const returnLine = role === "customer" ? faultReturnLine(claim, stillOut, now) : null;
   const raised = claim.created_at ? momentLabel(claim.created_at, now) : "";
 
   return (
@@ -251,10 +258,6 @@ function ClaimBody({ read, receivedAt, role }: { read: ClaimRead; receivedAt: nu
         </Section>
       ) : reply.kind === "form" ? (
         <ReplyForm claim={claim} due={reply.due} now={now} />
-      ) : reply.kind === "dashboard" ? (
-        <Notice tone="brand" icon="info">
-          {`You can reply once, by ${deadlineLabel(reply.due, now)}. Replies are made on the Renit dashboard, on a computer.`}
-        </Notice>
       ) : reply.kind === "late" ? (
         <Notice tone="warning" icon="clock">
           {`The time to reply has passed (${deadlineLabel(reply.due, now)}). Renit decides from what it has.`}
@@ -314,6 +317,11 @@ function ClaimBody({ read, receivedAt, role }: { read: ClaimRead; receivedAt: nu
       ) : null}
 
       {refunded && booking.data ? <PaymentsList booking={booking.data} /> : null}
+
+      {/* The claim has the booking's number; the booking's `can` offers `get_help` to either party, so the row is offered here. */}
+      <Panel>
+        <GetHelp booking={{ number: bookingNumber, can: ["get_help"] }} />
+      </Panel>
 
       <Button
         variant="outline"

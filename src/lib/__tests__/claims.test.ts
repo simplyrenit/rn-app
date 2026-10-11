@@ -22,6 +22,11 @@ import {
   faultNotice,
   faultReturnBy,
   faultReturnLine,
+  forfeitLine,
+  isMyReport,
+  newClaimIds,
+  problemLine,
+  problemState,
   faultRowSub,
   isVideoUrl,
   kindLabel,
@@ -70,6 +75,8 @@ const claim = (over: Partial<Claim> = {}): Claim => ({
   decided_amount: null,
   decision_note: "",
   effects: [],
+  money_pending: false,
+  forfeit_at: null,
   created_at: "2026-10-09T05:10:00Z",
   decided_at: null,
   ...over,
@@ -162,23 +169,55 @@ describe("deadlines are counted against the server's clock", () => {
 
 describe("where the claim stands", () => {
   it("is waiting for the decision while open", () => {
-    expect(statusBanner(claim(), NOW)).toEqual({ tone: "brand", title: "Waiting for Renit's decision", sub: "Renit decides by the end of tomorrow." });
-    expect(statusBanner(claim({ kind: "not_returned" }), NOW)).toEqual({ tone: "brand", title: "Renit's desk is dealing with this", sub: null });
+    expect(statusBanner(claim(), "customer", NOW)).toEqual({ tone: "brand", title: "Waiting for Renit's decision", sub: "Renit decides by the end of tomorrow." });
+    expect(statusBanner(claim({ kind: "not_returned" }), "customer", NOW)).toEqual({ tone: "brand", title: "Renit's desk is dealing with this", sub: null });
   });
 
   it("says what was decided, in the server's three words", () => {
-    expect(statusBanner(claim({ status: "decided", decision: "upheld", effects: [{ kind: "mark", amount: null, text: "x" }] }), NOW).title).toBe("Renit upheld this claim");
-    expect(statusBanner(claim({ status: "decided", decision: "not_upheld" }), NOW).title).toBe("Renit did not uphold this claim");
-    expect(statusBanner(damage({ status: "decided", decision: "resolved" }), NOW).title).toBe("Resolved by Renit");
-    expect(statusBanner(damage({ status: "decided", decision: "" }), NOW).title).toBe("Decided by Renit");
+    expect(statusBanner(claim({ status: "decided", decision: "upheld", effects: [{ kind: "mark", amount: null, text: "x" }] }), "customer", NOW).title).toBe("Renit upheld this claim");
+    expect(statusBanner(claim({ status: "decided", decision: "not_upheld" }), "customer", NOW).title).toBe("Renit did not uphold this claim");
+    expect(statusBanner(damage({ status: "decided", decision: "resolved" }), "customer", NOW).title).toBe("Resolved by Renit");
+    expect(statusBanner(damage({ status: "decided", decision: "" }), "customer", NOW).title).toBe("Decided by Renit");
   });
 
-  it("says a decided fault claim waits for the item to come back until its money has run", () => {
-    const fault = claim({ kind: "fault", status: "decided", decision: "upheld", effects: [] });
+  it("says the money waits for the item to come back exactly when the claim says `money_pending` (P4-10)", () => {
+    const fault = claim({ kind: "fault", status: "decided", decision: "upheld", money_pending: true });
     expect(waitsForReturn(fault)).toBe(true);
-    expect(statusBanner(fault, NOW).sub).toBe("The money moves once the item is back.");
-    expect(waitsForReturn({ ...fault, effects: [{ kind: "refund", amount: "1830.00", text: "Refunded to the customer" }] })).toBe(false);
-    expect(waitsForReturn(damage({ status: "decided", effects: [] }))).toBe(false);
+    expect(statusBanner(fault, "customer", NOW).sub).toBe("The money moves when the item is back.");
+    // An effect already written (the mark) does not end the wait: the flag does.
+    const withMark = { ...fault, effects: [{ kind: "mark", amount: null, text: "A mark on the shop's record" }] };
+    expect(waitsForReturn(withMark)).toBe(true);
+    expect(statusBanner(withMark, "owner", NOW).sub).toBe("The money moves when the item is back.");
+    // Not upheld and back late: no money moves and none waits, so nothing is promised.
+    const notUpheld = claim({ kind: "fault", status: "decided", decision: "not_upheld", money_pending: false, effects: [] });
+    expect(waitsForReturn(notUpheld)).toBe(false);
+    expect(statusBanner(notUpheld, "customer", NOW).sub).toBeNull();
+    // An open claim has nothing decided to wait on.
+    expect(waitsForReturn(claim({ kind: "fault", money_pending: true }))).toBe(false);
+  });
+
+  it("reads `money_pending` and `forfeit_at` from the claim", () => {
+    const read = readClaim({ ...claim(), kind: "not_returned", money_pending: true, forfeit_at: "2026-10-14T05:00:00Z" });
+    expect(read?.money_pending).toBe(true);
+    expect(read?.forfeit_at).toBe("2026-10-14T05:00:00Z");
+    // An older answer without them: not pending, no time.
+    const { money_pending: _m, forfeit_at: _f, ...old } = claim();
+    expect(readClaim(old)).toMatchObject({ money_pending: false, forfeit_at: null });
+  });
+
+  it("tells both sides when the deposit goes to the owner on an item not returned, by the server's clock", () => {
+    const gone = claim({ kind: "not_returned", against: "customer", raised_by_role: "system", reply_due_at: null, forfeit_at: "2026-10-12T04:30:00Z" });
+    expect(forfeitLine(gone, "customer", NOW)).toBe("If the item is still out at 10:00 am on Mon 12 Oct, your deposit goes to the shop.");
+    expect(forfeitLine(gone, "owner", NOW)).toBe("If the item is still out at 10:00 am on Mon 12 Oct, the deposit goes to you.");
+    expect(statusBanner(gone, "customer", NOW).sub).toBe("If the item is still out at 10:00 am on Mon 12 Oct, your deposit goes to the shop.");
+    // Past it: said plainly, not as a promise.
+    const after = new Date("2026-10-12T06:00:00Z");
+    expect(forfeitLine(gone, "customer", after)).toBe("The deposit was due to go to the shop at 10:00 am today, if the item was still out.");
+    expect(forfeitLine(gone, "owner", after)).toBe("The deposit was due to go to you at 10:00 am today, if the item was still out.");
+    // No time, another kind, or decided: nothing.
+    expect(forfeitLine({ ...gone, forfeit_at: null }, "customer", NOW)).toBeNull();
+    expect(forfeitLine(claim(), "customer", NOW)).toBeNull();
+    expect(forfeitLine({ ...gone, status: "decided" }, "customer", NOW)).toBeNull();
   });
 
   it("says what a damage claim asked for and what was decided", () => {
@@ -214,8 +253,11 @@ describe("the reply, once", () => {
     expect(replyView(damage(), "customer", NOW)).toEqual({ kind: "form", due: "2026-10-12T12:30:00Z" });
   });
 
-  it("is a line for the shop to reply on the dashboard when the claim is against it (the phone does not reply for a shop)", () => {
-    expect(replyView(claim(), "owner", NOW)).toEqual({ kind: "dashboard", due: "2026-10-10T12:30:00Z" });
+  it("is the same form for the shop when the claim is against it: an owner who is not a merchant has no dashboard", () => {
+    expect(replyView(claim(), "owner", NOW)).toEqual({ kind: "form", due: "2026-10-10T12:30:00Z" });
+    // Still once, still before the deadline, still only when the server says the caller may.
+    expect(replyView(claim({ can_reply: false }), "owner", NOW).kind).toBe("none");
+    expect(replyView(claim(), "owner", new Date("2026-10-10T12:30:00Z")).kind).toBe("late");
   });
 
   it("tells the side that raised it that the other can still reply", () => {
@@ -312,16 +354,19 @@ describe("the customer's fault report", () => {
     expect(faultReturnBy({ kind: "fault", created_at: "" })).toBeNull();
   });
 
-  it("tells the customer the item goes back first, until the money has run", () => {
+  it("tells the customer the item goes back first, only while the booking says it is still out", () => {
     const fault = claim({ kind: "fault", created_at: "2026-10-09T05:10:00Z" });
-    expect(faultReturnLine(fault, NOW)).toBe("The item goes back first: bring it back by 10:40 am tomorrow. Any refund is paid once it is back.");
-    expect(faultReturnLine(fault, new Date("2026-10-10T06:00:00Z"))).toBe(
+    expect(faultReturnLine(fault, true, NOW)).toBe("The item goes back first: bring it back by 10:40 am tomorrow. Any refund is paid once it is back.");
+    expect(faultReturnLine(fault, true, new Date("2026-10-10T06:00:00Z"))).toBe(
       "The item was due back by 10:40 am today. Bring it back as soon as you can: any refund is paid once it is back."
     );
-    // Decided, money waiting: still to bring back. Decided, money run: nothing more to say.
-    expect(faultReturnLine({ ...fault, status: "decided", effects: [] }, NOW)).not.toBeNull();
-    expect(faultReturnLine({ ...fault, status: "decided", effects: [{ kind: "refund", amount: "1.00", text: "x" }] }, NOW)).toBeNull();
-    expect(faultReturnLine(claim(), NOW)).toBeNull();
+    // The item is back (reported 10 am Saturday, returned that evening, decided Sunday night): nothing to bring.
+    expect(faultReturnLine(fault, false, NOW)).toBeNull();
+    expect(faultReturnLine({ ...fault, status: "decided", money_pending: true }, false, NOW)).toBeNull();
+    // Decided and the money waits, the item still out: still to bring back. Decided and nothing waits: nothing to say.
+    expect(faultReturnLine({ ...fault, status: "decided", money_pending: true }, true, NOW)).not.toBeNull();
+    expect(faultReturnLine({ ...fault, status: "decided", money_pending: false }, true, NOW)).toBeNull();
+    expect(faultReturnLine(claim(), true, NOW)).toBeNull();
   });
 
   it("says why a report was refused", () => {
@@ -366,23 +411,48 @@ describe("the shop's damage report", () => {
   const shop = (over = {}) => ({
     can: ["report_problem"],
     stage: "returned" as const,
+    exit: "" as const,
     claim_open: false,
+    claims: [] as number[],
     report_problem_until: "2026-10-10T05:12:00Z",
     money: { deposit: "3000.00", late_fee: "0.00" } as never,
     ...over,
   });
+  const NONE_LEFT = "Nothing is left of the deposit to claim against, so a problem can't be reported here. Use Get help to tell Renit's desk what is wrong.";
 
-  it("is offered when the server says so", () => {
+  it("is offered when the server says so, and only then (P4-10: the phone does not work the rule out)", () => {
     expect(damageBlocked(shop(), NOW)).toBeNull();
+    expect(problemState(shop(), NOW)).toBe("open");
+    // `can` is the rule: even a booking that looks reportable is not offered without it.
+    expect(problemState(shop({ can: [] }), NOW)).not.toBe("open");
   });
 
-  it("says which of the reasons it is not offered, and points to Get help where nothing can be claimed (A-50)", () => {
-    expect(damageBlocked(shop({ can: [], claim_open: true }), NOW)).toContain("already with Renit");
+  it("says plainly that nothing is left of the deposit, before the return code and after it, and points to Get help (A-50)", () => {
+    // No deposit was taken.
+    const none = { deposit: "0.00", late_fee: "0.00" } as never;
+    expect(problemState(shop({ can: [], money: none }), NOW)).toBe("none_left");
+    expect(problemState(shop({ can: [], money: none, stage: "out" }), NOW)).toBe("none_left");
+    // Late fees used it all.
+    const used = { deposit: "3000.00", late_fee: "3000.00" } as never;
+    expect(problemState(shop({ can: [], money: used }), NOW)).toBe("none_left");
+    expect(damageBlocked(shop({ can: [], money: used }), NOW)).toBe(NONE_LEFT);
+    expect(problemLine("none_left")).toBe(NONE_LEFT);
+  });
+
+  it("says which of the other reasons it is not offered", () => {
+    expect(problemState(shop({ can: [], stage: "out" }), NOW)).toBe("after_code");
     expect(damageBlocked(shop({ can: [], stage: "out" }), NOW)).toContain("once the item is back");
-    expect(damageBlocked(shop({ can: [], money: { deposit: "3000.00", late_fee: "3000.00" } as never }), NOW)).toBe(
-      "Nothing is left of the deposit, so a damage claim can't be made. Use Get help to talk to Renit's desk."
-    );
-    expect(damageBlocked(shop({ can: [] }), new Date("2026-10-10T06:00:00Z"))).toBe("The 24 hours to report a problem have passed. Use Get help to talk to Renit's desk.");
+    expect(problemState(shop({ can: [], claim_open: true }), NOW)).toBe("reported");
+    expect(damageBlocked(shop({ can: [], claim_open: true }), NOW)).toContain("already been reported");
+    // A claim made and decided still stops a second one.
+    expect(problemState(shop({ can: [], claims: [12] }), NOW)).toBe("reported");
+    expect(problemState(shop({ can: [] }), new Date("2026-10-10T06:00:00Z"))).toBe("passed");
+    expect(damageBlocked(shop({ can: [] }), new Date("2026-10-10T06:00:00Z"))).toBe("The time to report a problem has passed. Use Get help to talk to Renit's desk.");
+    expect(problemState(shop({ can: [], stage: "closed", report_problem_until: null }), NOW)).toBe("passed");
+    expect(problemState(shop({ can: [], exit: "cancelled_by_owner" }), NOW)).toBe("unavailable");
+    expect(problemState(shop({ can: [] }), NOW)).toBe("unavailable");
+    expect(problemLine("open")).toBeNull();
+    expect(problemLine("after_code")).toBeNull();
   });
 
   it("says what Renit does with the report", () => {
@@ -397,6 +467,36 @@ describe("the shop's damage report", () => {
     expect(damageErrorText(err({ code: "amount_too_large", details: { max: "0.00" } }))).toContain("Nothing is left of the deposit");
     expect(damageErrorText(err({ code: "claim_exists" }))).toBe("You have already reported a problem on this booking. It is with Renit.");
     expect(damageErrorText(err({ code: "validation_error", details: { fields: { amount: ["A valid number is required."] } } }))).toBe("A valid number is required.");
+  });
+});
+
+describe("after a report whose answer never came (review r1 #3)", () => {
+  it("takes only a claim the booking did not hold before the press", () => {
+    expect(newClaimIds([4, 7], [4, 7, 9])).toEqual([9]);
+    expect(newClaimIds([4, 7], [4, 7])).toEqual([]);
+    expect(newClaimIds(undefined, [3])).toEqual([3]);
+    expect(newClaimIds([1], undefined)).toEqual([]);
+  });
+
+  it("matches a fault report on its kind, who raised it and its words", () => {
+    const mine = claim({ kind: "fault", raised_by_role: "customer", statement: "It will not switch on." });
+    expect(isMyReport(mine, { kind: "fault", statement: "It will not switch on." })).toBe(true);
+    expect(isMyReport(mine, { kind: "fault", statement: "  It will not switch on.  " })).toBe(true);
+    expect(isMyReport(mine, { kind: "fault", statement: "Another thing" })).toBe(false);
+    // A "not as described" claim the customer made earlier is not a fault report.
+    expect(isMyReport(claim(), { kind: "fault", statement: "The lens is scratched and the remote is missing." })).toBe(false);
+    expect(isMyReport({ ...mine, raised_by_role: "owner" }, { kind: "fault", statement: "It will not switch on." })).toBe(false);
+  });
+
+  it("matches a damage report on its kind, its amount and its words, and never the customer's own open claim", () => {
+    const mine = damage({ statement: "The stick is broken." });
+    expect(isMyReport(mine, { kind: "damage", statement: "The stick is broken.", amount: 650 })).toBe(true);
+    expect(isMyReport(mine, { kind: "damage", statement: "The stick is broken.", amount: 600 })).toBe(false);
+    expect(isMyReport(mine, { kind: "damage", statement: "Something else", amount: 650 })).toBe(false);
+    // The scene of the review: the customer's fault claim is still open, and it is not the shop's damage report.
+    const theirs = claim({ kind: "fault", raised_by_role: "customer", statement: "The stick is broken." });
+    expect(isMyReport(theirs, { kind: "damage", statement: "The stick is broken.", amount: 650 })).toBe(false);
+    expect(isMyReport(damage({ amount_claimed: null }), { kind: "damage", statement: damage().statement, amount: 650 })).toBe(false);
   });
 });
 

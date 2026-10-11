@@ -1,5 +1,5 @@
 import { BookingCustomer } from "@/lib/booking";
-import { Claim, rupeesBody, readClaim } from "@/lib/claims";
+import { Claim, SentReport, isMyReport, readClaim, rupeesBody } from "@/lib/claims";
 import { BOOKINGS_ENDPOINT, CLAIMS_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { serverTimeFromHeaders } from "@/lib/server-clock";
@@ -23,11 +23,23 @@ const need = (value: unknown): Claim => {
 
 export async function fetchClaim(id: number): Promise<ClaimRead> {
   const response = await axiosInstance.get<{ claim: unknown }>(`${CLAIMS_ENDPOINT}${id}/`);
+  // Workaround, no contract field: the Claim has no `server_time`, so the answer's `Date` header is the server's clock.
   return { claim: need(response.data?.claim), serverTime: serverTimeFromHeaders(response.headers) };
 }
 
 export function useClaim(id: number, enabled = true) {
   return useQuery(claimQueryKey(id), () => fetchClaim(id), { enabled, staleTime: 0, retry: 1 });
+}
+
+/**
+ * After a report whose answer never came: which of these claim ids, if any, is the report that was sent. Each is read and
+ * matched on its kind, who raised it and its words, so another open claim on the booking is never taken for it.
+ */
+export async function findMyReport(ids: number[], sent: SentReport): Promise<number | null> {
+  for (const id of ids) {
+    if (isMyReport((await fetchClaim(id)).claim, sent)) return id;
+  }
+  return null;
 }
 
 /** The one reply, by the side the claim is against. `409 already_replied`, `claim_decided`, `reply_late`. */

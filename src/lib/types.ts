@@ -382,6 +382,7 @@ export type RootStackParamList = {
    * One claim, for either side (ENG-252, ENG-253): who raised it, the amount, the deadline, the reply
    * (the customer's one reply is sent here), what was decided and what it did to the money. `role` is
    * which side of the booking the person is on; a claim carries no word for it.
+   * Workaround, no contract field: a `viewer` side on the Claim would replace this param.
    */
   Claim: { id: number; role: Side };
   /**

@@ -56,6 +56,10 @@ export interface Claim {
   decided_amount: string | null;
   decision_note: string;
   effects: ClaimEffect[];
+  /** A decided claim's money waits for something: a fault report decided before the item is back (P4-10). */
+  money_pending: boolean;
+  /** `not_returned` only: when the deposit goes to the owner if the item is still out (P4-10). */
+  forfeit_at: string | null;
   created_at: string;
   decided_at: string | null;
 }
@@ -105,6 +109,8 @@ export function readClaim(value: unknown): Claim | null {
     decided_amount: orNull(value.decided_amount),
     decision_note: text(value.decision_note),
     effects: Array.isArray(value.effects) ? value.effects.map(readEffect).filter((e): e is ClaimEffect => e !== null) : [],
+    money_pending: value.money_pending === true,
+    forfeit_at: orNull(value.forfeit_at),
     created_at: text(value.created_at),
     decided_at: orNull(value.decided_at),
   };
@@ -171,7 +177,7 @@ export function decideLine(claim: Pick<Claim, "kind" | "decide_by">, now: Date):
 }
 
 /** The fault report's item goes back first; the claim carries no return time, so it is the report's time plus this. */
-// ponytail: the setting is FAULT_RETURN_HOURS on the server (24); the claim does not carry the time. Read `return_by` from the claim if it ever does.
+// Workaround, no contract field: the server's FAULT_RETURN_HOURS (24) is held here; read a `return_by` from the claim once it has one.
 export const FAULT_RETURN_HOURS = 24;
 
 /** When the item must be back for a fault report that is not upheld still to give a part-refund (A-32): the report plus 24 hours. */
@@ -183,12 +189,18 @@ export function faultReturnBy(claim: Pick<Claim, "kind" | "created_at">): string
 
 /**
  * What the customer is told about bringing the item back, for a fault report that is
- * open or decided with its money waiting on the return: the item goes back first (A-32,
- * N14). Null for anything else, and once the money has run.
+ * open or decided with its money waiting on the return (`money_pending`): the item goes
+ * back first (A-32, N14). Only while the booking still says the item is out (`stillOut`):
+ * once it is back there is nothing to bring. Null for anything else.
  */
-export function faultReturnLine(claim: Pick<Claim, "kind" | "created_at" | "status" | "effects">, now: Date): string | null {
+export function faultReturnLine(
+  claim: Pick<Claim, "kind" | "created_at" | "status" | "money_pending">,
+  stillOut: boolean,
+  now: Date
+): string | null {
+  if (!stillOut || (claim.status === "decided" && !claim.money_pending)) return null;
   const by = faultReturnBy(claim);
-  if (!by || (claim.status === "decided" && !waitsForReturn(claim))) return null;
+  if (!by) return null;
   const when = deadlineLabel(by, now);
   return reached(by, now)
     ? `The item was due back by ${when}. Bring it back as soon as you can: any refund is paid once it is back.`
@@ -210,23 +222,34 @@ const DECISION_TITLE: Record<string, string> = {
 };
 
 /**
- * A fault claim is decided and its money waits for the item to come back (the
- * claim shows "waiting for the return", API OE-K staff decision). The claim has no
- * flag for it, so it is read from what is there: decided, and no effect written yet.
+ * A decided claim whose money waits: the claim says so itself (`money_pending`, P4-10), and the page writes
+ * "The money moves when the item is back" from that flag, not from the booking.
  */
-export const waitsForReturn = (claim: Pick<Claim, "kind" | "status" | "effects">) =>
-  claim.kind === "fault" && claim.status === "decided" && claim.effects.length === 0;
+export const waitsForReturn = (claim: Pick<Claim, "status" | "money_pending">) => claim.status === "decided" && claim.money_pending;
 
-export function statusBanner(claim: Claim, now: Date): Banner {
+/**
+ * An "item not returned" claim says when the deposit goes to the owner if the item is still out (`forfeit_at`,
+ * P4-10), by the same clock as every other deadline. Null for any other kind and once the claim is decided.
+ */
+export function forfeitLine(claim: Pick<Claim, "kind" | "status" | "forfeit_at">, role: Side, now: Date): string | null {
+  if (claim.kind !== "not_returned" || claim.status !== "open" || !claim.forfeit_at) return null;
+  const when = deadlineLabel(claim.forfeit_at, now);
+  const to = role === "customer" ? "the shop" : "you";
+  return reached(claim.forfeit_at, now)
+    ? `The deposit was due to go to ${to} at ${when}, if the item was still out.`
+    : `If the item is still out at ${when}, ${role === "customer" ? "your" : "the"} deposit goes to ${to}.`;
+}
+
+export function statusBanner(claim: Claim, role: Side, now: Date): Banner {
   if (claim.status === "open") {
     return takesDecision(claim.kind)
       ? { tone: "brand", title: "Waiting for Renit's decision", sub: decideLine(claim, now) }
-      : { tone: "brand", title: "Renit's desk is dealing with this", sub: null };
+      : { tone: "brand", title: "Renit's desk is dealing with this", sub: forfeitLine(claim, role, now) };
   }
   return {
     tone: "neutral",
     title: DECISION_TITLE[claim.decision] ?? "Decided by Renit",
-    sub: waitsForReturn(claim) ? "The money moves once the item is back." : null,
+    sub: waitsForReturn(claim) ? "The money moves when the item is back." : null,
   };
 }
 
@@ -281,10 +304,8 @@ export function effectRows(claim: Pick<Claim, "effects">): EffectRow[] {
 export type ReplyView =
   /** A reply has been sent: it is shown, and no form is. */
   | { kind: "sent"; reply: ClaimReply }
-  /** The customer may reply, once, until `due`. */
+  /** The side the claim is against may reply, once, until `due`: the customer, or the shop (an owner who is not a merchant has no dashboard, so the phone replies for both). */
   | { kind: "form"; due: string }
-  /** The shop may reply, on the dashboard (replying on the phone is not built: ENG-253's scope). */
-  | { kind: "dashboard"; due: string }
   /** The caller's side could have replied and the time has passed. */
   | { kind: "late"; due: string }
   /** The other side may still reply. */
@@ -308,15 +329,15 @@ export function replyView(claim: Claim, role: Side, now: Date): ReplyView {
   if (reached(due, now)) return mine ? { kind: "late", due } : { kind: "none" };
   if (!mine) return { kind: "waiting", due };
   if (!claim.can_reply) return { kind: "none" };
-  return role === "customer" ? { kind: "form", due } : { kind: "dashboard", due };
+  return { kind: "form", due };
 }
 
 /** The line under a claim on a list of claims, or a booking. */
 export function claimRowSub(claim: Claim, role: Side, now: Date): string {
   if (claim.status === "decided") return DECISION_TITLE[claim.decision] ?? "Decided by Renit";
   const view = replyView(claim, role, now);
-  if (view.kind === "form" || view.kind === "dashboard") return `Waiting for Renit's decision. Reply by ${deadlineLabel(view.due, now)}.`;
-  return statusBanner(claim, now).title;
+  if (view.kind === "form") return `Waiting for Renit's decision. Reply by ${deadlineLabel(view.due, now)}.`;
+  return statusBanner(claim, role, now).title;
 }
 
 export function replyHold(reply: string): string | null {
@@ -349,6 +370,31 @@ export const replyAlreadyIn = (error: ApiError | null) => error?.code === "alrea
 
 /** A photo or a video, by the end of its address. Evidence from the dashboard may be either. */
 export const isVideoUrl = (url: string) => /\.(mp4|mov|m4v|webm)(\?|#|$)/i.test(url);
+
+// ---- After a send whose answer never came -----------------------------------------------------------
+
+/** The claims a booking holds now that it did not hold before the press: only a new id can be the report that was sent. */
+export const newClaimIds = (before: readonly number[] | null | undefined, after: readonly number[] | null | undefined): number[] =>
+  (after ?? []).filter((id) => !(before ?? []).includes(id));
+
+/** What was sent, to match a claim against it: a fault or a damage report, by who raised it and its words (and its amount, for damage). */
+export interface SentReport {
+  kind: "fault" | "damage";
+  statement: string;
+  /** Whole rupees, for a damage report. */
+  amount?: number;
+}
+
+/**
+ * Whether a claim is the report that was just sent. A new id is not proof enough on its own (the contract does not
+ * say `claims` is in any order, and another claim may have been made meanwhile): the kind, the side that raised it, the
+ * words and the amount must all be the ones sent.
+ */
+export function isMyReport(claim: Pick<Claim, "kind" | "raised_by_role" | "statement" | "amount_claimed">, sent: SentReport): boolean {
+  if (claim.kind !== sent.kind || claim.statement.trim() !== sent.statement.trim()) return false;
+  if (claim.raised_by_role !== (sent.kind === "fault" ? "customer" : "owner")) return false;
+  return sent.kind === "fault" || (claim.amount_claimed !== null && Number(claim.amount_claimed) === sent.amount);
+}
 
 // ---- The customer's fault report (BK-20, N14) -----------------------------------------------------
 
@@ -435,25 +481,54 @@ export function damageHold(statement: string, amount: string, photos: number, ma
 }
 
 /**
- * Why the damage form is not offered, or null when it is. `can` has `report_problem`
- * only once the item is back, while the 24 hours last, and while something is left of
- * the deposit (A-50): when it does not, the words say which, and point to Get help
- * where nothing can be claimed.
+ * Where "report a problem" stands for the shop, read from the server's `can` (P4-10): it holds `report_problem` only
+ * while the stage is `returned`, the 24 hours last, there is no damage claim yet, and something is left of the
+ * deposit. The phone does not work those out; it only says which one is missing when `can` lacks it.
+ *  - `open`: the form is offered. `after_code`: not yet, the customer has still to type the return code.
+ *  - `none_left`: nothing is left of the deposit to claim against (A-50): say so, and point to Get help.
+ *  - `reported`: a claim is already made. `passed`: the time is over. `unavailable`: none of those.
  */
+export type ProblemState = "open" | "after_code" | "none_left" | "reported" | "passed" | "unavailable";
+
+export function problemState(
+  booking: Pick<BookingShop, "can" | "stage" | "exit" | "claim_open" | "claims" | "report_problem_until" | "money">,
+  now: Date
+): ProblemState {
+  if (booking.can.includes("report_problem")) return "open";
+  if (booking.exit) return "unavailable";
+  // What is left of the deposit, as the server counts it (deposit less late fees); none when none was taken.
+  if (damageMax(booking.money) <= 0) return "none_left";
+  if (booking.stage === "out") return "after_code";
+  if (booking.claim_open || (booking.claims?.length ?? 0) > 0) return "reported";
+  if (booking.stage === "closed" || (booking.report_problem_until && reached(booking.report_problem_until, now))) return "passed";
+  return "unavailable";
+}
+
+/** What to tell the shop about a state that is not `open`: A-50's words for nothing left, and the way on (Get help). Null for `open` and `after_code`. */
+export function problemLine(state: ProblemState): string | null {
+  switch (state) {
+    case "none_left":
+      return "Nothing is left of the deposit to claim against, so a problem can't be reported here. Use Get help to tell Renit's desk what is wrong.";
+    case "reported":
+      return "A problem has already been reported on this booking. Its claim is listed on the booking.";
+    case "passed":
+      return "The time to report a problem has passed. Use Get help to talk to Renit's desk.";
+    case "unavailable":
+      return "A problem can't be reported on this booking now.";
+    default:
+      return null;
+  }
+}
+
+/** Why the damage form is not offered, or null when it is. */
 export function damageBlocked(
-  booking: Pick<BookingShop, "can" | "stage" | "claim_open" | "report_problem_until" | "money">,
+  booking: Pick<BookingShop, "can" | "stage" | "exit" | "claim_open" | "claims" | "report_problem_until" | "money">,
   now: Date
 ): string | null {
-  if (booking.can.includes("report_problem")) return null;
-  if (booking.claim_open) return "A problem is already with Renit on this booking. Open the booking to see where it stands.";
-  if (booking.stage === "out") return "A problem can be reported once the item is back and the customer has typed your code.";
-  if (booking.stage === "returned" && damageMax(booking.money) <= 0) {
-    return "Nothing is left of the deposit, so a damage claim can't be made. Use Get help to talk to Renit's desk.";
-  }
-  if (booking.report_problem_until && reached(booking.report_problem_until, now)) {
-    return "The 24 hours to report a problem have passed. Use Get help to talk to Renit's desk.";
-  }
-  return "A problem can't be reported on this booking now.";
+  const state = problemState(booking, now);
+  if (state === "open") return null;
+  if (state === "after_code") return "A problem can be reported once the item is back and the customer has typed your code.";
+  return problemLine(state);
 }
 
 /** SH-11's line under the box: "Up to the deposit of ₹3,000". With late days the deposit is less. */

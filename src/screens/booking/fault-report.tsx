@@ -1,6 +1,7 @@
 import { bookingQueryKey, fetchBooking, useBooking } from "@/backend/bookings";
-import { reportFault } from "@/backend/claims";
-import { BookingLoadError, BookingLoading, BottomBar, Notice } from "@/components/booking/parts";
+import { findMyReport, reportFault } from "@/backend/claims";
+import { GetHelp } from "@/components/booking/get-help";
+import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/components/booking/parts";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, SubpageHeader, Text, TextField } from "@/components/core";
 import { ConfirmSheet } from "@/components/core/confirm-sheet";
@@ -8,7 +9,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { useGuardedTap } from "@/components/handover/parts";
 import { EvidencePhoto, PhotoRow, discardEvidence, uploadPhotos } from "@/components/handover/photo-row";
 import { apiError } from "@/lib/api-error";
-import { deadlineLabel, faultBlocked, faultErrorText, faultHold, faultNotice } from "@/lib/claims";
+import { deadlineLabel, faultBlocked, faultErrorText, faultHold, faultNotice, newClaimIds } from "@/lib/claims";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { failedPhotosText, urlsOf } from "@/lib/evidence";
 import { toast } from "@/lib/toast";
@@ -83,6 +84,8 @@ export default function FaultReportScreen() {
         setError(failedPhotosText(up.failed, up.photos.length));
         return;
       }
+      // What the booking held before the press: only a claim that was not there, with these words, is this report.
+      const before = booking.claims;
       try {
         const made = await reportFault(number, statement, urlsOf(up.photos) ?? []);
         queryClient.setQueryData(bookingQueryKey(number), made.booking);
@@ -101,7 +104,7 @@ export default function FaultReportScreen() {
         try {
           const fresh = await fetchBooking(number);
           queryClient.setQueryData(bookingQueryKey(number), fresh);
-          const claimId = fresh.claim_open ? fresh.claims[fresh.claims.length - 1] : undefined;
+          const claimId = await findMyReport(newClaimIds(before, fresh.claims), { kind: "fault", statement });
           if (claimId) {
             discardEvidence(up.photos);
             opened(claimId);
@@ -161,6 +164,10 @@ export default function FaultReportScreen() {
             </Notice>
           </>
         )}
+        {/* The words above send people to Get help when a fault can't be reported: it is here, not a screen away. */}
+        <Panel>
+          <GetHelp booking={booking} />
+        </Panel>
       </ScrollView>
       <BottomBar>
         {blocked ? (
