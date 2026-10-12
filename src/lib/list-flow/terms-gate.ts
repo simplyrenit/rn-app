@@ -32,3 +32,12 @@ export function termsHold(gate: TermsGate, ticked: boolean, refused: boolean): b
   if (gate === "tick") return !ticked;
   return refused && (gate === "failed" || gate === "checking");
 }
+
+/**
+ * The line that says why Continue and "I'll fill it in myself" are greyed, when the tick is what holds them (test run D-14):
+ * they are greyed until the owner terms are ticked, and nothing said so. Null when the tick is not what holds them (it is
+ * ticked, there is none to tick, or the terms could not be read, which has its own words).
+ */
+export function termsHoldLine(gate: TermsGate, ticked: boolean): string | null {
+  return gate === "tick" && !ticked ? "Tick the owner terms to continue." : null;
+}

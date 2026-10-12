@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { TermsState, termsGate, termsHold } from "../terms-gate";
+import { TermsState, termsGate, termsHold, termsHoldLine } from "../terms-gate";
 
 const base: TermsState = { accepted: undefined, read: false, failed: false, fetching: false, refused: false };
 
@@ -42,5 +42,24 @@ describe("termsHold", () => {
     expect(termsHold("failed", false, true)).toBe(true);
     expect(termsHold("checking", false, true)).toBe(true);
     expect(termsHold("none", false, true)).toBe(false);
+  });
+});
+
+describe("the line that says what unlocks Continue (test run D-14)", () => {
+  it("says to tick the owner terms while they are the thing holding the buttons", () => {
+    expect(termsHoldLine("tick", false)).toBe("Tick the owner terms to continue.");
+  });
+
+  it("says nothing once they are ticked, when there is nothing to tick, or when the read has its own words", () => {
+    expect(termsHoldLine("tick", true)).toBeNull();
+    expect(termsHoldLine("none", false)).toBeNull();
+    expect(termsHoldLine("failed", false)).toBeNull();
+    expect(termsHoldLine("checking", false)).toBeNull();
+  });
+
+  it("is said exactly when the tick holds the buttons", () => {
+    for (const ticked of [true, false]) {
+      expect(Boolean(termsHoldLine("tick", ticked))).toBe(termsHold("tick", ticked, false));
+    }
   });
 });

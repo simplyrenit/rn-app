@@ -9,7 +9,7 @@ import { pickPhotos } from "@/components/list-flow/pick-photos";
 import { AddPhotoTile, PhotoTile } from "@/components/list-flow/photo-tile";
 import { AddPhotoSheet, ResumeDraftSheet } from "@/components/list-flow/sheets";
 import { useGlobalContext } from "@/context/global-context";
-import { termsGate, termsHold } from "@/lib/list-flow/terms-gate";
+import { termsGate, termsHold, termsHoldLine } from "@/lib/list-flow/terms-gate";
 import { useListDraft } from "@/context/list-draft-context";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import {
@@ -392,11 +392,18 @@ export default function ListAddPhotosScreen() {
         ) : (
           <>
             {needsOwnerTerms ? (
-              <OwnerTermsTick
-                checked={ownerTermsTick}
-                onChange={setOwnerTermsTick}
-                onOpenTerms={openOwnerTerms}
-              />
+              <>
+                <OwnerTermsTick
+                  checked={ownerTermsTick}
+                  onChange={setOwnerTermsTick}
+                  onOpenTerms={openOwnerTerms}
+                />
+                {termsHoldLine(gate, ownerTermsTick) ? (
+                  <Text tone="dim" fontSize="text-sm" accessibilityLiveRegion="polite">
+                    {termsHoldLine(gate, ownerTermsTick)}
+                  </Text>
+                ) : null}
+              </>
             ) : termsFailed ? (
               // The read failed: say so, with a way to try again, rather than showing
               // nothing about terms at all.
