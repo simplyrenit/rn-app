@@ -2,7 +2,7 @@ import { Button, EmptyState, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { Device } from "@/backend/shop";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
-import { DEVICE_SIGN_OUT_NOTE, SIGN_OUT_EVERYWHERE_NOTE, istWhen } from "@/lib/shop";
+import { DEVICE_SIGN_OUT_NOTE, SIGN_OUT_EVERYWHERE_NOTE, devicesNote, istWhen } from "@/lib/shop";
 import { useTheme } from "@/lib/theme";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { forwardRef } from "react";
@@ -27,6 +27,7 @@ interface Props {
 export const DevicesSheet = forwardRef<BottomSheetModal, Props>(
   ({ devices, failed, signingOut, onSignOut, onRetry, dashboard = false }, ref) => {
     const { color, isDark } = useTheme();
+    const note = devicesNote(devices ?? []);
     return (
       <CustomBottomSheetModal ref={ref} isDark={isDark} snapPoints={["70%"]} frame>
         <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.sm, paddingBottom: space.xl }}>
@@ -54,7 +55,8 @@ export const DevicesSheet = forwardRef<BottomSheetModal, Props>(
           ) : !devices ? (
             <Text tone="dim">Loading…</Text>
           ) : (
-            devices.map((device) => (
+            <>
+            {devices.map((device) => (
               <View
                 key={device.id}
                 style={{
@@ -87,7 +89,18 @@ export const DevicesSheet = forwardRef<BottomSheetModal, Props>(
                   </Button>
                 )}
               </View>
-            ))
+            ))}
+            {note.empty ? (
+              <Text fontSize="text-md" tone="body" accessibilityLiveRegion="polite">
+                {note.empty}
+              </Text>
+            ) : null}
+            {note.thisPhone ? (
+              <Text fontSize="text-sm" tone="body" style={{ marginTop: space.md }}>
+                {note.thisPhone}
+              </Text>
+            ) : null}
+            </>
           )}
         </View>
       </CustomBottomSheetModal>

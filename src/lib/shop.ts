@@ -394,3 +394,26 @@ export const deviceSignOutQuestion = (name: string | null | undefined) => ({
   title: `Sign out ${name || "this device"}?`,
   message: "It stops working at once. It can sign in again with your password.",
 });
+
+// ---- The list of signed-in devices (test run D-10) --------------------------------------------
+
+/** The part of a device the list needs. */
+interface DeviceLike {
+  this_device: boolean;
+}
+
+/**
+ * What the devices sheet says besides the rows. A phone that is signed in lists itself (`this_device`); when the list is empty,
+ * or has other devices but not this one, this phone's sign-in has no session on the server: it is from before the sessions
+ * existed (the one day an old sign-in lives out), and only a new sign-in makes one. An empty list is never a blank sheet.
+ */
+export function devicesNote(devices: readonly DeviceLike[]): { empty: string | null; thisPhone: string | null } {
+  const LOG_OUT_AND_IN = "Log out and sign in again and this phone will be listed.";
+  if (devices.length === 0) {
+    return { empty: "No devices are listed. This phone's sign-in is from before an update, so Renit has no record of it. " + LOG_OUT_AND_IN, thisPhone: null };
+  }
+  if (!devices.some((device) => device.this_device)) {
+    return { empty: null, thisPhone: "This phone isn't on the list: its sign-in is from before an update. " + LOG_OUT_AND_IN };
+  }
+  return { empty: null, thisPhone: null };
+}

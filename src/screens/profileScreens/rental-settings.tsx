@@ -387,7 +387,7 @@ export default function RentalSettingsScreen() {
             onPress={() => devicesSheet.current?.present()}
             right={
               <View style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}>
-                {deviceCount !== undefined ? (
+                {deviceCount ? (
                   <Text fontSize="text-md" tone="body">
                     {deviceCount}
                   </Text>

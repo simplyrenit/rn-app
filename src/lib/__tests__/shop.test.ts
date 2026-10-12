@@ -13,6 +13,7 @@ import {
   deliveryFormFrom,
   deliveryPatch,
   deviceSignOutQuestion,
+  devicesNote,
   hasDashboard,
   deliverySummary,
   hasHours,
@@ -277,5 +278,31 @@ describe("signing a device out (T-43)", () => {
     // An individual owner has no dashboard, whatever the status says.
     expect(hasDashboard(false, "approved")).toBe(false);
     expect(hasDashboard(undefined, "approved")).toBe(false);
+  });
+});
+
+describe("the list of signed-in devices (test run D-10)", () => {
+  // The shape `GET /api/access/devices/` answers (access/views.py DevicesView), a test account signed in on this phone.
+  const phone = { id: 7, name: "Meera's iPhone", platform: "ios", this_device: true, first_seen_at: "2026-10-12T04:00:00Z", last_seen_at: "2026-10-12T04:30:00Z" };
+  const other = { id: 8, name: "Counter tablet", platform: "android", this_device: false, first_seen_at: "2026-10-11T04:00:00Z", last_seen_at: "2026-10-11T08:00:00Z" };
+
+  it("a normal session lists this phone, and nothing more needs saying", () => {
+    expect(devicesNote([phone])).toEqual({ empty: null, thisPhone: null });
+    expect(devicesNote([phone, other])).toEqual({ empty: null, thisPhone: null });
+  });
+
+  it("an empty list is a sentence, not a blank sheet: this phone's old sign-in has no session, and how to get one", () => {
+    const note = devicesNote([]);
+    expect(note.thisPhone).toBeNull();
+    expect(note.empty).toBe(
+      "No devices are listed. This phone's sign-in is from before an update, so Renit has no record of it. Log out and sign in again and this phone will be listed."
+    );
+  });
+
+  it("other devices without this one say that this phone is missing", () => {
+    expect(devicesNote([other])).toEqual({
+      empty: null,
+      thisPhone: "This phone isn't on the list: its sign-in is from before an update. Log out and sign in again and this phone will be listed.",
+    });
   });
 });
