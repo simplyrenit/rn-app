@@ -13,6 +13,7 @@ import {
   deliveryFormFrom,
   deliveryPatch,
   deviceSignOutQuestion,
+  hasDashboard,
   deliverySummary,
   hasHours,
   hoursPayload,
@@ -260,7 +261,21 @@ describe("signing a device out (T-43)", () => {
     }
   });
 
-  it("says what Sign out everywhere does: the password stops working, a code to the shop's number gets back in", () => {
-    expect(SIGN_OUT_EVERYWHERE_NOTE).toContain("Your password then no longer works: sign in with a code sent to your shop's number, and set a new password if you want one.");
+  it("says what Sign out everywhere does: the password stops working, a code to the shop's number gets back in, and no new password is promised (no screen sets one)", () => {
+    expect(SIGN_OUT_EVERYWHERE_NOTE).toBe(
+      "To sign every device out and switch your password off, use Sign out everywhere on the dashboard. Your password then no longer works: sign in with a code sent to your shop's number."
+    );
+    expect(SIGN_OUT_EVERYWHERE_NOTE).not.toMatch(/new password/);
+  });
+
+  it("sends the reader to the dashboard only when the shop has one: an approved merchant", () => {
+    expect(hasDashboard(true, "approved")).toBe(true);
+    expect(hasDashboard(true, "pending")).toBe(false);
+    expect(hasDashboard(true, "rejected")).toBe(false);
+    expect(hasDashboard(true, null)).toBe(false);
+    expect(hasDashboard(true, undefined)).toBe(false);
+    // An individual owner has no dashboard, whatever the status says.
+    expect(hasDashboard(false, "approved")).toBe(false);
+    expect(hasDashboard(undefined, "approved")).toBe(false);
   });
 });

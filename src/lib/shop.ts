@@ -375,11 +375,19 @@ export function deliveryPatch(form: DeliveryForm) {
 export const DEVICE_SIGN_OUT_NOTE = "A device you sign out here stops working at once, but it can sign in again with your password.";
 
 /**
- * What "Sign out everywhere" on the dashboard does: every other device is signed out and the password is switched off too,
- * so the owner signs in with a code sent to the shop's number and can set a new password if they want one.
+ * What "Sign out everywhere" on the dashboard does: every device is signed out (the phone that shows this note too) and the
+ * password is switched off, so the owner signs in with a code sent to the shop's number. No screen sets a new password yet, so
+ * none is promised.
  */
 export const SIGN_OUT_EVERYWHERE_NOTE =
-  "To sign every other device out and switch your password off, use Sign out everywhere on the dashboard. Your password then no longer works: sign in with a code sent to your shop's number, and set a new password if you want one.";
+  "To sign every device out and switch your password off, use Sign out everywhere on the dashboard. Your password then no longer works: sign in with a code sent to your shop's number.";
+
+/**
+ * Whether this shop has the dashboard to go to: an approved merchant. An individual owner, or a merchant still waiting for
+ * approval, has none, and the note that sends the reader there is not shown.
+ */
+export const hasDashboard = (isMerchant: boolean | undefined, approval: string | null | undefined): boolean =>
+  Boolean(isMerchant) && approval === "approved";
 
 /** The confirmation for signing one device out. */
 export const deviceSignOutQuestion = (name: string | null | undefined) => ({

@@ -25,6 +25,7 @@ import {
   dayLabel,
   deliverySummary,
   deviceSignOutQuestion,
+  hasDashboard,
   hasHours,
   hoursRows,
   noticeLabel,
@@ -423,6 +424,7 @@ export default function RentalSettingsScreen() {
         signingOut={signingOut}
         onSignOut={confirmSignOut}
         onRetry={() => void devices.refetch()}
+        dashboard={hasDashboard(shop.is_merchant, userDetails?.merchant_approval_status)}
       />
       {pickingDay ? (
         <DayPickerModal

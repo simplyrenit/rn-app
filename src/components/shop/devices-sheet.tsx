@@ -15,6 +15,8 @@ interface Props {
   signingOut: number | null;
   onSignOut: (device: Device) => void;
   onRetry: () => void;
+  /** The shop has the dashboard (an approved merchant): only then is it sent there to sign every device out. */
+  dashboard?: boolean;
 }
 
 /**
@@ -23,7 +25,7 @@ interface Props {
  * (it can sign in again with it); "Sign out everywhere", on the dashboard, switches the password off too (T-43).
  */
 export const DevicesSheet = forwardRef<BottomSheetModal, Props>(
-  ({ devices, failed, signingOut, onSignOut, onRetry }, ref) => {
+  ({ devices, failed, signingOut, onSignOut, onRetry, dashboard = false }, ref) => {
     const { color, isDark } = useTheme();
     return (
       <CustomBottomSheetModal ref={ref} isDark={isDark} snapPoints={["70%"]} frame>
@@ -34,9 +36,13 @@ export const DevicesSheet = forwardRef<BottomSheetModal, Props>(
           <Text fontSize="text-md" tone="body" style={{ marginBottom: space.xs }}>
             {DEVICE_SIGN_OUT_NOTE}
           </Text>
-          <Text fontSize="text-sm" tone="body" style={{ marginBottom: space.md }}>
-            {SIGN_OUT_EVERYWHERE_NOTE}
-          </Text>
+          {dashboard ? (
+            <Text fontSize="text-sm" tone="body" style={{ marginBottom: space.md }}>
+              {SIGN_OUT_EVERYWHERE_NOTE}
+            </Text>
+          ) : (
+            <View style={{ height: space.sm }} />
+          )}
           {failed ? (
             <EmptyState
               compact
