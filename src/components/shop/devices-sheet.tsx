@@ -2,7 +2,7 @@ import { Button, EmptyState, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { Device } from "@/backend/shop";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
-import { istWhen } from "@/lib/shop";
+import { DEVICE_SIGN_OUT_NOTE, SIGN_OUT_EVERYWHERE_NOTE, istWhen } from "@/lib/shop";
 import { useTheme } from "@/lib/theme";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { forwardRef } from "react";
@@ -19,8 +19,8 @@ interface Props {
 
 /**
  * "Signed-in devices": every phone and computer signed in to this account. A
- * device other than this one can be signed out; its next call fails and it needs
- * a new code to come back.
+ * device other than this one can be signed out; its next call fails. The password is not touched
+ * (it can sign in again with it); "Sign out everywhere", on the dashboard, switches the password off too (T-43).
  */
 export const DevicesSheet = forwardRef<BottomSheetModal, Props>(
   ({ devices, failed, signingOut, onSignOut, onRetry }, ref) => {
@@ -31,8 +31,11 @@ export const DevicesSheet = forwardRef<BottomSheetModal, Props>(
           <Text role="sectionTitle" accessibilityRole="header" style={{ marginBottom: space.xs }}>
             Signed-in devices
           </Text>
-          <Text fontSize="text-md" tone="body" style={{ marginBottom: space.md }}>
-            Each one needs a code sent to your shop's number to sign in.
+          <Text fontSize="text-md" tone="body" style={{ marginBottom: space.xs }}>
+            {DEVICE_SIGN_OUT_NOTE}
+          </Text>
+          <Text fontSize="text-sm" tone="body" style={{ marginBottom: space.md }}>
+            {SIGN_OUT_EVERYWHERE_NOTE}
           </Text>
           {failed ? (
             <EmptyState

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  DEVICE_SIGN_OUT_NOTE,
   Hours,
+  SIGN_OUT_EVERYWHERE_NOTE,
   TIME_SLOTS,
   cannotOpenMessage,
   checkDelivery,
@@ -10,6 +12,7 @@ import {
   dayToOpen,
   deliveryFormFrom,
   deliveryPatch,
+  deviceSignOutQuestion,
   deliverySummary,
   hasHours,
   hoursPayload,
@@ -241,5 +244,23 @@ describe("delivery", () => {
       delivery_max_km: "15.0",
     });
     expect(deliveryPatch({ delivers: false, base: "50", perKm: "15", maxKm: "15" })).toEqual({ delivers: false });
+  });
+});
+
+describe("signing a device out (T-43)", () => {
+  it("does not promise a new code: the password is not touched by one device's sign-out", () => {
+    expect(DEVICE_SIGN_OUT_NOTE).toMatch(/sign in again with your password/);
+    expect(deviceSignOutQuestion("Meera's iPhone")).toEqual({
+      title: "Sign out Meera's iPhone?",
+      message: "It stops working at once. It can sign in again with your password.",
+    });
+    expect(deviceSignOutQuestion("").title).toBe("Sign out this device?");
+    for (const text of [DEVICE_SIGN_OUT_NOTE, SIGN_OUT_EVERYWHERE_NOTE, deviceSignOutQuestion("x").message]) {
+      expect(text).not.toMatch(/needs? a (new )?code/i);
+    }
+  });
+
+  it("says what Sign out everywhere does: the password stops working, a code to the shop's number gets back in", () => {
+    expect(SIGN_OUT_EVERYWHERE_NOTE).toContain("Your password then no longer works: sign in with a code sent to your shop's number, and set a new password if you want one.");
   });
 });

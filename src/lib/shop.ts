@@ -365,3 +365,24 @@ export function deliveryPatch(form: DeliveryForm) {
     delivery_max_km: Number(form.maxKm).toFixed(1),
   };
 }
+
+// ---- Signing a device out (decision T-43) ----------------------------------------------------
+
+/**
+ * What signing one device out does, in words that are true: the device stops working at once, but the shop's password is not
+ * touched, so it can sign in again with it (and with an emailed code, Google or Apple). "Each one needs a code" was not true.
+ */
+export const DEVICE_SIGN_OUT_NOTE = "A device you sign out here stops working at once, but it can sign in again with your password.";
+
+/**
+ * What "Sign out everywhere" on the dashboard does: every other device is signed out and the password is switched off too,
+ * so the owner signs in with a code sent to the shop's number and can set a new password if they want one.
+ */
+export const SIGN_OUT_EVERYWHERE_NOTE =
+  "To sign every other device out and switch your password off, use Sign out everywhere on the dashboard. Your password then no longer works: sign in with a code sent to your shop's number, and set a new password if you want one.";
+
+/** The confirmation for signing one device out. */
+export const deviceSignOutQuestion = (name: string | null | undefined) => ({
+  title: `Sign out ${name || "this device"}?`,
+  message: "It stops working at once. It can sign in again with your password.",
+});

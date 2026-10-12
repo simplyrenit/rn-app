@@ -24,6 +24,7 @@ import {
   cannotOpenMessage,
   dayLabel,
   deliverySummary,
+  deviceSignOutQuestion,
   hasHours,
   hoursRows,
   noticeLabel,
@@ -165,7 +166,8 @@ export default function RentalSettingsScreen() {
   };
 
   const confirmSignOut = (device: Device) => {
-    Alert.alert(`Sign out ${device.name || "this device"}?`, "It will need a new code to sign in again.", [
+    const ask = deviceSignOutQuestion(device.name);
+    Alert.alert(ask.title, ask.message, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Sign out",
