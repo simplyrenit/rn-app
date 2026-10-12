@@ -310,7 +310,7 @@ export function faultReturnTarget(
  * last extension (T-33), not at the 24 hours after the report. Null for anything else.
  */
 export function faultReturnLine(
-  claim: Pick<Claim, "kind" | "status" | "money_pending">,
+  claim: Pick<Claim, "kind" | "status" | "decision" | "money_pending">,
   target: ReturnTarget | null,
   now: Date
 ): string | null {
@@ -321,13 +321,21 @@ export function faultReturnLine(
     return `The item was due back by ${when}. Bring it back as soon as you can: any refund is paid once it is back.`;
   }
   if (!target.extended) return `The item goes back first: bring it back by ${when}. Any refund is paid once it is back.`;
-  // Extended. The report's own time (the 24 hours after it) still decides the refund if Renit does not agree, while it is
-  // ahead, undecided, and earlier than the extension's return: only then are there two times to say. When the extension is
-  // due inside those hours there is one time, and it is not "the end of the extension" by itself.
+  // Extended. The report's own time (the 24 hours after it) still decides a refund while it is ahead and earlier than the
+  // extension's return: only then are there two times to say. Undecided, it is the refund "if Renit does not agree". Decided
+  // and not upheld, the part-refund is still given only if the item is back within it; decided and upheld, the extension's
+  // return alone. When the extension is due inside those hours there is one time, and it is not "the end of the extension".
+  const decided = claim.status === "decided";
   const twoTimes =
-    claim.status !== "decided" && target.early !== null && !reached(target.early, now) && new Date(target.by).getTime() > new Date(target.early).getTime();
+    target.early !== null &&
+    !reached(target.early, now) &&
+    new Date(target.by).getTime() > new Date(target.early).getTime() &&
+    (!decided || claim.decision === "not_upheld");
   if (twoTimes && target.early) {
-    return `Bring the item back by ${deadlineLabel(target.early, now)} to keep a refund if Renit does not agree. The latest it can come back is ${when}, the end of your extension. Any refund is paid once it is back.`;
+    const early = deadlineLabel(target.early, now);
+    return decided
+      ? `Bring the item back by ${early} to get a part-refund. The latest it can come back is ${when}, the end of your extension. Any refund is paid once it is back.`
+      : `Bring the item back by ${early} to keep a refund if Renit does not agree. The latest it can come back is ${when}, the end of your extension. Any refund is paid once it is back.`;
   }
   const inside = target.early !== null && new Date(target.by).getTime() <= new Date(target.early).getTime();
   return inside

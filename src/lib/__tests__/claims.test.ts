@@ -495,12 +495,24 @@ describe("the customer's fault report", () => {
       expect(faultReturnLine(evening, target, NOW)).toBe("Bring the item back by 6:00 pm tomorrow. Any refund is paid once it is back.");
     });
 
-    it("once Renit has decided, 'if Renit does not agree' is gone: the extension's return alone", () => {
-      const decided = { ...fault, status: "decided" as const, money_pending: true };
+    it("once Renit has decided, 'if Renit does not agree' is gone: a report that was upheld keeps the extension's return alone", () => {
+      const decided = { ...fault, status: "decided" as const, decision: "upheld", money_pending: true };
       const target = faultReturnTarget(decided, b({ stage: "closed", extensions: ["RN-24900"] }), extension);
       const line = faultReturnLine(decided, target, NOW);
       expect(line).toBe("The item goes back at the end of your extension: bring it back by 8:00 pm on Wed 14 Oct. Any refund is paid once it is back.");
       expect(line).not.toMatch(/does not agree/);
+    });
+
+    it("a report that was not upheld keeps the report's own time while it is ahead: the part-refund is given only if the item is back by then", () => {
+      const decided = { ...fault, status: "decided" as const, decision: "not_upheld", money_pending: true };
+      const target = faultReturnTarget(decided, b({ stage: "closed", extensions: ["RN-24900"] }), extension);
+      expect(faultReturnLine(decided, target, NOW)).toBe(
+        "Bring the item back by 10:40 am tomorrow to get a part-refund. The latest it can come back is 8:00 pm on Wed 14 Oct, the end of your extension. Any refund is paid once it is back."
+      );
+      // Past that time it is the extension's return alone.
+      expect(faultReturnLine(decided, target, new Date("2026-10-10T06:00:00Z"))).toBe(
+        "The item goes back at the end of your extension: bring it back by 8:00 pm on Wed 14 Oct. Any refund is paid once it is back."
+      );
     });
 
     it("an answer without the field is read from the bookings: the claim's return_by is not taken for the chain's", () => {
