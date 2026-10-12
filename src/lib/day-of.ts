@@ -511,6 +511,12 @@ export interface ReturnStep {
  * The three steps of the return. `recorded`: this phone has finished its record
  * (it may still be uploading). The code can be typed at any point: at a door with
  * no signal the upload follows.
+ *
+ * Once the code is in, a step says what is true, not what was meant to happen
+ * (D-23): a return with no record on either side shows "Not recorded", and the
+ * shop's check is never "Done" unless the shop's own record is on the server. The
+ * shop's side then reads the 24 hours it has to report a problem (BK-21; the
+ * "What happens next" block under the steps says what that means for the deposit).
  */
 export function returnSteps(booking: Pick<BookingCustomer, "captures" | "stage">, recorded: boolean): ReturnStep[] {
   const returned = booking.stage === "returned" || booking.stage === "closed";
@@ -518,12 +524,29 @@ export function returnSteps(booking: Pick<BookingCustomer, "captures" | "stage">
   const mine = recorded || flags.mine;
   const theirs = flags.theirs;
   const steps: Omit<ReturnStep, "state">[] = [
-    { label: "Record its condition again", sub: mine ? "Done" : "The same photos and video as at the handover" },
-    { label: "The shop checks it against the handover", sub: theirs || returned ? "Done" : "They record it too, and compare" },
+    {
+      label: "Record its condition again",
+      sub: mine
+        ? "Done"
+        : returned
+          ? "Not recorded. You have no photos or video of how you returned it."
+          : "The same photos and video as at the handover",
+    },
+    {
+      label: "The shop checks it against the handover",
+      sub: theirs
+        ? "The shop's record is in."
+        : !returned
+          ? "They record it too, and compare"
+          : booking.stage === "closed"
+            ? "The shop did not record it. Its 24 hours to report a problem are over."
+            : "The shop has not recorded it. It has 24 hours to report a problem.",
+    },
     { label: "Type the shop's code", sub: returned ? "Done" : "The shop shows you a 6-digit code" },
   ];
-  const done = [mine, theirs || returned, returned];
-  const next = done.indexOf(false);
+  const done = [mine, theirs, returned];
+  // After the return no step is "next": a record can still be added, but nothing is waiting on the person.
+  const next = returned ? -1 : done.indexOf(false);
   return steps.map((step, i) => ({ ...step, state: done[i] ? "done" : i === next ? "next" : "todo" }));
 }
 

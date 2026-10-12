@@ -546,10 +546,25 @@ describe("BK-21, the return", () => {
     expect(both[2]).toMatchObject({ label: "Type the shop's code", sub: "The shop shows you a 6-digit code" });
   });
 
-  it("is all done once the code is in", () => {
-    const steps = returnSteps(booking({ stage: "returned" }), false);
-    expect(steps.map((s) => s.state)).toEqual(["next", "done", "done"]);
-    expect(returnSteps(booking({ stage: "returned" }), true).every((s) => s.state === "done")).toBe(true);
+  it("says what is true once the code is in, not that a check happened (D-23)", () => {
+    // Returned with nothing recorded on either side: the code is done, the records are not, and nobody checked anything.
+    const bare = returnSteps(booking({ stage: "returned" }), false);
+    expect(bare.map((s) => s.state)).toEqual(["todo", "todo", "done"]);
+    expect(bare[0].sub).toBe("Not recorded. You have no photos or video of how you returned it.");
+    expect(bare[1].sub).toBe("The shop has not recorded it. It has 24 hours to report a problem.");
+    expect(bare[2].sub).toBe("Done");
+    expect(bare.some((s) => s.state === "next")).toBe(false);
+    expect(bare.map((s) => s.sub).join(" ")).not.toMatch(/checks?|compare/i);
+    // Once the 24 hours and the booking are over, the shop's side says so.
+    expect(returnSteps(booking({ stage: "closed" }), false)[1].sub).toBe("The shop did not record it. Its 24 hours to report a problem are over.");
+  });
+
+  it("is all done once the code is in and both records are", () => {
+    const both = booking({ stage: "returned", captures: { handover: { mine: true, theirs: true }, return: { mine: true, theirs: true } } });
+    expect(returnSteps(both, false).map((s) => s.state)).toEqual(["done", "done", "done"]);
+    expect(returnSteps(both, false)[1].sub).toBe("The shop's record is in.");
+    // This phone's record still uploading counts for the customer's own step only.
+    expect(returnSteps(booking({ stage: "returned" }), true).map((s) => s.state)).toEqual(["done", "todo", "done"]);
   });
 
   it("says what happens next, with the time of the return from the timeline", () => {
