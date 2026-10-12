@@ -432,6 +432,8 @@ export type RootStackParamList = {
     skew_ms?: number;
     /** The booking asks the owner to check the customer's ID: for the general list, when the booking's own cannot be read. */
     id_match?: boolean;
+    /** The customer's full name from the shop's booking (T-44), for the ID tick's words; null or absent when it is not shown. */
+    id_match_name?: string | null;
   };
   [key: string]: object | undefined;
 };

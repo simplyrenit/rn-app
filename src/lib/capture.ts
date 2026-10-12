@@ -279,6 +279,23 @@ export function setIdMatch(draft: CaptureDraft, ticked: boolean): CaptureDraft {
   return { ...draft, idMatch: ticked };
 }
 
+/**
+ * The ID tick's words (T-44). From Ready, on a booking that needs the match, the shop's booking carries the customer's full name
+ * (`customer.full_name`): "The name on the ID must be: Aarav Mehta." Without it (`null`), the owner is told what can be matched:
+ * the first name and last initial the booking shows, which is all the tick can mean. `who` is the person whose ID it is and
+ * `shown` the name as the booking shows it ("Aarav M.").
+ */
+export function idMatchWords(who: string, fullName: string | null | undefined, shown?: string | null): { label: string; sub: string } {
+  const name = (fullName ?? "").trim();
+  if (name) {
+    return { label: "ID matches the booking name", sub: `Look at ${who}'s ID. The name on the ID must be: ${name}.` };
+  }
+  return {
+    label: "ID matches the name shown",
+    sub: `Look at ${who}'s ID. Only the first name and last initial are shown${shown ? ` (${shown})` : ""}, so that is what can be matched.`,
+  };
+}
+
 /** Every shot and the video are taken, and the ID tick is made where it is asked for. */
 export function canSeal(draft: CaptureDraft): boolean {
   return (

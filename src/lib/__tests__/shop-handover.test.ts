@@ -156,9 +156,15 @@ describe("SH-08, the handover", () => {
   });
 
   it("says to look at the ID when the item needs it", () => {
-    expect(handoverSteps(booking({ id_match_required: true }), false)[0].sub).toBe(
-      "Look at Aarav's ID too: the name must match the booking."
-    );
+    // The shop's booking shows the customer's full name from Ready on such a booking (T-44): the owner is told the name.
+    const named = booking({ id_match_required: true, customer: { ...booking().customer, full_name: "Aarav Mehta" } });
+    expect(handoverSteps(named, false)[0].sub).toBe("Look at Aarav's ID too: the name on it must be Aarav Mehta.");
+    // Without it (null, or an answer from before the field): what can be matched is said.
+    for (const full_name of [null, undefined, "  "]) {
+      expect(handoverSteps(booking({ id_match_required: true, customer: { ...booking().customer, full_name } }), false)[0].sub).toBe(
+        "Look at Aarav's ID too: only the first name and last initial are shown, so that is what can be matched."
+      );
+    }
     expect(handoverSteps(booking(), false)[0].sub).toBeUndefined();
   });
 });

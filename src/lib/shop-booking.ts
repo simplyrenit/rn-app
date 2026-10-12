@@ -83,6 +83,11 @@ export interface BookingShop {
   customer: {
     first_name: string;
     last_initial: string;
+    /**
+     * The customer's full name (T-44): from the stage Ready on, and only on a booking whose handover needs the ID match tick;
+     * null otherwise, and absent from an answer from before the field.
+     */
+    full_name?: string | null;
     /** Null while no real ID check stands behind the answer (T-41): no ID line is drawn then. */
     id_checked: boolean | null;
     rentals_completed: number;

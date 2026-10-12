@@ -30,6 +30,7 @@ import {
   draftState,
   durationLabel,
   fallbackErrorText,
+  idMatchWords,
   listSourceNote,
   FILES_KEPT,
   NO_MORE_CODES,
@@ -881,8 +882,8 @@ export default function CaptureScreen() {
               <Panel>
                 <TickRow
                   first
-                  label="ID matches the booking name"
-                  sub={`Look at ${forOther ? "the customer" : otherName}'s ID. The name on it must be the name on the booking.`}
+                  label={idMatchWords("", params.id_match_name).label}
+                  sub={idMatchWords(forOther ? "the customer" : otherName, params.id_match_name, otherName).sub}
                   ticked={draft.idMatch}
                   onPress={() => update((d) => setIdMatch(d, !d.idMatch))}
                 />

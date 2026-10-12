@@ -77,6 +77,12 @@ export function handoverCopy(b: BookingShop, now: Date): HandoverCopy {
   };
 }
 
+/** The ID line of the first step (T-44): the name to match, or what can be matched when the booking does not show it. */
+const idMatchStepNote = (first: string, fullName: string | null | undefined) =>
+  fullName?.trim()
+    ? `Look at ${first}'s ID too: the name on it must be ${fullName.trim()}.`
+    : `Look at ${first}'s ID too: only the first name and last initial are shown, so that is what can be matched.`;
+
 /** "At the handover": record, check each other's photos, type the code. */
 export function handoverSteps(b: BookingShop, recorded: boolean): Step[] {
   const first = b.customer.first_name;
@@ -85,7 +91,7 @@ export function handoverSteps(b: BookingShop, recorded: boolean): Step[] {
   return inOrder([
     {
       label: `Record its condition (you and ${first} both do this)`,
-      sub: b.id_match_required ? `Look at ${first}'s ID too: the name must match the booking.` : undefined,
+      sub: b.id_match_required ? idMatchStepNote(first, b.customer.full_name) : undefined,
       done: recorded || flags.mine,
     },
     { label: "Check each other's photos", done: (flags.mine && flags.theirs) || started },

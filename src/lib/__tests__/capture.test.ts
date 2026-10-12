@@ -23,6 +23,7 @@ import {
   files,
   genericShotList,
   localUris,
+  idMatchWords,
   includedRows,
   isShotList,
   listSourceNote,
@@ -113,6 +114,25 @@ const err = (code: string | null, status = 409, details: Record<string, unknown>
   code,
   message: null,
   details,
+});
+
+describe("the ID tick's words (T-44)", () => {
+  it("shows the name the ID must carry when the shop's booking gives the full name", () => {
+    expect(idMatchWords("Aarav", "Aarav Mehta", "Aarav M.")).toEqual({
+      label: "ID matches the booking name",
+      sub: "Look at Aarav's ID. The name on the ID must be: Aarav Mehta.",
+    });
+  });
+
+  it("says what can be matched when it does not (null, absent or blank): the first name and last initial shown", () => {
+    for (const full of [null, undefined, "", "   "]) {
+      expect(idMatchWords("Aarav", full, "Aarav M.")).toEqual({
+        label: "ID matches the name shown",
+        sub: "Look at Aarav's ID. Only the first name and last initial are shown (Aarav M.), so that is what can be matched.",
+      });
+    }
+    expect(idMatchWords("the customer", null).sub).toBe("Look at the customer's ID. Only the first name and last initial are shown, so that is what can be matched.");
+  });
 });
 
 describe("the walk", () => {
