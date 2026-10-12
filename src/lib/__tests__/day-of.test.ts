@@ -392,9 +392,17 @@ describe("BK-13, the deposit", () => {
 });
 
 describe("BK-14, the day of the handover", () => {
+  it("from Ready, a booking that needs the ID match tells the customer to bring one (e2e-B r2 finding 14)", () => {
+    expect(dayOfCopy(booking({ id_match_required: true }), NOW).idNote).toBe(
+      "Bring a photo ID in your own name to the handover. The owner checks the name on it."
+    );
+    expect(dayOfCopy(booking({ id_match_required: false }), NOW).idNote).toBeNull();
+  });
+
   it("collect today, with the shop's address and the window", () => {
     expect(dayOfCopy(booking(), NOW)).toEqual({
       title: "Collect your Sony PS5 today",
+      idNote: null,
       place: { name: "SoundBox Rentals", address: "Shop 4, Lokhandwala Complex, Andheri West, Mumbai 400053" },
       window: "10:00 – 11:00 am",
       codeNote: "Show this to the shop only after you have checked the item and both of you have recorded its condition.",

@@ -22,6 +22,7 @@ import {
   bookRefusalIsFinal,
   daysLabel,
   howLabel,
+  handoverIdLine,
   idCheckCopy,
   money,
   morningNotice,
@@ -350,6 +351,13 @@ export default function ReviewAndBookScreen() {
               </Text>
             ) : null}
           </View>
+        ) : null}
+
+        {/* An item whose handover needs the ID match: the customer is told to bring an ID, with or without a check above. */}
+        {handoverIdLine(quote) ? (
+          <Notice tone="info" icon="info">
+            {handoverIdLine(quote)}
+          </Notice>
         ) : null}
 
         {terms ? (

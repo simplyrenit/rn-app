@@ -49,6 +49,8 @@ import {
   getItLine,
   handoverLine,
   howLabel,
+  HANDOVER_ID,
+  handoverIdLine,
   idCheckCopy,
   liveCopy,
   morningNotice,
@@ -638,9 +640,19 @@ describe("the ID check", () => {
     expect(idCheckCopy(withCheck("id", null), "id")?.state).toBe("needed");
   });
 
-  it("adds the same-ID line when the owner matches it at handover", () => {
-    expect(idCheckCopy(withCheck("id_and_match", true))?.body).toMatch(/same ID/);
-    expect(idCheckCopy(withCheck("id_and_match", false))?.body).toMatch(/same ID/);
+  it("tells the customer to bring an ID to a handover that needs the match, by itself, whatever `passed` says (e2e-B r2 finding 14)", () => {
+    const line = "Bring a photo ID in your own name to the handover. The owner checks the name on it.";
+    // True, false and null (no real check): the sentence stands without the card, and says nothing of a check.
+    for (const passed of [true, false, null]) expect(handoverIdLine(withCheck("id_and_match", passed))).toBe(line);
+    expect(line).not.toMatch(/check(?!s the name)/i);
+    // Any other item, and signed out (the quote cannot say): nothing.
+    expect(handoverIdLine(withCheck("id", null))).toBeNull();
+    expect(handoverIdLine(withCheck("none", true))).toBeNull();
+    expect(handoverIdLine(quote({ id_check: null, blockers: [] }))).toBeNull();
+    // The cards no longer carry it (it is said once, under them).
+    expect(idCheckCopy(withCheck("id_and_match", true))?.body).toBeNull();
+    expect(idCheckCopy(withCheck("id_and_match", false))?.body).not.toMatch(/photo ID/);
+    expect(HANDOVER_ID).toBe(line);
   });
 
   it("says nothing signed out, where the quote cannot know", () => {

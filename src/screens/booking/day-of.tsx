@@ -171,6 +171,12 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
 
       <CallButton copy={callCopy("customer", day, "the shop", now)} />
 
+      {copy.idNote ? (
+        <Notice tone="info" icon="info">
+          {copy.idNote}
+        </Notice>
+      ) : null}
+
       <Block title="Your handover code">
         {day.handover_code && !booking.claim_open ? <CodeBoxes code={day.handover_code} /> : null}
         <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>

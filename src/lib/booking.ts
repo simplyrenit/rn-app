@@ -711,7 +711,13 @@ export interface IdCheckCopy {
   body: string | null;
 }
 
-const SAME_ID = "Bring the same ID to the handover. The owner checks that it matches.";
+/**
+ * An item whose handover needs the ID match (`id_check.needed` is `id_and_match`; the booking's `id_match_required`): the owner
+ * cannot finish the handover without ticking that the name on the customer's ID is right, so the customer is told to bring one.
+ * Said by itself, with no word about a check, whatever `passed` is (decision T-41 took the "ID check passed" card away; the
+ * sentence was only ever in it).
+ */
+export const HANDOVER_ID = "Bring a photo ID in your own name to the handover. The owner checks the name on it.";
 
 /**
  * What the price screen says about the ID check, or null when the item needs
@@ -739,14 +745,23 @@ export function idCheckCopy(
       title: "This item needs an ID check",
       body:
         level === "id_and_match"
-          ? `Renit checks your ID once, before you book an item like this. ${SAME_ID}`
+          ? "Renit checks your ID once, before you book an item like this."
           : "Renit checks your ID once, before you book an item like this. It then covers every booking.",
     };
   }
   if (quote.id_check && quote.id_check.needed !== "none" && quote.id_check.passed === true) {
-    return { state: "passed", title: "ID check passed", body: level === "id_and_match" ? SAME_ID : null };
+    // The handover sentence is `handoverIdLine`, said by itself under the card.
+    return { state: "passed", title: "ID check passed", body: null };
   }
   return null;
+}
+
+/**
+ * What the price screen says about the ID at the handover, by itself: the sentence for an item that needs the match, whatever
+ * `passed` says and whether or not the ID card shows. Null for any other item, and signed out (the quote cannot say).
+ */
+export function handoverIdLine(quote: Pick<Quote, "id_check">): string | null {
+  return quote.id_check?.needed === "id_and_match" ? HANDOVER_ID : null;
 }
 
 // ---- Why Book now would fail ------------------------------------------------------------

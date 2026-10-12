@@ -4,6 +4,7 @@ import {
   BookingDay,
   DayStatus,
   DeliveryMode,
+  HANDOVER_ID,
   clock,
   dayOf,
   dayShort,
@@ -378,6 +379,8 @@ export function depositCopy(booking: BookingCustomer): DepositCopy {
 
 export interface DayOfCopy {
   title: string;
+  /** An item whose handover needs the ID match: bring a photo ID in your own name. Null for any other. */
+  idNote: string | null;
   place: { name: string; address: string | null };
   window: string | null;
   codeNote: string;
@@ -392,6 +395,8 @@ export function dayOfCopy(booking: BookingCustomer, now: Date): DayOfCopy {
   const address = typeof booking.shop.address === "string" && booking.shop.address ? booking.shop.address : null;
   return {
     title: pickup ? `Collect your ${item} ${word}` : `Your ${item} arrives ${word}`,
+    // From Ready on a booking that needs the match (`id_match_required`): said again, since the price screen was long ago.
+    idNote: booking.id_match_required ? HANDOVER_ID : null,
     place: pickup
       ? { name: booking.shop.name, address: address ?? booking.shop.locality }
       : { name: delivery ? `${booking.shop.name} brings it to ${delivery.title}` : `${booking.shop.name} brings it to you`, address: delivery?.line ?? null },
