@@ -3,6 +3,7 @@ import { capturesQueryKey, confirmPhoneFallback, readKeptShotList, startPhoneFal
 import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoading, BottomBar, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { placeNow, recordVideo, recoverLostShot, takePhoto } from "@/components/capture/camera";
+import { CameraOffNotice } from "@/components/capture/camera-off";
 import { CODE_LENGTH, CodeInput } from "@/components/capture/code";
 import { UploadBar } from "@/components/capture/record-card";
 import { Button, SubpageHeader, Text } from "@/components/core";
@@ -589,6 +590,7 @@ export default function CaptureScreen() {
                   {listSourceNote(chosen.source)}
                 </Notice>
               ) : null}
+              <CameraOffNotice>Camera access is off for Renit, so the photos and video can't be taken. Allow it in Settings.</CameraOffNotice>
               <Intro
                 list={list}
                 side={role}

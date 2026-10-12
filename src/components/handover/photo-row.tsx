@@ -1,6 +1,7 @@
 import { discardFiles } from "@/backend/capture-jobs";
 import { uploadCaptureFile } from "@/backend/captures";
 import { takePhoto } from "@/components/capture/camera";
+import { CameraOffNotice } from "@/components/capture/camera-off";
 import { Text } from "@/components/core";
 import { MAX_EVIDENCE_PHOTOS, uploadKeeping } from "@/lib/evidence";
 import { MIN_TOUCH_TARGET, radius, space } from "@/lib/design-tokens";
@@ -81,6 +82,7 @@ export function PhotoRow({
 
   return (
     <View style={{ gap: space.sm }}>
+      <CameraOffNotice>Camera access is off for Renit, so a photo can't be taken. Allow it in Settings.</CameraOffNotice>
       {photos.length > 0 ? (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.sm }}>
           {photos.map((photo, index) => (
