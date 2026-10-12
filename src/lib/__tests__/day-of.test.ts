@@ -31,6 +31,7 @@ import {
   statusNote,
   handoverAt,
   returnedAt,
+  cameBackOn,
   telUrl,
   theirStatusLine,
   travels,
@@ -539,6 +540,12 @@ describe("BK-21, the return", () => {
       title: "Returned Mon 26 Oct, 6:40 pm.",
       body: "Your deposit of ₹3,000 comes back within 48 hours, unless the shop reports a problem in the next 24 hours.",
     });
+    // Staff recorded the return later and named the day it came back (T-22): that day, not the day it was recorded.
+    expect(returnedCopy({ ...returned, came_back_on: "2026-10-25" }).title).toBe("Came back on Sun 25 Oct.");
+    expect(returnedCopy({ ...returned, came_back_on: null }).title).toBe("Returned Mon 26 Oct, 6:40 pm.");
+    expect(returnedCopy({ ...returned, came_back_on: "not a day" as never }).title).toBe("Returned Mon 26 Oct, 6:40 pm.");
+    expect(cameBackOn({ came_back_on: "2026-10-25" })).toBe("2026-10-25");
+    expect(cameBackOn({})).toBeNull();
     expect(returnedCopy(booking({ stage: "returned" }, { deposit: "0.00", deposit_state: "none" }))).toEqual({
       title: "Returned.",
       body: "The shop has 24 hours to report a problem. After that the rental is closed.",

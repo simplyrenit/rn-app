@@ -259,6 +259,25 @@ describe("SH-10, the return", () => {
     });
   });
 
+  it("a return staff recorded later says the day it came back, in the heading, the column and the card (T-22)", () => {
+    const returned = out({
+      stage: "returned",
+      can: ["report_problem", "get_help"],
+      report_problem_until: "2026-10-27T13:10:00Z",
+      came_back_on: "2026-10-25",
+      timeline: [
+        { event: "handover", label: "Rental started", at: "2026-10-24T05:12:00Z", by: "owner" },
+        { event: "return", label: "Returned", at: "2026-10-26T13:10:00Z", by: "staff" },
+      ],
+    });
+    const copy = returnCopy(returned, new Date("2026-10-26T13:11:00Z"));
+    expect(copy.returned?.title).toBe("Came back on Sun 25 Oct");
+    expect(copy.returnDay).toBe("Sun 25");
+    expect(copy.sub).toContain("Sun 25 Oct");
+    // Without a named day: the day it was recorded, as before.
+    expect(returnCopy({ ...returned, came_back_on: null }, new Date("2026-10-26T13:11:00Z")).returned?.title).toBe("Returned · 6:40 pm");
+  });
+
   it("after late days neither line says the whole deposit goes back: the late days' rent is the shop's (review r1 #3)", () => {
     const lateMoney = { ...booking().money, late_days: 2, late_fee: "1220.00" };
     const late = out({ money: lateMoney });

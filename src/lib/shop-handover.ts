@@ -1,6 +1,6 @@
 import { problemLine, problemState } from "@/lib/claims";
 import { clock, dayOf, dayShort, depositAfterLate, lateDaysLabel, money, todayIst, windowLabel } from "@/lib/booking";
-import { captured, dayBlock, handoverAt, returnedAt, theirStatusLine, whenShort } from "@/lib/day-of";
+import { captured, cameBackOn, dayBlock, handoverAt, returnedAt, theirStatusLine, whenShort } from "@/lib/day-of";
 import { BookingShop, howLine, moneyView } from "@/lib/shop-booking";
 import { customerName } from "@/lib/shop-ring";
 import { depositPill } from "@/lib/shop-today";
@@ -154,7 +154,9 @@ export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly stri
   const handedAt = handoverAt(b);
   const returnAt = returnedAt(b);
   const today = todayIst(now);
-  const backDay = dayOf(returnAt) ?? today;
+  // The day staff named when they recorded the return later (T-22), else the day it was recorded.
+  const cameBack = cameBackOn(b);
+  const backDay = cameBack ?? dayOf(returnAt) ?? today;
   const due = b.return_by;
   const overdue = b.stage === "out" && Boolean(due) && now.getTime() > new Date(due ?? "").getTime();
   const held = Number(b.money.deposit) > 0 && b.money.deposit_state !== "none";
@@ -196,7 +198,7 @@ export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly stri
       b.stage === "out"
         ? null
         : {
-            title: returnAt ? `Returned · ${whenShort(returnAt, now)}` : "Returned",
+            title: cameBack ? `Came back on ${dayShort(cameBack)}` : returnAt ? `Returned · ${whenShort(returnAt, now)}` : "Returned",
             body: [
               until ? `You can report a problem until ${whenShort(until, now)}.` : problemLine(problem),
               !held

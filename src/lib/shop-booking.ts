@@ -124,6 +124,8 @@ export interface BookingShop {
   /** When the handover code and the return code were typed. The timeline has the same two moments. */
   handover_at?: string | null;
   returned_at?: string | null;
+  /** The day staff named when they recorded the return later (T-22), else null: the return's day is `returned_at`'s own. */
+  came_back_on?: string | null;
   /** `returned_at` plus 24 hours while the stage is `returned`, else null. */
   report_problem_until?: string | null;
   /** A "Not as described" or fault report waits for Renit's decision. */

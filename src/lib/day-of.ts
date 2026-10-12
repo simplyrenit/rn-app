@@ -131,6 +131,14 @@ export function theirStatusLine(
 export function handoverAt(b: { handover_at?: string | null; timeline: { event: string; at: string }[] }): string | null {
   return b.handover_at ?? b.timeline.find((entry) => entry.event === "handover")?.at ?? null;
 }
+/**
+ * The day the item came back when staff recorded the return later and named it (T-22, `came_back_on`), else null: a return
+ * by the code is on `returned_at`'s own day. Where a screen says when an item was returned, this day comes first.
+ */
+export function cameBackOn(b: { came_back_on?: string | null }): string | null {
+  return typeof b.came_back_on === "string" && /^\d{4}-\d{2}-\d{2}/.test(b.came_back_on) ? b.came_back_on.slice(0, 10) : null;
+}
+
 export function returnedAt(b: { returned_at?: string | null; timeline: { event: string; at: string }[] }): string | null {
   return b.returned_at ?? b.timeline.find((entry) => entry.event === "return")?.at ?? null;
 }
@@ -522,12 +530,14 @@ export function returnSteps(booking: Pick<BookingCustomer, "captures" | "stage">
 export function returnedCopy(booking: BookingCustomer): { title: string; body: string } {
   const at = returnedAt(booking);
   const day = dayOf(at);
+  const cameBack = cameBackOn(booking);
   const m = booking.money;
   const held = Number(m.deposit) > 0 && m.deposit_state !== "forfeited" && m.deposit_state !== "none";
   const late = depositAfterLate(m);
   const unless = "unless the shop reports a problem in the next 24 hours";
   return {
-    title: day ? `Returned ${dayShort(day)}, ${clock(at)}.` : "Returned.",
+    // Staff recorded the return later and named the day it came back: that day, not the day it was recorded.
+    title: cameBack ? `Came back on ${dayShort(cameBack)}.` : day ? `Returned ${dayShort(day)}, ${clock(at)}.` : "Returned.",
     body: !held
       ? "The shop has 24 hours to report a problem. After that the rental is closed."
       : late.kept <= 0

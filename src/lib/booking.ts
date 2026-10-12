@@ -253,6 +253,11 @@ export interface BookingCustomer {
   /** When the handover code and the return code were typed. The timeline has the same two moments. */
   handover_at?: string | null;
   returned_at?: string | null;
+  /**
+   * The day staff named when they recorded the return later (T-22): "YYYY-MM-DD", or null for a return by the code, whose day
+   * is `returned_at`'s own. Late days were counted to it.
+   */
+  came_back_on?: string | null;
   can: string[];
   timeline: { event: string; label: string; at: string; by: string }[];
   created_at: string;
