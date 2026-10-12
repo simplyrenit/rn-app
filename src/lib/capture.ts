@@ -898,7 +898,11 @@ export function recordCard(input: {
         title,
         text:
           moment === "handover"
-            ? "Not recorded yet. Take the photos and the video of the item now."
+            ? // Once the item is back, "now" would be a photo of how it is today. The owner's card keeps the plain line while
+              // the payout still waits for it (`stake`).
+              !stake && (input.stage === "returned" || input.stage === "closed")
+              ? "Not recorded at the handover. The item is back now, so photos and video taken now show it as it is today."
+              : "Not recorded yet. Take the photos and the video of the item now."
             : "Not recorded yet. Take the photos and the video of the item as it came back.",
         stake,
         button: { label: "Record its condition", action: "open" },
