@@ -77,7 +77,7 @@ function PhotoTile({ tile, onOpen }: { tile: Tile; onOpen: (tile: Tile) => void 
           <CameraIcon size={20} color={color.textDim} />
         </View>
       )}
-      <Text fontSize="text-xs" tone="body" numberOfLines={1} style={{ textAlign: "center" }}>
+      <Text fontSize="text-xs" tone="body" numberOfLines={2} style={{ textAlign: "center" }}>
         {tile.label}
       </Text>
     </TouchableOpacity>
