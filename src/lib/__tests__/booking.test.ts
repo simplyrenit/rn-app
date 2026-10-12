@@ -48,6 +48,7 @@ import {
   deliveryPlace,
   getItLine,
   handoverLine,
+  priceBlock,
   howLabel,
   HANDOVER_ID,
   handoverIdLine,
@@ -1535,5 +1536,21 @@ describe("an extension whose quote the server refuses outright (409)", () => {
     expect(quoteRefusal(refused("too_late_to_extend", 400))).toBeNull();
     expect(quoteRefusal(refused(null))).toBeNull();
     expect(quoteRefusal(null)).toBeNull();
+  });
+});
+
+describe("the price block of the product page (BK-01; test run D-15)", () => {
+  it("says the rate and, under it, the deposit as refundable, as the frame does", () => {
+    expect(priceBlock("610.00", "3000.00")).toEqual({ rate: "₹610", deposit: "Deposit ₹3,000 · refundable" });
+    expect(priceBlock(610, 3000)).toEqual({ rate: "₹610", deposit: "Deposit ₹3,000 · refundable" });
+  });
+
+  it("has no deposit line when there is no deposit to refund, and no block when the listing has no price yet", () => {
+    expect(priceBlock("610.00", "0.00")).toEqual({ rate: "₹610", deposit: null });
+    expect(priceBlock("610.00", null)).toEqual({ rate: "₹610", deposit: null });
+    expect(priceBlock("610.00", undefined)).toEqual({ rate: "₹610", deposit: null });
+    expect(priceBlock(null, "3000.00")).toBeNull();
+    expect(priceBlock("", "3000.00")).toBeNull();
+    expect(priceBlock(undefined, undefined)).toBeNull();
   });
 });

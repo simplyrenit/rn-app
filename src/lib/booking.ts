@@ -532,6 +532,20 @@ export function handoverLine(hours: Hours | null | undefined): string | null {
   return `Handover ${open.map((row) => `${row.label} ${said(row.value)}`).join(", ")}`;
 }
 
+/**
+ * BK-01's price block: "₹610 a day" and, under it, "Deposit ₹3,000 · refundable". The deposit line is left out when there is no
+ * deposit to refund (zero, or none given); the rate is left out when the listing has none yet.
+ */
+export function priceBlock(
+  rate: string | number | null | undefined,
+  deposit: string | number | null | undefined
+): { rate: string; deposit: string | null } | null {
+  const rateOk = rate !== null && rate !== undefined && String(rate).trim() !== "" && Number.isFinite(Number(rate));
+  if (!rateOk) return null;
+  const held = deposit !== null && deposit !== undefined && Number(deposit) > 0;
+  return { rate: money(rate), deposit: held ? `Deposit ${money(deposit)} · refundable` : null };
+}
+
 /** "Self pickup or delivery from ₹50". A product marked not delivered is pickup only. */
 export function getItLine(shop: ProductShop | null | undefined, notDelivered?: boolean): string {
   return shop?.delivers && !notDelivered

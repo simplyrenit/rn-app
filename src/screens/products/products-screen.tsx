@@ -243,6 +243,13 @@ export default function DetailsScreen() {
     extrapolate: "clamp",
   });
 
+  // The title comes in only once the band is nearly filled in behind it (test run D-15): at half way it was half-visible
+  // over the photo and its "1/2" badge. The band and the back control still fade as before.
+  const titleProgress = bandProgress.interpolate({
+    inputRange: [0, 0.7, 1],
+    outputRange: [0, 0, 1],
+  });
+
   /**
    * The share affordance in the title row was a TouchableOpacity with no
    * onPress at all — a dead control that looked alive, on the growth loop that
@@ -533,7 +540,7 @@ export default function DetailsScreen() {
 
           <Animated.View
             pointerEvents="none"
-            style={{ flex: 1, opacity: bandProgress }}
+            style={{ flex: 1, opacity: titleProgress }}
           >
             <Text
               role="sectionTitle"
@@ -768,6 +775,8 @@ export default function DetailsScreen() {
             copy={booking}
             shop={product.shop}
             notDelivered={product.not_delivered}
+            rate={product.rate}
+            deposit={product.security_deposit}
           />
         </View>
 
