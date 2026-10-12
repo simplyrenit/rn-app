@@ -35,6 +35,7 @@ import {
   ringingRow,
   waitingLine,
 } from "@/lib/shop-today";
+import { softBreaks } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
@@ -401,7 +402,7 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
           <Text role="screenTitle" accessibilityRole="header" numberOfLines={2} style={{ flex: 1 }}>
-            {shop?.name || "Your shop"}
+            {shop?.name ? softBreaks(shop.name) : "Your shop"}
           </Text>
           <View style={{ alignItems: "flex-end" }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
