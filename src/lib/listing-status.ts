@@ -110,6 +110,9 @@ export function hasPrice(rate: string | number | null | undefined): boolean {
  * (ENG-155): a moved listing's price was treated as per day and wants
  * confirming; a listing with no worth cannot be published.
  */
+/** What a listing with no worth is told, as an instruction like "Confirm your price" and not the unfinished phrase "Needs worth". */
+export const WORTH_PROMPT = "Add its worth";
+
 export function listingPrompts(product: {
   rate_needs_confirming?: boolean;
   needs_worth?: boolean;
@@ -119,7 +122,7 @@ export function listingPrompts(product: {
   if (product.rate_needs_confirming) prompts.push("Confirm your price");
   // `needs_worth` is the server's word; a payload that only has `worth` says the same.
   const needsWorth = product.needs_worth ?? (product.worth !== undefined && !product.worth);
-  if (needsWorth) prompts.push("Needs worth");
+  if (needsWorth) prompts.push(WORTH_PROMPT);
   return prompts;
 }
 

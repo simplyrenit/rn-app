@@ -11,6 +11,7 @@ import {
   resolveListingStatus,
   statusDetail,
   waitsText,
+  WORTH_PROMPT,
 } from "../listing-status";
 
 describe("resolveListingStatus", () => {
@@ -104,13 +105,13 @@ describe("listingPrompts", () => {
   });
 
   it("says a listing without a worth needs one", () => {
-    expect(listingPrompts({ rate_needs_confirming: false, needs_worth: true })).toEqual(["Needs worth"]);
+    expect(listingPrompts({ rate_needs_confirming: false, needs_worth: true })).toEqual([WORTH_PROMPT]);
   });
 
   it("gives both, price first", () => {
     expect(listingPrompts({ rate_needs_confirming: true, needs_worth: true })).toEqual([
       "Confirm your price",
-      "Needs worth",
+      WORTH_PROMPT,
     ]);
   });
 
@@ -119,7 +120,7 @@ describe("listingPrompts", () => {
   });
 
   it("reads a missing worth when the server sent only that", () => {
-    expect(listingPrompts({ worth: null })).toEqual(["Needs worth"]);
+    expect(listingPrompts({ worth: null })).toEqual([WORTH_PROMPT]);
     expect(listingPrompts({ worth: "100.00" })).toEqual([]);
     // Neither field in the payload (a server without ENG-155): say nothing.
     expect(listingPrompts({})).toEqual([]);
@@ -167,5 +168,12 @@ describe("what a listing waits for (T-45)", () => {
     expect(
       statusDetail("checking", [{ code: "changed_after_sent_back", text: "Renit is looking at your change", sent_back_for: "Add a photo", changed: ["title"] }], first)
     ).toContain("Renit will look at it again");
+  });
+});
+
+describe("the prompt for a listing with no worth (test run)", () => {
+  it("is an instruction, like 'Confirm your price', not 'Needs worth'", () => {
+    expect(WORTH_PROMPT).toBe("Add its worth");
+    expect(listingPrompts({ needs_worth: true })).toEqual(["Add its worth"]);
   });
 });

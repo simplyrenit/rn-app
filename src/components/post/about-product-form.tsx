@@ -507,7 +507,7 @@ export function AboutProductForm({
           {prompts?.needsWorth ? (
             <Text fontSize="text-sm" tone="warning">
               <Text fontSize="text-sm" fontWeight="font-bold" tone="warning">
-                Needs worth.{" "}
+                Worth is missing.{" "}
               </Text>
               Add what it would cost to replace. It is needed to publish.
             </Text>

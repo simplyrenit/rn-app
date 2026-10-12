@@ -11,7 +11,7 @@ import { apiError } from "@/lib/api-error";
 import { ListingAnswer, ownerView, readPendingEdit, saveOutcome } from "@/lib/listing-edit";
 import { HeldFormNotice } from "@/components/product/listing-status";
 import { toastSave } from "@/lib/save-toast";
-import { listingPrompts } from "@/lib/listing-status";
+import { WORTH_PROMPT, listingPrompts } from "@/lib/listing-status";
 import { parseQuantity, quantityInUseMessage } from "@/lib/list-flow/stock";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
@@ -161,7 +161,7 @@ export default function EditAboutProduct() {
           }}
           prompts={{
             confirmPrice: Boolean(data.rate_needs_confirming),
-            needsWorth: listingPrompts(data).includes("Needs worth"),
+            needsWorth: listingPrompts(data).includes(WORTH_PROMPT),
           }}
           submitLabel="Update product"
           onSubmit={handleSubmit}
