@@ -26,6 +26,7 @@ import {
   walkState,
 } from "@/lib/draft-photos";
 import { commitFeedback, tapFeedback } from "@/lib/haptics";
+import { waitsText } from "@/lib/listing-status";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React, { useEffect, useRef, useState } from "react";
@@ -423,6 +424,11 @@ export default function DraftPhotosScreen() {
                     {draft.shop_code}
                   </Text>
                 </View>
+              ) : null}
+              {waitsText(draft.waits_for_text) ? (
+                <Text fontSize="text-sm" tone="body">
+                  {waitsText(draft.waits_for_text)}
+                </Text>
               ) : null}
             </View>
 

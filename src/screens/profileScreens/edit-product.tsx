@@ -152,7 +152,7 @@ const EditProductScreen: React.FC = () => {
                         the reason is shown where they will fix it. */}
                     {status ? (
                       <View style={{ marginTop: 4 }}>
-                        <ListingStatusPill status={status} reasons={product.flag_reasons} fullReason />
+                        <ListingStatusPill status={status} reasons={product.flag_reasons} waitsText={product.waits_for_text} fullReason />
                       </View>
                     ) : null}
                     {/* A change of theirs that waits: which fields, and what to change. */}

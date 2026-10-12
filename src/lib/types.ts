@@ -338,7 +338,7 @@ export type RootStackParamList = {
   ListReview: { manual?: boolean } | undefined;
   ListPreview: undefined;
   // `coverUrl` is additive to §8.1: the draft is cleared before L-17 opens.
-  ListSubmitted: { productName: string; coverUrl?: string | null; status?: string | null; reasons?: FlagReason[] };
+  ListSubmitted: { productName: string; coverUrl?: string | null; status?: string | null; reasons?: FlagReason[]; waitsText?: string | null };
   OwnersProducts: { products: BackendProduct[]; name: string };
   /** The owner's bank account: add, verify, change (ENG-135). */
   BankAccount: undefined;
@@ -647,6 +647,12 @@ export interface BackendProduct {
    */
   status?: ListingStatus;
   flag_reasons?: FlagReason[];
+  /**
+   * What the listing waits for (T-45): `first_look` while a shop's first publish is held for Renit's staff, `renit_fill` on a draft
+   * whose category and details Renit has not filled yet; and the sentence to show. Null or absent: nothing, and the status's own words.
+   */
+  waits_for?: "first_look" | "renit_fill" | null;
+  waits_for_text?: string | null;
   /**
    * A change to a live listing that waits over the version customers still see (decisions T-34, T-35): which fields,
    * and why. Owner endpoint only; null or absent when nothing waits (`readPendingEdit`).

@@ -354,7 +354,11 @@ export interface SubmittedCopy {
  * them). A status that already says more is told in plain words: live (a repeated post of a listing already through), or
  * flagged with the check's reasons.
  */
-export function submittedCopy(status: string | null | undefined, reasons: readonly FlagReason[] | null | undefined): SubmittedCopy {
+export function submittedCopy(
+  status: string | null | undefined,
+  reasons: readonly FlagReason[] | null | undefined,
+  waits?: string | null
+): SubmittedCopy {
   const list = reasons ?? [];
   if (status === "live") {
     return { title: "Your listing is live.", body: "Renters can see it now. You can still edit it from My products.", status: "live" };
@@ -376,9 +380,13 @@ export function submittedCopy(status: string | null | undefined, reasons: readon
       status: "flagged",
     };
   }
+  // What the listing waits for, in the server's sentence (T-45), when it says (a shop's first products wait for Renit's staff).
+  const waiting = typeof waits === "string" && waits.trim() ? waits.trim() : null;
   return {
     title: "Submitted.\nIt's with our team now.",
-    body: "We check every new listing, and every photo on it, before renters can see it. Until then it sits in My products as Checking, and you can still edit it. We tell you when the check is done.",
+    body: waiting
+      ? `${waiting} Until then it sits in My products as Checking, and you can still edit it. We tell you when it is done.`
+      : "We check every new listing, and every photo on it, before renters can see it. Until then it sits in My products as Checking, and you can still edit it. We tell you when the check is done.",
     status: "checking",
   };
 }

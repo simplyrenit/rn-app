@@ -10,6 +10,7 @@ import {
   openBookingMessage,
   resolveListingStatus,
   statusDetail,
+  waitsText,
 } from "../listing-status";
 
 describe("resolveListingStatus", () => {
@@ -136,5 +137,35 @@ describe("blockedDatesOf", () => {
     expect(blockedDatesOf({})).toBeNull();
     expect(blockedDatesOf({ blocked_dates: undefined })).toBeNull();
     expect(blockedDatesOf({ blocked_dates: null })).toBeNull();
+  });
+});
+
+describe("what a listing waits for (T-45)", () => {
+  const first = "Renit looks at a shop's first products once, usually by the next day.";
+  const fill = "Renit is still filling in the category and details. This can take until tomorrow.";
+
+  it("reads the sentence, and nothing for null, absent, blank or a non-string", () => {
+    expect(waitsText(first)).toBe(first);
+    expect(waitsText(`  ${fill}  `)).toBe(fill);
+    for (const value of [null, undefined, "", "  ", 3, {}]) expect(waitsText(value)).toBeNull();
+  });
+
+  it("says it in place of 'usually takes seconds' for a listing that is checking, and for a draft Renit is still filling", () => {
+    expect(statusDetail("checking", [], first)).toBe(first);
+    expect(statusDetail("draft", [], fill)).toBe(fill);
+    // Nothing waits: the status's own words stand.
+    expect(statusDetail("checking", [])).toBe("Not visible to renters yet · usually takes seconds");
+    expect(statusDetail("checking", [], null)).toBe("Not visible to renters yet · usually takes seconds");
+    expect(statusDetail("draft", [], null)).toBe("Not published yet");
+    // Not said of a live or paused listing, whatever the server sends.
+    expect(statusDetail("live", [], first)).toBe("Visible to renters");
+    expect(statusDetail("paused", [], first)).toBe(STATUS_COPY.paused.detail);
+  });
+
+  it("a reason comes first: a flagged listing, or a sent-back listing changed and checking again", () => {
+    expect(statusDetail("flagged", [{ code: "deposit_zero", text: "The deposit is zero" }], first)).toBe("The deposit is zero");
+    expect(
+      statusDetail("checking", [{ code: "changed_after_sent_back", text: "Renit is looking at your change", sent_back_for: "Add a photo", changed: ["title"] }], first)
+    ).toContain("Renit will look at it again");
   });
 });

@@ -46,7 +46,7 @@ import { CategoryIcon } from "@/lib/category-icons";
 import { CHAT_ENABLED } from "@/lib/config";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
-import { FlagReason, ListingStatus, resolveListingStatus } from "@/lib/listing-status";
+import { FlagReason, ListingStatus, resolveListingStatus, waitsText } from "@/lib/listing-status";
 import { getDiscoveryLocationData } from "@/lib/location";
 import { keySpecLine, specMatchesFilters } from "@/lib/product-specs";
 import { rememberReturnTo } from "@/lib/return-to";
@@ -223,6 +223,7 @@ export default function DetailsScreen() {
     status: ListingStatus;
     reasons: FlagReason[];
     pending: PendingEdit | null;
+    waits: string | null;
   } | null>(null);
   const distanceLabel = useDistanceTo(product?.coordinates);
   // The similar-products rail draws the Home tile, whose heart has to start in
@@ -307,7 +308,7 @@ export default function DetailsScreen() {
     try {
       const owned = await getMyProductDetails(data.name);
       const status = resolveListingStatus(owned?.status);
-      setOwnerStatus(status ? { status, reasons: owned?.flag_reasons ?? [], pending: readPendingEdit(owned?.pending_edit) } : null);
+      setOwnerStatus(status ? { status, reasons: owned?.flag_reasons ?? [], pending: readPendingEdit(owned?.pending_edit), waits: waitsText(owned?.waits_for_text) } : null);
     } catch {
       setOwnerStatus(null);
     }
@@ -663,6 +664,7 @@ export default function DetailsScreen() {
               <ListingStatusPill
                 status={ownerStatus.status}
                 reasons={ownerStatus.reasons}
+                waitsText={ownerStatus.waits}
                 withDetail
               />
             ) : null}

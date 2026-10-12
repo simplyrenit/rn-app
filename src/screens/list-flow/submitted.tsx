@@ -37,7 +37,7 @@ export default function ListSubmittedScreen() {
   const cover = route.params?.coverUrl ?? null;
   // What the post answered: nearly always "checking"; a post that came back flagged, or held because a check could not
   // run, says so in the check's words.
-  const copy = submittedCopy(route.params?.status, route.params?.reasons);
+  const copy = submittedCopy(route.params?.status, route.params?.reasons, route.params?.waitsText);
 
   // §8.6: the draft is cleared on arrival. Preview already cleared it the
   // moment the create call succeeded; this only covers any other way here.

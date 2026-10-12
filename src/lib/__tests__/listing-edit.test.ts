@@ -223,6 +223,16 @@ describe("the screen after posting from the phone (every photo is checked, not o
     expect(submittedCopy("checking", [depositZero]).title).toBe("Submitted.\nIt's with our team now.");
   });
 
+  it("a shop's first products wait for Renit's staff: the server's sentence is said in place of the general line (T-45)", () => {
+    const first = "Renit looks at a shop's first products once, usually by the next day.";
+    const copy = submittedCopy("checking", [], first);
+    expect(copy.title).toBe("Submitted.\nIt's with our team now.");
+    expect(copy.body).toBe(`${first} Until then it sits in My products as Checking, and you can still edit it. We tell you when it is done.`);
+    expect(copy.body).not.toMatch(/every photo/);
+    expect(submittedCopy("checking", [], null).body).toContain("every photo on it");
+    expect(submittedCopy("checking", [], "  ").body).toContain("every photo on it");
+  });
+
   it("a flagged answer with no reasons still says what to do; a live one says it is live", () => {
     expect(submittedCopy("flagged", []).body).toBe("Open it from My products to change it, and we will look again.");
     expect(submittedCopy("live", []).status).toBe("live");

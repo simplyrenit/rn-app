@@ -208,7 +208,7 @@ const MyProductScreen: React.FC = () => {
               />
               {status ? (
                 <View style={{ marginTop: 6 }}>
-                  <ListingStatusPill status={status} reasons={item.flag_reasons} />
+                  <ListingStatusPill status={status} reasons={item.flag_reasons} waitsText={item.waits_for_text} />
                 </View>
               ) : null}
               {/* A change that waits over the version customers see: which fields, and why. */}

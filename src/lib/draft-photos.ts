@@ -15,6 +15,8 @@ export interface NeedingDraft {
   name: string;
   title: string;
   shop_code: string;
+  /** What the draft waits for, in the server's sentence (T-45), when the row carries it. */
+  waits_for_text?: string | null;
 }
 
 // ---- The walk -------------------------------------------------------------------------

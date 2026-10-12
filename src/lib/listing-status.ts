@@ -37,6 +37,15 @@ export interface FlagReason {
   changed?: string[];
 }
 
+/**
+ * What the server says a listing is waiting for, in the sentence to show (`waits_for_text`, T-45): "Renit looks at a shop's
+ * first products once, usually by the next day." (`first_look`) or "Renit is still filling in the category and details. This
+ * can take until tomorrow." (`renit_fill`). Null or absent: nothing to add, and the status's own words stand.
+ */
+export function waitsText(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 /** The status the server sent, or null when it is missing or one this app does not know. */
 export function resolveListingStatus(value: string | null | undefined): ListingStatus | null {
   return (LISTING_STATUSES as readonly string[]).includes(value ?? "")
@@ -65,12 +74,16 @@ export function flagReasonText(reasons: FlagReason[] | null | undefined): string
  */
 export function statusDetail(
   status: ListingStatus,
-  reasons?: FlagReason[] | null
+  reasons?: FlagReason[] | null,
+  waits?: string | null
 ): string {
   // A sent-back listing the owner has changed says Renit will look again whatever its status: while it is `checking` it is
   // not about to go live ("usually takes seconds" would say it is).
   const again = status === "checking" && changedSinceSentBack(reasons);
-  return (status === "flagged" || again ? flagLine(reasons) : null) ?? STATUS_COPY[status].detail;
+  const said = status === "flagged" || again ? flagLine(reasons) : null;
+  // A listing that waits for Renit's first look or fill says so, in the server's words, in place of "usually takes seconds" (T-45).
+  const waiting = status === "checking" || status === "draft" ? waitsText(waits) : null;
+  return said ?? waiting ?? STATUS_COPY[status].detail;
 }
 
 /**

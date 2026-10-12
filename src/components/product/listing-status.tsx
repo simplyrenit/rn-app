@@ -5,6 +5,7 @@ import {
   FlagReason,
   ListingStatus,
   STATUS_COPY,
+  waitsText,
   listingPrompts,
   statusDetail,
 } from "@/lib/listing-status";
@@ -22,6 +23,8 @@ interface PillProps {
   reasons?: FlagReason[] | null;
   /** Adds the one-line explanation beside the pill. */
   withDetail?: boolean;
+  /** What the listing waits for, in the server's sentence (T-45): said under the pill, and in the detail line, instead of "usually takes seconds". */
+  waitsText?: string | null;
   /** The reason in full, not cut to two lines: for the screen where the owner fixes the listing. */
   fullReason?: boolean;
 }
@@ -34,7 +37,7 @@ interface PillProps {
  * Flagged says why, as the frame does ("Flagged · price"): under the pill on
  * the narrow shelf tile, in the detail line where there is room for one.
  */
-export function ListingStatusPill({ status, reasons, withDetail = false, fullReason = false }: PillProps) {
+export function ListingStatusPill({ status, reasons, withDetail = false, fullReason = false, waitsText: waits }: PillProps) {
   const { color } = useTheme();
 
   const tint = {
@@ -46,7 +49,9 @@ export function ListingStatusPill({ status, reasons, withDetail = false, fullRea
     archived: { fg: color.textBody, bg: color.surfaceRaised },
   }[status];
 
-  const reason = status === "flagged" || (status === "checking" && changedSinceSentBack(reasons)) ? flagLine(reasons) : null;
+  const flagged = status === "flagged" || (status === "checking" && changedSinceSentBack(reasons)) ? flagLine(reasons) : null;
+  // A listing waiting for Renit's first look or fill says what for (T-45); a reason, when there is one, comes first.
+  const reason = flagged ?? (status === "checking" || status === "draft" ? waitsText(waits) : null);
 
   const pill = (
     <View
@@ -69,7 +74,7 @@ export function ListingStatusPill({ status, reasons, withDetail = false, fullRea
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         {pill}
         <Text fontSize="text-sm" tone="body" numberOfLines={2} style={{ flex: 1 }}>
-          {statusDetail(status, reasons)}
+          {statusDetail(status, reasons, waits)}
         </Text>
       </View>
     );
