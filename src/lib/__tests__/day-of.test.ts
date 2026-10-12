@@ -493,6 +493,19 @@ describe("BK-20, the rental", () => {
     });
   });
 
+  it("an item out two days late reads the server's running cost, the real sum (e2e-A finding 3)", () => {
+    // Both booking objects answer, while the stage is `out`, `late_days` from the nightly count and `late_fee` as what those
+    // days cost so far (2 days at the booking's ₹610 a day); after the return it is the stored sum, the same number.
+    const late = out({}, { late_days: 2, late_fee: "1220.00", rate: "610.00" });
+    expect(late.stage).toBe("out");
+    expect(activeCopy(late).late).toEqual({
+      text: "2 days late so far: ₹1,220 comes off your deposit. Each more day costs ₹610.",
+      tone: "warning",
+    });
+    // The sum is the server's: the phone does not work it out from the days.
+    expect(activeCopy(out({}, { late_days: 2, late_fee: "1500.00", rate: "610.00" })).late.text).toContain("₹1,500 comes off");
+  });
+
   it("the late-days notice: how late, and what it has cost so far (N11)", () => {
     expect(activeCopy(out({}, { late_days: 2, late_fee: "1220.00" })).late).toEqual({
       text: "2 days late so far: ₹1,220 comes off your deposit. Each more day costs ₹610.",
