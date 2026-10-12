@@ -645,6 +645,10 @@ describe("the ID check", () => {
     // True, false and null (no real check): the sentence stands without the card, and says nothing of a check.
     for (const passed of [true, false, null]) expect(handoverIdLine(withCheck("id_and_match", passed))).toBe(line);
     expect(line).not.toMatch(/check(?!s the name)/i);
+    // Pricing an extension (the booking's number is `extends`): there is no handover, the item is already with the customer.
+    for (const passed of [true, false, null]) expect(handoverIdLine(withCheck("id_and_match", passed), "RN-24831")).toBeNull();
+    expect(handoverIdLine(withCheck("id_and_match", null), true)).toBeNull();
+    expect(handoverIdLine(withCheck("id_and_match", null), null)).toBe(line);
     // Any other item, and signed out (the quote cannot say): nothing.
     expect(handoverIdLine(withCheck("id", null))).toBeNull();
     expect(handoverIdLine(withCheck("none", true))).toBeNull();

@@ -353,10 +353,10 @@ export default function ReviewAndBookScreen() {
           </View>
         ) : null}
 
-        {/* An item whose handover needs the ID match: the customer is told to bring an ID, with or without a check above. */}
-        {handoverIdLine(quote) ? (
+        {/* An item whose handover needs the ID match: the customer is told to bring an ID, with or without a check above. Not for an extension: the item is already with them. */}
+        {handoverIdLine(quote, extending) ? (
           <Notice tone="info" icon="info">
-            {handoverIdLine(quote)}
+            {handoverIdLine(quote, extending)}
           </Notice>
         ) : null}
 

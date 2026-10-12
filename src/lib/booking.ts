@@ -758,10 +758,11 @@ export function idCheckCopy(
 
 /**
  * What the price screen says about the ID at the handover, by itself: the sentence for an item that needs the match, whatever
- * `passed` says and whether or not the ID card shows. Null for any other item, and signed out (the quote cannot say).
+ * `passed` says and whether or not the ID card shows. Null for any other item, and signed out (the quote cannot say); and null
+ * when the screen prices an extension (`extending`): there is no handover then, the item is already with the customer.
  */
-export function handoverIdLine(quote: Pick<Quote, "id_check">): string | null {
-  return quote.id_check?.needed === "id_and_match" ? HANDOVER_ID : null;
+export function handoverIdLine(quote: Pick<Quote, "id_check">, extending: boolean | string | null = false): string | null {
+  return !extending && quote.id_check?.needed === "id_and_match" ? HANDOVER_ID : null;
 }
 
 // ---- Why Book now would fail ------------------------------------------------------------
