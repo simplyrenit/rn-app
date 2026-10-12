@@ -1159,6 +1159,28 @@ export function cancelCopy(outcome: CancelOutcome): { title: string; lines: stri
   };
 }
 
+/** Where this phone keeps the outcome a cancel carried out, for the cancelled page (D-24; in the query cache, for this run of the app). */
+export const cancelledKey = (number: string) => ["cancelled-outcome", number];
+
+/**
+ * True while a cancel promised money back and the booking does not show every refund yet. The server makes the refund
+ * with a timed job a few seconds after the cancel, so the answer to the cancel itself has no refund row (D-24).
+ */
+export function refundPending(booking: Pick<BookingCustomer, "payments"> | null | undefined, outcome: CancelOutcome | null | undefined): boolean {
+  if (!booking || !outcome) return false;
+  const promised = outcome.back.filter((row) => isPositive(row.amount)).length;
+  return booking.payments.filter((row) => row.kind === "refund").length < promised;
+}
+
+/**
+ * What the cancelled page says: the cancel itself, then what the server did with the money, in the sheet's own words
+ * (what goes back, to where, in how many working days, and what is not returned). `done` is missing when the page is
+ * opened later or on another phone: the payments list below carries the refund then.
+ */
+function cancelledSub(first: string, done: CancelOutcome | null | undefined): string {
+  return done ? [first, ...cancelCopy(done).lines].join(" ") : first;
+}
+
 /** What to say when the cancel call is refused. */
 export function cancelErrorText(error: ApiError | null): string {
   switch (error?.code) {
@@ -1517,8 +1539,11 @@ export interface Banner {
   sub: string | null;
 }
 
-/** The top of the booking screen: where the booking stands, in a line or two. */
-export function bookingBanner(booking: BookingCustomer): Banner {
+/**
+ * The top of the booking screen: where the booking stands, in a line or two. `cancelled`: the outcome of the cancel this
+ * phone has just made, so the page after it says what comes back and what is kept (D-24).
+ */
+export function bookingBanner(booking: BookingCustomer, cancelled?: CancelOutcome | null): Banner {
   const m = booking.money;
   const arrive = booking.delivery_mode === "pickup" ? "Collect" : "Arrives";
   const windowLine = booking.window ? `${arrive} ${windowSummary(booking.window)}` : "Pick your arrival window.";
@@ -1544,7 +1569,11 @@ export function bookingBanner(booking: BookingCustomer): Banner {
         };
       }
       if (booking.exit_reason === "before_opening" || booking.exit_reason === "while_ringing") {
-        return { tone: "neutral", title: "Request cancelled", sub: "You cancelled before the owner answered." };
+        return {
+          tone: "neutral",
+          title: "Request cancelled",
+          sub: cancelledSub("You cancelled before the owner answered.", cancelled),
+        };
       }
       if (booking.exit_reason === "deposit_unpaid") {
         return { tone: "warning", title: "Booking cancelled", sub: "The deposit was not paid in time." };
@@ -1552,7 +1581,7 @@ export function bookingBanner(booking: BookingCustomer): Banner {
       if (booking.exit_reason === "claim_not_upheld") {
         return { tone: "neutral", title: "Booking cancelled", sub: "Renit looked at your report and did not uphold it." };
       }
-      return { tone: "neutral", title: "Booking cancelled", sub: "You cancelled this booking." };
+      return { tone: "neutral", title: "Booking cancelled", sub: cancelledSub("You cancelled this booking.", cancelled) };
     case "lapsed_unpaid":
       return {
         tone: "warning",

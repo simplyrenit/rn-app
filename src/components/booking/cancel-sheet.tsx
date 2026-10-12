@@ -1,8 +1,8 @@
-import { bookingQueryKey, cancelBooking, fetchCancelOutcome } from "@/backend/bookings";
+import { bookingQueryKey, cancelBooking, fetchCancelOutcome, readUntilRefund } from "@/backend/bookings";
 import { Button, Skeleton, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { apiError } from "@/lib/api-error";
-import { CancelOutcome, cancelCopy, cancelErrorText } from "@/lib/booking";
+import { CancelOutcome, cancelCopy, cancelErrorText, cancelledKey } from "@/lib/booking";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -69,8 +69,14 @@ export const CancelSheet = forwardRef<CancelSheetHandle, { number: string }>(({ 
     setCancelling(true);
     setNote(null);
     try {
-      const booking = await cancelBooking(number, outcome.case);
-      queryClient.setQueryData(bookingQueryKey(number), booking);
+      const answer = await cancelBooking(number, outcome.case);
+      // The page behind says what the server did with the money (the outcome it carried out, else the one shown here).
+      // Set before the booking, so the booking's re-render already has it.
+      const done = answer.outcome ?? outcome;
+      queryClient.setQueryData(cancelledKey(number), done);
+      queryClient.setQueryData(bookingQueryKey(number), answer.booking);
+      // The refund row comes a few seconds after the cancel: read the booking again until it is there.
+      void readUntilRefund(queryClient, number, done);
       sheet.current?.dismiss();
       toast.success(outcome.case === "ringing" ? "Request cancelled" : "Booking cancelled");
     } catch (error) {

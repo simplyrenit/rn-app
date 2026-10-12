@@ -7,12 +7,13 @@ import {
   PaymentStart,
   Quote,
   pollEveryMs,
+  refundPending,
 } from "@/lib/booking";
 import { BOOKINGS_ENDPOINT, GET_PRODUCT_DETAILS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { correctedNow } from "@/lib/server-clock";
 import { BackendProduct } from "@/lib/types";
-import { useInfiniteQuery, useQuery } from "react-query";
+import { QueryClient, useInfiniteQuery, useQuery } from "react-query";
 
 /** API-CONTRACT OE-C: the customer's side of a booking. Every path ends in "/". */
 const bookingUrl = (number: string, action = "") =>
@@ -116,12 +117,40 @@ export async function fetchCancelOutcome(number: string): Promise<CancelOutcome>
 /**
  * Cancels, saying which outcome the customer was shown (A-33). If the booking
  * has moved on since (the owner accepted a second ago), the server cancels
- * nothing and answers `409 outcome_changed` with the new outcome.
+ * nothing and answers `409 outcome_changed` with the new outcome. The answer
+ * carries the outcome that was carried out beside the booking (D-24).
  */
-export async function cancelBooking(number: string, shownCase: CancelOutcome["case"]): Promise<BookingCustomer> {
-  return (
-    await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "cancel/"), { case: shownCase })
-  ).data.booking;
+export async function cancelBooking(
+  number: string,
+  shownCase: CancelOutcome["case"]
+): Promise<{ booking: BookingCustomer; outcome: CancelOutcome | null }> {
+  const { booking, outcome } = (
+    await axiosInstance.post<{ booking: BookingCustomer; outcome?: CancelOutcome | null }>(bookingUrl(number, "cancel/"), {
+      case: shownCase,
+    })
+  ).data;
+  return { booking, outcome: outcome ?? null };
+}
+
+/** How long after a cancel the booking is read again while its refund row is still to come. */
+export const REFUND_READ_WAITS_MS = [0, 4000, 10000, 20000];
+
+/**
+ * After a cancel: read the booking again now, and again a few seconds later while it shows no refund row. The server
+ * makes the refund with a timed job within seconds, so the cancel's own answer and the first read may not have it
+ * (D-24). Stops at the first read that has it, or after the last wait.
+ */
+export async function readUntilRefund(
+  queryClient: QueryClient,
+  number: string,
+  outcome: CancelOutcome | null,
+  waits: number[] = REFUND_READ_WAITS_MS
+): Promise<void> {
+  for (const wait of waits) {
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    await queryClient.invalidateQueries(bookingQueryKey(number));
+    if (!refundPending(queryClient.getQueryData<BookingCustomer>(bookingQueryKey(number)), outcome)) return;
+  }
 }
 
 /** `GET …/alternatives/`: other dates for this item, and the same item from other owners. */

@@ -3,6 +3,7 @@ import axiosInstance from "@/lib/networkUtils";
 import {
   bookNow,
   cancelBooking,
+  readUntilRefund,
   fetchAlternatives,
   fetchBooking,
   fetchBookings,
@@ -96,9 +97,44 @@ describe("cancelling", () => {
   });
 
   it("cancels saying which outcome the customer saw", async () => {
-    api.post.mockResolvedValue({ data: { booking: { number: "RN-24831", exit: "cancelled_by_customer" } } });
-    await expect(cancelBooking("RN-24831", "free")).resolves.toMatchObject({ exit: "cancelled_by_customer" });
+    api.post.mockResolvedValue({
+      data: { booking: { number: "RN-24831", exit: "cancelled_by_customer" }, outcome: { case: "free", back: [], kept: [] } },
+    });
+    await expect(cancelBooking("RN-24831", "free")).resolves.toMatchObject({
+      booking: { exit: "cancelled_by_customer" },
+      outcome: { case: "free" },
+    });
     expect(api.post).toHaveBeenCalledWith("https://api.test/bookings/RN-24831/cancel/", { case: "free" });
+    // An answer with no outcome still gives the booking.
+    api.post.mockResolvedValue({ data: { booking: { number: "RN-24831" } } });
+    await expect(cancelBooking("RN-24831", "free")).resolves.toEqual({ booking: { number: "RN-24831" }, outcome: null });
+  });
+
+  it("reads the booking again after a cancel until the refund row is there (D-24)", async () => {
+    const outcome = { case: "free" as const, back: [{ what: "rent" as const, amount: "511.00", text: null }], kept: [], to_owner: "0.00", free_until: null };
+    let cached: unknown = { payments: [] };
+    let reads = 0;
+    const queryClient = {
+      invalidateQueries: jest.fn(async () => {
+        reads += 1;
+        // The refund shows up on the second read, as the timed job lands.
+        if (reads === 2) cached = { payments: [{ kind: "refund" }] };
+      }),
+      getQueryData: jest.fn(() => cached),
+    };
+    await readUntilRefund(queryClient as never, "RN-24831", outcome, [0, 0, 0, 0]);
+    expect(reads).toBe(2);
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["booking", "RN-24831"]);
+    // No refund promised: one read is enough.
+    reads = 0;
+    cached = { payments: [] };
+    await readUntilRefund(queryClient as never, "RN-24831", { ...outcome, back: [] }, [0, 0, 0, 0]);
+    expect(reads).toBe(1);
+    // A refund that never shows stops at the last wait.
+    reads = 0;
+    queryClient.invalidateQueries.mockImplementation(async () => void (reads += 1));
+    await readUntilRefund(queryClient as never, "RN-24831", outcome, [0, 0, 0]);
+    expect(reads).toBe(3);
   });
 });
 

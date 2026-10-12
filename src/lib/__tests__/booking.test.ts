@@ -13,6 +13,7 @@ import {
   cancelCopy,
   cancelErrorText,
   cancelHint,
+  refundPending,
   moneyRowView,
   payRentCopy,
   payRentErrorText,
@@ -853,6 +854,47 @@ describe("cancelling", () => {
       free_until: null,
     });
     expect(inside.lines).toEqual(["₹1,220 goes back the way you paid.", "₹610 goes to the owner."]);
+  });
+
+  it("the page after a cancel says what comes back, to where, in how many days, and what is kept (D-24)", () => {
+    const done = {
+      case: "free" as const,
+      back: [{ what: "rent" as const, amount: "511.00", text: "UPI test@fakebank", expected_days_min: 1, expected_days_max: 5 }],
+      kept: [{ what: "booking_amount" as const, amount: "99.00", text: "The ₹99 is not returned" }],
+      to_owner: "0.00",
+      free_until: null,
+    };
+    const cancelled = booking({ exit: "cancelled_by_customer", exit_reason: "free" });
+    expect(bookingBanner(cancelled, done)).toEqual({
+      tone: "neutral",
+      title: "Booking cancelled",
+      sub: "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. The ₹99 is not returned",
+    });
+    // Opened later, or on another phone: the plain line, and the refund row in the payments list.
+    expect(bookingBanner(cancelled).sub).toBe("You cancelled this booking.");
+    expect(bookingBanner(cancelled, null).sub).toBe("You cancelled this booking.");
+    // A request cancelled while it rang.
+    const ringingOutcome = { ...done, case: "ringing" as const, kept: [], back: [{ ...done.back[0], what: "booking_amount" as const, amount: "99.00" }] };
+    expect(bookingBanner(booking({ exit: "cancelled_by_customer", exit_reason: "while_ringing" }), ringingOutcome).sub).toBe(
+      "You cancelled before the owner answered. ₹99 goes back to UPI test@fakebank. Expect it in 1 to 5 working days."
+    );
+  });
+
+  it("waits for the refund row while the cancel promised money back (D-24)", () => {
+    const outcome = {
+      case: "free" as const,
+      back: [{ what: "rent" as const, amount: "511.00", text: null }],
+      kept: [],
+      to_owner: "0.00",
+      free_until: null,
+    };
+    const refund = { id: "r1", kind: "refund" as const, what: "rent" as const, amount: "511.00", status: "pending", text: null, expected_days_min: null, expected_days_max: null, expected_by: null, at: "2026-10-12T17:00:00Z" };
+    expect(refundPending(booking({ payments: [] }), outcome)).toBe(true);
+    expect(refundPending(booking({ payments: [refund] }), outcome)).toBe(false);
+    // Nothing promised back, or nothing known: nothing to wait for.
+    expect(refundPending(booking({ payments: [] }), { ...outcome, back: [] })).toBe(false);
+    expect(refundPending(booking({ payments: [] }), null)).toBe(false);
+    expect(refundPending(undefined, outcome)).toBe(false);
   });
 
   it("says so when there is no money to move", () => {

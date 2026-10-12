@@ -12,7 +12,9 @@ import {
   BookingCustomer,
   bookingBanner,
   bookingHow,
+  CancelOutcome,
   cancelHint,
+  cancelledKey,
   datesLine,
   deliveryPlace,
   money,
@@ -51,7 +53,7 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
   const [answering, setAnswering] = useState<"accept" | "decline" | null>(null);
   const busy = useRef(false);
 
-  const banner = bookingBanner(booking);
+  const banner = bookingBanner(booking, queryClient.getQueryData<CancelOutcome>(cancelledKey(booking.number)));
   const rows = timelineRows(booking);
   const request = windowRequestCopy(booking);
   const can = (action: string) => booking.can.includes(action);
