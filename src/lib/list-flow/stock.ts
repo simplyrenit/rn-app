@@ -20,6 +20,12 @@ export function parseQuantity(text: string | null | undefined): number | null {
  * What the item would cost to replace, in rupees: more than zero, up to two
  * decimals (the column's own). Null for anything else.
  */
+/**
+ * The hint under "Worth". No ID check exists yet (decision T-41), so it cannot say the worth decides one: today the worth decides
+ * whether the owner must check the customer's ID at the handover (an item above the server's line, or of a kind that always does).
+ */
+export const WORTH_HINT = "What it would cost to replace. It decides whether you must check the customer's ID at the handover.";
+
 export function parseWorth(text: string | null | undefined): number | null {
   const trimmed = (text ?? "").trim();
   if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) return null;

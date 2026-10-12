@@ -8,7 +8,7 @@ import {
   useFieldSurfaceStyle,
 } from "@/components/core";
 import { SegmentedChoice } from "@/components/core/segmented-choice";
-import { parseQuantity, parseWorth, MAX_QUANTITY_DIGITS } from "@/lib/list-flow/stock";
+import { parseQuantity, parseWorth, MAX_QUANTITY_DIGITS, WORTH_HINT } from "@/lib/list-flow/stock";
 import { createLocationRequest } from "@/lib/location-request";
 import {
   MIN_TOUCH_TARGET,
@@ -724,7 +724,7 @@ export function AboutProductForm({
         <FieldLabel
           label="Worth"
           required
-          hint="What it would cost to replace. It decides the customer's ID check."
+          hint={WORTH_HINT}
         />
         <FieldShell focused={worthFocus}>
           {currencyAdornment}

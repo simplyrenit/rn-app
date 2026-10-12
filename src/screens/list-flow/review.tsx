@@ -50,7 +50,7 @@ import {
   uploadedPhotos,
 } from "@/lib/list-flow/draft";
 import { currentSpecs, specsLoading } from "@/lib/list-flow/specs";
-import { MAX_QUANTITY_DIGITS } from "@/lib/list-flow/stock";
+import { MAX_QUANTITY_DIGITS, WORTH_HINT } from "@/lib/list-flow/stock";
 import {
   CONDITIONS,
   CategoryValue,
@@ -727,15 +727,15 @@ export default function ListReviewScreen() {
             />
           </View>
 
-          {/* Worth and stock (ENG-155). Worth is needed to publish: it decides the
-              customer's ID check. A figure suggested from the photos is already in
+          {/* Worth and stock (ENG-155). Worth is needed to publish: it decides whether
+              you must check the customer's ID at the handover. A figure suggested from the photos is already in
               the box, and counts once it is confirmed or changed. Nothing here says
               where the figure came from. */}
           <View onLayout={onLayoutSection("worth")} style={{ marginBottom: density.fieldGap }}>
             <FieldLabel
               label="Worth"
               required
-              hint="What it would cost to replace. It decides the customer's ID check."
+              hint={WORTH_HINT}
             />
             <AmountInput
               accessibilityLabel="Worth"

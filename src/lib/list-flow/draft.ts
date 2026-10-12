@@ -662,7 +662,7 @@ export function missingRequirements(draft: ListingDraft): Requirement[] {
   // A pin with no name would reach the server as an empty `location`.
   if (!f.location.value?.locality?.trim())
     missing.push({ key: "location", label: "pickup location" });
-  // Worth is needed to publish (it decides the customer's ID check). A figure the
+  // Worth is needed to publish (it decides whether the owner must check the customer's ID at the handover). A figure the
   // model suggested counts only once the owner has confirmed or changed it.
   if (parseWorth(f.worth.value) === null || f.worth.source === "ai")
     missing.push({ key: "worth", label: "worth" });

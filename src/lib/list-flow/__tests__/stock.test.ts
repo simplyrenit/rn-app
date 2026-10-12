@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { parseQuantity, parseWorth, quantityInUseMessage, suggestedWorth } from "../stock";
+import { WORTH_HINT, parseQuantity, parseWorth, quantityInUseMessage, suggestedWorth } from "../stock";
 
 describe("parseQuantity", () => {
   it("takes a whole number of at least 1", () => {
@@ -63,5 +63,12 @@ describe("quantityInUseMessage", () => {
   it("still says something without details", () => {
     expect(quantityInUseMessage(null)).toContain("Keep at least");
     expect(quantityInUseMessage({ conflicts: [] })).toContain("Keep at least");
+  });
+});
+
+describe("the hint under Worth (T-41)", () => {
+  it("says what the worth decides today, the owner's check of the ID at the handover, not an ID check that does not exist yet", () => {
+    expect(WORTH_HINT).toBe("What it would cost to replace. It decides whether you must check the customer's ID at the handover.");
+    expect(WORTH_HINT).not.toMatch(/decides the customer's ID check/);
   });
 });
