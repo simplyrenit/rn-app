@@ -626,13 +626,19 @@ describe("the record's card", () => {
     expect(card({})?.stake).toBeNull();
   });
 
-  it("a handover record nobody made, once the item is back, does not say 'now' as if it were still at the door", () => {
+  it("a handover record nobody made, once the item is back, does not say 'now' as if it were still at the door, for either side", () => {
     const after = "Not recorded at the handover. The item is back now, so photos and video taken now show it as it is today.";
     expect(card({ role: "customer", stage: "returned" })).toMatchObject({ text: after, button: { label: "Record its condition", action: "open" } });
     expect(card({ role: "customer", stage: "closed" })?.text).toBe(after);
-    // While the rental runs, and for the owner whose payout still waits for it, the plain line stands.
+    // The owner's card reads the same after the return, and still says what waits on the record while the payout does.
+    expect(card({ stage: "returned", stake: true })).toMatchObject({
+      text: after,
+      stake: "Your payout for this rental waits for it: you are paid once it has uploaded.",
+    });
+    expect(card({ stage: "closed" })).toMatchObject({ text: after, stake: null });
+    // While the rental runs the plain line stands.
     expect(card({ role: "customer", stage: "out" })?.text).toBe("Not recorded yet. Take the photos and the video of the item now.");
-    expect(card({ stage: "returned", stake: true })?.text).toBe("Not recorded yet. Take the photos and the video of the item now.");
+    expect(card({ stage: "out", stake: true })?.text).toBe("Not recorded yet. Take the photos and the video of the item now.");
   });
 
   it("says what waits on a return record after the code", () => {
