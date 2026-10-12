@@ -13,6 +13,7 @@ import {
   cancelCopy,
   cancelErrorText,
   cancelHint,
+  cancelOutcomeOf,
   refundPending,
   moneyRowView,
   payRentCopy,
@@ -868,7 +869,7 @@ describe("cancelling", () => {
     expect(bookingBanner(cancelled, done)).toEqual({
       tone: "neutral",
       title: "Booking cancelled",
-      sub: "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. The ₹99 is not returned",
+      sub: "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. The ₹99 is not returned.",
     });
     // Opened later, or on another phone: the plain line, and the refund row in the payments list.
     expect(bookingBanner(cancelled).sub).toBe("You cancelled this booking.");
@@ -878,6 +879,48 @@ describe("cancelling", () => {
     expect(bookingBanner(booking({ exit: "cancelled_by_customer", exit_reason: "while_ringing" }), ringingOutcome).sub).toBe(
       "You cancelled before the owner answered. ₹99 goes back to UPI test@fakebank. Expect it in 1 to 5 working days."
     );
+  });
+
+  it("reads the same sentence back from the booking after the app was closed, or on another phone (D-28)", () => {
+    const refund = {
+      id: "r1",
+      kind: "refund" as const,
+      what: "rent" as const,
+      amount: "511.00",
+      status: "processed",
+      text: "UPI test@fakebank",
+      expected_days_min: 1,
+      expected_days_max: 5,
+      expected_by: "2026-10-19T00:00:00Z",
+      at: "2026-10-12T17:23:00Z",
+    };
+    const cancelled = (reason: string, moneyOver = {}, payments = [refund]) =>
+      booking({ exit: "cancelled_by_customer", exit_reason: reason, payments: [...booking().payments, ...payments] }, { booking_amount_state: "kept", ...moneyOver });
+    // The tester's booking: ₹511 rent refunded to the UPI it came from, the ₹99 kept.
+    expect(bookingBanner(cancelled("free")).sub).toBe(
+      "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. ₹99 is not returned."
+    );
+    // The same words as the sentence made from the cancel's own answer, except for the server's own text of what is kept.
+    expect(cancelOutcomeOf(cancelled("free"))).toMatchObject({
+      case: "free",
+      back: [{ what: "rent", amount: "511.00", text: "UPI test@fakebank", expected_days_min: 1, expected_days_max: 5 }],
+      kept: [{ what: "booking_amount", amount: "99.00" }],
+    });
+    // Inside 24 hours: one day's rent went to the owner; its amount is not on the booking, so none is said.
+    expect(bookingBanner(cancelled("inside_24h", { booking_amount_state: "refunded" })).sub).toBe(
+      "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. One day's rent goes to the owner."
+    );
+    // A request cancelled while it rang: the ₹99 back, nothing kept.
+    const rang = booking({ exit: "cancelled_by_customer", exit_reason: "while_ringing", payments: [{ ...refund, what: "booking_amount", amount: "99.00" }] }, { booking_amount_state: "refund_requested" });
+    expect(bookingBanner(rang).sub).toBe(
+      "You cancelled before the owner answered. ₹99 goes back to UPI test@fakebank. Expect it in 1 to 5 working days."
+    );
+    // Nothing on the booking yet (the refund row is a few seconds behind): only what is known.
+    expect(bookingBanner(cancelled("free", { booking_amount_state: "refund_requested" }, [])).sub).toBe("You cancelled this booking.");
+    expect(cancelOutcomeOf(booking({ payments: [] }))).toBeNull();
+    // This run's own outcome wins over the reading (it has the owner's amount).
+    const owner = { case: "inside_24h" as const, back: [], kept: [], to_owner: "610.00", free_until: null };
+    expect(bookingBanner(cancelled("inside_24h"), owner).sub).toBe("You cancelled this booking. ₹610 goes to the owner.");
   });
 
   it("waits for the refund row while the cancel promised money back (D-24)", () => {

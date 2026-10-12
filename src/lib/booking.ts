@@ -1173,12 +1173,49 @@ export function refundPending(booking: Pick<BookingCustomer, "payments"> | null 
 }
 
 /**
- * What the cancelled page says: the cancel itself, then what the server did with the money, in the sheet's own words
- * (what goes back, to where, in how many working days, and what is not returned). `done` is missing when the page is
- * opened later or on another phone: the payments list below carries the refund then.
+ * What a customer's cancel did with the money, read back from the booking itself, so the cancelled page says the same later
+ * and on another phone (D-28): the refund rows are what goes back, to where, in how many working days, and a booking amount in
+ * the state `kept` is what is not returned. Null while the booking shows neither (the refund row comes a few seconds after the
+ * cancel), so nothing is said that is not known. What goes to the owner when the cancel was inside 24 hours is not on the
+ * booking (only in the cancel's own answer, `outcome.to_owner`), so it is not in this outcome.
  */
-function cancelledSub(first: string, done: CancelOutcome | null | undefined): string {
-  return done ? [first, ...cancelCopy(done).lines].join(" ") : first;
+export function cancelOutcomeOf(booking: Pick<BookingCustomer, "payments" | "money" | "exit_reason">): CancelOutcome | null {
+  const back = booking.payments
+    .filter((row) => row.kind === "refund" && isPositive(row.amount))
+    .map((row) => ({
+      what: row.what,
+      amount: row.amount,
+      text: row.text,
+      expected_days_min: row.expected_days_min,
+      expected_days_max: row.expected_days_max,
+    }));
+  const m = booking.money;
+  const kept =
+    m.booking_amount_state === "kept" && isPositive(m.booking_amount)
+      ? [{ what: "booking_amount" as const, amount: m.booking_amount, text: null }]
+      : [];
+  if (back.length === 0 && kept.length === 0) return null;
+  const reason = booking.exit_reason;
+  return {
+    case: reason === "free" || reason === "inside_24h" || reason === "after_accept" ? reason : "ringing",
+    back,
+    kept,
+    to_owner: "0.00",
+    free_until: null,
+  };
+}
+
+/**
+ * What the cancelled page says: the cancel itself, then what the server did with the money, in the sheet's own words (what
+ * goes back, to where, in how many working days, and what is not returned). `cached` is the outcome of the cancel this phone
+ * made in this run of the app; otherwise the words are read back from the booking (`cancelOutcomeOf`), with a line for the
+ * owner's day's rent where the booking says the cancel was inside 24 hours (its amount is not on the booking).
+ */
+function cancelledSub(first: string, booking: BookingCustomer, cached: CancelOutcome | null | undefined): string {
+  const outcome = cached ?? cancelOutcomeOf(booking);
+  if (!outcome) return first;
+  const owner = !cached && booking.exit_reason === "inside_24h" ? ["One day's rent goes to the owner."] : [];
+  return [first, ...cancelCopy(outcome).lines, ...owner].map(sentence).join(" ");
 }
 
 /** What to say when the cancel call is refused. */
@@ -1541,7 +1578,7 @@ export interface Banner {
 
 /**
  * The top of the booking screen: where the booking stands, in a line or two. `cancelled`: the outcome of the cancel this
- * phone has just made, so the page after it says what comes back and what is kept (D-24).
+ * phone has just made in this run of the app; without it the page reads the same words back from the booking (D-28).
  */
 export function bookingBanner(booking: BookingCustomer, cancelled?: CancelOutcome | null): Banner {
   const m = booking.money;
@@ -1572,7 +1609,7 @@ export function bookingBanner(booking: BookingCustomer, cancelled?: CancelOutcom
         return {
           tone: "neutral",
           title: "Request cancelled",
-          sub: cancelledSub("You cancelled before the owner answered.", cancelled),
+          sub: cancelledSub("You cancelled before the owner answered.", booking, cancelled),
         };
       }
       if (booking.exit_reason === "deposit_unpaid") {
@@ -1581,7 +1618,7 @@ export function bookingBanner(booking: BookingCustomer, cancelled?: CancelOutcom
       if (booking.exit_reason === "claim_not_upheld") {
         return { tone: "neutral", title: "Booking cancelled", sub: "Renit looked at your report and did not uphold it." };
       }
-      return { tone: "neutral", title: "Booking cancelled", sub: cancelledSub("You cancelled this booking.", cancelled) };
+      return { tone: "neutral", title: "Booking cancelled", sub: cancelledSub("You cancelled this booking.", booking, cancelled) };
     case "lapsed_unpaid":
       return {
         tone: "warning",
