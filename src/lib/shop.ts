@@ -441,3 +441,17 @@ export function devicesNote(devices: readonly DeviceLike[]): { empty: string | n
   }
   return { empty: null, thisPhone: null };
 }
+
+/** The merchant approval status as the profile card says it: "Approved", not the server's bare lower-case word. */
+export function merchantStatusLabel(status: string | null | undefined): string {
+  switch (status) {
+    case "approved":
+      return "Approved";
+    case "pending":
+      return "Pending approval";
+    case "rejected":
+      return "Not approved";
+    default:
+      return status ?? "";
+  }
+}

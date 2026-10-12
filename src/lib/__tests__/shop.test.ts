@@ -8,6 +8,7 @@ import {
   checkDelivery,
   checkHours,
   cleanDecimal,
+  merchantStatusLabel,
   dayLabel,
   dayToOpen,
   deliveryFormFrom,
@@ -364,5 +365,15 @@ describe("hours that cover the whole day (test run D-13)", () => {
     expect(hoursRows({ mon: allDay, tue: allDay, wed: allDay, thu: allDay, fri: allDay, sat: allDay, sun: allDay })).toEqual([
       { label: "Mon – Sun", value: "All day", days: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] },
     ]);
+  });
+});
+
+describe("merchantStatusLabel", () => {
+  it("says the approval status as a person would read it, not the server's bare word", () => {
+    expect(merchantStatusLabel("approved")).toBe("Approved");
+    expect(merchantStatusLabel("pending")).toBe("Pending approval");
+    expect(merchantStatusLabel("rejected")).toBe("Not approved");
+    expect(merchantStatusLabel(null)).toBe("");
+    expect(merchantStatusLabel(undefined)).toBe("");
   });
 });

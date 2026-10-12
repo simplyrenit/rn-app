@@ -1,6 +1,7 @@
 import { Button, Text } from "@/components/core";
 import { useProfile } from "@/backend/profile";
 import { useGlobalContext } from "@/context/global-context";
+import { merchantStatusLabel } from "@/lib/shop";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
@@ -102,7 +103,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               }`}
             >
               <Text fontWeight="font-semibold">
-                Merchant status: {merchantStatus}
+                Merchant status: {merchantStatusLabel(merchantStatus)}
               </Text>
               {merchantStatus !== "approved" && (
                 <Text
