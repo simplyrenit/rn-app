@@ -20,6 +20,7 @@ import {
   faultErrorText,
   faultHold,
   faultNotice,
+  faultReportDeadline,
   faultReturnBy,
   chainEnd,
   faultReturnLine,
@@ -81,6 +82,7 @@ const claim = (over: Partial<Claim> = {}): Claim => ({
   money_pending: false,
   forfeit_at: null,
   return_by: null,
+  part_refund_by: null,
   extensions: [],
   my_side: "against",
   server_time: null,
@@ -513,6 +515,22 @@ describe("the customer's fault report", () => {
       expect(faultReturnLine(decided, target, new Date("2026-10-10T06:00:00Z"))).toBe(
         "The item goes back at the end of your extension: bring it back by 8:00 pm on Wed 14 Oct. Any refund is paid once it is back."
       );
+    });
+
+    it("the report's own time is the claim's part_refund_by; the 24-hour constant only when the field is absent", () => {
+      // The server's setting moved to 12 hours: the field wins.
+      const twelve = claim({ kind: "fault", created_at: "2026-10-09T05:10:00Z", return_by: "2026-10-14T14:30:00Z", part_refund_by: "2026-10-09T17:10:00Z", extensions: ["RN-24900"] });
+      const target = faultReturnTarget(twelve, b({ stage: "closed" }), extension);
+      expect(target?.early).toBe("2026-10-09T17:10:00Z");
+      expect(faultReportDeadline(twelve)).toBe("2026-10-09T17:10:00Z");
+      expect(faultReturnLine(twelve, target, NOW)).toContain("Bring the item back by 10:40 pm today to keep a refund");
+      // Absent (null on a fault claim, or no field at all): counted from the report.
+      expect(faultReportDeadline({ kind: "fault", created_at: "2026-10-09T05:10:00Z", part_refund_by: null })).toBe("2026-10-10T05:10:00.000Z");
+      expect(faultReportDeadline({ kind: "fault", created_at: "2026-10-09T05:10:00Z" })).toBe("2026-10-10T05:10:00.000Z");
+      // Not on any other kind.
+      expect(faultReportDeadline({ kind: "damage", created_at: "2026-10-09T05:10:00Z", part_refund_by: "2026-10-10T05:10:00Z" })).toBeNull();
+      expect(readClaim({ ...claim(), part_refund_by: "2026-10-10T05:10:00Z" })?.part_refund_by).toBe("2026-10-10T05:10:00Z");
+      expect(readClaim({ ...claim(), part_refund_by: undefined })?.part_refund_by).toBeNull();
     });
 
     it("an answer without the field is read from the bookings: the claim's return_by is not taken for the chain's", () => {

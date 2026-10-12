@@ -66,6 +66,12 @@ export interface Claim {
    */
   return_by: string | null;
   /**
+   * `fault` only: the report's own deadline, 24 hours after it (`FAULT_RETURN_HOURS` on the server): back by then, a report
+   * that is not upheld still gives the part-refund, on an extended rental too. Null on every other kind, and absent from an
+   * answer from before the field.
+   */
+  part_refund_by: string | null;
+  /**
    * The bookings that took the item on after this claim's booking, first to last (the last is where the item is now);
    * `[]` when none did. Null for an answer from before the field: the chain is then read from the bookings.
    */
@@ -126,6 +132,7 @@ export function readClaim(value: unknown): Claim | null {
     money_pending: value.money_pending === true,
     forfeit_at: orNull(value.forfeit_at),
     return_by: orNull(value.return_by),
+    part_refund_by: orNull(value.part_refund_by),
     extensions: Array.isArray(value.extensions) ? strings(value.extensions) : null,
     my_side: value.my_side === "raised" || value.my_side === "against" || value.my_side === "other" ? value.my_side : null,
     server_time: orNull(value.server_time),
@@ -218,22 +225,24 @@ export function decideLine(claim: Pick<Claim, "kind" | "decide_by">, now: Date):
 
 /**
  * The fault report's item goes back first, and the claim says by when (`return_by`, P5-4). Only a claim without that field
- * (an answer from before it) is counted here: the report's time plus the server's FAULT_RETURN_HOURS.
+ * (an answer from before it) is counted here: the report's time plus the 24-hour constant, held for an answer without the fields.
  */
 export const FAULT_RETURN_HOURS = 24;
 
 /**
- * The report plus the return hours: the time that decides the part-refund of a report Renit does not uphold (A-32),
- * measured to the item's return even on an extended rental (T-33). The claim does not carry it once its `return_by`
- * follows the chain, so it is counted here from the report's time.
+ * The report's own deadline, which decides the part-refund of a report Renit does not uphold (A-32), measured to the item's
+ * return even on an extended rental (T-33): the claim's `part_refund_by`. Only an answer without the field is counted here,
+ * from the report's time and the 24-hour constant.
  */
-export function faultReportDeadline(claim: Pick<Claim, "kind" | "created_at">): string | null {
+export function faultReportDeadline(claim: Pick<Claim, "kind" | "created_at"> & { part_refund_by?: string | null }): string | null {
+  if (claim.kind !== "fault") return null;
+  if (claim.part_refund_by) return claim.part_refund_by;
   const at = new Date(claim.created_at).getTime();
-  return claim.kind === "fault" && Number.isFinite(at) ? new Date(at + FAULT_RETURN_HOURS * 3_600_000).toISOString() : null;
+  return Number.isFinite(at) ? new Date(at + FAULT_RETURN_HOURS * 3_600_000).toISOString() : null;
 }
 
 /** When the item must be back for a fault report that is not upheld still to give a part-refund (A-32): the server's `return_by`. */
-export function faultReturnBy(claim: Pick<Claim, "kind" | "created_at" | "return_by">): string | null {
+export function faultReturnBy(claim: Pick<Claim, "kind" | "created_at" | "return_by"> & { part_refund_by?: string | null }): string | null {
   if (claim.kind !== "fault") return null;
   return claim.return_by ?? faultReportDeadline(claim);
 }
@@ -280,7 +289,7 @@ export interface ReturnTarget {
  * meanwhile.
  */
 export function faultReturnTarget(
-  claim: Pick<Claim, "kind" | "created_at" | "return_by" | "extensions">,
+  claim: Pick<Claim, "kind" | "created_at" | "return_by" | "extensions"> & { part_refund_by?: string | null },
   first: ChainBooking | null | undefined,
   end: ChainBooking | null | undefined
 ): ReturnTarget | null {
