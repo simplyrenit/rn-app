@@ -63,6 +63,8 @@ const FIELD_WORDS: Record<string, string> = {
   security_deposit: "deposit",
   worth: "worth",
   location: "address",
+  coordinates: "pin on the map",
+  full_address: "full address",
 };
 
 /** "title, price and deposit". */
@@ -92,6 +94,10 @@ const OWNER_FIELDS = [
   "security_deposit",
   "worth",
   "location",
+  // The pin and the full address wait with a held place line and are applied with it (T-34): the server shows them in
+  // `pending_edit`, and the form sends the pin with every save, so it has to be shown the one that waits.
+  "coordinates",
+  "full_address",
   "images",
   "cover_image",
 ];
@@ -127,6 +133,9 @@ const couldNotRun = (reasons: readonly FlagReason[]) => reasons.some((r) => r.un
 
 /** The reasons that ask something of the owner: the findings, not the marks for a check that could not run. */
 const askedOfOwner = (reasons: readonly FlagReason[]) => reasons.filter((r) => !r.unchecked);
+
+/** The pin is applied with its address: it waits with it. */
+export const PIN_WAITS = "The new pin waits with the address.";
 
 /** What a check that could not run means for the owner: nothing to do, staff look. */
 const STAFF_LOOK = "Renit's staff will look at it: a check could not run.";
@@ -286,7 +295,8 @@ export function saveOutcome(input: {
           kind: "held",
           // A check that could not run asks nothing of the owner: staff look.
           title: waitsForStaff(pending) ? "Renit's staff will look at your change" : "Your change is on hold",
-          message: pendingLine(pending) ?? "It needs a change.",
+          // A pin moved while its address waits, or with it, waits too: it is applied with the address.
+          message: [pendingLine(pending) ?? "It needs a change.", heldNow.includes("coordinates") ? PIN_WAITS : null].filter(Boolean).join(" "),
         };
   }
   // A listing staff sent back, changed by its owner: the save sends it to the check again (so the answer says `checking`),

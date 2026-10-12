@@ -1,6 +1,6 @@
 import { Text } from "@/components/core";
 import { radius, space } from "@/lib/design-tokens";
-import { PendingEdit, changedSinceSentBack, flagLine, pendingLine, waitsForStaff } from "@/lib/listing-edit";
+import { PIN_WAITS, PendingEdit, changedSinceSentBack, flagLine, pendingLine, waitsForStaff } from "@/lib/listing-edit";
 import {
   FlagReason,
   ListingStatus,
@@ -178,7 +178,7 @@ export function HeldFormNotice({ pending }: { pending: PendingEdit | null | unde
         Some of these values are waiting
       </Text>
       <Text fontSize="text-sm" tone="body">
-        {`${line} The boxes show the waiting values. Leave them as they are to keep the change waiting, or change them to try again.`}
+        {`${line}${pending.fields.includes("coordinates") ? ` ${PIN_WAITS}` : ""} The boxes show the waiting values. Leave them as they are to keep the change waiting, or change them to try again.`}
       </Text>
     </View>
   );

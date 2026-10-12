@@ -430,3 +430,88 @@ describe("a save is 'on hold' only for a change of its own (review app-e2e-3 r1,
     expect(saveOutcome({ sent: sent(7), answer: answer(7) }).kind).toBe("updated");
   });
 });
+
+describe("a place line waits with its pin (review app-e2e-3 r2, finding 7; oe-api-int a11bb38)", () => {
+  const here = { lat: 19.1364, long: 72.8296 };
+  const bandra = { lat: 19.0596, long: 72.8347 };
+  const juhu = { lat: 19.1075, long: 72.8296 };
+  const live = {
+    name: "ps5-1",
+    title: "Sony PS5",
+    location: "Andheri West, Mumbai",
+    full_address: "Shop 4",
+    coordinates: here,
+    rate: "610.00",
+    quantity: 1,
+    status: "live",
+    flag_reasons: [],
+    pending_edit: null,
+  };
+  /** The server's shape (ENG-95-api.md, pass 2b): the place line with its pin and full address, and the title with them. */
+  const held = {
+    state: "flagged",
+    fields: ["title", "location", "coordinates", "full_address"],
+    changes: { title: "Gamo air rifle", location: "badword lane", coordinates: bandra, full_address: "Flat 2, Bandra" },
+    flag_reasons: [{ code: "photo_or_text", text: "A photo or the text needs a look" }],
+  };
+  const waiting = { ...live, pending_edit: held };
+  const form = (view: Record<string, any>, over: Record<string, unknown> = {}) => ({
+    title: view.title,
+    location: view.location,
+    coordinates: view.coordinates,
+    rate: `${parseFloat(view.rate)}`,
+    quantity: view.quantity,
+    ...over,
+  });
+
+  it("lays the waiting pin and full address over the listing, like the rest", () => {
+    const view = ownerView(waiting);
+    expect(view).toMatchObject({ location: "badword lane", coordinates: bandra, full_address: "Flat 2, Bandra" });
+    expect(waiting.coordinates).toEqual(here);
+    expect(fieldsLine(held.fields)).toBe("title, address, pin on the map and full address");
+  });
+
+  it("(a) the owner fixes the title and saves: the waiting pin goes back as it waits, and the whole place goes live with its pin", () => {
+    const view = ownerView(waiting);
+    const sent = form(view, { title: "Sony PlayStation 5" });
+    expect(sent.coordinates).toEqual(bandra);
+    // The server: the place line and the pin are sent as they wait (no change), the new title is clean, nothing is refused
+    // any more: the whole held change is applied, the new place line with the new pin (drafts/tests_edits.py).
+    const answer = { ...live, title: "Sony PlayStation 5", location: "badword lane", full_address: "Flat 2, Bandra", coordinates: bandra, pending_edit: null };
+    expect(saveOutcome({ before: waiting, sent, answer })).toEqual({ kind: "updated", title: "Your product was updated!" });
+  });
+
+  it("(a2) a plain Save, or a quantity changed beside it: the waiting pin is left alone, nothing is swapped, and it is said", () => {
+    const plain = saveOutcome({ before: waiting, sent: form(ownerView(waiting)), answer: { ...waiting } });
+    expect(plain).toEqual({ kind: "nothing", title: "Nothing was changed" });
+    // The quantity is saved at once; the place line, its pin and the title still wait (the test's `again` answer).
+    const more = saveOutcome({ before: waiting, sent: form(ownerView(waiting), { quantity: 3 }), answer: { ...waiting, quantity: 3 } });
+    expect(more).toEqual({
+      kind: "updated",
+      title: "Your product was updated!",
+      message: "An earlier change still waits: title, address, pin on the map and full address.",
+    });
+  });
+
+  it("(b) the owner moves only the pin while the place line waits: it waits too, never 'Nothing was changed'", () => {
+    const sent = form(ownerView(waiting), { coordinates: juhu });
+    // The server: the pin sent alone replaces the waiting pin in the held change; the listing's own pin does not move.
+    const answer = { ...waiting, pending_edit: { ...held, changes: { ...held.changes, coordinates: juhu } } };
+    const out = saveOutcome({ before: waiting, sent, answer });
+    expect(out.kind).toBe("held");
+    expect(out.title).toBe("Your change is on hold");
+    expect(out.message).toContain("The new pin waits with the address.");
+  });
+
+  it("a place moved on a live listing with nothing waiting (line and pin together) waits together, and says so", () => {
+    const sent = form(live, { location: "badword lane", coordinates: bandra });
+    const answer = {
+      ...live,
+      pending_edit: { state: "flagged", fields: ["location", "coordinates", "full_address"], changes: { location: "badword lane", coordinates: bandra, full_address: "Shop 4" }, flag_reasons: held.flag_reasons },
+    };
+    const out = saveOutcome({ before: live, sent, answer });
+    expect(out.kind).toBe("held");
+    expect(out.message).toContain("Waiting: address, pin on the map and full address.");
+    expect(out.message).toContain("The new pin waits with the address.");
+  });
+});
