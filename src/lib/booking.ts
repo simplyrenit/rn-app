@@ -377,6 +377,24 @@ export function clock(iso: string | null | undefined): string {
   return `${hour % 12 || 12}:${pad(ist.getUTCMinutes())} ${hour < 12 ? "am" : "pm"}`;
 }
 
+/**
+ * When the deposit is due, as every screen of a booking says it (test run D-18). Two moments exist: `deposit_ask_at`, 24 hours
+ * before the reference time, when Renit asks for it, and `deposit_due_at`, 2 hours before it, the last moment to pay. The
+ * reference is the arrival window once one is picked and the shop's opening on the first day before that, and the server
+ * recomputes both when the window is set (`_set_window`). So: before a window, the day Renit asks (the design's "due Fri 23
+ * Oct"); once a window is picked, the deadline itself, day and time, which is what the "Deposit due" screen says. Null when the
+ * answer has neither.
+ */
+export function depositDueWhen(
+  m: { deposit_ask_at: string | null; deposit_due_at: string | null },
+  windowPicked: boolean
+): string | null {
+  const dueDay = dayOf(m.deposit_due_at);
+  if (windowPicked && dueDay) return `${dayShort(dueDay)}, ${clock(m.deposit_due_at)}`;
+  const askDay = dayOf(m.deposit_ask_at);
+  return askDay ? dayShort(askDay) : null;
+}
+
 /** The India day an instant falls on. */
 export function dayOf(iso: string | null | undefined): string | null {
   const at = new Date(iso ?? "");
@@ -1636,8 +1654,8 @@ export function timelineRows(booking: BookingCustomer, now: Date = new Date()): 
   const extension = Boolean(booking.extends);
   if (stage === "confirmed" && !booking.window && !extension) ahead.push({ label: "Arrival window", when: "Not picked yet" });
   if (m.deposit_state === "not_due" || m.deposit_state === "due") {
-    const day = dayOf(m.deposit_ask_at);
-    ahead.push({ label: `Deposit ${money(m.deposit)}`, when: day ? `due ${dayShort(day)}` : "due before handover" });
+    const when = depositDueWhen(m, Boolean(booking.window));
+    ahead.push({ label: `Deposit ${money(m.deposit)}`, when: when ? `due ${when}` : "due before handover" });
   }
   if (before("confirmed", "ready")) {
     ahead.push(
@@ -1740,11 +1758,11 @@ export function paymentRows(booking: BookingCustomer, now: Date = new Date()): M
   const rows = booking.payments.map((row) => moneyRowView(row, now));
   const m = booking.money;
   if (!booking.exit && (m.deposit_state === "not_due" || m.deposit_state === "due")) {
-    const day = dayOf(m.deposit_ask_at);
+    const when = depositDueWhen(m, Boolean(booking.window));
     rows.push({
       key: "deposit-to-pay",
       title: `Deposit ${money(m.deposit)}`,
-      sub: day ? `Refundable · due ${dayShort(day)}` : "Refundable",
+      sub: when ? `Refundable · due ${when}` : "Refundable",
       ...(m.deposit_state === "due"
         ? { status: "Due now", tone: "warning" as const }
         : { status: "Due later", tone: "neutral" as const }),
@@ -1869,8 +1887,8 @@ export function rentalNextLine(booking: BookingCustomer, now: Date = new Date())
       if (booking.extends) return `Starts ${dayShort(booking.first_day)} · the item stays with you`;
       if (!booking.window) return "Pick your arrival window";
       if (m.deposit_state === "not_due" || m.deposit_state === "due") {
-        const day = dayOf(m.deposit_ask_at);
-        return `Deposit ${money(m.deposit)} due${day ? ` ${dayShort(day)}` : " before handover"}`;
+        const when = depositDueWhen(m, true);
+        return `Deposit ${money(m.deposit)} due${when ? ` ${when}` : " before handover"}`;
       }
       return `${arrive} ${windowSummary(booking.window)}`;
     }

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
+import { depositCopy } from "../day-of";
 import {
   BookingCustomer,
   Quote,
@@ -47,6 +48,7 @@ import {
   lateDaysLabel,
   deliveryPlace,
   getItLine,
+  depositDueWhen,
   handoverLine,
   priceBlock,
   howLabel,
@@ -1212,7 +1214,7 @@ describe("the booking screen", () => {
       { label: "The owner accepted", when: "9:43 am", state: "done" },
       { label: "Rent paid", when: "9:52 am", state: "done" },
       { label: "Arrival window picked", when: "Sat 24 Oct, 10:00 – 11:00 am", state: "done" },
-      { label: "Deposit ₹3,000", when: "due Fri 23 Oct", state: "next" },
+      { label: "Deposit ₹3,000", when: "due Sat 24 Oct, 8:00 am", state: "next" },
       { label: "Collect it", when: "Sat 24 Oct", state: "todo" },
       { label: "Return by", when: "Mon 26 Oct, 8:00 pm", state: "todo" },
     ]);
@@ -1286,7 +1288,7 @@ describe("the booking screen", () => {
     expect(rows[rows.length - 1]).toEqual({
       key: "deposit-to-pay",
       title: "Deposit ₹3,000",
-      sub: "Refundable · due Fri 23 Oct",
+      sub: "Refundable · due Sat 24 Oct, 8:00 am",
       status: "Due later",
       tone: "neutral",
     });
@@ -1419,7 +1421,7 @@ describe("the Rentals tab", () => {
 
   it("says the next thing to do on a confirmed booking", () => {
     // BK-12: the deposit, once the window is picked.
-    expect(rentalNextLine(booking(), NOW)).toBe("Deposit ₹3,000 due Fri 23 Oct");
+    expect(rentalNextLine(booking(), NOW)).toBe("Deposit ₹3,000 due Sat 24 Oct, 8:00 am");
     expect(rentalNextLine(booking({ window: null }), NOW)).toBe("Pick your arrival window");
     expect(rentalNextLine(booking({}, { deposit_state: "paid" }), NOW)).toBe("Collect Sat 24 Oct, 10:00 – 11:00 am");
   });
@@ -1552,5 +1554,39 @@ describe("the price block of the product page (BK-01; test run D-15)", () => {
     expect(priceBlock(null, "3000.00")).toBeNull();
     expect(priceBlock("", "3000.00")).toBeNull();
     expect(priceBlock(undefined, undefined)).toBeNull();
+  });
+});
+
+describe("when the deposit is due, on every screen of a booking (test run D-18)", () => {
+  // RN-20100: pickup on Wed 28 Oct, the window 2 to 3 pm picked. The server asks 24 hours before the window (Tue 27 Oct, 2 pm)
+  // and the last moment to pay is 2 hours before it (Wed 28 Oct, 12:00 pm), both worked out again when the window was set.
+  const ask = "2026-10-27T08:30:00Z";
+  const due = "2026-10-28T06:30:00Z";
+  const withWindow = booking(
+    {
+      window: { start: "2026-10-28T08:30:00Z", end: "2026-10-28T09:30:00Z", step: 60 } as never,
+    },
+    { deposit_ask_at: ask, deposit_due_at: due, deposit_state: "not_due" }
+  );
+  const noWindow = booking({ window: null }, { deposit_ask_at: ask, deposit_due_at: due, deposit_state: "not_due" });
+
+  it("once a window is picked the timeline, the payment row and the list line say the deadline, as the Deposit due screen does", () => {
+    const timeline = timelineRows(withWindow, NOW).find((row) => row.label === "Deposit ₹3,000");
+    expect(timeline?.when).toBe("due Wed 28 Oct, 12:00 pm");
+    const payment = paymentRows(withWindow, NOW).find((row) => row.key === "deposit-to-pay");
+    expect(payment?.sub).toBe("Refundable · due Wed 28 Oct, 12:00 pm");
+    expect(rentalNextLine({ ...withWindow, stage: "confirmed" }, NOW)).toBe("Deposit ₹3,000 due Wed 28 Oct, 12:00 pm");
+    // The same moment the Deposit due screen prints: "Pay by Wed 28 Oct, 12:00 pm".
+    expect(depositCopy(withWindow).payBy).toBe("Pay by Wed 28 Oct, 12:00 pm");
+  });
+
+  it("before any window exists the day Renit asks is kept, in the design's words ('due Tue 27 Oct')", () => {
+    expect(depositDueWhen(noWindow.money, false)).toBe("Tue 27 Oct");
+    expect(paymentRows(noWindow, NOW).find((row) => row.key === "deposit-to-pay")?.sub).toBe("Refundable · due Tue 27 Oct");
+  });
+
+  it("falls back to the ask day when the answer has no due moment, and to nothing when it has neither", () => {
+    expect(depositDueWhen({ deposit_ask_at: ask, deposit_due_at: null }, true)).toBe("Tue 27 Oct");
+    expect(depositDueWhen({ deposit_ask_at: null, deposit_due_at: null }, true)).toBeNull();
   });
 });
