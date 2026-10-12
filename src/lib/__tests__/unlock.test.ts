@@ -69,9 +69,16 @@ describe("unlockErrorMessage", () => {
       "wrong_phone",
       "phone_required",
       "unlock_unavailable",
+      "not_authenticated",
       null,
     ].map(unlockErrorMessage);
-    expect(new Set(lines).size).toBe(6);
+    expect(new Set(lines).size).toBe(7);
+  });
+
+  it("a sign-in from before the sessions existed cannot be unlocked: it says to sign in again, with the way (test run D-09)", () => {
+    expect(unlockErrorMessage("not_authenticated")).toBe(
+      "A code can't unlock this sign-in, because it is from before an update. Go to your profile, log out, and sign in again."
+    );
   });
 
   it("says a code confirmed too long ago has expired, in the contract's words (W2-1)", () => {

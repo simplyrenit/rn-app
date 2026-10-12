@@ -31,6 +31,7 @@ import {
   answerSettlesKey,
   PAYMENTS_REFUSED,
   attemptLimitMessage,
+  bankLoadProblem,
   bankFieldErrors,
   canCheckAgain,
   cleanAccountNumber,
@@ -371,6 +372,8 @@ export default function BankAccountScreen() {
 
   if (!account) {
     const notOwner = apiError(query.error)?.code === "not_owner";
+    // What the person is told: the connection only when it was the connection (the profile failing is a connection too).
+    const problem = bankLoadProblem(profileFailed ? null : apiError(query.error));
     return (
       <NonScrollableContainer>
         {header}
@@ -387,13 +390,22 @@ export default function BankAccountScreen() {
             <EmptyState
               variant="error"
               icon={<ExclamationTriangleIcon size={28} color={color.danger} />}
-              title="Couldn't load your bank account"
-              body="Check your connection and try again."
-              actionLabel="Try again"
-              onAction={() => void (profileFailed ? fetchUserDetails() : query.refetch())}
+              title={problem.title}
+              body={problem.body}
+              actionLabel={problem.action?.label}
+              onAction={
+                problem.action
+                  ? () => {
+                      if (problem.action?.does === "code") void askForCode(() => void query.refetch(), true);
+                      else void (profileFailed ? fetchUserDetails() : query.refetch());
+                    }
+                  : undefined
+              }
             />
           )}
         </View>
+        {/* The code step is also the way in when the server asked for a fresh code to read the account. */}
+        {codeSheet}
       </NonScrollableContainer>
     );
   }

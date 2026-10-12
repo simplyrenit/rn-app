@@ -8,6 +8,8 @@ import {
   cleanAccountNumber,
   cleanIfsc,
   PAYMENTS_REFUSED,
+  bankLoadProblem,
+  retryBankRead,
   failureMessage,
   istDayLabel,
   landed,
@@ -217,5 +219,48 @@ describe("landed", () => {
 describe("a refusal from payments with no word of its own (409 payments_error)", () => {
   it("says plainly that nothing was changed, not the server's \"Payments refused this.\"", () => {
     expect(PAYMENTS_REFUSED).toBe("Payments did not accept this just now. Nothing was changed. Try again in a moment.");
+  });
+});
+
+describe("reading the bank account failed (test run D-09)", () => {
+  const answer = (status: number, code: string | null, message: string | null = null) => ({ status, code, message });
+
+  it("a person is told to check the connection only when it was the connection", () => {
+    expect(bankLoadProblem(null)).toMatchObject({ kind: "network", body: "Check your connection and try again.", action: { does: "retry" } });
+    expect(bankLoadProblem(answer(0, null)).kind).toBe("network");
+  });
+
+  it("403 fresh_code_required on a read leads to the same code step as adding an account, not to 'check your connection'", () => {
+    const problem = bankLoadProblem(answer(403, "fresh_code_required", "Enter a fresh code to do this."));
+    expect(problem).toMatchObject({
+      kind: "code",
+      title: "Confirm it's you first",
+      action: { label: "Send me a code", does: "code" },
+    });
+    expect(problem.body).not.toMatch(/connection/i);
+  });
+
+  it("an answer that says to sign in again says so, with the way, and offers no button that cannot help", () => {
+    for (const failure of [answer(401, null), answer(403, "not_authenticated")]) {
+      const problem = bankLoadProblem(failure.status === 401 ? failure : { ...failure, status: 401 });
+      expect(problem.kind).toBe("sign_in");
+      expect(problem.body).toBe("This phone's sign-in can no longer be used for your bank account. Go to your profile, log out, and sign in again.");
+      expect(problem.action).toBeNull();
+    }
+  });
+
+  it("a fault on the server, or another refusal, is not blamed on the connection", () => {
+    expect(bankLoadProblem(answer(503, "payments_unavailable")).body).toBe("Something went wrong on our side. Try again in a moment.");
+    expect(bankLoadProblem(answer(409, "stage_not_allowed", "Not now.")).body).toBe("Not now.");
+    expect(bankLoadProblem(answer(404, null)).body).toBe("Renit couldn't show it just now. Try again in a moment.");
+  });
+
+  it("a refusal is not asked three more times; a failure that may pass is asked twice more", () => {
+    expect(retryBankRead(0, { status: 403 })).toBe(false);
+    expect(retryBankRead(0, { status: 401 })).toBe(false);
+    expect(retryBankRead(0, { status: 0 })).toBe(true);
+    expect(retryBankRead(1, { status: 502 })).toBe(true);
+    expect(retryBankRead(2, { status: 0 })).toBe(false);
+    expect(retryBankRead(0, null)).toBe(true);
   });
 });

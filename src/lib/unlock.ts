@@ -59,6 +59,9 @@ export function unlockErrorMessage(code: string | null | undefined): string {
       return "Your account has no phone number yet. Add and verify one in your profile first.";
     case "unlock_unavailable":
       return "Confirming your number isn't available right now. Try again later.";
+    case "not_authenticated":
+      // A sign-in from before the sessions existed has no session to unlock: only a new sign-in does.
+      return "A code can't unlock this sign-in, because it is from before an update. Go to your profile, log out, and sign in again.";
     default:
       return "We couldn't confirm that code. Check your connection and try again.";
   }

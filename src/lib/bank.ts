@@ -205,3 +205,68 @@ export function landed(
     nameKey(account.holder_name) === nameKey(form.holderName)
   );
 }
+
+// ---- Reading the account failed ---------------------------------------------------------------
+
+export interface BankLoadProblem {
+  /** `code`: the server wants a fresh code first. `sign_in`: this sign-in cannot be used. `network`/`server`: try again. */
+  kind: "network" | "server" | "code" | "sign_in";
+  title: string;
+  body: string;
+  /** The button's label, and what it does. */
+  action: { label: string; does: "retry" | "code" } | null;
+}
+
+/**
+ * What to tell a person whose bank account did not load, by what the server answered. "Check your connection" is for a
+ * failure that really is the connection (no answer at all); when the server asked for something else, that is what the
+ * person is told. A phone's session is let read the account without a code, so a 403 `fresh_code_required` on a read means
+ * this sign-in is not known as a phone's (one from before the sessions existed): the code step is offered, the same as
+ * for adding an account, and if the server cannot unlock this sign-in the sheet says to sign in again (`unlockErrorMessage`).
+ */
+export function bankLoadProblem(error: { status: number; code: string | null; message?: string | null } | null): BankLoadProblem {
+  if (error && error.code === "fresh_code_required") {
+    return {
+      kind: "code",
+      title: "Confirm it's you first",
+      body: "Renit sends a code to your shop's number before it shows where you're paid.",
+      action: { label: "Send me a code", does: "code" },
+    };
+  }
+  if (error && (error.status === 401 || error.code === "not_authenticated")) {
+    return {
+      kind: "sign_in",
+      title: "Sign in again",
+      body: "This phone's sign-in can no longer be used for your bank account. Go to your profile, log out, and sign in again.",
+      action: null,
+    };
+  }
+  if (error && error.status >= 500) {
+    return {
+      kind: "server",
+      title: "Couldn't load your bank account",
+      body: "Something went wrong on our side. Try again in a moment.",
+      action: { label: "Try again", does: "retry" },
+    };
+  }
+  if (error && error.status >= 400) {
+    return {
+      kind: "server",
+      title: "Couldn't load your bank account",
+      body: error.message?.trim() || "Renit couldn't show it just now. Try again in a moment.",
+      action: { label: "Try again", does: "retry" },
+    };
+  }
+  return {
+    kind: "network",
+    title: "Couldn't load your bank account",
+    body: "Check your connection and try again.",
+    action: { label: "Try again", does: "retry" },
+  };
+}
+
+/** Reading the account is tried again only after a failure that may pass: not after an answer that was a refusal (4xx). */
+export function retryBankRead(failures: number, error: { status: number } | null): boolean {
+  if (error && error.status >= 400 && error.status < 500) return false;
+  return failures < 2;
+}

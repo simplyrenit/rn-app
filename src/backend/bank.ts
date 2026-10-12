@@ -1,6 +1,7 @@
 import { useGlobalContext } from "@/context/global-context";
 import { BANK_ACCOUNT_ENDPOINT, BANK_ACCOUNT_VERIFY_ENDPOINT } from "@/lib/config";
-import { BankAccount } from "@/lib/bank";
+import { apiError } from "@/lib/api-error";
+import { BankAccount, retryBankRead } from "@/lib/bank";
 import axiosInstance from "@/lib/networkUtils";
 import { useQuery } from "react-query";
 
@@ -54,6 +55,8 @@ export function useBankAccount() {
     enabled: signedIn && Boolean(username),
     // No cached answer is shown as current: money details are read fresh.
     staleTime: 0,
+    // A refusal is an answer, not a bad connection: it is not asked three more times (four 403s were seen).
+    retry: (failures, error) => retryBankRead(failures, apiError(error)),
     refetchInterval: (data) => (data?.status === "pending" ? BANK_POLL_MS : false),
   });
 }
