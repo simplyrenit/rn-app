@@ -9,6 +9,7 @@ import {
   DeliveryForm,
   checkDelivery,
   cleanDecimal,
+  deliveryChanged,
   deliveryFormFrom,
   deliveryPatch,
   rupees,
@@ -51,6 +52,8 @@ function DeliveryEditor({ initial }: { initial: DeliveryForm }) {
 
   const errors = checkDelivery(form);
   const valid = Object.keys(errors).length === 0;
+  // Greyed until something changed, as "Save hours" is.
+  const changed = deliveryChanged(initial, form);
 
   const setField = (field: "base" | "perKm" | "maxKm", value: string, places: number) => {
     setForm((current) => ({ ...current, [field]: cleanDecimal(value, places) }));
@@ -219,7 +222,7 @@ function DeliveryEditor({ initial }: { initial: DeliveryForm }) {
           </Text>
         ) : null}
 
-        <Button loading={saving} onPress={save}>
+        <Button disabled={!changed} loading={saving} onPress={save}>
           Save delivery
         </Button>
       </KeyboardAwareScrollView>

@@ -13,6 +13,7 @@ import {
   Hours,
   checkHours,
   dayToOpen,
+  hoursChanged,
   hoursPayload,
   time12,
 } from "@/lib/shop";
@@ -191,7 +192,7 @@ function HoursForm({ initial }: { initial: Hours }) {
             {serverError ?? check.week}
           </Text>
         ) : null}
-        <Button disabled={!check.ok} loading={saving} onPress={save}>
+        <Button disabled={!check.ok || !hoursChanged(initial, hours)} loading={saving} onPress={save}>
           Save hours
         </Button>
       </View>

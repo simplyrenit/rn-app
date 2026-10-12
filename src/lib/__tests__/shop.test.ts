@@ -11,7 +11,9 @@ import {
   dayLabel,
   dayToOpen,
   deliveryFormFrom,
+  deliveryChanged,
   deliveryPatch,
+  hoursChanged,
   deviceSignOutQuestion,
   devicesNote,
   hasDashboard,
@@ -306,3 +308,44 @@ describe("the list of signed-in devices (test run D-10)", () => {
     });
   });
 });
+
+describe("Save is greyed until something changed (test run D-12)", () => {
+  const form = { delivers: true, base: "50", perKm: "10", maxKm: "15" };
+
+  it("delivery: nothing changed, nothing to save; a changed switch or number is", () => {
+    expect(deliveryChanged(form, { ...form })).toBe(false);
+    expect(deliveryChanged(form, { ...form, delivers: false })).toBe(true);
+    expect(deliveryChanged(form, { ...form, base: "60" })).toBe(true);
+    expect(deliveryChanged(form, { ...form, maxKm: "12.5" })).toBe(true);
+    // The same number typed another way is not a change.
+    expect(deliveryChanged(form, { ...form, base: "50.0", perKm: "10.00" })).toBe(false);
+    // Half-typed or emptied is a change (and the form's own check says what is wrong).
+    expect(deliveryChanged(form, { ...form, base: "" })).toBe(true);
+  });
+
+  it("delivery: a shop that does not deliver has nothing else to save, whatever is typed in the boxes it is not using", () => {
+    const off = { delivers: false, base: "", perKm: "", maxKm: "" };
+    expect(deliveryChanged(off, { ...off })).toBe(false);
+    expect(deliveryChanged(off, { ...off, base: "40" })).toBe(false);
+    expect(deliveryChanged(off, { ...off, delivers: true })).toBe(true);
+  });
+
+  it("hours: the same hours are not a change; a day opened, closed or retimed is", () => {
+    const week = { ...checkHoursOpenWeek() };
+    expect(hoursChanged(week, { ...week })).toBe(false);
+    expect(hoursChanged(week, { ...week, mon: null })).toBe(true);
+    expect(hoursChanged(week, { ...week, mon: { open: "09:00", close: "19:00" } })).toBe(true);
+  });
+});
+
+function checkHoursOpenWeek() {
+  return {
+    mon: { open: "09:00", close: "18:00" },
+    tue: null,
+    wed: null,
+    thu: null,
+    fri: null,
+    sat: null,
+    sun: null,
+  } as import("../shop").Hours;
+}

@@ -207,6 +207,11 @@ export function hoursPayload(hours: Hours): Record<DayKey, DayHours | null> {
   return out;
 }
 
+/** Whether the hours on the form differ from the ones the screen opened with: "Save hours" is greyed until they do (test run D-12). */
+export function hoursChanged(initial: Hours, hours: Hours): boolean {
+  return JSON.stringify(hoursPayload(initial)) !== JSON.stringify(hoursPayload(hours));
+}
+
 // ---- The Open switch --------------------------------------------------------------
 
 export interface OpenCopy {
@@ -328,6 +333,18 @@ export function deliveryFormFrom(
     perKm: trimZeros(shop.delivery_per_km),
     maxKm: trimZeros(shop.delivery_max_km),
   };
+}
+
+const sameNumber = (a: string, b: string) => (a === b ? true : a !== "" && b !== "" && Number(a) === Number(b));
+
+/**
+ * Whether the delivery form differs from what the screen opened with: "Save delivery" is greyed until it does, as "Save hours"
+ * is (test run D-12). A shop that does not deliver has nothing else to save, whatever is typed in the boxes it is not using.
+ */
+export function deliveryChanged(initial: DeliveryForm, form: DeliveryForm): boolean {
+  if (initial.delivers !== form.delivers) return true;
+  if (!form.delivers) return false;
+  return !sameNumber(initial.base, form.base) || !sameNumber(initial.perKm, form.perKm) || !sameNumber(initial.maxKm, form.maxKm);
 }
 
 /** Digits and one point, at most `places` after it. */
