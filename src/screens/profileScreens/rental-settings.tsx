@@ -38,7 +38,8 @@ import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
-import { Alert, ScrollView, Switch, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
+import { AppSwitch } from "@/components/core/switch";
 import { CalendarIcon, ComputerDesktopIcon } from "react-native-heroicons/outline";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -282,7 +283,7 @@ export default function RentalSettingsScreen() {
               </Text>
             ) : null}
           </View>
-          <Switch
+          <AppSwitch
             accessibilityLabel="Open"
             value={shop.open.is_open}
             disabled={openBusy}

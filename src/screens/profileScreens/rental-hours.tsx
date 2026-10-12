@@ -21,7 +21,8 @@ import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
-import { ScrollView, Switch, TouchableOpacity, View } from "react-native";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import { AppSwitch } from "@/components/core/switch";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
 
@@ -150,7 +151,7 @@ function HoursForm({ initial }: { initial: Hours }) {
                     </Text>
                   )}
                 </View>
-                <Switch
+                <AppSwitch
                   accessibilityLabel={`${DAY_LONG[day]} open`}
                   value={Boolean(value)}
                   onValueChange={(on) => setDay(day, on ? dayToOpen(hours) : null)}

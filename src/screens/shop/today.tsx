@@ -41,7 +41,8 @@ import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useRef, useState } from "react";
-import { RefreshControl, ScrollView, Switch, TouchableOpacity, View } from "react-native";
+import { RefreshControl, ScrollView, TouchableOpacity, View } from "react-native";
+import { AppSwitch } from "@/components/core/switch";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import {
   BellIcon,
@@ -407,7 +408,7 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
               <Text fontSize="text-md" fontWeight="font-bold" tone={open.is_open ? "success" : "body"}>
                 {open.is_open ? "Open" : "Closed"}
               </Text>
-              <Switch
+              <AppSwitch
                 accessibilityLabel="Open"
                 value={open.is_open}
                 disabled={!shop || openBusy}

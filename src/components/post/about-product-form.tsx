@@ -25,7 +25,8 @@ import { useTypedNavigation } from "@/lib/types";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Platform, Pressable, Switch, TextInput, TouchableOpacity, View } from "react-native";
+import { Platform, Pressable, TextInput, TouchableOpacity, View } from "react-native";
+import { AppSwitch } from "@/components/core/switch";
 import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -791,7 +792,7 @@ export function AboutProductForm({
             Even if you deliver, this one is for pickup only.
           </Text>
         </View>
-        <Switch
+        <AppSwitch
           accessibilityLabel="This product is not delivered"
           value={notDelivered}
           onValueChange={setNotDelivered}

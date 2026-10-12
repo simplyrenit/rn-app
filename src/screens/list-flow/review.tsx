@@ -67,7 +67,8 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import React, { useEffect, useRef, useState } from "react";
-import { Pressable, ScrollView, Switch, TextInput, TouchableOpacity, View } from "react-native";
+import { Pressable, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import { AppSwitch } from "@/components/core/switch";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Animated from "react-native-reanimated";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
@@ -788,7 +789,7 @@ export default function ListReviewScreen() {
                 Even if you deliver, this one is for pickup only.
               </Text>
             </View>
-            <Switch
+            <AppSwitch
               accessibilityLabel="This product is not delivered"
               value={Boolean(draft.notDelivered)}
               onValueChange={(value) => flow.dispatch({ type: "setNotDelivered", value })}

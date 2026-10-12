@@ -17,7 +17,8 @@ import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import React, { useEffect, useState } from "react";
-import { Switch, View } from "react-native";
+import { View } from "react-native";
+import { AppSwitch } from "@/components/core/switch";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "react-query";
@@ -139,7 +140,7 @@ function DeliveryEditor({ initial }: { initial: DeliveryForm }) {
           <Text fontSize="text-md" fontWeight="font-bold">
             We deliver
           </Text>
-          <Switch
+          <AppSwitch
             accessibilityLabel="We deliver"
             value={form.delivers}
             onValueChange={(delivers) => setForm((current) => ({ ...current, delivers }))}
