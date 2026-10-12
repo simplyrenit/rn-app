@@ -1,9 +1,10 @@
-import { BackButton, Button, EmptyState, Text } from "@/components/core";
+import { Button, EmptyState, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import IconButton from "@/components/profile/post-auth/profile-icon-button";
 import { HeldChange, ListingPrompts, ListingStatusPill } from "@/components/product/listing-status";
 import { ownerView, readPendingEdit } from "@/lib/listing-edit";
 import { apiError } from "@/lib/api-error";
+import { softBreaks } from "@/lib/format";
 import { blockedDatesOf, hasPrice, openBookingMessage, resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -26,7 +27,7 @@ import { useProfile } from "@/backend/profile";
 import { useFocusEffect } from "@react-navigation/native";
 
 import { useGetMyDetails } from "@/services/userQueries";
-import { MIN_TOUCH_TARGET, ink } from "@/lib/design-tokens";
+import { ink } from "@/lib/design-tokens";
 import { toast } from "@/lib/toast";
 
 
@@ -87,15 +88,7 @@ const EditProductScreen: React.FC = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NonScrollableContainer>
-        <View className="flex-row items-center justify-between px-gutter py-2 pt-4">
-          <View style={{ width: MIN_TOUCH_TARGET }}>
-            <BackButton onPress={() => router.goBack()} />
-          </View>
-          <View style={{ flex: 1, alignItems: "center" }}>
-            <Text role="screenTitle">Edit product</Text>
-          </View>
-          <View style={{ width: MIN_TOUCH_TARGET }} />
-        </View>
+        <SubpageHeader title="Edit product" onBack={() => router.goBack()} />
 
         <ScrollView
           className="flex-1"
@@ -128,7 +121,7 @@ const EditProductScreen: React.FC = () => {
                       fontSize="text-lg"
                       fontWeight="font-bold"
                     >
-                      {product.title}
+                      {softBreaks(product.title)}
                     </Text>
                     <Text tone="body"
                       fontSize="text-sm"
