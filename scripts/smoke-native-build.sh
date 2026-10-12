@@ -17,7 +17,6 @@ set -uo pipefail
 
 CONFIG="${1:-Debug}"
 WATCH_SECONDS="${2:-25}"
-BUNDLE_ID="com.simplyrenit.renit"
 
 say()  { printf '\033[1m%s\033[0m\n' "$*"; }
 fail() { printf '\033[31mFAIL\033[0m  %s\n' "$*"; exit 1; }
@@ -29,7 +28,11 @@ DD=$(ls -dt "$HOME"/Library/Developer/Xcode/DerivedData/Renit-* 2>/dev/null | he
 PRODUCTS="$DD/Build/Products/$CONFIG-iphonesimulator"
 APP=$(ls -d "$PRODUCTS"/*.app 2>/dev/null | head -1)
 [ -n "$APP" ] || fail "no .app in $PRODUCTS — build first"
-ok "binary $(basename "$APP")  ($CONFIG)"
+# Read the id from the binary that was built. It used to be hardcoded, and
+# wrong (`com.simplyrenit.renit`), so every run stopped at "launch failed".
+BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist" 2>/dev/null)
+[ -n "$BUNDLE_ID" ] || fail "no CFBundleIdentifier in $APP/Info.plist"
+ok "binary $(basename "$APP")  $BUNDLE_ID  ($CONFIG)"
 
 # --- Static pre-check -------------------------------------------------------
 # Every pod the lockfile says we depend on should have left a build product
@@ -101,7 +104,9 @@ if [ -n "$HITS" ]; then
 $(echo "$HITS" | sed 's/^/      /')"
 fi
 
-if ! xcrun simctl listapps "$DEVICE" 2>/dev/null | grep -q "$BUNDLE_ID"; then
+# Not `grep -q`: it exits on the first match, `simctl` then dies of SIGPIPE, and
+# under `pipefail` that reads as "not installed" on a build that is.
+if ! xcrun simctl listapps "$DEVICE" 2>/dev/null | grep -F "$BUNDLE_ID" >/dev/null; then
   fail "$BUNDLE_ID is not installed after launch"
 fi
 
