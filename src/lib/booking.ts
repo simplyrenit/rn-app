@@ -73,8 +73,11 @@ export interface Quote {
     book_for_morning: boolean;
     hours_first_day: DayHours | null;
   };
-  /** Null when signed out. */
-  id_check: { needed: "none" | "id" | "id_and_match"; passed: boolean } | null;
+  /**
+   * Null when signed out. `passed` is null while no real ID check stands behind the answer (decision T-41: the stand-in that
+   * passes everybody must not read as a check): the screen then draws no ID line at all. The gates are the server's.
+   */
+  id_check: { needed: "none" | "id" | "id_and_match"; passed: boolean | null } | null;
   terms: { version: string; url: string; accepted: boolean } | null;
   can_book: boolean;
   blockers: string[];
@@ -712,7 +715,8 @@ const SAME_ID = "Bring the same ID to the handover. The owner checks that it mat
 
 /**
  * What the price screen says about the ID check, or null when the item needs
- * none (or the customer is signed out and the quote cannot say).
+ * none, the customer is signed out and the quote cannot say, or no real check stands behind the answer (`passed` is
+ * null, T-41: "ID check passed" must not be said of a stand-in).
  *
  * "Needed" comes from any of three places: the quote's `id_check`, its
  * `blockers`, or Book now answering `403 id_check_needed`, whose `details.needed`
@@ -727,7 +731,8 @@ export function idCheckCopy(
   const notPassed =
     refused !== null ||
     quote.blockers.includes("id_check_needed") ||
-    (quote.id_check !== null && quote.id_check.needed !== "none" && !quote.id_check.passed);
+    // Only a check that was run and not passed asks for one; an unknown (`null`) says nothing (T-41).
+    (quote.id_check !== null && quote.id_check.needed !== "none" && quote.id_check.passed === false);
   if (notPassed) {
     return {
       state: "needed",
@@ -738,7 +743,7 @@ export function idCheckCopy(
           : "Renit checks your ID once, before you book an item like this. It then covers every booking.",
     };
   }
-  if (quote.id_check && quote.id_check.needed !== "none") {
+  if (quote.id_check && quote.id_check.needed !== "none" && quote.id_check.passed === true) {
     return { state: "passed", title: "ID check passed", body: level === "id_and_match" ? SAME_ID : null };
   }
   return null;

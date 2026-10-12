@@ -68,7 +68,7 @@ function CustomerCard({ booking, now }: { booking: BookingShop; now: Date }) {
             {c.name}
           </Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}>
-            {booking.customer.id_checked ? <CheckCircleIcon size={16} color={color.success} /> : null}
+            {booking.customer.id_checked === true ? <CheckCircleIcon size={16} color={color.success} /> : null}
             <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
               {c.line}
             </Text>

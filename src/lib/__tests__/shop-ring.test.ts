@@ -126,6 +126,10 @@ describe("the request in words", () => {
     expect(customerLine(ring.customer)).toBe("ID checked · 3 rentals completed");
     expect(customerLine({ id_checked: false, rentals_completed: 1 })).toBe("ID not checked yet · 1 rental completed");
     expect(customerLine({ id_checked: true, rentals_completed: 0 })).toBe("ID checked · No rentals completed yet");
+    // No real check behind the answer (T-41): no ID words at all, whichever way the server says it.
+    expect(customerLine({ id_checked: null, rentals_completed: 3 })).toBe("3 rentals completed");
+    expect(customerLine({ id_checked: null, rentals_completed: 0 })).toBe("No rentals completed yet");
+    expect(customerLine({ rentals_completed: 1 })).toBe("1 rental completed");
   });
 
   it("says how many units are in use, with a dot for each unit up to ten", () => {

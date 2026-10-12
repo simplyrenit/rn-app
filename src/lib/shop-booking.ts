@@ -83,7 +83,8 @@ export interface BookingShop {
   customer: {
     first_name: string;
     last_initial: string;
-    id_checked: boolean;
+    /** Null while no real ID check stands behind the answer (T-41): no ID line is drawn then. */
+    id_checked: boolean | null;
     rentals_completed: number;
     area: string;
     distance_km: string | null;

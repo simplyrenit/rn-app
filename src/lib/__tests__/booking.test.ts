@@ -603,7 +603,7 @@ describe("the terms tick", () => {
 });
 
 describe("the ID check", () => {
-  const withCheck = (needed: "none" | "id" | "id_and_match", passed: boolean, blockers: string[] = []) =>
+  const withCheck = (needed: "none" | "id" | "id_and_match", passed: boolean | null, blockers: string[] = []) =>
     quote({ id_check: { needed, passed }, blockers });
 
   it("says nothing for an item that needs none (the 4,000 rupee item)", () => {
@@ -628,6 +628,14 @@ describe("the ID check", () => {
 
   it("shows the check as passed once it is", () => {
     expect(idCheckCopy(withCheck("id", true))).toEqual({ state: "passed", title: "ID check passed", body: null });
+  });
+
+  it("says nothing at all while no real check stands behind the answer (passed is null, T-41): no 'ID check passed', no 'needs an ID check'", () => {
+    expect(idCheckCopy(withCheck("id", null))).toBeNull();
+    expect(idCheckCopy(withCheck("id_and_match", null))).toBeNull();
+    // The gates are the server's: a blocker it names, or a Book now refusal, still asks for the check.
+    expect(idCheckCopy(withCheck("id", null, ["id_check_needed"]))?.state).toBe("needed");
+    expect(idCheckCopy(withCheck("id", null), "id")?.state).toBe("needed");
   });
 
   it("adds the same-ID line when the owner matches it at handover", () => {

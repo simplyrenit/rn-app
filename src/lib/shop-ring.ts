@@ -23,7 +23,8 @@ export interface Ring {
   customer: {
     first_name: string;
     last_initial: string;
-    id_checked: boolean;
+    /** Null while no real ID check stands behind the answer (T-41): no ID line is drawn then. */
+    id_checked: boolean | null;
     rentals_completed: number;
     area: string;
     distance_km: string | null;
@@ -135,11 +136,17 @@ export function customerName(customer: Pick<Ring["customer"], "first_name" | "la
   return customer.last_initial ? `${customer.first_name} ${customer.last_initial}.` : customer.first_name;
 }
 
-/** "ID checked · 3 rentals completed". */
-export function customerLine(customer: Pick<Ring["customer"], "id_checked" | "rentals_completed">): string {
+/**
+ * "ID checked · 3 rentals completed". The ID words only where the server says a real check was run (`id_checked` true or
+ * false); with `null` (no real check stands behind the answer, T-41) or no value at all, the line is the rentals alone and
+ * nothing says anything about an ID.
+ */
+export function customerLine(customer: Pick<Ring["customer"], "rentals_completed"> & { id_checked?: boolean | null }): string {
   const n = customer.rentals_completed;
   const rentals = n === 0 ? "No rentals completed yet" : `${n} ${n === 1 ? "rental" : "rentals"} completed`;
-  return `${customer.id_checked ? "ID checked" : "ID not checked yet"} · ${rentals}`;
+  if (customer.id_checked === true) return `ID checked · ${rentals}`;
+  if (customer.id_checked === false) return `ID not checked yet · ${rentals}`;
+  return rentals;
 }
 
 /** "2 of 5 in use on these dates": the units already promised on the fullest of these days. */

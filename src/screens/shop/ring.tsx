@@ -189,7 +189,7 @@ function RingingView({
                 {customerName(ring.customer)}
               </Text>
               <View style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}>
-                {ring.customer.id_checked ? <CheckCircleMini size={16} color={color.success} /> : null}
+                {ring.customer.id_checked === true ? <CheckCircleMini size={16} color={color.success} /> : null}
                 <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
                   {customerLine(ring.customer)}
                 </Text>
