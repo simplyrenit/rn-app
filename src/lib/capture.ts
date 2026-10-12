@@ -284,8 +284,23 @@ export function setIdMatch(draft: CaptureDraft, ticked: boolean): CaptureDraft {
  * (`customer.full_name`): "The name on the ID must be: Aarav Mehta." Without it (`null`), the owner is told what can be matched:
  * the first name and last initial the booking shows, which is all the tick can mean. `who` is the person whose ID it is and
  * `shown` the name as the booking shows it ("Aarav M.").
+ *
+ * `customerHolds`: the customer's phone records the owner's set (the owner's phone failed), so the tick is the shop's to say and
+ * the customer is the one holding the phone: it is worded for them, with no name shown ("Aarav M." would be the shop's name there,
+ * not the customer's).
  */
-export function idMatchWords(who: string, fullName: string | null | undefined, shown?: string | null): { label: string; sub: string } {
+export function idMatchWords(
+  who: string,
+  fullName: string | null | undefined,
+  shown?: string | null,
+  customerHolds = false
+): { label: string; sub: string } {
+  if (customerHolds) {
+    return {
+      label: "The shop has seen your ID",
+      sub: "Show your photo ID to the shop. Tick this once the shop has looked at it and the name on it is the name on your booking.",
+    };
+  }
   const name = (fullName ?? "").trim();
   if (name) {
     return { label: "ID matches the booking name", sub: `Look at ${who}'s ID. The name on the ID must be: ${name}.` };

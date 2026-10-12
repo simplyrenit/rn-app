@@ -135,6 +135,23 @@ describe("the ID tick's words (T-44)", () => {
   });
 });
 
+describe("the ID tick on the customer's phone (e2e-B r2 finding 19)", () => {
+  it("when the customer's phone records the owner's handover, the tick is worded for the person holding it and shows no name", () => {
+    const words = idMatchWords("the customer", null, "Sharma Rentals", true);
+    expect(words).toEqual({
+      label: "The shop has seen your ID",
+      sub: "Show your photo ID to the shop. Tick this once the shop has looked at it and the name on it is the name on your booking.",
+    });
+    // The shop's name is never given as the customer's first name and last initial.
+    expect(words.sub).not.toMatch(/Sharma|first name/);
+    expect(idMatchWords("the customer", "Aarav Mehta", "Aarav M.", true)).toEqual(words);
+  });
+
+  it("the owner's own phone is unchanged", () => {
+    expect(idMatchWords("Aarav", "Aarav Mehta", "Aarav M.", false).sub).toBe("Look at Aarav's ID. The name on the ID must be: Aarav Mehta.");
+  });
+});
+
 describe("the walk", () => {
   it("asks for each shot in the list's order, then the video, then the ticks, then only waits", () => {
     let d = start();
