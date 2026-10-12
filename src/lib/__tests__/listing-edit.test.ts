@@ -334,6 +334,28 @@ describe("the details form saved over a change that waits (review app-e2e-3 r1, 
     });
   });
 
+  describe("case b2: the deposit is set back so that the price passes", () => {
+    const held = {
+      state: "flagged",
+      fields: ["rate", "security_deposit"],
+      changes: { rate: "700.00", security_deposit: "500.00" },
+      flag_reasons: [{ code: "deposit_low", text: "The deposit is less than one day's rent" }],
+    };
+    const waiting = { ...live, pending_edit: held };
+
+    it("the deposit is withdrawn and the price goes live: 'updated', with the sentence about the deposit", () => {
+      const sent = wholeForm(ownerView(waiting), { security_deposit: "3000" });
+      // The server: the deposit put back (3000 is what customers see) leaves the price alone in the held group; the rule
+      // passes for the price alone, so it is applied (customers see 700 now) and nothing waits.
+      const answer = { ...live, rate: "700.00", security_deposit: "3000.00", pending_edit: null };
+      expect(saveOutcome({ before: waiting, sent, answer })).toEqual({
+        kind: "updated",
+        title: "Your product was updated!",
+        message: "The deposit you had waiting went back to what customers see.",
+      });
+    });
+  });
+
   describe("case c: a title and a description wait together and the owner types a new title", () => {
     const held = {
       state: "flagged",

@@ -324,7 +324,12 @@ export function saveOutcome(input: {
       !same(field, answer[field], heldBefore?.changes[field]) &&
       same(field, answer[field], before?.[field])
   );
-  const others = was ? sentKeys.some((key) => !withdrawn.includes(key) && !same(key, was[key], now[key])) : true;
+  // A field that waited, waits no more and now holds its waiting value was applied: customers see it from now on. That is
+  // a change too, though in the owner's view it looks the same before and after.
+  const applied = (heldBefore?.fields ?? []).filter(
+    (field) => !(pending?.fields ?? []).includes(field) && same(field, answer[field], heldBefore?.changes[field])
+  );
+  const others = was ? applied.length > 0 || sentKeys.some((key) => !withdrawn.includes(key) && !same(key, was[key], now[key])) : true;
   const gone = withdrawn.length > 0 ? `The ${fieldsLine(withdrawn)} you had waiting went back to what customers see.` : "";
   if (withdrawn.length > 0 && !others) return { kind: "withdrawn", title: "Your waiting change was withdrawn", message: gone };
   const still = pending ? `An earlier change still waits: ${fieldsLine(pending.fields) || "see the listing"}.` : "";
