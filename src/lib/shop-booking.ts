@@ -171,6 +171,18 @@ export function defaultTab(counts: Partial<ShopCounts> | null | undefined): Shop
   return (counts?.closed ?? 0) > 0 ? "closed" : "confirmed";
 }
 
+/**
+ * Where to scroll a row of chips so one is fully in view (test run D-select: the default chip, "Confirmed", sat half off the
+ * right edge). `offset` is where the row is scrolled to now, `edge` the gutter kept beside the chip. The row is left where it
+ * is when the chip is already in view; otherwise it moves by the least that shows it.
+ */
+export function revealChipAt(chip: { x: number; width: number }, viewport: number, offset: number, edge = 0): number {
+  if (viewport <= 0) return offset;
+  if (chip.x - edge < offset) return Math.max(0, chip.x - edge);
+  if (chip.x + chip.width + edge > offset + viewport) return Math.max(0, chip.x + chip.width + edge - viewport);
+  return offset;
+}
+
 export interface ShopPill {
   label: string;
   tone: "brand" | "success" | "warning" | "danger" | "neutral";

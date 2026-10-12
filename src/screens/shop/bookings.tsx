@@ -4,11 +4,11 @@ import { EmptyState, Skeleton, Text } from "@/components/core";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { selectionFeedback } from "@/lib/haptics";
 import { correctedNow } from "@/lib/server-clock";
-import { BookingCard, SHOP_TABS, ShopTab, bookingCard, defaultTab, emptyTab } from "@/lib/shop-booking";
+import { BookingCard, SHOP_TABS, ShopTab, bookingCard, defaultTab, emptyTab, revealChipAt } from "@/lib/shop-booking";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, RefreshControl, ScrollView, TouchableOpacity, View } from "react-native";
 import { CalendarDaysIcon, ClockIcon, ExclamationTriangleIcon } from "react-native-heroicons/outline";
 
@@ -99,6 +99,19 @@ export function ShopBookingsView({ bottomPad }: { bottomPad: number }) {
   const { refetch: refetchCounts } = counts;
   const [refreshing, setRefreshing] = useState(false);
 
+  // The chip row scrolls sideways: the chosen chip (the default one included) is kept in view, not half off the edge.
+  const chipRow = useRef<ScrollView>(null);
+  const chipAt = useRef<Partial<Record<ShopTab, { x: number; width: number }>>>({});
+  const rowWidth = useRef(0);
+  const rowOffset = useRef(0);
+  const revealTab = useCallback((key: ShopTab) => {
+    const chip = chipAt.current[key];
+    if (!chip) return;
+    const to = revealChipAt(chip, rowWidth.current, rowOffset.current, SCREEN_GUTTER);
+    if (to !== rowOffset.current) chipRow.current?.scrollTo({ x: to, animated: true });
+  }, []);
+  useEffect(() => revealTab(tab), [tab, revealTab]);
+
   useFocusEffect(
     useCallback(() => {
       void refetch();
@@ -118,8 +131,17 @@ export function ShopBookingsView({ bottomPad }: { bottomPad: number }) {
     <View style={{ flex: 1 }}>
       <View style={{ height: 52 }}>
         <ScrollView
+          ref={chipRow}
           horizontal
           showsHorizontalScrollIndicator={false}
+          scrollEventThrottle={32}
+          onScroll={(event) => {
+            rowOffset.current = event.nativeEvent.contentOffset.x;
+          }}
+          onLayout={(event) => {
+            rowWidth.current = event.nativeEvent.layout.width;
+            revealTab(tab);
+          }}
           accessibilityRole="tablist"
           contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, gap: space.sm, alignItems: "center" }}
         >
@@ -129,6 +151,10 @@ export function ShopBookingsView({ bottomPad }: { bottomPad: number }) {
             return (
               <TouchableOpacity
                 key={key}
+                onLayout={(event) => {
+                  chipAt.current[key] = { x: event.nativeEvent.layout.x, width: event.nativeEvent.layout.width };
+                  if (key === tab) revealTab(key);
+                }}
                 accessibilityRole="tab"
                 accessibilityState={{ selected }}
                 accessibilityLabel={count === undefined ? label : `${label}, ${count}`}

@@ -12,6 +12,7 @@ import {
   emptyTab,
   howLine,
   moneyView,
+  revealChipAt,
   ownRequest,
   shopActionErrorText,
   shopPill,
@@ -299,5 +300,28 @@ describe("cancelling", () => {
     expect(shopActionErrorText(failure(409, "window_outside_hours"))).toMatch(/no longer open/);
     expect(shopActionErrorText(failure(500, null))).toMatch(/Something went wrong/);
     expect(shopActionErrorText(failure(400, null, "The server's own words."))).toBe("The server's own words.");
+  });
+});
+
+describe("keeping the chosen chip in view (test run: the default chip sat half off the edge)", () => {
+  // A 402 pt screen with a 24 pt gutter: chips of about 130 pt, the third starting at 300.
+  const third = { x: 300, width: 150 };
+
+  it("scrolls by the least that shows a chip that is cut off on the right", () => {
+    expect(revealChipAt(third, 402, 0, 24)).toBe(300 + 150 + 24 - 402);
+  });
+
+  it("leaves the row where it is when the chip is already in view", () => {
+    expect(revealChipAt({ x: 60, width: 120 }, 402, 0, 24)).toBe(0);
+    expect(revealChipAt(third, 402, 100, 24)).toBe(100);
+  });
+
+  it("scrolls back for a chip that is cut off on the left, never past the start", () => {
+    expect(revealChipAt({ x: 130, width: 100 }, 402, 200, 24)).toBe(106);
+    expect(revealChipAt({ x: 10, width: 100 }, 402, 50, 24)).toBe(0);
+  });
+
+  it("does nothing before the row has a width", () => {
+    expect(revealChipAt(third, 0, 20, 24)).toBe(20);
   });
 });
