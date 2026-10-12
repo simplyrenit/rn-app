@@ -15,11 +15,18 @@ interface ContainerProps {
    * screen's headings and its cards disagree by 3pt.
    */
   width?: number;
+  /**
+   * The edges the safe area is kept clear on. A screen that is a tab's root sits above the tab bar, which already carries the
+   * home-bar inset: with the bottom edge here as well the scroll view ended a bar's height short of the tab bar and cut the
+   * last row of cards across the middle (test run, Home). Such a screen passes `["top", "left", "right"]`.
+   */
+  edges?: ("top" | "right" | "bottom" | "left")[];
 }
 
 export function StaticContainer({
   children,
   width,
+  edges,
 }: ContainerProps): JSX.Element {
   const { color, isDark } = useTheme();
   const keyboardInset = useKeyboardInset();
@@ -35,7 +42,7 @@ export function StaticContainer({
   const gutter = width === 100 ? 0 : SCREEN_GUTTER;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: color.canvas }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: color.canvas }} edges={edges}>
       <StatusBar style={isDark ? "light" : "dark"} />
       <View
         style={{

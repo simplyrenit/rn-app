@@ -48,7 +48,7 @@ export default function Home() {
   const tabBarHeight = useBottomTabBarHeight();
 
   return (
-    <StaticContainer width={100}>
+    <StaticContainer width={100} edges={["top", "left", "right"]}>
       {/* The search field is a pinned header, not a sibling floating above the
           list. Without the header's material the scroll view's top edge cut
           card titles and price lines through the middle of the letterforms and
