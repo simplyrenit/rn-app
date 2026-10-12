@@ -11,6 +11,7 @@ import {
   resolveListingStatus,
   statusDetail,
   waitsText,
+  PHOTOS_PROMPT,
   WORTH_PROMPT,
 } from "../listing-status";
 
@@ -117,6 +118,22 @@ describe("listingPrompts", () => {
 
   it("is quiet for a listing that is in order", () => {
     expect(listingPrompts({ rate_needs_confirming: false, needs_worth: false, worth: "45000.00" })).toEqual([]);
+  });
+
+  it("says what a draft still needs when it has no photo, in Today's words (D-27)", () => {
+    expect(PHOTOS_PROMPT).toBe("Needs photos");
+    expect(listingPrompts({ status: "draft", cover_image: "", images: [], needs_worth: false })).toEqual([PHOTOS_PROMPT]);
+    // Photos first, then the price and the worth.
+    expect(listingPrompts({ status: "draft", cover_image: "", images: [], rate_needs_confirming: true, needs_worth: true })).toEqual([
+      PHOTOS_PROMPT,
+      "Confirm your price",
+      WORTH_PROMPT,
+    ]);
+    // A draft with a photo, a listing that is not a draft, and a payload that does not say: nothing.
+    expect(listingPrompts({ status: "draft", cover_image: "https://cdn.test/a.jpg", images: ["https://cdn.test/a.jpg"] })).toEqual([]);
+    expect(listingPrompts({ status: "draft", images: ["https://cdn.test/a.jpg"] })).toEqual([]);
+    expect(listingPrompts({ status: "live", cover_image: "", images: [] })).toEqual([]);
+    expect(listingPrompts({ status: "draft" })).toEqual([]);
   });
 
   it("reads a missing worth when the server sent only that", () => {

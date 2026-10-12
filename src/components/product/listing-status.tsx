@@ -96,11 +96,7 @@ export function ListingStatusPill({ status, reasons, withDetail = false, fullRea
  * What the owner still has to do on a listing: "Confirm your price" on a moved
  * one, "Needs worth" on one with none (ENG-155). Draws nothing when there is none.
  */
-export function ListingPrompts({
-  product,
-}: {
-  product: { rate_needs_confirming?: boolean; needs_worth?: boolean; worth?: string | null };
-}) {
+export function ListingPrompts({ product }: { product: Parameters<typeof listingPrompts>[0] }) {
   const prompts = listingPrompts(product);
   if (prompts.length === 0) return null;
   return (

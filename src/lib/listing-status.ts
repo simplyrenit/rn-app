@@ -113,12 +113,22 @@ export function hasPrice(rate: string | number | null | undefined): boolean {
 /** What a listing with no worth is told, as an instruction like "Confirm your price" and not the unfinished phrase "Needs worth". */
 export const WORTH_PROMPT = "Add its worth";
 
+/** What a draft with no photo says it still needs: Today's own words for it ("4 drafts need photos"), D-27. */
+export const PHOTOS_PROMPT = "Needs photos";
+
 export function listingPrompts(product: {
   rate_needs_confirming?: boolean;
   needs_worth?: boolean;
   worth?: string | null;
+  status?: string | null;
+  cover_image?: string | null;
+  images?: string[] | null;
 }): string[] {
   const prompts: string[] = [];
+  // A draft with no photo is what the server counts as a draft that needs photos (the first photo becomes the cover). A payload
+  // with neither field says nothing, never a wrong prompt.
+  const photoKnown = product.cover_image !== undefined || product.images !== undefined;
+  if (product.status === "draft" && photoKnown && !product.cover_image && !product.images?.length) prompts.push(PHOTOS_PROMPT);
   if (product.rate_needs_confirming) prompts.push("Confirm your price");
   // `needs_worth` is the server's word; a payload that only has `worth` says the same.
   const needsWorth = product.needs_worth ?? (product.worth !== undefined && !product.worth);
