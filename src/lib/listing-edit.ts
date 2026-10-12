@@ -279,7 +279,12 @@ export function saveOutcome(input: {
 
   if (was) {
     const unchanged = sentKeys.every((key) => same(key, was[key], now[key]));
-    const samePending = heldBefore === undefined || !("pending_edit" in (before ?? {})) || JSON.stringify(heldBefore) === JSON.stringify(pending);
+    // The waiting change is the same one. A screen that cannot say what waited (`before` without `pending_edit`) cannot call it
+    // the same when the answer carries one that names a field this save sent: that field was held by this save.
+    const samePending =
+      before && "pending_edit" in before
+        ? JSON.stringify(heldBefore) === JSON.stringify(pending)
+        : !(pending && pending.fields.some((field) => sentKeys.includes(field)));
     const sameStatus = !before || before.status === undefined || before.status === answer.status;
     if (unchanged && samePending && sameStatus) return { kind: "nothing", title: "Nothing was changed" };
   }

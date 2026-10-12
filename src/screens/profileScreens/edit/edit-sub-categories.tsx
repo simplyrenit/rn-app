@@ -4,7 +4,7 @@ import { EditStepHeader } from "@/components/post/edit-step-header";
 import { TaxonomyList } from "@/components/post/taxonomy-list";
 import { categoryDisplayName } from "@/lib/category-icons";
 import { categoryPayload } from "@/lib/list-flow/payload";
-import { ListingAnswer, saveOutcome } from "@/lib/listing-edit";
+import { ListingAnswer, PendingEdit, saveOutcome } from "@/lib/listing-edit";
 import { toastSave } from "@/lib/save-toast";
 import { toast } from "@/lib/toast";
 import { RouteProps, Subcategory, useTypedNavigation } from "@/lib/types";
@@ -16,7 +16,7 @@ import { View } from "react-native";
  * The PATCH that re-files a product, shared with the category screen's search
  * so a search result saves exactly as picking the row here does.
  */
-export function useSaveSubcategory(name: string, currentCategoryId?: number | null) {
+export function useSaveSubcategory(name: string, currentCategoryId?: number | null, pending?: PendingEdit | null) {
   const navigation = useTypedNavigation();
   const { updateMyProductDetails } = useProfile();
   // Which row is saving. `useProfile`'s own `loading` is shared by every call
@@ -38,7 +38,8 @@ export function useSaveSubcategory(name: string, currentCategoryId?: number | nu
       const answer = await updateMyProductDetails(name, body);
 
       // What the screen opened with: choosing the category the listing already has changes nothing.
-      const before = currentCategoryId ? ({ category: { id: currentCategoryId } } as ListingAnswer) : null;
+      // And the change that waited, so a category held beside it, or one put back, is not read as "nothing".
+      const before = currentCategoryId ? ({ category: { id: currentCategoryId }, pending_edit: pending ?? null } as ListingAnswer) : null;
       toastSave(saveOutcome({ before, sent: body, answer: answer as unknown as ListingAnswer }));
       navigation.navigate("editProduct", { id: name });
     } catch (error) {
@@ -61,8 +62,8 @@ export function useSaveSubcategory(name: string, currentCategoryId?: number | nu
 export default function EditSubCategories() {
   const route = useRoute<RouteProps<"EditSubCategories">>();
   const navigation = useTypedNavigation();
-  const { name, category, subcategories, categoryId } = route.params;
-  const { save, saving } = useSaveSubcategory(name, categoryId);
+  const { name, category, subcategories, categoryId, pending } = route.params;
+  const { save, saving } = useSaveSubcategory(name, categoryId, pending);
 
   return (
     <NonScrollableContainer>

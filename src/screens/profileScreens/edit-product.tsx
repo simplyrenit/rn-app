@@ -190,6 +190,7 @@ const EditProductScreen: React.FC = () => {
                     navigation.navigate("EditCategory", {
                       name: product.name,
                       categoryId: product.category?.id ?? null,
+                      pending: readPendingEdit(product.pending_edit),
                     })
                   }
                   leftIcon="ClipboardDocumentIcon"

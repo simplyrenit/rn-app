@@ -515,3 +515,35 @@ describe("a place line waits with its pin (review app-e2e-3 r2, finding 7; oe-ap
     expect(out.message).toContain("The new pin waits with the address.");
   });
 });
+
+describe("the category screen over a change that waits (review app-e2e-3 r2, finding 8)", () => {
+  const sent = (id: number) => ({ category: { id, parent: "Gaming", title: "Consoles" } });
+  const heldTitle = { state: "flagged", fields: ["title"], changes: { title: "Gamo air rifle" }, flag_reasons: [{ code: "not_allowed", text: "Renit does not allow this item" }] };
+  const listing = { name: "ps5-1", title: "Sony PS5", category: { id: 7, title: "Consoles" }, status: "live", flag_reasons: [], pending_edit: heldTitle };
+  const screen = (pending: unknown) => ({ category: { id: 7 }, pending_edit: pending });
+
+  it("another category chosen while a title waits is held with it: on hold, not 'Nothing was changed'", () => {
+    // The server holds the category in the same group; the listing's own category stays (publish.py).
+    const answer = { ...listing, pending_edit: { ...heldTitle, fields: ["title", "category"], changes: { title: "Gamo air rifle", category: 9 } } };
+    const out = saveOutcome({ before: screen(heldTitle), sent: sent(9), answer });
+    expect(out.kind).toBe("held");
+    expect(out.message).toContain("Waiting: title and category.");
+  });
+
+  it("a screen that cannot say what waited does not call it the same when the answer names the category it sent", () => {
+    const answer = { ...listing, pending_edit: { ...heldTitle, fields: ["title", "category"], changes: { title: "Gamo air rifle", category: 9 } } };
+    expect(saveOutcome({ before: { category: { id: 7 } }, sent: sent(9), answer }).kind).toBe("held");
+    // But a waiting title that has nothing to do with this save is not: choosing the category the listing has changes nothing.
+    expect(saveOutcome({ before: { category: { id: 7 } }, sent: sent(7), answer: listing })).toEqual({ kind: "nothing", title: "Nothing was changed" });
+  });
+
+  it("a waiting category put back to the listing's own is withdrawn, and said so", () => {
+    const waiting = { state: "flagged", fields: ["category"], changes: { category: 9 }, flag_reasons: [{ code: "category_unsure", text: "Check the category" }] };
+    const answer = { ...listing, pending_edit: null };
+    expect(saveOutcome({ before: screen(waiting), sent: sent(7), answer })).toEqual({
+      kind: "withdrawn",
+      title: "Your waiting change was withdrawn",
+      message: "The category you had waiting went back to what customers see.",
+    });
+  });
+});

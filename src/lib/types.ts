@@ -297,12 +297,13 @@ export type RootStackParamList = {
   UnavailabilitySubCat: { category: string; subcategories?: Subcategory[] };
   EditProductAvailability: { dates_blocked: BlockedDates[]; name: string };
   /** `categoryId`: the sub-category the listing has now, so choosing it again can say nothing was changed. */
-  EditCategory: { name: string; categoryId?: number | null };
+  EditCategory: { name: string; categoryId?: number | null; pending?: PendingEdit | null };
   EditSubCategories: {
     category: string;
     subcategories?: Subcategory[];
     name: string;
     categoryId?: number | null;
+    pending?: PendingEdit | null;
   };
   EditAboutProduct: { data: BackendProduct };
   EditProductImages: { images: string[]; name: string, coverImage: string; };
