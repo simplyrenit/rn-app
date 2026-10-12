@@ -19,7 +19,7 @@ function ButtonLabel() {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
       <Text fontSize="text-sm" fontWeight="font-bold" style={{ color: labelColor }}>
-        Unavailability form
+        Request an item
       </Text>
       <ChevronRightIcon size={20} color={labelColor} />
     </View>

@@ -228,7 +228,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
             />
             <ProfileRow
               icon={InboxArrowDownIcon}
-              label="Unavailability form"
+              label="Request an item"
               onPress={() => {
                 router.navigate("unavailabilityFormCategories");
               }}
