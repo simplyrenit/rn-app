@@ -213,12 +213,13 @@ export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly stri
                   : "This rental is finished."
                 : lateShare
                   ? late.back > 0
-                    ? `${lateShare}. The rest (${money(late.back)}) goes back to ${first}${open ? " after that" : ""}.`
+                    ? `${lateShare}. The rest (${money(late.back)}) goes back to ${first}${open ? " by itself after that" : ""}.`
                     : `${lateShare}. Nothing goes back to ${first}.`
                   : problem === "reported"
                     ? `The part of the deposit that is not claimed goes back to ${first}.`
                     : open
-                      ? `After that the deposit goes back to ${first}.`
+                      ? // No "all good" call exists: with no report the server sends the deposit back by itself (D-26).
+                        `If nothing is reported by then, the deposit goes back to ${first} by itself.`
                       : `The deposit is settled with ${first} once both return records are in.`,
             ]
               .filter(Boolean)

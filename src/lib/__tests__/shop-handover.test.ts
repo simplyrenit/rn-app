@@ -261,7 +261,7 @@ describe("SH-10, the return", () => {
     expect(copy.title).toBe("Sony PS5 is back");
     expect(copy.returned).toEqual({
       title: "Returned · 6:40 pm",
-      body: "You can report a problem until 6:40 pm on Tue 27 Oct. After that the deposit goes back to Aarav.",
+      body: "You can report a problem until 6:40 pm on Tue 27 Oct. If nothing is reported by then, the deposit goes back to Aarav by itself.",
     });
   });
 
@@ -301,7 +301,7 @@ describe("SH-10, the return", () => {
       ],
     });
     expect(returnCopy(returned, new Date("2026-10-28T13:11:00Z")).returned?.body).toBe(
-      "You can report a problem until 6:40 pm on Thu 29 Oct. ₹1,220 of the deposit comes to you for 2 late days. The rest (₹1,780) goes back to Aarav after that."
+      "You can report a problem until 6:40 pm on Thu 29 Oct. ₹1,220 of the deposit comes to you for 2 late days. The rest (₹1,780) goes back to Aarav by itself after that."
     );
     // The late days took all of it.
     const all = out({ stage: "returned", can: ["get_help"], money: { ...booking().money, late_days: 6, late_fee: "3000.00" }, report_problem_until: null });
@@ -354,7 +354,7 @@ describe("SH-10, the return", () => {
     );
     // Offered: the time, from the server's `report_problem_until`.
     expect(body({ can: ["report_problem", "get_help"] })).toBe(
-      "You can report a problem until 6:40 pm on Tue 27 Oct. After that the deposit goes back to Aarav."
+      "You can report a problem until 6:40 pm on Tue 27 Oct. If nothing is reported by then, the deposit goes back to Aarav by itself."
     );
   });
 
