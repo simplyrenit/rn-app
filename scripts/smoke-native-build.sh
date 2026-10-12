@@ -30,7 +30,8 @@ APP=$(ls -d "$PRODUCTS"/*.app 2>/dev/null | head -1)
 [ -n "$APP" ] || fail "no .app in $PRODUCTS — build first"
 # Read the id from the binary that was built. It used to be hardcoded, and
 # wrong (`com.simplyrenit.renit`), so every run stopped at "launch failed".
-BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist" 2>/dev/null)
+# PlistBuddy prints its errors on stdout, so go by the exit status as well.
+BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist" 2>/dev/null) || BUNDLE_ID=""
 [ -n "$BUNDLE_ID" ] || fail "no CFBundleIdentifier in $APP/Info.plist"
 ok "binary $(basename "$APP")  $BUNDLE_ID  ($CONFIG)"
 
