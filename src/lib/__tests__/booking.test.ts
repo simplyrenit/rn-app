@@ -334,6 +334,13 @@ describe("the product page", () => {
       "Handover Mon – Fri 10 am – 8 pm, Sat 10 am – 9 pm"
     );
     expect(handoverLine({})).toBeNull();
+    // A shop open all day (stored "00:00" to "23:59") says so (test run D-13).
+    const allDay = { open: "00:00", close: "23:59" };
+    const week = { mon: allDay, tue: allDay, wed: allDay, thu: allDay, fri: allDay, sat: allDay, sun: allDay };
+    expect(handoverLine(week)).toBe("Handover all day");
+    expect(handoverLine({ ...week, sun: null })).toBe("Handover all day · Mon – Sat");
+    expect(handoverLine({ ...week, sat: { open: "10:00", close: "14:00" }, sun: null })).toBe("Handover Mon – Fri all day, Sat 10 am – 2 pm");
+    expect(handoverLine(week)).not.toMatch(/11:59/);
   });
 
   it("says how the item changes hands", () => {

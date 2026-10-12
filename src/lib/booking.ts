@@ -11,7 +11,7 @@ import { SavedAddress, addressLine, addressTitle } from "@/lib/addresses";
 import { ApiError, fieldErrors } from "@/lib/api-error";
 import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
-import { DayHours, Hours, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
+import { ALL_DAY, DayHours, Hours, coversWholeDay, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
 
 export type DeliveryMode = "pickup" | "owner_delivery";
 
@@ -518,17 +518,18 @@ export function shopNameOf(product: {
   );
 }
 
-/** "Handover 10 am – 8 pm", with the days when the week is not all the same. */
+/** "Handover 10 am – 8 pm", with the days when the week is not all the same. A shop open all day says "all day", not "12 am – 11:59 pm". */
 export function handoverLine(hours: Hours | null | undefined): string | null {
   const rows = hoursRows(hours);
   const open = rows.filter((row) => row.value !== "Closed");
   if (open.length === 0) return null;
+  const said = (value: string) => (value === ALL_DAY ? "all day" : value);
   if (open.length === 1) {
     return rows.length === 1
-      ? `Handover ${open[0].value}`
-      : `Handover ${open[0].value} · ${open[0].label}`;
+      ? `Handover ${said(open[0].value)}`
+      : `Handover ${said(open[0].value)} · ${open[0].label}`;
   }
-  return `Handover ${open.map((row) => `${row.label} ${row.value}`).join(", ")}`;
+  return `Handover ${open.map((row) => `${row.label} ${said(row.value)}`).join(", ")}`;
 }
 
 /** "Self pickup or delivery from ₹50". A product marked not delivered is pickup only. */
@@ -1401,7 +1402,9 @@ export function windowHeading(
   return {
     title: booking.delivery_mode === "pickup" ? "When will you collect it?" : "When should it arrive?",
     sub: hours
-      ? `${on} · the shop hands over between ${time12(hours.open)} and ${time12(hours.close)}`
+      ? coversWholeDay(hours)
+        ? `${on} · the shop hands over all day`
+        : `${on} · the shop hands over between ${time12(hours.open)} and ${time12(hours.close)}`
       : on,
   };
 }

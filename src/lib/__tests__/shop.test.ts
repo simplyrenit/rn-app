@@ -12,6 +12,7 @@ import {
   dayToOpen,
   deliveryFormFrom,
   deliveryChanged,
+  coversWholeDay,
   deliveryPatch,
   hoursChanged,
   deviceSignOutQuestion,
@@ -349,3 +350,19 @@ function checkHoursOpenWeek() {
     sun: null,
   } as import("../shop").Hours;
 }
+
+describe("hours that cover the whole day (test run D-13)", () => {
+  it("00:00 to 23:59 (or 24:00) is all day; any other hours are not", () => {
+    expect(coversWholeDay({ open: "00:00", close: "23:59" })).toBe(true);
+    expect(coversWholeDay({ open: "00:00", close: "24:00" })).toBe(true);
+    expect(coversWholeDay({ open: "00:00", close: "23:00" })).toBe(false);
+    expect(coversWholeDay({ open: "06:00", close: "23:59" })).toBe(false);
+  });
+
+  it("the rows of an all-day week read All day, not 12 am – 11:59 pm", () => {
+    const allDay = { open: "00:00", close: "23:59" };
+    expect(hoursRows({ mon: allDay, tue: allDay, wed: allDay, thu: allDay, fri: allDay, sat: allDay, sun: allDay })).toEqual([
+      { label: "Mon – Sun", value: "All day", days: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] },
+    ]);
+  });
+});

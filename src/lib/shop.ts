@@ -136,6 +136,13 @@ export interface HoursRow {
   days: DayKey[];
 }
 
+/** Open from midnight to the last minute of the day: what an all-day shop's hours are stored as ("00:00" to "23:59"). */
+export const ALL_DAY = "All day";
+
+export function coversWholeDay(hours: DayHours): boolean {
+  return hours.open === "00:00" && (hours.close === "23:59" || hours.close === "24:00" || hours.close === "23:59:59");
+}
+
 /**
  * The summary on SH-13: runs of days with the same hours become one row, as
  * "Mon – Fri  10 am – 8 pm", "Sat  10 am – 9 pm", "Sun  Closed".
@@ -143,7 +150,7 @@ export interface HoursRow {
 export function hoursRows(hours: Hours | null | undefined): HoursRow[] {
   const valueOf = (day: DayKey) => {
     const h = hours?.[day];
-    return h ? `${time12(h.open)} – ${time12(h.close)}` : "Closed";
+    return h ? (coversWholeDay(h) ? ALL_DAY : `${time12(h.open)} – ${time12(h.close)}`) : "Closed";
   };
   const rows: HoursRow[] = [];
   for (const day of DAY_KEYS) {
