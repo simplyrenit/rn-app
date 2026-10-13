@@ -5,7 +5,7 @@ import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal"
 import { apiError } from "@/lib/api-error";
 import { SCREEN_GUTTER, colors, ink, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
-import { RESEND_SECONDS, e164, isCode, resendLabel, unlockErrorMessage } from "@/lib/unlock";
+import { NO_TOKEN_MESSAGE, RESEND_SECONDS, e164, isCode, resendLabel, unlockErrorMessage } from "@/lib/unlock";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { View } from "react-native";
@@ -113,6 +113,12 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
           idToken.current = await verifyPhoneNumberChange(code);
         } catch {
           setError("That code didn't match, or it has expired. Check it, or send a new one.");
+          setBusy(false);
+          return;
+        }
+        // Confirmed, but the token could not be read: the code is spent, so only a new one helps.
+        if (!idToken.current) {
+          setError(NO_TOKEN_MESSAGE);
           setBusy(false);
           return;
         }

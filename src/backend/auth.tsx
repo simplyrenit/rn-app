@@ -2,6 +2,7 @@ import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
 import { DEV_MODE, OTP } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
+import { readIdToken } from "@/lib/unlock";
 import { acceptOwnerTerms } from "@/backend/terms";
 import { emailLogin, otpCheck, phoneLogin, signUp } from "@/backend/sign-in-calls";
 import { requestErrorFrom, signUpBody } from "@/lib/sign-in-proof";
@@ -147,7 +148,7 @@ export function useAuth() {
         phoneChangeConfirmation = null;
         confirmed = true;
         // Read before the phone identity is signed out again below.
-        idToken = (await credential?.user?.getIdToken?.()) ?? "";
+        idToken = await readIdToken(credential);
       } finally {
         if (confirmed) {
           try {

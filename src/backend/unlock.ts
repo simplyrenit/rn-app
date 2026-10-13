@@ -14,5 +14,7 @@ export async function fetchUnlock(): Promise<UnlockState> {
  * one it cannot read (`code_invalid`) and one for another number (`wrong_phone`).
  */
 export async function postUnlock(idToken: string): Promise<UnlockState> {
+  // An empty token is never posted: the server could only call it invalid (review before merge, R-3).
+  if (!idToken) throw new Error("No ID token to unlock with.");
   return (await axiosInstance.post<UnlockState>(ACCESS_UNLOCK_ENDPOINT, { id_token: idToken })).data;
 }

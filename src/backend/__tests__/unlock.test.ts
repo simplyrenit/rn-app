@@ -29,4 +29,9 @@ describe("the unlock calls", () => {
     await postUnlock("firebase-id-token");
     expect(api.post).toHaveBeenCalledWith("https://api.test/access/unlock/", { id_token: "firebase-id-token" });
   });
+
+  it("never posts an empty token", async () => {
+    await expect(postUnlock("")).rejects.toThrow();
+    expect(api.post).not.toHaveBeenCalled();
+  });
 });

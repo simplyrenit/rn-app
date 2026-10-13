@@ -75,3 +75,22 @@ export function resendLabel(secondsLeft: number): string {
 
 /** Seconds before another code can be asked for, as the frame's countdown starts. */
 export const RESEND_SECONDS = 30;
+
+/**
+ * The ID token of a confirmed phone sign-in, or "" when it cannot be read (review before
+ * merge, R-3). Reading it happens after the code is spent, so a failure must not turn a
+ * confirmed code into a rejected call: the profile sheet never uses the token, and the
+ * bank's unlock treats "" as "ask for a new code".
+ */
+export async function readIdToken(
+  credential: { user?: { getIdToken?: () => Promise<string> } | null } | null | undefined
+): Promise<string> {
+  try {
+    return (await credential?.user?.getIdToken?.()) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/** Said when the code was accepted but its token could not be read: the code is spent, a new one is needed. */
+export const NO_TOKEN_MESSAGE = "We couldn't finish confirming that code. Send a new one and try again.";

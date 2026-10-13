@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { e164, isCode, isUnlocked, resendLabel, unlockErrorMessage } from "../unlock";
+import { e164, isCode, isUnlocked, readIdToken, resendLabel, unlockErrorMessage } from "../unlock";
 
 const NOW = new Date("2026-10-12T05:00:00Z");
 
@@ -94,5 +94,25 @@ describe("resendLabel", () => {
     expect(resendLabel(0)).toBe("Send again in 0:00");
     expect(resendLabel(65)).toBe("Send again in 1:05");
     expect(resendLabel(-3)).toBe("Send again in 0:00");
+  });
+});
+
+describe("readIdToken", () => {
+  it("reads the token of the confirmed sign-in", async () => {
+    await expect(readIdToken({ user: { getIdToken: async () => "firebase-id-token" } })).resolves.toBe("firebase-id-token");
+  });
+
+  it("leaves it empty, and does not reject, when the code was accepted but the token cannot be read", async () => {
+    await expect(
+      readIdToken({
+        user: {
+          getIdToken: async () => {
+            throw new Error("auth/network-request-failed");
+          },
+        },
+      })
+    ).resolves.toBe("");
+    await expect(readIdToken({ user: {} })).resolves.toBe("");
+    await expect(readIdToken(null)).resolves.toBe("");
   });
 });
