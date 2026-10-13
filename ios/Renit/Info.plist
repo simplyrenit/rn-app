@@ -30,6 +30,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>renit</string>
+				<string>renit-qa</string>
 				<string>com.renit.app</string>
 			</array>
 		</dict>
