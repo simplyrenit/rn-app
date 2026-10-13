@@ -1,9 +1,13 @@
+import { useRingPermission } from "@/backend/ring-permission";
+import { useShop } from "@/backend/shop";
 import { Button, Text, useReduceMotion } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { FLOW_SPRING } from "@/components/list-flow/motion";
 import { ListingStatusPill } from "@/components/product/listing-status";
+import { RingPermissionCard } from "@/components/shop/ring-permission-card";
 import { useListDraft } from "@/context/list-draft-context";
 import { SCREEN_GUTTER, duration, radius, space } from "@/lib/design-tokens";
+import { submittedCopy } from "@/lib/listing-edit";
 import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
@@ -25,8 +29,15 @@ export default function ListSubmittedScreen() {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReduceMotion();
   const flow = useListDraft();
+  // A shop that can take bookings and a phone that will not ring is the one failure that costs a booking and a
+  // mark: an owner who is not a merchant has no Rentals tab, so the end of the listing flow is where they are told (ENG-209).
+  const ringPerm = useRingPermission();
+  const canTake = useShop().data?.can_take_bookings === true;
 
   const cover = route.params?.coverUrl ?? null;
+  // What the post answered: nearly always "checking"; a post that came back flagged, or held because a check could not
+  // run, says so in the check's words.
+  const copy = submittedCopy(route.params?.status, route.params?.reasons, route.params?.waitsText);
 
   // §8.6: the draft is cleared on arrival. Preview already cleared it the
   // moment the create call succeeded; this only covers any other way here.
@@ -76,14 +87,10 @@ export default function ListSubmittedScreen() {
 
         <View style={{ gap: space.sm }}>
           <Text fontSize="text-xl" fontWeight="font-bold" accessibilityRole="header">
-            {"Submitted.\nIt's with our team now."}
+            {copy.title}
           </Text>
           <Text tone="body" fontSize="text-md">
-            We check every new listing before renters can see it. Until then it sits in My listings as{" "}
-            <Text fontSize="text-md" fontWeight="font-bold">
-              Pending review
-            </Text>
-            , and you can still edit it.
+            {copy.body}
           </Text>
         </View>
 
@@ -108,9 +115,11 @@ export default function ListSubmittedScreen() {
             <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={2}>
               {route.params?.productName}
             </Text>
-            <ListingStatusPill status="pending" />
+            <ListingStatusPill status={copy.status} />
           </View>
         </View>
+
+        <RingPermissionCard enabled={canTake} permission={ringPerm} />
       </ScrollView>
 
       <View

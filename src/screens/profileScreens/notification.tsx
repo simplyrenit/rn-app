@@ -13,6 +13,7 @@ import { RefreshControl } from "react-native";
 import { Avatar, EmptyState } from "@/components/core";
 import { BellIcon } from "react-native-heroicons/outline";
 import { colors } from "@/lib/design-tokens";
+import { imageUrlOf } from "@/lib/image-url";
 
 interface NotificationProps {}
 
@@ -108,7 +109,7 @@ const NotificationScreen: React.FC<NotificationProps> = () => {
             }}
           >
             <Avatar
-              uri={notification.user.image}
+              uri={imageUrlOf(notification.user.image)}
               name={notification.user.first_name}
               size={48}
             />

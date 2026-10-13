@@ -1,4 +1,5 @@
 import { useGlobalContext } from "@/context/global-context";
+import { addDays } from "@/lib/booking";
 import { SCREEN_GUTTER, colors, ink, radius, space } from "@/lib/design-tokens";
 import React, { useCallback, useMemo, useState } from "react";
 import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -17,6 +18,8 @@ interface DateRangePickerProps {
     endDate: Date;
   }) => void;
   onCancel: () => void;
+  /** The last day the calendar offers, as days from today (a booking or a search reaches at most 180: decision T-25). */
+  maxDaysAhead?: number;
 }
 
 /** Height of a day cell. The row pitch is 50pt, so the hit slop below can make
@@ -85,6 +88,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   endDate,
   onConfirm,
   onCancel,
+  maxDaysAhead,
 }) => {
   const [tempStartDate, setTempStartDate] = useState<Date | undefined>(
     startDate
@@ -250,6 +254,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             dayComponent={renderDay}
             onDayPress={onDayPress}
             minDate={localToday()}
+            // A day past the limit is greyed and cannot be tapped (the server would refuse it).
+            maxDate={maxDaysAhead ? addDays(localToday(), maxDaysAhead) : undefined}
             theme={{
               backgroundColor: ink.surface(isDark),
               calendarBackground: ink.surface(isDark),

@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import { TextInput, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { toast } from "@/lib/toast";
 import { ink, colors } from "@/lib/design-tokens";
@@ -16,6 +17,8 @@ const ReportAProblemScreen: React.FC = () => {
   const { reportAProblem } = useProfile();
   const isDarkMode = theme === "dark";
   const router = useTypedNavigation();
+  // The container leaves the bottom edge to the screen: the last control clears the home bar.
+  const insets = useSafeAreaInsets();
 
   const [feedback, setFeedback] = useState<string>("");
   const submitting = useRef(false);
@@ -99,7 +102,7 @@ const ReportAProblemScreen: React.FC = () => {
           </View>
         </View>
       </View>
-      <View className="py-2 px-gutter">
+      <View className="pt-2 px-gutter" style={{ paddingBottom: insets.bottom + 8 }}>
         <Button
           disabled={!feedback.trim() || submitting.current}
           onPress={handleReportPress}

@@ -22,6 +22,7 @@ import { usePost } from "./post";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { apiError } from "@/lib/api-error";
 import axiosInstance from "@/lib/networkUtils";
 import {
   fetchMyDetailsRequest,
@@ -58,7 +59,12 @@ export function useProfile() {
     }
   }
 
-  async function updateMyDetails(username: string, data: Partial<MyDetails>) {
+  /**
+   * `phone_id_token` is the Firebase ID token of the NEW number, which the backend wants
+   * with any change of phone number (decision T-14); `proof_token` is the token of the emailed-code
+   * check of the NEW address, which it wants with any change of email (decision T-19). No other field takes them.
+   */
+  async function updateMyDetails(username: string, data: Partial<MyDetails> & { phone_id_token?: string; proof_token?: string }) {
     setLoading(true);
     try {
       const response = await axiosInstance.patch<MyDetails>(
@@ -93,21 +99,25 @@ export function useProfile() {
     }
   }
 
+  /**
+   * Deletes the account. Signs out and goes to Welcome only when the server closed it (204): a refusal
+   * (409 `open_bookings`: something is still open, T-20) or any failure rethrows and leaves the person signed in.
+   */
   async function deleteMyAccount(username: string) {
     setLoading(true);
     try {
-      const response = await axiosInstance.delete(`${DELETE_MY_ACCOUNT_ENDPOINT}${username}/`)
+      await axiosInstance.delete(`${DELETE_MY_ACCOUNT_ENDPOINT}${username}/`);
     } catch (error) {
-      console.error("Error deleting user account:", `${DELETE_MY_ACCOUNT_ENDPOINT}${username}`, error);
+      console.warn("Account was not deleted:", apiError(error)?.code ?? "no answer");
       throw error;
     } finally {
       setLoading(false);
-      await logout();
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Welcome" }],
-      });
     }
+    await logout();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Welcome" }],
+    });
   }
 
   async function updateMyProfileImage(username: string, image: string) {
@@ -183,7 +193,9 @@ export function useProfile() {
       );
       return response.data;
     } catch (error: any) {
-      console.error("Error updating product details:", error.response.data);
+      // `response` is missing when there was no answer at all (offline); reading
+      // `.data` off it threw a TypeError that hid the real failure from callers.
+      console.error("Error updating product details:", error?.response?.data ?? error?.message);
       throw error;
     } finally {
       setLoading(false);
@@ -251,17 +263,15 @@ export function useProfile() {
     }
   }
 
-  async function deleteMyProduct(name: string) {
+  /**
+   * Archives, not erases: the row stays with `status: "archived"` and drops off
+   * search and My products. `409 open_booking` when a booking on it is open —
+   * the caller reads the error, so it is thrown as it came.
+   */
+  async function archiveMyProduct(name: string) {
     setLoading(true);
     try {
-      const response = await axiosInstance.delete(
-        `${MY_PRODUCT_DETAILS_ENDPOINT}${name}/`,
-      );
-
-      return response.data;
-    } catch (error: any) {
-      console.error("Error deleting product:", error.response.data);
-      throw error;
+      await axiosInstance.delete(`${MY_PRODUCT_DETAILS_ENDPOINT}${name}/`);
     } finally {
       setLoading(false);
     }
@@ -328,7 +338,7 @@ export function useProfile() {
     reportAProblem,
     giveFeedback,
     getMyProductDetails,
-    deleteMyProduct,
+    archiveMyProduct,
     updateMyProductDetails,
     updateProductImages,
     updateProductDetails,

@@ -46,7 +46,7 @@ export default function Profile() {
   };
 
   return (
-    <StaticContainer width={100}>
+    <StaticContainer width={100} edges={["top", "left", "right"]}>
       {/* Solid rather than blurred, and with no rule: the design draws the
           topbar as part of the page. The material still has to be opaque —
           rows used to scroll under a header with no fill at all and were cut

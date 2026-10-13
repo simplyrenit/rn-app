@@ -1,12 +1,16 @@
 import { Button, Text } from "@/components/core";
 import { useProfile } from "@/backend/profile";
 import { useGlobalContext } from "@/context/global-context";
+import { merchantStatusLabel } from "@/lib/shop";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import {
+  AdjustmentsHorizontalIcon,
   ArrowRightOnRectangleIcon,
+  BuildingLibraryIcon,
+  CalendarDaysIcon,
   ChatBubbleLeftEllipsisIcon,
   CubeIcon,
   DevicePhoneMobileIcon,
@@ -99,7 +103,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
               }`}
             >
               <Text fontWeight="font-semibold">
-                Merchant status: {merchantStatus}
+                Merchant status: {merchantStatusLabel(merchantStatus)}
               </Text>
               {merchantStatus !== "approved" && (
                 <Text
@@ -136,10 +140,31 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
         <View style={{ paddingVertical: PROFILE_LIST_GAP }}>
           <ProfileSection title="Account">
             <ProfileRow
+              icon={CalendarDaysIcon}
+              label="Today and bookings"
+              onPress={() => {
+                router.navigate("ShopToday");
+              }}
+            />
+            <ProfileRow
               icon={CubeIcon}
               label="My products"
               onPress={() => {
                 router.navigate("myProducts");
+              }}
+            />
+            <ProfileRow
+              icon={AdjustmentsHorizontalIcon}
+              label="Rental settings"
+              onPress={() => {
+                router.navigate("RentalSettings");
+              }}
+            />
+            <ProfileRow
+              icon={BuildingLibraryIcon}
+              label="Bank account"
+              onPress={() => {
+                router.navigate("BankAccount");
               }}
             />
             <ProfileRow
@@ -204,7 +229,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
             />
             <ProfileRow
               icon={InboxArrowDownIcon}
-              label="Unavailability form"
+              label="Request an item"
               onPress={() => {
                 router.navigate("unavailabilityFormCategories");
               }}

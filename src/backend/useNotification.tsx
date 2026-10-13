@@ -74,20 +74,21 @@ export function useNotifications() {
   return { notifications, getNotifications, markAllAsRead };
 }
 
+/**
+ * The server's public user, nested: `image` is `{ name, image_url }` for an account with a photo and `null` for one without
+ * (never a bare string), so it is read with `imageUrlOf`.
+ */
+export interface NotificationUser {
+  username: string;
+  image: { name?: string; image_url?: string | null } | string | null;
+  first_name: string;
+  last_name: string;
+}
+
 export interface Notification {
   id: string;
-  user: {
-    username: string;
-    image: string;
-    first_name: string;
-    last_name: string;
-  };
-  actor: {
-    username: string;
-    image: string;
-    first_name: string;
-    last_name: string;
-  };
+  user: NotificationUser;
+  actor: NotificationUser;
   message: string;
   is_read: boolean;
   created_at: string;

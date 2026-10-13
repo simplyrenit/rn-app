@@ -7,6 +7,7 @@ import {
   useFieldSurfaceStyle,
 } from "@/components/core";
 import DateRangePicker from "@/components/core/date-range-picker";
+import { BOOKING_DAYS_AHEAD } from "@/lib/booking";
 import { useGlobalContext } from "@/context/global-context";
 import { ALL_PRODUCTS, GOOGLE_MAP_API_KEY } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
@@ -844,6 +845,7 @@ export default function SearchScreen() {
               setOpen(false);
             }}
             onCancel={() => setOpen(false)}
+            maxDaysAhead={BOOKING_DAYS_AHEAD}
           />
         )}
       </StaticContainer>

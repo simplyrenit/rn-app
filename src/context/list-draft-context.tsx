@@ -405,6 +405,12 @@ export const ListDraftProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             clearStaleAi = false;
           },
           onField: (event) => {
+            // The suggested worth (ENG-154) is read off the same photos but is not
+            // one of the checklist's rows: it lands on the draft and nowhere else.
+            if (event.field === "worth") {
+              dispatch({ type: "mergeAi", event });
+              return;
+            }
             if (!(AI_FIELDS as readonly string[]).includes(event.field)) return;
             if (!firstFieldSeen) {
               firstFieldSeen = true;

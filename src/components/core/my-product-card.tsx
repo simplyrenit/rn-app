@@ -6,10 +6,8 @@ import { Image } from "expo-image";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
-import {
-  listingStatusLabel,
-  resolveListingStatus,
-} from "@/components/product/listing-status";
+import { listingStatusLabel } from "@/components/product/listing-status";
+import { hasPrice } from "@/lib/listing-status";
 import { Text } from "./text";
 import { usePressFeedback } from "./use-press-feedback";
 
@@ -33,8 +31,7 @@ export function MyProductCard({
   location,
   price,
   id,
-  moderationLabels = [],
-  adminApproved,
+  status,
   width,
   alignItems,
 }: ItemCard) {
@@ -42,13 +39,14 @@ export function MyProductCard({
   const { color } = useTheme();
   const { pressStyle, onPressIn, onPressOut } = usePressFeedback();
 
-  const isModerated = moderationLabels?.length > 0;
+  const isFlagged = status === "flagged";
   // The same states the screen's status pill shows, so the row is announced with
   // the label that is drawn under it. The card draws only the "Flagged" overlay
-  // itself: the pill carries live / pending, and used to be repeated by a corner
-  // chip here.
-  const resolved = resolveListingStatus({ moderationLabels, adminApproved });
-  const status = resolved && resolved !== "live" ? listingStatusLabel(resolved) : null;
+  // itself: the pill carries the rest, and used to be repeated by a corner chip
+  // here.
+  const statusLabel = status && status !== "live" ? listingStatusLabel(status) : null;
+  // A draft made on the dashboard may have no price yet.
+  const priced = hasPrice(price);
 
   const imageStyle = {
     width: "100%",
@@ -60,9 +58,9 @@ export function MyProductCard({
     <TouchableOpacity
       id={id}
       accessibilityRole="button"
-      accessibilityLabel={`${title}${status ? `, ${status}` : ""}, ${formatCurrency(
-        price
-      )} per day. Opens the product editor.`}
+      accessibilityLabel={`${title}${statusLabel ? `, ${statusLabel}` : ""}, ${
+        priced ? `${formatCurrency(price)} per day` : "no price yet"
+      }. Opens the product editor.`}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       activeOpacity={1}
@@ -92,7 +90,7 @@ export function MyProductCard({
             }}
           />
 
-          {isModerated && (
+          {isFlagged && (
             <View
               style={{
                 ...imageStyle,
@@ -132,14 +130,20 @@ export function MyProductCard({
           <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="dim">
             {location}
           </Text>
-          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
-            <Text fontSize="text-md" fontWeight="font-bold">
-              {formatCurrency(price)}
+          {priced ? (
+            <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+              <Text fontSize="text-md" fontWeight="font-bold">
+                {formatCurrency(price)}
+              </Text>
+              <Text fontSize="text-sm" tone="dim">
+                per day
+              </Text>
+            </View>
+          ) : (
+            <Text fontSize="text-md" tone="dim">
+              No price yet
             </Text>
-            <Text fontSize="text-sm" tone="dim">
-              per day
-            </Text>
-          </View>
+          )}
         </View>
       </View>
     </TouchableOpacity>

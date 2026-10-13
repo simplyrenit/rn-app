@@ -10,7 +10,7 @@ import Toast from "react-native-toast-message";
  * app's `toast` helper has no action slot, so this shows the same toast body
  * directly and makes the toast itself the "Open Settings" action.
  */
-function permissionDenied(what: string) {
+export function permissionDenied(what: string) {
   errorFeedback();
   Toast.show({
     type: "customToast",

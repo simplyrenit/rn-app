@@ -1,4 +1,5 @@
 import { radius } from "@/lib/design-tokens";
+import { photoUrlOf } from "@/lib/image-url";
 import { useTheme } from "@/lib/theme";
 import { Image } from "expo-image";
 import React from "react";
@@ -6,32 +7,14 @@ import { View } from "react-native";
 import { Text } from "./text";
 
 interface Props {
-  uri?: string | null;
+  /**
+   * The photo: a URL, or what a nested user carries (`{ image_url }`); anything else, `null` too, draws the monogram. Read by
+   * `photoUrlOf`, which never throws on a value that is not a string.
+   */
+  uri?: string | { image_url?: string | null } | null;
   /** Used for the initials fallback and the VoiceOver label. */
   name?: string | null;
   size?: number;
-}
-
-/**
- * Backends commonly hand back a generic silhouette PNG rather than null. Four
- * of six rows in the inbox were the same grey figure, so the list carried no
- * information beyond order — a monogram is strictly better than that.
- */
-const PLACEHOLDER_PATTERNS = [
-  "default",
-  "placeholder",
-  "avatar-default",
-  "no-image",
-  "noimage",
-  "anonymous",
-  "user.png",
-  "profile.png",
-];
-
-function isPlaceholder(uri?: string | null) {
-  if (!uri) return true;
-  const lower = uri.toLowerCase();
-  return PLACEHOLDER_PATTERNS.some((token) => lower.includes(token));
 }
 
 /**
@@ -68,7 +51,8 @@ function initialsOf(name?: string | null) {
 export function Avatar({ uri, name, size = 40 }: Props) {
   const { color, isDark } = useTheme();
   const initials = initialsOf(name);
-  const showPhoto = !isPlaceholder(uri);
+  const photo = photoUrlOf(uri);
+  const showPhoto = photo !== null;
   const hue = hueFor(name);
   const monogramFill = `hsl(${hue}, 46%, ${isDark ? 30 : 42}%)`;
 
@@ -91,7 +75,7 @@ export function Avatar({ uri, name, size = 40 }: Props) {
     >
       {showPhoto ? (
         <Image
-          source={{ uri: uri! }}
+          source={{ uri: photo! }}
           style={{ width: "100%", height: "100%" }}
           contentFit="cover"
           transition={150}

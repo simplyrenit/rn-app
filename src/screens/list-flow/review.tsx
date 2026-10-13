@@ -50,6 +50,7 @@ import {
   uploadedPhotos,
 } from "@/lib/list-flow/draft";
 import { currentSpecs, specsLoading } from "@/lib/list-flow/specs";
+import { MAX_QUANTITY_DIGITS, WORTH_HINT } from "@/lib/list-flow/stock";
 import {
   CONDITIONS,
   CategoryValue,
@@ -67,6 +68,7 @@ import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import { AppSwitch } from "@/components/core/switch";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Animated from "react-native-reanimated";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
@@ -84,31 +86,41 @@ const THUMB = 56;
  */
 const ADDRESS_WAIT_MS = 4000;
 
-/** An "Rs" amount input on the shared field surface. */
+/**
+ * A digits-only input on the shared field surface: an "Rs" amount by default,
+ * or a bare count (`prefix={null}`).
+ */
 function AmountInput({
   value,
   onChangeText,
   inputRef,
   accessibilityLabel,
   placeholder,
+  prefix = "Rs",
+  maxLength,
 }: {
   value: string;
   onChangeText: (v: string) => void;
   inputRef?: React.RefObject<TextInput>;
   accessibilityLabel: string;
   placeholder?: string;
+  prefix?: string | null;
+  maxLength?: number;
 }) {
   const { color } = useTheme();
   const [focused, setFocused] = useState(false);
   return (
     <FieldShell focused={focused}>
-      <Text fontSize="text-md" fontWeight="font-bold" tone="body">
-        Rs
-      </Text>
+      {prefix ? (
+        <Text fontSize="text-md" fontWeight="font-bold" tone="body">
+          {prefix}
+        </Text>
+      ) : null}
       <TextInput
         ref={inputRef}
         accessibilityLabel={accessibilityLabel}
         keyboardType="number-pad"
+        maxLength={maxLength}
         value={value}
         placeholder={placeholder}
         placeholderTextColor={color.placeholder}
@@ -348,6 +360,12 @@ export default function ListReviewScreen() {
     if (!draft.depositTouched) flow.track("deposit_changed");
     edit("security_deposit", value);
   };
+
+  const onWorth = (value: string) => edit("worth", value);
+
+  // No analytics event: the events endpoint takes the names it knows, and none of
+  // them is about worth.
+  const onConfirmWorth = () => flow.dispatch({ type: "confirmWorth" });
 
   const onCondition = (value: Condition) => {
     flow.track("condition_confirmed", {
@@ -707,6 +725,76 @@ export default function ListReviewScreen() {
                 f.location.value && edit("location", { ...f.location.value, fullAddress: v })
               }
               onSaveAs={(value) => flow.dispatch({ type: "setSaveAddressAs", value })}
+            />
+          </View>
+
+          {/* Worth and stock (ENG-155). Worth is needed to publish: it decides whether
+              you must check the customer's ID at the handover. A figure suggested from the photos is already in
+              the box, and counts once it is confirmed or changed. Nothing here says
+              where the figure came from. */}
+          <View onLayout={onLayoutSection("worth")} style={{ marginBottom: density.fieldGap }}>
+            <FieldLabel
+              label="Worth"
+              required
+              hint={WORTH_HINT}
+            />
+            <AmountInput
+              accessibilityLabel="Worth"
+              value={f.worth.value ?? ""}
+              onChangeText={onWorth}
+              placeholder="e.g. 45000"
+            />
+            {f.worth.source === "ai" && f.worth.value ? (
+              <Animated.View
+                entering={appear.entering}
+                exiting={appear.exiting}
+                style={{ flexDirection: "row", alignItems: "center", gap: space.md, marginTop: space.sm }}
+              >
+                <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+                  Is this about right? Change it, or confirm it.
+                </Text>
+                <Button variant="outline" size="compact" onPress={onConfirmWorth} accessibilityLabel="Confirm worth">
+                  Confirm
+                </Button>
+              </Animated.View>
+            ) : null}
+          </View>
+
+          <View onLayout={onLayoutSection("quantity")} style={{ marginBottom: density.fieldGap }}>
+            <FieldLabel label="In stock" required hint="How many of this item you have to rent out" />
+            <AmountInput
+              accessibilityLabel="In stock"
+              prefix={null}
+              maxLength={MAX_QUANTITY_DIGITS}
+              value={f.quantity.value ?? ""}
+              onChangeText={(v) => edit("quantity", v)}
+              placeholder="1"
+            />
+          </View>
+
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: space.md,
+              marginBottom: density.fieldGap,
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text fontSize="text-md" fontWeight="font-bold">
+                This product is not delivered
+              </Text>
+              <Text fontSize="text-xs" tone="body">
+                Even if you deliver, this one is for pickup only.
+              </Text>
+            </View>
+            <AppSwitch
+              accessibilityLabel="This product is not delivered"
+              value={Boolean(draft.notDelivered)}
+              onValueChange={(value) => flow.dispatch({ type: "setNotDelivered", value })}
+              trackColor={{ true: color.brand, false: color.inputLine }}
+              thumbColor="#FFFFFF"
             />
           </View>
 

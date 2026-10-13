@@ -30,6 +30,7 @@ import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { NearbyPlace, useTypedNavigation } from "@/lib/types";
+import { goAfterSignIn } from "@/lib/return-to";
 import axios from "axios";
 import {
   MagnifyingGlassIcon,
@@ -505,14 +506,14 @@ export default function LocationScreen() {
         console.log(
           `${LOCATION_LOG_PREFIX} signup completed successfully with location`
         );
-        navigation.navigate("MainTabs");
+        goAfterSignIn(navigation);
       }
     } catch (error: any) {
       const signUpError = error as SignUpError;
       if (signUpError.code === "otp_verification_required") {
         Alert.alert(
           "Verification required",
-          "Please verify your email OTP before completing signup.",
+          "Please confirm your email or phone number again before completing signup. A confirmation lasts an hour.",
           [{ text: "Go to verification", onPress: () => navigation.navigate("Email") }]
         );
         return;
@@ -533,14 +534,14 @@ export default function LocationScreen() {
         console.log(
           `${LOCATION_LOG_PREFIX} signup completed successfully without location`
         );
-        navigation.navigate("MainTabs");
+        goAfterSignIn(navigation);
       }
     } catch (error: any) {
       const signUpError = error as SignUpError;
       if (signUpError.code === "otp_verification_required") {
         Alert.alert(
           "Verification required",
-          "Please verify your email OTP before completing signup.",
+          "Please confirm your email or phone number again before completing signup. A confirmation lasts an hour.",
           [{ text: "Go to verification", onPress: () => navigation.navigate("Email") }]
         );
         return;

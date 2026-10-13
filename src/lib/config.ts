@@ -198,3 +198,58 @@ export const LISTING_EXTRACTION_SPECS = SERVERURL + "listing-extractions/specs/"
 export const DEPOSIT_RULES = SERVERURL + "deposit-rules/";
 
 export const EVENTS = SERVERURL + "events/";
+
+// Order execution (ENG-94). Paths are API-CONTRACT.md's; every one ends in "/".
+export const TERMS_ENDPOINT = SERVERURL + "terms/";
+
+export const TERMS_ACCEPT_ENDPOINT = SERVERURL + "terms/accept/";
+
+export const BANK_ACCOUNT_ENDPOINT = SERVERURL + "shop/bank-account/";
+
+export const BANK_ACCOUNT_VERIFY_ENDPOINT = SERVERURL + "shop/bank-account/verify/";
+
+/** The code step before a bank account is added or changed (T-10). */
+export const ACCESS_UNLOCK_ENDPOINT = SERVERURL + "access/unlock/";
+
+export const SHOP_ENDPOINT = SERVERURL + "shop/";
+
+export const SHOP_OPEN_ENDPOINT = SERVERURL + "shop/open/";
+
+export const SHOP_DELIVERY_EXAMPLE_ENDPOINT = SERVERURL + "shop/delivery-example/";
+
+export const ACCESS_DEVICES_ENDPOINT = SERVERURL + "access/devices/";
+
+/** The customer's bookings: quote, Book now, and each booking's own actions (OE-C). */
+export const BOOKINGS_ENDPOINT = SERVERURL + "bookings/";
+
+/** Get help: the desk's hours and the caller's own requests (`GET`), and a new request (`POST`) (OE-L). */
+export const HELP_ENDPOINT = SERVERURL + "help/";
+
+/** Claims: a claim, its one reply, and the list (OE-K). A fault or a damage report is a booking action, under `BOOKINGS_ENDPOINT`. */
+export const CLAIMS_ENDPOINT = SERVERURL + "claims/";
+
+/** `{payment_id}/confirm/`: what the app asks after the pay page (OE-D). */
+export const PAYMENTS_ENDPOINT = SERVERURL + "payments/";
+
+/** The shop's side of a booking: live ring, accept, refuse, bookings, today, blocks (OE-F). */
+export const SHOP_LIVE_ENDPOINT = SERVERURL + "shop/live/";
+
+export const SHOP_BOOKINGS_ENDPOINT = SERVERURL + "shop/bookings/";
+
+export const SHOP_TODAY_ENDPOINT = SERVERURL + "shop/today/";
+
+export const SHOP_BLOCKS_ENDPOINT = SERVERURL + "shop/blocks/";
+
+export const SHOP_PRODUCTS_ENDPOINT = SERVERURL + "shop/products/";
+
+/** The shop's drafts: the summary, the ones that need photos (OE-G1, OE-G2). */
+export const SHOP_DRAFTS_ENDPOINT = SERVERURL + "shop/drafts/";
+
+/**
+ * Chat between customer and owner is off at launch (decision T-01, ENG-177). The
+ * Rentals tab has the Chat tab's place, and "Chat with owner" on the product
+ * page and on the owner profile are not drawn. Nothing was deleted: the chat
+ * screens, routes, Firestore data and notifications are all still here, and
+ * `true` puts the entry points back.
+ */
+export const CHAT_ENABLED = false;
