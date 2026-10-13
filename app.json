@@ -29,7 +29,8 @@
         "expo-image-picker",
         {
           "photosPermission": "The app accesses your photos to let you upload product images.",
-          "cameraPermission": "Renit uses your camera for photos of your items, and for the photo and video record of an item at handover and return."
+          "cameraPermission": "Renit uses your camera for photos of your items, and for the photo and video record of an item at handover and return.",
+          "microphonePermission": "Renit uses your microphone for the sound of the short video record of an item at handover and return."
         }
       ],
       [
@@ -75,6 +76,7 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Renit needs access to your location to fetch products near you, even when the app is in the background.",
         "NSLocationAlwaysUsageDescription": "Renit needs access to your location to fetch products near you, even when the app is in the background.",
         "NSCameraUsageDescription": "Renit uses your camera for photos of your items, and for the photo and video record of an item at handover and return.",
+        "NSMicrophoneUsageDescription": "Renit uses your microphone for the sound of the short video record of an item at handover and return.",
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload product images.",
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true

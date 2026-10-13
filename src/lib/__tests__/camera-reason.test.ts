@@ -13,6 +13,25 @@ const pickerReason: string | undefined = appJson.expo.plugins
   .filter((p: unknown) => Array.isArray(p) && p[0] === "expo-image-picker")
   .map((p: [string, { cameraPermission?: string }]) => p[1]?.cameraPermission)[0];
 
+const micPlist = /<key>NSMicrophoneUsageDescription<\/key>\s*<string>([^<]*)<\/string>/.exec(plist)?.[1];
+const micConfig: string = appJson.expo.ios.infoPlist.NSMicrophoneUsageDescription;
+const micPicker: string | undefined = appJson.expo.plugins
+  .filter((p: unknown) => Array.isArray(p) && p[0] === "expo-image-picker")
+  .map((p: [string, { microphonePermission?: string }]) => p[1]?.microphonePermission)[0];
+
+describe("the iOS microphone prompt (review before merge, R-5)", () => {
+  it("gives a reason: the sound of the short video record at handover and return", () => {
+    expect(micConfig).toBe(
+      "Renit uses your microphone for the sound of the short video record of an item at handover and return."
+    );
+  });
+
+  it("is the same in app.json, in the image picker's plugin and in the checked-in Info.plist", () => {
+    expect(micPlist).toBe(micConfig);
+    expect(micPicker).toBe(micConfig);
+  });
+});
+
 describe("the iOS camera prompt (test run D-21)", () => {
   it("says the camera is for the photos of items and for the record at handover and return, in plain words", () => {
     expect(configReason).toMatch(/photos of your items/);
