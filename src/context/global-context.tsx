@@ -11,7 +11,7 @@ import {
   MY_DETAILS_ENDPOINT,
 } from "@/lib/config";
 import { sessionEndText } from "@/lib/session-end";
-import { endSessionOnServer } from "@/lib/sign-out";
+import { SignOutReason, endSessionOnServer } from "@/lib/sign-out";
 import { authenticateFirebase, signOutFirebase } from "@/lib/firebase";
 import axiosInstance, {
   resetSessionExpiryNotice,
@@ -43,7 +43,7 @@ interface GlobalContextType {
   isAuthenticated: boolean | undefined;
   hasSeenWelcome: boolean;
   setHasSeenWelcome: (value: boolean) => void;
-  logout: () => Promise<void>;
+  logout: (reason?: SignOutReason) => Promise<void>;
   isReportModalVisible: boolean;
   showReportModal: () => void;
   hideReportModal: () => void;
@@ -104,12 +104,12 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [userData, setUserData] = useState<UserData | null>(null);
 
-  const logout = useCallback(async () => {
+  const logout = useCallback(async (reason?: SignOutReason) => {
     cancelMyDetailsRequest();
     // First, while the token is still in place: ends this phone's session so it
     // stops ringing (ENG-146). If the call cannot reach the server the tokens are
     // kept aside and it is repeated later; it cannot fail the sign-out.
-    await endSessionOnServer();
+    await endSessionOnServer(reason);
     try {
       await signOutFirebase();
     } catch (error) {
@@ -134,7 +134,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
       // One message, once (the interceptor lets only the first of several failing requests through).
       const said = sessionEndText(end);
       toast.error(said.title, { message: said.message });
-      void logout();
+      void logout("server_ended");
     });
 
     return () => setSessionExpiredHandler(null);
@@ -167,7 +167,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        await logout();
+        await logout("server_ended");
         return;
       }
       if (!(axios.isAxiosError(error) && !error.response)) {
@@ -266,7 +266,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
             );
           } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 401) {
-              await logout();
+              await logout("server_ended");
             } else {
               setAuthTokensState(tokens);
               setIsAuthenticated(true);

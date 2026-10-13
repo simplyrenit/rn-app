@@ -138,6 +138,13 @@ describe("endSessionOnServer", () => {
     expect(storage.setItem).toHaveBeenCalledWith(PENDING_SIGN_OUT_KEY, JSON.stringify(pending));
   });
 
+  it("does not sign out on the server a session the server has already ended", async () => {
+    tokens.mockResolvedValue(pending);
+    await endSessionOnServer("server_ended");
+    expect(http.post).not.toHaveBeenCalled();
+    expect(storage.setItem).not.toHaveBeenCalled();
+  });
+
   it("never throws", async () => {
     tokens.mockRejectedValue(new Error("storage"));
     await expect(endSessionOnServer()).resolves.toBeUndefined();

@@ -15,6 +15,9 @@ import { ACCESS_DEVICES_ENDPOINT, GET_REFRESH_TOKEN } from "./config";
  * and its push token, so a `ring` push that reaches a signed-out phone is dropped.
  */
 
+/** Why the phone signs out. Left out, the person chose it. */
+export type SignOutReason = "server_ended";
+
 export const PENDING_SIGN_OUT_KEY = "renit-pending-sign-out";
 
 export interface PendingSignOut {
@@ -150,7 +153,12 @@ export async function retryPendingSignOut(): Promise<void> {
  * not settle it, keeps the tokens aside and starts the repeat in the background.
  * Never throws.
  */
-export async function endSessionOnServer(): Promise<void> {
+export async function endSessionOnServer(reason?: SignOutReason): Promise<void> {
+  // The server ended this session itself (the refresh was refused, or a request answered 401
+  // after it): the call is bound to answer 401, would keep dead tokens as a pending sign-out
+  // and run a refresh that is bound to be refused, and the old account would stay on screen
+  // for seconds. Review before merge, R-4.
+  if (reason === "server_ended") return;
   try {
     const tokens = await getAuthTokens();
     if (!tokens?.access_token) return;
