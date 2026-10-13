@@ -1,6 +1,7 @@
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
 import { GetHelp } from "@/components/booking/get-help";
 import { BottomBar, MoneyLine, Panel, SummaryCard, TextButton } from "@/components/booking/parts";
+import { PushNotice } from "@/components/booking/push-notice";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { Text } from "@/components/core";
 import { BookingCustomer, RingStep, bookingHow, datesLine, money, ringCopy } from "@/lib/booking";
@@ -141,6 +142,8 @@ export function Confirming({ booking, receivedAt }: { booking: BookingCustomer; 
           lines={[datesLine(booking), `${bookingHow(booking)} · ${booking.shop.name}`]}
           footer={<MoneyLine label="Paid now · counts toward the rent" amount={amount} />}
         />
+
+        <PushNotice ask />
 
         <Panel>
           <GetHelp booking={booking} />

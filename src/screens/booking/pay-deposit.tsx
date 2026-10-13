@@ -2,6 +2,7 @@ import { bookingQueryKey, useBooking } from "@/backend/bookings";
 import { payDeposit } from "@/backend/handover";
 import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/components/booking/parts";
+import { PushNotice } from "@/components/booking/push-notice";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { usePay } from "@/components/booking/use-pay";
 import { useReadAt } from "@/components/booking/use-read-at";
@@ -215,6 +216,8 @@ function Deposit({
             {copy.warning}
           </Text>
         </View>
+
+        <PushNotice deadline />
 
         <Panel>
           <GetHelp booking={booking} />

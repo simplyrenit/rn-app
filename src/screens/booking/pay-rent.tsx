@@ -2,6 +2,7 @@ import { bookingQueryKey, payRent } from "@/backend/bookings";
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
 import { GetHelp } from "@/components/booking/get-help";
 import { BottomBar, MoneyLine, Notice, Panel, TextButton } from "@/components/booking/parts";
+import { PushNotice } from "@/components/booking/push-notice";
 import { usePay } from "@/components/booking/use-pay";
 import { useReadAt } from "@/components/booking/use-read-at";
 import { useServerNow } from "@/components/booking/use-server-now";
@@ -195,6 +196,8 @@ export function PayRent({
         </Panel>
 
         {copy.note ? <Notice>{copy.note}</Notice> : null}
+
+        <PushNotice deadline />
 
         <Panel>
           <GetHelp booking={booking} />

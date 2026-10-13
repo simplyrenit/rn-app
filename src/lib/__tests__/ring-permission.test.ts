@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { quietBody, ringCaption, ringNotice, ringPermission, ringsHere } from "../ring-permission";
+import { customerDeadlineNotice, customerPushNotice, quietBody, ringCaption, ringNotice, ringPermission, ringsHere } from "../ring-permission";
 
 describe("ringPermission", () => {
   it("a phone that was allowed notifications can ring", () => {
@@ -65,5 +65,23 @@ describe("the Open switch does not let an owner believe the phone rings when it 
     expect(quietBody(null)).toMatch(/New requests ring this phone/);
     expect(quietBody("settings")).not.toMatch(/ring this phone/);
     expect(quietBody("ask")).not.toMatch(/ring this phone/);
+  });
+});
+
+describe("customerPushNotice", () => {
+  it("says so, in a customer's words, when this phone cannot show the owner's answer", () => {
+    for (const state of ["ask", "settings"] as const) {
+      expect(customerPushNotice(state)).toBe(
+        "Notifications are off, so we can't tell you when the owner answers. Turn them on in Settings.",
+      );
+      expect(customerDeadlineNotice(state)).toMatch(/remind you before this runs out/);
+    }
+  });
+
+  it("says nothing when the push will arrive, or when that is not known or does not apply", () => {
+    for (const state of ["granted", "unavailable", null] as const) {
+      expect(customerPushNotice(state)).toBeNull();
+      expect(customerDeadlineNotice(state)).toBeNull();
+    }
   });
 });

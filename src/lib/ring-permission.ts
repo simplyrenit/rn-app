@@ -82,3 +82,23 @@ export const OPEN_BUT_QUIET = {
   title: "Open, but this phone won't ring",
   message: "Notifications are off for Renit. Turn them on to hear new requests.",
 } as const;
+
+/**
+ * What a customer who is waiting on a push is told when this phone cannot show one
+ * (review before merge, R-1): the owner's answer and the rent's deadline both arrive
+ * as a push, and chat, the only other place a customer was asked, is off. The shop's
+ * warning above is about ringing; this one is in a customer's words. Null when the
+ * push will arrive, and when that is not known or does not apply.
+ */
+export function customerPushNotice(state: RingPermission | null): string | null {
+  return ringsHere(state) === false
+    ? "Notifications are off, so we can't tell you when the owner answers. Turn them on in Settings."
+    : null;
+}
+
+/** The same fact on the screens with a deadline, where the push is what says the time is running out. */
+export function customerDeadlineNotice(state: RingPermission | null): string | null {
+  return ringsHere(state) === false
+    ? "Notifications are off, so we can't remind you before this runs out. Turn them on in Settings."
+    : null;
+}
