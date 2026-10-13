@@ -17,6 +17,7 @@ import {
   parsePayReturn,
   resumePayment,
   startPayment,
+  watchStrayReturns,
 } from "../payments";
 
 type Mock = jest.MockedFunction<(...args: any[]) => any>;
@@ -254,5 +255,71 @@ describe("the note of a payment in flight", () => {
     storage.getItem.mockResolvedValue(null);
     await expect(resumePayment("asha")).resolves.toBeNull();
     expect(post).not.toHaveBeenCalled();
+  });
+});
+
+describe("watchStrayReturns", () => {
+  let onUrl: (event: { url: string }) => void;
+  let remove: Mock;
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+  const note = { user: "yash", booking: "RN-24831", payment_id: PAY_ID, at: Date.now() };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    remove = jest.fn() as Mock;
+    jest.spyOn(Linking, "addEventListener").mockImplementation(((_type: string, handler: typeof onUrl) => {
+      onUrl = handler;
+      return { remove };
+    }) as never);
+    jest.spyOn(AppState, "addEventListener").mockImplementation((() => ({ remove: jest.fn() })) as never);
+    jest.spyOn(Linking, "openURL").mockResolvedValue(true as never);
+    storage.getItem.mockResolvedValue(JSON.stringify(note));
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("asks rn-api once for a return link nobody was waiting on, and gives the booking to open", async () => {
+    post.mockResolvedValue(answer("paid"));
+    const opened = jest.fn();
+    watchStrayReturns("yash", opened);
+    onUrl({ url: `renit://pay/return?payment_id=${PAY_ID}&status=paid` });
+    await settle();
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(post).toHaveBeenCalledWith(`https://api.test/payments/${PAY_ID}/confirm/`, {});
+    expect(opened).toHaveBeenCalledWith("RN-24831");
+  });
+
+  it("leaves other links alone, and does not ask while startPayment is waiting for this payment", async () => {
+    post.mockResolvedValue(answer("paid"));
+    const opened = jest.fn();
+    watchStrayReturns("yash", opened);
+    const watcherUrl = onUrl;
+    watcherUrl({ url: "renit://product/PRO_1" });
+    await settle();
+    expect(post).not.toHaveBeenCalled();
+
+    // startPayment registers its own listener after the watcher's, so `onUrl` is now that one.
+    const waiting = startPayment(payment());
+    await settle();
+    watcherUrl({ url: `renit://pay/return?payment_id=${PAY_ID}` });
+    await settle();
+    expect(post).not.toHaveBeenCalled();
+    expect(opened).not.toHaveBeenCalled();
+    onUrl({ url: `renit://pay/return?payment_id=${PAY_ID}` });
+    await expect(waiting).resolves.toBe("paid");
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens nothing after it was stopped, and marks nothing paid on its own", async () => {
+    post.mockResolvedValue(answer("created"));
+    const opened = jest.fn();
+    const stop = watchStrayReturns("yash", opened);
+    const link = onUrl;
+    link({ url: `renit://pay/return?payment_id=${PAY_ID}&status=paid` });
+    stop();
+    await settle();
+    expect(remove).toHaveBeenCalled();
+    expect(opened).not.toHaveBeenCalled();
   });
 });

@@ -81,7 +81,7 @@ import ReportScreen from "@/screens/booking/report";
 import ReturnScreen from "@/screens/booking/return";
 import BookingDatesScreen from "@/screens/booking/choose-dates";
 import ReviewAndBookScreen from "@/screens/booking/review-and-book";
-import { resumePayment } from "@/lib/payments";
+import { resumePayment, watchStrayReturns } from "@/lib/payments";
 import BankAccountScreen from "@/screens/profileScreens/bank-account";
 import ContactUsScreen from "@/screens/profileScreens/contactUs";
 import EditProductScreen from "@/screens/profileScreens/edit-product";
@@ -605,6 +605,16 @@ export default function Navigation() {
       stale = true;
     };
   }, [isAuthenticated, username, openBooking]);
+  // The pay page's "Back to Renit" can arrive when no payment is being waited on (the
+  // customer came back for a moment, then paid later): ask rn-api once and open the booking.
+  React.useEffect(() => {
+    if (!isAuthenticated || !username) return;
+    return watchStrayReturns(username, (number) => {
+      void queryClient.invalidateQueries(bookingQueryKey(number));
+      void queryClient.invalidateQueries("bookings");
+      openBooking(number);
+    });
+  }, [isAuthenticated, username, openBooking, queryClient]);
 
   React.useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {

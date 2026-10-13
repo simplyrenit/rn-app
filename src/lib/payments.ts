@@ -259,3 +259,29 @@ export async function resumePayment(user: string): Promise<string | null> {
   }
   return note.booking;
 }
+
+/**
+ * For the app's whole life while someone is signed in (review before merge, R-2): the
+ * return link of a payment nobody is waiting on. `startPayment`'s own listener goes
+ * after the first time the app comes back to the front, so a customer who looks at
+ * Renit for a moment, pays later and taps "Back to Renit" sends a link no one hears.
+ * When one arrives and no `startPayment` is in flight for its payment, ask rn-api
+ * once the way a restart does (`resumePayment`) and hand the booking to open to
+ * `onBooking`. Still only a nudge: nothing is marked paid from the link.
+ * A link that launches the app from closed needs no listener of its own: the start
+ * asks about the noted payment anyway.
+ */
+export function watchStrayReturns(user: string, onBooking: (number: string) => void): () => void {
+  let stopped = false;
+  const subscription = Linking.addEventListener("url", ({ url }) => {
+    const back = parsePayReturn(url);
+    if (!back || inFlight.has(back.payment_id)) return;
+    void resumePayment(user).then((number) => {
+      if (number && !stopped) onBooking(number);
+    });
+  });
+  return () => {
+    stopped = true;
+    subscription.remove();
+  };
+}
