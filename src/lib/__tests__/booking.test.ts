@@ -906,7 +906,11 @@ describe("cancelling", () => {
       back: [{ what: "rent", amount: "511.00", text: "UPI test@fakebank", expected_days_min: 1, expected_days_max: 5 }],
       kept: [{ what: "booking_amount", amount: "99.00" }],
     });
-    // Inside 24 hours: one day's rent went to the owner; its amount is not on the booking, so none is said.
+    // Inside 24 hours: one day's rent went to the owner. The booking names the amount (money.owner_share)...
+    expect(bookingBanner(cancelled("inside_24h", { booking_amount_state: "refunded", owner_share: "300.00" })).sub).toBe(
+      "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. ₹300 goes to the owner."
+    );
+    // ...and from a server that does not give it yet, the sentence says it without an amount.
     expect(bookingBanner(cancelled("inside_24h", { booking_amount_state: "refunded" })).sub).toBe(
       "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. One day's rent goes to the owner."
     );

@@ -11,6 +11,9 @@ module.exports = {
       ? {
           name: "Renit QA",
           slug: "renit-qa-app",
+          // QA's pay return link is renit-qa://, which the store build does not answer (the
+          // checked-in ios/Renit/Info.plist and android/app/src/qa/AndroidManifest.xml say so too).
+          scheme: [app.expo.scheme, "renit-qa"],
           android: {
             ...app.expo.android,
             package: "com.renit.app.qa",

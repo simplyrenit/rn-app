@@ -41,6 +41,8 @@ describe("parsePayReturn", () => {
       status: "paid",
     });
     expect(parsePayReturn(`renit://pay/return/?status=open&payment_id=${PAY_ID}`)?.payment_id).toBe(PAY_ID);
+    // The QA server's own link, which only the QA build answers.
+    expect(parsePayReturn(`renit-qa://pay/return?payment_id=${PAY_ID}`)?.payment_id).toBe(PAY_ID);
   });
 
   it("ignores every other link, and one with no payment id", () => {

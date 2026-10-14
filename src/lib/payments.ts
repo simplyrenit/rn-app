@@ -48,8 +48,12 @@ export interface PaymentConfirmation<Booking = unknown> {
   booking: Booking;
 }
 
-/** Where rn-pay's "Back to Renit" button sends the customer. The scheme is already registered. */
-const PAY_RETURN = "renit://pay/return";
+/**
+ * Where rn-pay's "Back to Renit" button sends the customer. `renit-qa` is the QA server's own
+ * link (`PAY_RETURN_URL` there): the store build and the QA build can sit on one Android phone,
+ * and both answer `renit://`, so only the QA build answers this one (review before merge, R-6).
+ */
+const PAY_RETURNS = ["renit://pay/return", "renit-qa://pay/return"];
 
 /** The contract's asking rhythm: at once, then every 3 seconds for up to 60. */
 const ASK_EVERY_MS = 3000;
@@ -65,7 +69,7 @@ export function parsePayReturn(
 ): { payment_id: string; status: string | null } | null {
   if (!url) return null;
   const [path, query = ""] = url.split("#")[0].split("?");
-  if (path.replace(/\/$/, "") !== PAY_RETURN) return null;
+  if (!PAY_RETURNS.includes(path.replace(/\/$/, ""))) return null;
   const params: Record<string, string> = {};
   for (const pair of query.split("&")) {
     const [key, value = ""] = pair.split("=");
