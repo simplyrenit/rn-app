@@ -216,6 +216,8 @@ export interface BookingCustomer {
     deposit_ask_at: string | null;
     deposit_due_at: string | null;
     deposit_refund_due_at: string | null;
+    /** What a booking that ended early pays its owner (a day's rent, and the delivery fee); null while it runs. Absent from an older server. */
+    owner_share?: string | null;
     late_days: number;
     late_fee: string;
     damage_deduction: string;
@@ -1176,8 +1178,8 @@ export function refundPending(booking: Pick<BookingCustomer, "payments"> | null 
  * What a customer's cancel did with the money, read back from the booking itself, so the cancelled page says the same later
  * and on another phone (D-28): the refund rows are what goes back, to where, in how many working days, and a booking amount in
  * the state `kept` is what is not returned. Null while the booking shows neither (the refund row comes a few seconds after the
- * cancel), so nothing is said that is not known. What goes to the owner when the cancel was inside 24 hours is not on the
- * booking (only in the cancel's own answer, `outcome.to_owner`), so it is not in this outcome.
+ * cancel), so nothing is said that is not known. What goes to the owner when the cancel was inside 24 hours is the
+ * booking's `money.owner_share` (a server older than that field gives none, and then none is said).
  */
 export function cancelOutcomeOf(booking: Pick<BookingCustomer, "payments" | "money" | "exit_reason">): CancelOutcome | null {
   const back = booking.payments
@@ -1200,7 +1202,7 @@ export function cancelOutcomeOf(booking: Pick<BookingCustomer, "payments" | "mon
     case: reason === "free" || reason === "inside_24h" || reason === "after_accept" ? reason : "ringing",
     back,
     kept,
-    to_owner: "0.00",
+    to_owner: m.owner_share ?? "0.00",
     free_until: null,
   };
 }
@@ -1209,12 +1211,15 @@ export function cancelOutcomeOf(booking: Pick<BookingCustomer, "payments" | "mon
  * What the cancelled page says: the cancel itself, then what the server did with the money, in the sheet's own words (what
  * goes back, to where, in how many working days, and what is not returned). `cached` is the outcome of the cancel this phone
  * made in this run of the app; otherwise the words are read back from the booking (`cancelOutcomeOf`), with a line for the
- * owner's day's rent where the booking says the cancel was inside 24 hours (its amount is not on the booking).
+ * owner's day's rent where the booking says the cancel was inside 24 hours and gives no amount for it.
  */
 function cancelledSub(first: string, booking: BookingCustomer, cached: CancelOutcome | null | undefined): string {
   const outcome = cached ?? cancelOutcomeOf(booking);
   if (!outcome) return first;
-  const owner = !cached && booking.exit_reason === "inside_24h" ? ["One day's rent goes to the owner."] : [];
+  const owner =
+    !cached && booking.exit_reason === "inside_24h" && !isPositive(booking.money.owner_share ?? "0")
+      ? ["One day's rent goes to the owner."]
+      : [];
   return [first, ...cancelCopy(outcome).lines, ...owner].map(sentence).join(" ");
 }
 
