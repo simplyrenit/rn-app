@@ -306,6 +306,7 @@ describe("cancelling", () => {
     const failure = (status: number, code: string | null, message: string | null = null): ApiError => ({ status, code, message, details: null });
     expect(shopActionErrorText(failure(0, null))).toMatch(/couldn't reach Renit/);
     expect(shopActionErrorText(failure(409, "stage_not_allowed"))).toMatch(/has moved on/);
+    expect(shopActionErrorText(failure(409, "window_request_expired"))).toBe("This time has passed. The request has ended.");
     expect(shopActionErrorText(failure(409, "claim_open"))).toMatch(/claim is open/);
     expect(shopActionErrorText(failure(409, "request_open"))).toMatch(/already waiting/);
     expect(shopActionErrorText(failure(409, "window_outside_hours"))).toMatch(/no longer open/);
