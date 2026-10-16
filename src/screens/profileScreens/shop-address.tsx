@@ -13,7 +13,7 @@ import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { ADDRESS_NOT_FOUND, ADDRESS_UNAVAILABLE } from "@/screens/post-screens/location-modal";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
@@ -45,6 +45,7 @@ export default function ShopAddressScreen() {
   const [picked, setPicked] = useState<Picked | null>(null);
   const [naming, setNaming] = useState(false);
   const [saving, setSaving] = useState(false);
+  const namingRun = useRef(0);
 
   const header = <SubpageHeader title="Shop address" />;
 
@@ -71,13 +72,11 @@ export default function ShopAddressScreen() {
           address && address !== ADDRESS_NOT_FOUND && address !== ADDRESS_UNAVAILABLE ? address : null;
         setPicked({ ...coords, address: named, locality: null });
         setNaming(true);
+        // A second pin can be chosen while the first is still being named; only the latest answer counts.
+        const run = ++namingRun.current;
         void localityFor(coords.latitude, coords.longitude).then((locality) => {
-          // Only the latest pin counts.
-          setPicked((current) =>
-            current && current.latitude === coords.latitude && current.longitude === coords.longitude
-              ? { ...current, locality }
-              : current
-          );
+          if (run !== namingRun.current) return;
+          setPicked((current) => (current ? { ...current, locality } : current));
           setNaming(false);
         });
       }),
@@ -157,7 +156,7 @@ export default function ShopAddressScreen() {
               New address
             </Text>
             <Text fontSize="text-md" fontWeight="font-bold">
-              {naming ? "Finding the area..." : picked.locality ?? "We couldn't name this spot."}
+              {naming ? "Finding the area..." : picked.locality ?? "We couldn't name this spot. Choose another place on the map."}
             </Text>
             {picked.address && picked.address !== picked.locality ? (
               <Text fontSize="text-sm" tone="body">
@@ -177,7 +176,7 @@ export default function ShopAddressScreen() {
             Save shop address
           </Button>
         ) : null}
-        <Button variant="outline" accessibilityLabel="Choose on the map" disabled={saving} onPress={choose}>
+        <Button variant="outline" disabled={saving} onPress={choose}>
           {picked ? "Choose another place" : shop.address_confirmed ? "Change on the map" : "Choose on the map"}
         </Button>
       </ScrollView>
