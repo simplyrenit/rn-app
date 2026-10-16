@@ -241,8 +241,9 @@ function NeedsItem({
  * SH-04, the shop's Today: the Open switch, "Rented at the counter", what is
  * ringing, what goes out and comes back today, and what needs the shop. The
  * feed is the server's (`GET /api/shop/today/`) and is read again every time the
- * screen comes into view and after a push about the shop; nothing here keeps a
- * verdict of its own. The Open switch is the dashboard's switch: what it says
+ * screen or the app comes into view, every 15 seconds while it stays there, on a
+ * pull down and after a push about the shop; a request that starts ringing takes
+ * the screen, once. Nothing here keeps a verdict of its own. The Open switch is the dashboard's switch: what it says
  * is what the server holds.
  */
 export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
@@ -274,18 +275,21 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   const busy = useRef(false);
 
   const { refetch } = today;
+  // When Today last came into view: only an answer fetched since then may open a ring, never a copy kept from before.
+  const since = useRef(0);
   useEffect(() => {
-    if (focused && active) void refetch();
+    if (!focused || !active) return;
+    since.current = Date.now();
+    void refetch();
   }, [focused, active, refetch]);
 
   // A request that starts ringing while this screen is open takes the screen, as a ring push does (once for each).
-  // Not from a copy that is being read again: it may have ended since.
   const ringing = feed?.ringing;
-  const fetching = today.isFetching;
+  const fetchedAt = today.dataUpdatedAt;
   useEffect(() => {
-    const ring = focused && active && !fetching && ringing ? ringToOpen(ringing) : null;
+    const ring = focused && active && ringing && fetchedAt >= since.current ? ringToOpen(ringing) : null;
     if (ring) navigation.navigate("ShopRing", { number: ring.number, ring });
-  }, [focused, active, fetching, ringing, navigation]);
+  }, [focused, active, fetchedAt, ringing, navigation]);
 
   const changeOpen = async (state: "open" | "closed" | "auto") => {
     if (!shop || openBusy) return;
