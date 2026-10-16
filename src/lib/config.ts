@@ -213,6 +213,8 @@ export const ACCESS_UNLOCK_ENDPOINT = SERVERURL + "access/unlock/";
 
 export const SHOP_ENDPOINT = SERVERURL + "shop/";
 
+export const SHOP_CONFIRM_ADDRESS_ENDPOINT = SERVERURL + "shop/confirm-address/";
+
 export const SHOP_OPEN_ENDPOINT = SERVERURL + "shop/open/";
 
 export const SHOP_DELIVERY_EXAMPLE_ENDPOINT = SERVERURL + "shop/delivery-example/";

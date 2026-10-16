@@ -30,6 +30,7 @@ import {
   noticeOptions,
   openCopy,
   rupees,
+  shopAddressBody,
   slotsWith,
   time12,
   tomorrowIst,
@@ -375,5 +376,23 @@ describe("merchantStatusLabel", () => {
     expect(merchantStatusLabel("rejected")).toBe("Not approved");
     expect(merchantStatusLabel(null)).toBe("");
     expect(merchantStatusLabel(undefined)).toBe("");
+  });
+});
+
+describe("the shop address body (ENG-265)", () => {
+  const pin = { latitude: 19.1364, longitude: 72.8296 };
+
+  it("sends the map's address, the locality and the pin as lat and long", () => {
+    expect(shopAddressBody(pin, "Lokhandwala Complex, Andheri West, Mumbai 400053", "Andheri West, Mumbai")).toEqual({
+      address: "Lokhandwala Complex, Andheri West, Mumbai 400053",
+      locality: "Andheri West, Mumbai",
+      coordinates: { lat: 19.1364, long: 72.8296 },
+    });
+  });
+
+  it("uses the locality when the geocoder had no address, and keeps within 255 characters", () => {
+    expect(shopAddressBody(pin, null, "Andheri West, Mumbai").address).toBe("Andheri West, Mumbai");
+    expect(shopAddressBody(pin, "  ", "Andheri West, Mumbai").address).toBe("Andheri West, Mumbai");
+    expect(shopAddressBody(pin, "x".repeat(300), "Andheri").address).toHaveLength(255);
   });
 });
