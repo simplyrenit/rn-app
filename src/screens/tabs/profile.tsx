@@ -6,7 +6,8 @@ import { useGlobalContext } from "@/context/global-context";
 import { RootStackParamList } from "@/lib/types";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { ScrollView, View } from "react-native";
+import { useState } from "react";
+import { RefreshControl, ScrollView, View } from "react-native";
 import { BellIcon } from "react-native-heroicons/outline";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, lineHeight } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -29,7 +30,8 @@ const BELL_SIZE = 24;
 const BELL_OVERHANG = (MIN_TOUCH_TARGET - lineHeight.xl) / 2;
 
 export default function Profile() {
-  const { logout, authTokens, isAuthenticated, theme, loading } = useGlobalContext();
+  const { logout, authTokens, isAuthenticated, theme, loading, fetchUserDetails } = useGlobalContext();
+  const [refreshing, setRefreshing] = useState(false);
 
   const isDarkMode = theme === "dark";
   const navigation = useNavigation<ProfileScreenNavigationProp>();
@@ -114,6 +116,19 @@ export default function Profile() {
         }
       >
         <ScrollView
+          // Pull down to read the merchant status again (ENG-271).
+          refreshControl={
+            authTokens && isAuthenticated ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={async () => {
+                  setRefreshing(true);
+                  await fetchUserDetails();
+                  setRefreshing(false);
+                }}
+              />
+            ) : undefined
+          }
           contentContainerStyle={
             authTokens && isAuthenticated
               ? {}

@@ -32,7 +32,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { useColorScheme } from "react-native";
+import { AppState, useColorScheme } from "react-native";
 
 import { toast } from "@/lib/toast";
 
@@ -142,6 +142,16 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     fetchUserDetails();
+  }, [authTokens?.access_token, isAuthenticated]);
+
+  // The admin approves a merchant while the app is closed or in the background:
+  // read the details again when the app comes to the front (ENG-271).
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void fetchUserDetails();
+    });
+    return () => subscription.remove();
   }, [authTokens?.access_token, isAuthenticated]);
 
   const fetchUserDetails = async () => {
