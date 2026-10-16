@@ -32,7 +32,7 @@ export default function Terms() {
 
   useEffect(() => {
     let live = true;
-    openCustomerTerms(() => fetchPublicTerms(READ_TIMEOUT_MS), Linking.openURL, () => live).then((opened) => {
+    openCustomerTerms(() => fetchPublicTerms(READ_TIMEOUT_MS), (url) => Linking.openURL(url), () => live).then((opened) => {
       if (!live) return;
       if (opened) navigation.goBack();
       else setUseBundled(true);
