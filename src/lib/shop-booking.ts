@@ -46,6 +46,9 @@ export interface ShopMoney {
   late_days?: number;
   late_fee?: string;
   damage_deduction?: string;
+  /** The rent of an upheld fault report that comes off a later payout, and how much of it has not yet; absent from an older server. */
+  clawback?: string;
+  clawback_left?: string;
   payout: {
     status: string;
     status_reason: string | null;
@@ -371,6 +374,8 @@ export interface MoneyView {
   earn: string;
   /** "Paid to your bank on the day of handover". */
   payout: string | null;
+  /** Under "You earn" (E-110, E-116): what was kept from the deposit for the shop, and a refund that comes off a later payout. */
+  notes: string[];
   deposit: { amount: string; sub: string } | null;
 }
 
@@ -383,11 +388,49 @@ const DEPOSIT_SUB: Record<string, string> = {
   forfeited: "Kept, as the item was not returned",
 };
 
+const amountOf = (value: string | undefined) => Math.max(Number(value) || 0, 0);
+
+/**
+ * What came out of the deposit for the shop: the damage Renit decided, and the late days once they are fixed at the return
+ * (while the item is out the late fee is only today's count). Never more than the deposit.
+ */
+function keptFromDeposit(b: BookingShop): { damage: number; late: number; returned: number } {
+  const m = b.money;
+  const deposit = amountOf(m.deposit);
+  // A forfeited deposit is all kept because the item was not returned.
+  if (m.deposit_state === "forfeited") return { damage: 0, late: 0, returned: 0 };
+  const damage = Math.min(amountOf(m.damage_deduction), deposit);
+  const late = b.stage === "out" ? 0 : Math.min(amountOf(m.late_fee), deposit - damage);
+  return { damage, late, returned: deposit - damage - late };
+}
+
 /** The Money card. A deposit of nothing is not drawn. */
 export function moneyView(b: BookingShop): MoneyView {
   const m = b.money;
   const shown = Number(m.fee_shown);
   const dep = Number(m.deposit);
+  const kept = keptFromDeposit(b);
+  const clawback = amountOf(m.clawback);
+  const notes = [
+    ...(kept.damage > 0 ? [`${money(kept.damage)} kept from the deposit for you, for the damage`] : []),
+    ...(kept.late > 0 ? [`${money(kept.late)} kept from the deposit for you, for the late days`] : []),
+    ...(clawback > 0
+      ? [
+          amountOf(m.clawback_left) > 0
+            ? `${money(clawback)} comes off your payouts for the fault report on this booking`
+            : `${money(clawback)} was recovered for the fault report on this booking`,
+        ]
+      : []),
+  ];
+  // A settled deposit says what went back and what stayed with the shop, not just "Settled".
+  const settledSub =
+    m.deposit_state === "settled" && kept.damage + kept.late > 0
+      ? [
+          ...(kept.returned > 0 ? [`${money(kept.returned)} returned`] : []),
+          ...(kept.damage > 0 ? [`${money(kept.damage)} kept for the damage`] : []),
+          ...(kept.late > 0 ? [`${money(kept.late)} kept for the late days`] : []),
+        ].join(", ")
+      : null;
   return {
     rent: money(m.rent),
     delivery: Number(m.delivery_fee) > 0 ? money(m.delivery_fee) : null,
@@ -397,9 +440,10 @@ export function moneyView(b: BookingShop): MoneyView {
     },
     earn: money(m.you_earn),
     payout: m.payout?.text || null,
+    notes,
     deposit:
       m.deposit_state !== "none" && Number.isFinite(dep) && dep > 0
-        ? { amount: money(m.deposit), sub: DEPOSIT_SUB[m.deposit_state] ?? "" }
+        ? { amount: money(m.deposit), sub: settledSub ?? DEPOSIT_SUB[m.deposit_state] ?? "" }
         : null,
   };
 }
