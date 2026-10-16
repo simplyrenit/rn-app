@@ -33,6 +33,7 @@ import {
   reviewBlocker,
   termsTicked,
   totalLabel,
+  totalLine,
 } from "@/lib/booking";
 import { dayErrorText, extensionLines } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
@@ -314,8 +315,14 @@ export default function ReviewAndBookScreen() {
           ))}
         </Panel>
 
+        {extending ? null : (
+          <Text fontSize="text-sm" fontWeight="font-bold">
+            {totalLine(quote, moved)}
+          </Text>
+        )}
+
         <View style={{ gap: space.xs }}>
-          {(extending ? extensionLines(quote.pay_now) : plainLines(quote)).map((line) => (
+          {(extending ? extensionLines(quote.pay_now) : plainLines(quote, moved)).map((line) => (
             <Text key={line} fontSize="text-sm" tone="body">
               {line}
             </Text>

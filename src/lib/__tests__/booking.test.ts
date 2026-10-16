@@ -45,6 +45,7 @@ import {
   dayCount,
   dayLong,
   dayShort,
+  depositTerms,
   deliveryOption,
   depositAfterLate,
   lateDaysLabel,
@@ -78,6 +79,7 @@ import {
   timeAndDay,
   todayIst,
   totalLabel,
+  totalLine,
 } from "../booking";
 
 /** The contract's example quote: a PS5 for Sat 24 to Mon 26 October, self pickup. */
@@ -96,6 +98,8 @@ const quote = (over: Partial<Quote> = {}): Quote => ({
   pay_now: "99.00",
   pay_after_accept: "1731.00",
   rent_pay_minutes: 30,
+  ring_minutes: 10,
+  cancel: { free_hours: 24, grace_minutes: 30, grace: false, day_rent: "610.00" },
   deposit: { amount: "3000.00", with_rent: false, due_on: "2026-10-23", refundable: true },
   units_free: 3,
   shop: { is_open: true, opens_at: null, book_for_morning: false, hours_first_day: { open: "10:00", close: "20:00" } },
@@ -411,14 +415,14 @@ describe("the price before Book now", () => {
   it("lists what is paid when", () => {
     expect(paySteps(quote(), false, NOW)).toEqual([
       { title: "Now", sub: "Counts toward the rent", amount: "₹99" },
-      { title: "After the owner accepts", sub: "Within 30 minutes", amount: "₹1,731" },
-      { title: "Deposit", sub: "Refundable · due Fri 23 Oct", amount: "₹3,000" },
+      { title: "After the owner accepts", sub: "Within 30 minutes of their yes", amount: "₹1,731" },
+      { title: "Deposit", sub: "Refundable, due Fri 23 Oct", amount: "₹3,000" },
     ]);
   });
 
   it("takes the rent window from the quote: no 30 is written in the app (P2-2)", () => {
-    expect(paySteps(quote({ rent_pay_minutes: 45 }), false, NOW)[1].sub).toBe("Within 45 minutes");
-    expect(paySteps(quote({ rent_pay_minutes: 1 }), false, NOW)[1].sub).toBe("Within 1 minute");
+    expect(paySteps(quote({ rent_pay_minutes: 45 }), false, NOW)[1].sub).toBe("Within 45 minutes of their yes");
+    expect(paySteps(quote({ rent_pay_minutes: 1 }), false, NOW)[1].sub).toBe("Within 1 minute of their yes");
     // A server that does not send it yet: no number is made up.
     expect(paySteps(quote({ rent_pay_minutes: undefined as unknown as number }), false, NOW)[1].sub).toBe(
       "Soon after they accept"
@@ -431,7 +435,7 @@ describe("the price before Book now", () => {
 
   it("says the deposit comes with the rent at short notice, and leaves out a deposit of zero", () => {
     const soon = quote({ deposit: { amount: "3000.00", with_rent: true, due_on: null, refundable: true } });
-    expect(paySteps(soon, false, NOW)[2].sub).toBe("Refundable · paid with the rent");
+    expect(paySteps(soon, false, NOW)[2].sub).toBe("Refundable, paid with the rent");
     const none = quote({ deposit: { amount: "0.00", with_rent: false, due_on: null, refundable: true } });
     expect(paySteps(none, false, NOW).map((s) => s.title)).toEqual(["Now", "After the owner accepts"]);
   });
@@ -450,22 +454,71 @@ describe("the price before Book now", () => {
     expect(bookLabel(quote(), true)).toBe("Book now");
   });
 
-  it("writes the three plain lines", () => {
+  it("says before paying what Book now does with the 99, how long the owner has, and when it comes back (D-2, E-36, E-65)", () => {
     expect(plainLines(quote())).toEqual([
-      "Cancel free until 24 hours before pickup. The ₹99 is not returned.",
+      "Book now pays ₹99 now, which counts toward the rent.",
+      "The owner is rung and has up to 10 minutes to answer.",
+      "If they say no, do not answer, or you cancel before they answer, the ₹99 comes back in full.",
+      "Once they accept, cancelling up to 24 hours before pickup gives the rent back in full. Renit keeps the ₹99.",
+      "Inside that time, one day's rent (₹610) goes to the owner for holding the dates, and the rest comes back.",
       "Each late day costs one day's rent.",
       "Returning early gives no refund.",
     ]);
-    expect(plainLines(quote({ delivery_mode: "owner_delivery" }))[0]).toBe(
-      "Cancel free until 24 hours before delivery. The ₹99 is not returned."
+  });
+
+  it("never calls a cancel free while the 99 is kept, and has no 'not returned' (E-78)", () => {
+    expect(plainLines(quote()).join(" ")).not.toMatch(/free|not returned/i);
+  });
+
+  it("takes the owner's minutes and the cancel numbers from the quote; an older server's quote loses the number, not the sentence", () => {
+    expect(plainLines(quote({ ring_minutes: 5 }))[1]).toBe("The owner is rung and has up to 5 minutes to answer.");
+    expect(plainLines(quote({ ring_minutes: 1 }))[1]).toBe("The owner is rung and has up to 1 minute to answer.");
+    const old = plainLines(quote({ ring_minutes: undefined, cancel: undefined }));
+    expect(old[1]).toBe("The owner is rung.");
+    expect(old[3]).toBe("Once they accept, cancelling up to 24 hours before pickup gives the rent back in full. Renit keeps the ₹99.");
+    expect(old[4]).toBe("Inside that time, one day's rent goes to the owner for holding the dates, and the rest comes back.");
+  });
+
+  it("says delivery, not pickup, for a delivery, and the 30-minute grace for a booking made for the next day (N7)", () => {
+    const soon = plainLines(
+      quote({ delivery_mode: "owner_delivery", cancel: { free_hours: 24, grace_minutes: 30, grace: true, day_rent: "610.00" } })
+    );
+    expect(soon[3]).toContain("24 hours before delivery");
+    expect(soon[5]).toBe(
+      "This delivery is under 24 hours away, so you have 30 minutes after paying the rent to cancel and get the rent back."
     );
   });
 
-  it("adds the change-of-mind line for a closed shop", () => {
-    expect(plainLines(quote({ shop: closed })).slice(0, 2)).toEqual([
-      "Changed your mind? Cancel any time before they open and the ₹99 comes back.",
-      "Cancel free until 24 hours before pickup. After they open, the ₹99 is not returned.",
+  it("says the 99 already paid moves, when it does", () => {
+    expect(plainLines(quote(), true).slice(0, 2)).toEqual([
+      "Your ₹99 from the earlier request moves to this booking and counts toward the rent.",
+      "The owner is rung and has up to 10 minutes to answer.",
     ]);
+  });
+
+  it("says a closed shop is asked when it opens, and keeps the change-of-mind line", () => {
+    expect(plainLines(quote({ shop: closed })).slice(0, 4)).toEqual([
+      "Book for the morning pays ₹99 now, which counts toward the rent.",
+      "The owner is asked when they open and has up to 10 minutes to answer.",
+      "If they say no, do not answer, or you cancel before they answer, the ₹99 comes back in full.",
+      "Changed your mind? Cancel any time before they open and the ₹99 comes back.",
+    ]);
+  });
+
+  it("adds up the whole booking in one line (E-65)", () => {
+    expect(totalLine(quote())).toBe(
+      "In all: ₹99 now, ₹1,731 after the owner accepts, ₹3,000 deposit (refundable). Total ₹4,830."
+    );
+    // No deposit, nothing after the accept (the 99 covers it all).
+    const small = quote({
+      rent: "60.00",
+      total: "60.00",
+      pay_now: "60.00",
+      pay_after_accept: "0.00",
+      deposit: { amount: "0.00", with_rent: false, due_on: null, refundable: true },
+    });
+    expect(totalLine(small)).toBe("In all: ₹60 now. Total ₹60.");
+    expect(totalLine(quote(), true)).toContain("₹99 already paid, ₹1,731 after");
   });
 
   it("writes the closed notice with the opening time", () => {
@@ -482,11 +535,14 @@ describe("the price before Book now", () => {
     expect(bookLabel(quote({ pay_now: "60.00" }))).toBe("Book now · Pay ₹60");
   });
 
-  it("promises no number of minutes for the owner's answer", () => {
-    const words = [...plainLines(quote()), bookLabel(quote()), ...paySteps(quote(), false, NOW).map((s) => s.sub)];
-    // The one stated time is the customer's own 30 minutes to pay the rent (N3).
-    expect(words.filter((w) => /minute/.test(w))).toEqual(["Within 30 minutes"]);
-    expect(words.join(" ")).not.toMatch(/\b(5|five|10|ten) minutes/);
+  it("writes no minutes of its own: the owner's and the customer's come from the quote", () => {
+    const words = [
+      ...plainLines(quote({ ring_minutes: 7 })),
+      ...paySteps(quote({ rent_pay_minutes: 45 }), false, NOW).map((step) => step.sub),
+    ].join(" ");
+    expect(words).toMatch(/up to 7 minutes/);
+    expect(words).toMatch(/Within 45 minutes of their yes/);
+    expect(words).not.toMatch(/\b(10|30) minutes/);
   });
 
   it("says how the item changes hands", () => {
@@ -838,14 +894,14 @@ describe("cancelling", () => {
     const free = cancelCopy({
       case: "free",
       back: [{ what: "rent", amount: "1731.00", text: "UPI asha@okhdfcbank", expected_days_min: 5, expected_days_max: 7 }],
-      kept: [{ what: "booking_amount", amount: "99.00", text: "The ₹99 is not returned" }],
+      kept: [{ what: "booking_amount", amount: "99.00", text: "Renit keeps the ₹99: the owner had already said yes" }],
       to_owner: "0.00",
       free_until: "2026-10-23T04:30:00Z",
     });
     expect(free.title).toBe("Cancel this booking?");
     expect(free.lines).toEqual([
       "₹1,731 goes back to UPI asha@okhdfcbank. Expect it in 5 to 7 working days.",
-      "The ₹99 is not returned",
+      "Renit keeps the ₹99: the owner had already said yes.",
     ]);
     const inside = cancelCopy({
       case: "inside_24h",
@@ -854,14 +910,18 @@ describe("cancelling", () => {
       to_owner: "610.00",
       free_until: null,
     });
-    expect(inside.lines).toEqual(["₹1,220 goes back the way you paid.", "₹610 goes to the owner."]);
+    // Who gets the money and why (E-82): one day's rent, with the booking amount inside it.
+    expect(inside.lines).toEqual([
+      "₹1,220 goes back the way you paid.",
+      "₹610 goes to the owner: one day's rent, for holding the dates. Your booking amount counts toward it.",
+    ]);
   });
 
   it("the page after a cancel says what comes back, to where, in how many days, and what is kept (D-24)", () => {
     const done = {
       case: "free" as const,
       back: [{ what: "rent" as const, amount: "511.00", text: "UPI test@fakebank", expected_days_min: 1, expected_days_max: 5 }],
-      kept: [{ what: "booking_amount" as const, amount: "99.00", text: "The ₹99 is not returned" }],
+      kept: [{ what: "booking_amount" as const, amount: "99.00", text: "Renit keeps the ₹99: the owner had already said yes" }],
       to_owner: "0.00",
       free_until: null,
     };
@@ -869,7 +929,7 @@ describe("cancelling", () => {
     expect(bookingBanner(cancelled, done)).toEqual({
       tone: "neutral",
       title: "Booking cancelled",
-      sub: "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. The ₹99 is not returned.",
+      sub: "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. Renit keeps the ₹99: the owner had already said yes.",
     });
     // Opened later, or on another phone: the plain line, and the refund row in the payments list.
     expect(bookingBanner(cancelled).sub).toBe("You cancelled this booking.");
@@ -898,7 +958,7 @@ describe("cancelling", () => {
       booking({ exit: "cancelled_by_customer", exit_reason: reason, payments: [...booking().payments, ...payments] }, { booking_amount_state: "kept", ...moneyOver });
     // The tester's booking: ₹511 rent refunded to the UPI it came from, the ₹99 kept.
     expect(bookingBanner(cancelled("free")).sub).toBe(
-      "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. ₹99 is not returned."
+      "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. Renit keeps the ₹99: the owner had already said yes."
     );
     // The same words as the sentence made from the cancel's own answer, except for the server's own text of what is kept.
     expect(cancelOutcomeOf(cancelled("free"))).toMatchObject({
@@ -908,7 +968,7 @@ describe("cancelling", () => {
     });
     // Inside 24 hours: one day's rent went to the owner. The booking names the amount (money.owner_share)...
     expect(bookingBanner(cancelled("inside_24h", { booking_amount_state: "refunded", owner_share: "300.00" })).sub).toBe(
-      "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. ₹300 goes to the owner."
+      "You cancelled this booking. ₹511 goes back to UPI test@fakebank. Expect it in 1 to 5 working days. ₹300 goes to the owner: one day's rent, for holding the dates. Your booking amount counts toward it."
     );
     // ...and from a server that does not give it yet, the sentence says it without an amount.
     expect(bookingBanner(cancelled("inside_24h", { booking_amount_state: "refunded" })).sub).toBe(
@@ -924,7 +984,7 @@ describe("cancelling", () => {
     expect(cancelOutcomeOf(booking({ payments: [] }))).toBeNull();
     // This run's own outcome wins over the reading (it has the owner's amount).
     const owner = { case: "inside_24h" as const, back: [], kept: [], to_owner: "610.00", free_until: null };
-    expect(bookingBanner(cancelled("inside_24h"), owner).sub).toBe("You cancelled this booking. ₹610 goes to the owner.");
+    expect(bookingBanner(cancelled("inside_24h"), owner).sub).toBe("You cancelled this booking. ₹610 goes to the owner: one day's rent, for holding the dates. Your booking amount counts toward it.");
   });
 
   it("waits for the refund row while the cancel promised money back (D-24)", () => {
@@ -1014,19 +1074,24 @@ describe("refused, no answer, cancelled by the owner", () => {
   });
 
   const refused = (state: string, over: Partial<BookingCustomer> = {}) =>
-    ringing("ringing", { exit: "refused", exit_reason: "not_available", pick_deadline_at: "2026-10-13T04:28:00Z", ...over, money: { ...booking().money, booking_amount_state: state } });
+    ringing("ringing", { exit: "refused", exit_reason: "not_available", pick_deadline_at: "2026-10-13T04:28:00Z", ...over, money: { ...booking().money, booking_amount_state: state, booking_amount_refund_days: { min: 1, max: 5 } } });
 
   it("says the 99 moves with the customer until the pick-by time", () => {
     expect(bookingAmountCopy(refused("paid"), true)).toEqual({
       title: "Your ₹99",
-      body: "It moves with you if you pick one of these. Pick nothing by 9:58 am and it goes back to UPI asha@okhdfcbank. Refunds take 5 to 7 working days.",
+      body: "It moves with you if you pick one of these. Pick nothing by 9:58 am and it goes back to UPI asha@okhdfcbank. Expect it in 1 to 5 working days.",
     });
   });
 
   it("says it goes back once it can no longer move, or was asked back", () => {
     expect(bookingAmountCopy(refused("paid"), false).body).toBe(
-      "It goes back to UPI asha@okhdfcbank. Refunds take 5 to 7 working days."
+      "It goes back to UPI asha@okhdfcbank. Expect it in 1 to 5 working days."
     );
+    // The figure is the server's, from the booking or from the refund row; the app has none of its own (D-11, E-75).
+    const unknown = refused("paid");
+    unknown.money = { ...unknown.money, booking_amount_refund_days: null };
+    expect(bookingAmountCopy(unknown, false).body).toBe("It goes back to UPI asha@okhdfcbank.");
+    expect(bookingAmountCopy(refused("paid"), false).body).not.toMatch(/5 to 7/);
     expect(bookingAmountCopy(refused("refund_requested"), false).body).toMatch(/^It is going back to UPI/);
     expect(bookingAmountCopy(refused("refunded"), false).body).toBe("It was refunded to UPI asha@okhdfcbank.");
     expect(bookingAmountCopy(refused("moved"), false).body).toBe("It moved to your new booking.");
@@ -1079,8 +1144,8 @@ describe("pay the rent", () => {
         { label: "Already paid", amount: "₹99", amountTone: "success" },
       ],
       total: { label: "To pay now", amount: "₹1,731" },
-      note: "Deposit ₹3,000 is due later, on Fri 23 Oct.",
-      small: "If it isn't paid in time, the booking lapses and the ₹99 is kept.",
+      note: "Deposit ₹3,000, refundable, due Fri 23 Oct.",
+      small: "If it isn't paid in time, the booking lapses and Renit keeps the ₹99.",
       button: "Pay ₹1,731",
     });
   });
@@ -1106,6 +1171,25 @@ describe("pay the rent", () => {
     expect(copy.lines.map((l) => l.label)).toEqual(["Rent", "Delivery", "Already paid", "Deposit · refundable"]);
     expect(copy.total.amount).toBe("₹4,901");
     expect(copy.note).toMatch(/paid with the rent/);
+  });
+
+  it("says the deposit's timing one way on the review, the accepted screen and the next-day sentence (E-79)", () => {
+    expect(depositTerms(false, "Fri 23 Oct")).toBe("refundable, due Fri 23 Oct");
+    expect(depositTerms(true, null)).toBe("refundable, paid with the rent");
+    const soon = accepted(
+      { pay_now: { purpose: "rent_and_deposit", amount: "4901.00", deposit_part: "3000.00", due_at: "2026-10-13T04:43:00Z", payment: null } },
+      { pay_after_accept: "1901.00" }
+    );
+    // The accepted screen and the review step carry the same words, the first with the amount in front.
+    expect(payRentCopy(soon, NOW).note).toBe("Deposit ₹3,000, refundable, paid with the rent.");
+    expect(paySteps(quote({ deposit: { amount: "3000.00", with_rent: true, due_on: null, refundable: true } }), false, NOW)[2].sub).toBe(
+      "Refundable, paid with the rent"
+    );
+    expect(payRentCopy(accepted(), NOW).note).toBe("Deposit ₹3,000, refundable, due Fri 23 Oct.");
+    // No date known: it still says when, never just "later".
+    expect(payRentCopy(accepted({}, { deposit_ask_at: null, deposit_due_at: null }), NOW).note).toBe(
+      "Deposit ₹3,000, refundable, due before the handover."
+    );
   });
 
   it("says nothing about a deposit there is none of", () => {
@@ -1254,7 +1338,7 @@ describe("the booking screen", () => {
     expect(bookingBanner(booking({ stage: "accepted", exit: "lapsed_unpaid" }, { booking_amount_state: "kept" }))).toEqual({
       tone: "warning",
       title: "Booking lapsed",
-      sub: "The rent was not paid in time. The ₹99 was kept.",
+      sub: "The rent was not paid in time. Renit kept the ₹99.",
     });
     expect(
       bookingBanner(ringing("awaiting_payment", { exit: "cancelled_by_customer", exit_reason: "booking_amount_unpaid" })).title
@@ -1377,7 +1461,7 @@ describe("the booking screen", () => {
     expect(rows[rows.length - 1]).toEqual({
       key: "deposit-to-pay",
       title: "Deposit ₹3,000",
-      sub: "Refundable · due Sat 24 Oct, 8:00 am",
+      sub: "Refundable, due Sat 24 Oct, 8:00 am",
       status: "Due later",
       tone: "neutral",
     });
@@ -1392,13 +1476,13 @@ describe("the booking screen", () => {
       cancelHint({
         case: "free",
         back: [],
-        kept: [{ what: "booking_amount", amount: "99.00", text: "The ₹99 is not returned" }],
+        kept: [{ what: "booking_amount", amount: "99.00", text: "Renit keeps the ₹99: the owner had already said yes" }],
         to_owner: "0.00",
         free_until: "2026-10-23T04:30:00Z",
       })
-    ).toBe("Free until Fri 23 Oct, 10:00 am. The ₹99 is not returned.");
+    ).toBe("Rent back in full until Fri 23 Oct, 10:00 am. Renit keeps the ₹99: the owner had already said yes.");
     expect(cancelHint({ case: "inside_24h", back: [], kept: [], to_owner: "610.00", free_until: null })).toBe(
-      "₹610 goes to the owner. The rest is refunded."
+      "One day's rent (₹610) goes to the owner. The rest is refunded."
     );
     expect(
       cancelHint({
@@ -1408,7 +1492,7 @@ describe("the booking screen", () => {
         to_owner: "0.00",
         free_until: null,
       })
-    ).toBe("₹99 is not returned.");
+    ).toBe("Renit keeps the ₹99: the owner had already said yes.");
   });
 });
 
@@ -1663,7 +1747,7 @@ describe("when the deposit is due, on every screen of a booking (test run D-18)"
     const timeline = timelineRows(withWindow, NOW).find((row) => row.label === "Deposit ₹3,000");
     expect(timeline?.when).toBe("due Wed 28 Oct, 12:00 pm");
     const payment = paymentRows(withWindow, NOW).find((row) => row.key === "deposit-to-pay");
-    expect(payment?.sub).toBe("Refundable · due Wed 28 Oct, 12:00 pm");
+    expect(payment?.sub).toBe("Refundable, due Wed 28 Oct, 12:00 pm");
     expect(rentalNextLine({ ...withWindow, stage: "confirmed" }, NOW)).toBe("Deposit ₹3,000 due Wed 28 Oct, 12:00 pm");
     // The same moment the Deposit due screen prints: "Pay by Wed 28 Oct, 12:00 pm".
     expect(depositCopy(withWindow).payBy).toBe("Pay by Wed 28 Oct, 12:00 pm");
@@ -1671,7 +1755,7 @@ describe("when the deposit is due, on every screen of a booking (test run D-18)"
 
   it("before any window exists the day Renit asks is kept, in the design's words ('due Tue 27 Oct')", () => {
     expect(depositDueWhen(noWindow.money, false)).toBe("Tue 27 Oct");
-    expect(paymentRows(noWindow, NOW).find((row) => row.key === "deposit-to-pay")?.sub).toBe("Refundable · due Tue 27 Oct");
+    expect(paymentRows(noWindow, NOW).find((row) => row.key === "deposit-to-pay")?.sub).toBe("Refundable, due Tue 27 Oct");
   });
 
   it("falls back to the ask day when the answer has no due moment, and to nothing when it has neither", () => {

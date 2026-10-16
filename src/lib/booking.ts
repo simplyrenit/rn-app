@@ -65,6 +65,13 @@ export interface Quote {
   pay_after_accept: string;
   /** How long the customer will have to pay the rest once the owner accepts. The server's setting. */
   rent_pay_minutes: number;
+  /** How long the owner has to answer once rung, in minutes. The server's setting; absent from an older server. */
+  ring_minutes?: number;
+  /**
+   * What cancelling costs once the owner has accepted (N7). `grace`: the handover is under `free_hours` away, so the rent can be
+   * had back for `grace_minutes` after paying. `day_rent`: what the owner keeps for a cancel inside the free hours. Absent from an older server.
+   */
+  cancel?: { free_hours: number; grace_minutes: number; grace: boolean; day_rent: string };
   deposit: { amount: string; with_rent: boolean; due_on: string | null; refundable: boolean };
   units_free: number;
   shop: {
@@ -204,6 +211,8 @@ export interface BookingCustomer {
     booking_amount: string;
     /** unpaid, paid, moved, refund_requested, refunded, kept */
     booking_amount_state: string;
+    /** The working days a refund of the ₹99 takes, by how it was paid; the same table every refund uses. Null when unknown; absent from an older server. */
+    booking_amount_refund_days?: { min: number; max: number } | null;
     pay_after_accept: string;
     /** How long the customer has to pay the rent once the owner accepts; the deadline is `rent_due_at`. */
     rent_pay_minutes: number;
@@ -641,16 +650,23 @@ export const totalLabel = (quote: Quote) => (isPositive(quote.delivery.fee) ? "T
 export const isForMorning = (quote: Pick<Quote, "shop">) => !quote.shop.is_open && quote.shop.book_for_morning;
 
 /**
- * "Within 30 minutes", as BK-03 writes it, with the server's own number
- * (`rent_pay_minutes`): no client holds the 30. It is the one stated length of
- * time the customer reads, and it is about their own payment, never about how
- * long the owner takes.
+ * "Within 30 minutes of their yes", as BK-03 writes it, with the server's own number
+ * (`rent_pay_minutes`): no client holds the 30. It counts from the accept, which
+ * the line says (E-36), and is about the customer's own payment.
  */
 function rentWindow(minutes: number | null | undefined): string {
   const n = Number(minutes);
   if (!Number.isFinite(n) || n <= 0) return "Soon after they accept";
-  return n === 1 ? "Within 1 minute" : `Within ${n} minutes`;
+  return n === 1 ? "Within 1 minute of their yes" : `Within ${n} minutes of their yes`;
 }
+
+/** The one way every screen says when the deposit is paid (E-79): "refundable, due Fri 16 Oct" or "refundable, paid with the rent". */
+export function depositTerms(withRent: boolean, due: string | null): string {
+  if (withRent) return "refundable, paid with the rent";
+  return due ? `refundable, due ${due}` : "refundable, due before the handover";
+}
+
+const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 export interface PayStep {
   title: string;
@@ -678,27 +694,45 @@ export function paySteps(quote: Quote, moved = false, now: Date = new Date()): P
   if (isPositive(quote.deposit.amount)) {
     steps.push({
       title: "Deposit",
-      sub: quote.deposit.with_rent
-        ? "Refundable · paid with the rent"
-        : quote.deposit.due_on
-          ? `Refundable · due ${dayShort(quote.deposit.due_on)}`
-          : "Refundable",
+      sub: capital(depositTerms(quote.deposit.with_rent, quote.deposit.due_on ? dayShort(quote.deposit.due_on) : null)),
       amount: money(quote.deposit.amount),
     });
   }
   return steps;
 }
 
-/** The plain lines under the sums: cancelling, late days, early return. */
-export function plainLines(quote: Quote): string[] {
+/** The sum of all of it, under the steps (E-65): what is paid now, after the accept, and the deposit, then the total. */
+export function totalLine(quote: Quote, moved = false): string {
+  const parts = [`${money(quote.pay_now)} ${moved ? "already paid" : "now"}`];
+  if (isPositive(quote.pay_after_accept)) parts.push(`${money(quote.pay_after_accept)} after the owner accepts`);
+  if (isPositive(quote.deposit.amount)) parts.push(`${money(quote.deposit.amount)} deposit (refundable)`);
+  const all = Number(quote.pay_now) + Number(quote.pay_after_accept) + Number(quote.deposit.amount);
+  return `In all: ${parts.join(", ")}. Total ${money(all)}.`;
+}
+
+/**
+ * The plain lines under the sums (D-2, N1 to N7): what Book now does with the ₹99, what cancelling costs, late days, early return.
+ * Every amount and length of time is the quote's; an older server's quote without them gets the sentence without the number.
+ */
+export function plainLines(quote: Quote, moved = false): string[] {
   const handover = quote.delivery_mode === "owner_delivery" ? "delivery" : "pickup";
   const amount = money(quote.pay_now);
   const morning = isForMorning(quote);
+  const minutes = Number(quote.ring_minutes);
+  const answer = Number.isFinite(minutes) && minutes > 0 ? ` and has up to ${minutes} ${minutes === 1 ? "minute" : "minutes"} to answer` : "";
+  const cancel = quote.cancel;
   return [
+    moved
+      ? `Your ${amount} from the earlier request moves to this booking and counts toward the rent.`
+      : `${morning ? "Book for the morning" : "Book now"} pays ${amount} now, which counts toward the rent.`,
+    `${morning ? "The owner is asked when they open" : "The owner is rung"}${answer}.`,
+    `If they say no, do not answer, or you cancel before they answer, the ${amount} comes back in full.`,
     ...(morning ? [`Changed your mind? Cancel any time before they open and the ${amount} comes back.`] : []),
-    morning
-      ? `Cancel free until 24 hours before ${handover}. After they open, the ${amount} is not returned.`
-      : `Cancel free until 24 hours before ${handover}. The ${amount} is not returned.`,
+    `Once they accept, cancelling up to ${cancel ? `${cancel.free_hours} hours` : "24 hours"} before ${handover} gives the rent back in full. Renit keeps the ${amount}.`,
+    `Inside that time, one day's rent${cancel ? ` (${money(cancel.day_rent)})` : ""} goes to the owner for holding the dates, and the rest comes back.`,
+    ...(cancel?.grace
+      ? [`This ${handover} is under ${cancel.free_hours} hours away, so you have ${cancel.grace_minutes} minutes after paying the rent to cancel and get the rent back.`]
+      : []),
     "Each late day costs one day's rent.",
     "Returning early gives no refund.",
   ];
@@ -1137,6 +1171,10 @@ export interface CancelOutcome {
   free_until: string | null;
 }
 
+/** What is kept and why (E-78): who keeps it, so "not returned" never stands alone. The server's own words when it sends them. */
+const keptLine = (row: CancelMoney) =>
+  sentence(row.text || `Renit keeps the ${money(row.amount)}: the owner had already said yes`);
+
 const daysText = (min?: number | null, max?: number | null) =>
   min && max ? ` Expect it in ${min === max ? min : `${min} to ${max}`} working days.` : "";
 
@@ -1151,8 +1189,10 @@ export function cancelCopy(outcome: CancelOutcome): { title: string; lines: stri
           row.expected_days_max
         )}`
     ),
-    ...outcome.kept.map((row) => row.text || `${money(row.amount)} is not returned.`),
-    ...(isPositive(outcome.to_owner) ? [`${money(outcome.to_owner)} goes to the owner.`] : []),
+    ...outcome.kept.map(keptLine),
+    ...(isPositive(outcome.to_owner)
+      ? [`${money(outcome.to_owner)} goes to the owner: one day's rent, for holding the dates. Your booking amount counts toward it.`]
+      : []),
   ];
   return {
     title: ringing ? "Cancel this request?" : "Cancel this booking?",
@@ -1323,8 +1363,9 @@ export function bookingAmountCopy(
   const source = paidWith(booking, "booking_amount");
   const to = source ? `to ${source}` : "the way you paid";
   const refund = booking.payments.find((row) => row.kind === "refund" && row.what === "booking_amount");
-  const days =
-    daysText(refund?.expected_days_min, refund?.expected_days_max) || " Refunds take 5 to 7 working days.";
+  // The refund row once it exists; before that the server's days for how it was paid, the one table (D-11). Never a figure of ours.
+  const known = booking.money.booking_amount_refund_days;
+  const days = daysText(refund?.expected_days_min, refund?.expected_days_max) || (known ? daysText(known.min, known.max) : "");
   const title = `Your ${amount}`;
   switch (booking.money.booking_amount_state) {
     case "paid":
@@ -1346,7 +1387,7 @@ export function bookingAmountCopy(
     case "moved":
       return { title, body: "It moved to your new booking." };
     case "kept":
-      return { title, body: "It was not returned." };
+      return { title, body: "Renit kept it, because the owner had already said yes." };
     default:
       return { title, body: "Nothing was paid." };
   }
@@ -1442,11 +1483,11 @@ export function payRentCopy(
   lines.push({ label: "Already paid", amount: money(m.booking_amount), amountTone: "success" });
   if (isPositive(depositPart)) lines.push({ label: "Deposit · refundable", amount: money(depositPart) });
 
-  const askDay = dayOf(m.deposit_ask_at);
+  const dueWhen = depositDueWhen(m, Boolean(booking.window));
   const note = withDeposit
-    ? "The handover is less than a day away, so the deposit is paid with the rent. It is refundable."
+    ? `Deposit ${money(depositPart)}, ${depositTerms(true, null)}.`
     : isPositive(m.deposit) && (m.deposit_state === "not_due" || m.deposit_state === "due")
-      ? `Deposit ${money(m.deposit)} is due later${askDay ? `, on ${dayShort(askDay)}` : ""}.`
+      ? `Deposit ${money(m.deposit)}, ${depositTerms(false, dueWhen)}.`
       : null;
 
   return {
@@ -1455,7 +1496,7 @@ export function payRentCopy(
     lines,
     total: { label: "To pay now", amount },
     note,
-    small: `If it isn't paid in time, the booking lapses and the ${money(m.booking_amount)} is kept.`,
+    small: `If it isn't paid in time, the booking lapses and Renit keeps the ${money(m.booking_amount)}.`,
     button: `Pay ${amount}`,
   };
 }
@@ -1630,7 +1671,7 @@ export function bookingBanner(booking: BookingCustomer, cancelled?: CancelOutcom
         title: "Booking lapsed",
         sub:
           m.booking_amount_state === "kept"
-            ? `The rent was not paid in time. The ${money(m.booking_amount)} was kept.`
+            ? `The rent was not paid in time. Renit kept the ${money(m.booking_amount)}.`
             : "The rent was not paid in time.",
       };
     case "no_show":
@@ -1833,7 +1874,7 @@ export function paymentRows(booking: BookingCustomer, now: Date = new Date()): M
     rows.push({
       key: "deposit-to-pay",
       title: `Deposit ${money(m.deposit)}`,
-      sub: when ? `Refundable · due ${when}` : "Refundable",
+      sub: capital(depositTerms(false, when)),
       ...(m.deposit_state === "due"
         ? { status: "Due now", tone: "warning" as const }
         : { status: "Due later", tone: "neutral" as const }),
@@ -1846,18 +1887,18 @@ const sentence = (text: string) => (/[.!?]$/.test(text.trim()) ? text.trim() : `
 
 /** The line under "Cancel booking": what cancelling costs right now. */
 export function cancelHint(outcome: CancelOutcome): string {
-  const kept = outcome.kept[0] ? sentence(outcome.kept[0].text || `${money(outcome.kept[0].amount)} is not returned`) : "";
+  const kept = outcome.kept[0] ? keptLine(outcome.kept[0]) : "";
   switch (outcome.case) {
     case "ringing":
-      return "The booking amount comes back.";
+      return "The booking amount comes back in full.";
     case "free": {
       const day = dayOf(outcome.free_until);
-      const until = day ? `Free until ${dayShort(day)}, ${clock(outcome.free_until)}.` : "Free to cancel now.";
+      const until = day ? `Rent back in full until ${dayShort(day)}, ${clock(outcome.free_until)}.` : "Rent back in full if you cancel now.";
       return [until, kept].filter(Boolean).join(" ");
     }
     case "inside_24h":
       return isPositive(outcome.to_owner)
-        ? `${money(outcome.to_owner)} goes to the owner. The rest is refunded.`
+        ? `One day's rent (${money(outcome.to_owner)}) goes to the owner. The rest is refunded.`
         : "The rest of what you paid is refunded.";
     default:
       return kept || "Nothing is refunded.";
