@@ -494,7 +494,7 @@ describe("the price before Book now", () => {
   it("leaves out the rent's refund and the day's rent when the 99 covers the rent (nothing is paid after the accept)", () => {
     const covered = plainLines(quote({ rent: "60.00", total: "60.00", pay_now: "60.00", pay_after_accept: "0.00" }));
     expect(covered.join(" ")).not.toMatch(/rent back in full|one day's rent goes|do not pay the rent/);
-    expect(covered).toContain("Once they accept, Renit keeps the ₹60 if you cancel.");
+    expect(covered).toContain("Once they accept, Renit keeps the ₹60 if you cancel up to 24 hours before pickup.");
   });
 
   it("says delivery, not pickup, for a delivery, and the 30-minute grace for a booking made for the next day (N7)", () => {
@@ -505,6 +505,15 @@ describe("the price before Book now", () => {
     expect(soon[6]).toBe(
       "This delivery is under 24 hours away, so you have 30 minutes after paying the rent to cancel and get the rent back."
     );
+  });
+
+  it("says the grace counts from when the owner is asked, for a shop that is closed now", () => {
+    const grace = { free_hours: 24, grace_minutes: 30, grace: true, day_rent: "610.00" };
+    const lines = plainLines(quote({ shop: closed, cancel: grace }));
+    expect(lines).toContain(
+      "This pickup is under 24 hours after the owner is asked, so you have 30 minutes after paying the rent to cancel and get the rent back."
+    );
+    expect(lines.join(" ")).not.toMatch(/hours away/);
   });
 
   it("says the 99 already paid moves, when it does", () => {

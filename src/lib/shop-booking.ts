@@ -415,7 +415,7 @@ export function moneyView(b: BookingShop): MoneyView {
       ? [
           amountOf(m.clawback_left) > 0
             ? `${money(clawback)} comes off your payouts for the fault report on this booking`
-            : `${money(clawback)} was taken off your payouts for the fault report on this booking`,
+            : `${money(clawback)} was recovered for the fault report on this booking`,
         ]
       : []),
   ];

@@ -739,13 +739,13 @@ export function plainLines(quote: Quote, moved = false): string[] {
     ...(rentToPay ? [`If you do not pay the rent${payWindow}, the booking lapses and Renit keeps the ${amount}.`] : []),
     rentToPay
       ? `Once they accept, cancelling up to ${before} before ${handover} gives the rent back in full. Renit keeps the ${amount}.`
-      : `Once they accept, Renit keeps the ${amount} if you cancel.`,
+      : `Once they accept, Renit keeps the ${amount} if you cancel up to ${before} before ${handover}.`,
     // With the ₹99 covering it all there is no rent paid, so no day's rent to split.
     ...(rentToPay
       ? [`Inside that time, one day's rent${cancel ? ` (${money(cancel.day_rent)})` : ""} goes to the owner for holding the dates, and the rest comes back.`]
       : []),
     ...(rentToPay && cancel?.grace
-      ? [`This ${handover} is under ${pluralize(cancel.free_hours, "hour")} away, so you have ${pluralize(cancel.grace_minutes, "minute")} after paying the rent to cancel and get the rent back.`]
+      ? [`This ${handover} is under ${pluralize(cancel.free_hours, "hour")} ${morning ? "after the owner is asked" : "away"}, so you have ${pluralize(cancel.grace_minutes, "minute")} after paying the rent to cancel and get the rent back.`]
       : []),
     "Each late day costs one day's rent.",
     "Returning early gives no refund.",
