@@ -121,6 +121,8 @@ export default function Profile() {
             authTokens && isAuthenticated ? (
               <RefreshControl
                 refreshing={refreshing}
+                tintColor={color.textBody}
+                colors={[color.brand]}
                 onRefresh={async () => {
                   setRefreshing(true);
                   await fetchUserDetails();
