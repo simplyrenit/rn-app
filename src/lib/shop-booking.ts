@@ -455,6 +455,8 @@ export function shopActionErrorText(error: ApiError | null): string {
       return "A change is already waiting for an answer.";
     case "no_request":
       return "That request is no longer open.";
+    case "window_request_expired":
+      return WINDOW_REQUEST_ENDED;
     case "own_request":
       return "You asked for this change. The customer answers it.";
     case "claim_open":
