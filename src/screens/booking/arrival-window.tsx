@@ -9,7 +9,7 @@ import { BookingLoadError, BookingLoading, BottomBar, Notice } from "@/component
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { apiError } from "@/lib/api-error";
-import { TimeWindow, windowErrorText, windowHeading, windowLabel } from "@/lib/booking";
+import { bookingLabel, TimeWindow, windowErrorText, windowHeading, windowLabel } from "@/lib/booking";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -42,7 +42,7 @@ export default function ArrivalWindowScreen() {
   const [error, setError] = useState<string | null>(null);
   const busy = useRef(false);
 
-  const header = <SubpageHeader title="" />;
+  const header = <SubpageHeader title={bookingLabel(params.number)} />;
 
   if (!booking || !windowsQuery.data) {
     const failed = bookingQuery.isError || windowsQuery.isError;

@@ -5,10 +5,10 @@ import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { useGlobalContext } from "@/context/global-context";
 import {
   BookingCustomer,
+  bookingLabel,
   RENTALS_LISTS,
   RentalsList,
   rentalNextLine,
-  rentalNumberLine,
   rentalSubLine,
   rentalsEmpty,
   stagePill,
@@ -33,10 +33,11 @@ function RentalCard({ booking, onPress }: { booking: BookingCustomer; onPress: (
   const pill = stagePill(booking);
   const next = rentalNextLine(booking);
   const sub = rentalSubLine(booking);
+  const number = bookingLabel(booking.number);
   return (
     <TouchableOpacity
       accessibilityRole="button"
-      accessibilityLabel={[booking.product.title, pill.label, sub, next].filter(Boolean).join(". ")}
+      accessibilityLabel={[booking.product.title, pill.label, sub, number, next].filter(Boolean).join(". ")}
       accessibilityHint="Opens the booking"
       activeOpacity={0.7}
       onPress={onPress}
@@ -44,7 +45,7 @@ function RentalCard({ booking, onPress }: { booking: BookingCustomer; onPress: (
       <SummaryCard
         title={booking.product.title}
         image={booking.product.cover_image}
-        lines={[sub, rentalNumberLine(booking)]}
+        lines={[sub, number]}
         right={<Pill label={pill.label} tone={pill.tone} />}
         footer={
           next ? (

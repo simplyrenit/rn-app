@@ -1934,12 +1934,6 @@ export function rentalSubLine(booking: Pick<BookingCustomer, "shop" | "first_day
 /** The booking's number as the customer reads it out to the desk: "Booking RN-20116". */
 export const bookingLabel = (number: string): string => `Booking ${number}`;
 
-/** A quiet line for a card while the owner is being asked or the rent is due; nothing once it is settled. */
-export function rentalNumberLine(booking: Pick<BookingCustomer, "number" | "stage" | "exit">): string | null {
-  return !booking.exit && (booking.stage === "ringing" || booking.stage === "accepted")
-    ? bookingLabel(booking.number)
-    : null;
-}
 
 /** The card's foot: the one thing to do or to expect next, or null when there is none. */
 export function rentalNextLine(booking: BookingCustomer, now: Date = new Date()): string | null {
