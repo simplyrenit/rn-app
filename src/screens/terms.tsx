@@ -1,11 +1,16 @@
 import { SubpageHeader, Text } from "@/components/core";
+import { fetchPublicTerms } from "@/backend/terms";
+import { openCustomerTerms } from "@/lib/terms-link";
+import { useNavigation } from "@react-navigation/native";
+import { useEffect, useState } from "react";
 
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { TERMS_CONTENT } from "@/lib/content";
 import { styled } from "nativewind";
-import { ScrollView, View } from "react-native";
+import { ActivityIndicator, Linking, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, ink } from "@/lib/design-tokens";
+import { useGlobalContext } from "@/context/global-context";
 
 const StyledScroll = styled(ScrollView);
 
@@ -14,9 +19,39 @@ const StyledScroll = styled(ScrollView);
 const TOP_INSET = 28;
 const BOTTOM_INSET = 24;
 const BLOCK_GAP = 20;
+// How long the server page's address is waited for before the bundled text shows.
+const READ_TIMEOUT_MS = 8000;
 
 export default function Terms() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  const { theme } = useGlobalContext();
+  // The server's terms page opens in the browser and this screen steps back; the
+  // bundled text below shows only when that page cannot be read or opened.
+  const [useBundled, setUseBundled] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    openCustomerTerms(() => fetchPublicTerms(READ_TIMEOUT_MS), Linking.openURL, () => live).then((opened) => {
+      if (!live) return;
+      if (opened) navigation.goBack();
+      else setUseBundled(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, [navigation]);
+
+  if (!useBundled) {
+    return (
+      <NonScrollableContainer>
+        <SubpageHeader title="Terms & Conditions" />
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color={ink.brandText(theme === "dark")} />
+        </View>
+      </NonScrollableContainer>
+    );
+  }
 
   return (
     <NonScrollableContainer>
