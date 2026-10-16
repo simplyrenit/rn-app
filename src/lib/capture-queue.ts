@@ -10,6 +10,7 @@ import {
   files,
   localUris,
   nextWork,
+  refuseDark,
   removedUris,
   resendLater,
   sendFailure,
@@ -146,7 +147,14 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
           }
         }
       } catch (error) {
-        const out = sendFailure(apiError(error), { forOther: draft.forOther });
+        const failure = apiError(error);
+        if (failure?.code === "photo_too_dark") {
+          // A black or blank photo: it leaves the record and is taken again; nothing is sent until then.
+          failed.add(draft.id);
+          change(draft.id, (d) => refuseDark(d, failure));
+          continue;
+        }
+        const out = sendFailure(failure, { forOther: draft.forOther });
         if ("done" in out) {
           change(draft.id, (d) => ({ ...d, done: true, error: null }));
         } else {

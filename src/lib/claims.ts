@@ -1,8 +1,8 @@
 import { ApiError, fieldErrors } from "@/lib/api-error";
 import type { BookingShop } from "@/lib/shop-booking";
 import { BookingCustomer, addDays, dayOf, dayShort, money, rangeLabel, timeAndDay, todayIst } from "@/lib/booking";
-import { Side } from "@/lib/capture";
-import { reached } from "@/lib/day-of";
+import { RECORD_FIRST, Side } from "@/lib/capture";
+import { captured, reached } from "@/lib/day-of";
 
 /**
  * Claims on the phone (ENG-252 the customer's side, ENG-253 the shop's report;
@@ -631,22 +631,27 @@ export function damageHold(statement: string, amount: string, photos: number, ma
 
 /**
  * Where "report a problem" stands for the shop, read from the server's `can` (P4-10): it holds `report_problem` only
- * while the stage is `returned`, the 24 hours last, there is no damage claim yet, and something is left of the
- * deposit. The phone does not work those out; it only says which one is missing when `can` lacks it.
+ * while the stage is `returned`, the 24 hours last, there is no damage claim yet, something is left of the
+ * deposit, and the shop's own handover and return records are both complete (ENG-267). The phone does not work
+ * those out; it only says which one is missing when `can` lacks it.
  *  - `open`: the form is offered. `after_code`: not yet, the customer has still to type the return code.
  *  - `none_left`: nothing is left of the deposit to claim against (A-50): say so, and point to Get help.
  *  - `forfeited`: the item was not back in time and the deposit already came to the shop (`deposit_state` `forfeited`):
  *    `can` has no `report_problem` then, and `report_problem_until` is null (it is only set while the stage is `returned`).
- *  - `reported`: a damage claim is already made. `passed`: the time is over. `unavailable`: none of those.
+ *  - `reported`: a damage claim is already made. `passed`: the time is over.
+ *  - `record_first`: none of the above, and the shop's own handover or return record is not complete yet.
+ *  - `unavailable`: none of those.
  *
  * `claimKinds` are the kinds of the booking's claims, once read: only a damage claim stops a second one, so a
  * customer's fault report (also a claim on the booking) does not make the shop's time that has passed read as
  * "already reported". While they are not known the booking's own `claim_open` and `claims` stand in (review app-5 r2 #8).
  */
-export type ProblemState = "open" | "after_code" | "none_left" | "forfeited" | "reported" | "passed" | "unavailable";
+export type ProblemState = "open" | "after_code" | "none_left" | "forfeited" | "reported" | "passed" | "record_first" | "unavailable";
 
 export function problemState(
-  booking: Pick<BookingShop, "can" | "stage" | "exit" | "claim_open" | "claims" | "report_problem_until" | "money">,
+  booking: Pick<BookingShop, "can" | "stage" | "exit" | "claim_open" | "claims" | "report_problem_until" | "money"> & {
+    captures?: BookingShop["captures"];
+  },
   now: Date,
   claimKinds?: readonly string[] | null
 ): ProblemState {
@@ -659,6 +664,8 @@ export function problemState(
   const claimed = claimKinds ? claimKinds.includes("damage") : booking.claim_open || (booking.claims?.length ?? 0) > 0;
   if (claimed) return "reported";
   if (booking.stage === "closed" || (booking.report_problem_until && reached(booking.report_problem_until, now))) return "passed";
+  // The server asks for the shop's own handover and return records before a claim (D-14).
+  if (booking.stage === "returned" && !(captured(booking, "handover").mine && captured(booking, "return").mine)) return "record_first";
   return "unavailable";
 }
 
@@ -673,6 +680,8 @@ export function problemLine(state: ProblemState): string | null {
       return "A problem has already been reported on this booking. Its claim is listed on the booking.";
     case "passed":
       return "The time to report a problem has passed. Use Get help to talk to Renit's desk.";
+    case "record_first":
+      return RECORD_FIRST;
     case "unavailable":
       return "A problem can't be reported on this booking now.";
     default:
@@ -682,7 +691,9 @@ export function problemLine(state: ProblemState): string | null {
 
 /** Why the damage form is not offered, or null when it is. */
 export function damageBlocked(
-  booking: Pick<BookingShop, "can" | "stage" | "exit" | "claim_open" | "claims" | "report_problem_until" | "money">,
+  booking: Pick<BookingShop, "can" | "stage" | "exit" | "claim_open" | "claims" | "report_problem_until" | "money"> & {
+    captures?: BookingShop["captures"];
+  },
   now: Date,
   claimKinds?: readonly string[] | null
 ): string | null {
@@ -718,6 +729,8 @@ export function damageErrorText(error: ApiError | null): string {
     }
     case "claim_exists":
       return "You have already reported a problem on this booking. It is with Renit.";
+    case "capture_required":
+      return RECORD_FIRST;
     case "stage_not_allowed":
       return "A problem can be reported once the item is back. This booking is not at that stage.";
     case "validation_error": {

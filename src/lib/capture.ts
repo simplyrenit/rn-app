@@ -373,6 +373,24 @@ export function dropFile(draft: CaptureDraft, slot: Slot, uri: string): CaptureD
   };
 }
 
+/** Why a shop's code step or damage report is held back until its own record is in (the server's rule, D-14). */
+export const RECORD_FIRST = "Record the item first: it is your proof if anything is wrong.";
+
+export const TOO_DARK = "Too dark to see the item. Take it again in good light.";
+
+/**
+ * The server refused photos as black or blank (`photo_too_dark`, with the keys of the shots): they are taken out of
+ * the record, with no tick, and the walk asks for them again.
+ */
+export function refuseDark(draft: CaptureDraft, error: Pick<ApiError, "message" | "details">): CaptureDraft {
+  const named = error.details?.keys;
+  // Keys the server did not name are not guessed at: the shots stay, and the record is only opened again with the words.
+  const keys = Array.isArray(named) ? named.filter((k): k is string => typeof k === "string") : [];
+  let next = draft;
+  for (const key of keys) next = withFile(next, { shot: key }, null);
+  return { ...next, sealed: false, error: { text: error.message ?? TOO_DARK, retry: false } };
+}
+
 /** Sealed, and every file is on the bucket: the record can be sent. */
 export function readyToSend(draft: CaptureDraft): boolean {
   return draft.sealed && !draft.done && canSeal(draft) && files(draft).every(({ file }) => file.url !== null);

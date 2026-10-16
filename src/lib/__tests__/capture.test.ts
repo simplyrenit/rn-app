@@ -43,6 +43,7 @@ import {
   recordState,
   recordWanted,
   recoverShot,
+  refuseDark,
   removedUris,
   seal,
   sendFailure,
@@ -411,6 +412,21 @@ describe("the server's answer", () => {
     // Kept on the phone until the code is typed.
     expect(draftsToKeep([d])).toEqual([d]);
     expect(draftsToKeep([{ ...d, awaitingCode: false }])).toEqual([]);
+  });
+
+  it("a photo the server refused as dark leaves the record; keys it did not name take nothing out", () => {
+    const sent = seal(uploaded(taken()));
+    const key = sent.list.shots[0].key;
+    const named = refuseDark(sent, { message: "Too dark to see the item. Take it again in good light.", details: { keys: [key] } });
+    expect(named.shots[key]).toBeUndefined();
+    expect(Object.keys(named.shots)).toHaveLength(Object.keys(sent.shots).length - 1);
+    expect(named).toMatchObject({ sealed: false, error: { text: "Too dark to see the item. Take it again in good light.", retry: false } });
+
+    for (const details of [null, {}, { keys: "front" }]) {
+      const kept = refuseDark(sent, { message: null, details });
+      expect(kept.shots).toEqual(sent.shots);
+      expect(kept).toMatchObject({ sealed: false, error: { retry: false } });
+    }
   });
 
   it("a refused send: locked means the server already has it; no answer is tried again; the rest needs a person", () => {

@@ -1,3 +1,4 @@
+import { RECORD_FIRST } from "@/lib/capture";
 import { problemLine, problemState } from "@/lib/claims";
 import { clock, dayOf, dayShort, depositAfterLate, lateDaysLabel, money, todayIst, windowLabel } from "@/lib/booking";
 import { captured, cameBackOn, dayBlock, handoverAt, returnedAt, theirStatusLine, whenShort } from "@/lib/day-of";
@@ -227,6 +228,11 @@ export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly stri
           },
   };
 }
+
+const RECORD_UPLOADING = "Your record is still uploading. It is needed before the code.";
+
+/** The line under a code step that is waiting for the shop's own record: still uploading (the record card's state), or not made. */
+export const recordFirstNote = (uploading: boolean): string => (uploading ? RECORD_UPLOADING : RECORD_FIRST);
 
 /** The steps of the return, for the shop. */
 export function shopReturnSteps(b: BookingShop, recorded: boolean): Step[] {
