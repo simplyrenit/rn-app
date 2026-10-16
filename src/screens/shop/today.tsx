@@ -1,6 +1,7 @@
 import { blockReturned, extendBlock, refreshShop, removeBlock, useOpenBlocks, useToday } from "@/backend/shop-today";
 import { setOpenState, shopQueryKey, useShop } from "@/backend/shop";
 import { Notice, Panel } from "@/components/booking/parts";
+import { useAppActive } from "@/components/booking/use-app-active";
 import { Button, EmptyState, Skeleton, Text } from "@/components/core";
 import { ConfirmSheet } from "@/components/core/confirm-sheet";
 import { useButtonLabelColor } from "@/components/core/button";
@@ -16,6 +17,7 @@ import { cannotOpenMessage } from "@/lib/shop";
 import { isQuiet } from "@/lib/shop-today";
 import { BookingShop } from "@/lib/shop-booking";
 import { dayScreen } from "@/lib/shop-handover";
+import { ringToOpen } from "@/lib/shop-ring";
 import {
   Block,
   NeedsRow,
@@ -40,8 +42,8 @@ import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useRef, useState } from "react";
+import { useIsFocused } from "@react-navigation/native";
+import React, { useEffect, useRef, useState } from "react";
 import { RefreshControl, ScrollView, TouchableOpacity, View } from "react-native";
 import { AppSwitch } from "@/components/core/switch";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
@@ -147,6 +149,7 @@ function NeedsItem({
   first,
   busy,
   onBooking,
+  onClaim,
   onProducts,
   onHours,
   onAddress,
@@ -158,6 +161,7 @@ function NeedsItem({
   first: boolean;
   busy: boolean;
   onBooking: (number: string) => void;
+  onClaim: (id: number) => void;
   onProducts: () => void;
   onHours: () => void;
   onAddress: () => void;
@@ -182,6 +186,8 @@ function NeedsItem({
   const open =
     action?.kind === "booking"
       ? () => onBooking(action.number)
+      : action?.kind === "claim"
+      ? () => onClaim(action.id)
       : action?.kind === "products"
       ? onProducts
       : action?.kind === "hours"
@@ -239,8 +245,9 @@ function NeedsItem({
  * SH-04, the shop's Today: the Open switch, "Rented at the counter", what is
  * ringing, what goes out and comes back today, and what needs the shop. The
  * feed is the server's (`GET /api/shop/today/`) and is read again every time the
- * screen comes into view and after a push about the shop; nothing here keeps a
- * verdict of its own. The Open switch is the dashboard's switch: what it says
+ * screen or the app comes into view, every 15 seconds while it stays there, on a
+ * pull down and after a push about the shop; a request that starts ringing takes
+ * the screen, once. Nothing here keeps a verdict of its own. The Open switch is the dashboard's switch: what it says
  * is what the server holds.
  */
 export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
@@ -248,7 +255,10 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   const { color } = useTheme();
   const queryClient = useQueryClient();
   const { userDetails } = useGlobalContext();
-  const today = useToday();
+  // The feed is read again by itself every 15 seconds while this screen is in front of an active app.
+  const focused = useIsFocused();
+  const active = useAppActive();
+  const today = useToday(focused && active);
   const shopQuery = useShop();
   const shop = shopQuery.data;
   const feed = today.data;
@@ -269,11 +279,21 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   const busy = useRef(false);
 
   const { refetch } = today;
-  useFocusEffect(
-    useCallback(() => {
-      void refetch();
-    }, [refetch])
-  );
+  // When Today last came into view: only an answer fetched since then may open a ring, never a copy kept from before.
+  const since = useRef(0);
+  useEffect(() => {
+    if (!focused || !active) return;
+    since.current = Date.now();
+    void refetch();
+  }, [focused, active, refetch]);
+
+  // A request that starts ringing while this screen is open takes the screen, as a ring push does (once for each).
+  const ringing = feed?.ringing;
+  const fetchedAt = today.dataUpdatedAt;
+  useEffect(() => {
+    const ring = focused && active && ringing && fetchedAt >= since.current ? ringToOpen(ringing) : null;
+    if (ring) navigation.navigate("ShopRing", { number: ring.number, ring });
+  }, [focused, active, fetchedAt, ringing, navigation]);
 
   const changeOpen = async (state: "open" | "closed" | "auto") => {
     if (!shop || openBusy) return;
@@ -573,6 +593,7 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
                     first={index === 0}
                     busy={row.action?.kind === "block_back" && blockBusy === row.action.block.id}
                     onBooking={openBooking}
+                    onClaim={(id) => navigation.navigate("Claim", { id })}
                     onProducts={() => navigation.navigate("myProducts")}
                     onHours={() => navigation.navigate("RentalHours")}
                     onAddress={() => navigation.navigate("ShopAddress")}

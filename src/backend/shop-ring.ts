@@ -1,7 +1,7 @@
 import { useGlobalContext } from "@/context/global-context";
 import { SHOP_BOOKINGS_ENDPOINT, SHOP_LIVE_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
-import { RING_POLL_MS } from "@/lib/booking";
+import { RING_POLL_MS, SLOW_POLL_MS } from "@/lib/booking";
 import { BookingShop } from "@/lib/shop-booking";
 import { LiveAnswer, RefuseReason, liveStillMatters, refuseBody } from "@/lib/shop-ring";
 import { useQuery } from "react-query";
@@ -73,11 +73,12 @@ export function useLive(watching: boolean, number: string) {
   });
 }
 
-/** One booking as its shop sees it. */
-export function useShopBooking(number: string, enabled = true) {
+/** One booking as its shop sees it; while `watching` (its page is in front of an active app) read again every 15 seconds. */
+export function useShopBooking(number: string, enabled = true, watching = false) {
   return useQuery(shopBookingQueryKey(number), () => fetchShopBooking(number), {
     enabled,
     staleTime: 0,
+    refetchInterval: watching ? SLOW_POLL_MS : false,
     retry: 1,
   });
 }

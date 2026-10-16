@@ -23,6 +23,7 @@ import {
   feeText,
   hereEnding,
   markAnswering,
+  markRingOpened,
   moreText,
   otherRings,
   outcomeUnknown,
@@ -465,6 +466,7 @@ export default function ShopRingScreen() {
   // This screen is still waiting for an answer while it rings or a tap is in flight: a new ring then waits
   // behind it as "1 more request". Once there is nothing left to answer here, the next ring may open over it.
   const waitingForAnswer = view.kind === "ringing" || working !== null;
+  useEffect(() => markRingOpened(params.number), [params.number]);
   useEffect(() => {
     markAnswering(params.number, waitingForAnswer);
     return () => markAnswering(params.number, false);

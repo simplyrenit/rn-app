@@ -1,5 +1,6 @@
 import { useGlobalContext } from "@/context/global-context";
 import { MY_PRODUCTS_ENDPOINT, SHOP_BLOCKS_ENDPOINT, SHOP_TODAY_ENDPOINT } from "@/lib/config";
+import { SLOW_POLL_MS } from "@/lib/booking";
 import axiosInstance from "@/lib/networkUtils";
 import { Block, BlockCall, PickerProduct, TodayFeed, pickerProductFrom } from "@/lib/shop-today";
 import { QueryClient, useQuery } from "react-query";
@@ -23,12 +24,20 @@ export async function fetchToday(): Promise<TodayFeed> {
   return (await axiosInstance.get<TodayFeed>(SHOP_TODAY_ENDPOINT)).data;
 }
 
-/** Read again each time the screen comes into view and after any push about the shop. */
-export function useToday() {
+/**
+ * Read again each time the screen comes into view and after any push about the shop; and, while `watching`
+ * (the screen is in front of an active app), every 15 seconds, so a new ring or request shows by itself.
+ */
+export function useToday(watching = false) {
   const { authTokens, isAuthenticated, userDetails } = useGlobalContext();
   const username = userDetails?.username;
   const signedIn = Boolean(isAuthenticated && authTokens?.access_token && username);
-  return useQuery(todayQueryKey(username), fetchToday, { enabled: signedIn, staleTime: 0, retry: 1 });
+  return useQuery(todayQueryKey(username), fetchToday, {
+    enabled: signedIn,
+    staleTime: 0,
+    refetchInterval: watching ? SLOW_POLL_MS : false,
+    retry: 1,
+  });
 }
 
 // ---- Quick block (API-CONTRACT OE-F) -------------------------------------------------------

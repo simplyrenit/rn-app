@@ -213,8 +213,16 @@ describe("needsRow: what each item offers", () => {
     });
   });
 
-  it("shows a claim and a kind it does not know as their words alone", () => {
-    for (const kind of ["claim_deadline", "something_new"]) {
+  it("opens the claim from 'A claim ... to answer by'", () => {
+    expect(needsRow({ kind: "claim_deadline", claim: 12, text: "A claim on Tripod to answer by Fri 16 Oct, 6:00 pm" }, 0)).toMatchObject({
+      key: "claim_deadline-12",
+      action: { kind: "claim", id: 12 },
+    });
+    expect(needsRow({ kind: "claim_deadline", text: "x" }, 0).action).toBeNull();
+  });
+
+  it("shows a kind it does not know as its words alone", () => {
+    for (const kind of ["something_new"]) {
       expect(needsRow({ kind, text: "Some words" }, 4)).toMatchObject({ icon: "info", text: "Some words", action: null });
     }
   });
