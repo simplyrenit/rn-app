@@ -1,9 +1,13 @@
 import { SubpageHeader, Text } from "@/components/core";
+import { fetchPublicTerms } from "@/backend/terms";
+import { openCustomerTerms } from "@/lib/terms-link";
+import { useNavigation } from "@react-navigation/native";
+import { useEffect, useState } from "react";
 
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { TERMS_CONTENT } from "@/lib/content";
 import { styled } from "nativewind";
-import { ScrollView, View } from "react-native";
+import { Linking, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 
@@ -17,6 +21,30 @@ const BLOCK_GAP = 20;
 
 export default function Terms() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  // The server's terms page opens in the browser and this screen steps back; the
+  // bundled text below shows only when that page cannot be read or opened.
+  const [useBundled, setUseBundled] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    openCustomerTerms(fetchPublicTerms, Linking.openURL).then((opened) => {
+      if (!live) return;
+      if (opened) navigation.goBack();
+      else setUseBundled(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, [navigation]);
+
+  if (!useBundled) {
+    return (
+      <NonScrollableContainer>
+        <SubpageHeader title="Terms & Conditions" />
+      </NonScrollableContainer>
+    );
+  }
 
   return (
     <NonScrollableContainer>
