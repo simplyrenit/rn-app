@@ -150,6 +150,13 @@ export function statusNote(day: Pick<BookingDay, "call_from">, now: Date): strin
   return day.call_from ? `These open at ${whenShort(day.call_from, now)}.` : "These open once an arrival window is picked.";
 }
 
+/** The shop's note while the code step is shut: it opens 2 hours before the arrival window, whatever the hour. */
+export function codeOpensCopy(name: string, day: Pick<BookingDay, "call_from">, now: Date): string {
+  return day.call_from
+    ? `${name}'s code can be typed from ${whenShort(day.call_from, now)}, 2 hours before the arrival time.`
+    : `${name}'s code can be typed once an arrival window is picked.`;
+}
+
 // ---- Call (a direct dial) ---------------------------------------------------------------------------------
 
 export interface CallCopy {

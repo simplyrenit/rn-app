@@ -8,6 +8,7 @@ import {
   captured,
   codeErrorText,
   codeIsClosed,
+  codeOpensCopy,
   dayBlock,
   dayErrorText,
   dayOfCopy,
@@ -199,6 +200,15 @@ describe("the three preset buttons (A-36)", () => {
     expect(statusNote(day, EVE)).toBe("These open at 8:00 am on Sat 24 Oct.");
     expect(statusNote(day, new Date("2026-10-24T02:00:00Z"))).toBe("These open at 8:00 am.");
     expect(statusNote({ call_from: null }, NOW)).toBe("These open once an arrival window is picked.");
+  });
+});
+
+describe("the shop's note while the code step is shut", () => {
+  it("says it opens 2 hours before the arrival time, and when", () => {
+    const day = booking().day;
+    expect(codeOpensCopy("Asha", day, NOW)).toBe("Asha's code can be typed from 8:00 am, 2 hours before the arrival time.");
+    expect(codeOpensCopy("Asha", day, EVE)).toBe("Asha's code can be typed from 8:00 am on Sat 24 Oct, 2 hours before the arrival time.");
+    expect(codeOpensCopy("Asha", { call_from: null }, NOW)).toBe("Asha's code can be typed once an arrival window is picked.");
   });
 });
 

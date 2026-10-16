@@ -249,18 +249,20 @@ function BookingPage({ booking, now, receivedAt }: { booking: BookingShop; now: 
             <Text fontSize="text-sm" tone="body">
               {request.body}
             </Text>
-            <View style={{ flexDirection: "row", gap: space.sm }}>
-              <View style={{ flex: 1 }}>
-                <Button loading={answering === "accept"} disabled={answering !== null} onPress={() => void answer(true)}>
-                  Accept
-                </Button>
+            {request.ended ? null : (
+              <View style={{ flexDirection: "row", gap: space.sm }}>
+                <View style={{ flex: 1 }}>
+                  <Button loading={answering === "accept"} disabled={answering !== null} onPress={() => void answer(true)}>
+                    Accept
+                  </Button>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Button variant="outline" loading={answering === "decline"} disabled={answering !== null} onPress={() => void answer(false)}>
+                    Decline
+                  </Button>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Button variant="outline" loading={answering === "decline"} disabled={answering !== null} onPress={() => void answer(false)}>
-                  Decline
-                </Button>
-              </View>
-            </View>
+            )}
           </Panel>
         ) : null}
         {mine ? <Notice icon="clock">{mine}</Notice> : null}

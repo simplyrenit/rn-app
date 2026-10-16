@@ -241,7 +241,7 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
 
       {can("request_window_change") || can("cancel") ? (
         <Panel>
-          {can("request_window_change") && !booking.window_request ? (
+          {can("request_window_change") ? (
             <TouchableOpacity
               accessibilityRole="button"
               activeOpacity={0.7}
@@ -273,7 +273,7 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
                 flexDirection: "row",
                 gap: space.md,
                 padding: space.md,
-                borderTopWidth: can("request_window_change") && !booking.window_request ? 1 : 0,
+                borderTopWidth: can("request_window_change") ? 1 : 0,
                 borderTopColor: color.line,
               }}
             >

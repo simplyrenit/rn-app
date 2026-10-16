@@ -259,7 +259,18 @@ describe("the time-change request", () => {
     expect(customerRequest(booking({ window_request: request, can: ["answer_window_change"] }))).toEqual({
       title: "Aarav asked to move the arrival time",
       body: "New time: Sat 24 Oct, 12:00 – 1:00 pm. The time stays as it is unless you accept.",
+      ended: false,
     });
+  });
+
+  it("an expired request is shown as ended, without Accept, even when the server offers no answer", () => {
+    const expired = { ...request, expired: true };
+    expect(customerRequest(booking({ window_request: expired, can: [] }))).toEqual({
+      title: "Aarav asked to move the arrival time",
+      body: "This time has passed. The request has ended.",
+      ended: true,
+    });
+    expect(ownRequest(booking({ window_request: { ...expired, by: "owner" } }))).toBe("This time has passed. The request has ended.");
   });
 
   it("is not offered for the shop's own request, or when the server does not allow an answer", () => {

@@ -3,6 +3,7 @@ import type { CaptureFlags } from "@/lib/capture";
 import type { ApiError } from "@/lib/api-error";
 import {
   TimelineRow,
+  WINDOW_REQUEST_ENDED,
   clock,
   dayOf,
   dayShort,
@@ -70,6 +71,8 @@ export interface ShopWindowRequest {
   start: string;
   end: string;
   asked_at: string;
+  /** The slot asked for has begun: nothing can be accepted any more. */
+  expired?: boolean;
 }
 
 export interface BookingShop {
@@ -405,18 +408,21 @@ export function moneyView(b: BookingShop): MoneyView {
 export function customerRequest(b: Pick<BookingShop, "window_request" | "can" | "customer">): {
   title: string;
   body: string;
+  /** The request is over: the card is shown without Accept or Decline. */
+  ended: boolean;
 } | null {
   const request = b.window_request;
-  if (!request || request.by !== "customer" || !b.can.includes("answer_window_change")) return null;
-  return {
-    title: `${b.customer.first_name} asked to move the arrival time`,
-    body: `New time: ${windowSummary(request)}. The time stays as it is unless you accept.`,
-  };
+  if (!request || request.by !== "customer") return null;
+  const title = `${b.customer.first_name} asked to move the arrival time`;
+  if (request.expired) return { title, body: WINDOW_REQUEST_ENDED, ended: true };
+  if (!b.can.includes("answer_window_change")) return null;
+  return { title, body: `New time: ${windowSummary(request)}. The time stays as it is unless you accept.`, ended: false };
 }
 
 /** What the shop itself has asked for and is waiting on. */
 export function ownRequest(b: Pick<BookingShop, "window_request">): string | null {
   const request = b.window_request;
+  if (request?.by === "owner" && request.expired) return WINDOW_REQUEST_ENDED;
   return request && request.by === "owner" ? `You asked to move it to ${windowSummary(request)}. It stays as it is until they accept.` : null;
 }
 

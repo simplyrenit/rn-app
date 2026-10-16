@@ -241,7 +241,7 @@ export interface BookingCustomer {
   tried?: { ring: boolean; second_ring: boolean; staff_call: boolean } | null;
   cancels_left_today: number;
   window: TimeWindow | null;
-  window_request: { by: "owner" | "customer"; start: string; end: string; asked_at: string } | null;
+  window_request: { by: "owner" | "customer"; start: string; end: string; asked_at: string; expired?: boolean } | null;
   return_by: string | null;
   /** The handover time plus 24 hours while the stage is `out`, else null. */
   report_fault_until?: string | null;
@@ -1514,6 +1514,8 @@ export function windowErrorText(error: ApiError | null): string {
       return "Your arrival time is already set. You can ask to change it.";
     case "request_open":
       return "A change is already waiting for an answer.";
+    case "window_request_expired":
+      return WINDOW_REQUEST_ENDED;
     case "no_request":
       return "That request is no longer open.";
     case "own_request":
@@ -1525,6 +1527,9 @@ export function windowErrorText(error: ApiError | null): string {
   }
 }
 
+/** A request whose slot has begun can never be accepted; the server says `expired`. */
+export const WINDOW_REQUEST_ENDED = "This time has passed. The request has ended.";
+
 /** A request to move the window that is waiting for an answer. */
 export function windowRequestCopy(
   booking: Pick<BookingCustomer, "window_request" | "can">
@@ -1532,14 +1537,16 @@ export function windowRequestCopy(
   const request = booking.window_request;
   if (!request) return null;
   const to = windowSummary(request);
+  const title = request.by === "owner" ? "The shop asked to move your arrival" : "You asked to change your arrival time";
+  if (request.expired) return { title, body: WINDOW_REQUEST_ENDED, canAnswer: false };
   return request.by === "owner"
     ? {
-        title: "The shop asked to move your arrival",
+        title,
         body: `New time: ${to}. Your time stays as it is unless you accept.`,
         canAnswer: booking.can.includes("answer_window_change"),
       }
     : {
-        title: "You asked to change your arrival time",
+        title,
         body: `To ${to}. Your time stays as it is until the shop accepts.`,
         canAnswer: false,
       };
