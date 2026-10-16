@@ -264,9 +264,9 @@ describe("the Money card", () => {
 
   it("says a refunded fault comes off a later payout, then that it was taken (E-116)", () => {
     const m = { ...booking().money, clawback: "600.00", clawback_left: "600.00" };
-    expect(moneyView(booking({ money: m })).notes).toEqual(["₹600 refunded to the customer: comes off a later payout"]);
+    expect(moneyView(booking({ money: m })).notes).toEqual(["₹600 comes off your payouts for the fault report on this booking"]);
     expect(moneyView(booking({ money: { ...m, clawback_left: "0.00" } })).notes).toEqual([
-      "₹600 refunded to the customer: taken off your payouts",
+      "₹600 was taken off your payouts for the fault report on this booking",
     ]);
     // A server without the field says nothing.
     expect(moneyView(booking()).notes).toEqual([]);

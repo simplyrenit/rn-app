@@ -459,6 +459,7 @@ describe("the price before Book now", () => {
       "Book now pays ₹99 now, which counts toward the rent.",
       "The owner is rung and has up to 10 minutes to answer.",
       "If they say no, do not answer, or you cancel before they answer, the ₹99 comes back in full.",
+      "If you do not pay the rent within 30 minutes of their yes, the booking lapses and Renit keeps the ₹99.",
       "Once they accept, cancelling up to 24 hours before pickup gives the rent back in full. Renit keeps the ₹99.",
       "Inside that time, one day's rent (₹610) goes to the owner for holding the dates, and the rest comes back.",
       "Each late day costs one day's rent.",
@@ -475,16 +476,33 @@ describe("the price before Book now", () => {
     expect(plainLines(quote({ ring_minutes: 1 }))[1]).toBe("The owner is rung and has up to 1 minute to answer.");
     const old = plainLines(quote({ ring_minutes: undefined, cancel: undefined }));
     expect(old[1]).toBe("The owner is rung.");
-    expect(old[3]).toBe("Once they accept, cancelling up to 24 hours before pickup gives the rent back in full. Renit keeps the ₹99.");
-    expect(old[4]).toBe("Inside that time, one day's rent goes to the owner for holding the dates, and the rest comes back.");
+    // No 24 made up: "a day".
+    expect(old[4]).toBe("Once they accept, cancelling up to a day before pickup gives the rent back in full. Renit keeps the ₹99.");
+    expect(old[5]).toBe("Inside that time, one day's rent goes to the owner for holding the dates, and the rest comes back.");
+    expect(plainLines(quote({ rent_pay_minutes: undefined as unknown as number }))[3]).toBe(
+      "If you do not pay the rent in time, the booking lapses and Renit keeps the ₹99."
+    );
+  });
+
+  it("uses the singular for one hour and one minute", () => {
+    const one = plainLines(quote({ ring_minutes: 1, rent_pay_minutes: 1, cancel: { free_hours: 1, grace_minutes: 1, grace: true, day_rent: "610.00" } }));
+    expect(one[3]).toContain("within 1 minute of their yes");
+    expect(one[4]).toContain("up to 1 hour before pickup");
+    expect(one[6]).toBe("This pickup is under 1 hour away, so you have 1 minute after paying the rent to cancel and get the rent back.");
+  });
+
+  it("leaves out the rent's refund and the day's rent when the 99 covers the rent (nothing is paid after the accept)", () => {
+    const covered = plainLines(quote({ rent: "60.00", total: "60.00", pay_now: "60.00", pay_after_accept: "0.00" }));
+    expect(covered.join(" ")).not.toMatch(/rent back in full|one day's rent goes|do not pay the rent/);
+    expect(covered).toContain("Once they accept, Renit keeps the ₹60 if you cancel.");
   });
 
   it("says delivery, not pickup, for a delivery, and the 30-minute grace for a booking made for the next day (N7)", () => {
     const soon = plainLines(
       quote({ delivery_mode: "owner_delivery", cancel: { free_hours: 24, grace_minutes: 30, grace: true, day_rent: "610.00" } })
     );
-    expect(soon[3]).toContain("24 hours before delivery");
-    expect(soon[5]).toBe(
+    expect(soon[4]).toContain("24 hours before delivery");
+    expect(soon[6]).toBe(
       "This delivery is under 24 hours away, so you have 30 minutes after paying the rent to cancel and get the rent back."
     );
   });
@@ -507,7 +525,7 @@ describe("the price before Book now", () => {
 
   it("adds up the whole booking in one line (E-65)", () => {
     expect(totalLine(quote())).toBe(
-      "In all: ₹99 now, ₹1,731 after the owner accepts, ₹3,000 deposit (refundable). Total ₹4,830."
+      "₹99 now, ₹1,731 after the owner accepts, ₹3,000 deposit (refundable). In all, deposit included: ₹4,830."
     );
     // No deposit, nothing after the accept (the 99 covers it all).
     const small = quote({
@@ -517,8 +535,10 @@ describe("the price before Book now", () => {
       pay_after_accept: "0.00",
       deposit: { amount: "0.00", with_rent: false, due_on: null, refundable: true },
     });
-    expect(totalLine(small)).toBe("In all: ₹60 now. Total ₹60.");
+    expect(totalLine(small)).toBe("₹60 now. In all: ₹60.");
     expect(totalLine(quote(), true)).toContain("₹99 already paid, ₹1,731 after");
+    // Never the price panel's own word.
+    expect(totalLine(quote())).not.toMatch(/\bTotal\b/);
   });
 
   it("writes the closed notice with the opening time", () => {
@@ -537,11 +557,12 @@ describe("the price before Book now", () => {
 
   it("writes no minutes of its own: the owner's and the customer's come from the quote", () => {
     const words = [
-      ...plainLines(quote({ ring_minutes: 7 })),
+      ...plainLines(quote({ ring_minutes: 7, rent_pay_minutes: 45 })),
       ...paySteps(quote({ rent_pay_minutes: 45 }), false, NOW).map((step) => step.sub),
     ].join(" ");
     expect(words).toMatch(/up to 7 minutes/);
     expect(words).toMatch(/Within 45 minutes of their yes/);
+    expect(words).toMatch(/within 45 minutes of their yes, the booking lapses/);
     expect(words).not.toMatch(/\b(10|30) minutes/);
   });
 
@@ -908,6 +929,7 @@ describe("cancelling", () => {
       back: [{ what: "rent", amount: "1220.00", text: null }],
       kept: [],
       to_owner: "610.00",
+      to_owner_delivery: "0.00",
       free_until: null,
     });
     // Who gets the money and why (E-82): one day's rent, with the booking amount inside it.
@@ -915,6 +937,14 @@ describe("cancelling", () => {
       "₹1,220 goes back the way you paid.",
       "₹610 goes to the owner: one day's rent, for holding the dates. Your booking amount counts toward it.",
     ]);
+  });
+
+  it("does not call the owner's whole share one day's rent when the delivery fee is in it, or when it cannot tell (review 4)", () => {
+    const base = { case: "inside_24h" as const, back: [], kept: [], to_owner: "780.00", free_until: null };
+    expect(cancelCopy({ ...base, to_owner_delivery: "170.00" }).lines).toEqual([
+      "₹780 goes to the owner: one day's rent (₹610) and the delivery fee (₹170), as they had set out. Your booking amount counts toward it.",
+    ]);
+    expect(cancelCopy(base).lines).toEqual(["₹780 goes to the owner for holding the dates."]);
   });
 
   it("the page after a cancel says what comes back, to where, in how many days, and what is kept (D-24)", () => {
@@ -982,8 +1012,12 @@ describe("cancelling", () => {
     // Nothing on the booking yet (the refund row is a few seconds behind): only what is known.
     expect(bookingBanner(cancelled("free", { booking_amount_state: "refund_requested" }, [])).sub).toBe("You cancelled this booking.");
     expect(cancelOutcomeOf(booking({ payments: [] }))).toBeNull();
+    // Read back from the booking, the delivery fee is what is over the day's rent (₹610).
+    expect(bookingBanner(cancelled("inside_24h", { booking_amount_state: "refunded", owner_share: "780.00" })).sub).toContain(
+      "₹780 goes to the owner: one day's rent (₹610) and the delivery fee (₹170), as they had set out."
+    );
     // This run's own outcome wins over the reading (it has the owner's amount).
-    const owner = { case: "inside_24h" as const, back: [], kept: [], to_owner: "610.00", free_until: null };
+    const owner = { case: "inside_24h" as const, back: [], kept: [], to_owner: "610.00", to_owner_delivery: "0.00", free_until: null };
     expect(bookingBanner(cancelled("inside_24h"), owner).sub).toBe("You cancelled this booking. ₹610 goes to the owner: one day's rent, for holding the dates. Your booking amount counts toward it.");
   });
 
@@ -1481,9 +1515,14 @@ describe("the booking screen", () => {
         free_until: "2026-10-23T04:30:00Z",
       })
     ).toBe("Rent back in full until Fri 23 Oct, 10:00 am. Renit keeps the ₹99: the owner had already said yes.");
-    expect(cancelHint({ case: "inside_24h", back: [], kept: [], to_owner: "610.00", free_until: null })).toBe(
-      "One day's rent (₹610) goes to the owner. The rest is refunded."
+    const late = { case: "inside_24h" as const, back: [], kept: [], to_owner: "610.00", free_until: null };
+    expect(cancelHint({ ...late, to_owner_delivery: "0.00" })).toBe("One day's rent (₹610) goes to the owner. The rest is refunded.");
+    // An owner delivering who had set out keeps the delivery fee too: it is not all "one day's rent" (review 4).
+    expect(cancelHint({ ...late, to_owner: "780.00", to_owner_delivery: "170.00" })).toBe(
+      "₹780 goes to the owner: one day's rent and the delivery fee, as they had set out. The rest is refunded."
     );
+    // An answer that cannot say: the amount, no name for it.
+    expect(cancelHint(late)).toBe("₹610 goes to the owner. The rest is refunded.");
     expect(
       cancelHint({
         case: "after_accept",

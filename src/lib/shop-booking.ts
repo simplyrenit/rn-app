@@ -411,9 +411,9 @@ export function moneyView(b: BookingShop): MoneyView {
     ...(kept.late > 0 ? [`${money(kept.late)} kept from the deposit for you, for the late days`] : []),
     ...(clawback > 0
       ? [
-          `${money(clawback)} refunded to the customer: ${
-            amountOf(m.clawback_left) > 0 ? "comes off a later payout" : "taken off your payouts"
-          }`,
+          amountOf(m.clawback_left) > 0
+            ? `${money(clawback)} comes off your payouts for the fault report on this booking`
+            : `${money(clawback)} was taken off your payouts for the fault report on this booking`,
         ]
       : []),
   ];

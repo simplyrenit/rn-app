@@ -7,6 +7,7 @@
  * instant is UTC and is shown in India time. The server works every amount out;
  * nothing here adds money up, it only says what the server sent.
  */
+import { pluralize } from "@/lib/pluralize";
 import { SavedAddress, addressLine, addressTitle } from "@/lib/addresses";
 import { ApiError, fieldErrors } from "@/lib/api-error";
 import type { CaptureFlags } from "@/lib/capture";
@@ -707,7 +708,8 @@ export function totalLine(quote: Quote, moved = false): string {
   if (isPositive(quote.pay_after_accept)) parts.push(`${money(quote.pay_after_accept)} after the owner accepts`);
   if (isPositive(quote.deposit.amount)) parts.push(`${money(quote.deposit.amount)} deposit (refundable)`);
   const all = Number(quote.pay_now) + Number(quote.pay_after_accept) + Number(quote.deposit.amount);
-  return `In all: ${parts.join(", ")}. Total ${money(all)}.`;
+  // Not "Total": the price panel's Total is the rent without the deposit.
+  return `${parts.join(", ")}. In all${isPositive(quote.deposit.amount) ? ", deposit included" : ""}: ${money(all)}.`;
 }
 
 /**
@@ -719,8 +721,13 @@ export function plainLines(quote: Quote, moved = false): string[] {
   const amount = money(quote.pay_now);
   const morning = isForMorning(quote);
   const minutes = Number(quote.ring_minutes);
-  const answer = Number.isFinite(minutes) && minutes > 0 ? ` and has up to ${minutes} ${minutes === 1 ? "minute" : "minutes"} to answer` : "";
+  const answer = Number.isFinite(minutes) && minutes > 0 ? ` and has up to ${pluralize(minutes, "minute")} to answer` : "";
   const cancel = quote.cancel;
+  // Without the server's number: "a day", never a made-up 24.
+  const before = cancel ? pluralize(cancel.free_hours, "hour") : "a day";
+  const rentToPay = isPositive(quote.pay_after_accept);
+  const payMinutes = Number(quote.rent_pay_minutes);
+  const payWindow = Number.isFinite(payMinutes) && payMinutes > 0 ? ` within ${pluralize(payMinutes, "minute")} of their yes` : " in time";
   return [
     moved
       ? `Your ${amount} from the earlier request moves to this booking and counts toward the rent.`
@@ -728,10 +735,17 @@ export function plainLines(quote: Quote, moved = false): string[] {
     `${morning ? "The owner is asked when they open" : "The owner is rung"}${answer}.`,
     `If they say no, do not answer, or you cancel before they answer, the ${amount} comes back in full.`,
     ...(morning ? [`Changed your mind? Cancel any time before they open and the ${amount} comes back.`] : []),
-    `Once they accept, cancelling up to ${cancel ? `${cancel.free_hours} hours` : "24 hours"} before ${handover} gives the rent back in full. Renit keeps the ${amount}.`,
-    `Inside that time, one day's rent${cancel ? ` (${money(cancel.day_rent)})` : ""} goes to the owner for holding the dates, and the rest comes back.`,
-    ...(cancel?.grace
-      ? [`This ${handover} is under ${cancel.free_hours} hours away, so you have ${cancel.grace_minutes} minutes after paying the rent to cancel and get the rent back.`]
+    // N4: the ₹99 is also kept when the rent is not paid after the accept.
+    ...(rentToPay ? [`If you do not pay the rent${payWindow}, the booking lapses and Renit keeps the ${amount}.`] : []),
+    rentToPay
+      ? `Once they accept, cancelling up to ${before} before ${handover} gives the rent back in full. Renit keeps the ${amount}.`
+      : `Once they accept, Renit keeps the ${amount} if you cancel.`,
+    // With the ₹99 covering it all there is no rent paid, so no day's rent to split.
+    ...(rentToPay
+      ? [`Inside that time, one day's rent${cancel ? ` (${money(cancel.day_rent)})` : ""} goes to the owner for holding the dates, and the rest comes back.`]
+      : []),
+    ...(rentToPay && cancel?.grace
+      ? [`This ${handover} is under ${pluralize(cancel.free_hours, "hour")} away, so you have ${pluralize(cancel.grace_minutes, "minute")} after paying the rent to cancel and get the rent back.`]
       : []),
     "Each late day costs one day's rent.",
     "Returning early gives no refund.",
@@ -1168,7 +1182,24 @@ export interface CancelOutcome {
   back: CancelMoney[];
   kept: CancelMoney[];
   to_owner: string;
+  /** Of `to_owner`, the delivery fee an owner who had set out keeps; the rest is one day's rent. Absent from an older server. */
+  to_owner_delivery?: string;
   free_until: string | null;
+}
+
+/**
+ * What goes to the owner and why (E-82). `to_owner` is one day's rent, plus the delivery fee when an owner delivering had set out
+ * (`to_owner_delivery`); "one day's rent" is said only when the amount is that. An answer that cannot say gets no name for it.
+ */
+function ownerLine(outcome: CancelOutcome): string {
+  const total = money(outcome.to_owner);
+  const delivery = outcome.to_owner_delivery;
+  if (delivery === undefined) return `${total} goes to the owner for holding the dates.`;
+  if (!isPositive(delivery)) {
+    return `${total} goes to the owner: one day's rent, for holding the dates. Your booking amount counts toward it.`;
+  }
+  const rent = Number(outcome.to_owner) - Number(delivery);
+  return `${total} goes to the owner: one day's rent (${money(rent)}) and the delivery fee (${money(delivery)}), as they had set out. Your booking amount counts toward it.`;
 }
 
 /** What is kept and why (E-78): who keeps it, so "not returned" never stands alone. The server's own words when it sends them. */
@@ -1190,9 +1221,7 @@ export function cancelCopy(outcome: CancelOutcome): { title: string; lines: stri
         )}`
     ),
     ...outcome.kept.map(keptLine),
-    ...(isPositive(outcome.to_owner)
-      ? [`${money(outcome.to_owner)} goes to the owner: one day's rent, for holding the dates. Your booking amount counts toward it.`]
-      : []),
+    ...(isPositive(outcome.to_owner) ? [ownerLine(outcome)] : []),
   ];
   return {
     title: ringing ? "Cancel this request?" : "Cancel this booking?",
@@ -1243,6 +1272,10 @@ export function cancelOutcomeOf(booking: Pick<BookingCustomer, "payments" | "mon
     back,
     kept,
     to_owner: m.owner_share ?? "0.00",
+    // The owner's share is one day's rent, and the delivery fee on top when they had set out: split it by the day's rent.
+    ...(m.owner_share != null
+      ? { to_owner_delivery: Math.max(Number(m.owner_share) - Number(m.rate), 0).toFixed(2) }
+      : {}),
     free_until: null,
   };
 }
@@ -1897,9 +1930,11 @@ export function cancelHint(outcome: CancelOutcome): string {
       return [until, kept].filter(Boolean).join(" ");
     }
     case "inside_24h":
-      return isPositive(outcome.to_owner)
-        ? `One day's rent (${money(outcome.to_owner)}) goes to the owner. The rest is refunded.`
-        : "The rest of what you paid is refunded.";
+      if (!isPositive(outcome.to_owner)) return "The rest of what you paid is refunded.";
+      if (outcome.to_owner_delivery === undefined) return `${money(outcome.to_owner)} goes to the owner. The rest is refunded.`;
+      return isPositive(outcome.to_owner_delivery)
+        ? `${money(outcome.to_owner)} goes to the owner: one day's rent and the delivery fee, as they had set out. The rest is refunded.`
+        : `One day's rent (${money(outcome.to_owner)}) goes to the owner. The rest is refunded.`;
     default:
       return kept || "Nothing is refunded.";
   }
