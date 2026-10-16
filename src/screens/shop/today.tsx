@@ -149,6 +149,7 @@ function NeedsItem({
   onBooking,
   onProducts,
   onHours,
+  onAddress,
   onPhotos,
   onReturned,
   onExtend,
@@ -159,6 +160,7 @@ function NeedsItem({
   onBooking: (number: string) => void;
   onProducts: () => void;
   onHours: () => void;
+  onAddress: () => void;
   onPhotos: () => void;
   onReturned: (block: Block) => void;
   onExtend: (block: Block) => void;
@@ -184,6 +186,8 @@ function NeedsItem({
       ? onProducts
       : action?.kind === "hours"
       ? onHours
+      : action?.kind === "address"
+      ? onAddress
       : null;
   const body = (
     <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
@@ -571,6 +575,7 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
                     onBooking={openBooking}
                     onProducts={() => navigation.navigate("myProducts")}
                     onHours={() => navigation.navigate("RentalHours")}
+                    onAddress={() => navigation.navigate("ShopAddress")}
                     onPhotos={() => navigation.navigate("DraftPhotos")}
                     onReturned={(block) =>
                       // What is said after follows the server's answer: a block that has not ended keeps today's unit taken.

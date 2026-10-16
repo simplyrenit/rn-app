@@ -52,6 +52,11 @@ export interface OpenState {
 /** `GET /api/shop/`, the fields the phone uses. */
 export interface Shop {
   name: string;
+  /** The full address and pin the owner confirmed; empty and null before. */
+  address: string;
+  locality: string;
+  coordinates: { lat: number; long: number } | null;
+  address_confirmed: boolean;
   hours: Hours;
   closed_until: string | null;
   min_notice_hours: number;
@@ -412,6 +417,30 @@ export const SIGN_OUT_EVERYWHERE_NOTE =
  */
 export const hasDashboard = (isMerchant: boolean | undefined, approval: string | null | undefined): boolean =>
   Boolean(isMerchant) && approval === "approved";
+
+/** The body of `POST /api/shop/confirm-address/`. */
+export interface ShopAddressBody {
+  address: string;
+  locality: string;
+  coordinates: { lat: number; long: number };
+}
+
+/**
+ * The body from what the map picker gave. When the geocoder had nothing
+ * (`mapAddress` null) the locality stands in, so the address is never blank.
+ * The server's column is 255 characters.
+ */
+export function shopAddressBody(
+  pin: { latitude: number; longitude: number },
+  mapAddress: string | null,
+  locality: string
+): ShopAddressBody {
+  return {
+    address: (mapAddress?.trim() || locality).slice(0, 255),
+    locality: locality.slice(0, 255),
+    coordinates: { lat: pin.latitude, long: pin.longitude },
+  };
+}
 
 /** The confirmation for signing one device out. */
 export const deviceSignOutQuestion = (name: string | null | undefined) => ({

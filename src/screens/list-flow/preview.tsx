@@ -27,7 +27,7 @@ import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { readReasons } from "@/lib/listing-edit";
 import { waitsText } from "@/lib/listing-status";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, View } from "react-native";
 import { useQueryClient } from "react-query";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { BanknotesIcon, CheckIcon } from "react-native-heroicons/outline";
@@ -223,6 +223,15 @@ export default function ListPreviewScreen() {
       }
       // A merchant who may not publish yet for another reason: say which.
       if (failure?.code === "publish_locked") {
+        // The address is the one thing the owner fixes on its own screen: a toast
+        // is gone in seconds and has no button.
+        if (locked.includes("shop_address")) {
+          Alert.alert("You can't publish yet", publishLockedMessage(locked), [
+            { text: "Not now", style: "cancel" },
+            { text: "Set shop address", onPress: () => navigation.navigate("ShopAddress") },
+          ]);
+          return;
+        }
         toast.warning("You can't publish yet", { message: publishLockedMessage(locked) });
         return;
       }

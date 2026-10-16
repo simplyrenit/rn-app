@@ -345,6 +345,8 @@ export type RootStackParamList = {
   /** The owner's hours, Open switch, notice and delivery (ENG-146). */
   RentalSettings: undefined;
   RentalHours: undefined;
+  /** The shop's address and pin, on the same map picker (ENG-265). */
+  ShopAddress: undefined;
   RentalDelivery: undefined;
   /**
    * Live booking, the customer's side (ENG-99). `BookingDates` is BK-02: the

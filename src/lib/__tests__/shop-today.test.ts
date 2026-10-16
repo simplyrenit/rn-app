@@ -206,8 +206,15 @@ describe("needsRow: what each item offers", () => {
     });
   });
 
-  it("shows a claim, an address to confirm and a kind it does not know as their words alone", () => {
-    for (const kind of ["claim_deadline", "address_unconfirmed", "something_new"]) {
+  it("opens the Shop address screen from 'Confirm your shop's address'", () => {
+    expect(needsRow({ kind: "address_unconfirmed", text: "Confirm your shop's address" }, 0)).toMatchObject({
+      icon: "warning",
+      action: { kind: "address" },
+    });
+  });
+
+  it("shows a claim and a kind it does not know as their words alone", () => {
+    for (const kind of ["claim_deadline", "something_new"]) {
       expect(needsRow({ kind, text: "Some words" }, 4)).toMatchObject({ icon: "info", text: "Some words", action: null });
     }
   });
