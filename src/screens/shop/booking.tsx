@@ -106,6 +106,11 @@ function MoneyCard({ booking }: { booking: BookingShop }) {
       <MoneyLine label="Renit's fee" amount={m.fee.charged} struck={m.fee.struck ?? undefined} />
       <View style={{ height: 1, backgroundColor: color.line }} />
       <MoneyLine label="You earn" amount={m.earn} bold />
+      {m.notes.map((note) => (
+        <Text key={note} fontSize="text-sm" tone="body">
+          {note}
+        </Text>
+      ))}
       {m.payout ? (
         <Text fontSize="text-sm" tone="body">
           {m.payout}

@@ -239,8 +239,37 @@ describe("the Money card", () => {
       fee: { struck: "₹92", charged: "₹0" },
       earn: "₹1,830",
       payout: "Sent on the day of handover",
+      notes: [],
       deposit: { amount: "₹3,000", sub: "Asked from the customer before the handover" },
     });
+  });
+
+  it("says what was kept from the deposit for the shop, and what of it went back (E-110)", () => {
+    const m = { ...booking().money, deposit: "5000.00", deposit_state: "settled", damage_deduction: "200.00" };
+    const view = moneyView(booking({ stage: "closed", money: m }));
+    expect(view.notes).toEqual(["₹200 kept from the deposit for you, for the damage"]);
+    expect(view.deposit).toEqual({ amount: "₹5,000", sub: "₹4,800 returned, ₹200 kept for the damage" });
+    // Late days count once they are fixed at the return, and come out of the deposit before the damage is asked.
+    const late = moneyView(booking({ stage: "closed", money: { ...m, late_days: 2, late_fee: "1220.00" } }));
+    expect(late.notes).toEqual([
+      "₹200 kept from the deposit for you, for the damage",
+      "₹1,220 kept from the deposit for you, for the late days",
+    ]);
+    expect(late.deposit?.sub).toBe("₹3,580 returned, ₹200 kept for the damage, ₹1,220 kept for the late days");
+    // While the item is out the late fee is only today's count: nothing is kept yet.
+    expect(moneyView(booking({ stage: "out", money: { ...m, deposit_state: "paid", damage_deduction: "0.00", late_fee: "610.00" } })).notes).toEqual([]);
+    // Nothing kept: the deposit just settles.
+    expect(moneyView(booking({ money: { ...m, damage_deduction: "0.00" } })).deposit?.sub).toBe("Settled");
+  });
+
+  it("says a refunded fault comes off a later payout, then that it was taken (E-116)", () => {
+    const m = { ...booking().money, clawback: "600.00", clawback_left: "600.00" };
+    expect(moneyView(booking({ money: m })).notes).toEqual(["₹600 refunded to the customer: comes off a later payout"]);
+    expect(moneyView(booking({ money: { ...m, clawback_left: "0.00" } })).notes).toEqual([
+      "₹600 refunded to the customer: taken off your payouts",
+    ]);
+    // A server without the field says nothing.
+    expect(moneyView(booking()).notes).toEqual([]);
   });
 
   it("a held deposit is 'Held by Renit'; no deposit is not drawn; a delivery fee is", () => {
