@@ -42,12 +42,18 @@ describe("fetchPublicTerms", () => {
   it("reads the terms with a plain call: no token, no header of an earlier account", async () => {
     plain.get.mockResolvedValue({ data: terms(null) });
     const read = await fetchPublicTerms();
-    expect(plain.get).toHaveBeenCalledWith("https://api.test/terms/");
+    expect(plain.get).toHaveBeenCalledWith("https://api.test/terms/", { timeout: undefined });
     expect(api.get).not.toHaveBeenCalled();
     // Signed out, the answer says nothing about a person.
     expect(read.owner.accepted).toBeNull();
     expect(read.owner.version).toBe("2026-10");
     expect(read.owner.url).toBe("https://simplyrenit.com/terms/owner");
+  });
+
+  it("gives up after the timeout a waiting caller passes", async () => {
+    plain.get.mockResolvedValue({ data: terms(null) });
+    await fetchPublicTerms(8000);
+    expect(plain.get).toHaveBeenCalledWith("https://api.test/terms/", { timeout: 8000 });
   });
 });
 

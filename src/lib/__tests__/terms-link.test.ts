@@ -28,4 +28,10 @@ describe("openCustomerTerms", () => {
       openCustomerTerms(async () => terms("/api/terms/page/"), () => Promise.reject(new Error("bad url")))
     ).resolves.toBe(false);
   });
+
+  it("does not open the link when the screen was left while the server was read", async () => {
+    const open = jest.fn(async (_url: string) => true);
+    await expect(openCustomerTerms(async () => terms("https://x.test/terms"), open, () => false)).resolves.toBe(false);
+    expect(open).not.toHaveBeenCalled();
+  });
 });
