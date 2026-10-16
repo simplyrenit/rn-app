@@ -631,13 +631,16 @@ export function damageHold(statement: string, amount: string, photos: number, ma
 
 /**
  * Where "report a problem" stands for the shop, read from the server's `can` (P4-10): it holds `report_problem` only
- * while the stage is `returned`, the 24 hours last, there is no damage claim yet, and something is left of the
- * deposit. The phone does not work those out; it only says which one is missing when `can` lacks it.
+ * while the stage is `returned`, the 24 hours last, there is no damage claim yet, something is left of the
+ * deposit, and the shop's own handover and return records are both complete (ENG-267). The phone does not work
+ * those out; it only says which one is missing when `can` lacks it.
  *  - `open`: the form is offered. `after_code`: not yet, the customer has still to type the return code.
  *  - `none_left`: nothing is left of the deposit to claim against (A-50): say so, and point to Get help.
  *  - `forfeited`: the item was not back in time and the deposit already came to the shop (`deposit_state` `forfeited`):
  *    `can` has no `report_problem` then, and `report_problem_until` is null (it is only set while the stage is `returned`).
- *  - `reported`: a damage claim is already made. `passed`: the time is over. `unavailable`: none of those.
+ *  - `reported`: a damage claim is already made. `passed`: the time is over.
+ *  - `record_first`: none of the above, and the shop's own handover or return record is not complete yet.
+ *  - `unavailable`: none of those.
  *
  * `claimKinds` are the kinds of the booking's claims, once read: only a damage claim stops a second one, so a
  * customer's fault report (also a claim on the booking) does not make the shop's time that has passed read as

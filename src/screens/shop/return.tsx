@@ -1,4 +1,4 @@
-import { useShopBooking } from "@/backend/shop-ring";
+import { shopBookingQueryKey, useShopBooking } from "@/backend/shop-ring";
 import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoadError, BookingLoading, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
@@ -22,6 +22,7 @@ import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
+import { useQueryClient } from "react-query";
 import { ScrollView, View } from "react-native";
 import { CheckCircleIcon } from "react-native-heroicons/outline";
 
@@ -51,6 +52,12 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
   const out = booking.stage === "out" && !booking.exit;
   const recorded = flags.mine || Boolean(record.draft?.sealed);
   const code = "return_code" in day ? day.return_code : null;
+  // The server shows the code once the shop's own record is complete: read the booking again when the shop's own draft is done.
+  const queryClient = useQueryClient();
+  const mineDone = Boolean(record.draft?.done && !record.draft.awaitingCode);
+  useEffect(() => {
+    if (mineDone) void queryClient.invalidateQueries(shopBookingQueryKey(number));
+  }, [mineDone, queryClient, number]);
 
   return (
     <ScrollView
@@ -128,7 +135,7 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
           {!code ? (
             // The server shows the code only once the shop's own return record is in (D-14).
             <Text fontSize="text-xs" tone="body" style={{ textAlign: "center" }}>
-              {recordFirstNote(recorded)}
+              {recordFirstNote(record.state === "uploading")}
             </Text>
           ) : null}
         </View>

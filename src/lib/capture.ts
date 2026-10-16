@@ -384,7 +384,8 @@ export const TOO_DARK = "Too dark to see the item. Take it again in good light."
  */
 export function refuseDark(draft: CaptureDraft, error: Pick<ApiError, "message" | "details">): CaptureDraft {
   const named = error.details?.keys;
-  const keys = Array.isArray(named) ? named.filter((k): k is string => typeof k === "string") : Object.keys(draft.shots);
+  // Keys the server did not name are not guessed at: the shots stay, and the record is only opened again with the words.
+  const keys = Array.isArray(named) ? named.filter((k): k is string => typeof k === "string") : [];
   let next = draft;
   for (const key of keys) next = withFile(next, { shot: key }, null);
   return { ...next, sealed: false, error: { text: error.message ?? TOO_DARK, retry: false } };

@@ -122,7 +122,8 @@ export interface BookingShop {
    * The day of the handover (`call_number` is the customer's phone). The shop's
    * `handover_code` is null until the handover is done: the owner types it and is
    * never shown it first. `return_code` is six digits while the stage is `out`:
-   * the owner shows it and the customer types it.
+   * the owner shows it and the customer types it. It is null until the shop's own
+   * return record is complete (the server holds it back, ENG-267).
    */
   day: BookingDay & { return_code: string | null };
   /** Whether each capture has finished uploading. */

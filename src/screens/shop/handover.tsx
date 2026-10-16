@@ -74,6 +74,11 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
   const waitsForRecord = ready && !booking.claim_open && !can("enter_handover_code") && !flags.mine && reached(day.call_from, now);
   const noShow = noShowCopy("owner", day, first, now);
   const key = shopBookingQueryKey(number);
+  // The server's `can` follows the record once it is complete: read the booking again when the shop's own draft is done.
+  const mineDone = Boolean(record.draft?.done && !record.draft.awaitingCode);
+  useEffect(() => {
+    if (mineDone) void queryClient.invalidateQueries(key);
+  }, [mineDone, queryClient, key]);
   const map = mapsUrl(booking.customer.coordinates, first, Platform.OS === "ios");
   const sendingStatus = running && running !== "code" ? running : null;
 
@@ -213,7 +218,7 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
           </Text>
           {waitsForRecord ? (
             <Notice tone="warning" icon="warning">
-              {recordFirstNote(recorded)}
+              {recordFirstNote(record.state === "uploading")}
             </Notice>
           ) : null}
           {closed ? (
