@@ -42,7 +42,9 @@ export type PushRoute =
   /** The bank check passed or failed, the account was changed, or a payout waits for it. */
   | { screen: "BankAccount" }
   /** The check on a publish finished. */
-  | { screen: "myProducts" };
+  | { screen: "myProducts" }
+  /** The admin approved or rejected the merchant (ENG-271): the Profile tab, whose status card shows which. */
+  | { screen: "Profile" };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -138,6 +140,8 @@ export function pushRoute(data: unknown): PushRoute | null {
         return { screen: "BankAccount" };
       case "product_checked":
         return { screen: "myProducts" };
+      case "merchant_approval":
+        return { screen: "Profile" };
       // `payout` is the dashboard's Earnings page: the phone has no screen for it.
       default:
         return null;

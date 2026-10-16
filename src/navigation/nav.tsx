@@ -418,8 +418,11 @@ function MainTabs() {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function Navigation() {
-  const { loading, hasSeenWelcome, theme, isAuthenticated, userDetails } = useGlobalContext();
+  const { loading, hasSeenWelcome, theme, isAuthenticated, userDetails, fetchUserDetails } = useGlobalContext();
   const username = userDetails?.username;
+  // The latest one, for the push listener below, which is not set up again on every render.
+  const refreshDetails = React.useRef(fetchUserDetails);
+  refreshDetails.current = fetchUserDetails;
   const queryClient = useQueryClient();
 
   // A screen to open, from a tapped push or a payment that was in flight. On a
@@ -461,6 +464,9 @@ export default function Navigation() {
         break;
       case "myProducts":
         navigationRef.navigate("myProducts");
+        break;
+      case "Profile":
+        navigationRef.navigate("MainTabs", { screen: "Profile" });
         break;
     }
   }, []);
@@ -525,6 +531,11 @@ export default function Navigation() {
     // says now (ENG-173, ENG-209).
     const stopPushes = setupPushRouter({
       onArrive: (route) => {
+        // The merchant was approved or rejected: the status the screens show is read again (ENG-271).
+        if (route.screen === "Profile") {
+          void refreshDetails.current();
+          return;
+        }
         if (route.screen === "Booking" || route.screen === "BookingDeposit") {
           void queryClient.invalidateQueries(bookingQueryKey(route.number));
           // Both Rentals lists start with this key.
