@@ -262,6 +262,15 @@ describe("the Money card", () => {
     expect(moneyView(booking({ money: { ...m, damage_deduction: "0.00" } })).deposit?.sub).toBe("Settled");
   });
 
+  it("does not split a forfeited deposit, and drops '₹0 returned'", () => {
+    const m = { ...booking().money, deposit: "3000.00", deposit_state: "forfeited", damage_deduction: "200.00", late_fee: "610.00" };
+    const forfeited = moneyView(booking({ stage: "closed", money: m }));
+    expect(forfeited.notes).toEqual([]);
+    expect(forfeited.deposit?.sub).toBe("Kept, as the item was not returned");
+    const whole = moneyView(booking({ stage: "closed", money: { ...m, deposit: "800.00", deposit_state: "settled" } }));
+    expect(whole.deposit?.sub).toBe("₹200 kept for the damage, ₹600 kept for the late days");
+  });
+
   it("says a refunded fault comes off a later payout, then that it was taken (E-116)", () => {
     const m = { ...booking().money, clawback: "600.00", clawback_left: "600.00" };
     expect(moneyView(booking({ money: m })).notes).toEqual(["₹600 comes off your payouts for the fault report on this booking"]);

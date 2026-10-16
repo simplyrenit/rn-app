@@ -394,6 +394,8 @@ const amountOf = (value: string | undefined) => Math.max(Number(value) || 0, 0);
 function keptFromDeposit(b: BookingShop): { damage: number; late: number; returned: number } {
   const m = b.money;
   const deposit = amountOf(m.deposit);
+  // A forfeited deposit is all kept because the item was not returned.
+  if (m.deposit_state === "forfeited") return { damage: 0, late: 0, returned: 0 };
   const damage = Math.min(amountOf(m.damage_deduction), deposit);
   const late = b.stage === "out" ? 0 : Math.min(amountOf(m.late_fee), deposit - damage);
   return { damage, late, returned: deposit - damage - late };
@@ -421,7 +423,7 @@ export function moneyView(b: BookingShop): MoneyView {
   const settledSub =
     m.deposit_state === "settled" && kept.damage + kept.late > 0
       ? [
-          `${money(kept.returned)} returned`,
+          ...(kept.returned > 0 ? [`${money(kept.returned)} returned`] : []),
           ...(kept.damage > 0 ? [`${money(kept.damage)} kept for the damage`] : []),
           ...(kept.late > 0 ? [`${money(kept.late)} kept for the late days`] : []),
         ].join(", ")
