@@ -633,6 +633,7 @@ describe("the shop's damage report", () => {
     claims: [] as number[],
     report_problem_until: "2026-10-10T05:12:00Z",
     money: { deposit: "3000.00", late_fee: "0.00" } as never,
+    captures: { handover: { mine: true, theirs: true }, return: { mine: true, theirs: true } },
     ...over,
   });
   const NONE_LEFT = "Nothing is left of the deposit to claim against, so a problem can't be reported here. Use Get help to tell Renit's desk what is wrong.";
@@ -670,6 +671,23 @@ describe("the shop's damage report", () => {
     expect(problemState(shop({ can: [] }), NOW)).toBe("unavailable");
     expect(problemLine("open")).toBeNull();
     expect(problemLine("after_code")).toBeNull();
+  });
+
+  it("asks for the shop's own records first when `can` lacks report_problem for that reason (D-14)", () => {
+    const both = { handover: { mine: true, theirs: true }, return: { mine: true, theirs: true } };
+    const noReturn = { ...both, return: { mine: false, theirs: true } };
+    expect(problemState(shop({ can: [], captures: noReturn }), NOW)).toBe("record_first");
+    expect(damageBlocked(shop({ can: [], captures: noReturn }), NOW)).toBe("Record the item first: it is your proof if anything is wrong.");
+    expect(problemState(shop({ can: [], captures: { ...both, handover: { mine: false, theirs: true } } }), NOW)).toBe("record_first");
+    // Both made: the other reasons stand as before.
+    expect(problemState(shop({ can: [], captures: both }), NOW)).toBe("unavailable");
+    // The time over or already reported is still said first.
+    expect(problemState(shop({ can: [], captures: noReturn, claims: [12] }), NOW)).toBe("reported");
+    expect(problemState(shop({ can: [], captures: noReturn }), new Date("2026-10-10T06:00:00Z"))).toBe("passed");
+    // The server's own refusal reads the same.
+    expect(damageErrorText({ status: 409, code: "capture_required", message: "x", details: null })).toBe(
+      "Record the item first: it is your proof if anything is wrong."
+    );
   });
 
   it("a forfeited deposit: `can` has no report_problem and the time is null, and nothing crashes on either", () => {

@@ -17,7 +17,7 @@ import { useClaimKinds } from "@/backend/claims";
 import { captured, dayBlock } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { BookingShop } from "@/lib/shop-booking";
-import { payoutPending, reportFirstNote, returnCopy, shopReturnSteps } from "@/lib/shop-handover";
+import { payoutPending, recordFirstNote, reportFirstNote, returnCopy, shopReturnSteps } from "@/lib/shop-handover";
 import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
@@ -125,9 +125,10 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
             All good · show my code
           </Button>
           <TextButton label="Report a problem" tone="danger" disabled={!code} onPress={() => setVerdict("problem")} />
-          {!recorded ? (
+          {!code ? (
+            // The server shows the code only once the shop's own return record is in (D-14).
             <Text fontSize="text-xs" tone="body" style={{ textAlign: "center" }}>
-              Record its condition first: it is your record if anything is wrong.
+              {recordFirstNote(recorded)}
             </Text>
           ) : null}
         </View>

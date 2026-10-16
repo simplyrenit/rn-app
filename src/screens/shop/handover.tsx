@@ -31,7 +31,7 @@ import {
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { successFeedback } from "@/lib/haptics";
 import { BookingShop } from "@/lib/shop-booking";
-import { handoverCopy, handoverSteps, payoutPending, payoutWaits, startedCopy } from "@/lib/shop-handover";
+import { handoverCopy, handoverSteps, payoutPending, payoutWaits, recordFirstNote, startedCopy } from "@/lib/shop-handover";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useKeyboardInset } from "@/lib/use-keyboard-inset";
@@ -70,6 +70,8 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
   const ready = booking.stage === "ready" && !booking.exit;
   const started = booking.stage !== "ready" && !booking.exit;
   const recorded = flags.mine || Boolean(record.draft?.sealed);
+  // The server holds the code step until the shop's own record is in (D-14): its `can` then lacks it, after the window opens.
+  const waitsForRecord = ready && !booking.claim_open && !can("enter_handover_code") && !flags.mine && reached(day.call_from, now);
   const noShow = noShowCopy("owner", day, first, now);
   const key = shopBookingQueryKey(number);
   const map = mapsUrl(booking.customer.coordinates, first, Platform.OS === "ios");
@@ -204,14 +206,14 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
         <TextButton label={`${first}'s phone can't record?`} onPress={theirRecord.open} />
       ) : null}
 
-      {ready && can("enter_handover_code") && !booking.claim_open ? (
+      {ready && (can("enter_handover_code") || waitsForRecord) && !booking.claim_open ? (
         <Block title={copy.codeTitle}>
           <Text fontSize="text-sm" tone="body">
             {copy.codeSub}
           </Text>
-          {!recorded ? (
+          {waitsForRecord ? (
             <Notice tone="warning" icon="warning">
-              Record the condition first. You are paid only once your photos and video have uploaded.
+              {recordFirstNote(recorded)}
             </Notice>
           ) : null}
           {closed ? (
@@ -224,7 +226,7 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
               }}
             />
           ) : (
-            <CodeInput round={round} disabled={running === "code"} onChange={(value) => (setCode(value), setCodeError(null))} />
+            <CodeInput round={round} disabled={running === "code" || waitsForRecord} onChange={(value) => (setCode(value), setCodeError(null))} />
           )}
           {codeError ? (
             <Text fontSize="text-sm" tone="danger" accessibilityRole="alert" style={{ textAlign: "center" }}>
@@ -232,7 +234,7 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
             </Text>
           ) : null}
           {closed ? null : (
-            <Button onPress={() => void start()} loading={running === "code"} disabled={running !== null || code.length !== CODE_LENGTH}>
+            <Button onPress={() => void start()} loading={running === "code"} disabled={running !== null || waitsForRecord || code.length !== CODE_LENGTH}>
               Start the rental
             </Button>
           )}
