@@ -8,6 +8,7 @@ import {
   RENTALS_LISTS,
   RentalsList,
   rentalNextLine,
+  rentalNumberLine,
   rentalSubLine,
   rentalsEmpty,
   stagePill,
@@ -43,7 +44,7 @@ function RentalCard({ booking, onPress }: { booking: BookingCustomer; onPress: (
       <SummaryCard
         title={booking.product.title}
         image={booking.product.cover_image}
-        lines={[sub]}
+        lines={[sub, rentalNumberLine(booking)]}
         right={<Pill label={pill.label} tone={pill.tone} />}
         footer={
           next ? (

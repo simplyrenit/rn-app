@@ -67,6 +67,7 @@ import {
   rangeIsFree,
   rangeLabel,
   rentalNextLine,
+  rentalNumberLine,
   rentalSubLine,
   rentalsEmpty,
   stagePill,
@@ -1506,6 +1507,14 @@ describe("the Rentals tab", () => {
 
   it("writes the shop and the dates under the name", () => {
     expect(rentalSubLine(booking())).toBe("SoundBox Rentals · Sat 24 – Mon 26 Oct");
+  });
+
+  it("shows the booking number on a card only while the owner is asked or the rent is due", () => {
+    const number = booking().number;
+    expect(rentalNumberLine(booking({ stage: "ringing" }))).toBe(`Booking ${number}`);
+    expect(rentalNumberLine(booking({ stage: "accepted" }))).toBe(`Booking ${number}`);
+    expect(rentalNumberLine(booking({ stage: "accepted", exit: "lapsed_unpaid" }))).toBeNull();
+    expect(rentalNumberLine(booking({ stage: "ready" }))).toBeNull();
   });
 
   it("says the next thing to do on a confirmed booking", () => {
