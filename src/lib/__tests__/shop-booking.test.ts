@@ -259,7 +259,18 @@ describe("the time-change request", () => {
     expect(customerRequest(booking({ window_request: request, can: ["answer_window_change"] }))).toEqual({
       title: "Aarav asked to move the arrival time",
       body: "New time: Sat 24 Oct, 12:00 – 1:00 pm. The time stays as it is unless you accept.",
+      ended: false,
     });
+  });
+
+  it("an expired request is shown as ended, without Accept, even when the server offers no answer", () => {
+    const expired = { ...request, expired: true };
+    expect(customerRequest(booking({ window_request: expired, can: [] }))).toEqual({
+      title: "Aarav asked to move the arrival time",
+      body: "This time has passed. The request has ended.",
+      ended: true,
+    });
+    expect(ownRequest(booking({ window_request: { ...expired, by: "owner" } }))).toBe("This time has passed. The request has ended.");
   });
 
   it("is not offered for the shop's own request, or when the server does not allow an answer", () => {
@@ -295,6 +306,7 @@ describe("cancelling", () => {
     const failure = (status: number, code: string | null, message: string | null = null): ApiError => ({ status, code, message, details: null });
     expect(shopActionErrorText(failure(0, null))).toMatch(/couldn't reach Renit/);
     expect(shopActionErrorText(failure(409, "stage_not_allowed"))).toMatch(/has moved on/);
+    expect(shopActionErrorText(failure(409, "window_request_expired"))).toBe("This time has passed. The request has ended.");
     expect(shopActionErrorText(failure(409, "claim_open"))).toMatch(/claim is open/);
     expect(shopActionErrorText(failure(409, "request_open"))).toMatch(/already waiting/);
     expect(shopActionErrorText(failure(409, "window_outside_hours"))).toMatch(/no longer open/);
