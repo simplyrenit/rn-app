@@ -28,6 +28,7 @@ import {
   ringDates,
   markAnswering,
   ringTakesScreen,
+  ringToOpen,
   ringView,
   ringWhere,
   shouldReadBooking,
@@ -578,5 +579,16 @@ describe("other requests ringing at the same time (review round 1, finding 6)", 
   it("says how many", () => {
     expect(moreText(1)).toBe("1 more request is waiting");
     expect(moreText(3)).toBe("3 more requests are waiting");
+  });
+});
+
+describe("ringToOpen: the request Today opens full-screen", () => {
+  const ring = (number: string) => ({ number } as Ring);
+
+  it("is the first ringing one not opened yet, and none once all were", () => {
+    expect(ringToOpen([ring("RN-1"), ring("RN-2")], new Set())?.number).toBe("RN-1");
+    expect(ringToOpen([ring("RN-1"), ring("RN-2")], new Set(["RN-1"]))?.number).toBe("RN-2");
+    expect(ringToOpen([ring("RN-1")], new Set(["RN-1"]))).toBeNull();
+    expect(ringToOpen([], new Set())).toBeNull();
   });
 });
