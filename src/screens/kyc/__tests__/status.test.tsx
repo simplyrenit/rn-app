@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import React from "react";
-import { Text } from "react-native";
+import { ActivityIndicator, Text } from "react-native";
 // No type package for it is installed (it comes with jest-expo); the tests only need create and act.
 // @ts-ignore
 import TestRenderer, { act } from "react-test-renderer";
 
 let mockAccountType = "merchant";
+let mockParams: any = undefined;
+let mockPolling = false;
 const mockRefetch = jest.fn(async () => undefined);
 let mockResolveResume: (value: unknown) => void = () => undefined;
 const mockResume = jest.fn(() => new Promise((resolve) => (mockResolveResume = resolve)));
@@ -24,7 +26,10 @@ jest.mock("@/context/global-context", () => ({
 }));
 jest.mock("@/backend/kyc", () => ({
   // The real query is disabled for a non-merchant; it answers here so the guard is what is tested.
-  useKycStatus: () => ({ data: actionRequired, error: null, isLoading: false, refetch: mockRefetch }),
+  useKycStatus: (poll: boolean) => {
+    mockPolling = poll;
+    return { data: actionRequired, error: null, isLoading: false, refetch: mockRefetch };
+  },
   useResumeKyc: () => mockResume,
   useWithdrawKyc: () => ({ mutateAsync: jest.fn() }),
   useKycBadgeSync: () => undefined,
@@ -35,12 +40,16 @@ jest.mock("@react-navigation/native", () => {
   return {
     useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
     useIsFocused: () => true,
-    useRoute: () => ({ params: undefined }),
+    useRoute: () => ({ params: mockParams }),
   };
 });
-jest.mock("@/lib/types", () => ({
-  useTypedNavigation: () => ({ navigate: jest.fn(), setParams: jest.fn(), isFocused: () => true }),
-}));
+// One object, as React Navigation gives a screen, whose setParams lands in the route.
+const mockNavigation = {
+  navigate: jest.fn(),
+  setParams: jest.fn((next: any) => (mockParams = { ...mockParams, ...next })),
+  isFocused: () => true,
+};
+jest.mock("@/lib/types", () => ({ useTypedNavigation: () => mockNavigation }));
 jest.mock("react-native-safe-area-context", () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0 }) }));
 jest.mock("@/components/core/non-scrollable-container", () => ({ NonScrollableContainer: ({ children }: any) => children }));
 jest.mock("@/components/kyc/kyc-chip", () => ({ KycChip: () => null }));
@@ -107,6 +116,32 @@ describe("the verification status screen", () => {
     const shown = texts(render());
     expect(shown).toContain("Finish verifying with DigiLocker");
     expect(mockRefetch).toHaveBeenCalled();
+  });
+
+  it("back from DigiLocker, checks for 30 s with a spinner, then stops and says so", () => {
+    jest.useFakeTimers();
+    try {
+      mockParams = { justReturned: true };
+      const renderer = render();
+      expect(texts(renderer)).toContain("Checking where things stand…");
+      expect(renderer.root.findAllByType(ActivityIndicator)).toHaveLength(1);
+      expect(mockPolling).toBe(true);
+
+      act(() => jest.advanceTimersByTime(29_000));
+      expect(texts(renderer)).toContain("Checking where things stand…");
+
+      act(() => jest.advanceTimersByTime(1_000));
+      const shown = texts(renderer);
+      expect(shown).not.toContain("Checking where things stand…");
+      expect(shown).toContain(
+        "If you've just finished DigiLocker, it can take a minute to show up. Pull down to refresh."
+      );
+      expect(renderer.root.findAllByType(ActivityIndicator)).toHaveLength(0);
+      expect(mockPolling).toBe(false);
+    } finally {
+      mockParams = undefined;
+      jest.useRealTimers();
+    }
   });
 
   it("asks for one DigiLocker session when Continue is tapped twice in one frame", async () => {
