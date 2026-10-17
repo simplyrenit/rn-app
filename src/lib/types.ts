@@ -526,6 +526,13 @@ export interface PublicOwner {
   } | null;
   average_rating?: number;
   date_joined: string;
+  /** The "Verified business" badge (D-26). Absent on an older API. */
+  business_verified?: boolean;
+  /** When the business was verified (ENG-73), RFC 3339; null when it is not. */
+  business_verified_at?: string | null;
+  /** ENG-73: so an owner with no listings still shows the business name. */
+  business_name?: string | null;
+  account_type?: string;
 }
 
 export interface Conversation {
@@ -581,7 +588,7 @@ export interface AuthUser {
   email_verified: boolean;
   phone_verified?: boolean;
   image?: string;
-  business_name?: string;
+  business_name?: string | null;
   account_type?: AccountType;
   merchant_approval_status?: MerchantApprovalStatus;
   /**
@@ -731,6 +738,8 @@ export interface BackendProduct {
     business_name: string;
     average_rating?: number;
     number_of_products?: number;
+    /** The "Verified business" badge (D-26). Search results carry only this and `username`. */
+    business_verified?: boolean;
   };
 }
 

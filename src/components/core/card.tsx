@@ -9,6 +9,7 @@ import { TouchableOpacity, View } from "react-native";
 import { FavouriteButton } from "./favourite-button";
 import { Text } from "./text";
 import { usePressFeedback } from "./use-press-feedback";
+import { VerifiedBusinessBadge } from "./verified-business-badge";
 
 // The design's Home tile rounds its photo to 8; the shared tile uses `radius.card`.
 const TILE_IMAGE_RADIUS = 8;
@@ -38,6 +39,11 @@ export interface CardProps extends ItemCard {
    * now starts on them (ENG-172). Search results only.
    */
   dates?: { first_day: string; last_day: string };
+  /**
+   * The owner's `business_verified` (ENG-73): a "Verified" chip on the photo.
+   * Search results only; Home rails and the owner's own listings do not pass it.
+   */
+  businessVerified?: boolean;
 }
 
 export function Card({
@@ -54,6 +60,7 @@ export function Card({
   tile = false,
   specFilters,
   dates,
+  businessVerified,
 }: CardProps) {
   const router = useTypedNavigation();
   const { color } = useTheme();
@@ -80,7 +87,7 @@ export function Card({
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${location}${
         distanceLine ? `, ${distanceLine}` : ""
-      }, ${formatCurrency(price)} per day`}
+      }, ${formatCurrency(price)} per day${businessVerified ? ", Verified business" : ""}`}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       activeOpacity={1}
@@ -116,6 +123,11 @@ export function Card({
               }}
             />
           )}
+
+          {/* Solid, not the bare mark: it has to read on any photo. */}
+          <View style={{ position: "absolute", left: 6, bottom: 6 }}>
+            <VerifiedBusinessBadge verified={businessVerified} variant="chip" />
+          </View>
 
           <View style={{ position: "absolute", top: 0, right: 0 }}>
             <FavouriteButton

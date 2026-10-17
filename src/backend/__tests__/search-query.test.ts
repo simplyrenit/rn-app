@@ -35,6 +35,15 @@ describe("buildSearchQuery", () => {
     ]);
   });
 
+  it("sends verified_business=true only when the toggle is on", () => {
+    expect(buildSearchQuery("ac", undefined, noDates, { ...base, verified_business: false })).not.toContain(
+      "verified_business"
+    );
+    expect(buildSearchQuery("ac", undefined, noDates, { ...base, verified_business: true })).toContain(
+      "verified_business=true"
+    );
+  });
+
   it("leaves out empty filters and sends coordinates as lat/long", () => {
     expect(buildSearchQuery("", { lat: 19.2, lng: 72.9 }, noDates)).toBe(
       "title=&lat=19.2&long=72.9"

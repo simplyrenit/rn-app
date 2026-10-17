@@ -920,6 +920,7 @@ export default function DetailsScreen() {
             rating={product?.avg_rating ?? 0}
             products={product?.products_listed ?? 0}
             isDark={isDark}
+            businessVerified={product?.owner?.business_verified}
           />
           {/* Chat is off at launch (ENG-177, decision T-01): the bar's button is
               Book now, and this entry point is not drawn. `handleStartChat` and

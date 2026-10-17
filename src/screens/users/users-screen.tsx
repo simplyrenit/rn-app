@@ -10,6 +10,7 @@ import {
   CrossFade,
   Text,
   useButtonLabelColor,
+  VerifiedBusinessBadge,
 } from "@/components/core";
 import { IconButton } from "@/components/core/icon-button";
 import Skeleton from "@/components/core/skeleton";
@@ -31,16 +32,19 @@ import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import {
   ArrowLeftIcon as ArrowLeftMini,
   CalendarIcon as CalendarMini,
+  CheckIcon as CheckMini,
   ChevronRightIcon as ChevronRightMini,
 } from "react-native-heroicons/mini";
 import {
-  CheckBadgeIcon,
   CubeIcon,
   MapPinIcon,
   ShieldExclamationIcon,
   StarIcon,
 } from "react-native-heroicons/outline";
-import { CheckBadgeIcon as CheckBadgeSolid } from "react-native-heroicons/solid";
+import {
+  CheckBadgeIcon as CheckBadgeSolid,
+  ShieldCheckIcon,
+} from "react-native-heroicons/solid";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
@@ -63,11 +67,13 @@ import { toast } from "@/lib/toast";
  * `profile` rhythm rather than a second set of section primitives.
  *
  * Not in the frame, but drawn on the owner's ruling: the verification card
- * (email/phone verified, "Lists in <area>") and the business-name pill. They sit
- * inside the profile block, between the facts strip and the chat button, so the
- * frame's 16pt rhythm is untouched. Both come from the listing payload rather
- * than from `owner-details/`, and a signal the payload does not carry is simply
- * not drawn.
+ * (email/phone verified, "Lists in <area>"), the business name with its
+ * "Verified" mark, and the "Verified business" panel (ENG-73). They sit inside
+ * the profile block, between the facts strip and the chat button, so the frame's
+ * 16pt rhythm is untouched. The business name and verification come from
+ * `owner-details/`, so an owner with no listings still shows them; email and
+ * phone come from the listing payload. A signal the payload does not carry is
+ * simply not drawn.
  */
 
 /** The frame's header row and, with it, the back control's target. */
@@ -94,10 +100,9 @@ const GLYPH_SIZE = 20;
 /** The chevron in a block's button is drawn in a 24pt box. */
 const CHEVRON_SIZE = 24;
 /**
- * Fields the owner object embedded in a listing carries but `PublicOwner` (the
- * shape `owner-details/` returns) does not. `src/lib/types.ts` belongs to another
- * lane, so they are described here and read off the listing payload the profile
- * already fetches.
+ * Fields the owner object embedded in a listing carries. Email and phone are
+ * read only from there; `account_type` and `business_name` are the fallback for
+ * an API older than ENG-73, whose `owner-details/` does not return them.
  */
 interface OwnerTrustFields {
   email_verified?: boolean;
@@ -105,6 +110,16 @@ interface OwnerTrustFields {
   account_type?: string;
   business_name?: string | null;
 }
+
+/**
+ * What every verified business went through (ENG-73). The API does not say
+ * whether a given merchant declared GST, so that line covers both cases.
+ */
+const VERIFIED_CHECKS = [
+  "Business PAN",
+  "GST registration (if registered)",
+  "Owner's identity through DigiLocker",
+];
 
 /** Label to chevron. */
 const CHEVRON_GAP = 4;
@@ -382,10 +397,21 @@ export default function UsersDetails() {
   const listedOwner = products[0]?.owner as
     | (NonNullable<BackendProduct["owner"]> & OwnerTrustFields)
     | undefined;
+  // owner-details first (ENG-73); an older API only has it on a listing.
+  const accountType = owner?.account_type ?? listedOwner?.account_type;
   const businessName =
-    listedOwner?.account_type && listedOwner.account_type !== "user"
-      ? listedOwner.business_name || null
+    accountType && accountType !== "user"
+      ? (owner?.business_name ?? listedOwner?.business_name) || null
       : null;
+
+  const businessVerified = owner?.business_verified === true;
+  const verifiedOn = owner?.business_verified_at
+    ? new Date(owner.business_verified_at).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
 
   const primaryArea = (() => {
     const counts = new Map<string, number>();
@@ -603,23 +629,28 @@ export default function UsersDetails() {
                 <Text fontSize="text-sm" fontWeight="font-bold">
                   {owner?.first_name} {owner?.last_name}
                 </Text>
+                {/* A brand pill with a check used to sit on every business
+                    name, checked or not (D-26). Now only a business Renit
+                    verified gets the mark; any other name is plain text. */}
                 {businessName ? (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 5,
-                      backgroundColor: color.brandWash,
-                      borderRadius: radius.full,
-                      paddingHorizontal: 9,
-                      paddingVertical: 3,
-                    }}
-                  >
-                    <CheckBadgeIcon size={14} color={color.brandText} />
-                    <Text fontSize="text-xs" fontWeight="font-semibold" tone="brand">
+                  businessVerified ? (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                      {/* Shrinks so a long name wraps and the mark stays on screen. */}
+                      <Text
+                        fontSize="text-sm"
+                        fontWeight="font-semibold"
+                        tone="hi"
+                        style={{ flexShrink: 1, textAlign: "center" }}
+                      >
+                        {businessName}
+                      </Text>
+                      <VerifiedBusinessBadge verified iconSize={18} />
+                    </View>
+                  ) : (
+                    <Text fontSize="text-xs" tone="dim">
                       {businessName}
                     </Text>
-                  </View>
+                  )
                 ) : null}
               </View>
 
@@ -635,6 +666,50 @@ export default function UsersDetails() {
                 }))}
               />
               </View>
+
+              {businessVerified ? (
+                <View
+                  accessible
+                  accessibilityLabel={`Verified business. Checked by Renit${
+                    verifiedOn ? ` on ${verifiedOn}` : ""
+                  }: ${VERIFIED_CHECKS.join(", ")}.`}
+                  style={{
+                    marginHorizontal: SCREEN_GUTTER,
+                    padding: density.block,
+                    gap: 10,
+                    borderRadius: radius.group,
+                    borderWidth: 1,
+                    // The dark panel line (#292929) is lost on the wash; the veil holds.
+                    borderColor: isDark ? color.brandVeil : color.brandPanelLine,
+                    backgroundColor: color.brandPanel,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                    <ShieldCheckIcon size={28} color={color.brandText} />
+                    <View style={{ flex: 1 }}>
+                      <Text fontSize="text-md" fontWeight="font-bold">
+                        Verified business
+                      </Text>
+                      <Text fontSize="text-xs" tone="body">
+                        {verifiedOn ? `Checked by Renit on ${verifiedOn}` : "Checked by Renit"}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={{ gap: 6 }}>
+                    {VERIFIED_CHECKS.map((check) => (
+                      <View
+                        key={check}
+                        style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                      >
+                        <CheckMini size={16} color={color.brandText} />
+                        <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+                          {check}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
 
               {trustRows.length ? (
                 <View
