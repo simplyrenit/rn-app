@@ -189,6 +189,14 @@ describe("needsRow: what each item offers", () => {
     expect(row.key).toBe("block_back-88");
   });
 
+  it("opens the claim from 'A claim ... to answer by'", () => {
+    expect(needsRow({ kind: "claim_deadline", claim: 12, text: "A claim on Tripod to answer by Fri 16 Oct, 6:00 pm" }, 0)).toMatchObject({
+      key: "claim_deadline-12",
+      action: { kind: "claim", id: 12 },
+    });
+    expect(needsRow({ kind: "claim_deadline", text: "x" }, 0).action).toBeNull();
+  });
+
   it("sends flagged products and prices to My products, and missing hours to the hours screen", () => {
     expect(needsRow({ kind: "flagged_products", count: 3, text: "3 products flagged by the check" }, 0).action).toEqual({
       kind: "products",
@@ -206,16 +214,8 @@ describe("needsRow: what each item offers", () => {
     });
   });
 
-  it("opens the claim from 'A claim ... to answer by'", () => {
-    expect(needsRow({ kind: "claim_deadline", claim: 12, text: "A claim on Tripod to answer by Fri 16 Oct, 6:00 pm" }, 0)).toMatchObject({
-      key: "claim_deadline-12",
-      action: { kind: "claim", id: 12 },
-    });
-    expect(needsRow({ kind: "claim_deadline", text: "x" }, 0).action).toBeNull();
-  });
-
-  it("shows an address to confirm and a kind it does not know as their words alone", () => {
-    for (const kind of ["address_unconfirmed", "something_new"]) {
+  it("shows a kind it does not know as its words alone", () => {
+    for (const kind of ["something_new"]) {
       expect(needsRow({ kind, text: "Some words" }, 4)).toMatchObject({ icon: "info", text: "Some words", action: null });
     }
   });

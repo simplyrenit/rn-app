@@ -274,9 +274,8 @@ export interface NeedsRow {
 
 /**
  * What a "Needs you" item offers. The text is the server's, ready to show. An
- * item with nothing to tap on the phone (an address to confirm, which
- * is the dashboard's) is shown as its text alone, and a kind this build does
- * not know is shown the same way.
+ * item with nothing to tap on the phone is shown as its text alone, and a kind
+ * this build does not know is shown the same way.
  */
 export function needsRow(item: NeedsYou, index: number): NeedsRow {
   const key = `${item.kind}-${item.booking ?? item.block?.id ?? item.claim ?? index}`;
