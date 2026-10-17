@@ -343,7 +343,7 @@ export default function KycDetailsScreen() {
           ) : null}
           {/* A disabled button takes no touches, so a tap on the greyed one lands here and runs the
               same checks as a submit: it says what is missing instead of doing nothing (ENG-280). */}
-          <Pressable onPress={submit} disabled={ready || busy} accessible={false}>
+          <Pressable onPress={submit} disabled={ready || busy} accessible={false} focusable={false}>
             <Button onPress={submit} loading={busy} disabled={!ready || busy}>
               {busy ? "Checking your details…" : "Continue to DigiLocker"}
             </Button>
