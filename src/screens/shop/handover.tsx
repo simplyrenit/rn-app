@@ -77,8 +77,8 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
   // The server's `can` follows the record once it is complete: read the booking again when the shop's own draft is done.
   const mineDone = Boolean(record.draft?.done && !record.draft.awaitingCode);
   useEffect(() => {
-    if (mineDone) void queryClient.invalidateQueries(key);
-  }, [mineDone, queryClient, key]);
+    if (mineDone) void queryClient.invalidateQueries(shopBookingQueryKey(number));
+  }, [mineDone, queryClient, number]);
   const map = mapsUrl(booking.customer.coordinates, first, Platform.OS === "ios");
   const sendingStatus = running && running !== "code" ? running : null;
 
