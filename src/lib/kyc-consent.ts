@@ -26,10 +26,26 @@ Your choices
 Verification is optional. You can remove your verification data any time from Business verification, without deleting your account, and you can delete your Renit account from Profile, Personal details. Copies in our backups are cleared within 30 days after the 180 days. Questions about your data: support@simplyrenit.com.
 
 Version: kyc-merchant-2026-10`,
+  "kyc-merchant-2026-10b": `What we collect
+Your PAN. Your GSTIN, if you tell us you're registered for GST. Your Aadhaar details from DigiLocker when you approve sharing; what DigiLocker shares can include your name, date of birth, gender, address and photo. We read them once to check them and keep only the few details listed below. We don't ask for photos or selfies.
+
+Why
+To check that you and your business are who you say you are, so we can show a Verified business badge. We don't use this information for anything else.
+
+Who handles it
+Cashfree Payments India Private Limited checks your PAN and GSTIN and connects you to DigiLocker for us. They handle your details under their own privacy policy: [CASHFREE PRIVACY POLICY LINK]. A member of the Renit team reviews each case before it's approved, and can see your name, your PAN's last 4 digits and the few Aadhaar details listed below.
+
+How long we keep it
+From your Aadhaar we keep only a few details: your name, year of birth, state, pincode and the last 4 digits of your Aadhaar number. We keep them for up to 180 days after we decide, then delete them. We never keep a copy of your Aadhaar itself. We don't store your full PAN or GSTIN: we keep the last 4 digits and a scrambled code that helps us spot duplicates. We keep the result of your verification for as long as you have a Renit account.
+
+Your choices
+Verification is optional. You can remove your verification data any time from Business verification, without deleting your account, and you can delete your Renit account from Profile, Personal details. Copies in our backups are cleared within 30 days after the 180 days. Questions about your data: support@simplyrenit.com.
+
+Version: kyc-merchant-2026-10b`,
 };
 
 /** The newest key of KYC_CONSENT_TEXTS: what `start/` is sent. */
-export const KYC_CONSENT_VERSION = "kyc-merchant-2026-10";
+export const KYC_CONSENT_VERSION = "kyc-merchant-2026-10b";
 
 export interface ConsentSection {
   heading: string;
