@@ -16,6 +16,8 @@ import { BOOKING_DAYS_AHEAD, daysRefusal } from "@/lib/booking";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { TaxonomyList } from "@/components/post/taxonomy-list";
 import { ConditionFilter } from "@/components/search/condition-filter";
+import { SellerFilter } from "@/components/search/seller-filter";
+import { track } from "@/lib/events";
 import { PriceFilter } from "@/components/search/price-filter";
 import { RatingFilter } from "@/components/search/rating-filter";
 import { SortFilter } from "@/components/search/sort-filter";
@@ -84,6 +86,8 @@ function sheetHeightForTab(tab: string, showSubCategory: boolean) {
       return showSubCategory ? "70%" : "62%";
     case "Specs":
       return "75%";
+    case "Seller":
+      return "40%";
     default:
       return "60%";
   }
@@ -104,6 +108,8 @@ function tabHasValue(tab: string, filters: any) {
       return Boolean(filters?.condition);
     case "Specs":
       return Object.keys(filters?.specs ?? {}).length > 0;
+    case "Seller":
+      return Boolean(filters?.verifiedBusiness);
     default:
       return false;
   }
@@ -123,6 +129,8 @@ const createDefaultFilters = (category = "", subCategory = "") => ({
   condition: "",
   /** Chosen options per spec key; they belong to one sub-category (ENG-31). */
   specs: {} as Record<string, string[]>,
+  /** Only listings from verified businesses (D-26, ENG-73). */
+  verifiedBusiness: false,
 });
 
 /** The range arrives as an ISO string, because navigation params must be
@@ -287,6 +295,11 @@ export default function SearchResults() {
     }));
   };
 
+  const handleVerifiedToggle = (on: boolean) => {
+    track("kyc_badge_filter_toggled", { on });
+    setFilters((prevFilters) => ({ ...prevFilters, verifiedBusiness: on }));
+  };
+
   const handleCategorySelect = (category: string) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
@@ -333,6 +346,7 @@ export default function SearchResults() {
         owner_rating: nextFilters.ratings.owner,
         condition: nextFilters.condition,
         specs: nextFilters.specs,
+        verified_business: nextFilters.verifiedBusiness,
       }
     );
 
@@ -450,6 +464,7 @@ export default function SearchResults() {
             owner_rating: filters.ratings.owner,
             condition: filters.condition,
             specs: filters.specs,
+            verified_business: filters.verifiedBusiness,
           }
         );
         if (!cancelled) setSpecPanel({ subCategory, panel });
@@ -512,6 +527,7 @@ export default function SearchResults() {
     filters.ratings.product !== 0 ||
     filters.ratings.owner !== 0 ||
     !!filters.condition ||
+    filters.verifiedBusiness ||
     Object.keys(filters.specs).length > 0;
 
   const tabs = [
@@ -521,6 +537,7 @@ export default function SearchResults() {
     "Price",
     "Ratings",
     "Condition",
+    "Seller",
   ];
 
   const pendingCount =
@@ -865,6 +882,7 @@ export default function SearchResults() {
               specFilters={specFilters}
               // The searched dates ride along, so Book now starts on them (ENG-172).
               dates={searchedDays(range)}
+              businessVerified={item.owner?.business_verified}
             />
           )}
           // Searching and finding nothing are the same slot, so the skeleton
@@ -1047,6 +1065,12 @@ export default function SearchResults() {
                   onSelect={(option) => handleFilterSelect("condition", option)}
                   closeSheet={closeSheet}
                   isLoading={isLoading}
+                />
+              )}
+              {activeTab === "Seller" && (
+                <SellerFilter
+                  verifiedOnly={filters.verifiedBusiness}
+                  onToggle={handleVerifiedToggle}
                 />
               )}
             </View>

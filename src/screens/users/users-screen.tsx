@@ -10,6 +10,7 @@ import {
   CrossFade,
   Text,
   useButtonLabelColor,
+  VerifiedBusinessBadge,
 } from "@/components/core";
 import { IconButton } from "@/components/core/icon-button";
 import Skeleton from "@/components/core/skeleton";
@@ -31,16 +32,19 @@ import { Animated, ScrollView, StyleSheet, View } from "react-native";
 import {
   ArrowLeftIcon as ArrowLeftMini,
   CalendarIcon as CalendarMini,
+  CheckIcon as CheckMini,
   ChevronRightIcon as ChevronRightMini,
 } from "react-native-heroicons/mini";
 import {
-  CheckBadgeIcon,
   CubeIcon,
   MapPinIcon,
   ShieldExclamationIcon,
   StarIcon,
 } from "react-native-heroicons/outline";
-import { CheckBadgeIcon as CheckBadgeSolid } from "react-native-heroicons/solid";
+import {
+  CheckBadgeIcon as CheckBadgeSolid,
+  ShieldCheckIcon,
+} from "react-native-heroicons/solid";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
@@ -105,6 +109,16 @@ interface OwnerTrustFields {
   account_type?: string;
   business_name?: string | null;
 }
+
+/**
+ * What every verified business went through (ENG-73). The API does not say
+ * whether a given merchant declared GST, so that line covers both cases.
+ */
+const VERIFIED_CHECKS = [
+  "Business PAN",
+  "GST registration (if registered)",
+  "Owner's identity through DigiLocker",
+];
 
 /** Label to chevron. */
 const CHEVRON_GAP = 4;
@@ -387,6 +401,16 @@ export default function UsersDetails() {
       ? listedOwner.business_name || null
       : null;
 
+  // From owner-details, not the listings, so an owner with none still shows it.
+  const businessVerified = owner?.business_verified === true;
+  const verifiedOn = owner?.business_verified_at
+    ? new Date(owner.business_verified_at).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
+
   const primaryArea = (() => {
     const counts = new Map<string, number>();
     products.forEach((item) => {
@@ -603,23 +627,22 @@ export default function UsersDetails() {
                 <Text fontSize="text-sm" fontWeight="font-bold">
                   {owner?.first_name} {owner?.last_name}
                 </Text>
+                {/* A brand pill with a check used to sit on every business
+                    name, checked or not (D-26). Now only a business Renit
+                    verified gets the mark; any other name is plain text. */}
                 {businessName ? (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 5,
-                      backgroundColor: color.brandWash,
-                      borderRadius: radius.full,
-                      paddingHorizontal: 9,
-                      paddingVertical: 3,
-                    }}
-                  >
-                    <CheckBadgeIcon size={14} color={color.brandText} />
-                    <Text fontSize="text-xs" fontWeight="font-semibold" tone="brand">
+                  businessVerified ? (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                      <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
+                        {businessName}
+                      </Text>
+                      <VerifiedBusinessBadge verified iconSize={18} />
+                    </View>
+                  ) : (
+                    <Text fontSize="text-xs" tone="dim">
                       {businessName}
                     </Text>
-                  </View>
+                  )
                 ) : null}
               </View>
 
@@ -635,6 +658,50 @@ export default function UsersDetails() {
                 }))}
               />
               </View>
+
+              {businessVerified ? (
+                <View
+                  accessible
+                  accessibilityLabel={`Verified business. Checked by Renit${
+                    verifiedOn ? ` on ${verifiedOn}` : ""
+                  }: ${VERIFIED_CHECKS.join(", ")}.`}
+                  style={{
+                    marginHorizontal: SCREEN_GUTTER,
+                    padding: density.block,
+                    gap: 10,
+                    borderRadius: radius.group,
+                    borderWidth: 1,
+                    // The dark panel line (#292929) is lost on the wash; the veil holds.
+                    borderColor: isDark ? color.brandVeil : color.brandPanelLine,
+                    backgroundColor: color.brandPanel,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                    <ShieldCheckIcon size={28} color={color.brandText} />
+                    <View style={{ flex: 1 }}>
+                      <Text fontSize="text-md" fontWeight="font-bold">
+                        Verified business
+                      </Text>
+                      <Text fontSize="text-xs" tone="body">
+                        {verifiedOn ? `Checked by Renit on ${verifiedOn}` : "Checked by Renit"}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={{ gap: 6 }}>
+                    {VERIFIED_CHECKS.map((check) => (
+                      <View
+                        key={check}
+                        style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                      >
+                        <CheckMini size={16} color={color.brandText} />
+                        <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+                          {check}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
 
               {trustRows.length ? (
                 <View

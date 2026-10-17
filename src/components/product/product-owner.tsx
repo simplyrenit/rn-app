@@ -1,5 +1,5 @@
 import { TouchableOpacity, View } from "react-native";
-import { Avatar, Text, usePressFeedback } from "@/components/core";
+import { Avatar, Text, usePressFeedback, VerifiedBusinessBadge } from "@/components/core";
 import { StarIcon } from "react-native-heroicons/solid";
 import { StarIcon as StarMini } from "react-native-heroicons/mini";
 import { ChevronRightIcon } from "react-native-heroicons/outline";
@@ -16,6 +16,8 @@ interface Props {
   rating: number;
   products: number;
   isDark: boolean;
+  /** The owner's `business_verified` (D-26): the mark after the name. */
+  businessVerified?: boolean;
   /**
    * Opt-in. `detail` is the row as Figma 1:9120 draws it in "About the owner":
    * a 48pt avatar, the meta line set entirely in tertiary, and a mini chevron
@@ -36,6 +38,7 @@ export function AboutOwner({
   products,
   profilePic,
   rating,
+  businessVerified,
   variant = "default",
 }: Props) {
   const navigation = useTypedNavigation();
@@ -59,7 +62,9 @@ export function AboutOwner({
     <TouchableOpacity
       onPress={() => navigation.navigate("UserDetail", { id })}
       accessibilityRole="button"
-      accessibilityLabel={`${name}, ${ratingDisplay.longLabel}, ${products} ${countWord}`}
+      accessibilityLabel={`${name}, ${ratingDisplay.longLabel}, ${products} ${countWord}${
+        businessVerified ? ", Verified business" : ""
+      }`}
       accessibilityHint="Opens this owner's profile"
       activeOpacity={1}
       onPressIn={onPressIn}
@@ -89,9 +94,12 @@ export function AboutOwner({
       >
         <Avatar uri={profilePic} name={name} size={detail ? DETAIL_AVATAR : 52} />
         <View style={{ flex: 1 }}>
-          <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={1}>
-            {name}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={1} style={{ flexShrink: 1 }}>
+              {name}
+            </Text>
+            <VerifiedBusinessBadge verified={businessVerified} />
+          </View>
           {/* A filled star beside the number 0 read as "rated zero out of five"
               — the worst possible host — for every seller who simply had not
               been rated yet. No score, no star. */}

@@ -19,3 +19,4 @@ export * from "./text";
 export * from "./use-press-feedback";
 export * from "./toast";
 export { default as Skeleton } from "./skeleton";
+export * from "./verified-business-badge";

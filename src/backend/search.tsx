@@ -14,6 +14,8 @@ export type SearchFilters = {
   condition: string;
   /** Chosen options per spec key (ENG-31), e.g. `{ ac_type: ["Split"] }`. */
   specs?: Record<string, string[]>;
+  /** Only listings from verified businesses (D-26). Sent only when on. */
+  verified_business?: boolean;
 };
 
 type Coordinates = { lat: number; lng: number } | undefined;
@@ -118,6 +120,7 @@ export function buildSearchQuery(
   if (filters?.product_rating) pairs.push(["product_rating", filters.product_rating]);
   if (filters?.owner_rating) pairs.push(["owner_rating", filters.owner_rating]);
   if (filters?.condition) pairs.push(["condition", filters.condition]);
+  if (filters?.verified_business) pairs.push(["verified_business", "true"]);
   for (const [key, options] of Object.entries(filters?.specs ?? {})) {
     for (const option of options) pairs.push([`attr.${key}`, option]);
   }
