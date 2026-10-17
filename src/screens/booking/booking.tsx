@@ -4,7 +4,7 @@ import { useAppActive } from "@/components/booking/use-app-active";
 import { useReadAt } from "@/components/booking/use-read-at";
 import { SubpageHeader } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { BookingView, bookingView } from "@/lib/booking";
+import { BookingView, bookingLabel, bookingView } from "@/lib/booking";
 import { clockSkewMs } from "@/lib/server-clock";
 import { RouteProps } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
@@ -17,15 +17,15 @@ import { PayBookingAmount } from "./pay-booking-amount";
 import { PayRent } from "./pay-rent";
 import { RentalActive } from "./rental-active";
 
-/** The header's words for each view. The wait and the pay steps carry their own heading. */
+/** The header's words for each view. The number shows from the first screen, so it can be quoted to the desk. */
 const TITLE: Record<BookingView, (number: string) => string> = {
-  pay_booking_amount: () => "",
-  confirming: () => "",
+  pay_booking_amount: bookingLabel,
+  confirming: bookingLabel,
   outcome: () => "Your request",
-  pay_rent: () => "",
-  day_of: (number) => `Booking ${number}`,
+  pay_rent: bookingLabel,
+  day_of: bookingLabel,
   active: () => "Your rental",
-  details: (number) => `Booking ${number}`,
+  details: bookingLabel,
 };
 
 /**
@@ -69,7 +69,7 @@ export default function BookingScreen() {
   if (!booking) {
     return (
       <NonScrollableContainer>
-        <SubpageHeader title={`Booking ${params.number}`} />
+        <SubpageHeader title={bookingLabel(params.number)} />
         {query.isError ? (
           <BookingLoadError error={query.error} what="this booking" onRetry={() => void refetch()} />
         ) : (

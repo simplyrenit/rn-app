@@ -1931,6 +1931,10 @@ export function rentalSubLine(booking: Pick<BookingCustomer, "shop" | "first_day
   return `${booking.shop.name} · ${rangeLabel(booking.first_day, booking.last_day)}`;
 }
 
+/** The booking's number as the customer reads it out to the desk: "Booking RN-20116". */
+export const bookingLabel = (number: string): string => `Booking ${number}`;
+
+
 /** The card's foot: the one thing to do or to expect next, or null when there is none. */
 export function rentalNextLine(booking: BookingCustomer, now: Date = new Date()): string | null {
   const m = booking.money;
