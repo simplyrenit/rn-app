@@ -52,7 +52,7 @@ import {
   setupNotificationListeners,
   setupRingChannel,
 } from "@/backend/notifications";
-import { useKycRefresh } from "@/backend/kyc";
+import { useKycRefetch, useKycRefresh, useKycReturnLinking } from "@/backend/kyc";
 import { PushRoute } from "@/lib/push-routes";
 import { ringEndedQueryKey } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
@@ -472,6 +472,9 @@ export default function Navigation() {
       case "Profile":
         navigationRef.navigate("MainTabs", { screen: "Profile" });
         break;
+      case "KycStatus":
+        navigationRef.navigate("KycStatus");
+        break;
     }
   }, []);
   const openBooking = React.useCallback(
@@ -510,6 +513,14 @@ export default function Navigation() {
   // A merchant's verification status and badge are read again whenever the app comes back to
   // the foreground: a reviewer may have decided while it was away.
   useKycRefresh();
+  const refetchKyc = useKycRefetch();
+
+  // A return link only opens the status screen, which reads the real status from the server.
+  useKycReturnLinking(() => {
+    if (navigationRef.isReady()) {
+      navigationRef.navigate("KycStatus", { justReturned: true });
+    }
+  });
 
   React.useEffect(() => {
     if (!isAuthenticated) {
@@ -542,6 +553,11 @@ export default function Navigation() {
         // The merchant was approved or rejected: the status the screens show is read again (ENG-271).
         if (route.screen === "Profile") {
           void refreshDetails.current();
+          return;
+        }
+        // Verification moved on: the status and the badge are read again, never taken from the push.
+        if (route.screen === "KycStatus") {
+          refetchKyc();
           return;
         }
         if (route.screen === "Booking" || route.screen === "BookingDeposit") {
@@ -598,7 +614,7 @@ export default function Navigation() {
       stopChat();
       stopPushes();
     };
-  }, [isAuthenticated, queryClient, openRoute]);
+  }, [isAuthenticated, queryClient, openRoute, refetchKyc]);
 
   // Photos and video of a handover or a return that are not on the server yet keep
   // uploading from wherever the app is, and start again after a restart (ENG-221).

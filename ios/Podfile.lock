@@ -1495,6 +1495,8 @@ PODS:
     - Yoga
   - ExpoSharing (12.0.1):
     - ExpoModulesCore
+  - ExpoWebBrowser (13.0.3):
+    - ExpoModulesCore
   - EXSplashScreen (0.27.7):
     - DoubleConversion
     - ExpoModulesCore
@@ -3097,6 +3099,7 @@ DEPENDENCIES:
   - ExpoLinearGradient (from `../node_modules/expo-linear-gradient/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoSharing (from `../node_modules/expo-sharing/ios`)
+  - ExpoWebBrowser (from `../node_modules/expo-web-browser/ios`)
   - EXSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - EXTaskManager (from `../node_modules/expo-task-manager/ios`)
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
@@ -3276,6 +3279,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-modules-core"
   ExpoSharing:
     :path: "../node_modules/expo-sharing/ios"
+  ExpoWebBrowser:
+    :path: "../node_modules/expo-web-browser/ios"
   EXSplashScreen:
     :path: "../node_modules/expo-splash-screen/ios"
   EXTaskManager:
@@ -3458,6 +3463,7 @@ SPEC CHECKSUMS:
   ExpoLinearGradient: 4c44b3803b441724874b232e6520b51ca6a50db1
   ExpoModulesCore: c11bcbf466b123a92eb66ab2ae9e0eaef61b7e97
   ExpoSharing: 5e6b6cbc0c232084b79ffa7243459f7dcdc5b1cb
+  ExpoWebBrowser: cf10afe886891ab495877dada977fe6c269614a4
   EXSplashScreen: 02d4bb2d7a6b05b4434126e01ee2e6872088f4ae
   EXTaskManager: b515b853fd97286a25cb643978ff7fa456f3139a
   EXUpdatesInterface: c3a9494c2173db6442c7d5ad4e5b984972760fd3

@@ -8,10 +8,10 @@ import { track } from "@/lib/events";
 import { successFeedback } from "@/lib/haptics";
 import { hasVerificationData, kycError, kycStateCopy } from "@/lib/kyc";
 import { toast } from "@/lib/toast";
-import { useTypedNavigation } from "@/lib/types";
-import { useFocusEffect, useIsFocused } from "@react-navigation/native";
+import { RouteProps, useTypedNavigation } from "@/lib/types";
+import { useFocusEffect, useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, RefreshControl, ScrollView, View } from "react-native";
+import { Alert, AppState, RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const STEPS = [
@@ -20,36 +20,98 @@ const STEPS = [
   "We notify you of the result.",
 ];
 
+// After DigiLocker the status moves on by itself within seconds, so it is read every 3 seconds
+// for this long. A status that waits on a reviewer is never polled: a push announces it.
+const POLL_FOR = 30_000;
+const movesOn = (status: string | undefined) => status === "pending" || status === "action_required";
+
 /**
  * One screen for every verification state: where the Profile card and the status push lead,
  * and where the merchant continues, starts over or removes their data.
  *
  * It renders only what the status endpoint returns. An answer served from the server's cache
  * (`stale`) looks exactly like a fresh one; nothing a link or a push claims is ever shown.
+ * Coming back from DigiLocker (`justReturned`) only starts a short spell of polling.
  */
 export default function KycStatusScreen() {
   const navigation = useTypedNavigation();
   const insets = useSafeAreaInsets();
   const { userDetails } = useGlobalContext();
-  const { data, error, isLoading, refetch } = useKycStatus();
+  const route = useRoute<RouteProps<"KycStatus">>();
+  const justReturned = route.params?.justReturned === true;
+  // When the current polling window opened; null outside one.
+  const [pollingSince, setPollingSince] = useState<number | null>(null);
+  const [timedOut, setTimedOut] = useState(false);
+  const { data, error, isLoading, refetch } = useKycStatus(pollingSince !== null);
+  const focused = useIsFocused();
   const resume = useResumeKyc();
   const withdraw = useWithdrawKyc();
   const [refreshing, setRefreshing] = useState(false);
-  // From the request until the browser has opened, so a second tap does nothing.
+  // From the request until the DigiLocker session has closed, so a second tap does nothing.
+  // `resuming` drives the buttons; the ref is the guard, because two taps in one frame both see
+  // the state from before the first one.
   const [resuming, setResuming] = useState(false);
+  const resumeInFlight = useRef(false);
+  // A return link or a status push can open this screen for anyone signed in, and rn-api answers
+  // a non-merchant too (its individual check, which this build does not offer).
+  const merchant = userDetails?.account_type === "merchant";
   useKycBadgeSync(data);
-
-  // The status may have moved while the merchant was elsewhere (a reviewer decided).
-  useFocusEffect(
-    useCallback(() => {
-      void refetch();
-    }, [refetch])
-  );
 
   const status = data?.kyc_status;
   const reason = data?.reason_code ?? null;
+  const latestStatus = useRef(status);
+  latestStatus.current = status;
+
+  const startPolling = useCallback(() => {
+    setTimedOut(false);
+    setPollingSince(Date.now());
+  }, []);
+
+  // The status may have moved while the merchant was elsewhere (a reviewer decided). Leaving
+  // the screen closes any polling window.
+  useFocusEffect(
+    useCallback(() => {
+      if (merchant) void refetch(); // `refetch` ignores the query's `enabled`
+      return () => setPollingSince(null);
+    }, [refetch, merchant])
+  );
+
+  // Back from DigiLocker. The flag is cleared so that the next return opens a new window.
+  useEffect(() => {
+    if (!justReturned) return;
+    startPolling();
+    navigation.setParams({ justReturned: false });
+  }, [justReturned, navigation, startPolling]);
+
+  // Leaving the app closes the window too; coming back to checks still running opens one.
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (next) => {
+      if (next !== "active") setPollingSince(null);
+      else if (latestStatus.current === "pending" && navigation.isFocused()) startPolling();
+    });
+    return () => subscription.remove();
+  }, [navigation, startPolling]);
+
+  // While the automated checks run the status is about to move again, so `pending` in view
+  // opens a window, however it was learned (on arriving, or from a refresh). The window ends
+  // when the status stops being one that moves on by itself, or after 30 s.
+  useEffect(() => {
+    setTimedOut(false);
+    if (status === "pending" && focused) startPolling();
+    else if (status && !movesOn(status)) setPollingSince(null);
+  }, [status, focused, startPolling]);
+  useEffect(() => {
+    if (pollingSince === null) return;
+    const timer = setTimeout(() => {
+      setPollingSince(null);
+      if (movesOn(latestStatus.current)) {
+        track("kyc_poll_timeout");
+        setTimedOut(true);
+      }
+    }, POLL_FOR);
+    return () => clearTimeout(timer);
+  }, [pollingSince]);
   const previous = useRef<string | undefined>();
-  const focused = useIsFocused();
   // Counted each time the screen comes into view, and again when the status changes under it.
   useEffect(() => {
     if (!status || !focused) return;
@@ -71,16 +133,18 @@ export default function KycStatusScreen() {
   };
 
   const onResume = async () => {
-    if (resuming) return;
+    if (resumeInFlight.current) return;
+    resumeInFlight.current = true;
     setResuming(true);
+    setPollingSince(null); // a window still open belongs to the previous attempt
     try {
       const answer = await resume();
       track("kyc_resumed");
       if (answer.next_action?.type === "digilocker") {
-        await openDigiLocker(answer.next_action);
+        if (await openDigiLocker(answer.next_action)) startPolling();
       } else {
         // No link means the consent has already reached us: the status will move on by itself.
-        toast.info("We've got your DigiLocker details", { message: "This page will update shortly." });
+        startPolling();
       }
     } catch (failure) {
       const { status: http, code } = kycError(failure);
@@ -95,6 +159,7 @@ export default function KycStatusScreen() {
         toast.error("Verification is unavailable right now", { message: "Please try again later." });
       }
     } finally {
+      resumeInFlight.current = false;
       setResuming(false);
     }
   };
@@ -139,6 +204,19 @@ export default function KycStatusScreen() {
     );
 
   const header = <SubpageHeader title="Business verification" onBack={toProfile} backLabel="Back to Profile" />;
+
+  if (!merchant) {
+    return (
+      <NonScrollableContainer>
+        {header}
+        <EmptyState
+          variant="error"
+          title="Verification is for business accounts"
+          body="Your account isn't set up as a business account."
+        />
+      </NonScrollableContainer>
+    );
+  }
 
   if (!data) {
     const http = error ? kycError(error).status : null;
@@ -211,6 +289,17 @@ export default function KycStatusScreen() {
             {copy.title}
           </Text>
           <Text tone="body">{copy.body}</Text>
+          {pollingSince !== null && movesOn(status) ? (
+            <Text tone="dim" accessibilityLiveRegion="polite">
+              Checking where things stand…
+            </Text>
+          ) : timedOut ? (
+            <Text tone="dim" accessibilityLiveRegion="polite">
+              {status === "pending"
+                ? "We're still working on it. We'll notify you when it's done. You can also check here any time."
+                : "If you've just finished DigiLocker, it can take a minute to show up. Pull down to refresh."}
+            </Text>
+          ) : null}
         </View>
 
         {step !== null ? (

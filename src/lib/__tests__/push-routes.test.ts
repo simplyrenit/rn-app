@@ -123,6 +123,11 @@ describe("pushRoute", () => {
     }
   });
 
+  it("opens the verification status for a kyc_status push, which carries no role or booking (ENG-72)", () => {
+    expect(pushRoute({ type: "kyc_status", kyc_status: "verified", case_ref: "kyc_01" })).toEqual({ screen: "KycStatus" });
+    expect(pushRoute(push("kyc_status", { role: "owner", booking: null }))).toEqual({ screen: "KycStatus" });
+  });
+
   it("has no phone screen for a payout, and ignores an owner type it does not know", () => {
     expect(pushRoute(push("payout", { role: "owner", booking: null, payout: "pout_1", amount: "1830.00" }))).toBeNull();
     expect(pushRoute(push("something_new", { role: "owner" }))).toBeNull();

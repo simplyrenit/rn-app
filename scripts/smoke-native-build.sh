@@ -12,7 +12,7 @@
 # actually built, drives it past the first screen, and fails on the log
 # signatures that class of break produces.
 #
-# Usage:  scripts/smoke-native-build.sh [Debug|Release] [seconds]
+# Usage:  [SMOKE_DEVICE=<udid>] scripts/smoke-native-build.sh [Debug|Release] [seconds]
 set -uo pipefail
 
 CONFIG="${1:-Debug}"
@@ -68,7 +68,9 @@ fi
 ok "all $COUNT local native pods have build products"
 
 # --- Launch -----------------------------------------------------------------
-DEVICE=$(xcrun simctl list devices booted -j | python3 -c '
+# SMOKE_DEVICE=<udid> picks the simulator when more than one is booted.
+DEVICE="${SMOKE_DEVICE:-}"
+[ -n "$DEVICE" ] || DEVICE=$(xcrun simctl list devices booted -j | python3 -c '
 import json,sys
 d=json.load(sys.stdin)["devices"]
 for rt in d.values():

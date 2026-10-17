@@ -44,7 +44,9 @@ export type PushRoute =
   /** The check on a publish finished. */
   | { screen: "myProducts" }
   /** The admin approved or rejected the merchant (ENG-271): the Profile tab, whose status card shows which. */
-  | { screen: "Profile" };
+  | { screen: "Profile" }
+  /** Business verification moved on (ENG-72). The screen reads the status; nothing in the push is shown. */
+  | { screen: "KycStatus" };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -58,6 +60,9 @@ function claimId(value: unknown): number | null {
 export function pushRoute(data: unknown): PushRoute | null {
   if (!isRecord(data) || typeof data.type !== "string") return null;
   const number = typeof data.booking === "string" && data.booking ? data.booking : null;
+
+  // Sent by the KYC sweep with no booking, and only to the merchant it is about.
+  if (data.type === "kyc_status") return { screen: "KycStatus" };
 
   if (data.role === "customer" && number) {
     switch (data.type) {
