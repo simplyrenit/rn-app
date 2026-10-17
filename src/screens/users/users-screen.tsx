@@ -100,10 +100,9 @@ const GLYPH_SIZE = 20;
 /** The chevron in a block's button is drawn in a 24pt box. */
 const CHEVRON_SIZE = 24;
 /**
- * Fields the owner object embedded in a listing carries but `PublicOwner` (the
- * shape `owner-details/` returns) does not. `src/lib/types.ts` belongs to another
- * lane, so they are described here and read off the listing payload the profile
- * already fetches.
+ * Fields the owner object embedded in a listing carries. Email and phone are
+ * read only from there; `account_type` and `business_name` are the fallback for
+ * an API older than ENG-73, whose `owner-details/` does not return them.
  */
 interface OwnerTrustFields {
   email_verified?: boolean;
