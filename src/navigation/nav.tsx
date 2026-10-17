@@ -91,6 +91,7 @@ import MyProductScreen from "@/screens/profileScreens/my-product";
 import RentalDeliveryScreen from "@/screens/profileScreens/rental-delivery";
 import RentalHoursScreen from "@/screens/profileScreens/rental-hours";
 import RentalSettingsScreen from "@/screens/profileScreens/rental-settings";
+import ShopAddressScreen from "@/screens/profileScreens/shop-address";
 import NotificationScreen from "@/screens/profileScreens/notification";
 import WhoWeAreScreen from "@/screens/profileScreens/who-we-are";
 import { AppState, BackHandler, PixelRatio, Platform, View } from "react-native";
@@ -795,6 +796,10 @@ export default function Navigation() {
         <Stack.Screen
           name="RentalHours"
           component={RentalHoursScreen}
+        />
+        <Stack.Screen
+          name="ShopAddress"
+          component={ShopAddressScreen}
         />
         <Stack.Screen
           name="RentalDelivery"

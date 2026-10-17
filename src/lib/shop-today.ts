@@ -260,6 +260,8 @@ export type NeedsAction =
   | { kind: "products" }
   /** The handover hours screen. */
   | { kind: "hours" }
+  /** The Shop address screen. */
+  | { kind: "address" }
   /** "42 drafts need photos": the photo walk-through (ENG-192). */
   | { kind: "photos" };
 
@@ -272,9 +274,8 @@ export interface NeedsRow {
 
 /**
  * What a "Needs you" item offers. The text is the server's, ready to show. An
- * item with nothing to tap on the phone (a claim, an address to confirm: both
- * are the dashboard's) is shown as its text alone, and a kind this build does
- * not know is shown the same way.
+ * item with nothing to tap on the phone is shown as its text alone, and a kind
+ * this build does not know is shown the same way.
  */
 export function needsRow(item: NeedsYou, index: number): NeedsRow {
   const key = `${item.kind}-${item.booking ?? item.block?.id ?? item.claim ?? index}`;
@@ -290,6 +291,8 @@ export function needsRow(item: NeedsYou, index: number): NeedsRow {
       return { key, icon: "warning", text: item.text, action: { kind: "products" } };
     case "no_hours":
       return { key, icon: "warning", text: item.text, action: { kind: "hours" } };
+    case "address_unconfirmed":
+      return { key, icon: "warning", text: item.text, action: { kind: "address" } };
     case "drafts_need_photos":
       return { key, icon: "camera", text: item.text, action: { kind: "photos" } };
     default:

@@ -383,6 +383,14 @@ export default function RentalSettingsScreen() {
             onPress={() => navigation.navigate("RentalDelivery")}
             right={<ChevronRightIcon size={20} color={color.text} />}
           />
+          {shop.is_merchant ? (
+            <SettingsRow
+              label="Shop address"
+              sub={shop.address_confirmed ? shop.locality || shop.address : "Not set yet"}
+              onPress={() => navigation.navigate("ShopAddress")}
+              right={<ChevronRightIcon size={20} color={color.text} />}
+            />
+          ) : null}
           <SettingsRow
             label="Signed-in devices"
             onPress={() => devicesSheet.current?.present()}

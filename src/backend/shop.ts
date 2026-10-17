@@ -1,12 +1,13 @@
 import { useGlobalContext } from "@/context/global-context";
 import {
   ACCESS_DEVICES_ENDPOINT,
+  SHOP_CONFIRM_ADDRESS_ENDPOINT,
   SHOP_DELIVERY_EXAMPLE_ENDPOINT,
   SHOP_ENDPOINT,
   SHOP_OPEN_ENDPOINT,
 } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
-import { Hours, OpenState, Shop } from "@/lib/shop";
+import { Hours, OpenState, Shop, ShopAddressBody } from "@/lib/shop";
 import { useQuery } from "react-query";
 
 /** Keyed on the username: the cache outlives a logout. */
@@ -32,6 +33,11 @@ export interface ShopPatch {
 
 export async function patchShop(patch: ShopPatch): Promise<Shop> {
   return (await axiosInstance.patch<Shop>(SHOP_ENDPOINT, patch)).data;
+}
+
+/** The shop's address and pin, confirmed by its owner. The phone is not asked for the fresh code. */
+export async function confirmShopAddress(body: ShopAddressBody): Promise<Shop> {
+  return (await axiosInstance.post<Shop>(SHOP_CONFIRM_ADDRESS_ENDPOINT, body)).data;
 }
 
 /**
