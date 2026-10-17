@@ -4,10 +4,10 @@ import { Capture, CaptureDraft, ShotList, addShot, codeConfirmed, reopenForMissi
 import { CaptureQueueDeps, FileGone, createCaptureQueue } from "../capture-queue";
 
 /** An axios error with an answer, the way the server's errors come. */
-function answer(status: number, code: string): AxiosError {
+function answer(status: number, code: string, message: string | null = null, details: unknown = null): AxiosError {
   return new AxiosError("failed", undefined, undefined, undefined, {
     status,
-    data: { error: { code, message: null, details: null } },
+    data: { error: { code, message, details } },
   } as never);
 }
 
@@ -91,6 +91,34 @@ describe("the capture queue", () => {
       "file:///captures/back.jpg",
       "file:///captures/video.mp4",
     ]);
+  });
+
+  it("a black photo the server refuses leaves the record with no tick, and only that shot is asked for again", async () => {
+    const words = "Too dark to see the item. Take it again in good light.";
+    const send = jest
+      .fn<CaptureQueueDeps["send"]>()
+      .mockRejectedValueOnce(answer(400, "photo_too_dark", words, { keys: ["back"] }))
+      .mockResolvedValue(complete);
+    const { queue, deps } = setup({ send });
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+
+    const refused = queue.getDrafts()[0];
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(refused.shots.back).toBeUndefined();
+    expect(refused.shots.front?.url).not.toBeNull();
+    expect(refused).toMatchObject({ sealed: false, done: false, error: { text: words, retry: false } });
+    expect(deps.discard).toHaveBeenCalledWith(["file:///captures/back.jpg"]);
+    // Nothing is sent again by itself.
+    expect(queue.hasWork()).toBe(false);
+
+    queue.update(ID, (d) => addShot(d, "back", photo("back-again")));
+    queue.update(ID, (d) => seal(d));
+    await queue.idle();
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(queue.getDrafts()[0]).toMatchObject({ done: true, error: null });
   });
 
   it("with no connection nothing is lost: the files wait, and go up on the next try", async () => {
