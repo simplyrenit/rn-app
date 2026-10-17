@@ -1,5 +1,6 @@
 
 import { useAuth } from "@/backend/auth";
+import { useKycStatus } from "@/backend/kyc";
 import { useProfile } from "@/backend/profile";
 import { fetchUnlock } from "@/backend/unlock";
 import { UnlockSheet, UnlockSheetHandle } from "@/components/bank/unlock-sheet";
@@ -44,7 +45,7 @@ import {
 } from "@/lib/design-tokens";
 import { apiError } from "@/lib/api-error";
 import { DeleteProblem, deleteProblem } from "@/lib/delete-account";
-import { NAME_LOCKED, nameSaveOutcome } from "@/lib/name-change";
+import { nameLockNote, nameSaveOutcome } from "@/lib/name-change";
 import { needsCurrentNumberCode, noNumberStep, phoneChangeBody, phoneChangeOutcome, unlockNext, unlockStart } from "@/lib/phone-change";
 import { EMAIL_HAS_ACCOUNT, emailChangeBody, emailChangeOutcome, emailCodeText, emailProof, sameEmail } from "@/lib/sign-in-proof";
 import { toast } from "@/lib/toast";
@@ -65,9 +66,10 @@ const AVATAR = 48;
 const FIELD_HEIGHT = 85;
 const SHEET_HEIGHT =
   37 + HEADER_HEIGHT + (AVATAR + 2 * ROW_PAD_V + 1) + 4 * FIELD_HEIGHT + 1 + MIN_TOUCH_TARGET;
-// The locked name's note under its row (8 above it, two lines of small text on a phone), added to the
-// sheet so it does not push the delete row out of the bottom.
-const NOTE_HEIGHT = 8 + 2 * lineHeight.sm;
+// The locked name's note under its row is added to the sheet, so it does not push the delete row out
+// of the bottom: 8 above it, and its measured height (two lines of small text until it is measured).
+const NOTE_GAP = 8;
+const NOTE_FIRST_GUESS = 2 * lineHeight.sm;
 
 function DetailField({
   label,
@@ -75,6 +77,7 @@ function DetailField({
   accessibilityLabel,
   onEdit,
   note = null,
+  onNoteHeight,
   busy = false,
   error = null,
 }: {
@@ -85,6 +88,8 @@ function DetailField({
   onEdit?: () => void;
   /** Why the field cannot be changed, said on the row so nobody is invited to try. */
   note?: string | null;
+  /** The note's laid-out height, for a sheet sized to its rows. */
+  onNoteHeight?: (height: number) => void;
   /** A change is being got ready (the unlock is read): the pencil waits, and a second tap does nothing. */
   busy?: boolean;
   /** Why the change could not open, said here in the sheet (a toast is drawn behind a sheet and cannot be seen). */
@@ -100,7 +105,7 @@ function DetailField({
         {value}
       </Text>
       {note ? (
-        <Text fontSize="text-sm" tone="dim">
+        <Text fontSize="text-sm" tone="dim" onLayout={(event) => onNoteHeight?.(event.nativeEvent.layout.height)}>
           {note}
         </Text>
       ) : null}
@@ -135,8 +140,11 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 }) => {
   const { theme, userDetails } = useGlobalContext();
   const { color } = useTheme();
-  // rn-api refuses a changed name while the account is verified (D-17), so the row does not offer one.
-  const nameLocked = userDetails?.business_verified === true;
+  // rn-api refuses a changed name while the account is verified or being verified (D-17), so the row
+  // does not offer one then. The status is the query the Profile card already keeps warm.
+  const { data: kycStatus } = useKycStatus();
+  const nameLock = nameLockNote(userDetails?.business_verified, kycStatus?.kyc_status);
+  const [noteHeight, setNoteHeight] = useState(NOTE_FIRST_GUESS);
   const insets = useSafeAreaInsets();
   const { sendOTP, verifyOTP, requestPhoneNumberChangeOtp, verifyPhoneNumberChange } =
     useAuth();
@@ -743,7 +751,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         // The frame's sheet is exactly its rows tall; a fixed point (plus the
         // home-indicator inset it draws outside the sheet) keeps the bottom
         // from reading as dead space, which "62%" left on shorter phones.
-        snapPoints={[SHEET_HEIGHT + insets.bottom + (nameLocked ? NOTE_HEIGHT : 0)]}
+        snapPoints={[SHEET_HEIGHT + insets.bottom + (nameLock ? NOTE_GAP + noteHeight : 0)]}
         frame
         isDark={isDarkMode}
       >
@@ -786,7 +794,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           )}
         </View>
 
-        <DetailField label="Full name" value={details.fullName} accessibilityLabel="Edit full name" onEdit={nameLocked ? undefined : openEditNameModal} note={nameLocked ? NAME_LOCKED : null} />
+        <DetailField label="Full name" value={details.fullName} accessibilityLabel="Edit full name" onEdit={nameLock ? undefined : openEditNameModal} note={nameLock} onNoteHeight={setNoteHeight} />
         <DetailField label="Email address" value={details.email} accessibilityLabel="Edit email address" onEdit={openEditEmailModal} busy={opening === "email"} error={openError?.field === "email" ? openError.text : null} />
         <DetailField label="Phone number" value={details.phone} accessibilityLabel="Edit phone number" onEdit={openEditPhoneModal} busy={opening === "phone"} error={openError?.field === "phone" ? openError.text : null} />
         <DetailField label="Password" value={details.password} accessibilityLabel="Edit password" onEdit={openEditPasswordModal} />
