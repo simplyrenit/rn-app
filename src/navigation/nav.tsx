@@ -52,6 +52,7 @@ import {
   setupNotificationListeners,
   setupRingChannel,
 } from "@/backend/notifications";
+import { useKycRefresh } from "@/backend/kyc";
 import { PushRoute } from "@/lib/push-routes";
 import { ringEndedQueryKey } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
@@ -135,6 +136,9 @@ import ListReadingScreen from "@/screens/list-flow/reading";
 import ListReviewScreen from "@/screens/list-flow/review";
 import ListPreviewScreen from "@/screens/list-flow/preview";
 import ListSubmittedScreen from "@/screens/list-flow/submitted";
+import KycDetailsScreen from "@/screens/kyc/details";
+import KycIntroScreen from "@/screens/kyc/intro";
+import KycStatusScreen from "@/screens/kyc/status";
 import OwnersProductsScreen from "@/screens/users/owners-products";
 import UnavailabilitySubCatScreen from "@/screens/profileScreens/unavailability_subCat";
 
@@ -503,6 +507,10 @@ export default function Navigation() {
     }
   }, [isAuthenticated]);
 
+  // A merchant's verification status and badge are read again whenever the app comes back to
+  // the foreground: a reviewer may have decided while it was away.
+  useKycRefresh();
+
   React.useEffect(() => {
     if (!isAuthenticated) {
       // Signed out (not merely not known yet): a tap on a notification now is dropped, and rings
@@ -777,6 +785,10 @@ export default function Navigation() {
           component={ListSubmittedScreen}
           options={{ gestureEnabled: false }}
         />
+        {/* Merchant verification (ENG-12): on the root stack, so the tab bar hides. */}
+        <Stack.Screen name="KycIntro" component={KycIntroScreen} />
+        <Stack.Screen name="KycDetails" component={KycDetailsScreen} />
+        <Stack.Screen name="KycStatus" component={KycStatusScreen} />
         <Stack.Screen
           name="profile"
           component={ProfileScreen}

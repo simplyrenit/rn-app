@@ -1,3 +1,4 @@
+import { KycCard } from "@/components/kyc/kyc-card";
 import { Button, Text } from "@/components/core";
 import { useProfile } from "@/backend/profile";
 import { useGlobalContext } from "@/context/global-context";
@@ -131,6 +132,9 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
             </View>
           </View>
         )}
+
+        {/* Business verification. It hides itself for anyone who is not a business account. */}
+        <KycCard isDark={isDark} />
 
         <ProfileBlockRule />
 
