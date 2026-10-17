@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { GET_CATEGORIES, GET_REFRESH_TOKEN } from "./config";
 import { getAuthTokens, setAuthTokens } from "./auth-fns";
+import { SessionEnd, sessionEndFrom } from "./session-end";
 
 const NETWORK_LOG_PREFIX = "[network]";
 let requestCounter = 0;
@@ -8,7 +9,7 @@ let requestCounter = 0;
 // When the server explicitly rejects a refresh token the session is over, but
 // this module cannot import the global context (that context imports this
 // module), so the provider registers a callback here instead.
-type SessionExpiredHandler = () => void;
+type SessionExpiredHandler = (end: SessionEnd) => void;
 let onSessionExpired: SessionExpiredHandler | null = null;
 // Several requests usually fail together when a session expires. Without this
 // guard each one would fire its own logout and its own "signed out" toast.
@@ -48,6 +49,8 @@ const REDACTED_KEYS = new Set([
   "pan",
   "gstin",
   "next_action",
+  // The owner's bank account (ENG-135). The server never stores it either.
+  "account_number",
 ]);
 
 const summarizeArray = (value: unknown[]) => {
@@ -322,7 +325,10 @@ axiosInstance.interceptors.response.use(
 
         if (sessionIsOver && !sessionExpiryNotified) {
           sessionExpiryNotified = true;
-          onSessionExpired?.();
+          // Why the server ended it ("This device has been signed out." from another device, or just expired) decides the words.
+          onSessionExpired?.(
+            sessionEndFrom(refreshError instanceof AxiosError ? refreshError.response?.data : undefined)
+          );
         }
       }
     }

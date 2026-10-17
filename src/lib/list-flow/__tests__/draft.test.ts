@@ -6,6 +6,7 @@ import {
   createDraft,
   draftReducer,
   hydrateDraft,
+  isDraftWorthResuming,
   missingRequirements,
   photosChangedSinceRun,
   serializeDraft,
@@ -182,6 +183,24 @@ describe("edit transitions", () => {
   it("an edit to the same value is not an edit", () => {
     const d = apply(fresh(), filled("title", "PS5"), { type: "editField", field: "title", value: "PS5" });
     expect(d.fields.title.source).toBe("ai");
+  });
+
+  it("keeps the sub-category's id when the extraction names it, and still takes the titles alone (P3-8)", () => {
+    const named = apply(
+      fresh(),
+      filled("category", { parent: "Gaming", title: "Gaming Console", id: 41, slug: "gaming-vr-emerging-tech-gaming-console" })
+    );
+    // The id rides along; the slug is not kept.
+    expect(named.fields.category).toMatchObject({ source: "ai" });
+    expect(named.fields.category.value).toEqual({ id: 41, parent: "Gaming", title: "Gaming Console" });
+    // The old shape: two titles, no id.
+    const old = apply(fresh(), filled("category", { parent: "Gaming", title: "Gaming Console" }));
+    expect(old.fields.category.value).toEqual({ parent: "Gaming", title: "Gaming Console" });
+    // An id that is not a whole positive number is dropped, never trusted.
+    for (const id of ["41", 0, -3, 4.5, null]) {
+      const odd = apply(fresh(), filled("category", { parent: "Gaming", title: "Gaming Console", id }));
+      expect(odd.fields.category.value).toEqual({ parent: "Gaming", title: "Gaming Console" });
+    }
   });
 
   it("picking the AI's category from the sheet takes the id but is not an edit", () => {
@@ -439,6 +458,7 @@ describe("requirements", () => {
       "title",
       "description",
       "location",
+      "worth",
     ]);
     expect(stillNeededLabel([{ key: "condition", label: "condition" }])).toBe(
       "Still needed: condition"
@@ -460,6 +480,7 @@ describe("requirements", () => {
       filled("description", "My PS5."),
       { type: "confirmCondition", value: "good" },
       { type: "editField", field: "rate", value: "500" },
+      { type: "editField", field: "worth", value: "45000" },
       {
         type: "prefillLocation",
         value: { locality: "Thane West, Thane", fullAddress: "", lat: 19.2, long: 72.97 },
@@ -480,6 +501,41 @@ describe("requirements", () => {
       const d = apply(fresh(), { type: "editField", field: "rate", value: rate });
       expect(missingRequirements(d).map((m) => m.key)).toContain("rate");
     }
+  });
+});
+
+describe("save-this-address intent", () => {
+  it("starts unset, takes a type, and clears on null", () => {
+    expect(fresh().saveAddressAs).toBeUndefined();
+    const chosen = apply(fresh(), { type: "setSaveAddressAs", value: "home" });
+    expect(chosen.saveAddressAs).toBe("home");
+    expect(apply(chosen, { type: "setSaveAddressAs", value: "work" }).saveAddressAs).toBe("work");
+    expect(apply(chosen, { type: "setSaveAddressAs", value: null }).saveAddressAs).toBeUndefined();
+  });
+
+  it("returns the same draft when nothing changes, so it is not re-saved", () => {
+    const d = fresh();
+    expect(draftReducer(d, { type: "setSaveAddressAs", value: null })).toBe(d);
+    const chosen = apply(d, { type: "setSaveAddressAs", value: "other" });
+    expect(draftReducer(chosen, { type: "setSaveAddressAs", value: "other" })).toBe(chosen);
+  });
+
+  it("survives a save and resume", () => {
+    const d = apply(fresh(), { type: "setSaveAddressAs", value: "work" });
+    expect(hydrateDraft(serializeDraft(d), NOW + 1000)!.saveAddressAs).toBe("work");
+  });
+
+  it("hydrates a draft stored before the field existed", () => {
+    const stored = JSON.parse(serializeDraft(fresh()));
+    expect("saveAddressAs" in stored).toBe(false);
+    const restored = hydrateDraft(JSON.stringify(stored), NOW + 1000)!;
+    expect(restored).not.toBeNull();
+    expect(restored.saveAddressAs).toBeUndefined();
+  });
+
+  it("drops a stored value that is not an address type", () => {
+    const stored = { ...JSON.parse(serializeDraft(fresh())), saveAddressAs: "office" };
+    expect(hydrateDraft(JSON.stringify(stored), NOW + 1000)!.saveAddressAs).toBeUndefined();
   });
 });
 
@@ -524,5 +580,100 @@ describe("persistence", () => {
     expect(hydrateDraft("{not json", NOW)).toBeNull();
     expect(hydrateDraft(JSON.stringify({ hello: 1 }), NOW)).toBeNull();
     expect(hydrateDraft(null, NOW)).toBeNull();
+  });
+});
+
+describe("quantity and worth (ENG-155)", () => {
+  it("starts at one unit, as the owner's own answer", () => {
+    const d = fresh();
+    expect(d.fields.quantity).toEqual({ value: "1", source: "user" });
+    expect(missingRequirements(d).map((m) => m.key)).not.toContain("quantity");
+  });
+
+  it("asks again when the owner clears the quantity or types 0", () => {
+    for (const value of ["", "0", "1.5"]) {
+      const d = apply(fresh(), { type: "editField", field: "quantity", value });
+      expect(missingRequirements(d).map((m) => m.key)).toContain("quantity");
+    }
+    const five = apply(fresh(), { type: "editField", field: "quantity", value: "5" });
+    expect(five.fields.quantity.value).toBe("5");
+    expect(missingRequirements(five).map((m) => m.key)).not.toContain("quantity");
+  });
+
+  it("reads the worth as a number of rupees, and still as the old money string (P3-8)", () => {
+    expect(apply(fresh(), filled("worth", 45000)).fields.worth.value).toBe("45000");
+    expect(apply(fresh(), filled("worth", "45000.00")).fields.worth.value).toBe("45000");
+    expect(apply(fresh(), filled("worth", "45000")).fields.worth.value).toBe("45000");
+    // No usable figure: nothing is suggested.
+    expect(apply(fresh(), filled("worth", 0)).fields.worth.value).toBeNull();
+    expect(apply(fresh(), filled("worth", "about fifty thousand")).fields.worth.value).toBeNull();
+  });
+
+  it("fills an untouched worth from the stream as a suggestion that still needs confirming", () => {
+    const d = apply(fresh(), filled("worth", 45000, { confidence: 0.6 }));
+    expect(d.fields.worth).toMatchObject({ value: "45000", source: "ai", confidence: 0.6 });
+    expect(missingRequirements(d).map((m) => m.key)).toContain("worth");
+  });
+
+  it("counts a confirmed suggestion, and keeps it the owner's afterwards", () => {
+    const d = apply(fresh(), filled("worth", 45000), { type: "confirmWorth" });
+    expect(d.fields.worth).toMatchObject({ value: "45000", source: "user" });
+    expect(missingRequirements(d).map((m) => m.key)).not.toContain("worth");
+    // A later run cannot replace what the owner has confirmed.
+    expect(apply(d, filled("worth", 99000)).fields.worth.value).toBe("45000");
+  });
+
+  it("counts a suggestion the owner changed", () => {
+    const d = apply(fresh(), filled("worth", 45000), { type: "editField", field: "worth", value: "52000" });
+    expect(d.fields.worth).toMatchObject({ value: "52000", source: "ai_edited" });
+    expect(missingRequirements(d).map((m) => m.key)).not.toContain("worth");
+  });
+
+  it("never lets the model overwrite a worth the owner typed", () => {
+    const d = apply(fresh(), { type: "editField", field: "worth", value: "30000" }, filled("worth", 45000));
+    expect(d.fields.worth).toMatchObject({ value: "30000", source: "user" });
+  });
+
+  it("ignores a blank, an unusable figure and a suggestion of zero", () => {
+    expect(apply(fresh(), blank("worth")).fields.worth).toEqual({ value: null, source: "empty" });
+    expect(apply(fresh(), filled("worth", "a lot")).fields.worth.value).toBeNull();
+    expect(apply(fresh(), filled("worth", 0)).fields.worth.value).toBeNull();
+  });
+
+  it("does not confirm a worth that is not a suggestion", () => {
+    const empty = apply(fresh(), { type: "confirmWorth" });
+    expect(empty.fields.worth).toEqual({ value: null, source: "empty" });
+  });
+
+  it("drops a suggestion made from photos that have since changed, and keeps a confirmed one", () => {
+    const suggested = apply(fresh(), filled("worth", 45000));
+    const rerun = apply(suggested, { type: "serverRunCounted", clearStaleAi: true });
+    expect(rerun.fields.worth).toEqual({ value: null, source: "empty" });
+
+    const confirmed = apply(suggested, { type: "confirmWorth" }, { type: "serverRunCounted", clearStaleAi: true });
+    expect(confirmed.fields.worth.value).toBe("45000");
+  });
+
+  it("remembers the not-delivered choice, and survives storage", () => {
+    const d = apply(fresh(), { type: "setNotDelivered", value: true });
+    expect(d.notDelivered).toBe(true);
+    const back = hydrateDraft(serializeDraft(d), NOW);
+    expect(back?.notDelivered).toBe(true);
+    expect(apply(d, { type: "setNotDelivered", value: false }).notDelivered).toBe(false);
+  });
+
+  it("gives a draft stored before the fields existed one unit and no worth", () => {
+    const old = JSON.parse(serializeDraft(fresh()));
+    delete old.fields.quantity;
+    delete old.fields.worth;
+    const back = hydrateDraft(JSON.stringify(old), NOW);
+    expect(back?.fields.quantity).toEqual({ value: "1", source: "user" });
+    expect(back?.fields.worth).toEqual({ value: null, source: "empty" });
+  });
+
+  it("is not worth resuming just because the quantity starts at one", () => {
+    expect(isDraftWorthResuming(fresh())).toBe(false);
+    expect(isDraftWorthResuming(apply(fresh(), { type: "editField", field: "quantity", value: "3" }))).toBe(true);
+    expect(isDraftWorthResuming(apply(fresh(), { type: "editField", field: "worth", value: "100" }))).toBe(true);
   });
 });

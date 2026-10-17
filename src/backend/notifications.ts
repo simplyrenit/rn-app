@@ -7,6 +7,12 @@ import { Platform } from "react-native";
 import { getFirestoreDb, getFirestoreModule } from "@/lib/firebase";
 import axiosInstance from "@/lib/networkUtils";
 import { REGISTER_PUSH_TOKEN_ENDPOINT } from "@/lib/config";
+import { getAuthTokens } from "@/lib/auth-fns";
+import { getDeviceInfo, sessionBody } from "@/lib/device";
+import { PushRoute, pushRoute } from "@/lib/push-routes";
+import { createTapLedger } from "@/lib/push-taps";
+import { sessionIdFromToken } from "@/lib/session";
+import { shouldDropPush } from "@/lib/sign-out";
 import { colors } from "@/lib/design-tokens";
 
 // Task name for background fetch
@@ -15,6 +21,25 @@ const MESSAGE_NOTIFICATION_TASK = "MESSAGE_NOTIFICATION_TASK";
 // Renit registers tokens with its authenticated API; Expo's persisted
 // auto-registration retries while offline before app code can handle it.
 void Notifications.setAutoServerRegistrationEnabledAsync(false);
+
+function expoProjectId(): string | undefined {
+  return Constants.easConfig?.projectId ?? Constants.expoConfig?.extra?.eas?.projectId;
+}
+
+/** The Expo push token, or undefined when it cannot be had (offline, no Expo answer). */
+async function fetchExpoToken(projectId: string): Promise<string | undefined> {
+  try {
+    await fetch("https://exp.host");
+    return (
+      await Notifications.getExpoPushTokenAsync({
+        projectId,
+        baseUrl: "https://exp.host/--/api/v2/",
+      })
+    ).data;
+  } catch {
+    return undefined;
+  }
+}
 
 // Function to register for push notifications
 export async function registerForPushNotificationsAsync() {
@@ -37,26 +62,15 @@ export async function registerForPushNotificationsAsync() {
       return;
     }
 
-    const projectId =
-      Constants.easConfig?.projectId ??
-      Constants.expoConfig?.extra?.eas?.projectId;
+    const projectId = expoProjectId();
 
     if (!projectId) {
       throw new Error("Missing EAS project ID for push notifications");
     }
 
-    try {
-      await fetch("https://exp.host");
-      token = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId,
-          baseUrl: "https://exp.host/--/api/v2/",
-        })
-      ).data;
-    } catch {
-      return;
-    }
-
+    token = await fetchExpoToken(projectId);
+    // As before: no token from Expo, nothing more to set up.
+    if (!token) return;
   } else {
     // Simulators and emulators cannot register for push. This is a developer
     // diagnostic, so it must not surface as a blocking alert over the UI.
@@ -97,12 +111,42 @@ export async function registerForPushNotificationsAsync() {
   return token;
 }
 
+/**
+ * Tells the server which phone this session is, at every start once signed in
+ * (ENG-146; API-CONTRACT `register-push-token`). The push token goes too when the
+ * phone already has one, and the call is made without it when it has none: with
+ * notifications off, on a simulator, or while Expo does not answer. That is what
+ * fills a session an older build started, so it stops being asked for a fresh
+ * code the phone has no screen for.
+ *
+ * It never asks for notification permission: that prompt stays where it was, with
+ * the chat subscription. A failure is not shown; the next start tries again.
+ */
+export async function registerDeviceSession(): Promise<void> {
+  let token: string | undefined;
+  try {
+    if (Device.isDevice) {
+      const { status } = await Notifications.getPermissionsAsync();
+      const projectId = expoProjectId();
+      if (status === "granted" && projectId) token = await fetchExpoToken(projectId);
+    }
+  } catch {
+    // No token this time; the device fields still go.
+  }
+  try {
+    await axiosInstance.post(REGISTER_PUSH_TOKEN_ENDPOINT, sessionBody(token, await getDeviceInfo()));
+  } catch {
+    // Quietly: tried again at the next start.
+  }
+}
+
 // Keep both chat transports supplied with the current Expo token.
 export async function updateUserPushToken(firebaseUid: string, pushToken: string) {
   try {
-    await axiosInstance.post(REGISTER_PUSH_TOKEN_ENDPOINT, {
-      expo_push_token: pushToken,
-    });
+    // With the device fields (ENG-146): the server files the token under this
+    // phone's session, and fills the platform of a session an older build started
+    // so that it stops being asked for a fresh code.
+    await axiosInstance.post(REGISTER_PUSH_TOKEN_ENDPOINT, sessionBody(pushToken, await getDeviceInfo()));
   } catch (error) {
   }
 
@@ -124,6 +168,60 @@ export async function updateUserPushToken(firebaseUid: string, pushToken: string
       { merge: true }
     );
   } catch (error) {
+  }
+}
+
+/**
+ * The Android channel a `ring` push is sent on (API-CONTRACT; ARCHITECTURE 7.1,
+ * `channel_id "ring"`, `sound "ring.wav"`). A push to a channel the phone does not
+ * have falls back to the default one: quiet and easy to miss, which is the one
+ * thing a ring must not be. So it is made at every start once signed in; making
+ * it again changes nothing. The sound is `res/raw/ring.wav`, which the native
+ * build carries (`assets/sounds/ring.wav`, the `expo-notifications` plugin in
+ * `app.json`), and the importance is the highest, so it opens over a locked screen.
+ */
+export async function setupRingChannel() {
+  if (Platform.OS !== "android") return;
+  try {
+    await Notifications.setNotificationChannelAsync("ring", {
+      name: "New booking requests",
+      description: "Rings when a customer asks to book from you.",
+      importance: Notifications.AndroidImportance.MAX,
+      sound: "ring.wav",
+      vibrationPattern: [0, 600, 300, 600, 300, 600],
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      enableVibrate: true,
+      enableLights: true,
+      lightColor: colors.dark.brand,
+    });
+  } catch {
+    // The next start tries again; the ring still arrives on the default channel.
+  }
+}
+
+/** This phone's own session id, from its access token (API-CONTRACT P3-14); null when it cannot be read. */
+export async function ownSessionId(): Promise<number | null> {
+  return sessionIdFromToken((await getAuthTokens())?.access_token);
+}
+
+/**
+ * Takes a request's ring out of the notification tray once it is over (answered
+ * here, answered elsewhere, ended), so a tap on it later does not open a ring that
+ * is not ringing. All of them when no number is given.
+ */
+export async function dismissRingNotifications(number?: string) {
+  try {
+    const shown = await Notifications.getPresentedNotificationsAsync();
+    await Promise.all(
+      shown
+        .filter((n) => {
+          const data = n.request.content.data as { type?: unknown; booking?: unknown } | undefined;
+          return data?.type === "ring" && (!number || data.booking === number);
+        })
+        .map((n) => Notifications.dismissNotificationAsync(n.request.identifier))
+    );
+  } catch {
+    // The tray is only tidied; the ring screen says what became of the request.
   }
 }
 
@@ -196,20 +294,14 @@ export async function registerBackgroundFetchAsync() {
   });
 }
 
-export type NotificationRoute = { kind: "chat"; conversationId: string } | { kind: "kyc" };
-
-// Listener for a notification tap: tells the caller where it leads. A verification-status push
-// that arrives while the app is open is not a tap; it only asks for the status to be read again.
+// Listener for notification response to navigate to conversation
 export function setupNotificationListeners(
-  onRoute: (route: NotificationRoute) => void,
-  onKycPush?: () => void
+  onNotificationResponse: (conversationId: string) => void
 ) {
   const handleResponse = (response: Notifications.NotificationResponse | null) => {
     const data = response?.notification.request.content.data as any;
-    if (data?.type === "kyc_status") {
-      onRoute({ kind: "kyc" });
-    } else if (data?.conversationId) {
-      onRoute({ kind: "chat", conversationId: data.conversationId });
+    if (data?.conversationId) {
+      onNotificationResponse(data.conversationId);
     }
   };
 
@@ -219,16 +311,74 @@ export function setupNotificationListeners(
 
   void Notifications.getLastNotificationResponseAsync().then(handleResponse);
 
+  // Also add a notification received listener for when the app is in the foreground
   const foregroundSubscription = Notifications.addNotificationReceivedListener(
     (notification) => {
-      const data = notification.request.content.data as any;
-      if (data?.type === "kyc_status") onKycPush?.();
+      // Handle foreground notifications if needed
     }
   );
 
   return () => {
     subscription.remove();
     foregroundSubscription.remove();
+  };
+}
+
+// A tap is answered once: the last one is handed out again every time the
+// listeners are set up (each sign-in), and must not reopen a booking each time.
+const taps = createTapLedger();
+
+/**
+ * While nobody is signed in the router is not listening, and a tap on a notification
+ * (a ring still in the tray, say) must not wait to open after the next sign-in for
+ * whoever signs in. So a tap made signed out, and the one the app was started by, are
+ * counted as dealt with. The tray's rings are cleared too (`dismissRingNotifications`).
+ * Returns what stops it.
+ */
+export function ignoreTapsWhileSignedOut() {
+  const drop = (response: Notifications.NotificationResponse | null) => {
+    if (response) taps.mark(response.notification.request.identifier);
+  };
+  void Notifications.getLastNotificationResponseAsync().then(drop);
+  const subscription = Notifications.addNotificationResponseReceivedListener(drop);
+  return () => subscription.remove();
+}
+
+/**
+ * The app's push router (ENG-173 owns it; API-CONTRACT, Common › Push
+ * notifications). Every push carries `data.type`; `pushRoute` in
+ * `src/lib/push-routes.ts` is the table that says where each type goes, and
+ * later sub-tasks add their types there, not here.
+ *
+ * A push that arrives while the app is open says something changed
+ * (`onArrive`: read it again). A tap on one opens its screen (`onOpen`), which
+ * reads the truth from the API. `onOpen` answers whether it took the route: a
+ * tap is marked as handled only then, so one that could not be opened yet is
+ * offered again.
+ */
+export function setupPushRouter(handlers: {
+  onArrive: (route: PushRoute) => void;
+  onOpen: (route: PushRoute) => boolean;
+}) {
+  const open = (response: Notifications.NotificationResponse | null) => {
+    if (!response) return;
+    const route = pushRoute(response.notification.request.content.data);
+    const id = response.notification.request.identifier;
+    if (!route || taps.handled(id)) return;
+    if (handlers.onOpen(route)) taps.mark(id);
+  };
+
+  const arrived = Notifications.addNotificationReceivedListener((notification) => {
+    const route = pushRoute(notification.request.content.data);
+    if (route) handlers.onArrive(route);
+  });
+  const opened = Notifications.addNotificationResponseReceivedListener(open);
+  // The app was started by the tap.
+  void Notifications.getLastNotificationResponseAsync().then(open);
+
+  return () => {
+    arrived.remove();
+    opened.remove();
   };
 }
 
@@ -281,6 +431,13 @@ export function setupChatNotifications() {
   Notifications.setNotificationHandler({
     handleNotification: async (notification) => {
       const data = notification.request.content.data;
+
+      // A `ring` for a shop reaches this phone only because the server still holds
+      // its session, which happens while a sign-out waits to be repeated (ENG-146).
+      // Nobody is signed in to answer it, so it is not shown and does not sound.
+      if (shouldDropPush(data, Boolean(await getAuthTokens()))) {
+        return { shouldShowAlert: false, shouldPlaySound: false, shouldSetBadge: false };
+      }
 
       return {
         shouldShowAlert: true,

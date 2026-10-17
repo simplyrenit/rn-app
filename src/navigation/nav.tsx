@@ -2,6 +2,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
   createNavigationContainerRef,
   NavigationContainer,
+  StackActions,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
@@ -29,37 +30,86 @@ import ChatScreen from "../screens/tabs/chat";
 import HomeScreen from "../screens/tabs/index";
 import PostScreen from "../screens/tabs/post";
 import ProfileScreen from "../screens/tabs/profile";
+import RentalsScreen from "../screens/tabs/rentals";
 import SavedScreen from "../screens/tabs/saved";
 import TermsScreen from "../screens/terms";
 import UserDetailScreen from "../screens/users/users-screen";
 
 import { HomeIcon, HomeIconSolid } from "@/icons/home";
 import { PlusSquareIcon } from "@/icons/plus-square";
+import { CHAT_ENABLED } from "@/lib/config";
+import { retryPendingSignOut } from "@/lib/sign-out";
 import { RootStackParamList } from "@/lib/types";
+import { bookingQueryKey } from "@/backend/bookings";
+import { claimQueryKey } from "@/backend/claims";
 import {
+  dismissRingNotifications,
+  ignoreTapsWhileSignedOut,
+  ownSessionId,
+  registerDeviceSession,
   setupChatNotifications,
+  setupPushRouter,
   setupNotificationListeners,
+  setupRingChannel,
 } from "@/backend/notifications";
 import { useKycRefetch, useKycRefresh, useKycReturnLinking } from "@/backend/kyc";
+import { PushRoute } from "@/lib/push-routes";
+import { ringEndedQueryKey } from "@/backend/shop-ring";
+import { refreshShop } from "@/backend/shop-today";
+import { shouldGoToWelcome } from "@/lib/session-end";
+import { endingFromPush, ringTakesScreen } from "@/lib/shop-ring";
+import ShopBookingScreen from "@/screens/shop/booking";
+import ShopHandoverScreen from "@/screens/shop/handover";
+import ShopReturnScreen from "@/screens/shop/return";
+import ShopReportProblemScreen from "@/screens/shop/report-problem";
+import DraftPhotosScreen from "@/screens/shop/draft-photos";
+import CaptureScreen from "@/screens/capture/capture";
+import { captureQueue, useCaptureUploads } from "@/backend/capture-jobs";
+import { recoverLostShot } from "@/components/capture/camera";
+import { useDraftPhotoUploads } from "@/backend/draft-photo-jobs";
+import { ShopTodayScreen } from "@/screens/shop/home";
+import ShopRingScreen from "@/screens/shop/ring";
+import ArrivalWindowScreen from "@/screens/booking/arrival-window";
+import BookingScreen from "@/screens/booking/booking";
+import CheckCapturesScreen from "@/screens/booking/check-captures";
+import BookingDetailsScreen from "@/screens/booking/details";
+import ClaimScreen from "@/screens/booking/claim";
+import ExtendScreen from "@/screens/booking/extend";
+import FaultReportScreen from "@/screens/booking/fault-report";
+import NotAsDescribedScreen from "@/screens/booking/not-as-described";
+import PayDepositScreen from "@/screens/booking/pay-deposit";
+import ReportScreen from "@/screens/booking/report";
+import ReturnScreen from "@/screens/booking/return";
+import BookingDatesScreen from "@/screens/booking/choose-dates";
+import ReviewAndBookScreen from "@/screens/booking/review-and-book";
+import { resumePayment, watchStrayReturns } from "@/lib/payments";
+import BankAccountScreen from "@/screens/profileScreens/bank-account";
 import ContactUsScreen from "@/screens/profileScreens/contactUs";
 import EditProductScreen from "@/screens/profileScreens/edit-product";
 import FAQScreen from "@/screens/profileScreens/faqs";
 import FeedbackNReviewScreen from "@/screens/profileScreens/feedback-review";
 import MyProductScreen from "@/screens/profileScreens/my-product";
+import RentalDeliveryScreen from "@/screens/profileScreens/rental-delivery";
+import RentalHoursScreen from "@/screens/profileScreens/rental-hours";
+import RentalSettingsScreen from "@/screens/profileScreens/rental-settings";
+import ShopAddressScreen from "@/screens/profileScreens/shop-address";
 import NotificationScreen from "@/screens/profileScreens/notification";
 import WhoWeAreScreen from "@/screens/profileScreens/who-we-are";
-import { BackHandler, PixelRatio, Platform, View } from "react-native";
+import { AppState, BackHandler, PixelRatio, Platform, View } from "react-native";
 import {
+  CalendarIcon,
   ChatBubbleLeftIcon,
   HeartIcon,
   UserIcon,
 } from "react-native-heroicons/outline";
 import {
+  CalendarIcon as CalendarIconSolid,
   ChatBubbleLeftIcon as ChatBubbleLeftIconSolid,
   HeartIcon as HeartIconSolid,
   UserIcon as UserIconSolid,
 } from "react-native-heroicons/solid";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQueryClient } from "react-query";
 import { darkColors, lightColors, radius } from "@/lib/design-tokens";
 import { fontFamily, fontSize, lineHeight } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -79,6 +129,8 @@ import ReportAProblemScreen from "@/screens/profileScreens/report-a-problem";
 import NetworkDiagnosticsScreen from "@/screens/profileScreens/network-diagnostics";
 import OwnersReviewScreen from "@/screens/users/owners-review";
 import LocationModal from "@/screens/post-screens/location-modal";
+import SavedAddressesScreen from "@/screens/addresses/saved-addresses";
+import AddressDetailsScreen from "@/screens/addresses/address-details";
 import ListAddPhotosScreen from "@/screens/list-flow/add-photos";
 import ListReadingScreen from "@/screens/list-flow/reading";
 import ListReviewScreen from "@/screens/list-flow/review";
@@ -275,6 +327,9 @@ function MainTabs() {
             case "Post":
               Icon = PlusSquareIcon;
               break;
+            case "Rentals":
+              Icon = focused ? CalendarIconSolid : CalendarIcon;
+              break;
             case "Chat":
               Icon = focused ? ChatBubbleLeftIconSolid : ChatBubbleLeftIcon;
               break;
@@ -344,10 +399,19 @@ function MainTabs() {
           },
         })}
       />
+      {/* Rentals has the place Chat had (ENG-177, decision T-01). The Chat tab
+          is only switched off: its screen, the thread route and the unread
+          badge above are all still here behind `CHAT_ENABLED`. */}
       <Tab.Screen
-        name="Chat"
-        component={ChatScreen}
+        name="Rentals"
+        component={RentalsScreen}
       />
+      {CHAT_ENABLED ? (
+        <Tab.Screen
+          name="Chat"
+          component={ChatScreen}
+        />
+      ) : null}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
@@ -358,7 +422,93 @@ function MainTabs() {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function Navigation() {
-  const { loading, hasSeenWelcome, theme, isAuthenticated } = useGlobalContext();
+  const { loading, hasSeenWelcome, theme, isAuthenticated, userDetails, fetchUserDetails } = useGlobalContext();
+  const username = userDetails?.username;
+  // The latest one, for the push listener below, which is not set up again on every render.
+  const refreshDetails = React.useRef(fetchUserDetails);
+  refreshDetails.current = fetchUserDetails;
+  const queryClient = useQueryClient();
+
+  // A screen to open, from a tapped push or a payment that was in flight. On a
+  // start from a closed app the answer can arrive before the navigator is
+  // mounted, so it waits here and `onReady` below opens it (ENG-173).
+  const toOpen = React.useRef<PushRoute | null>(null);
+  const openRoute = React.useCallback((route: PushRoute) => {
+    if (!navigationRef.isReady()) {
+      toOpen.current = route;
+      return;
+    }
+    switch (route.screen) {
+      case "Booking":
+        navigationRef.navigate("Booking", { number: route.number });
+        break;
+      case "BookingDeposit":
+        navigationRef.navigate("BookingDeposit", { number: route.number });
+        break;
+      case "ShopRing":
+        // Pushed, not navigated to: with the screens keyed by booking, `navigate` to a ring
+        // that is already open pops every screen above it, and a newer ring on top would be
+        // thrown away. `push` brings an existing one to the front and leaves the others.
+        navigationRef.dispatch(StackActions.push("ShopRing", { number: route.number, ring: route.ring ?? undefined }));
+        break;
+      case "ShopBooking":
+        navigationRef.navigate("ShopBooking", { number: route.number });
+        break;
+      case "ShopHandover":
+        navigationRef.navigate("ShopHandover", { number: route.number });
+        break;
+      case "Claim":
+        navigationRef.navigate("Claim", { id: route.id });
+        break;
+      case "ShopToday":
+        navigationRef.navigate("ShopToday");
+        break;
+      case "BankAccount":
+        navigationRef.navigate("BankAccount");
+        break;
+      case "myProducts":
+        navigationRef.navigate("myProducts");
+        break;
+      case "Profile":
+        navigationRef.navigate("MainTabs", { screen: "Profile" });
+        break;
+      case "KycStatus":
+        navigationRef.navigate("KycStatus");
+        break;
+    }
+  }, []);
+  const openBooking = React.useCallback(
+    (number: string) => openRoute({ screen: "Booking", number }),
+    [openRoute]
+  );
+  const openWaiting = React.useCallback(() => {
+    const route = toOpen.current;
+    toOpen.current = null;
+    if (route) openRoute(route);
+  }, [openRoute]);
+
+  // A sign-out that could not reach the server is repeated when the app starts and
+  // each time it comes to the front, signed in or not (ENG-146). A no-op when none waits.
+  React.useEffect(() => {
+    void retryPendingSignOut();
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void retryPendingSignOut();
+    });
+    return () => subscription.remove();
+  }, []);
+
+  // A sign-out the person did not choose (the session ended: another device signed this phone out, T-26) arrives from
+  // whatever screen is on top, a ring or a booking in the middle of a flow. The stack is cleared to Welcome so nothing
+  // of the old account stays on screen; a sign-out the person chose resets the stack itself, and this does the same.
+  const wasAuthenticated = React.useRef<boolean | undefined>(undefined);
+  React.useEffect(() => {
+    const was = wasAuthenticated.current;
+    wasAuthenticated.current = isAuthenticated;
+    if (!navigationRef.isReady()) return;
+    if (shouldGoToWelcome(was, isAuthenticated, navigationRef.getCurrentRoute()?.name)) {
+      navigationRef.reset({ index: 0, routes: [{ name: "Welcome" }] });
+    }
+  }, [isAuthenticated]);
 
   // A merchant's verification status and badge are read again whenever the app comes back to
   // the foreground: a reviewer may have decided while it was away.
@@ -374,21 +524,133 @@ export default function Navigation() {
 
   React.useEffect(() => {
     if (!isAuthenticated) {
+      // Signed out (not merely not known yet): a tap on a notification now is dropped, and rings
+      // still in the tray are cleared, so nobody who signs in next is shown a request that was not theirs.
+      if (isAuthenticated === false) {
+        void dismissRingNotifications();
+        return ignoreTapsWhileSignedOut();
+      }
       return;
     }
 
     setupChatNotifications();
-    return setupNotificationListeners((route) => {
-      // What a status push says is a hint: the status is read again, never taken from the push.
-      if (route.kind === "kyc") refetchKyc();
-      if (!navigationRef.isReady()) return;
-      if (route.kind === "kyc") {
-        navigationRef.navigate("KycStatus");
-      } else {
-        navigationRef.navigate("ChatDetails", { id: route.conversationId });
+    // The channel a ring is sent on, before the first one can arrive (Android).
+    void setupRingChannel();
+    // Every start, once signed in: say which phone this session is, with the push
+    // token if the phone has one and without it if not (ENG-146).
+    void registerDeviceSession();
+    const stopChat = setupNotificationListeners((conversationId) => {
+      if (navigationRef.isReady()) {
+        navigationRef.navigate("ChatDetails", { id: conversationId });
       }
-    }, refetchKyc);
-  }, [isAuthenticated, refetchKyc]);
+    });
+    // The push router: the answer came, the rent is due, a refund went out; for a
+    // shop, a request is ringing. Arriving, a push makes the open screen read
+    // itself again; tapped, it opens its screen, which shows whatever the server
+    // says now (ENG-173, ENG-209).
+    const stopPushes = setupPushRouter({
+      onArrive: (route) => {
+        // The merchant was approved or rejected: the status the screens show is read again (ENG-271).
+        if (route.screen === "Profile") {
+          void refreshDetails.current();
+          return;
+        }
+        // Verification moved on: the status and the badge are read again, never taken from the push.
+        if (route.screen === "KycStatus") {
+          refetchKyc();
+          return;
+        }
+        if (route.screen === "Booking" || route.screen === "BookingDeposit") {
+          void queryClient.invalidateQueries(bookingQueryKey(route.number));
+          // Both Rentals lists start with this key.
+          void queryClient.invalidateQueries("bookings");
+          return;
+        }
+        // A claim moved: the claim itself, and the booking it holds or settles, are read afresh (ENG-252, ENG-253).
+        if (route.screen === "Claim") {
+          void queryClient.invalidateQueries(claimQueryKey(route.id));
+          if (route.role === "customer") {
+            void queryClient.invalidateQueries(bookingQueryKey(route.number));
+            void queryClient.invalidateQueries("bookings");
+            return;
+          }
+        }
+        // Whatever the shop's push was about, what its screens show is now out of date.
+        refreshShop(queryClient);
+        // A ring that arrives with the app open takes over the screen, as it does
+        // from the tray. When it ends, wherever it was answered, the ring screen
+        // that is open reads that and says so, and the tray forgets the ring.
+        if (route.screen === "ShopRing") {
+          if (route.ended) {
+            void dismissRingNotifications(route.number);
+            // The push says which session answered; this phone's own session says whether
+            // that was this phone ("You accepted") or another device (P3-14).
+            const end = route.end;
+            if (end) {
+              void ownSessionId().then((own) =>
+                queryClient.setQueryData(ringEndedQueryKey(route.number), endingFromPush(end, own))
+              );
+            }
+          } else {
+            queryClient.removeQueries(ringEndedQueryKey(route.number));
+            // A ring screen is open: the owner may be about to tap Accept on it, and Accept sits in
+            // the same place on the next one. The new request waits as "1 more request" on that
+            // screen (it reads the live answer) and opens when this one is answered.
+            if (navigationRef.isReady()) {
+              const top = navigationRef.getCurrentRoute();
+              const topNumber = (top?.params as { number?: string } | undefined)?.number;
+              if (!ringTakesScreen(top?.name, topNumber)) return;
+            }
+            openRoute(route);
+          }
+        }
+      },
+      onOpen: (route) => {
+        openRoute(route);
+        return true;
+      },
+    });
+    return () => {
+      stopChat();
+      stopPushes();
+    };
+  }, [isAuthenticated, queryClient, openRoute, refetchKyc]);
+
+  // Photos and video of a handover or a return that are not on the server yet keep
+  // uploading from wherever the app is, and start again after a restart (ENG-221).
+  useCaptureUploads(isAuthenticated ? username : null);
+  // On Android the system may close the app while its camera is in front. The photo is
+  // handed back at this start, and goes into the record that was waiting for it.
+  React.useEffect(() => {
+    if (isAuthenticated && username) void captureQueue.init(username).then(() => recoverLostShot());
+  }, [isAuthenticated, username]);
+  // Photos of drafts that are not on their drafts yet carry on from here too (ENG-192).
+  useDraftPhotoUploads(isAuthenticated ? username : null);
+
+  // A payment can finish while the app is closed (the customer was in the
+  // browser or a UPI app). On start, once it is known who is signed in, ask
+  // rn-api about the one of theirs that was in flight and open its booking,
+  // which shows where things stand (ENG-172).
+  React.useEffect(() => {
+    if (!isAuthenticated || !username) return;
+    let stale = false;
+    void resumePayment(username).then((number) => {
+      if (number && !stale) openBooking(number);
+    });
+    return () => {
+      stale = true;
+    };
+  }, [isAuthenticated, username, openBooking]);
+  // The pay page's "Back to Renit" can arrive when no payment is being waited on (the
+  // customer came back for a moment, then paid later): ask rn-api once and open the booking.
+  React.useEffect(() => {
+    if (!isAuthenticated || !username) return;
+    return watchStrayReturns(username, (number) => {
+      void queryClient.invalidateQueries(bookingQueryKey(number));
+      void queryClient.invalidateQueries("bookings");
+      openBooking(number);
+    });
+  }, [isAuthenticated, username, openBooking, queryClient]);
 
   React.useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -407,7 +669,7 @@ export default function Navigation() {
   }
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} onReady={openWaiting}>
       <Stack.Navigator
         initialRouteName={isAuthenticated || hasSeenWelcome ? "MainTabs" : "Welcome"}
         screenOptions={{
@@ -550,6 +812,151 @@ export default function Navigation() {
         <Stack.Screen
           name="myProducts"
           component={MyProductScreen}
+        />
+        <Stack.Screen
+          name="BankAccount"
+          component={BankAccountScreen}
+        />
+        <Stack.Screen
+          name="RentalSettings"
+          component={RentalSettingsScreen}
+        />
+        <Stack.Screen
+          name="RentalHours"
+          component={RentalHoursScreen}
+        />
+        <Stack.Screen
+          name="ShopAddress"
+          component={ShopAddressScreen}
+        />
+        <Stack.Screen
+          name="RentalDelivery"
+          component={RentalDeliveryScreen}
+        />
+        {/* Live booking, the customer's side (ENG-99). On the root stack, so
+            the tab bar is hidden from the dates to the booking itself. */}
+        <Stack.Screen
+          name="BookingDates"
+          component={BookingDatesScreen}
+        />
+        <Stack.Screen
+          name="ReviewAndBook"
+          component={ReviewAndBookScreen}
+        />
+        {/* Keyed by booking, like the product page: a push for another
+            booking opens its own screen instead of rewriting this one. */}
+        <Stack.Screen
+          name="Booking"
+          component={BookingScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="BookingWindow"
+          component={ArrivalWindowScreen}
+        />
+        {/* The deposit, the day of the handover and the return, the customer's
+            side (ENG-222). Each is keyed by booking, like the booking itself. */}
+        <Stack.Screen
+          name="BookingDeposit"
+          component={PayDepositScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="BookingDetails"
+          component={BookingDetailsScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="BookingCheck"
+          component={CheckCapturesScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="BookingRefuse"
+          component={NotAsDescribedScreen}
+        />
+        <Stack.Screen
+          name="BookingReturn"
+          component={ReturnScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="BookingExtend"
+          component={ExtendScreen}
+        />
+        <Stack.Screen
+          name="BookingReport"
+          component={ReportScreen}
+        />
+        {/* The customer's fault report, and one claim for either side (ENG-252, ENG-253). A claim
+            is keyed by its id, so a push for it opens the one that is already open. */}
+        <Stack.Screen
+          name="BookingFault"
+          component={FaultReportScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="Claim"
+          component={ClaimScreen}
+          getId={({ params }) => String(params?.id)}
+        />
+        {/* The shop's ring (ENG-209), on the root stack so the tab bar is hidden
+            while a request rings. Keyed by booking, so a second push for the same
+            request opens the screen that is already there. */}
+        <Stack.Screen
+          name="ShopRing"
+          component={ShopRingScreen}
+          getId={({ params }) => params?.number}
+        />
+        {/* The shop's Today and Bookings for an owner who is not a merchant, and one
+            booking as its shop sees it (ENG-210). Keyed by booking, like the customer's. */}
+        <Stack.Screen
+          name="ShopToday"
+          component={ShopTodayScreen}
+        />
+        <Stack.Screen
+          name="ShopBooking"
+          component={ShopBookingScreen}
+          getId={({ params }) => params?.number}
+        />
+        {/* The shop's handover and return (ENG-223), keyed by booking. */}
+        <Stack.Screen
+          name="ShopHandover"
+          component={ShopHandoverScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="ShopReturn"
+          component={ShopReturnScreen}
+          getId={({ params }) => params?.number}
+        />
+        <Stack.Screen
+          name="ShopReportProblem"
+          component={ShopReportProblemScreen}
+          getId={({ params }) => params?.number}
+        />
+        {/* The photo walk-through for drafts (ENG-192), on the root stack so the tab
+            bar is hidden while the camera is the point of the screen. */}
+        <Stack.Screen
+          name="DraftPhotos"
+          component={DraftPhotosScreen}
+        />
+        {/* The capture at a handover or a return (ENG-221). Keyed by whose record
+            it is, so one booking's two sets are two screens. */}
+        <Stack.Screen
+          name="Capture"
+          component={CaptureScreen}
+          getId={({ params }) =>
+            `${params?.number}:${params?.moment}:${params?.role}:${params?.forOther ? "other" : "own"}`
+          }
+        />
+        <Stack.Screen
+          name="SavedAddresses"
+          component={SavedAddressesScreen}
+        />
+        <Stack.Screen
+          name="AddressDetails"
+          component={AddressDetailsScreen}
         />
         <Stack.Screen
           name="editProduct"

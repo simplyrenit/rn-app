@@ -10,6 +10,8 @@ import {
   GET_CATEGORIES,
   MY_DETAILS_ENDPOINT,
 } from "@/lib/config";
+import { sessionEndText } from "@/lib/session-end";
+import { SignOutReason, endSessionOnServer } from "@/lib/sign-out";
 import { authenticateFirebase, signOutFirebase } from "@/lib/firebase";
 import axiosInstance, {
   resetSessionExpiryNotice,
@@ -30,7 +32,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { useColorScheme } from "react-native";
+import { AppState, useColorScheme } from "react-native";
 
 import { toast } from "@/lib/toast";
 
@@ -41,7 +43,7 @@ interface GlobalContextType {
   isAuthenticated: boolean | undefined;
   hasSeenWelcome: boolean;
   setHasSeenWelcome: (value: boolean) => void;
-  logout: () => Promise<void>;
+  logout: (reason?: SignOutReason) => Promise<void>;
   isReportModalVisible: boolean;
   showReportModal: () => void;
   hideReportModal: () => void;
@@ -56,6 +58,12 @@ interface GlobalContextType {
   loadUserDataFromStorage: () => Promise<void>;
   userDetails: UserDetails | null;
   fetchUserDetails: () => Promise<void>;
+  /**
+   * The last profile fetch failed, and nothing has replaced it. `userDetails`
+   * being null cannot say this on its own: it is also null while the first
+   * fetch after sign-in is still in flight.
+   */
+  userDetailsFailed: boolean;
 }
 
 interface UserData {
@@ -94,11 +102,16 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   const [theme, setTheme] = useState<string>("device");
   const [categories, setCategories] = useState<Category[]>([]);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [userDetailsFailed, setUserDetailsFailed] = useState(false);
 
   const [userData, setUserData] = useState<UserData | null>(null);
 
-  const logout = useCallback(async () => {
+  const logout = useCallback(async (reason?: SignOutReason) => {
     cancelMyDetailsRequest();
+    // First, while the token is still in place: ends this phone's session so it
+    // stops ringing (ENG-146). If the call cannot reach the server the tokens are
+    // kept aside and it is repeated later; it cannot fail the sign-out.
+    await endSessionOnServer(reason);
     try {
       await signOutFirebase();
     } catch (error) {
@@ -119,9 +132,11 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   // tokens stayed in storage: the app still looked signed in while every
   // authenticated request failed, with no way back to the sign-in screen.
   useEffect(() => {
-    setSessionExpiredHandler(() => {
-      toast.error("Your session expired. Please sign in again.");
-      void logout();
+    setSessionExpiredHandler((end) => {
+      // One message, once (the interceptor lets only the first of several failing requests through).
+      const said = sessionEndText(end);
+      toast.error(said.title, { message: said.message });
+      void logout("server_ended");
     });
 
     return () => setSessionExpiredHandler(null);
@@ -131,12 +146,24 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchUserDetails();
   }, [authTokens?.access_token, isAuthenticated]);
 
+  // The admin approves a merchant while the app is closed or in the background:
+  // read the details again when the app comes to the front (ENG-271).
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void fetchUserDetails();
+    });
+    return () => subscription.remove();
+  }, [authTokens?.access_token, isAuthenticated]);
+
   const fetchUserDetails = async () => {
     if (!isAuthenticated || !authTokens?.access_token) {
       setUserDetails(null);
+      setUserDetailsFailed(false);
       return;
     }
 
+    setUserDetailsFailed(false);
     try {
       const details = await getMyDetails();
       setUserDetails({
@@ -153,12 +180,15 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        await logout();
+        await logout("server_ended");
         return;
       }
       if (!(axios.isAxiosError(error) && !error.response)) {
         console.error("Failed to fetch user details:", error);
       }
+      // Not a request logout cancelled: that is not a failure, and the flag
+      // would still be set when the next account signs in.
+      if (!axios.isCancel(error)) setUserDetailsFailed(true);
     }
   };
 
@@ -250,7 +280,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
             );
           } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 401) {
-              await logout();
+              await logout("server_ended");
             } else {
               setAuthTokensState(tokens);
               setIsAuthenticated(true);
@@ -341,6 +371,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     loadUserDataFromStorage,
     userDetails,
     fetchUserDetails,
+    userDetailsFailed,
     themePreference: theme,
   };
 

@@ -1,4 +1,6 @@
 import { buildCreatePayload, submitListing } from "@/backend/list-flow/submit";
+import { saveOfferedAddress } from "@/backend/addresses-api";
+import { termsQueryKey } from "@/backend/terms";
 import { Button, Text, useButtonLabelColor, useReduceMotion } from "@/components/core";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -9,18 +11,24 @@ import { ProductMap } from "@/components/product/product-map";
 import { SpecStrip } from "@/components/product/spec-strip";
 import { useGlobalContext } from "@/context/global-context";
 import { useListDraft } from "@/context/list-draft-context";
+import { inlineOfferPayload } from "@/lib/addresses";
+import { apiError } from "@/lib/api-error";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import { SCREEN_GUTTER, duration, radius, space } from "@/lib/design-tokens";
 import { formatNumber } from "@/lib/format";
 import { commitFeedback, successFeedback } from "@/lib/haptics";
 import { uploadedPhotos } from "@/lib/list-flow/draft";
+import { lockedItems, needsOwnerTerms, publishLockedMessage } from "@/lib/list-flow/publish-locked";
 import { currentSpecs, specDisplayValue } from "@/lib/list-flow/specs";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { readReasons } from "@/lib/listing-edit";
+import { waitsText } from "@/lib/listing-status";
+import { ActivityIndicator, Alert, ScrollView, View } from "react-native";
+import { useQueryClient } from "react-query";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { BanknotesIcon, CheckIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -81,6 +89,7 @@ export default function ListPreviewScreen() {
   const { userDetails } = useGlobalContext();
   const flow = useListDraft();
   const { draft } = flow;
+  const queryClient = useQueryClient();
   const [state, setState] = useState<SubmitState>("idle");
   const mounted = useRef(true);
   /**
@@ -137,12 +146,27 @@ export default function ListPreviewScreen() {
       phone: userDetails?.phone ?? "",
     });
     try {
-      await submitListing(payload);
+      const response = await submitListing(payload);
+      // The answer is the listing as its owner sees it: its status, and the reasons if the check has already flagged it.
+      const posted = response?.data as { status?: string | null; flag_reasons?: unknown; waits_for_text?: unknown } | undefined;
       flow.track("listing_submitted", {
         ms_since_start: Date.now() - draft.startedAt,
         photos: payload.images.length,
       });
       successFeedback();
+
+      // ENG-25 §8.8: the "Save this address" offer from Review. Built here,
+      // from this render's draft, because `finish` below clears it. Not
+      // awaited and never thrown: the listing is already live, and a failed
+      // address save must not hold up or fail the flow (D8).
+      // No flat line, no address: Profile's form will not save one either.
+      if (draft.saveAddressAs && location?.fullAddress.trim()) {
+        const addressPayload = inlineOfferPayload(location, draft.saveAddressAs);
+        void saveOfferedAddress(queryClient, userDetails?.username, addressPayload).catch(() => {
+          flow.track("address_save_failed");
+          toast.warning("Your listing is live. We couldn't save the address.");
+        });
+      }
 
       // The listing exists now, so the draft goes whatever happens to this
       // screen — the context outlives it. The stack is reset so Back from
@@ -154,7 +178,16 @@ export default function ListPreviewScreen() {
           index: 1,
           routes: [
             { name: "MainTabs" },
-            { name: "ListSubmitted", params: { productName: payload.title, coverUrl: payload.cover_image } },
+            {
+              name: "ListSubmitted",
+              params: {
+                productName: payload.title,
+                coverUrl: payload.cover_image,
+                status: posted?.status ?? null,
+                reasons: readReasons(posted?.flag_reasons),
+                waitsText: waitsText(posted?.waits_for_text),
+              },
+            },
           ],
         });
       };
@@ -174,6 +207,34 @@ export default function ListPreviewScreen() {
       flow.track("listing_submit_failed", { status });
       submitting.current = false;
       if (mounted.current) setState("idle");
+      // The owner terms moved on, or were never accepted (ENG-122). An individual
+      // is told `owner_terms_required`; a merchant `publish_locked`, which lists
+      // everything in the way. Either way the tick is on the first step of the
+      // flow and the draft stays as it is.
+      const failure = apiError(error);
+      const locked = failure?.code === "publish_locked" ? lockedItems(failure.details) : [];
+      if (failure?.code === "owner_terms_required" || needsOwnerTerms(locked)) {
+        void queryClient.invalidateQueries(termsQueryKey(userDetails?.username));
+        toast.warning("Accept the owner terms to submit", {
+          message: "The tick is on the first step. Your listing is saved.",
+        });
+        navigation.navigate("ListAddPhotos", { termsNeeded: true });
+        return;
+      }
+      // A merchant who may not publish yet for another reason: say which.
+      if (failure?.code === "publish_locked") {
+        // The address is the one thing the owner fixes on its own screen: a toast
+        // is gone in seconds and has no button.
+        if (locked.includes("shop_address")) {
+          Alert.alert("You can't publish yet", publishLockedMessage(locked), [
+            { text: "Not now", style: "cancel" },
+            { text: "Set shop address", onPress: () => navigation.navigate("ShopAddress") },
+          ]);
+          return;
+        }
+        toast.warning("You can't publish yet", { message: publishLockedMessage(locked) });
+        return;
+      }
       // The draft is untouched, so the owner can simply try again.
       toast.error("We couldn't submit your listing", {
         message: typeof serverMessage === "string" ? serverMessage : "Check your connection and try again.",
@@ -277,7 +338,16 @@ export default function ListPreviewScreen() {
           <Text role="groupHeader" tone="brand">
             Only you see this part
           </Text>
+          {/* Worth, stock and delivery are the owner's own figures: typed, or confirmed
+              before Preview unlocked. They are not under the AI heading, which would
+              say where a confirmed figure came from. */}
           <Text fontSize="text-md" fontWeight="font-bold" style={{ marginTop: space.xs, marginBottom: space.sm }}>
+            Confirmed by you
+          </Text>
+          <DefaultRow label="Worth" value={f.worth.value ? `Rs ${formatNumber(f.worth.value)}` : "—"} />
+          <DefaultRow label="In stock" value={f.quantity.value ?? "1"} />
+          {draft.notDelivered ? <DefaultRow label="Delivery" value="Not delivered · pickup only" /> : null}
+          <Text fontSize="text-md" fontWeight="font-bold" style={{ marginTop: space.md, marginBottom: space.sm }}>
             Filled by AI · checked by you
           </Text>
           <DefaultRow label="Deposit" value={deposit ? `Rs ${formatNumber(deposit)}` : "—"} />

@@ -30,6 +30,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>renit</string>
+				<string>renit-qa</string>
 				<string>com.renit.app</string>
 			</array>
 		</dict>
@@ -64,7 +65,7 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs access to your camera to take product photos.</string>
+	<string>Renit uses your camera for photos of your items, and for the photo and video record of an item at handover and return.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Renit needs access to your location to fetch products near you, even when the app is in the background.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
@@ -72,7 +73,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Renit needs access to your location to fetch products near you.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Allow $(PRODUCT_NAME) to access your microphone</string>
+	<string>Renit uses your microphone for the sound of the short video record of an item at handover and return.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>Allow $(PRODUCT_NAME) to access your device motion</string>
 	<key>NSPhotoLibraryUsageDescription</key>

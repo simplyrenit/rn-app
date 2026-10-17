@@ -1,94 +1,186 @@
 import { Text } from "@/components/core";
-import { radius } from "@/lib/design-tokens";
+import { radius, space } from "@/lib/design-tokens";
+import { PIN_WAITS, PendingEdit, changedSinceSentBack, flagLine, pendingLine, waitsForStaff } from "@/lib/listing-edit";
+import {
+  FlagReason,
+  ListingStatus,
+  STATUS_COPY,
+  waitsText,
+  listingPrompts,
+  statusDetail,
+} from "@/lib/listing-status";
 import { useTheme } from "@/lib/theme";
 import React from "react";
 import { View } from "react-native";
 
-export type ListingStatus = "live" | "pending" | "rejected" | "flagged";
-
-interface Source {
-  moderationLabels?: string[] | null;
-  /** Only the owner-facing endpoints return this; undefined means "not known". */
-  adminApproved?: boolean | null;
-}
-
-/**
- * A listing was only ever labelled when something was wrong with it: flagged
- * listings got an overlay, unapproved ones a "Pending" pill, and a live listing
- * got nothing at all — so the owner had to infer "this is visible to renters"
- * from the absence of a badge, which is indistinguishable from a bug.
- *
- * Returns null rather than guessing when approval state was not in the payload,
- * because "Pending" on a listing that is actually live is worse than silence.
- */
-export function resolveListingStatus({
-  moderationLabels,
-  adminApproved,
-}: Source): ListingStatus | null {
-  if (moderationLabels && moderationLabels.length > 0) return "flagged";
-  if (adminApproved === true) return "live";
-  // The backend's `admin_approved` defaults to False on every new listing and is
-  // only set to null when an edit sends it back for re-moderation, so False is
-  // "not approved yet", not "rejected": the API has no field that separates the
-  // two. Calling every fresh listing "Rejected" was wrong; until the backend
-  // exposes a real rejection status, both read as pending. `rejected` stays in
-  // the type for that day.
-  if (adminApproved === false || adminApproved === null) return "pending";
-  return null;
-}
-
-const COPY: Record<ListingStatus, { label: string; detail: string }> = {
-  live: { label: "Live", detail: "Visible to renters" },
-  pending: { label: "Pending review", detail: "Not visible to renters yet" },
-  rejected: { label: "Rejected", detail: "Not visible to renters" },
-  flagged: { label: "Flagged", detail: "Hidden until this is resolved" },
-};
-
 export function listingStatusLabel(status: ListingStatus) {
-  return COPY[status].label;
+  return STATUS_COPY[status].label;
 }
 
 interface PillProps {
   status: ListingStatus;
+  /** A flagged listing's reasons, as the check gave them. */
+  reasons?: FlagReason[] | null;
   /** Adds the one-line explanation beside the pill. */
   withDetail?: boolean;
+  /** What the listing waits for, in the server's sentence (T-45): said under the pill, and in the detail line, instead of "usually takes seconds". */
+  waitsText?: string | null;
+  /** The reason in full, not cut to two lines: for the screen where the owner fixes the listing. */
+  fullReason?: boolean;
 }
 
-/** One status treatment, on the shelf and on the listing's own page. */
-export function ListingStatusPill({ status, withDetail = false }: PillProps) {
+/**
+ * One status treatment for all six, on the shelf and on the listing's own page.
+ * Draft and Archived are neutral, Checking is informational, Live is good news,
+ * Paused asks for attention and Flagged is the one that needs action.
+ *
+ * Flagged says why, as the frame does ("Flagged · price"): under the pill on
+ * the narrow shelf tile, in the detail line where there is room for one.
+ */
+export function ListingStatusPill({ status, reasons, withDetail = false, fullReason = false, waitsText: waits }: PillProps) {
   const { color } = useTheme();
 
-  const tint =
-    status === "live"
-      ? { fg: color.success, bg: color.successWash }
-      : status === "pending"
-      ? { fg: color.warning, bg: color.warningWash }
-      : { fg: color.danger, bg: color.dangerWash };
+  const tint = {
+    draft: { fg: color.textBody, bg: color.surfaceRaised },
+    checking: { fg: color.info, bg: color.infoWash },
+    live: { fg: color.success, bg: color.successWash },
+    paused: { fg: color.warning, bg: color.warningWash },
+    flagged: { fg: color.danger, bg: color.dangerWash },
+    archived: { fg: color.textBody, bg: color.surfaceRaised },
+  }[status];
 
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <View
-        style={{
-          alignSelf: "flex-start",
-          backgroundColor: tint.bg,
-          borderRadius: radius.full,
-          paddingHorizontal: 8,
-          paddingVertical: 2,
-        }}
-      >
-        <Text
-          fontSize="text-xs"
-          fontWeight="font-semibold"
-          style={{ color: tint.fg }}
-        >
-          {COPY[status].label}
+  const flagged = status === "flagged" || (status === "checking" && changedSinceSentBack(reasons)) ? flagLine(reasons) : null;
+  // A listing waiting for Renit's first look or fill says what for (T-45); a reason, when there is one, comes first.
+  const reason = flagged ?? (status === "checking" || status === "draft" ? waitsText(waits) : null);
+
+  const pill = (
+    <View
+      style={{
+        alignSelf: "flex-start",
+        backgroundColor: tint.bg,
+        borderRadius: radius.full,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+      }}
+    >
+      <Text fontSize="text-xs" fontWeight="font-semibold" style={{ color: tint.fg }}>
+        {STATUS_COPY[status].label}
+      </Text>
+    </View>
+  );
+
+  if (withDetail) {
+    return (
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        {pill}
+        <Text fontSize="text-sm" tone="body" numberOfLines={2} style={{ flex: 1 }}>
+          {statusDetail(status, reasons, waits)}
         </Text>
       </View>
-      {withDetail ? (
-        <Text fontSize="text-sm" tone="body" numberOfLines={1} style={{ flex: 1 }}>
-          {COPY[status].detail}
+    );
+  }
+
+  return (
+    <View style={{ gap: 2 }}>
+      {pill}
+      {reason ? (
+        <Text fontSize={fullReason ? "text-sm" : "text-xs"} tone="body" numberOfLines={fullReason ? undefined : 2}>
+          {reason}
         </Text>
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * What the owner still has to do on a listing: "Confirm your price" on a moved
+ * one, "Needs worth" on one with none (ENG-155). Draws nothing when there is none.
+ */
+export function ListingPrompts({ product }: { product: Parameters<typeof listingPrompts>[0] }) {
+  const prompts = listingPrompts(product);
+  if (prompts.length === 0) return null;
+  return (
+    <View style={{ gap: 2 }}>
+      {prompts.map((prompt) => (
+        <Text key={prompt} fontSize="text-xs" fontWeight="font-bold" tone="warning">
+          {prompt}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * A change that waits over the version customers still see (decision T-34): which fields, and why. Draws nothing when
+ * no change waits. `compact` is one small line, for a tile on the shelf.
+ */
+export function HeldChange({ pending, compact = false }: { pending: PendingEdit | null | undefined; compact?: boolean }) {
+  const { color } = useTheme();
+  const line = pendingLine(pending);
+  if (!pending || !line) return null;
+  if (compact) {
+    return (
+      <Text fontSize="text-xs" tone="warning" numberOfLines={3}>
+        {line}
+      </Text>
+    );
+  }
+  return (
+    <View
+      accessible
+      accessibilityLabel={`A change is waiting. ${line}`}
+      style={{
+        gap: space.xs,
+        padding: space.md,
+        borderRadius: radius.card,
+        borderWidth: 1,
+        borderColor: color.warning,
+        backgroundColor: color.warningWash,
+      }}
+    >
+      <Text fontSize="text-md" fontWeight="font-bold">
+        {pending.state === "checking"
+          ? "Your change is being checked"
+          : waitsForStaff(pending)
+            ? "Renit's staff will look at your change"
+            : "A change of yours is on hold"}
+      </Text>
+      <Text fontSize="text-sm" tone="body">
+        {line}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * Over a form that is filled with a listing: the values of a waiting change are the ones in the boxes (the server compares a
+ * save with them), so the owner is told which, and that customers still see the earlier ones. Nothing when none waits.
+ */
+export function HeldFormNotice({ pending }: { pending: PendingEdit | null | undefined }) {
+  const { color } = useTheme();
+  const line = pendingLine(pending);
+  if (!pending || !line) return null;
+  return (
+    <View
+      accessible
+      accessibilityLabel={`Some of these values are waiting. ${line}`}
+      style={{
+        marginHorizontal: space.md,
+        marginTop: space.sm,
+        gap: space.xs,
+        padding: space.md,
+        borderRadius: radius.card,
+        borderWidth: 1,
+        borderColor: color.warning,
+        backgroundColor: color.warningWash,
+      }}
+    >
+      <Text fontSize="text-md" fontWeight="font-bold">
+        Some of these values are waiting
+      </Text>
+      <Text fontSize="text-sm" tone="body">
+        {`${line}${pending.fields.includes("coordinates") ? ` ${PIN_WAITS}` : ""} The boxes show the waiting values. Leave them as they are to keep the change waiting, or change them to try again.`}
+      </Text>
     </View>
   );
 }

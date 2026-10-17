@@ -10,14 +10,12 @@ import {
   Text,
   useButtonLabelColor,
 } from "@/components/core";
+import { BookingFacts } from "@/components/booking/booking-facts";
 import { DetailSection } from "@/components/product/detail-section";
 import { ExpandableText } from "@/components/product/expandable-text";
 import { ModerationBanner } from "@/components/product/moderation-banner";
-import {
-  ListingStatus,
-  ListingStatusPill,
-  resolveListingStatus,
-} from "@/components/product/listing-status";
+import { HeldChange, ListingStatusPill } from "@/components/product/listing-status";
+import { PendingEdit, readPendingEdit } from "@/lib/listing-edit";
 import { ProductHero } from "@/components/product/product-hero";
 import { SpecStrip } from "@/components/product/spec-strip";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
@@ -43,11 +41,15 @@ import {
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import { liveCopy } from "@/lib/booking";
 import { CategoryIcon } from "@/lib/category-icons";
+import { CHAT_ENABLED } from "@/lib/config";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
+import { FlagReason, ListingStatus, resolveListingStatus, waitsText } from "@/lib/listing-status";
 import { getDiscoveryLocationData } from "@/lib/location";
 import { keySpecLine, specMatchesFilters } from "@/lib/product-specs";
+import { rememberReturnTo } from "@/lib/return-to";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { IconButton } from "@/components/core/icon-button";
@@ -190,7 +192,7 @@ export default function DetailsScreen() {
   const [similarProducts, setSimilarProducts] = useState<BackendProduct[]>([]);
   const [isModerated, setIsModerated] = useState(false);
   const [reviews, setReviews] = useState<BackendReview[]>([]);
-  const { id, isFavorite, specFilters } = route.params;
+  const { id, isFavorite, specFilters, dates } = route.params;
   const allSpecsRef = React.useRef<BottomSheetModal>(null);
   // The root native stack, for its typed `push`; `useTypedNavigation` is the
   // generic navigation prop, which has no `push`.
@@ -215,9 +217,14 @@ export default function DetailsScreen() {
   // True once the pinned band, not the hero, owns the top of the screen. It is
   // what decides which of the two back controls takes a tap.
   const [heroCovered, setHeroCovered] = useState(false);
-  // Only the owner-facing endpoint knows whether a listing is approved, so this
+  // Only the owner-facing endpoint knows what state a listing is in, so this
   // is fetched separately and only for the owner.
-  const [ownerStatus, setOwnerStatus] = useState<ListingStatus | null>(null);
+  const [ownerStatus, setOwnerStatus] = useState<{
+    status: ListingStatus;
+    reasons: FlagReason[];
+    pending: PendingEdit | null;
+    waits: string | null;
+  } | null>(null);
   const distanceLabel = useDistanceTo(product?.coordinates);
   // The similar-products rail draws the Home tile, whose heart has to start in
   // the right state. One shared, cached query — the same one every
@@ -234,6 +241,13 @@ export default function DetailsScreen() {
     inputRange: [collapseEnd - COLLAPSE_SPAN, collapseEnd],
     outputRange: [0, 1],
     extrapolate: "clamp",
+  });
+
+  // The title comes in only once the band is nearly filled in behind it (test run D-15): at half way it was half-visible
+  // over the photo and its "1/2" badge. The band and the back control still fade as before.
+  const titleProgress = bandProgress.interpolate({
+    inputRange: [0, 0.7, 1],
+    outputRange: [0, 0, 1],
   });
 
   /**
@@ -288,9 +302,9 @@ export default function DetailsScreen() {
   }
 
   /**
-   * The public listing payload carries no approval state, so an owner looking
-   * at their own listing could not tell whether renters could see it. Failure
-   * here is silent: the status is additive and must not take the page down.
+   * The public listing payload carries no status, so an owner looking at their
+   * own listing could not tell whether renters could see it. Failure here is
+   * silent: the status is additive and must not take the page down.
    */
   async function loadOwnerStatus(data: BackendProduct | null) {
     if (!data || !userDetails?.username) return;
@@ -300,12 +314,8 @@ export default function DetailsScreen() {
     }
     try {
       const owned = await getMyProductDetails(data.name);
-      setOwnerStatus(
-        resolveListingStatus({
-          moderationLabels: owned?.moderation_labels,
-          adminApproved: owned?.admin_approved,
-        })
-      );
+      const status = resolveListingStatus(owned?.status);
+      setOwnerStatus(status ? { status, reasons: owned?.flag_reasons ?? [], pending: readPendingEdit(owned?.pending_edit), waits: waitsText(owned?.waits_for_text) } : null);
     } catch {
       setOwnerStatus(null);
     }
@@ -317,6 +327,26 @@ export default function DetailsScreen() {
   };
 
   const isOwner = userDetails?.username === product?.owner?.username;
+
+  // Whether the owner is asked now, at their next opening, or cannot be booked.
+  const booking = product ? liveCopy(product) : null;
+
+  /**
+   * Book now opens the dates (BK-02), on the dates of the search when there was
+   * one. Signed out, the customer is sent to sign in first: the booking, its
+   * payment and the saved address all belong to an account. Signing in brings
+   * them back to this listing with the same dates (`goAfterSignIn`).
+   */
+  const handleBook = () => {
+    if (!product) return;
+    if (!isAuthenticated) {
+      rememberReturnTo({ name: "ProductDetail", params: { id: product.name, dates } });
+      toast.info("Sign in to book", { message: "You'll come back to this listing." });
+      navigation.navigate("Welcome");
+      return;
+    }
+    navigation.navigate("BookingDates", { product: product.name, ...dates });
+  };
 
   const handleStartChat = async () => {
     if (startingChat) {
@@ -510,7 +540,7 @@ export default function DetailsScreen() {
 
           <Animated.View
             pointerEvents="none"
-            style={{ flex: 1, opacity: bandProgress }}
+            style={{ flex: 1, opacity: titleProgress }}
           >
             <Text
               role="sectionTitle"
@@ -638,8 +668,14 @@ export default function DetailsScreen() {
             {/* Your own listing said nothing about whether renters could see
                 it. "Live" is a fact the owner needs stated, not inferred. */}
             {isOwner && ownerStatus ? (
-              <ListingStatusPill status={ownerStatus} withDetail />
+              <ListingStatusPill
+                status={ownerStatus.status}
+                reasons={ownerStatus.reasons}
+                waitsText={ownerStatus.waits}
+                withDetail
+              />
             ) : null}
+            {isOwner && ownerStatus?.pending ? <HeldChange pending={ownerStatus.pending} /> : null}
 
             {/* Shown with or without specs: "more like this" is useful either
                 way. The label sits at the top of its 44pt target (PDP-01). */}
@@ -731,6 +767,18 @@ export default function DetailsScreen() {
             },
           ]}
         />
+
+        {/* BK-01: "Live booking", how the item changes hands and the handover
+            hours, between the facts strip and the long sections (ENG-172). */}
+        <View style={{ paddingTop: 24 }}>
+          <BookingFacts
+            copy={booking}
+            shop={product.shop}
+            notDelivered={product.not_delivered}
+            rate={product.rate}
+            deposit={product.security_deposit}
+          />
+        </View>
 
         {/* Straight after the strip, where a renter decides (ENG-35); absent,
             dividers and all, when the listing has no specs (PDP-04b). */}
@@ -873,6 +921,20 @@ export default function DetailsScreen() {
             products={product?.products_listed ?? 0}
             isDark={isDark}
           />
+          {/* Chat is off at launch (ENG-177, decision T-01): the bar's button is
+              Book now, and this entry point is not drawn. `handleStartChat` and
+              the chat screens are untouched, for the day it is switched back on. */}
+          {CHAT_ENABLED && !isOwner ? (
+            <Button
+              variant="outline"
+              onPress={handleStartChat}
+              loading={startingChat}
+              disabled={startingChat}
+              accessibilityLabel="Chat with owner"
+            >
+              Chat with owner
+            </Button>
+          ) : null}
         </DetailSection>
 
         {similarProducts.length > 0 && (
@@ -934,13 +996,21 @@ export default function DetailsScreen() {
           ...(isDark ? null : BAR_LIFT),
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
-          <Text fontWeight="font-bold" fontSize="text-lg">
-            {formatCurrency(product?.rate)}
-          </Text>
-          <Text fontSize="text-sm" tone="body">
-            per day
-          </Text>
+        {/* BK-01's bar: the day rate over the deposit. */}
+        <View>
+          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+            <Text fontWeight="font-bold" fontSize="text-lg">
+              {formatCurrency(product?.rate)}
+            </Text>
+            <Text fontSize="text-sm" tone="body">
+              a day
+            </Text>
+          </View>
+          {Number(product?.security_deposit) > 0 ? (
+            <Text fontSize="text-xs" tone="body">
+              {`Deposit ${formatCurrency(product.security_deposit)}`}
+            </Text>
+          ) : null}
         </View>
 
         <View style={{ flex: 1 }}>
@@ -955,16 +1025,20 @@ export default function DetailsScreen() {
             >
               <CtaLabel>Edit product</CtaLabel>
             </Button>
-          ) : (
+          ) : booking ? (
+            // "Book now", or "Book for the morning" while the shop is closed.
             <Button
-              onPress={handleStartChat}
-              loading={startingChat}
-              disabled={startingChat}
+              onPress={handleBook}
               style={CTA_STYLE}
-              accessibilityLabel="Chat with owner"
+              accessibilityLabel={booking.button}
             >
-              <CtaLabel>Chat with owner</CtaLabel>
+              <CtaLabel>{booking.button}</CtaLabel>
             </Button>
+          ) : (
+            // Neither flag set: the contract says no Book now.
+            <Text fontSize="text-sm" tone="dim" style={{ textAlign: "right" }}>
+              Not taking bookings right now
+            </Text>
           )}
         </View>
       </View>

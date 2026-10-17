@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <!-- The QA build's own return link from the pay page (renit-qa://pay/return, the QA server's
+         PAY_RETURN_URL). The store build also answers renit://, so on a phone with both builds
+         "Back to Renit" could open the wrong one; nothing else answers this scheme. -->
+    <activity android:name=".MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="renit-qa"/>
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

@@ -1,11 +1,11 @@
-import { MyDetails, useProfile } from "@/backend/profile";
+import { useRefreshDetailsOnFocus } from "@/backend/use-refresh-details";
+import { useGlobalContext } from "@/context/global-context";
 import { Avatar, Text } from "@/components/core";
 import { IconButton } from "@/components/core/icon-button";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import Skeleton from "@/components/core/skeleton";
-import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
 import { View } from "react-native";
 import { PencilSquareIcon } from "react-native-heroicons/outline";
 
@@ -23,31 +23,12 @@ const ProfileImgContainer: React.FC<ProfileImgContainerProps> = ({
   isDarkMode,
   handlePersonalDetailsSheetPress,
 }) => {
-  const [loading, setLoading] = useState(true);
-  const [details, setDetails] = useState<Partial<MyDetails>>({
-    first_name: "",
-    last_name: "",
-    email: "",
-    image: { image_url: "", name: "" },
-  });
-  const { getMyDetails } = useProfile();
+  const { userDetails } = useGlobalContext();
   const { color } = useTheme();
+  const loading = !userDetails;
 
-  const fetchDetails = async () => {
-    const details = await getMyDetails();
-    setDetails(details);
-    setLoading(false);
-  };
-
-  // The dependency was `handlePersonalDetailsSheetPress`, which the parent
-  // rebuilds on every render — so this refetched, set state, re-rendered and
-  // refetched again, polling /users/me in a loop for as long as the screen was
-  // focused. Fetch once per focus.
-  useFocusEffect(
-    useCallback(() => {
-      void fetchDetails();
-    }, [])
-  );
+  // The status card and the Post gate read the context's copy, so Profile refreshes that one.
+  useRefreshDetailsOnFocus();
 
   return (
     <View
@@ -67,8 +48,8 @@ const ProfileImgContainer: React.FC<ProfileImgContainerProps> = ({
         <Skeleton height={AVATAR_SIZE} width={AVATAR_SIZE} borderRadius={999} />
       ) : (
         <Avatar
-          uri={details.image?.image_url}
-          name={`${details.first_name ?? ""} ${details.last_name ?? ""}`.trim()}
+          uri={userDetails.image}
+          name={userDetails.name.trim()}
           size={AVATAR_SIZE}
         />
       )}
@@ -78,14 +59,14 @@ const ProfileImgContainer: React.FC<ProfileImgContainerProps> = ({
           <Skeleton height={14} width={140} borderRadius={4} />
         ) : (
           <Text fontSize="text-sm" fontWeight="font-bold" numberOfLines={1}>
-            {`${details.first_name ?? ""} ${details.last_name ?? ""}`.trim()}
+            {userDetails?.name.trim()}
           </Text>
         )}
         {loading ? (
           <Skeleton height={14} width={180} borderRadius={4} />
         ) : (
           <Text fontSize="text-sm" tone="body" numberOfLines={1}>
-            {details.email}
+            {userDetails?.email}
           </Text>
         )}
       </View>

@@ -18,16 +18,18 @@ export default function EditCategory() {
   const navigation = useTypedNavigation();
 
   const route = useRoute<RouteProps<"EditCategory">>();
-  const { name } = route.params;
+  const { name, categoryId, pending } = route.params;
   // A search result is a sub-category, so choosing one saves here rather than
   // pushing the sub-category screen.
-  const { save, saving } = useSaveSubcategory(name);
+  const { save, saving } = useSaveSubcategory(name, categoryId, pending);
 
   const onSelect = (cat: Category) => {
     navigation.navigate("EditSubCategories", {
       name,
       category: cat.title,
       subcategories: cat.subcategories,
+      categoryId,
+      pending,
     });
   };
 

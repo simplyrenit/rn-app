@@ -1,4 +1,6 @@
+import { acceptOwnerTerms, isTermsVersionOld, termsQueryKey, useTerms } from "@/backend/terms";
 import { Button, Text } from "@/components/core";
+import { OwnerTermsTick } from "@/components/terms/owner-terms-tick";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { RETAKE_WARNINGS, WARNING_TAG, warningHeadline } from "@/components/list-flow/copy";
 import { FlowHeader } from "@/components/list-flow/flow-header";
@@ -6,6 +8,8 @@ import { useAppear } from "@/components/list-flow/motion";
 import { pickPhotos } from "@/components/list-flow/pick-photos";
 import { AddPhotoTile, PhotoTile } from "@/components/list-flow/photo-tile";
 import { AddPhotoSheet, ResumeDraftSheet } from "@/components/list-flow/sheets";
+import { useGlobalContext } from "@/context/global-context";
+import { termsGate, termsHold, termsHoldLine } from "@/lib/list-flow/terms-gate";
 import { useListDraft } from "@/context/list-draft-context";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import {
@@ -18,11 +22,13 @@ import {
 } from "@/lib/list-flow/draft";
 import { ListingWarning, PhotoSource } from "@/lib/list-flow/types";
 import { useTheme } from "@/lib/theme";
+import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
-import { Alert, ScrollView, useWindowDimensions, View } from "react-native";
+import { Alert, Linking, ScrollView, useWindowDimensions, View } from "react-native";
+import { useQueryClient } from "react-query";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -52,6 +58,29 @@ export default function ListAddPhotosScreen() {
   const replaceIndex = useRef<number | null>(null);
   const [continuing, setContinuing] = useState(false);
   const [resumeTitle, setResumeTitle] = useState("last");
+
+  // The owner terms (ENG-122): asked at the start of a listing until accepted.
+  // Ordinarily, while the terms are loading, or if they cannot be read, nothing is
+  // held back: the server refuses a submit without them and Preview brings the
+  // owner back here. Once it has (`termsNeeded`), this step holds Continue until the
+  // terms have been read, and says so while they cannot be.
+  const termsQuery = useTerms();
+  const { data: terms } = termsQuery;
+  const termsRefused = Boolean(route.params?.termsNeeded);
+  const { userDetails } = useGlobalContext();
+  const queryClient = useQueryClient();
+  const [ownerTermsTick, setOwnerTermsTick] = useState(false);
+  const ownerTerms = terms?.owner;
+  const gate = termsGate({
+    accepted: ownerTerms?.accepted,
+    read: Boolean(ownerTerms),
+    failed: termsQuery.isError && !ownerTerms,
+    fetching: termsQuery.isFetching,
+    refused: termsRefused,
+  });
+  const needsOwnerTerms = gate === "tick";
+  const termsFailed = gate === "failed";
+  const termsHeld = termsHold(gate, ownerTermsTick, termsRefused);
   const shownWarnings = useRef(new Set<string>());
 
   // ---- Opening: fresh draft or the resume sheet ------------------------------
@@ -170,9 +199,49 @@ export default function ListAddPhotosScreen() {
     }
   };
 
+  /** Sends the tick if one is owed. False means stay here: the owner has been told why. */
+  const recordOwnerTerms = async () => {
+    if (!needsOwnerTerms || !ownerTerms) return true;
+    try {
+      const updated = await acceptOwnerTerms(ownerTerms.version);
+      queryClient.setQueryData(termsQueryKey(userDetails?.username), updated);
+      // A later version asks again, with an empty box.
+      setOwnerTermsTick(false);
+      navigation.setParams({ termsNeeded: undefined });
+      return true;
+    } catch (error) {
+      if (isTermsVersionOld(error)) {
+        // The terms moved on while the box was open. What was ticked was the old
+        // page, so the box is emptied and the new page is read again.
+        void queryClient.invalidateQueries(termsQueryKey(userDetails?.username));
+        setOwnerTermsTick(false);
+        toast.warning("The owner terms were updated", { message: "Read them and tick again." });
+        return false;
+      }
+      toast.error("We couldn't save your acceptance", {
+        message: "Check your connection and try again.",
+      });
+      return false;
+    }
+  };
+
+  const openOwnerTerms = () => {
+    // The owner terms page and nothing else, as at sign-up: what is recorded with the
+    // tick is an acceptance of this page, so the app's general Terms screen is no
+    // stand-in for it. If the page cannot be opened, the owner is told so.
+    const couldNotOpen = () =>
+      toast.error("We couldn't open the owner terms", { message: "Check your connection and try again." });
+    if (!ownerTerms?.url) {
+      couldNotOpen();
+      return;
+    }
+    Linking.openURL(ownerTerms.url).catch(couldNotOpen);
+  };
+
   const onContinue = async () => {
     setContinuing(true);
     try {
+      if (!(await recordOwnerTerms())) return;
       await flow.waitForUploads();
     } finally {
       setContinuing(false);
@@ -180,7 +249,13 @@ export default function ListAddPhotosScreen() {
     proceed();
   };
 
-  const onManual = () => {
+  const onManual = async () => {
+    setContinuing(true);
+    try {
+      if (!(await recordOwnerTerms())) return;
+    } finally {
+      setContinuing(false);
+    }
     flow.track("manual_path_chosen", { from: "L-12" });
     navigation.navigate("ListReview", { manual: true });
   };
@@ -316,10 +391,49 @@ export default function ListAddPhotosScreen() {
           </>
         ) : (
           <>
-            <Button disabled={doneCount === 0} loading={continuing} onPress={onContinue}>
+            {needsOwnerTerms ? (
+              <>
+                <OwnerTermsTick
+                  checked={ownerTermsTick}
+                  onChange={setOwnerTermsTick}
+                  onOpenTerms={openOwnerTerms}
+                />
+                {termsHoldLine(gate, ownerTermsTick) ? (
+                  <Text tone="dim" fontSize="text-sm" accessibilityLiveRegion="polite">
+                    {termsHoldLine(gate, ownerTermsTick)}
+                  </Text>
+                ) : null}
+              </>
+            ) : termsFailed ? (
+              // The read failed: say so, with a way to try again, rather than showing
+              // nothing about terms at all.
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.sm }}>
+                <Text tone={termsRefused ? "danger" : "dim"} fontSize="text-sm" style={{ flex: 1 }}>
+                  {termsRefused
+                    ? "We couldn't load the owner terms, and they are needed to submit."
+                    : "We couldn't check the owner terms."}
+                </Text>
+                <Button variant="outline" size="compact" loading={termsQuery.isFetching} onPress={() => void termsQuery.refetch()}>
+                  Try again
+                </Button>
+              </View>
+            ) : gate === "checking" ? (
+              <Text tone="dim" fontSize="text-sm" accessibilityLiveRegion="polite">
+                Checking the owner terms…
+              </Text>
+            ) : null}
+            <Button
+              disabled={doneCount === 0 || termsHeld}
+              loading={continuing}
+              onPress={onContinue}
+            >
               Continue
             </Button>
-            <Button variant="ghost" onPress={onManual}>
+            <Button
+              variant="ghost"
+              disabled={continuing || termsHeld}
+              onPress={onManual}
+            >
               I'll fill it in myself
             </Button>
           </>

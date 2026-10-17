@@ -4,14 +4,11 @@ import {
   isSuccessResponse,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
-import axios from "axios";
 import { useState } from "react";
-import {
-  APPLE_SIGN_IN_ENDPOINT,
-  GOOGLE_SIGN_IN_ENDPOINT,
-} from "@/lib/config";
+import { appleLogin, googleLogin } from "@/backend/sign-in-calls";
 import { useGlobalContext } from "@/context/global-context";
 import { AuthTokens, useTypedNavigation } from "@/lib/types";
+import { goAfterSignIn } from "@/lib/return-to";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useProfile } from "@/backend/profile";
 import axiosInstance from "@/lib/networkUtils";
@@ -48,16 +45,14 @@ export function useOAuth() {
 
       if (googleToken) {
         try {
-          const res = await axios.post<AuthTokens>(GOOGLE_SIGN_IN_ENDPOINT, {
-            access_token: googleToken,
-          });
+          const res = await googleLogin(googleToken);
 
 
           if (res.data.access_token && res.data.refresh_token) {
             axiosInstance.defaults.headers.Authorization = `Bearer ${res.data.access_token}`;
             setAuthTokens(res.data);
             await getMyDetails(res.data.access_token);
-            router.navigate("MainTabs");
+            goAfterSignIn(router);
             return;
           }
         } catch (backendError) {
@@ -88,17 +83,13 @@ export function useOAuth() {
       });
 
       if (credential.identityToken) {
-        const res = await axiosInstance.post<AuthTokens>(APPLE_SIGN_IN_ENDPOINT, {
-          data: {
-            identityToken: credential.identityToken,
-          },
-        });
+        const res = await appleLogin(credential.identityToken);
 
         if (res.data.access_token !== null && res.data.refresh_token !== null) {
           axiosInstance.defaults.headers.Authorization = `Bearer ${res.data.access_token}`;
           setAuthTokens(res.data);
           await getMyDetails(res.data.access_token);
-          router.navigate("MainTabs");
+          goAfterSignIn(router);
           return;
         }
       } else {

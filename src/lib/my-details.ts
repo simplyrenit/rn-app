@@ -15,14 +15,13 @@ export interface MyDetailsResponse {
     name: string;
   } | null;
   addresses: {
+    id: number;
     address: string;
     address_line_1: string;
     address_line_2: string;
-    city: string;
-    state: string;
-    postal_code: string;
-    country: string;
+    locality: string;
     address_type: string;
+    label: string;
     coordinates: {
       lat: number;
       long: number;

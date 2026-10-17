@@ -1,4 +1,6 @@
+import { ADDRESS_TYPES } from "@/lib/addresses";
 import { computeDepositDefault, parseRate } from "./deposit";
+import { parseQuantity, parseWorth, suggestedWorth } from "./stock";
 import {
   AI_FIELDS,
   AiFieldName,
@@ -46,11 +48,18 @@ const FIELD_NAMES: FieldName[] = [
   "rate",
   "security_deposit",
   "location",
+  "quantity",
+  "worth",
 ];
 
+/** One unit, unless the owner says more (API-CONTRACT: `quantity` defaults to 1). */
+export const DEFAULT_QUANTITY = "1";
+
 function emptyFields(): DraftFields {
-  const fields = {} as Record<FieldName, { value: null; source: FieldSource }>;
+  const fields = {} as Record<FieldName, { value: string | null; source: FieldSource }>;
   for (const name of FIELD_NAMES) fields[name] = { value: null, source: "empty" };
+  // The default is the owner's answer unless they change it, as the deposit's is.
+  fields.quantity = { value: DEFAULT_QUANTITY, source: "user" };
   return fields as unknown as DraftFields;
 }
 
@@ -106,7 +115,11 @@ function coerceAiValue(field: AiFieldName, value: unknown) {
   if (field === "category") {
     const v = value as Partial<CategoryValue> | null;
     if (v && typeof v.parent === "string" && typeof v.title === "string" && v.parent && v.title) {
-      return { parent: v.parent, title: v.title };
+      // The extraction now names the sub-category by `id` as well (and `slug`, which
+      // nothing here reads): kept, so the specs and the create call need no match by
+      // title. An answer without it (an older server) still gives the two titles (P3-8).
+      const id = typeof v.id === "number" && Number.isInteger(v.id) && v.id > 0 ? v.id : null;
+      return id === null ? { parent: v.parent, title: v.title } : { id, parent: v.parent, title: v.title };
     }
     return null;
   }
@@ -155,13 +168,18 @@ export type DraftAction =
   | { type: "dismissWarning"; warning: Pick<ListingWarning, "type" | "photo"> }
   | { type: "editField"; field: Exclude<FieldName, "condition">; value: unknown }
   | { type: "confirmCondition"; value: Condition }
+  /** The owner agrees with the suggested worth, unchanged: it becomes theirs. */
+  | { type: "confirmWorth" }
+  | { type: "setNotDelivered"; value: boolean }
   | { type: "prefillLocation"; value: FieldValues["location"] }
   | { type: "setDepositRule"; rule: DepositRule | null }
   | { type: "setReviewNote"; note: ListingDraft["reviewNote"] }
   | { type: "specsRequested"; categoryId: number; requestId: string }
   | { type: "specsLoaded"; requestId: string; specs: WireSpec[] }
   | { type: "specsUnavailable"; requestId: string }
-  | { type: "setSpec"; key: string; value: SpecValue | null };
+  | { type: "setSpec"; key: string; value: SpecValue | null }
+  /** `null` clears it: the "Save this address" checkbox unticked. */
+  | { type: "setSaveAddressAs"; value: NonNullable<ListingDraft["saveAddressAs"]> | null };
 
 /** Recompute the deposit default while the owner has not overridden it. */
 function withDerivedDeposit(draft: ListingDraft): ListingDraft {
@@ -181,7 +199,27 @@ function withDerivedDeposit(draft: ListingDraft): ListingDraft {
   return { ...draft, fields: { ...draft.fields, security_deposit: next } };
 }
 
+/**
+ * The model's guess at what the item is worth (ENG-154). It lands only on a field
+ * the owner has not touched, stays "ai" until they confirm or change it, and is
+ * never shown as the model's: Review treats an "ai" worth as "still to confirm".
+ */
+function mergeWorth(draft: ListingDraft, event: FieldEvent): ListingDraft {
+  if (event.status !== "filled") return draft;
+  const value = suggestedWorth(event.value);
+  const current = draft.fields.worth;
+  if (value === null || !aiMayWrite(current.source)) return draft;
+  return {
+    ...draft,
+    fields: {
+      ...draft.fields,
+      worth: { value, source: "ai", confidence: event.confidence, evidence: event.evidence },
+    },
+  };
+}
+
 function mergeAi(draft: ListingDraft, event: FieldEvent): ListingDraft {
+  if (event.field === "worth") return mergeWorth(draft, event);
   if (!isAiField(event.field)) return draft;
   const field = event.field;
   const current = draft.fields[field];
@@ -257,6 +295,12 @@ function withoutStaleAi(draft: ListingDraft): ListingDraft {
     if (name === "condition" && draft.conditionConfirmed) continue;
     if (fields[name].source !== "ai") continue;
     fields[name] = { value: null, source: "empty" };
+    changed = true;
+  }
+  // A worth suggested from the old photos goes the same way: still the model's
+  // (never confirmed or edited), so it describes photos that may be gone.
+  if (draft.fields.worth.source === "ai") {
+    fields.worth = { value: null, source: "empty" };
     changed = true;
   }
   // The old photos' guess goes too, unless the owner confirmed exactly it —
@@ -483,6 +527,17 @@ export function draftReducer(
       };
     }
 
+    case "confirmWorth": {
+      const current = draft.fields.worth;
+      if (current.source !== "ai" || parseWorth(current.value) === null) return draft;
+      return { ...draft, fields: { ...draft.fields, worth: { ...current, source: "user" } } };
+    }
+
+    case "setNotDelivered":
+      return (draft.notDelivered ?? false) === action.value
+        ? draft
+        : { ...draft, notDelivered: action.value };
+
     case "prefillLocation": {
       // A default, not an edit: only ever fills a field nobody has set.
       const current = draft.fields.location;
@@ -538,6 +593,11 @@ export function draftReducer(
       return { ...draft, specs: { ...draft.specs, items } };
     }
 
+    case "setSaveAddressAs":
+      return (draft.saveAddressAs ?? null) === action.value
+        ? draft
+        : { ...draft, saveAddressAs: action.value ?? undefined };
+
     default:
       return draft;
   }
@@ -575,7 +635,16 @@ export function canRunAgain(draft: ListingDraft) {
 }
 
 export interface Requirement {
-  key: "rate" | "condition" | "category" | "title" | "description" | "location" | "deposit";
+  key:
+    | "rate"
+    | "condition"
+    | "category"
+    | "title"
+    | "description"
+    | "location"
+    | "worth"
+    | "quantity"
+    | "deposit";
   label: string;
 }
 
@@ -593,6 +662,11 @@ export function missingRequirements(draft: ListingDraft): Requirement[] {
   // A pin with no name would reach the server as an empty `location`.
   if (!f.location.value?.locality?.trim())
     missing.push({ key: "location", label: "pickup location" });
+  // Worth is needed to publish (it decides whether the owner must check the customer's ID at the handover). A figure the
+  // model suggested counts only once the owner has confirmed or changed it.
+  if (parseWorth(f.worth.value) === null || f.worth.source === "ai")
+    missing.push({ key: "worth", label: "worth" });
+  if (parseQuantity(f.quantity.value) === null) missing.push({ key: "quantity", label: "quantity" });
   // The deposit is derived from the price, so it is only named once there is
   // a price. After that an empty one means the owner cleared it: sending 0
   // would list the item with no deposit at all, which nobody chose.
@@ -662,6 +736,11 @@ export function hydrateDraft(raw: string | null, now: number): ListingDraft | nu
       dismissedWarnings: parsed.dismissedWarnings ?? [],
       warnings: parsed.warnings ?? [],
       specs: hydrateSpecs(parsed.specs),
+      // Absent on drafts stored before ENG-25; anything else unknown is dropped
+      // rather than sent to the address API as a type.
+      saveAddressAs: (ADDRESS_TYPES as readonly string[]).includes(parsed.saveAddressAs ?? "")
+        ? parsed.saveAddressAs
+        : undefined,
     });
     return {
       ...draft,
@@ -681,6 +760,10 @@ export function draftDisplayTitle(draft: ListingDraft) {
 export function isDraftWorthResuming(draft: ListingDraft) {
   return (
     draft.photos.length > 0 ||
-    (Object.keys(draft.fields) as FieldName[]).some((n) => draft.fields[n].value !== null)
+    // The quantity starts at 1 in every draft, so only another number counts.
+    draft.fields.quantity.value !== DEFAULT_QUANTITY ||
+    (Object.keys(draft.fields) as FieldName[]).some(
+      (n) => n !== "quantity" && draft.fields[n].value !== null
+    )
   );
 }

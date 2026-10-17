@@ -1,4 +1,5 @@
 import { useChat } from "@/backend/chat";
+import { CHAT_ENABLED } from "@/lib/config";
 import useOwner from "@/backend/owner";
 import useReviews from "@/backend/reviews";
 import useSaved from "@/backend/useSaved";
@@ -666,7 +667,9 @@ export default function UsersDetails() {
                 </View>
               ) : null}
 
-              {!isOwner && (
+              {/* Chat is off at launch (ENG-177); the button and `handleStartChat`
+                  stay for the day it is switched back on. */}
+              {!isOwner && CHAT_ENABLED && (
                 <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
                   <BlockButton
                     label={`Chat with ${owner?.first_name ?? "the owner"}`}
