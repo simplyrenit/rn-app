@@ -1,6 +1,11 @@
-import { BackButton, EmptyState, Text } from "@/components/core";
+import { Button, EmptyState, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import IconButton from "@/components/profile/post-auth/profile-icon-button";
+import { HeldChange, ListingPrompts, ListingStatusPill } from "@/components/product/listing-status";
+import { ownerView, readPendingEdit } from "@/lib/listing-edit";
+import { apiError } from "@/lib/api-error";
+import { softBreaks } from "@/lib/format";
+import { blockedDatesOf, hasPrice, openBookingMessage, resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
@@ -13,7 +18,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { TrashIcon } from "react-native-heroicons/outline";
+import { ArchiveBoxIcon } from "react-native-heroicons/outline";
 import * as React from "react";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
@@ -22,7 +27,7 @@ import { useProfile } from "@/backend/profile";
 import { useFocusEffect } from "@react-navigation/native";
 
 import { useGetMyDetails } from "@/services/userQueries";
-import { MIN_TOUCH_TARGET, ink } from "@/lib/design-tokens";
+import { ink } from "@/lib/design-tokens";
 import { toast } from "@/lib/toast";
 
 
@@ -37,10 +42,13 @@ const EditProductScreen: React.FC = () => {
   const { width: winW } = useWindowDimensions();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const openBottomSheet = () => {
+    setArchiveError(null);
     bottomSheetRef.current?.present();
   };
   const [product, setProduct] = useState<BackendProduct | null>(null);
-  const { getMyProductDetails, deleteMyProduct, loading } = useProfile();
+  // Why the last archive attempt failed, shown in the sheet it was made from.
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+  const { getMyProductDetails, archiveMyProduct, loading } = useProfile();
   const { data: userData } = useGetMyDetails()
   const getProductDetails = async () => {
     const product = await getMyProductDetails(id);
@@ -53,24 +61,34 @@ const EditProductScreen: React.FC = () => {
     }, [])
   );
 
-  const handleDelete = async () => {
-    await deleteMyProduct(id);
-    toast.success("Your product was deleted!");
+  // Archiving keeps the product on record but takes it off search and off My
+  // products. The server refuses while a booking on it is still open, and says
+  // which ones.
+  const handleArchive = async () => {
+    setArchiveError(null);
+    try {
+      await archiveMyProduct(id);
+    } catch (error) {
+      const failure = apiError(error);
+      setArchiveError(
+        failure?.code === "open_booking"
+          ? openBookingMessage(failure.details?.bookings as string[] | undefined)
+          : failure?.message ??
+              "We couldn't archive this product. Check your connection and try again."
+      );
+      return;
+    }
+    bottomSheetRef.current?.dismiss();
+    toast.success("Your product was archived.");
     navigation.navigate("myProducts");
   };
+
+  const status = resolveListingStatus(product?.status);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NonScrollableContainer>
-        <View className="flex-row items-center justify-between px-gutter py-2 pt-4">
-          <View style={{ width: MIN_TOUCH_TARGET }}>
-            <BackButton onPress={() => router.goBack()} />
-          </View>
-          <View style={{ flex: 1, alignItems: "center" }}>
-            <Text role="screenTitle">Edit product</Text>
-          </View>
-          <View style={{ width: MIN_TOUCH_TARGET }} />
-        </View>
+        <SubpageHeader title="Edit product" onBack={() => router.goBack()} />
 
         <ScrollView
           className="flex-1"
@@ -103,21 +121,41 @@ const EditProductScreen: React.FC = () => {
                       fontSize="text-lg"
                       fontWeight="font-bold"
                     >
-                      {product.title}
+                      {softBreaks(product.title)}
                     </Text>
                     <Text tone="body"
                       fontSize="text-sm"
                     >
                       {product.location}
                     </Text>
-                    <View className="flex-row space-x-1">
-                      <Text
-                        fontSize="text-sm"
-                        fontWeight="font-bold"
-                      >
-                        ₹{Number(product.rate).toFixed(0)}
-                      </Text>
-                      <Text tone="body">per day</Text>
+                    {hasPrice(product.rate) ? (
+                      <View className="flex-row space-x-1">
+                        <Text
+                          fontSize="text-sm"
+                          fontWeight="font-bold"
+                        >
+                          ₹{Number(product.rate).toFixed(0)}
+                        </Text>
+                        <Text tone="body">per day</Text>
+                      </View>
+                    ) : (
+                      <Text tone="body" fontSize="text-sm">No price yet</Text>
+                    )}
+                    {/* A flagged owner opens this screen to fix the listing, so
+                        the reason is shown where they will fix it. */}
+                    {status ? (
+                      <View style={{ marginTop: 4 }}>
+                        <ListingStatusPill status={status} reasons={product.flag_reasons} waitsText={product.waits_for_text} fullReason />
+                      </View>
+                    ) : null}
+                    {/* A change of theirs that waits: which fields, and what to change. */}
+                    {product.pending_edit ? (
+                      <View style={{ marginTop: 6 }}>
+                        <HeldChange pending={readPendingEdit(product.pending_edit)} />
+                      </View>
+                    ) : null}
+                    <View style={{ marginTop: 4 }}>
+                      <ListingPrompts product={product} />
                     </View>
                   </View>
                   <View>
@@ -128,12 +166,12 @@ const EditProductScreen: React.FC = () => {
                         : "border-line-light bg-surface-light"
                         }`}
                     >
-                      <TrashIcon
+                      <ArchiveBoxIcon
                         size={20}
                         color={ink.danger(isDarkMode)}
                       />
                       <Text fontSize="text-sm" fontWeight="font-bold">
-                        Delete
+                        Archive
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -144,6 +182,8 @@ const EditProductScreen: React.FC = () => {
                   onPress={() =>
                     navigation.navigate("EditCategory", {
                       name: product.name,
+                      categoryId: product.category?.id ?? null,
+                      pending: readPendingEdit(product.pending_edit),
                     })
                   }
                   leftIcon="ClipboardDocumentIcon"
@@ -153,7 +193,12 @@ const EditProductScreen: React.FC = () => {
                 <IconButton
                   onPress={() =>
                     navigation.navigate("EditAboutProduct", {
-                      data: { ...product, isOwnerContact: `${userData?.first_name} ${userData?.last_name}` === product.contact_name && userData?.phone === product.contact_number },
+                      // The listing as the server has it (the screen lays a waiting change over it, `ownerView`); the owner is
+                      // the contact when the contact the owner sees is theirs.
+                      data: (() => {
+                        const view = ownerView(product);
+                        return { ...product, isOwnerContact: `${userData?.first_name} ${userData?.last_name}` === view.contact_name && userData?.phone === view.contact_number };
+                      })(),
                     })
                   }
                   leftIcon="DocumentTextIcon"
@@ -162,10 +207,12 @@ const EditProductScreen: React.FC = () => {
                 />
                 <IconButton
                   onPress={() => {
+                    // The photos as their owner sees them: waiting ones, if a change of photos waits.
+                    const view = ownerView(product);
                     navigation.navigate("EditProductImages", {
-                      images: product.images,
+                      images: view.images,
                       name: product.name,
-                      coverImage: product.cover_image,
+                      coverImage: view.cover_image,
                     })
                   }
                   }
@@ -174,12 +221,24 @@ const EditProductScreen: React.FC = () => {
                   isDarkMode={isDarkMode}
                 />
                 <IconButton
-                  onPress={() =>
+                  onPress={() => {
+                    // `blocked_dates`, never `booked`: the contract keeps `booked`
+                    // for the old meaning and the editor writes `blocked_dates`.
+                    const dates = blockedDatesOf(product);
+                    if (!dates) {
+                      // Update sends the whole list and replaces the server's, so an
+                      // answer without the field must not open the editor as "none".
+                      toast.error("We couldn't load your unavailable dates", {
+                        message: "Check your connection and try again.",
+                      });
+                      void getProductDetails();
+                      return;
+                    }
                     navigation.navigate("EditProductAvailability", {
-                      dates_blocked: product.booked!,
+                      dates_blocked: dates,
                       name: product.name,
-                    })
-                  }
+                    });
+                  }}
                   leftIcon="CalendarIcon"
                   text="Unavailability"
                   isDarkMode={isDarkMode}
@@ -194,7 +253,7 @@ const EditProductScreen: React.FC = () => {
 
       <CustomBottomSheetModal
         ref={bottomSheetRef}
-        snapPoints={["40%"]}
+        snapPoints={["55%"]}
         isDark={isDarkMode}
       >
         <View className="flex items-center mb-4">
@@ -202,7 +261,7 @@ const EditProductScreen: React.FC = () => {
             fontSize="text-xl"
             fontWeight="font-bold"
           >
-            Delete product
+            Archive product
           </Text>
         </View>
         {product && (
@@ -229,58 +288,53 @@ const EditProductScreen: React.FC = () => {
                   >
                     {product.location}
                   </Text>
-                  <View className="flex-row items-center mt-1 space-x-1">
-                    <Text
-                      fontSize="text-base"
-                      fontWeight="font-bold"
-                    >
-                      ₹{Number(product.rate).toFixed(0)}
-                    </Text>
-                    <Text tone="body">per day</Text>
-                  </View>
+                  {hasPrice(product.rate) ? (
+                    <View className="flex-row items-center mt-1 space-x-1">
+                      <Text
+                        fontSize="text-base"
+                        fontWeight="font-bold"
+                      >
+                        ₹{Number(product.rate).toFixed(0)}
+                      </Text>
+                      <Text tone="body">per day</Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
             </View>
           </>
         )}
-        <View className="flex-row justify-between mt-6 space-x-2 px-2">
-          <TouchableOpacity
-            onPress={() => bottomSheetRef.current?.close()}
-            className={`border rounded-card flex-1 items-center justify-center p-3  ${isDarkMode
-              ? "border-line-dark bg-surface-dark"
-              : "border-line-light bg-surface-light"
-              }`}
-          >
+        <View className="px-gutter" style={{ gap: 8, marginTop: 8 }}>
+          <Text tone="body" fontSize="text-md">
+            Archiving takes this product out of search and out of My products.
+            We keep it on record. You can’t archive a product while a booking
+            on it is still open.
+          </Text>
+          {archiveError ? (
             <Text
-              fontWeight="font-bold"
-              fontSize="text-base"
-              className="text-center"
+              tone="danger"
+              fontSize="text-sm"
+              accessibilityLiveRegion="polite"
+            >
+              {archiveError}
+            </Text>
+          ) : null}
+        </View>
+        <View className="flex-row justify-between mt-6 space-x-2 px-2">
+          <View style={{ flex: 1 }}>
+            <Button
+              variant="outline"
+              disabled={loading}
+              onPress={() => bottomSheetRef.current?.close()}
             >
               Cancel
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => {
-              handleDelete();
-            }}
-            className="bg-danger-light p-3 rounded-card flex-1  flex-row items-center justify-center"
-          >
-            {loading ? (
-              // No `onDanger` token exists yet; `onBrand` is the nearest
-              // available (theme-invariant white), same as the label it
-              // stands in for below.
-              <ActivityIndicator size="small" color={ink.onBrand()} />
-            ) : (
-              <Text
-                fontWeight="font-bold"
-                fontSize="text-base"
-                className="text-center"
-              >
-                Delete
-              </Text>
-            )}
-          </TouchableOpacity>
+            </Button>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button variant="warning" loading={loading} onPress={handleArchive}>
+              Archive
+            </Button>
+          </View>
         </View>
       </CustomBottomSheetModal>
     </GestureHandlerRootView>

@@ -38,12 +38,25 @@ describe("buildCreatePayload", () => {
     { type: "editField", field: "model_name", value: "CFI-1216A" },
     { type: "confirmCondition", value: "good" },
     { type: "editField", field: "rate", value: "610" },
+    { type: "editField", field: "quantity", value: "5" },
+    { type: "mergeAi", event: { field: "worth", status: "filled", value: 45000 } },
+    { type: "confirmWorth" },
+    { type: "setNotDelivered", value: true },
     {
       type: "prefillLocation",
       value: { locality: "Thane West, Thane", fullAddress: "Flat 1203", lat: 19.2, long: 72.97 },
     }
   );
   const payload = buildCreatePayload(draft, contact);
+
+  it("sends quantity, worth and not_delivered as numbers and a flag", () => {
+    expect(payload).toMatchObject({ quantity: 5, worth: 45000, not_delivered: true });
+  });
+
+  it("sends one unit and not-delivered false for an owner who changed neither", () => {
+    const plain = buildCreatePayload(build(), contact);
+    expect(plain).toMatchObject({ quantity: 1, worth: null, not_delivered: false });
+  });
 
   it("sends uploaded images in order, with the cover picked from them", () => {
     expect(payload.images).toEqual(["https://cdn.example.com/a.jpg", "https://cdn.example.com/b.jpg"]);
@@ -66,6 +79,8 @@ describe("buildCreatePayload", () => {
       rate: "user",
       security_deposit: "user",
       location: "user",
+      // Confirmed as it stood: the owner's now. The quantity is never reported.
+      worth: "user",
     });
   });
 

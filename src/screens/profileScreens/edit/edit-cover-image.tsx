@@ -5,6 +5,8 @@ import { EditStepHeader } from "@/components/post/edit-step-header";
 import { ProductImage, RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React from "react";
+import { ListingAnswer, saveOutcome } from "@/lib/listing-edit";
+import { toastSave } from "@/lib/save-toast";
 import { toast } from "@/lib/toast";
 
 export default function EditCoverImage() {
@@ -15,7 +17,7 @@ export default function EditCoverImage() {
 
   const handleSubmit = async (croppedImage: ProductImage) => {
     try {
-      await updateProductImages(name, {
+      const response = await updateProductImages(name, {
         images: images.map((img) => ({
           image: img,
           file_type: "image/jpeg",
@@ -23,7 +25,14 @@ export default function EditCoverImage() {
         cover_image: croppedImage,
       });
 
-      toast.success("Your product was updated!");
+      // Every photo is uploaded again, so a save here is never the same photos: the opening values are for the earlier change.
+      toastSave(
+        saveOutcome({
+          before: { images, cover_image: coverImage },
+          sent: { images, cover_image: croppedImage },
+          answer: response.data as unknown as ListingAnswer,
+        })
+      );
       navigation.navigate("editProduct", { id: name });
     } catch (error) {
       console.error("Error updating product images:", error);

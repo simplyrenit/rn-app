@@ -1,6 +1,8 @@
 
 import { useAuth } from "@/backend/auth";
 import { useProfile } from "@/backend/profile";
+import { fetchUnlock } from "@/backend/unlock";
+import { UnlockSheet, UnlockSheetHandle } from "@/components/bank/unlock-sheet";
 import { Button, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
@@ -39,8 +41,13 @@ import {
   space,
   SCREEN_GUTTER,
 } from "@/lib/design-tokens";
+import { apiError } from "@/lib/api-error";
+import { DeleteProblem, deleteProblem } from "@/lib/delete-account";
+import { needsCurrentNumberCode, noNumberStep, phoneChangeBody, phoneChangeOutcome, unlockNext, unlockStart } from "@/lib/phone-change";
+import { EMAIL_HAS_ACCOUNT, emailChangeBody, emailChangeOutcome, emailCodeText, emailProof, sameEmail } from "@/lib/sign-in-proof";
 import { toast } from "@/lib/toast";
 import { useTheme } from "@/lib/theme";
+import { isUnlocked } from "@/lib/unlock";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // A fixed-length mask so the field never leaks the real password's length —
@@ -62,11 +69,17 @@ function DetailField({
   value,
   accessibilityLabel,
   onEdit,
+  busy = false,
+  error = null,
 }: {
   label: string;
   value: string;
   accessibilityLabel: string;
   onEdit: () => void;
+  /** A change is being got ready (the unlock is read): the pencil waits, and a second tap does nothing. */
+  busy?: boolean;
+  /** Why the change could not open, said here in the sheet (a toast is drawn behind a sheet and cannot be seen). */
+  error?: string | null;
 }) {
   const { color } = useTheme();
   return (
@@ -77,14 +90,21 @@ function DetailField({
       <Text fontSize="text-md" numberOfLines={1} style={{ paddingRight: 32 }}>
         {value}
       </Text>
+      {error ? (
+        <Text fontSize="text-sm" tone="danger" accessibilityRole="alert">
+          {error}
+        </Text>
+      ) : null}
       <TouchableOpacity
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ busy, disabled: busy }}
+        disabled={busy}
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         onPress={onEdit}
         style={{ position: "absolute", top: ROW_PAD_V, right: SCREEN_GUTTER }}
       >
-        <PencilSquareIcon size={20} color={color.brandText} />
+        {busy ? <ActivityIndicator size="small" color={color.brandText} /> : <PencilSquareIcon size={20} color={color.brandText} />}
       </TouchableOpacity>
     </View>
   );
@@ -102,7 +122,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const { theme } = useGlobalContext();
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
-  const { sendOTP, requestPhoneNumberChangeOtp, verifyPhoneNumberChange } =
+  const { sendOTP, verifyOTP, requestPhoneNumberChangeOtp, verifyPhoneNumberChange } =
     useAuth();
   const isDark = theme === "dark";
   const { width: winW, height: winH } = useWindowDimensions();
@@ -120,7 +140,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const { getMyDetails, updateMyProfileImage, updateMyDetails, loading, deleteMyAccount } =
     useProfile();
 
-  const fetchDetails = async () => {
+  /**
+   * Reads the account. With `accountOnly` only what the sheet shows of the account is refreshed (the rows, and the
+   * number the code goes to): the boxes a change is being typed in keep what the person typed, so a new address with
+   * its proof held is never overwritten by the account's current one (review app-6 r2 #5).
+   */
+  const fetchDetails = async (accountOnly = false) => {
     const details = await getMyDetails();
     // setDetails(details);
 
@@ -134,6 +159,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       phone: details.phone,
       password: PASSWORD_MASK,
     });
+    if (accountOnly) return;
     setUpdatedName(details.first_name + " " + details.last_name);
     setUpdatedEmail(details.email);
     setUpdatedPhone(details.phone.slice(-10));
@@ -184,8 +210,103 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const allValid = Object.values(validatePassword).every(Boolean);
 
   const openEditNameModal = () => editNameModalRef.current?.present();
-  const openEditEmailModal = () => editEmailModalRef.current?.present();
-  const openEditPhoneModal = () => editPhoneModalRef.current?.present();
+  // Changing the email needs the same two proofs as the number (decisions T-14, T-19): the code to the
+  // CURRENT number first, when the account has one, and then the emailed code to the NEW address, whose
+  // proof token goes with the change. It is below, with the number's: they share the one unlock sheet.
+  const openEditEmailModal = () =>
+    void openChange("email", () => {
+      setEmailError("");
+      setIsIncorrect(false);
+      setIsOtpSent(false);
+      emailToken.current = "";
+      editEmailModalRef.current?.present();
+    });
+  // Changing the number needs two proofs (decision T-14): a code sent to the CURRENT number
+  // first, when the account has one (it unlocks this phone for a while, as for the bank
+  // account), and the code sent to the NEW number, whose ID token goes with the change.
+  const unlockSheet = useRef<UnlockSheetHandle>(null);
+  /** What to do once the unlock is done, and what a forced one may do if it cannot be (never repeat a save on its own). */
+  const pending = useRef<{ then: () => void; force: boolean; onFail?: (text: string) => void } | null>(null);
+  // True while the unlock is being read, so a second tap does not open the sheet and send a second text.
+  const askingForCode = useRef(false);
+  const [codeGoesTo, setCodeGoesTo] = useState({ phoneMasked: "", minutes: 30 });
+  /** The Firebase ID token of the new number, kept after the code is spent so a failed save is repeated alone. */
+  const phoneToken = useRef("");
+  const savingPhone = useRef(false);
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+
+  /**
+   * Runs `then` once this phone is unlocked: at once if it already is, and with no
+   * code at all when this phone believes the account has no number yet (a first number is the save alone).
+   * `force` is for when the server has just said it is locked (403 `fresh_code_required`): the server is always
+   * asked, the shortcut is never taken, and nothing is done for the person if the unlock cannot be made; `onFail`
+   * says why, in the place the person is looking. A save is repeated only after a new unlock or a press, never
+   * on its own (review app-6 r1 #2).
+   */
+  const askForCode = async (then: () => void, opts: { force?: boolean; onFail?: (text: string) => void } = {}) => {
+    const { force = false, onFail } = opts;
+    if (askingForCode.current) return;
+    const believesNumber = needsCurrentNumberCode(details.phone);
+    if (unlockStart({ force, believesNumber }) === "carry_on") {
+      then();
+      return;
+    }
+    askingForCode.current = true;
+    try {
+      const state = await fetchUnlock();
+      const next = unlockNext({ force, believesNumber, unlocked: isUnlocked(state) });
+      if (next === "carry_on") {
+        then();
+        return;
+      }
+      if (next === "stale_copy") {
+        // The server has a number this phone's copy of the account does not (set on another phone): the copy is read
+        // again, and the person tries once more with it, instead of a save that would be refused again.
+        void fetchDetails(true).catch(() => undefined);
+        onFail?.("Your account has a phone number this phone didn't know about. Your details are updated: try again.");
+        return;
+      }
+      setCodeGoesTo({ phoneMasked: state.phone_masked, minutes: state.minutes });
+      pending.current = { then, force, onFail };
+      // Sends the code to the number the account has, as it opens.
+      unlockSheet.current?.open();
+    } catch (error) {
+      if (apiError(error)?.code === "phone_required") {
+        // The server says the account has no number after all: nothing to confirm first, unless it has just asked for it.
+        if (noNumberStep(force) === "carry_on") {
+          then();
+          return;
+        }
+        onFail?.("Your account has no phone number to send a code to. Add one in your profile first.");
+        return;
+      }
+      onFail?.("We couldn't check your code. Check your connection and try again.");
+    } finally {
+      askingForCode.current = false;
+    }
+  };
+
+  /** Which row is being got ready (the unlock is read), and why it could not open: both shown on the row itself. */
+  const [opening, setOpening] = useState<"email" | "phone" | null>(null);
+  const [openError, setOpenError] = useState<{ field: "email" | "phone"; text: string } | null>(null);
+
+  const openChange = async (field: "email" | "phone", present: () => void) => {
+    if (opening) return;
+    setOpenError(null);
+    // The real number is needed to know whether a code comes first: not before the details have loaded.
+    if (!nameId) {
+      setOpenError({ field, text: "Still loading your details. Try again in a moment." });
+      return;
+    }
+    setOpening(field);
+    try {
+      await askForCode(present, { onFail: (text) => setOpenError({ field, text }) });
+    } finally {
+      setOpening(null);
+    }
+  };
+
+  const openEditPhoneModal = () => void openChange("phone", () => editPhoneModalRef.current?.present());
   const openEditPasswordModal = () => editPasswordModalRef.current?.present();
   const openProfileImageSheet = () => profileImageSheetRef.current?.present();
 
@@ -241,10 +362,33 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const [isMobileOtpSent, setIsMobileOtpSent] = useState(false);
   const [isIncorrect, setIsIncorrect] = useState(false);
 
+  const [emailError, setEmailError] = useState("");
+  const [isEmailBusy, setIsEmailBusy] = useState(false);
+  /** The proof token of the emailed code, kept after the code is spent so a failed save is repeated alone. */
+  const emailToken = useRef("");
+  const savingEmail = useRef(false);
+
+  /** Sends (or sends again) the code to the NEW address. A new code makes the one confirmed before it worthless. */
   const handleSendOtp = async () => {
-    if (updatedEmail) {
+    if (!updatedEmail.trim() || savingEmail.current) return;
+    if (sameEmail(updatedEmail, details.email)) {
+      setEmailError("That is already your email address.");
+      return;
+    }
+    savingEmail.current = true;
+    setIsEmailBusy(true);
+    setEmailError("");
+    setIsIncorrect(false);
+    emailToken.current = "";
+    try {
+      // The server limits how often codes are asked for (429): said plainly, never retried by itself.
+      await sendOTP(updatedEmail.trim());
       setIsOtpSent(true);
-      // await sendOTP(updatedEmail);
+    } catch (error: any) {
+      setEmailError(emailCodeText(error, "send"));
+    } finally {
+      savingEmail.current = false;
+      setIsEmailBusy(false);
     }
   };
 
@@ -263,6 +407,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     setPhoneOtpError("");
     setIsIncorrect(false);
     setIsPhoneOtpLoading(true);
+    // A new code makes the one that was confirmed before it worthless.
+    phoneToken.current = "";
     try {
       await requestPhoneNumberChangeOtp(fullPhone);
       setIsMobileOtpSent(true);
@@ -292,30 +438,66 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   //     setIsOtpSent(false);
   //   }
   // };
-  const handleSubmitOtp = async () => {
-    if (verificationCode.length === 6) {
-      if (verificationCode !== "111111") {
-        setIsIncorrect(true);
-        return;
-      }
-
-      try {
-        // Call the API to update the email
-        await updateMyDetails(nameId, { email: updatedEmail });
-
-        // Update local state with the new email
-        setDetails((prevDetails) => ({
-          ...prevDetails,
-          email: updatedEmail,
-        }));
-
-        // Close the modal and reset OTP state
-        editEmailModalRef.current?.close();
+  /**
+   * Sends the new address with the proof that this person reads its mail (decision T-19). The answers are said
+   * in plain words; the proof is kept for the ones that leave it good, so a lost answer is repeated alone.
+   */
+  const saveEmail = async () => {
+    try {
+      const saved = await updateMyDetails(nameId, emailChangeBody(updatedEmail, emailToken.current));
+      emailToken.current = "";
+      setDetails((prevDetails) => ({ ...prevDetails, email: saved?.email || updatedEmail.trim() }));
+      editEmailModalRef.current?.close();
+      setIsOtpSent(false);
+    } catch (error) {
+      const outcome = emailChangeOutcome(apiError(error));
+      setEmailError(outcome.text);
+      if (outcome.next === "unlock") {
+        // The unlock ran out while the code was typed: confirm the current number again, then save.
+        void askForCode(() => void saveEmail(), { force: true, onFail: setEmailError });
+      } else if (outcome.next === "new_code") {
+        emailToken.current = "";
+      } else if (outcome.next === "new_email") {
+        // Another address is needed: back to typing one, with the reason under the box.
+        emailToken.current = "";
         setIsOtpSent(false);
-      } catch (error) {
-        console.error("Error updating email:", error);
-        toast.error("Could not update your email. Please try again.");
       }
+    }
+  };
+
+  const handleSubmitOtp = async () => {
+    if (verificationCode.length !== 6 || savingEmail.current) return;
+    savingEmail.current = true;
+    setIsEmailBusy(true);
+    setIsIncorrect(false);
+    setEmailError("");
+    try {
+      if (!emailToken.current) {
+        let proof;
+        try {
+          // The check answers `proof_token` for an address that has no account of its own. If it answers tokens
+          // instead, the address already belongs to an account: say so and stop, and keep nothing.
+          proof = emailProof(await verifyOTP(updatedEmail.trim(), verificationCode));
+        } catch (error: any) {
+          if (error?.status === 401) setIsIncorrect(true);
+          else setEmailError(emailCodeText(error, "check"));
+          return;
+        }
+        if (proof.kind === "has_account") {
+          setEmailError(EMAIL_HAS_ACCOUNT);
+          setIsOtpSent(false);
+          return;
+        }
+        if (proof.kind === "none") {
+          setEmailError("We couldn't confirm that code. Send a new one and try again.");
+          return;
+        }
+        emailToken.current = proof.token;
+      }
+      await saveEmail();
+    } finally {
+      savingEmail.current = false;
+      setIsEmailBusy(false);
     }
   };
 
@@ -334,30 +516,64 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   //     setIsMobileOtpSent(false);
   //   }
   // };
-  const handleSubmitOtpForMobile = async () => {
-    if (mobileOtpVerificationCode.length !== 6) {
-      return;
-    }
-
-    setIsIncorrect(false);
+  /**
+   * Sends the new number with the proof that this person holds it (decision T-14). The
+   * backend refuses a number another account has (`phone_taken`), a code confirmed more
+   * than five minutes ago, and a phone that has not been unlocked with its current number.
+   * Each is said in plain words, and the proof is kept for the answers that leave it good,
+   * so a lost answer is repeated alone and does not ask for another text.
+   */
+  const savePhone = async () => {
     try {
-      // Throws on a wrong/expired code. Runs on an isolated Firebase app, so it
-      // does not touch the login/chat session.
-      await verifyPhoneNumberChange(mobileOtpVerificationCode);
-
-      const nextPhone = "+" + country.callingCode + "-" + updatedPhone;
-      await updateMyDetails(nameId, { phone: nextPhone });
-
-      setDetails((prevDetails) => ({
-        ...prevDetails,
-        phone: nextPhone,
-      }));
-
+      const saved = await updateMyDetails(nameId, phoneChangeBody(fullPhone, phoneToken.current));
+      phoneToken.current = "";
+      setDetails((prevDetails) => ({ ...prevDetails, phone: saved?.phone || fullPhone }));
       editPhoneModalRef.current?.close();
       setIsMobileOtpSent(false);
-    } catch (error: any) {
-      console.error("Error verifying phone number:", error);
-      setIsIncorrect(true);
+    } catch (error) {
+      const outcome = phoneChangeOutcome(apiError(error));
+      setPhoneOtpError(outcome.text);
+      if (outcome.next === "unlock") {
+        // The unlock ran out while the code was being typed: confirm the current number again, then save.
+        void askForCode(() => void savePhone(), { force: true, onFail: setPhoneOtpError });
+      } else if (outcome.next === "new_code") {
+        phoneToken.current = "";
+      } else if (outcome.next === "new_number") {
+        // Another number is needed: back to typing one, with the reason under the box.
+        phoneToken.current = "";
+        setIsMobileOtpSent(false);
+      }
+    }
+  };
+
+  const handleSubmitOtpForMobile = async () => {
+    if (mobileOtpVerificationCode.length !== 6 || savingPhone.current) {
+      return;
+    }
+    savingPhone.current = true;
+    setIsSavingPhone(true);
+    setIsIncorrect(false);
+    setPhoneOtpError("");
+    try {
+      if (!phoneToken.current) {
+        try {
+          // Throws on a wrong/expired code. Runs on an isolated Firebase app, so it
+          // does not touch the login/chat session. Gives the ID token of the new number.
+          phoneToken.current = await verifyPhoneNumberChange(mobileOtpVerificationCode);
+        } catch (error: any) {
+          console.error("Error verifying phone number:", error);
+          setIsIncorrect(true);
+          return;
+        }
+        if (!phoneToken.current) {
+          setPhoneOtpError("We couldn't confirm that code. Send a new one and try again.");
+          return;
+        }
+      }
+      await savePhone();
+    } finally {
+      savingPhone.current = false;
+      setIsSavingPhone(false);
     }
   };
 
@@ -471,14 +687,32 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     profileImageSheetRef.current?.close();
   };
 
-  const handleDeleteAccount = () => {
-    deleteMyAccount(nameId);
-  }
+  // A delete the server refused (T-20: something is still open) or that failed: the person stays signed in and is told why.
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteIssue, setDeleteIssue] = useState<DeleteProblem | null>(null);
+  const deleting = useRef(false);
+
+  const handleDeleteAccount = async () => {
+    if (deleting.current) return;
+    deleting.current = true;
+    setDeleteBusy(true);
+    setDeleteIssue(null);
+    try {
+      // Signs out and goes to Welcome only when the account was closed.
+      await deleteMyAccount(nameId);
+    } catch (error) {
+      setDeleteIssue(deleteProblem(apiError(error)));
+    } finally {
+      deleting.current = false;
+      setDeleteBusy(false);
+    }
+  };
 
   return (
     <>
-      {deleteAccountModal && <DeleteAccountModal open={deleteAccountModal} onDelete={handleDeleteAccount} onCancel={() => {
+      {deleteAccountModal && <DeleteAccountModal open={deleteAccountModal} busy={deleteBusy} problem={deleteIssue} onDelete={() => void handleDeleteAccount()} onCancel={() => {
         setDeleteAccountModal(false);
+        setDeleteIssue(null);
       }} />}
       {!deleteAccountModal && <CustomBottomSheetModal
         ref={bottomSheetModalRef}
@@ -529,8 +763,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         </View>
 
         <DetailField label="Full name" value={details.fullName} accessibilityLabel="Edit full name" onEdit={openEditNameModal} />
-        <DetailField label="Email address" value={details.email} accessibilityLabel="Edit email address" onEdit={openEditEmailModal} />
-        <DetailField label="Phone number" value={details.phone} accessibilityLabel="Edit phone number" onEdit={openEditPhoneModal} />
+        <DetailField label="Email address" value={details.email} accessibilityLabel="Edit email address" onEdit={openEditEmailModal} busy={opening === "email"} error={openError?.field === "email" ? openError.text : null} />
+        <DetailField label="Phone number" value={details.phone} accessibilityLabel="Edit phone number" onEdit={openEditPhoneModal} busy={opening === "phone"} error={openError?.field === "phone" ? openError.text : null} />
         <DetailField label="Password" value={details.password} accessibilityLabel="Edit password" onEdit={openEditPasswordModal} />
 
         {selectedImage && (
@@ -766,10 +1000,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 keyboardType="email-address"
               />
 
-              <TouchableOpacity
-                onPress={handleSendOtp}
-                style={styles.saveButton}
-              >
+              <Button onPress={handleSendOtp} loading={isEmailBusy} disabled={isEmailBusy}>
                 <Text
                   fontSize="text-sm"
                   fontWeight="font-bold"
@@ -777,7 +1008,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 >
                   Verify
                 </Text>
-              </TouchableOpacity>
+              </Button>
+              {emailError ? (
+                <Text tone="danger" fontSize="text-sm" fontWeight="font-bold" accessibilityRole="alert">
+                  {emailError}
+                </Text>
+              ) : null}
             </>
           ) : (
             <>
@@ -818,9 +1054,15 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 </View>
               )}
 
+              {emailError ? (
+                <Text tone="danger" fontSize="text-sm" fontWeight="font-bold" accessibilityRole="alert">
+                  {emailError}
+                </Text>
+              ) : null}
+
               <View className=" flex-row space-x-3 ">
                 <View className="flex-1">
-                  <Button variant="outline">
+                  <Button variant="outline" onPress={handleSendOtp} disabled={isEmailBusy}>
                     <Text
                       fontSize="text-sm"
                       fontWeight="font-bold"
@@ -831,7 +1073,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   </Button>
                 </View>
                 <View className="flex-1">
-                  <Button onPress={handleSubmitOtp}>
+                  <Button onPress={handleSubmitOtp} loading={isEmailBusy} disabled={isEmailBusy}>
                     <Text
                       fontSize="text-sm"
                       fontWeight="font-bold"
@@ -846,6 +1088,28 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           )}
         </View>
       </CustomBottomSheetModal>
+
+      {/* The code to the number the account has now, before a new one is taken (decision T-14). */}
+      <UnlockSheet
+        ref={unlockSheet}
+        phoneMasked={codeGoesTo.phoneMasked}
+        minutes={codeGoesTo.minutes}
+        phone={details.phone}
+        // The server says the account has no number: a first number needs no code first. Whichever change asked
+        // carries on as itself (not always the number's sheet); one that was told to unlock again does not carry on.
+        onPhoneRequired={() => {
+          const next = pending.current;
+          pending.current = null;
+          if (next && noNumberStep(next.force) === "carry_on") next.then();
+          else next?.onFail?.("Your account has no phone number to send a code to. Add one in your profile first.");
+        }}
+        onUnlocked={() => {
+          unlockSheet.current?.close();
+          const next = pending.current;
+          pending.current = null;
+          next?.then();
+        }}
+      />
 
       {/* Phone Modal */}
       <CustomBottomSheetModal
@@ -863,6 +1127,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               setPhoneOtpError("");
               setIsIncorrect(false);
               setIsMobileOtpSent(false);
+              phoneToken.current = "";
               editPhoneModalRef.current?.close();
             }}
           >
@@ -1037,7 +1302,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                   </Button>
                 </View>
                 <View className="flex-1">
-                  <Button onPress={handleSubmitOtpForMobile}>
+                  <Button onPress={handleSubmitOtpForMobile} loading={isSavingPhone}>
                     <Text
                       fontSize="text-sm"
                       fontWeight="font-bold"

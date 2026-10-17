@@ -18,7 +18,6 @@ import {
 } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import DateRangePicker from "@/components/core/date-range-picker";
-import { useAuthContext } from "@/context/auth-context";
 import { useRoute } from "@react-navigation/native";
 import moment from "moment-timezone";
 import { useProfile } from "@/backend/profile";
@@ -39,7 +38,8 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
 
   const router = useTypedNavigation();
   const { theme } = useGlobalContext();
-  const { user } = useAuthContext();
+  // The account's own email, from its profile (not from the sign-up details, which are no longer kept).
+  const { userDetails } = useGlobalContext();
   const isDarkMode = theme === "dark";
   const { color } = useTheme();
   const [open, setOpen] = useState(false);
@@ -112,8 +112,8 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
 
   const handleOptionChange = (selectedOption: string | null) => {
     setSelectedOption(selectedOption ?? options[0].value);
-    if (selectedOption === "email" && user?.email) {
-      setContactDetail(user.email);
+    if (selectedOption === "email" && userDetails?.email) {
+      setContactDetail(userDetails.email);
     } else {
       setContactDetail("");
     }
@@ -121,7 +121,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
 
   useEffect(() => {
     handleOptionChange(selectedOption);
-  }, [selectedOption, user?.email ?? ""]);
+  }, [selectedOption, userDetails?.email ?? ""]);
 
   const handleNextPress = async () => {
     const unavailabilityFormData: UnavailabilityFormData = {

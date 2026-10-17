@@ -1,5 +1,6 @@
 import { Button, Text } from "@/components/core";
 import { useProfile } from "@/backend/profile";
+import { useRefreshDetailsOnFocus } from "@/backend/use-refresh-details";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { useGlobalContext } from "@/context/global-context";
@@ -16,6 +17,8 @@ export default function Post() {
   const merchantNeedsApproval =
     userDetails?.account_type === "merchant" &&
     userDetails?.merchant_approval_status !== "approved";
+  // The gate below opens once the admin approves: read the status again on each visit.
+  useRefreshDetailsOnFocus(merchantNeedsApproval);
 
   const handleRequestReviewAgain = async () => {
     try {

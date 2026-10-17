@@ -1,7 +1,11 @@
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
-import { DEV_MODE, LOGIN, OTP, PHONE_LOGIN, SIGN_UP } from "@/lib/config";
+import { DEV_MODE, OTP } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
+import { readIdToken } from "@/lib/unlock";
+import { acceptOwnerTerms } from "@/backend/terms";
+import { emailLogin, otpCheck, phoneLogin, signUp } from "@/backend/sign-in-calls";
+import { requestErrorFrom, signUpBody } from "@/lib/sign-in-proof";
 import {
   authenticateFirebase,
   initializeAppCheck,
@@ -39,25 +43,11 @@ export interface OTPResponseMessage {
 
 export function useAuth() {
   const [loading, setLoading] = useState(false);
-  const { user } = useAuthContext();
+  const { user, clearUser } = useAuthContext();
   const { setAuthTokens } = useGlobalContext();
 
-  const toRequestError = (error: any, fallbackMessage: string): SignUpError => {
-    if (error?.response) {
-      return {
-        status: error.response.status,
-        code: error.response.data?.code,
-        message:
-          error.response.data?.error ||
-          error.response.data?.message ||
-          fallbackMessage,
-      };
-    }
-
-    return {
-      message: error?.message || fallbackMessage,
-    };
-  };
+  // A call made too often (429) says "Too many tries. Wait a few minutes." and is never repeated by itself (T-19).
+  const toRequestError = (error: any, fallbackMessage: string): SignUpError => requestErrorFrom(error, fallbackMessage);
 
   async function sendOTP(email: string): Promise<OTPResponseMessage> {
     setLoading(true);
@@ -79,9 +69,8 @@ export function useAuth() {
   async function verifyOTP(email: string, otp: string): Promise<OTPResponse> {
     setLoading(true);
     try {
-      const response = await axios.get<OTPResponse>(OTP, {
-        params: { email, otp },
-      });
+      // Signs an existing account in too, so it says which phone it is (ENG-146).
+      const response = await otpCheck(email, otp);
       return response.data;
     } catch (error: any) {
       throw toRequestError(
@@ -139,8 +128,10 @@ export function useAuth() {
 
   // Confirm the OTP. Unlike verifyPhoneOTP (the login variant) this never calls
   // PHONE_LOGIN — it only proves the user controls the number so the caller can
-  // PATCH the profile. Throws on an invalid or expired code.
-  async function verifyPhoneNumberChange(otp: string): Promise<void> {
+  // PATCH the profile, or unlock the bank account (ENG-135). Throws on an invalid
+  // or expired code. Resolves the Firebase ID token the confirmation made, which
+  // is what `POST /api/access/unlock/` wants; the profile sheet ignores it.
+  async function verifyPhoneNumberChange(otp: string): Promise<string> {
     setLoading(true);
     try {
       if (!phoneChangeConfirmation) {
@@ -151,10 +142,13 @@ export function useAuth() {
       // stays quiet, then re-mint the real session right after.
       setPhoneReauthInProgress(true);
       let confirmed = false;
+      let idToken = "";
       try {
-        await phoneChangeConfirmation.confirm(otp);
+        const credential = await phoneChangeConfirmation.confirm(otp);
         phoneChangeConfirmation = null;
         confirmed = true;
+        // Read before the phone identity is signed out again below.
+        idToken = await readIdToken(credential);
       } finally {
         if (confirmed) {
           try {
@@ -172,6 +166,7 @@ export function useAuth() {
         }
         setPhoneReauthInProgress(false);
       }
+      return idToken;
     } catch (error: any) {
       throw toRequestError(
         error,
@@ -227,9 +222,7 @@ export function useAuth() {
       const credential = await phoneConfirmation.confirm(otp);
       phoneConfirmation = null;
       const idToken = await credential.user.getIdToken();
-      const response = await axios.post<PhoneVerificationResponse>(PHONE_LOGIN, {
-        id_token: idToken,
-      });
+      const response = await phoneLogin(idToken);
       return response.data;
     } catch (error: any) {
       throw toRequestError(
@@ -248,28 +241,32 @@ export function useAuth() {
     try {
       const mergedUser = { ...(user ?? {}), ...(overrides ?? {}) };
       const accountType = mergedUser.account_type ?? "user";
-      const signupPayload = {
-        email: mergedUser.email,
-        first_name: mergedUser.first_name,
-        last_name: mergedUser.last_name,
-        password: mergedUser.password,
-        phone: mergedUser.phone,
-        country: mergedUser.country,
-        account_type: accountType,
-        business_name:
-          accountType === "merchant" ? mergedUser.business_name : undefined,
-        coordinates: mergedUser.coordinates,
-        date_of_birth: mergedUser.date_of_birth,
-        email_verified: mergedUser.email_verified,
-      };
-      const payload = Object.fromEntries(
-        Object.entries(signupPayload).filter(
-          ([, value]) => value !== undefined && value !== null && value !== ""
-        )
-      );
+      // The proof token of the emailed code or the phone check goes with it (T-19): without it the server answers
+      // 403 `otp_verification_required`, which the sign-up screen turns into "verify again".
+      const payload = signUpBody(mergedUser);
 
-      const response: { data: AuthTokens } = await axios.post(SIGN_UP, payload);
+      const response: { data: AuthTokens } = await signUp(payload);
       setAuthTokens(response.data);
+      // The sign-up is over: its details, the password and the proof token with them, are forgotten (T-19).
+      clearUser();
+
+      // The merchant ticked the owner terms on the About step (ENG-122), against
+      // the page and the version that screen read before there was an account.
+      // That kept version is what is recorded now that the tokens exist. Nothing
+      // is recorded without a tick. If it does not land (the version moved on in
+      // between, or no network) the sign-up still finishes, and the tick comes up
+      // again at the start of the first listing with the page as it now stands.
+      if (
+        accountType === "merchant" &&
+        mergedUser.owner_terms_accepted &&
+        mergedUser.owner_terms_version
+      ) {
+        try {
+          await acceptOwnerTerms(mergedUser.owner_terms_version, response.data.access_token);
+        } catch (termsError) {
+          console.warn("Owner terms acceptance after sign-up failed", termsError);
+        }
+      }
 
       return response.data;
     } catch (error: any) {
@@ -287,10 +284,7 @@ export function useAuth() {
   ): Promise<AuthTokens | null> {
     setLoading(true);
     try {
-      const response: { data: AuthTokens } = await axios.post(LOGIN, {
-        email,
-        password,
-      });
+      const response: { data: AuthTokens } = await emailLogin(email, password);
       setAuthTokens(response.data);
       return response?.data;
     } catch (error: any) {

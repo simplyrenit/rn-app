@@ -4,7 +4,9 @@ import { Button, StaticContainer, Text } from "@/components/core";
 import { ScrollContainer } from "@/components/core/scroll-container";
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
+import { emailProof, phoneProof } from "@/lib/sign-in-proof";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
+import { goAfterSignIn } from "@/lib/return-to";
 import { useRoute } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import {
@@ -58,7 +60,7 @@ export default function VerifyEmail() {
                 access_token: data.access_token,
                 refresh_token: data.refresh_token,
               });
-              router.navigate("MainTabs");
+              goAfterSignIn(router);
               return;
             }
             if (data.onboarding_required) {
@@ -66,6 +68,8 @@ export default function VerifyEmail() {
                 email: "",
                 phone: data.phone || phone || "",
                 phone_verified: true,
+                // The proof that this number was just confirmed: sign-up sends it (T-19).
+                proof_token: phoneProof(data) ?? "",
               });
               router.navigate("About");
               return;
@@ -81,11 +85,19 @@ export default function VerifyEmail() {
               access_token: data.access,
               refresh_token: data.refresh,
             });
-            router.navigate("MainTabs");
+            goAfterSignIn(router);
             return;
           }
           if (data?.is_verified) {
-            saveUser({ email_verified: true });
+            const proof = emailProof(data);
+            saveUser({
+              email_verified: true,
+              // The proof that this address was just confirmed: sign-up sends it (T-19). A number left over from
+              // an earlier try by phone is cleared, so the token and what sign-up names are the same thing.
+              proof_token: proof.kind === "proof" ? proof.token : "",
+              phone: "",
+              phone_verified: false,
+            });
             router.navigate("About");
           } else {
             setIsIncorrect(true);
@@ -114,7 +126,7 @@ export default function VerifyEmail() {
           access_token: data.access_token,
           refresh_token: data.refresh_token,
         });
-        router.navigate("MainTabs");
+        goAfterSignIn(router);
         return;
       } else {
         setIsIncorrect(true);

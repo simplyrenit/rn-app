@@ -5,6 +5,8 @@
  * be unit-tested without React, storage or the network.
  */
 
+import type { AddressType } from "@/lib/addresses";
+
 export type FieldName =
   | "category"
   | "title"
@@ -15,7 +17,9 @@ export type FieldName =
   | "usage_description"
   | "rate"
   | "security_deposit"
-  | "location";
+  | "location"
+  | "quantity"
+  | "worth";
 
 /** The fields the extraction service reports on (§4.3). Anything else is ignored. */
 export const AI_FIELDS = [
@@ -35,8 +39,9 @@ export const CONDITIONS: Condition[] = ["excellent", "good", "fair"];
 
 export interface CategoryValue {
   /**
-   * The sub-category's server id, when the picker had one. AI extraction and
-   * drafts saved before ENG-28 carry only the titles.
+   * The sub-category's server id: from the picker, or from the extraction, which
+   * names it since P3-8. An older extraction answer and drafts saved before
+   * ENG-28 carry only the titles.
    */
   id?: number;
   parent: string;
@@ -64,6 +69,10 @@ export interface FieldValues {
   rate: string;
   security_deposit: string;
   location: LocationValue;
+  /** How many units the owner has to rent out. Typed text; parsed when used. */
+  quantity: string;
+  /** What the item would cost to replace, in rupees. Typed text. */
+  worth: string;
 }
 
 export interface FieldState<T> {
@@ -181,6 +190,19 @@ export interface ListingDraft {
    */
   reviewNote: "failed" | "quota" | null;
   specs: SpecsState;
+  /**
+   * ENG-25 §8.8: the owner asked, on Review, to save the pickup location as
+   * this kind of address. Only the intent: the address is created after the
+   * listing is submitted, from the location as it stands then. Absent on
+   * drafts stored before the field existed.
+   */
+  saveAddressAs?: AddressType;
+  /**
+   * ENG-155: "This product is not delivered" — the one exception to the shop's
+   * delivery settings. Absent on drafts stored before the field existed, which
+   * reads as false.
+   */
+  notDelivered?: boolean;
 }
 
 // ---- Wire shapes (IMPLEMENTATION.md §4.6) ----------------------------------

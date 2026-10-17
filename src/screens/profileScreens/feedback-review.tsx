@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { TextInput, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { toast } from "@/lib/toast";
 import {
@@ -31,6 +32,8 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
   const { giveFeedback } = useProfile();
   const { color } = useTheme();
   const router = useTypedNavigation();
+  // The container leaves the bottom edge to the screen: the last line clears the home bar.
+  const insets = useSafeAreaInsets();
 
   const [feedback, setFeedback] = useState<string>("");
   const submitting = useRef(false);
@@ -131,7 +134,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
         )}
       </KeyboardAwareScrollView>
 
-      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: 12, gap: 2 }}>
+      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: insets.bottom + 12, gap: 2 }}>
         <Text fontSize="text-sm" tone="body">
           Have any more questions?
         </Text>

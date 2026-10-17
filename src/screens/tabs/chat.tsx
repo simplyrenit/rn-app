@@ -61,7 +61,7 @@ export default function Chat() {
 
   if (!authTokens || !isAuthenticated) {
     return (
-      <StaticContainer width={100}>
+      <StaticContainer width={100} edges={["top", "left", "right"]}>
         <View style={{ flex: 1, marginTop: 16 }}>
           <View style={{ paddingHorizontal: SCREEN_GUTTER, marginBottom: 16 }}>
             {heading}
@@ -86,7 +86,7 @@ export default function Chat() {
     : conversations;
 
   return (
-    <StaticContainer width={100}>
+    <StaticContainer width={100} edges={["top", "left", "right"]}>
       <View style={{ flex: 1 }}>
         {/* The frame's topbar: the title padded 16 above and below on the
             gutter, then the search block padded 8 above and below. */}

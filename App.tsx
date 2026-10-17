@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { View } from "react-native";
 import { GlobalProvider } from "@/context/global-context";
 import { ListDraftProvider } from "@/context/list-draft-context";
+import { AppErrorBoundary } from "@/components/error-boundary";
 import Navigation from "@/navigation/nav";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useFonts } from "expo-font";
@@ -85,7 +86,10 @@ export default function App() {
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <SafeAreaProvider>
                   <BottomSheetModalProvider>
-                    <Navigation />
+                    {/* One boundary for every screen (T-55): a render error shows a plain screen, not a blank page. */}
+                    <AppErrorBoundary>
+                      <Navigation />
+                    </AppErrorBoundary>
                     {/* @ts-ignore */}
                     <Toast config={toastConfig} />
                   </BottomSheetModalProvider>

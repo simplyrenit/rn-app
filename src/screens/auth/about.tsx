@@ -3,14 +3,17 @@ import { Button, StaticContainer, Text } from "@/components/core";
 import { ScrollContainer } from "@/components/core/scroll-container";
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
+import { usePublicTerms } from "@/backend/terms";
+import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import React, { useCallback, useEffect, useState } from "react";
-import { Modal, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import { Linking, Modal, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 import {
   InformationCircleIcon,
   ChevronDownIcon,
 } from "react-native-heroicons/outline";
 import { CheckBox } from "@/components/core/checkbox";
+import { OwnerTermsTick } from "@/components/terms/owner-terms-tick";
 import { ink } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
@@ -441,6 +444,21 @@ export default function AboutYourself() {
   });
   const [dobError, setDobError] = useState("");
   const [agreementChecked, setAgreementChecked] = useState(false);
+  // A merchant also accepts the owner terms (ENG-122). The account does not exist
+  // yet, so the tick is kept on the sign-up draft and sent once it does, against
+  // the page and the version read here, signed out, and shown by the link below.
+  const [ownerTermsChecked, setOwnerTermsChecked] = useState(false);
+  const publicTerms = usePublicTerms();
+  const ownerTerms = publicTerms.data?.owner;
+
+  const openOwnerTerms = () => {
+    if (!ownerTerms?.url) return;
+    // The owner terms themselves, not the app's general Terms screen: what is
+    // recorded is an acceptance of this page.
+    Linking.openURL(ownerTerms.url).catch(() =>
+      toast.error("We couldn't open the owner terms", { message: "Check your connection and try again." })
+    );
+  };
 
   const { color } = useTheme();
   const { theme } = useGlobalContext();
@@ -562,10 +580,13 @@ export default function AboutYourself() {
         account_type: isMerchant ? "merchant" : "user",
         business_name: isMerchant ? businessName.trim() : "",
         date_of_birth: !isMerchant ? formattedDob || "" : "",
+        owner_terms_accepted: isMerchant && ownerTermsChecked,
+        // The version the link showed when the box was ticked; sent once the account exists.
+        owner_terms_version: isMerchant && ownerTermsChecked ? ownerTerms?.version : undefined,
       });
       router.navigate("Password");
     }
-  }, [isMerchant, dob, firstName, lastName, businessName, validateForm, saveUser, router]);
+  }, [isMerchant, dob, firstName, lastName, businessName, ownerTermsChecked, ownerTerms?.version, validateForm, saveUser, router]);
 
   return (
     <StaticContainer>
@@ -671,6 +692,32 @@ export default function AboutYourself() {
         </ScrollContainer>
 
         <View className="py-5">
+          {isMerchant && (
+            <View className="mb-1">
+              {ownerTerms ? (
+                <OwnerTermsTick
+                  checked={ownerTermsChecked}
+                  onChange={setOwnerTermsChecked}
+                  onOpenTerms={openOwnerTerms}
+                />
+              ) : publicTerms.isError ? (
+                // No page and no version means nothing to tick: say so and offer
+                // another try, rather than a box that records a page nobody saw.
+                <View className="flex-row items-center justify-between mb-2">
+                  <Text tone="danger" fontSize="text-sm" style={{ flex: 1 }}>
+                    We couldn't load the owner terms.
+                  </Text>
+                  <Button variant="outline" size="compact" onPress={() => void publicTerms.refetch()}>
+                    Try again
+                  </Button>
+                </View>
+              ) : (
+                <Text tone="dim" fontSize="text-sm" className="mb-2">
+                  Loading the owner terms…
+                </Text>
+              )}
+            </View>
+          )}
           <View className="flex-row items-center mb-4">
             <CheckBox
               checked={agreementChecked}
@@ -686,7 +733,7 @@ export default function AboutYourself() {
           <Button
             variant="primary"
             onPress={handleSubmit}
-            disabled={!agreementChecked}
+            disabled={!agreementChecked || (isMerchant && !(ownerTerms && ownerTermsChecked))}
           >
             Continue
           </Button>

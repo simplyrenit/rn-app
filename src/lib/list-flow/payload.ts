@@ -1,5 +1,6 @@
 import { parseRate } from "./deposit";
 import { specAttributes } from "./specs";
+import { parseQuantity, parseWorth } from "./stock";
 import { CategoryValue, FieldName, ListingDraft } from "./types";
 
 export interface ContactDetails {
@@ -35,10 +36,16 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
 
   const fieldSources: Partial<Record<FieldName, string>> = {};
   (Object.keys(f) as FieldName[]).forEach((name) => {
+    // The quantity is a count the owner states, never a guess: nothing to report.
+    if (name === "quantity") return;
     if (f[name].source !== "empty") fieldSources[name] = f[name].source;
   });
 
   const rate = parseRate(f.rate.value);
+  // Review will not let the owner past an empty or invalid quantity, so the
+  // fallback to the server's own default of 1 only covers a stored old draft.
+  const quantity = parseQuantity(f.quantity.value) ?? 1;
+  const worth = parseWorth(f.worth.value);
   const deposit = Number(f.security_deposit.value);
   const location = f.location.value;
   const attributes = specAttributes(draft);
@@ -47,6 +54,9 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
     title: f.title.value?.trim() ?? "",
     description: f.description.value?.trim() ?? "",
     rate,
+    quantity,
+    worth,
+    not_delivered: Boolean(draft.notDelivered),
     security_deposit: Number.isFinite(deposit) ? deposit : 0,
     currency: "INR",
     category: f.category.value ? categoryPayload(f.category.value) : null,

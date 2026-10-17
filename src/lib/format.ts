@@ -122,3 +122,12 @@ export function truncateWords(text: string, limit: number) {
   const boundary = cut.lastIndexOf(" ");
   return `${(boundary > limit * 0.6 ? cut.slice(0, boundary) : cut).trimEnd()}…`;
 }
+
+/**
+ * A name that is one long token ("AGENT_QA_T1012") breaks in the middle of a letter group when it is wider than its column:
+ * React Native has no word-breaking of its own. A zero-width space after an underscore, hyphen or slash lets the line break
+ * there, where a person would. Names with spaces are untouched; the text reads and sounds the same.
+ */
+export function softBreaks(text: string | null | undefined): string {
+  return (text ?? "").replace(/([_\-/])(?=[^\s_\-/])/g, "$1\u200B");
+}
