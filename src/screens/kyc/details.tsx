@@ -63,7 +63,10 @@ export default function KycDetailsScreen() {
   const [banner, setBanner] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<Blocked>(null);
   // Stays true from the request until the DigiLocker session has closed, so a second tap does nothing.
+  // `busy` drives the button; the ref is the guard, because two taps in one frame both see the
+  // state from before the first one.
   const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
   const panInput = useRef<TextInput>(null);
   const gstinInput = useRef<TextInput>(null);
 
@@ -89,8 +92,9 @@ export default function KycDetailsScreen() {
     setPanError(panBad ? PAN_ERROR : undefined);
     setGstError(gstBad ? "Choose Yes or No." : undefined);
     setGstinError(gstinBad ? GSTIN_ERROR : undefined);
-    if (panBad || gstBad || gstinBad || busy) return;
+    if (panBad || gstBad || gstinBad || inFlight.current) return;
 
+    inFlight.current = true;
     setBusy(true);
     try {
       const status = await start({
@@ -110,6 +114,7 @@ export default function KycDetailsScreen() {
     } catch (error) {
       onFailure(error);
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   };

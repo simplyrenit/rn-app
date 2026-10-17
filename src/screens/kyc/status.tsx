@@ -48,7 +48,13 @@ export default function KycStatusScreen() {
   const withdraw = useWithdrawKyc();
   const [refreshing, setRefreshing] = useState(false);
   // From the request until the DigiLocker session has closed, so a second tap does nothing.
+  // `resuming` drives the buttons; the ref is the guard, because two taps in one frame both see
+  // the state from before the first one.
   const [resuming, setResuming] = useState(false);
+  const resumeInFlight = useRef(false);
+  // A return link or a status push can open this screen for anyone signed in, and rn-api answers
+  // a non-merchant too (its individual check, which this build does not offer).
+  const merchant = userDetails?.account_type === "merchant";
   useKycBadgeSync(data);
 
   const status = data?.kyc_status;
@@ -65,9 +71,9 @@ export default function KycStatusScreen() {
   // the screen closes any polling window.
   useFocusEffect(
     useCallback(() => {
-      void refetch();
+      if (merchant) void refetch(); // `refetch` ignores the query's `enabled`
       return () => setPollingSince(null);
-    }, [refetch])
+    }, [refetch, merchant])
   );
 
   // Back from DigiLocker. The flag is cleared so that the next return opens a new window.
@@ -127,7 +133,8 @@ export default function KycStatusScreen() {
   };
 
   const onResume = async () => {
-    if (resuming) return;
+    if (resumeInFlight.current) return;
+    resumeInFlight.current = true;
     setResuming(true);
     setPollingSince(null); // a window still open belongs to the previous attempt
     try {
@@ -152,6 +159,7 @@ export default function KycStatusScreen() {
         toast.error("Verification is unavailable right now", { message: "Please try again later." });
       }
     } finally {
+      resumeInFlight.current = false;
       setResuming(false);
     }
   };
@@ -196,6 +204,19 @@ export default function KycStatusScreen() {
     );
 
   const header = <SubpageHeader title="Business verification" onBack={toProfile} backLabel="Back to Profile" />;
+
+  if (!merchant) {
+    return (
+      <NonScrollableContainer>
+        {header}
+        <EmptyState
+          variant="error"
+          title="Verification is for business accounts"
+          body="Your account isn't set up as a business account."
+        />
+      </NonScrollableContainer>
+    );
+  }
 
   if (!data) {
     const http = error ? kycError(error).status : null;
