@@ -531,6 +531,21 @@ export function ringTakesScreen(
   return number != null && !waiting.has(number);
 }
 
+/** The requests whose ring screen has been opened on this phone (by a push, a tap or Today), so Today opens each once. */
+const opened = new Set<string>();
+
+export function markRingOpened(number: string): void {
+  opened.add(number);
+}
+
+/**
+ * The request Today should open full-screen, as a ring push does: the first ringing one not opened yet.
+ * Closing that screen without answering does not open it again.
+ */
+export function ringToOpen(rings: readonly Ring[], seen: ReadonlySet<string> = opened): Ring | null {
+  return rings.find((ring) => !seen.has(ring.number)) ?? null;
+}
+
 /** The other requests that are ringing now, for "1 more request is waiting" on the one on screen. */
 export function otherRings(live: LiveAnswer | null | undefined, number: string): Ring[] {
   return (live?.ringing ?? []).filter((r) => r.number !== number);

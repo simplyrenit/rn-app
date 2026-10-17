@@ -33,7 +33,7 @@ import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import { RefreshControl, ScrollView, TouchableOpacity, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { CheckCircleIcon, ClockIcon, InformationCircleIcon, MapPinIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -154,7 +154,19 @@ function ActionRow({ label, onPress, first }: { label: string; onPress: () => vo
   );
 }
 
-function BookingPage({ booking, now, receivedAt }: { booking: BookingShop; now: Date; receivedAt: number }) {
+function BookingPage({
+  booking,
+  now,
+  receivedAt,
+  refreshing,
+  onRefresh,
+}: {
+  booking: BookingShop;
+  now: Date;
+  receivedAt: number;
+  refreshing: boolean;
+  onRefresh: () => void;
+}) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
@@ -195,6 +207,9 @@ function BookingPage({ booking, now, receivedAt }: { booking: BookingShop; now: 
     <>
       <ScrollView
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={color.textBody} colors={[color.brand]} />
+        }
         contentContainerStyle={{
           paddingHorizontal: SCREEN_GUTTER,
           paddingTop: space.sm,
@@ -333,7 +348,7 @@ function BookingPage({ booking, now, receivedAt }: { booking: BookingShop; now: 
  * SH-07, one booking as its shop sees it: its stage, what happened and what comes
  * next, who asked, the money, and what the shop can do now. What is offered follows
  * the server's `can` list. The booking is read again each time the screen or the
- * app comes back to the front, so a stage that moved while the shop was away is
+ * app comes back to the front, every 15 seconds while it stays there, and on a pull down, so a stage that moved is
  * never shown as it was. The day-of buttons, the camera and the codes are on the
  * handover and return screens, which this page opens.
  */
@@ -341,8 +356,9 @@ export default function ShopBookingScreen() {
   const { params } = useRoute<RouteProps<"ShopBooking">>();
   const focused = useIsFocused();
   const active = useAppActive();
-  const query = useShopBooking(params.number);
+  const query = useShopBooking(params.number, true, focused && active);
   const { refetch } = query;
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (focused && active) void refetch();
@@ -353,7 +369,16 @@ export default function ShopBookingScreen() {
     <NonScrollableContainer>
       <SubpageHeader title="Booking" />
       {booking ? (
-        <BookingPage booking={booking} now={correctedNow(booking.server_time, query.dataUpdatedAt)} receivedAt={query.dataUpdatedAt} />
+        <BookingPage
+          booking={booking}
+          now={correctedNow(booking.server_time, query.dataUpdatedAt)}
+          receivedAt={query.dataUpdatedAt}
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            void refetch().finally(() => setRefreshing(false));
+          }}
+        />
       ) : query.isError ? (
         <BookingLoadError error={query.error} what="this booking" onRetry={() => void refetch()} />
       ) : (

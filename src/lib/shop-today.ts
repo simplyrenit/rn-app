@@ -254,6 +254,8 @@ export type NeedsIcon = "warning" | "clock" | "info" | "camera";
 export type NeedsAction =
   /** Opens a booking. */
   | { kind: "booking"; number: string }
+  /** Opens a claim against the shop (a fault report), where it replies once. */
+  | { kind: "claim"; id: number }
   /** "Is it back?": Returned and Extend on a walk-in block. */
   | { kind: "block_back"; block: Block }
   /** My products, where flagged listings and prices to confirm are. */
@@ -284,6 +286,8 @@ export function needsRow(item: NeedsYou, index: number): NeedsRow {
       return { key, icon: "warning", text: item.text, action: item.booking ? { kind: "booking", number: item.booking } : null };
     case "window_request":
       return { key, icon: "clock", text: item.text, action: item.booking ? { kind: "booking", number: item.booking } : null };
+    case "claim_deadline":
+      return { key, icon: "info", text: item.text, action: item.claim ? { kind: "claim", id: item.claim } : null };
     case "block_back":
       return { key, icon: "clock", text: item.text, action: item.block ? { kind: "block_back", block: item.block } : null };
     case "flagged_products":
