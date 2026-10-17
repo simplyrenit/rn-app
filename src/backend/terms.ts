@@ -37,9 +37,10 @@ export async function fetchTerms(accessToken?: string): Promise<Terms> {
  * The terms read with no sign-in (API-CONTRACT, `GET /api/terms/` is open to anyone):
  * merchant sign-up needs the owner terms' address and version before any token
  * exists. A plain call, so no stale header of an earlier account goes with it.
+ * `timeout` (ms) is for a caller that is waiting on it with nothing else to show.
  */
-export async function fetchPublicTerms(): Promise<Terms> {
-  return (await axios.get<Terms>(TERMS_ENDPOINT)).data;
+export async function fetchPublicTerms(timeout?: number): Promise<Terms> {
+  return (await axios.get<Terms>(TERMS_ENDPOINT, { timeout })).data;
 }
 
 /**
@@ -82,5 +83,5 @@ export function useTerms() {
  * once the account exists is the one this read gave.
  */
 export function usePublicTerms() {
-  return useQuery(["terms", "public"], fetchPublicTerms, { staleTime: 60_000 });
+  return useQuery(["terms", "public"], () => fetchPublicTerms(), { staleTime: 60_000 });
 }
