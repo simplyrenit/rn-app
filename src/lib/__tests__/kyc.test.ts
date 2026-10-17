@@ -180,4 +180,14 @@ describe("consent text", () => {
     for (const section of sections) expect(section.body.length).toBeGreaterThan(20);
     expect(consentSections("kyc-merchant-1999-01")).toEqual([]);
   });
+
+  it("names the verification partner, and leaves only its privacy-policy link to fill", () => {
+    const text = KYC_CONSENT_TEXTS[KYC_CONSENT_VERSION];
+    expect(KYC_CONSENT_VERSION).toBe("kyc-merchant-2026-10b");
+    expect(text).toContain("Cashfree Payments India Private Limited checks your PAN and GSTIN");
+    expect(text).not.toContain("[VERIFICATION PARTNER");
+    expect(text.match(/\[[^\]]*\]/g)).toEqual(["[CASHFREE PRIVACY POLICY LINK]"]);
+    // The version agreed to before stays as it was: the server can still be sent it.
+    expect(KYC_CONSENT_TEXTS["kyc-merchant-2026-10"]).toContain("[VERIFICATION PARTNER NAME]");
+  });
 });

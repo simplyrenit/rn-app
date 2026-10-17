@@ -7,11 +7,12 @@ import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { track } from "@/lib/events";
 import { successFeedback } from "@/lib/haptics";
 import { hasVerificationData, kycError, kycStateCopy } from "@/lib/kyc";
+import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useFocusEffect, useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, AppState, RefreshControl, ScrollView, View } from "react-native";
+import { ActivityIndicator, Alert, AppState, RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const STEPS = [
@@ -36,6 +37,7 @@ const movesOn = (status: string | undefined) => status === "pending" || status =
 export default function KycStatusScreen() {
   const navigation = useTypedNavigation();
   const insets = useSafeAreaInsets();
+  const { color } = useTheme();
   const { userDetails } = useGlobalContext();
   const route = useRoute<RouteProps<"KycStatus">>();
   const justReturned = route.params?.justReturned === true;
@@ -290,9 +292,13 @@ export default function KycStatusScreen() {
           </Text>
           <Text tone="body">{copy.body}</Text>
           {pollingSince !== null && movesOn(status) ? (
-            <Text tone="dim" accessibilityLiveRegion="polite">
-              Checking where things stand…
-            </Text>
+            // The spinner says this line is live: without it, it read as a label stuck on screen.
+            <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+              <ActivityIndicator size="small" color={color.textDim} />
+              <Text tone="dim" accessibilityLiveRegion="polite">
+                Checking where things stand…
+              </Text>
+            </View>
           ) : timedOut ? (
             <Text tone="dim" accessibilityLiveRegion="polite">
               {status === "pending"

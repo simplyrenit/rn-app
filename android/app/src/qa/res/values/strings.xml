@@ -1,0 +1,4 @@
+<resources>
+  <!-- Tells this build apart from the store one on a phone that has both (ENG-280). -->
+  <string name="app_name">Renit QA</string>
+</resources>

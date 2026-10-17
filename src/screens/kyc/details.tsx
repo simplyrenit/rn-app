@@ -22,7 +22,7 @@ import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React, { useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PAN_ERROR = "Enter a valid 10-character PAN, like ABCDE1234F.";
@@ -341,9 +341,13 @@ export default function KycDetailsScreen() {
               {banner}
             </Text>
           ) : null}
-          <Button onPress={submit} loading={busy} disabled={!ready || busy}>
-            {busy ? "Checking your details…" : "Continue to DigiLocker"}
-          </Button>
+          {/* A disabled button takes no touches, so a tap on the greyed one lands here and runs the
+              same checks as a submit: it says what is missing instead of doing nothing (ENG-280). */}
+          <Pressable onPress={submit} disabled={ready || busy} accessible={false} focusable={false}>
+            <Button onPress={submit} loading={busy} disabled={!ready || busy}>
+              {busy ? "Checking your details…" : "Continue to DigiLocker"}
+            </Button>
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </NonScrollableContainer>

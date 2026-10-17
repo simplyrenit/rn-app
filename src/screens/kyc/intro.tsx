@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const HERO = 56;
 const CONSENT_LABEL =
-  "I've read this and agree to Renit and [VERIFICATION PARTNER] using my details to verify my business.";
+  "I've read this and agree to Renit and Cashfree Payments India Private Limited using my details to verify my business.";
 
 const NEEDS = [
   { Icon: IdentificationIcon, text: "Your PAN" },
