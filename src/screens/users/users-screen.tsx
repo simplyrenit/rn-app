@@ -67,11 +67,13 @@ import { toast } from "@/lib/toast";
  * `profile` rhythm rather than a second set of section primitives.
  *
  * Not in the frame, but drawn on the owner's ruling: the verification card
- * (email/phone verified, "Lists in <area>") and the business-name pill. They sit
- * inside the profile block, between the facts strip and the chat button, so the
- * frame's 16pt rhythm is untouched. Both come from the listing payload rather
- * than from `owner-details/`, and a signal the payload does not carry is simply
- * not drawn.
+ * (email/phone verified, "Lists in <area>"), the business name with its
+ * "Verified" mark, and the "Verified business" panel (ENG-73). They sit inside
+ * the profile block, between the facts strip and the chat button, so the frame's
+ * 16pt rhythm is untouched. The business name and verification come from
+ * `owner-details/`, so an owner with no listings still shows them; email and
+ * phone come from the listing payload. A signal the payload does not carry is
+ * simply not drawn.
  */
 
 /** The frame's header row and, with it, the back control's target. */
@@ -396,12 +398,13 @@ export default function UsersDetails() {
   const listedOwner = products[0]?.owner as
     | (NonNullable<BackendProduct["owner"]> & OwnerTrustFields)
     | undefined;
+  // owner-details first (ENG-73); an older API only has it on a listing.
+  const accountType = owner?.account_type ?? listedOwner?.account_type;
   const businessName =
-    listedOwner?.account_type && listedOwner.account_type !== "user"
-      ? listedOwner.business_name || null
+    accountType && accountType !== "user"
+      ? (owner?.business_name ?? listedOwner?.business_name) || null
       : null;
 
-  // From owner-details, not the listings, so an owner with none still shows it.
   const businessVerified = owner?.business_verified === true;
   const verifiedOn = owner?.business_verified_at
     ? new Date(owner.business_verified_at).toLocaleDateString("en-IN", {
@@ -633,7 +636,13 @@ export default function UsersDetails() {
                 {businessName ? (
                   businessVerified ? (
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                      <Text fontSize="text-sm" fontWeight="font-semibold" tone="hi">
+                      {/* Shrinks so a long name wraps and the mark stays on screen. */}
+                      <Text
+                        fontSize="text-sm"
+                        fontWeight="font-semibold"
+                        tone="hi"
+                        style={{ flexShrink: 1, textAlign: "center" }}
+                      >
                         {businessName}
                       </Text>
                       <VerifiedBusinessBadge verified iconSize={18} />
