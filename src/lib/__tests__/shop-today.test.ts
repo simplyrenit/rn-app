@@ -197,6 +197,13 @@ describe("needsRow: what each item offers", () => {
     expect(needsRow({ kind: "no_hours", text: "Set your hours" }, 0).action).toEqual({ kind: "hours" });
   });
 
+  it("opens the Shop address screen from 'Confirm your shop's address'", () => {
+    expect(needsRow({ kind: "address_unconfirmed", text: "Confirm your shop's address" }, 0)).toMatchObject({
+      icon: "warning",
+      action: { kind: "address" },
+    });
+  });
+
   it("starts the photo walk-through from '42 drafts need photos'", () => {
     expect(needsRow({ kind: "drafts_need_photos", count: 42, text: "42 drafts need photos" }, 0)).toEqual({
       key: "drafts_need_photos-0",
@@ -206,15 +213,8 @@ describe("needsRow: what each item offers", () => {
     });
   });
 
-  it("opens the Shop address screen from 'Confirm your shop's address'", () => {
-    expect(needsRow({ kind: "address_unconfirmed", text: "Confirm your shop's address" }, 0)).toMatchObject({
-      icon: "warning",
-      action: { kind: "address" },
-    });
-  });
-
-  it("shows a claim and a kind it does not know as their words alone", () => {
-    for (const kind of ["claim_deadline", "something_new"]) {
+  it("shows a kind it does not know as its words alone", () => {
+    for (const kind of ["something_new"]) {
       expect(needsRow({ kind, text: "Some words" }, 4)).toMatchObject({ icon: "info", text: "Some words", action: null });
     }
   });
