@@ -69,8 +69,8 @@ export interface Quote {
   /** How long the owner has to answer once rung, in minutes. The server's setting; absent from an older server. */
   ring_minutes?: number;
   /**
-   * What cancelling costs once the owner has accepted (N7). `grace`: the handover is under `free_hours` away, so the rent can be
-   * had back for `grace_minutes` after paying. `day_rent`: what the owner keeps for a cancel inside the free hours. Absent from an older server.
+   * What cancelling costs once the owner has accepted (N7). `grace`: the handover is under `free_hours` from when the owner is
+   * rung (now, or the shop's opening for Book for the morning), so the rent can be had back for `grace_minutes` after paying. `day_rent`: what the owner keeps for a cancel inside the free hours. Absent from an older server.
    */
   cancel?: { free_hours: number; grace_minutes: number; grace: boolean; day_rent: string };
   deposit: { amount: string; with_rent: boolean; due_on: string | null; refundable: boolean };
