@@ -117,6 +117,12 @@ describe("pushRoute", () => {
     expect(pushRoute(push("product_checked", { role: "owner", booking: null, live: 3, flagged: 1 }))).toEqual({ screen: "myProducts" });
   });
 
+  it("opens Profile when the admin approves or rejects the merchant (ENG-271)", () => {
+    for (const status of ["approved", "rejected"]) {
+      expect(pushRoute(push("merchant_approval", { role: "owner", booking: null, status }))).toEqual({ screen: "Profile" });
+    }
+  });
+
   it("has no phone screen for a payout, and ignores an owner type it does not know", () => {
     expect(pushRoute(push("payout", { role: "owner", booking: null, payout: "pout_1", amount: "1830.00" }))).toBeNull();
     expect(pushRoute(push("something_new", { role: "owner" }))).toBeNull();
