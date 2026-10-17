@@ -69,7 +69,7 @@ export default function ArrivalWindowScreen() {
   const heading = windowHeading(booking, day);
   // A window is already set: this is a request to change it, not a pick.
   const changing = booking.window !== null;
-  const waiting = booking.window_request !== null;
+  const waiting = booking.window_request !== null && !booking.window_request.expired;
   const choice = windows.find((w) => w.start === picked) ?? null;
 
   const save = async () => {

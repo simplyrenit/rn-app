@@ -1227,6 +1227,21 @@ describe("the arrival window", () => {
     expect(windowRequestCopy(mine)).toMatchObject({ canAnswer: false });
     expect(windowRequestCopy(booking())).toBeNull();
   });
+
+  it("shows an expired request as ended, with nothing to answer", () => {
+    const old = booking({
+      window_request: { by: "owner", start: "2026-10-24T06:30:00Z", end: "2026-10-24T07:30:00Z", asked_at: "2026-10-13T05:00:00Z", expired: true },
+      can: ["request_window_change", "cancel"],
+    });
+    expect(windowRequestCopy(old)).toEqual({
+      title: "The shop asked to move your arrival",
+      body: "This time has passed. The request has ended.",
+      canAnswer: false,
+    });
+    expect(windowErrorText({ status: 409, code: "window_request_expired", message: null, details: null })).toBe(
+      "This time has passed. The request has ended."
+    );
+  });
 });
 
 describe("the booking screen", () => {
