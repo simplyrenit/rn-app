@@ -1,4 +1,4 @@
-import { SavedAddress, toLocationValue } from "@/lib/addresses";
+import { SavedAddress, toLocationValue, validPin } from "@/lib/addresses";
 import { MY_ADDRESSES_ENDPOINT, MY_PRODUCTS_ENDPOINT } from "@/lib/config";
 import { googleReverseGeocode, joinLocality } from "@/lib/geocode";
 import { LocationValue } from "@/lib/list-flow/types";
@@ -13,18 +13,30 @@ import * as Location from "expo-location";
  * only shared once a booking is confirmed.
  */
 export async function localityFor(lat: number, long: number): Promise<string | null> {
+  return (await placeFor(lat, long)).locality;
+}
+
+/**
+ * The locality and the PIN code of a point (ENG-284 D4), from the same answer.
+ * The PIN is the geocoder's, for an address form to prefill; null when it has none.
+ */
+export async function placeFor(
+  lat: number,
+  long: number
+): Promise<{ locality: string | null; postalCode: string | null }> {
   try {
     const [place] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: long });
     const named =
       place &&
       joinLocality([place.district || place.subregion || place.name, place.city || place.region]);
-    if (named) return named;
+    if (named) return { locality: named, postalCode: validPin(place.postalCode) };
   } catch {
     // Android's geocoder throws without location permission, so a user who
     // denied it could pick a spot by hand and then never name it.
   }
   // The phone could not name the point; Google can, with or without permission.
-  return (await googleReverseGeocode(lat, long))?.locality ?? null;
+  const google = await googleReverseGeocode(lat, long);
+  return { locality: google?.locality ?? null, postalCode: google?.postalCode ?? null };
 }
 
 /**

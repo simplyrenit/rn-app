@@ -9,6 +9,7 @@ import {
   flatForPickedSpot,
   fullAddressForNewPin,
   inlineOfferPayload,
+  validPin,
   showsSaveOffer,
   takenTypes,
   toLocationValue,
@@ -86,9 +87,28 @@ describe("inlineOfferPayload", () => {
     });
   });
 
+  it("sends the geocoder's PIN only when it is one (ENG-284 D4)", () => {
+    expect(inlineOfferPayload(location, "home", "400061").postal_code).toBe("400061");
+    expect(inlineOfferPayload(location, "home", "0400061")).not.toHaveProperty("postal_code");
+    expect(inlineOfferPayload(location, "home", null)).not.toHaveProperty("postal_code");
+  });
+
   it("cuts line 1 to the column's 255 characters", () => {
     const payload = inlineOfferPayload({ ...location, fullAddress: "x".repeat(300) }, "home");
     expect(payload.address_line_1).toHaveLength(255);
+  });
+});
+
+describe("validPin", () => {
+  it("takes six digits not starting with 0, spaces dropped", () => {
+    expect(validPin("400061")).toBe("400061");
+    expect(validPin(" 400 061 ")).toBe("400061");
+  });
+
+  it("is null for anything else, so nothing is sent", () => {
+    for (const bad of ["", "40006", "4000611", "040006", "4OOO61", "४००០६१", null, undefined]) {
+      expect(validPin(bad)).toBeNull();
+    }
   });
 });
 

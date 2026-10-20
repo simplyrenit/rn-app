@@ -1,11 +1,14 @@
 import { usePublicProduct, useQuote } from "@/backend/bookings";
-import useAddresses from "@/backend/useAddresses";
 import { AddressPickerSheet, AddressPickerSheetHandle } from "@/components/addresses/address-picker-sheet";
 import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/components/booking/parts";
-import { Button, SubpageHeader, Text } from "@/components/core";
+import { Button, Skeleton, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
-import { SavedAddress, addressTitle } from "@/lib/addresses";
+import { addressTitle, flatAndLandmark } from "@/lib/addresses";
+import { deliveryAddressKey, useDeliveryAddress } from "@/context/delivery-address";
+import { areaLabel, areaOf } from "@/lib/delivery";
+import { createLocationRequest } from "@/lib/location-request";
+import { InformationCircleIcon } from "react-native-heroicons/outline";
 import { apiError } from "@/lib/api-error";
 import {
   DeliveryMode,
@@ -48,6 +51,7 @@ const DAY_HIT_SLOP = { top: 2, bottom: 2, left: 2, right: 2 };
 function ChoiceCard({
   title,
   sub,
+  reason,
   selected,
   disabled,
   action,
@@ -55,6 +59,8 @@ function ChoiceCard({
 }: {
   title: string;
   sub?: string | null;
+  /** Why it can't be chosen (ENG-284): under the sub-line with an info mark, and the screen reader's hint. */
+  reason?: string | null;
   selected: boolean;
   disabled?: boolean;
   /** A small action on the right: "Change" beside the delivery address. */
@@ -67,6 +73,7 @@ function ChoiceCard({
       accessibilityRole="radio"
       accessibilityState={{ selected, disabled: Boolean(disabled) }}
       accessibilityLabel={sub ? `${title}. ${sub}` : title}
+      accessibilityHint={reason ?? undefined}
       activeOpacity={0.7}
       disabled={disabled}
       onPress={onPress}
@@ -107,6 +114,14 @@ function ChoiceCard({
           <Text fontSize="text-sm" tone="body">
             {sub}
           </Text>
+        ) : null}
+        {reason ? (
+          <View style={{ flexDirection: "row", gap: space.xs, marginTop: 2 }}>
+            <InformationCircleIcon size={16} color={color.textBody} style={{ marginTop: 2 }} />
+            <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+              {reason}
+            </Text>
+          </View>
         ) : null}
       </View>
       {action ? (
@@ -163,7 +178,9 @@ export default function BookingDatesScreen() {
 
   const productQuery = usePublicProduct(params.product);
   const product = productQuery.data;
-  const { addresses } = useAddresses();
+  // ENG-284 D12: the address chosen on search results, for the whole session;
+  // the picker below writes it back, so results and the product page follow.
+  const { address, choose: chooseAddress } = useDeliveryAddress();
   const addressSheet = useRef<AddressPickerSheetHandle>(null);
   const distanceLabel = useDistanceTo(product?.coordinates);
 
@@ -182,7 +199,12 @@ export default function BookingDatesScreen() {
       : null
   );
   const [mode, setMode] = useState<DeliveryMode>("pickup");
-  const [chosenAddress, setChosenAddress] = useState<SavedAddress | null>(null);
+  /**
+   * The address (its key) the customer just chose or edited to have it
+   * delivered. Once that address's quote is in, Delivery is selected if it
+   * works; if not, self pickup stays with the new reason.
+   */
+  const wantDeliveryFor = useRef<string | null>(null);
 
   // ENG-281: the shortest booking the listing's plans allow. A first tap alone is a one-day rental only when one day is.
   const minDays = product ? minDaysOf(plansOf(product)) : 1;
@@ -201,7 +223,7 @@ export default function BookingDatesScreen() {
   }, [taken]);
 
   const canDeliver = Boolean(product?.shop?.delivers && !product?.not_delivered);
-  const address = chosenAddress ?? addresses.find((a) => a.is_default) ?? addresses[0] ?? null;
+  const addressKey = deliveryAddressKey(address);
 
   const pickupQuote = useQuote(
     first && last
@@ -217,12 +239,26 @@ export default function BookingDatesScreen() {
           delivery_mode: "owner_delivery",
           address_id: address.id,
         }
-      : null
+      : null,
+    // The PIN and point too: an edited PIN keeps the id but changes the answer.
+    addressKey
   );
   // An answer for the last address or dates says nothing about these ones.
   const delivery = address
-    ? deliveryOption(deliveryQuote.isPreviousData ? undefined : deliveryQuote.data, addressTitle(address))
+    ? deliveryOption(deliveryQuote.isPreviousData ? undefined : deliveryQuote.data, addressTitle(address), {
+        name: product ? shopNameOf(product) : "The shop",
+        maxKm: product?.shop?.delivery_max_km,
+      })
     : null;
+  // Asking again for a new address or a fixed PIN: the card waits as a skeleton.
+  const requoting = Boolean(deliveryQuote.isFetching && (deliveryQuote.isPreviousData || !deliveryQuote.data));
+
+  useEffect(() => {
+    const fresh = deliveryQuote.data && !deliveryQuote.isPreviousData && !deliveryQuote.isFetching;
+    if (!wantDeliveryFor.current || wantDeliveryFor.current !== addressKey || !fresh) return;
+    wantDeliveryFor.current = null;
+    if (deliveryQuote.data?.delivery.status === "ok") setMode("owner_delivery");
+  }, [addressKey, deliveryQuote.data, deliveryQuote.isPreviousData, deliveryQuote.isFetching]);
 
   // A delivery that turns out too far (a new address, new dates) falls back to pickup.
   useEffect(() => {
@@ -346,6 +382,20 @@ export default function BookingDatesScreen() {
   const shopName = shopNameOf(product);
   const pickupSub = [shopName, product.shop?.locality || product.location, distanceLabel].filter(Boolean).join(" · ");
 
+  // "Not in Vesava? Edit this address": only when the shop turned that area off,
+  // since a wrong PIN is the one thing the customer can fix here.
+  const quoted = deliveryQuote.isPreviousData ? undefined : deliveryQuote.data;
+  const offArea = quoted?.delivery.reason === "area_off" ? areaLabel(quoted.delivery.area) : null;
+  const editAddress = () => {
+    if (!address) return;
+    navigation.navigate("AddressDetails", {
+      address,
+      requestId: createLocationRequest((_coords, _line, saved) => {
+        if (saved) wantDeliveryFor.current = deliveryAddressKey(saved);
+      }),
+    });
+  };
+
   const goOn = () => {
     if (!first || !last) return;
     navigation.navigate("ReviewAndBook", {
@@ -422,7 +472,7 @@ export default function BookingDatesScreen() {
           </Text>
           <View accessibilityRole="radiogroup" style={{ gap: space.sm }}>
             <ChoiceCard
-              title="Self pickup · free"
+              title="Self pickup · Free"
               sub={pickupSub}
               selected={mode === "pickup"}
               onPress={() => setMode("pickup")}
@@ -442,18 +492,58 @@ export default function BookingDatesScreen() {
                   selected={false}
                   onPress={() => addressSheet.current?.present()}
                 />
-              ) : (
+              ) : requoting ? (
+                <View
+                  accessible
+                  accessibilityRole="progressbar"
+                  accessibilityLabel={`Checking delivery to ${addressTitle(address)}`}
+                  style={{ padding: space.md, borderRadius: radius.card, borderWidth: 1, borderColor: color.inputLine, gap: space.sm }}
+                >
+                  <Skeleton width="60%" height={18} borderRadius={4} />
+                  <Skeleton width="40%" height={14} borderRadius={4} />
+                </View>
+              ) : delivery.ok ? (
                 <ChoiceCard
                   title={delivery.title}
-                  sub={delivery.sub ?? [addressTitle(address), address.locality].filter(Boolean).join(" · ")}
+                  sub={[addressTitle(address), address.locality].filter(Boolean).join(" · ")}
                   selected={mode === "owner_delivery"}
-                  // Still tappable when it is too far: the tap opens the list to pick another address.
-                  onPress={() => (delivery.ok ? setMode("owner_delivery") : addressSheet.current?.present())}
+                  onPress={() => setMode("owner_delivery")}
                   action={{ label: "Change", onPress: () => addressSheet.current?.present() }}
+                />
+              ) : (
+                // Shown, not hidden, so the customer learns why; it can't be chosen (D11).
+                <ChoiceCard
+                  title={delivery.title}
+                  sub={[addressTitle(address), [areaOf(address), address.postal_code].filter(Boolean).join(" ")]
+                    .filter(Boolean)
+                    .join(" · ")}
+                  reason={delivery.reason}
+                  selected={false}
+                  disabled
+                  onPress={() => {}}
                 />
               )
             ) : null}
           </View>
+          {canDeliver && signedIn && address && delivery && !delivery.ok && !requoting ? (
+            <View style={{ gap: space.sm }}>
+              {offArea ? (
+                <Text
+                  fontSize="text-sm"
+                  tone="brand"
+                  fontWeight="font-bold"
+                  accessibilityRole="button"
+                  onPress={editAddress}
+                  style={{ paddingVertical: space.sm }}
+                >
+                  {`Not in ${offArea}? Edit this address`}
+                </Text>
+              ) : null}
+              <Button variant="outline" onPress={() => addressSheet.current?.present()}>
+                Use another address
+              </Button>
+            </View>
+          ) : null}
         </View>
       </ScrollView>
 
@@ -500,7 +590,7 @@ export default function BookingDatesScreen() {
           disabled={!first || !quote || settling || Boolean(blocker)}
           loading={Boolean(first) && active.isFetching}
         >
-          Continue
+          {mode === "pickup" && delivery && !delivery.ok && !requoting ? "Continue with self pickup" : "Continue"}
         </Button>
       </BottomBar>
 
@@ -508,17 +598,17 @@ export default function BookingDatesScreen() {
         ref={addressSheet}
         title="Delivery address"
         description="The shop brings it here and collects it at the end."
-        selected={address ? { lat: address.coordinates.lat, long: address.coordinates.long } : undefined}
+        savedOnly
+        selected={
+          address
+            ? { lat: address.coordinates.lat, long: address.coordinates.long, fullAddress: flatAndLandmark(address) }
+            : undefined
+        }
         onPick={(pickedAddress) => {
-          // Delivery is priced from a saved address; a one-off spot on the map has no id to quote.
-          if (!pickedAddress.saved) {
-            toast.info("Save the address to have it delivered there", {
-              message: "Use “Add new address”.",
-            });
-            return;
-          }
-          setChosenAddress(pickedAddress.saved);
-          setMode("owner_delivery");
+          // Saved addresses only (savedOnly): a one-off spot has no id to quote.
+          if (!pickedAddress.saved) return;
+          wantDeliveryFor.current = deliveryAddressKey(pickedAddress.saved);
+          chooseAddress(pickedAddress.saved);
         }}
       />
     </NonScrollableContainer>

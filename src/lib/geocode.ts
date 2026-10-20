@@ -1,10 +1,13 @@
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
+import { validPin } from "@/lib/addresses";
 import axios from "axios";
 
 /** What a point is called: "Locality, City" for the public, and the full address line. */
 export interface NamedPlace {
   locality: string | null;
   address: string | null;
+  /** The 6-digit PIN code, when the geocoder has one (ENG-284 D4). */
+  postalCode: string | null;
 }
 
 interface GoogleComponent {
@@ -45,6 +48,7 @@ export function placeFromGoogle(results: GoogleGeocodeResult[]): NamedPlace {
       first("locality", "administrative_area_level_3", "administrative_area_level_2"),
     ]),
     address: results[0]?.formatted_address || null,
+    postalCode: validPin(first("postal_code")),
   };
 }
 

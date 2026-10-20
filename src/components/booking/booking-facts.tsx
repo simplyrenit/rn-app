@@ -1,6 +1,7 @@
 import { Notice, Panel } from "@/components/booking/parts";
 import { Text } from "@/components/core";
 import { LiveCopy, ProductShop, getItLine, handoverLine, priceBlock } from "@/lib/booking";
+import type { ListingDelivery } from "@/lib/delivery";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { Plan, UNIT_WORDS, minimumLine, perDay, plansOf, smallestPlan } from "@/lib/plans";
 import { formatCurrency } from "@/lib/format";
@@ -21,10 +22,15 @@ export function BookingFacts({
   rate,
   plans: listingPlans,
   deposit,
+  delivery,
+  addressName,
 }: {
   copy: LiveCopy | null;
   shop: ProductShop | null | undefined;
   notDelivered?: boolean;
+  /** ENG-284: whether the shop delivers to the customer's chosen address, and that address's name. */
+  delivery?: ListingDelivery | null;
+  addressName?: string | null;
   /** The listing's price and deposit, for BK-01's price block under the banner. */
   rate?: string | number | null;
   /** ENG-281: its plans; absent from an older server, which priced by `rate` alone. */
@@ -38,7 +44,7 @@ export function BookingFacts({
   const price = priceBlock(first?.price, deposit);
   const minimum = minimumLine(plans);
   const rows = [
-    { icon: MapPinIcon, text: getItLine(shop, notDelivered) },
+    { icon: MapPinIcon, text: getItLine(shop, notDelivered, delivery, addressName) },
     ...(hours ? [{ icon: ClockIcon, text: hours }] : []),
   ];
 

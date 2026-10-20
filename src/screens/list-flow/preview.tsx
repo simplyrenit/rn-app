@@ -1,5 +1,6 @@
 import { buildCreatePayload, submitListing } from "@/backend/list-flow/submit";
 import { saveOfferedAddress } from "@/backend/addresses-api";
+import { placeFor } from "@/backend/list-flow/pickup-location";
 import { termsQueryKey } from "@/backend/terms";
 import { Button, Text, useButtonLabelColor, useReduceMotion } from "@/components/core";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
@@ -163,11 +164,22 @@ export default function ListPreviewScreen() {
       // address save must not hold up or fail the flow (D8).
       // No flat line, no address: Profile's form will not save one either.
       if (draft.saveAddressAs && location?.fullAddress.trim()) {
-        const addressPayload = inlineOfferPayload(location, draft.saveAddressAs);
-        void saveOfferedAddress(queryClient, userDetails?.username, addressPayload).catch(() => {
-          flow.track("address_save_failed");
-          toast.warning("Your listing is live. We couldn't save the address.");
-        });
+        const saveAs = draft.saveAddressAs;
+        // ENG-284 D4: the PIN from the geocoder, as Address details would
+        // prefill it. The offer's `address` is only the locality, so the
+        // server has no text to read one from.
+        void placeFor(location.lat, location.long)
+          .then((place) =>
+            saveOfferedAddress(
+              queryClient,
+              userDetails?.username,
+              inlineOfferPayload(location, saveAs, place.postalCode)
+            )
+          )
+          .catch(() => {
+            flow.track("address_save_failed");
+            toast.warning("Your listing is live. We couldn't save the address.");
+          });
       }
 
       // The listing exists now, so the draft goes whatever happens to this

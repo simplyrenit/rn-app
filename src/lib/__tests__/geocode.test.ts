@@ -37,6 +37,21 @@ describe("placeFromGoogle", () => {
 
     expect(place.locality).toBe("Thane West, Thane");
     expect(place.address).toBe("Lodha Amara, Kolshet Road, Thane West, Thane, Maharashtra 400607");
+    // No postal_code component: the PIN in the formatted line is the server's to read (D4).
+    expect(place.postalCode).toBeNull();
+  });
+
+  it("takes the PIN code from the postal_code component (ENG-284 D4)", () => {
+    const place = placeFromGoogle([
+      {
+        address_components: [
+          component("Versova", "sublocality_level_1"),
+          component("Mumbai", "locality"),
+          component("400061", "postal_code"),
+        ],
+      },
+    ]);
+    expect(place.postalCode).toBe("400061");
   });
 
   it("looks past a first result that has no locality in it", () => {
@@ -65,6 +80,7 @@ describe("placeFromGoogle", () => {
     expect(placeFromGoogle([{ address_components: [component("India", "country")] }])).toEqual({
       locality: null,
       address: null,
+      postalCode: null,
     });
   });
 });

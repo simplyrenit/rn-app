@@ -19,6 +19,11 @@ export interface SavedAddress {
   label: string;
   coordinates: { lat: number; long: number };
   is_default: boolean;
+  /**
+   * The 6-digit PIN code (ENG-284 D4), "" when unknown. The server derives it
+   * from the address text when the app sends none; absent from an older server.
+   */
+  postal_code?: string;
 }
 
 /** What create and update send. The server owns `id`, and the default when it is left out. */
@@ -38,6 +43,16 @@ export interface PickedAddress {
   addressLine1: string;
   addressLine2: string;
   saved?: SavedAddress;
+}
+
+/**
+ * A PIN code as the server takes it: six ASCII digits, never starting with 0.
+ * Spaces are dropped ("400 061"); anything else is null, and is then not sent,
+ * so the server derives the PIN from the address text instead (ENG-284 D4).
+ */
+export function validPin(text: string | null | undefined): string | null {
+  const pin = (text ?? "").replace(/\s+/g, "");
+  return /^[1-9][0-9]{5}$/.test(pin) ? pin : null;
 }
 
 /** The server allows 20 per user (D18). */
@@ -188,8 +203,15 @@ export function flatForPickedSpot(
  * has one free-text field for flat, building and landmark, so all of it goes
  * into line 1, cut to the column's 255 characters.
  */
-export function inlineOfferPayload(location: LocationValue, type: AddressType): AddressPayload {
+export function inlineOfferPayload(
+  location: LocationValue,
+  type: AddressType,
+  /** The geocoder's PIN for the point; sent only when it is one. */
+  postalCode?: string | null
+): AddressPayload {
+  const pin = validPin(postalCode);
   return {
+    ...(pin ? { postal_code: pin } : {}),
     address: location.locality,
     address_line_1: location.fullAddress.trim().slice(0, 255),
     address_line_2: "",

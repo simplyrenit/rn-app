@@ -4,7 +4,7 @@ import { SavedAddress } from "@/lib/addresses";
 import { googleReverseGeocode } from "@/lib/geocode";
 import { getDiscoveryCoordinates } from "@/lib/location";
 import axiosInstance from "@/lib/networkUtils";
-import { defaultPickupLocation, localityFor, localityOfSaved } from "../pickup-location";
+import { defaultPickupLocation, localityFor, localityOfSaved, placeFor } from "../pickup-location";
 
 jest.mock("@/lib/config", () => ({
   MY_PRODUCTS_ENDPOINT: "https://api.test/my/products/",
@@ -65,14 +65,14 @@ describe("localityFor", () => {
 
   it("asks Google when the phone's geocoder throws (Android without location permission)", async () => {
     phoneGeocoder.mockRejectedValue(new Error("Not authorized to use location services"));
-    google.mockResolvedValue({ locality: "Vashi, Navi Mumbai", address: "Sector 17, Vashi" });
+    google.mockResolvedValue({ locality: "Vashi, Navi Mumbai", address: "Sector 17, Vashi", postalCode: null });
 
     expect(await localityFor(19.07, 73.0)).toBe("Vashi, Navi Mumbai");
   });
 
   it("asks Google when the phone's geocoder has nothing for the point", async () => {
     phoneGeocoder.mockResolvedValue([]);
-    google.mockResolvedValue({ locality: "Powai, Mumbai", address: null });
+    google.mockResolvedValue({ locality: "Powai, Mumbai", address: null, postalCode: null });
 
     expect(await localityFor(19.12, 72.9)).toBe("Powai, Mumbai");
   });
@@ -81,6 +81,27 @@ describe("localityFor", () => {
     phoneGeocoder.mockRejectedValue(new Error("boom"));
 
     expect(await localityFor(1, 1)).toBeNull();
+  });
+});
+
+describe("placeFor (ENG-284 D4)", () => {
+  it("carries the phone geocoder's PIN code with the locality", async () => {
+    phoneGeocoder.mockResolvedValue([
+      { district: "Versova", city: "Mumbai", postalCode: "400 061" },
+    ] as unknown as Location.LocationGeocodedAddress[]);
+
+    expect(await placeFor(19.13, 72.81)).toEqual({ locality: "Versova, Mumbai", postalCode: "400061" });
+  });
+
+  it("drops a PIN that is not one, and takes Google's when the phone cannot answer", async () => {
+    phoneGeocoder.mockResolvedValue([
+      { district: "Versova", city: "Mumbai", postalCode: "40006" },
+    ] as unknown as Location.LocationGeocodedAddress[]);
+    expect((await placeFor(19.13, 72.81)).postalCode).toBeNull();
+
+    phoneGeocoder.mockRejectedValue(new Error("boom"));
+    google.mockResolvedValue({ locality: "Juhu, Mumbai", address: null, postalCode: "400049" });
+    expect(await placeFor(19.1, 72.83)).toEqual({ locality: "Juhu, Mumbai", postalCode: "400049" });
   });
 });
 

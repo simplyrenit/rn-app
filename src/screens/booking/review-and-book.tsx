@@ -254,12 +254,15 @@ export default function ReviewAndBookScreen() {
           image={params.item.cover_image}
           lines={[
             `${rangeLabel(quote.first_day, quote.last_day, true)} · ${daysLabel(quote.days)}`,
-            `${howLabel(quote.delivery_mode, params.address_name)} · ${params.item.shop_name}`,
+            // ENG-284: self pickup says where it is collected, as the design writes it.
+            quote.delivery_mode === "pickup" && !params.extends
+              ? `You collect it from ${params.item.shop_name}`
+              : `${howLabel(quote.delivery_mode, params.address_name)} · ${params.item.shop_name}`,
           ]}
         />
 
         <Panel style={{ padding: space.md, gap: space.sm }}>
-          {priceLines(quote).map((line, index) => (
+          {priceLines(quote, Boolean(params.extends)).map((line, index) => (
             <React.Fragment key={line.label}>
               <MoneyLine {...line} />
               {/* Under the rent, as the design draws it (ENG-281): how the plan's price came to the day rate. */}

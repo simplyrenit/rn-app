@@ -36,6 +36,7 @@ import {
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import {
   useFocusEffect,
+  useIsFocused,
   useNavigation,
   useRoute,
 } from "@react-navigation/native";
@@ -51,11 +52,13 @@ import { FlagReason, ListingStatus, resolveListingStatus, waitsText } from "@/li
 import { getDiscoveryLocationData } from "@/lib/location";
 import { keySpecLine, specMatchesFilters } from "@/lib/product-specs";
 import { rememberReturnTo } from "@/lib/return-to";
+import { useDeliveryAddress } from "@/context/delivery-address";
+import { addressTitle } from "@/lib/addresses";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { IconButton } from "@/components/core/icon-button";
 import { EmptyState } from "@/components/core/empty-state";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Animated,
   RefreshControl,
@@ -227,6 +230,32 @@ export default function DetailsScreen() {
     waits: string | null;
   } | null>(null);
   const distanceLabel = useDistanceTo(product?.coordinates);
+  // ENG-284: the product answers whether its shop delivers to the session's
+  // address; every focus refetches, so a change made on BK-02 is followed.
+  const { address: deliveryAddress } = useDeliveryAddress();
+  const deliveryAddressRef = React.useRef(deliveryAddress);
+  deliveryAddressRef.current = deliveryAddress;
+  /** The address `product.delivery` answers for; another one's answer is not shown under this name. */
+  const [deliveryFor, setDeliveryFor] = useState<number | null>(null);
+  const focused = useIsFocused();
+  const deliveryId = deliveryAddress?.id ?? null;
+  // The addresses can arrive after the first fetch (a cold start on this
+  // page): ask again for the delivery answer, quietly, without the skeleton.
+  useEffect(() => {
+    if (!focused || !product || deliveryFor === deliveryId) return;
+    let live = true;
+    fetchProduct(id, deliveryId)
+      .then((data) => {
+        if (!live) return;
+        setProduct(data);
+        setDeliveryFor(deliveryId);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focused, deliveryId, product?.name, deliveryFor]);
   // The similar-products rail draws the Home tile, whose heart has to start in
   // the right state. One shared, cached query — the same one every
   // `FavouriteButton` on the page already subscribes to.
@@ -286,8 +315,13 @@ export default function DetailsScreen() {
     setLoading(true);
     setLoadError(false);
     try {
-      const data = await fetchProduct(id);
+      // The ref, not this render's value: the focus callback that calls this
+      // was made on the first render, and the address may have changed on
+      // BK-02 since (ENG-284 D12).
+      const forAddress = deliveryAddressRef.current?.id ?? null;
+      const data = await fetchProduct(id, forAddress);
       setProduct(data);
+      setDeliveryFor(forAddress);
       const similarProducts = await fetchSimilarProducts(id);
       const reviews = await fetchReviews(id);
       setSimilarProducts(similarProducts);
@@ -778,6 +812,8 @@ export default function DetailsScreen() {
             copy={booking}
             shop={product.shop}
             notDelivered={product.not_delivered}
+            delivery={deliveryFor === deliveryId ? product.delivery : null}
+            addressName={deliveryAddress ? addressTitle(deliveryAddress) : null}
             rate={product.rate}
             plans={product.plans}
             deposit={product.security_deposit}

@@ -78,9 +78,17 @@ export function usePublicProduct(name: string) {
  * the next loads so the sums do not blink. Keyed on the person too: signed in,
  * the quote carries their delivery fee, terms and ID check.
  */
-export function useQuote(input: QuoteInput | null) {
+export function useQuote(
+  input: QuoteInput | null,
+  /**
+   * Part of the key, never sent: what the answer depends on that the input
+   * does not carry. BK-02 passes the address's PIN and point, so a PIN fixed
+   * in Address details asks again though the address id is the same (ENG-284).
+   */
+  keyExtra?: string
+) {
   const { userDetails } = useGlobalContext();
-  return useQuery(["quote", userDetails?.username ?? null, input], () => fetchQuote(input as QuoteInput), {
+  return useQuery(["quote", userDetails?.username ?? null, input, keyExtra ?? null], () => fetchQuote(input as QuoteInput), {
     enabled: input !== null,
     staleTime: 0,
     keepPreviousData: true,
