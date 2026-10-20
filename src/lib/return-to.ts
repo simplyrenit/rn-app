@@ -8,7 +8,11 @@ import type { NavigationUseType, RootStackParamList } from "@/lib/types";
  * Kept in memory only and for a short while: it is for the sign-in that follows
  * the prompt, not for one made tomorrow from the Profile tab.
  */
-export type ReturnTo = { name: "ProductDetail"; params: RootStackParamList["ProductDetail"] };
+export type ReturnTo =
+  | { name: "ProductDetail"; params: RootStackParamList["ProductDetail"] }
+  // ENG-292: "Sign in to see who delivers to you" comes back to the same search
+  // (text, place and dates); filters and sort start again.
+  | { name: "SearchResults"; params: RootStackParamList["SearchResults"] };
 
 const KEEP_MS = 15 * 60 * 1000;
 

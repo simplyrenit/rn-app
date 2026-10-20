@@ -39,3 +39,22 @@ describe("goAfterSignIn", () => {
     expect(navigation.reset).not.toHaveBeenCalled();
   });
 });
+
+describe("back to the same search after signing in (ENG-292)", () => {
+  it("rebuilds the results with their text, place and dates", () => {
+    const search = {
+      name: "SearchResults" as const,
+      params: {
+        selectedItem: "air cooler",
+        address: "Andheri West",
+        coords: { lat: 19.13, lng: 72.83 },
+        range: { startDate: "2026-10-24T00:00:00.000Z", endDate: "2026-10-26T00:00:00.000Z" },
+        products: [],
+      },
+    };
+    const navigation = { navigate: jest.fn(), reset: jest.fn() };
+    rememberReturnTo(search);
+    goAfterSignIn(navigation as never);
+    expect(navigation.reset).toHaveBeenCalledWith({ index: 1, routes: [{ name: "MainTabs" }, search] });
+  });
+});

@@ -8,6 +8,7 @@ import type { SavedAddress } from "@/lib/addresses";
 import type { BookItem, DeliveryMode, ProductShop } from "@/lib/booking";
 import type { Moment, Side } from "@/lib/capture";
 import type { Plan } from "@/lib/plans";
+import type { ListingDelivery } from "@/lib/delivery";
 import type { ReportKind } from "@/lib/day-of";
 import type { PendingEdit } from "@/lib/listing-edit";
 import type { FlagReason, ListingStatus } from "@/lib/listing-status";
@@ -700,6 +701,11 @@ export interface BackendProduct {
    * the runs of days with no unit free.
    */
   shop?: ProductShop | null;
+  /**
+   * ENG-284: whether the shop delivers to the address sent as
+   * `?deliver_address=` (search and product detail only); null without one.
+   */
+  delivery?: ListingDelivery | null;
   live_booking?: boolean;
   book_for_morning?: boolean;
   id_check_needed?: "none" | "id" | "id_and_match";
