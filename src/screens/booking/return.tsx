@@ -11,7 +11,8 @@ import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { Block, LinkRow, StepList, useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
-import { BookingCustomer, SLOW_POLL_MS } from "@/lib/booking";
+import { returnNoticeLine } from "@/lib/billing";
+import { BookingCustomer, SLOW_POLL_MS, todayIst } from "@/lib/booking";
 import { otherSetOffered, recordWanted } from "@/lib/capture";
 import {
   captured,
@@ -43,6 +44,7 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
   const [round, setRound] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [closed, setClosed] = useState(false);
+  const notice = returnNoticeLine(booking.money, todayIst(now), booking.last_day);
 
   // The customer's return record, and the shop's if this phone recorded it: one rule
   // (`recordState`). Both stay open after the code, while the booking is `returned`.
@@ -101,6 +103,13 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
       {absentAt && out ? (
         <Notice tone="brand" icon="info">
           {ownerAbsentNote(absentAt, now)}
+        </Notice>
+      ) : null}
+
+      {/* ENG-282: inside a monthly booking's minimum, an early return owes the notice month. */}
+      {out && notice ? (
+        <Notice tone="warning" icon="warning">
+          {notice}
         </Notice>
       ) : null}
 

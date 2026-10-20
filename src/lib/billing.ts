@@ -188,20 +188,36 @@ export function monthlyReturnLine(m: MonthlyMoney & { rate: string }, held: bool
   }.`;
 }
 
+type PlanMoney = MonthlyMoney & { plan?: { unit: string; price: string; min?: number | null } };
+
 /**
- * The rental screen's line under the deposit, for a monthly booking: the notice while the minimum is not over, else nothing.
- * The minimum's last day is `min × 30` days from the chain's first day (the first month's). Without the plan's minimum
- * (a server that does not send it) nothing can be said.
+ * The month plan's minimum and price while `today` is still inside the minimum of a monthly booking, else null. The
+ * minimum's last day is `min × 30` days from the chain's first day (the first month's). Without the plan's minimum (a
+ * server that does not send it) nothing can be said.
  */
-export function endingEarlyLine(
-  m: MonthlyMoney & { plan?: { unit: string; price: string; min?: number | null } },
-  today: string
-): string | null {
+function insideMinimum(m: PlanMoney, today: string): { min: number; price: string } | null {
   const min = m.plan?.unit === "month" ? m.plan.min : undefined;
   // `n` counts within one booking of a chain; the first day is the chain's.
   const first = (m.periods ?? []).filter((p) => p.kind === "rent").sort((a, b) => a.first_day.localeCompare(b.first_day))[0];
-  if (!min || min < 2 || !first) return null;
-  return today < addDays(first.first_day, min * 30 - 1) ? noticeLine(min, m.plan?.price) : null;
+  if (!isMonthly(m) || !min || min < 2 || !first || !m.plan) return null;
+  return today < addDays(first.first_day, min * 30 - 1) ? { min, price: m.plan.price } : null;
+}
+
+/** The rental screen's line under the deposit, for a monthly booking: the notice while the minimum is not over, else nothing. */
+export function endingEarlyLine(m: PlanMoney, today: string): string | null {
+  const inside = insideMinimum(m, today);
+  return inside ? noticeLine(inside.min, inside.price) : null;
+}
+
+/**
+ * The return screen's line: handing the item back before the last day and inside the minimum ends the rental early, which
+ * owes the notice month (the server treats it as `end_early`).
+ */
+export function returnNoticeLine(m: PlanMoney, today: string, lastDay: string): string | null {
+  const inside = today < lastDay ? insideMinimum(m, today) : null;
+  return inside
+    ? `Returning before ${inside.min} months costs one month's rent (${money(inside.price)}) as notice. Pay it in the app, or it comes out of your deposit.`
+    : null;
 }
 
 // ---- Rent due (BK-13 for a month, Figma 9477:5285) ----------------------------------------------------------------

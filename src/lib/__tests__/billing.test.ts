@@ -13,6 +13,7 @@ import {
   periodPill,
   periodRow,
   rentPaidOf,
+  returnNoticeLine,
   scheduleFoot,
   scheduleHead,
   scheduleRows,
@@ -208,6 +209,16 @@ describe("the notice", () => {
     // Without the plan's minimum nothing can be said.
     expect(endingEarlyLine(money(sofa(), { plan: { unit: "month", price: "1800.00" } }), "2026-12-25")).toBeNull();
     expect(endingEarlyLine(money(sofa(), { plan: { unit: "month", price: "1800.00", min: 1 } }), "2026-12-25")).toBeNull();
+  });
+
+  it("is on the return screen before the last day, inside the minimum", () => {
+    expect(returnNoticeLine(money(), "2026-12-25", "2027-04-21")).toBe(
+      "Returning before 6 months costs one month's rent (₹1,800) as notice. Pay it in the app, or it comes out of your deposit."
+    );
+    // On the last day, after the minimum, or billed upfront: nothing.
+    expect(returnNoticeLine(money(), "2027-04-21", "2027-04-21")).toBeNull();
+    expect(returnNoticeLine(money(), "2027-04-21", "2027-06-21")).toBeNull();
+    expect(returnNoticeLine({ ...money(), billing: "upfront" }, "2026-12-25", "2027-04-21")).toBeNull();
   });
 
   it("is on the product page for a month plan of 2 months or more", () => {
