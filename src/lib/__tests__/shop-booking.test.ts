@@ -234,6 +234,8 @@ describe("the Customer card", () => {
 describe("the Money card", () => {
   it("shows the rent, Renit's fee crossed out, what the shop earns, the payout and the deposit", () => {
     expect(moneyView(booking())).toEqual({
+      rentLabel: "Rent",
+      earnLabel: "You earn",
       rent: "₹1,830",
       delivery: null,
       fee: { struck: "₹92", charged: "₹0" },
@@ -242,6 +244,33 @@ describe("the Money card", () => {
       notes: [],
       deposit: { amount: "₹3,000", sub: "Asked from the customer before the handover" },
     });
+  });
+
+  it("says a monthly booking's money a month at a time (ENG-282)", () => {
+    const month = (n: number, state: string) => ({
+      booking: "RN-24831", n, label: `Month ${n}`, kind: "rent", first_day: "2026-10-24", last_day: "2026-11-22",
+      amount: "1800.00", state, link_on: null, pay_by: null, grace_ends: null, paid_at: null, linked_at: null,
+    });
+    const m = {
+      ...booking().money,
+      rent: "10800.00",
+      fee_shown: "540.00",
+      fee_charged: "0.00",
+      you_earn: "10800.00",
+      plan: { unit: "month", price: "1800.00", min: 6 },
+      billing: "monthly",
+      periods: [month(1, "paid"), month(2, "overdue"), month(3, "upcoming")],
+    };
+    expect(moneyView(booking({ stage: "out", money: m }))).toMatchObject({
+      rentLabel: "Rent a month",
+      earnLabel: "You earn a month",
+      rent: "₹1,800",
+      fee: { struck: "₹90", charged: "₹0" },
+      earn: "₹1,800",
+      payout: "Paid to your bank the morning after each month is paid, once it has started.",
+    });
+    expect(customerBlock(booking({ stage: "out", money: m }), NOW).note).toBe("Renit's desk follows up on unpaid months.");
+    expect(customerBlock(booking({ stage: "out" }), NOW).note).toBeNull();
   });
 
   it("says what was kept from the deposit for the shop, and what of it went back (E-110)", () => {

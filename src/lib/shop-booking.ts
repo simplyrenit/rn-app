@@ -16,6 +16,7 @@ import {
   windowLabel,
   windowSummary,
 } from "@/lib/booking";
+import { isMonthly } from "@/lib/billing";
 import { kmText } from "@/lib/shop";
 import { customerLine, customerName, whereText } from "@/lib/shop-ring";
 
@@ -355,6 +356,8 @@ export function customerBlock(b: BookingShop, now: Date = new Date()): CustomerB
   const km = b.customer.distance_km;
   const from = b.day.call_from;
   let note: string | null = null;
+  // ENG-282: an unpaid month is the desk's to chase, not the shop's.
+  if (!b.exit && b.stage === "out" && isMonthly(b.money)) note = "Renit's desk follows up on unpaid months.";
   if (!b.exit && (b.stage === "confirmed" || b.stage === "ready")) {
     note = from
       ? `You can call each other from ${clock(from)}${dayOf(from) === todayIst(now) ? "" : ` on ${dayShort(dayOf(from) ?? "")}`}, before the handover.`
@@ -371,6 +374,9 @@ export function customerBlock(b: BookingShop, now: Date = new Date()): CustomerB
 }
 
 export interface MoneyView {
+  /** "Rent", or "Rent a month" for monthly billing (ENG-282), with "You earn a month" to match. */
+  rentLabel: string;
+  earnLabel: string;
   rent: string;
   delivery: string | null;
   fee: { struck: string | null; charged: string };
@@ -434,15 +440,24 @@ export function moneyView(b: BookingShop): MoneyView {
           ...(kept.late > 0 ? [`${money(kept.late)} kept for the late days`] : []),
         ].join(", ")
       : null;
+  // Monthly billing (ENG-282): the rent, the fee and what the shop earns are said for one month. The fee is a share of the
+  // rent, so a month's is the booking's in the same proportion; the delivery fee stays whole, as it is paid with month 1.
+  const plan = isMonthly(m) && m.plan && Number(m.rent) > 0 ? m.plan : null;
+  const perMonth = (value: string) => (plan ? Math.round(((Number(value) * Number(plan.price)) / Number(m.rent)) * 100) / 100 : Number(value));
+  const feeShown = perMonth(m.fee_shown);
+  const feeCharged = perMonth(m.fee_charged);
   return {
-    rent: money(m.rent),
+    rentLabel: plan ? "Rent a month" : "Rent",
+    earnLabel: plan ? "You earn a month" : "You earn",
+    rent: money(plan ? plan.price : m.rent),
     delivery: Number(m.delivery_fee) > 0 ? money(m.delivery_fee) : null,
     fee: {
-      struck: Number.isFinite(shown) && shown > 0 && shown !== Number(m.fee_charged) ? money(m.fee_shown) : null,
-      charged: money(m.fee_charged),
+      struck: Number.isFinite(shown) && shown > 0 && feeShown !== feeCharged ? money(feeShown) : null,
+      charged: money(feeCharged),
     },
-    earn: money(m.you_earn),
-    payout: m.payout?.text || null,
+    earn: plan ? money(Number(plan.price) - feeCharged) : money(m.you_earn),
+    // Each month is paid out on its own, the morning after it is paid, never before it starts (plan §6).
+    payout: plan ? "Paid to your bank the morning after each month is paid, once it has started." : m.payout?.text || null,
     notes,
     deposit:
       m.deposit_state !== "none" && Number.isFinite(dep) && dep > 0

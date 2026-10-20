@@ -270,14 +270,31 @@ const GetHelpSheet = forwardRef<SheetHandle, { number: string }>(({ number }, re
  * it among the rows of one (`first={false}`). It shows only where the server's
  * `can` list offers `get_help`, so it never offers what the server would refuse.
  */
-export function GetHelp({ booking, first = true }: { booking: HelpBooking; first?: boolean }) {
+export function GetHelp({
+  booking,
+  first = true,
+  title,
+  danger = false,
+}: {
+  booking: HelpBooking;
+  first?: boolean;
+  /** Another way into the same sheet: the shop's "End the rental early" (ENG-282, D16), in red, without the hours line. */
+  title?: string;
+  danger?: boolean;
+}) {
   const sheet = useRef<SheetHandle>(null);
   const offered = booking.can.includes("get_help");
   const query = useHelp(booking.number, offered);
   if (!offered) return null;
   return (
     <>
-      <LinkRow title="Get help" sub={helpRowSub(query.data, booking.number)} first={first} onPress={() => sheet.current?.present()} />
+      <LinkRow
+        title={title ?? "Get help"}
+        sub={title ? null : helpRowSub(query.data, booking.number)}
+        first={first}
+        danger={danger}
+        onPress={() => sheet.current?.present()}
+      />
       <GetHelpSheet ref={sheet} number={booking.number} />
     </>
   );
