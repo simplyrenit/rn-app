@@ -11,7 +11,8 @@ import {
   dayShort,
   deliveryPlace,
   depositAfterLate,
-  lateDaysLabel,
+  keptLineOf,
+  keptReasons,
   money,
   todayIst,
   addDays,
@@ -578,13 +579,13 @@ export function returnedCopy(booking: BookingCustomer): { title: string; body: s
     title: cameBack ? `Came back on ${dayShort(cameBack)}.` : day ? `Returned ${dayShort(day)}, ${clock(at)}.` : "Returned.",
     body: !held
       ? "The shop has 24 hours to report a problem. After that the rental is closed."
-      : late.kept <= 0
+      : late.kept + late.notice <= 0
         ? `Your deposit of ${money(m.deposit)} comes back within 48 hours, ${unless}.`
         : late.back > 0
-          ? `Your deposit is ${money(late.deposit)}. ${money(late.kept)} is kept for ${lateDaysLabel(late.days)}, and ${money(
+          ? `Your deposit is ${money(late.deposit)}. ${keptLineOf(late)}, and ${money(
               late.back
             )} comes back within 48 hours, ${unless}.`
-          : `Your ${money(late.deposit)} deposit is kept for ${lateDaysLabel(late.days)}. Nothing comes back.`,
+          : `Your ${money(late.deposit)} deposit is kept for ${keptReasons(late)}. Nothing comes back.`,
   };
 }
 

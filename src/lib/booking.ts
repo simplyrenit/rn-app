@@ -92,6 +92,11 @@ export interface MonthlyMoney {
   rent_paid?: boolean;
   /** What has been paid of the rent so far; to the shop, what it has earned. Null for upfront billing. */
   rent_paid_amount?: string | null;
+  /**
+   * An unpaid notice month, taken from the deposit when it settles unless it is paid by its link first; "0.00" when none.
+   * The server keeps sending the expected amount until then.
+   */
+  notice_deduction?: string;
 }
 
 /** `POST /api/bookings/quote/`. */
@@ -1794,8 +1799,24 @@ export interface DepositAfterLate {
   days: number;
   /** What is kept for them: one day's rent each, never more than the deposit. */
   kept: number;
+  /** ENG-282: an unpaid notice month, taken after the late days (the server's order), never more than is left. */
+  notice: number;
   /** What comes back, before any damage Renit's staff may still decide. */
   back: number;
+}
+
+/** Why part of the deposit is kept: "2 late days", "the notice", "2 late days and the notice". */
+export function keptReasons(late: DepositAfterLate): string {
+  return [late.kept > 0 ? lateDaysLabel(late.days) : null, late.notice > 0 ? "the notice" : null].filter(Boolean).join(" and ");
+}
+
+/** What is kept and for what: "₹1,220 is kept for 2 late days and ₹1,800 for the notice". */
+export function keptLineOf(late: DepositAfterLate): string {
+  const parts = [
+    late.kept > 0 ? `${money(late.kept)} is kept for ${lateDaysLabel(late.days)}` : null,
+    late.notice > 0 ? (late.kept > 0 ? `${money(late.notice)} for the notice` : `${money(late.notice)} is kept for the notice`) : null,
+  ];
+  return parts.filter(Boolean).join(" and ");
 }
 
 /**
@@ -1804,11 +1825,17 @@ export interface DepositAfterLate {
  * the late fee; what comes back is the one sum this app works out, because no
  * screen may promise the whole deposit when part of it is already spoken for.
  */
-export function depositAfterLate(m: { deposit: string; late_days?: number | null; late_fee?: string | null }): DepositAfterLate {
+export function depositAfterLate(m: {
+  deposit: string;
+  late_days?: number | null;
+  late_fee?: string | null;
+  notice_deduction?: string | null;
+}): DepositAfterLate {
   const deposit = Math.max(Number(m.deposit) || 0, 0);
   const days = Math.max(Number(m.late_days) || 0, 0);
   const kept = days > 0 ? Math.min(Math.max(Number(m.late_fee) || 0, 0), deposit) : 0;
-  return { deposit, days, kept, back: deposit - kept };
+  const notice = Math.min(Math.max(Number(m.notice_deduction) || 0, 0), deposit - kept);
+  return { deposit, days, kept, notice, back: deposit - kept - notice };
 }
 
 /** "2 late days", "1 late day". */
@@ -1910,12 +1937,12 @@ export function bookingBanner(booking: BookingCustomer, cancelled?: CancelOutcom
         title: "Returned",
         sub: !isPositive(m.deposit)
           ? null
-          : late.kept > 0
+          : late.kept + late.notice > 0
             ? late.back > 0
-              ? `${money(late.back)} of your ${money(late.deposit)} deposit comes back within 48 hours: ${money(
-                  late.kept
-                )} is kept for ${lateDaysLabel(late.days)}, and any damage Renit agrees comes off too.`
-              : `Your ${money(late.deposit)} deposit is kept for ${lateDaysLabel(late.days)}.`
+              ? `${money(late.back)} of your ${money(late.deposit)} deposit comes back within 48 hours: ${keptLineOf(
+                  late
+                )}, and any damage Renit agrees comes off too.`
+              : `Your ${money(late.deposit)} deposit is kept for ${keptReasons(late)}.`
             : "Your deposit comes back within 48 hours, less any agreed damage.",
       };
     }
@@ -1988,10 +2015,10 @@ export function timelineRows(booking: BookingCustomer, now: Date = new Date()): 
     const late = depositAfterLate(m);
     ahead.push({
       label:
-        late.kept > 0
+        late.kept + late.notice > 0
           ? late.back > 0
             ? `${money(late.back)} of the deposit comes back`
-            : `Deposit kept for ${lateDaysLabel(late.days)}`
+            : `Deposit kept for ${keptReasons(late)}`
           : "Deposit comes back",
       when: day ? `by ${dayShort(day)}` : "within 48 hours",
     });
@@ -2219,7 +2246,7 @@ export function rentalNextLine(booking: BookingCustomer, now: Date = new Date())
     case "returned": {
       if (m.deposit_state !== "paid") return null;
       const late = depositAfterLate(m);
-      return late.kept > 0
+      return late.kept + late.notice > 0
         ? `${money(late.back)} of the deposit comes back within 48 hours`
         : "Deposit comes back within 48 hours";
     }

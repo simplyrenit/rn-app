@@ -283,6 +283,15 @@ describe("the Money card", () => {
     const view = moneyView(booking({ stage: "closed", money: m }));
     expect(view.notes).toEqual(["₹1,800 kept from the deposit for you, for the notice"]);
     expect(view.deposit?.sub).toBe("₹3,200 returned, ₹1,800 kept for the notice");
+    // Before the deposit settles the customer can still pay it by its link.
+    expect(moneyView(booking({ stage: "returned", money: { ...m, deposit_state: "paid" } })).notes).toEqual([
+      "₹1,800 for the notice, from the deposit unless the customer pays it",
+    ]);
+    // The server's order: late fee, then notice, then damage, each from what is left.
+    const tight = { ...m, deposit: "3000.00", late_fee: "1220.00", damage_deduction: "1000.00" };
+    expect(moneyView(booking({ stage: "closed", money: tight })).deposit?.sub).toBe(
+      "₹1,220 kept for the late days, ₹1,780 kept for the notice"
+    );
   });
 
   it("says what was kept from the deposit for the shop, and what of it went back (E-110)", () => {
@@ -309,7 +318,8 @@ describe("the Money card", () => {
     expect(forfeited.notes).toEqual([]);
     expect(forfeited.deposit?.sub).toBe("Kept, as the item was not returned");
     const whole = moneyView(booking({ stage: "closed", money: { ...m, deposit: "800.00", deposit_state: "settled" } }));
-    expect(whole.deposit?.sub).toBe("₹200 kept for the damage, ₹600 kept for the late days");
+    // The late fee comes first (the server's order, D15), the damage from what is left.
+    expect(whole.deposit?.sub).toBe("₹190 kept for the damage, ₹610 kept for the late days");
   });
 
   it("says a refunded fault comes off a later payout, then that it was taken (E-116)", () => {

@@ -1617,8 +1617,10 @@ describe("the deposit after a late return (review r1 #3)", () => {
   const late = { deposit: "3000.00", late_days: 2, late_fee: "1220.00" };
 
   it("what is kept for the late days, and what comes back", () => {
-    expect(depositAfterLate(late)).toEqual({ deposit: 3000, days: 2, kept: 1220, back: 1780 });
-    expect(depositAfterLate({ deposit: "3000.00", late_days: 0, late_fee: "0.00" })).toEqual({ deposit: 3000, days: 0, kept: 0, back: 3000 });
+    expect(depositAfterLate(late)).toEqual({ deposit: 3000, days: 2, kept: 1220, notice: 0, back: 1780 });
+    expect(depositAfterLate({ deposit: "3000.00", late_days: 0, late_fee: "0.00" })).toEqual({ deposit: 3000, days: 0, kept: 0, notice: 0, back: 3000 });
+    // ENG-282: an unpaid notice comes after the late days, from what is left.
+    expect(depositAfterLate({ ...late, notice_deduction: "1800.00" })).toMatchObject({ kept: 1220, notice: 1780, back: 0 });
     // Never more than the deposit.
     expect(depositAfterLate({ deposit: "3000.00", late_days: 9, late_fee: "5490.00" })).toMatchObject({ kept: 3000, back: 0 });
     // A late fee with no late days on the booking is not counted, and missing fields are nothing.
@@ -1634,6 +1636,16 @@ describe("the deposit after a late return (review r1 #3)", () => {
     );
     expect(timelineRows(returned, NOW).pop()).toMatchObject({ label: "₹1,780 of the deposit comes back" });
     expect(rentalNextLine(returned, NOW)).toBe("₹1,780 of the deposit comes back within 48 hours");
+    // ENG-282: an unpaid notice is kept too, said as such.
+    const notice = booking({ stage: "returned" }, { deposit_state: "paid", deposit: "5000.00", notice_deduction: "1800.00" });
+    expect(bookingBanner(notice).sub).toBe(
+      "₹3,200 of your ₹5,000 deposit comes back within 48 hours: ₹1,800 is kept for the notice, and any damage Renit agrees comes off too."
+    );
+    const both = booking({ stage: "returned" }, { deposit_state: "paid", ...late, deposit: "5000.00", notice_deduction: "1800.00" });
+    expect(bookingBanner(both).sub).toBe(
+      "₹1,980 of your ₹5,000 deposit comes back within 48 hours: ₹1,220 is kept for 2 late days and ₹1,800 for the notice, and any damage Renit agrees comes off too."
+    );
+    expect(rentalNextLine(notice, NOW)).toBe("₹3,200 of the deposit comes back within 48 hours");
     // On time: the plain line.
     const onTime = booking({ stage: "returned" }, { deposit_state: "paid" });
     expect(bookingBanner(onTime).sub).toBe("Your deposit comes back within 48 hours, less any agreed damage.");

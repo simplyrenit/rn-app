@@ -200,7 +200,8 @@ export const EndEarlySheet = forwardRef<EndEarlySheetHandle, { booking: BookingC
               {copy.button}
             </Button>
           ) : failed ? (
-            <Button variant="outline" onPress={() => void load(asked.current || undefined)}>
+            // The server's own day: a day it refused is not asked about again.
+            <Button variant="outline" onPress={() => void load()}>
               Try again
             </Button>
           ) : null}

@@ -49,8 +49,6 @@ export interface ShopMoney extends MonthlyMoney {
   late_days?: number;
   late_fee?: string;
   damage_deduction?: string;
-  /** ENG-282: a notice not paid by the return day, taken from the deposit for the shop; "0.00" when none. */
-  notice_deduction?: string;
   /** The rent of an upheld fault report that comes off a later payout, and how much of it has not yet; absent from an older server. */
   clawback?: string;
   clawback_left?: string;
@@ -410,10 +408,10 @@ function keptFromDeposit(b: BookingShop): { damage: number; late: number; notice
   const deposit = amountOf(m.deposit);
   // A forfeited deposit is all kept because the item was not returned.
   if (m.deposit_state === "forfeited") return { damage: 0, late: 0, notice: 0, returned: 0 };
-  const damage = Math.min(amountOf(m.damage_deduction), deposit);
-  const late = b.stage === "out" ? 0 : Math.min(amountOf(m.late_fee), deposit - damage);
-  // ENG-282: an unpaid notice comes out of the deposit too, so it is not shown as returned.
-  const notice = Math.min(amountOf(m.notice_deduction), deposit - damage - late);
+  // In the server's order (D15): the late fee, then an unpaid notice (ENG-282), then the damage, each from what is left.
+  const late = b.stage === "out" ? 0 : Math.min(amountOf(m.late_fee), deposit);
+  const notice = Math.min(amountOf(m.notice_deduction), deposit - late);
+  const damage = Math.min(amountOf(m.damage_deduction), deposit - late - notice);
   return { damage, late, notice, returned: deposit - damage - late - notice };
 }
 
@@ -427,7 +425,14 @@ export function moneyView(b: BookingShop): MoneyView {
   const notes = [
     ...(kept.damage > 0 ? [`${money(kept.damage)} kept from the deposit for you, for the damage`] : []),
     ...(kept.late > 0 ? [`${money(kept.late)} kept from the deposit for you, for the late days`] : []),
-    ...(kept.notice > 0 ? [`${money(kept.notice)} kept from the deposit for you, for the notice`] : []),
+    // Until the deposit settles the notice can still be paid by its link.
+    ...(kept.notice > 0
+      ? [
+          m.deposit_state === "settled"
+            ? `${money(kept.notice)} kept from the deposit for you, for the notice`
+            : `${money(kept.notice)} for the notice, from the deposit unless the customer pays it`,
+        ]
+      : []),
     ...(clawback > 0
       ? [
           amountOf(m.clawback_left) > 0

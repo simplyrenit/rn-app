@@ -140,7 +140,8 @@ export function scheduleHead(periods: RentPeriod[], today: string): string | nul
 export function scheduleFoot(m: MonthlyMoney, side: "customer" | "owner"): string {
   const periods = m.periods ?? [];
   if (side === "owner") return `You've earned ${money(rentPaidOf(m))} so far.`;
-  // The rent alone: the delivery fee paid with month 1 and a notice are not "for 6 months".
+  // The rent alone: the delivery fee paid with month 1 and a notice are not "for 6 months". Renit's fee is left out too,
+  // which is right while it is charged at nothing (launch); say it here if it ever is not.
   const rentOf = (p: RentPeriod) => Number(p.rent ?? p.amount) || 0;
   const rent = liveRent(periods);
   const total = rent.reduce((sum, p) => sum + rentOf(p), 0);
