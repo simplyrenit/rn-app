@@ -2,7 +2,7 @@ import { Notice, Panel } from "@/components/booking/parts";
 import { Text } from "@/components/core";
 import { LiveCopy, ProductShop, getItLine, handoverLine, priceBlock } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
-import { Plan, UNIT_WORDS, minimumLine, perDay, plansOf, smallestPlan } from "@/lib/plans";
+import { Plan, UNIT_WORDS, minimumLine, noticeWords, perDay, plansOf, smallestPlan } from "@/lib/plans";
 import { formatCurrency } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import React from "react";
@@ -37,6 +37,8 @@ export function BookingFacts({
   const first = smallestPlan(plans);
   const price = priceBlock(first?.price, deposit);
   const minimum = minimumLine(plans);
+  // ENG-282: a month plan of 2 months or more is billed monthly, and ending inside it costs a month's notice.
+  const notice = noticeWords(plans);
   const rows = [
     { icon: MapPinIcon, text: getItLine(shop, notDelivered) },
     ...(hours ? [{ icon: ClockIcon, text: hours }] : []),
@@ -87,6 +89,11 @@ export function BookingFacts({
                 {minimum}
               </Text>
             </View>
+          ) : null}
+          {notice ? (
+            <Text fontSize="text-md" tone="body">
+              {notice}
+            </Text>
           ) : null}
           {price.deposit ? (
             <Text fontSize="text-md" tone="body">
