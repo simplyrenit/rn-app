@@ -51,8 +51,11 @@ export interface BookItem {
  */
 export type Billing = "upfront" | "monthly";
 
-/** `paid`, `upcoming` (no link yet), `due`, `overdue` (the 3 days' grace), `lapsed` (the grace ran out), `dropped` (never billed). */
-export type PeriodState = "paid" | "due" | "upcoming" | "overdue" | "lapsed" | "dropped";
+/**
+ * `paid`, `upcoming` (no link yet), `due`, `overdue` (the 3 days' grace), `lapsed` (the grace ran out), `dropped` (never
+ * billed), `from_deposit` (a notice not paid by the return day, taken from the deposit).
+ */
+export type PeriodState = "paid" | "due" | "upcoming" | "overdue" | "lapsed" | "dropped" | "from_deposit";
 
 /**
  * One month of a monthly-billed booking (ENG-282). Across an extension chain `label` runs on ("Month 7"). A `notice`
@@ -70,6 +73,8 @@ export interface RentPeriod {
   first_day: string;
   last_day: string;
   amount: string;
+  /** The month's rent alone: no delivery fee, no Renit fee. Absent from an answer before it. */
+  rent?: string;
   state: PeriodState;
   /** The day the pay link is sent (3 days before `first_day`); the day it is due; the last day of the grace. */
   link_on: string | null;
@@ -1659,9 +1664,15 @@ export function payRentCopy(
   const amount = money(charge.amount);
   const withDeposit = charge.purpose === "rent_and_deposit";
   const depositPart = charge.deposit_part;
-  const lines: PriceLine[] = [{ label: "Rent", amount: money(m.rent) }];
-  if (isPositive(m.delivery_fee)) lines.push({ label: "Delivery", amount: money(m.delivery_fee) });
-  if (isPositive(m.fee_charged)) lines.push({ label: "Renit's fee", amount: money(m.fee_charged) });
+  // ENG-282: billed monthly, the rent payment is month 1 (its rent, fee and the delivery fee), not the whole booking, so
+  // the lines add up to what is charged.
+  const month1 =
+    m.billing === "monthly"
+      ? m.periods?.find((p) => p.booking === booking.number && p.n === 1 && p.kind === "rent") ?? null
+      : null;
+  const lines: PriceLine[] = month1 ? [{ label: "Month 1", amount: money(month1.amount) }] : [{ label: "Rent", amount: money(m.rent) }];
+  if (!month1 && isPositive(m.delivery_fee)) lines.push({ label: "Delivery", amount: money(m.delivery_fee) });
+  if (!month1 && isPositive(m.fee_charged)) lines.push({ label: "Renit's fee", amount: money(m.fee_charged) });
   lines.push({ label: "Already paid", amount: money(m.booking_amount), amountTone: "success" });
   if (isPositive(depositPart)) lines.push({ label: "Deposit · refundable", amount: money(depositPart) });
 

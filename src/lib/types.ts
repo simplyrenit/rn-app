@@ -698,6 +698,8 @@ export interface BackendProduct {
    */
   plans?: Plan[];
   min_days?: number;
+  /** ENG-282: a month plan of this listing is billed a month at a time (the server's switch). Absent from an older server. */
+  monthly_billing?: boolean;
   /**
    * Public products only (ENG-172): the shop behind the listing, whether it can
    * be booked now (`live_booking`) or for the next opening (`book_for_morning`),

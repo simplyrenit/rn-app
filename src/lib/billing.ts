@@ -22,8 +22,8 @@ type Tone = "brand" | "success" | "warning" | "danger" | "neutral";
 export const isMonthly = (m: MonthlyMoney | null | undefined): boolean =>
   m?.billing === "monthly" && (m.periods?.length ?? 0) > 0;
 
-/** A month that will never be billed: ended early, cancelled, or lapsed after its grace. */
-const gone = (p: RentPeriod) => p.state === "dropped" || p.state === "lapsed";
+/** A month that will never be billed by link: ended early, cancelled, lapsed after its grace, or taken from the deposit. */
+const gone = (p: RentPeriod) => p.state === "dropped" || p.state === "lapsed" || p.state === "from_deposit";
 
 /** The rent months still on the schedule (not the notice, not those dropped). */
 const liveRent = (periods: RentPeriod[]) => periods.filter((p) => p.kind === "rent" && !gone(p));
@@ -39,8 +39,11 @@ export function periodDates(p: Pick<RentPeriod, "first_day" | "last_day">): stri
   return p.first_day === p.last_day ? dayMonth(p.first_day) : `${dayMonth(p.first_day)} – ${dayMonth(p.last_day)}`;
 }
 
-/** The row's pill (Figma 9477:5122): "Paid 20 Oct", "Due 23 Dec", "Link on 19 Jan", "Overdue", "Cancelled", "Notice". */
-export function periodPill(p: RentPeriod): { label: string; tone: Tone } {
+/**
+ * The row's pill (Figma 9477:5122): "Paid 20 Oct", "Due 23 Dec", "Link on 19 Jan", "Overdue", "Cancelled", "Notice". A
+ * lapse drops its month and every later one: only the first says "Not paid" (`laterLapse` for the others).
+ */
+export function periodPill(p: RentPeriod, laterLapse = false): { label: string; tone: Tone } {
   const paidDay = dayOf(p.paid_at);
   switch (p.state) {
     case "paid":
@@ -48,9 +51,11 @@ export function periodPill(p: RentPeriod): { label: string; tone: Tone } {
     case "overdue":
       return { label: "Overdue", tone: "danger" };
     case "lapsed":
-      return { label: "Not paid", tone: "neutral" };
+      return { label: laterLapse ? "Cancelled" : "Not paid", tone: "neutral" };
     case "dropped":
       return { label: "Cancelled", tone: "neutral" };
+    case "from_deposit":
+      return { label: "From deposit", tone: "neutral" };
     default:
       break;
   }
@@ -69,21 +74,44 @@ export interface PeriodRowView {
   dim: boolean;
   /** The overdue row is tinted. */
   tinted: boolean;
-  /** Due or overdue: the row opens Rent due. */
+  /** The row opens Rent due (`canPayPeriod`). */
   payable: boolean;
 }
 
-export function periodRow(p: RentPeriod): PeriodRowView {
+/**
+ * Whether this booking's screen can pay month `p`: a month of this very booking (a chain's other months are paid from their
+ * own booking), never its month 1 (paid with the rent after the accept), due or overdue, and offered by the server: its
+ * `pay_now` names the month, or `can` has `pay_period`.
+ */
+export function canPayPeriod(
+  p: RentPeriod,
+  booking: { number: string; can: string[]; pay_now?: { period?: number } | null }
+): boolean {
+  if (p.booking !== booking.number || p.n === 1 || (p.state !== "due" && p.state !== "overdue")) return false;
+  return booking.pay_now?.period === p.n || booking.can.includes("pay_period");
+}
+
+export function periodRow(p: RentPeriod, payable = false, laterLapse = false): PeriodRowView {
   return {
     key: `${p.booking}-${p.n}`,
     label: p.label,
     dates: periodDates(p),
     amount: money(p.amount),
-    pill: periodPill(p),
+    pill: periodPill(p, laterLapse),
     dim: p.state === "upcoming" || gone(p),
     tinted: p.state === "overdue",
-    payable: p.state === "due" || p.state === "overdue",
+    payable,
   };
+}
+
+/** Every row of the schedule, in order, each lapsed month after the first said as cancelled. */
+export function scheduleRows(periods: RentPeriod[], canPay: (p: RentPeriod) => boolean = () => false): { period: RentPeriod; row: PeriodRowView }[] {
+  let lapsed = false;
+  return periods.map((period) => {
+    const later = period.state === "lapsed" && lapsed;
+    if (period.state === "lapsed") lapsed = true;
+    return { period, row: periodRow(period, canPay(period), later) };
+  });
 }
 
 /** The rent month `today` falls in; before the first, the first, and after the last, the last. */
@@ -111,11 +139,13 @@ export function scheduleHead(periods: RentPeriod[], today: string): string | nul
  */
 export function scheduleFoot(m: MonthlyMoney, side: "customer" | "owner"): string {
   const periods = m.periods ?? [];
-  const paid = money(rentPaidOf(m));
-  if (side === "owner") return `You've earned ${paid} so far.`;
+  if (side === "owner") return `You've earned ${money(rentPaidOf(m))} so far.`;
+  // The rent alone: the delivery fee paid with month 1 and a notice are not "for 6 months".
+  const rentOf = (p: RentPeriod) => Number(p.rent ?? p.amount) || 0;
   const rent = liveRent(periods);
-  const total = rent.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  const head = `${money(total)} for ${pluralize(rent.length, "month")} · ${paid} paid.`;
+  const total = rent.reduce((sum, p) => sum + rentOf(p), 0);
+  const paid = periods.filter((p) => p.kind === "rent" && p.state === "paid").reduce((sum, p) => sum + rentOf(p), 0);
+  const head = `${money(total)} for ${pluralize(rent.length, "month")} · ${money(paid)} paid.`;
   const linksToCome = rent.some((p) => p.state === "upcoming") && !periods.some((p) => p.state === "overdue");
   return linksToCome ? `${head} Each month's pay link comes 3 days before it starts.` : head;
 }
@@ -220,6 +250,9 @@ export function payPeriodCopy(booking: BookingCustomer, n: number, today: string
   if (p.state === "paid") {
     const paidDay = dayOf(p.paid_at);
     return { ...base, ...rest, state: "paid", payBy: null, info: null, warning: null, done: paidDay ? `Paid ${dayShort(paidDay)}.` : "Paid." };
+  }
+  if (p.state === "from_deposit") {
+    return { ...base, ...rest, state: "gone", payBy: null, info: null, warning: null, done: "It was taken from your deposit." };
   }
   if (gone(p)) {
     return { ...base, ...rest, state: "gone", payBy: null, info: null, warning: null, done: "This month is no longer billed." };

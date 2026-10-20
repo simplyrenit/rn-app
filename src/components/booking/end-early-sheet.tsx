@@ -51,19 +51,26 @@ export const EndEarlySheet = forwardRef<EndEarlySheetHandle, { booking: BookingC
   const [ending, setEnding] = useState(false);
   const [picking, setPicking] = useState(false);
   const busy = useRef(false);
+  // The day last asked about: an answer for an earlier pick that lands late is dropped, never shown or confirmed.
+  const asked = useRef<string | null>(null);
 
   const { phase, pay } = usePay(number, {
     onResult: () => void queryClient.invalidateQueries(bookingQueryKey(number)),
     onError: (error) => toast.error("We couldn't start the payment", { message: payPeriodErrorText(apiError(error)) }),
   });
 
+  // Each ask clears the quote on screen, so no button stands for a day that is no longer the one asked about.
   const load = async (day?: string) => {
+    const key = day ?? "";
+    asked.current = key;
     setNote(null);
     setFailed(false);
-    if (!day) setQuote(null);
+    setQuote(null);
     try {
-      setQuote(await fetchEndEarly(number, day));
+      const answer = await fetchEndEarly(number, day);
+      if (asked.current === key) setQuote(answer);
     } catch (error) {
+      if (asked.current !== key) return;
       setFailed(true);
       setNote(endEarlyErrorText(apiError(error)));
     }
@@ -193,7 +200,7 @@ export const EndEarlySheet = forwardRef<EndEarlySheetHandle, { booking: BookingC
               {copy.button}
             </Button>
           ) : failed ? (
-            <Button variant="outline" onPress={() => void load()}>
+            <Button variant="outline" onPress={() => void load(asked.current || undefined)}>
               Try again
             </Button>
           ) : null}

@@ -20,6 +20,7 @@ export function BookingFacts({
   notDelivered,
   rate,
   plans: listingPlans,
+  monthlyBilling,
   deposit,
 }: {
   copy: LiveCopy | null;
@@ -29,6 +30,8 @@ export function BookingFacts({
   rate?: string | number | null;
   /** ENG-281: its plans; absent from an older server, which priced by `rate` alone. */
   plans?: Plan[];
+  /** ENG-282: the server bills this listing's month plan monthly (its switch is on). Absent from an older server. */
+  monthlyBilling?: boolean;
   deposit?: string | number | null;
 }) {
   const { color } = useTheme();
@@ -37,8 +40,8 @@ export function BookingFacts({
   const first = smallestPlan(plans);
   const price = priceBlock(first?.price, deposit);
   const minimum = minimumLine(plans);
-  // ENG-282: a month plan of 2 months or more is billed monthly, and ending inside it costs a month's notice.
-  const notice = noticeWords(plans);
+  // ENG-282: a month plan of 2 months or more, billed monthly, costs a month's notice for ending inside it.
+  const notice = monthlyBilling ? noticeWords(plans) : null;
   const rows = [
     { icon: MapPinIcon, text: getItLine(shop, notDelivered) },
     ...(hours ? [{ icon: ClockIcon, text: hours }] : []),

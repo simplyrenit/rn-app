@@ -1,6 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   EndEarlyQuote,
+  canPayPeriod,
   currentPeriod,
   endEarlyCopy,
   endingEarlyLine,
@@ -14,6 +15,7 @@ import {
   rentPaidOf,
   scheduleFoot,
   scheduleHead,
+  scheduleRows,
   shopOverdueAlert,
 } from "../billing";
 import { BookingCustomer, RentPeriod, noticeLine } from "../booking";
@@ -94,15 +96,42 @@ describe("periodPill and periodRow", () => {
     const notice = month(7, "2027-01-04", "2027-01-04", { kind: "notice", state: "due", label: "Notice month" });
     expect(periodPill(notice)).toEqual({ label: "Notice", tone: "warning" });
     expect(periodPill({ ...notice, state: "paid", paid_at: "2027-01-02T05:00:00Z" }).label).toBe("Paid 2 Jan");
-    expect(periodRow(notice)).toMatchObject({ label: "Notice month", dates: "4 Jan", payable: true });
+    expect(periodRow(notice)).toMatchObject({ label: "Notice month", dates: "4 Jan" });
+    // Not paid by the return day: taken from the deposit, and nothing to pay.
+    expect(periodPill({ ...notice, state: "from_deposit" })).toEqual({ label: "From deposit", tone: "neutral" });
+    expect(canPayPeriod({ ...notice, state: "from_deposit" }, { number: "RN-31207", can: ["pay_period"], pay_now: { period: 7 } })).toBe(false);
   });
 
-  it("tints only the overdue row, greys months not yet asked for, and opens Rent due for due and overdue", () => {
+  it("tints only the overdue row and greys months not yet asked for", () => {
     const [one, , three, four] = sofa();
     expect(periodRow(one)).toMatchObject({ label: "Month 1", dates: "24 Oct – 22 Nov", amount: "₹1,800", dim: false, tinted: false, payable: false });
-    expect(periodRow(three)).toMatchObject({ payable: true, tinted: false });
-    expect(periodRow({ ...three, state: "overdue" })).toMatchObject({ payable: true, tinted: true });
+    expect(periodRow(three, true)).toMatchObject({ payable: true, tinted: false });
+    expect(periodRow({ ...three, state: "overdue" }, true)).toMatchObject({ payable: true, tinted: true });
     expect(periodRow(four)).toMatchObject({ dim: true, payable: false });
+  });
+
+  it("pays from this screen only this booking's own due month that the server offers, never month 1", () => {
+    const [one, , three] = sofa();
+    const offered = { number: "RN-31207", can: [], pay_now: { period: 3 } };
+    expect(canPayPeriod(three, offered)).toBe(true);
+    expect(canPayPeriod({ ...three, state: "overdue" }, { ...offered, pay_now: null, can: ["pay_period"] })).toBe(true);
+    // Not offered, another booking of the chain, month 1, or not due.
+    expect(canPayPeriod(three, { ...offered, pay_now: null })).toBe(false);
+    expect(canPayPeriod({ ...three, booking: "RN-31300" }, offered)).toBe(false);
+    expect(canPayPeriod({ ...one, state: "due" }, { ...offered, pay_now: { period: 1 } })).toBe(false);
+    expect(canPayPeriod({ ...three, state: "upcoming" }, offered)).toBe(false);
+  });
+
+  it("says Not paid on the month that lapsed and Cancelled on the ones after", () => {
+    const lapsed = sofa().map((p) => (p.n >= 3 ? { ...p, state: "lapsed" as const } : p));
+    expect(scheduleRows(lapsed).map(({ row }) => row.pill.label)).toEqual([
+      "Paid 20 Oct",
+      "Paid 20 Nov",
+      "Not paid",
+      "Cancelled",
+      "Cancelled",
+      "Cancelled",
+    ]);
   });
 });
 
@@ -125,6 +154,12 @@ describe("the schedule card", () => {
     const overdue = sofa().map((p) => (p.n === 3 ? { ...p, state: "overdue" as const } : p));
     expect(scheduleFoot(money(overdue), "customer")).toBe("₹10,800 for 6 months · ₹3,600 paid.");
     expect(scheduleFoot(money(), "owner")).toBe("You've earned ₹3,600 so far.");
+    // The rent alone: month 1's delivery fee and a notice are left out of both sums.
+    const withDelivery = sofa().map((p) => (p.n === 1 ? { ...p, amount: "1950.00", rent: "1800.00" } : p));
+    const notice = month(7, "2027-01-04", "2027-01-04", { kind: "notice", state: "paid", label: "Notice month" });
+    expect(scheduleFoot(money([...withDelivery, notice]), "customer")).toBe(
+      "₹10,800 for 6 months · ₹3,600 paid. Each month's pay link comes 3 days before it starts."
+    );
   });
 
   it("reads what is paid from the server first", () => {

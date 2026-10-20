@@ -7,7 +7,7 @@ import { Records } from "@/components/capture/record-card";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, Text } from "@/components/core";
 import { LinkRow } from "@/components/handover/parts";
-import { endingEarlyLine, isMonthly, overdueAlert, overduePeriod } from "@/lib/billing";
+import { canPayPeriod, endingEarlyLine, isMonthly, overdueAlert, overduePeriod } from "@/lib/billing";
 import { BookingCustomer, RentPeriod, money, todayIst } from "@/lib/booking";
 import { faultRowSub } from "@/lib/claims";
 import { activeCopy, ownerAbsentAt, ownerAbsentKey } from "@/lib/day-of";
@@ -51,10 +51,12 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
   const monthly = isMonthly(booking.money);
   const overdue = monthly ? overduePeriod(booking.money) : null;
   const alert = overdue ? overdueAlert(overdue, booking.product.title, booking.money.rate) : null;
+  // Paid from here only when it is this booking's own month and the server offers it (`canPayPeriod`).
+  const payOverdue = overdue !== null && canPayPeriod(overdue, booking);
+  const canPay = (period: RentPeriod) => canPayPeriod(period, booking);
   // Monthly: the notice while inside the minimum, else nothing (the months after are simply not charged).
   const ending = monthly ? endingEarlyLine(booking.money, today) : "Returning early gives no refund.";
-  // A month of an extension chain is paid from its own booking.
-  const payMonth = (period: RentPeriod) => navigation.navigate("PayPeriod", { number: period.booking || number, n: period.n });
+  const payMonth = (period: RentPeriod) => navigation.navigate("PayPeriod", { number, n: period.n });
 
   return (
     <View style={{ flex: 1 }}>
@@ -72,7 +74,13 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
         </View>
 
         {overdue && alert ? (
-          <TouchableOpacity accessibilityRole="button" accessibilityHint="Opens Rent due" activeOpacity={0.8} onPress={() => payMonth(overdue)}>
+          <TouchableOpacity
+            accessibilityRole={payOverdue ? "button" : undefined}
+            accessibilityHint={payOverdue ? "Opens Rent due" : undefined}
+            activeOpacity={0.8}
+            disabled={!payOverdue}
+            onPress={() => payMonth(overdue)}
+          >
             <Notice tone="danger" icon="warning" title={alert.title}>
               {alert.body}
             </Notice>
@@ -114,7 +122,7 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
           </View>
         </View>
 
-        {monthly ? <PaymentSchedule money={booking.money} side="customer" today={today} onPay={payMonth} /> : null}
+        {monthly ? <PaymentSchedule money={booking.money} side="customer" today={today} onPay={payMonth} canPay={canPay} /> : null}
 
         <Records
           role="customer"
@@ -204,7 +212,7 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
         ) : null}
       </ScrollView>
       <BottomBar>
-        {overdue ? (
+        {overdue && payOverdue ? (
           <Button onPress={() => payMonth(overdue)}>{`Pay ${money(overdue.amount)}`}</Button>
         ) : (
           <Button variant="outline" onPress={() => navigation.navigate("BookingReturn", { number })}>

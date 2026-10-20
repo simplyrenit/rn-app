@@ -780,6 +780,7 @@ export default function DetailsScreen() {
             notDelivered={product.not_delivered}
             rate={product.rate}
             plans={product.plans}
+            monthlyBilling={product.monthly_billing}
             deposit={product.security_deposit}
           />
         </View>

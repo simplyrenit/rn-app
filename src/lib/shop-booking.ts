@@ -49,6 +49,8 @@ export interface ShopMoney extends MonthlyMoney {
   late_days?: number;
   late_fee?: string;
   damage_deduction?: string;
+  /** ENG-282: a notice not paid by the return day, taken from the deposit for the shop; "0.00" when none. */
+  notice_deduction?: string;
   /** The rent of an upheld fault report that comes off a later payout, and how much of it has not yet; absent from an older server. */
   clawback?: string;
   clawback_left?: string;
@@ -403,14 +405,16 @@ const amountOf = (value: string | undefined) => Math.max(Number(value) || 0, 0);
  * What came out of the deposit for the shop: the damage Renit decided, and the late days once they are fixed at the return
  * (while the item is out the late fee is only today's count). Never more than the deposit.
  */
-function keptFromDeposit(b: BookingShop): { damage: number; late: number; returned: number } {
+function keptFromDeposit(b: BookingShop): { damage: number; late: number; notice: number; returned: number } {
   const m = b.money;
   const deposit = amountOf(m.deposit);
   // A forfeited deposit is all kept because the item was not returned.
-  if (m.deposit_state === "forfeited") return { damage: 0, late: 0, returned: 0 };
+  if (m.deposit_state === "forfeited") return { damage: 0, late: 0, notice: 0, returned: 0 };
   const damage = Math.min(amountOf(m.damage_deduction), deposit);
   const late = b.stage === "out" ? 0 : Math.min(amountOf(m.late_fee), deposit - damage);
-  return { damage, late, returned: deposit - damage - late };
+  // ENG-282: an unpaid notice comes out of the deposit too, so it is not shown as returned.
+  const notice = Math.min(amountOf(m.notice_deduction), deposit - damage - late);
+  return { damage, late, notice, returned: deposit - damage - late - notice };
 }
 
 /** The Money card. A deposit of nothing is not drawn. */
@@ -423,6 +427,7 @@ export function moneyView(b: BookingShop): MoneyView {
   const notes = [
     ...(kept.damage > 0 ? [`${money(kept.damage)} kept from the deposit for you, for the damage`] : []),
     ...(kept.late > 0 ? [`${money(kept.late)} kept from the deposit for you, for the late days`] : []),
+    ...(kept.notice > 0 ? [`${money(kept.notice)} kept from the deposit for you, for the notice`] : []),
     ...(clawback > 0
       ? [
           amountOf(m.clawback_left) > 0
@@ -433,16 +438,18 @@ export function moneyView(b: BookingShop): MoneyView {
   ];
   // A settled deposit says what went back and what stayed with the shop, not just "Settled".
   const settledSub =
-    m.deposit_state === "settled" && kept.damage + kept.late > 0
+    m.deposit_state === "settled" && kept.damage + kept.late + kept.notice > 0
       ? [
           ...(kept.returned > 0 ? [`${money(kept.returned)} returned`] : []),
           ...(kept.damage > 0 ? [`${money(kept.damage)} kept for the damage`] : []),
           ...(kept.late > 0 ? [`${money(kept.late)} kept for the late days`] : []),
+          ...(kept.notice > 0 ? [`${money(kept.notice)} kept for the notice`] : []),
         ].join(", ")
       : null;
   // Monthly billing (ENG-282): the rent, the fee and what the shop earns are said for one month. The fee is a share of the
   // rent, so a month's is the booking's in the same proportion; the delivery fee stays whole, as it is paid with month 1.
-  const plan = isMonthly(m) && m.plan && Number(m.rent) > 0 ? m.plan : null;
+  // A booking that has ended is said as a whole, as it settled.
+  const plan = !b.exit && isMonthly(m) && m.plan && Number(m.rent) > 0 ? m.plan : null;
   const perMonth = (value: string) => (plan ? Math.round(((Number(value) * Number(plan.price)) / Number(m.rent)) * 100) / 100 : Number(value));
   const feeShown = perMonth(m.fee_shown);
   const feeCharged = perMonth(m.fee_charged);
@@ -456,8 +463,12 @@ export function moneyView(b: BookingShop): MoneyView {
       charged: money(feeCharged),
     },
     earn: plan ? money(Number(plan.price) - feeCharged) : money(m.you_earn),
-    // Each month is paid out on its own, the morning after it is paid, never before it starts (plan §6).
-    payout: plan ? "Paid to your bank the morning after each month is paid, once it has started." : m.payout?.text || null,
+    // Each month is paid out on its own, the morning after it is paid, never before it starts (plan §6). A payout that has
+    // moved past the plain default (failed, waiting for the bank, held) still says so.
+    payout:
+      plan && (m.payout?.status ?? "none") === "none"
+        ? "Paid to your bank the morning after each month is paid, once it has started."
+        : m.payout?.text || null,
     notes,
     deposit:
       m.deposit_state !== "none" && Number.isFinite(dep) && dep > 0

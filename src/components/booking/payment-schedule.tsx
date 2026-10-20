@@ -1,6 +1,6 @@
 import { Panel, Pill } from "@/components/booking/parts";
 import { Text } from "@/components/core";
-import { PeriodRowView, periodRow, scheduleFoot, scheduleHead } from "@/lib/billing";
+import { PeriodRowView, scheduleFoot, scheduleHead, scheduleRows } from "@/lib/billing";
 import { MonthlyMoney, RentPeriod } from "@/lib/booking";
 import { space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -52,19 +52,21 @@ export function PeriodRow({ row, first, onPress }: { row: PeriodRowView; first: 
 
 /**
  * The card "Monthly rent · Month 3 of 6" (Figma 9477:5156, shop 9478:3638): every month of a monthly-billed booking,
- * across its extension chain, and a foot with what is paid. `onPay`: the customer's, opening Rent due from a month that is
- * due or overdue; the shop's rows are not tapped.
+ * across its extension chain, and a foot with what is paid. `onPay`: the customer's, opening Rent due from a month that
+ * `canPay` allows (`canPayPeriod`); the shop's rows are not tapped.
  */
 export function PaymentSchedule({
   money,
   side,
   today,
   onPay,
+  canPay,
 }: {
   money: MonthlyMoney;
   side: "customer" | "owner";
   today: string;
   onPay?: (period: RentPeriod) => void;
+  canPay?: (period: RentPeriod) => boolean;
 }) {
   const { color } = useTheme();
   const periods = money.periods ?? [];
@@ -94,8 +96,7 @@ export function PaymentSchedule({
           </Text>
         ) : null}
       </View>
-      {periods.map((period, index) => {
-        const row = periodRow(period);
+      {scheduleRows(periods, onPay ? canPay : undefined).map(({ period, row }, index) => {
         return (
           <PeriodRow
             key={row.key}

@@ -271,6 +271,18 @@ describe("the Money card", () => {
     });
     expect(customerBlock(booking({ stage: "out", money: m }), NOW).note).toBe("Renit's desk follows up on unpaid months.");
     expect(customerBlock(booking({ stage: "out" }), NOW).note).toBeNull();
+    // A payout past the plain default still says where it stands.
+    const held = { ...m, payout: { ...m.payout, status: "paused", text: "Held: Renit's desk is checking this payout" } };
+    expect(moneyView(booking({ stage: "out", money: held })).payout).toBe("Held: Renit's desk is checking this payout");
+    // An ended booking is said as a whole, as it settled.
+    expect(moneyView(booking({ stage: "closed", exit: "cancelled_by_customer", money: m }))).toMatchObject({ rentLabel: "Rent", rent: "₹10,800" });
+  });
+
+  it("keeps an unpaid notice out of what is returned from the deposit (ENG-282)", () => {
+    const m = { ...booking().money, deposit: "5000.00", deposit_state: "settled", damage_deduction: "0.00", notice_deduction: "1800.00" };
+    const view = moneyView(booking({ stage: "closed", money: m }));
+    expect(view.notes).toEqual(["₹1,800 kept from the deposit for you, for the notice"]);
+    expect(view.deposit?.sub).toBe("₹3,200 returned, ₹1,800 kept for the notice");
   });
 
   it("says what was kept from the deposit for the shop, and what of it went back (E-110)", () => {

@@ -1227,6 +1227,24 @@ describe("pay the rent", () => {
     });
   });
 
+  it("says month 1 alone for a monthly booking (ENG-282), so the lines add up to what is charged", () => {
+    const monthly = accepted(
+      { pay_now: { purpose: "rent", amount: "1851.00", deposit_part: "0.00", due_at: "2026-10-13T04:43:00Z", payment: null } },
+      {
+        rent: "10800.00",
+        delivery_fee: "150.00",
+        billing: "monthly",
+        periods: [
+          { booking: "RN-24831", n: 1, label: "Month 1", kind: "rent", first_day: "2026-10-24", last_day: "2026-11-22", amount: "1950.00", rent: "1800.00", state: "upcoming", link_on: null, pay_by: null, grace_ends: null, paid_at: null, linked_at: null },
+        ],
+      }
+    );
+    expect(payRentCopy(monthly, NOW).lines).toEqual([
+      { label: "Month 1", amount: "₹1,950" },
+      { label: "Already paid", amount: "₹99", amountTone: "success" },
+    ]);
+  });
+
   it("gives the deadline as a clock time, never as a number of minutes", () => {
     const copy = payRentCopy(accepted(), NOW);
     expect(`${copy.sub} ${copy.small} ${copy.note}`).not.toMatch(/minute/);

@@ -9,7 +9,7 @@ import { PaymentsList } from "@/components/booking/payments-list";
 import { Timeline } from "@/components/booking/timeline";
 import { Button, Text } from "@/components/core";
 import { apiError } from "@/lib/api-error";
-import { isMonthly } from "@/lib/billing";
+import { canPayPeriod, isMonthly } from "@/lib/billing";
 import {
   BookingCustomer,
   bookingBanner,
@@ -247,7 +247,8 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
           money={booking.money}
           side="customer"
           today={todayIst(correctedNow(booking.server_time, receivedAt))}
-          onPay={(period) => navigation.navigate("PayPeriod", { number: period.booking || booking.number, n: period.n })}
+          onPay={(period) => navigation.navigate("PayPeriod", { number: booking.number, n: period.n })}
+          canPay={(period) => canPayPeriod(period, booking)}
         />
       ) : null}
 
