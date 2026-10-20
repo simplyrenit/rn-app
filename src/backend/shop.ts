@@ -5,9 +5,10 @@ import {
   SHOP_DELIVERY_EXAMPLE_ENDPOINT,
   SHOP_ENDPOINT,
   SHOP_OPEN_ENDPOINT,
+  SHOP_PINCODES_ENDPOINT,
 } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
-import { Hours, OpenState, Shop, ShopAddressBody } from "@/lib/shop";
+import { AreasResponse, Hours, OpenState, Shop, ShopAddressBody, areasKm } from "@/lib/shop";
 import { useQuery } from "react-query";
 
 /** Keyed on the username: the cache outlives a logout. */
@@ -29,6 +30,8 @@ export interface ShopPatch {
   delivery_base_fee?: string;
   delivery_per_km?: string;
   delivery_max_km?: string;
+  /** Replaces the whole list. A PIN being added that the server doesn't know is a `400 validation_error`. */
+  excluded_pincodes?: string[];
 }
 
 export async function patchShop(patch: ShopPatch): Promise<Shop> {
@@ -77,6 +80,14 @@ export async function fetchDeliveryExample(numbers: {
   ).data;
 }
 
+/**
+ * The areas around the shop's pin for a distance, nearest first. `409 shop_address_missing` when the shop has no pin; `404`
+ * from a server older than ENG-284.
+ */
+export async function fetchAreas(km: number): Promise<AreasResponse> {
+  return (await axiosInstance.get<AreasResponse>(SHOP_PINCODES_ENDPOINT, { params: { km: areasKm(km) } })).data;
+}
+
 export interface Device {
   id: number;
   name: string;
@@ -114,5 +125,17 @@ export function useDevices(enabledByScreen = true) {
   return useQuery(devicesQueryKey(username), fetchDevices, {
     enabled: enabled && enabledByScreen,
     staleTime: 15_000,
+  });
+}
+
+/** The areas for a distance the caller has already let settle, so a run of + taps asks once. */
+export function useAreas(settledKm: number, enabledByScreen = true) {
+  const { username, enabled } = useOwnerQueryGate();
+  const km = areasKm(settledKm);
+  return useQuery(["shop-areas", username, km], () => fetchAreas(km), {
+    enabled: enabled && enabledByScreen,
+    keepPreviousData: true,
+    staleTime: 60_000,
+    retry: false,
   });
 }
