@@ -35,9 +35,18 @@ interface Props {
   dailyHint?: string;
   /** Show "Add a weekly price, or unpick Weekly." under an empty price. */
   showErrors?: boolean;
+  /** Before each price: the edit form's currency icon, which follows the listing's country. "Rs" when not given. */
+  currency?: React.ReactNode;
 }
 
-export function PlanPricing({ value, onChange, label = "How do you rent this?", dailyHint, showErrors }: Props) {
+export function PlanPricing({
+  value,
+  onChange,
+  label = "How do you rent this?",
+  dailyHint,
+  showErrors,
+  currency,
+}: Props) {
   const plans = sortPlans(value);
   const picked = new Set(plans.map((p) => p.unit));
   const missing = new Set(missingPrices(plans));
@@ -71,6 +80,7 @@ export function PlanPricing({ value, onChange, label = "How do you rent this?", 
         plans={plans}
         missing={showErrors ? missing : new Set()}
         dailyHint={dailyHint}
+        currency={currency}
         onChange={change}
       />
       {plans.length > 1 ? (
@@ -129,11 +139,13 @@ function PlanRows({
   plans,
   missing,
   dailyHint,
+  currency,
   onChange,
 }: {
   plans: DraftPlan[];
   missing: Set<PlanUnit>;
   dailyHint?: string;
+  currency?: React.ReactNode;
   onChange: (unit: PlanUnit, changes: Partial<DraftPlan>) => void;
 }) {
   const { color } = useTheme();
@@ -159,7 +171,12 @@ function PlanRows({
                 : (worksOutLine({ ...plan, price: plan.price || "0" }) ?? `What a renter pays for one ${plan.unit}.`)}
             </Text>
           </View>
-          <PriceBox plan={plan} wrong={missing.has(plan.unit)} onChange={(price) => onChange(plan.unit, { price })} />
+          <PriceBox
+            plan={plan}
+            wrong={missing.has(plan.unit)}
+            currency={currency}
+            onChange={(price) => onChange(plan.unit, { price })}
+          />
           {missing.has(plan.unit) ? (
             <Text fontSize="text-xs" tone="danger">
               {`Add a ${UNIT_WORDS[plan.unit].toLowerCase()} price, or unpick ${UNIT_WORDS[plan.unit]}.`}
@@ -198,14 +215,26 @@ function PlanRows({
   );
 }
 
-function PriceBox({ plan, wrong, onChange }: { plan: DraftPlan; wrong: boolean; onChange: (price: string) => void }) {
+function PriceBox({
+  plan,
+  wrong,
+  currency,
+  onChange,
+}: {
+  plan: DraftPlan;
+  wrong: boolean;
+  currency?: React.ReactNode;
+  onChange: (price: string) => void;
+}) {
   const { color } = useTheme();
   const [focused, setFocused] = useState(false);
   return (
     <FieldShell focused={focused} error={wrong}>
-      <Text fontSize="text-md" fontWeight="font-bold" tone="body">
-        Rs
-      </Text>
+      {currency ?? (
+        <Text fontSize="text-md" fontWeight="font-bold" tone="body">
+          Rs
+        </Text>
+      )}
       <TextInput
         accessibilityLabel={`${UNIT_WORDS[plan.unit]} price`}
         keyboardType="number-pad"

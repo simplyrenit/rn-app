@@ -32,7 +32,7 @@ import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "react-query";
 
-/** The same item from another owner: who, how far, the day rate, and "Ask this owner". */
+/** The same item from another owner: who, how far, its smallest plan's price (ENG-281), and "Ask this owner". */
 function OtherOwner({ product, onAsk }: { product: BackendProduct; onAsk: () => void }) {
   const otherPlan = smallestPlan(plansOf(product));
   const distance = useDistanceTo(product.coordinates);

@@ -348,6 +348,16 @@ export const LONGEST_BOOKING_DAYS = 365;
 /** The last day a booking that starts on `first` can end on. */
 export const lastReturnDay = (first: string): string => addDays(first, LONGEST_BOOKING_DAYS - 1);
 
+/**
+ * ENG-281: the return days a booking from `first` cannot have, its minimum not reached: from the day after `first` up to
+ * the day before the earliest return. A minimum of 3 days from Sat 24 greys out Sun 25 alone; Mon 26 is the minimum itself.
+ */
+export function daysInsideMinimum(first: string, minDays: number): string[] {
+  const days: string[] = [];
+  for (let n = 2; n < minDays; n++) days.push(addDays(first, n - 1));
+  return days;
+}
+
 /** Days the server takes: the start within 180 days of today, at most a year long. */
 export function daysAllowed(first: string, last: string, today: string): boolean {
   return first >= today && last >= first && first <= lastBookableDay(today) && last <= lastReturnDay(first);

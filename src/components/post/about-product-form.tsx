@@ -668,7 +668,7 @@ export function AboutProductForm({
       />
 
       <View style={{ marginBottom: density.fieldGap }}>
-        <PlanPricing value={plans} onChange={setPlans} showErrors />
+        <PlanPricing value={plans} onChange={setPlans} showErrors currency={currencyAdornment ?? undefined} />
       </View>
 
       <View style={{ marginBottom: density.fieldGap }}>

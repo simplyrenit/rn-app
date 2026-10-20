@@ -17,6 +17,7 @@ import {
   lastBookableDay,
   lastReturnDay,
   daysAllowed,
+  daysInsideMinimum,
   dayShort,
   dayCount,
   daysLabel,
@@ -229,7 +230,8 @@ export default function BookingDatesScreen() {
   }, [mode, delivery]);
 
   const active = mode === "pickup" ? pickupQuote : deliveryQuote;
-  const quote = first ? active.data : undefined;
+  // With no return day yet (a minimum over a day) the last answer is for other dates: none is shown.
+  const quote = first && last ? active.data : undefined;
   // The last answer stays on screen while the next loads; it must not be continued from.
   const settling = active.isFetching || active.isPreviousData;
   const blocker = datesBlocker(quote);
@@ -241,10 +243,8 @@ export default function BookingDatesScreen() {
       marks[day] = { taken: true };
     });
     if (first && choosingReturn && minDays > 1) {
-      // Return days inside the minimum cannot be tapped.
-      for (let i = 1, day = addDays(first, 1); i < minDays; i++, day = addDays(day, 1)) {
-        marks[day] = { ...marks[day], short: true };
-      }
+      // Return days inside the minimum cannot be tapped; the minimum's own last day can.
+      for (const day of daysInsideMinimum(first, minDays)) marks[day] = { ...marks[day], short: true };
       marks[first] = { ...marks[first], inRange: true, start: true, end: true };
     }
     if (first && last) {

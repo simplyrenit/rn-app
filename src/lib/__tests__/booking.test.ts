@@ -67,6 +67,7 @@ import {
   priceLines,
   rateLine,
   daysAllowed,
+  daysInsideMinimum,
   rangeIsFree,
   rangeLabel,
   rentalNextLine,
@@ -1854,6 +1855,13 @@ describe("pricing plans (ENG-281)", () => {
     const start = { first: "2026-10-24", last: null };
     expect(tapDay(start, "2026-10-25", new Set(), 3)).toEqual({ picked: start, blocked: false, short: true });
     expect(tapDay(start, "2026-10-26", new Set(), 3).picked).toEqual({ first: "2026-10-24", last: "2026-10-26" });
+  });
+
+  it("greys out the return days inside the minimum, and not the minimum's own last day", () => {
+    expect(daysInsideMinimum("2026-10-24", 3)).toEqual(["2026-10-25"]);
+    expect(daysInsideMinimum("2026-10-24", 1)).toEqual([]);
+    expect(daysInsideMinimum("2026-10-24", 2)).toEqual([]);
+    expect(daysInsideMinimum("2026-10-24", 7)).toHaveLength(5); // the 7th day, Fri 30, can be the return
   });
 
   it("allows a start within 180 days and a booking of up to a year", () => {
