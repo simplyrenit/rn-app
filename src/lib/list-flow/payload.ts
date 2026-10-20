@@ -1,4 +1,4 @@
-import { parseRate } from "./deposit";
+import { toPlans } from "@/lib/plans";
 import { specAttributes } from "./specs";
 import { parseQuantity, parseWorth } from "./stock";
 import { CategoryValue, FieldName, ListingDraft } from "./types";
@@ -41,7 +41,7 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
     if (f[name].source !== "empty") fieldSources[name] = f[name].source;
   });
 
-  const rate = parseRate(f.rate.value);
+  const plans = toPlans(f.plans.value);
   // Review will not let the owner past an empty or invalid quantity, so the
   // fallback to the server's own default of 1 only covers a stored old draft.
   const quantity = parseQuantity(f.quantity.value) ?? 1;
@@ -53,7 +53,7 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
   return {
     title: f.title.value?.trim() ?? "",
     description: f.description.value?.trim() ?? "",
-    rate,
+    plans,
     quantity,
     worth,
     not_delivered: Boolean(draft.notDelivered),

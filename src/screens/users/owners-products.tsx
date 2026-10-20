@@ -98,6 +98,7 @@ const OwnersProductsScreen: React.FC = () => {
               title={item.title}
               location={item.location}
               price={item.rate}
+              plans={item.plans}
               coordinates={item.coordinates}
               width={isTrailingOdd ? COLUMN_WIDTH * 2 + GRID_GAP : COLUMN_WIDTH}
             />

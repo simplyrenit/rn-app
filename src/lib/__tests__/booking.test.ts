@@ -65,6 +65,8 @@ import {
   paySteps,
   plainLines,
   priceLines,
+  rateLine,
+  daysAllowed,
   rangeIsFree,
   rangeLabel,
   rentalNextLine,
@@ -1824,5 +1826,45 @@ describe("when the deposit is due, on every screen of a booking (test run D-18)"
   it("falls back to the ask day when the answer has no due moment, and to nothing when it has neither", () => {
     expect(depositDueWhen({ deposit_ask_at: ask, deposit_due_at: null }, true)).toBe("Tue 27 Oct");
     expect(depositDueWhen({ deposit_ask_at: null, deposit_due_at: null }, true)).toBeNull();
+  });
+});
+
+describe("pricing plans (ENG-281)", () => {
+  const weekly = quote({
+    days: 10,
+    rate: "357.14",
+    rent: "3571.00",
+    total: "3571.00",
+    plan: { unit: "week", price: "2500.00", min: 1 },
+  });
+
+  it("names the plan that priced the rent, with its maths under it", () => {
+    expect(priceLines(weekly)[0]).toEqual({ label: "Rent · 10 days, weekly rate", amount: "₹3,571" });
+    expect(rateLine(weekly)).toBe("₹2,500 a week ÷ 7 = ₹357.14 a day");
+    expect(rateLine(quote())).toBeNull();
+    expect(priceLines(quote({ plan: { unit: "day", price: "610.00", min: 1 } }))[0].label).toBe("Rent · 3 days × ₹610");
+  });
+
+  it("says a late day costs the plan's price a day", () => {
+    expect(plainLines(weekly)).toContain("Each late day costs ₹357.14, your plan's price a day.");
+    expect(plainLines(quote())).toContain("Each late day costs one day's rent.");
+  });
+
+  it("keeps a return day inside the minimum from being picked", () => {
+    const start = { first: "2026-10-24", last: null };
+    expect(tapDay(start, "2026-10-25", new Set(), 3)).toEqual({ picked: start, blocked: false, short: true });
+    expect(tapDay(start, "2026-10-26", new Set(), 3).picked).toEqual({ first: "2026-10-24", last: "2026-10-26" });
+  });
+
+  it("allows a start within 180 days and a booking of up to a year", () => {
+    const today = "2026-11-02";
+    expect(daysAllowed("2027-05-01", "2027-05-01", today)).toBe(true);
+    expect(daysAllowed("2027-05-02", "2027-05-02", today)).toBe(false);
+    expect(daysAllowed("2026-11-07", "2027-11-06", today)).toBe(true); // 365 days
+    expect(daysAllowed("2026-11-07", "2027-11-07", today)).toBe(false);
+  });
+
+  it("asks for more days when the dates are under the minimum", () => {
+    expect(datesBlocker(quote({ blockers: ["too_short"], can_book: false, min_days: 3 }))).toBe("Pick at least 3 days.");
   });
 });

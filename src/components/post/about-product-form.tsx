@@ -27,6 +27,8 @@ import * as Location from "expo-location";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, TextInput, TouchableOpacity, View } from "react-native";
 import { AppSwitch } from "@/components/core/switch";
+import { PlanPricing } from "@/components/post/plan-pricing";
+import { DraftPlan, toPlans } from "@/lib/plans";
 import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -48,9 +50,9 @@ export type ContactPerson = "Owner" | "Other";
 /**
  * Everything this form collects.
  *
- * The two screens that use it persist these differently — the create flow puts
- * them in the product context and moves on, the edit screen PATCHes them — so
- * the form hands the whole set over and takes no view on where it goes.
+ * Only the edit-listing screen uses it now (the create flow is the photo-first
+ * `list-flow`), and it PATCHes them; the form hands the whole set over and
+ * takes no view on where it goes.
  */
 export interface AboutProductValues {
   productName: string;
@@ -60,7 +62,8 @@ export interface AboutProductValues {
   condition: string;
   productDescription: string;
   usageDescription: string;
-  pricePerDay: string;
+  /** ENG-281: how it is rented and for how much, as typed. */
+  plans: DraftPlan[];
   securityDeposit: string;
   /** ENG-155: units the owner has, what the item costs to replace, and the one per-product delivery exception. */
   quantity: string;
@@ -138,8 +141,6 @@ const CURRENCY_ICON: Record<
 
 const SUPPORTED_COUNTRIES = ["USA", "UK", "India"];
 
-const isPositiveAmount = (value: string) =>
-  /^\d+(\.\d{1,2})?$/.test(value) && Number(value) > 0;
 const isNonNegativeAmount = (value: string) =>
   /^\d+(\.\d{1,2})?$/.test(value) && Number(value) >= 0;
 
@@ -178,8 +179,8 @@ export function AboutProductForm({
   const [usageDescription, setUsageDescription] = useState(
     initialValues?.usageDescription ?? ""
   );
-  const [pricePerDay, setPricePerDay] = useState(
-    initialValues?.pricePerDay ?? ""
+  const [plans, setPlans] = useState<DraftPlan[]>(
+    initialValues?.plans ?? [{ unit: "day", price: "", min: 1 }]
   );
   const [securityDeposit, setSecurityDeposit] = useState(
     initialValues?.securityDeposit ?? ""
@@ -193,7 +194,6 @@ export function AboutProductForm({
   // than getting one for free from TextField. Same for the two currency fields
   // and the phone number, which wrap a bare TextInput to fit an adornment in.
   const [conditionFocus, setConditionFocus] = useState(false);
-  const [priceFocus, setPriceFocus] = useState(false);
   const [depositFocus, setDepositFocus] = useState(false);
   const [worthFocus, setWorthFocus] = useState(false);
   const [quantityFocus, setQuantityFocus] = useState(false);
@@ -395,7 +395,7 @@ export function AboutProductForm({
     !productName.trim() && "a product name",
     !condition && "a condition",
     !productDescription.trim() && "a description",
-    !isPositiveAmount(pricePerDay) && "a price per day",
+    toPlans(plans) === null && "a price",
     !isNonNegativeAmount(securityDeposit) && "a security deposit",
     parseWorth(worth) === null && "what it is worth",
     parseQuantity(quantity) === null && "how many you have",
@@ -438,7 +438,7 @@ export function AboutProductForm({
         condition,
         productDescription,
         usageDescription,
-        pricePerDay,
+        plans,
         securityDeposit,
         quantity,
         worth,
@@ -499,9 +499,9 @@ export function AboutProductForm({
           {prompts?.confirmPrice ? (
             <Text fontSize="text-sm" tone="warning">
               <Text fontSize="text-sm" fontWeight="font-bold" tone="warning">
-                Confirm your price.{" "}
+                Confirm your prices.{" "}
               </Text>
-              Check it is what a renter pays per day, then update the product.
+              Check each is what a renter pays, then update the product.
             </Text>
           ) : null}
           {prompts?.needsWorth ? (
@@ -668,30 +668,7 @@ export function AboutProductForm({
       />
 
       <View style={{ marginBottom: density.fieldGap }}>
-        <FieldLabel
-          label="Price per day"
-          required
-          hint="What a renter pays per day"
-        />
-        <FieldShell focused={priceFocus}>
-          {currencyAdornment}
-          <TextInput
-            accessibilityLabel="Price per day"
-            placeholder="e.g. 1200"
-            keyboardType="numeric"
-            value={pricePerDay}
-            onChangeText={(value) => setPricePerDay(digitsOnly(value))}
-            placeholderTextColor={color.placeholder}
-            onFocus={() => setPriceFocus(true)}
-            onBlur={() => setPriceFocus(false)}
-            style={{
-              flex: 1,
-              color: color.text,
-              fontFamily: fontFamily.regular,
-              fontSize: fontSize.md,
-            }}
-          />
-        </FieldShell>
+        <PlanPricing value={plans} onChange={setPlans} showErrors />
       </View>
 
       <View style={{ marginBottom: density.fieldGap }}>

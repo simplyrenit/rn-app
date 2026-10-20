@@ -6,6 +6,7 @@
  */
 
 import type { AddressType } from "@/lib/addresses";
+import type { DraftPlan } from "@/lib/plans";
 
 export type FieldName =
   | "category"
@@ -15,7 +16,7 @@ export type FieldName =
   | "condition"
   | "description"
   | "usage_description"
-  | "rate"
+  | "plans"
   | "security_deposit"
   | "location"
   | "quantity"
@@ -65,8 +66,13 @@ export interface FieldValues {
   condition: Condition;
   description: string;
   usage_description: string;
-  /** Kept as the typed text; parsed only when it is used. */
-  rate: string;
+  /**
+   * ENG-281: how the listing is rented and for how much, each price kept as
+   * the typed text; `toPlans` reads them. Null until the owner touches the
+   * price check, so the category can still pick the first plan (furniture is
+   * monthly). Drafts saved before carried a `rate`, read as a day plan.
+   */
+  plans: DraftPlan[];
   security_deposit: string;
   location: LocationValue;
   /** How many units the owner has to rent out. Typed text; parsed when used. */

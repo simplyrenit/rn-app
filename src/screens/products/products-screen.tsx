@@ -46,6 +46,7 @@ import { CategoryIcon } from "@/lib/category-icons";
 import { CHAT_ENABLED } from "@/lib/config";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
+import { aUnitLabel, plansOf, smallestPlan } from "@/lib/plans";
 import { FlagReason, ListingStatus, resolveListingStatus, waitsText } from "@/lib/listing-status";
 import { getDiscoveryLocationData } from "@/lib/location";
 import { keySpecLine, specMatchesFilters } from "@/lib/product-specs";
@@ -257,7 +258,8 @@ export default function DetailsScreen() {
    */
   const handleShare = async () => {
     if (!product) return;
-    const line = `${product.title} — ${formatCurrency(product.rate)} per day on Renit`;
+    const plan = smallestPlan(plansOf(product));
+    const line = plan ? `${product.title} — ${aUnitLabel(plan)} on Renit` : `${product.title} on Renit`;
     try {
       await Share.share({ message: line, title: product.title });
     } catch {
@@ -330,6 +332,7 @@ export default function DetailsScreen() {
 
   // Whether the owner is asked now, at their next opening, or cannot be booked.
   const booking = product ? liveCopy(product) : null;
+  const barPlan = product ? smallestPlan(plansOf(product)) : null;
 
   /**
    * Book now opens the dates (BK-02), on the dates of the search when there was
@@ -776,6 +779,7 @@ export default function DetailsScreen() {
             shop={product.shop}
             notDelivered={product.not_delivered}
             rate={product.rate}
+            plans={product.plans}
             deposit={product.security_deposit}
           />
         </View>
@@ -958,6 +962,7 @@ export default function DetailsScreen() {
                     title={item.title}
                     location={item.location}
                     price={item.rate}
+                    plans={item.plans}
                     coordinates={item.coordinates}
                     isFavorite={favorites.some((fav) => fav.name === item.name)}
                     tile
@@ -997,14 +1002,14 @@ export default function DetailsScreen() {
           ...(isDark ? null : BAR_LIFT),
         }}
       >
-        {/* BK-01's bar: the day rate over the deposit. */}
+        {/* BK-01's bar: the smallest plan's price over the deposit (ENG-281). */}
         <View>
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
             <Text fontWeight="font-bold" fontSize="text-lg">
-              {formatCurrency(product?.rate)}
+              {formatCurrency(barPlan?.price ?? product?.rate)}
             </Text>
             <Text fontSize="text-sm" tone="body">
-              a day
+              {`a ${barPlan?.unit ?? "day"}`}
             </Text>
           </View>
           {Number(product?.security_deposit) > 0 ? (

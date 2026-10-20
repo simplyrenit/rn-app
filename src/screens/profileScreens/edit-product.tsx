@@ -4,7 +4,8 @@ import IconButton from "@/components/profile/post-auth/profile-icon-button";
 import { HeldChange, ListingPrompts, ListingStatusPill } from "@/components/product/listing-status";
 import { ownerView, readPendingEdit } from "@/lib/listing-edit";
 import { apiError } from "@/lib/api-error";
-import { softBreaks } from "@/lib/format";
+import { formatCurrency, softBreaks } from "@/lib/format";
+import { plansOf, smallestPlan } from "@/lib/plans";
 import { blockedDatesOf, hasPrice, openBookingMessage, resolveListingStatus } from "@/lib/listing-status";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -134,9 +135,9 @@ const EditProductScreen: React.FC = () => {
                           fontSize="text-sm"
                           fontWeight="font-bold"
                         >
-                          ₹{Number(product.rate).toFixed(0)}
+                          {formatCurrency(smallestPlan(plansOf(product))?.price ?? product.rate)}
                         </Text>
-                        <Text tone="body">per day</Text>
+                        <Text tone="body">{`per ${smallestPlan(plansOf(product))?.unit ?? "day"}`}</Text>
                       </View>
                     ) : (
                       <Text tone="body" fontSize="text-sm">No price yet</Text>
@@ -294,9 +295,9 @@ const EditProductScreen: React.FC = () => {
                         fontSize="text-base"
                         fontWeight="font-bold"
                       >
-                        ₹{Number(product.rate).toFixed(0)}
+                        {formatCurrency(smallestPlan(plansOf(product))?.price ?? product.rate)}
                       </Text>
-                      <Text tone="body">per day</Text>
+                      <Text tone="body">{`per ${smallestPlan(plansOf(product))?.unit ?? "day"}`}</Text>
                     </View>
                   ) : null}
                 </View>

@@ -105,7 +105,7 @@ export default function ListAddPhotosScreen() {
     flow.track("listing_started", { resumed_draft: true });
     // A draft that already reached Review goes back there, with its fields.
     const target = resumable;
-    if (target && (target.extractionRuns > 0 || target.fields.title.value || target.fields.rate.value)) {
+    if (target && (target.extractionRuns > 0 || target.fields.title.value || target.fields.plans.value)) {
       navigation.navigate("ListReview");
     }
   };

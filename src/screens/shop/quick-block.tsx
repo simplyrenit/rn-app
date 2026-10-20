@@ -1,6 +1,7 @@
 import { fetchFree, makeBlock, refreshShop } from "@/backend/shop-today";
 import { Button, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
+import { Stepper } from "@/components/core/stepper";
 import { DayPickerModal } from "@/components/shop/day-picker-modal";
 import { ProductPicker } from "@/components/shop/product-picker";
 import { apiError } from "@/lib/api-error";
@@ -31,32 +32,6 @@ import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { CalendarIcon, InformationCircleIcon, MagnifyingGlassIcon, MinusIcon, PlusIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "react-query";
-
-function Stepper({ label, onPress, disabled, children }: { label: string; onPress: () => void; disabled: boolean; children: React.ReactNode }) {
-  const { color } = useTheme();
-  return (
-    <TouchableOpacity
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      activeOpacity={0.7}
-      onPress={onPress}
-      style={{
-        width: MIN_TOUCH_TARGET + 6,
-        height: MIN_TOUCH_TARGET + 6,
-        borderRadius: radius.full,
-        borderWidth: 1,
-        borderColor: color.inputLine,
-        alignItems: "center",
-        justifyContent: "center",
-        opacity: disabled ? 0.4 : 1,
-      }}
-    >
-      {children}
-    </TouchableOpacity>
-  );
-}
 
 /**
  * SH-05, "Rented at the counter": the item, how many, until when and why. It

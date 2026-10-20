@@ -9,6 +9,7 @@ import { Notice, Panel, Pill, TextButton, Thumb } from "@/components/booking/par
 import { PaymentsList } from "@/components/booking/payments-list";
 import { useReadAt } from "@/components/booking/use-read-at";
 import { Button, Skeleton, Text } from "@/components/core";
+import { aUnitLabel, plansOf, smallestPlan } from "@/lib/plans";
 import { apiError } from "@/lib/api-error";
 import {
   BookItem,
@@ -33,6 +34,7 @@ import { useQuery, useQueryClient } from "react-query";
 
 /** The same item from another owner: who, how far, the day rate, and "Ask this owner". */
 function OtherOwner({ product, onAsk }: { product: BackendProduct; onAsk: () => void }) {
+  const otherPlan = smallestPlan(plansOf(product));
   const distance = useDistanceTo(product.coordinates);
   return (
     <Panel style={{ padding: space.md, gap: space.md }}>
@@ -47,7 +49,7 @@ function OtherOwner({ product, onAsk }: { product: BackendProduct; onAsk: () => 
           </Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, flexWrap: "wrap" }}>
             <Text fontSize="text-md" fontWeight="font-bold">
-              {`${money(product.rate)} a day`}
+              {otherPlan ? aUnitLabel(otherPlan) : `${money(product.rate)} a day`}
             </Text>
             {product.live_booking ? <Pill label="Live booking" tone="success" /> : null}
           </View>

@@ -30,6 +30,7 @@ import {
   plainLines,
   priceLines,
   rangeLabel,
+  rateLine,
   reviewBlocker,
   termsTicked,
   totalLabel,
@@ -261,6 +262,11 @@ export default function ReviewAndBookScreen() {
           {priceLines(quote).map((line) => (
             <MoneyLine key={line.label} {...line} />
           ))}
+          {rateLine(quote) ? (
+            <Text fontSize="text-xs" tone="success">
+              {rateLine(quote)}
+            </Text>
+          ) : null}
           <View style={{ height: 1, backgroundColor: color.line }} />
           <MoneyLine label={totalLabel(quote)} amount={money(quote.total)} bold />
         </Panel>

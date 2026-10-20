@@ -75,6 +75,10 @@ export function PriceFilter({
         </Text>
         <PriceBox label="Max" value={max} onChangeText={handleMaxChange} />
       </View>
+      {/* ENG-281: a weekly or monthly listing is filtered by what it works out to a day. */}
+      <Text fontSize="text-xs" tone="body" className="px-gutter mt-1">
+        Price per day
+      </Text>
     </View>
   );
 }

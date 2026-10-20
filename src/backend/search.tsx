@@ -1,3 +1,4 @@
+import type { Plan } from "@/lib/plans";
 import { SEARCH_PRODUCTS, SEARCH_SPEC_FILTERS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { BackendProduct } from "@/lib/types";
@@ -186,6 +187,7 @@ interface Product {
   average_rating?: string; // readonly, decimal
   security_deposit?: string; // readonly, decimal
   rate: string; // decimal
+  plans?: Plan[]; // ENG-281
   currency?: string; // max length: 10
   location: string; // min length: 1
   brand_name?: string; // max length: 100, nullable

@@ -1,5 +1,6 @@
 import { aspect, radius } from "@/lib/design-tokens";
 import { formatCurrency } from "@/lib/format";
+import { plansOf, smallestPlan } from "@/lib/plans";
 import { useTheme } from "@/lib/theme";
 import { ItemCard, useTypedNavigation } from "@/lib/types";
 import { Image } from "expo-image";
@@ -30,6 +31,7 @@ export function MyProductCard({
   title,
   location,
   price,
+  plans,
   id,
   status,
   width,
@@ -47,6 +49,8 @@ export function MyProductCard({
   const statusLabel = status && status !== "live" ? listingStatusLabel(status) : null;
   // A draft made on the dashboard may have no price yet.
   const priced = hasPrice(price);
+  // ENG-281: the smallest plan, per its unit.
+  const shownPlan = smallestPlan(plansOf({ plans, rate: price }));
 
   const imageStyle = {
     width: "100%",
@@ -59,7 +63,7 @@ export function MyProductCard({
       id={id}
       accessibilityRole="button"
       accessibilityLabel={`${title}${statusLabel ? `, ${statusLabel}` : ""}, ${
-        priced ? `${formatCurrency(price)} per day` : "no price yet"
+        priced ? `${formatCurrency(shownPlan?.price ?? price)} per ${shownPlan?.unit ?? "day"}` : "no price yet"
       }. Opens the product editor.`}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
@@ -133,10 +137,10 @@ export function MyProductCard({
           {priced ? (
             <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
               <Text fontSize="text-md" fontWeight="font-bold">
-                {formatCurrency(price)}
+                {formatCurrency(shownPlan?.price ?? price)}
               </Text>
               <Text fontSize="text-sm" tone="dim">
-                per day
+                {`per ${shownPlan?.unit ?? "day"}`}
               </Text>
             </View>
           ) : (

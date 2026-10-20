@@ -206,6 +206,7 @@ export default function CategoryLandingScreen() {
             title={item.title}
             location={item.location}
             price={item.rate}
+            plans={item.plans}
             width={cardWidth}
             isFavorite={favorites.some((fav) => fav.name === item.name)}
             tile

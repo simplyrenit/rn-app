@@ -1,7 +1,7 @@
 import { usePublicProduct, useQuote } from "@/backend/bookings";
 import useAddresses from "@/backend/useAddresses";
 import { AddressPickerSheet, AddressPickerSheetHandle } from "@/components/addresses/address-picker-sheet";
-import { BookingLoadError, BookingLoading, BottomBar, Panel } from "@/components/booking/parts";
+import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/components/booking/parts";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
@@ -15,6 +15,9 @@ import {
   datesBlocker,
   daysRefusal,
   lastBookableDay,
+  lastReturnDay,
+  daysAllowed,
+  dayShort,
   dayCount,
   daysLabel,
   deliveryOption,
@@ -27,6 +30,7 @@ import {
 } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useDistanceTo } from "@/lib/distance";
+import { minDays as minDaysOf, minimumWords, plansOf } from "@/lib/plans";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -170,16 +174,20 @@ export default function BookingDatesScreen() {
     params.last_day &&
     params.first_day >= today &&
     params.last_day >= params.first_day &&
-    // Days a search or an earlier request carried that the server would refuse (more than 180 days ahead) are not kept.
-    params.last_day <= lastBookableDay(today)
+    // Days a search or an earlier request carried that the server would refuse (a start more than 180 days ahead, more
+    // than a year) are not kept.
+    daysAllowed(params.first_day, params.last_day, today)
       ? { first: params.first_day, last: params.last_day }
       : null
   );
   const [mode, setMode] = useState<DeliveryMode>("pickup");
   const [chosenAddress, setChosenAddress] = useState<SavedAddress | null>(null);
 
+  // ENG-281: the shortest booking the listing's plans allow. A first tap alone is a one-day rental only when one day is.
+  const minDays = product ? minDaysOf(plansOf(product)) : 1;
   const first = picked?.first ?? null;
-  const last = picked ? picked.last ?? picked.first : null;
+  const last = picked ? picked.last ?? (minDays > 1 ? null : picked.first) : null;
+  const choosingReturn = Boolean(picked && !picked.last);
 
   // Dates that came from a search or an earlier request may have been taken since.
   useEffect(() => {
@@ -232,6 +240,13 @@ export default function BookingDatesScreen() {
     taken.forEach((day) => {
       marks[day] = { taken: true };
     });
+    if (first && choosingReturn && minDays > 1) {
+      // Return days inside the minimum cannot be tapped.
+      for (let i = 1, day = addDays(first, 1); i < minDays; i++, day = addDays(day, 1)) {
+        marks[day] = { ...marks[day], short: true };
+      }
+      marks[first] = { ...marks[first], inRange: true, start: true, end: true };
+    }
     if (first && last) {
       const count = dayCount(first, last);
       for (let i = 0, day = first; i < count; i++) {
@@ -240,12 +255,14 @@ export default function BookingDatesScreen() {
       }
     }
     return marks;
-  }, [taken, first, last]);
+  }, [taken, first, last, choosingReturn, minDays]);
 
   const onDayPress = (day: string) => {
-    const next = tapDay(picked, day, taken);
+    const next = tapDay(picked, day, taken, minDays);
     setPicked(next.picked);
-    if (next.blocked) {
+    if (next.short) {
+      toast.info(`Minimum rental is ${minimumWords(plansOf(product ?? {}))}`, { haptic: false });
+    } else if (next.blocked) {
       toast.info("Those dates include a day that is not available", { haptic: false });
     }
   };
@@ -253,7 +270,7 @@ export default function BookingDatesScreen() {
   const renderDay = ({ date, state, marking }: any) => {
     const day: string = date?.dateString;
     const isTaken = Boolean(marking?.taken);
-    const isOff = isTaken || state === "disabled";
+    const isOff = isTaken || Boolean(marking?.short) || state === "disabled";
     const isEnd = Boolean(marking?.start || marking?.end);
     const inRange = Boolean(marking?.inRange);
     const isToday = day === today;
@@ -357,8 +374,9 @@ export default function BookingDatesScreen() {
           <Calendar
             current={first ?? today}
             minDate={today}
-            // Days past the limit (T-25) are greyed and cannot be tapped: the server refuses them.
-            maxDate={lastBookableDay(today)}
+            // Days past the limit (T-25) are greyed and cannot be tapped: the server refuses them. A booking starts within
+            // 180 days and, once it has, may end up to a year later (ENG-281).
+            maxDate={first && choosingReturn ? lastReturnDay(first) : lastBookableDay(today)}
             firstDay={1}
             hideExtraDays
             markedDates={markedDates}
@@ -388,6 +406,14 @@ export default function BookingDatesScreen() {
             <LegendDot label="Today" ring={color.brand} />
           </View>
         </Panel>
+
+        {minDays > 1 ? (
+          <Notice icon="clock">
+            {first && choosingReturn
+              ? `Minimum rental is ${minimumWords(plansOf(product))}. The earliest return from ${dayShort(first)} is ${dayShort(addDays(first, minDays - 1))}.`
+              : `Minimum rental is ${minimumWords(plansOf(product))}.`}
+          </Notice>
+        ) : null}
 
         <View style={{ gap: space.sm }}>
           <Text role="sectionTitle" accessibilityRole="header">

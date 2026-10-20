@@ -3,6 +3,9 @@ import { createDraft, draftReducer, DraftAction } from "../draft";
 import { buildCreatePayload, categoryPayload } from "../payload";
 import { ListingDraft, PhotoItem } from "../types";
 
+/** A listing priced by the day alone, as the price check sends it (ENG-281). */
+const dayPlan = (price: string) => [{ unit: "day" as const, price, min: 1 }];
+
 const photo = (id: string, source: PhotoItem["source"], status: PhotoItem["status"] = "done"): PhotoItem => ({
   id,
   localUri: `file:///${id}.jpg`,
@@ -37,7 +40,7 @@ describe("buildCreatePayload", () => {
     { type: "editField", field: "title", value: "Sony PS5 with 2 controllers" },
     { type: "editField", field: "model_name", value: "CFI-1216A" },
     { type: "confirmCondition", value: "good" },
-    { type: "editField", field: "rate", value: "610" },
+    { type: "editField", field: "plans", value: dayPlan("610") },
     { type: "editField", field: "quantity", value: "5" },
     { type: "mergeAi", event: { field: "worth", status: "filled", value: 45000 } },
     { type: "confirmWorth" },
@@ -76,7 +79,7 @@ describe("buildCreatePayload", () => {
       model_name: "user",
       condition: "ai",
       description: "ai",
-      rate: "user",
+      plans: "user",
       security_deposit: "user",
       location: "user",
       // Confirmed as it stood: the owner's now. The quantity is never reported.
@@ -88,7 +91,7 @@ describe("buildCreatePayload", () => {
     expect(payload).toMatchObject({
       title: "Sony PS5 with 2 controllers",
       description: "My PS5.",
-      rate: 610,
+      plans: dayPlan("610"),
       security_deposit: 3050,
       currency: "INR",
       category: { parent: "Gaming", title: "Consoles" },
