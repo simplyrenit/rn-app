@@ -1,5 +1,6 @@
-import type { BookingDay, BookingExit, BookingStage, DeliveryMode, RingState, TimeWindow } from "@/lib/booking";
+import type { BookingDay, BookingExit, BookingStage, DeliveryMode, MonthlyMoney, RingState, TimeWindow } from "@/lib/booking";
 import type { CaptureFlags } from "@/lib/capture";
+import type { PlanUnit } from "@/lib/plans";
 import type { ApiError } from "@/lib/api-error";
 import {
   TimelineRow,
@@ -25,14 +26,15 @@ import { customerLine, customerName, whereText } from "@/lib/shop-ring";
  */
 export type AnsweredVia = "phone" | "dashboard" | "admin" | "system";
 
-export interface ShopMoney {
+export interface ShopMoney extends MonthlyMoney {
   rate: string;
+  /** ENG-281: the plan that priced the booking. Absent from an older server. */
+  plan?: { unit: PlanUnit; price: string; min?: number | null };
   rent: string;
   delivery_fee: string;
   fee_shown: string;
   fee_charged: string;
   you_earn: string;
-  rent_paid: boolean;
   deposit: string;
   /** `none`, `not_due`, `due`, `paid`, `carried`, `settled`, `forfeited`. */
   deposit_state: string;

@@ -64,6 +64,7 @@ import {
   payPhaseText,
   paySteps,
   plainLines,
+  monthlyLine,
   priceLines,
   rateLine,
   daysAllowed,
@@ -468,6 +469,36 @@ describe("the price before Book now", () => {
       "Each late day costs one day's rent.",
       "Returning early gives no refund.",
     ]);
+  });
+
+  it("bills a month plan a month at a time (ENG-282): month 1 after the accept, and the notice for ending early", () => {
+    const monthly = quote({
+      days: 180,
+      rent: "10800.00",
+      total: "10800.00",
+      pay_after_accept: "10701.00",
+      plan: { unit: "month", price: "1800.00", min: 6 },
+      billing: "monthly",
+      first_payment: "1701.00",
+      notice: "1800.00",
+    });
+    expect(monthlyLine(monthly)).toBe("Month 1 now, then ₹1,800 a month");
+    expect(paySteps(monthly)[1]).toEqual({
+      title: "After the owner accepts",
+      sub: "Month 1 · Within 30 minutes of their yes",
+      amount: "₹1,701",
+    });
+    expect(totalLine(monthly)).toBe(
+      "₹99 now, ₹1,701 after the owner accepts, ₹3,000 deposit (refundable). To start, deposit included: ₹4,800. Then ₹1,800 a month."
+    );
+    expect(plainLines(monthly).at(-1)).toBe("Ending before 6 months costs one month's rent (₹1,800).");
+    expect(plainLines({ ...monthly, notice: null }).at(-1)).toBe(
+      "You can end early: the month you are in is not refunded, and the months after are not charged."
+    );
+    // Upfront, and an older server's quote: as before.
+    expect(monthlyLine(quote())).toBeNull();
+    expect(monthlyLine({ ...monthly, billing: "upfront" })).toBeNull();
+    expect(paySteps(quote())[1].amount).toBe("₹1,731");
   });
 
   it("never calls a cancel free while the 99 is kept, and has no 'not returned' (E-78)", () => {
@@ -1483,6 +1514,8 @@ describe("the booking screen", () => {
       status: "Paid · UPI",
       tone: "success",
     });
+    // ENG-282: a month's rent says which month, where the server names it.
+    expect(moneyRowView({ ...booking().payments[0], what: "rent", label: "Month 3 rent" }, NOW).sub).toBe("Month 3 rent · 9:41 am");
   });
 
   it("shows a refund with its amount, where it is going and the days (N16)", () => {

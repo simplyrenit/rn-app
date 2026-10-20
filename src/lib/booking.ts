@@ -45,6 +45,50 @@ export interface BookItem {
   shop_name: string;
 }
 
+/**
+ * ENG-282: how the rent is paid. `monthly`: a month plan of more than 30 days pays month 1 after the accept and each later
+ * month by its own link. Every booking before ENG-282, and every other one, is `upfront`. The server decides it.
+ */
+export type Billing = "upfront" | "monthly";
+
+/** `paid`, `upcoming` (no link yet), `due`, `overdue` (the 3 days' grace), `lapsed` (the grace ran out), `dropped` (never billed). */
+export type PeriodState = "paid" | "due" | "upcoming" | "overdue" | "lapsed" | "dropped";
+
+/**
+ * One month of a monthly-billed booking (ENG-282). Across an extension chain `label` runs on ("Month 7"). A `notice`
+ * is the month's rent owed for ending early inside the minimum: both its days are the return day. To the shop, `amount` is
+ * what it earns for the month, not what the customer pays.
+ */
+export interface RentPeriod {
+  /** The booking the month belongs to: across an extension chain the rows come from several bookings. */
+  booking: string;
+  /** The month's number on its own booking: with `booking`, what `POST …/periods/{n}/pay/` and `pay_now.period` name. */
+  n: number;
+  /** Numbered across the chain ("Month 7"), or "Notice month". */
+  label: string;
+  kind: "rent" | "notice";
+  first_day: string;
+  last_day: string;
+  amount: string;
+  state: PeriodState;
+  /** The day the pay link is sent (3 days before `first_day`); the day it is due; the last day of the grace. */
+  link_on: string | null;
+  pay_by: string | null;
+  grace_ends: string | null;
+  paid_at: string | null;
+  linked_at: string | null;
+}
+
+/** What both sides' `money` carries for monthly billing (ENG-282). All absent from an older server. */
+export interface MonthlyMoney {
+  billing?: Billing;
+  periods?: RentPeriod[];
+  /** Whether the rent payment (month 1, for monthly billing) is paid. */
+  rent_paid?: boolean;
+  /** What has been paid of the rent so far; to the shop, what it has earned. Null for upfront billing. */
+  rent_paid_amount?: string | null;
+}
+
 /** `POST /api/bookings/quote/`. */
 export interface Quote {
   product: string;
@@ -93,6 +137,11 @@ export interface Quote {
   terms: { version: string; url: string; accepted: boolean } | null;
   can_book: boolean;
   blockers: string[];
+  /** ENG-282: monthly billing pays `first_payment` (month 1, less what Book now paid) after the accept, then a month at a time. */
+  billing?: Billing;
+  first_payment?: string | null;
+  /** One month's rent, owed for ending early inside the minimum: null when the month plan's minimum is under 2 months. */
+  notice?: string | null;
 }
 
 export type PaymentPurpose = "booking_amount" | "rent" | "rent_and_deposit" | "deposit";
@@ -122,6 +171,8 @@ export interface MoneyRow {
   expected_days_max: number | null;
   expected_by: string | null;
   at: string;
+  /** ENG-282: what a payment was for when the purpose alone does not say ("Month 3 rent", "Notice month"). Absent before it. */
+  label?: string | null;
 }
 
 export type BookingStage =
@@ -206,10 +257,13 @@ export interface BookingCustomer {
    * then (the saved-address shape without `is_default`). Null for self pickup.
    */
   delivery_address: BookingAddress | null;
-  money: {
+  money: MonthlyMoney & {
     rate: string;
-    /** ENG-281: the plan that priced the booking; `rate` is one day of it. Absent from an older server. */
-    plan?: { unit: PlanUnit; price: string };
+    /**
+     * ENG-281: the plan that priced the booking; `rate` is one day of it. Absent from an older server. `min` (ENG-282): its
+     * minimum, in its unit, which the notice line needs.
+     */
+    plan?: { unit: PlanUnit; price: string; min?: number | null };
     rent: string;
     delivery_fee: string;
     fee_shown: string;
@@ -224,7 +278,6 @@ export interface BookingCustomer {
     /** How long the customer has to pay the rent once the owner accepts; the deadline is `rent_due_at`. */
     rent_pay_minutes: number;
     rent_due_at: string | null;
-    rent_paid: boolean;
     deposit: string;
     deposit_with_rent: boolean;
     /** none, not_due, due, paid, carried, settled, forfeited */
@@ -250,6 +303,8 @@ export interface BookingCustomer {
     deposit_part: string;
     due_at: string | null;
     payment: PaymentStart | null;
+    /** ENG-282: the month this is (its `n` on this booking), while one is due or overdue; `purpose` is then `rent`. */
+    period?: number;
   } | null;
   payments: MoneyRow[];
   pick_deadline_at: string | null;
@@ -382,6 +437,13 @@ export function dayShort(day: string): string {
   const d = new Date(dayMs(day));
   if (Number.isNaN(d.getTime())) return "";
   return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+}
+
+/** "2026-10-24" → "24 Oct": a month's dates and its pill (ENG-282), where the weekday would crowd the row. */
+export function dayMonth(day: string): string {
+  const d = new Date(dayMs(day));
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
 }
 
 /** "2026-10-24" → "Sat 24 October", the arrival window's heading. */
@@ -716,6 +778,18 @@ export interface PayStep {
   amount: string;
 }
 
+/** ENG-282: billed a month at a time, with month 1's amount to show. */
+const monthlyQuote = (quote: Quote) => quote.billing === "monthly" && quote.first_payment != null;
+
+/** What is paid once the owner accepts: the whole rest, or month 1 alone for monthly billing. */
+const afterAccept = (quote: Quote) => (monthlyQuote(quote) ? (quote.first_payment as string) : quote.pay_after_accept);
+
+/** "Month 1 now, then ₹1,800 a month": the price panel's line for monthly billing, or null. */
+export function monthlyLine(quote: Quote): string | null {
+  if (!monthlyQuote(quote) || !quote.plan) return null;
+  return `Month 1 now, then ${money(quote.plan.price)} a month`;
+}
+
 /** "What you pay, and when". `moved`: the ₹99 of an earlier request moves here (N2). */
 export function paySteps(quote: Quote, moved = false, now: Date = new Date()): PayStep[] {
   const steps: PayStep[] = [
@@ -725,12 +799,13 @@ export function paySteps(quote: Quote, moved = false, now: Date = new Date()): P
       amount: money(quote.pay_now),
     },
   ];
-  if (isPositive(quote.pay_after_accept)) {
+  if (isPositive(afterAccept(quote))) {
     const opens = isForMorning(quote) && quote.shop.opens_at ? timeAndDay(quote.shop.opens_at, now) : null;
+    const when = opens ? `They are asked ${opens.day} at ${opens.time}` : rentWindow(quote.rent_pay_minutes);
     steps.push({
       title: "After the owner accepts",
-      sub: opens ? `They are asked ${opens.day} at ${opens.time}` : rentWindow(quote.rent_pay_minutes),
-      amount: money(quote.pay_after_accept),
+      sub: monthlyQuote(quote) ? `Month 1 · ${when}` : when,
+      amount: money(afterAccept(quote)),
     });
   }
   if (isPositive(quote.deposit.amount)) {
@@ -746,11 +821,17 @@ export function paySteps(quote: Quote, moved = false, now: Date = new Date()): P
 /** The sum of all of it, under the steps (E-65): what is paid now, after the accept, and the deposit, then the total. */
 export function totalLine(quote: Quote, moved = false): string {
   const parts = [`${money(quote.pay_now)} ${moved ? "already paid" : "now"}`];
-  if (isPositive(quote.pay_after_accept)) parts.push(`${money(quote.pay_after_accept)} after the owner accepts`);
+  const after = afterAccept(quote);
+  if (isPositive(after)) parts.push(`${money(after)} after the owner accepts`);
   if (isPositive(quote.deposit.amount)) parts.push(`${money(quote.deposit.amount)} deposit (refundable)`);
-  const all = Number(quote.pay_now) + Number(quote.pay_after_accept) + Number(quote.deposit.amount);
+  const all = Number(quote.pay_now) + Number(after) + Number(quote.deposit.amount);
+  const deposit = isPositive(quote.deposit.amount) ? ", deposit included" : "";
+  // Monthly: what the start costs, then each later month by its own link.
+  if (monthlyQuote(quote) && quote.plan) {
+    return `${parts.join(", ")}. To start${deposit}: ${money(all)}. Then ${money(quote.plan.price)} a month.`;
+  }
   // Not "Total": the price panel's Total is the rent without the deposit.
-  return `${parts.join(", ")}. In all${isPositive(quote.deposit.amount) ? ", deposit included" : ""}: ${money(all)}.`;
+  return `${parts.join(", ")}. In all${deposit}: ${money(all)}.`;
 }
 
 /**
@@ -792,8 +873,26 @@ export function plainLines(quote: Quote, moved = false): string[] {
     quote.plan && quote.plan.unit !== "day"
       ? `Each late day costs ${money(quote.rate)}, your plan's price a day.`
       : "Each late day costs one day's rent.",
-    "Returning early gives no refund.",
+    earlyReturnLine(quote),
   ];
+}
+
+/** "Ending before 6 months costs one month's rent (₹1,800)."; without the minimum, the same with no number. Null when nothing is owed. */
+export function noticeLine(min: number | null | undefined, notice: string | number | null | undefined): string | null {
+  if (!isPositive(notice == null ? null : String(notice))) return null;
+  const before = min && min >= 2 ? `Ending before ${min} months` : "Ending early";
+  return `${before} costs one month's rent (${money(notice)}).`;
+}
+
+/**
+ * The last of the plain lines. ENG-282: with a notice, "Ending before 6 months costs one month's rent (₹1,800)."; billed
+ * monthly without one, ending early stops the later months; otherwise, as before, no refund.
+ */
+function earlyReturnLine(quote: Quote): string {
+  const notice = noticeLine(quote.plan?.unit === "month" ? quote.plan.min : null, quote.notice);
+  if (notice) return notice;
+  if (monthlyQuote(quote)) return "You can end early: the month you are in is not refunded, and the months after are not charged.";
+  return "Returning early gives no refund.";
 }
 
 /** The closed notice of BK-11: the bold start and the rest. */
@@ -1950,7 +2049,7 @@ export function moneyRowView(row: MoneyRow, now: Date = new Date()): MoneyRowVie
   return {
     key: row.id,
     title: money(row.amount),
-    sub: `${PAID_FOR[row.what] ?? "Payment"} · ${momentLabel(row.at, now)}`,
+    sub: `${row.label || PAID_FOR[row.what] || "Payment"} · ${momentLabel(row.at, now)}`,
     ...status,
   };
 }
