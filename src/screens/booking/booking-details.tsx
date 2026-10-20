@@ -4,10 +4,12 @@ import { GetHelp } from "@/components/booking/get-help";
 import { ClaimRows } from "@/components/claims/claim-rows";
 import { Records } from "@/components/capture/record-card";
 import { Panel, SummaryCard } from "@/components/booking/parts";
+import { PaymentSchedule } from "@/components/booking/payment-schedule";
 import { PaymentsList } from "@/components/booking/payments-list";
 import { Timeline } from "@/components/booking/timeline";
 import { Button, Text } from "@/components/core";
 import { apiError } from "@/lib/api-error";
+import { isMonthly } from "@/lib/billing";
 import {
   BookingCustomer,
   bookingBanner,
@@ -19,10 +21,12 @@ import {
   deliveryPlace,
   money,
   timelineRows,
+  todayIst,
   windowErrorText,
   windowRequestCopy,
 } from "@/lib/booking";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { correctedNow } from "@/lib/server-clock";
 import { kmText } from "@/lib/shop";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -235,6 +239,16 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
             <Timeline rows={rows} />
           </Panel>
         </View>
+      ) : null}
+
+      {/* ENG-282: the months of a monthly-billed booking, above the payments that paid them. */}
+      {isMonthly(booking.money) ? (
+        <PaymentSchedule
+          money={booking.money}
+          side="customer"
+          today={todayIst(correctedNow(booking.server_time, receivedAt))}
+          onPay={(period) => navigation.navigate("PayPeriod", { number: period.booking || booking.number, n: period.n })}
+        />
       ) : null}
 
       <PaymentsList booking={booking} />

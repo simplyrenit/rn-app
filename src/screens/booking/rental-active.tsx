@@ -1,18 +1,21 @@
+import { EndEarlySheet, EndEarlySheetHandle } from "@/components/booking/end-early-sheet";
 import { GetHelp } from "@/components/booking/get-help";
 import { BottomBar, Notice, Panel } from "@/components/booking/parts";
+import { PaymentSchedule } from "@/components/booking/payment-schedule";
 import { ClaimRows } from "@/components/claims/claim-rows";
 import { Records } from "@/components/capture/record-card";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, Text } from "@/components/core";
 import { LinkRow } from "@/components/handover/parts";
-import { BookingCustomer } from "@/lib/booking";
+import { endingEarlyLine, isMonthly, overdueAlert, overduePeriod } from "@/lib/billing";
+import { BookingCustomer, RentPeriod, money, todayIst } from "@/lib/booking";
 import { faultRowSub } from "@/lib/claims";
 import { activeCopy, ownerAbsentAt, ownerAbsentKey } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
-import React from "react";
-import { ScrollView, View } from "react-native";
+import React, { useRef } from "react";
+import { ScrollView, TouchableOpacity, View } from "react-native";
 import { ClockIcon, LockClosedIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
@@ -26,6 +29,10 @@ import { useQueryClient } from "react-query";
  * made or finished from here (review r1 #2): the shop may have typed the code
  * while the customer was still shooting. Once "Owner did not come" is reported,
  * the late-day line gives way to what was reported (review r1 #11).
+ *
+ * A monthly-billed booking (ENG-282) also shows its months under the return-by card, each due month opening Rent due.
+ * While a month is overdue an alert says when the rental ends, above the card, and the bar pays it; "End the rental
+ * early" opens its sheet when the server offers it.
  */
 export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer; receivedAt: number }) {
   const navigation = useTypedNavigation();
@@ -39,6 +46,15 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
   const can = (action: string) => booking.can.includes(action);
   const late = copy.late.tone === "warning";
   const extension = booking.extensions?.[booking.extensions.length - 1] ?? null;
+  const endSheet = useRef<EndEarlySheetHandle>(null);
+  const today = todayIst(now);
+  const monthly = isMonthly(booking.money);
+  const overdue = monthly ? overduePeriod(booking.money) : null;
+  const alert = overdue ? overdueAlert(overdue, booking.product.title, booking.money.rate) : null;
+  // Monthly: the notice while inside the minimum, else nothing (the months after are simply not charged).
+  const ending = monthly ? endingEarlyLine(booking.money, today) : "Returning early gives no refund.";
+  // A month of an extension chain is paid from its own booking.
+  const payMonth = (period: RentPeriod) => navigation.navigate("PayPeriod", { number: period.booking || number, n: period.n });
 
   return (
     <View style={{ flex: 1 }}>
@@ -54,6 +70,14 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
             {copy.sub}
           </Text>
         </View>
+
+        {overdue && alert ? (
+          <TouchableOpacity accessibilityRole="button" accessibilityHint="Opens Rent due" activeOpacity={0.8} onPress={() => payMonth(overdue)}>
+            <Notice tone="danger" icon="warning" title={alert.title}>
+              {alert.body}
+            </Notice>
+          </TouchableOpacity>
+        ) : null}
 
         <View
           accessible
@@ -90,6 +114,8 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
           </View>
         </View>
 
+        {monthly ? <PaymentSchedule money={booking.money} side="customer" today={today} onPay={payMonth} /> : null}
+
         <Records
           role="customer"
           moments={["handover"]}
@@ -111,8 +137,12 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
         <Panel>
           {can("extend") ? (
             <LinkRow
-              title="Extend this rental"
-              sub="A new booking for the days after. The shop has to accept."
+              title={monthly ? "Extend by a month" : "Extend this rental"}
+              sub={
+                monthly
+                  ? "Adds a month to the schedule. The shop has to accept."
+                  : "A new booking for the days after. The shop has to accept."
+              }
               onPress={() => navigation.navigate("BookingExtend", { number })}
             />
           ) : null}
@@ -132,6 +162,9 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
             onPress={() => navigation.navigate("BookingDetails", { number })}
           />
           <GetHelp booking={booking} first={false} />
+          {can("end_early") ? (
+            <LinkRow first={false} danger title="End the rental early" onPress={() => endSheet.current?.present()} />
+          ) : null}
         </Panel>
 
         {copy.deposit ? (
@@ -164,15 +197,22 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
           </Panel>
         ) : null}
 
-        <Text fontSize="text-sm" tone="body">
-          Returning early gives no refund.
-        </Text>
+        {ending ? (
+          <Text fontSize="text-sm" tone="body">
+            {ending}
+          </Text>
+        ) : null}
       </ScrollView>
       <BottomBar>
-        <Button variant="outline" onPress={() => navigation.navigate("BookingReturn", { number })}>
-          {copy.button}
-        </Button>
+        {overdue ? (
+          <Button onPress={() => payMonth(overdue)}>{`Pay ${money(overdue.amount)}`}</Button>
+        ) : (
+          <Button variant="outline" onPress={() => navigation.navigate("BookingReturn", { number })}>
+            {copy.button}
+          </Button>
+        )}
       </BottomBar>
+      {monthly ? <EndEarlySheet ref={endSheet} booking={booking} /> : null}
     </View>
   );
 }

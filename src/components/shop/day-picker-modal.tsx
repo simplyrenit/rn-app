@@ -11,6 +11,8 @@ interface Props {
   value: string | null;
   /** The earliest day that can be picked, `YYYY-MM-DD`. */
   minDate: string;
+  /** The last day that can be picked, when there is one (ending a rental early: the end of the current month). */
+  maxDate?: string;
   onPick: (day: string) => void;
   /** Present when a day is set: clears it. */
   onClear?: () => void;
@@ -32,6 +34,7 @@ const closedUntilLine = (picked: string | null) =>
 export function DayPickerModal({
   value,
   minDate,
+  maxDate,
   onPick,
   onClear,
   onCancel,
@@ -63,6 +66,7 @@ export function DayPickerModal({
           <Calendar
             current={picked ?? minDate}
             minDate={minDate}
+            maxDate={maxDate}
             markedDates={picked ? { [picked]: { selected: true } } : {}}
             onDayPress={(day: { dateString: string }) => setPicked(day.dateString)}
             theme={{

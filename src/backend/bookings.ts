@@ -9,6 +9,7 @@ import {
   pollEveryMs,
   refundPending,
 } from "@/lib/booking";
+import type { EndEarlyQuote } from "@/lib/billing";
 import { BOOKINGS_ENDPOINT, GET_PRODUCT_DETAILS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { correctedNow } from "@/lib/server-clock";
@@ -105,6 +106,34 @@ export function useBooking(number: string, watching = false) {
       watching && data ? pollEveryMs(data, correctedNow(data.server_time, query.state.dataUpdatedAt)) : false,
     retry: 1,
   });
+}
+
+// ---- Monthly billing (ENG-282) -----------------------------------------------------------
+
+/**
+ * Month `n`'s payment: its open page, or a new one. `409 period_not_due` before its link day, `period_lapsed` after the
+ * grace, `period_paid`. `number` is the month's own booking.
+ */
+export async function payPeriod(number: string, n: number): Promise<PaymentStart> {
+  return (await axiosInstance.post<{ payment: PaymentStart }>(bookingUrl(number, `periods/${n}/pay/`), {})).data.payment;
+}
+
+/** What ending the rental early on `day` costs (the server's default day without one). Changes nothing. */
+export async function fetchEndEarly(number: string, day?: string | null): Promise<EndEarlyQuote> {
+  return (
+    await axiosInstance.get<EndEarlyQuote>(bookingUrl(number, "end-early/"), { params: day ? { day } : undefined })
+  ).data;
+}
+
+/**
+ * Ends the rental early on `day`. `payment` is the notice's page when one is owed and not covered by a month already paid.
+ * `409 end_early_not_allowed` (a month overdue, an extension waiting), `day_out_of_range`.
+ */
+export async function endEarly(number: string, day: string): Promise<{ booking: BookingCustomer; payment: PaymentStart | null }> {
+  const { booking, payment } = (
+    await axiosInstance.post<{ booking: BookingCustomer; payment?: PaymentStart | null }>(bookingUrl(number, "end-early/"), { day })
+  ).data;
+  return { booking, payment: payment ?? null };
 }
 
 // ---- When the request ends (ENG-173) ------------------------------------------------------

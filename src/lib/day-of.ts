@@ -1,4 +1,5 @@
 import { type ApiError, fieldErrors } from "@/lib/api-error";
+import { isMonthly, monthlyReturnLine } from "@/lib/billing";
 import {
   BookingCustomer,
   BookingDay,
@@ -490,7 +491,9 @@ export function activeCopy(booking: BookingCustomer, absentAt: string | null = n
             }. Each more day costs ${money(m.rate)}.`,
             tone: "warning",
           }
-        : { text: `Each late day costs ${money(m.rate)}${held ? ", taken from your deposit" : ""}.`, tone: "info" },
+        : isMonthly(m)
+          ? { text: monthlyReturnLine(m, held), tone: "info" }
+          : { text: `Each late day costs ${money(m.rate)}${held ? ", taken from your deposit" : ""}.`, tone: "info" },
     deposit: held
       ? {
           amount: money(m.deposit),
