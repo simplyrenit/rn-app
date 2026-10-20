@@ -149,7 +149,8 @@ export default function EditAboutProduct() {
             condition: data.condition?.toLowerCase() || "",
             productDescription: data.description || "",
             usageDescription: data.usage_description || "",
-            plans: draftsOf(plansOf(data)),
+            // A dashboard draft with no price yet starts on Daily, as a new listing does.
+            plans: plansOf(data).length ? draftsOf(plansOf(data)) : [{ unit: "day", price: "", min: 1 }],
             securityDeposit: data.security_deposit?.toString() || "",
             quantity: String(data.quantity ?? 1),
             // "45000.00" from the server, "45000" in the box; empty while there is none.

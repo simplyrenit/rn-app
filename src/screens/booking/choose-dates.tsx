@@ -312,7 +312,8 @@ export default function BookingDatesScreen() {
             fontSize="text-md"
             fontWeight={isEnd || isToday || inRange ? "font-bold" : "font-normal"}
             style={{
-              color: isEnd ? color.onBrand : isOff ? color.textDim : color.text,
+              // A picked day past the start limit stays in the band's colour (ENG-281: a year-long booking ends there).
+              color: isEnd ? color.onBrand : isOff && !inRange ? color.textDim : color.text,
               textDecorationLine: isTaken ? "line-through" : "none",
             }}
           >
