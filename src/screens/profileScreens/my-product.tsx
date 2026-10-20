@@ -202,6 +202,7 @@ const MyProductScreen: React.FC = () => {
                 title={item.title}
                 location={item.location}
                 price={item.rate}
+                plans={item.plans}
                 isDarkMode={isDark}
                 status={status}
                 width="100%"

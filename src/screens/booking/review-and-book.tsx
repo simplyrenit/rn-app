@@ -30,6 +30,7 @@ import {
   plainLines,
   priceLines,
   rangeLabel,
+  rateLine,
   reviewBlocker,
   termsTicked,
   totalLabel,
@@ -258,8 +259,16 @@ export default function ReviewAndBookScreen() {
         />
 
         <Panel style={{ padding: space.md, gap: space.sm }}>
-          {priceLines(quote).map((line) => (
-            <MoneyLine key={line.label} {...line} />
+          {priceLines(quote).map((line, index) => (
+            <React.Fragment key={line.label}>
+              <MoneyLine {...line} />
+              {/* Under the rent, as the design draws it (ENG-281): how the plan's price came to the day rate. */}
+              {index === 0 && rateLine(quote) ? (
+                <Text fontSize="text-xs" tone="success">
+                  {rateLine(quote)}
+                </Text>
+              ) : null}
+            </React.Fragment>
           ))}
           <View style={{ height: 1, backgroundColor: color.line }} />
           <MoneyLine label={totalLabel(quote)} amount={money(quote.total)} bold />

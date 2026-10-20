@@ -1,5 +1,6 @@
 import { ADDRESS_TYPES } from "@/lib/addresses";
-import { computeDepositDefault, parseRate } from "./deposit";
+import { derivedRate, toPlans } from "@/lib/plans";
+import { computeDepositDefault } from "./deposit";
 import { parseQuantity, parseWorth, suggestedWorth } from "./stock";
 import {
   AI_FIELDS,
@@ -45,7 +46,7 @@ const FIELD_NAMES: FieldName[] = [
   "condition",
   "description",
   "usage_description",
-  "rate",
+  "plans",
   "security_deposit",
   "location",
   "quantity",
@@ -185,7 +186,7 @@ export type DraftAction =
 function withDerivedDeposit(draft: ListingDraft): ListingDraft {
   if (draft.depositTouched) return draft;
   const deposit = computeDepositDefault(
-    parseRate(draft.fields.rate.value),
+    derivedRate(toPlans(draft.fields.plans.value)),
     draft.depositRule ?? undefined
   );
   const current = draft.fields.security_deposit;
@@ -369,7 +370,7 @@ function editField(
   }
 
   if (field === "security_deposit") return { ...next, depositTouched: true };
-  if (field === "rate") return withDerivedDeposit(next);
+  if (field === "plans") return withDerivedDeposit(next);
   return next;
 }
 
@@ -652,7 +653,7 @@ export interface Requirement {
 export function missingRequirements(draft: ListingDraft): Requirement[] {
   const f = draft.fields;
   const missing: Requirement[] = [];
-  if (parseRate(f.rate.value) === null) missing.push({ key: "rate", label: "price" });
+  if (toPlans(f.plans.value) === null) missing.push({ key: "rate", label: "price" });
   if (!draft.conditionConfirmed || !f.condition.value)
     missing.push({ key: "condition", label: "condition" });
   if (!f.category.value) missing.push({ key: "category", label: "category" });
@@ -671,7 +672,7 @@ export function missingRequirements(draft: ListingDraft): Requirement[] {
   // a price. After that an empty one means the owner cleared it: sending 0
   // would list the item with no deposit at all, which nobody chose.
   if (
-    parseRate(f.rate.value) !== null &&
+    toPlans(f.plans.value) !== null &&
     !/^\d+(\.\d{1,2})?$/.test(f.security_deposit.value?.trim() ?? "")
   )
     missing.push({ key: "deposit", label: "deposit" });
@@ -718,6 +719,13 @@ function withUploadedPhotosOnly(draft: ListingDraft): ListingDraft {
   return { ...draft, photos, coverIndex, warnings, dismissedWarnings };
 }
 
+/** A draft stored before ENG-281 priced by `rate`: that is a day plan, its source kept. */
+function withPlans(fields: Partial<DraftFields> & { rate?: { value: string | null; source: FieldSource } }) {
+  const { rate, ...rest } = fields;
+  if (rest.plans || !rate?.value) return rest;
+  return { ...rest, plans: { value: [{ unit: "day" as const, price: rate.value, min: 1 }], source: rate.source } };
+}
+
 /** Parse a stored draft; null when it is missing, malformed or expired. */
 export function hydrateDraft(raw: string | null, now: number): ListingDraft | null {
   if (!raw) return null;
@@ -731,7 +739,7 @@ export function hydrateDraft(raw: string | null, now: number): ListingDraft | nu
     const draft = withUploadedPhotosOnly({
       ...base,
       ...parsed,
-      fields: { ...base.fields, ...parsed.fields },
+      fields: { ...base.fields, ...withPlans(parsed.fields) },
       photos: parsed.photos ?? [],
       dismissedWarnings: parsed.dismissedWarnings ?? [],
       warnings: parsed.warnings ?? [],

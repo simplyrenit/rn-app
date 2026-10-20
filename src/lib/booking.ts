@@ -12,6 +12,7 @@ import { SavedAddress, addressLine, addressTitle } from "@/lib/addresses";
 import { ApiError, fieldErrors } from "@/lib/api-error";
 import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
+import type { PlanUnit } from "@/lib/plans";
 import { ALL_DAY, DayHours, Hours, coversWholeDay, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
 
 export type DeliveryMode = "pickup" | "owner_delivery";
@@ -53,6 +54,9 @@ export interface Quote {
   delivery_mode: DeliveryMode;
   rate: string;
   rent: string;
+  /** ENG-281: the plan that priced it (`rate` is one day of it) and the listing's shortest booking. Absent from an older server. */
+  plan?: { unit: PlanUnit; price: string; min: number };
+  min_days?: number;
   delivery: {
     status: "not_asked" | "ok" | "too_far" | "not_offered";
     fee: string;
@@ -204,6 +208,8 @@ export interface BookingCustomer {
   delivery_address: BookingAddress | null;
   money: {
     rate: string;
+    /** ENG-281: the plan that priced the booking; `rate` is one day of it. Absent from an older server. */
+    plan?: { unit: PlanUnit; price: string };
     rent: string;
     delivery_fee: string;
     fee_shown: string;
@@ -333,8 +339,29 @@ export const daysLabel = (n: number) => (n === 1 ? "1 day" : `${n} days`);
  */
 export const BOOKING_DAYS_AHEAD = 180;
 
-/** The last day a booking or a search may name, from today. */
+/** The last day a booking or a search may start on, from today (ENG-281: the first day, not the last). */
 export const lastBookableDay = (today: string): string => addDays(today, BOOKING_DAYS_AHEAD);
+
+/** ENG-281: the longest booking, both ends counted: a year. The server refuses a longer one. */
+export const LONGEST_BOOKING_DAYS = 365;
+
+/** The last day a booking that starts on `first` can end on. */
+export const lastReturnDay = (first: string): string => addDays(first, LONGEST_BOOKING_DAYS - 1);
+
+/**
+ * ENG-281: the return days a booking from `first` cannot have, its minimum not reached: from the day after `first` up to
+ * the day before the earliest return. A minimum of 3 days from Sat 24 greys out Sun 25 alone; Mon 26 is the minimum itself.
+ */
+export function daysInsideMinimum(first: string, minDays: number): string[] {
+  const days: string[] = [];
+  for (let n = 2; n < minDays; n++) days.push(addDays(first, n - 1));
+  return days;
+}
+
+/** Days the server takes: the start within 180 days of today, at most a year long. */
+export function daysAllowed(first: string, last: string, today: string): boolean {
+  return first >= today && last >= first && first <= lastBookableDay(today) && last <= lastReturnDay(first);
+}
 
 /**
  * The server's own sentence for days it refused ("You can book up to 180 days ahead.", "Pick days within the next 180
@@ -484,17 +511,21 @@ export interface PickedDays {
 }
 
 /**
- * What a tap on the calendar does. The first tap is a one-day rental; a later
- * day extends it; anything else (a day before the start, or a third tap) starts
- * again. `blocked` is true when the stretch would cross a day that is taken: the
- * tapped day then becomes the new start.
+ * What a tap on the calendar does. The first tap is a one-day rental (when the
+ * listing allows one day); a later day extends it; anything else (a day before
+ * the start, or a third tap) starts again. `blocked` is true when the stretch
+ * would cross a day that is taken: the tapped day then becomes the new start.
+ * `short` (ENG-281): a return day inside the listing's minimum, refused; the
+ * start stays.
  */
 export function tapDay(
   picked: PickedDays | null,
   day: string,
-  taken: Set<string>
-): { picked: PickedDays; blocked: boolean } {
+  taken: Set<string>,
+  minDays = 1
+): { picked: PickedDays; blocked: boolean; short?: boolean } {
   if (!picked || picked.last || day < picked.first) return { picked: { first: day, last: null }, blocked: false };
+  if (dayCount(picked.first, day) < minDays) return { picked, blocked: false, short: true };
   if (!rangeIsFree(picked.first, day, taken)) return { picked: { first: day, last: null }, blocked: true };
   return { picked: { first: picked.first, last: day }, blocked: false };
 }
@@ -637,11 +668,21 @@ export interface PriceLine {
 export function priceLines(quote: Quote): PriceLine[] {
   const fee: PriceLine = { label: "Renit's fee", amount: money(quote.fee_charged) };
   if (Number(quote.fee_shown) !== Number(quote.fee_charged)) fee.struck = money(quote.fee_shown);
-  return [
-    { label: `Rent · ${daysLabel(quote.days)} × ${money(quote.rate)}`, amount: money(quote.rent) },
-    { label: "Delivery", amount: money(quote.delivery.fee) },
-    fee,
-  ];
+  const plan = quote.plan;
+  // ENG-281: a week or month plan names itself; a day plan reads as it always did.
+  const rent =
+    plan && plan.unit !== "day"
+      ? `Rent · ${daysLabel(quote.days)}, ${plan.unit === "week" ? "weekly" : "monthly"} rate`
+      : `Rent · ${daysLabel(quote.days)} × ${money(quote.rate)}`;
+  return [{ label: rent, amount: money(quote.rent) }, { label: "Delivery", amount: money(quote.delivery.fee) }, fee];
+}
+
+/** Under the rent of a week or month plan: "₹3,500 a week ÷ 7 = ₹500 a day". Null for a day plan or an older server. */
+export function rateLine(quote: Quote): string | null {
+  const plan = quote.plan;
+  if (!plan || plan.unit === "day") return null;
+  const days = plan.unit === "week" ? 7 : 30;
+  return `${money(plan.price)} a ${plan.unit} ÷ ${days} = ${money(quote.rate)} a day`;
 }
 
 /** "Total rent" as the frame says; plain "Total" once a delivery fee is in it. */
@@ -747,7 +788,10 @@ export function plainLines(quote: Quote, moved = false): string[] {
     ...(rentToPay && cancel?.grace
       ? [`This ${handover} is under ${pluralize(cancel.free_hours, "hour")} ${morning ? "after the owner is asked" : "away"}, so you have ${pluralize(cancel.grace_minutes, "minute")} after paying the rent to cancel and get the rent back.`]
       : []),
-    "Each late day costs one day's rent.",
+    // ENG-281: on a week or month plan a late day costs that plan's price a day, which is not "one day's rent" of a daily price.
+    quote.plan && quote.plan.unit !== "day"
+      ? `Each late day costs ${money(quote.rate)}, your plan's price a day.`
+      : "Each late day costs one day's rent.",
     "Returning early gives no refund.",
   ];
 }
@@ -856,6 +900,7 @@ const OWN_PLACE = new Set(["terms_not_accepted", "id_check_needed"]);
 /** Blockers that picking other dates or another way to get it can fix. */
 const FIXED_BY_DATES = new Set([
   "own_product",
+  "too_short",
   "no_unit_free",
   "closed_that_day",
   "closed_on_return_day",
@@ -870,6 +915,11 @@ export function blockerText(code: string, details?: Record<string, unknown> | nu
   switch (code) {
     case "own_product":
       return "This is your own listing.";
+    case "too_short": {
+      // ENG-281: shorter than every plan's minimum. A quote carries `min_days`; Book now's error says the minimum itself.
+      const n = Number(details?.min_days);
+      return n > 1 ? `Pick at least ${daysLabel(n)}.` : "These dates are shorter than this listing's minimum rental.";
+    }
     case "no_unit_free":
       return "These dates are no longer free. Pick other dates.";
     case "closed_that_day":
@@ -911,7 +961,7 @@ export function blockerText(code: string, details?: Record<string, unknown> | nu
 /** The first thing in the way that the dates screen can fix, in the server's order. */
 export function datesBlocker(quote: Quote | null | undefined): string | null {
   const code = quote?.blockers.find((b) => FIXED_BY_DATES.has(b));
-  return code ? blockerText(code) : null;
+  return code ? blockerText(code, { min_days: quote?.min_days }) : null;
 }
 
 /** The first thing in the way on the price screen, leaving out the tick and the ID check. */

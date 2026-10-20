@@ -5,6 +5,7 @@ import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useRailClaim } from "./rail-dedupe";
 import React from "react";
 import { ScrollView, View } from "react-native";
+import type { Plan } from "@/lib/plans";
 
 // Measured off the Figma Home frame: 163pt cards (the photo is 176 tall, so the
 // tile's 163:176 ratio holds) with a 16pt gap, under a heading that sits 24pt
@@ -20,6 +21,8 @@ export interface RailProduct {
   title: string;
   location: string;
   rate: string;
+  /** ENG-281: the card shows the smallest plan. Absent from an older server. */
+  plans?: Plan[];
   cover_image: string | null;
 }
 
@@ -123,6 +126,7 @@ export function ProductRail({
                 title={item.title}
                 location={item.location}
                 price={item.rate}
+                plans={item.plans}
                 isFavorite={favorites.some((fav) => fav.name === item.name)}
                 tile
               />

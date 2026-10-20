@@ -13,6 +13,7 @@ import { HeldFormNotice } from "@/components/product/listing-status";
 import { toastSave } from "@/lib/save-toast";
 import { WORTH_PROMPT, listingPrompts } from "@/lib/listing-status";
 import { parseQuantity, quantityInUseMessage } from "@/lib/list-flow/stock";
+import { draftsOf, plansOf, toPlans } from "@/lib/plans";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React from "react";
@@ -83,7 +84,8 @@ export default function EditAboutProduct() {
         description: values.productDescription,
         location: values.address,
         usage_description: values.usageDescription,
-        rate: `${parseFloat(values.pricePerDay)}`,
+        // The form will not submit without a price for every plan picked (ENG-281).
+        plans: toPlans(values.plans) ?? [],
         security_deposit: `${parseFloat(values.securityDeposit)}`,
         // The form will not submit without a valid quantity and worth.
         quantity: parseQuantity(values.quantity) ?? 1,
@@ -147,7 +149,8 @@ export default function EditAboutProduct() {
             condition: data.condition?.toLowerCase() || "",
             productDescription: data.description || "",
             usageDescription: data.usage_description || "",
-            pricePerDay: data.rate?.toString() || "",
+            // A dashboard draft with no price yet starts on Daily, as a new listing does.
+            plans: plansOf(data).length ? draftsOf(plansOf(data)) : [{ unit: "day", price: "", min: 1 }],
             securityDeposit: data.security_deposit?.toString() || "",
             quantity: String(data.quantity ?? 1),
             // "45000.00" from the server, "45000" in the box; empty while there is none.

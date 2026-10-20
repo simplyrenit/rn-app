@@ -781,6 +781,7 @@ export default function UsersDetails() {
                         title={item.title}
                         location={item.location}
                         price={item.rate.toString()}
+                        plans={item.plans}
                         coordinates={item.coordinates}
                         isFavorite={favorites.some(
                           (fav) => fav.name === item.name

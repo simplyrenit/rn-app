@@ -16,6 +16,7 @@ import { apiError } from "@/lib/api-error";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
 import { SCREEN_GUTTER, duration, radius, space } from "@/lib/design-tokens";
 import { formatNumber } from "@/lib/format";
+import { smallestPlan, toPlans } from "@/lib/plans";
 import { commitFeedback, successFeedback } from "@/lib/haptics";
 import { uploadedPhotos } from "@/lib/list-flow/draft";
 import { lockedItems, needsOwnerTerms, publishLockedMessage } from "@/lib/list-flow/publish-locked";
@@ -125,6 +126,7 @@ export default function ListPreviewScreen() {
 
   if (!draft) return <NonScrollableContainer>{null}</NonScrollableContainer>;
   const f = draft.fields;
+  const firstPlan = smallestPlan(toPlans(f.plans.value) ?? []);
   const images = uploadedPhotos(draft).map((p) => p.remoteUrl as string);
   const coverPhoto = draft.photos[draft.coverIndex];
   const cover = coverPhoto?.remoteUrl ?? images[0] ?? null;
@@ -371,9 +373,9 @@ export default function ListPreviewScreen() {
       >
         <View style={{ flex: 1 }}>
           <Text fontSize="text-lg" fontWeight="font-bold">
-            {`Rs ${formatNumber(f.rate.value ?? 0)}`}
+            {`Rs ${formatNumber(firstPlan?.price ?? 0)}`}
             <Text fontSize="text-sm" tone="body">
-              {" /day to you"}
+              {` /${firstPlan?.unit ?? "day"} to you`}
             </Text>
           </Text>
         </View>

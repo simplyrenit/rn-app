@@ -15,6 +15,9 @@ import {
 import { DraftAction } from "../draft";
 import { FieldEvent, ListingDraft, PhotoItem } from "../types";
 
+/** A listing priced by the day alone, as the price check sends it (ENG-281). */
+const dayPlan = (price: string) => [{ unit: "day" as const, price, min: 1 }];
+
 const NOW = 1_790_000_000_000;
 
 function apply(draft: ListingDraft, ...actions: DraftAction[]): ListingDraft {
@@ -107,8 +110,8 @@ describe("merge rule", () => {
 
   it("ignores fields outside the extraction allowlist", () => {
     const before = fresh();
-    const d = apply(before, filled("rate", "500"), filled("location", "Thane"));
-    expect(d.fields.rate.value).toBeNull();
+    const d = apply(before, filled("plans", "500"), filled("location", "Thane"));
+    expect(d.fields.plans.value).toBeNull();
     expect(d.fields.location.value).toBeNull();
   });
 
@@ -224,21 +227,21 @@ describe("edit transitions", () => {
     expect(other.fields.category.source).toBe("ai_edited");
   });
 
-  it("recomputes the deposit from the rate until the owner overrides it", () => {
-    let d = apply(fresh(), { type: "editField", field: "rate", value: "610" });
+  it("recomputes the deposit from the day price until the owner overrides it", () => {
+    let d = apply(fresh(), { type: "editField", field: "plans", value: dayPlan("610") });
     expect(d.fields.security_deposit.value).toBe("3050");
-    d = apply(d, { type: "editField", field: "rate", value: "80" });
+    d = apply(d, { type: "editField", field: "plans", value: dayPlan("80") });
     expect(d.fields.security_deposit.value).toBe("500");
     d = apply(d, { type: "editField", field: "security_deposit", value: "1000" });
     expect(d.depositTouched).toBe(true);
-    d = apply(d, { type: "editField", field: "rate", value: "900" });
+    d = apply(d, { type: "editField", field: "plans", value: dayPlan("900") });
     expect(d.fields.security_deposit.value).toBe("1000");
   });
 
   it("uses the category's deposit rule once it is known", () => {
     const d = apply(
       fresh(),
-      { type: "editField", field: "rate", value: "100" },
+      { type: "editField", field: "plans", value: dayPlan("100") },
       { type: "setDepositRule", rule: { multiplier: 10, floor: 200, round_to: 100 } }
     );
     expect(d.fields.security_deposit.value).toBe("1000");
@@ -479,7 +482,7 @@ describe("requirements", () => {
       filled("title", "Sony PS5"),
       filled("description", "My PS5."),
       { type: "confirmCondition", value: "good" },
-      { type: "editField", field: "rate", value: "500" },
+      { type: "editField", field: "plans", value: dayPlan("500") },
       { type: "editField", field: "worth", value: "45000" },
       {
         type: "prefillLocation",
@@ -490,7 +493,7 @@ describe("requirements", () => {
   });
 
   it("asks for a deposit the owner cleared instead of sending 0", () => {
-    const d = apply(fresh(), { type: "editField", field: "rate", value: "500" });
+    const d = apply(fresh(), { type: "editField", field: "plans", value: dayPlan("500") });
     expect(missingRequirements(d).map((m) => m.key)).not.toContain("deposit");
     const cleared = apply(d, { type: "editField", field: "security_deposit", value: "" });
     expect(missingRequirements(cleared).map((m) => m.key)).toContain("deposit");
@@ -498,7 +501,7 @@ describe("requirements", () => {
 
   it("rejects a zero or malformed price", () => {
     for (const rate of ["0", "abc", "-5", "1.234"]) {
-      const d = apply(fresh(), { type: "editField", field: "rate", value: rate });
+      const d = apply(fresh(), { type: "editField", field: "plans", value: dayPlan(rate) });
       expect(missingRequirements(d).map((m) => m.key)).toContain("rate");
     }
   });
@@ -531,6 +534,15 @@ describe("save-this-address intent", () => {
     const restored = hydrateDraft(JSON.stringify(stored), NOW + 1000)!;
     expect(restored).not.toBeNull();
     expect(restored.saveAddressAs).toBeUndefined();
+  });
+
+  it("reads the price of a draft stored before plans as a day plan (ENG-281)", () => {
+    const stored = JSON.parse(serializeDraft(fresh()));
+    delete stored.fields.plans;
+    stored.fields.rate = { value: "610", source: "user" };
+    const restored = hydrateDraft(JSON.stringify(stored), NOW + 1000)!;
+    expect(restored.fields.plans).toEqual({ value: dayPlan("610"), source: "user" });
+    expect("rate" in restored.fields).toBe(false);
   });
 
   it("drops a stored value that is not an address type", () => {

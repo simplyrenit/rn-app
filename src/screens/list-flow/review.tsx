@@ -40,7 +40,9 @@ import {
   space,
 } from "@/lib/design-tokens";
 import { formatNumber } from "@/lib/format";
-import { DEFAULT_DEPOSIT_RULE, parseRate } from "@/lib/list-flow/deposit";
+import { DEFAULT_DEPOSIT_RULE } from "@/lib/list-flow/deposit";
+import { DraftPlan, defaultUnit, derivedRate, toPlans } from "@/lib/plans";
+import { PlanPricing } from "@/components/post/plan-pricing";
 import {
   Requirement,
   canRunAgain,
@@ -349,9 +351,9 @@ export default function ListReviewScreen() {
     flow.dispatch({ type: "editField", field, value });
   };
 
-  const onRate = (value: string) => {
-    edit("rate", value);
-    const valid = parseRate(value) !== null;
+  const onPlans = (value: DraftPlan[]) => {
+    edit("plans", value);
+    const valid = toPlans(value) !== null;
     if (valid && !priceWasValid.current) flow.track("price_entered");
     priceWasValid.current = valid;
   };
@@ -462,7 +464,11 @@ export default function ListReviewScreen() {
 
   // ---- Derived display ------------------------------------------------------------
 
-  const rate = parseRate(f.rate.value);
+  const rate = derivedRate(toPlans(f.plans.value));
+  // Until the owner touches the price check the category picks the first
+  // plan: furniture is rented by the month (ENG-281).
+  const parentSlug = categories.find((c) => c.title === f.category.value?.parent)?.slug;
+  const shownPlans = f.plans.value ?? [{ unit: defaultUnit(parentSlug), price: "", min: 1 }];
   const rule = draft.depositRule ?? DEFAULT_DEPOSIT_RULE;
   const deposit = f.security_deposit.value;
   const photos = draft.photos;
@@ -626,26 +632,23 @@ export default function ListReviewScreen() {
 
           {categoryFirst ? categorySection : null}
 
-          {/* Check 1 · price per day */}
+          {/* Check 1 · how it is rented, and the prices (ENG-281) */}
           <View onLayout={onLayoutSection("rate")} style={{ marginBottom: density.fieldGap }}>
-            <FieldLabel label="Check 1 · price per day" required />
             <PulseOnce>
-              <AmountInput
-                accessibilityLabel="Price per day"
-                value={f.rate.value ?? ""}
-                onChangeText={onRate}
-                placeholder="0"
+              <PlanPricing
+                label="Check 1 · how you rent it"
+                value={shownPlans}
+                onChange={onPlans}
+                dailyHint="Think about what you'd pay to borrow it for a day."
+                showErrors={showMissing}
               />
             </PulseOnce>
-            <Text fontSize="text-xs" tone="body" style={{ marginTop: space.xs }}>
-              Think about what you'd pay to borrow it for a day.
-            </Text>
             {rate !== null && deposit ? (
               <Animated.View entering={appear.entering} exiting={appear.exiting}>
                 <Text fontSize="text-sm" tone="body" style={{ marginTop: 2 }}>
                   {draft.depositTouched
                     ? `Deposit Rs ${formatNumber(deposit)} · `
-                    : `Deposit Rs ${formatNumber(deposit)} · ${formatNumber(rule.multiplier)} × your daily rate · `}
+                    : `Deposit Rs ${formatNumber(deposit)} · ${formatNumber(rule.multiplier)} × your price a day · `}
                   <Text
                     fontSize="text-sm"
                     fontWeight="font-bold"

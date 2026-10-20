@@ -44,6 +44,7 @@ export default function Saved() {
         title={item.title}
         location={item.location}
         price={item.rate}
+        plans={item.plans}
         isFavorite
         tile
       />

@@ -2,6 +2,8 @@ import { Notice, Panel } from "@/components/booking/parts";
 import { Text } from "@/components/core";
 import { LiveCopy, ProductShop, getItLine, handoverLine, priceBlock } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { Plan, UNIT_WORDS, minimumLine, perDay, plansOf, smallestPlan } from "@/lib/plans";
+import { formatCurrency } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import React from "react";
 import { View } from "react-native";
@@ -17,6 +19,7 @@ export function BookingFacts({
   shop,
   notDelivered,
   rate,
+  plans: listingPlans,
   deposit,
 }: {
   copy: LiveCopy | null;
@@ -24,11 +27,16 @@ export function BookingFacts({
   notDelivered?: boolean;
   /** The listing's price and deposit, for BK-01's price block under the banner. */
   rate?: string | number | null;
+  /** ENG-281: its plans; absent from an older server, which priced by `rate` alone. */
+  plans?: Plan[];
   deposit?: string | number | null;
 }) {
   const { color } = useTheme();
   const hours = handoverLine(shop?.hours);
-  const price = priceBlock(rate, deposit);
+  const plans = plansOf({ plans: listingPlans, rate: rate == null ? null : String(rate) });
+  const first = smallestPlan(plans);
+  const price = priceBlock(first?.price, deposit);
+  const minimum = minimumLine(plans);
   const rows = [
     { icon: MapPinIcon, text: getItLine(shop, notDelivered) },
     ...(hours ? [{ icon: ClockIcon, text: hours }] : []),
@@ -68,9 +76,18 @@ export function BookingFacts({
               {price.rate}
             </Text>
             <Text fontSize="text-md" tone="body">
-              a day
+              {`a ${first?.unit ?? "day"}`}
             </Text>
           </View>
+          {plans.length > 1 ? <PlansCard plans={plans} /> : null}
+          {minimum ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: space.xs }}>
+              <ClockIcon size={18} color={color.text} />
+              <Text fontSize="text-md" fontWeight="font-bold">
+                {minimum}
+              </Text>
+            </View>
+          ) : null}
           {price.deposit ? (
             <Text fontSize="text-md" tone="body">
               {price.deposit}
@@ -99,6 +116,42 @@ export function BookingFacts({
           </View>
         ))}
       </Panel>
+    </View>
+  );
+}
+
+/** Each plan of a listing with two or three (ENG-281): its price, and what it works out to a day. */
+function PlansCard({ plans }: { plans: Plan[] }) {
+  const { color } = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        marginVertical: space.sm,
+        borderWidth: 1,
+        borderColor: color.line,
+        borderRadius: radius.group,
+        overflow: "hidden",
+      }}
+    >
+      {plans.map((plan, i) => (
+        <View
+          key={plan.unit}
+          accessible
+          accessibilityLabel={`${UNIT_WORDS[plan.unit]}, ${formatCurrency(plan.price)}, ${formatCurrency(perDay(plan))} a day`}
+          style={{ flex: 1, padding: space.md, borderLeftWidth: i === 0 ? 0 : 1, borderLeftColor: color.line }}
+        >
+          <Text fontSize="text-xs" tone="body">
+            {UNIT_WORDS[plan.unit]}
+          </Text>
+          <Text fontSize="text-md" fontWeight="font-bold">
+            {formatCurrency(plan.price)}
+          </Text>
+          <Text fontSize="text-xs" tone="body">
+            {plan.unit === "day" ? "a day" : `${formatCurrency(Math.round(perDay(plan)))} a day`}
+          </Text>
+        </View>
+      ))}
     </View>
   );
 }

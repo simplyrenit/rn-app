@@ -579,3 +579,9 @@ describe("the category screen over a change that waits (review app-e2e-3 r2, fin
     });
   });
 });
+
+describe("plans in a held change (ENG-281)", () => {
+  it("names them as prices", () => {
+    expect(fieldsLine(["plans", "security_deposit"])).toBe("prices and deposit");
+  });
+});

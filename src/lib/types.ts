@@ -7,6 +7,7 @@ import { DimensionValue, FlexAlignType, ImageSourcePropType } from "react-native
 import type { SavedAddress } from "@/lib/addresses";
 import type { BookItem, DeliveryMode, ProductShop } from "@/lib/booking";
 import type { Moment, Side } from "@/lib/capture";
+import type { Plan } from "@/lib/plans";
 import type { ReportKind } from "@/lib/day-of";
 import type { PendingEdit } from "@/lib/listing-edit";
 import type { FlagReason, ListingStatus } from "@/lib/listing-status";
@@ -59,7 +60,9 @@ export interface ItemCard {
   image: string | null;
   title: string;
   location: string;
+  /** The day price (`rate`); with `plans` the card shows the smallest plan instead (ENG-281). */
   price: string;
+  plans?: Plan[];
   isFavorite?: boolean;
   isDarkMode?: boolean;
   /** The owner's own shelf only: what state the listing is in (ENG-124). */
@@ -683,6 +686,13 @@ export interface BackendProduct {
   shop_code?: string;
   not_delivered?: boolean;
   rate_unit?: "day";
+  /**
+   * ENG-281: the listing's prices, sorted day, week, month, and the shortest
+   * booking they allow, in days. `rate` stays the day price, or else the
+   * lowest price a day; absent from an older server (`plansOf` reads `rate`).
+   */
+  plans?: Plan[];
+  min_days?: number;
   /**
    * Public products only (ENG-172): the shop behind the listing, whether it can
    * be booked now (`live_booking`) or for the next opening (`book_for_morning`),

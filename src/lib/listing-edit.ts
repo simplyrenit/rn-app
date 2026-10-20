@@ -60,6 +60,7 @@ const FIELD_WORDS: Record<string, string> = {
   contact_number: "contact number",
   included_items: "what is included",
   rate: "price",
+  plans: "prices",
   security_deposit: "deposit",
   worth: "worth",
   location: "address",
@@ -91,6 +92,8 @@ const OWNER_FIELDS = [
   "contact_name",
   "contact_number",
   "rate",
+  // ENG-281: a listing's prices, held and compared as one value.
+  "plans",
   "security_deposit",
   "worth",
   "location",
@@ -221,7 +224,8 @@ export interface SaveOutcome {
   message?: string;
 }
 
-const NUMERIC_FIELDS = new Set(["rate", "security_deposit", "worth", "quantity", "lat", "long"]);
+// `price` and `min` are a plan's (ENG-281): "2500" is "2500.00".
+const NUMERIC_FIELDS = new Set(["rate", "security_deposit", "worth", "quantity", "lat", "long", "price", "min"]);
 
 /** The same value, whatever spelling the server gave it ("610" and "610.00", a rounded coordinate). */
 function same(key: string, a: unknown, b: unknown): boolean {

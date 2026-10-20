@@ -7,6 +7,7 @@ import { Image } from "expo-image";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { FavouriteButton } from "./favourite-button";
+import { plansOf, smallestPlan } from "@/lib/plans";
 import { Text } from "./text";
 import { usePressFeedback } from "./use-press-feedback";
 import { VerifiedBusinessBadge } from "./verified-business-badge";
@@ -51,6 +52,7 @@ export function Card({
   title,
   location,
   price,
+  plans,
   id,
   isFavorite: checked,
   width,
@@ -62,6 +64,8 @@ export function Card({
   dates,
   businessVerified,
 }: CardProps) {
+  // ENG-281: the smallest plan, per its unit; a product from an older server is its day price.
+  const shownPlan = smallestPlan(plansOf({ plans, rate: price }));
   const router = useTypedNavigation();
   const { color } = useTheme();
   const { pressStyle, onPressIn, onPressOut } = usePressFeedback();
@@ -87,7 +91,7 @@ export function Card({
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${location}${
         distanceLine ? `, ${distanceLine}` : ""
-      }, ${formatCurrency(price)} per day${businessVerified ? ", Verified business" : ""}`}
+      }, ${formatCurrency(shownPlan?.price ?? price)} per ${shownPlan?.unit ?? "day"}${businessVerified ? ", Verified business" : ""}`}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       activeOpacity={1}
@@ -164,12 +168,12 @@ export function Card({
           </Text>
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
             <Text fontSize="text-md" fontWeight="font-bold">
-              {formatCurrency(price)}
+              {formatCurrency(shownPlan?.price ?? price)}
             </Text>
             {/* Same tone as the location line above it. These two adjacent lines
                 of secondary text used to sit at visibly different weights. */}
             <Text fontSize="text-sm" tone="dim">
-              per day
+              {`per ${shownPlan?.unit ?? "day"}`}
             </Text>
           </View>
         </View>

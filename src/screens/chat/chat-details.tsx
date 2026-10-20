@@ -45,7 +45,8 @@ import {
   fontFamily,
   fontSize,
 } from "@/lib/design-tokens";
-import { formatDayHeading, isSameDay } from "@/lib/format";
+import { formatCurrency, formatDayHeading, isSameDay } from "@/lib/format";
+import { plansOf, smallestPlan } from "@/lib/plans";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 
@@ -106,6 +107,8 @@ function OfferProduct({
   product?: BackendProduct | null;
   getImageSource: (uri?: string | null) => any;
 }) {
+  // ENG-281: the smallest plan, per its unit.
+  const offerPlan = product ? smallestPlan(plansOf(product)) : null;
   return (
     <View
       style={{
@@ -134,12 +137,10 @@ function OfferProduct({
         </Text>
         <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
           <Text fontSize="text-md" fontWeight="font-bold">
-            {Number.isFinite(Number(product?.rate))
-              ? `₹${Number(product?.rate).toFixed(0)}`
-              : "—"}
+            {offerPlan ? formatCurrency(offerPlan.price) : "—"}
           </Text>
           <Text fontSize="text-sm" tone="dim">
-            per day
+            {`per ${offerPlan?.unit ?? "day"}`}
           </Text>
         </View>
       </View>

@@ -26,6 +26,8 @@ import {
   fontSize,
   radius,
 } from "@/lib/design-tokens";
+import { formatCurrency } from "@/lib/format";
+import { plansOf, smallestPlan } from "@/lib/plans";
 import { useTheme } from "@/lib/theme";
 
 // Measured off the Figma "Write a review" frame (1:18034): a 24pt column under
@@ -203,10 +205,10 @@ export default function WriteReviewScreen() {
               style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}
             >
               <Text fontSize="text-md" fontWeight="font-bold">
-                ₹{Number(product.rate).toFixed(0)}
+                {formatCurrency(smallestPlan(plansOf(product))?.price ?? product.rate)}
               </Text>
               <Text fontSize="text-sm" tone="dim">
-                per day
+                {`per ${smallestPlan(plansOf(product))?.unit ?? "day"}`}
               </Text>
             </View>
           </View>
