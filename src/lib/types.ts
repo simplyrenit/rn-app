@@ -355,6 +355,8 @@ export type RootStackParamList = {
   /** The shop's address and pin, on the same map picker (ENG-265). */
   ShopAddress: undefined;
   RentalDelivery: undefined;
+  /** Every area around the shop, on and off, editing the Delivery screen's draft (ENG-291). */
+  DeliveryAreas: undefined;
   /**
    * Live booking, the customer's side (ENG-99). `BookingDates` is BK-02: the
    * dates and how the item changes hands. `moved_from` is the customer's refused
