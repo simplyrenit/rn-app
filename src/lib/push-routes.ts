@@ -10,9 +10,9 @@ import { Ring, RingEndPush, parseRing, parseRingEnd } from "@/lib/shop-ring";
  *
  * This is the table the router in `src/backend/notifications.ts` reads. It
  * holds the customer's types (ENG-173), the ring (ENG-209) and the shop's other
- * types (ENG-210), the deposit and the day-of screens (ENG-222, ENG-223) and the
- * claim (ENG-252, ENG-253). A type this build does not know is ignored, as the
- * contract asks.
+ * types (ENG-210), the deposit and the day-of screens (ENG-222, ENG-223), the
+ * claim (ENG-252, ENG-253) and monthly billing (ENG-282). A type this build does
+ * not know is ignored, as the contract asks.
  */
 export type PushRoute =
   /** The customer's booking, at whatever stage the server says it is in. */
@@ -81,6 +81,15 @@ export function pushRoute(data: unknown): PushRoute | null {
       case "returned":
       case "closed":
       case "late":
+      // Monthly billing (ENG-282): a month's link, its due day, its grace, its lapse, and ending early. The rental
+      // screen shows the schedule and the overdue alert, and opens Rent due from there.
+      case "period_link":
+      case "period_due":
+      case "period_overdue":
+      case "period_lapsed":
+      case "end_early":
+      // The desk reopened a rental that lapsed, once its month was paid.
+      case "period_reopened":
       // The booking's payments list.
       case "refund":
       // The day of the handover: `Booking` draws it while the stage is `ready` (ENG-222).
@@ -132,6 +141,12 @@ export function pushRoute(data: unknown): PushRoute | null {
       case "started":
       case "returned":
       case "closed":
+      // Monthly billing (ENG-282): a month paid, a month overdue (Renit's desk is following up), one that lapsed, and the
+      // customer ending early.
+      case "period_paid":
+      case "owner_period_overdue":
+      case "period_lapsed":
+      case "owner_end_early":
         return number ? { screen: "ShopBooking", number } : null;
       // The claim: a customer's reply or Renit's decision, where the shop may reply too (ENG-253).
       case "claim": {

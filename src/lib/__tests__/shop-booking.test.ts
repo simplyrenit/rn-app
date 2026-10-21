@@ -234,6 +234,8 @@ describe("the Customer card", () => {
 describe("the Money card", () => {
   it("shows the rent, Renit's fee crossed out, what the shop earns, the payout and the deposit", () => {
     expect(moneyView(booking())).toEqual({
+      rentLabel: "Rent",
+      earnLabel: "You earn",
       rent: "₹1,830",
       delivery: null,
       fee: { struck: "₹92", charged: "₹0" },
@@ -242,6 +244,54 @@ describe("the Money card", () => {
       notes: [],
       deposit: { amount: "₹3,000", sub: "Asked from the customer before the handover" },
     });
+  });
+
+  it("says a monthly booking's money a month at a time (ENG-282)", () => {
+    const month = (n: number, state: string) => ({
+      booking: "RN-24831", n, label: `Month ${n}`, kind: "rent", first_day: "2026-10-24", last_day: "2026-11-22",
+      amount: "1800.00", state, link_on: null, pay_by: null, grace_ends: null, paid_at: null, linked_at: null,
+    });
+    const m = {
+      ...booking().money,
+      rent: "10800.00",
+      fee_shown: "540.00",
+      fee_charged: "0.00",
+      you_earn: "10800.00",
+      plan: { unit: "month", price: "1800.00", min: 6 },
+      billing: "monthly",
+      periods: [month(1, "paid"), month(2, "overdue"), month(3, "upcoming")],
+    };
+    expect(moneyView(booking({ stage: "out", money: m }))).toMatchObject({
+      rentLabel: "Rent a month",
+      earnLabel: "You earn a month",
+      rent: "₹1,800",
+      fee: { struck: "₹90", charged: "₹0" },
+      earn: "₹1,800",
+      payout: "Paid to your bank the morning after each month is paid, once it has started.",
+    });
+    expect(customerBlock(booking({ stage: "out", money: m }), NOW).note).toBe("Renit's desk follows up on unpaid months.");
+    expect(customerBlock(booking({ stage: "out" }), NOW).note).toBeNull();
+    // A payout past the plain default still says where it stands.
+    const held = { ...m, payout: { ...m.payout, status: "paused", text: "Held: Renit's desk is checking this payout" } };
+    expect(moneyView(booking({ stage: "out", money: held })).payout).toBe("Held: Renit's desk is checking this payout");
+    // An ended booking is said as a whole, as it settled.
+    expect(moneyView(booking({ stage: "closed", exit: "cancelled_by_customer", money: m }))).toMatchObject({ rentLabel: "Rent", rent: "₹10,800" });
+  });
+
+  it("keeps an unpaid notice out of what is returned from the deposit (ENG-282)", () => {
+    const m = { ...booking().money, deposit: "5000.00", deposit_state: "settled", damage_deduction: "0.00", notice_deduction: "1800.00" };
+    const view = moneyView(booking({ stage: "closed", money: m }));
+    expect(view.notes).toEqual(["₹1,800 kept from the deposit for you, for the notice"]);
+    expect(view.deposit?.sub).toBe("₹3,200 returned, ₹1,800 kept for the notice");
+    // Before the deposit settles the customer can still pay it by its link.
+    expect(moneyView(booking({ stage: "returned", money: { ...m, deposit_state: "paid" } })).notes).toEqual([
+      "₹1,800 for the notice, from the deposit unless the customer pays it",
+    ]);
+    // The server's order: late fee, then notice, then damage, each from what is left.
+    const tight = { ...m, deposit: "3000.00", late_fee: "1220.00", damage_deduction: "1000.00" };
+    expect(moneyView(booking({ stage: "closed", money: tight })).deposit?.sub).toBe(
+      "₹1,220 kept for the late days, ₹1,780 kept for the notice"
+    );
   });
 
   it("says what was kept from the deposit for the shop, and what of it went back (E-110)", () => {
@@ -268,7 +318,8 @@ describe("the Money card", () => {
     expect(forfeited.notes).toEqual([]);
     expect(forfeited.deposit?.sub).toBe("Kept, as the item was not returned");
     const whole = moneyView(booking({ stage: "closed", money: { ...m, deposit: "800.00", deposit_state: "settled" } }));
-    expect(whole.deposit?.sub).toBe("₹200 kept for the damage, ₹600 kept for the late days");
+    // The late fee comes first (the server's order, D15), the damage from what is left.
+    expect(whole.deposit?.sub).toBe("₹190 kept for the damage, ₹610 kept for the late days");
   });
 
   it("says a refunded fault comes off a later payout, then that it was taken (E-116)", () => {

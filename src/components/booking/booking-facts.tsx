@@ -3,7 +3,7 @@ import { Text } from "@/components/core";
 import { LiveCopy, ProductShop, getItLine, handoverLine, priceBlock } from "@/lib/booking";
 import type { ListingDelivery } from "@/lib/delivery";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
-import { Plan, UNIT_WORDS, minimumLine, perDay, plansOf, smallestPlan } from "@/lib/plans";
+import { Plan, UNIT_WORDS, minimumLine, noticeWords, perDay, plansOf, smallestPlan } from "@/lib/plans";
 import { formatCurrency } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import React from "react";
@@ -21,6 +21,7 @@ export function BookingFacts({
   notDelivered,
   rate,
   plans: listingPlans,
+  monthlyBilling,
   deposit,
   delivery,
   addressName,
@@ -35,6 +36,8 @@ export function BookingFacts({
   rate?: string | number | null;
   /** ENG-281: its plans; absent from an older server, which priced by `rate` alone. */
   plans?: Plan[];
+  /** ENG-282: the server bills this listing's month plan monthly (its switch is on). Absent from an older server. */
+  monthlyBilling?: boolean;
   deposit?: string | number | null;
 }) {
   const { color } = useTheme();
@@ -43,6 +46,8 @@ export function BookingFacts({
   const first = smallestPlan(plans);
   const price = priceBlock(first?.price, deposit);
   const minimum = minimumLine(plans);
+  // ENG-282: a month plan of 2 months or more, billed monthly, costs a month's notice for ending inside it.
+  const notice = monthlyBilling ? noticeWords(plans) : null;
   const rows = [
     { icon: MapPinIcon, text: getItLine(shop, notDelivered, delivery, addressName) },
     ...(hours ? [{ icon: ClockIcon, text: hours }] : []),
@@ -93,6 +98,11 @@ export function BookingFacts({
                 {minimum}
               </Text>
             </View>
+          ) : null}
+          {notice ? (
+            <Text fontSize="text-md" tone="body">
+              {notice}
+            </Text>
           ) : null}
           {price.deposit ? (
             <Text fontSize="text-md" tone="body">

@@ -4,6 +4,7 @@ import { refreshShop } from "@/backend/shop-today";
 import { GetHelp } from "@/components/booking/get-help";
 import { ClaimRows } from "@/components/claims/claim-rows";
 import { BookingLoadError, BookingLoading, MoneyLine, Notice, Panel, Pill, SummaryCard } from "@/components/booking/parts";
+import { PaymentSchedule } from "@/components/booking/payment-schedule";
 import { Records } from "@/components/capture/record-card";
 import { Timeline } from "@/components/booking/timeline";
 import { useAppActive } from "@/components/booking/use-app-active";
@@ -12,7 +13,8 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { ShopCancelSheet, ShopCancelSheetHandle } from "@/components/shop/shop-cancel-sheet";
 import { WindowChangeSheet, WindowChangeSheetHandle } from "@/components/shop/window-change-sheet";
 import { apiError } from "@/lib/api-error";
-import { datesLine } from "@/lib/booking";
+import { isMonthly, overduePeriod, shopOverdueAlert } from "@/lib/billing";
+import { datesLine, todayIst } from "@/lib/booking";
 import { correctedNow } from "@/lib/server-clock";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import {
@@ -101,11 +103,11 @@ function MoneyCard({ booking }: { booking: BookingShop }) {
       <Text role="sectionTitle" accessibilityRole="header">
         Money
       </Text>
-      <MoneyLine label="Rent" amount={m.rent} />
+      <MoneyLine label={m.rentLabel} amount={m.rent} />
       {m.delivery ? <MoneyLine label="Delivery fee" amount={m.delivery} /> : null}
       <MoneyLine label="Renit's fee" amount={m.fee.charged} struck={m.fee.struck ?? undefined} />
       <View style={{ height: 1, backgroundColor: color.line }} />
-      <MoneyLine label="You earn" amount={m.earn} bold />
+      <MoneyLine label={m.earnLabel} amount={m.earn} bold />
       {m.notes.map((note) => (
         <Text key={note} fontSize="text-sm" tone="body">
           {note}
@@ -181,7 +183,10 @@ function BookingPage({
   const [answering, setAnswering] = useState<"accept" | "decline" | null>(null);
   const busy = useRef(false);
 
-  const pill = shopPill(booking);
+  const monthly = isMonthly(booking.money);
+  const overdue = monthly && booking.stage === "out" && !booking.exit ? overduePeriod(booking.money) : null;
+  const alert = overdue ? shopOverdueAlert(overdue, booking.customer.first_name, booking.product.title) : null;
+  const pill = overdue ? ({ label: "Rent overdue", tone: "danger" } as const) : shopPill(booking);
   const can = (action: string) => booking.can.includes(action);
   const request = customerRequest(booking);
   const mine = ownRequest(booking);
@@ -261,6 +266,12 @@ function BookingPage({
           lines={[datesLine(booking), howLine(booking)]}
         />
 
+        {alert ? (
+          <Notice tone="danger" icon="warning" title={alert.title}>
+            {alert.body}
+          </Notice>
+        ) : null}
+
         {request ? (
           <Panel style={{ padding: space.md, gap: space.sm }}>
             <Text fontSize="text-md" fontWeight="font-bold">
@@ -298,6 +309,7 @@ function BookingPage({
 
         <CustomerCard booking={booking} now={now} />
         <MoneyCard booking={booking} />
+        {monthly ? <PaymentSchedule money={booking.money} side="owner" today={todayIst(now)} /> : null}
 
         {/* A damage claim the shop made, a fault report or a "not as described" report against it. */}
         <ClaimRows ids={booking.claims} role="owner" />
@@ -342,6 +354,18 @@ function BookingPage({
         <Panel>
           <GetHelp booking={booking} />
         </Panel>
+
+        {/* Figma's shop "End the rental early" (D16): the shop has no way to end a rental, so it reaches the desk. */}
+        {monthly && booking.stage === "out" && !booking.exit && can("get_help") ? (
+          <View style={{ gap: space.sm }}>
+            <Panel>
+              <GetHelp booking={booking} title="End the rental early" danger />
+            </Panel>
+            <Text fontSize="text-sm" tone="body" style={{ paddingHorizontal: space.xs }}>
+              Talk to Renit's desk first. Ending early follows the rental terms.
+            </Text>
+          </View>
+        ) : null}
       </ScrollView>
       <ShopCancelSheet ref={cancelSheet} number={booking.number} />
       <WindowChangeSheet ref={changeSheet} number={booking.number} firstName={booking.customer.first_name} />

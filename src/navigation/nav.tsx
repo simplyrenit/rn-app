@@ -78,6 +78,7 @@ import ExtendScreen from "@/screens/booking/extend";
 import FaultReportScreen from "@/screens/booking/fault-report";
 import NotAsDescribedScreen from "@/screens/booking/not-as-described";
 import PayDepositScreen from "@/screens/booking/pay-deposit";
+import PayPeriodScreen from "@/screens/booking/pay-period";
 import ReportScreen from "@/screens/booking/report";
 import ReturnScreen from "@/screens/booking/return";
 import BookingDatesScreen from "@/screens/booking/choose-dates";
@@ -865,6 +866,12 @@ export default function Navigation() {
           name="BookingDeposit"
           component={PayDepositScreen}
           getId={({ params }) => params?.number}
+        />
+        {/* A month's rent (ENG-282), keyed by the booking and the month. */}
+        <Stack.Screen
+          name="PayPeriod"
+          component={PayPeriodScreen}
+          getId={({ params }) => (params ? `${params.number}:${params.n}` : undefined)}
         />
         <Stack.Screen
           name="BookingDetails"

@@ -141,16 +141,21 @@ export function MoneyLine({
   );
 }
 
-type NoticeTone = "info" | "warning" | "brand";
+type NoticeTone = "info" | "warning" | "brand" | "danger";
 
-/** A tinted note with an icon: the deposit note, the closed shop, a thing in the way. */
+/**
+ * A tinted note with an icon: the deposit note, the closed shop, a thing in the way. `danger` with a `title` is an alert
+ * that costs the rental (ENG-282: a month overdue), its title in the danger colour above the words.
+ */
 export function Notice({
   tone = "info",
   icon,
+  title,
   children,
 }: {
   tone?: NoticeTone;
   icon?: "info" | "clock" | "warning";
+  title?: string;
   children: React.ReactNode;
 }) {
   const { color } = useTheme();
@@ -158,6 +163,7 @@ export function Notice({
     info: { bg: color.surfaceRaised, fg: color.textBody, line: "transparent" },
     warning: { bg: color.warningWash, fg: color.warning, line: color.warning },
     brand: { bg: color.brandPanel, fg: color.brandText, line: color.brandPanelLine },
+    danger: { bg: color.dangerWash, fg: color.danger, line: color.danger },
   }[tone];
   const Icon =
     icon === "clock" ? ClockIcon : icon === "warning" ? ExclamationTriangleIcon : InformationCircleIcon;
@@ -174,9 +180,18 @@ export function Notice({
       }}
     >
       <Icon size={20} color={tint.fg} />
-      <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
-        {children}
-      </Text>
+      {title ? (
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text fontSize="text-md" fontWeight="font-bold" style={{ color: tint.fg }}>
+            {title}
+          </Text>
+          <Text fontSize="text-sm">{children}</Text>
+        </View>
+      ) : (
+        <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+          {children}
+        </Text>
+      )}
     </View>
   );
 }

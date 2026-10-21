@@ -2,6 +2,7 @@ import { useBooking } from "@/backend/bookings";
 import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/components/booking/parts";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
+import { isMonthly } from "@/lib/billing";
 import { dayShort, daysLabel } from "@/lib/booking";
 import { MAX_EXTRA_DAYS, extensionDays } from "@/lib/day-of";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
@@ -55,7 +56,8 @@ export default function ExtendScreen() {
   const { color } = useTheme();
   const query = useBooking(params.number);
   const booking = query.data;
-  const [extra, setExtra] = useState(1);
+  // ENG-282: a monthly-billed rental extends by a month, so the stepper starts at 30 days (the most it allows).
+  const [picked, setExtra] = useState<number | null>(null);
 
   if (!booking) {
     return (
@@ -70,6 +72,7 @@ export default function ExtendScreen() {
     );
   }
 
+  const extra = picked ?? (isMonthly(booking.money) ? MAX_EXTRA_DAYS : 1);
   const days = extensionDays(booking.last_day, extra);
 
   return (
@@ -87,13 +90,13 @@ export default function ExtendScreen() {
 
         <Panel style={{ padding: space.lg, alignItems: "center", gap: space.md }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.lg }}>
-            <Step label="One day fewer" disabled={extra <= 1} onPress={() => setExtra((n) => Math.max(1, n - 1))}>
+            <Step label="One day fewer" disabled={extra <= 1} onPress={() => setExtra(Math.max(1, extra - 1))}>
               <MinusIcon size={20} color={color.text} />
             </Step>
             <Text fontSize="text-2xl" fontWeight="font-bold" accessibilityLiveRegion="polite" style={{ minWidth: 110, textAlign: "center" }}>
               {daysLabel(extra)}
             </Text>
-            <Step label="One day more" disabled={extra >= MAX_EXTRA_DAYS} onPress={() => setExtra((n) => Math.min(MAX_EXTRA_DAYS, n + 1))}>
+            <Step label="One day more" disabled={extra >= MAX_EXTRA_DAYS} onPress={() => setExtra(Math.min(MAX_EXTRA_DAYS, extra + 1))}>
               <PlusIcon size={20} color={color.text} />
             </Step>
           </View>

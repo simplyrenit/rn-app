@@ -25,6 +25,7 @@ import {
   handoverIdLine,
   idCheckCopy,
   money,
+  monthlyLine,
   morningNotice,
   paySteps,
   plainLines,
@@ -277,6 +278,12 @@ export default function ReviewAndBookScreen() {
           ))}
           <View style={{ height: 1, backgroundColor: color.line }} />
           <MoneyLine label={totalLabel(quote)} amount={money(quote.total)} bold />
+          {/* ENG-282: billed a month at a time, so the total is not what is paid at the start. */}
+          {monthlyLine(quote) ? (
+            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+              {monthlyLine(quote)}
+            </Text>
+          ) : null}
         </Panel>
 
         <Text role="sectionTitle" accessibilityRole="header" style={{ marginTop: space.sm }}>

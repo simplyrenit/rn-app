@@ -64,6 +64,7 @@ import {
   payPhaseText,
   paySteps,
   plainLines,
+  monthlyLine,
   priceLines,
   rateLine,
   daysAllowed,
@@ -521,6 +522,36 @@ describe("the price before Book now", () => {
       "Each late day costs one day's rent.",
       "Returning early gives no refund.",
     ]);
+  });
+
+  it("bills a month plan a month at a time (ENG-282): month 1 after the accept, and the notice for ending early", () => {
+    const monthly = quote({
+      days: 180,
+      rent: "10800.00",
+      total: "10800.00",
+      pay_after_accept: "10701.00",
+      plan: { unit: "month", price: "1800.00", min: 6 },
+      billing: "monthly",
+      first_payment: "1701.00",
+      notice: "1800.00",
+    });
+    expect(monthlyLine(monthly)).toBe("Month 1 now, then ₹1,800 a month");
+    expect(paySteps(monthly)[1]).toEqual({
+      title: "After the owner accepts",
+      sub: "Month 1 · Within 30 minutes of their yes",
+      amount: "₹1,701",
+    });
+    expect(totalLine(monthly)).toBe(
+      "₹99 now, ₹1,701 after the owner accepts, ₹3,000 deposit (refundable). To start, deposit included: ₹4,800. Then ₹1,800 a month."
+    );
+    expect(plainLines(monthly).at(-1)).toBe("Ending before 6 months costs one month's rent (₹1,800).");
+    expect(plainLines({ ...monthly, notice: null }).at(-1)).toBe(
+      "You can end early: the month you are in is not refunded, and the months after are not charged."
+    );
+    // Upfront, and an older server's quote: as before.
+    expect(monthlyLine(quote())).toBeNull();
+    expect(monthlyLine({ ...monthly, billing: "upfront" })).toBeNull();
+    expect(paySteps(quote())[1].amount).toBe("₹1,731");
   });
 
   it("never calls a cancel free while the 99 is kept, and has no 'not returned' (E-78)", () => {
@@ -1264,6 +1295,24 @@ describe("pay the rent", () => {
     });
   });
 
+  it("says month 1 alone for a monthly booking (ENG-282), so the lines add up to what is charged", () => {
+    const monthly = accepted(
+      { pay_now: { purpose: "rent", amount: "1851.00", deposit_part: "0.00", due_at: "2026-10-13T04:43:00Z", payment: null } },
+      {
+        rent: "10800.00",
+        delivery_fee: "150.00",
+        billing: "monthly",
+        periods: [
+          { booking: "RN-24831", n: 1, label: "Month 1", kind: "rent", first_day: "2026-10-24", last_day: "2026-11-22", amount: "1950.00", rent: "1800.00", state: "upcoming", link_on: null, pay_by: null, grace_ends: null, paid_at: null, linked_at: null },
+        ],
+      }
+    );
+    expect(payRentCopy(monthly, NOW).lines).toEqual([
+      { label: "Month 1", amount: "₹1,950" },
+      { label: "Already paid", amount: "₹99", amountTone: "success" },
+    ]);
+  });
+
   it("gives the deadline as a clock time, never as a number of minutes", () => {
     const copy = payRentCopy(accepted(), NOW);
     expect(`${copy.sub} ${copy.small} ${copy.note}`).not.toMatch(/minute/);
@@ -1551,6 +1600,8 @@ describe("the booking screen", () => {
       status: "Paid · UPI",
       tone: "success",
     });
+    // ENG-282: a month's rent says which month, where the server names it.
+    expect(moneyRowView({ ...booking().payments[0], what: "rent", label: "Month 3 rent" }, NOW).sub).toBe("Month 3 rent · 9:41 am");
   });
 
   it("shows a refund with its amount, where it is going and the days (N16)", () => {
@@ -1634,8 +1685,10 @@ describe("the deposit after a late return (review r1 #3)", () => {
   const late = { deposit: "3000.00", late_days: 2, late_fee: "1220.00" };
 
   it("what is kept for the late days, and what comes back", () => {
-    expect(depositAfterLate(late)).toEqual({ deposit: 3000, days: 2, kept: 1220, back: 1780 });
-    expect(depositAfterLate({ deposit: "3000.00", late_days: 0, late_fee: "0.00" })).toEqual({ deposit: 3000, days: 0, kept: 0, back: 3000 });
+    expect(depositAfterLate(late)).toEqual({ deposit: 3000, days: 2, kept: 1220, notice: 0, back: 1780 });
+    expect(depositAfterLate({ deposit: "3000.00", late_days: 0, late_fee: "0.00" })).toEqual({ deposit: 3000, days: 0, kept: 0, notice: 0, back: 3000 });
+    // ENG-282: an unpaid notice comes after the late days, from what is left.
+    expect(depositAfterLate({ ...late, notice_deduction: "1800.00" })).toMatchObject({ kept: 1220, notice: 1780, back: 0 });
     // Never more than the deposit.
     expect(depositAfterLate({ deposit: "3000.00", late_days: 9, late_fee: "5490.00" })).toMatchObject({ kept: 3000, back: 0 });
     // A late fee with no late days on the booking is not counted, and missing fields are nothing.
@@ -1651,6 +1704,16 @@ describe("the deposit after a late return (review r1 #3)", () => {
     );
     expect(timelineRows(returned, NOW).pop()).toMatchObject({ label: "₹1,780 of the deposit comes back" });
     expect(rentalNextLine(returned, NOW)).toBe("₹1,780 of the deposit comes back within 48 hours");
+    // ENG-282: an unpaid notice is kept too, said as such.
+    const notice = booking({ stage: "returned" }, { deposit_state: "paid", deposit: "5000.00", notice_deduction: "1800.00" });
+    expect(bookingBanner(notice).sub).toBe(
+      "₹3,200 of your ₹5,000 deposit comes back within 48 hours: ₹1,800 is kept for the notice, and any damage Renit agrees comes off too."
+    );
+    const both = booking({ stage: "returned" }, { deposit_state: "paid", ...late, deposit: "5000.00", notice_deduction: "1800.00" });
+    expect(bookingBanner(both).sub).toBe(
+      "₹1,980 of your ₹5,000 deposit comes back within 48 hours: ₹1,220 is kept for 2 late days and ₹1,800 for the notice, and any damage Renit agrees comes off too."
+    );
+    expect(rentalNextLine(notice, NOW)).toBe("₹3,200 of the deposit comes back within 48 hours");
     // On time: the plain line.
     const onTime = booking({ stage: "returned" }, { deposit_state: "paid" });
     expect(bookingBanner(onTime).sub).toBe("Your deposit comes back within 48 hours, less any agreed damage.");

@@ -1,6 +1,6 @@
 import { RECORD_FIRST } from "@/lib/capture";
 import { problemLine, problemState } from "@/lib/claims";
-import { clock, dayOf, dayShort, depositAfterLate, lateDaysLabel, money, todayIst, windowLabel } from "@/lib/booking";
+import { clock, dayOf, dayShort, depositAfterLate, keptReasons, money, todayIst, windowLabel } from "@/lib/booking";
 import { captured, cameBackOn, dayBlock, handoverAt, returnedAt, theirStatusLine, whenShort } from "@/lib/day-of";
 import { BookingShop, howLine, moneyView } from "@/lib/shop-booking";
 import { customerName } from "@/lib/shop-ring";
@@ -175,12 +175,13 @@ export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly stri
   const until = open ? b.report_problem_until : null;
   // Late days come out of the deposit to the shop (N11): neither line may say the whole deposit goes back (review r1 #3).
   const late = depositAfterLate(b.money);
+  // ENG-282: an unpaid notice comes to the shop from the deposit too.
   const lateShare =
-    late.kept <= 0
+    late.kept + late.notice <= 0
       ? null
       : late.back > 0
-        ? `${money(late.kept)} of the deposit comes to you for ${lateDaysLabel(late.days)}`
-        : `The whole ${money(late.deposit)} deposit comes to you for ${lateDaysLabel(late.days)}`;
+        ? `${money(late.kept + late.notice)} of the deposit comes to you for ${keptReasons(late)}`
+        : `The whole ${money(late.deposit)} deposit comes to you for ${keptReasons(late)}`;
   return {
     title: b.stage === "out" ? `Take the ${b.product.title} back` : `${b.product.title} is back`,
     sub: [b.number, customerName(b.customer), dayShort(backDay)].join(" · "),

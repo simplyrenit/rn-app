@@ -115,19 +115,24 @@ export function CallButton({ copy }: { copy: CallCopy }) {
   );
 }
 
-/** A words-and-chevron row: "The shop isn't here?", "Extend this rental". Dimmed and still while `disabled`. */
+/**
+ * A words-and-chevron row: "The shop isn't here?", "Extend this rental". Dimmed and still while `disabled`. `danger`: a row
+ * that ends something ("End the rental early"), its title in red.
+ */
 export function LinkRow({
   title,
   sub,
   onPress,
   disabled = false,
   first = true,
+  danger = false,
 }: {
   title: string;
   sub?: string | null;
   onPress: () => void;
   disabled?: boolean;
   first?: boolean;
+  danger?: boolean;
 }) {
   const { color } = useTheme();
   return (
@@ -149,7 +154,7 @@ export function LinkRow({
       }}
     >
       <View style={{ flex: 1, gap: 2 }}>
-        <Text fontSize="text-md" fontWeight="font-bold" tone={disabled ? "body" : "default"}>
+        <Text fontSize="text-md" fontWeight="font-bold" tone={disabled ? "body" : danger ? "danger" : "default"}>
           {title}
         </Text>
         {sub ? (

@@ -386,6 +386,11 @@ export type RootStackParamList = {
   BookingWindow: { number: string };
   /** BK-13: pay the deposit. Opened from the booking and from the deposit pushes (ENG-222). */
   BookingDeposit: { number: string };
+  /**
+   * BK-13 for a month (ENG-282), "Rent due": pays month `n` of booking `number`. Across an extension chain a month belongs
+   * to one booking of it, and `number` is that one, so its `pay_now` and its pay call name the same month.
+   */
+  PayPeriod: { number: string; n: number };
   /** BK-08 for a booking whose own screen is the day of the handover or the rental: the timeline, the payments, cancelling. */
   BookingDetails: { number: string };
   /** BK-18: both sets side by side, "All good · show my code", "Not as described". */
@@ -696,6 +701,8 @@ export interface BackendProduct {
    */
   plans?: Plan[];
   min_days?: number;
+  /** ENG-282: a month plan of this listing is billed a month at a time (the server's switch). Absent from an older server. */
+  monthly_billing?: boolean;
   /**
    * Public products only (ENG-172): the shop behind the listing, whether it can
    * be booked now (`live_booking`) or for the next opening (`book_for_morning`),

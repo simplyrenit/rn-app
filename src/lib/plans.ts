@@ -61,6 +61,15 @@ export function minimumLine(plans: Plan[]): string | null {
   return minDays(plans) > 1 ? `Minimum rental · ${minimumWords(plans)}` : null;
 }
 
+/**
+ * ENG-282: a month plan whose minimum is 2 months or more is billed a month at a time, and ending inside the minimum
+ * costs one more month's rent as notice. Null for any other listing.
+ */
+export function noticeWords(plans: Plan[]): string | null {
+  const month = plans.find((p) => p.unit === "month");
+  return month && month.min >= 2 ? "Ending early costs one month's rent" : null;
+}
+
 /** "₹610 per day", "₹1,800 per month": a card's price. */
 export function perUnitLabel(plan: Plan): string {
   return `${formatCurrency(plan.price)} per ${plan.unit}`;

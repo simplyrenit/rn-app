@@ -816,6 +816,7 @@ export default function DetailsScreen() {
             addressName={deliveryAddress ? addressTitle(deliveryAddress) : null}
             rate={product.rate}
             plans={product.plans}
+            monthlyBilling={product.monthly_billing}
             deposit={product.security_deposit}
           />
         </View>
