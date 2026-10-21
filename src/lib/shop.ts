@@ -323,11 +323,14 @@ const areasOff = (n: number) => `${n} ${n === 1 ? "area" : "areas"} off`;
 
 /** The Delivery row's second line on SH-13: "Up to 5 km · 1 area off · ₹50 + ₹15 a km". */
 export function deliverySummary(
-  shop: Pick<Shop, "delivers" | "delivery_base_fee" | "delivery_per_km" | "delivery_max_km" | "excluded_pincodes">
+  shop: Pick<Shop, "delivers" | "delivery_base_fee" | "delivery_per_km" | "delivery_max_km" | "excluded_pincodes"> &
+    Partial<Pick<Shop, "coordinates">>
 ): string {
   if (!shop.delivers) return "We don't deliver";
   const off = excludedPins(shop).length;
-  return `Up to ${kmText(shop.delivery_max_km)} · ${off ? areasOff(off) : "all areas"} · ${rupees(
+  // With no pin there is nothing to measure from, so no areas: say what to do instead.
+  const areas = shop.coordinates === null ? "add your shop address" : off ? areasOff(off) : "all areas";
+  return `Up to ${kmText(shop.delivery_max_km)} · ${areas} · ${rupees(
     shop.delivery_base_fee
   )} + ${rupees(shop.delivery_per_km)} a km`;
 }

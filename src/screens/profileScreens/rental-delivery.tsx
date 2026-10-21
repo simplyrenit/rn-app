@@ -433,8 +433,9 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
                   </Text>
                 ) : null}
                 <Text fontSize="text-sm" tone="body">
-                  Measured in a straight line, not by road. If the road is much longer, like across a creek, turn that
-                  area off below. Go farther and new areas are turned on for you.
+                  {noAddress
+                    ? "Measured in a straight line from your shop, not by road."
+                    : "Measured in a straight line, not by road. If the road is much longer, like across a creek, turn that area off below. Go farther and new areas are turned on for you."}
                 </Text>
               </View>
 

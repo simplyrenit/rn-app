@@ -227,6 +227,7 @@ describe("delivery", () => {
     expect(deliverySummary(shop)).toBe("Up to 15 km · all areas · ₹50 + ₹15 a km");
     expect(deliverySummary({ ...shop, excluded_pincodes: [] })).toBe("Up to 15 km · all areas · ₹50 + ₹15 a km");
     expect(deliverySummary({ ...shop, excluded_pincodes: ["400061"] })).toBe("Up to 15 km · 1 area off · ₹50 + ₹15 a km");
+    expect(deliverySummary({ ...shop, coordinates: null })).toBe("Up to 15 km · add your shop address · ₹50 + ₹15 a km");
     expect(deliverySummary({ ...shop, excluded_pincodes: ["400061", "400049"] })).toBe(
       "Up to 15 km · 2 areas off · ₹50 + ₹15 a km"
     );
