@@ -665,6 +665,9 @@ export default function SearchResults() {
     const latestKey = searchingKeyRef.current ?? appliedKeyRef.current;
     if (!(await applyFilterAndSearch(JSON.parse(latestKey), range, true))) {
       setAddressSearchFailed(true);
+      // As applyNow: back to the set behind the grid, since a superseded rail
+      // or chip search never landed either.
+      setFilters(JSON.parse(appliedKeyRef.current));
     }
   };
   useEffect(() => {

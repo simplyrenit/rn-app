@@ -280,6 +280,8 @@ export default function BookingDatesScreen() {
     const key = deliveryAddressKey(saved);
     if (key !== addressKey) wantDeliveryFor.current = key;
     else if (delivery?.ok) setMode("owner_delivery");
+    // Still quoting (new dates): its answer decides, as for a new address.
+    else if (deliveryQuote.isFetching) wantDeliveryFor.current = key;
   };
 
   // A delivery that turns out too far (a new address, new dates) falls back to pickup.
