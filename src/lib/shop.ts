@@ -452,6 +452,20 @@ export function offWithin(areas: readonly Area[], excluded: readonly string[]): 
   return areas.filter((a) => a.inside && excluded.includes(a.pin));
 }
 
+/**
+ * All areas' OFF and ON groups. A row stays in the group it had when the list was drawn (`groupedOff`), so a tap only
+ * changes its checkbox and the next row never slides under the finger; the counts follow the draft (`off`).
+ */
+export function areaGroups(areas: readonly Area[], groupedOff: readonly string[], off: readonly string[]) {
+  const offCount = areas.filter((a) => off.includes(a.pin)).length;
+  return {
+    off: areas.filter((a) => groupedOff.includes(a.pin)),
+    on: areas.filter((a) => !groupedOff.includes(a.pin)),
+    offCount,
+    onCount: areas.length - offCount,
+  };
+}
+
 /** What the server takes for `?km=`; a stored distance outside it still lists the nearest it can. */
 export const AREAS_KM_MIN = 0.5;
 export const AREAS_KM_MAX = 50;

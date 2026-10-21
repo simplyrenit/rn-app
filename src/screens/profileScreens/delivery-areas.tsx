@@ -5,7 +5,7 @@ import { ShopLoading } from "@/components/shop/states";
 import { apiError } from "@/lib/api-error";
 import { deliveryDraft, useDeliveryDraft } from "@/lib/delivery-draft";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
-import { Area, deliveryDraftFrom, kmText, offWithin, toggleExcluded } from "@/lib/shop";
+import { Area, areaGroups, deliveryDraftFrom, kmText, offWithin, toggleExcluded } from "@/lib/shop";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React, { useMemo, useState } from "react";
@@ -83,6 +83,9 @@ export default function DeliveryAreasScreen() {
   const form = useDeliveryDraft() ?? saved;
   const areasQuery = useAreas(Number(form?.maxKm) || 0, Boolean(form));
   const [search, setSearch] = useState("");
+  // The groups as the list was opened (or last searched), like the Delivery screen's chips: a tapped row only changes
+  // its checkbox instead of jumping to the other group, where the next tap would land on another area.
+  const [groupedOff, setGroupedOff] = useState<string[] | null>(() => form?.excluded ?? null);
 
   if (!form) {
     return (
@@ -98,8 +101,7 @@ export default function DeliveryAreasScreen() {
   const toggle = (pin: string) => deliveryDraft.set({ ...form, excluded: toggleExcluded(form.excluded, pin) });
   const needle = search.trim().toLowerCase();
   const matching = needle ? areas.filter((a) => a.name.toLowerCase().includes(needle) || a.pin.includes(needle)) : areas;
-  const off = matching.filter(isOff);
-  const on = matching.filter((a) => !isOff(a));
+  const groups = areaGroups(matching, groupedOff ?? form.excluded, form.excluded);
   const offCount = offWithin(areas, form.excluded).length;
   const failure = apiError(areasQuery.error);
 
@@ -151,7 +153,10 @@ export default function DeliveryAreasScreen() {
               accessibilityLabel="Search area or PIN code"
               placeholder="Search area or PIN code"
               value={search}
-              onChangeText={setSearch}
+              onChangeText={(text) => {
+                setSearch(text);
+                setGroupedOff(form.excluded);
+              }}
               autoCorrect={false}
               returnKeyType="search"
             />
@@ -170,13 +175,13 @@ export default function DeliveryAreasScreen() {
                   No area matches "{search.trim()}".
                 </Text>
               ) : null}
-              {off.length ? <GroupLabel>{`OFF · ${off.length}`}</GroupLabel> : null}
-              {off.map((area, i) => (
-                <AreaRow key={area.pin} area={area} off first={i === 0} onPress={() => toggle(area.pin)} />
+              {groups.off.length ? <GroupLabel>{`OFF · ${groups.offCount}`}</GroupLabel> : null}
+              {groups.off.map((area, i) => (
+                <AreaRow key={area.pin} area={area} off={isOff(area)} first={i === 0} onPress={() => toggle(area.pin)} />
               ))}
-              {on.length ? <GroupLabel>{`ON · ${on.length}, NEAREST FIRST`}</GroupLabel> : null}
-              {on.map((area, i) => (
-                <AreaRow key={area.pin} area={area} off={false} first={i === 0} onPress={() => toggle(area.pin)} />
+              {groups.on.length ? <GroupLabel>{`ON · ${groups.onCount}, NEAREST FIRST`}</GroupLabel> : null}
+              {groups.on.map((area, i) => (
+                <AreaRow key={area.pin} area={area} off={isOff(area)} first={i === 0} onPress={() => toggle(area.pin)} />
               ))}
             </View>
           </>

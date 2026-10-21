@@ -17,6 +17,7 @@ import {
   areasKm,
   deliveryDraftFrom,
   offWithin,
+  areaGroups,
   prefillFees,
   previewAreas,
   savedMessage,
@@ -468,6 +469,16 @@ describe("delivery areas (ENG-284)", () => {
   it("counts as off only the areas inside the distance", () => {
     expect(offWithin(areas, ["400061", "400056"]).map((a) => a.pin)).toEqual(["400061"]);
     expect(offWithin(areas, [])).toEqual([]);
+  });
+
+  it("keeps each row in the group it was drawn in, counting from the draft", () => {
+    const shown = areas.slice(0, 4);
+    // Drawn with Vesava off; then Vesava turned back on and Andheri W off.
+    const groups = areaGroups(shown, ["400061"], ["400053"]);
+    expect(groups.off.map((a) => a.pin)).toEqual(["400061"]);
+    expect(groups.on.map((a) => a.pin)).toEqual(["400053", "400058", "400102"]);
+    expect([groups.offCount, groups.onCount]).toEqual([1, 3]);
+    expect(areaGroups([], ["400061"], ["400061"])).toEqual({ off: [], on: [], offCount: 0, onCount: 0 });
   });
 
   it("turns one area on or off", () => {
