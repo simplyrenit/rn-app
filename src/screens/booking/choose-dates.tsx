@@ -34,6 +34,7 @@ import {
 } from "@/lib/booking";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useDistanceTo } from "@/lib/distance";
+import { kmText } from "@/lib/shop";
 import { minDays as minDaysOf, minimumWords, plansOf } from "@/lib/plans";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -71,7 +72,7 @@ function ChoiceCard({
   return (
     <TouchableOpacity
       accessibilityRole="radio"
-      accessibilityState={{ selected, disabled: Boolean(disabled) }}
+      accessibilityState={{ selected, checked: selected, disabled: Boolean(disabled) }}
       accessibilityLabel={sub ? `${title}. ${sub}` : title}
       accessibilityHint={reason ?? undefined}
       activeOpacity={0.7}
@@ -380,7 +381,11 @@ export default function BookingDatesScreen() {
   }
 
   const shopName = shopNameOf(product);
-  const pickupSub = [shopName, product.shop?.locality || product.location, distanceLabel].filter(Boolean).join(" · ");
+  // From the chosen address when the delivery quote has measured it, so the card agrees with the reason
+  // under Delivery ("pick it up 2.5 km away") and with the search card; else from the phone, as before.
+  const addressKm = !deliveryQuote.isPreviousData ? deliveryQuote.data?.delivery.distance_km : null;
+  const pickupDistance = addressKm ? `${kmText(addressKm)} km away` : distanceLabel;
+  const pickupSub = [shopName, product.shop?.locality || product.location, pickupDistance].filter(Boolean).join(" · ");
 
   // "Not in Vesava? Edit this address": only when the shop turned that area off,
   // since a wrong PIN is the one thing the customer can fix here.
