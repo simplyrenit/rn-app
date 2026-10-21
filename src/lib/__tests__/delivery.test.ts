@@ -69,6 +69,7 @@ describe("splitByDelivery and the count line", () => {
   it("counts both sides, and leaves out an empty pickup side", () => {
     expect(deliverCountLine(4, 3)).toEqual({ shown: "Showing 4 that deliver", more: "3 more for self pickup" });
     expect(deliverCountLine(4, 0)).toEqual({ shown: "Showing 4 that deliver", more: null });
+    expect(deliverCountLine(1, 2)).toEqual({ shown: "Showing 1 that delivers", more: "2 more for self pickup" });
   });
 });
 

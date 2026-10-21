@@ -71,10 +71,10 @@ export function splitByDelivery<T extends DeliveryFacts>(products: T[]): { deliv
   return { deliver, pickup };
 }
 
-/** "Showing 4 that deliver" and, when there are any, "3 more for self pickup". */
+/** "Showing 4 that deliver" ("1 that delivers") and, when there are any, "3 more for self pickup". */
 export function deliverCountLine(deliver: number, pickup: number): { shown: string; more: string | null } {
   return {
-    shown: `Showing ${deliver} that deliver`,
+    shown: `Showing ${deliver} that ${deliver === 1 ? "delivers" : "deliver"}`,
     more: pickup > 0 ? `${pickup} more for self pickup` : null,
   };
 }
