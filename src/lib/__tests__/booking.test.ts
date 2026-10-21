@@ -443,6 +443,14 @@ describe("the price before Book now", () => {
     expect(priceLines(quote(), true)[1]).toEqual({ label: "Delivery", amount: "₹0" });
   });
 
+  it("never reads a delivery the shop stopped offering as ₹0 (ENG-284)", () => {
+    const gone = quote({
+      delivery_mode: "owner_delivery",
+      delivery: { status: "too_far", fee: "0.00", distance_km: "2.8", offer_pickup: true, reason: "area_off", area: { pin: "400069", name: "Andheri East" } },
+    });
+    expect(priceLines(gone)[1]).toEqual({ label: "Delivery", amount: "Not available" });
+  });
+
   it("matches the contract's seven-day example", () => {
     const lines = priceLines(quote({ days: 7, rent: "4270.00", fee_shown: "214.00", total: "4270.00" }));
     expect(lines[0]).toEqual({ label: "Rent · 7 days × ₹610", amount: "₹4,270" });

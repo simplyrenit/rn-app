@@ -701,7 +701,10 @@ export function priceLines(quote: Quote, extending = false): PriceLine[] {
   const handover =
     quote.delivery_mode === "pickup" && !extending
       ? { label: "Self pickup", amount: "Free" }
-      : { label: "Delivery", amount: money(quote.delivery.fee) };
+      : // ENG-284: the shop stopped delivering here; "₹0" would read as free delivery.
+        quote.delivery_mode === "owner_delivery" && quote.delivery.offer_pickup && !extending
+        ? { label: "Delivery", amount: "Not available" }
+        : { label: "Delivery", amount: money(quote.delivery.fee) };
   return [{ label: rent, amount: money(quote.rent) }, handover, fee];
 }
 

@@ -40,6 +40,7 @@ import { dayErrorText, extensionLines } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { startIdCheck } from "@/lib/id-check";
 import { rememberReturnTo } from "@/lib/return-to";
+import { deliveryReason } from "@/lib/delivery";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -407,9 +408,14 @@ export default function ReviewAndBookScreen() {
       </ScrollView>
 
       <BottomBar>
-        {bookError ? (
+        {bookError && !deliveryGone ? (
           <Text fontSize="text-sm" tone="danger" accessibilityRole="alert">
             {bookError}
+          </Text>
+        ) : null}
+        {deliveryGone ? (
+          <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
+            {deliveryReason(quote.delivery, params.item.shop_name, null)}
           </Text>
         ) : null}
         {deliveryGone ? (
