@@ -33,8 +33,9 @@ import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { useFocusEffect } from "@react-navigation/native";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { CheckIcon, ComputerDesktopIcon, MinusIcon, PlusIcon, XMarkIcon } from "react-native-heroicons/outline";
@@ -150,6 +151,14 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
 
   const saved = useMemo(() => deliveryDraftFrom(shop), [shop]);
   const form = useDeliveryDraft() ?? saved;
+  const latestOff = useRef<string[]>([]);
+  latestOff.current = [...new Set([...saved.excluded, ...form.excluded])];
+  const [orderOff, setOrderOff] = useState<string[]>(() => latestOff.current);
+  useFocusEffect(
+    useCallback(() => {
+      setOrderOff(latestOff.current);
+    }, [])
+  );
   const edit = (patch: Partial<DeliveryDraft>) => {
     deliveryDraft.set({ ...(deliveryDraft.get() ?? saved), ...patch });
     setServerErrors({});
@@ -274,8 +283,9 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
 
   const closer = stepKm(km, -1);
   const farther = stepKm(km, 1);
-  // Kept at the front while being edited: a saved area turned back on stays where it was.
-  const preview = previewAreas(areas, [...new Set([...saved.excluded, ...form.excluded])]);
+  // Off first, in the order the screen had when it came into view (or back from All areas): a chip
+  // tapped here stays under the finger instead of jumping to the front.
+  const preview = previewAreas(areas, orderOff);
   const offCount = offWithin(areas, form.excluded).length;
   const inside = areas.filter((a) => a.inside);
   const everyOff = inside.length > 0 && inside.every((a) => form.excluded.includes(a.pin));
@@ -339,12 +349,42 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
           {form.delivers ? (
             <>
               <View style={card}>
+                <Text fontSize="text-md" fontWeight="font-bold" accessibilityRole="header">
+                  Delivery fee
+                </Text>
+                {suggested ? (
+                  <Text fontSize="text-sm" tone="brand">
+                    Suggested. Change if you like.
+                  </Text>
+                ) : null}
+                <TextField
+                  label="Starting fee (₹)"
+                  hint="Charged on every delivery"
+                  required
+                  keyboardType="decimal-pad"
+                  value={form.base}
+                  onChangeText={(v) => setFee("base", v)}
+                  error={shown("base", "delivery_base_fee")}
+                  placeholder="e.g. 50"
+                />
+                <TextField
+                  label="Each kilometre (₹)"
+                  hint="Added for every kilometre away"
+                  required
+                  keyboardType="decimal-pad"
+                  value={form.perKm}
+                  onChangeText={(v) => setFee("perKm", v)}
+                  error={shown("perKm", "delivery_per_km")}
+                  placeholder="e.g. 15"
+                />
+              </View>
+              <View style={card}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
                   <Text fontSize="text-md" fontWeight="font-bold" accessibilityRole="header" style={{ flex: 1 }}>
                     How far you go
                   </Text>
                   <Stepper
-                    label="Closer"
+                    label={`Closer, now ${kmText(km)}`}
                     disabled={closer === null}
                     onPress={() => closer !== null && edit({ maxKm: String(closer) })}
                   >
@@ -359,7 +399,7 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
                     {km > 0 ? kmText(form.maxKm) : "—"}
                   </Text>
                   <Stepper
-                    label={`Farther, ${kmText(km)}`}
+                    label={`Farther, now ${kmText(km)}`}
                     disabled={farther === null}
                     onPress={() => farther !== null && edit({ maxKm: String(farther) })}
                   >
@@ -501,36 +541,6 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
                 </View>
               )}
 
-              <View style={card}>
-                <Text fontSize="text-md" fontWeight="font-bold" accessibilityRole="header">
-                  Delivery fee
-                </Text>
-                {suggested ? (
-                  <Text fontSize="text-sm" tone="brand">
-                    Suggested. Change if you like.
-                  </Text>
-                ) : null}
-                <TextField
-                  label="Starting fee (₹)"
-                  hint="Charged on every delivery"
-                  required
-                  keyboardType="decimal-pad"
-                  value={form.base}
-                  onChangeText={(v) => setFee("base", v)}
-                  error={shown("base", "delivery_base_fee")}
-                  placeholder="e.g. 50"
-                />
-                <TextField
-                  label="Each kilometre (₹)"
-                  hint="Added for every kilometre away"
-                  required
-                  keyboardType="decimal-pad"
-                  value={form.perKm}
-                  onChangeText={(v) => setFee("perKm", v)}
-                  error={shown("perKm", "delivery_per_km")}
-                  placeholder="e.g. 15"
-                />
-              </View>
             </>
           ) : null}
 
