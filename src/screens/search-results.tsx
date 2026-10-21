@@ -304,8 +304,10 @@ export default function SearchResults() {
   // Anything Clear Filters would undo. Against the route's own scope, so a
   // browse does not show Clear Filters for the category it opened on. The
   // "Delivers to me" chip counts, though it lives outside `filters`: it is
-  // applied here, not by the server, so it never goes into a search.
-  const isFilterActive = () => filtersKey !== keyOf(routeFilters()) || deliversToMe;
+  // applied here, not by the server, so it never goes into a search. Only
+  // while it is shown and filtering (`filterOn`): signed out or with no
+  // address it is hidden, and Clear Filters would clear nothing visible.
+  const isFilterActive = () => filtersKey !== keyOf(routeFilters()) || filterOn;
 
   const handleFilterSelect = (
     filterType: keyof typeof filters,
@@ -657,7 +659,11 @@ export default function SearchResults() {
   const focused = useIsFocused();
   const searchForAddress = async () => {
     setAddressSearchFailed(false);
-    if (!(await applyFilterAndSearch(JSON.parse(appliedKeyRef.current), range, true))) {
+    // The set a rail or chip search is still running for, if any, else the one
+    // behind the grid: the newer search supersedes that one, and with the old
+    // set the rail would show the tap while the grid showed what came before.
+    const latestKey = searchingKeyRef.current ?? appliedKeyRef.current;
+    if (!(await applyFilterAndSearch(JSON.parse(latestKey), range, true))) {
       setAddressSearchFailed(true);
     }
   };
@@ -932,18 +938,22 @@ export default function SearchResults() {
           </TouchableOpacity>
         ) : null}
         {addressSearchFailed ? (
-          <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
-            {"We couldn't update these results for this address. "}
-            <Text
-              fontSize="text-sm"
-              fontWeight="font-bold"
-              tone="brand"
+          // Retry is its own button: a pressable span inside text is out of a
+          // screen reader's reach and only as tall as its letters.
+          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 4 }}>
+            <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
+              We couldn't update these results for this address.
+            </Text>
+            <TouchableOpacity
               accessibilityRole="button"
               onPress={() => void searchForAddress()}
+              style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center" }}
             >
-              Retry
-            </Text>
-          </Text>
+              <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+                Retry
+              </Text>
+            </TouchableOpacity>
+          </View>
         ) : null}
 
         {/* Results */}
@@ -957,24 +967,25 @@ export default function SearchResults() {
           }}
         >
           {filterOn && !(isLoading && products.length === 0) ? (
-            <Text accessibilityRole="header" fontSize="text-sm" fontWeight="font-bold" style={{ flexShrink: 1 }}>
-              {deliverCountLine(split.deliver.length, split.pickup.length).shown}
+            // "N more for self pickup" is its own button beside the heading, as Retry above.
+            <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", flexShrink: 1 }}>
+              <Text accessibilityRole="header" fontSize="text-sm" fontWeight="font-bold">
+                {deliverCountLine(split.deliver.length, split.pickup.length).shown}
+                {split.pickup.length > 0 ? " · " : ""}
+              </Text>
               {split.pickup.length > 0 ? (
-                <>
-                  {" · "}
-                  <Text
-                    fontSize="text-sm"
-                    fontWeight="font-bold"
-                    tone="brand"
-                    accessibilityRole="button"
-                    accessibilityHint="Shows self pickup too"
-                    onPress={() => setDeliversToMe(false)}
-                  >
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityHint="Shows self pickup too"
+                  onPress={() => setDeliversToMe(false)}
+                  style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center" }}
+                >
+                  <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
                     {deliverCountLine(split.deliver.length, split.pickup.length).more}
                   </Text>
-                </>
+                </TouchableOpacity>
               ) : null}
-            </Text>
+            </View>
           ) : (
             <Text
               accessibilityRole="header"

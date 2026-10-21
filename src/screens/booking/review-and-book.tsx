@@ -389,7 +389,8 @@ export default function ReviewAndBookScreen() {
           />
         ) : null}
 
-        {blocker ? (
+        {/* Delivery gone: the bottom bar already says why, once. */}
+        {blocker && !(deliveryGone && ["too_far", "area_off", "delivery_not_offered"].includes(blocker.code)) ? (
           <Notice tone="warning" icon="warning">
             {blocker.text}
             {blocker.code === "phone_required" ? (

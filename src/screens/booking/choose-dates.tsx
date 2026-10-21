@@ -4,7 +4,7 @@ import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/co
 import { Button, Skeleton, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
-import { addressTitle, flatAndLandmark } from "@/lib/addresses";
+import { SavedAddress, addressTitle, flatAndLandmark } from "@/lib/addresses";
 import { deliveryAddressKey, useDeliveryAddress } from "@/context/delivery-address";
 import { areaLabel, areaOf } from "@/lib/delivery";
 import { createLocationRequest } from "@/lib/location-request";
@@ -32,7 +32,7 @@ import {
   tapDay,
   todayIst,
 } from "@/lib/booking";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useDistanceTo } from "@/lib/distance";
 import { kmText } from "@/lib/shop";
 import { minDays as minDaysOf, minimumWords, plansOf } from "@/lib/plans";
@@ -272,6 +272,16 @@ export default function BookingDatesScreen() {
     if (deliveryQuote.data?.delivery.status === "ok") setMode("owner_delivery");
   }, [addressKey, deliveryQuote.data, deliveryQuote.isPreviousData, deliveryQuote.isFetching]);
 
+  /**
+   * The customer chose (or edited) this address to have it delivered. The address already in use gets no new quote, so
+   * Delivery is selected now if it works: a flag left set would fire on some later, unrelated re-quote.
+   */
+  const wantDelivery = (saved: SavedAddress) => {
+    const key = deliveryAddressKey(saved);
+    if (key !== addressKey) wantDeliveryFor.current = key;
+    else if (delivery?.ok) setMode("owner_delivery");
+  };
+
   // A delivery that turns out too far (a new address, new dates) falls back to pickup.
   useEffect(() => {
     if (mode === "owner_delivery" && (!delivery || !delivery.ok)) setMode("pickup");
@@ -407,7 +417,7 @@ export default function BookingDatesScreen() {
     navigation.navigate("AddressDetails", {
       address,
       requestId: createLocationRequest((_coords, _line, saved) => {
-        if (saved) wantDeliveryFor.current = deliveryAddressKey(saved);
+        if (saved) wantDelivery(saved);
       }),
     });
   };
@@ -491,7 +501,11 @@ export default function BookingDatesScreen() {
               title="Self pickup · Free"
               sub={pickupSub}
               selected={mode === "pickup"}
-              onPress={() => setMode("pickup")}
+              onPress={() => {
+                // Self pickup on purpose: an address still being quoted must not switch it back.
+                wantDeliveryFor.current = null;
+                setMode("pickup");
+              }}
             />
             {canDeliver ? (
               !signedIn ? (
@@ -544,16 +558,15 @@ export default function BookingDatesScreen() {
           {canDeliver && signedIn && address && delivery && !delivery.ok && !requoting ? (
             <View style={{ gap: space.sm }}>
               {offArea ? (
-                <Text
-                  fontSize="text-sm"
-                  tone="brand"
-                  fontWeight="font-bold"
+                <TouchableOpacity
                   accessibilityRole="button"
                   onPress={editAddress}
-                  style={{ paddingVertical: space.sm }}
+                  style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center" }}
                 >
-                  {`Not in ${offArea}? Edit this address`}
-                </Text>
+                  <Text fontSize="text-sm" tone="brand" fontWeight="font-bold">
+                    {`Not in ${offArea}? Edit this address`}
+                  </Text>
+                </TouchableOpacity>
               ) : null}
               <Button variant="outline" onPress={() => addressSheet.current?.present()}>
                 Use another address
@@ -623,7 +636,7 @@ export default function BookingDatesScreen() {
         onPick={(pickedAddress) => {
           // Saved addresses only (savedOnly): a one-off spot has no id to quote.
           if (!pickedAddress.saved) return;
-          wantDeliveryFor.current = deliveryAddressKey(pickedAddress.saved);
+          wantDelivery(pickedAddress.saved);
           chooseAddress(pickedAddress.saved);
         }}
       />
