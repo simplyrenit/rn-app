@@ -52,7 +52,8 @@ function AreaRow({ area, off, first, onPress }: { area: Area; off: boolean; firs
           {area.name}
         </Text>
         <Text fontSize="text-xs" tone="body">
-          {off ? `${area.pin} · Off` : area.pin}
+          {/* An edge area (D13) is listed so a shop can turn off a PIN code that straddles the distance. */}
+          {`${area.pin}${off ? " · Off" : ""}${area.inside ? "" : " · just outside"}`}
         </Text>
       </View>
       <Text fontSize="text-sm" tone="body">
