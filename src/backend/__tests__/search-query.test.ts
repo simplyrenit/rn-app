@@ -49,4 +49,12 @@ describe("buildSearchQuery", () => {
       "title=&lat=19.2&long=72.9"
     );
   });
+
+  it("sends the delivery address by id, last, and only when there is one (ENG-284 D3)", () => {
+    expect(buildSearchQuery("ac", { lat: 19.2, lng: 72.9 }, noDates, undefined, 42)).toBe(
+      "title=ac&lat=19.2&long=72.9&deliver_address=42"
+    );
+    expect(buildSearchQuery("ac", undefined, noDates, base, null)).not.toContain("deliver_address");
+    expect(buildSearchQuery("ac", undefined, noDates, base)).not.toContain("deliver_address");
+  });
 });

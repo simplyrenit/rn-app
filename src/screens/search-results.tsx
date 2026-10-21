@@ -38,6 +38,7 @@ import { BottomSheetView } from "@gorhom/bottom-sheet";
 import {
   StackActions,
   useFocusEffect,
+  useIsFocused,
   useNavigation,
   useRoute,
 } from "@react-navigation/native";
@@ -61,8 +62,15 @@ import {
   useSearch,
 } from "@/backend/search";
 import { Disclaimer } from "@/components/home/disclaimer";
-import { SCREEN_GUTTER, colors, density, ink, radius } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, colors, density, ink, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
+import { useAddAddress } from "@/backend/useAddresses";
+import { AddressPickerSheet, AddressPickerSheetHandle } from "@/components/addresses/address-picker-sheet";
+import { deliveryAddressKey, useDeliveryAddress } from "@/context/delivery-address";
+import { SavedAddress, flatAndLandmark } from "@/lib/addresses";
+import { addressRowCopy, areaOf, deliverCountLine, nobodyDeliversCopy, splitByDelivery } from "@/lib/delivery";
+import { rememberReturnTo } from "@/lib/return-to";
+import { MapPinIcon, TruckIcon } from "react-native-heroicons/outline";
 
 
 const StyledBottomView = styled(BottomSheetView);
@@ -235,6 +243,29 @@ export default function SearchResults() {
   const didBootstrapSearchRef = useRef(false);
 
   /**
+   * ENG-284 D12: the address the grid answers "who delivers?" for. Each result
+   * says it (`delivery`) when the search carries `deliver_address`; the
+   * "Delivers to me" chip, its counts and the nobody-delivers state are worked
+   * out here from that one array (D2), so the chip is instant.
+   */
+  const deliveryAddress = useDeliveryAddress();
+  const deliverTo = deliveryAddress.address;
+  const addressKey = deliveryAddressKey(deliverTo);
+  /** The address the grid on screen was searched for; null before the first search lands. */
+  const [gridAddressKey, setGridAddressKey] = useState<string | null>(null);
+  const [addressSearchFailed, setAddressSearchFailed] = useState(false);
+  const [deliversToMe, setDeliversToMe] = useState(false);
+  // The first search waits for the addresses (signed in), so cards don't flash
+  // "Delivery available" and the search doesn't run twice; but not for long.
+  const [holdOver, setHoldOver] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setHoldOver(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+  const addressSettled = deliveryAddress.state !== "loading" || holdOver;
+  const addressSheet = useRef<AddressPickerSheetHandle>(null);
+
+  /**
    * The scope the route opened with: a browse keeps its category and
    * sub-category through Clear Filters, a typed search has neither. Clearing
    * a browse to nothing searched the whole catalogue, the label no longer
@@ -271,8 +302,12 @@ export default function SearchResults() {
   } | null>(null);
 
   // Anything Clear Filters would undo. Against the route's own scope, so a
-  // browse does not show Clear Filters for the category it opened on.
-  const isFilterActive = () => filtersKey !== keyOf(routeFilters());
+  // browse does not show Clear Filters for the category it opened on. The
+  // "Delivers to me" chip counts, though it lives outside `filters`: it is
+  // applied here, not by the server, so it never goes into a search. Only
+  // while it is shown and filtering (`filterOn`): signed out or with no
+  // address it is hidden, and Clear Filters would clear nothing visible.
+  const isFilterActive = () => filtersKey !== keyOf(routeFilters()) || filterOn;
 
   const handleFilterSelect = (
     filterType: keyof typeof filters,
@@ -347,7 +382,8 @@ export default function SearchResults() {
         condition: nextFilters.condition,
         specs: nextFilters.specs,
         verified_business: nextFilters.verifiedBusiness,
-      }
+      },
+      deliverTo?.id ?? null
     );
 
   /** The latest search; the rail and chips make several in quick succession. */
@@ -357,9 +393,12 @@ export default function SearchResults() {
   /** False when the search failed; a superseded one counts as done. */
   const applyFilterAndSearch = async (
     nextFilters: typeof filters = filters,
-    dates = range
+    dates = range,
+    /** An address change says its failure inline, under the row, not as a toast. */
+    quiet = false
   ): Promise<boolean> => {
     const seq = ++searchSeqRef.current;
+    const forAddress = addressKey;
     searchingKeyRef.current = keyOf(nextFilters);
     setIsLoading(true);
     try {
@@ -369,10 +408,13 @@ export default function SearchResults() {
       if (seq !== searchSeqRef.current) return true;
       setProducts(filteredProducts.filter(prod => !prod?.moderation_labels?.length));
       setAppliedKey(keyOf(nextFilters));
+      setGridAddressKey(forAddress);
+      setAddressSearchFailed(false);
       return true;
     } catch (error) {
       console.error(error);
       if (seq !== searchSeqRef.current) return true;
+      if (quiet) return false;
       // Days the server will not search (beyond 180 days ahead): its own sentence, not "check your connection".
       const refusal = daysRefusal(apiError(error));
       toast.error(refusal ? "These dates can't be searched." : "We couldn't update these results.", {
@@ -399,6 +441,7 @@ export default function SearchResults() {
   };
 
   const clearFiltersAndSearch = async () => {
+    setDeliversToMe(false);
     const resetFilters = routeFilters();
     setSelectedCategory(category || null);
     setShowSubCategory(Boolean(category && subCategory));
@@ -409,16 +452,19 @@ export default function SearchResults() {
   // Re-count whenever the entered filters drift from the applied ones. Debounced
   // so a price typed digit by digit is one request, not four. Not while that
   // very set is being searched (a rail or chip tap): the search is the count.
+  // Keyed on the address too: a count made for another address would say
+  // "Show N results" for a grid that is not the one the button gives.
+  const previewKey = `${filtersKey}#${addressKey}`;
   useEffect(() => {
     if (filtersKey === appliedKey) return;
-    if (preview?.key === filtersKey) return;
+    if (preview?.key === previewKey) return;
     if (searchingKeyRef.current === filtersKey) return;
 
     let cancelled = false;
     const timer = setTimeout(async () => {
       try {
         const counted = await runSearch(filters);
-        if (!cancelled) setPreview({ key: filtersKey, products: counted });
+        if (!cancelled) setPreview({ key: previewKey, products: counted });
       } catch {
         // Leave the count unknown rather than showing a stale one.
       }
@@ -428,7 +474,7 @@ export default function SearchResults() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [filtersKey, appliedKey, preview?.key]);
+  }, [filtersKey, appliedKey, preview?.key, previewKey]);
 
   /**
    * The chosen sub-category's spec filters, counted against the filters as
@@ -518,6 +564,9 @@ export default function SearchResults() {
     // The text, dates and place are route params, untouched here.
     applyNow({ ...filters, subCategory, specs: {} });
 
+  const nobodyDelivers = (to: SavedAddress) =>
+    nobodyDeliversCopy(searchText || filters.subCategory || railParent?.title || "", areaOf(to), split.pickup);
+
   const hasDates = !!range.startDate || !!range.endDate;
   // The rail already shows the category, so it does not light Filters up too.
   const refined =
@@ -540,17 +589,23 @@ export default function SearchResults() {
     "Seller",
   ];
 
+  const filterOn = deliversToMe && deliveryAddress.state === "ready";
+  const split = splitByDelivery(products);
+  const shown = filterOn ? split.deliver : products;
+  // The sheet's count is what "Show N results" will put on screen, chip included.
+  const countOf = (list: BackendProduct[]) =>
+    filterOn ? splitByDelivery(list).deliver.length : list.length;
   const pendingCount =
     filtersKey === appliedKey
-      ? products.length
-      : preview?.key === filtersKey
-      ? preview.products.length
+      ? shown.length
+      : preview?.key === previewKey
+      ? countOf(preview.products)
       : null;
 
   const closeSheet = async () => {
     // Commit exactly the set that was counted, so the number cannot change
     // between reading it and tapping it.
-    if (preview?.key === filtersKey) {
+    if (preview?.key === previewKey) {
       // Supersedes a rail or chip search still in flight. Its `finally` is
       // gated on the sequence, so release its key here or a later preview of
       // that same set would be skipped.
@@ -559,6 +614,7 @@ export default function SearchResults() {
       setIsLoading(false);
       setProducts(preview.products);
       setAppliedKey(filtersKey);
+      setGridAddressKey(addressKey);
       bottomSheetRef.current?.dismiss();
       return;
     }
@@ -596,16 +652,69 @@ export default function SearchResults() {
     }
   }, [category]);
 
+  // The first search, once the addresses are in (or 1.5 s have gone), and a
+  // search again whenever the address the grid answers for has changed: chosen
+  // here or on BK-02, edited or deleted in Profile. Only while this screen is
+  // in front: a search under another screen would toast over it.
+  const focused = useIsFocused();
+  const searchForAddress = async () => {
+    setAddressSearchFailed(false);
+    // The set a rail or chip search is still running for, if any, else the one
+    // behind the grid: the newer search supersedes that one, and with the old
+    // set the rail would show the tap while the grid showed what came before.
+    const latestKey = searchingKeyRef.current ?? appliedKeyRef.current;
+    if (!(await applyFilterAndSearch(JSON.parse(latestKey), range, true))) {
+      setAddressSearchFailed(true);
+      // As applyNow: back to the set behind the grid, since a superseded rail
+      // or chip search never landed either.
+      setFilters(JSON.parse(appliedKeyRef.current));
+    }
+  };
   useEffect(() => {
-    if (didBootstrapSearchRef.current || fetchedProducts.length > 0) {
+    if (!focused || !addressSettled || gridAddressKey === addressKey) return;
+    if (!didBootstrapSearchRef.current) {
+      didBootstrapSearchRef.current = true;
+      void applyFilterAndSearch(
+        createDefaultFilters(category || "", (category && subCategory) || "")
+      );
       return;
     }
+    void searchForAddress();
+    // The search functions are remade every render; these are what decide.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focused, addressSettled, addressKey]);
 
-    didBootstrapSearchRef.current = true;
-    void applyFilterAndSearch(
-      createDefaultFilters(category || "", (category && subCategory) || "")
-    );
-  }, [category, fetchedProducts.length]);
+  /** The add flow, coming back with the new address chosen (and the chip on, from the chip). */
+  const turnOnAfterAdd = useRef(false);
+  const addAddress = useAddAddress(
+    useCallback(
+      (saved: SavedAddress) => {
+        deliveryAddress.choose(saved);
+        if (turnOnAfterAdd.current) setDeliversToMe(true);
+        turnOnAfterAdd.current = false;
+      },
+      [deliveryAddress.choose]
+    )
+  );
+  const signInForDelivery = () => {
+    // The same search after sign-in: text, place and dates; filters start again.
+    rememberReturnTo({ name: "SearchResults", params: { ...route.params, products: [] } });
+    navigation.navigate("Welcome");
+  };
+  const onAddressRow = () => {
+    if (deliveryAddress.state === "signed_out") signInForDelivery();
+    else if (deliveryAddress.state === "none") {
+      turnOnAfterAdd.current = false;
+      addAddress();
+    } else addressSheet.current?.present();
+  };
+  const onDeliversToMe = () => {
+    if (deliveryAddress.state === "none") {
+      turnOnAfterAdd.current = true;
+      addAddress();
+    } else setDeliversToMe((on) => !on);
+  };
+  const addressRow = addressRowCopy(deliveryAddress.state, deliverTo);
 
   /** Back to the search form with these criteria, to change the words or place. */
   const editSearch = () => {
@@ -790,6 +899,11 @@ export default function SearchResults() {
             onFilters={() => openSheetOn(specs.length > 0 ? "Specs" : "Category")}
             onSort={() => openSheetOn("Sort")}
             onDates={() => setDatesOpen(true)}
+            deliver={
+              deliveryAddress.state === "ready" || deliveryAddress.state === "none"
+                ? { on: filterOn, onPress: onDeliversToMe }
+                : undefined
+            }
             chipSpecLabel={chipSpec?.label}
             chips={quickChips}
             onChip={(value) =>
@@ -802,25 +916,90 @@ export default function SearchResults() {
           />
         </View>
 
+        {/* ENG-284 D12: whose address the cards answer for, and the way to change it. */}
+        {addressRow ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={`${addressRow.text}. ${addressRow.action}`}
+            activeOpacity={0.6}
+            onPress={onAddressRow}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              minHeight: MIN_TOUCH_TARGET,
+              marginTop: 4,
+            }}
+          >
+            <MapPinIcon size={18} color={color.textBody} />
+            <Text fontSize="text-sm" tone="body" numberOfLines={1} style={{ flex: 1 }}>
+              {addressRow.text}
+            </Text>
+            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+              {`${addressRow.action} ›`}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+        {addressSearchFailed ? (
+          // Retry is its own button: a pressable span inside text is out of a
+          // screen reader's reach and only as tall as its letters.
+          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: 4 }}>
+            <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
+              We couldn't update these results for this address.
+            </Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={() => void searchForAddress()}
+              style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center" }}
+            >
+              <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+                Retry
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         {/* Results */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
-            marginTop: 12,
+            marginTop: addressRow ? 4 : 12,
             marginBottom: RESULTS_GAP,
           }}
         >
-          <Text
-            accessibilityRole="header"
-            fontSize="text-sm"
-            fontWeight="font-bold"
-          >
-            {isLoading && products.length === 0
-              ? "Searching…"
-              : pluralize(products.length, "result")}
-          </Text>
+          {filterOn && !(isLoading && products.length === 0) ? (
+            // "N more for self pickup" is its own button beside the heading, as Retry above.
+            <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", flexShrink: 1 }}>
+              <Text accessibilityRole="header" fontSize="text-sm" fontWeight="font-bold">
+                {deliverCountLine(split.deliver.length, split.pickup.length).shown}
+                {split.pickup.length > 0 ? " · " : ""}
+              </Text>
+              {split.pickup.length > 0 ? (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityHint="Shows self pickup too"
+                  onPress={() => setDeliversToMe(false)}
+                  style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center" }}
+                >
+                  <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+                    {deliverCountLine(split.deliver.length, split.pickup.length).more}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : (
+            <Text
+              accessibilityRole="header"
+              fontSize="text-sm"
+              fontWeight="font-bold"
+            >
+              {isLoading && products.length === 0
+                ? "Searching…"
+                : pluralize(products.length, "result")}
+            </Text>
+          )}
 
           <View className="flex flex-row items-center space-x-3">
             {isFilterActive() && (
@@ -843,7 +1022,7 @@ export default function SearchResults() {
 
         <FlatList
           style={{ width: "100%" }}
-          data={products}
+          data={shown}
           keyExtractor={(item) => item.name}
           // Always the two-up grid. Special-casing a single result to full width
           // gave the app a third product-card layout: the same object rendered
@@ -884,6 +1063,7 @@ export default function SearchResults() {
               // The searched dates ride along, so Book now starts on them (ENG-172).
               dates={searchedDays(range)}
               businessVerified={item.owner?.business_verified}
+              deliveryFacts={item}
             />
           )}
           // Searching and finding nothing are the same slot, so the skeleton
@@ -891,6 +1071,21 @@ export default function SearchResults() {
           // mounted, which keeps it the thing that owns scrolling.
           ListEmptyComponent={
             <CrossFade loading={isLoading} placeholder={<ResultsSkeleton width={cardWidth} />}>
+              {filterOn && products.length > 0 && deliverTo ? (
+                // Filter on and nobody delivers: say so, and offer the two ways out.
+                <View>
+                  <EmptyState
+                    compact
+                    icon={<TruckIcon size={28} color={color.brandText} />}
+                    title={nobodyDelivers(deliverTo).title}
+                    body={nobodyDelivers(deliverTo).body ?? undefined}
+                    actionLabel="Show self pickup too"
+                    onAction={() => setDeliversToMe(false)}
+                    secondaryActionLabel="Try another address"
+                    onSecondaryAction={() => addressSheet.current?.present()}
+                  />
+                </View>
+              ) : (
               <View>
                 <EmptyState
                   compact
@@ -905,6 +1100,7 @@ export default function SearchResults() {
                 />
                 <Disclaimer mb={24} />
               </View>
+              )}
             </CrossFade>
           }
         />
@@ -1115,6 +1311,25 @@ export default function SearchResults() {
           </View>
         </StyledBottomView>
       </CustomBottomSheetModal>
+
+      <AddressPickerSheet
+        ref={addressSheet}
+        savedOnly
+        title="Where should we deliver?"
+        description="We'll show who delivers there and what it costs."
+        selected={
+          deliverTo
+            ? {
+                lat: deliverTo.coordinates.lat,
+                long: deliverTo.coordinates.long,
+                fullAddress: flatAndLandmark(deliverTo),
+              }
+            : undefined
+        }
+        onPick={(picked) => {
+          if (picked.saved) deliveryAddress.choose(picked.saved);
+        }}
+      />
 
       {datesOpen && (
         <DateRangePicker

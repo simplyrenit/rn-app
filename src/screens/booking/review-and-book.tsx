@@ -40,6 +40,7 @@ import { dayErrorText, extensionLines } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { startIdCheck } from "@/lib/id-check";
 import { rememberReturnTo } from "@/lib/return-to";
+import { deliveryReason } from "@/lib/delivery";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -142,6 +143,7 @@ export default function ReviewAndBookScreen() {
 
   const moved = movedFrom !== null;
   const blocker = reviewBlocker(quote);
+  const deliveryGone = !extending && quote.delivery_mode === "owner_delivery" && quote.delivery.offer_pickup;
   const notice = morningNotice(quote, params.item.shop_name);
   const terms = quote.terms;
   const ticked = termsTicked(terms, tickedFor);
@@ -254,12 +256,15 @@ export default function ReviewAndBookScreen() {
           image={params.item.cover_image}
           lines={[
             `${rangeLabel(quote.first_day, quote.last_day, true)} · ${daysLabel(quote.days)}`,
-            `${howLabel(quote.delivery_mode, params.address_name)} · ${params.item.shop_name}`,
+            // ENG-284: self pickup says where it is collected, as the design writes it.
+            quote.delivery_mode === "pickup" && !params.extends
+              ? `You collect it from ${params.item.shop_name}`
+              : `${howLabel(quote.delivery_mode, params.address_name)} · ${params.item.shop_name}`,
           ]}
         />
 
         <Panel style={{ padding: space.md, gap: space.sm }}>
-          {priceLines(quote).map((line, index) => (
+          {priceLines(quote, Boolean(params.extends)).map((line, index) => (
             <React.Fragment key={line.label}>
               <MoneyLine {...line} />
               {/* Under the rent, as the design draws it (ENG-281): how the plan's price came to the day rate. */}
@@ -384,7 +389,8 @@ export default function ReviewAndBookScreen() {
           />
         ) : null}
 
-        {blocker ? (
+        {/* Delivery gone: the bottom bar already says why, once. */}
+        {blocker && !(deliveryGone && ["too_far", "area_off", "delivery_not_offered"].includes(blocker.code)) ? (
           <Notice tone="warning" icon="warning">
             {blocker.text}
             {blocker.code === "phone_required" ? (
@@ -403,21 +409,33 @@ export default function ReviewAndBookScreen() {
       </ScrollView>
 
       <BottomBar>
-        {bookError ? (
+        {bookError && !deliveryGone ? (
           <Text fontSize="text-sm" tone="danger" accessibilityRole="alert">
             {bookError}
           </Text>
         ) : null}
-        <Button
-          onPress={book}
-          loading={booking}
-          // Signed out there are no terms in the quote: the tap asks to sign in instead.
-          disabled={
-            booking || Boolean(blocker) || idNeeded || quoteQuery.isFetching || (terms !== null && !ticked)
-          }
-        >
-          {extending ? `Extend · Pay ${money(quote.pay_now)}` : bookLabel(quote, moved)}
-        </Button>
+        {deliveryGone ? (
+          <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
+            {deliveryReason(quote.delivery, params.item.shop_name, null)}
+          </Text>
+        ) : null}
+        {deliveryGone ? (
+          // The shop stopped delivering here while this screen was open (an area turned off, the
+          // distance cut, delivery switched off): Book now can only be refused again, so the way
+          // on is back to "How will you get it?", which falls back to self pickup and says why.
+          <Button onPress={() => navigation.goBack()}>Change to self pickup</Button>
+        ) : (
+          <Button
+            onPress={book}
+            loading={booking}
+            // Signed out there are no terms in the quote: the tap asks to sign in instead.
+            disabled={
+              booking || Boolean(blocker) || idNeeded || quoteQuery.isFetching || (terms !== null && !ticked)
+            }
+          >
+            {extending ? `Extend · Pay ${money(quote.pay_now)}` : bookLabel(quote, moved)}
+          </Button>
+        )}
       </BottomBar>
     </NonScrollableContainer>
   );

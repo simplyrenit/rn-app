@@ -313,14 +313,42 @@ describe("picking dates", () => {
   });
 
   it("writes the delivery choice from the quote", () => {
+    const shop = { name: "SoundBox Rentals", maxKm: "5.0" };
     const ok = quote({ delivery: { status: "ok", fee: "170.00", distance_km: "8.0", offer_pickup: false } });
-    expect(deliveryOption(ok, "Home")).toEqual({ title: "Delivery to Home · ₹170 · 8 km", sub: null, ok: true });
-    const far = quote({ delivery: { status: "too_far", fee: "0.00", distance_km: "22.4", offer_pickup: true } });
-    expect(deliveryOption(far, "Home")).toMatchObject({ title: "Delivery to Home · too far", ok: false });
+    expect(deliveryOption(ok, "Home", shop)).toEqual({ title: "Delivery to Home · ₹170 · 8 km", reason: null, ok: true });
+    const far = quote({ delivery: { status: "too_far", fee: "0.00", distance_km: "8.4", offer_pickup: true } });
+    expect(deliveryOption(far, "Home", shop)).toEqual({
+      title: "Delivery to Home",
+      reason: "SoundBox Rentals delivers up to 5 km. This address is 8.4 km away.",
+      ok: false,
+    });
     const none = quote({ delivery: { status: "not_offered", fee: "0.00", distance_km: null, offer_pickup: true } });
-    expect(deliveryOption(none, "Home").ok).toBe(false);
+    expect(deliveryOption(none, "Home", shop)).toMatchObject({ reason: "SoundBox Rentals only offers self pickup.", ok: false });
     // No quote yet (no dates picked): the choice is offered, without a fee.
-    expect(deliveryOption(undefined, "Work")).toEqual({ title: "Delivery to Work", sub: null, ok: true });
+    expect(deliveryOption(undefined, "Work")).toEqual({ title: "Delivery to Work", reason: null, ok: true });
+  });
+
+  it("says why an area turned off can't have it delivered (ENG-284 D11)", () => {
+    const off = quote({
+      delivery: {
+        status: "too_far",
+        reason: "area_off",
+        area: { pin: "400061", name: "Vesava" },
+        fee: "0.00",
+        distance_km: "3.2",
+        offer_pickup: true,
+      },
+    });
+    expect(deliveryOption(off, "Home", { name: "SoundBox Rentals", maxKm: "5.0" })).toEqual({
+      title: "Delivery to Home",
+      reason: "SoundBox Rentals doesn't deliver to Vesava (400061). You can pick it up 3.2 km away, or use another address.",
+      ok: false,
+    });
+  });
+
+  it("reads a status this build does not know as not available", () => {
+    const newer = quote({ delivery: { status: "busy" as never, fee: "0.00", distance_km: null, offer_pickup: true } });
+    expect(deliveryOption(newer, "Home", { name: "SoundBox Rentals" }).ok).toBe(false);
   });
 });
 
@@ -360,6 +388,14 @@ describe("the product page", () => {
     expect(getItLine(shop, true)).toBe("Self pickup");
     expect(getItLine({ ...shop, delivers: false })).toBe("Self pickup");
     expect(getItLine(null)).toBe("Self pickup");
+    // ENG-284: with an answer for the chosen address, that answer.
+    expect(getItLine(shop, false, { to_me: true, fee: "110.00", km: "1.2" }, "Home")).toBe(
+      "Self pickup or delivery to Home ₹110"
+    );
+    expect(getItLine(shop, false, { to_me: false, fee: null, km: "3.2" }, "Home")).toBe(
+      "Self pickup · doesn't deliver to Home"
+    );
+    expect(getItLine(shop, false, null, "Home")).toBe("Self pickup or delivery from ₹50");
   });
 
   it("says Live booking while the shop is open, with no number of minutes", () => {
@@ -393,9 +429,26 @@ describe("the price before Book now", () => {
   it("shows the fee crossed out with what is charged beside it", () => {
     expect(priceLines(quote())).toEqual([
       { label: "Rent · 3 days × ₹610", amount: "₹1,830" },
-      { label: "Delivery", amount: "₹0" },
+      { label: "Self pickup", amount: "Free" },
       { label: "Renit's fee", amount: "₹0", struck: "₹92" },
     ]);
+  });
+
+  it("says self pickup as itself, delivery with its fee, and leaves an extension's line as it was", () => {
+    const delivered = quote({
+      delivery_mode: "owner_delivery",
+      delivery: { status: "ok", fee: "110.00", distance_km: "1.2", offer_pickup: false },
+    });
+    expect(priceLines(delivered)[1]).toEqual({ label: "Delivery", amount: "₹110" });
+    expect(priceLines(quote(), true)[1]).toEqual({ label: "Delivery", amount: "₹0" });
+  });
+
+  it("never reads a delivery the shop stopped offering as ₹0 (ENG-284)", () => {
+    const gone = quote({
+      delivery_mode: "owner_delivery",
+      delivery: { status: "too_far", fee: "0.00", distance_km: "2.8", offer_pickup: true, reason: "area_off", area: { pin: "400069", name: "Andheri East" } },
+    });
+    expect(priceLines(gone)[1]).toEqual({ label: "Delivery", amount: "Not available" });
   });
 
   it("matches the contract's seven-day example", () => {
@@ -595,6 +648,7 @@ describe("what is in the way", () => {
       "notice_too_short",
       "owner_cannot_accept",
       "too_far",
+      "area_off",
       "delivery_not_offered",
       "phone_required",
       "linked_account",
@@ -613,6 +667,20 @@ describe("what is in the way", () => {
       text: "A report on this booking is waiting for Renit's decision. It cannot be extended until then.",
     });
     expect(reviewBlocker(quote({ blockers: ["listing_unavailable", "shop_closed"] }))?.code).toBe("listing_unavailable");
+  });
+
+  it("names the area a shop turned off, on the dates screen and at Book now (ENG-284)", () => {
+    const off = quote({
+      blockers: ["area_off"],
+      delivery_mode: "owner_delivery",
+      delivery: { status: "too_far", reason: "area_off", area: { pin: "400061", name: "Vesava" }, fee: "0.00", distance_km: "3.2", offer_pickup: true },
+    });
+    expect(datesBlocker(off)).toBe("This shop doesn't deliver to Vesava (400061). Choose self pickup.");
+    expect(reviewBlocker(off)?.text).toBe("This shop doesn't deliver to Vesava (400061). Choose self pickup.");
+    expect(blockerText("area_off")).toBe("This shop doesn't deliver to this area. Choose self pickup.");
+    const said = { status: 409, code: "area_off", message: "This shop doesn't deliver to Juhu (400049). Choose self pickup.", details: null };
+    expect(bookErrorText(said)).toBe("This shop doesn't deliver to Juhu (400049). Choose self pickup.");
+    expect(bookErrorText({ ...said, message: null })).toBe("This shop doesn't deliver to this area. Choose self pickup.");
   });
 
   it("names the shop's notice when the server gives it", () => {

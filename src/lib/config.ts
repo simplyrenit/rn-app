@@ -225,6 +225,8 @@ export const SHOP_CONFIRM_ADDRESS_ENDPOINT = SERVERURL + "shop/confirm-address/"
 export const SHOP_OPEN_ENDPOINT = SERVERURL + "shop/open/";
 
 export const SHOP_DELIVERY_EXAMPLE_ENDPOINT = SERVERURL + "shop/delivery-example/";
+/** The PIN code areas around the shop (ENG-284): `?km=`, owner only. */
+export const SHOP_PINCODES_ENDPOINT = SERVERURL + "shop/pincodes/";
 
 export const ACCESS_DEVICES_ENDPOINT = SERVERURL + "access/devices/";
 

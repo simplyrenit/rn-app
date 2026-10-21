@@ -8,6 +8,7 @@ import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { FavouriteButton } from "./favourite-button";
 import { plansOf, smallestPlan } from "@/lib/plans";
+import { DeliveryFacts, cardDeliveryLine, deliveryLineText } from "@/lib/delivery";
 import { Text } from "./text";
 import { usePressFeedback } from "./use-press-feedback";
 import { VerifiedBusinessBadge } from "./verified-business-badge";
@@ -45,6 +46,12 @@ export interface CardProps extends ItemCard {
    * Search results only; Home rails and the owner's own listings do not pass it.
    */
   businessVerified?: boolean;
+  /**
+   * ENG-292: the listing's delivery facts, to say "1.2 km · Delivery ₹110" or
+   * "0.9 km · Self pickup" for the customer's address in place of the
+   * distance and locality. Search results only.
+   */
+  deliveryFacts?: DeliveryFacts;
 }
 
 export function Card({
@@ -63,6 +70,7 @@ export function Card({
   specFilters,
   dates,
   businessVerified,
+  deliveryFacts,
 }: CardProps) {
   // ENG-281: the smallest plan, per its unit; a product from an older server is its day price.
   const shownPlan = smallestPlan(plansOf({ plans, rate: price }));
@@ -74,6 +82,7 @@ export function Card({
   // not a grid of location lookups.
   const derivedDistance = useDistanceTo(coordinates);
   const distanceLine = distance ?? derivedDistance;
+  const delivery = deliveryFacts ? cardDeliveryLine(deliveryFacts, distanceLine) : null;
 
   // Only used when a call site does not pass an explicit width. Grid callers
   // pass one (e.g. "48.5%"); the horizontal rows on Home do not.
@@ -90,7 +99,7 @@ export function Card({
       id={id}
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${location}${
-        distanceLine ? `, ${distanceLine}` : ""
+        delivery ? `, ${deliveryLineText(delivery)}` : distanceLine ? `, ${distanceLine}` : ""
       }, ${formatCurrency(shownPlan?.price ?? price)} per ${shownPlan?.unit ?? "day"}${businessVerified ? ", Verified business" : ""}`}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
@@ -163,9 +172,21 @@ export function Card({
           </Text>
           {/* Distance is the more useful of the two, so it takes the line when
               we have it and the place name follows it. */}
-          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="dim">
-            {distanceLine ? `${distanceLine} · ${location}` : location}
-          </Text>
+          {delivery ? (
+            // The word is what the customer scans for: green when the shop
+            // delivers to their address; the fee keeps the line's own tone.
+            <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="dim">
+              {delivery.km ? `${delivery.km} · ` : ""}
+              <Text fontSize="text-sm" tone={delivery.word === "Delivery" ? "success" : "dim"}>
+                {delivery.word}
+              </Text>
+              {delivery.fee ? ` ${delivery.fee}` : ""}
+            </Text>
+          ) : (
+            <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="dim">
+              {distanceLine ? `${distanceLine} · ${location}` : location}
+            </Text>
+          )}
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
             <Text fontSize="text-md" fontWeight="font-bold">
               {formatCurrency(shownPlan?.price ?? price)}

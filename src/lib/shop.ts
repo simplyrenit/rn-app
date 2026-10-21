@@ -65,6 +65,11 @@ export interface Shop {
   delivery_base_fee: string;
   delivery_per_km: string;
   delivery_max_km: string;
+  /**
+   * PIN codes the shop won't deliver to, sorted (ENG-284). Missing on an older server: read it as `[]`
+   * (`excludedPins`).
+   */
+  excluded_pincodes?: string[];
   /** A merchant has the dashboard; an individual owner does not. */
   is_merchant: boolean;
   /** Nothing in the shop's `missing` list stops it taking bookings, so its requests will ring. */
@@ -313,14 +318,21 @@ export function kmText(value: string | number | null | undefined): string {
   return `${Number.isInteger(n) ? n : n.toFixed(1)} km`;
 }
 
-/** The Delivery row's second line on SH-13. */
+/** "1 area off", "3 areas off". */
+const areasOff = (n: number) => `${n} ${n === 1 ? "area" : "areas"} off`;
+
+/** The Delivery row's second line on SH-13: "Up to 5 km · 1 area off · ₹50 + ₹15 a km". */
 export function deliverySummary(
-  shop: Pick<Shop, "delivers" | "delivery_base_fee" | "delivery_per_km" | "delivery_max_km">
+  shop: Pick<Shop, "delivers" | "delivery_base_fee" | "delivery_per_km" | "delivery_max_km" | "excluded_pincodes"> &
+    Partial<Pick<Shop, "coordinates">>
 ): string {
   if (!shop.delivers) return "We don't deliver";
-  return `We deliver · ${rupees(shop.delivery_base_fee)} + ${rupees(shop.delivery_per_km)} a km · up to ${kmText(
-    shop.delivery_max_km
-  )}`;
+  const off = excludedPins(shop).length;
+  // With no pin there is nothing to measure from, so no areas: say what to do instead.
+  const areas = shop.coordinates === null ? "add your shop address" : off ? areasOff(off) : "all areas";
+  return `Up to ${kmText(shop.delivery_max_km)} · ${areas} · ${rupees(
+    shop.delivery_base_fee
+  )} + ${rupees(shop.delivery_per_km)} a km`;
 }
 
 /** The delivery form as typed: text, so a half-typed "1." is not rewritten under a finger. */
@@ -349,16 +361,6 @@ export function deliveryFormFrom(
 
 const sameNumber = (a: string, b: string) => (a === b ? true : a !== "" && b !== "" && Number(a) === Number(b));
 
-/**
- * Whether the delivery form differs from what the screen opened with: "Save delivery" is greyed until it does, as "Save hours"
- * is (test run D-12). A shop that does not deliver has nothing else to save, whatever is typed in the boxes it is not using.
- */
-export function deliveryChanged(initial: DeliveryForm, form: DeliveryForm): boolean {
-  if (initial.delivers !== form.delivers) return true;
-  if (!form.delivers) return false;
-  return !sameNumber(initial.base, form.base) || !sameNumber(initial.perKm, form.perKm) || !sameNumber(initial.maxKm, form.maxKm);
-}
-
 /** Digits and one point, at most `places` after it. */
 export function cleanDecimal(value: string, places: number): string {
   const kept = value.replace(/[^\d.]/g, "");
@@ -379,20 +381,166 @@ export function checkDelivery(form: DeliveryForm): DeliveryErrors {
   if (!MONEY.test(form.base)) errors.base = "Enter the starting fee in rupees, 0 or more";
   if (!MONEY.test(form.perKm)) errors.perKm = "Enter the amount per km in rupees, 0 or more";
   if (!KM.test(form.maxKm) || Number(form.maxKm) <= 0) {
-    errors.maxKm = "Enter how far you go, more than 0 km";
+    errors.maxKm = "Choose how far you go, more than 0 km";
   }
   return errors;
 }
 
-/** The PATCH body: money to two places, distance to one, as the API formats them. */
-export function deliveryPatch(form: DeliveryForm) {
+/**
+ * The PATCH body: money to two places, distance to one, as the API formats them. The areas go with a delivering shop only:
+ * while delivery is off the areas card is hidden, so what it held is not what the owner is saving.
+ */
+export function deliveryPatch(form: DeliveryForm & { excluded?: string[] }) {
   if (!form.delivers) return { delivers: false };
   return {
     delivers: true,
     delivery_base_fee: Number(form.base).toFixed(2),
     delivery_per_km: Number(form.perKm).toFixed(2),
     delivery_max_km: Number(form.maxKm).toFixed(1),
+    ...(form.excluded ? { excluded_pincodes: [...new Set(form.excluded)].sort() } : {}),
   };
+}
+
+// ---- Delivery areas (ENG-284) ------------------------------------------------------
+
+/** One PIN code around the shop, from `GET /api/shop/pincodes/?km=`. */
+export interface Area {
+  pin: string;
+  /** India Post's name: "Vesava". */
+  name: string;
+  /** From the shop's pin to the area's centre, "2.4". */
+  km: string;
+  /** The centre is within the km asked for. */
+  inside: boolean;
+  /** Off as saved on the server. The screens read the draft's list instead. */
+  excluded: boolean;
+}
+
+export interface AreasResponse {
+  km: string;
+  /** Nearest first. */
+  areas: Area[];
+}
+
+/** The shop's areas that are off; an older server sends no list, which is none off. */
+export const excludedPins = (shop: Pick<Shop, "excluded_pincodes">): string[] => shop.excluded_pincodes ?? [];
+
+/** The delivery screen's whole draft: the form plus the PIN codes that are off. Shared by Delivery and All areas. */
+export interface DeliveryDraft extends DeliveryForm {
+  excluded: string[];
+}
+
+export function deliveryDraftFrom(
+  shop: Pick<Shop, "delivers" | "delivery_base_fee" | "delivery_per_km" | "delivery_max_km" | "excluded_pincodes">
+): DeliveryDraft {
+  return { ...deliveryFormFrom(shop), excluded: [...excludedPins(shop)] };
+}
+
+/** One area on or off. */
+export function toggleExcluded(excluded: readonly string[], pin: string): string[] {
+  return excluded.includes(pin) ? excluded.filter((p) => p !== pin) : [...excluded, pin];
+}
+
+/** The chips on the Delivery screen: what is off first (so it is never hidden past the eighth), then nearest. */
+export function previewAreas(areas: readonly Area[], off: readonly string[], count = 8): Area[] {
+  const isOff = (a: Area) => (off.includes(a.pin) ? 0 : 1);
+  return [...areas].sort((a, b) => isOff(a) - isOff(b) || Number(a.km) - Number(b.km)).slice(0, count);
+}
+
+/** The areas inside the distance that are off: the ones a customer would be refused in. */
+export function offWithin(areas: readonly Area[], excluded: readonly string[]): Area[] {
+  return areas.filter((a) => a.inside && excluded.includes(a.pin));
+}
+
+/**
+ * All areas' OFF and ON groups. A row stays in the group it had when the list was drawn (`groupedOff`), so a tap only
+ * changes its checkbox and the next row never slides under the finger.
+ */
+export function areaGroups(areas: readonly Area[], groupedOff: readonly string[]) {
+  return {
+    off: areas.filter((a) => groupedOff.includes(a.pin)),
+    on: areas.filter((a) => !groupedOff.includes(a.pin)),
+  };
+}
+
+/** What the server takes for `?km=`; a stored distance outside it still lists the nearest it can. */
+export const AREAS_KM_MIN = 0.5;
+export const AREAS_KM_MAX = 50;
+export const areasKm = (km: number) => Math.min(AREAS_KM_MAX, Math.max(AREAS_KM_MIN, km));
+
+/** Half a km at a time up to 2 km, where a half matters; whole km after, to 50. */
+const KM_STEPS: readonly number[] = [0.5, 1, 1.5, ...Array.from({ length: 49 }, (_, i) => i + 2)];
+
+/**
+ * The next distance the − or + gives, or null when there is none (the button is disabled). A distance off the steps (7.5
+ * from the dashboard, or 0) stays as it is until a button is pressed, then moves to the next step that way: 7.5 → 8 or 7.
+ * Past 50 only − works, and it goes to 50.
+ */
+export function stepKm(km: number, direction: 1 | -1): number | null {
+  const EPS = 1e-9;
+  const next =
+    direction > 0 ? KM_STEPS.find((s) => s > km + EPS) : [...KM_STEPS].reverse().find((s) => s < km - EPS);
+  return next ?? null;
+}
+
+/** The areas whose state the draft changed, by name (PIN when the list doesn't have it). */
+export function areaChanges(
+  saved: readonly string[],
+  draft: readonly string[],
+  areas: readonly Area[]
+): { off: string[]; on: string[] } {
+  const name = (pin: string) => areas.find((a) => a.pin === pin)?.name ?? pin;
+  return {
+    off: draft.filter((p) => !saved.includes(p)).map(name),
+    on: saved.filter((p) => !draft.includes(p)).map(name),
+  };
+}
+
+const namesTurned = (names: string[], how: "off" | "on") =>
+  names.length === 0
+    ? null
+    : names.length === 1
+      ? `${names[0]} turned ${how}`
+      : names.length === 2
+        ? `${names[0]} and ${names[1]} turned ${how}`
+        : `${names.length} areas turned ${how}`;
+
+/**
+ * The pinned bar's words for what isn't saved: "up to 6 km, fee changed, Juhu turned off", or null when nothing is.
+ * A shop switching delivery off has nothing else to save (the cards are hidden), as `deliveryPatch` sends.
+ */
+export function unsavedSummary(saved: DeliveryDraft, draft: DeliveryDraft, areas: readonly Area[]): string | null {
+  if (saved.delivers && !draft.delivers) return "delivery turned off";
+  if (!draft.delivers) return null;
+  const parts: (string | null)[] = [];
+  if (!saved.delivers) parts.push("delivery turned on");
+  if (!sameNumber(saved.maxKm, draft.maxKm)) parts.push(`up to ${kmText(draft.maxKm)}`);
+  if (!sameNumber(saved.base, draft.base) || !sameNumber(saved.perKm, draft.perKm)) parts.push("fee changed");
+  const changes = areaChanges(saved.excluded, draft.excluded, areas);
+  parts.push(namesTurned(changes.off, "off"), namesTurned(changes.on, "on"));
+  const said = parts.filter((p): p is string => p !== null);
+  return said.length ? said.join(", ") : null;
+}
+
+/** The toast after a save. Turning areas off is when the owner most needs telling pickup still works there. */
+export function savedMessage(turnedOff: readonly string[]): string {
+  if (turnedOff.length === 0) return "Saved.";
+  return turnedOff.length === 1
+    ? `Saved. Customers in ${turnedOff[0]} can still pick up.`
+    : "Saved. Customers in those areas can still pick up.";
+}
+
+/** What "We deliver" switched on suggests (D7). */
+export const SUGGESTED_FEES = { base: "50", perKm: "15", maxKm: "5" } as const;
+
+/**
+ * Switching delivery on. A shop with both fees at 0 has never set them: it gets ₹50 + ₹15 a km and 5 km, marked as a
+ * suggestion. Any fee already set is left alone.
+ */
+export function prefillFees<T extends DeliveryForm>(form: T): { form: T; suggested: boolean } {
+  const on = { ...form, delivers: true };
+  if (Number(form.base || 0) !== 0 || Number(form.perKm || 0) !== 0) return { form: on, suggested: false };
+  return { form: { ...on, ...SUGGESTED_FEES }, suggested: true };
 }
 
 // ---- Signing a device out (decision T-43) ----------------------------------------------------

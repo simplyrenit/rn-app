@@ -95,7 +95,12 @@ export function buildSearchQuery(
   item: string,
   coordinates: Coordinates,
   when: When,
-  filters?: SearchFilters
+  filters?: SearchFilters,
+  /**
+   * ENG-284 D3: one of the customer's saved addresses, by id. Each result then
+   * says whether its shop delivers there. Never coordinates or a PIN.
+   */
+  deliverAddress?: number | null
 ): string {
   const pairs: [string, string | number][] = [["title", item ?? ""]];
   if (coordinates) {
@@ -125,6 +130,7 @@ export function buildSearchQuery(
   for (const [key, options] of Object.entries(filters?.specs ?? {})) {
     for (const option of options) pairs.push([`attr.${key}`, option]);
   }
+  if (deliverAddress != null) pairs.push(["deliver_address", deliverAddress]);
   return pairs
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
     .join("&");
@@ -135,11 +141,12 @@ export function useSearch() {
     item: string,
     coordinates: Coordinates,
     when: When,
-    filters?: SearchFilters
+    filters?: SearchFilters,
+    deliverAddress?: number | null
   ): Promise<BackendProduct[]> {
     try {
       const response = await axiosInstance.get<BackendProduct[]>(
-        `${SEARCH_PRODUCTS}?${buildSearchQuery(item, coordinates, when, filters)}`
+        `${SEARCH_PRODUCTS}?${buildSearchQuery(item, coordinates, when, filters, deliverAddress)}`
       );
 
       return (response.data || []).filter(prod => !prod.moderation_labels?.length);

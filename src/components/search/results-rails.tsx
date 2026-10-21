@@ -184,6 +184,8 @@ interface FilterBarProps {
   chipSpecLabel?: string;
   chips: { value: string; on: boolean }[];
   onChip: (value: string) => void;
+  /** ENG-292 "Delivers to me", after Dates; absent hides it (signed out). */
+  deliver?: { on: boolean; onPress: () => void };
 }
 
 export function FilterBar(props: FilterBarProps) {
@@ -210,6 +212,15 @@ export function FilterBar(props: FilterBarProps) {
         accessibilityHint={props.hint}
         onPress={props.onDates}
       />
+      {props.deliver ? (
+        <Pill
+          label={props.deliver.on ? "Delivers to me ✕" : "Delivers to me"}
+          role="checkbox"
+          selected={props.deliver.on}
+          accessibilityLabel="Delivers to me"
+          onPress={props.deliver.onPress}
+        />
+      ) : null}
       {props.chips.length > 0 && (
         <View style={{ width: 1, height: 24, backgroundColor: color.line }} />
       )}

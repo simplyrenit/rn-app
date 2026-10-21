@@ -22,7 +22,11 @@ export function useProduct() {
   const { access_token } = authTokens || {};
   const [loading, setLoading] = useState(false);
 
-  const fetchProduct = async (id: string) => {
+  /**
+   * `deliverAddress` (ENG-284 D3): the session's delivery address, by id, so the
+   * product answers whether its shop delivers there (`delivery`).
+   */
+  const fetchProduct = async (id: string, deliverAddress?: number | null) => {
     setLoading(true);
     try {
       const response = await axiosInstance.get<BackendProduct>(
@@ -31,6 +35,7 @@ export function useProduct() {
           headers: {
             "Content-Type": "application/json",
           },
+          ...(deliverAddress != null ? { params: { deliver_address: deliverAddress } } : {}),
         }
       );
 

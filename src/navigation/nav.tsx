@@ -90,6 +90,7 @@ import FAQScreen from "@/screens/profileScreens/faqs";
 import FeedbackNReviewScreen from "@/screens/profileScreens/feedback-review";
 import MyProductScreen from "@/screens/profileScreens/my-product";
 import RentalDeliveryScreen from "@/screens/profileScreens/rental-delivery";
+import DeliveryAreasScreen from "@/screens/profileScreens/delivery-areas";
 import RentalHoursScreen from "@/screens/profileScreens/rental-hours";
 import RentalSettingsScreen from "@/screens/profileScreens/rental-settings";
 import ShopAddressScreen from "@/screens/profileScreens/shop-address";
@@ -832,6 +833,10 @@ export default function Navigation() {
         <Stack.Screen
           name="RentalDelivery"
           component={RentalDeliveryScreen}
+        />
+        <Stack.Screen
+          name="DeliveryAreas"
+          component={DeliveryAreasScreen}
         />
         {/* Live booking, the customer's side (ENG-99). On the root stack, so
             the tab bar is hidden from the dates to the booking itself. */}

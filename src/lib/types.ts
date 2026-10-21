@@ -8,6 +8,7 @@ import type { SavedAddress } from "@/lib/addresses";
 import type { BookItem, DeliveryMode, ProductShop } from "@/lib/booking";
 import type { Moment, Side } from "@/lib/capture";
 import type { Plan } from "@/lib/plans";
+import type { ListingDelivery } from "@/lib/delivery";
 import type { ReportKind } from "@/lib/day-of";
 import type { PendingEdit } from "@/lib/listing-edit";
 import type { FlagReason, ListingStatus } from "@/lib/listing-status";
@@ -355,6 +356,8 @@ export type RootStackParamList = {
   /** The shop's address and pin, on the same map picker (ENG-265). */
   ShopAddress: undefined;
   RentalDelivery: undefined;
+  /** Every area around the shop, on and off, editing the Delivery screen's draft (ENG-291). */
+  DeliveryAreas: undefined;
   /**
    * Live booking, the customer's side (ENG-99). `BookingDates` is BK-02: the
    * dates and how the item changes hands. `moved_from` is the customer's refused
@@ -700,6 +703,11 @@ export interface BackendProduct {
    * the runs of days with no unit free.
    */
   shop?: ProductShop | null;
+  /**
+   * ENG-284: whether the shop delivers to the address sent as
+   * `?deliver_address=` (search and product detail only); null without one.
+   */
+  delivery?: ListingDelivery | null;
   live_booking?: boolean;
   book_for_morning?: boolean;
   id_check_needed?: "none" | "id" | "id_and_match";

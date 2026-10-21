@@ -14,6 +14,7 @@ import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
 import type { PlanUnit } from "@/lib/plans";
 import { ALL_DAY, DayHours, Hours, coversWholeDay, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
+import { ListingDelivery, deliveryReason, productHowLine } from "@/lib/delivery";
 
 export type DeliveryMode = "pickup" | "owner_delivery";
 
@@ -58,10 +59,15 @@ export interface Quote {
   plan?: { unit: PlanUnit; price: string; min: number };
   min_days?: number;
   delivery: {
+    /** A status this build does not know is read as "not available" (ENG-284 D11). */
     status: "not_asked" | "ok" | "too_far" | "not_offered";
     fee: string;
     distance_km: string | null;
     offer_pickup: boolean;
+    /** ENG-284: why `too_far`: beyond the shop's km, or in an area the shop turned off. Absent from an older server. */
+    reason?: "distance" | "area_off" | null;
+    /** ENG-284: the area turned off, for `area_off`. */
+    area?: { pin: string; name: string } | null;
   };
   fee_shown: string;
   fee_charged: string;
@@ -546,22 +552,25 @@ export function searchedDays(
   return { first_day: first, last_day: last };
 }
 
-/** The delivery choice on BK-02: "Delivery to Home · ₹170 · 8 km". */
+/**
+ * The delivery choice on BK-02: "Delivery to Home · ₹170 · 8 km", or, when the
+ * shop can't deliver there, the plain title and the reason (ENG-284 D11):
+ * "SoundBox Rentals doesn't deliver to Vesava (400061). …". Only `ok` is a
+ * yes: an unknown status from a newer server is not available.
+ */
 export function deliveryOption(
   quote: Pick<Quote, "delivery"> | null | undefined,
-  addressName: string
-): { title: string; sub: string | null; ok: boolean } {
+  addressName: string,
+  shop: { name: string; maxKm?: string | number | null } = { name: "The shop" }
+): { title: string; reason: string | null; ok: boolean } {
   const to = `Delivery to ${addressName}`;
-  if (!quote) return { title: to, sub: null, ok: true };
+  if (!quote) return { title: to, reason: null, ok: true };
   const { status, fee, distance_km } = quote.delivery;
-  if (status === "too_far") {
-    return { title: `${to} · too far`, sub: "The shop does not deliver that far. You can pick it up.", ok: false };
-  }
-  if (status === "not_offered") {
-    return { title: "Delivery", sub: "This item is not delivered. You can pick it up.", ok: false };
+  if (status !== "ok") {
+    return { title: to, reason: deliveryReason(quote.delivery, shop.name, shop.maxKm), ok: false };
   }
   const parts = [to, money(fee), distance_km ? kmText(distance_km) : null].filter(Boolean);
-  return { title: parts.join(" · "), sub: null, ok: true };
+  return { title: parts.join(" · "), reason: null, ok: true };
 }
 
 // ---- The product page (BK-01) ---------------------------------------------------------
@@ -607,8 +616,19 @@ export function priceBlock(
   return { rate: money(rate), deposit: held ? `Deposit ${money(deposit)} · refundable` : null };
 }
 
-/** "Self pickup or delivery from ₹50". A product marked not delivered is pickup only. */
-export function getItLine(shop: ProductShop | null | undefined, notDelivered?: boolean): string {
+/**
+ * "Self pickup or delivery from ₹50". A product marked not delivered is pickup
+ * only. With an answer for the customer's address (ENG-284 U6), that answer:
+ * "Self pickup or delivery to Home ₹110" / "Self pickup · doesn't deliver to Home".
+ */
+export function getItLine(
+  shop: ProductShop | null | undefined,
+  notDelivered?: boolean,
+  delivery?: ListingDelivery | null,
+  addressName?: string | null
+): string {
+  const forAddress = productHowLine({ shop, not_delivered: notDelivered, delivery }, addressName ?? null);
+  if (forAddress) return forAddress;
   return shop?.delivers && !notDelivered
     ? `Self pickup or delivery from ${money(shop.delivery_base_fee)}`
     : "Self pickup";
@@ -664,8 +684,12 @@ export interface PriceLine {
   amountTone?: "success";
 }
 
-/** The three lines above the total. The fee is always shown, crossed out when less is charged. */
-export function priceLines(quote: Quote): PriceLine[] {
+/**
+ * The three lines above the total. The fee is always shown, crossed out when
+ * less is charged. Self pickup is said as itself, "Self pickup · Free" (ENG-284),
+ * not as a ₹0 delivery; an extension keeps its old line.
+ */
+export function priceLines(quote: Quote, extending = false): PriceLine[] {
   const fee: PriceLine = { label: "Renit's fee", amount: money(quote.fee_charged) };
   if (Number(quote.fee_shown) !== Number(quote.fee_charged)) fee.struck = money(quote.fee_shown);
   const plan = quote.plan;
@@ -674,7 +698,14 @@ export function priceLines(quote: Quote): PriceLine[] {
     plan && plan.unit !== "day"
       ? `Rent · ${daysLabel(quote.days)}, ${plan.unit === "week" ? "weekly" : "monthly"} rate`
       : `Rent · ${daysLabel(quote.days)} × ${money(quote.rate)}`;
-  return [{ label: rent, amount: money(quote.rent) }, { label: "Delivery", amount: money(quote.delivery.fee) }, fee];
+  const handover =
+    quote.delivery_mode === "pickup" && !extending
+      ? { label: "Self pickup", amount: "Free" }
+      : // ENG-284: the shop stopped delivering here; "₹0" would read as free delivery.
+        quote.delivery_mode === "owner_delivery" && quote.delivery.offer_pickup && !extending
+        ? { label: "Delivery", amount: "Not available" }
+        : { label: "Delivery", amount: money(quote.delivery.fee) };
+  return [{ label: rent, amount: money(quote.rent) }, handover, fee];
 }
 
 /** Under the rent of a week or month plan: "₹3,500 a week ÷ 7 = ₹500 a day". Null for a day plan or an older server. */
@@ -907,6 +938,7 @@ const FIXED_BY_DATES = new Set([
   "notice_too_short",
   "owner_cannot_accept",
   "too_far",
+  "area_off",
   "delivery_not_offered",
 ]);
 
@@ -936,6 +968,14 @@ export function blockerText(code: string, details?: Record<string, unknown> | nu
       return "This owner can't take bookings right now.";
     case "too_far":
       return "You are too far for this shop to deliver. Choose self pickup.";
+    case "area_off": {
+      // ENG-284: Book now's 409 names the area in its own message; a quote's blocker has it in `delivery.area`.
+      const area = details?.area as { pin?: string; name?: string } | undefined;
+      const where = area?.name && area.pin ? `${area.name} (${area.pin})` : area?.name || area?.pin;
+      return where
+        ? `This shop doesn't deliver to ${where}. Choose self pickup.`
+        : "This shop doesn't deliver to this area. Choose self pickup.";
+    }
     case "delivery_not_offered":
       return "This item is not delivered. Choose self pickup.";
     case "phone_required":
@@ -961,14 +1001,14 @@ export function blockerText(code: string, details?: Record<string, unknown> | nu
 /** The first thing in the way that the dates screen can fix, in the server's order. */
 export function datesBlocker(quote: Quote | null | undefined): string | null {
   const code = quote?.blockers.find((b) => FIXED_BY_DATES.has(b));
-  return code ? blockerText(code, { min_days: quote?.min_days }) : null;
+  return code ? blockerText(code, { min_days: quote?.min_days, area: quote?.delivery.area }) : null;
 }
 
 /** The first thing in the way on the price screen, leaving out the tick and the ID check. */
 export function reviewBlocker(quote: Quote | null | undefined): { code: string; text: string } | null {
   for (const code of quote?.blockers ?? []) {
     if (OWN_PLACE.has(code)) continue;
-    const text = blockerText(code);
+    const text = blockerText(code, { area: quote?.delivery.area });
     if (text) return { code, text };
   }
   return null;
@@ -1002,6 +1042,8 @@ export function bookRefusalIsFinal(error: ApiError | null): boolean {
 
 /** What to say when Book now is refused. */
 export function bookErrorText(error: ApiError | null): string {
+  // The area turned off between the quote and Book now: the server's sentence names it (ENG-284 D11).
+  if (error?.code === "area_off" && error.message) return error.message;
   const known = error?.code ? blockerText(error.code, error.details) : null;
   if (known) return known;
   switch (error?.code) {

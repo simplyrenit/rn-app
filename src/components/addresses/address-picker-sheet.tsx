@@ -29,6 +29,13 @@ interface Props {
   onPick: (picked: PickedAddress) => void;
   title?: string;
   description?: string;
+  /**
+   * ENG-284 D12: saved addresses only, for delivery (search results, BK-02).
+   * A one-off spot has no id to quote or search with, so "Use current
+   * location" goes; "Add new address" opens the map at the current location
+   * and comes back with the new address picked.
+   */
+  savedOnly?: boolean;
 }
 
 function ActionRow({
@@ -96,6 +103,7 @@ export const AddressPickerSheet = forwardRef<AddressPickerSheetHandle, Props>(
       onPick,
       title = "Pickup location",
       description = "Renters see only your area until they book.",
+      savedOnly = false,
     },
     ref
   ) => {
@@ -271,18 +279,26 @@ export const AddressPickerSheet = forwardRef<AddressPickerSheetHandle, Props>(
           )}
 
           <View style={card}>
+            {savedOnly ? null : (
+              <ActionRow
+                first
+                icon={<ViewfinderCircleIcon size={24} color={color.brandText} />}
+                label="Use current location"
+                sub={locationOff ? "Location is off · choose on the map" : "Pick the spot on the map"}
+                onPress={pickOnMap}
+              />
+            )}
             <ActionRow
-              first
-              icon={<ViewfinderCircleIcon size={24} color={color.brandText} />}
-              label="Use current location"
-              sub={locationOff ? "Location is off · choose on the map" : "Pick the spot on the map"}
-              onPress={pickOnMap}
-            />
-            <ActionRow
-              first={false}
+              first={savedOnly}
               icon={<PlusIcon size={24} color={color.brandText} />}
               label="Add new address"
-              sub={full ? "You can save up to 20 addresses." : "Save a place to reuse it"}
+              sub={
+                full
+                  ? "You can save up to 20 addresses."
+                  : savedOnly
+                  ? "Starts at your current location"
+                  : "Save a place to reuse it"
+              }
               disabled={full}
               onPress={addNew}
             />

@@ -12,7 +12,18 @@ import {
   dayLabel,
   dayToOpen,
   deliveryFormFrom,
-  deliveryChanged,
+  Area,
+  areaChanges,
+  areasKm,
+  deliveryDraftFrom,
+  offWithin,
+  areaGroups,
+  prefillFees,
+  previewAreas,
+  savedMessage,
+  stepKm,
+  toggleExcluded,
+  unsavedSummary,
   coversWholeDay,
   deliveryPatch,
   hoursChanged,
@@ -214,7 +225,13 @@ describe("delivery", () => {
   });
 
   it("summarises as SH-13 does", () => {
-    expect(deliverySummary(shop)).toBe("We deliver · ₹50 + ₹15 a km · up to 15 km");
+    expect(deliverySummary(shop)).toBe("Up to 15 km · all areas · ₹50 + ₹15 a km");
+    expect(deliverySummary({ ...shop, excluded_pincodes: [] })).toBe("Up to 15 km · all areas · ₹50 + ₹15 a km");
+    expect(deliverySummary({ ...shop, excluded_pincodes: ["400061"] })).toBe("Up to 15 km · 1 area off · ₹50 + ₹15 a km");
+    expect(deliverySummary({ ...shop, coordinates: null })).toBe("Up to 15 km · add your shop address · ₹50 + ₹15 a km");
+    expect(deliverySummary({ ...shop, excluded_pincodes: ["400061", "400049"] })).toBe(
+      "Up to 15 km · 2 areas off · ₹50 + ₹15 a km"
+    );
     expect(deliverySummary({ ...shop, delivers: false })).toBe("We don't deliver");
   });
 
@@ -251,6 +268,15 @@ describe("delivery", () => {
       delivery_max_km: "15.0",
     });
     expect(deliveryPatch({ delivers: false, base: "50", perKm: "15", maxKm: "15" })).toEqual({ delivers: false });
+  });
+
+  it("sends the areas that are off, sorted and once each, only while delivering", () => {
+    const form = { delivers: true, base: "50", perKm: "15", maxKm: "5" };
+    expect(deliveryPatch({ ...form, excluded: ["400061", "400049", "400061"] })).toMatchObject({
+      excluded_pincodes: ["400049", "400061"],
+    });
+    expect(deliveryPatch({ ...form, excluded: [] })).toMatchObject({ excluded_pincodes: [] });
+    expect(deliveryPatch({ ...form, delivers: false, excluded: ["400061"] })).toEqual({ delivers: false });
   });
 });
 
@@ -315,22 +341,27 @@ describe("the list of signed-in devices (test run D-10)", () => {
 describe("Save is greyed until something changed (test run D-12)", () => {
   const form = { delivers: true, base: "50", perKm: "10", maxKm: "15" };
 
+  const draft = { ...form, excluded: [] as string[] };
+
   it("delivery: nothing changed, nothing to save; a changed switch or number is", () => {
-    expect(deliveryChanged(form, { ...form })).toBe(false);
-    expect(deliveryChanged(form, { ...form, delivers: false })).toBe(true);
-    expect(deliveryChanged(form, { ...form, base: "60" })).toBe(true);
-    expect(deliveryChanged(form, { ...form, maxKm: "12.5" })).toBe(true);
+    expect(unsavedSummary(draft, { ...draft }, [])).toBeNull();
+    expect(unsavedSummary(draft, { ...draft, delivers: false }, [])).toBe("delivery turned off");
+    expect(unsavedSummary(draft, { ...draft, base: "60" }, [])).toBe("fee changed");
+    expect(unsavedSummary(draft, { ...draft, maxKm: "12.5" }, [])).toBe("up to 12.5 km");
     // The same number typed another way is not a change.
-    expect(deliveryChanged(form, { ...form, base: "50.0", perKm: "10.00" })).toBe(false);
+    expect(unsavedSummary(draft, { ...draft, base: "50.0", perKm: "10.00" }, [])).toBeNull();
     // Half-typed or emptied is a change (and the form's own check says what is wrong).
-    expect(deliveryChanged(form, { ...form, base: "" })).toBe(true);
+    expect(unsavedSummary(draft, { ...draft, base: "" }, [])).toBe("fee changed");
   });
 
   it("delivery: a shop that does not deliver has nothing else to save, whatever is typed in the boxes it is not using", () => {
-    const off = { delivers: false, base: "", perKm: "", maxKm: "" };
-    expect(deliveryChanged(off, { ...off })).toBe(false);
-    expect(deliveryChanged(off, { ...off, base: "40" })).toBe(false);
-    expect(deliveryChanged(off, { ...off, delivers: true })).toBe(true);
+    const off = { delivers: false, base: "", perKm: "", maxKm: "", excluded: [] as string[] };
+    expect(unsavedSummary(off, { ...off }, [])).toBeNull();
+    expect(unsavedSummary(off, { ...off, base: "40" }, [])).toBeNull();
+    expect(unsavedSummary(off, { ...off, excluded: ["400061"] }, [])).toBeNull();
+    expect(unsavedSummary(off, { ...off, delivers: true, base: "50", perKm: "15", maxKm: "5" }, [])).toBe(
+      "delivery turned on, up to 5 km, fee changed"
+    );
   });
 
   it("hours: the same hours are not a change; a day opened, closed or retimed is", () => {
@@ -394,5 +425,134 @@ describe("the shop address body (ENG-265)", () => {
     expect(shopAddressBody(pin, null, "Andheri West, Mumbai").address).toBe("Andheri West, Mumbai");
     expect(shopAddressBody(pin, "  ", "Andheri West, Mumbai").address).toBe("Andheri West, Mumbai");
     expect(shopAddressBody(pin, "x".repeat(300), "Andheri").address).toHaveLength(255);
+  });
+});
+
+const area = (pin: string, name: string, km: string, inside = true, excluded = false): Area => ({
+  pin,
+  name,
+  km,
+  inside,
+  excluded,
+});
+
+describe("delivery areas (ENG-284)", () => {
+  const areas: Area[] = [
+    area("400053", "Andheri W", "0.4"),
+    area("400058", "Four Bungalows", "1.6"),
+    area("400102", "Jogeshwari W", "2.1"),
+    area("400061", "Vesava", "2.4", true, true),
+    area("400047", "Marol", "2.9"),
+    area("400060", "Jogeshwari E", "3.2"),
+    area("400049", "Juhu", "3.4"),
+    area("400104", "Goregaon W", "3.9"),
+    area("400069", "Chakala", "4.1"),
+    area("400056", "Vile Parle W", "5.6", false),
+  ];
+
+  it("previews what is off first, then the nearest, eight at most", () => {
+    const shown = previewAreas(areas, ["400061", "400056"]);
+    expect(shown.map((a) => a.pin)).toEqual([
+      "400061",
+      "400056",
+      "400053",
+      "400058",
+      "400102",
+      "400047",
+      "400060",
+      "400049",
+    ]);
+    expect(previewAreas(areas, []).map((a) => a.name)[0]).toBe("Andheri W");
+    expect(previewAreas(areas.slice(0, 3), [])).toHaveLength(3);
+  });
+
+  it("counts as off only the areas inside the distance", () => {
+    expect(offWithin(areas, ["400061", "400056"]).map((a) => a.pin)).toEqual(["400061"]);
+    expect(offWithin(areas, [])).toEqual([]);
+  });
+
+  it("groups each row by what was off when the list was drawn", () => {
+    const groups = areaGroups(areas.slice(0, 4), ["400061"]);
+    expect(groups.off.map((a) => a.pin)).toEqual(["400061"]);
+    expect(groups.on.map((a) => a.pin)).toEqual(["400053", "400058", "400102"]);
+    expect(areaGroups([], ["400061"])).toEqual({ off: [], on: [] });
+  });
+
+  it("turns one area on or off", () => {
+    expect(toggleExcluded(["400061"], "400049")).toEqual(["400061", "400049"]);
+    expect(toggleExcluded(["400061", "400049"], "400061")).toEqual(["400049"]);
+  });
+
+  it("steps half a km under 2 km and whole km above, 0.5 to 50", () => {
+    expect(stepKm(5, 1)).toBe(6);
+    expect(stepKm(5, -1)).toBe(4);
+    expect(stepKm(2, -1)).toBe(1.5);
+    expect(stepKm(1.5, 1)).toBe(2);
+    expect(stepKm(0.5, -1)).toBeNull();
+    expect(stepKm(50, 1)).toBeNull();
+    expect(stepKm(49, 1)).toBe(50);
+  });
+
+  it("leaves a stored distance off the steps alone until pressed, then moves to the next step", () => {
+    expect(stepKm(7.5, 1)).toBe(8);
+    expect(stepKm(7.5, -1)).toBe(7);
+    expect(stepKm(1.2, 1)).toBe(1.5);
+    expect(stepKm(1.2, -1)).toBe(1);
+    expect(stepKm(0, 1)).toBe(0.5);
+    expect(stepKm(0, -1)).toBeNull();
+    expect(stepKm(60, 1)).toBeNull();
+    expect(stepKm(60, -1)).toBe(50);
+    expect(stepKm(50.5, -1)).toBe(50);
+  });
+
+  it("asks the server for a distance it takes", () => {
+    expect(areasKm(0)).toBe(0.5);
+    expect(areasKm(7.5)).toBe(7.5);
+    expect(areasKm(60)).toBe(50);
+  });
+
+  it("says what is unsaved, areas by name", () => {
+    const saved = { delivers: true, base: "50", perKm: "15", maxKm: "5", excluded: ["400061"] };
+    expect(unsavedSummary(saved, { ...saved, excluded: ["400061", "400049"] }, areas)).toBe("Juhu turned off");
+    expect(unsavedSummary(saved, { ...saved, maxKm: "6", perKm: "20", excluded: ["400061", "400049"] }, areas)).toBe(
+      "up to 6 km, fee changed, Juhu turned off"
+    );
+    expect(unsavedSummary(saved, { ...saved, excluded: [] }, areas)).toBe("Vesava turned on");
+    expect(unsavedSummary(saved, { ...saved, excluded: ["400061", "400049", "400047"] }, areas)).toBe(
+      "Juhu and Marol turned off"
+    );
+    expect(
+      unsavedSummary(saved, { ...saved, excluded: ["400061", "400049", "400047", "400060"] }, areas)
+    ).toBe("3 areas turned off");
+    // A PIN the list doesn't carry is named by its number.
+    expect(unsavedSummary(saved, { ...saved, excluded: ["400061", "400099"] }, areas)).toBe("400099 turned off");
+    // The same areas in another order are not a change.
+    const two = { ...saved, excluded: ["400061", "400049"] };
+    expect(unsavedSummary(two, { ...two, excluded: ["400049", "400061"] }, areas)).toBeNull();
+  });
+
+  it("names the areas a save turned off", () => {
+    expect(areaChanges(["400061"], ["400061", "400049"], areas)).toEqual({ off: ["Juhu"], on: [] });
+    expect(savedMessage([])).toBe("Saved.");
+    expect(savedMessage(["Vesava"])).toBe("Saved. Customers in Vesava can still pick up.");
+    expect(savedMessage(["Vesava", "Juhu"])).toBe("Saved. Customers in those areas can still pick up.");
+  });
+
+  it("suggests ₹50 + ₹15 a km and 5 km when delivery goes on with both fees at 0", () => {
+    const zero = { delivers: false, base: "0", perKm: "0", maxKm: "0", excluded: [] as string[] };
+    expect(prefillFees(zero)).toEqual({
+      form: { delivers: true, base: "50", perKm: "15", maxKm: "5", excluded: [] },
+      suggested: true,
+    });
+    expect(prefillFees({ ...zero, base: "", perKm: "" }).suggested).toBe(true);
+    const set = { ...zero, base: "40", maxKm: "8" };
+    expect(prefillFees(set)).toEqual({ form: { ...set, delivers: true }, suggested: false });
+    expect(prefillFees({ ...zero, perKm: "10" }).suggested).toBe(false);
+  });
+
+  it("reads a shop from an older server as having nothing off", () => {
+    const shop = { delivers: true, delivery_base_fee: "50.00", delivery_per_km: "15.00", delivery_max_km: "7.5" };
+    expect(deliveryDraftFrom(shop)).toEqual({ delivers: true, base: "50", perKm: "15", maxKm: "7.5", excluded: [] });
+    expect(deliveryDraftFrom({ ...shop, excluded_pincodes: ["400061"] }).excluded).toEqual(["400061"]);
   });
 });

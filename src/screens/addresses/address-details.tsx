@@ -1,4 +1,4 @@
-import { localityFor } from "@/backend/list-flow/pickup-location";
+import { placeFor } from "@/backend/list-flow/pickup-location";
 import useAddresses from "@/backend/useAddresses";
 import {
   Button,
@@ -14,7 +14,7 @@ import { CheckBox } from "@/components/core/checkbox";
 import { ConfirmSheet } from "@/components/core/confirm-sheet";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { SegmentedChoice } from "@/components/core/segmented-choice";
-import { AddressPayload, AddressType, addressTitle, takenTypes } from "@/lib/addresses";
+import { AddressPayload, AddressType, addressTitle, takenTypes, validPin } from "@/lib/addresses";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, radius, space } from "@/lib/design-tokens";
 import {
   cancelLocationRequest,
@@ -84,19 +84,31 @@ export default function AddressDetailsScreen() {
     route.params.pin ? null : editing?.locality || null
   );
   const [naming, setNaming] = useState(!locality);
+
+  // ENG-284 D4: the PIN code, prefilled from the geocoder and editable, because
+  // geocoders get it wrong near area borders and a wrong PIN can cost delivery.
+  // Sent only when it is six digits; left out, the server reads it from the text.
+  const [pinCode, setPinCode] = useState(editing?.postal_code ?? "");
+  const [pinError, setPinError] = useState<string | null>(null);
+  // Once typed in, the customer's PIN is theirs: a moved map pin does not overwrite it.
+  const pinTyped = useRef(false);
+
   const namingRun = useRef(0);
-  const nameSpot = useCallback(async (lat: number, long: number) => {
+  const nameSpot = useCallback(async (lat: number, long: number, fillPin: boolean) => {
     // A second pin can be chosen while the first is still being named; only
     // the latest answer counts.
     const run = ++namingRun.current;
     setNaming(true);
-    const named = await localityFor(lat, long);
+    const named = await placeFor(lat, long);
     if (run !== namingRun.current) return;
-    setLocality(named);
+    setLocality(named.locality);
+    // A blank PIN when the geocoder has none: the old one described the old spot.
+    if (fillPin && !pinTyped.current) setPinCode(named.postalCode ?? "");
     setNaming(false);
   }, []);
   useEffect(() => {
-    if (!locality) void nameSpot(pin.lat, pin.long);
+    // A saved address keeps its own PIN; a fresh pin takes the geocoder's.
+    if (!locality) void nameSpot(pin.lat, pin.long, !pinCode);
     // Once, for the pin the screen opened with; "Change" names its own.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -179,7 +191,7 @@ export default function AddressDetailsScreen() {
         // The picker's "skip" keeps the pin this address already has.
         if (!coords) return;
         setPin({ lat: coords.latitude, long: coords.longitude, address });
-        void nameSpot(coords.latitude, coords.longitude);
+        void nameSpot(coords.latitude, coords.longitude, true);
       }),
     });
   };
@@ -188,6 +200,11 @@ export default function AddressDetailsScreen() {
     if (!line1.trim()) {
       setLine1Error("Enter your flat, house number or building");
       scrollToField("line1");
+      return;
+    }
+    const pinToSend = validPin(pinCode);
+    if (pinCode.trim() && !pinToSend) {
+      setPinError("Enter a 6-digit PIN code");
       return;
     }
     if (!locality) return;
@@ -206,6 +223,7 @@ export default function AddressDetailsScreen() {
       address_type: type,
       label: type === "other" ? label.trim() : "",
       coordinates: { lat: pin.lat, long: pin.long },
+      ...(pinToSend ? { postal_code: pinToSend } : {}),
     };
 
     try {
@@ -380,7 +398,7 @@ export default function AddressDetailsScreen() {
                     <TouchableOpacity
                       accessibilityRole="button"
                       hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                      onPress={() => void nameSpot(pin.lat, pin.long)}
+                      onPress={() => void nameSpot(pin.lat, pin.long, !pinCode)}
                     >
                       <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
                         Try again
@@ -419,6 +437,23 @@ export default function AddressDetailsScreen() {
               value={line2}
               onChangeText={setLine2}
               maxLength={255}
+            />
+
+            <TextField
+              label="PIN code"
+              hint="Shops use it to see if they deliver here"
+              placeholder="e.g. 400053"
+              value={pinCode}
+              onChangeText={(text) => {
+                pinTyped.current = true;
+                setPinCode(text.replace(/[^0-9]/g, ""));
+                setPinError(null);
+              }}
+              error={pinError ?? undefined}
+              maxLength={6}
+              keyboardType="number-pad"
+              textContentType="postalCode"
+              autoComplete="postal-code"
             />
 
             <View
