@@ -203,8 +203,14 @@ function insideMinimum(m: PlanMoney, today: string): { min: number; price: strin
   return today < addDays(first.first_day, min * 30 - 1) ? { min, price: m.plan.price } : null;
 }
 
-/** The rental screen's line under the deposit, for a monthly booking: the notice while the minimum is not over, else nothing. */
+/**
+ * The rental screen's line under the deposit, for a monthly booking: the notice while the minimum is not over, else
+ * nothing. Nothing either once the rental has an end already (ended early, or a month unpaid ended it): there is no
+ * early end left to warn about.
+ */
 export function endingEarlyLine(m: PlanMoney, today: string): string | null {
+  const ended = (m.periods ?? []).some((p) => p.kind === "notice" || p.state === "dropped" || p.state === "lapsed");
+  if (ended) return null;
   const inside = insideMinimum(m, today);
   return inside ? noticeLine(inside.min, inside.price) : null;
 }

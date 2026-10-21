@@ -211,6 +211,11 @@ describe("the notice", () => {
     expect(endingEarlyLine(money(sofa(), { plan: { unit: "month", price: "1800.00", min: 1 } }), "2026-12-25")).toBeNull();
   });
 
+  it("is gone once the rental already has an end", () => {
+    const ended = sofa().map((p) => (p.label === "Month 4" ? { ...p, state: "dropped" as const } : p));
+    expect(endingEarlyLine(money(ended), "2026-12-25")).toBeNull();
+  });
+
   it("is on the return screen before the last day, inside the minimum", () => {
     expect(returnNoticeLine(money(), "2026-12-25", "2027-04-21")).toBe(
       "Returning before 6 months costs one month's rent (₹1,800) as notice. Pay it in the app, or it comes out of your deposit."
