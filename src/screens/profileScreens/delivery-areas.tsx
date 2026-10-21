@@ -101,7 +101,7 @@ export default function DeliveryAreasScreen() {
   const toggle = (pin: string) => deliveryDraft.set({ ...form, excluded: toggleExcluded(form.excluded, pin) });
   const needle = search.trim().toLowerCase();
   const matching = needle ? areas.filter((a) => a.name.toLowerCase().includes(needle) || a.pin.includes(needle)) : areas;
-  const groups = areaGroups(matching, groupedOff ?? form.excluded, form.excluded);
+  const groups = areaGroups(matching, groupedOff ?? form.excluded);
   const offCount = offWithin(areas, form.excluded).length;
   const failure = apiError(areasQuery.error);
 
@@ -175,11 +175,11 @@ export default function DeliveryAreasScreen() {
                   No area matches "{search.trim()}".
                 </Text>
               ) : null}
-              {groups.off.length ? <GroupLabel>{`OFF · ${groups.offCount}`}</GroupLabel> : null}
+              {groups.off.length ? <GroupLabel>{`OFF · ${groups.off.length}`}</GroupLabel> : null}
               {groups.off.map((area, i) => (
                 <AreaRow key={area.pin} area={area} off={isOff(area)} first={i === 0} onPress={() => toggle(area.pin)} />
               ))}
-              {groups.on.length ? <GroupLabel>{`ON · ${groups.onCount}, NEAREST FIRST`}</GroupLabel> : null}
+              {groups.on.length ? <GroupLabel>{`ON · ${groups.on.length}, NEAREST FIRST`}</GroupLabel> : null}
               {groups.on.map((area, i) => (
                 <AreaRow key={area.pin} area={area} off={isOff(area)} first={i === 0} onPress={() => toggle(area.pin)} />
               ))}

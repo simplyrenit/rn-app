@@ -454,15 +454,12 @@ export function offWithin(areas: readonly Area[], excluded: readonly string[]): 
 
 /**
  * All areas' OFF and ON groups. A row stays in the group it had when the list was drawn (`groupedOff`), so a tap only
- * changes its checkbox and the next row never slides under the finger; the counts follow the draft (`off`).
+ * changes its checkbox and the next row never slides under the finger.
  */
-export function areaGroups(areas: readonly Area[], groupedOff: readonly string[], off: readonly string[]) {
-  const offCount = areas.filter((a) => off.includes(a.pin)).length;
+export function areaGroups(areas: readonly Area[], groupedOff: readonly string[]) {
   return {
     off: areas.filter((a) => groupedOff.includes(a.pin)),
     on: areas.filter((a) => !groupedOff.includes(a.pin)),
-    offCount,
-    onCount: areas.length - offCount,
   };
 }
 
