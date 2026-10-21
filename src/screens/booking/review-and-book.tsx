@@ -142,6 +142,7 @@ export default function ReviewAndBookScreen() {
 
   const moved = movedFrom !== null;
   const blocker = reviewBlocker(quote);
+  const deliveryGone = !extending && quote.delivery_mode === "owner_delivery" && quote.delivery.offer_pickup;
   const notice = morningNotice(quote, params.item.shop_name);
   const terms = quote.terms;
   const ticked = termsTicked(terms, tickedFor);
@@ -411,16 +412,23 @@ export default function ReviewAndBookScreen() {
             {bookError}
           </Text>
         ) : null}
-        <Button
-          onPress={book}
-          loading={booking}
-          // Signed out there are no terms in the quote: the tap asks to sign in instead.
-          disabled={
-            booking || Boolean(blocker) || idNeeded || quoteQuery.isFetching || (terms !== null && !ticked)
-          }
-        >
-          {extending ? `Extend · Pay ${money(quote.pay_now)}` : bookLabel(quote, moved)}
-        </Button>
+        {deliveryGone ? (
+          // The shop stopped delivering here while this screen was open (an area turned off, the
+          // distance cut, delivery switched off): Book now can only be refused again, so the way
+          // on is back to "How will you get it?", which falls back to self pickup and says why.
+          <Button onPress={() => navigation.goBack()}>Change to self pickup</Button>
+        ) : (
+          <Button
+            onPress={book}
+            loading={booking}
+            // Signed out there are no terms in the quote: the tap asks to sign in instead.
+            disabled={
+              booking || Boolean(blocker) || idNeeded || quoteQuery.isFetching || (terms !== null && !ticked)
+            }
+          >
+            {extending ? `Extend · Pay ${money(quote.pay_now)}` : bookLabel(quote, moved)}
+          </Button>
+        )}
       </BottomBar>
     </NonScrollableContainer>
   );

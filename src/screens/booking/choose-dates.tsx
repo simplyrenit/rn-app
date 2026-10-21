@@ -39,8 +39,8 @@ import { minDays as minDaysOf, minimumWords, plansOf } from "@/lib/plans";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
-import { useRoute } from "@react-navigation/native";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
@@ -231,8 +231,9 @@ export default function BookingDatesScreen() {
       ? { product: params.product, first_day: first, last_day: last, delivery_mode: "pickup", address_id: null }
       : null
   );
+  const asksDelivery = Boolean(first && last && canDeliver && signedIn && address);
   const deliveryQuote = useQuote(
-    first && last && canDeliver && signedIn && address
+    asksDelivery && first && last && address
       ? {
           product: params.product,
           first_day: first,
@@ -243,6 +244,16 @@ export default function BookingDatesScreen() {
       : null,
     // The PIN and point too: an edited PIN keeps the id but changes the answer.
     addressKey
+  );
+  // Back from Review and book after the shop stopped delivering there (ENG-284): the cached
+  // answer still says Delivery, so ask again each time the screen comes back into view.
+  const returning = useRef(false);
+  const refetchDelivery = deliveryQuote.refetch;
+  useFocusEffect(
+    useCallback(() => {
+      if (returning.current && asksDelivery) void refetchDelivery();
+      returning.current = true;
+    }, [asksDelivery, refetchDelivery])
   );
   // An answer for the last address or dates says nothing about these ones.
   const delivery = address
