@@ -20,7 +20,7 @@ function AreaRow({ area, off, first, onPress }: { area: Area; off: boolean; firs
     <TouchableOpacity
       accessibilityRole="checkbox"
       accessibilityState={{ checked: !off }}
-      accessibilityLabel={`${area.name}, ${area.pin}, ${kmText(area.km)}`}
+      accessibilityLabel={`${area.name}, ${area.pin}, ${kmText(area.km)}${area.inside ? "" : ", just outside"}`}
       activeOpacity={0.6}
       onPress={onPress}
       style={{
