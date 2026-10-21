@@ -395,7 +395,7 @@ export default function BookingDatesScreen() {
   // From the chosen address when the delivery quote has measured it, so the card agrees with the reason
   // under Delivery ("pick it up 2.5 km away") and with the search card; else from the phone, as before.
   const addressKm = !deliveryQuote.isPreviousData ? deliveryQuote.data?.delivery.distance_km : null;
-  const pickupDistance = addressKm ? `${kmText(addressKm)} km away` : distanceLabel;
+  const pickupDistance = addressKm ? `${kmText(addressKm)} away` : distanceLabel;
   const pickupSub = [shopName, product.shop?.locality || product.location, pickupDistance].filter(Boolean).join(" · ");
 
   // "Not in Vesava? Edit this address": only when the shop turned that area off,
