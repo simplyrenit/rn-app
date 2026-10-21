@@ -183,7 +183,7 @@ describe("pushRoute", () => {
   });
 
   it("routes monthly billing (ENG-282): the customer's to the booking, the shop's to its booking page", () => {
-    for (const type of ["period_link", "period_due", "period_overdue", "period_lapsed", "end_early"]) {
+    for (const type of ["period_link", "period_due", "period_overdue", "period_lapsed", "end_early", "period_reopened"]) {
       expect(pushRoute(push(type))).toEqual({ screen: "Booking", number: "RN-24831" });
     }
     for (const type of ["owner_period_overdue", "period_paid", "period_lapsed", "owner_end_early"]) {

@@ -224,6 +224,20 @@ describe("the notice", () => {
     expect(returnNoticeLine(money(), "2027-04-21", "2027-04-21")).toBeNull();
     expect(returnNoticeLine(money(), "2027-04-21", "2027-06-21")).toBeNull();
     expect(returnNoticeLine({ ...money(), billing: "upfront" }, "2026-12-25", "2027-04-21")).toBeNull();
+    // An end already set (a notice on the schedule): nothing more to warn about.
+    const notice = month(7, "2027-01-04", "2027-01-04", { kind: "notice", state: "due", label: "Notice month" });
+    expect(returnNoticeLine(money([...sofa(), notice]), "2026-12-25", "2027-04-21")).toBeNull();
+  });
+
+  it("follows the server's cap: nothing in the minimum's last month, or with the next month paid", () => {
+    // Month 6, the minimum's last: no month of it is left to bill, so ending costs nothing.
+    expect(endingEarlyLine(money(), "2027-03-25")).toBeNull();
+    // Month 5: month 6 is still unpaid, so the notice is owed.
+    expect(endingEarlyLine(money(), "2027-02-25")).toBe("Ending before 6 months costs one month's rent (₹1,800).");
+    // Month 3 with month 4 already paid: it counts as the notice, and nothing more is asked.
+    const fourPaid = sofa().map((p) => (p.n === 4 ? { ...p, state: "paid" as const } : p));
+    expect(endingEarlyLine(money(fourPaid), "2026-12-25")).toBeNull();
+    expect(returnNoticeLine(money(fourPaid), "2026-12-25", "2027-04-21")).toBeNull();
   });
 
   it("is on the product page for a month plan of 2 months or more", () => {
@@ -312,6 +326,12 @@ describe("endEarlyCopy", () => {
     expect(copy.lines[0]).toEqual({ label: "Notice · Month 4, already paid", value: "₹1,800", quiet: true });
     expect(copy.button).toBe("End the rental on Mon 4 Jan");
     expect(copy.note).toBe("Urban Nest Furniture collects the sofa on Mon 4 Jan.");
+  });
+
+  it("costs nothing inside the minimum when the server owes nothing (its last month)", () => {
+    const copy = endEarlyCopy(quote({ notice: "0.00", pay_now: "0.00", cancelled: null, current: { label: "Month 6", last_day: "2027-04-21" }, day: "2027-04-10" }), booking());
+    expect(copy.lead).toBe("Ending early costs nothing more.");
+    expect(copy.button).toBe("End the rental on Sat 10 Apr");
   });
 
   it("costs nothing after the minimum, and gives back a month already paid", () => {

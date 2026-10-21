@@ -88,6 +88,8 @@ export function pushRoute(data: unknown): PushRoute | null {
       case "period_overdue":
       case "period_lapsed":
       case "end_early":
+      // The desk reopened a rental that lapsed, once its month was paid.
+      case "period_reopened":
       // The booking's payments list.
       case "refund":
       // The day of the handover: `Booking` draws it while the stage is `ready` (ENG-222).

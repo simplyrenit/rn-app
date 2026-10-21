@@ -191,26 +191,36 @@ export function monthlyReturnLine(m: MonthlyMoney & { rate: string }, held: bool
 type PlanMoney = MonthlyMoney & { plan?: { unit: string; price: string; min?: number | null } };
 
 /**
- * The month plan's minimum and price while `today` is still inside the minimum of a monthly booking, else null. The
- * minimum's last day is `min × 30` days from the chain's first day (the first month's). Without the plan's minimum (a
- * server that does not send it) nothing can be said.
+ * The month plan's minimum and price while ending a monthly booking today would owe the notice, else null. The minimum's
+ * last day is `min × 30` days from the chain's first day (the first month's). It mirrors the server's cap (D12, D13): the
+ * notice is owed only while the month after the current one is inside the minimum and unpaid, so nothing is said in the
+ * minimum's last month or when the next month is already paid (it then counts as the notice). Nothing either once the
+ * rental has an end already (ended early, or a month unpaid ended it), and nothing without the plan's minimum (a server
+ * that does not send it).
  */
 function insideMinimum(m: PlanMoney, today: string): { min: number; price: string } | null {
   const min = m.plan?.unit === "month" ? m.plan.min : undefined;
+  const periods = m.periods ?? [];
+  if (!isMonthly(m) || !min || min < 2 || !m.plan) return null;
+  if (periods.some((p) => p.kind === "notice" || p.state === "dropped" || p.state === "lapsed")) return null;
   // `n` counts within one booking of a chain; the first day is the chain's.
-  const first = (m.periods ?? []).filter((p) => p.kind === "rent").sort((a, b) => a.first_day.localeCompare(b.first_day))[0];
-  if (!isMonthly(m) || !min || min < 2 || !first || !m.plan) return null;
-  return today < addDays(first.first_day, min * 30 - 1) ? { min, price: m.plan.price } : null;
+  const first = periods.filter((p) => p.kind === "rent").sort((a, b) => a.first_day.localeCompare(b.first_day))[0];
+  const current = currentPeriod(periods, today);
+  if (!first || !current) return null;
+  const minEnd = addDays(first.first_day, min * 30 - 1);
+  // The month after the current one: inside the minimum and unpaid, it is what the notice stands for.
+  const next = liveRent(periods)
+    .filter((p) => p.first_day > current.last_day)
+    .sort((a, b) => a.first_day.localeCompare(b.first_day))[0];
+  const owed = next !== undefined && next.state !== "paid" && next.first_day <= minEnd;
+  return today < minEnd && owed ? { min, price: m.plan.price } : null;
 }
 
 /**
- * The rental screen's line under the deposit, for a monthly booking: the notice while the minimum is not over, else
- * nothing. Nothing either once the rental has an end already (ended early, or a month unpaid ended it): there is no
- * early end left to warn about.
+ * The rental screen's line under the deposit, for a monthly booking: the notice while ending now would owe it
+ * (`insideMinimum`), else nothing.
  */
 export function endingEarlyLine(m: PlanMoney, today: string): string | null {
-  const ended = (m.periods ?? []).some((p) => p.kind === "notice" || p.state === "dropped" || p.state === "lapsed");
-  if (ended) return null;
   const inside = insideMinimum(m, today);
   return inside ? noticeLine(inside.min, inside.price) : null;
 }
@@ -357,9 +367,12 @@ export function endEarlyCopy(
   const plan = booking.money.plan;
   const min = plan?.unit === "month" ? plan.min : undefined;
   const where = lower(quote.current.label);
+  // Inside the minimum the server can still owe nothing (its last month, D12): no notice is then talked about.
   const lead = !quote.inside_minimum
     ? "Your minimum is over, so ending early costs nothing more."
-    : quote.notice_paid_by
+    : !(Number(quote.notice) > 0) && !quote.notice_paid_by
+      ? "Ending early costs nothing more."
+      : quote.notice_paid_by
       ? `You're in ${where}${min ? ` of a ${min}-month minimum` : ", inside your minimum"}. ${quote.notice_paid_by} is already paid, so it counts as the notice.`
       : `You're in ${where}${min ? ` of a ${min}-month minimum` : ", inside your minimum"}. Ending now costs one more month's rent as notice.`;
 

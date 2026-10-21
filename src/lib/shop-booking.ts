@@ -452,9 +452,10 @@ export function moneyView(b: BookingShop): MoneyView {
         ].join(", ")
       : null;
   // Monthly billing (ENG-282): the rent, the fee and what the shop earns are said for one month. The fee is a share of the
-  // rent, so a month's is the booking's in the same proportion; the delivery fee stays whole, as it is paid with month 1.
-  // A booking that has ended is said as a whole, as it settled.
-  const plan = !b.exit && isMonthly(m) && m.plan && Number(m.rent) > 0 ? m.plan : null;
+  // rent, so a month's is the booking's in the same proportion.
+  // A booking that has ended, or come back, is said as a whole, as it settled.
+  const running = !b.exit && b.stage !== "returned" && b.stage !== "closed";
+  const plan = running && isMonthly(m) && m.plan && Number(m.rent) > 0 ? m.plan : null;
   const perMonth = (value: string) => (plan ? Math.round(((Number(value) * Number(plan.price)) / Number(m.rent)) * 100) / 100 : Number(value));
   const feeShown = perMonth(m.fee_shown);
   const feeCharged = perMonth(m.fee_charged);
@@ -462,7 +463,8 @@ export function moneyView(b: BookingShop): MoneyView {
     rentLabel: plan ? "Rent a month" : "Rent",
     earnLabel: plan ? "You earn a month" : "You earn",
     rent: money(plan ? plan.price : m.rent),
-    delivery: Number(m.delivery_fee) > 0 ? money(m.delivery_fee) : null,
+    // Per month, the delivery fee (paid with month 1) would not add up to "You earn a month": it is left out.
+    delivery: !plan && Number(m.delivery_fee) > 0 ? money(m.delivery_fee) : null,
     fee: {
       struck: Number.isFinite(shown) && shown > 0 && feeShown !== feeCharged ? money(feeShown) : null,
       charged: money(feeCharged),
