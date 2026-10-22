@@ -20,6 +20,7 @@ import {
   sameCharge,
   timeLeft,
 } from "@/lib/booking";
+import { byRenit } from "@/lib/delivery";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { clockSkewMs } from "@/lib/server-clock";
 import { useTheme } from "@/lib/theme";
@@ -221,7 +222,7 @@ export function PayRent({
         ) : null}
       </BottomBar>
 
-      <CancelSheet ref={cancelSheet} number={booking.number} />
+      <CancelSheet ref={cancelSheet} number={booking.number} courier={byRenit(booking)} />
     </View>
   );
 }

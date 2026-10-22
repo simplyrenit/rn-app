@@ -814,6 +814,7 @@ export default function DetailsScreen() {
             notDelivered={product.not_delivered}
             delivery={deliveryFor === deliveryId ? product.delivery : null}
             addressName={deliveryAddress ? addressTitle(deliveryAddress) : null}
+            deliveryFrom={product.delivery_from}
             rate={product.rate}
             plans={product.plans}
             monthlyBilling={product.monthly_billing}

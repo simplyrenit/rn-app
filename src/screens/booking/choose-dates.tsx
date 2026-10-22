@@ -6,7 +6,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { useGlobalContext } from "@/context/global-context";
 import { SavedAddress, addressTitle, flatAndLandmark } from "@/lib/addresses";
 import { deliveryAddressKey, useDeliveryAddress } from "@/context/delivery-address";
-import { areaLabel, areaOf } from "@/lib/delivery";
+import { addressMayHelp, areaLabel, areaOf, offersDelivery } from "@/lib/delivery";
 import { createLocationRequest } from "@/lib/location-request";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
 import { apiError } from "@/lib/api-error";
@@ -53,6 +53,7 @@ function ChoiceCard({
   title,
   sub,
   reason,
+  note,
   selected,
   disabled,
   action,
@@ -62,6 +63,8 @@ function ChoiceCard({
   sub?: string | null;
   /** Why it can't be chosen (ENG-284): under the sub-line with an info mark, and the screen reader's hint. */
   reason?: string | null;
+  /** A line under the sub-line with the same info mark, on a card that can be chosen (B1's "The shop won't be there"). */
+  note?: string | null;
   selected: boolean;
   disabled?: boolean;
   /** A small action on the right: "Change" beside the delivery address. */
@@ -73,7 +76,7 @@ function ChoiceCard({
     <TouchableOpacity
       accessibilityRole="radio"
       accessibilityState={{ selected, checked: selected, disabled: Boolean(disabled) }}
-      accessibilityLabel={sub ? `${title}. ${sub}` : title}
+      accessibilityLabel={[title, sub, note].filter(Boolean).join(". ")}
       accessibilityHint={reason ?? undefined}
       activeOpacity={0.7}
       disabled={disabled}
@@ -116,11 +119,11 @@ function ChoiceCard({
             {sub}
           </Text>
         ) : null}
-        {reason ? (
+        {reason || note ? (
           <View style={{ flexDirection: "row", gap: space.xs, marginTop: 2 }}>
             <InformationCircleIcon size={16} color={color.textBody} style={{ marginTop: 2 }} />
             <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
-              {reason}
+              {reason ?? note}
             </Text>
           </View>
         ) : null}
@@ -223,7 +226,8 @@ export default function BookingDatesScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taken]);
 
-  const canDeliver = Boolean(product?.shop?.delivers && !product?.not_delivered);
+  // B1: the shop delivers, or the courier does (`delivery_from`); the quote then says who.
+  const canDeliver = product ? offersDelivery(product) : false;
   const addressKey = deliveryAddressKey(address);
 
   const pickupQuote = useQuote(
@@ -537,7 +541,8 @@ export default function BookingDatesScreen() {
               ) : delivery.ok ? (
                 <ChoiceCard
                   title={delivery.title}
-                  sub={[addressTitle(address), address.locality].filter(Boolean).join(" · ")}
+                  sub={delivery.sub ?? [addressTitle(address), address.locality].filter(Boolean).join(" · ")}
+                  note={delivery.note}
                   selected={mode === "owner_delivery"}
                   onPress={() => setMode("owner_delivery")}
                   action={{ label: "Change", onPress: () => addressSheet.current?.present() }}
@@ -570,9 +575,12 @@ export default function BookingDatesScreen() {
                   </Text>
                 </TouchableOpacity>
               ) : null}
-              <Button variant="outline" onPress={() => addressSheet.current?.present()}>
-                Use another address
-              </Button>
+              {/* B1: the courier refused the item itself, so no other address would change the answer. */}
+              {!quoted || addressMayHelp(quoted.delivery) ? (
+                <Button variant="outline" onPress={() => addressSheet.current?.present()}>
+                  Use another address
+                </Button>
+              ) : null}
             </View>
           ) : null}
         </View>

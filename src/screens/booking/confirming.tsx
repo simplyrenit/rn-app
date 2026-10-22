@@ -5,6 +5,7 @@ import { PushNotice } from "@/components/booking/push-notice";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { Text } from "@/components/core";
 import { BookingCustomer, RingStep, bookingHow, datesLine, money, ringCopy } from "@/lib/booking";
+import { byRenit } from "@/lib/delivery";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import React, { useRef } from "react";
@@ -165,7 +166,7 @@ export function Confirming({ booking, receivedAt }: { booking: BookingCustomer; 
         </BottomBar>
       ) : null}
 
-      <CancelSheet ref={cancelSheet} number={booking.number} />
+      <CancelSheet ref={cancelSheet} number={booking.number} courier={byRenit(booking)} />
     </View>
   );
 }

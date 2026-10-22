@@ -25,6 +25,7 @@ import {
   windowErrorText,
   windowRequestCopy,
 } from "@/lib/booking";
+import { COURIER, byRenit } from "@/lib/delivery";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { correctedNow } from "@/lib/server-clock";
 import { kmText } from "@/lib/shop";
@@ -111,7 +112,9 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
           .join(" ")
       : delivery
         ? `Delivered to ${delivery.title}: ${delivery.line}`
-        : "The shop brings it to your address.";
+        : byRenit(booking)
+          ? `${COURIER} brings it to your address.`
+          : "The shop brings it to your address.";
 
   return (
     <ScrollView
@@ -280,7 +283,7 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Cancel booking"
-              accessibilityHint={cancelQuery.data ? cancelHint(cancelQuery.data) : undefined}
+              accessibilityHint={cancelQuery.data ? cancelHint(cancelQuery.data, byRenit(booking)) : undefined}
               activeOpacity={0.7}
               onPress={() => cancelSheet.current?.present()}
               style={{
@@ -299,7 +302,7 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
                 </Text>
                 {cancelQuery.data ? (
                   <Text fontSize="text-sm" tone="body">
-                    {cancelHint(cancelQuery.data)}
+                    {cancelHint(cancelQuery.data, byRenit(booking))}
                   </Text>
                 ) : null}
               </View>
@@ -312,7 +315,7 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
         <GetHelp booking={booking} />
       </Panel>
 
-      <CancelSheet ref={cancelSheet} number={booking.number} />
+      <CancelSheet ref={cancelSheet} number={booking.number} courier={byRenit(booking)} />
     </ScrollView>
   );
 }

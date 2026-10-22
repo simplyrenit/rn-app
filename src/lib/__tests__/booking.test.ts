@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { depositCopy } from "../day-of";
+import { ProductShop, bookBy, courierQuote } from "../booking";
 import {
   BookingCustomer,
   Quote,
@@ -2005,5 +2006,142 @@ describe("pricing plans (ENG-281)", () => {
 
   it("asks for more days when the dates are under the minimum", () => {
     expect(datesBlocker(quote({ blockers: ["too_short"], can_book: false, min_days: 3 }))).toBe("Pick at least 3 days.");
+  });
+});
+
+describe("the Renit courier, customer side (unified delivery B1)", () => {
+  const home = {
+    id: 17,
+    address: "Lodha Bellissimo, Mahalaxmi, Mumbai",
+    address_line_1: "Flat 12B",
+    address_line_2: "",
+    locality: "Mahalaxmi, Mumbai",
+    address_type: "home" as const,
+    label: "",
+    coordinates: { lat: 18.9827, long: 72.8205 },
+  };
+  const deliveryQuote = (by?: "shop" | "renit") =>
+    quote({
+      delivery_mode: "owner_delivery",
+      delivery: { status: "ok", fee: by === "renit" ? "280.00" : "170.00", distance_km: by === "renit" ? null : "8.0", offer_pickup: false, ...(by ? { by } : {}) },
+    });
+  const delivered = (by?: "shop" | "renit", over: Partial<BookingCustomer> = {}, moneyOver: Partial<BookingCustomer["money"]> = {}) =>
+    booking({ delivery_mode: "owner_delivery", delivery_address: home, ...(by ? { delivered_by: by } : {}), ...over }, moneyOver);
+  const shop = { name: "SoundBox Rentals", maxKm: "5.0" };
+
+  it("draws the courier's delivery card: both trips, GST in, no km, and the shop not at the door", () => {
+    expect(deliveryOption(deliveryQuote("renit"), "Home", shop)).toEqual({
+      title: "Delivery to Home · ₹280 · Renit courier partner",
+      reason: null,
+      ok: true,
+      sub: "Drop-off and pickup included, GST included",
+      note: "The shop won't be there: you check the item when it arrives",
+    });
+    // The shop's own delivery, and a server before B1, read as today.
+    const today = { title: "Delivery to Home · ₹170 · 8 km", reason: null, ok: true };
+    expect(deliveryOption(deliveryQuote("shop"), "Home", shop)).toStrictEqual(today);
+    expect(deliveryOption(deliveryQuote(), "Home", shop)).toStrictEqual(today);
+  });
+
+  it("says why the courier refused, with no courier lines on the card", () => {
+    const refused = quote({
+      delivery_mode: "owner_delivery",
+      delivery: { status: "too_far", fee: "0.00", distance_km: null, offer_pickup: true, reason: "courier_value", by: "renit" },
+    });
+    expect(deliveryOption(refused, "Home", shop)).toStrictEqual({
+      title: "Delivery to Home",
+      reason: "Items above ₹25,000 can't go by courier. You can pick it up from the shop.",
+      ok: false,
+    });
+  });
+
+  it("names the courier on the delivery row of the price, but not on an extension's", () => {
+    expect(priceLines(deliveryQuote("renit"))[1]).toEqual({ label: "Renit courier partner", amount: "₹280" });
+    expect(priceLines(deliveryQuote("renit"), true)[1]).toEqual({ label: "Delivery", amount: "₹280" });
+    expect(priceLines(deliveryQuote("shop"))).toEqual(priceLines(deliveryQuote()));
+    expect(priceLines(deliveryQuote())[1]).toEqual({ label: "Delivery", amount: "₹170" });
+  });
+
+  it("adds the courier's cancel rule to the plain lines, and leaves today's lines alone otherwise", () => {
+    const today = plainLines(deliveryQuote());
+    expect(plainLines(deliveryQuote("shop"))).toEqual(today);
+    const courier = plainLines(deliveryQuote("renit"));
+    const rule =
+      "The Renit courier partner fee comes back in full if you cancel before a rider is assigned, or if the shop, the rider or Renit caused the cancel. Otherwise Renit keeps the fee for the trips already used and the rest comes back.";
+    const after = today.findIndex((text) => text.startsWith("Inside that time"));
+    expect(courier).toEqual([...today.slice(0, after + 1), rule, ...today.slice(after + 1)]);
+    // Never that the delivery fee goes to the shop.
+    expect(courier.join(" ")).not.toMatch(/delivery fee/);
+  });
+
+  it("is a courier quote only for an owner delivery the server gave to Renit", () => {
+    expect(courierQuote(deliveryQuote("renit"))).toBe(true);
+    expect(courierQuote(deliveryQuote("shop"))).toBe(false);
+    expect(courierQuote(deliveryQuote())).toBe(false);
+    expect(courierQuote({ ...deliveryQuote("renit"), delivery_mode: "pickup" })).toBe(false);
+  });
+
+  it("sends Book now the carrier it was quoted, and nothing more for a server before B1", () => {
+    expect(bookBy(deliveryQuote("renit"))).toEqual({ delivery_by: "renit" });
+    expect(bookBy(deliveryQuote("shop"))).toEqual({ delivery_by: "shop" });
+    expect(bookBy(deliveryQuote())).toStrictEqual({});
+    expect(bookBy({ ...deliveryQuote("renit"), delivery_mode: "pickup" })).toStrictEqual({});
+  });
+
+  it("says the product page's from-fee from the courier when the server sends one", () => {
+    const productShop = { delivers: true, delivery_base_fee: "50.00" } as ProductShop;
+    expect(getItLine(productShop, false, null, null, "280.00")).toBe("Self pickup or delivery from ₹280");
+    expect(getItLine({ ...productShop, delivers: false }, false, null, null, "280.00")).toBe("Self pickup or delivery from ₹280");
+    expect(getItLine(productShop, true, null, null, "280.00")).toBe("Self pickup");
+    // Absent: today's line from the shop's base fee.
+    expect(getItLine(productShop, false, null, null, null)).toBe(getItLine(productShop, false, null, null));
+    expect(getItLine(productShop, false)).toBe("Self pickup or delivery from ₹50");
+  });
+
+  it("says the courier partner brings it, on the summary line, the banner, the card and the timeline", () => {
+    expect(bookingHow(delivered("renit"))).toBe("Renit courier partner brings it to Home");
+    expect(bookingHow(delivered("renit", { delivery_address: null }))).toBe("Renit courier partner brings it");
+    expect(howLabel("owner_delivery", "Home", true)).toBe("Renit courier partner brings it to Home");
+    expect(howLabel("pickup", null, true)).toBe("Self pickup");
+    expect(bookingHow(delivered("shop"))).toBe("Delivery to Home");
+    expect(bookingHow(delivered())).toBe("Delivery to Home");
+
+    expect(bookingBanner(delivered("renit")).sub).toBe("Renit courier partner brings it Sat 24 Oct, 10:00 – 11:00 am");
+    expect(bookingBanner(delivered()).sub).toBe("Arrives Sat 24 Oct, 10:00 – 11:00 am");
+    expect(bookingBanner(delivered("shop"))).toEqual(bookingBanner(delivered()));
+
+    const paid = { deposit_state: "paid" };
+    expect(rentalNextLine(delivered("renit", {}, paid), NOW)).toBe("Renit courier partner brings it Sat 24 Oct, 10:00 – 11:00 am");
+    expect(rentalNextLine(delivered(undefined, {}, paid), NOW)).toBe("Arrives Sat 24 Oct, 10:00 – 11:00 am");
+
+    const label = (b: BookingCustomer) => timelineRows(b, NOW).map((row) => row.label);
+    expect(label(delivered("renit", {}, paid))).toContain("Renit courier partner brings it");
+    expect(label(delivered(undefined, {}, paid))).toContain("Delivery");
+    expect(label(delivered("shop", {}, paid))).toEqual(label(delivered(undefined, {}, paid)));
+    // The customer is never told a pack-by time.
+    expect(JSON.stringify([bookingBanner(delivered("renit")), timelineRows(delivered("renit"), NOW)])).not.toMatch(/pack/i);
+  });
+
+  it("never says the delivery fee goes to the owner of a courier booking", () => {
+    const base = { case: "inside_24h" as const, back: [], kept: [], to_owner: "610.00", free_until: null };
+    // A server that split a share as if a delivery fee were in it: the courier's is Renit's, so none is the owner's.
+    expect(cancelCopy({ ...base, to_owner_delivery: "170.00" }, true).lines).toEqual([
+      "₹610 goes to the owner: one day's rent, for holding the dates. Your booking amount counts toward it.",
+    ]);
+    expect(cancelHint({ ...base, to_owner_delivery: "170.00" }, true)).toBe("One day's rent (₹610) goes to the owner. The rest is refunded.");
+    // No split at all: the amount, no name for it, as today.
+    expect(cancelCopy(base, true).lines).toEqual(cancelCopy(base).lines);
+    expect(cancelHint(base, true)).toBe(cancelHint(base));
+    // The shop's own delivery keeps today's words.
+    expect(cancelCopy({ ...base, to_owner: "780.00", to_owner_delivery: "170.00" }).lines[0]).toContain("and the delivery fee (₹170)");
+
+    // Read back from the booking: a courier booking's owner share is rent only, never split into a delivery fee.
+    const refund = { ...booking().payments[0], id: "ref_01", kind: "refund" as const, what: "rent" as const, amount: "511.00" };
+    const cancelled = (by?: "shop" | "renit") =>
+      delivered(by, { exit: "cancelled_by_customer", exit_reason: "inside_24h", payments: [refund] }, { owner_share: "780.00", booking_amount_state: "refunded" });
+    expect(cancelOutcomeOf(cancelled("renit"))?.to_owner_delivery).toBe("0.00");
+    expect(bookingBanner(cancelled("renit")).sub).not.toMatch(/delivery fee/);
+    expect(cancelOutcomeOf(cancelled())?.to_owner_delivery).toBe("170.00");
+    expect(bookingBanner(cancelled("shop"))).toEqual(bookingBanner(cancelled()));
   });
 });
