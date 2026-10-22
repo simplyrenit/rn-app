@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { summarizeValue } from "@/lib/networkUtils";
+import axiosInstance, { RENIT_CLIENT, summarizeValue } from "@/lib/networkUtils";
 
 jest.mock("@/lib/config", () => ({ GET_CATEGORIES: "", GET_REFRESH_TOKEN: "" }));
 jest.mock("@/lib/auth-fns", () => ({}));
@@ -17,5 +17,12 @@ describe("the network log", () => {
     const logged = JSON.stringify(summarizeValue(JSON.stringify(body)));
     expect(logged).not.toContain(body.pan);
     expect(logged).not.toContain(body.gstin);
+  });
+});
+
+describe("the client header (unified delivery B1)", () => {
+  it("sends this build's contract number on every call", () => {
+    expect(RENIT_CLIENT).toBe(1);
+    expect(axiosInstance.defaults.headers["X-Renit-Client"]).toBe("1");
   });
 });

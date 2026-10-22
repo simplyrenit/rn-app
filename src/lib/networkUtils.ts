@@ -148,11 +148,19 @@ const getAuthAttached = (config?: AxiosRequestConfig): boolean => {
     : false;
 };
 
+/**
+ * Which contract this build speaks, sent as `X-Renit-Client` on every call (unified delivery B1). The app's version
+ * strings are never bumped, so the server reads this integer instead: it offers the Renit courier only to a client at
+ * or above its `COURIER_MIN_CLIENT`. Bump it by one whenever the courier contract (b1-plan §2) changes.
+ */
+export const RENIT_CLIENT = 1;
+
 // Create axios instance with shared timeout/header defaults.
 const axiosInstance = axios.create({
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
+    "X-Renit-Client": String(RENIT_CLIENT),
   },
 });
 
