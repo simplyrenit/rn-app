@@ -1296,6 +1296,15 @@ describe("pay the rent", () => {
     });
   });
 
+  it("labels the delivery fee by who carries it: the courier partner for renit, Delivery otherwise", () => {
+    const label = (over: Partial<BookingCustomer>) =>
+      payRentCopy(accepted(over, { delivery_fee: "280.00" }), NOW).lines[1].label;
+
+    expect(label({ delivered_by: "renit" })).toBe("Renit courier partner");
+    expect(label({ delivered_by: "shop" })).toBe("Delivery");
+    expect(label({})).toBe("Delivery");
+  });
+
   it("says month 1 alone for a monthly booking (ENG-282), so the lines add up to what is charged", () => {
     const monthly = accepted(
       { pay_now: { purpose: "rent", amount: "1851.00", deposit_part: "0.00", due_at: "2026-10-13T04:43:00Z", payment: null } },

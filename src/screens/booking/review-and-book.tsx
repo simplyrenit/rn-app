@@ -264,7 +264,7 @@ export default function ReviewAndBookScreen() {
             // ENG-284: self pickup says where it is collected, as the design writes it.
             quote.delivery_mode === "pickup" && !params.extends
               ? `You collect it from ${params.item.shop_name}`
-              : `${howLabel(quote.delivery_mode, params.address_name, courierQuote(quote))} · ${params.item.shop_name}`,
+              : `${howLabel(quote.delivery_mode, params.address_name, courierQuote(quote) && !extending)} · ${params.item.shop_name}`,
           ]}
         />
 
