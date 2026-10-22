@@ -227,7 +227,7 @@ export default function BookingDatesScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taken]);
 
-  // B1: the shop delivers, or the courier does (`delivery_from`); the quote then says who.
+  // B1: the shop delivers, or the server sent a from-price (`delivery_from`); the quote then says who.
   const canDeliver = product ? offersDelivery(product) : false;
   const addressKey = deliveryAddressKey(address);
 
@@ -637,7 +637,7 @@ export default function BookingDatesScreen() {
       <AddressPickerSheet
         ref={addressSheet}
         title="Delivery address"
-        description={addressSheetLine(quoted)}
+        description={addressSheetLine(quoted, product)}
         savedOnly
         selected={
           address

@@ -2174,10 +2174,39 @@ describe("the Renit courier, customer side (unified delivery B1)", () => {
   });
 
   it("says who brings it to the address in the address picker", () => {
-    expect(addressSheetLine(deliveryQuote("renit"))).toBe("Our courier partner brings it here and collects it at the end.");
+    const courier = "The Renit courier partner brings it here and collects it at the end.";
     const today = "The shop brings it here and collects it at the end.";
+    expect(addressSheetLine(deliveryQuote("renit"))).toBe(courier);
+    // Before any quote: a shop that doesn't deliver itself but has a from-price is the courier's.
+    expect(addressSheetLine(undefined, { shop: { delivers: false }, delivery_from: "280.00" })).toBe(courier);
+    expect(addressSheetLine(undefined, { shop: null, delivery_from: "280.00" })).toBe(courier);
+    // A shop that delivers itself, with a from-price, waits for the quote to say who.
+    expect(addressSheetLine(undefined, { shop: { delivers: true }, delivery_from: "280.00" })).toBe(today);
+    expect(addressSheetLine(deliveryQuote("shop"), { shop: { delivers: true }, delivery_from: "170.00" })).toBe(today);
+    // Field-absent: today's line.
     expect(addressSheetLine(deliveryQuote("shop"))).toBe(today);
     expect(addressSheetLine(deliveryQuote())).toBe(today);
     expect(addressSheetLine(undefined)).toBe(today);
+    expect(addressSheetLine(undefined, { shop: { delivers: false } })).toBe(today);
+    expect(addressSheetLine(undefined, { shop: { delivers: true }, delivery_from: null })).toBe(today);
+  });
+
+  it("adds the courier's kept trips to the free cancel hint", () => {
+    const free = {
+      case: "free" as const,
+      back: [],
+      kept: [{ what: "booking_amount" as const, amount: "99.00", text: "Renit keeps the ₹99: the owner had already said yes" }],
+      to_owner: "0.00",
+      free_until: "2026-10-23T04:30:00Z",
+    };
+    const today = "Rent back in full until Fri 23 Oct, 10:00 am. Renit keeps the ₹99: the owner had already said yes.";
+    expect(cancelHint(free, true)).toBe(
+      `${today} Renit keeps the courier fee for any trips already used, and the rest is refunded.`
+    );
+    expect(cancelHint(free)).toBe(today);
+    expect(cancelHint({ ...free, kept: [], free_until: null }, true)).toBe(
+      "Rent back in full if you cancel now. Renit keeps the courier fee for any trips already used, and the rest is refunded."
+    );
+    expect(cancelHint({ ...free, kept: [], free_until: null })).toBe("Rent back in full if you cancel now.");
   });
 });

@@ -42,15 +42,16 @@ export interface DeliveryFacts {
   shop?: { delivers?: boolean } | null;
   not_delivered?: boolean;
   /**
-   * B1: the lowest courier fee to this listing ("280.00"), sent only while the courier is on, to a new enough client,
-   * for an item that can go by courier. Absent or null: today's lines.
+   * B1: the lowest delivery price of any kind to this listing ("280.00"): the lower of the shop's own base fee, when it
+   * delivers, and the lowest courier band. The server works it out and sends it only while the courier is on, to a new
+   * enough client; the app shows it as it comes and never works one out itself. Absent or null: today's lines.
    */
   delivery_from?: string | null;
 }
 
 /**
- * Whether the listing offers delivery at all: the shop delivers, or the courier does (`delivery_from`), and this item is
- * not excepted.
+ * Whether the listing offers delivery at all: the shop delivers, or the server sends a from-price (`delivery_from`, so
+ * the courier may take it), and this item is not excepted.
  */
 export const offersDelivery = (p: DeliveryFacts) => Boolean((p.shop?.delivers || p.delivery_from) && !p.not_delivered);
 
@@ -80,7 +81,7 @@ export function cardDeliveryLine(p: DeliveryFacts, gpsDistance: string | null): 
       : { km, word: "Self pickup", fee: null };
   }
   if (!offersDelivery(p)) return null;
-  // B1: no address yet, but the server knows the lowest courier fee: "Delivery from ₹280".
+  // B1: no address yet, but the server sent the lowest delivery price: "Delivery from ₹280".
   if (p.delivery_from) return { km: gpsDistance, word: "Delivery from", fee: formatCurrency(p.delivery_from) };
   return { km: gpsDistance, word: "Delivery available", fee: null };
 }

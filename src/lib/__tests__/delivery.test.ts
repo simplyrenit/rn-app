@@ -177,7 +177,7 @@ describe("the Renit courier (unified delivery B1)", () => {
     expect(COURIER).toBe("Renit courier partner");
   });
 
-  it("says delivery from the lowest courier fee when no address is chosen", () => {
+  it("says delivery from the server's lowest delivery price when no address is chosen", () => {
     expect(line({ ...delivers, delivery_from: "280.00" }, "1.2 km away")).toBe("1.2 km away · Delivery from ₹280");
     // A shop that does not deliver itself: the courier still does.
     expect(line({ shop: { delivers: false }, delivery_from: "280.00" }, null)).toBe("Delivery from ₹280");

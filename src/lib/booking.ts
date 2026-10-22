@@ -586,11 +586,20 @@ export function bookingHow(booking: Pick<BookingCustomer, "delivery_mode" | "del
 export const courierQuote = (quote: Pick<Quote, "delivery_mode" | "delivery">) =>
   quote.delivery_mode === "owner_delivery" && byRenit(quote);
 
-/** The delivery address picker's line on BK-02: who brings it there, by the quote for the address in use. */
-export const addressSheetLine = (quote: Pick<Quote, "delivery"> | null | undefined) =>
-  byRenit(quote)
-    ? "Our courier partner brings it here and collects it at the end."
+/**
+ * The delivery address picker's line on BK-02: who brings it there. The quote for the address in use says so; before
+ * one, a shop that doesn't deliver itself but has a from-price can only be delivered by the courier.
+ */
+export const addressSheetLine = (
+  quote: Pick<Quote, "delivery"> | null | undefined,
+  product?: { shop?: { delivers?: boolean } | null; delivery_from?: string | null } | null
+) =>
+  byRenit(quote) || (!product?.shop?.delivers && product?.delivery_from)
+    ? `The ${COURIER} brings it here and collects it at the end.`
     : "The shop brings it here and collects it at the end.";
+
+/** B1 (b1-plan §5 Cancel): what a cancel does with the courier fee, said after the rent. */
+const COURIER_KEPT = "Renit keeps the courier fee for any trips already used, and the rest is refunded.";
 
 /** What Book now sends of the quote's carrier (b1-plan §2): the `by` it was quoted, so a change is refused, not booked. */
 export const bookBy = (quote: Pick<Quote, "delivery_mode" | "delivery">): { delivery_by?: DeliveredBy } =>
@@ -762,7 +771,7 @@ export function getItLine(
   notDelivered?: boolean,
   delivery?: ListingDelivery | null,
   addressName?: string | null,
-  /** B1: the product's lowest courier fee (`delivery_from`); it is the "from" when the server sends it. */
+  /** B1: the product's lowest delivery price of any kind (`delivery_from`), the server's; it is the "from" when sent. */
   deliveryFrom?: string | null
 ): string {
   const forAddress = productHowLine(
@@ -2252,11 +2261,11 @@ export function cancelHint(outcome: CancelOutcome, courier = false): string {
     case "free": {
       const day = dayOf(outcome.free_until);
       const until = day ? `Rent back in full until ${dayShort(day)}, ${clock(outcome.free_until)}.` : "Rent back in full if you cancel now.";
-      return [until, kept].filter(Boolean).join(" ");
+      return [until, kept, courier ? COURIER_KEPT : null].filter(Boolean).join(" ");
     }
     case "inside_24h": {
       // B1 (b1-plan §5 Cancel): the courier trips a rider was already assigned for are kept, so not all the rest comes back.
-      const rest = courier ? "Renit keeps the courier fee for any trips already used, and the rest is refunded." : "The rest is refunded.";
+      const rest = courier ? COURIER_KEPT : "The rest is refunded.";
       if (!isPositive(outcome.to_owner)) return courier ? rest : "The rest of what you paid is refunded.";
       if (outcome.to_owner_delivery === undefined) return `${money(outcome.to_owner)} goes to the owner. ${rest}`;
       return isPositive(outcome.to_owner_delivery) && !courier

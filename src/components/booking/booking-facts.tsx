@@ -33,7 +33,7 @@ export function BookingFacts({
   /** ENG-284: whether the shop delivers to the customer's chosen address, and that address's name. */
   delivery?: ListingDelivery | null;
   addressName?: string | null;
-  /** B1: the product's lowest courier fee (`delivery_from`). */
+  /** B1: the product's lowest delivery price of any kind (`delivery_from`), as the server sends it. */
   deliveryFrom?: string | null;
   /** The listing's price and deposit, for BK-01's price block under the banner. */
   rate?: string | number | null;
