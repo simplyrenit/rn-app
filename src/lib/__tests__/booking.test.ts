@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { depositCopy } from "../day-of";
-import { ProductShop, bookBy, courierQuote } from "../booking";
+import { ProductShop, addressSheetLine, bookBy, courierQuote } from "../booking";
 import {
   BookingCustomer,
   Quote,
@@ -2128,10 +2128,12 @@ describe("the Renit courier, customer side (unified delivery B1)", () => {
     expect(cancelCopy({ ...base, to_owner_delivery: "170.00" }, true).lines).toEqual([
       "₹610 goes to the owner: one day's rent, for holding the dates. Your booking amount counts toward it.",
     ]);
-    expect(cancelHint({ ...base, to_owner_delivery: "170.00" }, true)).toBe("One day's rent (₹610) goes to the owner. The rest is refunded.");
+    expect(cancelHint({ ...base, to_owner_delivery: "170.00" }, true)).toBe(
+      "One day's rent (₹610) goes to the owner. Renit keeps the courier fee for any trips already used, and the rest is refunded."
+    );
     // No split at all: the amount, no name for it, as today.
     expect(cancelCopy(base, true).lines).toEqual(cancelCopy(base).lines);
-    expect(cancelHint(base, true)).toBe(cancelHint(base));
+    expect(cancelHint(base, true)).toBe("₹610 goes to the owner. Renit keeps the courier fee for any trips already used, and the rest is refunded.");
     // The shop's own delivery keeps today's words.
     expect(cancelCopy({ ...base, to_owner: "780.00", to_owner_delivery: "170.00" }).lines[0]).toContain("and the delivery fee (₹170)");
 
@@ -2143,5 +2145,39 @@ describe("the Renit courier, customer side (unified delivery B1)", () => {
     expect(bookingBanner(cancelled("renit")).sub).not.toMatch(/delivery fee/);
     expect(cancelOutcomeOf(cancelled())?.to_owner_delivery).toBe("170.00");
     expect(bookingBanner(cancelled("shop"))).toEqual(bookingBanner(cancelled()));
+  });
+
+  it("says the courier trips already used are kept inside 24 hours, not that all the rest comes back", () => {
+    const late = { case: "inside_24h" as const, back: [], kept: [], to_owner: "610.00", free_until: null };
+    const kept = "Renit keeps the courier fee for any trips already used, and the rest is refunded.";
+    expect(cancelHint({ ...late, to_owner_delivery: "0.00" }, true)).toBe(`One day's rent (₹610) goes to the owner. ${kept}`);
+    expect(cancelHint(late, true)).toBe(`₹610 goes to the owner. ${kept}`);
+    expect(cancelHint({ ...late, to_owner: "0.00" }, true)).toBe(kept);
+    // Not a courier booking: today's words, word for word.
+    expect(cancelHint({ ...late, to_owner_delivery: "0.00" })).toBe("One day's rent (₹610) goes to the owner. The rest is refunded.");
+    expect(cancelHint(late)).toBe("₹610 goes to the owner. The rest is refunded.");
+    expect(cancelHint({ ...late, to_owner: "0.00" })).toBe("The rest of what you paid is refunded.");
+    // The other cases have no courier words.
+    expect(cancelHint({ ...late, case: "ringing" }, true)).toBe(cancelHint({ ...late, case: "ringing" }));
+  });
+
+  it("heads the arrival window with the courier, not the shop's hours", () => {
+    expect(windowHeading(delivered("renit"), "2026-10-24")).toEqual({
+      title: "When should it arrive?",
+      sub: "Sat 24 October · the Renit courier partner brings it in the window you pick",
+    });
+    const today = { title: "When should it arrive?", sub: "Sat 24 October · the shop hands over between 10 am and 8 pm" };
+    expect(windowHeading(delivered("shop"), "2026-10-24")).toEqual(today);
+    expect(windowHeading(delivered(), "2026-10-24")).toEqual(today);
+    // A pickup is collected from the shop, whatever the field says.
+    expect(windowHeading(booking({ delivered_by: "renit" }), "2026-10-24").sub).toContain("the shop hands over");
+  });
+
+  it("says who brings it to the address in the address picker", () => {
+    expect(addressSheetLine(deliveryQuote("renit"))).toBe("Our courier partner brings it here and collects it at the end.");
+    const today = "The shop brings it here and collects it at the end.";
+    expect(addressSheetLine(deliveryQuote("shop"))).toBe(today);
+    expect(addressSheetLine(deliveryQuote())).toBe(today);
+    expect(addressSheetLine(undefined)).toBe(today);
   });
 });

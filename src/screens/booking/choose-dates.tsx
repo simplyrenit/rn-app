@@ -24,6 +24,7 @@ import {
   dayShort,
   dayCount,
   daysLabel,
+  addressSheetLine,
   deliveryOption,
   money,
   rangeIsFree,
@@ -636,7 +637,7 @@ export default function BookingDatesScreen() {
       <AddressPickerSheet
         ref={addressSheet}
         title="Delivery address"
-        description="The shop brings it here and collects it at the end."
+        description={addressSheetLine(quoted)}
         savedOnly
         selected={
           address

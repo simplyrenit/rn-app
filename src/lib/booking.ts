@@ -586,6 +586,12 @@ export function bookingHow(booking: Pick<BookingCustomer, "delivery_mode" | "del
 export const courierQuote = (quote: Pick<Quote, "delivery_mode" | "delivery">) =>
   quote.delivery_mode === "owner_delivery" && byRenit(quote);
 
+/** The delivery address picker's line on BK-02: who brings it there, by the quote for the address in use. */
+export const addressSheetLine = (quote: Pick<Quote, "delivery"> | null | undefined) =>
+  byRenit(quote)
+    ? "Our courier partner brings it here and collects it at the end."
+    : "The shop brings it here and collects it at the end.";
+
 /** What Book now sends of the quote's carrier (b1-plan §2): the `by` it was quoted, so a change is refused, not booked. */
 export const bookBy = (quote: Pick<Quote, "delivery_mode" | "delivery">): { delivery_by?: DeliveredBy } =>
   quote.delivery_mode === "owner_delivery" && quote.delivery.by ? { delivery_by: quote.delivery.by } : {};
@@ -1843,16 +1849,22 @@ export function windowSummary(window: TimeWindow): string {
   return day ? `${dayShort(day)}, ${windowLabel(window)}` : "";
 }
 
-/** The picker's heading: the question, then the day and the shop's hours on it. */
+/**
+ * The picker's heading: the question, then the day and the shop's hours on it. B1: a courier booking's windows are the
+ * courier's slots, not the shop's hours, and the shop does not hand it over at the door.
+ */
 export function windowHeading(
-  booking: Pick<BookingCustomer, "delivery_mode" | "shop" | "first_day">,
+  booking: Pick<BookingCustomer, "delivery_mode" | "shop" | "first_day" | "delivered_by">,
   day: string | null | undefined
 ): { title: string; sub: string } {
   const hours = booking.shop.hours_first_day;
   const on = dayLong(day || booking.first_day);
+  const courier = booking.delivery_mode !== "pickup" && byRenit(booking);
   return {
     title: booking.delivery_mode === "pickup" ? "When will you collect it?" : "When should it arrive?",
-    sub: hours
+    sub: courier
+      ? `${on} · the ${COURIER} brings it in the window you pick`
+      : hours
       ? coversWholeDay(hours)
         ? `${on} · the shop hands over all day`
         : `${on} · the shop hands over between ${time12(hours.open)} and ${time12(hours.close)}`
@@ -2242,12 +2254,15 @@ export function cancelHint(outcome: CancelOutcome, courier = false): string {
       const until = day ? `Rent back in full until ${dayShort(day)}, ${clock(outcome.free_until)}.` : "Rent back in full if you cancel now.";
       return [until, kept].filter(Boolean).join(" ");
     }
-    case "inside_24h":
-      if (!isPositive(outcome.to_owner)) return "The rest of what you paid is refunded.";
-      if (outcome.to_owner_delivery === undefined) return `${money(outcome.to_owner)} goes to the owner. The rest is refunded.`;
+    case "inside_24h": {
+      // B1 (b1-plan §5 Cancel): the courier trips a rider was already assigned for are kept, so not all the rest comes back.
+      const rest = courier ? "Renit keeps the courier fee for any trips already used, and the rest is refunded." : "The rest is refunded.";
+      if (!isPositive(outcome.to_owner)) return courier ? rest : "The rest of what you paid is refunded.";
+      if (outcome.to_owner_delivery === undefined) return `${money(outcome.to_owner)} goes to the owner. ${rest}`;
       return isPositive(outcome.to_owner_delivery) && !courier
-        ? `${money(outcome.to_owner)} goes to the owner: one day's rent and the delivery fee, as they had set out. The rest is refunded.`
-        : `One day's rent (${money(outcome.to_owner)}) goes to the owner. The rest is refunded.`;
+        ? `${money(outcome.to_owner)} goes to the owner: one day's rent and the delivery fee, as they had set out. ${rest}`
+        : `One day's rent (${money(outcome.to_owner)}) goes to the owner. ${rest}`;
+    }
     default:
       return kept || "Nothing is refunded.";
   }
