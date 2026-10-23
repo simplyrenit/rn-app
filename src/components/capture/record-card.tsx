@@ -47,7 +47,7 @@ export interface RecordBookingProps {
   /** The customer's booking: the booking this one extends. An extension has no handover record. */
   extends?: string | null;
   /** B1: who carries it. `renit` opens the customer's capture as a courier booking's (`Capture`'s `courier`). */
-  delivered_by?: DeliveredBy;
+  delivered_by?: DeliveredBy | null;
 }
 
 export interface RecordProps {
