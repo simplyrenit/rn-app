@@ -46,10 +46,13 @@ export interface BookItem {
   shop_name: string;
 }
 
-/** The cart's other cards, which stay in the cart while one card checks out: "Your 2 items from Party Props and HomeEase". */
+/**
+ * The cart's other cards, which stay in the cart while one card checks out: "Your 2 items from Party Props and
+ * HomeEase". `shops` is their names, or (as A5's first cut sent it) only how many there are.
+ */
 export interface CartOthers {
   items: number;
-  shops: string[];
+  shops: string[] | number;
 }
 
 /**

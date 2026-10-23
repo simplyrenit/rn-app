@@ -55,7 +55,7 @@ export function shortestOf<T extends { plans?: Plan[] | null; rate?: string | nu
 /** Line reasons that keep Continue and Book off while the item is included. Leaving it in the cart, or other dates, fixes them. */
 const LINE_BLOCKS = ["no_unit_free", "too_short", "already_requested", "not_listed"];
 
-/** Line reasons no dates can fix: the item stays in the cart for this checkout and can't be added back (CT-21d, e). */
+/** Line reasons no dates can fix: the item stays in the cart for this checkout until added back, and the next quote decides again (CT-21d, e). */
 const LINE_ALONE = ["other_pickup_point", "monthly_book_alone"];
 
 export const lineBlock = (line: QuoteLine | undefined): string | null =>
@@ -159,8 +159,12 @@ export function notDeliveredReason(titles: string[]): string {
 /** Under the card (FIXES B2 row 15): "Your 2 items from Party Props and HomeEase stay in your cart. Each shop is booked on its own." */
 export function othersLine(others: CartOthers | null | undefined): string | null {
   if (!others || others.items < 1) return null;
-  const shops = others.shops.filter(Boolean);
-  const from = shops.length > 1 ? `${shops.slice(0, -1).join(", ")} and ${shops[shops.length - 1]}` : shops[0];
+  const shops = Array.isArray(others.shops) ? others.shops.filter(Boolean) : [];
+  const count = Array.isArray(others.shops) ? 0 : others.shops;
+  const from =
+    shops.length > 1
+      ? `${shops.slice(0, -1).join(", ")} and ${shops[shops.length - 1]}`
+      : shops[0] ?? (count > 1 ? `${count} other shops` : count === 1 ? "another shop" : undefined);
   const items = others.items === 1 ? "Your item" : `Your ${others.items} items`;
   return `${items}${from ? ` from ${from}` : ""} ${others.items === 1 ? "stays" : "stay"} in your cart. Each shop is booked on its own.`;
 }

@@ -725,7 +725,15 @@ export default function BookingDatesScreen() {
                           <TextButton
                             label="Book it on its own"
                             // A new dates step for that item: `navigate` would only change this one's params.
-                            onPress={() => navigation.dispatch(StackActions.push("BookingDates", { product: name }))}
+                            onPress={() =>
+                              navigation.dispatch(
+                                StackActions.push("BookingDates", {
+                                  product: name,
+                                  first_day: first ?? undefined,
+                                  last_day: last ?? undefined,
+                                })
+                              )
+                            }
                           />
                         </View>
                       ) : null

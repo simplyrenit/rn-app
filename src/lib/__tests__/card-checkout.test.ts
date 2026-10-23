@@ -356,3 +356,10 @@ describe("Book Now on book_flow=card (D41)", () => {
     expect(blockerText("one_item_only")).toBe("This shop takes one item per booking for now. Book each item on its own.");
   });
 });
+
+describe("the other shops, as the cart sends them", () => {
+  it("reads a count of shops too", () => {
+    expect(othersLine({ items: 3, shops: 2 })).toBe("Your 3 items from 2 other shops stay in your cart. Each shop is booked on its own.");
+    expect(othersLine({ items: 1, shops: 1 })).toBe("Your item from another shop stays in your cart. Each shop is booked on its own.");
+  });
+});

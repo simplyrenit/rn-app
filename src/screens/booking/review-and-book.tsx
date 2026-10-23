@@ -222,10 +222,11 @@ export default function ReviewAndBookScreen() {
       })
     : null;
   const refusalWay = refusalCode ? refusalButton(refusalCode) : null;
-  // Leaving an item answers a refusal that named it (CT-44c).
+  // Leaving an item answers a refusal that named it (CT-44c); the old amounts included it, so they go too.
   const drop = (more: string[]) => {
     setDropped((was) => [...was, ...more]);
     setRefused(null);
+    setWas(null);
   };
   const depositPage = card ? depositOwnPage(quote) : null;
 
