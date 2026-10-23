@@ -10,6 +10,23 @@ import { SavedAddress, addressTitle } from "@/lib/addresses";
 import { formatCurrency } from "@/lib/format";
 import { kmText } from "@/lib/shop";
 
+/**
+ * Unified delivery B1: who carries an owner delivery. The wire mode stays `owner_delivery`; `renit` means Renit books a
+ * courier partner for both trips at a fixed fee. Absent (a server before B1) is the shop, as is anything this build does
+ * not know.
+ */
+export type DeliveredBy = "shop" | "renit";
+
+/** The name customers see for the courier (plan-v2 §5.11): never the aggregator's brand, never "Delivered by Renit". */
+export const COURIER = "Renit courier partner";
+
+/** Whether Renit's courier partner carries it: a booking's `delivered_by`, or a quote's `delivery.by`. Only `renit` says yes. */
+export function byRenit(
+  x: { delivered_by?: DeliveredBy | null; delivery?: { by?: DeliveredBy | null } | null } | null | undefined
+): boolean {
+  return (x?.delivered_by ?? x?.delivery?.by) === "renit";
+}
+
 /** `delivery` on a search result or product with `?deliver_address=` (API-CONTRACT §5.5). */
 export interface ListingDelivery {
   to_me: boolean;
@@ -24,10 +41,19 @@ export interface DeliveryFacts {
   delivery?: ListingDelivery | null;
   shop?: { delivers?: boolean } | null;
   not_delivered?: boolean;
+  /**
+   * B1: the lowest delivery price of any kind to this listing ("280.00"): the lower of the shop's own base fee, when it
+   * delivers, and the lowest courier band. The server works it out and sends it only while the courier is on, to a new
+   * enough client; the app shows it as it comes and never works one out itself. Absent or null: today's lines.
+   */
+  delivery_from?: string | null;
 }
 
-/** Whether the listing offers delivery at all: the shop delivers and this item is not excepted. */
-export const offersDelivery = (p: DeliveryFacts) => Boolean(p.shop?.delivers && !p.not_delivered);
+/**
+ * Whether the listing offers delivery at all: the shop delivers, or the server sends a from-price (`delivery_from`, so
+ * the courier may take it), and this item is not excepted.
+ */
+export const offersDelivery = (p: DeliveryFacts) => Boolean((p.shop?.delivers || p.delivery_from) && !p.not_delivered);
 
 /**
  * A card's meta line, in parts so the card can colour the word: "1.2 km ·
@@ -42,7 +68,7 @@ export const offersDelivery = (p: DeliveryFacts) => Boolean(p.shop?.delivers && 
  */
 export interface DeliveryLine {
   km: string | null;
-  word: "Delivery" | "Self pickup" | "Delivery available";
+  word: "Delivery" | "Self pickup" | "Delivery available" | "Delivery from";
   fee: string | null;
 }
 
@@ -55,6 +81,8 @@ export function cardDeliveryLine(p: DeliveryFacts, gpsDistance: string | null): 
       : { km, word: "Self pickup", fee: null };
   }
   if (!offersDelivery(p)) return null;
+  // B1: no address yet, but the server sent the lowest delivery price: "Delivery from ₹280".
+  if (p.delivery_from) return { km: gpsDistance, word: "Delivery from", fee: formatCurrency(p.delivery_from) };
   return { km: gpsDistance, word: "Delivery available", fee: null };
 }
 
@@ -143,7 +171,8 @@ export function productHowLine(p: DeliveryFacts, addressName: string | null): st
 export interface QuoteDelivery {
   status: string;
   distance_km: string | null;
-  reason?: "distance" | "area_off" | null;
+  /** B1 adds the courier's own reasons: outside its area, an item that can't go, worth too much, or an ID-match item. */
+  reason?: "distance" | "area_off" | "courier_area" | "courier_item" | "courier_value" | "id_match" | null;
   area?: { pin: string; name: string } | null;
 }
 
@@ -159,6 +188,9 @@ export function deliveryReason(
   shopName: string,
   maxKm: string | number | null | undefined
 ): string {
+  // B1: the courier's own reasons come first, whatever the status: they say nothing about the shop's km.
+  const courier = d.reason ? COURIER_REASONS[d.reason] : undefined;
+  if (courier) return courier;
   if (d.status === "not_offered") return `${shopName} only offers self pickup.`;
   if (d.status === "too_far" && d.reason === "area_off") {
     const name = areaLabel(d.area);
@@ -175,3 +207,18 @@ export function deliveryReason(
   }
   return `${shopName} can't deliver to this address. You can pick it up, or use another address.`;
 }
+
+/**
+ * Why the courier can't take it (b1-plan §2). The screen still offers "Continue with self pickup" under each. The ₹25,000
+ * is the server's rule (`courier_on`, deposit ≤ ₹25k), said here because the reason carries no amount.
+ */
+const COURIER_REASONS: Partial<Record<NonNullable<QuoteDelivery["reason"]>, string>> = {
+  courier_area: `The ${COURIER} doesn't reach this area yet. You can pick it up, or use another address.`,
+  courier_item: "This item can't go by courier. You can pick it up from the shop.",
+  courier_value: "Items above ₹25,000 can't go by courier. You can pick it up from the shop.",
+  id_match: "Items that need an ID check at handover can't go by courier. You can pick it up from the shop.",
+};
+
+/** Whether another address could change the answer: not when the courier refused the item itself. */
+export const addressMayHelp = (d: Pick<QuoteDelivery, "reason">) =>
+  d.reason !== "courier_item" && d.reason !== "courier_value" && d.reason !== "id_match";

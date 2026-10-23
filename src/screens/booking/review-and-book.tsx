@@ -15,7 +15,9 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
 import {
+  bookBy,
   bookErrorText,
+  courierQuote,
   daysRefusal,
   quoteRefusal,
   bookLabel,
@@ -188,6 +190,8 @@ export default function ReviewAndBookScreen() {
           })
         : await bookNow({
             ...input,
+            // B1: the carrier it was quoted with; the server refuses a change with `price_changed`.
+            ...bookBy(quote),
             terms_version,
             expected_total: quote.total,
             moved_from: movedFrom,
@@ -260,7 +264,7 @@ export default function ReviewAndBookScreen() {
             // ENG-284: self pickup says where it is collected, as the design writes it.
             quote.delivery_mode === "pickup" && !params.extends
               ? `You collect it from ${params.item.shop_name}`
-              : `${howLabel(quote.delivery_mode, params.address_name)} · ${params.item.shop_name}`,
+              : `${howLabel(quote.delivery_mode, params.address_name, courierQuote(quote) && !extending)} · ${params.item.shop_name}`,
           ]}
         />
 

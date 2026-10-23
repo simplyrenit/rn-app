@@ -715,6 +715,8 @@ export interface BackendProduct {
    * `?deliver_address=` (search and product detail only); null without one.
    */
   delivery?: ListingDelivery | null;
+  /** B1: the lowest delivery price of any kind (shop base fee or courier band), worked out by the server; see `DeliveryFacts`. */
+  delivery_from?: string | null;
   live_booking?: boolean;
   book_for_morning?: boolean;
   id_check_needed?: "none" | "id" | "id_and_match";

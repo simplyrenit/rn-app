@@ -14,7 +14,7 @@ import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
 import type { PlanUnit } from "@/lib/plans";
 import { ALL_DAY, DayHours, Hours, coversWholeDay, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
-import { ListingDelivery, deliveryReason, productHowLine } from "@/lib/delivery";
+import { COURIER, DeliveredBy, ListingDelivery, QuoteDelivery, byRenit, deliveryReason, productHowLine } from "@/lib/delivery";
 
 export type DeliveryMode = "pickup" | "owner_delivery";
 
@@ -118,10 +118,15 @@ export interface Quote {
     fee: string;
     distance_km: string | null;
     offer_pickup: boolean;
-    /** ENG-284: why `too_far`: beyond the shop's km, or in an area the shop turned off. Absent from an older server. */
-    reason?: "distance" | "area_off" | null;
+    /**
+     * ENG-284: why `too_far`: beyond the shop's km, or in an area the shop turned off. B1 adds the courier's reasons.
+     * Absent from an older server.
+     */
+    reason?: QuoteDelivery["reason"];
     /** ENG-284: the area turned off, for `area_off`. */
     area?: { pin: string; name: string } | null;
+    /** B1: who would carry it. `renit`: the courier partner, both trips in `fee` (GST included), no `distance_km`. */
+    by?: DeliveredBy;
   };
   fee_shown: string;
   fee_charged: string;
@@ -245,6 +250,25 @@ export interface BookingDay {
   handover_code: string | null;
 }
 
+/** Where a courier booking's outbound leg stands (b1-plan §2). A state this build does not know is read as none. */
+export type CourierState =
+  | "awaiting_pack"
+  | "packed"
+  | "dispatching"
+  | "rider_assigned"
+  | "picked_up"
+  | "delivered"
+  | "with_customer"
+  | "returning"
+  | "back_at_shop"
+  | "not_delivered"
+  | "cancelled";
+
+/** The `courier` block, as far as this build reads it; the rest of b1-plan §2 is typed when a screen draws it. */
+export interface CourierBlock {
+  state: CourierState;
+}
+
 /** A booking as its customer sees it (API-CONTRACT, BookingCustomer). */
 export interface BookingCustomer {
   number: string;
@@ -267,6 +291,10 @@ export interface BookingCustomer {
   last_day: string;
   days: number;
   delivery_mode: DeliveryMode;
+  /** B1: who carries an owner delivery. Absent from a server before B1, which is the shop. */
+  delivered_by?: DeliveredBy;
+  /** B1: the courier's legs, only when `delivered_by` is `renit`. APP-2 (ENG-308) draws its steps and banner. */
+  courier?: CourierBlock | null;
   distance_km: string | null;
   /**
    * Owner delivery only: the address the customer chose at Book now, copied
@@ -535,16 +563,51 @@ export function timeAndDay(iso: string, now: Date = new Date()): { time: string;
 
 export const money = (value: string | number | null | undefined) => formatCurrency(value);
 
-/** How the item changes hands, as the summary line says it: "Self pickup", "Delivery to Home". */
-export function howLabel(mode: DeliveryMode, addressName?: string | null): string {
+/**
+ * How the item changes hands, as the summary line says it: "Self pickup", "Delivery to Home"; B1's courier, "Renit
+ * courier partner brings it to Home".
+ */
+export function howLabel(mode: DeliveryMode, addressName?: string | null, courier = false): string {
   if (mode === "pickup") return "Self pickup";
+  if (courier) return addressName ? `${COURIER} brings it to ${addressName}` : `${COURIER} brings it`;
   return addressName ? `Delivery to ${addressName}` : "Delivery";
 }
 
 /** The same for a booking, which carries the address it is delivered to. */
-export function bookingHow(booking: Pick<BookingCustomer, "delivery_mode" | "delivery_address">): string {
-  return howLabel(booking.delivery_mode, booking.delivery_address ? addressTitle(booking.delivery_address) : null);
+export function bookingHow(booking: Pick<BookingCustomer, "delivery_mode" | "delivery_address" | "delivered_by">): string {
+  return howLabel(
+    booking.delivery_mode,
+    booking.delivery_address ? addressTitle(booking.delivery_address) : null,
+    byRenit(booking)
+  );
 }
+
+/** B1: a quote for the courier partner. Only an owner delivery can be one: the delivery answer of a pickup quote is not it. */
+export const courierQuote = (quote: Pick<Quote, "delivery_mode" | "delivery">) =>
+  quote.delivery_mode === "owner_delivery" && byRenit(quote);
+
+/**
+ * The delivery address picker's line on BK-02: who brings it there. The quote for the address in use says so; before
+ * one, a shop that doesn't deliver itself but has a from-price can only be delivered by the courier.
+ */
+export const addressSheetLine = (
+  quote: Pick<Quote, "delivery"> | null | undefined,
+  product?: { shop?: { delivers?: boolean } | null; delivery_from?: string | null } | null
+) =>
+  byRenit(quote) || (!product?.shop?.delivers && product?.delivery_from)
+    ? `The ${COURIER} brings it here and collects it at the end.`
+    : "The shop brings it here and collects it at the end.";
+
+/** B1 (b1-plan §5 Cancel): what a cancel does with the courier fee, said after the rent. */
+const COURIER_KEPT = "Renit keeps the courier fee for any trips already used, and the rest is refunded.";
+
+/** What Book now sends of the quote's carrier (b1-plan §2): the `by` it was quoted, so a change is refused, not booked. */
+export const bookBy = (quote: Pick<Quote, "delivery_mode" | "delivery">): { delivery_by?: DeliveredBy } =>
+  quote.delivery_mode === "owner_delivery" && quote.delivery.by ? { delivery_by: quote.delivery.by } : {};
+
+/** How the booking arrives, before its window: "Collect", "Arrives", and B1's "Renit courier partner brings it". */
+const arriveWord = (booking: Pick<BookingCustomer, "delivery_mode" | "delivered_by">) =>
+  booking.delivery_mode === "pickup" ? "Collect" : byRenit(booking) ? `${COURIER} brings it` : "Arrives";
 
 /** Where an owner delivery goes, for the booking screen: "Home" and its one-line address. */
 export function deliveryPlace(address: BookingAddress | null | undefined): { title: string; line: string } | null {
@@ -634,12 +697,22 @@ export function deliveryOption(
   quote: Pick<Quote, "delivery"> | null | undefined,
   addressName: string,
   shop: { name: string; maxKm?: string | number | null } = { name: "The shop" }
-): { title: string; reason: string | null; ok: boolean } {
+): { title: string; reason: string | null; ok: boolean; sub?: string; note?: string } {
   const to = `Delivery to ${addressName}`;
   if (!quote) return { title: to, reason: null, ok: true };
   const { status, fee, distance_km } = quote.delivery;
   if (status !== "ok") {
     return { title: to, reason: deliveryReason(quote.delivery, shop.name, shop.maxKm), ok: false };
+  }
+  // B1 (plan-v2 §5.3): the courier's fee is both trips, by band, so no km; and the shop is not at the door.
+  if (byRenit(quote)) {
+    return {
+      title: [to, money(fee), COURIER].join(" · "),
+      reason: null,
+      ok: true,
+      sub: "Drop-off and pickup included, GST included",
+      note: "The shop won't be there: you check the item when it arrives",
+    };
   }
   const parts = [to, money(fee), distance_km ? kmText(distance_km) : null].filter(Boolean);
   return { title: parts.join(" · "), reason: null, ok: true };
@@ -697,10 +770,16 @@ export function getItLine(
   shop: ProductShop | null | undefined,
   notDelivered?: boolean,
   delivery?: ListingDelivery | null,
-  addressName?: string | null
+  addressName?: string | null,
+  /** B1: the product's lowest delivery price of any kind (`delivery_from`), the server's; it is the "from" when sent. */
+  deliveryFrom?: string | null
 ): string {
-  const forAddress = productHowLine({ shop, not_delivered: notDelivered, delivery }, addressName ?? null);
+  const forAddress = productHowLine(
+    { shop, not_delivered: notDelivered, delivery, delivery_from: deliveryFrom },
+    addressName ?? null
+  );
   if (forAddress) return forAddress;
+  if (deliveryFrom && !notDelivered) return `Self pickup or delivery from ${money(deliveryFrom)}`;
   return shop?.delivers && !notDelivered
     ? `Self pickup or delivery from ${money(shop.delivery_base_fee)}`
     : "Self pickup";
@@ -776,7 +855,7 @@ export function priceLines(quote: Quote, extending = false): PriceLine[] {
       : // ENG-284: the shop stopped delivering here; "₹0" would read as free delivery.
         quote.delivery_mode === "owner_delivery" && quote.delivery.offer_pickup && !extending
         ? { label: "Delivery", amount: "Not available" }
-        : { label: "Delivery", amount: money(quote.delivery.fee) };
+        : { label: courierQuote(quote) && !extending ? COURIER : "Delivery", amount: money(quote.delivery.fee) };
   return [{ label: rent, amount: money(quote.rent) }, handover, fee];
 }
 
@@ -906,6 +985,12 @@ export function plainLines(quote: Quote, moved = false): string[] {
     // With the ₹99 covering it all there is no rent paid, so no day's rent to split.
     ...(rentToPay
       ? [`Inside that time, one day's rent${cancel ? ` (${money(cancel.day_rent)})` : ""} goes to the owner for holding the dates, and the rest comes back.`]
+      : []),
+    // B1 (b1-plan §5 Cancel): the courier fee is settled beside the rent, by the trips a rider was assigned for.
+    ...(courierQuote(quote)
+      ? [
+          `The ${COURIER} fee comes back in full if you cancel before a rider is assigned, or if the shop, the rider or Renit caused the cancel. Otherwise Renit keeps the fee for the trips already used and the rest comes back.`,
+        ]
       : []),
     ...(rentToPay && cancel?.grace
       ? [`This ${handover} is under ${pluralize(cancel.free_hours, "hour")} ${morning ? "after the owner is asked" : "away"}, so you have ${pluralize(cancel.grace_minutes, "minute")} after paying the rent to cancel and get the rent back.`]
@@ -1392,9 +1477,10 @@ export interface CancelOutcome {
  * What goes to the owner and why (E-82). `to_owner` is one day's rent, plus the delivery fee when an owner delivering had set out
  * (`to_owner_delivery`); "one day's rent" is said only when the amount is that. An answer that cannot say gets no name for it.
  */
-function ownerLine(outcome: CancelOutcome): string {
+function ownerLine(outcome: CancelOutcome, courier = false): string {
   const total = money(outcome.to_owner);
-  const delivery = outcome.to_owner_delivery;
+  // B1: the courier fee is Renit's, never the owner's, whatever a split of `owner_share` would say.
+  const delivery = courier && outcome.to_owner_delivery !== undefined ? "0.00" : outcome.to_owner_delivery;
   if (delivery === undefined) return `${total} goes to the owner for holding the dates.`;
   if (!isPositive(delivery)) {
     return `${total} goes to the owner: one day's rent, for holding the dates. Your booking amount counts toward it.`;
@@ -1410,8 +1496,8 @@ const keptLine = (row: CancelMoney) =>
 const daysText = (min?: number | null, max?: number | null) =>
   min && max ? ` Expect it in ${min === max ? min : `${min} to ${max}`} working days.` : "";
 
-/** The cancel sheet: its heading, each thing that happens to the money, and the button. */
-export function cancelCopy(outcome: CancelOutcome): { title: string; lines: string[]; confirm: string } {
+/** The cancel sheet: its heading, each thing that happens to the money, and the button. `courier`: a B1 courier booking. */
+export function cancelCopy(outcome: CancelOutcome, courier = false): { title: string; lines: string[]; confirm: string } {
   const ringing = outcome.case === "ringing";
   const lines = [
     ...outcome.back.map(
@@ -1422,7 +1508,7 @@ export function cancelCopy(outcome: CancelOutcome): { title: string; lines: stri
         )}`
     ),
     ...outcome.kept.map(keptLine),
-    ...(isPositive(outcome.to_owner) ? [ownerLine(outcome)] : []),
+    ...(isPositive(outcome.to_owner) ? [ownerLine(outcome, courier)] : []),
   ];
   return {
     title: ringing ? "Cancel this request?" : "Cancel this booking?",
@@ -1451,7 +1537,9 @@ export function refundPending(booking: Pick<BookingCustomer, "payments"> | null 
  * cancel), so nothing is said that is not known. What goes to the owner when the cancel was inside 24 hours is the
  * booking's `money.owner_share` (a server older than that field gives none, and then none is said).
  */
-export function cancelOutcomeOf(booking: Pick<BookingCustomer, "payments" | "money" | "exit_reason">): CancelOutcome | null {
+export function cancelOutcomeOf(
+  booking: Pick<BookingCustomer, "payments" | "money" | "exit_reason" | "delivered_by">
+): CancelOutcome | null {
   const back = booking.payments
     .filter((row) => row.kind === "refund" && isPositive(row.amount))
     .map((row) => ({
@@ -1474,8 +1562,9 @@ export function cancelOutcomeOf(booking: Pick<BookingCustomer, "payments" | "mon
     kept,
     to_owner: m.owner_share ?? "0.00",
     // The owner's share is one day's rent, and the delivery fee on top when they had set out: split it by the day's rent.
+    // B1: a courier booking's owner share is rent only (the courier fee is Renit's), so none of it is a delivery fee.
     ...(m.owner_share != null
-      ? { to_owner_delivery: Math.max(Number(m.owner_share) - Number(m.rate), 0).toFixed(2) }
+      ? { to_owner_delivery: byRenit(booking) ? "0.00" : Math.max(Number(m.owner_share) - Number(m.rate), 0).toFixed(2) }
       : {}),
     free_until: null,
   };
@@ -1494,7 +1583,7 @@ function cancelledSub(first: string, booking: BookingCustomer, cached: CancelOut
     !cached && booking.exit_reason === "inside_24h" && !isPositive(booking.money.owner_share ?? "0")
       ? ["One day's rent goes to the owner."]
       : [];
-  return [first, ...cancelCopy(outcome).lines, ...owner].map(sentence).join(" ");
+  return [first, ...cancelCopy(outcome, byRenit(booking)).lines, ...owner].map(sentence).join(" ");
 }
 
 /** What to say when the cancel call is refused. */
@@ -1718,7 +1807,8 @@ export function payRentCopy(
       ? m.periods?.find((p) => p.booking === booking.number && p.n === 1 && p.kind === "rent") ?? null
       : null;
   const lines: PriceLine[] = month1 ? [{ label: "Month 1", amount: money(month1.amount) }] : [{ label: "Rent", amount: money(m.rent) }];
-  if (!month1 && isPositive(m.delivery_fee)) lines.push({ label: "Delivery", amount: money(m.delivery_fee) });
+  if (!month1 && isPositive(m.delivery_fee))
+    lines.push({ label: byRenit(booking) ? COURIER : "Delivery", amount: money(m.delivery_fee) });
   if (!month1 && isPositive(m.fee_charged)) lines.push({ label: "Renit's fee", amount: money(m.fee_charged) });
   lines.push({ label: "Already paid", amount: money(m.booking_amount), amountTone: "success" });
   if (isPositive(depositPart)) lines.push({ label: "Deposit · refundable", amount: money(depositPart) });
@@ -1769,16 +1859,22 @@ export function windowSummary(window: TimeWindow): string {
   return day ? `${dayShort(day)}, ${windowLabel(window)}` : "";
 }
 
-/** The picker's heading: the question, then the day and the shop's hours on it. */
+/**
+ * The picker's heading: the question, then the day and the shop's hours on it. B1: a courier booking's windows are the
+ * courier's slots, not the shop's hours, and the shop does not hand it over at the door.
+ */
 export function windowHeading(
-  booking: Pick<BookingCustomer, "delivery_mode" | "shop" | "first_day">,
+  booking: Pick<BookingCustomer, "delivery_mode" | "shop" | "first_day" | "delivered_by">,
   day: string | null | undefined
 ): { title: string; sub: string } {
   const hours = booking.shop.hours_first_day;
   const on = dayLong(day || booking.first_day);
+  const courier = booking.delivery_mode !== "pickup" && byRenit(booking);
   return {
     title: booking.delivery_mode === "pickup" ? "When will you collect it?" : "When should it arrive?",
-    sub: hours
+    sub: courier
+      ? `${on} · the ${COURIER} brings it in the window you pick`
+      : hours
       ? coversWholeDay(hours)
         ? `${on} · the shop hands over all day`
         : `${on} · the shop hands over between ${time12(hours.open)} and ${time12(hours.close)}`
@@ -1897,7 +1993,7 @@ export interface Banner {
  */
 export function bookingBanner(booking: BookingCustomer, cancelled?: CancelOutcome | null): Banner {
   const m = booking.money;
-  const arrive = booking.delivery_mode === "pickup" ? "Collect" : "Arrives";
+  const arrive = arriveWord(booking);
   const windowLine = booking.window ? `${arrive} ${windowSummary(booking.window)}` : "Pick your arrival window.";
   switch (booking.exit) {
     case "cancelled_by_customer":
@@ -2042,7 +2138,10 @@ export function timelineRows(booking: BookingCustomer, now: Date = new Date()): 
     ahead.push(
       extension
         ? { label: "Starts, the item stays with you", when: dayShort(booking.first_day) }
-        : { label: booking.delivery_mode === "pickup" ? "Collect it" : "Delivery", when: dayShort(booking.first_day) }
+        : {
+            label: booking.delivery_mode === "pickup" ? "Collect it" : byRenit(booking) ? `${COURIER} brings it` : "Delivery",
+            when: dayShort(booking.first_day),
+          }
     );
   }
   if (before("confirmed", "ready", "out")) {
@@ -2154,8 +2253,8 @@ export function paymentRows(booking: BookingCustomer, now: Date = new Date()): M
 
 const sentence = (text: string) => (/[.!?]$/.test(text.trim()) ? text.trim() : `${text.trim()}.`);
 
-/** The line under "Cancel booking": what cancelling costs right now. */
-export function cancelHint(outcome: CancelOutcome): string {
+/** The line under "Cancel booking": what cancelling costs right now. `courier`: a B1 courier booking, whose fee is never the owner's. */
+export function cancelHint(outcome: CancelOutcome, courier = false): string {
   const kept = outcome.kept[0] ? keptLine(outcome.kept[0]) : "";
   switch (outcome.case) {
     case "ringing":
@@ -2163,14 +2262,17 @@ export function cancelHint(outcome: CancelOutcome): string {
     case "free": {
       const day = dayOf(outcome.free_until);
       const until = day ? `Rent back in full until ${dayShort(day)}, ${clock(outcome.free_until)}.` : "Rent back in full if you cancel now.";
-      return [until, kept].filter(Boolean).join(" ");
+      return [until, kept, courier ? COURIER_KEPT : null].filter(Boolean).join(" ");
     }
-    case "inside_24h":
-      if (!isPositive(outcome.to_owner)) return "The rest of what you paid is refunded.";
-      if (outcome.to_owner_delivery === undefined) return `${money(outcome.to_owner)} goes to the owner. The rest is refunded.`;
-      return isPositive(outcome.to_owner_delivery)
-        ? `${money(outcome.to_owner)} goes to the owner: one day's rent and the delivery fee, as they had set out. The rest is refunded.`
-        : `One day's rent (${money(outcome.to_owner)}) goes to the owner. The rest is refunded.`;
+    case "inside_24h": {
+      // B1 (b1-plan §5 Cancel): the courier trips a rider was already assigned for are kept, so not all the rest comes back.
+      const rest = courier ? COURIER_KEPT : "The rest is refunded.";
+      if (!isPositive(outcome.to_owner)) return courier ? rest : "The rest of what you paid is refunded.";
+      if (outcome.to_owner_delivery === undefined) return `${money(outcome.to_owner)} goes to the owner. ${rest}`;
+      return isPositive(outcome.to_owner_delivery) && !courier
+        ? `${money(outcome.to_owner)} goes to the owner: one day's rent and the delivery fee, as they had set out. ${rest}`
+        : `One day's rent (${money(outcome.to_owner)}) goes to the owner. ${rest}`;
+    }
     default:
       return kept || "Nothing is refunded.";
   }
@@ -2257,7 +2359,7 @@ export function rentalNextLine(booking: BookingCustomer, now: Date = new Date())
       ? `Pick another option by ${clock(booking.pick_deadline_at)}`
       : null;
   }
-  const arrive = booking.delivery_mode === "pickup" ? "Collect" : "Arrives";
+  const arrive = arriveWord(booking);
   switch (booking.stage) {
     case "ringing": {
       if (booking.ring_state === "awaiting_payment") return `Pay ${money(m.booking_amount)} to ask the owner`;

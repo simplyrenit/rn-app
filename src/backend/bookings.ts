@@ -10,6 +10,7 @@ import {
   refundPending,
 } from "@/lib/booking";
 import type { EndEarlyQuote } from "@/lib/billing";
+import type { DeliveredBy } from "@/lib/delivery";
 import { BOOKINGS_ENDPOINT, GET_PRODUCT_DETAILS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { correctedNow } from "@/lib/server-clock";
@@ -47,6 +48,8 @@ export interface BookInput extends QuoteInput {
   moved_from: string | null;
   /** Made once per tap: a repeat with the same key returns the first booking. */
   client_key: string;
+  /** B1: the quote's `delivery.by`, sent only when the quote had one (`bookBy`). */
+  delivery_by?: DeliveredBy;
 }
 
 export interface BookAnswer {

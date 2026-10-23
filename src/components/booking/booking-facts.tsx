@@ -25,6 +25,7 @@ export function BookingFacts({
   deposit,
   delivery,
   addressName,
+  deliveryFrom,
 }: {
   copy: LiveCopy | null;
   shop: ProductShop | null | undefined;
@@ -32,6 +33,8 @@ export function BookingFacts({
   /** ENG-284: whether the shop delivers to the customer's chosen address, and that address's name. */
   delivery?: ListingDelivery | null;
   addressName?: string | null;
+  /** B1: the product's lowest delivery price of any kind (`delivery_from`), as the server sends it. */
+  deliveryFrom?: string | null;
   /** The listing's price and deposit, for BK-01's price block under the banner. */
   rate?: string | number | null;
   /** ENG-281: its plans; absent from an older server, which priced by `rate` alone. */
@@ -49,7 +52,7 @@ export function BookingFacts({
   // ENG-282: a month plan of 2 months or more, billed monthly, costs a month's notice for ending inside it.
   const notice = monthlyBilling ? noticeWords(plans) : null;
   const rows = [
-    { icon: MapPinIcon, text: getItLine(shop, notDelivered, delivery, addressName) },
+    { icon: MapPinIcon, text: getItLine(shop, notDelivered, delivery, addressName, deliveryFrom) },
     ...(hours ? [{ icon: ClockIcon, text: hours }] : []),
   ];
 

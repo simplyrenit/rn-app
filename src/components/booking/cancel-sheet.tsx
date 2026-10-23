@@ -27,7 +27,8 @@ const isOutcome = (value: unknown): value is CancelOutcome =>
  * server cancels nothing and sends the new outcome, which replaces the one on
  * screen and is asked about again. So a tap never costs more than the sheet said.
  */
-export const CancelSheet = forwardRef<CancelSheetHandle, { number: string }>(({ number }, ref) => {
+/** `courier`: a B1 courier booking, whose courier fee the sheet never says goes to the owner. */
+export const CancelSheet = forwardRef<CancelSheetHandle, { number: string; courier?: boolean }>(({ number, courier = false }, ref) => {
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -92,7 +93,7 @@ export const CancelSheet = forwardRef<CancelSheetHandle, { number: string }>(({ 
     }
   };
 
-  const copy = outcome ? cancelCopy(outcome) : null;
+  const copy = outcome ? cancelCopy(outcome, courier) : null;
 
   return (
     <CustomBottomSheetModal ref={sheet} isDark={isDark} snapPoints={[380 + insets.bottom]} frame>

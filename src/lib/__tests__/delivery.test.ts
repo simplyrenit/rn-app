@@ -1,8 +1,11 @@
 import { describe, expect, it } from "@jest/globals";
 import { SavedAddress } from "../addresses";
 import {
+  COURIER,
+  addressMayHelp,
   addressRowCopy,
   areaOf,
+  byRenit,
   cardDeliveryLine,
   deliverCountLine,
   deliveryLineText,
@@ -157,5 +160,69 @@ describe("the address row (D12)", () => {
   it("names the area by the locality's first part, else the PIN", () => {
     expect(areaOf(home)).toBe("Versova");
     expect(areaOf({ locality: "", postal_code: "400061" })).toBe("400061");
+  });
+});
+
+describe("the Renit courier (unified delivery B1)", () => {
+  it("is Renit's only when the server says renit; absent, shop or unknown is the shop", () => {
+    expect(byRenit({ delivered_by: "renit" })).toBe(true);
+    expect(byRenit({ delivery: { by: "renit" } })).toBe(true);
+    expect(byRenit({ delivered_by: "shop" })).toBe(false);
+    expect(byRenit({ delivery: { by: "shop" } })).toBe(false);
+    expect(byRenit({})).toBe(false);
+    expect(byRenit({ delivery: null })).toBe(false);
+    expect(byRenit(null)).toBe(false);
+    expect(byRenit({ delivered_by: "drone" as never })).toBe(false);
+    // The customer's name for it, never the aggregator's (plan-v2 §5.11).
+    expect(COURIER).toBe("Renit courier partner");
+  });
+
+  it("says delivery from the server's lowest delivery price when no address is chosen", () => {
+    expect(line({ ...delivers, delivery_from: "280.00" }, "1.2 km away")).toBe("1.2 km away · Delivery from ₹280");
+    // A shop that does not deliver itself: the courier still does.
+    expect(line({ shop: { delivers: false }, delivery_from: "280.00" }, null)).toBe("Delivery from ₹280");
+    // With an address, the exact answer wins.
+    expect(line({ ...delivers, delivery_from: "280.00", delivery: { to_me: true, fee: "320.00", km: "4.1" } }, null)).toBe(
+      "4.1 km · Delivery ₹320"
+    );
+    // An item the owner never delivers stays pickup only.
+    expect(cardDeliveryLine({ delivery_from: "280.00", not_delivered: true }, null)).toBeNull();
+  });
+
+  it("keeps today's line when the server sends no from-fee", () => {
+    const today = line(delivers, "1.2 km away");
+    expect(line({ ...delivers, delivery_from: null }, "1.2 km away")).toBe(today);
+    expect(today).toBe("1.2 km away · Delivery available");
+    expect(cardDeliveryLine({ shop: { delivers: false }, delivery_from: null }, null)).toBeNull();
+  });
+
+  it("offers delivery on the product page when only the courier delivers", () => {
+    const answer = { to_me: true, fee: "280.00", km: null };
+    expect(productHowLine({ shop: { delivers: false }, delivery_from: "280.00", delivery: answer }, "Home")).toBe(
+      "Self pickup or delivery to Home ₹280"
+    );
+    expect(productHowLine({ shop: { delivers: false }, delivery: answer }, "Home")).toBeNull();
+  });
+
+  it("says why the courier can't take it, whatever the status, never the shop's km", () => {
+    const refused = (reason: "courier_area" | "courier_item" | "courier_value" | "id_match", status = "too_far") =>
+      deliveryReason({ status, reason, distance_km: null }, "SoundBox Rentals", "5.0");
+    expect(refused("courier_area")).toBe(
+      "The Renit courier partner doesn't reach this area yet. You can pick it up, or use another address."
+    );
+    expect(refused("courier_item", "not_offered")).toBe("This item can't go by courier. You can pick it up from the shop.");
+    expect(refused("courier_value")).toBe("Items above ₹25,000 can't go by courier. You can pick it up from the shop.");
+    expect(refused("id_match")).toBe(
+      "Items that need an ID check at handover can't go by courier. You can pick it up from the shop."
+    );
+  });
+
+  it("offers another address only where one could help", () => {
+    expect(addressMayHelp({ reason: "courier_area" })).toBe(true);
+    expect(addressMayHelp({ reason: "area_off" })).toBe(true);
+    expect(addressMayHelp({})).toBe(true);
+    expect(addressMayHelp({ reason: "courier_item" })).toBe(false);
+    expect(addressMayHelp({ reason: "courier_value" })).toBe(false);
+    expect(addressMayHelp({ reason: "id_match" })).toBe(false);
   });
 });
