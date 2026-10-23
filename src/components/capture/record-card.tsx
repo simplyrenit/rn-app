@@ -46,7 +46,7 @@ export interface RecordBookingProps {
   server_time?: string;
   /** The customer's booking: the booking this one extends. An extension has no handover record. */
   extends?: string | null;
-  /** B1: who carries it. `renit` opens the capture as a courier booking's (`Capture`'s `courier`). */
+  /** B1: who carries it. `renit` opens the customer's capture as a courier booking's (`Capture`'s `courier`). */
   delivered_by?: DeliveredBy;
 }
 
@@ -122,7 +122,8 @@ export function useRecord({ moment, role, forOther = false, booking, receivedAt,
         id_match: Boolean(booking.id_match_required),
         id_match_name: booking.customer?.full_name ?? null,
         skew_ms: clockSkewMs(booking.server_time, receivedAt),
-        ...(byRenit(booking) ? { courier: true } : {}),
+        // The customer's set only: it is their home that must not reach the shop.
+        ...(byRenit(booking) && side === "customer" ? { courier: true } : {}),
       }),
     retry: () => draft && captureQueue.retry(draft.id),
   };

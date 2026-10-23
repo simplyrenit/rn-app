@@ -182,6 +182,7 @@ export default function NotAsDescribedScreen() {
           onChange={(next) => setExtra(next.filter((photo) => !photo.fixed))}
           addLabel={photos.length > 0 ? "Add another photo" : "Take a photo"}
           disabled={sending}
+          courier={courier}
         />
         <Notice tone="warning" icon="info">
           {copy.notice}

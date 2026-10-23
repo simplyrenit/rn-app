@@ -596,6 +596,13 @@ export default function CaptureScreen() {
                 </Notice>
               ) : null}
               <CameraOffNotice>Camera access is off for Renit, so the photos and video can't be taken. Allow it in Settings.</CameraOffNotice>
+              {params.courier ? (
+                // B1: a clip whose camera saved the place is refused (`keepVideo`); say so before it is shot, not after.
+                <Notice tone="warning" icon="warning">
+                  Turn off location tags in your camera app's settings before you start. A video that saves where you are
+                  can't be used, so the shop never learns your address.
+                </Notice>
+              ) : null}
               <Intro
                 list={list}
                 side={role}

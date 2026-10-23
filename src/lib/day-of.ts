@@ -16,6 +16,7 @@ import {
   money,
   todayIst,
   addDays,
+  windowErrorText,
   windowLabel,
   windowSummary,
 } from "@/lib/booking";
@@ -350,7 +351,7 @@ export function dayErrorText(error: ApiError | null, now: Date): string {
     case "capture_missing":
       return "Record the item on camera first.";
     case "other_side":
-      return "The shop does this, not you.";
+      return "The other side of the booking does this, not you.";
     case "already_extending":
       return "An extension is already open for this rental.";
     case "shop_closed":
@@ -508,13 +509,15 @@ export function courierDoorTips(seal: string | null | undefined): string[] {
       ? `Check seal ${seal} is unbroken. Broken seal or crushed box? Don't open it: record it first.`
       : "Check the seal is unbroken. Broken seal or crushed box? Don't open it: record it first.",
     "Start recording with the seal in view, then open it, show every side and switch it on.",
+    "Turn off location tags in your camera app first: a video that saves where you are can't be used.",
     "The partner may text you a delivery code. That one is fine to share. Never share a Renit code.",
   ];
 }
 
 /**
  * C6, the return window picker. `earliest` is the server's first day with no late fee; `day` the day it offers slots
- * on, which is later only when that day's slots are gone (and then it counts as late, as for any return after the last day).
+ * on, which is later only when that day's slots are gone. The late clock stops at the customer's return record (F6), so
+ * a record by `earliest` charges no late day, whenever the rider comes.
  */
 export function returnWindowCopy(
   slots: { day: string; earliest: string },
@@ -527,11 +530,17 @@ export function returnWindowCopy(
     sub: `${dayShort(day)} · the ${COURIER} collects it in the window you pick`,
     note:
       day > earliest
-        ? `No slot is left on ${dayShort(earliest)}, so collecting it on ${dayShort(day)} counts as late.`
+        ? `No slot is left on ${dayShort(earliest)}. Record it and seal the bag by then and no late day is charged, even if the rider comes on ${dayShort(day)}.`
         : earliest > lastDay
           ? `There is no courier slot on your last day, so it is due back on ${dayShort(earliest)} with no late fee.`
           : null,
   };
+}
+
+/** What a refused return-window pick says. The desk may already be booking the rider (`stage_not_allowed`). */
+export function returnWindowErrorText(error: ApiError | null): string {
+  if (error?.code === "stage_not_allowed") return "The return window can't be changed now. Call via Renit to move it.";
+  return windowErrorText(error);
 }
 
 // ---- BK-19, not as described ---------------------------------------------------------------------------------------

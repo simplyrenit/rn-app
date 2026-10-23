@@ -54,6 +54,7 @@ export function PhotoRow({
   addLabel,
   disabled = false,
   max = MAX_EVIDENCE_PHOTOS,
+  courier = false,
 }: {
   photos: EvidencePhoto[];
   onChange: (photos: EvidencePhoto[]) => void;
@@ -62,6 +63,8 @@ export function PhotoRow({
   disabled?: boolean;
   /** The most photos the form takes; the server refuses more. */
   max?: number;
+  /** B1: the customer's report on a courier booking: the photo keeps no place in it (`CameraOptions`). */
+  courier?: boolean;
 }) {
   const { color } = useTheme();
   const opening = useRef(false);
@@ -72,7 +75,7 @@ export function PhotoRow({
     opening.current = true;
     setLaunching(true);
     try {
-      const uri = await takePhoto();
+      const uri = await takePhoto({ courier });
       if (uri) onChange([...photos, { uri, url: null }]);
     } finally {
       opening.current = false;

@@ -3,8 +3,8 @@ import { BookingLoadError, BookingLoading, BottomBar, Notice } from "@/component
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { apiError } from "@/lib/api-error";
-import { TimeWindow, windowErrorText, windowLabel } from "@/lib/booking";
-import { returnWindowCopy } from "@/lib/day-of";
+import { TimeWindow, windowLabel } from "@/lib/booking";
+import { returnWindowCopy, returnWindowErrorText } from "@/lib/day-of";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -73,7 +73,7 @@ export default function ReturnWindowScreen() {
       navigation.goBack();
     } catch (failure) {
       const problem = apiError(failure);
-      setError(windowErrorText(problem));
+      setError(returnWindowErrorText(problem));
       // A slot taken or closed meanwhile, or a booking that moved on: read both again.
       if (problem && problem.status > 0) {
         setPicked(null);

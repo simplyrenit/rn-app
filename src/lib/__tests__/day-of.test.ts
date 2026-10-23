@@ -11,6 +11,7 @@ import {
   courierRows,
   openByLine,
   returnWindowCopy,
+  returnWindowErrorText,
   captured,
   codeErrorText,
   codeIsClosed,
@@ -854,7 +855,7 @@ describe("B1, the courier's refusals", () => {
     expect(dayErrorText(err("window_taken"), NOW)).toBe("That slot has just filled. Pick another.");
     expect(dayErrorText(err("window_closed"), NOW)).toMatch(/^That window can't be picked any more/);
     expect(dayErrorText(err("capture_missing"), NOW)).toBe("Record the item on camera first.");
-    expect(dayErrorText(err("other_side"), NOW)).toBe("The shop does this, not you.");
+    expect(dayErrorText(err("other_side"), NOW)).toBe("The other side of the booking does this, not you.");
   });
 });
 
@@ -874,9 +875,14 @@ describe("B1, the return window (C6)", () => {
     );
   });
 
-  it("a day offered after the no-fee day counts as late", () => {
+  it("a day offered after the no-fee day: the record by then stops the late clock (F6), whenever the rider comes", () => {
     expect(returnWindowCopy({ day: "2026-10-27", earliest: "2026-10-26" }, "2026-10-26", false).note).toBe(
-      "No slot is left on Mon 26 Oct, so collecting it on Tue 27 Oct counts as late."
+      "No slot is left on Mon 26 Oct. Record it and seal the bag by then and no late day is charged, even if the rider comes on Tue 27 Oct."
     );
+  });
+
+  it("a pick the desk has overtaken says to call, and a full slot says to pick another", () => {
+    expect(returnWindowErrorText(err("stage_not_allowed"))).toBe("The return window can't be changed now. Call via Renit to move it.");
+    expect(returnWindowErrorText(err("window_taken"))).toBe("That slot has just filled. Pick another.");
   });
 });

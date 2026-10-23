@@ -64,28 +64,36 @@ async function keepPhoto(asset: ImagePicker.ImagePickerAsset, { courier }: Camer
   }
 }
 
-/** The largest `moov` box read to look for a place; a 15-second clip's is a few hundred KB. */
+/** The largest metadata box read to look for a place; a 15-second clip's `moov` is a few hundred KB. */
 const MOOV_MAX_BYTES = 8 * 1024 * 1024;
+/** The boxes that hold a clip's metadata: `moov`, and a `udta` or `meta` some cameras put beside it. */
+const META_BOXES = ["moov", "udta", "meta"];
 
 const readBytes = async (uri: string, position: number, length: number) =>
   base64Bytes(await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64, position, length }));
 
 /**
  * Whether a video's metadata names where it was taken: the top-level boxes are walked by their headers (no picture is
- * read) to the `moov` box, which is searched for a location tag. A file that can't be read this way counts as naming one.
+ * read), and each metadata box is searched for a location tag. A file that can't be read this way, or has no `moov`,
+ * counts as naming one.
  */
 async function videoNamesPlace(uri: string, bytes: number): Promise<boolean> {
   try {
+    let moov = false;
     for (let at = 0; at + 8 <= bytes; ) {
       const box = videoBox(await readBytes(uri, at, Math.min(16, bytes - at)), bytes - at);
       if (!box) return true;
-      if (box.type === "moov") return box.size > MOOV_MAX_BYTES || namesPlace(await readBytes(uri, at, box.size));
+      if (META_BOXES.includes(box.type)) {
+        if (box.size > MOOV_MAX_BYTES || namesPlace(await readBytes(uri, at, box.size))) return true;
+        moov ||= box.type === "moov";
+      }
       at += box.size;
     }
+    return !moov;
   } catch {
     // Unreadable: it can't be shown to hold no place.
+    return true;
   }
-  return true;
 }
 
 /**
