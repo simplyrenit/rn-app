@@ -5,6 +5,7 @@ import { getAuthTokens } from "@/lib/auth-fns";
 import { readIdToken } from "@/lib/unlock";
 import { acceptOwnerTerms } from "@/backend/terms";
 import { emailLogin, otpCheck, phoneLogin, signUp } from "@/backend/sign-in-calls";
+import { signInIntent } from "@/lib/return-to";
 import { requestErrorFrom, signUpBody } from "@/lib/sign-in-proof";
 import {
   authenticateFirebase,
@@ -52,7 +53,8 @@ export function useAuth() {
   async function sendOTP(email: string): Promise<OTPResponseMessage> {
     setLoading(true);
     try {
-      const response = await axios.post<OTPResponseMessage>(OTP, { email });
+      // Says when Add to cart asked for this sign-in: rn-api counts the code sends too (cart plan D50).
+      const response = await axios.post<OTPResponseMessage>(OTP, { email, ...signInIntent() });
       return response.data;
     } catch (error: any) {
       const otpError = toRequestError(

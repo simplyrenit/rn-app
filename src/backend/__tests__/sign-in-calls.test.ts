@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import axios from "axios";
 import axiosInstance from "@/lib/networkUtils";
+import { rememberReturnTo, takeReturnTo } from "@/lib/return-to";
 import { appleLogin, emailLogin, googleLogin, otpCheck, phoneLogin, signUp } from "../sign-in-calls";
 
 jest.mock("axios", () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn() } }));
@@ -110,5 +111,27 @@ describe("the proof tokens (T-19)", () => {
     await phoneLogin("firebase-id-token");
     const [, body] = http.post.mock.calls[0] as [string, Record<string, unknown>];
     expect(body).not.toHaveProperty("proof_token");
+  });
+});
+
+describe("a sign-in asked for by Add to cart says so (cart plan D50)", () => {
+  it("carries intent=cart_add on the code check and in a body, and nothing once that sign-in is over", async () => {
+    rememberReturnTo({ name: "ProductDetail", params: { id: "PRO_8fk2Lq", add: true } });
+    await otpCheck("asha@example.com", "123456");
+    await googleLogin("google-token");
+    const config = http.get.mock.calls[0][1] as { params: Record<string, string> };
+    expect(config.params.intent).toBe("cart_add");
+    expect(http.post).toHaveBeenCalledWith("https://api.test/google-login/", {
+      access_token: "google-token",
+      ...DEVICE,
+      intent: "cart_add",
+    });
+    takeReturnTo();
+    await emailLogin("asha@example.com", "secret");
+    expect(http.post).toHaveBeenLastCalledWith("https://api.test/login/", {
+      email: "asha@example.com",
+      password: "secret",
+      ...DEVICE,
+    });
   });
 });

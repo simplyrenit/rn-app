@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { goAfterSignIn, rememberReturnTo, takeReturnTo } from "../return-to";
+import { goAfterSignIn, rememberReturnTo, signInIntent, takeReturnTo } from "../return-to";
 
 const listing = {
   name: "ProductDetail" as const,
@@ -56,5 +56,22 @@ describe("back to the same search after signing in (ENG-292)", () => {
     rememberReturnTo(search);
     goAfterSignIn(navigation as never);
     expect(navigation.reset).toHaveBeenCalledWith({ index: 1, routes: [{ name: "MainTabs" }, search] });
+  });
+});
+
+describe("signInIntent (cart plan D50)", () => {
+  it("says cart_add while the sign-in was asked for by Add to cart, and leaves the target in place", () => {
+    rememberReturnTo({ name: "ProductDetail", params: { id: "PRO_8fk2Lq", add: true } }, 1_000);
+    expect(signInIntent(2_000)).toEqual({ intent: "cart_add" });
+    expect(takeReturnTo(3_000)).toEqual({ name: "ProductDetail", params: { id: "PRO_8fk2Lq", add: true } });
+    expect(signInIntent(4_000)).toEqual({});
+  });
+
+  it("says nothing for a sign-in asked for by Book now, or one too late", () => {
+    rememberReturnTo(listing, 0);
+    expect(signInIntent(1_000)).toEqual({});
+    rememberReturnTo({ name: "ProductDetail", params: { id: "PRO_8fk2Lq", add: true } }, 0);
+    expect(signInIntent(16 * 60 * 1000)).toEqual({});
+    takeReturnTo();
   });
 });

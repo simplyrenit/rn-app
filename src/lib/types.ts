@@ -228,7 +228,14 @@ export type RootStackParamList = {
      * Book now starts on them. Absent from every other entry point.
      */
     dates?: { first_day: string; last_day: string };
+    /**
+     * Set only when sign-in was asked for by Add to cart (cart plan D3): back on
+     * the listing, the page adds it once and clears this.
+     */
+    add?: boolean;
   };
+  /** The customer's cart (cart plan §3.2), on the root stack like the booking screens. */
+  Cart: undefined;
   ReviewsScreen: {
     reviews: BackendReview[];
     product: BackendProduct;
@@ -363,7 +370,20 @@ export type RootStackParamList = {
    * dates and how the item changes hands. `moved_from` is the customer's refused
    * or unanswered booking whose ₹99 moves to the new one.
    */
-  BookingDates: { product: string; first_day?: string; last_day?: string; moved_from?: string };
+  BookingDates: {
+    product: string;
+    first_day?: string;
+    last_day?: string;
+    moved_from?: string;
+    /**
+     * A cart card's checkout (cart plan §3.3, docs/feature/cart/build/CONTRACT-CHANGES.md): its products in cart order,
+     * and `from_cart`, which Book sends on. `product` is then `products[0]`.
+     */
+    products?: string[];
+    from_cart?: boolean;
+    /** The rest of the cart, outside this card: how many items, from how many other shops (A3's copy). */
+    others?: { items: number; shops: number };
+  };
   /** BK-03 and BK-11: the whole price, then Book now. */
   ReviewAndBook: {
     item: BookItem;
@@ -376,6 +396,8 @@ export type RootStackParamList = {
     moved_from?: string;
     /** An extension (ENG-220): the booking these days follow. The request then goes to `extend`. */
     extends?: string;
+    /** Booked from a cart card: the stack after Book keeps the cart (`afterBookRoutes`). */
+    from_cart?: boolean;
   };
   /**
    * One booking at whatever stage the server says it is in. `pay` opens the pay
@@ -724,6 +746,16 @@ export interface BackendProduct {
   live_booking?: boolean;
   book_for_morning?: boolean;
   id_check_needed?: "none" | "id" | "id_and_match";
+  /**
+   * Cart plan D28 (T12): whether this listing's shop takes cart lines now. Absent from an older server, which is
+   * read as no: the Add to cart button shows only when this is true (§9.3).
+   */
+  can_add_to_cart?: boolean;
+  /**
+   * Cart plan D28, D39 (T8): the customer's live booking of this item, if any. The dates may be absent (plan §5.3
+   * names only the number).
+   */
+  requested?: { number: string; first_day?: string; last_day?: string } | null;
   /** A moved listing's price is treated as per day until the owner saves `rate`. */
   rate_needs_confirming?: boolean;
   /** True while `worth` is null. */
