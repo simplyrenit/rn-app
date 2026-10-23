@@ -406,6 +406,8 @@ export type RootStackParamList = {
   Booking: { number: string; pay?: boolean };
   /** BK-07: picks the first arrival window, or asks to change the one that is set. */
   BookingWindow: { number: string };
+  /** B1: the return slot Renit's courier partner collects it in (`return-window/`), from the return screen. */
+  BookingReturnWindow: { number: string };
   /** BK-13: pay the deposit. Opened from the booking and from the deposit pushes (ENG-222). */
   BookingDeposit: { number: string };
   /**
@@ -473,6 +475,8 @@ export type RootStackParamList = {
     id_match?: boolean;
     /** The customer's full name from the shop's booking (T-44), for the ID tick's words; null or absent when it is not shown. */
     id_match_name?: string | null;
+    /** B1: a booking Renit's courier partner carries (no place in the files; the customer's return asks for the seal). */
+    courier?: boolean;
   };
   [key: string]: object | undefined;
 };

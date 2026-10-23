@@ -185,7 +185,8 @@ export function StepList({ steps }: { steps: StepRow[] }) {
         const last = index === steps.length - 1;
         return (
           <View
-            key={step.label}
+            // By place: a courier's tracker repeats labels ("Rider booked" on both legs).
+            key={index}
             accessible
             accessibilityLabel={`${step.label}${step.sub ? `. ${step.sub}` : ""}${done ? ", done" : next ? ", next" : ""}`}
             style={{ flexDirection: "row", gap: space.md }}

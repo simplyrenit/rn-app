@@ -10,6 +10,7 @@ import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { apiError } from "@/lib/api-error";
 import { bookingLabel, TimeWindow, windowErrorText, windowHeading, windowLabel } from "@/lib/booking";
+import { byRenit } from "@/lib/delivery";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -83,7 +84,8 @@ export default function ArrivalWindowScreen() {
         : await setWindow(params.number, choice.start);
       queryClient.setQueryData(bookingQueryKey(params.number), next);
       if (changing) {
-        toast.success("Asked the shop", { message: "Your time stays as it is until they accept." });
+        // B1: on a courier booking only Renit's desk answers a change (O12).
+        toast.success(byRenit(booking) ? "Asked Renit" : "Asked the shop", { message: "Your time stays as it is until they accept." });
       } else {
         toast.success("Arrival time set");
       }
@@ -178,10 +180,14 @@ export default function ArrivalWindowScreen() {
           {waiting
             ? "A change is already waiting for an answer. You can ask again once it is answered."
             : changing
-              ? "The shop has to accept the new time. Until they do, your arrival time stays as it is."
+              ? byRenit(booking)
+                ? "Renit's desk has to accept the new time. Until it does, your arrival time stays as it is."
+                : "The shop has to accept the new time. Until they do, your arrival time stays as it is."
               : booking.delivery_mode === "pickup"
                 ? "This tells the shop when you're coming. You can ask to change it later."
-                : "This tells the shop when to arrive. You can ask to change it later."}
+                : byRenit(booking)
+                  ? "Renit books the courier partner's rider for this window. You can ask Renit to change it until it's packed."
+                  : "This tells the shop when to arrive. You can ask to change it later."}
         </Notice>
       </ScrollView>
 

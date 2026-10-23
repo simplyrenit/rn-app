@@ -8,6 +8,12 @@ import {
   PHOTO_MAX_BYTES,
   VIDEO_MAX_BYTES,
   addShot,
+  base64Bytes,
+  namesPlace,
+  needsSealNumber,
+  sealNumberOf,
+  setSealNumber,
+  videoBox,
   applyAnswer,
   canSeal,
   captureBody,
@@ -1131,5 +1137,75 @@ describe("the new answers of the capture calls (lane I, T-23)", () => {
     expect(nextStep(gone)).toEqual({ kind: "shot", index: 1 });
     expect(reopenForMissing(waiting, ["id_match"]).sealed).toBe(false);
     expect(reopenForMissing({ ...waiting, video: null }, ["video"]).sealed).toBe(false);
+  });
+});
+
+// ---- B1: the courier's capture (ENG-308) ------------------------------------------------------------------------------
+
+describe("B1, a courier booking's capture", () => {
+  it("a shop booking's draft and body are as they were", () => {
+    const shop = uploaded(taken(start({ moment: "return" })));
+    expect("courier" in start()).toBe(false);
+    expect(needsSealNumber(shop)).toBe(false);
+    expect(canSeal(shop)).toBe(true);
+    expect("seal" in captureBody(shop)).toBe(false);
+  });
+
+  it("the customer's return asks for the seal number before Done, and sends it upper-cased", () => {
+    const draft = taken(start({ moment: "return", courier: true }));
+    expect(draft.courier).toBe(true);
+    expect(needsSealNumber(draft)).toBe(true);
+    expect(canSeal(draft)).toBe(false);
+    expect(canSeal(setSealNumber(draft, "r 1042"))).toBe(false);
+    const typed = uploaded(setSealNumber(draft, " r-1042 "));
+    expect(canSeal(typed)).toBe(true);
+    expect(captureBody(typed).seal).toBe("R-1042");
+  });
+
+  it("only the customer's return carries a seal number", () => {
+    expect(needsSealNumber(start({ moment: "handover", courier: true }))).toBe(false);
+    expect(needsSealNumber(start({ moment: "return", side: "owner", courier: true }))).toBe(false);
+    expect(canSeal(taken(start({ moment: "handover", courier: true })))).toBe(true);
+  });
+
+  it("takes the seal as the server does", () => {
+    expect(sealNumberOf("R-1042")).toBe("R-1042");
+    expect(sealNumberOf("abc123")).toBe("ABC123");
+    expect(sealNumberOf("")).toBeNull();
+    expect(sealNumberOf(undefined)).toBeNull();
+    expect(sealNumberOf("R 1042")).toBeNull();
+    expect(sealNumberOf("X".repeat(21))).toBeNull();
+  });
+});
+
+describe("B1, a video that names where it was taken", () => {
+  const ascii = (text: string) => Array.from(text, (c) => c.charCodeAt(0));
+  const u32 = (n: number) => [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
+  const box = (type: string, body: number[]) => [...u32(8 + body.length), ...ascii(type), ...body];
+
+  it("reads a box header: 32-bit, 64-bit, and a last box that runs to the end", () => {
+    expect(videoBox(new Uint8Array(box("ftyp", ascii("isom"))), 100)).toEqual({ type: "ftyp", size: 12 });
+    const large = new Uint8Array([...u32(1), ...ascii("mdat"), ...u32(1), ...u32(16)]);
+    expect(videoBox(large, 2 ** 33)).toEqual({ type: "mdat", size: 2 ** 32 + 16 });
+    expect(videoBox(new Uint8Array([...u32(0), ...ascii("moov")]), 500)).toEqual({ type: "moov", size: 500 });
+  });
+
+  it("is not fooled by a header that is not one", () => {
+    expect(videoBox(new Uint8Array([0, 0, 0]), 100)).toBeNull();
+    expect(videoBox(new Uint8Array([...u32(4), ...ascii("moov")]), 100)).toBeNull();
+    expect(videoBox(new Uint8Array([...u32(200), ...ascii("moov")]), 100)).toBeNull();
+    expect(videoBox(new Uint8Array([...u32(1), ...ascii("mdat")]), 100)).toBeNull();
+  });
+
+  it("finds Android's, 3GPP's and the iPhone's location tags, and nothing in a clip without one", () => {
+    const xyz = [0xa9, ...ascii("xyz")];
+    expect(namesPlace(new Uint8Array(box("moov", box("udta", [...xyz, ...ascii("+19.1364+072.8296/")]))))).toBe(true);
+    expect(namesPlace(new Uint8Array(box("moov", box("udta", box("loci", [0, 0, 0, 0])))))).toBe(true);
+    expect(namesPlace(new Uint8Array(box("moov", box("meta", ascii("mdtacom.apple.quicktime.location.ISO6709")))))).toBe(true);
+    expect(namesPlace(new Uint8Array(box("moov", box("mvhd", [0, 0, 0, 0, 0xa9, ...ascii("xy")]))))).toBe(false);
+  });
+
+  it("reads the range the file system hands back", () => {
+    expect(Array.from(base64Bytes("AAAAGGZ0eXA="))).toEqual([0, 0, 0, 24, ...ascii("ftyp")]);
   });
 });

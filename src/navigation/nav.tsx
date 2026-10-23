@@ -71,6 +71,7 @@ import { useDraftPhotoUploads } from "@/backend/draft-photo-jobs";
 import { ShopTodayScreen } from "@/screens/shop/home";
 import ShopRingScreen from "@/screens/shop/ring";
 import ArrivalWindowScreen from "@/screens/booking/arrival-window";
+import ReturnWindowScreen from "@/screens/booking/return-window";
 import BookingScreen from "@/screens/booking/booking";
 import CheckCapturesScreen from "@/screens/booking/check-captures";
 import BookingDetailsScreen from "@/screens/booking/details";
@@ -462,6 +463,9 @@ export default function Navigation() {
         break;
       case "ShopHandover":
         navigationRef.navigate("ShopHandover", { number: route.number });
+        break;
+      case "ShopReturn":
+        navigationRef.navigate("ShopReturn", { number: route.number });
         break;
       case "Claim":
         navigationRef.navigate("Claim", { id: route.id });
@@ -887,6 +891,10 @@ export default function Navigation() {
         <Stack.Screen
           name="BookingWindow"
           component={ArrivalWindowScreen}
+        />
+        <Stack.Screen
+          name="BookingReturnWindow"
+          component={ReturnWindowScreen}
         />
         {/* The deposit, the day of the handover and the return, the customer's
             side (ENG-222). Each is keyed by booking, like the booking itself. */}

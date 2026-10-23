@@ -12,6 +12,8 @@ import {
 } from "@/lib/booking";
 import { OpenState, dayLabel, istWhen } from "@/lib/shop";
 import type { Ring } from "@/lib/shop-ring";
+import { byRenit, type DeliveredBy } from "@/lib/delivery";
+import { packByText } from "@/lib/shop-courier";
 
 /**
  * The shop's Today and the quick block on the phone (SH-04, SH-05; API-CONTRACT
@@ -48,6 +50,10 @@ export interface GoingOut extends TodayPerson {
   number: string;
   product_title: string;
   delivery_mode: "pickup" | "owner_delivery";
+  /** B1: `renit` when Renit's courier carries it; absent is the shop. */
+  delivered_by?: DeliveredBy | null;
+  /** B1, a courier booking: when the shop must have packed. Absent from a server that does not send it yet. */
+  pack_by?: string | null;
   stage: string;
   /** Null until the customer has picked an arrival window. */
   window: TimeWindow | null;
@@ -192,13 +198,19 @@ export interface TodayRow {
   pill: RowPill | null;
 }
 
-/** "Epson projector · Kabir A." over "Arrives 10:00 – 11:00 am". */
-export function goingOutRow(item: GoingOut): TodayRow {
-  const verb = item.delivery_mode === "pickup" ? "Arrives" : "Deliver";
+/** "Epson projector · Kabir A." over "Arrives 10:00 – 11:00 am"; B1's courier "Pack by 3:15 pm". */
+export function goingOutRow(item: GoingOut, now: Date = new Date()): TodayRow {
+  const courier = byRenit(item);
+  const verb = courier ? "Courier collects" : item.delivery_mode === "pickup" ? "Arrives" : "Deliver";
   return {
     number: item.number,
     title: `${item.product_title} · ${who(item)}`,
-    sub: item.window ? `${verb} ${windowLabel(item.window)}` : "No arrival time picked yet",
+    sub:
+      courier && item.pack_by
+        ? packByText(item.pack_by, now)
+        : item.window
+          ? `${verb} ${windowLabel(item.window)}`
+          : "No arrival time picked yet",
     pill: depositPill(item.deposit_state),
   };
 }

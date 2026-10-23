@@ -1,10 +1,17 @@
 import { describe, expect, it } from "@jest/globals";
 import type { ApiError } from "../api-error";
-import type { BookingCustomer } from "../booking";
+import type { BookingCustomer, CourierBlock } from "../booking";
 import {
   MAX_EXTRA_DAYS,
   activeCopy,
+  bannerTone,
   callCopy,
+  courierDoorTips,
+  courierMayRecord,
+  courierRows,
+  openByLine,
+  returnWindowCopy,
+  returnWindowErrorText,
   captured,
   codeErrorText,
   codeIsClosed,
@@ -677,5 +684,210 @@ describe("extending", () => {
     const lines = extensionLines("99.00");
     expect(lines[0]).toMatch(/deposit carries on/);
     expect(lines[1]).toMatch(/₹99 comes back and the item is due back on the original day/);
+  });
+});
+
+// ---- B1: Renit's courier partner (ENG-308) --------------------------------------------------------------------------
+
+/** The server's customer block after the rider was set (rn-api eng303-build.md), on the contract's booking. */
+const STEPS: CourierBlock["steps"] = [
+  { key: "packed", label: "Packed and sealed", sub: "Seal R-1042", at: "2026-10-24T02:10:00Z", state: "done" },
+  { key: "rider", label: "Rider booked", sub: "Ravi, Bike MH02AB1", at: "2026-10-24T02:20:00Z", state: "done" },
+  { key: "picked_up", label: "Picked up", sub: "On the way to you, arriving Sat 24 Oct, 10:00 to 11:00 am", at: null, state: "now" },
+  { key: "delivered", label: "Delivered", sub: null, at: null, state: "todo" },
+  { key: "received", label: "Opened on camera", sub: "Your rental has started", at: null, state: "todo" },
+  { key: "return_window", label: "Pick a return window", sub: null, at: null, state: "todo" },
+  { key: "return_rider", label: "Rider booked", sub: null, at: null, state: "todo" },
+  { key: "return_picked_up", label: "Picked up", sub: "On its way to the shop", at: null, state: "todo" },
+  { key: "at_shop", label: "Back at the shop", sub: null, at: null, state: "todo" },
+  { key: "return_received", label: "Received by the shop", sub: "Your deposit comes back within 48 hours", at: null, state: "todo" },
+];
+
+const HOME = {
+  id: 17,
+  address: "Lodha Bellissimo, Mahalaxmi, Mumbai",
+  address_line_1: "Flat 12B",
+  address_line_2: "Opposite the race course",
+  locality: "Mahalaxmi, Mumbai",
+  address_type: "home",
+  label: "",
+  coordinates: { lat: 18.9827, long: 72.8205 },
+} as BookingCustomer["delivery_address"];
+
+const courierBooking = (courier: Partial<CourierBlock> = {}, over: Partial<BookingCustomer> = {}) =>
+  booking({
+    delivery_mode: "owner_delivery",
+    delivered_by: "renit",
+    delivery_address: HOME,
+    shop: { ...booking().shop, address: null, coordinates: null },
+    day: { call_number: "+912212345678", call_from: "2026-10-24T02:30:00Z", my_status: "", their_status: "", no_show_from: null, handover_code: null },
+    can: ["refuse_at_door", "capture_handover", "get_help"],
+    courier: {
+      state: "rider_assigned",
+      steps: STEPS,
+      banner: null,
+      seal: "R-1042",
+      rider: { name: "Ravi", vehicle: "Bike", plate: "MH02AB1" },
+      return: { state: "not_set", window: null, earliest: "2026-10-26", seal: null },
+      attempt: 1,
+      not_delivered_reason: null,
+      open_by: null,
+      ...courier,
+    },
+    ...over,
+  });
+
+describe("B1, the courier's day of the handover (C3, C4)", () => {
+  it("draws the server's outbound steps, the time before a done step's words and the server's now as next", () => {
+    expect(courierRows(STEPS, "out", NOW)).toEqual([
+      { label: "Packed and sealed", sub: "7:40 am · Seal R-1042", state: "done" },
+      { label: "Rider booked", sub: "7:50 am · Ravi, Bike MH02AB1", state: "done" },
+      { label: "Picked up", sub: "On the way to you, arriving Sat 24 Oct, 10:00 to 11:00 am", state: "next" },
+      { label: "Delivered", sub: "", state: "todo" },
+      { label: "Opened on camera", sub: "Your rental has started", state: "todo" },
+    ]);
+  });
+
+  it("the return screen draws the return leg, from the return window on", () => {
+    expect(courierRows(STEPS, "return", NOW).map((row) => row.label)).toEqual([
+      "Pick a return window",
+      "Rider booked",
+      "Picked up",
+      "Back at the shop",
+      "Received by the shop",
+    ]);
+  });
+
+  it("draws nothing it was not sent, and every step as outbound when the server sends no return leg", () => {
+    expect(courierRows(undefined, "out", NOW)).toEqual([]);
+    expect(courierRows(STEPS.slice(0, 2), "out", NOW)).toHaveLength(2);
+    expect(courierRows(STEPS.slice(0, 2), "return", NOW)).toEqual([]);
+    // A step done on another day says which.
+    expect(courierRows([{ ...STEPS[0], at: "2026-10-23T12:00:00Z" }], "out", NOW)[0].sub).toBe("5:30 pm on Fri 23 Oct · Seal R-1042");
+  });
+
+  it("the desk's banner takes the notice's tones, and a tone this build does not know is plain information", () => {
+    expect(bannerTone({ tone: "info" })).toBe("brand");
+    expect(bannerTone({ tone: "warn" })).toBe("warning");
+    expect(bannerTone({ tone: "bad" })).toBe("danger");
+    expect(bannerTone({ tone: "loud" as "info" })).toBe("brand");
+  });
+
+  it("the courier partner brings it, and once delivered it is here", () => {
+    expect(dayOfCopy(courierBooking(), NOW)).toMatchObject({
+      title: "Your Sony PS5 arrives today",
+      place: { name: "Renit courier partner brings it to Home" },
+      window: "10:00 – 11:00 am",
+    });
+    expect(dayOfCopy(courierBooking({ state: "delivered", open_by: "2026-10-24T04:42:00Z" }), NOW).title).toBe("Your Sony PS5 is here");
+  });
+
+  it("a shop delivery, and a booking from a server before B1, read as today", () => {
+    const shop = booking({ delivery_mode: "owner_delivery", delivery_address: HOME, delivered_by: "shop" });
+    const old = booking({ delivery_mode: "owner_delivery", delivery_address: HOME });
+    for (const b of [shop, old]) {
+      expect(dayOfCopy(b, NOW).place.name).toBe("SoundBox Rentals brings it to Home");
+      expect(callCopy("customer", b.day, "SoundBox Rentals", NOW)).toEqual(callCopy("customer", b.day, "SoundBox Rentals", NOW, false));
+    }
+    expect(callCopy("customer", shop.day, "SoundBox Rentals", NOW).label).toBe("Call the shop");
+  });
+
+  it("calls go to Renit's desk", () => {
+    expect(callCopy("customer", courierBooking().day, "", NOW, true)).toEqual({
+      label: "Call via Renit",
+      number: "+912212345678",
+      note: "Calls go through Renit, so your number stays private.",
+    });
+    const noLine = callCopy("customer", { call_number: null, call_from: null }, "", NOW, true);
+    expect(noLine.number).toBeNull();
+    expect(noLine.label).toBe("Call via Renit");
+  });
+
+  it("the customer may record from the moment the rider has it", () => {
+    expect(courierMayRecord(courierBooking().courier)).toBe(false);
+    expect(courierMayRecord({ state: "picked_up" })).toBe(true);
+    expect(courierMayRecord({ state: "delivered" })).toBe(true);
+    expect(courierMayRecord({ state: "with_customer" })).toBe(false);
+    expect(courierMayRecord({ state: null })).toBe(false);
+    expect(courierMayRecord(undefined)).toBe(false);
+  });
+
+  it("counts down to open_by on the server's clock", () => {
+    const openBy = "2026-10-24T04:42:00Z";
+    expect(openByLine(openBy, new Date("2026-10-24T04:16:00Z"))).toBe("26 min left. After that, we take it that it arrived fine.");
+    expect(openByLine(openBy, new Date("2026-10-24T04:41:30Z"))).toBe("1 min left. After that, we take it that it arrived fine.");
+    expect(openByLine(openBy, new Date("2026-10-24T04:42:00Z"))).toMatch(/^The 30 minutes are up/);
+    expect(openByLine(null, NOW)).toMatch(/^Start recording as soon as the rider hands it to you/);
+  });
+
+  it("names the seal at the door when the server sent it", () => {
+    expect(courierDoorTips("R-1042")[1]).toBe("Check seal R-1042 is unbroken. Broken seal or crushed box? Don't open it: record it first.");
+    expect(courierDoorTips(null)[1]).toMatch(/^Check the seal is unbroken/);
+  });
+});
+
+describe("B1, problem at the door (row 19)", () => {
+  it("a broken seal or box is on Renit, and needs no words", () => {
+    for (const problem of ["seal_broken", "box_damaged"] as const) {
+      expect(refuseCopy(courierBooking(), 2, problem).notice).toBe(
+        "Damage on the way is on Renit, not you. Renit decides within one day: if the trip damaged it, you get everything back, the courier fee included."
+      );
+      expect(refuseHold("", 1, problem)).toBeNull();
+      expect(refuseHold("", 0, problem)).toBe("Add at least one photo.");
+    }
+  });
+
+  it("anything else is decided as today, and the courier trips used are kept", () => {
+    expect(refuseCopy(courierBooking(), 2).notice).toBe(
+      "Renit decides within one day. If we agree, you get everything back, including the ₹99. If we don't, it counts as cancelling inside 24 hours and one day's rent (₹610) goes to the shop, and Renit keeps the courier fee for the trips already used."
+    );
+    expect(refuseHold("", 1, "not_as_described")).toBe("Say what is different from the listing.");
+  });
+
+  it("a shop booking's notice does not change with the problem", () => {
+    expect(refuseCopy(booking(), 6, "seal_broken")).toEqual(refuseCopy(booking(), 6));
+  });
+});
+
+describe("B1, the courier's refusals", () => {
+  it("each says what to do", () => {
+    expect(dayErrorText(err("courier_booking"), NOW)).toMatch(/^Renit's courier partner carries this booking/);
+    expect(dayErrorText(err("window_taken"), NOW)).toBe("That slot has just filled. Pick another.");
+    expect(dayErrorText(err("window_closed"), NOW)).toMatch(/^That window can't be picked any more/);
+    expect(dayErrorText(err("capture_missing"), NOW)).toBe("Record the item on camera first.");
+    expect(dayErrorText(err("other_side"), NOW)).toBe("The other side of the booking does this, not you.");
+  });
+});
+
+describe("B1, the return window (C6)", () => {
+  it("the last day, with no late fee", () => {
+    expect(returnWindowCopy({ day: "2026-10-26", earliest: "2026-10-26" }, "2026-10-26", false, "2026-10-25")).toEqual({
+      title: "When should the rider collect it?",
+      sub: "Mon 26 Oct · the Renit courier partner collects it in the window you pick",
+      note: null,
+    });
+    expect(returnWindowCopy({ day: "2026-10-26", earliest: "2026-10-26" }, "2026-10-26", true, "2026-10-25").title).toBe("Change your return window");
+  });
+
+  it("a last day with no courier slot moves the return, with no late fee", () => {
+    expect(returnWindowCopy({ day: "2026-10-27", earliest: "2026-10-27" }, "2026-10-26", false, "2026-10-25").note).toBe(
+      "There is no courier slot on your last day, so it is due back on Tue 27 Oct with no late fee."
+    );
+  });
+
+  it("a day offered after the no-fee day: the record by then stops the late clock (F6), whenever the rider comes", () => {
+    expect(returnWindowCopy({ day: "2026-10-27", earliest: "2026-10-26" }, "2026-10-26", false, "2026-10-25").note).toBe(
+      "No slot is left on Mon 26 Oct. Record it and seal the bag by then and no late day is charged, even if the rider comes on Tue 27 Oct."
+    );
+  });
+
+  it("says nothing of a no-fee day that has already gone", () => {
+    expect(returnWindowCopy({ day: "2026-10-27", earliest: "2026-10-26" }, "2026-10-26", false, "2026-10-27").note).toBeNull();
+    expect(returnWindowCopy({ day: "2026-10-27", earliest: "2026-10-26" }, "2026-10-26", false, "2026-10-26").note).toMatch(/^No slot is left on Mon 26 Oct/);
+  });
+
+  it("a pick the desk has overtaken says to call, and a full slot says to pick another", () => {
+    expect(returnWindowErrorText(err("stage_not_allowed"))).toBe("The return window can't be changed now. Call via Renit to move it.");
+    expect(returnWindowErrorText(err("window_taken"))).toBe("That slot has just filled. Pick another.");
   });
 });

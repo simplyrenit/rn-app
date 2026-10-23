@@ -27,6 +27,53 @@ export function byRenit(
   return (x?.delivered_by ?? x?.delivery?.by) === "renit";
 }
 
+/**
+ * B1 (b1-plan §2): one step of a courier booking's tracker, outbound then return, written by the server in each side's
+ * words. The app draws the steps as they come and works none of them out, so a B2 state needs no release.
+ */
+export interface CourierStep {
+  key: string;
+  label: string;
+  sub: string | null;
+  /** When it was done; null until then. */
+  at: string | null;
+  state: "done" | "now" | "todo";
+}
+
+/** A line the desk typed (a delay, a rider changed), shown above the tracker; null when there is none. */
+export interface CourierBanner {
+  tone: "info" | "warn" | "bad";
+  title: string;
+  body: string;
+}
+
+export interface CourierRider {
+  name: string | null;
+  vehicle: string | null;
+  plate: string | null;
+  /** The aggregator's OTP: the shop's side only. */
+  otp?: string | null;
+}
+
+/** Where the return leg stands. A state this build does not know is drawn from the steps all the same. */
+export type CourierReturnState =
+  | "not_set"
+  | "set"
+  | "dispatching"
+  | "rider_assigned"
+  | "picked_up"
+  | "at_shop"
+  | "self_return"
+  | "attempt_failed";
+
+export interface CourierReturn {
+  state: CourierReturnState;
+  window: { from: string; to: string } | null;
+  /** The first day the rider can collect it with no late fee: the last day, or the next open day when that has no slot. */
+  earliest: string;
+  seal: string | null;
+}
+
 /** `delivery` on a search result or product with `?deliver_address=` (API-CONTRACT §5.5). */
 export interface ListingDelivery {
   to_me: boolean;

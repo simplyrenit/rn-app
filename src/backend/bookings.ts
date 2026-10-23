@@ -250,6 +250,22 @@ export async function answerWindowChange(number: string, accept: boolean): Promi
   ).data.booking;
 }
 
+/**
+ * B1: the slots Renit's courier partner can collect the return in (`courier_windows`). `day` is the day offered, `earliest`
+ * the first day with no late fee (the last day, or the next open day when that has no slot).
+ */
+export async function fetchReturnWindows(number: string): Promise<{ day: string; earliest: string; windows: TimeWindow[] }> {
+  return (
+    await axiosInstance.get<{ day: string; earliest: string; windows: TimeWindow[] }>(bookingUrl(number, "return-window/"))
+  ).data;
+}
+
+/** Picks one. `409 window_taken` when it has just filled, `window_closed` when it is no longer offered. */
+export async function setReturnWindow(number: string, start: string): Promise<BookingCustomer> {
+  return (await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "return-window/"), { start })).data
+    .booking;
+}
+
 // ---- The Rentals tab (ENG-177) -----------------------------------------------------------------
 
 /**

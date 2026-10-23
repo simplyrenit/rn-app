@@ -6,7 +6,7 @@ import { placeNow, recordVideo, recoverLostShot, takePhoto } from "@/components/
 import { CameraOffNotice } from "@/components/capture/camera-off";
 import { CODE_LENGTH, CodeInput } from "@/components/capture/code";
 import { UploadBar } from "@/components/capture/record-card";
-import { Button, SubpageHeader, Text } from "@/components/core";
+import { Button, SubpageHeader, Text, TextField } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
@@ -23,6 +23,9 @@ import {
   reopenForMissing,
   reopenedText,
   canSeal,
+  needsSealNumber,
+  sealNumberOf,
+  setSealNumber,
   captureHeading,
   captureId,
   chooseList,
@@ -46,6 +49,7 @@ import {
   setIdMatch,
   setVideo,
   shotChip,
+  listFor,
   startDraft,
   tick,
   uploadProgress,
@@ -60,7 +64,7 @@ import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { ArrowUturnLeftIcon, CameraIcon, CheckCircleIcon, ClockIcon, EyeIcon } from "react-native-heroicons/outline";
 import { CheckIcon } from "react-native-heroicons/solid";
@@ -390,6 +394,8 @@ export default function CaptureScreen() {
 
   const draft = useCaptureDraft(number, moment, side);
   const listQuery = useShotList(number);
+  // The list this record walks: on a courier booking the owner's handover record also asks for the seal (B1).
+  const fetched = useMemo(() => listFor(listQuery.data, moment, side), [listQuery.data, moment, side]);
   // The copy of this booking's list the phone kept from an earlier read: undefined until looked for, null when there is none.
   const [kept, setKept] = useState<ShotList | null | undefined>(undefined);
   useEffect(() => {
@@ -406,8 +412,8 @@ export default function CaptureScreen() {
   const chosen =
     ready && !draft
       ? chooseList({
-          fetched: listQuery.data,
-          kept,
+          fetched,
+          kept: listFor(kept, moment, side),
           offline: listQuery.isError || noWait,
           idMatch: Boolean(params.id_match),
         })
@@ -429,7 +435,7 @@ export default function CaptureScreen() {
   const update = (fn: (d: CaptureDraft) => CaptureDraft) => captureQueue.update(id, fn);
 
   // Staff can change a list without a release: a draft takes the newer one, keeping its photos.
-  const fresh = listQuery.data;
+  const fresh = fetched;
   useEffect(() => {
     if (fresh && draft && !draft.done) captureQueue.update(id, (d) => withList(d, fresh));
     // Only when a newer list arrives.
@@ -515,7 +521,9 @@ export default function CaptureScreen() {
         });
       }
     }
-    captureQueue.start(startDraft({ number, moment, side, forOther, list: chosen.list, generic: chosen.source === "generic" }));
+    captureQueue.start(
+      startDraft({ number, moment, side, forOther, list: chosen.list, generic: chosen.source === "generic", courier: params.courier })
+    );
   };
 
   const confirmCode = async () => {
@@ -591,6 +599,13 @@ export default function CaptureScreen() {
                 </Notice>
               ) : null}
               <CameraOffNotice>Camera access is off for Renit, so the photos and video can't be taken. Allow it in Settings.</CameraOffNotice>
+              {params.courier ? (
+                // B1: a clip whose camera saved the place is refused (`keepVideo`); say so before it is shot, not after.
+                <Notice tone="warning" icon="warning">
+                  Turn off location tags in your camera app's settings before you start. A video that saves where you are
+                  can't be used, so the shop never learns your address.
+                </Notice>
+              ) : null}
               <Intro
                 list={list}
                 side={role}
@@ -750,7 +765,7 @@ export default function CaptureScreen() {
       // Which slot the camera is open for is kept with the record first: if the
       // system closes the app under the camera, the photo still finds its place.
       update((d) => withShooting(d, { shot: shot.key }));
-      const [uri, place] = await Promise.all([takePhoto(), placeNow()]);
+      const [uri, place] = await Promise.all([takePhoto({ courier: draft.courier }), placeNow()]);
       if (!uri) {
         update((d) => withShooting(d, null));
         return;
@@ -763,7 +778,7 @@ export default function CaptureScreen() {
   const record = () =>
     withCamera(async () => {
       update((d) => withShooting(d, "video"));
-      const video = await recordVideo();
+      const video = await recordVideo({ courier: draft.courier });
       if (!video) {
         update((d) => withShooting(d, null));
         return;
@@ -891,6 +906,25 @@ export default function CaptureScreen() {
                 />
               </Panel>
             ) : null}
+            {needsSealNumber(draft) ? (
+              <View style={{ gap: space.xs }}>
+                <Text fontSize="text-sm" fontWeight="font-bold">
+                  The seal's number
+                </Text>
+                <Text fontSize="text-sm" tone="body">
+                  Close the bag with the spare seal, then type the number printed on it. The shop checks it is unbroken.
+                </Text>
+                <TextField
+                  value={draft.sealNumber ?? ""}
+                  onChangeText={(typed) => update((d) => setSealNumber(d, typed))}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  maxLength={20}
+                  placeholder="R-1042"
+                  accessibilityLabel="The seal's number"
+                />
+              </View>
+            ) : null}
             <Text fontSize="text-sm" fontWeight="font-bold">
               Your photos and video
             </Text>
@@ -903,7 +937,9 @@ export default function CaptureScreen() {
           <BottomBar>
             {!canSeal(draft) ? (
               <Text fontSize="text-sm" tone="body">
-                Tick the ID check to finish.
+                {needsSealNumber(draft) && !sealNumberOf(draft.sealNumber)
+                  ? "Type the seal's number (letters, digits and dashes) to finish."
+                  : "Tick the ID check to finish."}
               </Text>
             ) : null}
             <Button disabled={!canSeal(draft)} onPress={() => (commitFeedback(), update(seal))}>
