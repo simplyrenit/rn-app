@@ -5,6 +5,7 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
   default: { getItem: jest.fn(), setItem: jest.fn() },
 }));
 jest.mock("expo-device", () => ({ modelName: "iPhone 15", deviceName: "Asha's iPhone" }));
+jest.mock("expo-application", () => ({ nativeApplicationVersion: "2.1.0" }));
 
 import { makeDeviceInfo, sessionBody } from "../device";
 
@@ -41,13 +42,27 @@ describe("sessionBody", () => {
   const info = { device_id: "dev-1", device_name: "iPhone 15", platform: "ios" as const };
 
   it("carries the token with the device fields when the phone has one", () => {
-    expect(sessionBody("ExponentPushToken[abc]", info)).toEqual({ expo_push_token: "ExponentPushToken[abc]", ...info });
+    expect(sessionBody("ExponentPushToken[abc]", info, null)).toEqual({ expo_push_token: "ExponentPushToken[abc]", ...info });
   });
 
   it("carries the device fields alone when it has none", () => {
-    expect(sessionBody(undefined, info)).toEqual(info);
-    expect(sessionBody(null, info)).toEqual(info);
-    expect(sessionBody("", info)).toEqual(info);
-    expect(sessionBody(undefined, info)).not.toHaveProperty("expo_push_token");
+    expect(sessionBody(undefined, info, null)).toEqual(info);
+    expect(sessionBody(null, info, null)).toEqual(info);
+    expect(sessionBody("", info, null)).toEqual(info);
+    expect(sessionBody(undefined, info, null)).not.toHaveProperty("expo_push_token");
+  });
+
+  it("carries the app's own version, with a token or without", () => {
+    expect(sessionBody("ExponentPushToken[abc]", info)).toEqual({
+      expo_push_token: "ExponentPushToken[abc]",
+      ...info,
+      app_version: "2.1.0",
+    });
+    expect(sessionBody(undefined, info)).toEqual({ ...info, app_version: "2.1.0" });
+  });
+
+  it("leaves the version out when the app has none to give", () => {
+    expect(sessionBody(undefined, info, null)).not.toHaveProperty("app_version");
+    expect(sessionBody(undefined, info, "")).not.toHaveProperty("app_version");
   });
 });
