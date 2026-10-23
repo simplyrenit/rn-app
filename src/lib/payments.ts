@@ -16,8 +16,8 @@
  *    out is the server's to say (the page itself, or `confirm` answering `expired`).
  *
  * The pay page of an open payment is not kept on the phone: it rides on the
- * booking (`pay_now.payment`), so any phone can resume it. What is kept is one
- * small note of the payment in flight, only so a restarted app can ask about it.
+ * booking (`pay_now.payment`), so any phone can resume it. What is kept is a
+ * small note per payment in flight, only so a restarted app can ask about it.
  */
 import { PAYMENTS_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
@@ -193,12 +193,15 @@ export function startPayment(payment: PaymentHandoff): Promise<PayResult> {
   return run;
 }
 
-// ---- The payment in flight: a note for the next app start --------------------------------
+// ---- Payments in flight: notes for the next app start --------------------------------
 
 const PENDING_KEY = "renit-pending-payment";
 
 /** Tidying only: a note this old is about a payment nobody is in the middle of. */
 const NOTE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/** Up to three cards in flight at once (cart plan D49), with room for a page opened again. */
+const MAX_NOTES = 5;
 
 interface PaymentNote {
   /** Whose payment it is: another account on this phone must not be sent to it. */
@@ -210,54 +213,69 @@ interface PaymentNote {
   at: number;
 }
 
+/** The notes younger than a day, oldest first. */
+async function readNotes(): Promise<PaymentNote[]> {
+  try {
+    const stored = JSON.parse((await AsyncStorage.getItem(PENDING_KEY)) ?? "null");
+    // A build before the cart (ENG-323) kept one note, not a list.
+    const notes: PaymentNote[] = Array.isArray(stored) ? stored : stored ? [stored] : [];
+    return notes.filter((note) => note?.booking && note.payment_id && Date.now() - note.at < NOTE_MAX_AGE_MS);
+  } catch {
+    return [];
+  }
+}
+
+let editing: Promise<void> = Promise.resolve();
+
+/** One change at a time, so two payments settling together do not write over each other. */
+function editNotes(change: (notes: PaymentNote[]) => PaymentNote[]): Promise<void> {
+  editing = editing.then(async () => {
+    const notes = change(await readNotes());
+    try {
+      if (notes.length) await AsyncStorage.setItem(PENDING_KEY, JSON.stringify(notes));
+      else await AsyncStorage.removeItem(PENDING_KEY);
+    } catch {
+      // Only a convenience: the server knows the payment.
+    }
+  });
+  return editing;
+}
+
 /**
  * Notes which payment was handed to the pay page, because the phone may close
  * the app while the customer is in the browser or a UPI app. Nothing is read
  * back from it but "which payment to ask rn-api about, and which booking to
- * open": the pay page itself always comes from the booking.
- * ponytail: one note; a second payment in flight replaces the first, whose
- * booking still shows the truth when opened. Keep a list if that ever bites.
+ * open": the pay page itself always comes from the booking. Each payment has its
+ * own note (cart plan D30), so a second card's page in flight does not lose the
+ * first; the same payment noted again moves to newest.
  */
-export async function notePayment(user: string, booking: string, paymentId: string): Promise<void> {
+export function notePayment(user: string, booking: string, paymentId: string): Promise<void> {
   const note: PaymentNote = { user, booking, payment_id: paymentId, at: Date.now() };
-  try {
-    await AsyncStorage.setItem(PENDING_KEY, JSON.stringify(note));
-  } catch {
-    // Only a convenience: the server knows the payment.
-  }
+  return editNotes((notes) => [...notes.filter((n) => n.payment_id !== paymentId), note].slice(-MAX_NOTES));
 }
 
-export async function forgetPayment(): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(PENDING_KEY);
-  } catch {
-    // As above.
-  }
+/** Forgets one payment's note; the others in flight stay. */
+export function forgetPayment(paymentId: string): Promise<void> {
+  return editNotes((notes) => notes.filter((n) => n.payment_id !== paymentId));
 }
 
 /**
- * For app start, once it is known who is signed in: if this person had a
- * payment in flight when the app last closed, ask rn-api about it once (which
- * also moves the booking on if it was paid) and return the booking's number so
- * the app can open it. Null when there is nothing of theirs to ask about.
+ * For app start, once it is known who is signed in, and for a stray return link:
+ * if this person has a payment in flight, ask rn-api about it once (which also
+ * moves the booking on if it was paid) and return the booking's number so the
+ * app can open it. With `paymentId` (from a return link) only that payment's note
+ * counts; without, the newest of theirs. Null when there is nothing of theirs to
+ * ask about.
  */
-export async function resumePayment(user: string): Promise<string | null> {
-  let note: PaymentNote | null = null;
-  try {
-    note = JSON.parse((await AsyncStorage.getItem(PENDING_KEY)) ?? "null") as PaymentNote | null;
-  } catch {
-    return null;
-  }
-  if (!note?.booking || !note.payment_id) return null;
-  if (!(Date.now() - note.at < NOTE_MAX_AGE_MS)) {
-    await forgetPayment();
-    return null;
-  }
-  // Someone else's: left alone, for when they sign back in (or until it is a day old).
-  if (note.user !== user) return null;
+export async function resumePayment(user: string, paymentId?: string | null): Promise<string | null> {
+  await editing;
+  // Someone else's are left alone, for when they sign back in (or until they are a day old).
+  const mine = (await readNotes()).filter((n) => n.user === user);
+  const note = paymentId ? mine.find((n) => n.payment_id === paymentId) : mine[mine.length - 1];
+  if (!note) return null;
   try {
     const { payment } = await confirmPayment(note.payment_id);
-    if (payment.status !== "created" && payment.status !== "failed") await forgetPayment();
+    if (payment.status !== "created" && payment.status !== "failed") await forgetPayment(note.payment_id);
   } catch {
     // The booking screen asks the server itself when it opens.
   }
@@ -270,17 +288,17 @@ export async function resumePayment(user: string): Promise<string | null> {
  * after the first time the app comes back to the front, so a customer who looks at
  * Renit for a moment, pays later and taps "Back to Renit" sends a link no one hears.
  * When one arrives and no `startPayment` is in flight for its payment, ask rn-api
- * once the way a restart does (`resumePayment`) and hand the booking to open to
+ * once about that payment's note (`resumePayment`) and hand its booking to
  * `onBooking`. Still only a nudge: nothing is marked paid from the link.
- * A link that launches the app from closed needs no listener of its own: the start
- * asks about the noted payment anyway.
+ * A link that launches the app from closed comes as `Linking.getInitialURL()`
+ * instead, which the start reads.
  */
 export function watchStrayReturns(user: string, onBooking: (number: string) => void): () => void {
   let stopped = false;
   const subscription = Linking.addEventListener("url", ({ url }) => {
     const back = parsePayReturn(url);
     if (!back || inFlight.has(back.payment_id)) return;
-    void resumePayment(user).then((number) => {
+    void resumePayment(user, back.payment_id).then((number) => {
       if (number && !stopped) onBooking(number);
     });
   });

@@ -13,6 +13,7 @@ import axiosInstance from "../networkUtils";
 import {
   PaymentStatus,
   askUntilSettled,
+  forgetPayment,
   notePayment,
   parsePayReturn,
   resumePayment,
@@ -200,61 +201,120 @@ describe("startPayment", () => {
   });
 });
 
-describe("the note of a payment in flight", () => {
-  const note = (over: Record<string, unknown> = {}) =>
-    JSON.stringify({ user: "asha", booking: "RN-24831", payment_id: PAY_ID, at: Date.now(), ...over });
+describe("the notes of payments in flight", () => {
+  const KEY = "renit-pending-payment";
+  const A = { user: "asha", booking: "RN-24831", payment_id: PAY_ID };
+  const B = { user: "asha", booking: "RN-24832", payment_id: "pay_B" };
+  /** AsyncStorage as a map, so what one call writes the next one reads. */
+  let store: Map<string, string>;
+  const notes = () => JSON.parse(store.get(KEY) ?? "[]") as { booking: string; payment_id: string }[];
+  const keep = (...list: object[]) => store.set(KEY, JSON.stringify(list.map((n) => ({ at: Date.now(), ...n }))));
+  const paidFor = (status: PaymentStatus) => post.mockResolvedValue(answer(status));
 
   beforeEach(() => {
     jest.clearAllMocks();
+    store = new Map();
+    storage.getItem.mockImplementation(async (key: string) => store.get(key) ?? null);
+    storage.setItem.mockImplementation(async (key: string, value: string) => void store.set(key, value));
+    storage.removeItem.mockImplementation(async (key: string) => void store.delete(key));
   });
 
   it("keeps whose payment it is, the booking and the payment id, and no pay page", async () => {
     await notePayment("asha", "RN-24831", PAY_ID);
-    const [key, value] = storage.setItem.mock.calls[0];
-    expect(key).toBe("renit-pending-payment");
-    expect(JSON.parse(value)).toMatchObject({ user: "asha", booking: "RN-24831", payment_id: PAY_ID });
-    expect(value).not.toMatch(/checkout|expires/);
+    expect(notes()).toEqual([expect.objectContaining(A)]);
+    expect(store.get(KEY)).not.toMatch(/checkout|expires/);
   });
 
-  it("on app start asks rn-api once and names the booking to open", async () => {
-    storage.getItem.mockResolvedValue(note());
-    post.mockResolvedValue(answer("paid"));
-    await expect(resumePayment("asha")).resolves.toBe("RN-24831");
+  it("keeps a second payment in flight beside the first, and one noted again as the newest", async () => {
+    await notePayment("asha", A.booking, A.payment_id);
+    await notePayment("asha", B.booking, B.payment_id);
+    expect(notes().map((n) => n.payment_id)).toEqual([PAY_ID, "pay_B"]);
+    await notePayment("asha", A.booking, A.payment_id);
+    expect(notes().map((n) => n.payment_id)).toEqual(["pay_B", PAY_ID]);
+  });
+
+  it("keeps the five newest", async () => {
+    for (let i = 1; i <= 6; i++) await notePayment("asha", `RN-${i}`, `pay_${i}`);
+    expect(notes().map((n) => n.payment_id)).toEqual(["pay_2", "pay_3", "pay_4", "pay_5", "pay_6"]);
+  });
+
+  it("forgets one payment and leaves the others in flight", async () => {
+    keep(A, B);
+    await forgetPayment(PAY_ID);
+    expect(notes().map((n) => n.payment_id)).toEqual(["pay_B"]);
+    await forgetPayment("pay_B");
+    expect(store.has(KEY)).toBe(false);
+  });
+
+  it("loses neither change when a note and a forget run together", async () => {
+    keep(A);
+    await Promise.all([notePayment("asha", B.booking, B.payment_id), forgetPayment(PAY_ID)]);
+    expect(notes().map((n) => n.payment_id)).toEqual(["pay_B"]);
+  });
+
+  it("on app start asks rn-api once about the newest and names its booking", async () => {
+    keep(A, B);
+    paidFor("paid");
+    await expect(resumePayment("asha")).resolves.toBe("RN-24832");
     expect(post).toHaveBeenCalledTimes(1);
-    expect(post).toHaveBeenCalledWith(`https://api.test/payments/${PAY_ID}/confirm/`, {});
-    expect(storage.removeItem).toHaveBeenCalled();
+    expect(post).toHaveBeenCalledWith("https://api.test/payments/pay_B/confirm/", {});
+    // Settled, so forgotten; the other card's payment is still in flight.
+    expect(notes().map((n) => n.payment_id)).toEqual([PAY_ID]);
   });
 
-  it("keeps the note while the payment is still open", async () => {
-    storage.getItem.mockResolvedValue(note());
-    post.mockResolvedValue(answer("created"));
+  it("resumes the payment the return link names, not the newest, and keeps the other (QA 5)", async () => {
+    keep(A, B);
+    paidFor("paid");
+    await expect(resumePayment("asha", PAY_ID)).resolves.toBe("RN-24831");
+    expect(post).toHaveBeenCalledWith(`https://api.test/payments/${PAY_ID}/confirm/`, {});
+    expect(notes().map((n) => n.payment_id)).toEqual(["pay_B"]);
+  });
+
+  it("opens nothing for a return link whose payment it has no note of", async () => {
+    keep(A);
+    await expect(resumePayment("asha", "pay_unknown")).resolves.toBeNull();
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it("keeps the note while the payment is still open, or failed and can be tried again", async () => {
+    keep(A);
+    paidFor("created");
     await expect(resumePayment("asha")).resolves.toBe("RN-24831");
-    expect(storage.removeItem).not.toHaveBeenCalled();
+    paidFor("failed");
+    await expect(resumePayment("asha")).resolves.toBe("RN-24831");
+    expect(notes()).toHaveLength(1);
   });
 
   it("never sends another account on this phone to someone else's booking", async () => {
-    storage.getItem.mockResolvedValue(note());
+    keep(A);
     await expect(resumePayment("ravi")).resolves.toBeNull();
+    await expect(resumePayment("ravi", PAY_ID)).resolves.toBeNull();
     expect(post).not.toHaveBeenCalled();
     // Left for its owner.
-    expect(storage.removeItem).not.toHaveBeenCalled();
+    expect(notes()).toHaveLength(1);
   });
 
-  it("tidies away a note a day old without asking about it", async () => {
-    storage.getItem.mockResolvedValue(note({ at: Date.now() - 25 * 60 * 60 * 1000 }));
+  it("does not ask about a note a day old, and tidies it away at the next change", async () => {
+    keep({ ...A, at: Date.now() - 25 * 60 * 60 * 1000 });
     await expect(resumePayment("asha")).resolves.toBeNull();
     expect(post).not.toHaveBeenCalled();
-    expect(storage.removeItem).toHaveBeenCalledWith("renit-pending-payment");
+    await notePayment("asha", B.booking, B.payment_id);
+    expect(notes().map((n) => n.payment_id)).toEqual(["pay_B"]);
+  });
+
+  it("reads the one note a build before the list left", async () => {
+    store.set(KEY, JSON.stringify({ ...A, at: Date.now() }));
+    paidFor("created");
+    await expect(resumePayment("asha")).resolves.toBe("RN-24831");
   });
 
   it("still opens the booking when rn-api cannot be reached", async () => {
-    storage.getItem.mockResolvedValue(note());
+    keep(A);
     post.mockRejectedValue(new Error("Network Error"));
     await expect(resumePayment("asha")).resolves.toBe("RN-24831");
   });
 
   it("does nothing on app start when no payment was in flight", async () => {
-    storage.getItem.mockResolvedValue(null);
     await expect(resumePayment("asha")).resolves.toBeNull();
     expect(post).not.toHaveBeenCalled();
   });
@@ -264,7 +324,10 @@ describe("watchStrayReturns", () => {
   let onUrl: (event: { url: string }) => void;
   let remove: Mock;
   const settle = () => new Promise((resolve) => setImmediate(resolve));
-  const note = { user: "yash", booking: "RN-24831", payment_id: PAY_ID, at: Date.now() };
+  const notes = [
+    { user: "yash", booking: "RN-24831", payment_id: PAY_ID, at: Date.now() },
+    { user: "yash", booking: "RN-24832", payment_id: "pay_B", at: Date.now() },
+  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -275,7 +338,7 @@ describe("watchStrayReturns", () => {
     }) as never);
     jest.spyOn(AppState, "addEventListener").mockImplementation((() => ({ remove: jest.fn() })) as never);
     jest.spyOn(Linking, "openURL").mockResolvedValue(true as never);
-    storage.getItem.mockResolvedValue(JSON.stringify(note));
+    storage.getItem.mockResolvedValue(JSON.stringify(notes));
   });
   afterEach(() => {
     jest.restoreAllMocks();
@@ -290,6 +353,16 @@ describe("watchStrayReturns", () => {
     expect(post).toHaveBeenCalledTimes(1);
     expect(post).toHaveBeenCalledWith(`https://api.test/payments/${PAY_ID}/confirm/`, {});
     expect(opened).toHaveBeenCalledWith("RN-24831");
+  });
+
+  it("opens the booking of the payment the link names, not the newest note's", async () => {
+    post.mockResolvedValue(answer("paid"));
+    const opened = jest.fn();
+    watchStrayReturns("yash", opened);
+    onUrl({ url: "renit://pay/return?payment_id=pay_B" });
+    await settle();
+    expect(post).toHaveBeenCalledWith("https://api.test/payments/pay_B/confirm/", {});
+    expect(opened).toHaveBeenCalledWith("RN-24832");
   });
 
   it("leaves other links alone, and does not ask while startPayment is waiting for this payment", async () => {

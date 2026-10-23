@@ -45,8 +45,8 @@ export function usePay(
         if (result === "failed" || result === "pending") {
           setPhase(result);
         } else {
-          // Paid, or rn-api says the page is over: nothing is in flight any more.
-          await forgetPayment();
+          // Paid, or rn-api says the page is over: this payment is not in flight any more.
+          await forgetPayment(payment.payment_id);
           setPhase(result === "paid" ? "idle" : "ended");
         }
         callbacks.current.onResult(result);
