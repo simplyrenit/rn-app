@@ -145,7 +145,7 @@ export function CourierPack({ booking, courier, receivedAt }: Props) {
     >
       <View style={{ gap: 2 }}>
         <Text role="screenTitle" accessibilityRole="header">
-          Pack it for the courier
+          {packing ? "Pack it for the courier" : rider ? "Rider at your shop" : "Courier handover"}
         </Text>
         <Text fontSize="text-md" tone="body">
           {[booking.product.title, number, customerName(booking.customer)].join(" · ")}
@@ -241,6 +241,12 @@ export function CourierPack({ booking, courier, receivedAt }: Props) {
             disabled={running !== null}
             max={1}
           />
+          {!courier.seal ? (
+            // The desk may name the rider before Packed; the bag goes only once it is sealed.
+            <Text fontSize="text-sm" tone="body">
+              Tap Packed first: the rider takes it only once it is sealed.
+            </Text>
+          ) : null}
           {error && !packing ? (
             <Text fontSize="text-sm" tone="danger" accessibilityRole="alert">
               {error}
