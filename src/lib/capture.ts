@@ -49,6 +49,8 @@ export interface ShotList {
   included_items_source?: "listing" | "category" | "generic";
   /** The owner looks at the customer's ID at the handover and ticks that the name matches. */
   id_match_required: boolean;
+  /** B1, a booking Renit's courier carries: one more shot for the owner's handover record, the sealed bag (ENG-303). */
+  seal_shot?: Shot;
 }
 
 export interface CaptureShot {
@@ -1170,6 +1172,16 @@ export function chooseList(input: {
   if (input.kept) return { list: input.kept, source: "kept" };
   if (input.kept === null && input.offline) return { list: genericShotList(input.idMatch), source: "generic" };
   return null;
+}
+
+/**
+ * The list one record walks: the owner's handover record on a courier booking ends with the seal shot, which Packed
+ * needs (the server refuses Packed until the record has it). Every other record walks the list as it is.
+ */
+export function listFor<L extends ShotList | null | undefined>(list: L, moment: Moment, side: Side): L {
+  const seal = list?.seal_shot;
+  if (!list || !seal || moment !== "handover" || side !== "owner" || list.shots.some((shot) => shot.key === seal.key)) return list;
+  return { ...list, shots: [...list.shots, seal] };
 }
 
 /** What the notice says about a list that did not come from the server just now. */

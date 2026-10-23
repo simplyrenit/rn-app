@@ -17,7 +17,9 @@ import {
   windowSummary,
 } from "@/lib/booking";
 import { isMonthly } from "@/lib/billing";
+import { DeliveredBy, byRenit } from "@/lib/delivery";
 import { kmText } from "@/lib/shop";
+import { COURIER_WAY, OwnerCourier, courierOf, packByText } from "@/lib/shop-courier";
 import { customerLine, customerName, whereText } from "@/lib/shop-ring";
 
 
@@ -110,6 +112,10 @@ export interface BookingShop {
   last_day: string;
   days: number;
   delivery_mode: DeliveryMode;
+  /** B1: `renit` when Renit's courier carries it both ways (the owner then sees the area only); absent is the shop. */
+  delivered_by?: DeliveredBy | null;
+  /** B1: the courier legs as the owner reads them; only on a `renit` booking. */
+  courier?: OwnerCourier | null;
   units: { in_use: number; quantity: number };
   money: ShopMoney;
   /** Null while ringing. */
@@ -234,8 +240,9 @@ export function shopPill(b: Pick<BookingShop, "stage" | "exit" | "exit_reason">)
   }
 }
 
-/** "Self pickup", "Delivery · 2.8 km". */
-export function howLine(b: Pick<BookingShop, "delivery_mode" | "customer">): string {
+/** "Self pickup", "Delivery · 2.8 km"; B1 "Renit courier". */
+export function howLine(b: Pick<BookingShop, "delivery_mode" | "customer" | "delivered_by">): string {
+  if (byRenit(b)) return COURIER_WAY;
   const km = b.customer.distance_km;
   return b.delivery_mode === "pickup" ? "Self pickup" : km ? `Delivery · ${kmText(km)}` : "Delivery";
 }
@@ -247,10 +254,13 @@ export function howLine(b: Pick<BookingShop, "delivery_mode" | "customer">): str
 export function cardNote(b: BookingShop, now: Date = new Date()): string | null {
   if (b.exit) return null;
   const today = todayIst(now);
+  const courier = courierOf(b);
+  // B1: before the seal, what the shop has to do by when; then the courier's window, never "Deliver".
+  if (courier?.pack_by && !courier.seal && (b.stage === "confirmed" || b.stage === "ready")) return packByText(courier.pack_by, now);
   if (b.stage === "ready" && b.window) {
     const day = dayOf(b.window.start);
     const when = day === today ? "today" : day ? dayShort(day) : "";
-    return `${b.delivery_mode === "pickup" ? "Collects" : "Deliver"} ${when}, ${windowLabel(b.window)}`;
+    return `${courier ? "Courier collects" : b.delivery_mode === "pickup" ? "Collects" : "Deliver"} ${when}, ${windowLabel(b.window)}`;
   }
   if (b.stage === "confirmed" && !b.window) return "Waiting for the customer to pick an arrival time";
   if (b.stage === "accepted") {
@@ -332,7 +342,7 @@ export function shopTimeline(b: BookingShop, now: Date = new Date()): TimelineRo
     ahead.push({ label: "Deposit", when: day ? `due ${dayShort(day)}` : "due before handover" });
   }
   if (before("confirmed", "ready")) {
-    ahead.push({ label: b.delivery_mode === "pickup" ? "Handover" : "Delivery", when: dayShort(b.first_day) });
+    ahead.push({ label: byRenit(b) ? "Courier collects" : b.delivery_mode === "pickup" ? "Handover" : "Delivery", when: dayShort(b.first_day) });
   }
   if (before("accepted", "confirmed", "ready", "out")) {
     const day = dayOf(b.return_by);
@@ -358,8 +368,12 @@ export function customerBlock(b: BookingShop, now: Date = new Date()): CustomerB
   let note: string | null = null;
   // ENG-282: an unpaid month is the desk's to chase, not the shop's.
   if (!b.exit && b.stage === "out" && isMonthly(b.money)) note = "Renit's desk follows up on unpaid months.";
+  const courier = byRenit(b);
   if (!b.exit && (b.stage === "confirmed" || b.stage === "ready")) {
-    note = from
+    note = courier
+      ? // B1: the two never meet; the desk line is the only number either side gets (A15).
+        "You don't meet the customer: Renit's courier carries it both ways. Call Renit's desk with any question."
+      : from
       ? `You can call each other from ${clock(from)}${dayOf(from) === todayIst(now) ? "" : ` on ${dayShort(dayOf(from) ?? "")}`}, before the handover.`
       : "You can call each other shortly before the handover, once an arrival time is picked.";
   }
@@ -368,7 +382,8 @@ export function customerBlock(b: BookingShop, now: Date = new Date()): CustomerB
     initial: b.customer.first_name.charAt(0).toUpperCase(),
     line: customerLine(b.customer),
     place: [b.customer.area || null, km ? kmText(km) : null].filter(Boolean).join(" · "),
-    address: typeof b.customer.address === "string" && b.customer.address ? b.customer.address : null,
+    // B1: never the customer's address on a courier booking, even from a server that sent one.
+    address: !courier && typeof b.customer.address === "string" && b.customer.address ? b.customer.address : null,
     note,
   };
 }
@@ -464,7 +479,8 @@ export function moneyView(b: BookingShop): MoneyView {
     earnLabel: plan ? "You earn a month" : "You earn",
     rent: money(plan ? plan.price : m.rent),
     // Per month, the delivery fee (paid with month 1) would not add up to "You earn a month": it is left out.
-    delivery: !plan && Number(m.delivery_fee) > 0 ? money(m.delivery_fee) : null,
+    // B1: the courier fee is Renit's, never the shop's, whatever the server sends.
+    delivery: !plan && !byRenit(b) && Number(m.delivery_fee) > 0 ? money(m.delivery_fee) : null,
     fee: {
       struck: Number.isFinite(shown) && shown > 0 && feeShown !== feeCharged ? money(feeShown) : null,
       charged: money(feeCharged),

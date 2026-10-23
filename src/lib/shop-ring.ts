@@ -1,5 +1,6 @@
 import type { ApiError } from "@/lib/api-error";
 import { DeliveryMode, RingState, clock, daysLabel, momentLabel, money, rangeLabel } from "@/lib/booking";
+import { DeliveredBy, byRenit } from "@/lib/delivery";
 import { correctedNow } from "@/lib/server-clock";
 import type { OpenState } from "@/lib/shop";
 import type { AnsweredVia, BookingShop } from "@/lib/shop-booking";
@@ -20,6 +21,8 @@ export interface Ring {
   last_day: string;
   days: number;
   delivery_mode: DeliveryMode;
+  /** B1: `renit` when Renit's courier carries it (the push's ring has it too); absent is the shop. */
+  delivered_by?: DeliveredBy | null;
   customer: {
     first_name: string;
     last_initial: string;
@@ -119,11 +122,15 @@ export function ringDates(ring: Pick<Ring, "first_day" | "last_day" | "days">): 
   return `${rangeLabel(ring.first_day, ring.last_day)} · ${daysLabel(ring.days)}`;
 }
 
+/** The way in two words: "Self pickup", "Delivery", B1's "Renit courier". */
+const wayWord = (b: Pick<Ring, "delivery_mode" | "delivered_by">) =>
+  byRenit(b) ? "Renit courier" : b.delivery_mode === "pickup" ? "Self pickup" : "Delivery";
+
 /** "Self pickup · Andheri East · 3.2 km". Never an address or a phone number: the ring carries none. */
-export function ringWhere(ring: Pick<Ring, "delivery_mode" | "customer">): string {
+export function ringWhere(ring: Pick<Ring, "delivery_mode" | "delivered_by" | "customer">): string {
   const km = ring.customer.distance_km;
   return [
-    ring.delivery_mode === "pickup" ? "Self pickup" : "Delivery",
+    wayWord(ring),
     ring.customer.area || null,
     km ? `${km} km` : null,
   ]
@@ -584,7 +591,7 @@ export function summaryOfRing(ring: Ring): RingSummary {
     image: ring.product.cover_image,
     range: rangeLabel(ring.first_day, ring.last_day),
     dates: ringDates(ring),
-    how: `${ring.delivery_mode === "pickup" ? "Self pickup" : "Delivery"} · ${customerName(ring.customer)}`,
+    how: `${wayWord(ring)} · ${customerName(ring.customer)}`,
     firstName: ring.customer.first_name,
     earn: money(ring.you_earn),
   };
@@ -596,7 +603,7 @@ export function summaryOfBooking(booking: BookingShop): RingSummary {
     image: booking.product.cover_image,
     range: rangeLabel(booking.first_day, booking.last_day),
     dates: ringDates(booking),
-    how: `${booking.delivery_mode === "pickup" ? "Self pickup" : "Delivery"} · ${customerName(booking.customer)}`,
+    how: `${wayWord(booking)} · ${customerName(booking.customer)}`,
     firstName: booking.customer.first_name,
     earn: money(booking.money.you_earn),
   };
@@ -623,6 +630,9 @@ export function answerErrorText(error: ApiError | null): string {
   switch (error.code) {
     case "rate_limited":
       return "Too many taps. Wait a moment and try again.";
+    // B1: a courier booking needs a build that can pack it (409, the request keeps ringing).
+    case "update_required":
+      return "Update the Renit app to accept courier bookings. This request is still ringing.";
     case "not_owner":
     case "not_shop_owner":
     case "forbidden":

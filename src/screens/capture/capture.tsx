@@ -49,6 +49,7 @@ import {
   setIdMatch,
   setVideo,
   shotChip,
+  listFor,
   startDraft,
   tick,
   uploadProgress,
@@ -63,7 +64,7 @@ import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { ArrowUturnLeftIcon, CameraIcon, CheckCircleIcon, ClockIcon, EyeIcon } from "react-native-heroicons/outline";
 import { CheckIcon } from "react-native-heroicons/solid";
@@ -393,6 +394,8 @@ export default function CaptureScreen() {
 
   const draft = useCaptureDraft(number, moment, side);
   const listQuery = useShotList(number);
+  // The list this record walks: on a courier booking the owner's handover record also asks for the seal (B1).
+  const fetched = useMemo(() => listFor(listQuery.data, moment, side), [listQuery.data, moment, side]);
   // The copy of this booking's list the phone kept from an earlier read: undefined until looked for, null when there is none.
   const [kept, setKept] = useState<ShotList | null | undefined>(undefined);
   useEffect(() => {
@@ -409,8 +412,8 @@ export default function CaptureScreen() {
   const chosen =
     ready && !draft
       ? chooseList({
-          fetched: listQuery.data,
-          kept,
+          fetched,
+          kept: listFor(kept, moment, side),
           offline: listQuery.isError || noWait,
           idMatch: Boolean(params.id_match),
         })
@@ -432,7 +435,7 @@ export default function CaptureScreen() {
   const update = (fn: (d: CaptureDraft) => CaptureDraft) => captureQueue.update(id, fn);
 
   // Staff can change a list without a release: a draft takes the newer one, keeping its photos.
-  const fresh = listQuery.data;
+  const fresh = fetched;
   useEffect(() => {
     if (fresh && draft && !draft.done) captureQueue.update(id, (d) => withList(d, fresh));
     // Only when a newer list arrives.

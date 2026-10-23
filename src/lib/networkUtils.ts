@@ -153,7 +153,9 @@ const getAuthAttached = (config?: AxiosRequestConfig): boolean => {
  * strings are never bumped, so the server reads this integer instead: it offers the Renit courier only to a client at
  * or above its `COURIER_MIN_CLIENT`. Bump it by one whenever the courier contract (b1-plan §2) changes.
  */
-export const RENIT_CLIENT = 1;
+// 2 (ENG-309): the first build with the owner's courier screens (Packed, Handed to rider). The server's
+// `COURIER_MIN_CLIENT` is set to this number before `COURIER_ON`.
+export const RENIT_CLIENT = 2;
 
 // Create axios instance with shared timeout/header defaults.
 const axiosInstance = axios.create({

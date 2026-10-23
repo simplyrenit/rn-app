@@ -463,6 +463,9 @@ export default function Navigation() {
       case "ShopHandover":
         navigationRef.navigate("ShopHandover", { number: route.number });
         break;
+      case "ShopReturn":
+        navigationRef.navigate("ShopReturn", { number: route.number });
+        break;
       case "Claim":
         navigationRef.navigate("Claim", { id: route.id });
         break;

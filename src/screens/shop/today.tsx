@@ -566,7 +566,7 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
         {feed.going_out.length > 0 ? (
           <Section title="Going out today">
             <RowList
-              rows={feed.going_out.map(goingOutRow)}
+              rows={feed.going_out.map((item) => goingOutRow(item, now))}
               onOpen={(number) => openDay(number, feed.going_out.find((item) => item.number === number)?.stage)}
             />
           </Section>
