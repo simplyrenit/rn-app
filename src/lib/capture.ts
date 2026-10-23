@@ -162,6 +162,13 @@ export interface CaptureDraft {
    * like at the door, so they stay on the phone until the record is let go of (app-4 review r2, finding 16).
    */
   spare?: Record<string, LocalFile>;
+  /**
+   * B1: a booking Renit's courier partner carries. Its files keep no place in them (the other side must never learn the
+   * customer's home, plan §6 APP-2), and the customer's return asks for the seal number (`sealNumber`).
+   */
+  courier?: boolean;
+  /** The number on the spare seal the customer closed the courier's return bag with, as typed. */
+  sealNumber?: string;
 }
 
 export const captureId = (number: string, moment: Moment, side: Side) => `${number}:${moment}:${side}`;
@@ -169,6 +176,21 @@ export const captureId = (number: string, moment: Moment, side: Side) => `${numb
 /** Whether this record needs the owner's ID tick before it can be finished. */
 export function needsIdMatch(draft: Pick<CaptureDraft, "side" | "moment" | "list">): boolean {
   return draft.side === "owner" && draft.moment === "handover" && draft.list.id_match_required;
+}
+
+/** The seal number as the server takes it (`^[A-Za-z0-9-]{1,20}$`), upper-cased; null when what was typed is not one. */
+export function sealNumberOf(typed: string | null | undefined): string | null {
+  const seal = (typed ?? "").trim().toUpperCase();
+  return /^[A-Z0-9-]{1,20}$/.test(seal) ? seal : null;
+}
+
+/** B1: the customer's return on a courier booking carries the number of the seal they closed the bag with. */
+export function needsSealNumber(draft: Pick<CaptureDraft, "courier" | "moment" | "side">): boolean {
+  return Boolean(draft.courier) && draft.moment === "return" && draft.side === "customer";
+}
+
+export function setSealNumber(draft: CaptureDraft, typed: string): CaptureDraft {
+  return { ...draft, sealNumber: typed };
 }
 
 const untickedList = (items: readonly string[], kept: readonly ChecklistItem[] = []): ChecklistItem[] =>
@@ -181,6 +203,7 @@ export function startDraft(input: {
   forOther?: boolean;
   list: ShotList;
   generic?: boolean;
+  courier?: boolean;
 }): CaptureDraft {
   return {
     id: captureId(input.number, input.moment, input.side),
@@ -200,6 +223,8 @@ export function startDraft(input: {
     shooting: null,
     refusedAt: null,
     generic: Boolean(input.generic),
+    // Only on a courier booking: a shop booking's draft is exactly as it was.
+    ...(input.courier ? { courier: true } : {}),
   };
 }
 
@@ -311,12 +336,13 @@ export function idMatchWords(
   };
 }
 
-/** Every shot and the video are taken, and the ID tick is made where it is asked for. */
+/** Every shot and the video are taken, and the ID tick is made, and the seal number typed, where they are asked for. */
 export function canSeal(draft: CaptureDraft): boolean {
   return (
     draft.list.shots.every((shot) => Boolean(draft.shots[shot.key])) &&
     Boolean(draft.video) &&
-    (!needsIdMatch(draft) || draft.idMatch)
+    (!needsIdMatch(draft) || draft.idMatch) &&
+    (!needsSealNumber(draft) || sealNumberOf(draft.sealNumber) !== null)
   );
 }
 
@@ -428,6 +454,8 @@ export interface CaptureBody {
   video?: { url: string; taken_at: string };
   checklist: ChecklistItem[];
   id_match_ticked?: boolean;
+  /** B1: the customer's courier return, the spare seal's number. */
+  seal?: string;
 }
 
 /** What is sent: every file that is up, the ticks, and the ID tick where it is asked for. */
@@ -446,6 +474,8 @@ export function captureBody(draft: CaptureDraft): CaptureBody {
   }
   if (draft.video?.url) body.video = { url: draft.video.url, taken_at: draft.video.taken_at };
   if (needsIdMatch(draft)) body.id_match_ticked = draft.idMatch;
+  const sealNumber = needsSealNumber(draft) ? sealNumberOf(draft.sealNumber) : null;
+  if (sealNumber) body.seal = sealNumber;
   return body;
 }
 
@@ -705,6 +735,60 @@ export function sizeLabel(bytes: number | null | undefined): string {
   if (mb >= 10) return `${Math.round(mb)} MB`;
   if (mb >= 1) return `${mb.toFixed(1).replace(/\.0$/, "")} MB`;
   return `${Math.max(1, Math.round(n / 1024))} KB`;
+}
+
+// ---- B1: where a video was taken (plan §6 APP-2) --------------------------------------------------------------------
+
+/** One box of an MP4 / QuickTime file: its full size (header included) and its four-letter type. */
+export interface VideoBox {
+  type: string;
+  size: number;
+}
+
+/**
+ * The box header at the start of `head` (at least 16 bytes when there are that many): a 32-bit size, the type, and a
+ * 64-bit size when the 32-bit one is 1. A size of 0 runs to the end of the file (`left` bytes from here). Null when it is
+ * not a box header.
+ */
+export function videoBox(head: Uint8Array, left: number): VideoBox | null {
+  if (head.length < 8) return null;
+  const u32 = (at: number) => ((head[at] << 24) >>> 0) + (head[at + 1] << 16) + (head[at + 2] << 8) + head[at + 3];
+  const type = String.fromCharCode(head[4], head[5], head[6], head[7]);
+  let size = u32(0);
+  let header = 8;
+  if (size === 1) {
+    if (head.length < 16) return null;
+    size = u32(8) * 2 ** 32 + u32(12);
+    header = 16;
+  } else if (size === 0) {
+    size = left;
+  }
+  return size >= header && size <= left ? { type, size } : null;
+}
+
+// ISO 6709 locations: Android's MediaRecorder (`©xyz`), 3GPP (`loci`), and the iPhone's metadata key.
+const PLACE_TAGS = ["©xyz", "loci", "com.apple.quicktime.location"].map((tag) =>
+  Array.from(tag, (char) => char.charCodeAt(0))
+);
+
+/** Whether a video's `moov` box (its metadata, never the picture) names a place. */
+export function namesPlace(moov: Uint8Array): boolean {
+  return PLACE_TAGS.some((tag) => {
+    for (let i = 0; i + tag.length <= moov.length; i++) {
+      let j = 0;
+      while (j < tag.length && moov[i + j] === tag[j]) j++;
+      if (j === tag.length) return true;
+    }
+    return false;
+  });
+}
+
+/** Base64 (as the file system reads a range) to bytes. */
+export function base64Bytes(base64: string): Uint8Array {
+  const text = globalThis.atob(base64);
+  const bytes = new Uint8Array(text.length);
+  for (let i = 0; i < text.length; i++) bytes[i] = text.charCodeAt(i);
+  return bytes;
 }
 
 /**

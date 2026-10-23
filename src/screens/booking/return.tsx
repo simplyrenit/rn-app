@@ -15,8 +15,10 @@ import { returnNoticeLine } from "@/lib/billing";
 import { BookingCustomer, SLOW_POLL_MS, todayIst } from "@/lib/booking";
 import { otherSetOffered, recordWanted } from "@/lib/capture";
 import {
+  bannerTone,
   captured,
   codeErrorText,
+  courierRows,
   codeIsClosed,
   ownerAbsentAt,
   ownerAbsentKey,
@@ -24,6 +26,7 @@ import {
   returnSteps,
   returnedCopy,
 } from "@/lib/day-of";
+import { COURIER, byRenit } from "@/lib/delivery";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { successFeedback } from "@/lib/haptics";
 import { useKeyboardInset } from "@/lib/use-keyboard-inset";
@@ -61,6 +64,9 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
   // The code is asked for only while the server says it can be typed.
   const typing = out && !closed && can("enter_return_code");
   const absentAt = ownerAbsentAt(booking, queryClient.getQueryData<string>(ownerAbsentKey(number)));
+  // B1: Renit's courier partner collects it. The server's tracker is the steps; no code, and nobody meets the shop.
+  const courier = byRenit(booking) ? booking.courier ?? null : null;
+  const steps = byRenit(booking) ? courierRows(courier?.steps, "return", now) : returnSteps(booking, recorded);
 
   const finish = () =>
     run("return", async () => {
@@ -96,9 +102,15 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
           {returned ? `${booking.product.title} returned` : `Return the ${booking.product.title}`}
         </Text>
         <Text fontSize="text-md" tone="body">
-          {`${number} · ${booking.shop.name}`}
+          {`${number} · ${byRenit(booking) ? COURIER : booking.shop.name}`}
         </Text>
       </View>
+
+      {courier?.banner ? (
+        <Notice tone={bannerTone(courier.banner)} icon="clock" title={courier.banner.title}>
+          {courier.banner.body}
+        </Notice>
+      ) : null}
 
       {absentAt && out ? (
         <Notice tone="brand" icon="info">
@@ -114,7 +126,7 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
       ) : null}
 
       <Panel style={{ padding: space.md, gap: space.md }}>
-        <StepList steps={returnSteps(booking, recorded)} />
+        <StepList steps={steps} />
         {typing ? (
           <>
             <CodeInput round={round} disabled={sending} onChange={(value) => (setCode(value), setError(null))} />
@@ -152,8 +164,20 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
       {/* The record can be made before the code or after it: the server takes it while the
           booking is out or returned, and the card is here in both (review r1 #2). */}
       <RecordCardBody record={record} />
+      {can("pick_return_window") ? (
+        <Button
+          variant={courier?.return?.window ? "outline" : "primary"}
+          onPress={() => navigation.navigate("BookingReturnWindow", { number })}
+        >
+          {courier?.return?.window ? "Change the return window" : "Pick a return window"}
+        </Button>
+      ) : null}
       {out && record.state === "start" ? (
-        <Notice icon="info">Record the item's condition before you hand it back. It is your proof of how you returned it.</Notice>
+        <Notice icon="info">
+          {byRenit(booking)
+            ? "Before the rider comes, record its condition, then close the bag with the spare seal and type its number. Late charges stop at your recording."
+            : "Record the item's condition before you hand it back. It is your proof of how you returned it."}
+        </Notice>
       ) : null}
       <RecordCardBody record={theirRecord} />
 
@@ -180,7 +204,7 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
         />
       ) : null}
 
-      {recorded && otherSetOffered("return", booking, flags.theirs, theirRecord.draft) ? (
+      {recorded && !byRenit(booking) && otherSetOffered("return", booking, flags.theirs, theirRecord.draft) ? (
         <TextButton label="The shop's phone can't record?" onPress={theirRecord.open} />
       ) : null}
 

@@ -10,7 +10,7 @@ import { LinkRow } from "@/components/handover/parts";
 import { canPayPeriod, endingEarlyLine, isMonthly, overdueAlert, overduePeriod } from "@/lib/billing";
 import { BookingCustomer, RentPeriod, money, todayIst } from "@/lib/booking";
 import { faultRowSub } from "@/lib/claims";
-import { activeCopy, ownerAbsentAt, ownerAbsentKey } from "@/lib/day-of";
+import { activeCopy, bannerTone, ownerAbsentAt, ownerAbsentKey } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
@@ -72,6 +72,13 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
             {copy.sub}
           </Text>
         </View>
+
+        {/* B1: what Renit's desk says about the courier's return leg (a delay, a rider changed). */}
+        {booking.courier?.banner ? (
+          <Notice tone={bannerTone(booking.courier.banner)} icon="clock" title={booking.courier.banner.title}>
+            {booking.courier.banner.body}
+          </Notice>
+        ) : null}
 
         {overdue && alert ? (
           <TouchableOpacity

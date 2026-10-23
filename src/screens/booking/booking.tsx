@@ -5,12 +5,14 @@ import { useReadAt } from "@/components/booking/use-read-at";
 import { SubpageHeader } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { BookingView, bookingLabel, bookingView } from "@/lib/booking";
+import { byRenit } from "@/lib/delivery";
 import { clockSkewMs } from "@/lib/server-clock";
 import { RouteProps } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect } from "react";
 import { BookingDetails } from "./booking-details";
 import { Confirming } from "./confirming";
+import { CourierDayOf } from "./courier-day-of";
 import { DayOf } from "./day-of";
 import { Outcome } from "./outcome";
 import { PayBookingAmount } from "./pay-booking-amount";
@@ -93,7 +95,12 @@ export default function BookingScreen() {
       ) : view === "pay_rent" ? (
         <PayRent booking={booking} receivedAt={receivedAt} watching={watching} refresh={refresh} />
       ) : view === "day_of" ? (
-        <DayOf booking={booking} receivedAt={receivedAt} />
+        // B1: Renit's courier partner carries it, so the two sides never meet.
+        byRenit(booking) ? (
+          <CourierDayOf booking={booking} receivedAt={receivedAt} />
+        ) : (
+          <DayOf booking={booking} receivedAt={receivedAt} />
+        )
       ) : view === "active" ? (
         <RentalActive booking={booking} receivedAt={receivedAt} />
       ) : (

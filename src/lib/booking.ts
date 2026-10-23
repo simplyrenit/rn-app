@@ -14,7 +14,19 @@ import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
 import type { PlanUnit } from "@/lib/plans";
 import { ALL_DAY, DayHours, Hours, coversWholeDay, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
-import { COURIER, DeliveredBy, ListingDelivery, QuoteDelivery, byRenit, deliveryReason, productHowLine } from "@/lib/delivery";
+import {
+  COURIER,
+  CourierBanner,
+  CourierReturn,
+  CourierRider,
+  CourierStep,
+  DeliveredBy,
+  ListingDelivery,
+  QuoteDelivery,
+  byRenit,
+  deliveryReason,
+  productHowLine,
+} from "@/lib/delivery";
 
 export type DeliveryMode = "pickup" | "owner_delivery";
 
@@ -264,9 +276,18 @@ export type CourierState =
   | "not_delivered"
   | "cancelled";
 
-/** The `courier` block, as far as this build reads it; the rest of b1-plan §2 is typed when a screen draws it. */
+/** The `courier` block (b1-plan §2), as the customer's booking carries it: never the OTP or the pack-by time. */
 export interface CourierBlock {
-  state: CourierState;
+  state: CourierState | null;
+  steps: CourierStep[];
+  banner: CourierBanner | null;
+  seal: string | null;
+  rider: CourierRider | null;
+  return: CourierReturn;
+  attempt: number;
+  not_delivered_reason: string | null;
+  /** The desk's "delivered" plus 30 minutes, by the server's clock: open it on camera by then. Null until delivered. */
+  open_by: string | null;
 }
 
 /** A booking as its customer sees it (API-CONTRACT, BookingCustomer). */
@@ -1345,6 +1366,16 @@ export function isRinging(booking: Pick<BookingCustomer, "stage" | "exit">): boo
   return booking.stage === "ringing" && !booking.exit;
 }
 
+const LIVE_OUT: readonly (CourierState | null)[] = ["packed", "dispatching", "rider_assigned", "picked_up", "delivered"];
+const LIVE_BACK: readonly string[] = ["dispatching", "rider_assigned", "picked_up"];
+
+/** A courier leg a rider or the desk is moving now. False for any booking without a `courier` block. */
+export function courierLive(booking: Pick<BookingCustomer, "exit" | "courier">): boolean {
+  const courier = booking.courier;
+  if (!courier || booking.exit) return false;
+  return LIVE_OUT.includes(courier.state) || LIVE_BACK.includes(courier.return?.state);
+}
+
 /** The contract's rhythm while an answer can arrive at any second. */
 export const RING_POLL_MS = 3000;
 /** For a state the phone only suspects has changed (its own clock says so; the server's decides). */
@@ -1359,11 +1390,17 @@ export const SLOW_POLL_MS = 15_000;
  * before `shop.opens_at` except the customer's own cancel, so the screen reads
  * once at that time instead. If the phone's clock says the shop should have
  * opened and the server still says waiting, it is read slowly until they agree.
+ *
+ * B1: a courier booking is read slowly while a leg is live (packed to delivered, and the return rider's
+ * dispatching to picked up, b1-plan §2), whatever its stage: the desk moves it, and a push can be missed.
  */
 export function pollEveryMs(
-  booking: Pick<BookingCustomer, "stage" | "exit" | "ring_state" | "shop"> & { day?: Pick<BookingDay, "call_from"> | null },
+  booking: Pick<BookingCustomer, "stage" | "exit" | "ring_state" | "shop" | "courier"> & {
+    day?: Pick<BookingDay, "call_from"> | null;
+  },
   now: Date = new Date()
 ): number | false {
+  if (courierLive(booking)) return SLOW_POLL_MS;
   // On the day, from the time the buttons open: the other side's tap, or the owner
   // typing the code, changes this screen while the two people stand together. A
   // push says so too; this is for the phone that did not get it.
@@ -1899,6 +1936,11 @@ export function windowErrorText(error: ApiError | null): string {
       return "You asked for this change. The shop answers it.";
     case "stage_not_allowed":
       return "The arrival time can no longer be changed for this booking.";
+    // B1: a courier booking's slots (`courier_windows`) fill up, and close hours before they start.
+    case "window_taken":
+      return "That slot has just filled. Pick another.";
+    case "window_closed":
+      return "That window can't be picked any more. Pick another, or call via Renit.";
     default:
       return error?.message ?? "We couldn't save that. Check your connection and try again.";
   }

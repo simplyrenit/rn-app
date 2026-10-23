@@ -10,6 +10,7 @@ import { Block } from "@/components/handover/parts";
 import { BookingCustomer } from "@/lib/booking";
 import { otherSetOffered, recordOpens } from "@/lib/capture";
 import { captured, dayBlock } from "@/lib/day-of";
+import { byRenit } from "@/lib/delivery";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
@@ -28,6 +29,8 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
   const record = useRecord({ moment: "handover", role: "customer", booking, receivedAt, ...names });
   const theirRecord = useRecord({ moment: "handover", role: "customer", forOther: true, booking, receivedAt, ...names });
   const recorded = !recordOpens(record.state);
+  // B1: on a courier booking nobody types a code; Renit's desk starts the rental from the customer's record.
+  const courier = byRenit(booking);
   const both = flags.mine && flags.theirs;
   const can = (action: string) => booking.can.includes(action);
 
@@ -64,7 +67,7 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
           poll={watching && !both}
         />
 
-        {otherSetOffered("handover", booking, flags.theirs, theirRecord.draft) ? (
+        {!courier && otherSetOffered("handover", booking, flags.theirs, theirRecord.draft) ? (
           <TextButton label="The shop's phone can't record?" onPress={theirRecord.open} />
         ) : null}
 
@@ -95,11 +98,11 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
           <Button onPress={() => setShowCode(true)}>All good · show my code</Button>
         )}
         {can("refuse_at_door") && !booking.claim_open ? (
-          <TextButton label="Not as described" tone="danger" onPress={() => navigation.navigate("BookingRefuse", { number })} />
+          <TextButton label={courier ? "Problem at the door" : "Not as described"} tone="danger" onPress={() => navigation.navigate("BookingRefuse", { number })} />
         ) : null}
         {!showCode && recorded && !booking.claim_open ? (
           <Text fontSize="text-xs" tone="body" style={{ textAlign: "center" }}>
-            The shop types your code to start the rental.
+            {courier ? "Renit starts your rental once it has your recording." : "The shop types your code to start the rental."}
           </Text>
         ) : null}
       </BottomBar>

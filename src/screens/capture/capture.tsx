@@ -6,7 +6,7 @@ import { placeNow, recordVideo, recoverLostShot, takePhoto } from "@/components/
 import { CameraOffNotice } from "@/components/capture/camera-off";
 import { CODE_LENGTH, CodeInput } from "@/components/capture/code";
 import { UploadBar } from "@/components/capture/record-card";
-import { Button, SubpageHeader, Text } from "@/components/core";
+import { Button, SubpageHeader, Text, TextField } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
@@ -23,6 +23,9 @@ import {
   reopenForMissing,
   reopenedText,
   canSeal,
+  needsSealNumber,
+  sealNumberOf,
+  setSealNumber,
   captureHeading,
   captureId,
   chooseList,
@@ -515,7 +518,9 @@ export default function CaptureScreen() {
         });
       }
     }
-    captureQueue.start(startDraft({ number, moment, side, forOther, list: chosen.list, generic: chosen.source === "generic" }));
+    captureQueue.start(
+      startDraft({ number, moment, side, forOther, list: chosen.list, generic: chosen.source === "generic", courier: params.courier })
+    );
   };
 
   const confirmCode = async () => {
@@ -750,7 +755,7 @@ export default function CaptureScreen() {
       // Which slot the camera is open for is kept with the record first: if the
       // system closes the app under the camera, the photo still finds its place.
       update((d) => withShooting(d, { shot: shot.key }));
-      const [uri, place] = await Promise.all([takePhoto(), placeNow()]);
+      const [uri, place] = await Promise.all([takePhoto({ courier: draft.courier }), placeNow()]);
       if (!uri) {
         update((d) => withShooting(d, null));
         return;
@@ -763,7 +768,7 @@ export default function CaptureScreen() {
   const record = () =>
     withCamera(async () => {
       update((d) => withShooting(d, "video"));
-      const video = await recordVideo();
+      const video = await recordVideo({ courier: draft.courier });
       if (!video) {
         update((d) => withShooting(d, null));
         return;
@@ -891,6 +896,25 @@ export default function CaptureScreen() {
                 />
               </Panel>
             ) : null}
+            {needsSealNumber(draft) ? (
+              <View style={{ gap: space.xs }}>
+                <Text fontSize="text-sm" fontWeight="font-bold">
+                  The seal's number
+                </Text>
+                <Text fontSize="text-sm" tone="body">
+                  Close the bag with the spare seal, then type the number printed on it. The shop checks it is unbroken.
+                </Text>
+                <TextField
+                  value={draft.sealNumber ?? ""}
+                  onChangeText={(typed) => update((d) => setSealNumber(d, typed))}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  maxLength={20}
+                  placeholder="R-1042"
+                  accessibilityLabel="The seal's number"
+                />
+              </View>
+            ) : null}
             <Text fontSize="text-sm" fontWeight="font-bold">
               Your photos and video
             </Text>
@@ -903,7 +927,9 @@ export default function CaptureScreen() {
           <BottomBar>
             {!canSeal(draft) ? (
               <Text fontSize="text-sm" tone="body">
-                Tick the ID check to finish.
+                {needsSealNumber(draft) && !sealNumberOf(draft.sealNumber)
+                  ? "Type the seal's number (letters, digits and dashes) to finish."
+                  : "Tick the ID check to finish."}
               </Text>
             ) : null}
             <Button disabled={!canSeal(draft)} onPress={() => (commitFeedback(), update(seal))}>

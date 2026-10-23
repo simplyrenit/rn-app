@@ -20,6 +20,7 @@ import {
   windowSummary,
 } from "@/lib/booking";
 import type { CaptureFlags, Moment, Side } from "@/lib/capture";
+import { COURIER, CourierBanner, CourierStep, byRenit } from "@/lib/delivery";
 
 /**
  * The day of the handover and the return, for both sides (API-CONTRACT OE-I;
@@ -168,10 +169,26 @@ export interface CallCopy {
   note: string;
 }
 
-/** The Call button: open from two hours before the window until the handover, as the server says. */
-export function callCopy(role: Side, day: Pick<BookingDay, "call_number" | "call_from">, name: string, now: Date): CallCopy {
+/**
+ * The Call button: open from two hours before the window until the handover, as the server says. `courier`: a B1 courier
+ * booking, where both sides call Renit's desk line (`call_number`, from Ready until the item is back), never each other.
+ */
+export function callCopy(
+  role: Side,
+  day: Pick<BookingDay, "call_number" | "call_from">,
+  name: string,
+  now: Date,
+  courier = false
+): CallCopy {
   const until = role === "customer" ? "until you have the item" : "until the handover";
   const number = typeof day.call_number === "string" && day.call_number ? day.call_number : null;
+  if (courier) {
+    return {
+      label: "Call via Renit",
+      number,
+      note: number ? "Calls go through Renit, so your number stays private." : "Renit's desk is on Get help below.",
+    };
+  }
   return {
     label: role === "customer" ? "Call the shop" : `Call ${name}`,
     number,
@@ -323,6 +340,17 @@ export function dayErrorText(error: ApiError | null, now: Date): string {
       const fields = fieldErrors(error);
       return fields.photos ?? fields.photo ?? fields.statement ?? "Something is missing. Check the photo and the words, then try again.";
     }
+    // B1: the courier's own refusals (b1-plan §2).
+    case "courier_booking":
+      return "Renit's courier partner carries this booking, so Renit's desk does this. Call via Renit.";
+    case "window_taken":
+      return "That slot has just filled. Pick another.";
+    case "window_closed":
+      return "That window can't be picked any more. Pick another, or call via Renit.";
+    case "capture_missing":
+      return "Record the item on camera first.";
+    case "other_side":
+      return "The shop does this, not you.";
     case "already_extending":
       return "An extension is already open for this rental.";
     case "shop_closed":
@@ -402,13 +430,16 @@ export function dayOfCopy(booking: BookingCustomer, now: Date): DayOfCopy {
   const delivery = deliveryPlace(booking.delivery_address);
   // The address is on the booking only once the deposit is paid. Drawn only when it is text.
   const address = typeof booking.shop.address === "string" && booking.shop.address ? booking.shop.address : null;
+  // B1: Renit's courier partner brings it, not the shop.
+  const bringer = !pickup && byRenit(booking) ? COURIER : booking.shop.name;
   return {
-    title: pickup ? `Collect your ${item} ${word}` : `Your ${item} arrives ${word}`,
+    // B1: once the desk says it was delivered (`open_by` is sent), it is at the door.
+    title: pickup ? `Collect your ${item} ${word}` : booking.courier?.open_by ? `Your ${item} is here` : `Your ${item} arrives ${word}`,
     // From Ready on a booking that needs the match (`id_match_required`): said again, since the price screen was long ago.
     idNote: booking.id_match_required ? HANDOVER_ID : null,
     place: pickup
       ? { name: booking.shop.name, address: address ?? booking.shop.locality }
-      : { name: delivery ? `${booking.shop.name} brings it to ${delivery.title}` : `${booking.shop.name} brings it to you`, address: delivery?.line ?? null },
+      : { name: delivery ? `${bringer} brings it to ${delivery.title}` : `${bringer} brings it to you`, address: delivery?.line ?? null },
     window: booking.window ? windowLabel(booking.window) : null,
     codeNote: booking.claim_open
       ? "You reported this item as not as described. Renit decides within one day, and your code is paused until then."
@@ -424,21 +455,124 @@ export function mapsUrl(coordinates: { lat: number; long: number } | null | unde
   return ios ? `http://maps.apple.com/?ll=${at}&q=${q}` : `geo:${at}?q=${at}(${q})`;
 }
 
-// ---- BK-19, not as described ---------------------------------------------------------------------------------------
+// ---- B1, Renit's courier partner (b1-plan §2, §6 APP-2) ---------------------------------------------------------------
 
-export function refuseCopy(booking: Pick<BookingCustomer, "money">, attached: number): { notice: string; attachedNote: string | null } {
-  const m = booking.money;
+/** The first step of the return leg. The server lists the outbound steps, then the return's, from this one on. */
+const RETURN_FROM = "return_window";
+
+/**
+ * One leg of the server's tracker, as `StepList` draws it: the server's `now` is the ring, and a done step's time goes
+ * before its sub ("2:40 pm · Seal 4821"). Nothing here decides a state; the server wrote every one.
+ */
+export function courierRows(steps: CourierStep[] | null | undefined, leg: "out" | "return", now: Date): ReturnStep[] {
+  const all = steps ?? [];
+  const split = all.findIndex((step) => step.key === RETURN_FROM);
+  const mine = split < 0 ? (leg === "out" ? all : []) : leg === "out" ? all.slice(0, split) : all.slice(split);
+  return mine.map((step) => {
+    const when = step.state === "done" && step.at ? whenShort(step.at, now) : "";
+    return {
+      label: step.label,
+      sub: [when, step.sub].filter(Boolean).join(" · "),
+      state: step.state === "done" ? "done" : step.state === "now" ? "next" : "todo",
+    };
+  });
+}
+
+/** The desk's banner as a `Notice` tone. A tone this build does not know is plain information. */
+export function bannerTone(banner: Pick<CourierBanner, "tone">): "brand" | "warning" | "danger" {
+  return banner.tone === "bad" ? "danger" : banner.tone === "warn" ? "warning" : "brand";
+}
+
+/**
+ * Whether the customer may start recording it: from the moment the rider has it (`picked_up`) and once delivered (O9).
+ * Before that the item is still at the shop.
+ */
+export const courierMayRecord = (courier: { state: string | null } | null | undefined) =>
+  courier?.state === "picked_up" || courier?.state === "delivered";
+
+/** The line under "Open it on camera": the minutes left to `open_by`, by the server's clock. */
+export function openByLine(openBy: string | null | undefined, now: Date): string {
+  const at = new Date(openBy ?? "").getTime();
+  if (!Number.isFinite(at)) return "Start recording as soon as the rider hands it to you, with the seal in view.";
+  const left = Math.ceil((at - now.getTime()) / 60_000);
+  return left > 0
+    ? `${left} min left. After that, we take it that it arrived fine.`
+    : "The 30 minutes are up, so we take it that it arrived fine. You can still record it.";
+}
+
+/** What to do at the door (C3, C4). */
+export function courierDoorTips(seal: string | null | undefined): string[] {
+  return [
+    "Be there in your window. The rider hands it to you, not to the gate.",
+    seal
+      ? `Check seal ${seal} is unbroken. Broken seal or crushed box? Don't open it: record it first.`
+      : "Check the seal is unbroken. Broken seal or crushed box? Don't open it: record it first.",
+    "Start recording with the seal in view, then open it, show every side and switch it on.",
+    "The partner may text you a delivery code. That one is fine to share. Never share a Renit code.",
+  ];
+}
+
+/**
+ * C6, the return window picker. `earliest` is the server's first day with no late fee; `day` the day it offers slots
+ * on, which is later only when that day's slots are gone (and then it counts as late, as for any return after the last day).
+ */
+export function returnWindowCopy(
+  slots: { day: string; earliest: string },
+  lastDay: string,
+  changing: boolean
+): { title: string; sub: string; note: string | null } {
+  const { day, earliest } = slots;
   return {
-    notice: `Renit decides within one day. If we agree, you get everything back, including the ${money(
-      m.booking_amount
-    )}. If we don't, it counts as cancelling inside 24 hours and one day's rent (${money(m.rate)}) goes to the shop.`,
-    attachedNote: attached > 0 ? `The ${attached} you just took` : null,
+    title: changing ? "Change your return window" : "When should the rider collect it?",
+    sub: `${dayShort(day)} · the ${COURIER} collects it in the window you pick`,
+    note:
+      day > earliest
+        ? `No slot is left on ${dayShort(earliest)}, so collecting it on ${dayShort(day)} counts as late.`
+        : earliest > lastDay
+          ? `There is no courier slot on your last day, so it is due back on ${dayShort(earliest)} with no late fee.`
+          : null,
   };
 }
 
-/** Why "Send to Renit" is off, or null: the words and at least one photo are both needed. */
-export function refuseHold(statement: string, photos: number): string | null {
-  if (!statement.trim()) return "Say what is different from the listing.";
+// ---- BK-19, not as described ---------------------------------------------------------------------------------------
+
+/** B1: what the customer found at the door of a courier booking. A broken seal or box is the trip's fault (plan §8a). */
+export type DoorProblem = "seal_broken" | "box_damaged" | "not_as_described";
+
+export const DOOR_PROBLEMS: { problem: DoorProblem; label: string }[] = [
+  { problem: "seal_broken", label: "The seal is broken" },
+  { problem: "box_damaged", label: "The box is damaged" },
+  { problem: "not_as_described", label: "It isn't as described" },
+];
+
+/**
+ * The notice under the report. On a courier booking (`delivered_by` renit) a broken seal or box is the trip's: Renit
+ * pays, never the customer (plan-v2 §5.11); anything else is decided as today, and the courier trips used are kept.
+ */
+export function refuseCopy(
+  booking: Pick<BookingCustomer, "money" | "delivered_by">,
+  attached: number,
+  problem: DoorProblem = "not_as_described"
+): { notice: string; attachedNote: string | null } {
+  const m = booking.money;
+  const courier = byRenit(booking);
+  const notice =
+    courier && problem !== "not_as_described"
+      ? "Damage on the way is on Renit, not you. Renit decides within one day: if the trip damaged it, you get everything back, the courier fee included."
+      : `Renit decides within one day. If we agree, you get everything back, including the ${money(
+          m.booking_amount
+        )}. If we don't, it counts as cancelling inside 24 hours and one day's rent (${money(m.rate)}) goes to the shop${
+          courier ? ", and Renit keeps the courier fee for the trips already used" : ""
+        }.`;
+  return { notice, attachedNote: attached > 0 ? `The ${attached} you just took` : null };
+}
+
+/**
+ * Why "Send to Renit" is off, or null: the words and at least one photo are both needed. A broken seal or box needs only
+ * the photos: what is wrong is the problem picked.
+ */
+export function refuseHold(statement: string, photos: number, problem: DoorProblem = "not_as_described"): string | null {
+  if (problem === "not_as_described" && !statement.trim()) return "Say what is different from the listing.";
   return photos > 0 ? null : "Add at least one photo.";
 }
 
