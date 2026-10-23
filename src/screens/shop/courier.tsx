@@ -347,7 +347,12 @@ export function CourierReturn({ booking, courier, receivedAt, watching }: Props)
         </Block>
       )}
 
-      {receiving ? <Notice icon="info">{RECEIPT_NOTE}</Notice> : null}
+      {receiving ? (
+        <Notice icon="info">
+          {/* The number the customer typed when sealing the return: what the shop checks at the counter. */}
+          {courier.return.seal ? `${RECEIPT_NOTE} The seal should read ${courier.return.seal}.` : RECEIPT_NOTE}
+        </Notice>
+      ) : null}
 
       {/* A handover record that was never made or finished: the payout still waits for it. */}
       <Records role="owner" moments={["handover"]} booking={booking} receivedAt={receivedAt} stake={payoutPending(booking)} {...names} />
