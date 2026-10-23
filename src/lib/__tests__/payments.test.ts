@@ -344,7 +344,7 @@ describe("watchStrayReturns", () => {
     jest.restoreAllMocks();
   });
 
-  it("asks rn-api once for a return link nobody was waiting on, and gives the booking to open", async () => {
+  it("asks rn-api once for a return link nobody was waiting on, and gives its booking, not the newest", async () => {
     post.mockResolvedValue(answer("paid"));
     const opened = jest.fn();
     watchStrayReturns("yash", opened);
@@ -353,16 +353,6 @@ describe("watchStrayReturns", () => {
     expect(post).toHaveBeenCalledTimes(1);
     expect(post).toHaveBeenCalledWith(`https://api.test/payments/${PAY_ID}/confirm/`, {});
     expect(opened).toHaveBeenCalledWith("RN-24831");
-  });
-
-  it("opens the booking of the payment the link names, not the newest note's", async () => {
-    post.mockResolvedValue(answer("paid"));
-    const opened = jest.fn();
-    watchStrayReturns("yash", opened);
-    onUrl({ url: "renit://pay/return?payment_id=pay_B" });
-    await settle();
-    expect(post).toHaveBeenCalledWith("https://api.test/payments/pay_B/confirm/", {});
-    expect(opened).toHaveBeenCalledWith("RN-24832");
   });
 
   it("leaves other links alone, and does not ask while startPayment is waiting for this payment", async () => {

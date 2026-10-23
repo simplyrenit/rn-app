@@ -83,7 +83,7 @@ import ReportScreen from "@/screens/booking/report";
 import ReturnScreen from "@/screens/booking/return";
 import BookingDatesScreen from "@/screens/booking/choose-dates";
 import ReviewAndBookScreen from "@/screens/booking/review-and-book";
-import { parsePayReturn, resumePayment, watchStrayReturns } from "@/lib/payments";
+import { parsePayReturn, resumePayment, screens, watchStrayReturns } from "@/lib/payments";
 import BankAccountScreen from "@/screens/profileScreens/bank-account";
 import ContactUsScreen from "@/screens/profileScreens/contactUs";
 import EditProductScreen from "@/screens/profileScreens/edit-product";
@@ -656,6 +656,13 @@ export default function Navigation() {
       stale = true;
     };
   }, [isAuthenticated, username, openBooking]);
+  // Only Android rebuilding the screens unmounts this while the JS runs on (see `screens`).
+  React.useEffect(
+    () => () => {
+      screens.torn += 1;
+    },
+    []
+  );
   // The pay page's "Back to Renit" can arrive when no payment is being waited on (the
   // customer came back for a moment, then paid later): ask rn-api once and open the booking.
   React.useEffect(() => {

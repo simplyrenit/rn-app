@@ -181,6 +181,15 @@ async function pay(payment: PaymentHandoff): Promise<PayResult> {
 const inFlight = new Map<string, Promise<PayResult>>();
 
 /**
+ * How many times the app's screens have been torn down in this run (`Navigation` unmounting).
+ * Android does that while the customer is in a UPI app ("Don't keep activities", low memory)
+ * and builds them again on return, with this JS and its payments still running. A payment
+ * started before that leaves its note to the new start, which resumes it, opens its booking
+ * and forgets it there (`usePay`).
+ */
+export const screens = { torn: 0 };
+
+/**
  * Opens the pay page, waits for the customer to come back, and asks rn-api what
  * happened. A second call for a payment already in flight (a double tap) joins
  * the first: the page is not opened twice.
