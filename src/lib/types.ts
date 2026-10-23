@@ -228,7 +228,14 @@ export type RootStackParamList = {
      * Book now starts on them. Absent from every other entry point.
      */
     dates?: { first_day: string; last_day: string };
+    /**
+     * Set only when sign-in was asked for by Add to cart (cart plan D3): back on
+     * the listing, the page adds it once and clears this.
+     */
+    add?: boolean;
   };
+  /** The customer's cart (cart plan §3.2), on the root stack like the booking screens. */
+  Cart: undefined;
   ReviewsScreen: {
     reviews: BackendReview[];
     product: BackendProduct;
@@ -385,7 +392,6 @@ export type RootStackParamList = {
     item: BookItem;
     /** Card mode: every listing in this booking, sent as `products[]` (Book Now on `book_flow=card` has just `item`). */
     lines?: BookItem[];
-    from_cart?: boolean;
     others?: CartOthers;
     first_day: string;
     last_day: string;
@@ -396,6 +402,8 @@ export type RootStackParamList = {
     moved_from?: string;
     /** An extension (ENG-220): the booking these days follow. The request then goes to `extend`. */
     extends?: string;
+    /** Booked from a cart card: the stack after Book keeps the cart (`afterBookRoutes`). */
+    from_cart?: boolean;
   };
   /**
    * One booking at whatever stage the server says it is in. `pay` opens the pay
@@ -404,6 +412,8 @@ export type RootStackParamList = {
   Booking: { number: string; pay?: boolean };
   /** BK-07: picks the first arrival window, or asks to change the one that is set. */
   BookingWindow: { number: string };
+  /** B1: the return slot Renit's courier partner collects it in (`return-window/`), from the return screen. */
+  BookingReturnWindow: { number: string };
   /** BK-13: pay the deposit. Opened from the booking and from the deposit pushes (ENG-222). */
   BookingDeposit: { number: string };
   /**
@@ -471,6 +481,8 @@ export type RootStackParamList = {
     id_match?: boolean;
     /** The customer's full name from the shop's booking (T-44), for the ID tick's words; null or absent when it is not shown. */
     id_match_name?: string | null;
+    /** B1: a booking Renit's courier partner carries (no place in the files; the customer's return asks for the seal). */
+    courier?: boolean;
   };
   [key: string]: object | undefined;
 };
@@ -745,8 +757,16 @@ export interface BackendProduct {
    * screens; anything else, and an older server without it, the classic `product`.
    */
   book_flow?: "classic" | "card";
-  /** Cart plan D28: the caller's live booking of this listing, or null. Signed in only; absent from an older server. */
-  requested?: { number: string } | null;
+  /**
+   * Cart plan D28 (T12): whether this listing's shop takes cart lines now. Absent from an older server, which is
+   * read as no: the Add to cart button shows only when this is true (§9.3).
+   */
+  can_add_to_cart?: boolean;
+  /**
+   * Cart plan D28, D39 (T8): the customer's live booking of this item, if any. The dates may be absent (plan §5.3
+   * names only the number).
+   */
+  requested?: { number: string; first_day?: string; last_day?: string } | null;
   /** A moved listing's price is treated as per day until the owner saves `rate`. */
   rate_needs_confirming?: boolean;
   /** True while `worth` is null. */

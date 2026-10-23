@@ -2,6 +2,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { PayPhase } from "@/lib/booking";
 import { PayResult, PaymentHandoff, forgetPayment, notePayment, screens, startPayment } from "@/lib/payments";
 import { useCallback, useRef, useState } from "react";
+import { useQueryClient } from "react-query";
 
 /**
  * One payment button's state around `startPayment`: the ₹99 and the rent use it,
@@ -22,6 +23,7 @@ export function usePay(
 ) {
   const { userDetails } = useGlobalContext();
   const username = userDetails?.username;
+  const queryClient = useQueryClient();
   const [phase, setPhase] = useState<PayPhase>("idle");
   const busy = useRef(false);
   // A payment settles minutes after the tap; it must reach the screen's current callbacks.
@@ -53,6 +55,8 @@ export function usePay(
           if (screens.torn === torn) await forgetPayment(payment.payment_id);
           setPhase(result === "paid" ? "idle" : "ended");
         }
+        // A paid rent takes its lines out of the cart (cart plan row 12): the badge reads it again.
+        if (result === "paid") void queryClient.invalidateQueries("cart");
         callbacks.current.onResult(result);
       } catch (error) {
         setPhase("idle");
@@ -61,7 +65,7 @@ export function usePay(
         busy.current = false;
       }
     },
-    [booking, username]
+    [booking, username, queryClient]
   );
 
   return { phase, pay };

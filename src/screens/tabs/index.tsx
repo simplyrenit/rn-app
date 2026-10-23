@@ -1,4 +1,6 @@
+import { useCart } from "@/backend/cart";
 import { useNotifications } from "@/backend/useNotification";
+import { CartButton } from "@/components/cart/parts";
 import { PinnedHeader, StaticContainer } from "@/components/core";
 import { Categories } from "@/components/home/categories";
 import { Disclaimer } from "@/components/home/disclaimer";
@@ -18,6 +20,7 @@ export default function Home() {
   const { isAuthenticated, fetchCategories } = useGlobalContext();
   const { getNotifications } = useNotifications();
   const { color } = useTheme();
+  const { cart } = useCart();
 
   // Remounting the sections is the simplest correct refresh: each rail owns its
   // own fetch, and this is the gesture an iOS customer reaches for first.
@@ -62,7 +65,19 @@ export default function Home() {
         material="solid"
         style={{ paddingTop: 16, paddingBottom: 8 }}
       >
-        <SearchBar />
+        {/* The cart's way in from Home, only while it has lines (cart plan D29,
+            Figma CT-05): an empty bag on every launch would be a second, dead
+            control beside the search. */}
+        {(cart?.count ?? 0) > 0 ? (
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={{ flex: 1, marginRight: -12 }}>
+              <SearchBar />
+            </View>
+            <CartButton style={{ marginRight: SCREEN_GUTTER - 10 }} />
+          </View>
+        ) : (
+          <SearchBar />
+        )}
       </PinnedHeader>
       <ScrollView
         style={{ flex: 1 }}

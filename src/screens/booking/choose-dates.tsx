@@ -1,6 +1,7 @@
 import { QuoteInput, usePublicProducts, useQuote } from "@/backend/bookings";
 import { AddressPickerSheet, AddressPickerSheetHandle } from "@/components/addresses/address-picker-sheet";
 import { LineRow, ShopHead } from "@/components/booking/card-lines";
+import { RentStrip } from "@/components/cart/parts";
 import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { Button, Skeleton, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -652,6 +653,8 @@ export default function BookingDatesScreen() {
   return (
     <NonScrollableContainer>
       {header}
+      {/* CT-42b: another card's rent waits; the strip is the way to it (A5's, nothing while none waits). */}
+      {card && params.from_cart ? <RentStrip /> : null}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.lg }}

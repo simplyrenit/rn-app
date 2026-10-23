@@ -1,4 +1,5 @@
 import { bookingQueryKey, fetchBooking, useBooking } from "@/backend/bookings";
+import { byRenit } from "@/lib/delivery";
 import { findMyReport, reportFault } from "@/backend/claims";
 import { GetHelp } from "@/components/booking/get-help";
 import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/components/booking/parts";
@@ -160,6 +161,7 @@ export default function FaultReportScreen() {
               onChange={setPhotos}
               addLabel={photos.length > 0 ? "Add another photo" : "Take a photo"}
               disabled={sending}
+              courier={byRenit(booking)}
             />
             <Notice tone="warning" icon="info">
               {faultNotice(booking)}

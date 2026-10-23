@@ -20,6 +20,7 @@ import { useGlobalContext } from "@/context/global-context";
 import ChatDetailsScreen from "@/screens/chat/chat-details";
 import PrivacyScreen from "../screens/privacy";
 import ProductDetailScreen from "../screens/products/products-screen";
+import CartScreen from "../screens/cart/cart";
 import ReviewsScreen from "../screens/products/reviews-screen";
 import WriteReviewsScreen from "../screens/products/write-review";
 import SearchScreen from "../screens/search";
@@ -70,6 +71,7 @@ import { useDraftPhotoUploads } from "@/backend/draft-photo-jobs";
 import { ShopTodayScreen } from "@/screens/shop/home";
 import ShopRingScreen from "@/screens/shop/ring";
 import ArrivalWindowScreen from "@/screens/booking/arrival-window";
+import ReturnWindowScreen from "@/screens/booking/return-window";
 import BookingScreen from "@/screens/booking/booking";
 import CheckCapturesScreen from "@/screens/booking/check-captures";
 import BookingDetailsScreen from "@/screens/booking/details";
@@ -462,6 +464,9 @@ export default function Navigation() {
       case "ShopHandover":
         navigationRef.navigate("ShopHandover", { number: route.number });
         break;
+      case "ShopReturn":
+        navigationRef.navigate("ShopReturn", { number: route.number });
+        break;
       case "Claim":
         navigationRef.navigate("Claim", { id: route.id });
         break;
@@ -569,6 +574,8 @@ export default function Navigation() {
           void queryClient.invalidateQueries(bookingQueryKey(route.number));
           // Both Rentals lists start with this key.
           void queryClient.invalidateQueries("bookings");
+          // A booking that moved may take its lines out of the cart (rent paid) or out of checkout.
+          void queryClient.invalidateQueries("cart");
           return;
         }
         // A claim moved: the claim itself, and the booking it holds or settles, are read afresh (ENG-252, ENG-253).
@@ -671,6 +678,7 @@ export default function Navigation() {
     return watchStrayReturns(username, (number) => {
       void queryClient.invalidateQueries(bookingQueryKey(number));
       void queryClient.invalidateQueries("bookings");
+      void queryClient.invalidateQueries("cart");
       openBooking(number);
     });
   }, [isAuthenticated, username, openBooking, queryClient]);
@@ -860,6 +868,9 @@ export default function Navigation() {
           name="DeliveryAreas"
           component={DeliveryAreasScreen}
         />
+        {/* The cart (cart plan §3.2). On the root stack like the booking
+            screens: the tab bar has no slot for it (F24). */}
+        <Stack.Screen name="Cart" component={CartScreen} />
         {/* Live booking, the customer's side (ENG-99). On the root stack, so
             the tab bar is hidden from the dates to the booking itself. */}
         <Stack.Screen
@@ -880,6 +891,10 @@ export default function Navigation() {
         <Stack.Screen
           name="BookingWindow"
           component={ArrivalWindowScreen}
+        />
+        <Stack.Screen
+          name="BookingReturnWindow"
+          component={ReturnWindowScreen}
         />
         {/* The deposit, the day of the handover and the return, the customer's
             side (ENG-222). Each is keyed by booking, like the booking itself. */}

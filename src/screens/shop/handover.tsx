@@ -32,10 +32,12 @@ import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { successFeedback } from "@/lib/haptics";
 import { BookingShop } from "@/lib/shop-booking";
 import { handoverCopy, handoverSteps, payoutPending, payoutWaits, recordFirstNote, startedCopy } from "@/lib/shop-handover";
+import { courierOf } from "@/lib/shop-courier";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
+import { CourierPack } from "@/screens/shop/courier";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { Linking, Platform, ScrollView, View } from "react-native";
@@ -341,6 +343,7 @@ export default function ShopHandoverScreen() {
   const query = useShopBooking(params.number);
   const { refetch } = query;
   const booking = query.data;
+  const courier = booking ? courierOf(booking) : null;
 
   useEffect(() => {
     if (watching) void refetch();
@@ -358,7 +361,12 @@ export default function ShopHandoverScreen() {
     <NonScrollableContainer>
       <SubpageHeader title="Handover" />
       {booking ? (
-        <Handover booking={booking} receivedAt={query.dataUpdatedAt} watching={watching} />
+        courier ? (
+          // B1: Renit's courier carries it, and the shop never meets the customer.
+          <CourierPack booking={booking} courier={courier} receivedAt={query.dataUpdatedAt} watching={watching} />
+        ) : (
+          <Handover booking={booking} receivedAt={query.dataUpdatedAt} watching={watching} />
+        )
       ) : query.isError ? (
         <BookingLoadError error={query.error} what="this booking" onRetry={() => void refetch()} />
       ) : (

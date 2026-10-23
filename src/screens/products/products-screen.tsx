@@ -2,6 +2,8 @@ import { useChat } from "@/backend/chat";
 import { useProduct } from "@/backend/product";
 import { useProfile } from "@/backend/profile";
 import useSaved from "@/backend/useSaved";
+import { useCart } from "@/backend/cart";
+import { CartButton, RequestedLine } from "@/components/cart/parts";
 import {
   BackButton,
   Button,
@@ -43,7 +45,9 @@ import {
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
-import { liveCopy } from "@/lib/booking";
+import { liveCopy, shopNameOf } from "@/lib/booking";
+import { apiError } from "@/lib/api-error";
+import { addFailure, cartLine, cartSize, rememberSearchDates } from "@/lib/cart";
 import { CategoryIcon } from "@/lib/category-icons";
 import { CHAT_ENABLED } from "@/lib/config";
 import { useDistanceTo } from "@/lib/distance";
@@ -72,10 +76,11 @@ import {
 } from "react-native";
 import {
   BanknotesIcon,
+  InformationCircleIcon,
   LightBulbIcon,
   ShareIcon,
 } from "react-native-heroicons/outline";
-import { ChevronRightIcon } from "react-native-heroicons/mini";
+import { CheckIcon, ChevronRightIcon } from "react-native-heroicons/mini";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ProductsSkeleton } from "./products-skeleton";
@@ -186,6 +191,17 @@ function CtaLabel({ children }: { children: string }) {
   );
 }
 
+/** "✓ In cart · View": the bar's way into the cart once this item is in it (Figma CT-01). */
+function InCartLabel() {
+  const labelColor = useButtonLabelColor();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+      <CheckIcon size={18} color={labelColor} />
+      <CtaLabel>In cart · View</CtaLabel>
+    </View>
+  );
+}
+
 export default function DetailsScreen() {
   const [loading, setLoading] = React.useState(true);
   const route = useRoute<RouteProps<"ProductDetail">>();
@@ -197,7 +213,7 @@ export default function DetailsScreen() {
   const [similarProducts, setSimilarProducts] = useState<BackendProduct[]>([]);
   const [isModerated, setIsModerated] = useState(false);
   const [reviews, setReviews] = useState<BackendReview[]>([]);
-  const { id, isFavorite, specFilters, dates } = route.params;
+  const { id, isFavorite, specFilters, dates, add: addAfterSignIn } = route.params;
   const allSpecsRef = React.useRef<BottomSheetModal>(null);
   // The root native stack, for its typed `push`; `useTypedNavigation` is the
   // generic navigation prop, which has no `push`.
@@ -365,6 +381,97 @@ export default function DetailsScreen() {
 
   const isOwner = userDetails?.username === product?.owner?.username;
 
+  // The cart (cart plan §3.1). Add to cart shows only for a shop that takes cart
+  // lines now (`can_add_to_cart`, D28); a 409 `shop_not_ready` takes it away for
+  // this visit, as the shop lost that since the page loaded.
+  const { cart, query: cartQuery, add } = useCart();
+  const [cartRefused, setCartRefused] = useState(false);
+  const [adding, setAdding] = useState(false);
+  // The bar's height, so the cart's toasts sit just above it instead of over its buttons (FIXES-r1 B1 row 22).
+  const [barHeight, setBarHeight] = useState(0);
+  const aboveBar = barHeight ? { bottomOffset: barHeight + 8 } : null;
+  const inCart = product ? Boolean(cartLine(cart, product.name)) : false;
+  const canAdd = Boolean(product?.can_add_to_cart) && !cartRefused && !isOwner;
+  const openCart = () => navigation.navigate("Cart");
+
+  // Checkout starts on the dates of the search when nothing was booked yet (D5).
+  useEffect(() => {
+    rememberSearchDates(dates);
+  }, [dates?.first_day, dates?.last_day]);
+
+  /** The add itself, signed in. The cart changes at once and goes back if rn-api refuses (`useCart`). */
+  const addToCart = async () => {
+    if (!product?.owner) return;
+    const shop = {
+      key: product.owner.username,
+      name: shopNameOf(product),
+      locality: product.shop?.locality ?? "",
+      delivers: Boolean(product.shop?.delivers),
+      verified: Boolean(product.owner.business_verified),
+    };
+    setAdding(true);
+    try {
+      const answer = await add({
+        product: {
+          name: product.name,
+          title: product.title,
+          cover_image: product.cover_image ?? null,
+          rate: product.rate ?? null,
+          deposit: product.security_deposit ?? "0",
+        },
+        shop,
+      });
+      // "Not booked yet": adding holds nothing (FIXES-r1 B1 row 9).
+      toast.success("Added to cart", {
+        ...aboveBar,
+        message: `${cartSize(answer)} · not booked yet`,
+        action: { label: "View cart", onPress: openCart },
+      });
+    } catch (error) {
+      const failure = addFailure(apiError(error), shop.name);
+      if (failure.refused) setCartRefused(true);
+      toast[failure.severity](failure.title, {
+        ...aboveBar,
+        message: failure.message,
+        action:
+          failure.action === "retry"
+            ? { label: "Retry", onPress: () => void addToCart() }
+            : failure.action === "view_cart"
+              ? { label: "View cart", onPress: openCart }
+              : undefined,
+      });
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  /**
+   * Add to cart. Signed out, the customer signs in first, as for Book now and
+   * the heart (D3); coming back, the page adds it (below). Only that sign-in
+   * adds: `add` rides on the return-to target, not on a later sign-in.
+   */
+  const handleAdd = () => {
+    if (!product || adding) return;
+    if (!isAuthenticated) {
+      rememberReturnTo({ name: "ProductDetail", params: { id: product.name, dates, add: true } });
+      // Not raised above the bar: it shows over Welcome, which has none.
+      toast.info("Sign in to add to cart", { message: "You'll come back to this listing and it will be added." });
+      navigation.navigate("Welcome");
+      return;
+    }
+    track("product_cta_tapped", { product: product.name, cta: "add_to_cart" });
+    void addToCart();
+  };
+
+  // Back from the sign-in Add to cart asked for: add once, then forget it. The
+  // cart is read first, so an item already in it is not added (or toasted) again.
+  useEffect(() => {
+    if (!addAfterSignIn || !product || !isAuthenticated || !cartQuery.isFetched) return;
+    navigation.setParams({ add: undefined } as never);
+    if (canAdd && !inCart) void addToCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addAfterSignIn, product?.name, isAuthenticated, cartQuery.isFetched]);
+
   // Once per visit, not per focus: coming back from the dates is the same visit. Only
   // signed in, as rn-api takes no events from a signed-out phone (cart plan D50).
   const viewed = React.useRef<string | null>(null);
@@ -376,6 +483,8 @@ export default function DetailsScreen() {
 
   // Whether the owner is asked now, at their next opening, or cannot be booked.
   const booking = product ? liveCopy(product) : null;
+  // The cart's bar (CT-01) once the item can go in a cart or is in one; else BK-01's bar as it was.
+  const cartBar = !isOwner && (canAdd || inCart);
   const barPlan = product ? smallestPlan(plansOf(product)) : null;
 
   /**
@@ -599,8 +708,18 @@ export default function DetailsScreen() {
             </Text>
           </Animated.View>
 
-          {/* Balances the back control so the title is centred on the screen. */}
-          <View style={{ width: MIN_TOUCH_TARGET }} />
+          {/* The cart (D29): signed in, and only once there is a cart to see or
+              this item can go in one, so a shop without the cart shows no empty
+              bag. Over the photo it sits left of the hero's heart; once the band
+              owns the top it takes the right edge. Without it, a spacer balances
+              the back control so the title is centred on the screen. */}
+          {isAuthenticated && ((cart?.count ?? 0) > 0 || canAdd) ? (
+            <View style={{ marginRight: heroCovered ? 0 : 48 }}>
+              <CartButton onPhoto={!heroCovered} />
+            </View>
+          ) : (
+            <View style={{ width: MIN_TOUCH_TARGET }} />
+          )}
         </View>
       </View>
 
@@ -1036,11 +1155,9 @@ export default function DetailsScreen() {
       */}
       {product ? (
       <View
+        onLayout={(event) => setBarHeight(event.nativeEvent.layout.height)}
         style={{
-          flexDirection: "row",
-          alignItems: "center",
-          // 16 + a 44pt button + 16 is the frame's 76pt bar.
-          gap: 16,
+          gap: 12,
           paddingHorizontal: SCREEN_GUTTER,
           paddingTop: 16,
           paddingBottom: 16 + insets.bottom,
@@ -1051,6 +1168,76 @@ export default function DetailsScreen() {
           ...(isDark ? null : BAR_LIFT),
         }}
       >
+        {/* D28: the customer already has a live booking of this item. */}
+        {product.requested && !isOwner ? (
+          <RequestedLine
+            requested={product.requested}
+            onView={() => navigation.navigate("Booking", { number: product.requested!.number })}
+          />
+        ) : null}
+
+        {cartBar ? (
+          // Figma CT-01: the price row above, then Add to cart (outline) beside
+          // Book now (filled). With no Book now, Add is the one action and so
+          // the primary; once the item is in the cart it opens the cart.
+          <>
+            <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+                <Text fontWeight="font-bold" fontSize="text-lg">
+                  {formatCurrency(barPlan?.price ?? product?.rate)}
+                </Text>
+                <Text fontSize="text-sm" tone="body">
+                  {`a ${barPlan?.unit ?? "day"}`}
+                </Text>
+              </View>
+              {Number(product?.security_deposit) > 0 ? (
+                <Text fontSize="text-sm" tone="body">
+                  {`Deposit ${formatCurrency(product.security_deposit)}`}
+                </Text>
+              ) : null}
+            </View>
+            {booking?.kind === "morning" ? (
+              <Text fontSize="text-sm" tone="body">
+                {booking.body}
+              </Text>
+            ) : !booking ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <InformationCircleIcon size={16} color={color.textBody} />
+                <Text fontSize="text-sm" tone="body">
+                  Not taking bookings right now
+                </Text>
+              </View>
+            ) : null}
+            <View style={{ flexDirection: "row", gap: 12 }}>
+              {inCart ? (
+                <Button
+                  variant="outline"
+                  onPress={openCart}
+                  style={[CTA_STYLE, { flex: 1 }]}
+                  accessibilityLabel="In your cart. View your cart"
+                >
+                  <InCartLabel />
+                </Button>
+              ) : (
+                <Button
+                  variant={booking ? "outline" : "primary"}
+                  onPress={handleAdd}
+                  loading={adding}
+                  style={[CTA_STYLE, { flex: 1 }]}
+                  accessibilityLabel="Add to cart"
+                >
+                  <CtaLabel>Add to cart</CtaLabel>
+                </Button>
+              )}
+              {booking ? (
+                <Button onPress={handleBook} style={[CTA_STYLE, { flex: 1 }]} accessibilityLabel={booking.button}>
+                  <CtaLabel>{booking.button}</CtaLabel>
+                </Button>
+              ) : null}
+            </View>
+          </>
+        ) : (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
         {/* BK-01's bar: the smallest plan's price over the deposit (ENG-281). */}
         <View>
           <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
@@ -1096,6 +1283,8 @@ export default function DetailsScreen() {
             </Text>
           )}
         </View>
+        </View>
+        )}
       </View>
       ) : null}
 

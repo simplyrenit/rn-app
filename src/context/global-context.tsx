@@ -1,3 +1,4 @@
+import { forgetDates } from "@/lib/cart";
 import { cancelMyDetailsRequest, fetchMyDetailsRequest } from "@/lib/my-details";
 import {
   getAuthTokens,
@@ -127,6 +128,8 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     // Cleared before the state below, so no screen draws the old answers signed out.
     await queryClient.cancelQueries();
     queryClient.clear();
+    // The next account's checkout must not start on this one's dates (cart plan D5).
+    forgetDates();
     setAuthTokensState(null);
     setIsAuthenticated(false);
     setHasSeenWelcome(false);

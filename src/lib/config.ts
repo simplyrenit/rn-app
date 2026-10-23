@@ -233,6 +233,9 @@ export const ACCESS_DEVICES_ENDPOINT = SERVERURL + "access/devices/";
 /** The customer's bookings: quote, Book now, and each booking's own actions (OE-C). */
 export const BOOKINGS_ENDPOINT = SERVERURL + "bookings/";
 
+/** The customer's cart (cart plan §5.3): `GET` the cart, `PUT`/`DELETE` `lines/{product}/`. */
+export const CART_ENDPOINT = SERVERURL + "cart/";
+
 /** Get help: the desk's hours and the caller's own requests (`GET`), and a new request (`POST`) (OE-L). */
 export const HELP_ENDPOINT = SERVERURL + "help/";
 

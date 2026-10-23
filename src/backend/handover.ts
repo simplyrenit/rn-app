@@ -38,16 +38,21 @@ export async function reportNoShow<B = BookingCustomer>(number: string, photo: s
   return (await axiosInstance.post<{ booking: B }>(url(number, "no-show/"), { photo })).data.booking;
 }
 
-/** "Not as described", before the code: a statement and at least one photo. Staff decide by the end of the next day. */
+/**
+ * "Not as described", before the code: a statement and at least one photo. Staff decide by the end of the next day.
+ * `problem` (B1, a courier booking only): a broken seal or box opens a fault of the trip; left out, as today.
+ */
 export async function refuseAtDoor(
   number: string,
   statement: string,
-  photos: string[]
+  photos: string[],
+  problem?: "seal_broken" | "box_damaged" | "not_as_described"
 ): Promise<{ booking: BookingCustomer; claim: ClaimStub }> {
   return (
     await axiosInstance.post<{ booking: BookingCustomer; claim: ClaimStub }>(url(number, "refuse-at-door/"), {
       statement,
       photos,
+      ...(problem ? { problem } : {}),
     })
   ).data;
 }

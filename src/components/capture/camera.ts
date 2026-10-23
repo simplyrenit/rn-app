@@ -1,8 +1,9 @@
 import { captureQueue, discardFiles, fileBytes, keepFile } from "@/backend/capture-jobs";
 import { prepareImage } from "@/backend/list-flow/images";
 import { permissionDenied } from "@/components/list-flow/pick-photos";
-import { LocalFile, VIDEO_SECONDS, pendingList, recoverShot, videoProblem } from "@/lib/capture";
+import { LocalFile, VIDEO_SECONDS, base64Bytes, namesPlace, pendingList, recoverShot, videoBox, videoProblem } from "@/lib/capture";
 import { toast } from "@/lib/toast";
+import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { Platform } from "react-native";
@@ -36,13 +37,62 @@ export interface TakenVideo {
   bytes?: number;
 }
 
-/** A photo as the camera gave it: resized once for upload and moved to where it is kept until the server has it. */
-async function keepPhoto(asset: ImagePicker.ImagePickerAsset): Promise<string> {
+/**
+ * B1 (plan §6 APP-2): on a booking Renit's courier partner carries, the two sides never meet, so a capture file must not
+ * tell the other side where it was taken (the customer's home). Shots carry no place for the other side already (the
+ * server hides it); these are the places inside the files themselves.
+ */
+export interface CameraOptions {
+  courier?: boolean;
+}
+
+/**
+ * A photo as the camera gave it: resized once for upload and moved to where it is kept until the server has it. The
+ * re-encode drops the photo's EXIF, its place included. Null when it can't be used, having said why.
+ */
+async function keepPhoto(asset: ImagePicker.ImagePickerAsset, { courier }: CameraOptions = {}): Promise<string | null> {
   try {
     return await keepFile(await prepareImage(asset.uri, { width: asset.width, height: asset.height }));
   } catch {
-    // The resize failed (a format the phone could not re-encode): the photo is kept as it was taken.
+    // The resize failed (a format the phone could not re-encode). On a courier booking the original's EXIF may hold
+    // where it was taken, so it is not kept; otherwise the photo is kept as it was taken.
+    if (courier) {
+      toast.error("That photo can't be used", { message: "This phone could not prepare it. Take it again." });
+      return null;
+    }
     return keepFile(asset.uri);
+  }
+}
+
+/** The largest metadata box read to look for a place; a 15-second clip's `moov` is a few hundred KB. */
+const MOOV_MAX_BYTES = 8 * 1024 * 1024;
+/** The boxes that hold a clip's metadata: `moov`, and a `udta` or `meta` some cameras put beside it. */
+const META_BOXES = ["moov", "udta", "meta"];
+
+const readBytes = async (uri: string, position: number, length: number) =>
+  base64Bytes(await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64, position, length }));
+
+/**
+ * Whether a video's metadata names where it was taken: the top-level boxes are walked by their headers (no picture is
+ * read), and each metadata box is searched for a location tag. A file that can't be read this way, or has no `moov`,
+ * counts as naming one.
+ */
+async function videoNamesPlace(uri: string, bytes: number): Promise<boolean> {
+  try {
+    let moov = false;
+    for (let at = 0; at + 8 <= bytes; ) {
+      const box = videoBox(await readBytes(uri, at, Math.min(16, bytes - at)), bytes - at);
+      if (!box) return true;
+      if (META_BOXES.includes(box.type)) {
+        if (box.size > MOOV_MAX_BYTES || namesPlace(await readBytes(uri, at, box.size))) return true;
+        moov ||= box.type === "moov";
+      }
+      at += box.size;
+    }
+    return !moov;
+  } catch {
+    // Unreadable: it can't be shown to hold no place.
+    return true;
   }
 }
 
@@ -50,13 +100,21 @@ async function keepPhoto(asset: ImagePicker.ImagePickerAsset): Promise<string> {
  * A video as the camera gave it, measured before it is taken into a record: its
  * real length and its size. A camera app that ignored the limit, or a clip too
  * large to send, is refused with the reason and deleted (decision T-18).
+ *
+ * On a courier booking a clip whose metadata names a place is refused too: Android's camera app writes one when its
+ * location tags are on. ponytail: refused, not stripped; the app has no way to write inside a file in place, and a whole
+ * rewrite in JS would hold the clip in memory. A small native module that renames the tag's box to `free` would strip it.
  */
-async function keepVideo(asset: ImagePicker.ImagePickerAsset): Promise<TakenVideo | null> {
+async function keepVideo(asset: ImagePicker.ImagePickerAsset, { courier }: CameraOptions = {}): Promise<TakenVideo | null> {
   const uri = await keepFile(asset.uri);
   // The picker gives the length in milliseconds, and not on every phone.
   const seconds = asset.duration && asset.duration > 0 ? Math.round(asset.duration / 1000) : undefined;
   const bytes = (await fileBytes(uri)) ?? (typeof asset.fileSize === "number" ? asset.fileSize : undefined) ?? undefined;
-  const problem = videoProblem({ seconds, bytes });
+  const problem =
+    videoProblem({ seconds, bytes }) ??
+    (courier && (!bytes || (await videoNamesPlace(uri, bytes)))
+      ? "Your camera saved where you are in this video. Turn off location tags in the camera app's settings, then record it again."
+      : null);
   if (problem) {
     void discardFiles([uri]);
     toast.error("That video can't be used", { message: problem });
@@ -66,7 +124,7 @@ async function keepVideo(asset: ImagePicker.ImagePickerAsset): Promise<TakenVide
 }
 
 /** One photo, taken now with the camera. */
-export async function takePhoto(): Promise<string | null> {
+export async function takePhoto(options: CameraOptions = {}): Promise<string | null> {
   if (!(await cameraOpen())) return null;
   let result: ImagePicker.ImagePickerResult;
   try {
@@ -80,7 +138,7 @@ export async function takePhoto(): Promise<string | null> {
     return null;
   }
   const asset = result.canceled ? null : result.assets?.[0];
-  return asset ? keepPhoto(asset) : null;
+  return asset ? keepPhoto(asset, options) : null;
 }
 
 /**
@@ -91,7 +149,7 @@ export async function takePhoto(): Promise<string | null> {
  * and nothing can be run on a device in this build). The length limit and the
  * size ceiling are the bounds; add a compressor here, behind this one function.
  */
-export async function recordVideo(): Promise<TakenVideo | null> {
+export async function recordVideo(options: CameraOptions = {}): Promise<TakenVideo | null> {
   if (!(await cameraOpen())) return null;
   let result: ImagePicker.ImagePickerResult;
   try {
@@ -106,7 +164,7 @@ export async function recordVideo(): Promise<TakenVideo | null> {
     return null;
   }
   const asset = result.canceled ? null : result.assets?.[0];
-  return asset ? keepVideo(asset) : null;
+  return asset ? keepVideo(asset, options) : null;
 }
 
 /**
@@ -127,11 +185,13 @@ export async function recoverLostShot(stamp: () => string = () => new Date().toI
       for (const pending of pendingList<Pending>(await ImagePicker.getPendingResultAsync())) {
         const asset = "assets" in pending && !pending.canceled ? pending.assets?.[0] : null;
         if (!asset) continue;
+        const options = { courier: waiting.courier };
         if (asset.type === "video") {
-          const video = await keepVideo(asset);
+          const video = await keepVideo(asset, options);
           if (video) taken = { kind: "video", file: { uri: video.uri, seconds: video.seconds, bytes: video.bytes, taken_at: stamp() } };
         } else {
-          taken = { kind: "photo", file: { uri: await keepPhoto(asset), taken_at: stamp() } };
+          const uri = await keepPhoto(asset, options);
+          if (uri) taken = { kind: "photo", file: { uri, taken_at: stamp() } };
         }
         break;
       }

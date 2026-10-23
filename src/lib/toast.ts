@@ -1,4 +1,4 @@
-import type { ToastSeverity } from "@/components/core/toast";
+import type { ToastAction, ToastSeverity } from "@/components/core/toast";
 import { errorFeedback, successFeedback, warningFeedback } from "@/lib/haptics";
 import Toast from "react-native-toast-message";
 
@@ -7,12 +7,16 @@ interface ShowToastOptions {
   message?: string;
   /** Fire the matching notification haptic. On by default. */
   haptic?: boolean;
+  /** One action on the toast's right: "View cart", "Undo", "Retry". A tap hides the toast. */
+  action?: ToastAction;
+  /** Distance from the screen's bottom, to sit above a pinned bar (the product page's). */
+  bottomOffset?: number;
 }
 
 function show(
   severity: ToastSeverity,
   title: string,
-  { message, haptic = true }: ShowToastOptions = {}
+  { message, haptic = true, action, bottomOffset }: ShowToastOptions = {}
 ) {
   if (haptic) {
     if (severity === "success") successFeedback();
@@ -25,7 +29,10 @@ function show(
     position: "bottom",
     text1: title,
     text2: message,
-    props: { severity },
+    props: { severity, action },
+    // An action needs longer than the 4 s default to be reached, by eye and by screen reader.
+    ...(action ? { visibilityTime: 7000 } : null),
+    ...(bottomOffset ? { bottomOffset } : null),
   });
 }
 
@@ -43,4 +50,7 @@ export const toast = {
     show("warning", title, options),
   info: (title: string, options?: ShowToastOptions) =>
     show("info", title, options),
+  /** An undoable change the customer just made ("Removed from cart"): no tone of its own, no haptic. */
+  neutral: (title: string, options?: ShowToastOptions) =>
+    show("neutral", title, { haptic: false, ...options }),
 };

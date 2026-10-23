@@ -8,6 +8,7 @@ import { RefuseSheet } from "@/components/shop/refuse-sheet";
 import { apiError } from "@/lib/api-error";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { errorFeedback, successFeedback } from "@/lib/haptics";
+import { ringCourierLine } from "@/lib/shop-courier";
 import {
   Ring,
   RingEnding,
@@ -168,6 +169,11 @@ function RingingView({
             {ringWhere(ring)}
           </Text>
         </View>
+        {ringCourierLine(ring) ? (
+          <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
+            {ringCourierLine(ring)}
+          </Text>
+        ) : null}
 
         <Panel style={{ alignSelf: "stretch", marginTop: space.sm }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md }}>
