@@ -181,9 +181,10 @@ async function pay(payment: PaymentHandoff): Promise<PayResult> {
 const inFlight = new Map<string, Promise<PayResult>>();
 
 /**
- * How many times the app's screens have been torn down in this run (`Navigation` unmounting).
- * Android does that while the customer is in a UPI app ("Don't keep activities", low memory)
- * and builds them again on return, with this JS and its payments still running. A payment
+ * How many times the app's screens have been torn down in this run (`Navigation` unmounting:
+ * the error screen's "Try again" does it too). Android does that while the customer is in a
+ * UPI app ("Don't keep activities", low memory) and builds them again on return, with this JS
+ * and its payments still running. A payment
  * started before that leaves its note to the new start, which resumes it, opens its booking
  * and forgets it there (`usePay`).
  */

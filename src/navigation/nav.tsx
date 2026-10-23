@@ -656,7 +656,8 @@ export default function Navigation() {
       stale = true;
     };
   }, [isAuthenticated, username, openBooking]);
-  // Only Android rebuilding the screens unmounts this while the JS runs on (see `screens`).
+  // Unmounted while the JS runs on only when Android rebuilds the screens, or by the error
+  // screen's "Try again" (see `screens`).
   React.useEffect(
     () => () => {
       screens.torn += 1;
