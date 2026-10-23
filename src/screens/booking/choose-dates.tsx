@@ -43,7 +43,6 @@ import {
   blockedNote,
   cardDays,
   fixLabel,
-  lastUsedDates,
   lineAlone,
   lineBlock,
   lineChip,
@@ -51,7 +50,6 @@ import {
   noDayNotice,
   notDeliveredReason,
   othersLine,
-  rememberDates,
   shortestOf,
   startLeftOut,
 } from "@/lib/card-checkout";
@@ -251,19 +249,17 @@ export default function BookingDatesScreen() {
     [daysKey]
   );
 
-  // D5: a cart checkout starts on the last dates used in this app session, else the search's.
-  const [picked, setPicked] = useState<PickedDays | null>(() => {
-    const from = (params.from_cart && lastUsedDates()) || { first_day: params.first_day, last_day: params.last_day };
-    return from.first_day &&
-      from.last_day &&
-      from.first_day >= today &&
-      from.last_day >= from.first_day &&
-      // Days a search or an earlier request carried that the server would refuse (a start more than 180 days ahead, more
-      // than a year) are not kept.
-      daysAllowed(from.first_day, from.last_day, today)
-      ? { first: from.first_day, last: from.last_day }
-      : null;
-  });
+  const [picked, setPicked] = useState<PickedDays | null>(() =>
+    params.first_day &&
+    params.last_day &&
+    params.first_day >= today &&
+    params.last_day >= params.first_day &&
+    // Days a search or an earlier request carried that the server would refuse (a start more than 180 days ahead, more
+    // than a year) are not kept.
+    daysAllowed(params.first_day, params.last_day, today)
+      ? { first: params.first_day, last: params.last_day }
+      : null
+  );
   const [mode, setMode] = useState<DeliveryMode>("pickup");
   /**
    * The address (its key) the customer just chose or edited to have it
@@ -573,7 +569,6 @@ export default function BookingDatesScreen() {
   /** `going`: the card's items that go on to the price; Book Now's one listing otherwise. */
   const goOn = (going: string[] = included) => {
     if (!first || !last) return;
-    rememberDates(first, last);
     const lines = going.map((name) => itemOf(byName.get(name) as BackendProduct));
     navigation.navigate("ReviewAndBook", {
       item: card ? lines[0] : itemOf(product),

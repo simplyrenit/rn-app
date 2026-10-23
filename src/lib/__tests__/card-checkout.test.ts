@@ -10,7 +10,6 @@ import {
   cardPriceLines,
   depositOwnPage,
   fixLabel,
-  lastUsedDates,
   lineAlone,
   lineBlock,
   lineChanges,
@@ -22,7 +21,6 @@ import {
   othersLine,
   refusalButton,
   refusalNotice,
-  rememberDates,
   shortestOf,
   startLeftOut,
   wasAmount,
@@ -213,14 +211,6 @@ describe("no day has every item free (CT-40)", () => {
       { name: "b", taken: new Set<string>() },
     ];
     expect(noDayAllFree("2026-12", "2026-10-22", "2027-04-20", lines).culprits).toEqual(["a"]);
-  });
-});
-
-describe("the dates of the session (D5)", () => {
-  it("remembers the last dates used", () => {
-    expect(lastUsedDates()).toBeNull();
-    rememberDates("2026-10-24", "2026-10-26");
-    expect(lastUsedDates()).toEqual({ first_day: "2026-10-24", last_day: "2026-10-26" });
   });
 });
 

@@ -371,7 +371,7 @@ export type RootStackParamList = {
      * lines. Lines past the checkout cap start left in the cart.
      */
     products?: string[];
-    /** From the cart: Book sends `from_cart`, and the dates start at the last ones used in this app session (D5). */
+    /** From the cart: Book sends `from_cart`. The cart passes its dates (D5) as `first_day` / `last_day`. */
     from_cart?: boolean;
     /** The other cards' items that stay in the cart, for the line under this card. */
     others?: CartOthers;

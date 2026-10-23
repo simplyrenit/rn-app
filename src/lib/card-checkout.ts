@@ -203,16 +203,6 @@ export function noDayNotice(count: number, culprits: string[]): { title: string;
   return { title, text: "Leave an item in your cart, or look at another month." };
 }
 
-// D5: the last dates used on a dates step in this app session, for the next cart checkout. Module memory on purpose: the
-// plan keeps no dates in the cart, and a restart forgets them.
-let lastDates: { first_day: string; last_day: string } | null = null;
-
-export function rememberDates(first_day: string, last_day: string) {
-  lastDates = { first_day, last_day };
-}
-
-export const lastUsedDates = () => lastDates;
-
 /** G5's price panel: "Rent (3 items)", then delivery and Renit's fee as the one-item screen says them. */
 export function cardPriceLines(quote: Quote, items: number): PriceLine[] {
   const [, handover, fee] = priceLines(quote);
