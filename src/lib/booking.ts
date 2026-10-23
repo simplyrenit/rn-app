@@ -46,6 +46,12 @@ export interface BookItem {
   shop_name: string;
 }
 
+/** The cart's other cards, which stay in the cart while one card checks out: "Your 2 items from Party Props and HomeEase". */
+export interface CartOthers {
+  items: number;
+  shops: string[];
+}
+
 /**
  * ENG-282: how the rent is paid. `monthly`: a month plan of more than 30 days pays month 1 after the accept and each later
  * month by its own link. Every booking before ENG-282, and every other one, is `upfront`. The server decides it.
@@ -163,6 +169,38 @@ export interface Quote {
   first_payment?: string | null;
   /** One month's rent, owed for ending early inside the minimum: null when the month plan's minimum is under 2 months. */
   notice?: string | null;
+  /**
+   * Cart plan §5.3: one row per product asked for with `products[]`, in that order. The totals above are their sum; the
+   * reasons one item can't go are its own `blockers` (`no_unit_free`, `too_short`, `already_requested`, …), not the quote's.
+   * Absent from a quote asked with `product`, and from an older server.
+   */
+  lines?: QuoteLine[];
+}
+
+export interface QuoteLine {
+  product: string;
+  n: number;
+  rate: string;
+  rent: string;
+  deposit: string;
+  plan?: { unit: PlanUnit; price: string; min: number };
+  units_free: number;
+  /** Where it is collected; named when it is `other_pickup_point`. */
+  pickup_locality?: string | null;
+  blockers: string[];
+}
+
+/** One item of a booking (cart plan T6), the customer's side. */
+export interface BookingLine {
+  id: number;
+  n: number;
+  /** "RN-21345·2". */
+  ref: string;
+  product: { name: string | null; title: string; cover_image: string | null };
+  rent: string;
+  deposit: string;
+  /** `refused`: the shop unticked it; `no_unit`: it lost its unit before the accept. */
+  state: "live" | "refused" | "no_unit";
 }
 
 export type PaymentPurpose = "booking_amount" | "rent" | "rent_and_deposit" | "deposit";
@@ -278,6 +316,8 @@ export interface BookingCustomer {
   exit_reason: string;
   is_open: boolean;
   product: { name: string; title: string; cover_image: string | null };
+  /** Cart plan T6: one row per item; a booking before lines has one. Absent from an older server. */
+  lines?: BookingLine[];
   shop: {
     name: string;
     locality: string;
@@ -896,6 +936,15 @@ export interface PayStep {
   title: string;
   sub: string;
   amount: string;
+  /** Under the amount after a price change at Book now (CT-23a): "(was ₹2,801)". */
+  was?: string;
+}
+
+/** A card checkout (cart plan §3.3): the shop is named where a one-item booking says "the owner". */
+export interface CardWords {
+  shop: string;
+  /** The deposit's items: "Camera ₹20,000 · Lens ₹5,000". */
+  madeOf?: string | null;
 }
 
 /** ENG-282: billed a month at a time, with month 1's amount to show. */
@@ -911,7 +960,7 @@ export function monthlyLine(quote: Quote): string | null {
 }
 
 /** "What you pay, and when". `moved`: the ₹99 of an earlier request moves here (N2). */
-export function paySteps(quote: Quote, moved = false, now: Date = new Date()): PayStep[] {
+export function paySteps(quote: Quote, moved = false, now: Date = new Date(), card?: CardWords): PayStep[] {
   const steps: PayStep[] = [
     {
       title: "Now",
@@ -923,15 +972,16 @@ export function paySteps(quote: Quote, moved = false, now: Date = new Date()): P
     const opens = isForMorning(quote) && quote.shop.opens_at ? timeAndDay(quote.shop.opens_at, now) : null;
     const when = opens ? `They are asked ${opens.day} at ${opens.time}` : rentWindow(quote.rent_pay_minutes);
     steps.push({
-      title: "After the owner accepts",
+      title: card ? `After ${card.shop} accepts` : "After the owner accepts",
       sub: monthlyQuote(quote) ? `Month 1 · ${when}` : when,
       amount: money(afterAccept(quote)),
     });
   }
   if (isPositive(quote.deposit.amount)) {
+    const terms = capital(depositTerms(quote.deposit.with_rent, quote.deposit.due_on ? dayShort(quote.deposit.due_on) : null));
     steps.push({
       title: "Deposit",
-      sub: capital(depositTerms(quote.deposit.with_rent, quote.deposit.due_on ? dayShort(quote.deposit.due_on) : null)),
+      sub: card?.madeOf ? `${terms}\nMade of: ${card.madeOf}` : terms,
       amount: money(quote.deposit.amount),
     });
   }
@@ -958,7 +1008,7 @@ export function totalLine(quote: Quote, moved = false): string {
  * The plain lines under the sums (D-2, N1 to N7): what Book now does with the ₹99, what cancelling costs, late days, early return.
  * Every amount and length of time is the quote's; an older server's quote without them gets the sentence without the number.
  */
-export function plainLines(quote: Quote, moved = false): string[] {
+export function plainLines(quote: Quote, moved = false, card?: CardWords): string[] {
   const handover = quote.delivery_mode === "owner_delivery" ? "delivery" : "pickup";
   const amount = money(quote.pay_now);
   const morning = isForMorning(quote);
@@ -975,10 +1025,16 @@ export function plainLines(quote: Quote, moved = false): string[] {
       ? `Your ${amount} from the earlier request moves to this booking and counts toward the rent.`
       : `${morning ? "Book for the morning" : "Book now"} pays ${amount} now, which counts toward the rent.`,
     `${morning ? "The owner is asked when they open" : "The owner is rung"}${answer}.`,
-    `If they say no, do not answer, or you cancel before they answer, the ${amount} comes back in full.`,
+    `If ${card ? `${card.shop} says` : "they say"} no, do not answer, or you cancel before they answer, the ${amount} comes back in full.`,
     ...(morning ? [`Changed your mind? Cancel any time before they open and the ${amount} comes back.`] : []),
-    // N4: the ₹99 is also kept when the rent is not paid after the accept.
-    ...(rentToPay ? [`If you do not pay the rent${payWindow}, the booking lapses and Renit keeps the ${amount}.`] : []),
+    // N4: the ₹99 is also kept when the rent is not paid after the accept. A card's partial accept gives it back (D11).
+    ...(rentToPay
+      ? [
+          card
+            ? `If you don't pay the rent${payWindow}, the request ends and Renit keeps the ${amount}. If ${card.shop} accepts only some items, the ${amount} comes back.`
+            : `If you do not pay the rent${payWindow}, the booking lapses and Renit keeps the ${amount}.`,
+        ]
+      : []),
     rentToPay
       ? `Once they accept, cancelling up to ${before} before ${handover} gives the rent back in full. Renit keeps the ${amount}.`
       : `Once they accept, Renit keeps the ${amount} if you cancel up to ${before} before ${handover}.`,
@@ -996,9 +1052,12 @@ export function plainLines(quote: Quote, moved = false): string[] {
       ? [`This ${handover} is under ${pluralize(cancel.free_hours, "hour")} ${morning ? "after the owner is asked" : "away"}, so you have ${pluralize(cancel.grace_minutes, "minute")} after paying the rent to cancel and get the rent back.`]
       : []),
     // ENG-281: on a week or month plan a late day costs that plan's price a day, which is not "one day's rent" of a daily price.
-    quote.plan && quote.plan.unit !== "day"
-      ? `Each late day costs ${money(quote.rate)}, your plan's price a day.`
-      : "Each late day costs one day's rent.",
+    // A card's `rate` is the sum of its items' day rates (§6.1 late fee).
+    card
+      ? `Each late day costs one day's rent of every item (${money(quote.rate)}).`
+      : quote.plan && quote.plan.unit !== "day"
+        ? `Each late day costs ${money(quote.rate)}, your plan's price a day.`
+        : "Each late day costs one day's rent.",
     earlyReturnLine(quote),
   ];
 }
@@ -1134,6 +1193,7 @@ const FIXED_BY_DATES = new Set([
   "too_far",
   "area_off",
   "delivery_not_offered",
+  "already_requested",
 ]);
 
 /** A blocker or a Book now error code in plain words; null for one this list does not know. */
@@ -1176,6 +1236,19 @@ export function blockerText(code: string, details?: Record<string, unknown> | nu
       return "Add a phone number to your account to book. The pay page needs it.";
     case "linked_account":
       return "You can't book from this owner: your accounts share a phone number, a device or a bank account.";
+    // Cart plan D39, D49 and §3.2: the server sends these on Book Now too.
+    case "already_requested": {
+      const number = typeof details?.number === "string" ? ` (${details.number})` : "";
+      return `You already asked for this item on these dates${number}. Pick other dates.`;
+    }
+    case "too_many_in_flight": {
+      const n = Number(details?.max);
+      return `Finish or cancel one of your ${n > 0 ? `${n} ` : ""}open requests first.`;
+    }
+    case "one_item_only":
+      return "This shop takes one item per booking for now. Book each item on its own.";
+    case "not_listed":
+      return "This item is no longer available.";
     // Only an extension has these (ENG-220, T-30): the quote lists them as codes, and the price screen says each in words.
     case "listing_unavailable":
       return "This item is not taking bookings right now. Ask the owner.";

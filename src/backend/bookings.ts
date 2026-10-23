@@ -15,7 +15,7 @@ import { BOOKINGS_ENDPOINT, GET_PRODUCT_DETAILS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { correctedNow } from "@/lib/server-clock";
 import { BackendProduct } from "@/lib/types";
-import { QueryClient, useInfiniteQuery, useQuery } from "react-query";
+import { QueryClient, UseQueryResult, useInfiniteQuery, useQueries, useQuery } from "react-query";
 
 /** API-CONTRACT OE-C: the customer's side of a booking. Every path ends in "/". */
 const bookingUrl = (number: string, action = "") =>
@@ -24,7 +24,13 @@ const bookingUrl = (number: string, action = "") =>
 export const bookingQueryKey = (number: string) => ["booking", number];
 
 export interface QuoteInput {
-  product: string;
+  /** Book Now on the classic flow: one listing. */
+  product?: string;
+  /**
+   * Card mode (cart plan §5.3, D41): one shop's listings, one booking. Sent instead of `product`, by a cart checkout and
+   * by Book Now when the server's `book_flow` is `card`. The answer then has `lines`.
+   */
+  products?: string[];
   first_day: string;
   last_day: string;
   delivery_mode: DeliveryMode;
@@ -50,6 +56,10 @@ export interface BookInput extends QuoteInput {
   client_key: string;
   /** B1: the quote's `delivery.by`, sent only when the quote had one (`bookBy`). */
   delivery_by?: DeliveredBy;
+  /** Card mode: the deposit the customer saw (D36); a change is refused with `price_changed`. */
+  expected_deposit?: string;
+  /** A cart checkout: the server marks the cart's lines "in checkout" (D6). */
+  from_cart?: boolean;
 }
 
 export interface BookAnswer {
@@ -74,6 +84,13 @@ export async function fetchPublicProduct(name: string): Promise<BackendProduct> 
 
 export function usePublicProduct(name: string) {
   return useQuery(["public-product", name], () => fetchPublicProduct(name), { staleTime: 30_000 });
+}
+
+/** `usePublicProduct` for each of a card's listings (cart checkout), sharing its cache. */
+export function usePublicProducts(names: string[]) {
+  return useQueries(
+    names.map((name) => ({ queryKey: ["public-product", name], queryFn: () => fetchPublicProduct(name), staleTime: 30_000 }))
+  ) as UseQueryResult<BackendProduct>[];
 }
 
 /**

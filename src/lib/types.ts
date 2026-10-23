@@ -5,7 +5,7 @@ import {
 } from "@react-navigation/native";
 import { DimensionValue, FlexAlignType, ImageSourcePropType } from "react-native";
 import type { SavedAddress } from "@/lib/addresses";
-import type { BookItem, DeliveryMode, ProductShop } from "@/lib/booking";
+import type { BookItem, CartOthers, DeliveryMode, ProductShop } from "@/lib/booking";
 import type { Moment, Side } from "@/lib/capture";
 import type { Plan } from "@/lib/plans";
 import type { ListingDelivery } from "@/lib/delivery";
@@ -363,10 +363,30 @@ export type RootStackParamList = {
    * dates and how the item changes hands. `moved_from` is the customer's refused
    * or unanswered booking whose ₹99 moves to the new one.
    */
-  BookingDates: { product: string; first_day?: string; last_day?: string; moved_from?: string };
+  BookingDates: {
+    /** Book Now: one listing. Its `book_flow` picks the classic quote or the card's (D41); the screen looks the same. */
+    product?: string;
+    /**
+     * A cart checkout (cart plan §3.3, CT-20): the card's listings in cart order, without `not_listed` and `in_checkout`
+     * lines. Lines past the checkout cap start left in the cart.
+     */
+    products?: string[];
+    /** From the cart: Book sends `from_cart`, and the dates start at the last ones used in this app session (D5). */
+    from_cart?: boolean;
+    /** The other cards' items that stay in the cart, for the line under this card. */
+    others?: CartOthers;
+    first_day?: string;
+    last_day?: string;
+    moved_from?: string;
+  };
   /** BK-03 and BK-11: the whole price, then Book now. */
   ReviewAndBook: {
+    /** The listing booked; in card mode the first of `lines`. */
     item: BookItem;
+    /** Card mode: every listing in this booking, sent as `products[]` (Book Now on `book_flow=card` has just `item`). */
+    lines?: BookItem[];
+    from_cart?: boolean;
+    others?: CartOthers;
     first_day: string;
     last_day: string;
     delivery_mode: DeliveryMode;
@@ -720,6 +740,13 @@ export interface BackendProduct {
   live_booking?: boolean;
   book_for_morning?: boolean;
   id_check_needed?: "none" | "id" | "id_and_match";
+  /**
+   * Cart plan D41: which way Book Now books, the server's switch. `card` sends `products:[name]` through the same
+   * screens; anything else, and an older server without it, the classic `product`.
+   */
+  book_flow?: "classic" | "card";
+  /** Cart plan D28: the caller's live booking of this listing, or null. Signed in only; absent from an older server. */
+  requested?: { number: string } | null;
   /** A moved listing's price is treated as per day until the owner saves `rate`. */
   rate_needs_confirming?: boolean;
   /** True while `worth` is null. */
