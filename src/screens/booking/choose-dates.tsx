@@ -232,18 +232,20 @@ export default function BookingDatesScreen() {
   const [alone, setAlone] = useState<Record<string, { code: string; locality?: string | null }>>({});
   // Other listings in the same screen (a navigate that lands back on it) start over; so does a line already requested
   // (`you_booked_it`, §3.2), which starts left in the cart once its listing says so.
+  // Keyed on the listings loaded too, so one that loads on Retry is seeded. The card's quote waits for it.
   const seeded = useRef<string | null>(null);
   const loaded = productQueries.every((q) => !q.isLoading);
+  const seedKey = `${namesKey}|${names.filter((_, i) => productQueries[i]?.data).join("\n")}`;
   useEffect(() => {
-    if (!loaded || seeded.current === namesKey) return;
-    const first = seeded.current === null;
-    seeded.current = namesKey;
-    const booked = card ? names.filter((name) => byName.get(name)?.requested) : [];
-    if (!first) setAlone({});
-    if (!first || booked.length) setLeft([...new Set([...startLeftOut(names), ...booked])]);
+    if (!card || !loaded || seeded.current === seedKey) return;
+    seeded.current = seedKey;
+    const booked = names.filter((name) => byName.get(name)?.requested);
+    setAlone({});
+    // A new array every time: the render it causes is the one whose quote is asked.
+    setLeft([...new Set([...startLeftOut(names), ...booked])]);
     // `byName` is read once the listings are in.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, namesKey]);
+  }, [card, loaded, seedKey]);
   const included = card ? listed.filter((name) => !left.includes(name) && !alone[name]) : listed;
   const includedProducts = included.map((name) => byName.get(name) as BackendProduct);
   // The shop's place, name and delivery: every item of a card is one shop's.
@@ -311,7 +313,7 @@ export default function BookingDatesScreen() {
 
   // What is priced: Book Now's listing, as `product` or (D41) `products:[name]`; a card's included items once loaded.
   const asked: Pick<QuoteInput, "product" | "products"> | null = card
-    ? included.length
+    ? included.length && seeded.current === seedKey
       ? { products: included }
       : null
     : asCard
