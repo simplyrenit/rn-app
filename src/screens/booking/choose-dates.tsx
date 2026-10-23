@@ -61,7 +61,7 @@ import { minDays as minDaysOf, minimumWords, plansOf } from "@/lib/plans";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
-import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { StackActions, useFocusEffect, useRoute } from "@react-navigation/native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
@@ -210,8 +210,12 @@ export default function BookingDatesScreen() {
   const { authTokens, isAuthenticated } = useGlobalContext();
   const signedIn = Boolean(isAuthenticated && authTokens?.access_token);
 
-  // A cart checkout names its card's listings; Book Now names one.
-  const [names] = useState(() => params.products ?? (params.product ? [params.product] : []));
+  // A cart checkout names its card's listings; Book Now names one. Followed from the params, as `product` always was.
+  const names = useMemo(
+    () => params.products ?? (params.product ? [params.product] : []),
+    [params.products, params.product]
+  );
+  const namesKey = names.join("\n");
   const card = Boolean(params.from_cart) || names.length > 1;
   const productQueries = usePublicProducts(names);
   const byName = new Map<string, BackendProduct>();
@@ -224,8 +228,22 @@ export default function BookingDatesScreen() {
   const gone = card ? names.filter((_, i) => apiError(productQueries[i]?.error)?.status === 404) : [];
   const listed = names.filter((name) => byName.has(name));
   const [left, setLeft] = useState<string[]>(() => startLeftOut(names));
-  // Items the quote said are collected elsewhere or billed monthly: checked out on their own, never added back (CT-21d, e).
+  // Items the quote said are collected elsewhere or billed monthly: checked out on their own (CT-21d, e) until added back.
   const [alone, setAlone] = useState<Record<string, { code: string; locality?: string | null }>>({});
+  // Other listings in the same screen (a navigate that lands back on it) start over; so does a line already requested
+  // (`you_booked_it`, §3.2), which starts left in the cart once its listing says so.
+  const seeded = useRef<string | null>(null);
+  const loaded = productQueries.every((q) => !q.isLoading);
+  useEffect(() => {
+    if (!loaded || seeded.current === namesKey) return;
+    const first = seeded.current === null;
+    seeded.current = namesKey;
+    const booked = card ? names.filter((name) => byName.get(name)?.requested) : [];
+    if (!first) setAlone({});
+    if (!first || booked.length) setLeft([...new Set([...startLeftOut(names), ...booked])]);
+    // `byName` is read once the listings are in.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, namesKey]);
   const included = card ? listed.filter((name) => !left.includes(name) && !alone[name]) : listed;
   const includedProducts = included.map((name) => byName.get(name) as BackendProduct);
   // The shop's place, name and delivery: every item of a card is one shop's.
@@ -397,6 +415,14 @@ export default function BookingDatesScreen() {
       return next;
     });
   }, [card, pickupLines]);
+  // Billed monthly depends on the days: other dates ask again about those items.
+  useEffect(() => {
+    setAlone((was) =>
+      Object.values(was).some((a) => a.code === "monthly_book_alone")
+        ? Object.fromEntries(Object.entries(was).filter(([, a]) => a.code !== "monthly_book_alone"))
+        : was
+    );
+  }, [first, last]);
 
   // CT-40: the month on screen has no day with every included item free.
   const [month, setMonth] = useState(() => (picked?.first ?? today).slice(0, 7));
@@ -585,7 +611,10 @@ export default function BookingDatesScreen() {
 
   // ---- Card mode: the items, and the bar's fix (G11) ----
   const leave = (more: string[]) => setLeft((was) => [...was, ...more.filter((name) => !was.includes(name))]);
-  const addable = listed.filter((name) => !alone[name]);
+  const addBack = (names: string[]) => {
+    setLeft((was) => was.filter((name) => !names.includes(name)));
+    setAlone((was) => Object.fromEntries(Object.entries(was).filter(([name]) => !names.includes(name))));
+  };
   const blockedItems = blocked.map((name) => {
     const code = lineBlock(lineOf(name)) as string;
     const p = byName.get(name) as BackendProduct;
@@ -598,7 +627,7 @@ export default function BookingDatesScreen() {
   const cardNote = included.length === 0 ? "Add back at least one item to go on." : blockedNote(blockedItems) ?? blocker;
   const leftNote = aloneNote(Object.entries(alone).map(([name, a]) => ({ title: titleOf(name), ...a })));
   // The way on when something is in the way: add the items back, or leave the blocking ones in the cart.
-  const back = Math.min(addable.length, CHECKOUT_CAP);
+  const back = Math.min(listed.length, CHECKOUT_CAP);
   const leaveAndGo = () => {
     leave(blocked);
     goOn(going);
@@ -607,8 +636,8 @@ export default function BookingDatesScreen() {
     ? null
     : included.length === 0
       ? {
-          label: back > 1 && back === addable.length ? `Add back all ${back} items` : `Add back ${pluralize(back, "item")}`,
-          onPress: () => setLeft(startLeftOut(addable)),
+          label: back > 1 && back === listed.length ? `Add back all ${back} items` : `Add back ${pluralize(back, "item")}`,
+          onPress: () => addBack(listed.slice(0, CHECKOUT_CAP)),
         }
       : blocked.length && quote && !settling
         ? going.length && !blocker
@@ -654,13 +683,15 @@ export default function BookingDatesScreen() {
                 const chips: { chip: LineChip; onView?: () => void }[] = [];
                 const chip = (said: LineChip | null, onView?: () => void) => said && chips.push({ chip: said, onView });
                 chip(own ? lineChip(own.code, { locality: own.locality }) : isLeft ? lineChip("left") : null);
+                const view = requested ? () => navigation.navigate("Booking", { number: requested }) : undefined;
                 if (code) {
                   chip(
                     lineChip(code, { minDays: minDaysOf(plansOf(p)), number: requested }),
-                    code === "already_requested" && requested
-                      ? () => navigation.navigate("Booking", { number: requested })
-                      : undefined
+                    code === "already_requested" ? view : undefined
                   );
+                } else if (isLeft && !own && requested) {
+                  // Why it started left in the cart (§3.2 `you_booked_it`).
+                  chip(lineChip("already_requested", { number: requested }), view);
                 }
                 if (culprits.includes(name)) chip(lineChip("month_full"));
                 if (notDelivered.includes(name)) chip(lineChip("delivery_not_offered"));
@@ -676,21 +707,24 @@ export default function BookingDatesScreen() {
                     left={isLeft}
                     chips={chips}
                     action={
-                      own
-                        ? undefined
-                        : isLeft
-                          ? {
-                              label: "Add back",
-                              disabled: full,
-                              hint: full ? `Up to ${CHECKOUT_CAP} items go in one booking` : undefined,
-                              onPress: () => setLeft((was) => was.filter((n) => n !== name)),
-                            }
-                          : { label: "Leave in cart", onPress: () => leave([name]) }
+                      isLeft
+                        ? {
+                            label: "Add back",
+                            disabled: full,
+                            hint: full ? `Up to ${CHECKOUT_CAP} items go in one booking` : undefined,
+                            // An item on its own is asked about again: the next quote says whether it still is.
+                            onPress: () => addBack([name]),
+                          }
+                        : { label: "Leave in cart", onPress: () => leave([name]) }
                     }
                     extra={
                       own?.code === "monthly_book_alone" ? (
                         <View style={{ alignSelf: "flex-start" }}>
-                          <TextButton label="Book it on its own" onPress={() => navigation.navigate("BookingDates", { product: name })} />
+                          <TextButton
+                            label="Book it on its own"
+                            // A new dates step for that item: `navigate` would only change this one's params.
+                            onPress={() => navigation.dispatch(StackActions.push("BookingDates", { product: name }))}
+                          />
                         </View>
                       ) : null
                     }
@@ -879,7 +913,7 @@ export default function BookingDatesScreen() {
               Try again
             </Text>
           </Text>
-        ) : card && (leftNote || monthFull.none) ? (
+        ) : card && (leftNote || (!range && monthFull.none)) ? (
           <Text fontSize="text-sm" tone={leftNote ? "body" : "warning"} style={{ textAlign: "center" }}>
             {leftNote ?? "No day this month has every item free."}
           </Text>

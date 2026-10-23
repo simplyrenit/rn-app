@@ -108,18 +108,19 @@ export default function ReviewAndBookScreen() {
   const [dropped, setDropped] = useState<string[]>([]);
   const items = (params.lines ?? [params.item]).filter((line) => !dropped.includes(line.name));
   const titleOf = (name: string) => params.lines?.find((line) => line.name === name)?.title ?? name;
-  const products = items.map((line) => line.name).join("\n");
 
   const input: QuoteInput = useMemo(
     () => ({
-      ...(asCard ? { products: products.split("\n") } : { product: params.item.name }),
+      ...(asCard ? { products: items.map((line) => line.name) } : { product: params.item.name }),
       first_day: params.first_day,
       last_day: params.last_day,
       delivery_mode: params.delivery_mode,
       address_id: params.address_id ?? null,
       ...(params.extends ? { extends: params.extends } : {}),
     }),
-    [asCard, products, params.item.name, params.first_day, params.last_day, params.delivery_mode, params.address_id, params.extends]
+    // `items` follows `params.lines` and `dropped`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [asCard, dropped, params.lines, params.item.name, params.first_day, params.last_day, params.delivery_mode, params.address_id, params.extends]
   );
   const extending = params.extends ?? null;
   const quoteQuery = useQuote(input);
@@ -383,7 +384,8 @@ export default function ReviewAndBookScreen() {
                   amount={line ? money(line.rent) : null}
                   deposit={line && Number(line.deposit) > 0 ? `Deposit ${money(line.deposit)}` : null}
                   chips={chips}
-                  action={code ? { label: "Leave in cart", onPress: () => drop([item.name]) } : undefined}
+                  // The last item can't be left: the bar's way on is other dates then.
+                  action={code && blocked.length < items.length ? { label: "Leave in cart", onPress: () => drop([item.name]) } : undefined}
                 />
               );
             })}
