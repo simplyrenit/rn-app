@@ -18,8 +18,10 @@ import { captured, dayBlock } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { BookingShop } from "@/lib/shop-booking";
 import { payoutPending, recordFirstNote, reportFirstNote, returnCopy, shopReturnSteps } from "@/lib/shop-handover";
+import { courierOf } from "@/lib/shop-courier";
 import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
+import { CourierReturn } from "@/screens/shop/courier";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
@@ -212,6 +214,7 @@ export default function ShopReturnScreen() {
   const query = useShopBooking(params.number);
   const { refetch } = query;
   const booking = query.data;
+  const courier = booking ? courierOf(booking) : null;
 
   useEffect(() => {
     if (watching) void refetch();
@@ -229,7 +232,12 @@ export default function ShopReturnScreen() {
     <NonScrollableContainer>
       <SubpageHeader title="Return" />
       {booking ? (
-        <Return booking={booking} receivedAt={query.dataUpdatedAt} watching={watching} />
+        courier ? (
+          // B1: Renit's courier carries it, and the shop never meets the customer.
+          <CourierReturn booking={booking} courier={courier} receivedAt={query.dataUpdatedAt} watching={watching} />
+        ) : (
+          <Return booking={booking} receivedAt={query.dataUpdatedAt} watching={watching} />
+        )
       ) : query.isError ? (
         <BookingLoadError error={query.error} what="this booking" onRetry={() => void refetch()} />
       ) : (

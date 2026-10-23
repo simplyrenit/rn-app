@@ -3,6 +3,7 @@ import { problemLine, problemState } from "@/lib/claims";
 import { clock, dayOf, dayShort, depositAfterLate, keptReasons, money, todayIst, windowLabel } from "@/lib/booking";
 import { captured, cameBackOn, dayBlock, handoverAt, returnedAt, theirStatusLine, whenShort } from "@/lib/day-of";
 import { BookingShop, howLine, moneyView } from "@/lib/shop-booking";
+import { courierOf } from "@/lib/shop-courier";
 import { customerName } from "@/lib/shop-ring";
 import { depositPill } from "@/lib/shop-today";
 
@@ -31,10 +32,14 @@ export function dayScreen(b: Pick<BookingShop, "stage" | "exit">): "ShopHandover
 }
 
 /** The button on the shop's booking page that opens the day's screen. */
-export function dayButton(b: Pick<BookingShop, "stage" | "exit">): string | null {
+export function dayButton(b: Pick<BookingShop, "stage" | "exit" | "delivered_by" | "courier">): string | null {
   switch (dayScreen(b)) {
-    case "ShopHandover":
+    case "ShopHandover": {
+      // B1: the shop packs for a rider rather than handing it over.
+      const courier = courierOf(b);
+      if (courier) return courier.seal ? "Open the courier handover" : "Pack it for the courier";
       return "Open the handover";
+    }
     case "ShopReturn":
       return b.stage === "out" ? "Open the return" : "See the return";
     default:
