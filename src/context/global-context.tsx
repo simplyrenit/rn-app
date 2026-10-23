@@ -33,6 +33,7 @@ import React, {
   useState,
 } from "react";
 import { AppState, useColorScheme } from "react-native";
+import { useQueryClient } from "react-query";
 
 import { toast } from "@/lib/toast";
 
@@ -105,6 +106,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   const [userDetailsFailed, setUserDetailsFailed] = useState(false);
 
   const [userData, setUserData] = useState<UserData | null>(null);
+  const queryClient = useQueryClient();
 
   const logout = useCallback(async (reason?: SignOutReason) => {
     cancelMyDetailsRequest();
@@ -119,13 +121,19 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     await removeAuthTokens();
     delete axiosInstance.defaults.headers.Authorization;
+    // Nothing read for this account outlives it (ENG-323). Some answers are cached
+    // under keys that name no account (`["favorites"]`, `["booking", number]`), and
+    // the next one to sign in on this phone was shown them until they were read again.
+    // Cleared before the state below, so no screen draws the old answers signed out.
+    await queryClient.cancelQueries();
+    queryClient.clear();
     setAuthTokensState(null);
     setIsAuthenticated(false);
     setHasSeenWelcome(false);
     await AsyncStorage.removeItem("userData");
     setUserData(null);
     setUserDetails(null);
-  }, []);
+  }, [queryClient]);
 
   // The axios interceptor cannot reach this context, so hand it the logout it
   // should run when the server rejects a refresh token. Without this the stale
