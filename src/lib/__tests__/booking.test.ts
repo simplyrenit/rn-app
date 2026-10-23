@@ -3,7 +3,9 @@ import { depositCopy } from "../day-of";
 import { ProductShop, addressSheetLine, bookBy, courierQuote } from "../booking";
 import {
   BookingCustomer,
+  CourierBlock,
   Quote,
+  courierLive,
   bookErrorText,
   quoteRefusal,
   bookRefusalIsFinal,
@@ -2217,5 +2219,55 @@ describe("the Renit courier, customer side (unified delivery B1)", () => {
       "Rent back in full if you cancel now. Renit keeps the courier fee for any trips already used, and the rest is refunded."
     );
     expect(cancelHint({ ...free, kept: [], free_until: null })).toBe("Rent back in full if you cancel now.");
+  });
+});
+
+// ---- B1: polling while a courier leg is live (ENG-308) ---------------------------------------------------------------
+
+describe("B1, reading a courier booking while a leg is live", () => {
+  const courier = (state: CourierBlock["state"], back: CourierBlock["return"]["state"] = "not_set"): CourierBlock => ({
+    state,
+    steps: [],
+    banner: null,
+    seal: null,
+    rider: null,
+    return: { state: back, window: null, earliest: "2026-10-26", seal: null },
+    attempt: 1,
+    not_delivered_reason: null,
+    open_by: null,
+  });
+  // Before the buttons would open: a shop booking is not read on a timer then.
+  const EARLY = new Date("2026-10-23T10:00:00Z");
+
+  it("reads slowly from packed to delivered, whatever the clock", () => {
+    for (const state of ["packed", "dispatching", "rider_assigned", "picked_up", "delivered"] as const) {
+      expect(pollEveryMs(booking({ stage: "ready", delivered_by: "renit", courier: courier(state) }), EARLY)).toBe(15_000);
+    }
+  });
+
+  it("and while the return rider is on the way, with the item out", () => {
+    for (const back of ["dispatching", "rider_assigned", "picked_up"] as const) {
+      expect(pollEveryMs(booking({ stage: "out", delivered_by: "renit", courier: courier("with_customer", back) }), EARLY)).toBe(15_000);
+    }
+  });
+
+  it("not before packing, once it is with the customer, at the shop, or after an exit", () => {
+    expect(courierLive(booking({ courier: courier("awaiting_pack") }))).toBe(false);
+    expect(courierLive(booking({ stage: "out", courier: courier("with_customer", "set") }))).toBe(false);
+    expect(courierLive(booking({ stage: "out", courier: courier("with_customer", "at_shop") }))).toBe(false);
+    expect(courierLive(booking({ exit: "cancelled_by_customer", courier: courier("picked_up") }))).toBe(false);
+    expect(courierLive(booking({ courier: courier(null) }))).toBe(false);
+    expect(pollEveryMs(booking({ stage: "out", courier: courier("with_customer", "set") }), EARLY)).toBe(false);
+  });
+
+  it("a booking without the block polls as it always did", () => {
+    expect(courierLive(booking({ stage: "ready" }))).toBe(false);
+    expect(courierLive(booking({ stage: "ready", courier: null }))).toBe(false);
+    expect(pollEveryMs(booking({ stage: "ready" }), EARLY)).toBe(pollEveryMs(booking({ stage: "ready", courier: undefined }), EARLY));
+  });
+
+  it("a courier slot that filled or closed says so", () => {
+    expect(windowErrorText({ status: 409, code: "window_taken", message: null, details: null })).toBe("That slot has just filled. Pick another.");
+    expect(windowErrorText({ status: 409, code: "window_closed", message: null, details: null })).toMatch(/^That window can't be picked any more/);
   });
 });
