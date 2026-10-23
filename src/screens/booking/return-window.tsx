@@ -3,7 +3,8 @@ import { BookingLoadError, BookingLoading, BottomBar, Notice } from "@/component
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { apiError } from "@/lib/api-error";
-import { TimeWindow, windowLabel } from "@/lib/booking";
+import { TimeWindow, todayIst, windowLabel } from "@/lib/booking";
+import { correctedNow } from "@/lib/server-clock";
 import { returnWindowCopy, returnWindowErrorText } from "@/lib/day-of";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -59,7 +60,8 @@ export default function ReturnWindowScreen() {
 
   const { windows } = slotsQuery.data;
   const changing = Boolean(booking.courier?.return?.window);
-  const copy = returnWindowCopy(slotsQuery.data, booking.last_day, changing);
+  const today = todayIst(correctedNow(booking.server_time, bookingQuery.dataUpdatedAt));
+  const copy = returnWindowCopy(slotsQuery.data, booking.last_day, changing, today);
   const choice = windows.find((w) => w.start === picked) ?? null;
 
   const save = async () => {

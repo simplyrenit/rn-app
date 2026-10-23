@@ -82,7 +82,9 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
 
         {booking.claim_open ? (
           <Notice tone="warning" icon="clock">
-            Renit is looking at your report. Your code is paused until Renit decides.
+            {courier
+              ? "Renit is looking at your report. Nothing is charged or refunded until Renit decides."
+              : "Renit is looking at your report. Your code is paused until Renit decides."}
           </Notice>
         ) : null}
       </ScrollView>

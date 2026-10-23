@@ -517,19 +517,23 @@ export function courierDoorTips(seal: string | null | undefined): string[] {
 /**
  * C6, the return window picker. `earliest` is the server's first day with no late fee; `day` the day it offers slots
  * on, which is later only when that day's slots are gone. The late clock stops at the customer's return record (F6), so
- * a record by `earliest` charges no late day, whenever the rider comes.
+ * a record by `earliest` charges no late day, whenever the rider comes. `today` is the server's, in India.
  */
 export function returnWindowCopy(
   slots: { day: string; earliest: string },
   lastDay: string,
-  changing: boolean
+  changing: boolean,
+  today: string
 ): { title: string; sub: string; note: string | null } {
   const { day, earliest } = slots;
   return {
     title: changing ? "Change your return window" : "When should the rider collect it?",
     sub: `${dayShort(day)} · the ${COURIER} collects it in the window you pick`,
     note:
-      day > earliest
+      // A no-fee day already gone (a rider who could not collect it, say) promises nothing any more.
+      earliest < today
+        ? null
+        : day > earliest
         ? `No slot is left on ${dayShort(earliest)}. Record it and seal the bag by then and no late day is charged, even if the rider comes on ${dayShort(day)}.`
         : earliest > lastDay
           ? `There is no courier slot on your last day, so it is due back on ${dayShort(earliest)} with no late fee.`

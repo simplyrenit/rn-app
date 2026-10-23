@@ -861,24 +861,29 @@ describe("B1, the courier's refusals", () => {
 
 describe("B1, the return window (C6)", () => {
   it("the last day, with no late fee", () => {
-    expect(returnWindowCopy({ day: "2026-10-26", earliest: "2026-10-26" }, "2026-10-26", false)).toEqual({
+    expect(returnWindowCopy({ day: "2026-10-26", earliest: "2026-10-26" }, "2026-10-26", false, "2026-10-25")).toEqual({
       title: "When should the rider collect it?",
       sub: "Mon 26 Oct · the Renit courier partner collects it in the window you pick",
       note: null,
     });
-    expect(returnWindowCopy({ day: "2026-10-26", earliest: "2026-10-26" }, "2026-10-26", true).title).toBe("Change your return window");
+    expect(returnWindowCopy({ day: "2026-10-26", earliest: "2026-10-26" }, "2026-10-26", true, "2026-10-25").title).toBe("Change your return window");
   });
 
   it("a last day with no courier slot moves the return, with no late fee", () => {
-    expect(returnWindowCopy({ day: "2026-10-27", earliest: "2026-10-27" }, "2026-10-26", false).note).toBe(
+    expect(returnWindowCopy({ day: "2026-10-27", earliest: "2026-10-27" }, "2026-10-26", false, "2026-10-25").note).toBe(
       "There is no courier slot on your last day, so it is due back on Tue 27 Oct with no late fee."
     );
   });
 
   it("a day offered after the no-fee day: the record by then stops the late clock (F6), whenever the rider comes", () => {
-    expect(returnWindowCopy({ day: "2026-10-27", earliest: "2026-10-26" }, "2026-10-26", false).note).toBe(
+    expect(returnWindowCopy({ day: "2026-10-27", earliest: "2026-10-26" }, "2026-10-26", false, "2026-10-25").note).toBe(
       "No slot is left on Mon 26 Oct. Record it and seal the bag by then and no late day is charged, even if the rider comes on Tue 27 Oct."
     );
+  });
+
+  it("says nothing of a no-fee day that has already gone", () => {
+    expect(returnWindowCopy({ day: "2026-10-27", earliest: "2026-10-26" }, "2026-10-26", false, "2026-10-27").note).toBeNull();
+    expect(returnWindowCopy({ day: "2026-10-27", earliest: "2026-10-26" }, "2026-10-26", false, "2026-10-26").note).toMatch(/^No slot is left on Mon 26 Oct/);
   });
 
   it("a pick the desk has overtaken says to call, and a full slot says to pick another", () => {
