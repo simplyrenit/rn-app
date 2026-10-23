@@ -1,7 +1,7 @@
 import { useGlobalContext } from "@/context/global-context";
 import { PayPhase } from "@/lib/booking";
 import { PayResult, PaymentHandoff, forgetPayment, notePayment, startPayment } from "@/lib/payments";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * One payment button's state around `startPayment`: the ₹99 and the rent use it,
@@ -27,6 +27,17 @@ export function usePay(
   // A payment settles minutes after the tap; it must reach the screen's current callbacks.
   const callbacks = useRef({ onResult, onError });
   callbacks.current = { onResult, onError };
+  // Android can drop the app's screens while the customer is in the UPI app ("Don't keep
+  // activities", low memory) and build them again on return, with this payment still being
+  // asked about. The new start resumes the payment's note to open its booking, and forgets it
+  // there; forgetting it here first could leave that start nothing to open, or the wrong card.
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const pay = useCallback(
     async (getPayment: () => Promise<PaymentHandoff | null>) => {
@@ -46,7 +57,7 @@ export function usePay(
           setPhase(result);
         } else {
           // Paid, or rn-api says the page is over: this payment is not in flight any more.
-          await forgetPayment(payment.payment_id);
+          if (mounted.current) await forgetPayment(payment.payment_id);
           setPhase(result === "paid" ? "idle" : "ended");
         }
         callbacks.current.onResult(result);

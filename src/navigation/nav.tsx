@@ -423,6 +423,9 @@ function MainTabs() {
 }
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+/** The link that started the app, once its payment has been resumed (below). */
+let startLinkSeen: string | null = null;
+
 export default function Navigation() {
   const { loading, hasSeenWelcome, theme, isAuthenticated, userDetails, fetchUserDetails } = useGlobalContext();
   const username = userDetails?.username;
@@ -639,7 +642,13 @@ export default function Navigation() {
     let stale = false;
     void Linking.getInitialURL()
       .catch(() => null)
-      .then((url) => resumePayment(username, parsePayReturn(url)?.payment_id))
+      .then((url) => {
+        // A link counts once per run: Android hands the same one back each time the screen
+        // is built again from recents, and a second sign-in reads it too. Seen, it is no link.
+        const fresh = url !== startLinkSeen;
+        startLinkSeen = url;
+        return resumePayment(username, fresh ? parsePayReturn(url)?.payment_id : null);
+      })
       .then((number) => {
         if (number && !stale) openBooking(number);
       });
