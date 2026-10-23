@@ -1,4 +1,5 @@
 import { QuoteInput, bookNow, bookingQueryKey, useQuote } from "@/backend/bookings";
+import { cartQueryKey } from "@/backend/cart";
 import { extendBooking } from "@/backend/handover";
 import {
   BookingLoadError,
@@ -14,6 +15,7 @@ import { RentalTermsTick } from "@/components/terms/owner-terms-tick";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
+import { Cart, afterBookRoutes, rememberDates } from "@/lib/cart";
 import {
   bookBy,
   bookErrorText,
@@ -73,7 +75,7 @@ export default function ReviewAndBookScreen() {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const queryClient = useQueryClient();
-  const { authTokens, isAuthenticated } = useGlobalContext();
+  const { authTokens, isAuthenticated, userDetails } = useGlobalContext();
   const signedIn = Boolean(isAuthenticated && authTokens?.access_token);
 
   const input: QuoteInput = useMemo(
@@ -208,14 +210,21 @@ export default function ReviewAndBookScreen() {
           ? { ...booked, pay_now: { ...booked.pay_now, payment } }
           : booked
       );
-      // The booking exists now, so the way back is to the Rentals tab, not to the price screen.
-      navigation.reset({
-        index: 1,
-        routes: [
-          { name: "MainTabs", params: { screen: "Rentals" } },
-          { name: "Booking", params: { number: answer.booking.number, pay: Boolean(answer.payment) } },
-        ],
-      });
+      // The booking exists now, so the way back is to the Rentals tab, not to the price screen;
+      // from the cart, through the cart while it has more to check out (cart plan §3.4).
+      const fromCart = Boolean(params.from_cart) && !extending;
+      if (!extending) rememberDates(params.first_day, params.last_day);
+      navigation.reset(
+        afterBookRoutes({
+          number: answer.booking.number,
+          pay: Boolean(answer.payment),
+          fromCart,
+          cart: queryClient.getQueryData<Cart>(cartQueryKey(userDetails?.username)),
+          booked: [params.item.name],
+        })
+      );
+      // Its lines are in checkout now.
+      if (fromCart) void queryClient.invalidateQueries("cart");
     } catch (error) {
       const failure = apiError(error);
       // A refusal ends this tap. No answer, or a fault on the way, may mean the

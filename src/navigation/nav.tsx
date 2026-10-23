@@ -20,6 +20,7 @@ import { useGlobalContext } from "@/context/global-context";
 import ChatDetailsScreen from "@/screens/chat/chat-details";
 import PrivacyScreen from "../screens/privacy";
 import ProductDetailScreen from "../screens/products/products-screen";
+import CartScreen from "../screens/cart/cart";
 import ReviewsScreen from "../screens/products/reviews-screen";
 import WriteReviewsScreen from "../screens/products/write-review";
 import SearchScreen from "../screens/search";
@@ -569,6 +570,8 @@ export default function Navigation() {
           void queryClient.invalidateQueries(bookingQueryKey(route.number));
           // Both Rentals lists start with this key.
           void queryClient.invalidateQueries("bookings");
+          // A booking that moved may take its lines out of the cart (rent paid) or out of checkout.
+          void queryClient.invalidateQueries("cart");
           return;
         }
         // A claim moved: the claim itself, and the booking it holds or settles, are read afresh (ENG-252, ENG-253).
@@ -860,6 +863,9 @@ export default function Navigation() {
           name="DeliveryAreas"
           component={DeliveryAreasScreen}
         />
+        {/* The cart (cart plan §3.2). On the root stack like the booking
+            screens: the tab bar has no slot for it (F24). */}
+        <Stack.Screen name="Cart" component={CartScreen} />
         {/* Live booking, the customer's side (ENG-99). On the root stack, so
             the tab bar is hidden from the dates to the booking itself. */}
         <Stack.Screen
