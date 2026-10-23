@@ -1,7 +1,8 @@
 import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import React from "react";
-import { View, useWindowDimensions } from "react-native";
+import { TouchableOpacity, View, useWindowDimensions } from "react-native";
+import Toast from "react-native-toast-message";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -11,8 +12,14 @@ import {
 } from "react-native-heroicons/solid";
 import { Text } from "./text";
 
-export type ToastSeverity = "success" | "error" | "warning" | "info";
+export type ToastSeverity = "success" | "error" | "warning" | "info" | "neutral";
 
+export interface ToastAction {
+  label: string;
+  onPress: () => void;
+}
+
+// The legacy `text2` sniff knows only the four it always knew.
 const SEVERITIES: ToastSeverity[] = ["success", "error", "warning", "info"];
 
 /**
@@ -30,7 +37,7 @@ export function splitLegacyToastProps(text2?: string) {
 interface ToastBodyProps {
   text1?: string;
   text2?: string;
-  props?: { severity?: ToastSeverity };
+  props?: { severity?: ToastSeverity; action?: ToastAction };
 }
 
 /**
@@ -47,12 +54,13 @@ export function ToastBody({ text1, text2, props }: ToastBodyProps) {
   const legacy = splitLegacyToastProps(text2);
   const severity = props?.severity ?? legacy.severity;
   const message = legacy.message;
+  const action = props?.action;
 
   // The Figma success toast: a brand-tint pill on the 24 gutter with a brand
   // check tile. Only a success toast without a second line takes it — the other
   // severities, and a success that carries a message, keep the semantic palette
   // below until the designer ships one for them.
-  if (severity === "success" && !message) {
+  if (severity === "success" && !message && !action) {
     return (
       <View
         accessible
@@ -110,13 +118,16 @@ export function ToastBody({ text1, text2, props }: ToastBodyProps) {
       wash: color.infoWash,
       Icon: InformationCircleIcon,
     },
+    // A change that can be undone is not news in any tone: the bar is the hairline.
+    neutral: { accent: color.line, wash: color.surfaceRaised, Icon: CheckIcon },
   };
 
   const { accent, wash, Icon } = palette[severity];
 
   return (
     <View
-      accessible
+      // One element to VoiceOver, unless it holds an action, which has to stay reachable.
+      accessible={!action}
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
       accessibilityLabel={message ? `${text1}. ${message}` : text1}
@@ -162,6 +173,22 @@ export function ToastBody({ text1, text2, props }: ToastBodyProps) {
           </Text>
         ) : null}
       </View>
+
+      {action ? (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={action.label}
+          hitSlop={12}
+          onPress={() => {
+            Toast.hide();
+            action.onPress();
+          }}
+        >
+          <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
+            {action.label}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }

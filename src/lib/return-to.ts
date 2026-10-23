@@ -30,6 +30,16 @@ export function takeReturnTo(now: number = Date.now()): ReturnTo | null {
 }
 
 /**
+ * `{intent: "cart_add"}` while the sign-in under way was asked for by Add to
+ * cart, for the sign-in calls to send (cart plan D50: rn-api counts how many of
+ * those sign-ins finish). Looking does not take the target.
+ */
+export function signInIntent(now: number = Date.now()): { intent?: "cart_add" } {
+  const target = kept && now - kept.at < KEEP_MS ? kept.target : null;
+  return target?.name === "ProductDetail" && target.params.add ? { intent: "cart_add" } : {};
+}
+
+/**
  * The last step of every sign-in and sign-up: back to where the customer was
  * asked to sign in, or to the tabs as before. The stack is rebuilt, because the
  * sign-in screens sit on top of the listing they were opened from.
