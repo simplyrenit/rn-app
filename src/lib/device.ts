@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Application from "expo-application";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
 import { uuidv4 } from "./uuid";
@@ -37,9 +38,25 @@ export function makeDeviceInfo({ id, modelName, deviceName, os }: DeviceFacts): 
  * push token when the phone has one. A phone with notifications off has none, and
  * the call is still made without it (API-CONTRACT, register-push-token), so its
  * session is filled all the same.
+ *
+ * With the app's version too, at every signed-in start (ENG-323): the server keeps
+ * it per session for the cart's gate, which lets a shop take baskets only once every
+ * phone of its owner reports at least `CART_MIN_OWNER_APP` (cart plan §9.2). The store
+ * versions are not bumped today (Android `versionName` 1.0.2, iOS `MARKETING_VERSION`
+ * 2.0.0), so the gate tells builds apart only once the release with the owner's basket
+ * screens gives both platforms one new version. The server ignores a version that is
+ * not digits and dots, so it is sent as the store has it.
  */
-export function sessionBody(token: string | null | undefined, info: DeviceInfo) {
-  return token ? { expo_push_token: token, ...info } : { ...info };
+export function sessionBody(
+  token: string | null | undefined,
+  info: DeviceInfo,
+  appVersion: string | null = Application.nativeApplicationVersion
+) {
+  return {
+    ...(token ? { expo_push_token: token } : {}),
+    ...info,
+    ...(appVersion ? { app_version: appVersion } : {}),
+  };
 }
 
 let cached: Promise<DeviceInfo> | null = null;

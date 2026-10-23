@@ -1,6 +1,6 @@
 import { useGlobalContext } from "@/context/global-context";
 import { PayPhase } from "@/lib/booking";
-import { PayResult, PaymentHandoff, forgetPayment, notePayment, startPayment } from "@/lib/payments";
+import { PayResult, PaymentHandoff, forgetPayment, notePayment, screens, startPayment } from "@/lib/payments";
 import { useCallback, useRef, useState } from "react";
 
 /**
@@ -33,6 +33,10 @@ export function usePay(
       if (busy.current) return;
       busy.current = true;
       setPhase("working");
+      // The screens this payment started under. If Android tears them down meanwhile, the
+      // new start resumes the note to open the booking; forgetting it here first could leave
+      // that start nothing to open, or the wrong card (see `screens`).
+      const torn = screens.torn;
       try {
         const payment = await getPayment();
         if (!payment) {
@@ -45,8 +49,8 @@ export function usePay(
         if (result === "failed" || result === "pending") {
           setPhase(result);
         } else {
-          // Paid, or rn-api says the page is over: nothing is in flight any more.
-          await forgetPayment();
+          // Paid, or rn-api says the page is over: this payment is not in flight any more.
+          if (screens.torn === torn) await forgetPayment(payment.payment_id);
           setPhase(result === "paid" ? "idle" : "ended");
         }
         callbacks.current.onResult(result);

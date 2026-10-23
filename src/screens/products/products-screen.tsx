@@ -26,6 +26,7 @@ import { ReviewCard } from "@/components/product/review-card";
 import { Stars } from "@/components/product/stars";
 import { useFocusedStatusBar } from "@/components/product/use-focused-status-bar";
 import { useGlobalContext } from "@/context/global-context";
+import { track } from "@/lib/events";
 import {
   BackendProduct,
   BackendReview,
@@ -364,6 +365,15 @@ export default function DetailsScreen() {
 
   const isOwner = userDetails?.username === product?.owner?.username;
 
+  // Once per visit, not per focus: coming back from the dates is the same visit. Only
+  // signed in, as rn-api takes no events from a signed-out phone (cart plan D50).
+  const viewed = React.useRef<string | null>(null);
+  useEffect(() => {
+    if (!product || isOwner || !isAuthenticated || viewed.current === product.name) return;
+    viewed.current = product.name;
+    track("product_viewed", { product: product.name });
+  }, [product, isOwner, isAuthenticated]);
+
   // Whether the owner is asked now, at their next opening, or cannot be booked.
   const booking = product ? liveCopy(product) : null;
   const barPlan = product ? smallestPlan(plansOf(product)) : null;
@@ -376,6 +386,7 @@ export default function DetailsScreen() {
    */
   const handleBook = () => {
     if (!product) return;
+    if (isAuthenticated) track("product_cta_tapped", { product: product.name, cta: "book_now" });
     if (!isAuthenticated) {
       rememberReturnTo({ name: "ProductDetail", params: { id: product.name, dates } });
       toast.info("Sign in to book", { message: "You'll come back to this listing." });

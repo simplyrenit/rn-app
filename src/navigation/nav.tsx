@@ -83,7 +83,7 @@ import ReportScreen from "@/screens/booking/report";
 import ReturnScreen from "@/screens/booking/return";
 import BookingDatesScreen from "@/screens/booking/choose-dates";
 import ReviewAndBookScreen from "@/screens/booking/review-and-book";
-import { resumePayment, watchStrayReturns } from "@/lib/payments";
+import { parsePayReturn, resumePayment, screens, watchStrayReturns } from "@/lib/payments";
 import BankAccountScreen from "@/screens/profileScreens/bank-account";
 import ContactUsScreen from "@/screens/profileScreens/contactUs";
 import EditProductScreen from "@/screens/profileScreens/edit-product";
@@ -97,7 +97,7 @@ import RentalSettingsScreen from "@/screens/profileScreens/rental-settings";
 import ShopAddressScreen from "@/screens/profileScreens/shop-address";
 import NotificationScreen from "@/screens/profileScreens/notification";
 import WhoWeAreScreen from "@/screens/profileScreens/who-we-are";
-import { AppState, BackHandler, PixelRatio, Platform, View } from "react-native";
+import { AppState, BackHandler, Linking, PixelRatio, Platform, View } from "react-native";
 import {
   CalendarIcon,
   ChatBubbleLeftIcon,
@@ -423,6 +423,9 @@ function MainTabs() {
 }
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+/** The link that started the app, once its payment has been resumed (below). */
+let startLinkSeen: string | null = null;
+
 export default function Navigation() {
   const { loading, hasSeenWelcome, theme, isAuthenticated, userDetails, fetchUserDetails } = useGlobalContext();
   const username = userDetails?.username;
@@ -631,18 +634,36 @@ export default function Navigation() {
 
   // A payment can finish while the app is closed (the customer was in the
   // browser or a UPI app). On start, once it is known who is signed in, ask
-  // rn-api about the one of theirs that was in flight and open its booking,
-  // which shows where things stand (ENG-172).
+  // rn-api about one of theirs that was in flight and open its booking, which
+  // shows where things stand (ENG-172). When "Back to Renit" is what started the
+  // app, its payment's note; otherwise the newest (cart plan D30).
   React.useEffect(() => {
     if (!isAuthenticated || !username) return;
     let stale = false;
-    void resumePayment(username).then((number) => {
-      if (number && !stale) openBooking(number);
-    });
+    void Linking.getInitialURL()
+      .catch(() => null)
+      .then((url) => {
+        // A link counts once per run: Android hands the same one back each time the screen
+        // is built again from recents, and a second sign-in reads it too. Seen, it is no link.
+        const fresh = url !== startLinkSeen;
+        startLinkSeen = url;
+        return resumePayment(username, fresh ? parsePayReturn(url)?.payment_id : null);
+      })
+      .then((number) => {
+        if (number && !stale) openBooking(number);
+      });
     return () => {
       stale = true;
     };
   }, [isAuthenticated, username, openBooking]);
+  // Unmounted while the JS runs on only when Android rebuilds the screens, or by the error
+  // screen's "Try again" (see `screens`).
+  React.useEffect(
+    () => () => {
+      screens.torn += 1;
+    },
+    []
+  );
   // The pay page's "Back to Renit" can arrive when no payment is being waited on (the
   // customer came back for a moment, then paid later): ask rn-api once and open the booking.
   React.useEffect(() => {
