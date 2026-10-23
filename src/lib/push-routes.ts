@@ -28,8 +28,13 @@ export type PushRoute =
   | { screen: "ShopRing"; number: string; ring: Ring | null; ended: boolean; end: RingEndPush | null }
   /** The shop's page for a booking (ENG-210). */
   | { screen: "ShopBooking"; number: string }
-  /** The shop's handover (ENG-223): the customer tapped a preset button on the day. */
+  /**
+   * The shop's handover (ENG-223): the customer tapped a preset button on the day. B1: a step of the courier's
+   * outbound leg (Packed, the rider, the pickup) lands here too.
+   */
   | { screen: "ShopHandover"; number: string }
+  /** B1: a step of the courier's return leg ("Item arriving", back at the shop). */
+  | { screen: "ShopReturn"; number: string }
   /**
    * A claim was raised, replied to or decided (`claim`: its id). The screen reads the claim from the API;
    * `number` is its booking, for the screens behind it. Either side opens the same screen and the side the claim
@@ -57,12 +62,30 @@ function claimId(value: unknown): number | null {
   return typeof id === "number" && Number.isInteger(id) && id > 0 ? id : null;
 }
 
+/** The courier's outbound steps the shop acts on, from its handover screen (rn-api `courier.OWNER_WORDS`). */
+const OUTBOUND = ["packed", "dispatching", "set_rider", "picked_up", "reattempt"];
+
+/**
+ * B1, an owner's courier push (`window` with `what: "courier"`, `courier`: the step): the return leg opens the return,
+ * an outbound step the handover, anything else (a banner, a failed door, a step this build does not know) the booking.
+ */
+function courierRoute(step: unknown, number: string): PushRoute {
+  if (typeof step !== "string") return { screen: "ShopBooking", number };
+  if (step.startsWith("return_") || step === "at_shop" || step === "self_return") return { screen: "ShopReturn", number };
+  return OUTBOUND.includes(step) ? { screen: "ShopHandover", number } : { screen: "ShopBooking", number };
+}
+
 export function pushRoute(data: unknown): PushRoute | null {
   if (!isRecord(data) || typeof data.type !== "string") return null;
   const number = typeof data.booking === "string" && data.booking ? data.booking : null;
 
   // Sent by the KYC sweep with no booking, and only to the merchant it is about.
   if (data.type === "kyc_status") return { screen: "KycStatus" };
+
+  // B1: a desk alarm, pushed to Renit's desk staff (ENG-303). The notification itself is the message; the booking is
+  // not theirs to open on the phone (the server marks the push `customer` for anyone who is not its owner), so a tap
+  // opens nothing. The desk acts from the "Courier legs" board.
+  if (data.type === "desk_alert") return null;
 
   if (data.role === "customer" && number) {
     switch (data.type) {
@@ -132,6 +155,7 @@ export function pushRoute(data: unknown): PushRoute | null {
       // shop answers it. Every other word about the window is the booking's.
       case "window":
         if (!number) return null;
+        if (data.what === "courier") return courierRoute(data.courier, number);
         return data.what === "status" ? { screen: "ShopHandover", number } : { screen: "ShopBooking", number };
       // The booking, as it now stands.
       case "lapsed":
