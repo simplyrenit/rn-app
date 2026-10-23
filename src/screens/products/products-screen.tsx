@@ -387,6 +387,9 @@ export default function DetailsScreen() {
   const { cart, query: cartQuery, add } = useCart();
   const [cartRefused, setCartRefused] = useState(false);
   const [adding, setAdding] = useState(false);
+  // The bar's height, so the cart's toasts sit just above it instead of over its buttons (FIXES-r1 B1 row 22).
+  const [barHeight, setBarHeight] = useState(0);
+  const aboveBar = barHeight ? { bottomOffset: barHeight + 8 } : null;
   const inCart = product ? Boolean(cartLine(cart, product.name)) : false;
   const canAdd = Boolean(product?.can_add_to_cart) && !cartRefused && !isOwner;
   const openCart = () => navigation.navigate("Cart");
@@ -420,6 +423,7 @@ export default function DetailsScreen() {
       });
       // "Not booked yet": adding holds nothing (FIXES-r1 B1 row 9).
       toast.success("Added to cart", {
+        ...aboveBar,
         message: `${cartSize(answer)} · not booked yet`,
         action: { label: "View cart", onPress: openCart },
       });
@@ -427,6 +431,7 @@ export default function DetailsScreen() {
       const failure = addFailure(apiError(error), shop.name);
       if (failure.refused) setCartRefused(true);
       toast[failure.severity](failure.title, {
+        ...aboveBar,
         message: failure.message,
         action:
           failure.action === "retry"
@@ -449,7 +454,10 @@ export default function DetailsScreen() {
     if (!product || adding) return;
     if (!isAuthenticated) {
       rememberReturnTo({ name: "ProductDetail", params: { id: product.name, dates, add: true } });
-      toast.info("Sign in to add to cart", { message: "You'll come back to this listing and it will be added." });
+      toast.info("Sign in to add to cart", {
+        ...aboveBar,
+        message: "You'll come back to this listing and it will be added.",
+      });
       navigation.navigate("Welcome");
       return;
     }
@@ -1149,6 +1157,7 @@ export default function DetailsScreen() {
       */}
       {product ? (
       <View
+        onLayout={(event) => setBarHeight(event.nativeEvent.layout.height)}
         style={{
           gap: 12,
           paddingHorizontal: SCREEN_GUTTER,

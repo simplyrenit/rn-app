@@ -205,7 +205,7 @@ function ShopCard({
       <>
         <View style={{ flex: 1, gap: 2 }}>
           <Text fontSize="text-md" fontWeight="font-bold">
-            {`${pluralize(card.lines.length, "item")} in checkout`}
+            {`${pluralize(card.lines.filter((l) => l.warning?.code === "in_checkout").length, "item")} in checkout`}
           </Text>
           {stage ? (
             <Text fontSize="text-sm" tone="body">
@@ -327,12 +327,15 @@ export default function CartScreen() {
     }
   };
 
+  /** Undo: the line back in the cart. False when rn-api refused it, which the toast then says. */
   const putBack = async (shop: CartShop, product: CartProduct) => {
     try {
       await add({ product, shop });
+      return true;
     } catch (error) {
       const failure = addFailure(apiError(error), shop.name);
       toast[failure.severity](failure.title, { message: failure.message });
+      return false;
     }
   };
 
@@ -348,7 +351,11 @@ export default function CartScreen() {
     }
     toast.neutral("Removed from cart", {
       message: line.product.title,
-      action: { label: "Undo", onPress: () => void putBack(card.shop, line.product) },
+      // A listing that is gone can't go back in: rn-api answers 404.
+      action:
+        line.warning?.code === "not_listed"
+          ? undefined
+          : { label: "Undo", onPress: () => void putBack(card.shop, line.product) },
     });
   };
 
@@ -369,10 +376,10 @@ export default function CartScreen() {
       message: line.product.title,
       action: {
         label: "Undo",
-        onPress: () => {
-          void putBack(card.shop, line.product);
-          // Saved before it moved: Undo leaves it saved.
-          if (!wasSaved) void deleteFavorite(name).catch(() => {});
+        onPress: async () => {
+          // Saved before it moved: Undo leaves it saved. And it stays saved unless it is back in the
+          // cart, so a refused put-back (the shop lost the cart, the listing went) loses nothing.
+          if ((await putBack(card.shop, line.product)) && !wasSaved) void deleteFavorite(name).catch(() => {});
         },
       },
     });
@@ -380,8 +387,15 @@ export default function CartScreen() {
 
   const checkOut = (card: CartCard) => {
     const products = checkoutLines(card).map((line) => line.product.name);
-    if (!products.length) return;
-    navigation.navigate("BookingDates", { product: products[0], products, from_cart: true, ...checkoutDates() });
+    if (!products.length || !cart) return;
+    navigation.navigate("BookingDates", {
+      // ponytail: `product` only until A3's card-mode dates step lands and makes it optional; then drop it.
+      product: products[0],
+      products,
+      from_cart: true,
+      others: { items: cart.count - card.lines.length, shops: cart.cards.length - 1 },
+      ...checkoutDates(),
+    });
   };
 
   const openBooking = (number: string) => navigation.navigate("Booking", { number });

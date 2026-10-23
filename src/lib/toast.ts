@@ -9,12 +9,14 @@ interface ShowToastOptions {
   haptic?: boolean;
   /** One action on the toast's right: "View cart", "Undo", "Retry". A tap hides the toast. */
   action?: ToastAction;
+  /** Distance from the screen's bottom, to sit above a pinned bar (the product page's). */
+  bottomOffset?: number;
 }
 
 function show(
   severity: ToastSeverity,
   title: string,
-  { message, haptic = true, action }: ShowToastOptions = {}
+  { message, haptic = true, action, bottomOffset }: ShowToastOptions = {}
 ) {
   if (haptic) {
     if (severity === "success") successFeedback();
@@ -28,6 +30,9 @@ function show(
     text1: title,
     text2: message,
     props: { severity, action },
+    // An action needs longer than the 4 s default to be reached, by eye and by screen reader.
+    ...(action ? { visibilityTime: 7000 } : null),
+    ...(bottomOffset ? { bottomOffset } : null),
   });
 }
 

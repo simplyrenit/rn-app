@@ -51,6 +51,11 @@ export function useCart() {
     onSuccess: (answer: Cart) => {
       queryClient.setQueryData(key, answer);
     },
+    // A rollback restores the cart as it was before this write, which may undo another write that
+    // landed meanwhile; reading it again settles it.
+    onSettled: () => {
+      void queryClient.invalidateQueries(key);
+    },
   });
 
   const addLine = useMutation(

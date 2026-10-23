@@ -674,6 +674,7 @@ export default function Navigation() {
     return watchStrayReturns(username, (number) => {
       void queryClient.invalidateQueries(bookingQueryKey(number));
       void queryClient.invalidateQueries("bookings");
+      void queryClient.invalidateQueries("cart");
       openBooking(number);
     });
   }, [isAuthenticated, username, openBooking, queryClient]);

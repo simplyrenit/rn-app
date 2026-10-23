@@ -107,7 +107,7 @@ describe("what the cart says", () => {
     ],
     [{ code: "other_pickup_point", locality: "Bandra W" }, { text: "Collected from Bandra W · checked out separately", tone: "neutral" }],
     [{ code: "pickup_only" }, { text: "Pickup only · you collect it from Andheri W", tone: "neutral" }],
-  ] as const)("says %j", (warning, note) => {
+  ] as [object, object][])("says %j", (warning, note) => {
     expect(lineNote(line("camera", warning as CartLine["warning"]), card)).toEqual(note);
   });
 

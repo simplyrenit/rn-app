@@ -381,6 +381,8 @@ export type RootStackParamList = {
      */
     products?: string[];
     from_cart?: boolean;
+    /** The rest of the cart, outside this card: how many items, from how many other shops (A3's copy). */
+    others?: { items: number; shops: number };
   };
   /** BK-03 and BK-11: the whole price, then Book now. */
   ReviewAndBook: {
