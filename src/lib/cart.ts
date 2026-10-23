@@ -245,7 +245,7 @@ export function checkoutDates(): Partial<Dates> {
   return booked ?? searched ?? {};
 }
 
-/** For tests: forget both. */
+/** Forget both: logout calls this, so the next account's checkout never starts on these dates (QA 11). */
 export function forgetDates() {
   booked = null;
   searched = null;

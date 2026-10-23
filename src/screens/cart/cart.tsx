@@ -351,9 +351,9 @@ export default function CartScreen() {
     }
     toast.neutral("Removed from cart", {
       message: line.product.title,
-      // A listing that is gone can't go back in: rn-api answers 404.
+      // A listing that is gone can't go back in (404), nor a line of a shop that takes no carts now (409).
       action:
-        line.warning?.code === "not_listed"
+        line.warning?.code === "not_listed" || card.warning?.code === "one_item_only"
           ? undefined
           : { label: "Undo", onPress: () => void putBack(card.shop, line.product) },
     });

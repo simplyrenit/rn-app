@@ -100,7 +100,7 @@ export function ToastBody({ text1, text2, props }: ToastBodyProps) {
 
   const palette: Record<
     ToastSeverity,
-    { accent: string; wash: string; Icon: typeof CheckCircleIcon }
+    { accent: string; wash: string; Icon: typeof CheckCircleIcon; glyph?: string }
   > = {
     success: {
       accent: color.success,
@@ -119,10 +119,10 @@ export function ToastBody({ text1, text2, props }: ToastBodyProps) {
       Icon: InformationCircleIcon,
     },
     // A change that can be undone is not news in any tone: the bar is the hairline.
-    neutral: { accent: color.line, wash: color.surfaceRaised, Icon: CheckIcon },
+    neutral: { accent: color.line, wash: color.surfaceRaised, Icon: CheckIcon, glyph: color.text },
   };
 
-  const { accent, wash, Icon } = palette[severity];
+  const { accent, wash, Icon, glyph = accent } = palette[severity];
 
   return (
     <View
@@ -160,7 +160,7 @@ export function ToastBody({ text1, text2, props }: ToastBodyProps) {
           backgroundColor: wash,
         }}
       >
-        <Icon size={18} color={accent} />
+        <Icon size={18} color={glyph} />
       </View>
 
       <View style={{ flex: 1, gap: 2 }}>
