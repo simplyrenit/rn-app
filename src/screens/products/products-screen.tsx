@@ -454,10 +454,8 @@ export default function DetailsScreen() {
     if (!product || adding) return;
     if (!isAuthenticated) {
       rememberReturnTo({ name: "ProductDetail", params: { id: product.name, dates, add: true } });
-      toast.info("Sign in to add to cart", {
-        ...aboveBar,
-        message: "You'll come back to this listing and it will be added.",
-      });
+      // Not raised above the bar: it shows over Welcome, which has none.
+      toast.info("Sign in to add to cart", { message: "You'll come back to this listing and it will be added." });
       navigation.navigate("Welcome");
       return;
     }
