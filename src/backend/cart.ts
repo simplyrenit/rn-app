@@ -1,6 +1,8 @@
 import { useGlobalContext } from "@/context/global-context";
+import { apiError, failureCode } from "@/lib/api-error";
 import { Cart, CartProduct, CartShop, withLine, withoutLine } from "@/lib/cart";
 import { CART_ENDPOINT } from "@/lib/config";
+import { track } from "@/lib/events";
 import axiosInstance from "@/lib/networkUtils";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 
@@ -11,6 +13,27 @@ const lineUrl = (name: string) => `${CART_ENDPOINT}lines/${encodeURIComponent(na
 
 export async function fetchCart(): Promise<Cart> {
   return (await axiosInstance.get<Cart>(CART_ENDPOINT)).data;
+}
+
+/**
+ * One line in, one line out. Every add and remove comes through these two (the product page, Undo, Move to Saved), so
+ * the cart's events (cart plan §9.5) are sent here.
+ */
+export async function putLine(name: string): Promise<Cart> {
+  try {
+    const { data } = await axiosInstance.put<Cart>(lineUrl(name));
+    track("cart_add", { product: name });
+    return data;
+  } catch (error) {
+    track("cart_add_failed", { product: name, code: failureCode(apiError(error)) });
+    throw error;
+  }
+}
+
+export async function deleteLine(name: string): Promise<Cart> {
+  const { data } = await axiosInstance.delete<Cart>(lineUrl(name));
+  track("cart_remove", { product: name });
+  return data;
 }
 
 /**
@@ -60,16 +83,13 @@ export function useCart() {
 
   const addLine = useMutation(
     write<{ product: CartProduct; shop: CartShop }>(
-      async ({ product }) => (await axiosInstance.put<Cart>(lineUrl(product.name))).data,
+      ({ product }) => putLine(product.name),
       (cart, { product, shop }) => withLine(cart, shop, product)
     )
   );
 
   const removeLine = useMutation(
-    write<string>(
-      async (name) => (await axiosInstance.delete<Cart>(lineUrl(name))).data,
-      (cart, name) => withoutLine(cart, name)
-    )
+    write<string>(deleteLine, (cart, name) => withoutLine(cart, name))
   );
 
   return {

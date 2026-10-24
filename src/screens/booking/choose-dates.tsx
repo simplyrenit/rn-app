@@ -12,6 +12,8 @@ import { addressMayHelp, areaLabel, areaOf, offersDelivery } from "@/lib/deliver
 import { createLocationRequest } from "@/lib/location-request";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
 import { apiError } from "@/lib/api-error";
+import { track } from "@/lib/events";
+import { uuidv4 } from "@/lib/uuid";
 import {
   DeliveryMode,
   PickedDays,
@@ -31,6 +33,7 @@ import {
   money,
   rangeIsFree,
   rangeLabel,
+  requestedOn,
   shopNameOf,
   tapDay,
   todayIst,
@@ -235,15 +238,24 @@ export default function BookingDatesScreen() {
   // (`you_booked_it`, §3.2), which starts left in the cart once its listing says so.
   // Keyed on the listings loaded too, so one that loads on Retry is seeded. The card's quote waits for it.
   const seeded = useRef<string | null>(null);
+  // Why each item is out of this checkout, for `checkout_line_left_out`: a line blocker's code, "cap", "customer", or
+  // the cart's `you_booked_it`.
+  const why = useRef<Record<string, string>>({});
   const loaded = productQueries.every((q) => !q.isLoading);
   const seedKey = `${namesKey}|${names.filter((_, i) => productQueries[i]?.data).join("\n")}`;
   useEffect(() => {
     if (!card || !loaded || seeded.current === seedKey) return;
     seeded.current = seedKey;
     const booked = names.filter((name) => byName.get(name)?.requested);
+    const capped = startLeftOut(names);
     setAlone({});
+    why.current = Object.fromEntries([
+      ...capped.map((name) => [name, "cap"]),
+      // The cart's warning for it (§3.2): already requested, so it starts left in the cart.
+      ...booked.map((name) => [name, "you_booked_it"]),
+    ]);
     // A new array every time: the render it causes is the one whose quote is asked.
-    setLeft([...new Set([...startLeftOut(names), ...booked])]);
+    setLeft([...new Set([...capped, ...booked])]);
     // `byName` is read once the listings are in.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card, loaded, seedKey]);
@@ -253,6 +265,19 @@ export default function BookingDatesScreen() {
   const product = includedProducts[0] ?? byName.get(listed[0]);
   // D41: Book Now books through the card's quote when the server says so; a server without the switch is classic.
   const asCard = card || product?.book_flow === "card";
+
+  // One checkout, one attempt (cart plan §9.5): its events share this id, from here to Book. Other listings landing on
+  // this screen are another checkout.
+  const attempt = useRef({ key: "", id: "" });
+  if (attempt.current.key !== namesKey) attempt.current = { key: namesKey, id: uuidv4() };
+  const attemptId = attempt.current.id;
+  const from = params.from_cart ? "cart" : "book_now";
+  useEffect(() => {
+    if (signedIn) track("checkout_started", { from }, attemptId);
+    // Once per attempt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attemptId]);
+  const told = useRef(new Set<string>());
 
   // ENG-284 D12: the address chosen on search results, for the whole session;
   // the picker below writes it back, so results and the product page follow.
@@ -402,7 +427,7 @@ export default function BookingDatesScreen() {
   const quote = answer && asCard && !card ? asOneItem(answer) : answer;
   // The last answer stays on screen while the next loads; it must not be continued from.
   const settling = active.isFetching || active.isPreviousData;
-  const blocker = datesBlocker(quote);
+  const blocker = datesBlocker(quote, requestedOn(product?.requested, first, last));
 
   // A card's items that can't go on these dates (D40), and those the quote says go on their own (CT-21d, e).
   const lineOf = (name: string) => (card ? quote?.lines?.find((line) => line.product === name) : undefined);
@@ -599,6 +624,16 @@ export default function BookingDatesScreen() {
   const goOn = (going: string[] = included) => {
     if (!first || !last) return;
     const lines = going.map((name) => itemOf(byName.get(name) as BackendProduct));
+    // The card's items that don't go on, and why; each once per attempt, however often Continue is tapped.
+    if (card && signedIn) {
+      for (const name of names.filter((n) => !going.includes(n))) {
+        const reason = alone[name]?.code ?? why.current[name] ?? (gone.includes(name) ? "not_listed" : null);
+        const once = `${attemptId}|${name}|${reason}`;
+        if (!reason || told.current.has(once)) continue;
+        told.current.add(once);
+        track("checkout_line_left_out", { product: name, reason }, attemptId);
+      }
+    }
     navigation.navigate("ReviewAndBook", {
       item: card ? lines[0] : itemOf(product),
       ...(asCard ? { lines } : {}),
@@ -609,19 +644,25 @@ export default function BookingDatesScreen() {
       address_id: mode === "owner_delivery" ? address?.id ?? null : null,
       address_name: mode === "owner_delivery" && address ? addressTitle(address) : undefined,
       moved_from: params.moved_from,
+      attempt_id: attemptId,
     });
   };
 
   // ---- Card mode: the items, and the bar's fix (G11) ----
-  const leave = (more: string[]) => setLeft((was) => [...was, ...more.filter((name) => !was.includes(name))]);
+  /** `reason`: why, when the item's own line has no blocker. */
+  const leave = (more: string[], reason = "customer") => {
+    for (const name of more) why.current[name] = lineBlock(lineOf(name)) ?? reason;
+    setLeft((was) => [...was, ...more.filter((name) => !was.includes(name))]);
+  };
   const addBack = (names: string[]) => {
+    for (const name of names) delete why.current[name];
     setLeft((was) => was.filter((name) => !names.includes(name)));
     setAlone((was) => Object.fromEntries(Object.entries(was).filter(([name]) => !names.includes(name))));
   };
   const blockedItems = blocked.map((name) => {
     const code = lineBlock(lineOf(name)) as string;
     const p = byName.get(name) as BackendProduct;
-    return { name, title: p.title, code, minDays: minDaysOf(plansOf(p)), number: p.requested?.number ?? null };
+    return { name, title: p.title, code, minDays: minDaysOf(plansOf(p)), number: requestedOn(p.requested, first, last) };
   });
   const range = Boolean(first && last);
   const culprits = !range && monthFull.none ? monthFull.culprits : [];
@@ -647,7 +688,7 @@ export default function BookingDatesScreen() {
           ? { label: fixLabel(blocked.length), onPress: leaveAndGo }
           : { label: fixLabel(blocked.length, false), onPress: () => leave(blocked) }
         : culprits.length
-          ? { label: fixLabel(culprits.length, false), onPress: () => leave(culprits) }
+          ? { label: fixLabel(culprits.length, false), onPress: () => leave(culprits, "no_unit_free") }
           : null;
 
   return (
@@ -685,18 +726,21 @@ export default function BookingDatesScreen() {
                 const rate = money(line?.rate ?? p.rate);
                 const deposit = line?.deposit ?? p.security_deposit;
                 const requested = p.requested?.number ?? null;
+                // The request these days clash with; the soonest one may be for other days.
+                const clash = requestedOn(p.requested, first, last);
                 const chips: { chip: LineChip; onView?: () => void }[] = [];
                 const chip = (said: LineChip | null, onView?: () => void) => said && chips.push({ chip: said, onView });
                 chip(own ? lineChip(own.code, { locality: own.locality }) : isLeft ? lineChip("left") : null);
-                const view = requested ? () => navigation.navigate("Booking", { number: requested }) : undefined;
+                const view = (number: string | null) =>
+                  number ? () => navigation.navigate("Booking", { number }) : undefined;
                 if (code) {
                   chip(
-                    lineChip(code, { minDays: minDaysOf(plansOf(p)), number: requested }),
-                    code === "already_requested" ? view : undefined
+                    lineChip(code, { minDays: minDaysOf(plansOf(p)), number: clash }),
+                    code === "already_requested" ? view(clash) : undefined
                   );
                 } else if (isLeft && !own && requested) {
                   // Why it started left in the cart (§3.2 `you_booked_it`).
-                  chip(lineChip("already_requested", { number: requested }), view);
+                  chip(lineChip("already_requested", { number: requested }), view(requested));
                 }
                 if (culprits.includes(name)) chip(lineChip("month_full"));
                 if (notDelivered.includes(name)) chip(lineChip("delivery_not_offered"));
