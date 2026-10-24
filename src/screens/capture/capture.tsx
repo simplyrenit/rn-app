@@ -59,6 +59,7 @@ import {
 } from "@/lib/capture";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, darkColors, radius, space } from "@/lib/design-tokens";
 import { commitFeedback, tapFeedback } from "@/lib/haptics";
+import { pluralize } from "@/lib/pluralize";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -409,12 +410,14 @@ export default function CaptureScreen() {
   const [noWait, setNoWait] = useState(false);
   // A new record begins from the server's list, else the kept copy, else (with no
   // connection) the general list the app carries: a capture can always begin.
+  // A basket's keys name each item (cart D18): Renit's general list would be refused, so it waits for a real list.
+  const basket = Boolean(params.basket);
   const chosen =
     ready && !draft
       ? chooseList({
           fetched,
           kept: listFor(kept, moment, side),
-          offline: listQuery.isError || noWait,
+          offline: !basket && (listQuery.isError || noWait),
           idMatch: Boolean(params.id_match),
         })
       : null;
@@ -422,6 +425,14 @@ export default function CaptureScreen() {
 
   // A shot picked to be taken again; null follows the walk.
   const [target, setTarget] = useState<number | null>(null);
+  // Opened on one shot (a basket's "Take" or "Take again"): the walk starts there, once.
+  const aimed = useRef(false);
+  useEffect(() => {
+    if (aimed.current || !draft || !params.shot) return;
+    aimed.current = true;
+    const index = draft.list.shots.findIndex((s) => s.key === params.shot);
+    if (index >= 0) setTarget(index);
+  }, [draft, params.shot]);
   const [launching, setLaunching] = useState(false);
   const opening = useRef(false);
   // The phone-fallback code: where it went, the digits typed, and the call in flight.
@@ -567,10 +578,20 @@ export default function CaptureScreen() {
     return (
       <NonScrollableContainer>
         <SubpageHeader title={heading.header} />
-        {!list || !chosen ? (
+        {(!list || !chosen) && basket && listQuery.isError && kept === null ? (
+          // MR-09c: no list on the phone and no connection. A basket can't start on the general list.
+          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.md, gap: space.md }}>
+            <Notice tone="warning" icon="warning" title="Connect to start">
+              {`Shots for ${pluralize(params.items ?? 2, "item")} need the internet.`}
+            </Notice>
+            <Button onPress={() => void listQuery.refetch()} loading={listQuery.isFetching}>
+              Try again
+            </Button>
+          </View>
+        ) : !list || !chosen ? (
           <View style={{ flex: 1 }}>
             <BookingLoading label="Loading what to record" />
-            {ready ? (
+            {ready && !basket ? (
               // Never a dead end at a door with no signal: the general list is always on the phone.
               <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.lg }}>
                 <TextButton label="No signal? Use Renit's general list" onPress={() => setNoWait(true)} />

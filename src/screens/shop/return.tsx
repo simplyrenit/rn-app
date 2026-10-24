@@ -22,6 +22,9 @@ import { courierOf } from "@/lib/shop-courier";
 import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { CourierReturn } from "@/screens/shop/courier";
+import { BasketRecord } from "@/components/shop/basket-record";
+import { pluralize } from "@/lib/pluralize";
+import { basketTitle, isBasket, liveLines } from "@/lib/shop-lines";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
@@ -40,6 +43,8 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
   // (`recordState`). Both stay open after the customer's code, while the booking is
   // `returned`: it is the record a damage report rests on (review r1 #2).
   const names = { title: `${booking.product.title} · ${first}`, other: first };
+  // Cart: a booking of several items is taken back item by item, each ticked Received (MR-10, D51).
+  const basket = isBasket(booking);
   const record = useRecord({ moment: "return", role: "owner", booking, receivedAt, ...names });
   const theirRecord = useRecord({ moment: "return", role: "owner", forOther: true, booking, receivedAt, ...names });
   // What the shop tapped: "All good" or "Report a problem". Both show the code (decision A-35).
@@ -57,9 +62,11 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
   // The server shows the code once the shop's own record is complete: read the booking again when the shop's own draft is done.
   const queryClient = useQueryClient();
   const mineDone = Boolean(record.draft?.done && !record.draft.awaitingCode);
+  // A basket's code shows once every item is ticked Received and its shots are in (T11): read again as they arrive.
+  const synced = record.draft?.synced;
   useEffect(() => {
-    if (mineDone) void queryClient.invalidateQueries(shopBookingQueryKey(number));
-  }, [mineDone, queryClient, number]);
+    if (mineDone || synced) void queryClient.invalidateQueries(shopBookingQueryKey(number));
+  }, [mineDone, synced, queryClient, number]);
 
   return (
     <ScrollView
@@ -68,7 +75,7 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
     >
       <View style={{ gap: 2 }}>
         <Text role="screenTitle" accessibilityRole="header">
-          {copy.title}
+          {basket && out ? basketTitle("return", booking, first) : copy.title}
         </Text>
         <Text fontSize="text-md" tone="body">
           {copy.sub}
@@ -111,7 +118,10 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
           and an `out` booking lands here, so this is where it is found (review r1 #1). */}
       <Records role="owner" moments={["handover"]} booking={booking} receivedAt={receivedAt} stake={payoutPending(booking)} {...names} />
 
-      <RecordCardBody record={record} />
+      <RecordCardBody record={record} skip={basket ? ["start", "continue", "uploading"] : []} />
+      {basket && (out || booking.stage === "returned") ? (
+        <BasketRecord booking={booking} moment="return" record={record} complete={flags.mine} watching={watching} />
+      ) : null}
       <RecordCardBody record={theirRecord} />
 
       <ReturnSets
@@ -137,7 +147,9 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
           {!code ? (
             // The server shows the code only once the shop's own return record is in (D-14).
             <Text fontSize="text-xs" tone="body" style={{ textAlign: "center" }}>
-              {recordFirstNote(record.state === "uploading")}
+              {basket
+                ? `Tick and record all ${pluralize(liveLines(booking).length, "item")} to finish the return.`
+                : recordFirstNote(record.state === "uploading")}
             </Text>
           ) : null}
         </View>

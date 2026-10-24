@@ -194,6 +194,9 @@ export function depositPill(state: string): RowPill | null {
   }
 }
 
+/** A booking of several items carries its "3 items" chip; one item's row is as it was. */
+const items = (item: { lines?: ShopLine[] }) => (itemsChip(item) ? { items: itemsChip(item) } : {});
+
 const who = (p: TodayPerson) => `${p.customer_first_name} ${p.customer_last_initial}.`.replace(" .", "");
 
 export interface TodayRow {
@@ -219,7 +222,7 @@ export function goingOutRow(item: GoingOut, now: Date = new Date()): TodayRow {
           ? `${verb} ${windowLabel(item.window)}`
           : "No arrival time picked yet",
     pill: depositPill(item.deposit_state),
-    items: itemsChip(item),
+    ...items(item),
   };
 }
 
@@ -249,7 +252,7 @@ export function comingBackRow(item: ComingBack, now: Date = new Date()): TodayRo
     pill: late
       ? { label: item.late_days === 1 ? "1 day late" : `${item.late_days} days late`, tone: "danger" }
       : { label: "Due today", tone: "neutral" },
-    items: itemsChip(item),
+    ...items(item),
   };
 }
 
