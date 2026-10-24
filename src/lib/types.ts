@@ -486,6 +486,11 @@ export type RootStackParamList = {
     id_match_name?: string | null;
     /** B1: a booking Renit's courier partner carries (no place in the files; the customer's return asks for the seal). */
     courier?: boolean;
+    /** Cart: a booking of several items (its live count in `items`). Its keys name each item, so no general list. */
+    basket?: boolean;
+    items?: number;
+    /** Opens the walk on this shot of the list: to take it, or take it again. */
+    shot?: string;
   };
   [key: string]: object | undefined;
 };

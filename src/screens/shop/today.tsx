@@ -1,6 +1,6 @@
 import { blockReturned, extendBlock, refreshShop, removeBlock, useOpenBlocks, useToday } from "@/backend/shop-today";
 import { setOpenState, shopQueryKey, useShop } from "@/backend/shop";
-import { Notice, Panel } from "@/components/booking/parts";
+import { Notice, Panel, Pill } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { Button, EmptyState, Skeleton, Text } from "@/components/core";
 import { ConfirmSheet } from "@/components/core/confirm-sheet";
@@ -84,7 +84,7 @@ function RowList({ rows, onOpen }: { rows: TodayRow[]; onOpen: (number: string) 
         <TouchableOpacity
           key={row.number}
           accessibilityRole="button"
-          accessibilityLabel={[row.title, row.sub, row.pill?.label].filter(Boolean).join(". ")}
+          accessibilityLabel={[row.title, row.items, row.sub, row.pill?.label].filter(Boolean).join(". ")}
           accessibilityHint="Opens the booking"
           activeOpacity={0.7}
           onPress={() => onOpen(row.number)}
@@ -104,6 +104,11 @@ function RowList({ rows, onOpen }: { rows: TodayRow[]; onOpen: (number: string) 
             <Text fontSize="text-sm" tone="body">
               {row.sub}
             </Text>
+            {row.items ? (
+              <View style={{ flexDirection: "row", marginTop: space.xs }}>
+                <Pill label={row.items} tone="brand" />
+              </View>
+            ) : null}
           </View>
           {row.pill ? <PillView pill={row.pill} /> : null}
         </TouchableOpacity>

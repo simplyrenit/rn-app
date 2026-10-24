@@ -46,12 +46,34 @@ export interface ShotList {
   video_hint: string;
   /** The checklist, ticked at handover and again at return. */
   included_items: string[];
-  included_items_source?: "listing" | "category" | "generic";
+  /** `lines`: a basket's checklist, each item's own (`lines[].included_items_source`). */
+  included_items_source?: "listing" | "category" | "generic" | "lines";
   /** The owner looks at the customer's ID at the handover and ticks that the name matches. */
   id_match_required: boolean;
   /** B1, a booking Renit's courier carries: one more shot for the owner's handover record, the sealed bag (ENG-303). */
   seal_shot?: Shot;
+  /**
+   * A booking of several items (cart D18, D19): each live item, in line order. Its shots and checklist are in the lists
+   * above, keys led by `prefix` (`l2_rear`) and labels by `title` ("Tripod: Legs open"). Absent for one item.
+   */
+  lines?: ShotListLine[];
 }
+
+export interface ShotListLine {
+  id: number;
+  n: number;
+  /** "RN-21345·2". */
+  ref: string;
+  /** The item's name as its labels lead with it; two items of one title carry their `n` ("Lens (2)"). */
+  title: string;
+  /** `l2_`. */
+  prefix: string;
+  included_items: string[];
+  included_items_source?: string;
+}
+
+/** A booking of several items: its record names each item's keys, and the shop's return record ticks each one Received. */
+export const isBasketList = (list: Pick<ShotList, "lines"> | null | undefined): boolean => Array.isArray(list?.lines);
 
 export interface CaptureShot {
   key: string;
@@ -75,10 +97,12 @@ export interface Capture {
   video: { url: string; taken_at: string } | null;
   checklist: ChecklistItem[];
   id_match_ticked: boolean | null;
-  /** What is still needed: shot keys, `video`, `id_match`, `confirmation_code`. */
+  /** What is still needed: shot keys, `video`, `id_match`, `confirmation_code`; on a basket's return, `l{n}_received`. */
   missing: string[];
   complete: boolean;
   completed_at: string | null;
+  /** A booking of several items: the line ids the shop's return record has ticked Received, from any of its phones. */
+  received?: number[];
 }
 
 /** `GET /api/bookings/{number}/captures/`. */
@@ -135,8 +159,8 @@ export interface CaptureDraft {
   done: boolean;
   /** The other person's set is up and waits for the code they read out. */
   awaitingCode: boolean;
-  /** Why it is not moving. `retry`: it goes again by itself; otherwise the person has to act. */
-  error: { text: string; retry: boolean } | null;
+  /** Why it is not moving. `retry`: it goes again by itself; otherwise the person has to act. `status`: the server's refusal. */
+  error: { text: string; retry: boolean; status?: number } | null;
   /**
    * The slot the camera was opened for and has not answered yet. On Android the
    * system may close the app while its camera is in front; the photo is then
@@ -171,6 +195,23 @@ export interface CaptureDraft {
   courier?: boolean;
   /** The number on the spare seal the customer closed the courier's return bag with, as typed. */
   sealNumber?: string;
+  // A booking of several items (`isBasketList`). Another phone of the shop may record it too, so a send names only what
+  // this phone did: the server adds shots, checklist ticks and Received ticks up item by item (cart D19, D51).
+  /**
+   * The shop's return record: Received ticks and unticks made on this phone and not yet taken by the server, and the
+   * server's own ticks from either phone as last read (`theirReceived`, never sent back as this phone's).
+   */
+  received?: number[];
+  unticked?: number[];
+  theirReceived?: number[];
+  /** The booking is no longer out (the desk took the return by hand, OR12): Received is not asked for any more (T11). */
+  receivedWaived?: boolean;
+  /** Checklist items this phone ticked or unticked: only those are sent. */
+  touched?: string[];
+  /** The ID tick was made or taken back on this phone: only then is it sent, so an untick reaches the server too. */
+  idTouched?: boolean;
+  /** The last body the server took (`bodyKey`), so what changed since is sent as the photos go up (`partialDue`). */
+  synced?: string;
 }
 
 export const captureId = (number: string, moment: Moment, side: Side) => `${number}:${moment}:${side}`;
@@ -299,11 +340,52 @@ export function recoverShot(
 }
 
 export function tick(draft: CaptureDraft, item: string): CaptureDraft {
-  return { ...draft, checklist: draft.checklist.map((c) => (c.item === item ? { ...c, ticked: !c.ticked } : c)) };
+  const checklist = draft.checklist.map((c) => (c.item === item ? { ...c, ticked: !c.ticked } : c));
+  if (!isBasketList(draft.list)) return { ...draft, checklist };
+  return { ...draft, checklist, touched: [...new Set([...(draft.touched ?? []), item])] };
 }
 
+/** The shop's return record of a basket ticks every item Received before it can be finished (D51). */
+export function needsReceived(draft: Pick<CaptureDraft, "list" | "moment" | "side" | "receivedWaived">): boolean {
+  return isBasketList(draft.list) && draft.moment === "return" && draft.side === "owner" && !draft.receivedWaived;
+}
+
+/** The items ticked Received as this phone sees them: the server's ticks and this phone's own, less this phone's unticks. */
+export function receivedIds(
+  draft: Pick<CaptureDraft, "received" | "unticked" | "theirReceived">,
+  onServer: readonly number[] | null | undefined = draft.theirReceived
+): number[] {
+  const out = new Set([...(onServer ?? []), ...(draft.received ?? [])]);
+  for (const id of draft.unticked ?? []) out.delete(id);
+  return [...out];
+}
+
+/** Every live item is ticked Received, on this phone or another. */
+export const allReceived = (draft: Pick<CaptureDraft, "list" | "received" | "unticked" | "theirReceived">): boolean =>
+  (draft.list.lines ?? []).every((line) => receivedIds(draft).includes(line.id));
+
+/** One item ticked, or unticked, Received. An untick is sent as `not_received`, so a tick sent by mistake is taken back. */
+export function setReceived(draft: CaptureDraft, line: number, on: boolean): CaptureDraft {
+  const received = (draft.received ?? []).filter((id) => id !== line);
+  const unticked = (draft.unticked ?? []).filter((id) => id !== line);
+  const error = draft.error?.text === RECEIVED_NEEDED.text ? null : draft.error;
+  return on ? { ...draft, received: [...received, line], unticked, error } : { ...draft, received, unticked: [...unticked, line], error };
+}
+
+/** The server's Received ticks as last read: they count here, and are never sent back as this phone's. */
+export function withReceived(draft: CaptureDraft, onServer: readonly number[] | null | undefined): CaptureDraft {
+  const next = [...(onServer ?? [])].sort((a, b) => a - b);
+  return next.join(",") === (draft.theirReceived ?? []).join(",") ? draft : { ...draft, theirReceived: next };
+}
+
+/** The booking is no longer out: the desk took the return by hand, and the record completes without the Received ticks. */
+export const waiveReceived = (draft: CaptureDraft): CaptureDraft =>
+  draft.receivedWaived
+    ? draft
+    : { ...draft, receivedWaived: true, error: draft.error?.text === RECEIVED_NEEDED.text ? null : draft.error };
+
 export function setIdMatch(draft: CaptureDraft, ticked: boolean): CaptureDraft {
-  return { ...draft, idMatch: ticked };
+  return isBasketList(draft.list) ? { ...draft, idMatch: ticked, idTouched: true } : { ...draft, idMatch: ticked };
 }
 
 /**
@@ -344,7 +426,8 @@ export function canSeal(draft: CaptureDraft): boolean {
     draft.list.shots.every((shot) => Boolean(draft.shots[shot.key])) &&
     Boolean(draft.video) &&
     (!needsIdMatch(draft) || draft.idMatch) &&
-    (!needsSealNumber(draft) || sealNumberOf(draft.sealNumber) !== null)
+    (!needsSealNumber(draft) || sealNumberOf(draft.sealNumber) !== null) &&
+    (!needsReceived(draft) || allReceived(draft))
   );
 }
 
@@ -426,7 +509,63 @@ export function readyToSend(draft: CaptureDraft): boolean {
 
 export type Work =
   | { kind: "upload"; draft: CaptureDraft; slot: Slot; file: LocalFile }
-  | { kind: "send"; draft: CaptureDraft };
+  /** `partial`: a basket's record sent before it is finished, with what is up so far (`partialDue`). */
+  | { kind: "send"; draft: CaptureDraft; partial?: true };
+
+/** What a send carries, as one string, to tell whether anything changed since the server last took one. */
+export const bodyKey = (body: CaptureBody): string => JSON.stringify(body);
+
+/**
+ * A basket's record is sent as its photos go up, not only once finished (cart D19, T11): the server looks at each photo
+ * as it comes, adds shots and ticks up across the shop's phones, and lets the code go once every item's shots (and the
+ * ID tick) are in, while the video may still be uploading. Sent again whenever what is up has changed. The other
+ * person's set is not: it is taken only while a code is out for it.
+ */
+export function partialDue(draft: CaptureDraft): boolean {
+  if (draft.done || draft.forOther || !isBasketList(draft.list) || readyToSend(draft)) return false;
+  if (draft.error && !draft.error.retry) return false;
+  const body = partialBody(draft);
+  const empty =
+    body.shots.length === 0 &&
+    body.checklist.length === 0 &&
+    body.id_match_ticked === undefined &&
+    !body.received &&
+    !body.not_received;
+  return !empty && bodyKey(body) !== (draft.synced ?? "");
+}
+
+/**
+ * A basket's send before the person has finished: never the video. With the video in, the server would complete the
+ * record on the spot, and every tick after it would be refused as `capture_locked` (review r1). The code needs only the
+ * shots and the ID tick (D19); the video goes with the finished send.
+ */
+export function partialBody(draft: CaptureDraft): CaptureBody {
+  const { video: _video, ...body } = captureBody(draft);
+  return body;
+}
+
+/**
+ * The server's answer to a basket's send before it is finished. Complete (another phone's video made it whole): done,
+ * as for a finished send. Otherwise the record goes on; what was sent is remembered, and a file the server lacks is
+ * named by the finished send's answer (`applyAnswer`). The Received ticks sent have been taken: they leave this phone's
+ * list, so they are never sent again over another phone's later untick, and the server's answer says where they stand.
+ */
+export function applyPartial(
+  draft: CaptureDraft,
+  capture: Pick<Capture, "complete" | "missing" | "received">,
+  sent: CaptureBody
+): CaptureDraft {
+  if (capture.complete) return applyAnswer(draft, capture);
+  const { received: ticked = [], not_received: unticked = [], ...kept } = sent;
+  return {
+    ...draft,
+    received: (draft.received ?? []).filter((id) => !ticked.includes(id)),
+    unticked: (draft.unticked ?? []).filter((id) => !unticked.includes(id)),
+    theirReceived: capture.received ?? draft.theirReceived,
+    synced: bodyKey(kept),
+    error: draft.error?.retry ? null : draft.error,
+  };
+}
 
 /**
  * The next thing the queue does: a file to put on the bucket, or a finished
@@ -442,6 +581,8 @@ export function nextWork(drafts: readonly CaptureDraft[], skip: ReadonlySet<stri
     if (photo) return { kind: "upload", draft, ...photo };
   }
   for (const draft of live) {
+    // A basket's shots go to the server before its video goes up: they let the code go (`partialDue`).
+    if (partialDue(draft)) return { kind: "send", draft, partial: true };
     const video = files(draft).find(({ slot, file }) => slot === "video" && file.url === null);
     if (video) return { kind: "upload", draft, ...video };
     // A send the server refused for a reason only a person can fix is not sent again by itself.
@@ -458,11 +599,20 @@ export interface CaptureBody {
   id_match_ticked?: boolean;
   /** B1: the customer's courier return, the spare seal's number. */
   seal?: string;
+  /** The shop's return record of a basket: line ids ticked Received, and ticks taken back (cart D51). */
+  received?: number[];
+  not_received?: number[];
 }
 
-/** What is sent: every file that is up, the ticks, and the ID tick where it is asked for. */
+/**
+ * What is sent: every file that is up, the ticks, and the ID tick where it is asked for. A basket's send names only
+ * what this phone did (the checklist items it touched, the ID tick once made, its Received ticks), so it never undoes
+ * another phone's.
+ */
 export function captureBody(draft: CaptureDraft): CaptureBody {
-  const body: CaptureBody = { shots: [], checklist: draft.checklist };
+  const basket = isBasketList(draft.list);
+  const touched = new Set(draft.touched ?? []);
+  const body: CaptureBody = { shots: [], checklist: basket ? draft.checklist.filter((c) => touched.has(c.item)) : draft.checklist };
   for (const shot of draft.list.shots) {
     const file = draft.shots[shot.key];
     if (!file?.url) continue;
@@ -475,7 +625,9 @@ export function captureBody(draft: CaptureDraft): CaptureBody {
     });
   }
   if (draft.video?.url) body.video = { url: draft.video.url, taken_at: draft.video.taken_at };
-  if (needsIdMatch(draft)) body.id_match_ticked = draft.idMatch;
+  if (needsIdMatch(draft) && (!basket || draft.idMatch || draft.idTouched)) body.id_match_ticked = draft.idMatch;
+  if (needsReceived(draft) && draft.received?.length) body.received = draft.received;
+  if (needsReceived(draft) && draft.unticked?.length) body.not_received = draft.unticked;
   const sealNumber = needsSealNumber(draft) ? sealNumberOf(draft.sealNumber) : null;
   if (sealNumber) body.seal = sealNumber;
   return body;
@@ -552,7 +704,12 @@ export function reopenForMissing(draft: CaptureDraft, missing: string[]): Captur
   let held = false;
   for (const what of missing) {
     if (what === "confirmation_code") continue;
-    if (what === "id_match") next = { ...next, idMatch: false, sealed: false };
+    const line = next.list.lines?.find((l) => what === `${l.prefix}received`);
+    if (line) {
+      // An item not ticked Received (another phone took its tick back): it shows unticked again here.
+      const drop = (ids?: number[]) => (ids ?? []).filter((id) => id !== line.id);
+      next = { ...next, received: drop(next.received), theirReceived: drop(next.theirReceived), sealed: false };
+    } else if (what === "id_match") next = { ...next, idMatch: false, sealed: false };
     else if (what === "video") {
       if (next.video) {
         held = true;
@@ -572,8 +729,14 @@ export function reopenForMissing(draft: CaptureDraft, missing: string[]): Captur
     }
     next = { ...next, lost };
   }
-  return next.sealed ? next : { ...next, error: STILL_NEEDS };
+  if (next.sealed) return next;
+  return { ...next, error: missing.some((m) => m.endsWith("_received")) ? RECEIVED_NEEDED : STILL_NEEDS };
 }
+
+const RECEIVED_NEEDED: NonNullable<CaptureDraft["error"]> = {
+  text: "Tick every item Received to finish the return. Something missing? Don't finish: the booking stays out. Call Renit.",
+  retry: false,
+};
 
 /**
  * A send the server took, with nothing of the record missing but possibly its code: the phone's stop on a file the server
@@ -674,9 +837,12 @@ export function sendFailure(
         : { error: { text: "This record can't be saved from this phone right now.", retry: false } };
     case "validation_error":
       // The server's own sentence for the field: a capture holds at most 40 photos, and the like.
-      return { error: { text: Object.values(fieldErrors(error))[0] ?? error.message ?? "Renit couldn't accept this record. Try again.", retry: false } };
+      return {
+        error: { text: Object.values(fieldErrors(error))[0] ?? error.message ?? "Renit couldn't accept this record. Try again.", retry: false, status: error.status },
+      };
     default:
-      return { error: { text: error.message ?? "Renit couldn't accept this record. Try again.", retry: false } };
+      // A basket's 400 `update_app` ("Update Renit to record these items.") lands here too, in the server's words.
+      return { error: { text: error.message ?? "Renit couldn't accept this record. Try again.", retry: false, status: error.status } };
   }
 }
 

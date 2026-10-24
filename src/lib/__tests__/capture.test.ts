@@ -1085,8 +1085,8 @@ describe("the new answers of the capture calls (lane I, T-23)", () => {
 
   it("400 beyond 40 shots shows the server's own sentence for the field", () => {
     const error: ApiError = { status: 400, code: "validation_error", message: "Check the fields.", details: { fields: { shots: ["A capture holds at most 40 photos."] } } };
-    expect(sendFailure(error)).toEqual({ error: { text: "A capture holds at most 40 photos.", retry: false } });
-    expect(sendFailure({ ...error, details: null })).toEqual({ error: { text: "Check the fields.", retry: false } });
+    expect(sendFailure(error)).toEqual({ error: { text: "A capture holds at most 40 photos.", retry: false, status: 400 } });
+    expect(sendFailure({ ...error, details: null })).toEqual({ error: { text: "Check the fields.", retry: false, status: 400 } });
   });
 
   it("403 on the other person's set, when its code ran out, is a new code and not a dead end", () => {

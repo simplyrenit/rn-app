@@ -48,6 +48,8 @@ export interface RecordBookingProps {
   extends?: string | null;
   /** B1: who carries it. `renit` opens the customer's capture as a courier booking's (`Capture`'s `courier`). */
   delivered_by?: DeliveredBy | null;
+  /** Cart: the booking's items. A booking of several can't be recorded on Renit's general list (`Capture`'s `basket`). */
+  lines?: { state: string }[] | null;
 }
 
 export interface RecordProps {
@@ -76,6 +78,8 @@ export interface RecordHandle {
   draft: CaptureDraft | null;
   /** Opens the capture: to begin the record, carry it on, or type the other person's code. */
   open: () => void;
+  /** Opens the capture on one shot of the list: to take it, or take it again. */
+  openAt: (shot: string) => void;
   retry: () => void;
 }
 
@@ -106,25 +110,32 @@ export function useRecord({ moment, role, forOther = false, booking, receivedAt,
     if (release && draftId) captureQueue.remove(draftId);
   }, [release, draftId]);
 
+  const items = booking.lines?.length ?? 0;
+  const open = (shot?: string) =>
+    navigation.navigate("Capture", {
+      number,
+      moment,
+      role,
+      forOther,
+      title,
+      other,
+      id_match: Boolean(booking.id_match_required),
+      id_match_name: booking.customer?.full_name ?? null,
+      skew_ms: clockSkewMs(booking.server_time, receivedAt),
+      // The customer's set only: it is their home that must not reach the shop.
+      ...(byRenit(booking) && side === "customer" ? { courier: true } : {}),
+      // Cart: a booking of several items names each item's keys, so it never starts on the general list.
+      ...(items > 1 ? { basket: true, items: booking.lines?.filter((l) => l.state === "live").length ?? items } : {}),
+      ...(shot ? { shot } : {}),
+    });
+
   return {
     number,
     state,
     view: recordCard({ state, moment, role, forOther, otherName: other, stage: booking.stage, draft, stake }),
     draft,
-    open: () =>
-      navigation.navigate("Capture", {
-        number,
-        moment,
-        role,
-        forOther,
-        title,
-        other,
-        id_match: Boolean(booking.id_match_required),
-        id_match_name: booking.customer?.full_name ?? null,
-        skew_ms: clockSkewMs(booking.server_time, receivedAt),
-        // The customer's set only: it is their home that must not reach the shop.
-        ...(byRenit(booking) && side === "customer" ? { courier: true } : {}),
-      }),
+    open: () => open(),
+    openAt: (shot) => open(shot),
     retry: () => draft && captureQueue.retry(draft.id),
   };
 }

@@ -57,8 +57,9 @@ export const CAPTURES_POLL_MS = 5000;
  * The two sets. Read again every few seconds while `waitingFor` says a set is
  * still to come and the screen is in front: the other person is standing there.
  */
-export function useCaptures(number: string, poll: boolean) {
+export function useCaptures(number: string, poll: boolean, enabled = true) {
   return useQuery(capturesQueryKey(number), () => fetchCaptures(number), {
+    enabled,
     staleTime: 0,
     refetchInterval: poll ? CAPTURES_POLL_MS : false,
     retry: 1,

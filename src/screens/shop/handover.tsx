@@ -38,6 +38,8 @@ import { toast } from "@/lib/toast";
 import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { CourierPack } from "@/screens/shop/courier";
+import { BasketRecord } from "@/components/shop/basket-record";
+import { basketTitle, isBasket } from "@/lib/shop-lines";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { Linking, Platform, ScrollView, View } from "react-native";
@@ -60,6 +62,8 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
   // (`recordState`): it can be made and finished for as long as the server takes it, so
   // after the code too. The payout waits for the shop's own, and the card says so.
   const names = { title: `${booking.product.title} · ${first}`, other: first };
+  // Cart: a booking of several items is recorded item by item (MR-06b, MR-09).
+  const basket = isBasket(booking);
   const record = useRecord({ moment: "handover", role: "owner", booking, receivedAt, stake: payoutPending(booking), ...names });
   const theirRecord = useRecord({ moment: "handover", role: "owner", forOther: true, booking, receivedAt, ...names });
   const [code, setCode] = useState("");
@@ -78,9 +82,11 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
   const key = shopBookingQueryKey(number);
   // The server's `can` follows the record once it is complete: read the booking again when the shop's own draft is done.
   const mineDone = Boolean(record.draft?.done && !record.draft.awaitingCode);
+  // A basket's shots reach the server as they go up, and the code opens once every item's are in (D19): read again.
+  const synced = record.draft?.synced;
   useEffect(() => {
-    if (mineDone) void queryClient.invalidateQueries(shopBookingQueryKey(number));
-  }, [mineDone, queryClient, number]);
+    if (mineDone || synced) void queryClient.invalidateQueries(shopBookingQueryKey(number));
+  }, [mineDone, synced, queryClient, number]);
   const map = mapsUrl(booking.customer.coordinates, first, Platform.OS === "ios");
   const sendingStatus = running && running !== "code" ? running : null;
 
@@ -129,7 +135,7 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
     >
       <View style={{ gap: 2 }}>
         <Text role="screenTitle" accessibilityRole="header">
-          {copy.title}
+          {basket ? basketTitle("handover", booking, first) : copy.title}
         </Text>
         <Text fontSize="text-md" tone="body">
           {copy.sub}
@@ -193,11 +199,12 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
       ) : null}
 
       {/* Not tied to the stage: after the code the record is still taken, and the payout
-          waits for it (review r1 #1). */}
-      <RecordCardBody record={record} />
+          waits for it (review r1 #1). A basket's own record is drawn item by item below. */}
+      <RecordCardBody record={record} skip={basket ? ["start", "continue", "uploading"] : []} />
+      {basket ? <BasketRecord booking={booking} moment="handover" record={record} complete={flags.mine} watching={watching} /> : null}
       <RecordCardBody record={theirRecord} />
 
-      {recorded || flags.theirs ? (
+      {(recorded || flags.theirs) && !basket ? (
         <MomentSets
           number={number}
           moment="handover"
@@ -220,7 +227,9 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
           </Text>
           {waitsForRecord ? (
             <Notice tone="warning" icon="warning">
-              {recordFirstNote(record.state === "uploading")}
+              {basket
+                ? `Opens when every item's shots are in. ${first} ticks each item on their phone, then shows you the code.`
+                : recordFirstNote(record.state === "uploading")}
             </Notice>
           ) : null}
           {closed ? (

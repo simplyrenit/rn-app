@@ -21,6 +21,7 @@ import { DeliveredBy, byRenit } from "@/lib/delivery";
 import { kmText } from "@/lib/shop";
 import { COURIER_WAY, OwnerCourier, courierOf, packByText } from "@/lib/shop-courier";
 import { customerLine, customerName, whereText } from "@/lib/shop-ring";
+import { type ShopLine, itemsChip } from "@/lib/shop-lines";
 
 
 /**
@@ -91,6 +92,13 @@ export interface BookingShop {
   exit_reason: string;
   is_open: boolean;
   product: { name: string; title: string; shop_code: string; cover_image: string | null; quantity: number };
+  /**
+   * Cart (T6, T9): every item of the booking in line order, refused and `no_unit` ones too. `product` and `units` are
+   * then the first live item's, its title their summary ("Sony A7 IV + 2 more", D31). Absent from a server before lines.
+   */
+  lines?: ShopLine[];
+  /** Cart (T10): the item the shop named when it cancelled the whole booking (D46). */
+  exit_line?: { id: number; ref: string; title: string } | null;
   customer: {
     first_name: string;
     last_initial: string;
@@ -283,6 +291,8 @@ export interface BookingCard {
   pill: ShopPill;
   note: string | null;
   earn: string;
+  /** "3 items" for a booking of several. */
+  items: string | null;
 }
 
 export function bookingCard(b: BookingShop, now: Date = new Date()): BookingCard {
@@ -295,6 +305,7 @@ export function bookingCard(b: BookingShop, now: Date = new Date()): BookingCard
     pill: shopPill(b),
     note: cardNote(b, now),
     earn: money(b.money.you_earn),
+    items: itemsChip(b),
   };
 }
 
@@ -557,6 +568,9 @@ export function shopActionErrorText(error: ApiError | null): string {
       return "You asked for this change. The customer answers it.";
     case "claim_open":
       return "A claim is open on this booking, so it can't be cancelled now.";
+    // Cart (D46): the item named is not a live item of the booking any more.
+    case "lines_unknown":
+      return "That item isn't in this booking any more. Pick again.";
     case "validation_error":
       return "That wasn't accepted. Try again.";
     default:
