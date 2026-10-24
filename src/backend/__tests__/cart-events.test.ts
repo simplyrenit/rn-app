@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import axiosInstance from "@/lib/networkUtils";
 import { track } from "@/lib/events";
-import { deleteLine, putLine } from "../cart";
+import { addCartLine, deleteLine } from "../cart";
 
 jest.mock("@/lib/networkUtils", () => ({ __esModule: true, default: { put: jest.fn(), delete: jest.fn() } }));
 jest.mock("@/lib/config", () => ({ CART_ENDPOINT: "https://api.test/cart/" }));
@@ -24,18 +24,18 @@ beforeEach(() => {
 describe("the cart's events", () => {
   it("an add sends cart_add with the listing's name", async () => {
     http.put.mockResolvedValue({ data: CART });
-    await expect(putLine("PRO_1")).resolves.toBe(CART);
+    await expect(addCartLine("PRO_1")).resolves.toBe(CART);
     expect(http.put).toHaveBeenCalledWith("https://api.test/cart/lines/PRO_1/");
     expect(track).toHaveBeenCalledWith("cart_add", { product: "PRO_1" });
   });
 
   it("a refused add sends the API's code, and the status or network when there is none", async () => {
     http.put.mockRejectedValueOnce(answered(409, { error: { code: "shop_not_ready", message: "No." } }));
-    await expect(putLine("PRO_1")).rejects.toThrow();
+    await expect(addCartLine("PRO_1")).rejects.toThrow();
     http.put.mockRejectedValueOnce(answered(502, "<html>"));
-    await expect(putLine("PRO_1")).rejects.toThrow();
+    await expect(addCartLine("PRO_1")).rejects.toThrow();
     http.put.mockRejectedValueOnce(Object.assign(new Error("Network Error"), { isAxiosError: true }));
-    await expect(putLine("PRO_1")).rejects.toThrow();
+    await expect(addCartLine("PRO_1")).rejects.toThrow();
     expect(jest.mocked(track).mock.calls).toEqual([
       ["cart_add_failed", { product: "PRO_1", code: "shop_not_ready" }],
       ["cart_add_failed", { product: "PRO_1", code: 502 }],

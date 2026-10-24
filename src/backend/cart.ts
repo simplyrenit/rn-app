@@ -16,10 +16,10 @@ export async function fetchCart(): Promise<Cart> {
 }
 
 /**
- * One line in, one line out. Every add and remove comes through these two (the product page, Undo, Move to Saved), so
- * the cart's events (cart plan §9.5) are sent here.
+ * One line in, one line out. Every add and remove goes through these two, whoever calls them, so the cart's events
+ * (cart plan §9.5) are sent here.
  */
-export async function putLine(name: string): Promise<Cart> {
+export async function addCartLine(name: string): Promise<Cart> {
   try {
     const { data } = await axiosInstance.put<Cart>(lineUrl(name));
     track("cart_add", { product: name });
@@ -83,7 +83,7 @@ export function useCart() {
 
   const addLine = useMutation(
     write<{ product: CartProduct; shop: CartShop }>(
-      ({ product }) => putLine(product.name),
+      ({ product }) => addCartLine(product.name),
       (cart, { product, shop }) => withLine(cart, shop, product)
     )
   );

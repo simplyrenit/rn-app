@@ -132,7 +132,7 @@ export default function ReviewAndBookScreen() {
   const quote = quoteQuery.data && asCard && !card ? asOneItem(quoteQuery.data) : quoteQuery.data;
   // CT-23a: the quote on screen when Book now answered `price_changed`, to show what moved.
   const [was, setWas] = useState<Quote | null>(null);
-  // CT-44: Book now refused the whole card.
+  // Book now's refusal that named something: the whole card (CT-44), or the earlier request (`already_requested`).
   const [refused, setRefused] = useState<{ code: string; details?: Record<string, unknown> | null } | null>(null);
 
   // The ₹99 of a refused or unanswered request, moving here. Dropped if the server says it no longer can.

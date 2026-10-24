@@ -238,11 +238,11 @@ export function track(
 const leftOut = new Set<string>();
 
 /**
- * `checkout_line_left_out`, once per item and reason in a checkout attempt, however often the customer goes back from
- * the price screen and on again.
+ * `checkout_line_left_out`, once per item in a checkout attempt (the first reason), however often the customer goes
+ * back from the price screen and on again.
  */
 export function trackLeftOut(attemptId: string | null, product: string, reason: string) {
-  const once = `${attemptId}|${product}|${reason}`;
+  const once = `${attemptId}|${product}`;
   if (leftOut.has(once)) return;
   leftOut.add(once);
   track("checkout_line_left_out", { product, reason }, attemptId);
