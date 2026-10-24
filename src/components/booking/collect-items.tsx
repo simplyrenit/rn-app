@@ -53,6 +53,8 @@ export function useItemTicks(booking: BookingCustomer, now: Date) {
       const answer = await postReceived(booking.number, body);
       rememberTicks(booking.number, answer, true);
       setPosted(answer);
+      // Ticks that land after the code are when Renit files its report on what is missing (ENG-337): read it.
+      if (booking.stage === "out") void queryClient.invalidateQueries(bookingQueryKey(booking.number));
       const same = (a: number[], b: number[]) => [...a].sort().join() === [...b].sort().join();
       if (same(answer.got, body.got) && same(answer.not_here, body.not_here)) {
         track("handover_items_ticked", { booking: booking.number, not_here: answer.not_here.length });
