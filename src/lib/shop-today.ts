@@ -233,7 +233,8 @@ export function comingBackRow(item: ComingBack, now: Date = new Date()): TodayRo
   const title = `${item.product_title} · ${who(item)}`;
   // B1: Renit's rider has it, or brought it: not "due" any more, whatever the last day (ENG-333).
   if (item.return_state === "at_shop") {
-    return { number: item.number, title, sub: "Back at your shop. Record it in the app", pill: { label: "Back", tone: "success" } };
+    // Not "Record it": the feed has no record flag, and the row stays until the desk finishes the return.
+    return { number: item.number, title, sub: "Back at your shop", pill: { label: "Back", tone: "success" } };
   }
   if (item.return_state === "picked_up") {
     return { number: item.number, title, sub: "With the rider, on its way to you", pill: { label: "On its way", tone: "neutral" } };

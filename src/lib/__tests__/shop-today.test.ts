@@ -145,7 +145,7 @@ describe("Today's lists", () => {
     expect(comingBackRow({ ...early, return_state: "at_shop" }, NOW)).toEqual({
       number: "RN-24790",
       title: "Sony PS5 · Isha T.",
-      sub: "Back at your shop. Record it in the app",
+      sub: "Back at your shop",
       pill: { label: "Back", tone: "success" },
     });
     expect(comingBackRow({ ...early, return_state: "picked_up" }, NOW)).toMatchObject({

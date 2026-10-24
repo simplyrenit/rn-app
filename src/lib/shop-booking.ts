@@ -268,7 +268,9 @@ export function cardNote(b: BookingShop, now: Date = new Date()): string | null 
     return due ? `Waiting for the customer to pay the rent by ${momentLabel(due, now)}` : "Waiting for the customer to pay the rent";
   }
   // B1: the rider brought it back; it stays out until Renit's desk finishes the return (ENG-333).
-  if (b.stage === "out" && courier?.return.state === "at_shop") return "Back at your shop. Record it in the app";
+  if (b.stage === "out" && courier?.return.state === "at_shop") {
+    return b.captures?.return?.mine ? "Back at your shop" : "Back at your shop. Record it in the app";
+  }
   if (b.stage === "out" && b.return_by) {
     const day = dayOf(b.return_by);
     return `Back by ${day === today ? "" : `${dayShort(day ?? "")}, `}${clock(b.return_by)}`;
