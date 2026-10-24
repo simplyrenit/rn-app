@@ -13,11 +13,6 @@ export async function fetchCart(): Promise<Cart> {
   return (await axiosInstance.get<Cart>(CART_ENDPOINT)).data;
 }
 
-/** Adds one listing, idempotently, and answers the whole cart. 409 `cart_full` / `shop_not_ready`, 404, 403 own listing. */
-export async function addCartLine(name: string): Promise<Cart> {
-  return (await axiosInstance.put<Cart>(lineUrl(name))).data;
-}
-
 /**
  * The signed-in customer's cart, and adding and removing its lines. Both writes
  * change the cache before the request leaves the phone and put it back if the

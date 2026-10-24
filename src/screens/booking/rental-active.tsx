@@ -10,7 +10,7 @@ import { Button, Text } from "@/components/core";
 import { LinkRow } from "@/components/handover/parts";
 import { canPayPeriod, endingEarlyLine, isMonthly, overdueAlert, overduePeriod } from "@/lib/billing";
 import { BookingCustomer, RentPeriod, money, todayIst } from "@/lib/booking";
-import { basketActive, isBasket, liveLines, rememberedTicks, theItems } from "@/lib/booking-lines";
+import { basketActive, isBasket, liveLines, manyItems, rememberedTicks, theItems } from "@/lib/booking-lines";
 import { faultRowSub } from "@/lib/claims";
 import { activeCopy, bannerTone, ownerAbsentAt, ownerAbsentKey } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
@@ -179,7 +179,7 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
               sub={
                 monthly
                   ? "Adds a month to the schedule. The shop has to accept."
-                  : basket
+                  : manyItems(booking)
                     ? `Adds days to all ${items} items. The shop has to accept.`
                     : "A new booking for the days after. The shop has to accept."
               }

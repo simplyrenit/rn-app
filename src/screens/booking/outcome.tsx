@@ -4,7 +4,7 @@ import {
   fetchAlternatives,
   refundBookingAmount,
 } from "@/backend/bookings";
-import { addCartLine } from "@/backend/cart";
+import { useCart } from "@/backend/cart";
 import { GetHelp } from "@/components/booking/get-help";
 import { StillInCart } from "@/components/booking/items";
 import { Notice, Panel, Pill, TextButton, Thumb } from "@/components/booking/parts";
@@ -22,7 +22,7 @@ import {
   rangeLabel,
   shopNameOf,
 } from "@/lib/booking";
-import { exitLineProduct, isBasket, ownerCancelCopy, rentPaid, restOf } from "@/lib/booking-lines";
+import { exitLine, isBasket, ownerCancelCopy, rentPaid, restOf } from "@/lib/booking-lines";
 import { addFailure } from "@/lib/cart";
 import { SCREEN_GUTTER, MIN_TOUCH_TARGET, radius, space } from "@/lib/design-tokens";
 import { useDistanceTo } from "@/lib/distance";
@@ -138,15 +138,33 @@ export function Outcome({ booking }: { booking: BookingCustomer }) {
 
   // D46: with the rent paid the items left the cart, so the others can be booked again, and the missing one added back.
   const rest = booking.exit_line && rentPaid(booking) ? restOf(booking) : [];
-  const missing = booking.exit_line && rentPaid(booking) ? exitLineProduct(booking) : null;
+  const missing = booking.exit_line && rentPaid(booking) ? exitLine(booking) : null;
+  const { cart, add } = useCart();
   const [adding, setAdding] = useState(false);
   const addMissing = async () => {
-    if (!missing?.name || adding) return;
+    if (!missing?.product.name || adding) return;
     setAdding(true);
+    // The cart groups by the shop's key, which a booking doesn't carry: the cart's own card for this shop when it has one.
+    // The guess only lasts until the server's answer replaces the cart.
+    const shop = cart?.cards.find((card) => card.shop.name === booking.shop.name)?.shop ?? {
+      key: booking.shop.name,
+      name: booking.shop.name,
+      locality: booking.shop.locality,
+      delivers: booking.delivery_mode !== "pickup",
+      verified: false,
+    };
     try {
-      await addCartLine(missing.name);
-      void queryClient.invalidateQueries("cart");
-      toast.success("Added to cart", { message: missing.title });
+      await add({
+        product: {
+          name: missing.product.name,
+          title: missing.product.title,
+          cover_image: missing.product.cover_image,
+          rate: null,
+          deposit: missing.deposit,
+        },
+        shop,
+      });
+      toast.success("Added to cart", { message: missing.product.title });
     } catch (error) {
       const failure = addFailure(apiError(error), booking.shop.name);
       toast[failure.severity](failure.title, { message: failure.message });
@@ -225,7 +243,7 @@ export function Outcome({ booking }: { booking: BookingCustomer }) {
           ) : null}
           {missing ? (
             <Button variant="outline" loading={adding} disabled={adding} onPress={() => void addMissing()}>
-              {`Add the ${missing.title} to cart`}
+              {`Add the ${missing.product.title} to cart`}
             </Button>
           ) : null}
         </>

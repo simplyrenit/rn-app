@@ -3,9 +3,9 @@ import {
   BookingLine,
   CancelOutcome,
   PayRentCopy,
+  byWhen,
   clock,
   money,
-  timeAndDay,
 } from "@/lib/booking";
 import type { ActiveCopy } from "@/lib/day-of";
 import { pluralize } from "@/lib/pluralize";
@@ -68,20 +68,13 @@ export const rentPaid = (b: Pick<BookingCustomer, "payments">) =>
     (row) => row.kind === "payment" && (row.what === "rent" || row.what === "rent_and_deposit") && row.status === "paid"
   );
 
-/** " by 4:34 pm", with the day when it is not today; "" without a time. */
-function by(iso: string | null | undefined, now: Date): string {
-  const when = iso ? timeAndDay(iso, now) : null;
-  if (!when) return "";
-  return when.day === "today" ? ` by ${when.time}` : ` by ${when.time} ${when.day}`;
-}
-
 const rentOf = (lines: BookingLine[]) => lines.reduce((total, line) => total + Number(line.rent), 0);
 
 /** The Rentals card's foot after a partial accept (§3.7): "Pay ₹2,501 for 2 of 3 items by 4:34 pm". Null otherwise. */
 export function basketNextLine(b: BookingCustomer, now: Date = new Date()): string | null {
   if (!partlyAccepted(b)) return null;
   const amount = money(b.pay_now?.amount ?? b.money.pay_after_accept);
-  return `Pay ${amount} for ${liveLines(b).length} of ${b.lines?.length} items${by(b.pay_now?.due_at ?? b.money.rent_due_at, now)}`;
+  return `Pay ${amount} for ${liveLines(b).length} of ${b.lines?.length} items${byWhen(b.pay_now?.due_at ?? b.money.rent_due_at, now)}`;
 }
 
 export interface BasketPayRent extends PayRentCopy {
@@ -100,7 +93,7 @@ export function basketPayRent(b: BookingCustomer, copy: PayRentCopy, now: Date =
   const live = liveLines(b);
   const out = leftOutLines(b);
   const amount = copy.total.amount;
-  const deadline = by(b.pay_now?.due_at ?? b.money.rent_due_at, now);
+  const deadline = byWhen(b.pay_now?.due_at ?? b.money.rent_due_at, now);
   const lines = copy.lines.map((line) =>
     line.label === "Rent"
       ? { ...line, label: `Rent (${itemsText(live.length)})`, struck: out.length ? money(rentOf(b.lines ?? [])) : undefined }
@@ -223,10 +216,10 @@ export function restOf(b: BookingCustomer): string[] {
     .filter((name): name is string => Boolean(name));
 }
 
-/** The listing of the item the shop couldn't give, for "Add it to cart". Null when it has none (deleted). */
-export function exitLineProduct(b: BookingCustomer): BookingLine["product"] | null {
+/** The item the shop couldn't give, for "Add it to cart". Null when its listing is gone. */
+export function exitLine(b: BookingCustomer): BookingLine | null {
   const line = (b.lines ?? []).find((l) => l.id === b.exit_line?.id);
-  return line?.product.name ? line.product : null;
+  return line?.product.name ? line : null;
 }
 
 // ---- Day-of ticks (D44, CT-34, CT-45) ------------------------------------------------------------
@@ -273,18 +266,23 @@ export function ticksCaption(b: Lines, ticks: Ticks): string {
   return `Tick all ${live.length} items to see your code · ${done} of ${live.length} ticked`;
 }
 
-/** CT-45a: the "Not here" sheet for one item. Each choice is the plan's (§3.3 Day-of) with its money (FIXES B3 row 8). */
-export function notHereCopy(b: BookingCustomer, line: BookingLine) {
-  const others = liveLines(b).filter((l) => l.id !== line.id);
+/**
+ * CT-45a: the "Not here" sheet for one item. Each choice is the plan's (§3.3 Day-of) with its money (FIXES B3 row 8).
+ * `ticks`: the others already ticked Not here are not "the rest"; with nothing left to take, only Ask and Refuse remain.
+ */
+export function notHereCopy(b: BookingCustomer, line: BookingLine, ticks: Ticks = {}) {
+  const others = liveLines(b).filter((l) => l.id !== line.id && ticks[l.id] !== "not_here");
   const share = Number(line.deposit) > 0 ? ` Its ${money(line.deposit)} deposit share comes back with your deposit.` : "";
   return {
     title: `The ${line.product.title} isn't here?`,
     sub: "Your code stays hidden until you choose.",
     ask: { title: `Ask ${b.shop.name}`, sub: "Call the shop. It may still be in the car or in another bag." },
-    take: {
-      title: "Take the rest and report",
-      sub: `Your code shows for ${theItems(others)}. After the handover, report the ${line.product.title}: Renit can refund up to its rent (${money(line.rent)}).${share}`,
-    },
+    take: others.length
+      ? {
+          title: "Take the rest and report",
+          sub: `Your code shows for ${theItems(others)}. After the handover, report the ${line.product.title}: Renit can refund up to its rent (${money(line.rent)}).${share}`,
+        }
+      : null,
     refuse: {
       title: "Refuse everything",
       sub: `This refuses all ${liveLines(b).length} items, not only the ${line.product.title}. ${b.shop.name} takes everything back.`,

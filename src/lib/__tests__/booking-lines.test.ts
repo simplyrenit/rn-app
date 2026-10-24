@@ -6,7 +6,7 @@ import {
   basketPayRent,
   basketReturnNote,
   cancelHead,
-  exitLineProduct,
+  exitLine,
   isBasket,
   lapseBanner,
   lapseNotice,
@@ -299,7 +299,7 @@ describe("the shop couldn't give one item (CT-47, D46)", () => {
 
   it("books the rest without that item, and offers that item to the cart", () => {
     expect(restOf(cancelled(true))).toEqual(["PRO_1", "PRO_3"]);
-    expect(exitLineProduct(cancelled(true))).toEqual(lens.product);
+    expect(exitLine(cancelled(true))).toEqual(lens);
   });
 });
 
@@ -327,10 +327,13 @@ describe("the day-of ticks (D44, CT-34, CT-45)", () => {
   it("gives each Not here choice with its money", () => {
     const copy = notHereCopy(ready, lens);
     expect(copy.title).toBe("The Sony FE lens isn't here?");
-    expect(copy.take.sub).toBe(
+    expect(copy.take?.sub).toBe(
       "Your code shows for the Sony A7 IV camera and the Manfrotto tripod. After the handover, report the Sony FE lens: Renit can refund up to its rent (₹900). Its ₹5,000 deposit share comes back with your deposit."
     );
     expect(copy.refuse.sub).toBe("This refuses all 3 items, not only the Sony FE lens. Lens Lane takes everything back.");
+    // Another item already Not here is not "the rest"; with none left, only Ask and Refuse are offered.
+    expect(notHereCopy(ready, lens, { [camera.id]: "not_here" }).take?.sub).toMatch(/^Your code shows for the Manfrotto tripod\./);
+    expect(notHereCopy(ready, lens, { [camera.id]: "not_here", [tripod.id]: "not_here" }).take).toBeNull();
   });
 
   it("ticks several items only: one item left after a partial accept is handed over as one", () => {

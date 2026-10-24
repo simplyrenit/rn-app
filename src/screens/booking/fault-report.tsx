@@ -82,7 +82,9 @@ export default function FaultReportScreen() {
   const chosen = basket ? liveLines(booking).filter((l) => picked.includes(l.id)) : [];
   const hold = basket && !chosen.length ? "Pick the items with the problem." : faultHold(statement, photos.length);
   // What the desk reads first: CT-36b's "Didn't receive this" or "Not working".
-  const said = basket ? `${missing ? "Didn't receive this" : "Not working"}: ${statement.trim()}` : statement;
+  const said = basket
+    ? `${missing ? (chosen.length > 1 ? "Didn't receive these" : "Didn't receive this") : "Not working"}: ${statement.trim()}`
+    : statement;
   const sending = running !== null;
   const until = deadlineLabel(booking.report_fault_until, now);
 

@@ -53,7 +53,10 @@ export function useItemTicks(booking: BookingCustomer, now: Date) {
       const answer = await postReceived(booking.number, body);
       rememberTicks(booking.number, answer, true);
       setPosted(answer);
-      track("handover_items_ticked", { booking: booking.number, not_here: answer.not_here.length });
+      const same = (a: number[], b: number[]) => [...a].sort().join() === [...b].sort().join();
+      if (same(answer.got, body.got) && same(answer.not_here, body.not_here)) {
+        track("handover_items_ticked", { booking: booking.number, not_here: answer.not_here.length });
+      }
     } catch (error) {
       const failure = apiError(error);
       if (failure?.code === "validation_error") {
@@ -266,16 +269,18 @@ export const NotHereSheet = forwardRef<
   {
     booking: BookingCustomer;
     line: BookingLine | null;
+    /** The other items' ticks: one already Not here is not part of "the rest". */
+    ticks: Ticks;
     callNumber: string | null;
     canRefuse: boolean;
     onTake: (line: BookingLine) => void;
     onRefuse: () => void;
   }
->(({ booking, line, callNumber, canRefuse, onTake, onRefuse }, ref) => {
+>(({ booking, line, ticks, callNumber, canRefuse, onTake, onRefuse }, ref) => {
   const { isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [choice, setChoice] = useState<Choice>("ask");
-  const copy = line ? notHereCopy(booking, line) : null;
+  const copy = line ? notHereCopy(booking, line, ticks) : null;
   const dismiss = () => (ref && "current" in ref ? ref.current?.dismiss() : undefined);
 
   const go = () => {
@@ -307,7 +312,7 @@ export const NotHereSheet = forwardRef<
           </View>
           <View accessibilityRole="radiogroup" style={{ gap: space.sm }}>
             <ChoiceRow {...copy.ask} selected={choice === "ask"} onPress={() => setChoice("ask")} />
-            <ChoiceRow {...copy.take} selected={choice === "take"} onPress={() => setChoice("take")} />
+            {copy.take ? <ChoiceRow {...copy.take} selected={choice === "take"} onPress={() => setChoice("take")} /> : null}
             {canRefuse ? <ChoiceRow {...copy.refuse} selected={choice === "refuse"} onPress={() => setChoice("refuse")} /> : null}
           </View>
           <Button variant={choice === "refuse" ? "warning" : "primary"} disabled={choice === "ask" && !callNumber} onPress={go}>

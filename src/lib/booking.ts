@@ -1780,7 +1780,7 @@ export function bookingAmountCopy(
 // ---- Pay the rent (BK-06, ENG-174) -------------------------------------------------------------
 
 /** "by 10:13 am", and the day when it is not today. The server's own time: no length of time is written. */
-function byWhen(iso: string | null | undefined, now: Date): string {
+export function byWhen(iso: string | null | undefined, now: Date): string {
   const when = iso ? timeAndDay(iso, now) : null;
   if (!when) return "";
   return when.day === "today" ? ` by ${when.time}` : ` by ${when.time} ${when.day}`;

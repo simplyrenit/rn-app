@@ -91,6 +91,39 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
       }
     });
 
+  const codeSection = (
+    <Block title="Your handover code">
+      {showCode && day.handover_code ? <CodeBoxes code={day.handover_code} /> : null}
+      <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
+        {basket && !items.done && !booking.claim_open ? ticksCaption(booking, items.ticks) : copy.codeNote}
+      </Text>
+    </Block>
+  );
+  const recordSection = (
+    <>
+      {/* The record's own state while it uploads, waits or needs the customer; the first button is below. */}
+      <RecordCardBody record={record} skip={["start"]} />
+      <RecordCard moment="handover" role="customer" forOther booking={booking} receivedAt={receivedAt} {...names} />
+
+      {booking.claim_open ? (
+        <Notice tone="warning" icon="clock">
+          Renit is looking at your report. You will hear by the end of tomorrow. Nothing is charged or refunded until then.
+        </Notice>
+      ) : recorded ? (
+        <Button onPress={() => navigation.navigate("BookingCheck", { number })}>Check both sets of photos</Button>
+      ) : record.state === "start" ? (
+        <Button onPress={record.open} accessibilityLabel="Start recording the condition">
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+            <CameraIcon size={20} color={color.onBrand} />
+            <Text fontSize="text-md" fontWeight="font-bold" tone="onBrand">
+              Start recording the condition
+            </Text>
+          </View>
+        </Button>
+      ) : null}
+    </>
+  );
+
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -221,33 +254,19 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         </Notice>
       ) : null}
 
-      <Block title="Your handover code">
-        {showCode && day.handover_code ? <CodeBoxes code={day.handover_code} /> : null}
-        <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
-          {basket && !items.done && !booking.claim_open ? ticksCaption(booking, items.ticks) : copy.codeNote}
+      {/* CT-34b: on a basket the items are recorded first, then the code is shown (FIXES-r1 B3 row 9). */}
+      {basket ? (
+        <Text role="sectionTitle" accessibilityRole="header">
+          {`1 · Record ${theItems(liveLines(booking).filter((line) => items.ticks[line.id] !== "not_here"))}`}
         </Text>
-      </Block>
-
-      {/* The record's own state while it uploads, waits or needs the customer; the first button is below. */}
-      <RecordCardBody record={record} skip={["start"]} />
-      <RecordCard moment="handover" role="customer" forOther booking={booking} receivedAt={receivedAt} {...names} />
-
-      {booking.claim_open ? (
-        <Notice tone="warning" icon="clock">
-          Renit is looking at your report. You will hear by the end of tomorrow. Nothing is charged or refunded until then.
-        </Notice>
-      ) : recorded ? (
-        <Button onPress={() => navigation.navigate("BookingCheck", { number })}>Check both sets of photos</Button>
-      ) : record.state === "start" ? (
-        <Button onPress={record.open} accessibilityLabel="Start recording the condition">
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-            <CameraIcon size={20} color={color.onBrand} />
-            <Text fontSize="text-md" fontWeight="font-bold" tone="onBrand">
-              Start recording the condition
-            </Text>
-          </View>
-        </Button>
       ) : null}
+      {basket ? recordSection : codeSection}
+      {basket ? (
+        <Text role="sectionTitle" accessibilityRole="header">
+          2 · Show this code
+        </Text>
+      ) : null}
+      {basket ? codeSection : recordSection}
 
       <ClaimRows ids={booking.claims} role="customer" />
 
@@ -279,6 +298,7 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         ref={notHereSheet}
         booking={booking}
         line={missingLine}
+        ticks={items.ticks}
         callNumber={call.number}
         canRefuse={can("refuse_at_door") && !booking.claim_open}
         onTake={(line) => void items.tick(line, "not_here")}
