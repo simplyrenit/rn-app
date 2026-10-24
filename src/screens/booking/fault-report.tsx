@@ -250,7 +250,7 @@ export default function FaultReportScreen() {
             </Text>
             {absent ? (
               <Text fontSize="text-sm" tone="body">
-                Lay out everything the shop gave you and take a photo of it, so Renit can see what is missing.
+                Lay out everything you were handed and take a photo of it, so Renit can see what is missing.
               </Text>
             ) : null}
             <PhotoRow

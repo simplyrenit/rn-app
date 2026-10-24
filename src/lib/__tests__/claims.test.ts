@@ -376,6 +376,7 @@ describe("the customer's fault report", () => {
     expect(faultHold("", 1)).toBe("Say what does not work.");
     expect(faultHold("It will not switch on", 0)).toBe("Add at least one photo of the problem.");
     expect(faultHold("It will not switch on", 1)).toBeNull();
+    expect(faultHold("", 1, true)).toBe("Say what was missing.");
     expect(faultHold("Not in the bag", 0, true)).toBe("Add a photo of what you were handed.");
     expect(faultHold("Not in the bag", 1, true)).toBeNull();
   });

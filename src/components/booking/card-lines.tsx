@@ -180,10 +180,7 @@ export function LineRow({
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={`${action.label}: ${title}`}
-            // The chips are read after this button now; their reason is heard with it.
-            accessibilityHint={
-              [action.hint, ...chips.map(({ chip }) => chip.text)].filter(Boolean).join(". ") || undefined
-            }
+            accessibilityHint={action.hint}
             accessibilityState={{ disabled: Boolean(action.disabled) }}
             disabled={action.disabled}
             onPress={action.onPress}

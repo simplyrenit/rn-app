@@ -600,7 +600,7 @@ export function faultNotice(booking: Pick<BookingCustomer, "money">): string {
  * N14). `missing`, "Didn't receive this": there is nothing to photograph, so the photo is of what was handed over.
  */
 export function faultHold(statement: string, photos: number, missing = false): string | null {
-  if (!statement.trim()) return "Say what does not work.";
+  if (!statement.trim()) return missing ? "Say what was missing." : "Say what does not work.";
   if (photos > 0) return null;
   return missing ? "Add a photo of what you were handed." : "Add at least one photo of the problem.";
 }
