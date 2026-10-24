@@ -280,7 +280,7 @@ export function notHereCopy(b: BookingCustomer, line: BookingLine, ticks: Ticks 
     take: others.length
       ? {
           title: "Take the rest and report",
-          sub: `Your code shows for ${theItems(others)}. After the handover, report the ${line.product.title}: Renit can refund up to its rent (${money(line.rent)}).${share}`,
+          sub: `Your code shows for ${theItems(others)}. Once it is typed, Renit's desk gets a report on the ${line.product.title}: it can refund up to its rent (${money(line.rent)}).${share}`,
         }
       : null,
     refuse: {
