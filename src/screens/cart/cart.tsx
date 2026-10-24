@@ -389,11 +389,13 @@ export default function CartScreen() {
     const products = checkoutLines(card).map((line) => line.product.name);
     if (!products.length || !cart) return;
     navigation.navigate("BookingDates", {
-      // ponytail: `product` only until A3's card-mode dates step lands and makes it optional; then drop it.
-      product: products[0],
       products,
       from_cart: true,
-      others: { items: cart.count - card.lines.length, shops: cart.cards.length - 1 },
+      // The other shops by name, for "Your 2 items from Party Props and HomeEase stay in your cart" (FIXES B2 row 15).
+      others: {
+        items: cart.count - card.lines.length,
+        shops: cart.cards.filter((other) => other !== card).map((other) => other.shop.name),
+      },
       ...checkoutDates(),
     });
   };

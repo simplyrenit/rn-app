@@ -5,6 +5,7 @@ import { Pill } from "@/components/booking/parts";
 import { clock, rangeLabel, rentCharge, timeLeft } from "@/lib/booking";
 import { CartNoteTone, waitingForRent } from "@/lib/cart";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, darkColors, radius, space } from "@/lib/design-tokens";
+import { track } from "@/lib/events";
 import { formatCurrency } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
@@ -23,14 +24,26 @@ import {
  * number of lines on it. The tab bar has no room for a cart (F24), so it sits
  * in the product page's band and in Home's header.
  */
-export function CartButton({ onPhoto = false, style }: { onPhoto?: boolean; style?: StyleProp<ViewStyle> }) {
+export function CartButton({
+  from,
+  onPhoto = false,
+  style,
+}: {
+  /** Where it sits, for `cart_opened` (cart plan §9.5). */
+  from: "product" | "home";
+  onPhoto?: boolean;
+  style?: StyleProp<ViewStyle>;
+}) {
   const { cart } = useCart();
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const count = cart?.count ?? 0;
   return (
     <IconButton
-      onPress={() => navigation.navigate("Cart")}
+      onPress={() => {
+        track("cart_opened", { from });
+        navigation.navigate("Cart");
+      }}
       accessibilityLabel={count ? `Your cart, ${count === 1 ? "1 item" : `${count} items`}` : "Your cart"}
       scrim={onPhoto}
       size={onPhoto ? 40 : undefined}

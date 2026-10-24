@@ -65,6 +65,7 @@ const claim = (over: Partial<Claim> = {}): Claim => ({
     deposit: "3000.00",
   },
   kind: "not_as_described",
+  lines: [],
   against: "shop",
   raised_by_role: "customer",
   statement: "The lens is scratched and the remote is missing.",
@@ -149,6 +150,10 @@ describe("who and what", () => {
 
   it("writes the booking as a line", () => {
     expect(claimBookingLine(claim())).toBe("RN-24790 · Epson projector · Fri 9 – Sat 10 Oct");
+    // Cart D38: a claim on items of a basket names them by their refs.
+    const lens = { id: 7, ref: "RN-24790·2", title: "Sony FE lens" };
+    expect(claimBookingLine(claim({ kind: "fault", lines: [lens] }))).toBe("RN-24790·2 Sony FE lens · Fri 9 – Sat 10 Oct");
+    expect(readClaim({ ...claim(), lines: [lens, { ref: "no id" }] })?.lines).toEqual([lens]);
   });
 });
 

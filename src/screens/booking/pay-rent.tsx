@@ -1,6 +1,7 @@
 import { bookingQueryKey, payRent } from "@/backend/bookings";
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
 import { GetHelp } from "@/components/booking/get-help";
+import { ShopAnswer } from "@/components/booking/items";
 import { BottomBar, MoneyLine, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { PushNotice } from "@/components/booking/push-notice";
 import { usePay } from "@/components/booking/use-pay";
@@ -20,6 +21,7 @@ import {
   sameCharge,
   timeLeft,
 } from "@/lib/booking";
+import { basketPayRent, isBasket, partlyAccepted } from "@/lib/booking-lines";
 import { byRenit } from "@/lib/delivery";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { clockSkewMs } from "@/lib/server-clock";
@@ -28,7 +30,7 @@ import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import React, { useEffect, useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
-import { CheckCircleIcon, ClockIcon } from "react-native-heroicons/outline";
+import { CheckCircleIcon, ClockIcon, ExclamationTriangleIcon } from "react-native-heroicons/outline";
 import { useQueryClient } from "react-query";
 
 /**
@@ -71,7 +73,9 @@ export function PayRent({
   const [offered, setOffered] = useState<Charge | null>(null);
   const [changed, setChanged] = useState(false);
   const shown = offered ?? rentCharge(booking);
-  const copy = payRentCopy(booking, now, shown);
+  // A basket names its items; after a partial accept, what was left out and the ₹99 that comes back (CT-26, CT-27).
+  const copy = basketPayRent(booking, payRentCopy(booking, now, shown), now);
+  const partial = partlyAccepted(booking);
   // The tap's work finishes later; it must compare against what is on screen at the tap.
   const latest = useRef(shown);
   latest.current = shown;
@@ -145,13 +149,17 @@ export function PayRent({
               width: 88,
               height: 88,
               borderRadius: radius.full,
-              backgroundColor: color.successWash,
+              backgroundColor: partial ? color.warningWash : color.successWash,
               alignItems: "center",
               justifyContent: "center",
               marginBottom: space.sm,
             }}
           >
-            <CheckCircleIcon size={40} color={color.success} />
+            {partial ? (
+              <ExclamationTriangleIcon size={36} color={color.warning} />
+            ) : (
+              <CheckCircleIcon size={40} color={color.success} />
+            )}
           </View>
           <Text role="screenTitle" accessibilityRole="header" style={{ textAlign: "center" }}>
             {copy.title}
@@ -188,6 +196,8 @@ export function PayRent({
           </Notice>
         ) : null}
 
+        {isBasket(booking) ? <ShopAnswer booking={booking} /> : null}
+
         <Panel style={{ padding: space.md, gap: space.sm }}>
           {copy.lines.map((line) => (
             <MoneyLine key={line.label} {...line} />
@@ -218,11 +228,11 @@ export function PayRent({
           {copy.small}
         </Text>
         {booking.can.includes("cancel") ? (
-          <TextButton label="Cancel booking" tone="danger" disabled={working} onPress={() => cancelSheet.current?.present()} />
+          <TextButton label={copy.cancel} tone="danger" disabled={working} onPress={() => cancelSheet.current?.present()} />
         ) : null}
       </BottomBar>
 
-      <CancelSheet ref={cancelSheet} number={booking.number} courier={byRenit(booking)} />
+      <CancelSheet ref={cancelSheet} number={booking.number} courier={byRenit(booking)} booking={booking} />
     </View>
   );
 }

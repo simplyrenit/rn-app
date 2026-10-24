@@ -1771,7 +1771,7 @@ describe("the Rentals tab", () => {
   it("names each stage on its pill, as BK-12 does", () => {
     expect(stagePill(ringing("ringing"))).toEqual({ label: "Asking the owner", tone: "warning" });
     expect(stagePill(ringing("calling")).label).toBe("Asking the owner");
-    expect(stagePill(ringing("awaiting_payment")).label).toBe("Payment pending");
+    expect(stagePill(ringing("awaiting_payment"))).toEqual({ label: "Not sent yet", tone: "neutral" });
     expect(stagePill(ringing("waiting_to_open")).label).toBe("Asked at opening");
     expect(stagePill(booking({ stage: "accepted" }))).toEqual({ label: "Accepted", tone: "brand" });
     expect(stagePill(booking())).toEqual({ label: "Confirmed", tone: "brand" });

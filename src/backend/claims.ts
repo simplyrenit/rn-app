@@ -68,11 +68,14 @@ const bookingUrl = (number: string, action: string) => `${BOOKINGS_ENDPOINT}${en
 export async function reportFault(
   number: string,
   statement: string,
-  photos: string[]
+  photos: string[],
+  /** A booking of several items names the ones the report is about (cart D45); 400 without them. */
+  lines?: number[]
 ): Promise<{ claim: Claim; booking: BookingCustomer }> {
   const { data } = await axiosInstance.post<{ claim: unknown; booking: BookingCustomer }>(bookingUrl(number, "claims/fault/"), {
     statement: statement.trim(),
     photos,
+    ...(lines?.length ? { lines } : {}),
   });
   return { claim: need(data?.claim), booking: data.booking };
 }

@@ -356,6 +356,7 @@ describe("BK-13, the deposit", () => {
       sub: "Sony PS5 · RN-24831",
       amount: "₹3,000",
       refund: "Refundable. Back within 48 hours of closing.",
+      madeOf: null,
       payBy: "Pay by Sat 24 Oct, 8:00 am",
       when: "Collecting Sat 24 Oct, 10:00 – 11:00 am",
       unlocks: "Paying the deposit shows you the shop's address and unlocks your handover code.",

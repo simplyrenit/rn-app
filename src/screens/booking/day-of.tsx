@@ -1,5 +1,6 @@
 import { bookingQueryKey } from "@/backend/bookings";
 import { setDayStatus } from "@/backend/handover";
+import { CollectItems, NotHereSheet, useItemTicks } from "@/components/booking/collect-items";
 import { GetHelp } from "@/components/booking/get-help";
 import { Notice, Panel, Pill } from "@/components/booking/parts";
 import { useServerNow } from "@/components/booking/use-server-now";
@@ -9,7 +10,8 @@ import { RecordCard, RecordCardBody, useRecord } from "@/components/capture/reco
 import { Button, Text } from "@/components/core";
 import { Block, CallButton, LinkRow, StatusButtons, useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
-import { BookingCustomer } from "@/lib/booking";
+import { BookingCustomer, BookingLine } from "@/lib/booking";
+import { liveLines, manyItems, theItems, ticksCaption } from "@/lib/booking-lines";
 import { recordOpens } from "@/lib/capture";
 import {
   callCopy,
@@ -22,12 +24,14 @@ import {
   statusButtons,
   statusNote,
   theirStatusLine,
+  whenShort,
 } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
-import React from "react";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import React, { useRef, useState } from "react";
 import { Linking, Platform, ScrollView, TouchableOpacity, View } from "react-native";
 import { CameraIcon, ClockIcon, MapPinIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -63,6 +67,17 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
   // Nothing left for the customer to shoot: the next thing is to compare the two sets.
   const recorded = !recordOpens(record.state);
   const map = booking.delivery_mode === "pickup" ? mapsUrl(booking.shop.coordinates, booking.shop.name, Platform.OS === "ios") : null;
+  const call = callCopy("customer", day, "the shop", now);
+
+  // D44, CT-34: on a booking of several items each is ticked Got it or Not here before the code shows. The ticks open with
+  // the calls, two hours before the window (the server refuses them earlier).
+  // One item left after a partial accept is handed over as one item, as before.
+  const basket = manyItems(booking);
+  const items = useItemTicks(booking, now);
+  const notHereSheet = useRef<BottomSheetModal>(null);
+  const [missingLine, setMissingLine] = useState<BookingLine | null>(null);
+  const notHere = items.done ? liveLines(booking).filter((line) => items.ticks[line.id] === "not_here") : [];
+  const showCode = Boolean(day.handover_code) && !booking.claim_open && (!basket || items.done);
 
   const tapStatus = (status: "on_my_way" | "running_late" | "i_am_here") =>
     run(status, async () => {
@@ -75,6 +90,39 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         if (failure && failure.status > 0) void queryClient.invalidateQueries(bookingQueryKey(number));
       }
     });
+
+  const codeSection = (
+    <Block title="Your handover code">
+      {showCode && day.handover_code ? <CodeBoxes code={day.handover_code} /> : null}
+      <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
+        {basket && !items.done && !booking.claim_open ? ticksCaption(booking, items.ticks) : copy.codeNote}
+      </Text>
+    </Block>
+  );
+  const recordSection = (
+    <>
+      {/* The record's own state while it uploads, waits or needs the customer; the first button is below. */}
+      <RecordCardBody record={record} skip={["start"]} />
+      <RecordCard moment="handover" role="customer" forOther booking={booking} receivedAt={receivedAt} {...names} />
+
+      {booking.claim_open ? (
+        <Notice tone="warning" icon="clock">
+          Renit is looking at your report. You will hear by the end of tomorrow. Nothing is charged or refunded until then.
+        </Notice>
+      ) : recorded ? (
+        <Button onPress={() => navigation.navigate("BookingCheck", { number })}>Check both sets of photos</Button>
+      ) : record.state === "start" ? (
+        <Button onPress={record.open} accessibilityLabel="Start recording the condition">
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+            <CameraIcon size={20} color={color.onBrand} />
+            <Text fontSize="text-md" fontWeight="font-bold" tone="onBrand">
+              Start recording the condition
+            </Text>
+          </View>
+        </Button>
+      ) : null}
+    </>
+  );
 
   return (
     <ScrollView
@@ -169,7 +217,7 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         ) : null}
       </View>
 
-      <CallButton copy={callCopy("customer", day, "the shop", now)} />
+      <CallButton copy={call} />
 
       {copy.idNote ? (
         <Notice tone="info" icon="info">
@@ -177,33 +225,48 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         </Notice>
       ) : null}
 
-      <Block title="Your handover code">
-        {day.handover_code && !booking.claim_open ? <CodeBoxes code={day.handover_code} /> : null}
-        <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
-          {copy.codeNote}
-        </Text>
-      </Block>
-
-      {/* The record's own state while it uploads, waits or needs the customer; the first button is below. */}
-      <RecordCardBody record={record} skip={["start"]} />
-      <RecordCard moment="handover" role="customer" forOther booking={booking} receivedAt={receivedAt} {...names} />
-
-      {booking.claim_open ? (
-        <Notice tone="warning" icon="clock">
-          Renit is looking at your report. You will hear by the end of tomorrow. Nothing is charged or refunded until then.
-        </Notice>
-      ) : recorded ? (
-        <Button onPress={() => navigation.navigate("BookingCheck", { number })}>Check both sets of photos</Button>
-      ) : record.state === "start" ? (
-        <Button onPress={record.open} accessibilityLabel="Start recording the condition">
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-            <CameraIcon size={20} color={color.onBrand} />
-            <Text fontSize="text-md" fontWeight="font-bold" tone="onBrand">
-              Start recording the condition
-            </Text>
-          </View>
-        </Button>
+      {basket ? (
+        <CollectItems
+          booking={booking}
+          ticks={items.ticks}
+          sent={items.posted !== null}
+          sending={items.sending}
+          failed={items.failed}
+          open={reached(day.call_from, now)}
+          closedNote={
+            day.call_from ? `You can tick these from ${whenShort(day.call_from, now)}.` : "You can tick these once an arrival window is picked."
+          }
+          onTick={(line) => void items.tick(line, "got")}
+          onUndo={items.undo}
+          onRetry={items.retry}
+          onNotHere={(line) => {
+            setMissingLine(line);
+            notHereSheet.current?.present();
+          }}
+        />
       ) : null}
+
+      {/* CT-45c: taken without one item. Its report is filed after the handover, from the rental, where the server takes it. */}
+      {notHere.length ? (
+        <Notice tone="warning" icon="warning" title={`Not here: ${theItems(notHere)}`}>
+          Show your code for the rest. Once you have them, report what is missing from your rental, within 24 hours of the
+          handover: Renit can refund up to its rent.
+        </Notice>
+      ) : null}
+
+      {/* CT-34b: on a basket the items are recorded first, then the code is shown (FIXES-r1 B3 row 9). */}
+      {basket ? (
+        <Text role="sectionTitle" accessibilityRole="header">
+          {`1 · Record ${theItems(liveLines(booking).filter((line) => items.ticks[line.id] !== "not_here"))}`}
+        </Text>
+      ) : null}
+      {basket ? recordSection : codeSection}
+      {basket ? (
+        <Text role="sectionTitle" accessibilityRole="header">
+          2 · Show this code
+        </Text>
+      ) : null}
+      {basket ? codeSection : recordSection}
 
       <ClaimRows ids={booking.claims} role="customer" />
 
@@ -230,6 +293,17 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         />
         <GetHelp booking={booking} first={false} />
       </Panel>
+
+      <NotHereSheet
+        ref={notHereSheet}
+        booking={booking}
+        line={missingLine}
+        ticks={items.ticks}
+        callNumber={call.number}
+        canRefuse={can("refuse_at_door") && !booking.claim_open}
+        onTake={(line) => void items.tick(line, "not_here")}
+        onRefuse={() => navigation.navigate("BookingRefuse", { number })}
+      />
     </ScrollView>
   );
 }

@@ -1,6 +1,8 @@
-import { usePublicProduct, useQuote } from "@/backend/bookings";
+import { QuoteInput, usePublicProducts, useQuote } from "@/backend/bookings";
 import { AddressPickerSheet, AddressPickerSheetHandle } from "@/components/addresses/address-picker-sheet";
-import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel } from "@/components/booking/parts";
+import { LineRow, ShopHead } from "@/components/booking/card-lines";
+import { RentStrip } from "@/components/cart/parts";
+import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { Button, Skeleton, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
@@ -10,6 +12,8 @@ import { addressMayHelp, areaLabel, areaOf, offersDelivery } from "@/lib/deliver
 import { createLocationRequest } from "@/lib/location-request";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
 import { apiError } from "@/lib/api-error";
+import { track, trackLeftOut } from "@/lib/events";
+import { uuidv4 } from "@/lib/uuid";
 import {
   DeliveryMode,
   PickedDays,
@@ -29,18 +33,39 @@ import {
   money,
   rangeIsFree,
   rangeLabel,
+  requestedOn,
   shopNameOf,
   tapDay,
   todayIst,
 } from "@/lib/booking";
+import {
+  CHECKOUT_CAP,
+  LineChip,
+  aloneNote,
+  asOneItem,
+  barLine,
+  blockedNote,
+  cardDays,
+  fixLabel,
+  lineAlone,
+  lineBlock,
+  lineChip,
+  noDayAllFree,
+  noDayNotice,
+  notDeliveredReason,
+  othersLine,
+  shortestOf,
+  startLeftOut,
+} from "@/lib/card-checkout";
+import { pluralize } from "@/lib/pluralize";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useDistanceTo } from "@/lib/distance";
 import { kmText } from "@/lib/shop";
 import { minDays as minDaysOf, minimumWords, plansOf } from "@/lib/plans";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
-import { RouteProps, useTypedNavigation } from "@/lib/types";
-import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { BackendProduct, RouteProps, useTypedNavigation } from "@/lib/types";
+import { StackActions, useFocusEffect, useRoute } from "@react-navigation/native";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
@@ -173,6 +198,14 @@ function LegendDot({ label, fill, ring }: { label: string; fill?: string; ring?:
  * The quote is asked again on every change. Two are kept, one for self pickup
  * and one for delivery to the chosen address, because the delivery card shows
  * its fee and distance before it is chosen.
+ *
+ * Card mode (cart plan §3.3, CT-20, CT-21, CT-40): a cart card's items, one
+ * booking. Each item can be left in the cart or added back; the calendar greys
+ * a day only when no included item is free, and its minimum is the smallest
+ * included one (D40). Any range is quoted, and an item that can't go names
+ * itself: the main button then leaves it in the cart and goes on (G11). Book
+ * Now on a server whose `book_flow` is `card` asks the same quote for its one
+ * item and looks as it always has (D41).
  */
 export default function BookingDatesScreen() {
   const { params } = useRoute<RouteProps<"BookingDates">>();
@@ -181,8 +214,70 @@ export default function BookingDatesScreen() {
   const { authTokens, isAuthenticated } = useGlobalContext();
   const signedIn = Boolean(isAuthenticated && authTokens?.access_token);
 
-  const productQuery = usePublicProduct(params.product);
-  const product = productQuery.data;
+  // A cart checkout names its card's listings; Book Now names one. Followed from the params, as `product` always was.
+  const names = useMemo(
+    () => params.products ?? (params.product ? [params.product] : []),
+    [params.products, params.product]
+  );
+  const namesKey = names.join("\n");
+  const card = Boolean(params.from_cart) || names.length > 1;
+  const productQueries = usePublicProducts(names);
+  const byName = new Map<string, BackendProduct>();
+  names.forEach((name, i) => {
+    const data = productQueries[i]?.data;
+    if (data) byName.set(name, data);
+  });
+  const titleOf = (name: string) => byName.get(name)?.title ?? name;
+  // A listing taken down since the cart was read is left out of the card; it stays in the cart.
+  const gone = card ? names.filter((_, i) => apiError(productQueries[i]?.error)?.status === 404) : [];
+  const listed = names.filter((name) => byName.has(name));
+  const [left, setLeft] = useState<string[]>(() => startLeftOut(names));
+  // Items the quote said are collected elsewhere or billed monthly: checked out on their own (CT-21d, e) until added back.
+  const [alone, setAlone] = useState<Record<string, { code: string; locality?: string | null }>>({});
+  // Other listings in the same screen (a navigate that lands back on it) start over; so does a line already requested
+  // (`you_booked_it`, §3.2), which starts left in the cart once its listing says so.
+  // Keyed on the listings loaded too, so one that loads on Retry is seeded. The card's quote waits for it.
+  const seeded = useRef<string | null>(null);
+  // Why each item is out of this checkout, for `checkout_line_left_out`: a line blocker's code, "cap", "customer", or
+  // the cart's `you_booked_it`.
+  const why = useRef<Record<string, string>>({});
+  const loaded = productQueries.every((q) => !q.isLoading);
+  const seedKey = `${namesKey}|${names.filter((_, i) => productQueries[i]?.data).join("\n")}`;
+  useEffect(() => {
+    if (!card || !loaded || seeded.current === seedKey) return;
+    seeded.current = seedKey;
+    const booked = names.filter((name) => byName.get(name)?.requested);
+    const capped = startLeftOut(names);
+    setAlone({});
+    why.current = Object.fromEntries([
+      ...capped.map((name) => [name, "cap"]),
+      // The cart's warning for it (§3.2): already requested, so it starts left in the cart.
+      ...booked.map((name) => [name, "you_booked_it"]),
+    ]);
+    // A new array every time: the render it causes is the one whose quote is asked.
+    setLeft([...new Set([...capped, ...booked])]);
+    // `byName` is read once the listings are in.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card, loaded, seedKey]);
+  const included = card ? listed.filter((name) => !left.includes(name) && !alone[name]) : listed;
+  const includedProducts = included.map((name) => byName.get(name) as BackendProduct);
+  // The shop's place, name and delivery: every item of a card is one shop's.
+  const product = includedProducts[0] ?? byName.get(listed[0]);
+  // D41: Book Now books through the card's quote when the server says so; a server without the switch is classic.
+  const asCard = card || product?.book_flow === "card";
+
+  // One checkout, one attempt (cart plan §9.5): its events share this id, from here to Book. Other listings landing on
+  // this screen are another checkout.
+  const attempt = useRef({ key: "", id: "" });
+  if (attempt.current.key !== namesKey) attempt.current = { key: namesKey, id: uuidv4() };
+  const attemptId = attempt.current.id;
+  const from = params.from_cart ? "cart" : "book_now";
+  useEffect(() => {
+    if (signedIn) track("checkout_started", { from }, attemptId);
+    // Once per attempt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attemptId]);
+
   // ENG-284 D12: the address chosen on search results, for the whole session;
   // the picker below writes it back, so results and the product page follow.
   const { address, choose: chooseAddress } = useDeliveryAddress();
@@ -190,7 +285,14 @@ export default function BookingDatesScreen() {
   const distanceLabel = useDistanceTo(product?.coordinates);
 
   const today = todayIst();
-  const taken = useMemo(() => bookedDays(product?.booked), [product?.booked]);
+  // One listing: its booked days. A card: the days no included item is free, and those only some are (D40).
+  const daysKey = includedProducts.map((p) => `${p.name}:${JSON.stringify(p.booked ?? [])}`).join("|");
+  const { none: taken, some } = useMemo(
+    () => cardDays(includedProducts.map((p) => p.booked)),
+    // The booked runs, not the objects: a refetch with the same days must not clear the picked range.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [daysKey]
+  );
 
   const [picked, setPicked] = useState<PickedDays | null>(() =>
     params.first_day &&
@@ -212,7 +314,9 @@ export default function BookingDatesScreen() {
   const wantDeliveryFor = useRef<string | null>(null);
 
   // ENG-281: the shortest booking the listing's plans allow. A first tap alone is a one-day rental only when one day is.
-  const minDays = product ? minDaysOf(plansOf(product)) : 1;
+  // A card's is its included item with the smallest (D40); the others say so on their own line if the range is short.
+  const shortest = shortestOf(includedProducts);
+  const minDays = shortest ? minDaysOf(plansOf(shortest)) : 1;
   const first = picked?.first ?? null;
   const last = picked ? picked.last ?? (minDays > 1 ? null : picked.first) : null;
   const choosingReturn = Boolean(picked && !picked.last);
@@ -228,19 +332,28 @@ export default function BookingDatesScreen() {
   }, [taken]);
 
   // B1: the shop delivers, or the server sent a from-price (`delivery_from`); the quote then says who.
-  const canDeliver = product ? offersDelivery(product) : false;
+  // A card offers it when an included item is delivered; the quote names any item that isn't (D26).
+  const canDeliver = includedProducts.some(offersDelivery);
   const addressKey = deliveryAddressKey(address);
 
+  // What is priced: Book Now's listing, as `product` or (D41) `products:[name]`; a card's included items once loaded.
+  const asked: Pick<QuoteInput, "product" | "products"> | null = card
+    ? included.length && seeded.current === seedKey
+      ? { products: included }
+      : null
+    : asCard
+      ? { products: names }
+      : { product: params.product };
   const pickupQuote = useQuote(
-    first && last
-      ? { product: params.product, first_day: first, last_day: last, delivery_mode: "pickup", address_id: null }
+    first && last && asked
+      ? { ...asked, first_day: first, last_day: last, delivery_mode: "pickup", address_id: null }
       : null
   );
-  const asksDelivery = Boolean(first && last && canDeliver && signedIn && address);
+  const asksDelivery = Boolean(first && last && canDeliver && signedIn && address && asked);
   const deliveryQuote = useQuote(
-    asksDelivery && first && last && address
+    asksDelivery && first && last && address && asked
       ? {
-          product: params.product,
+          ...asked,
           first_day: first,
           last_day: last,
           delivery_mode: "owner_delivery",
@@ -261,12 +374,22 @@ export default function BookingDatesScreen() {
     }, [asksDelivery, refetchDelivery])
   );
   // An answer for the last address or dates says nothing about these ones.
-  const delivery = address
+  const offered = address
     ? deliveryOption(deliveryQuote.isPreviousData ? undefined : deliveryQuote.data, addressTitle(address), {
         name: product ? shopNameOf(product) : "The shop",
         maxKm: product?.shop?.delivery_max_km,
       })
     : null;
+  // CT-21c: an included item that isn't delivered keeps Delivery off for the card, and the card names it.
+  const notDelivered = card
+    ? (deliveryQuote.isPreviousData ? [] : deliveryQuote.data?.lines ?? [])
+        .filter((line) => included.includes(line.product) && line.blockers.includes("delivery_not_offered"))
+        .map((line) => line.product)
+    : [];
+  const delivery =
+    offered && notDelivered.length
+      ? { ...offered, ok: false, reason: notDeliveredReason(notDelivered.map(titleOf)) }
+      : offered;
   // Asking again for a new address or a fixed PIN: the card waits as a skeleton.
   const requoting = Boolean(deliveryQuote.isFetching && (deliveryQuote.isPreviousData || !deliveryQuote.data));
 
@@ -274,7 +397,9 @@ export default function BookingDatesScreen() {
     const fresh = deliveryQuote.data && !deliveryQuote.isPreviousData && !deliveryQuote.isFetching;
     if (!wantDeliveryFor.current || wantDeliveryFor.current !== addressKey || !fresh) return;
     wantDeliveryFor.current = null;
-    if (deliveryQuote.data?.delivery.status === "ok") setMode("owner_delivery");
+    if (deliveryQuote.data?.delivery.status === "ok" && notDelivered.length === 0) setMode("owner_delivery");
+    // `notDelivered` is read from the same answer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addressKey, deliveryQuote.data, deliveryQuote.isPreviousData, deliveryQuote.isFetching]);
 
   /**
@@ -296,14 +421,59 @@ export default function BookingDatesScreen() {
 
   const active = mode === "pickup" ? pickupQuote : deliveryQuote;
   // With no return day yet (a minimum over a day) the last answer is for other dates: none is shown.
-  const quote = first && last ? active.data : undefined;
+  // Book Now's one item on the card's quote (D41) has its reasons read back into the quote's, so it reads as today.
+  const answer = first && last ? active.data : undefined;
+  const quote = answer && asCard && !card ? asOneItem(answer) : answer;
   // The last answer stays on screen while the next loads; it must not be continued from.
   const settling = active.isFetching || active.isPreviousData;
-  const blocker = datesBlocker(quote);
+  const blocker = datesBlocker(quote, requestedOn(product?.requested, first, last));
+
+  // A card's items that can't go on these dates (D40), and those the quote says go on their own (CT-21d, e).
+  const lineOf = (name: string) => (card ? quote?.lines?.find((line) => line.product === name) : undefined);
+  const blocked = included.filter((name) => lineBlock(lineOf(name)));
+  const pickupLines = pickupQuote.isPreviousData ? undefined : pickupQuote.data?.lines;
+  useEffect(() => {
+    if (!card || !pickupLines) return;
+    setAlone((was) => {
+      const found = pickupLines.filter((line) => lineAlone(line) && !was[line.product]);
+      if (found.length === 0) return was;
+      const next = { ...was };
+      for (const line of found) next[line.product] = { code: lineAlone(line) as string, locality: line.pickup_locality };
+      return next;
+    });
+  }, [card, pickupLines]);
+  // Billed monthly depends on the days: other dates ask again about those items.
+  useEffect(() => {
+    setAlone((was) =>
+      Object.values(was).some((a) => a.code === "monthly_book_alone")
+        ? Object.fromEntries(Object.entries(was).filter(([, a]) => a.code !== "monthly_book_alone"))
+        : was
+    );
+  }, [first, last]);
+
+  // CT-40: the month on screen has no day with every included item free.
+  const [month, setMonth] = useState(() => (picked?.first ?? today).slice(0, 7));
+  const monthFull = useMemo(
+    () =>
+      card
+        ? noDayAllFree(
+            month,
+            today,
+            lastBookableDay(today),
+            includedProducts.map((p) => ({ name: p.name, taken: bookedDays(p.booked) }))
+          )
+        : { none: false, culprits: [] as string[] },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [card, month, today, daysKey]
+  );
 
   const markedDates = useMemo(() => {
     // The calendar's own marking type knows only its built-in marks; these are read by `renderDay`.
     const marks: Record<string, any> = {};
+    // A card's day with some items free: a dot, and it can still be picked (D40).
+    some.forEach((day) => {
+      marks[day] = { some: true };
+    });
     taken.forEach((day) => {
       marks[day] = { taken: true };
     });
@@ -320,13 +490,13 @@ export default function BookingDatesScreen() {
       }
     }
     return marks;
-  }, [taken, first, last, choosingReturn, minDays]);
+  }, [some, taken, first, last, choosingReturn, minDays]);
 
   const onDayPress = (day: string) => {
     const next = tapDay(picked, day, taken, minDays);
     setPicked(next.picked);
     if (next.short) {
-      toast.info(`Minimum rental is ${minimumWords(plansOf(product ?? {}))}`, { haptic: false });
+      toast.info(`Minimum rental is ${minimumWords(plansOf(shortest ?? {}))}`, { haptic: false });
     } else if (next.blocked) {
       toast.info("Those dates include a day that is not available", { haptic: false });
     }
@@ -384,6 +554,11 @@ export default function BookingDatesScreen() {
           >
             {date?.day}
           </Text>
+          {marking?.some && !isOff && !isEnd ? (
+            <View
+              style={{ position: "absolute", bottom: 3, width: 5, height: 5, borderRadius: radius.full, backgroundColor: color.warning }}
+            />
+          ) : null}
         </View>
       </TouchableOpacity>
     );
@@ -391,7 +566,9 @@ export default function BookingDatesScreen() {
 
   const header = <SubpageHeader title="Choose dates" />;
 
-  if (productQuery.isLoading) {
+  // A card waits for every item; one that is gone (404) is left out, anything else can be tried again.
+  const failed = productQueries.find((q, i) => q.isError && !q.data && !gone.includes(names[i]));
+  if (productQueries.some((q) => q.isLoading)) {
     return (
       <NonScrollableContainer>
         {header}
@@ -399,11 +576,17 @@ export default function BookingDatesScreen() {
       </NonScrollableContainer>
     );
   }
-  if (!product) {
+  if (!product || failed) {
     return (
       <NonScrollableContainer>
         {header}
-        <BookingLoadError error={productQuery.error} what="this listing" onRetry={() => void productQuery.refetch()} />
+        <BookingLoadError
+          error={failed?.error ?? productQueries[0]?.error}
+          what={card ? "these items" : "this listing"}
+          onRetry={() => {
+            for (const q of productQueries) if (q.isError) void q.refetch();
+          }}
+        />
       </NonScrollableContainer>
     );
   }
@@ -429,34 +612,202 @@ export default function BookingDatesScreen() {
     });
   };
 
-  const goOn = () => {
+  const itemOf = (p: BackendProduct) => ({
+    name: p.name,
+    title: p.title,
+    cover_image: p.cover_image ?? null,
+    shop_name: shopName,
+  });
+
+  /** `going`: the card's items that go on to the price; Book Now's one listing otherwise. */
+  const goOn = (going: string[] = included) => {
     if (!first || !last) return;
+    const lines = going.map((name) => itemOf(byName.get(name) as BackendProduct));
+    // The card's items that don't go on, and why.
+    if (card && signedIn) {
+      for (const name of names.filter((n) => !going.includes(n))) {
+        const reason = alone[name]?.code ?? why.current[name] ?? (gone.includes(name) ? "not_listed" : null);
+        if (reason) trackLeftOut(attemptId, name, reason);
+      }
+    }
     navigation.navigate("ReviewAndBook", {
-      item: {
-        name: product.name,
-        title: product.title,
-        cover_image: product.cover_image ?? null,
-        shop_name: shopName,
-      },
+      item: card ? lines[0] : itemOf(product),
+      ...(asCard ? { lines } : {}),
+      ...(card ? { from_cart: params.from_cart, others: params.others } : {}),
       first_day: first,
       last_day: last,
       delivery_mode: mode,
       address_id: mode === "owner_delivery" ? address?.id ?? null : null,
       address_name: mode === "owner_delivery" && address ? addressTitle(address) : undefined,
       moved_from: params.moved_from,
+      attempt_id: attemptId,
     });
   };
+
+  // ---- Card mode: the items, and the bar's fix (G11) ----
+  /** `reason`: why, when the item's own line has no blocker. */
+  const leave = (more: string[], reason = "customer") => {
+    for (const name of more) why.current[name] = lineBlock(lineOf(name)) ?? reason;
+    setLeft((was) => [...was, ...more.filter((name) => !was.includes(name))]);
+  };
+  const addBack = (names: string[]) => {
+    for (const name of names) delete why.current[name];
+    setLeft((was) => was.filter((name) => !names.includes(name)));
+    setAlone((was) => Object.fromEntries(Object.entries(was).filter(([name]) => !names.includes(name))));
+  };
+  const blockedItems = blocked.map((name) => {
+    const code = lineBlock(lineOf(name)) as string;
+    const p = byName.get(name) as BackendProduct;
+    return { name, title: p.title, code, minDays: minDaysOf(plansOf(p)), number: requestedOn(p.requested, first, last) };
+  });
+  const range = Boolean(first && last);
+  const culprits = !range && monthFull.none ? monthFull.culprits : [];
+  const going = included.filter((name) => !blocked.includes(name));
+  // Above the card's bar: what is in the way first, then what was left out and why.
+  const cardNote = included.length === 0 ? "Add back at least one item to go on." : blockedNote(blockedItems) ?? blocker;
+  const leftNote = aloneNote(Object.entries(alone).map(([name, a]) => ({ title: titleOf(name), ...a })));
+  // The way on when something is in the way: add the items back, or leave the blocking ones in the cart.
+  const back = Math.min(listed.length, CHECKOUT_CAP);
+  const leaveAndGo = () => {
+    leave(blocked);
+    goOn(going);
+  };
+  const cardFix: { label: string; onPress: () => void } | null = !card
+    ? null
+    : included.length === 0
+      ? {
+          label: back > 1 && back === listed.length ? `Add back all ${back} items` : `Add back ${pluralize(back, "item")}`,
+          onPress: () => addBack(listed.slice(0, CHECKOUT_CAP)),
+        }
+      : blocked.length && quote && !settling
+        ? going.length && !blocker
+          ? { label: fixLabel(blocked.length), onPress: leaveAndGo }
+          : { label: fixLabel(blocked.length, false), onPress: () => leave(blocked) }
+        : culprits.length
+          ? { label: fixLabel(culprits.length, false), onPress: () => leave(culprits, "no_unit_free") }
+          : null;
 
   return (
     <NonScrollableContainer>
       {header}
+      {/* CT-42b: another card's rent waits; the strip is the way to it (A5's, nothing while none waits). */}
+      {card && params.from_cart ? <RentStrip /> : null}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.lg }}
       >
+        {card ? (
+          <>
+            {!range && monthFull.none ? (
+              <Notice tone="warning" icon="warning" title={noDayNotice(included.length, culprits.map(titleOf)).title}>
+                {noDayNotice(included.length, culprits.map(titleOf)).text}
+              </Notice>
+            ) : null}
+            <Panel style={{ padding: space.md, gap: space.xs }}>
+              <ShopHead
+                name={shopName}
+                verified={product.owner?.business_verified}
+                sub={[product.shop?.locality || product.location, pickupDistance].filter(Boolean).join(" · ")}
+                delivers={canDeliver}
+                handover={canDeliver ? "Delivers" : "Self pickup only"}
+              />
+              <View style={{ height: 1, backgroundColor: color.line, marginVertical: space.xs }} />
+              {listed.map((name) => {
+                const p = byName.get(name) as BackendProduct;
+                const own = alone[name];
+                const isLeft = own !== undefined || left.includes(name);
+                const line = isLeft ? undefined : lineOf(name);
+                const code = lineBlock(line);
+                const days = range && first && last ? dayCount(first, last) : null;
+                const rate = money(line?.rate ?? p.rate);
+                const deposit = line?.deposit ?? p.security_deposit;
+                const requested = p.requested?.number ?? null;
+                // The request these days clash with; the soonest one may be for other days.
+                const clash = requestedOn(p.requested, first, last);
+                const chips: { chip: LineChip; onView?: () => void }[] = [];
+                const chip = (said: LineChip | null, onView?: () => void) => said && chips.push({ chip: said, onView });
+                chip(own ? lineChip(own.code, { locality: own.locality }) : isLeft ? lineChip("left") : null);
+                const view = (number: string | null) =>
+                  number ? () => navigation.navigate("Booking", { number }) : undefined;
+                if (code) {
+                  chip(
+                    lineChip(code, { minDays: minDaysOf(plansOf(p)), number: clash }),
+                    code === "already_requested" ? view(clash) : undefined
+                  );
+                } else if (isLeft && !own && requested) {
+                  // Why it started left in the cart (§3.2 `you_booked_it`).
+                  chip(lineChip("already_requested", { number: requested }), view(requested));
+                }
+                if (culprits.includes(name)) chip(lineChip("month_full"));
+                if (notDelivered.includes(name)) chip(lineChip("delivery_not_offered"));
+                const full = included.length >= CHECKOUT_CAP;
+                return (
+                  <LineRow
+                    key={name}
+                    title={p.title}
+                    image={p.cover_image}
+                    meta={days ? `${rate} a day · ${daysLabel(days)}` : `${rate} a day`}
+                    amount={line ? money(line.rent) : null}
+                    deposit={Number(deposit) > 0 ? `Deposit ${money(deposit)}` : null}
+                    left={isLeft}
+                    chips={chips}
+                    action={
+                      isLeft
+                        ? {
+                            label: "Add back",
+                            disabled: full,
+                            hint: full ? `Up to ${CHECKOUT_CAP} items go in one booking` : undefined,
+                            // An item on its own is asked about again: the next quote says whether it still is.
+                            onPress: () => addBack([name]),
+                          }
+                        : { label: "Leave in cart", onPress: () => leave([name]) }
+                    }
+                    extra={
+                      own?.code === "monthly_book_alone" ? (
+                        <View style={{ alignSelf: "flex-start" }}>
+                          <TextButton
+                            label="Book it on its own"
+                            // A new dates step for that item: `navigate` would only change this one's params.
+                            onPress={() =>
+                              navigation.dispatch(
+                                StackActions.push("BookingDates", {
+                                  product: name,
+                                  first_day: first ?? undefined,
+                                  last_day: last ?? undefined,
+                                })
+                              )
+                            }
+                          />
+                        </View>
+                      ) : null
+                    }
+                  />
+                );
+              })}
+            </Panel>
+            {[
+              included.length > 1 ? "Leave an item in your cart to book the rest." : null,
+              left.length > 0 && included.length >= CHECKOUT_CAP
+                ? `Up to ${CHECKOUT_CAP} items go in one booking. Leave one in your cart to add another.`
+                : null,
+              gone.length
+                ? `${gone.length === 1 ? "An item" : `${gone.length} items`} from this shop ${gone.length === 1 ? "is" : "are"} no longer listed.`
+                : null,
+              othersLine(params.others),
+            ]
+              .filter(Boolean)
+              .map((text) => (
+                <Text key={text} fontSize="text-sm" tone="body">
+                  {text}
+                </Text>
+              ))}
+          </>
+        ) : null}
+
         <Panel style={{ padding: space.sm }}>
           <Calendar
             current={first ?? today}
+            onMonthChange={(shown: { dateString: string }) => setMonth(shown.dateString.slice(0, 7))}
             minDate={today}
             // Days past the limit (T-25) are greyed and cannot be tapped: the server refuses them. A booking starts within
             // 180 days and, once it has, may end up to a year later (ENG-281).
@@ -486,16 +837,17 @@ export default function BookingDatesScreen() {
             }}
           >
             <LegendDot label="Your dates" fill={color.brand} />
+            {some.size ? <LegendDot label="Some items free" fill={color.warning} /> : null}
             <LegendDot label="Unavailable" fill={color.surfaceRaised} />
             <LegendDot label="Today" ring={color.brand} />
           </View>
         </Panel>
 
-        {minDays > 1 ? (
+        {minDays > 1 && shortest ? (
           <Notice icon="clock">
             {first && choosingReturn
-              ? `Minimum rental is ${minimumWords(plansOf(product))}. The earliest return from ${dayShort(first)} is ${dayShort(addDays(first, minDays - 1))}.`
-              : `Minimum rental is ${minimumWords(plansOf(product))}.`}
+              ? `Minimum rental is ${minimumWords(plansOf(shortest))}. The earliest return from ${dayShort(first)} is ${dayShort(addDays(first, minDays - 1))}.`
+              : `Minimum rental is ${minimumWords(plansOf(shortest))}.`}
           </Notice>
         ) : null}
 
@@ -588,7 +940,11 @@ export default function BookingDatesScreen() {
       </ScrollView>
 
       <BottomBar>
-        {blocker ? (
+        {card && cardNote ? (
+          <Text fontSize="text-sm" tone="warning" accessibilityRole="alert" style={{ textAlign: "center" }}>
+            {cardNote}
+          </Text>
+        ) : !card && blocker ? (
           <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
             {blocker}
           </Text>
@@ -610,28 +966,60 @@ export default function BookingDatesScreen() {
               Try again
             </Text>
           </Text>
-        ) : null}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-          <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
-            {first && last
-              ? quote && !settling
-                ? `${daysLabel(quote.days)} · ${money(quote.total)}`
-                : daysLabel(dayCount(first, last))
-              : "Pick your dates"}
+        ) : card && (leftNote || (!range && monthFull.none)) ? (
+          <Text fontSize="text-sm" tone={leftNote ? "body" : "warning"} style={{ textAlign: "center" }}>
+            {leftNote ?? "No day this month has every item free."}
           </Text>
-          {first && last ? (
-            <Text fontSize="text-sm" tone="body">
-              {rangeLabel(first, last)}
+        ) : null}
+        {card ? (
+          // CT-20: the card's total, and when it is paid, so it doesn't read as due now (FIXES B2 row 16).
+          <View style={{ gap: 2 }}>
+            <Text fontSize="text-lg" fontWeight="font-bold">
+              {included.length === 0
+                ? "No items"
+                : first && last
+                  ? quote && !settling
+                    ? money(quote.total)
+                    : daysLabel(dayCount(first, last))
+                  : "Pick your dates"}
             </Text>
-          ) : null}
-        </View>
-        <Button
-          onPress={goOn}
-          disabled={!first || !quote || settling || Boolean(blocker)}
-          loading={Boolean(first) && active.isFetching}
-        >
-          {mode === "pickup" && delivery && !delivery.ok && !requoting ? "Continue with self pickup" : "Continue"}
-        </Button>
+            {included.length > 0 && quote && !settling ? (
+              <Text fontSize="text-sm" tone="body">
+                {barLine(quote, shopName)}
+              </Text>
+            ) : first && last ? (
+              <Text fontSize="text-sm" tone="body">
+                {rangeLabel(first, last)}
+              </Text>
+            ) : null}
+          </View>
+        ) : (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+            <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
+              {first && last
+                ? quote && !settling
+                  ? `${daysLabel(quote.days)} · ${money(quote.total)}`
+                  : daysLabel(dayCount(first, last))
+                : "Pick your dates"}
+            </Text>
+            {first && last ? (
+              <Text fontSize="text-sm" tone="body">
+                {rangeLabel(first, last)}
+              </Text>
+            ) : null}
+          </View>
+        )}
+        {cardFix ? (
+          <Button onPress={cardFix.onPress}>{cardFix.label}</Button>
+        ) : (
+          <Button
+            onPress={() => goOn()}
+            disabled={!first || !quote || settling || Boolean(blocker) || (card && included.length === 0)}
+            loading={Boolean(first) && active.isFetching}
+          >
+            {mode === "pickup" && delivery && !delivery.ok && !requoting ? "Continue with self pickup" : "Continue"}
+          </Button>
+        )}
       </BottomBar>
 
       <AddressPickerSheet

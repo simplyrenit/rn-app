@@ -392,7 +392,11 @@ export default function DetailsScreen() {
   const aboveBar = barHeight ? { bottomOffset: barHeight + 8 } : null;
   const inCart = product ? Boolean(cartLine(cart, product.name)) : false;
   const canAdd = Boolean(product?.can_add_to_cart) && !cartRefused && !isOwner;
-  const openCart = () => navigation.navigate("Cart");
+  /** `cart_opened`: `toast` from a toast's View cart, `product` from the bar's In cart. The band's bag sends its own. */
+  const openCart = (from: "product" | "toast") => {
+    track("cart_opened", { from });
+    navigation.navigate("Cart");
+  };
 
   // Checkout starts on the dates of the search when nothing was booked yet (D5).
   useEffect(() => {
@@ -425,7 +429,7 @@ export default function DetailsScreen() {
       toast.success("Added to cart", {
         ...aboveBar,
         message: `${cartSize(answer)} · not booked yet`,
-        action: { label: "View cart", onPress: openCart },
+        action: { label: "View cart", onPress: () => openCart("toast") },
       });
     } catch (error) {
       const failure = addFailure(apiError(error), shop.name);
@@ -437,7 +441,7 @@ export default function DetailsScreen() {
           failure.action === "retry"
             ? { label: "Retry", onPress: () => void addToCart() }
             : failure.action === "view_cart"
-              ? { label: "View cart", onPress: openCart }
+              ? { label: "View cart", onPress: () => openCart("toast") }
               : undefined,
       });
     } finally {
@@ -715,7 +719,7 @@ export default function DetailsScreen() {
               the back control so the title is centred on the screen. */}
           {isAuthenticated && ((cart?.count ?? 0) > 0 || canAdd) ? (
             <View style={{ marginRight: heroCovered ? 0 : 48 }}>
-              <CartButton onPhoto={!heroCovered} />
+              <CartButton from="product" onPhoto={!heroCovered} />
             </View>
           ) : (
             <View style={{ width: MIN_TOUCH_TARGET }} />
@@ -1212,7 +1216,7 @@ export default function DetailsScreen() {
               {inCart ? (
                 <Button
                   variant="outline"
-                  onPress={openCart}
+                  onPress={() => openCart("product")}
                   style={[CTA_STYLE, { flex: 1 }]}
                   accessibilityLabel="In your cart. View your cart"
                 >
