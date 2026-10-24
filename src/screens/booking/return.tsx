@@ -1,6 +1,7 @@
 import { bookingQueryKey, useBooking } from "@/backend/bookings";
 import { returnItem } from "@/backend/handover";
 import { GetHelp } from "@/components/booking/get-help";
+import { ItemList } from "@/components/booking/items";
 import { BookingLoadError, BookingLoading, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { useServerNow } from "@/components/booking/use-server-now";
@@ -13,6 +14,7 @@ import { Block, LinkRow, StepList, useGuardedTap } from "@/components/handover/p
 import { apiError } from "@/lib/api-error";
 import { returnNoticeLine } from "@/lib/billing";
 import { BookingCustomer, SLOW_POLL_MS, todayIst } from "@/lib/booking";
+import { basketReturnNote, isBasket, itemsText, liveLines } from "@/lib/booking-lines";
 import { otherSetOffered, recordWanted } from "@/lib/capture";
 import {
   bannerTone,
@@ -90,6 +92,9 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
     });
 
   const after = returned ? returnedCopy(booking) : null;
+  // CT-35b: a basket goes back whole (D51); its items are listed and the note says so before the code.
+  const many = isBasket(booking) && liveLines(booking).length > 1 ? liveLines(booking).length : 0;
+  const together = out ? basketReturnNote(booking) : null;
 
   return (
     <ScrollView
@@ -99,7 +104,13 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
     >
       <View style={{ gap: 2 }}>
         <Text role="screenTitle" accessibilityRole="header">
-          {returned ? `${booking.product.title} returned` : `Return the ${booking.product.title}`}
+          {many
+            ? returned
+              ? `${itemsText(many)} returned`
+              : `Return ${itemsText(many)} to ${booking.shop.name}`
+            : returned
+              ? `${booking.product.title} returned`
+              : `Return the ${booking.product.title}`}
         </Text>
         <Text fontSize="text-md" tone="body">
           {`${number} · ${byRenit(booking) ? COURIER : booking.shop.name}`}
@@ -122,6 +133,14 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
       {out && notice ? (
         <Notice tone="warning" icon="warning">
           {notice}
+        </Notice>
+      ) : null}
+
+      <ItemList booking={booking} title={`${byRenit(booking) ? COURIER : booking.shop.name} collects`} />
+
+      {together ? (
+        <Notice tone="info" icon="info">
+          {together}
         </Notice>
       ) : null}
 

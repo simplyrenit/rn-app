@@ -4,7 +4,9 @@ import {
   fetchAlternatives,
   refundBookingAmount,
 } from "@/backend/bookings";
+import { addCartLine } from "@/backend/cart";
 import { GetHelp } from "@/components/booking/get-help";
+import { StillInCart } from "@/components/booking/items";
 import { Notice, Panel, Pill, TextButton, Thumb } from "@/components/booking/parts";
 import { PaymentsList } from "@/components/booking/payments-list";
 import { useReadAt } from "@/components/booking/use-read-at";
@@ -20,6 +22,8 @@ import {
   rangeLabel,
   shopNameOf,
 } from "@/lib/booking";
+import { exitLineProduct, isBasket, ownerCancelCopy, rentPaid, restOf } from "@/lib/booking-lines";
+import { addFailure } from "@/lib/cart";
 import { SCREEN_GUTTER, MIN_TOUCH_TARGET, radius, space } from "@/lib/design-tokens";
 import { useDistanceTo } from "@/lib/distance";
 import { useTheme } from "@/lib/theme";
@@ -76,8 +80,10 @@ export function Outcome({ booking }: { booking: BookingCustomer }) {
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const copy = outcomeCopy(booking);
+  // D46, CT-47: the shop couldn't give one item of a basket, and says which.
+  const copy = { ...outcomeCopy(booking), ...ownerCancelCopy(booking) };
   const Icon = copy.icon === "clock" ? ClockIcon : CalendarIcon;
+  const basket = isBasket(booking);
 
   const options = useQuery<Alternatives>(["booking-alternatives", booking.number], () =>
     fetchAlternatives(booking.number)
@@ -127,6 +133,25 @@ export function Outcome({ booking }: { booking: BookingCustomer }) {
     } finally {
       busy.current = false;
       setRefunding(false);
+    }
+  };
+
+  // D46: with the rent paid the items left the cart, so the others can be booked again, and the missing one added back.
+  const rest = booking.exit_line && rentPaid(booking) ? restOf(booking) : [];
+  const missing = booking.exit_line && rentPaid(booking) ? exitLineProduct(booking) : null;
+  const [adding, setAdding] = useState(false);
+  const addMissing = async () => {
+    if (!missing?.name || adding) return;
+    setAdding(true);
+    try {
+      await addCartLine(missing.name);
+      void queryClient.invalidateQueries("cart");
+      toast.success("Added to cart", { message: missing.title });
+    } catch (error) {
+      const failure = addFailure(apiError(error), booking.shop.name);
+      toast[failure.severity](failure.title, { message: failure.message });
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -180,7 +205,31 @@ export function Outcome({ booking }: { booking: BookingCustomer }) {
         </Text>
       </Panel>
 
-      {options.isLoading ? (
+      {basket ? (
+        // A basket gets no other owners or dates from the server (§3.3); its items wait in the cart, or are booked again.
+        <>
+          <StillInCart booking={booking} movedFrom={moves ? booking.number : undefined} />
+          {rest.length ? (
+            <Button
+              onPress={() =>
+                navigation.navigate("BookingDates", {
+                  product: rest[0],
+                  products: rest,
+                  first_day: booking.first_day,
+                  last_day: booking.last_day,
+                })
+              }
+            >
+              Book the rest
+            </Button>
+          ) : null}
+          {missing ? (
+            <Button variant="outline" loading={adding} disabled={adding} onPress={() => void addMissing()}>
+              {`Add the ${missing.title} to cart`}
+            </Button>
+          ) : null}
+        </>
+      ) : options.isLoading ? (
         <View accessible accessibilityRole="progressbar" accessibilityLabel="Looking for other options" style={{ gap: space.sm }}>
           <Skeleton width="100%" height={52} />
           <Skeleton width="100%" height={140} />

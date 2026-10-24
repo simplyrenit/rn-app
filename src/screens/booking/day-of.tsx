@@ -1,5 +1,6 @@
 import { bookingQueryKey } from "@/backend/bookings";
 import { setDayStatus } from "@/backend/handover";
+import { CollectItems, NotHereSheet, useItemTicks } from "@/components/booking/collect-items";
 import { GetHelp } from "@/components/booking/get-help";
 import { Notice, Panel, Pill } from "@/components/booking/parts";
 import { useServerNow } from "@/components/booking/use-server-now";
@@ -9,7 +10,8 @@ import { RecordCard, RecordCardBody, useRecord } from "@/components/capture/reco
 import { Button, Text } from "@/components/core";
 import { Block, CallButton, LinkRow, StatusButtons, useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
-import { BookingCustomer } from "@/lib/booking";
+import { BookingCustomer, BookingLine } from "@/lib/booking";
+import { isBasket, liveLines, theItems, ticksCaption } from "@/lib/booking-lines";
 import { recordOpens } from "@/lib/capture";
 import {
   callCopy,
@@ -22,12 +24,14 @@ import {
   statusButtons,
   statusNote,
   theirStatusLine,
+  whenShort,
 } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
-import React from "react";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import React, { useRef, useState } from "react";
 import { Linking, Platform, ScrollView, TouchableOpacity, View } from "react-native";
 import { CameraIcon, ClockIcon, MapPinIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -63,6 +67,16 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
   // Nothing left for the customer to shoot: the next thing is to compare the two sets.
   const recorded = !recordOpens(record.state);
   const map = booking.delivery_mode === "pickup" ? mapsUrl(booking.shop.coordinates, booking.shop.name, Platform.OS === "ios") : null;
+  const call = callCopy("customer", day, "the shop", now);
+
+  // D44, CT-34: on a booking of several items each is ticked Got it or Not here before the code shows. The ticks open with
+  // the calls, two hours before the window (the server refuses them earlier).
+  const basket = isBasket(booking);
+  const items = useItemTicks(booking, now);
+  const notHereSheet = useRef<BottomSheetModal>(null);
+  const [missingLine, setMissingLine] = useState<BookingLine | null>(null);
+  const notHere = items.posted ? liveLines(booking).filter((line) => items.posted?.not_here.includes(line.id)) : [];
+  const showCode = Boolean(day.handover_code) && !booking.claim_open && (!basket || items.posted !== null);
 
   const tapStatus = (status: "on_my_way" | "running_late" | "i_am_here") =>
     run(status, async () => {
@@ -169,7 +183,7 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         ) : null}
       </View>
 
-      <CallButton copy={callCopy("customer", day, "the shop", now)} />
+      <CallButton copy={call} />
 
       {copy.idNote ? (
         <Notice tone="info" icon="info">
@@ -177,10 +191,37 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         </Notice>
       ) : null}
 
+      {basket ? (
+        <CollectItems
+          booking={booking}
+          ticks={items.ticks}
+          sent={items.posted !== null}
+          sending={items.sending}
+          open={reached(day.call_from, now)}
+          closedNote={
+            day.call_from ? `You can tick these from ${whenShort(day.call_from, now)}.` : "You can tick these once an arrival window is picked."
+          }
+          onTick={(line) => void items.tick(line, "got")}
+          onUndo={items.undo}
+          onNotHere={(line) => {
+            setMissingLine(line);
+            notHereSheet.current?.present();
+          }}
+        />
+      ) : null}
+
+      {/* CT-45c: taken without one item. Its report is filed after the handover, from the rental, where the server takes it. */}
+      {notHere.length ? (
+        <Notice tone="warning" icon="warning" title={`Not here: ${theItems(notHere)}`}>
+          Show your code for the rest. Once you have them, report what is missing from your rental, within 24 hours of the
+          handover: Renit can refund up to its rent.
+        </Notice>
+      ) : null}
+
       <Block title="Your handover code">
-        {day.handover_code && !booking.claim_open ? <CodeBoxes code={day.handover_code} /> : null}
+        {showCode && day.handover_code ? <CodeBoxes code={day.handover_code} /> : null}
         <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
-          {copy.codeNote}
+          {basket && !items.posted && !booking.claim_open ? ticksCaption(booking, items.ticks) : copy.codeNote}
         </Text>
       </Block>
 
@@ -230,6 +271,16 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         />
         <GetHelp booking={booking} first={false} />
       </Panel>
+
+      <NotHereSheet
+        ref={notHereSheet}
+        booking={booking}
+        line={missingLine}
+        callNumber={call.number}
+        canRefuse={can("refuse_at_door") && !booking.claim_open}
+        onTake={(line) => void items.tick(line, "not_here")}
+        onRefuse={() => navigation.navigate("BookingRefuse", { number })}
+      />
     </ScrollView>
   );
 }

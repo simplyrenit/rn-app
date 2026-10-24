@@ -1,5 +1,6 @@
 import { EndEarlySheet, EndEarlySheetHandle } from "@/components/booking/end-early-sheet";
 import { GetHelp } from "@/components/booking/get-help";
+import { ItemList } from "@/components/booking/items";
 import { BottomBar, Notice, Panel } from "@/components/booking/parts";
 import { PaymentSchedule } from "@/components/booking/payment-schedule";
 import { ClaimRows } from "@/components/claims/claim-rows";
@@ -9,6 +10,7 @@ import { Button, Text } from "@/components/core";
 import { LinkRow } from "@/components/handover/parts";
 import { canPayPeriod, endingEarlyLine, isMonthly, overdueAlert, overduePeriod } from "@/lib/billing";
 import { BookingCustomer, RentPeriod, money, todayIst } from "@/lib/booking";
+import { Received, basketActive, isBasket, liveLines, receivedKey } from "@/lib/booking-lines";
 import { faultRowSub } from "@/lib/claims";
 import { activeCopy, bannerTone, ownerAbsentAt, ownerAbsentKey } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
@@ -42,8 +44,14 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
   const now = useServerNow(booking.server_time, receivedAt);
   const { number } = booking;
   const absentAt = ownerAbsentAt(booking, queryClient.getQueryData<string>(ownerAbsentKey(number)));
-  const copy = activeCopy(booking, absentAt, now);
+  const copy = basketActive(booking, activeCopy(booking, absentAt, now));
   const can = (action: string) => booking.can.includes(action);
+  const basket = isBasket(booking);
+  const items = liveLines(booking).length;
+  // CT-45c: an item ticked Not here at the handover (this run of the app) is reported from here, the first place it can be.
+  const notHere = can("report_fault")
+    ? liveLines(booking).filter((line) => queryClient.getQueryData<Received>(receivedKey(number))?.not_here.includes(line.id))
+    : [];
   const late = copy.late.tone === "warning";
   const extension = booking.extensions?.[booking.extensions.length - 1] ?? null;
   const endSheet = useRef<EndEarlySheetHandle>(null);
@@ -131,6 +139,22 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
 
         {monthly ? <PaymentSchedule money={booking.money} side="customer" today={today} onPay={payMonth} canPay={canPay} /> : null}
 
+        {notHere.map((line) => (
+          <TouchableOpacity
+            key={line.id}
+            accessibilityRole="button"
+            accessibilityHint="Opens the problem report"
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate("BookingFault", { number, line: line.id })}
+          >
+            <Notice tone="warning" icon="warning" title={`Report the ${line.product.title}`}>
+              {`You said it wasn't there at the handover. Report it within 24 hours, with a photo: Renit can refund up to its rent (${money(line.rent)}).`}
+            </Notice>
+          </TouchableOpacity>
+        ))}
+
+        <ItemList booking={booking} title={`Items (${items})`} />
+
         <Records
           role="customer"
           moments={["handover"]}
@@ -156,7 +180,9 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
               sub={
                 monthly
                   ? "Adds a month to the schedule. The shop has to accept."
-                  : "A new booking for the days after. The shop has to accept."
+                  : basket
+                    ? `Adds days to all ${items} items. The shop has to accept.`
+                    : "A new booking for the days after. The shop has to accept."
               }
               onPress={() => navigation.navigate("BookingExtend", { number })}
             />
@@ -165,7 +191,7 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
           {can("report_fault") ? (
             <LinkRow
               first={!can("extend")}
-              title="Something doesn't work?"
+              title={basket ? "Problem with an item?" : "Something doesn't work?"}
               sub={faultRowSub(booking, now)}
               onPress={() => navigation.navigate("BookingFault", { number })}
             />

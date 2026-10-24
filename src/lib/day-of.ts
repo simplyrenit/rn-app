@@ -20,6 +20,7 @@ import {
   windowLabel,
   windowSummary,
 } from "@/lib/booking";
+import { isBasket, itemsText, liveLines, madeOf } from "@/lib/booking-lines";
 import type { CaptureFlags, Moment, Side } from "@/lib/capture";
 import { COURIER, CourierBanner, CourierStep, byRenit } from "@/lib/delivery";
 
@@ -371,6 +372,8 @@ export interface DepositCopy {
   sub: string;
   amount: string;
   refund: string;
+  /** A basket's deposit, item by item (cart D21, CT-37): "Made of: Camera ₹20,000 · Lens ₹5,000". Null for one item. */
+  madeOf: string | null;
   payBy: string | null;
   when: string | null;
   unlocks: string;
@@ -403,6 +406,7 @@ export function depositCopy(booking: BookingCustomer): DepositCopy {
     sub: `${booking.product.title} · ${booking.number}`,
     amount,
     refund: "Refundable. Back within 48 hours of closing.",
+    madeOf: madeOf(booking) ? `Made of: ${madeOf(booking)}` : null,
     payBy: dueDay ? `Pay by ${dayShort(dueDay)}, ${clock(due)}` : null,
     when: booking.window ? `${pickup ? "Collecting" : "Arriving"} ${windowSummary(booking.window)}` : null,
     unlocks: pickup
@@ -426,7 +430,9 @@ export interface DayOfCopy {
 
 export function dayOfCopy(booking: BookingCustomer, now: Date): DayOfCopy {
   const pickup = booking.delivery_mode === "pickup";
-  const item = booking.product.title;
+  // A basket (cart CT-34): "Your 3 items arrive today".
+  const basket = isBasket(booking);
+  const item = basket ? itemsText(liveLines(booking).length) : booking.product.title;
   const word = dayWord(booking.window ? dayOf(booking.window.start) : booking.first_day, now);
   const delivery = deliveryPlace(booking.delivery_address);
   // The address is on the booking only once the deposit is paid. Drawn only when it is text.
@@ -435,7 +441,11 @@ export function dayOfCopy(booking: BookingCustomer, now: Date): DayOfCopy {
   const bringer = !pickup && byRenit(booking) ? COURIER : booking.shop.name;
   return {
     // B1: once the desk says it was delivered (`open_by` is sent), it is at the door.
-    title: pickup ? `Collect your ${item} ${word}` : booking.courier?.open_by ? `Your ${item} is here` : `Your ${item} arrives ${word}`,
+    title: pickup
+      ? `Collect your ${item} ${word}`
+      : booking.courier?.open_by
+        ? `Your ${item} ${basket ? "are" : "is"} here`
+        : `Your ${item} ${basket ? "arrive" : "arrives"} ${word}`,
     // From Ready on a booking that needs the match (`id_match_required`): said again, since the price screen was long ago.
     idNote: booking.id_match_required ? HANDOVER_ID : null,
     place: pickup
@@ -444,7 +454,9 @@ export function dayOfCopy(booking: BookingCustomer, now: Date): DayOfCopy {
     window: booking.window ? windowLabel(booking.window) : null,
     codeNote: booking.claim_open
       ? "You reported this item as not as described. Renit decides within one day, and your code is paused until then."
-      : "Show this to the shop only after you have checked the item and both of you have recorded its condition.",
+      : basket
+        ? "Show this to the shop after both of you have recorded every item."
+        : "Show this to the shop only after you have checked the item and both of you have recorded its condition.",
   };
 }
 

@@ -41,6 +41,8 @@ export interface Claim {
   };
   /** `not_as_described`, `fault`, `damage`, `not_returned`, `owner_absent_at_return`. */
   kind: string;
+  /** The booking's items it is about (cart D45, D21), "RN-21345·2"; `[]`: the whole booking. Absent from an older server. */
+  lines: { id: number; ref: string; title: string }[];
   against: "shop" | "customer";
   raised_by_role: "customer" | "owner" | "system";
   statement: string;
@@ -115,6 +117,12 @@ export function readClaim(value: unknown): Claim | null {
       deposit: orNull(booking.deposit),
     },
     kind: value.kind,
+    lines: Array.isArray(value.lines)
+      ? value.lines
+          .filter(isRecord)
+          .filter((line) => typeof line.id === "number")
+          .map((line) => ({ id: line.id as number, ref: text(line.ref), title: text(line.title) }))
+      : [],
     against: value.against === "customer" ? "customer" : "shop",
     raised_by_role: value.raised_by_role === "owner" || value.raised_by_role === "system" ? value.raised_by_role : "customer",
     statement: text(value.statement),
@@ -210,10 +218,16 @@ export function deadlineLabel(iso: string | null | undefined, now: Date): string
   return at ? `${at.time} ${at.day}` : "";
 }
 
-/** "RN-24790 · Epson projector · Fri 9 – Sat 10 Oct". */
-export function claimBookingLine(claim: Pick<Claim, "booking">): string {
+/**
+ * "RN-24790 · Epson projector · Fri 9 – Sat 10 Oct". A claim on items of a booking of several names them by their refs
+ * instead (cart D38, CT-48b): "RN-21345·2 Sony FE lens · Sat 24 – Mon 26 Oct".
+ */
+export function claimBookingLine(claim: Pick<Claim, "booking"> & { lines?: Claim["lines"] }): string {
   const b = claim.booking;
-  return [b.number, b.product_title, b.first_day && b.last_day ? rangeLabel(b.first_day, b.last_day) : ""].filter(Boolean).join(" · ");
+  const items = claim.lines?.length ? claim.lines.map((line) => `${line.ref} ${line.title}`).join(", ") : null;
+  return [items ?? b.number, items ? "" : b.product_title, b.first_day && b.last_day ? rangeLabel(b.first_day, b.last_day) : ""]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 /** The time Renit has to decide, in words; says so plainly once it has passed. */
