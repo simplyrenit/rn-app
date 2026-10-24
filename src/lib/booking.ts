@@ -1318,11 +1318,17 @@ export function datesBlocker(quote: Quote | null | undefined, requested: string 
   return code ? blockerText(code, { min_days: quote?.min_days, area: quote?.delivery.area, number: requested }) : null;
 }
 
-/** The first thing in the way on the price screen, leaving out the tick and the ID check. */
-export function reviewBlocker(quote: Quote | null | undefined): { code: string; text: string } | null {
+/**
+ * The first thing in the way on the price screen, leaving out the tick and the ID check. `requested`: the earlier
+ * request Book now's `already_requested` named.
+ */
+export function reviewBlocker(
+  quote: Quote | null | undefined,
+  requested: string | null = null
+): { code: string; text: string } | null {
   for (const code of quote?.blockers ?? []) {
     if (OWN_PLACE.has(code)) continue;
-    const text = blockerText(code, { area: quote?.delivery.area });
+    const text = blockerText(code, { area: quote?.delivery.area, number: requested });
     if (text) return { code, text };
   }
   return null;

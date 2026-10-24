@@ -2,7 +2,7 @@ import { uuidv4 } from "@/lib/uuid";
 
 /**
  * Funnel analytics for the listing flow (IMPLEMENTATION.md §6), merchant
- * verification and the product page.
+ * verification, the product page, and the cart and its checkouts.
  *
  * Events are queued in memory and posted in batches: at 20 events, every 10 s,
  * and when the app goes to the background — the last one matters most, since a
@@ -233,6 +233,19 @@ export function track(
   } catch {
     // Analytics is a garnish; a failure here must not break the flow.
   }
+}
+
+const leftOut = new Set<string>();
+
+/**
+ * `checkout_line_left_out`, once per item and reason in a checkout attempt, however often the customer goes back from
+ * the price screen and on again.
+ */
+export function trackLeftOut(attemptId: string | null, product: string, reason: string) {
+  const once = `${attemptId}|${product}|${reason}`;
+  if (leftOut.has(once)) return;
+  leftOut.add(once);
+  track("checkout_line_left_out", { product, reason }, attemptId);
 }
 
 /**

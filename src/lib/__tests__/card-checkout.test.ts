@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { Quote, QuoteLine, datesBlocker, paySteps, plainLines, blockerText, requestedOn } from "@/lib/booking";
+import { Quote, QuoteLine, datesBlocker, paySteps, plainLines, blockerText, requestedOn, reviewBlocker } from "@/lib/booking";
 import {
   CHECKOUT_CAP,
   aloneNote,
@@ -355,6 +355,9 @@ describe("Book Now on book_flow=card (D41)", () => {
       "You already asked for this item on these dates. Pick other dates."
     );
     expect(datesBlocker(quote({ lines: undefined, blockers: ["already_requested"] }), "RN-21338")).toBe(
+      "You already asked for this item on these dates (RN-21338). Pick other dates."
+    );
+    expect(reviewBlocker(quote({ lines: undefined, blockers: ["already_requested"] }), "RN-21338")?.text).toBe(
       "You already asked for this item on these dates (RN-21338). Pick other dates."
     );
     expect(blockerText("too_many_in_flight", { max: 3 })).toBe("Finish or cancel one of your 3 open requests first.");

@@ -62,7 +62,7 @@ import {
   wasAmount,
 } from "@/lib/card-checkout";
 import { dayErrorText, extensionLines } from "@/lib/day-of";
-import { track } from "@/lib/events";
+import { track, trackLeftOut } from "@/lib/events";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { startIdCheck } from "@/lib/id-check";
 import { rememberReturnTo } from "@/lib/return-to";
@@ -201,7 +201,10 @@ export default function ReviewAndBookScreen() {
   }
 
   const moved = movedFrom !== null;
-  const blocker = reviewBlocker(quote);
+  // Book now's 409 named the earlier request; the quote fetched after it doesn't.
+  const earlier =
+    refused?.code === "already_requested" && typeof refused.details?.number === "string" ? refused.details.number : null;
+  const blocker = reviewBlocker(quote, earlier);
   const deliveryGone = !extending && quote.delivery_mode === "owner_delivery" && quote.delivery.offer_pickup;
   const notice = morningNotice(quote, params.item.shop_name);
   const terms = quote.terms;
@@ -240,9 +243,7 @@ export default function ReviewAndBookScreen() {
   const refusalWay = refusalCode ? refusalButton(refusalCode) : null;
   // Leaving an item answers a refusal that named it (CT-44c); the old amounts included it, so they go too.
   const drop = (more: string[]) => {
-    for (const name of more) {
-      track("checkout_line_left_out", { product: name, reason: lineBlock(lineOf(name)) ?? "customer" }, attempt.current);
-    }
+    if (signedIn) for (const name of more) trackLeftOut(attempt.current, name, lineBlock(lineOf(name)) ?? "customer");
     setDropped((was) => [...was, ...more]);
     setRefused(null);
     setWas(null);
@@ -338,7 +339,8 @@ export default function ReviewAndBookScreen() {
         setIdRefused(typeof failure.details?.needed === "string" ? failure.details.needed : "id");
       }
       if (card && failure?.code === "price_changed") setWas(quote);
-      if (card && failure?.code && CARD_REFUSALS.includes(failure.code)) {
+      // Kept on Book Now too, for the request `already_requested` names; only a card draws CT-44 from it.
+      if (failure?.code && CARD_REFUSALS.includes(failure.code)) {
         setRefused({ code: failure.code, details: failure.details });
       }
       if (!extending) track("checkout_book_failed", { from, code: failureCode(failure) }, attempt.current);

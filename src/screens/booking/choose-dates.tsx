@@ -12,7 +12,7 @@ import { addressMayHelp, areaLabel, areaOf, offersDelivery } from "@/lib/deliver
 import { createLocationRequest } from "@/lib/location-request";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
 import { apiError } from "@/lib/api-error";
-import { track } from "@/lib/events";
+import { track, trackLeftOut } from "@/lib/events";
 import { uuidv4 } from "@/lib/uuid";
 import {
   DeliveryMode,
@@ -277,7 +277,6 @@ export default function BookingDatesScreen() {
     // Once per attempt.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attemptId]);
-  const told = useRef(new Set<string>());
 
   // ENG-284 D12: the address chosen on search results, for the whole session;
   // the picker below writes it back, so results and the product page follow.
@@ -624,14 +623,11 @@ export default function BookingDatesScreen() {
   const goOn = (going: string[] = included) => {
     if (!first || !last) return;
     const lines = going.map((name) => itemOf(byName.get(name) as BackendProduct));
-    // The card's items that don't go on, and why; each once per attempt, however often Continue is tapped.
+    // The card's items that don't go on, and why.
     if (card && signedIn) {
       for (const name of names.filter((n) => !going.includes(n))) {
         const reason = alone[name]?.code ?? why.current[name] ?? (gone.includes(name) ? "not_listed" : null);
-        const once = `${attemptId}|${name}|${reason}`;
-        if (!reason || told.current.has(once)) continue;
-        told.current.add(once);
-        track("checkout_line_left_out", { product: name, reason }, attemptId);
+        if (reason) trackLeftOut(attemptId, name, reason);
       }
     }
     navigation.navigate("ReviewAndBook", {
