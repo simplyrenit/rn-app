@@ -15,7 +15,7 @@ import { Button, SubpageHeader, Text } from "@/components/core";
 import { RentalTermsTick } from "@/components/terms/owner-terms-tick";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
-import { apiError } from "@/lib/api-error";
+import { apiError, failureCode } from "@/lib/api-error";
 import { Cart, afterBookRoutes, rememberDates } from "@/lib/cart";
 import {
   bookBy,
@@ -54,6 +54,7 @@ import {
   lineBlock,
   lineChanges,
   lineChip,
+  lineRefusalNote,
   madeOf,
   othersLine,
   refusalButton,
@@ -61,6 +62,7 @@ import {
   wasAmount,
 } from "@/lib/card-checkout";
 import { dayErrorText, extensionLines } from "@/lib/day-of";
+import { track, trackLeftOut } from "@/lib/events";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { startIdCheck } from "@/lib/id-check";
 import { rememberReturnTo } from "@/lib/return-to";
@@ -70,7 +72,7 @@ import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { uuidv4 } from "@/lib/uuid";
 import { StackActions, useFocusEffect, useRoute } from "@react-navigation/native";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Linking, ScrollView, View } from "react-native";
 import { CheckBadgeIcon, IdentificationIcon } from "react-native-heroicons/outline";
 import { useQueryClient } from "react-query";
@@ -130,7 +132,7 @@ export default function ReviewAndBookScreen() {
   const quote = quoteQuery.data && asCard && !card ? asOneItem(quoteQuery.data) : quoteQuery.data;
   // CT-23a: the quote on screen when Book now answered `price_changed`, to show what moved.
   const [was, setWas] = useState<Quote | null>(null);
-  // CT-44: Book now refused the whole card.
+  // Book now's refusal that named something: the whole card (CT-44), or the earlier request (`already_requested`).
   const [refused, setRefused] = useState<{ code: string; details?: Record<string, unknown> | null } | null>(null);
 
   // The ₹99 of a refused or unanswered request, moving here. Dropped if the server says it no longer can.
@@ -158,6 +160,18 @@ export default function ReviewAndBookScreen() {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );
+
+  // The checkout's events share the dates step's attempt (cart plan §9.5). A new request straight from an outcome's
+  // "ask again" starts its own here; an extension is no checkout.
+  const attempt = useRef(params.attempt_id ?? null);
+  const from = params.from_cart ? "cart" : "book_now";
+  useEffect(() => {
+    if (attempt.current || extending || !signedIn) return;
+    attempt.current = uuidv4();
+    track("checkout_started", { from }, attempt.current);
+    // Once, on arrival.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const header = <SubpageHeader title={extending ? "Extend your rental" : "Review and book"} />;
   const refusal = quoteQuery.isError ? daysRefusal(apiError(quoteQuery.error)) ?? quoteRefusal(apiError(quoteQuery.error)) : null;
@@ -187,7 +201,10 @@ export default function ReviewAndBookScreen() {
   }
 
   const moved = movedFrom !== null;
-  const blocker = reviewBlocker(quote);
+  // Book now's 409 named the earlier request; the quote fetched after it doesn't.
+  const earlier =
+    refused?.code === "already_requested" && typeof refused.details?.number === "string" ? refused.details.number : null;
+  const blocker = reviewBlocker(quote, earlier);
   const deliveryGone = !extending && quote.delivery_mode === "owner_delivery" && quote.delivery.offer_pickup;
   const notice = morningNotice(quote, params.item.shop_name);
   const terms = quote.terms;
@@ -226,6 +243,7 @@ export default function ReviewAndBookScreen() {
   const refusalWay = refusalCode ? refusalButton(refusalCode) : null;
   // Leaving an item answers a refusal that named it (CT-44c); the old amounts included it, so they go too.
   const drop = (more: string[]) => {
+    if (signedIn) for (const name of more) trackLeftOut(attempt.current, name, lineBlock(lineOf(name)) ?? "customer");
     setDropped((was) => [...was, ...more]);
     setRefused(null);
     setWas(null);
@@ -282,6 +300,7 @@ export default function ReviewAndBookScreen() {
             client_key: clientKey.current,
           });
       clientKey.current = null;
+      if (!extending) track("checkout_booked", { from }, attempt.current);
       // The booking carries its own pay page (`pay_now.payment`) and the next screen
       // pays from it. This answer's `payment` is that same page, so it stands in if
       // the booking beside it came without one.
@@ -320,13 +339,15 @@ export default function ReviewAndBookScreen() {
         setIdRefused(typeof failure.details?.needed === "string" ? failure.details.needed : "id");
       }
       if (card && failure?.code === "price_changed") setWas(quote);
-      if (card && failure?.code && CARD_REFUSALS.includes(failure.code)) {
+      // Kept on Book Now too, for the request `already_requested` names; only a card draws CT-44 from it.
+      if (failure?.code && CARD_REFUSALS.includes(failure.code)) {
         setRefused({ code: failure.code, details: failure.details });
       }
+      if (!extending) track("checkout_book_failed", { from, code: failureCode(failure) }, attempt.current);
       setBookError(
         failure?.code === "already_extending" || failure?.code === "shop_closed" || failure?.code === "too_late_to_extend"
           ? dayErrorText(failure, new Date())
-          : bookErrorText(failure)
+          : (card ? lineRefusalNote(failure, titleOf) : null) ?? bookErrorText(failure)
       );
       // Whatever refused it (the price, the last unit, the shop closing) is in a fresh quote.
       if (failure && failure.status > 0) void quoteQuery.refetch();
@@ -613,6 +634,17 @@ export default function ReviewAndBookScreen() {
                 onPress={() => navigation.navigate("MainTabs", { screen: "Profile" })}
               >
                 {"  Go to profile"}
+              </Text>
+            ) : blocker.code === "too_many_in_flight" ? (
+              // Book Now's way on from D49's cap; a card's is its CT-44b button.
+              <Text
+                fontSize="text-sm"
+                fontWeight="font-bold"
+                tone="brand"
+                accessibilityRole="button"
+                onPress={() => navigation.navigate("MainTabs", { screen: "Rentals" })}
+              >
+                {"  See your open requests"}
               </Text>
             ) : null}
           </Notice>

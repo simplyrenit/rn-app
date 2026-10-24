@@ -2,7 +2,7 @@ import { uuidv4 } from "@/lib/uuid";
 
 /**
  * Funnel analytics for the listing flow (IMPLEMENTATION.md §6), merchant
- * verification and the product page.
+ * verification, the product page, and the cart and its checkouts.
  *
  * Events are queued in memory and posted in batches: at 20 events, every 10 s,
  * and when the app goes to the background — the last one matters most, since a
@@ -49,6 +49,16 @@ export type EventName =
   | "kyc_withdrawn"
   | "kyc_nudge"
   | "kyc_badge_filter_toggled"
+  // The cart (ENG-328, cart plan §9.5), as rn-api's catalogue lists them (ENG-321); its props are exact, an extra one is
+  // refused. `product` is the listing's name. A checkout's events share one attempt id, from its dates step to Book.
+  | "cart_add"
+  | "cart_add_failed"
+  | "cart_remove"
+  | "cart_opened"
+  | "checkout_started"
+  | "checkout_line_left_out"
+  | "checkout_booked"
+  | "checkout_book_failed"
   // The cart pilot's baseline (ENG-323, cart plan §9.5): bookings started per product view.
   // `product_viewed {product}` once per visit to someone else's listing, signed in;
   // `product_cta_tapped {product, cta}` on its bar's button. rn-api's catalogue lists both.
@@ -223,6 +233,19 @@ export function track(
   } catch {
     // Analytics is a garnish; a failure here must not break the flow.
   }
+}
+
+const leftOut = new Set<string>();
+
+/**
+ * `checkout_line_left_out`, once per item in a checkout attempt (the first reason), however often the customer goes
+ * back from the price screen and on again.
+ */
+export function trackLeftOut(attemptId: string | null, product: string, reason: string) {
+  const once = `${attemptId}|${product}`;
+  if (leftOut.has(once)) return;
+  leftOut.add(once);
+  track("checkout_line_left_out", { product, reason }, attemptId);
 }
 
 /**

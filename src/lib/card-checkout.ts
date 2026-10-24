@@ -15,9 +15,11 @@ import {
   dayCount,
   dayShort,
   daysLabel,
+  inFlightMax,
   money,
   priceLines,
 } from "@/lib/booking";
+import { ApiError } from "@/lib/api-error";
 import { Plan, minDays, plansOf } from "@/lib/plans";
 import { pluralize } from "@/lib/pluralize";
 
@@ -133,6 +135,16 @@ export function blockedNote(items: BlockedItem[], review = false): string | null
     default:
       return `The ${title} is no longer available. Leave it in your cart to go on.`;
   }
+}
+
+/** Book now's refusal of one of a card's items, named (CT-23b), while the fresh quote comes; null when it names none. */
+export function lineRefusalNote(failure: ApiError | null, titleOf: (name: string) => string): string | null {
+  const code = failure?.code;
+  const details = failure?.details;
+  if (!code || !LINE_BLOCKS.includes(code) || typeof details?.product !== "string") return null;
+  const min = Number(details.min_days);
+  const number = typeof details.number === "string" ? details.number : null;
+  return blockedNote([{ title: titleOf(details.product), code, minDays: min > 0 ? min : undefined, number }], true);
 }
 
 /** The note for items checked out on their own (CT-21d, e). */
@@ -276,11 +288,10 @@ export function refusalNotice(
         text: `Nothing was booked and no money was taken. Each item is booked on its own, with its own ${ctx.amount} and delivery fee. Your items stay in your cart.`,
       };
     case "too_many_in_flight": {
-      const n = Number(details.max);
-      const yours = n > 0 ? `your ${n} open requests` : "your open requests";
+      const n = inFlightMax(details);
       return {
-        title: n > 0 ? `You have ${n} open requests` : "You have too many open requests",
-        text: `Nothing was booked. Finish or cancel one of ${yours} first. Your items stay in your cart.`,
+        title: `You have ${n} open requests`,
+        text: `Nothing was booked. Finish or cancel one of your ${n} open requests first. Your items stay in your cart.`,
       };
     }
     case "already_requested": {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { Quote, QuoteLine, datesBlocker, paySteps, plainLines, blockerText } from "@/lib/booking";
+import { Quote, QuoteLine, datesBlocker, paySteps, plainLines, blockerText, requestedOn, reviewBlocker } from "@/lib/booking";
 import {
   CHECKOUT_CAP,
   aloneNote,
@@ -14,6 +14,7 @@ import {
   lineBlock,
   lineChanges,
   lineChip,
+  lineRefusalNote,
   madeOf,
   noDayAllFree,
   noDayNotice,
@@ -321,6 +322,8 @@ describe("refused for the whole card (CT-44)", () => {
       title: "You've already requested the Sony FE 24-70 mm GM lens",
       text: "Nothing was booked. Your request RN-21338 is for this Sony FE 24-70 mm GM lens on these dates. Leave it in your cart to book the rest.",
     });
+    // The quote's blocker is a bare code: D49's cap of 3 stands in.
+    expect(refusalNotice("too_many_in_flight", { shop: "Lens Lane", amount: "₹99", titleOf })?.title).toBe("You have 3 open requests");
     expect(refusalNotice("price_changed", { shop: "Lens Lane", amount: "₹99", titleOf })).toBeNull();
     expect(refusalButton("one_item_only")).toBe("Back to your cart");
     expect(refusalButton("too_many_in_flight")).toBe("See your open requests");
@@ -351,8 +354,15 @@ describe("Book Now on book_flow=card (D41)", () => {
     expect(datesBlocker(quote({ lines: undefined, blockers: ["already_requested"] }))).toBe(
       "You already asked for this item on these dates. Pick other dates."
     );
+    expect(datesBlocker(quote({ lines: undefined, blockers: ["already_requested"] }), "RN-21338")).toBe(
+      "You already asked for this item on these dates (RN-21338). Pick other dates."
+    );
+    expect(reviewBlocker(quote({ lines: undefined, blockers: ["already_requested"] }), "RN-21338")?.text).toBe(
+      "You already asked for this item on these dates (RN-21338). Pick other dates."
+    );
     expect(blockerText("too_many_in_flight", { max: 3 })).toBe("Finish or cancel one of your 3 open requests first.");
-    expect(blockerText("too_many_in_flight")).toBe("Finish or cancel one of your open requests first.");
+    expect(blockerText("too_many_in_flight", { max: 4 })).toBe("Finish or cancel one of your 4 open requests first.");
+    expect(blockerText("too_many_in_flight")).toBe("Finish or cancel one of your 3 open requests first.");
     expect(blockerText("one_item_only")).toBe("This shop takes one item per booking for now. Book each item on its own.");
   });
 });
@@ -361,5 +371,44 @@ describe("the other shops, as the cart sends them", () => {
   it("reads a count of shops too", () => {
     expect(othersLine({ items: 3, shops: 2 })).toBe("Your 3 items from 2 other shops stay in your cart. Each shop is booked on its own.");
     expect(othersLine({ items: 1, shops: 1 })).toBe("Your item from another shop stays in your cart. Each shop is booked on its own.");
+  });
+});
+
+describe("the earlier request an already_requested is about", () => {
+  const requested = { number: "RN-21338", first_day: "2026-10-24", last_day: "2026-10-26" };
+
+  it("is named only when its days overlap the ones picked", () => {
+    expect(requestedOn(requested, "2026-10-26", "2026-10-28")).toBe("RN-21338");
+    expect(requestedOn(requested, "2026-10-20", "2026-10-24")).toBe("RN-21338");
+    expect(requestedOn(requested, "2026-10-27", "2026-10-29")).toBeNull();
+    expect(requestedOn(null, "2026-10-24", "2026-10-26")).toBeNull();
+  });
+
+  it("is the best guess without its days, or without a range", () => {
+    expect(requestedOn({ number: "RN-21338" }, "2026-10-27", "2026-10-29")).toBe("RN-21338");
+    expect(requestedOn(requested, "2026-10-27", null)).toBe("RN-21338");
+  });
+});
+
+describe("Book now refused one of a card's items (CT-23b)", () => {
+  const refused = (code: string, details: Record<string, unknown> | null) => ({ status: 409, code, message: null, details });
+
+  it("names the item while the fresh quote comes", () => {
+    expect(lineRefusalNote(refused("no_unit_free", { days: ["2026-10-24"], product: "lens" }), titleOf)).toBe(
+      "The last Sony FE 24-70 mm GM lens was just booked for these dates."
+    );
+    expect(lineRefusalNote(refused("too_short", { min_days: 4, minimum: "4 days", product: "lens" }), titleOf)).toBe(
+      "The Sony FE 24-70 mm GM lens needs at least 4 days. Leave it in your cart or pick 4 days."
+    );
+    expect(lineRefusalNote(refused("already_requested", { product: "lens", number: "RN-21338" }), titleOf)).toBe(
+      "You already asked for this Sony FE 24-70 mm GM lens on these dates (RN-21338). Leave it in your cart to go on."
+    );
+  });
+
+  it("leaves the rest to the usual words", () => {
+    expect(lineRefusalNote(refused("no_unit_free", { days: ["2026-10-24"] }), titleOf)).toBeNull();
+    expect(lineRefusalNote(refused("too_many_in_flight", { max: 3 }), titleOf)).toBeNull();
+    expect(lineRefusalNote(refused("other_pickup_point", { product: "lens", locality: "Bandra W" }), titleOf)).toBeNull();
+    expect(lineRefusalNote(null, titleOf)).toBeNull();
   });
 });

@@ -1220,6 +1220,28 @@ const FIXED_BY_DATES = new Set([
   "already_requested",
 ]);
 
+/**
+ * D49: how many requests may be open at once. Book now's 409 says it (`details.max`); the quote's blocker is a bare code.
+ * ponytail: a client copy of the server's MAX_IN_FLIGHT; if the cap ever moves, have the quote send its blockers' details.
+ */
+export const MAX_IN_FLIGHT = 3;
+
+export const inFlightMax = (details?: Record<string, unknown> | null): number => Number(details?.max) || MAX_IN_FLIGHT;
+
+/**
+ * The customer's earlier request of a listing (its `requested`, the soonest open one) when it overlaps these days: the
+ * booking an `already_requested` on them is about. One on other days is not named. Without its days, the best guess.
+ */
+export function requestedOn(
+  requested: { number: string; first_day?: string; last_day?: string } | null | undefined,
+  first: string | null | undefined,
+  last: string | null | undefined
+): string | null {
+  if (!requested) return null;
+  if (!requested.first_day || !requested.last_day || !first || !last) return requested.number;
+  return requested.first_day <= last && first <= requested.last_day ? requested.number : null;
+}
+
 /** A blocker or a Book now error code in plain words; null for one this list does not know. */
 export function blockerText(code: string, details?: Record<string, unknown> | null): string | null {
   switch (code) {
@@ -1265,10 +1287,8 @@ export function blockerText(code: string, details?: Record<string, unknown> | nu
       const number = typeof details?.number === "string" ? ` (${details.number})` : "";
       return `You already asked for this item on these dates${number}. Pick other dates.`;
     }
-    case "too_many_in_flight": {
-      const n = Number(details?.max);
-      return `Finish or cancel one of your ${n > 0 ? `${n} ` : ""}open requests first.`;
-    }
+    case "too_many_in_flight":
+      return `Finish or cancel one of your ${inFlightMax(details)} open requests first.`;
     case "one_item_only":
       return "This shop takes one item per booking for now. Book each item on its own.";
     case "not_listed":
@@ -1289,17 +1309,26 @@ export function blockerText(code: string, details?: Record<string, unknown> | nu
   }
 }
 
-/** The first thing in the way that the dates screen can fix, in the server's order. */
-export function datesBlocker(quote: Quote | null | undefined): string | null {
+/**
+ * The first thing in the way that the dates screen can fix, in the server's order. `requested`: the earlier request on
+ * these days (`requestedOn`), which the quote's bare `already_requested` doesn't name.
+ */
+export function datesBlocker(quote: Quote | null | undefined, requested: string | null = null): string | null {
   const code = quote?.blockers.find((b) => FIXED_BY_DATES.has(b));
-  return code ? blockerText(code, { min_days: quote?.min_days, area: quote?.delivery.area }) : null;
+  return code ? blockerText(code, { min_days: quote?.min_days, area: quote?.delivery.area, number: requested }) : null;
 }
 
-/** The first thing in the way on the price screen, leaving out the tick and the ID check. */
-export function reviewBlocker(quote: Quote | null | undefined): { code: string; text: string } | null {
+/**
+ * The first thing in the way on the price screen, leaving out the tick and the ID check. `requested`: the earlier
+ * request Book now's `already_requested` named.
+ */
+export function reviewBlocker(
+  quote: Quote | null | undefined,
+  requested: string | null = null
+): { code: string; text: string } | null {
   for (const code of quote?.blockers ?? []) {
     if (OWN_PLACE.has(code)) continue;
-    const text = blockerText(code, { area: quote?.delivery.area });
+    const text = blockerText(code, { area: quote?.delivery.area, number: requested });
     if (text) return { code, text };
   }
   return null;

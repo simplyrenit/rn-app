@@ -404,6 +404,8 @@ export type RootStackParamList = {
     extends?: string;
     /** Booked from a cart card: the stack after Book keeps the cart (`afterBookRoutes`). */
     from_cart?: boolean;
+    /** The checkout's events' id (cart plan §9.5), from the dates step; absent, the price screen starts one. */
+    attempt_id?: string;
   };
   /**
    * One booking at whatever stage the server says it is in. `pay` opens the pay
