@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import {
   Capture,
+  CaptureBody,
   CaptureDraft,
   ShotList,
   addShot,
@@ -106,7 +107,7 @@ describe("a basket's record goes to the server as its photos go up", () => {
         order.push(`${kind} ${uri.split("/").pop()}`);
         return `https://bucket.test/${uri.split("/").pop()}`;
       }),
-      send: jest.fn(async (_draft: CaptureDraft, body) => {
+      send: jest.fn(async (_draft: CaptureDraft, body: CaptureBody) => {
         order.push(body.video ? "send with video" : `send ${body.shots.length} shots`);
         return (body.video ? { complete: true, missing: [] } : notYet) as Capture;
       }),

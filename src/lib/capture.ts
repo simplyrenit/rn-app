@@ -46,7 +46,8 @@ export interface ShotList {
   video_hint: string;
   /** The checklist, ticked at handover and again at return. */
   included_items: string[];
-  included_items_source?: "listing" | "category" | "generic";
+  /** `lines`: a basket's checklist, each item's own (`lines[].included_items_source`). */
+  included_items_source?: "listing" | "category" | "generic" | "lines";
   /** The owner looks at the customer's ID at the handover and ticks that the name matches. */
   id_match_required: boolean;
   /** B1, a booking Renit's courier carries: one more shot for the owner's handover record, the sealed bag (ENG-303). */
