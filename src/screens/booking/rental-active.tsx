@@ -10,7 +10,7 @@ import { Button, Text } from "@/components/core";
 import { LinkRow } from "@/components/handover/parts";
 import { canPayPeriod, endingEarlyLine, isMonthly, overdueAlert, overduePeriod } from "@/lib/billing";
 import { BookingCustomer, RentPeriod, money, todayIst } from "@/lib/booking";
-import { Received, basketActive, isBasket, liveLines, receivedKey } from "@/lib/booking-lines";
+import { basketActive, isBasket, liveLines, rememberedTicks, theItems } from "@/lib/booking-lines";
 import { faultRowSub } from "@/lib/claims";
 import { activeCopy, bannerTone, ownerAbsentAt, ownerAbsentKey } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
@@ -48,9 +48,9 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
   const can = (action: string) => booking.can.includes(action);
   const basket = isBasket(booking);
   const items = liveLines(booking).length;
-  // CT-45c: an item ticked Not here at the handover (this run of the app) is reported from here, the first place it can be.
+  // CT-45c: items ticked Not here at the handover (this run of the app) are reported from here, the first place they can be.
   const notHere = can("report_fault")
-    ? liveLines(booking).filter((line) => queryClient.getQueryData<Received>(receivedKey(number))?.not_here.includes(line.id))
+    ? liveLines(booking).filter((line) => rememberedTicks(number)?.not_here.includes(line.id))
     : [];
   const late = copy.late.tone === "warning";
   const extension = booking.extensions?.[booking.extensions.length - 1] ?? null;
@@ -139,19 +139,18 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
 
         {monthly ? <PaymentSchedule money={booking.money} side="customer" today={today} onPay={payMonth} canPay={canPay} /> : null}
 
-        {notHere.map((line) => (
+        {notHere.length ? (
           <TouchableOpacity
-            key={line.id}
             accessibilityRole="button"
             accessibilityHint="Opens the problem report"
             activeOpacity={0.8}
-            onPress={() => navigation.navigate("BookingFault", { number, line: line.id })}
+            onPress={() => navigation.navigate("BookingFault", { number, lines: notHere.map((line) => line.id) })}
           >
-            <Notice tone="warning" icon="warning" title={`Report the ${line.product.title}`}>
-              {`You said it wasn't there at the handover. Report it within 24 hours, with a photo: Renit can refund up to its rent (${money(line.rent)}).`}
+            <Notice tone="warning" icon="warning" title={`Report ${theItems(notHere)}`}>
+              {`You said ${notHere.length === 1 ? "it wasn't" : "they weren't"} there at the handover. Report within 24 hours, with a photo: Renit can refund up to the rent of what is missing.`}
             </Notice>
           </TouchableOpacity>
-        ))}
+        ) : null}
 
         <ItemList booking={booking} title={`Items (${items})`} />
 

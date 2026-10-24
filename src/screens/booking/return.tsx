@@ -94,7 +94,8 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
   const after = returned ? returnedCopy(booking) : null;
   // CT-35b: a basket goes back whole (D51); its items are listed and the note says so before the code.
   const many = isBasket(booking) && liveLines(booking).length > 1 ? liveLines(booking).length : 0;
-  const together = out ? basketReturnNote(booking) : null;
+  // A courier's return has no code to type (B1).
+  const together = out && !byRenit(booking) ? basketReturnNote(booking) : null;
 
   return (
     <ScrollView

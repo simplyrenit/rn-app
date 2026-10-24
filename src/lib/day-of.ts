@@ -20,7 +20,7 @@ import {
   windowLabel,
   windowSummary,
 } from "@/lib/booking";
-import { isBasket, itemsText, liveLines, madeOf } from "@/lib/booking-lines";
+import { itemsText, liveLines, madeOf, manyItems } from "@/lib/booking-lines";
 import type { CaptureFlags, Moment, Side } from "@/lib/capture";
 import { COURIER, CourierBanner, CourierStep, byRenit } from "@/lib/delivery";
 
@@ -430,8 +430,8 @@ export interface DayOfCopy {
 
 export function dayOfCopy(booking: BookingCustomer, now: Date): DayOfCopy {
   const pickup = booking.delivery_mode === "pickup";
-  // A basket (cart CT-34): "Your 3 items arrive today".
-  const basket = isBasket(booking);
+  // Several items (cart CT-34): "Your 3 items arrive today".
+  const basket = manyItems(booking);
   const item = basket ? itemsText(liveLines(booking).length) : booking.product.title;
   const word = dayWord(booking.window ? dayOf(booking.window.start) : booking.first_day, now);
   const delivery = deliveryPlace(booking.delivery_address);

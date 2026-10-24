@@ -1,7 +1,7 @@
 import { bookingQueryKey } from "@/backend/bookings";
 import { postReceived } from "@/backend/handover";
 import { ItemRow } from "@/components/booking/items";
-import { Panel, Pill } from "@/components/booking/parts";
+import { Panel, Pill, TextButton } from "@/components/booking/parts";
 import { Button, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { apiError } from "@/lib/api-error";
@@ -13,7 +13,8 @@ import {
   liveLines,
   notHereCopy,
   receivedBody,
-  receivedKey,
+  rememberTicks,
+  rememberedTicks,
   ticksOf,
 } from "@/lib/booking-lines";
 import { dayErrorText, telUrl } from "@/lib/day-of";
@@ -29,30 +30,24 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
 
 /**
- * The day-of ticks on a booking of several items (cart D44, CT-34): Got it or Not here for each item, sent once every item
- * has one, and only then does the code show. A wrong tick can be undone until they are sent; after that the server holds
- * them (logged once), and this phone keeps its answer for the rest of the run. A send that fails takes the last tick back,
- * so the customer taps it again rather than looking at a screen that is waiting for nothing.
+ * The day-of ticks on a booking of several items (cart D44, CT-34): Got it or Not here for each item. The code shows once
+ * every item has one; the ticks then go to the server as evidence (logged once). They never hold the code back: a counter
+ * with no signal must still be able to hand over, so a send that fails is offered again (`retry`) while the code stays.
+ * Undo works until the server has them; this phone keeps the server's answer for the rest of the run.
  */
 export function useItemTicks(booking: BookingCustomer, now: Date) {
   const queryClient = useQueryClient();
-  const key = receivedKey(booking.number);
-  const [posted, setPosted] = useState<Received | null>(() => queryClient.getQueryData<Received>(key) ?? null);
+  const [posted, setPosted] = useState<Received | null>(() => rememberedTicks(booking.number));
   const [draft, setDraft] = useState<Ticks>({});
   const [sending, setSending] = useState(false);
+  const [failed, setFailed] = useState(false);
 
-  const without = (ticks: Ticks, id: number) => Object.fromEntries(Object.entries(ticks).filter(([k]) => Number(k) !== id));
-
-  const tick = async (line: BookingLine, value: Tick) => {
-    if (posted || sending) return;
-    const next = { ...draft, [line.id]: value };
-    setDraft(next);
-    const body = receivedBody(booking, next);
-    if (!body) return;
+  const send = async (body: Received) => {
     setSending(true);
+    setFailed(false);
     try {
       const answer = await postReceived(booking.number, body);
-      queryClient.setQueryData(key, answer);
+      rememberTicks(booking.number, answer);
       setPosted(answer);
       track("handover_items_ticked", { booking: booking.number, not_here: answer.not_here.length });
     } catch (error) {
@@ -62,8 +57,8 @@ export function useItemTicks(booking: BookingCustomer, now: Date) {
         setDraft({});
         toast.error("Your ticks didn't go through", { message: "The items of this booking changed. Tick them again." });
       } else {
-        setDraft(without(next, line.id));
-        toast.error("Your ticks didn't go through", { message: dayErrorText(failure, now) });
+        setFailed(true);
+        toast.error("Your ticks didn't reach Renit", { message: dayErrorText(failure, now) });
       }
       if (failure && failure.status > 0) void queryClient.invalidateQueries(bookingQueryKey(booking.number));
     } finally {
@@ -71,11 +66,27 @@ export function useItemTicks(booking: BookingCustomer, now: Date) {
     }
   };
 
-  const undo = (line: BookingLine) => {
-    if (!posted && !sending) setDraft((ticks) => without(ticks, line.id));
+  const tick = (line: BookingLine, value: Tick) => {
+    if (posted || sending) return;
+    const next = { ...draft, [line.id]: value };
+    setDraft(next);
+    const body = receivedBody(booking, next);
+    if (body) void send(body);
   };
 
-  return { ticks: posted ? ticksOf(posted) : draft, posted, sending, tick, undo };
+  const undo = (line: BookingLine) => {
+    if (posted || sending) return;
+    setFailed(false);
+    setDraft((ticks) => Object.fromEntries(Object.entries(ticks).filter(([id]) => Number(id) !== line.id)));
+  };
+
+  const retry = () => {
+    const body = receivedBody(booking, draft);
+    if (body && !posted && !sending) void send(body);
+  };
+
+  const ticks = posted ? ticksOf(posted) : draft;
+  return { ticks, posted, sending, failed, done: receivedBody(booking, ticks) !== null, tick, undo, retry };
 }
 
 function TickButton({ label, Icon, disabled, onPress }: { label: string; Icon: typeof CheckIcon; disabled: boolean; onPress: () => void }) {
@@ -117,21 +128,26 @@ export function CollectItems({
   ticks,
   sent,
   sending,
+  failed,
   open,
   closedNote,
   onTick,
   onUndo,
   onNotHere,
+  onRetry,
 }: {
   booking: BookingCustomer;
   ticks: Ticks;
   sent: boolean;
   sending: boolean;
+  /** The last send failed: the code shows anyway, and the ticks can go again. */
+  failed: boolean;
   open: boolean;
   closedNote: string | null;
   onTick: (line: BookingLine) => void;
   onUndo: (line: BookingLine) => void;
   onNotHere: (line: BookingLine) => void;
+  onRetry: () => void;
 }) {
   const { color } = useTheme();
   const live = liveLines(booking);
@@ -184,6 +200,7 @@ export function CollectItems({
           );
         })}
       </Panel>
+      {failed ? <TextButton label="Your ticks didn't reach Renit. Send them again" disabled={sending} onPress={onRetry} /> : null}
     </View>
   );
 }

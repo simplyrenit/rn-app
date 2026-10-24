@@ -240,8 +240,14 @@ export interface Received {
   not_here: number[];
 }
 
-/** Where this phone keeps the ticks the server logged, for the rest of this run of the app (the server answers them again). */
-export const receivedKey = (number: string) => ["items-received", number];
+/** Several live items: the day-of ticks and the plural words. A basket left with one item reads as one item. */
+export const manyItems = (b: Lines) => liveLines(b).length > 1;
+
+// ponytail: the ticks the server logged, kept in memory for this run of the app (the query cache would drop them after its
+// five idle minutes, mid-handover). A restart forgets them: the customer ticks again and the server answers the first ticks.
+const sentTicks = new Map<string, Received>();
+export const rememberTicks = (number: string, received: Received) => void sentTicks.set(number, received);
+export const rememberedTicks = (number: string): Received | null => sentTicks.get(number) ?? null;
 
 /** The body of `POST …/received/` once every live item is ticked one way; null until then, and the code stays hidden. */
 export function receivedBody(b: Lines, ticks: Ticks): Received | null {
@@ -285,12 +291,14 @@ export function notHereCopy(b: BookingCustomer, line: BookingLine) {
   };
 }
 
-/** D45, CT-48a: what a report on one item of a basket does, before it is sent. */
-export function lineFaultNotice(line: BookingLine): string {
-  const share = Number(line.deposit) > 0 ? ` Its ${money(line.deposit)} deposit share comes back with your deposit, as usual.` : "";
+/** D45, CT-48a: what a report on items of a basket does, before it is sent. */
+export function lineFaultNotice(lines: BookingLine[]): string {
+  const one = lines.length === 1;
+  const deposit = lines.reduce((total, line) => total + Number(line.deposit), 0);
+  const share = deposit > 0 ? ` ${one ? "Its" : "Their"} ${money(deposit)} deposit share comes back with your deposit, as usual.` : "";
   return (
-    `Only the ${line.product.title} is looked at: the rest of the rental goes on. ` +
-    `If Renit agrees, it decides how much of its rent (up to ${money(line.rent)}) comes back to you.${share}`
+    `Only ${theItems(lines)} ${one ? "is" : "are"} looked at: the rest of the rental goes on. ` +
+    `If Renit agrees, it decides how much of ${one ? "its" : "their"} rent (up to ${money(rentOf(lines))}) comes back to you.${share}`
   );
 }
 

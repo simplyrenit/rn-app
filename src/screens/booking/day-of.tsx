@@ -11,7 +11,7 @@ import { Button, Text } from "@/components/core";
 import { Block, CallButton, LinkRow, StatusButtons, useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
 import { BookingCustomer, BookingLine } from "@/lib/booking";
-import { isBasket, liveLines, theItems, ticksCaption } from "@/lib/booking-lines";
+import { liveLines, manyItems, theItems, ticksCaption } from "@/lib/booking-lines";
 import { recordOpens } from "@/lib/capture";
 import {
   callCopy,
@@ -71,12 +71,13 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
 
   // D44, CT-34: on a booking of several items each is ticked Got it or Not here before the code shows. The ticks open with
   // the calls, two hours before the window (the server refuses them earlier).
-  const basket = isBasket(booking);
+  // One item left after a partial accept is handed over as one item, as before.
+  const basket = manyItems(booking);
   const items = useItemTicks(booking, now);
   const notHereSheet = useRef<BottomSheetModal>(null);
   const [missingLine, setMissingLine] = useState<BookingLine | null>(null);
-  const notHere = items.posted ? liveLines(booking).filter((line) => items.posted?.not_here.includes(line.id)) : [];
-  const showCode = Boolean(day.handover_code) && !booking.claim_open && (!basket || items.posted !== null);
+  const notHere = items.done ? liveLines(booking).filter((line) => items.ticks[line.id] === "not_here") : [];
+  const showCode = Boolean(day.handover_code) && !booking.claim_open && (!basket || items.done);
 
   const tapStatus = (status: "on_my_way" | "running_late" | "i_am_here") =>
     run(status, async () => {
@@ -197,12 +198,14 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
           ticks={items.ticks}
           sent={items.posted !== null}
           sending={items.sending}
+          failed={items.failed}
           open={reached(day.call_from, now)}
           closedNote={
             day.call_from ? `You can tick these from ${whenShort(day.call_from, now)}.` : "You can tick these once an arrival window is picked."
           }
           onTick={(line) => void items.tick(line, "got")}
           onUndo={items.undo}
+          onRetry={items.retry}
           onNotHere={(line) => {
             setMissingLine(line);
             notHereSheet.current?.present();
@@ -221,7 +224,7 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
       <Block title="Your handover code">
         {showCode && day.handover_code ? <CodeBoxes code={day.handover_code} /> : null}
         <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
-          {basket && !items.posted && !booking.claim_open ? ticksCaption(booking, items.ticks) : copy.codeNote}
+          {basket && !items.done && !booking.claim_open ? ticksCaption(booking, items.ticks) : copy.codeNote}
         </Text>
       </Block>
 

@@ -65,7 +65,7 @@ export function useCart() {
 
   const addLine = useMutation(
     write<{ product: CartProduct; shop: CartShop }>(
-      async ({ product }) => addCartLine(product.name),
+      async ({ product }) => (await axiosInstance.put<Cart>(lineUrl(product.name))).data,
       (cart, { product, shop }) => withLine(cart, shop, product)
     )
   );

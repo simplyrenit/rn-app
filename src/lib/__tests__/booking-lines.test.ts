@@ -11,7 +11,9 @@ import {
   lapseBanner,
   lapseNotice,
   leftOutChip,
+  lineFaultNotice,
   madeOf,
+  manyItems,
   moreBadge,
   notHereCopy,
   ownerCancelCopy,
@@ -331,10 +333,29 @@ describe("the day-of ticks (D44, CT-34, CT-45)", () => {
     expect(copy.refuse.sub).toBe("This refuses all 3 items, not only the Sony FE lens. Lens Lane takes everything back.");
   });
 
+  it("ticks several items only: one item left after a partial accept is handed over as one", () => {
+    expect(manyItems(ready)).toBe(true);
+    expect(manyItems(basket({ stage: "ready", lines: [camera, { ...lens, state: "refused" }] }))).toBe(false);
+    expect(dayOfCopy(basket({ stage: "ready", lines: [camera, { ...lens, state: "refused" }] }), NOW).title).toBe(
+      "Collect your Sony A7 IV camera + 2 more on Sat 24 Oct"
+    );
+  });
+
   it("says the day's title for the items", () => {
     expect(dayOfCopy(ready, NOW).title).toBe("Collect your 3 items on Sat 24 Oct");
     expect(dayOfCopy({ ...ready, delivery_mode: "owner_delivery" }, NOW).title).toBe("Your 3 items arrive on Sat 24 Oct");
     expect(dayOfCopy(single({ stage: "ready" }), NOW).title).toBe("Collect your Sony A7 IV camera on Sat 24 Oct");
+  });
+});
+
+describe("a problem with items of a basket (CT-48a, D45)", () => {
+  it("looks at the named items only, up to their rent, and their deposit share comes back as usual", () => {
+    expect(lineFaultNotice([lens])).toBe(
+      "Only the Sony FE lens is looked at: the rest of the rental goes on. If Renit agrees, it decides how much of its rent (up to ₹900) comes back to you. Its ₹5,000 deposit share comes back with your deposit, as usual."
+    );
+    expect(lineFaultNotice([lens, tripod])).toBe(
+      "Only the Sony FE lens and the Manfrotto tripod are looked at: the rest of the rental goes on. If Renit agrees, it decides how much of their rent (up to ₹1,200) comes back to you. Their ₹6,000 deposit share comes back with your deposit, as usual."
+    );
   });
 });
 

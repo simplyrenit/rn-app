@@ -13,7 +13,7 @@ import { EvidencePhoto, PhotoRow, discardEvidence, uploadPhotos } from "@/compon
 import { apiError } from "@/lib/api-error";
 import { isBasket, lineFaultNotice, liveLines } from "@/lib/booking-lines";
 import { deadlineLabel, faultBlocked, faultErrorText, faultHold, faultNotice, newClaimIds } from "@/lib/claims";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { failedPhotosText, forgetAddresses, refusedFiles, urlsOf } from "@/lib/evidence";
 import { toast } from "@/lib/toast";
@@ -23,6 +23,7 @@ import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { StackActions, useRoute } from "@react-navigation/native";
 import React, { useRef, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
+import { CheckIcon } from "react-native-heroicons/outline";
 import { useQueryClient } from "react-query";
 
 /** The longest statement sent. Enough for what does not work; the photos carry the rest. */
@@ -34,6 +35,10 @@ const MAX_STATEMENT = 500;
  * the camera. Renit decides by the end of the next day; the item goes back first and
  * any refund follows its return. There is no drawn frame: it is the shape of BK-19
  * ("Not as described") with the fault's own words.
+ *
+ * On a booking of several items (cart D45, CT-48a) the report names the items it is
+ * about, missing or not working, and the rest of the rental goes on: nothing goes back
+ * first, and Renit refunds an amount it sets at once.
  *
  * The report is sent once. A tap is held while it goes; the photos that went up stay
  * up if another did not; and if the answer never comes the booking is read to see
@@ -55,9 +60,9 @@ export default function FaultReportScreen() {
   const [photos, setPhotos] = useState<EvidencePhoto[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { color } = useTheme();
-  // A basket's report names its item (cart D45, CT-48a); one ticked Not here at the handover comes picked, as missing.
-  const [lineId, setLineId] = useState<number | null>(params.line ?? null);
-  const [missing, setMissing] = useState(params.line !== undefined);
+  // A basket's report names its items (cart D45, CT-48a); those ticked Not here at the handover come picked, as missing.
+  const [picked, setPicked] = useState<number[]>(params.lines ?? []);
+  const [missing, setMissing] = useState(Boolean(params.lines?.length));
 
   if (!booking) {
     return (
@@ -74,8 +79,8 @@ export default function FaultReportScreen() {
 
   const blocked = faultBlocked(booking, now);
   const basket = isBasket(booking);
-  const line = basket ? liveLines(booking).find((l) => l.id === lineId) ?? null : null;
-  const hold = basket && !line ? "Pick the item with the problem." : faultHold(statement, photos.length);
+  const chosen = basket ? liveLines(booking).filter((l) => picked.includes(l.id)) : [];
+  const hold = basket && !chosen.length ? "Pick the items with the problem." : faultHold(statement, photos.length);
   // What the desk reads first: CT-36b's "Didn't receive this" or "Not working".
   const said = basket ? `${missing ? "Didn't receive this" : "Not working"}: ${statement.trim()}` : statement;
   const sending = running !== null;
@@ -99,7 +104,7 @@ export default function FaultReportScreen() {
       // What the booking held before the press: only a claim that was not there, with these words, is this report.
       const before = booking.claims;
       try {
-        const made = await reportFault(number, said, urlsOf(up.photos) ?? [], line ? [line.id] : undefined);
+        const made = await reportFault(number, said, urlsOf(up.photos) ?? [], chosen.map((l) => l.id));
         queryClient.setQueryData(bookingQueryKey(number), made.booking);
         // The photos are on Renit's bucket now: their copies on the phone have done their work.
         discardEvidence(up.photos);
@@ -156,18 +161,20 @@ export default function FaultReportScreen() {
           <>
             {basket ? (
               <Panel>
-                <View accessibilityRole="radiogroup">
+                <View>
                   {liveLines(booking).map((item, index) => {
-                    const selected = item.id === lineId;
+                    const selected = picked.includes(item.id);
                     return (
                       <TouchableOpacity
                         key={item.id}
-                        accessibilityRole="radio"
-                        accessibilityState={{ selected }}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: selected }}
                         accessibilityLabel={`${item.product.title}, ${item.ref}`}
                         activeOpacity={0.7}
                         disabled={sending}
-                        onPress={() => setLineId(item.id)}
+                        onPress={() =>
+                          setPicked((ids) => (selected ? ids.filter((id) => id !== item.id) : [...ids, item.id]))
+                        }
                         style={{
                           minHeight: MIN_TOUCH_TARGET + 12,
                           flexDirection: "row",
@@ -182,16 +189,15 @@ export default function FaultReportScreen() {
                           style={{
                             width: 22,
                             height: 22,
-                            borderRadius: radius.full,
+                            borderRadius: 6,
                             borderWidth: 2,
                             borderColor: selected ? color.brand : color.inputLine,
+                            backgroundColor: selected ? color.brand : "transparent",
                             alignItems: "center",
                             justifyContent: "center",
                           }}
                         >
-                          {selected ? (
-                            <View style={{ width: 10, height: 10, borderRadius: radius.full, backgroundColor: color.brand }} />
-                          ) : null}
+                          {selected ? <CheckIcon size={14} color={color.onBrand} strokeWidth={3} /> : null}
                         </View>
                         <Thumb uri={item.product.cover_image} />
                         <View style={{ flex: 1, gap: 2 }}>
@@ -208,17 +214,17 @@ export default function FaultReportScreen() {
                 </View>
               </Panel>
             ) : null}
-            {line ? (
+            {chosen.length ? (
               <View accessibilityRole="radiogroup" style={{ gap: space.sm }}>
                 <ChoiceRow
-                  title="Didn't receive this"
-                  sub="It was not in the bag at the handover."
+                  title={chosen.length > 1 ? "Didn't receive these" : "Didn't receive this"}
+                  sub="Not in the bag at the handover."
                   selected={missing}
                   onPress={() => setMissing(true)}
                 />
                 <ChoiceRow
                   title="Not working"
-                  sub="It came, but it does not work as listed."
+                  sub="Came, but does not work as listed."
                   selected={!missing}
                   onPress={() => setMissing(false)}
                 />
@@ -245,9 +251,9 @@ export default function FaultReportScreen() {
               courier={byRenit(booking)}
             />
             {basket ? (
-              line ? (
+              chosen.length ? (
                 <Notice tone="info" icon="info" title="How Renit decides">
-                  {lineFaultNotice(line)}
+                  {lineFaultNotice(chosen)}
                 </Notice>
               ) : null
             ) : (
@@ -291,7 +297,11 @@ export default function FaultReportScreen() {
       <ConfirmSheet
         ref={confirm}
         title="Send this report to Renit?"
-        body="Renit gets your words and photos now. A report can't be taken back, and the item has to go back before any refund."
+        body={
+          basket
+            ? "Renit gets your words and photos now. A report can't be taken back. The rest of the rental goes on while Renit decides."
+            : "Renit gets your words and photos now. A report can't be taken back, and the item has to go back before any refund."
+        }
         confirmLabel="Send to Renit"
         loading={sending}
         onConfirm={() => {
