@@ -1,3 +1,4 @@
+import { describe, expect, it } from "@jest/globals";
 import { BookingCustomer, BookingLine, CancelOutcome, cancelCopy, cancelHint, cancelOutcomeOf, payRentCopy } from "@/lib/booking";
 import {
   basketActive,

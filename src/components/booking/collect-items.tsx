@@ -17,6 +17,7 @@ import {
   ticksOf,
 } from "@/lib/booking-lines";
 import { dayErrorText, telUrl } from "@/lib/day-of";
+import { track } from "@/lib/events";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -53,6 +54,7 @@ export function useItemTicks(booking: BookingCustomer, now: Date) {
       const answer = await postReceived(booking.number, body);
       queryClient.setQueryData(key, answer);
       setPosted(answer);
+      track("handover_items_ticked", { booking: booking.number, not_here: answer.not_here.length });
     } catch (error) {
       const failure = apiError(error);
       if (failure?.code === "validation_error") {
