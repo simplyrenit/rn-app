@@ -140,6 +140,22 @@ describe("Today's lists", () => {
     expect(comingBackRow({ ...back, late_days: 0, return_by: null }, NOW).sub).toBe("Due today");
   });
 
+  it("a courier return with the rider or at the shop is not 'due', whatever its last day (ENG-333)", () => {
+    const early = { ...back, late_days: 0, return_by: "2026-10-15T14:30:00Z" };
+    expect(comingBackRow({ ...early, return_state: "at_shop" }, NOW)).toEqual({
+      number: "RN-24790",
+      title: "Sony PS5 · Isha T.",
+      sub: "Back at your shop. Record it in the app",
+      pill: { label: "Back", tone: "success" },
+    });
+    expect(comingBackRow({ ...early, return_state: "picked_up" }, NOW)).toMatchObject({
+      sub: "With the rider, on its way to you",
+      pill: { label: "On its way", tone: "neutral" },
+    });
+    // The shop's own return, and a server before ENG-333, read as before.
+    expect(comingBackRow({ ...back, return_state: "" }, NOW).pill?.label).toBe("1 day late");
+  });
+
   it("bookings waiting for the shop to open are one line each", () => {
     expect(waitingLine({ ring_at: "2026-10-14T04:30:00Z", count: 3 }, NOW)).toBe("Ringing tomorrow 10 am: 3 bookings");
     expect(waitingLine({ ring_at: "2026-10-13T11:30:00Z", count: 1 }, NOW)).toBe("Ringing today 5 pm: 1 booking");

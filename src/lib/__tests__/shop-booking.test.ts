@@ -150,6 +150,13 @@ describe("a card on the list", () => {
     expect(cardNote(booking({ stage: "out" }), NOW)).toBe("Back by Mon 26 Oct, 8:00 pm");
     expect(cardNote(booking({ stage: "ready", exit: "cancelled_by_owner" }), NOW)).toBeNull();
   });
+
+  it("a courier return the rider brought back is back, not due (ENG-333)", () => {
+    const leg = (state: string) =>
+      ({ ...booking({ stage: "out" }), delivered_by: "renit", courier: { return: { state, window: null, earliest: null, seal: "R-2052" } } }) as unknown as BookingShop;
+    expect(cardNote(leg("at_shop"), NOW)).toBe("Back at your shop. Record it in the app");
+    expect(cardNote(leg("picked_up"), NOW)).toBe("Back by Mon 26 Oct, 8:00 pm");
+  });
 });
 
 describe("a booking's timeline", () => {
