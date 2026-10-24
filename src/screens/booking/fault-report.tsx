@@ -174,7 +174,7 @@ export default function FaultReportScreen() {
                         key={item.id}
                         accessibilityRole="checkbox"
                         accessibilityState={{ checked: selected }}
-                        accessibilityLabel={`${item.product.title}, ${item.ref}`}
+                        accessibilityLabel={`${item.product.title}, ${item.ref}${item.claim ? ", already reported" : ""}`}
                         activeOpacity={0.7}
                         disabled={sending}
                         onPress={() =>
@@ -210,7 +210,8 @@ export default function FaultReportScreen() {
                             {item.product.title}
                           </Text>
                           <Text fontSize="text-sm" tone="body">
-                            {item.ref}
+                            {/* Renit filed it for an item ticked Not here (ENG-337); picked again, these words join that report. */}
+                            {item.claim ? `${item.ref} · Already reported` : item.ref}
                           </Text>
                         </View>
                       </TouchableOpacity>
