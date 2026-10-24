@@ -210,7 +210,8 @@ export default function FaultReportScreen() {
                             {item.product.title}
                           </Text>
                           <Text fontSize="text-sm" tone="body">
-                            {/* Renit filed it for an item ticked Not here (ENG-337); picked again, these words join that report. */}
+                            {/* Renit filed it for an item ticked Not here (ENG-337). Picked again, these words join it
+                                while it is open; once it is decided they are a new report. */}
                             {item.claim ? `${item.ref} · Already reported` : item.ref}
                           </Text>
                         </View>
