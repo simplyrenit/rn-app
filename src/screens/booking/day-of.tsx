@@ -246,11 +246,11 @@ export function DayOf({ booking, receivedAt }: { booking: BookingCustomer; recei
         />
       ) : null}
 
-      {/* CT-45c: taken without one item. Its report is filed after the handover, from the rental, where the server takes it. */}
+      {/* CT-45c: taken without one item. Renit files its report once the code is typed (ENG-337). */}
       {notHere.length ? (
         <Notice tone="warning" icon="warning" title={`Not here: ${theItems(notHere)}`}>
-          Show your code for the rest. Once you have them, report what is missing from your rental, within 24 hours of the
-          handover: Renit can refund up to its rent.
+          Show your code for the rest. Once it is typed, Renit's desk gets a report on what is missing and can refund up to
+          its rent. You'll hear by the end of tomorrow.
         </Notice>
       ) : null}
 

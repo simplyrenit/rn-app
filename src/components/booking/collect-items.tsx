@@ -261,8 +261,8 @@ export function ChoiceRow({ title, sub, selected, onPress }: { title: string; su
 
 /**
  * CT-45a, "The lens isn't here?": Ask the shop (a call; it may still be in the car), Take the rest and report (the item is
- * ticked Not here and the code shows for the rest; the report on it is filed after the handover, where the server takes
- * it), or Refuse everything (today's refusal at the door, for every item). `callNumber`: the shop's, once calls are open.
+ * ticked Not here and the code shows for the rest; the server files the report on it once the code is typed, ENG-337),
+ * or Refuse everything (today's refusal at the door, for every item). `callNumber`: the shop's, once calls are open.
  */
 export const NotHereSheet = forwardRef<
   BottomSheetModal,

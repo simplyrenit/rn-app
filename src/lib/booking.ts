@@ -216,6 +216,8 @@ export interface BookingLine {
   deposit: string;
   /** `refused`: the shop unticked it; `no_unit`: it lost its unit before the accept. */
   state: "live" | "refused" | "no_unit";
+  /** The fault claim naming it, or null; absent from a server before ENG-337, which files one for an item ticked Not here. */
+  claim?: number | null;
 }
 
 export type PaymentPurpose = "booking_amount" | "rent" | "rent_and_deposit" | "deposit";

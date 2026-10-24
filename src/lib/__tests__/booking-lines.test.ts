@@ -328,7 +328,7 @@ describe("the day-of ticks (D44, CT-34, CT-45)", () => {
     const copy = notHereCopy(ready, lens);
     expect(copy.title).toBe("The Sony FE lens isn't here?");
     expect(copy.take?.sub).toBe(
-      "Your code shows for the Sony A7 IV camera and the Manfrotto tripod. After the handover, report the Sony FE lens: Renit can refund up to its rent (₹900). Its ₹5,000 deposit share comes back with your deposit."
+      "Your code shows for the Sony A7 IV camera and the Manfrotto tripod. Once it is typed, Renit's desk gets a report on the Sony FE lens: it can refund up to its rent (₹900). Its ₹5,000 deposit share comes back with your deposit."
     );
     expect(copy.refuse.sub).toBe("This refuses all 3 items, not only the Sony FE lens. Lens Lane takes everything back.");
     // Another item already Not here is not "the rest"; with none left, only Ask and Refuse are offered.
