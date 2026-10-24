@@ -50,7 +50,7 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
   const items = liveLines(booking).length;
   // CT-45c: items ticked Not here at the handover (this run of the app) are reported from here, the first place they can be.
   const notHere = can("report_fault")
-    ? liveLines(booking).filter((line) => rememberedTicks(number)?.not_here.includes(line.id))
+    ? liveLines(booking).filter((line) => rememberedTicks(number)?.received.not_here.includes(line.id))
     : [];
   const late = copy.late.tone === "warning";
   const extension = booking.extensions?.[booking.extensions.length - 1] ?? null;

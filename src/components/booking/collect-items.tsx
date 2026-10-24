@@ -37,17 +37,21 @@ import { useQueryClient } from "react-query";
  */
 export function useItemTicks(booking: BookingCustomer, now: Date) {
   const queryClient = useQueryClient();
-  const [posted, setPosted] = useState<Received | null>(() => rememberedTicks(booking.number));
-  const [draft, setDraft] = useState<Ticks>({});
+  // Back on this screen in the same run: the server's ticks, or the phone's whose send failed (offered again).
+  const kept = rememberedTicks(booking.number);
+  const [posted, setPosted] = useState<Received | null>(kept?.logged ? kept.received : null);
+  const [draft, setDraft] = useState<Ticks>(kept && !kept.logged ? ticksOf(kept.received) : {});
   const [sending, setSending] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState(Boolean(kept && !kept.logged));
 
   const send = async (body: Received) => {
     setSending(true);
     setFailed(false);
+    // Kept before the send: the rental screen's prompt to report what was Not here must not depend on the signal.
+    rememberTicks(booking.number, body, false);
     try {
       const answer = await postReceived(booking.number, body);
-      rememberTicks(booking.number, answer);
+      rememberTicks(booking.number, answer, true);
       setPosted(answer);
       track("handover_items_ticked", { booking: booking.number, not_here: answer.not_here.length });
     } catch (error) {

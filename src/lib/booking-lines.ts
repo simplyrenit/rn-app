@@ -243,11 +243,12 @@ export interface Received {
 /** Several live items: the day-of ticks and the plural words. A basket left with one item reads as one item. */
 export const manyItems = (b: Lines) => liveLines(b).length > 1;
 
-// ponytail: the ticks the server logged, kept in memory for this run of the app (the query cache would drop them after its
-// five idle minutes, mid-handover). A restart forgets them: the customer ticks again and the server answers the first ticks.
-const sentTicks = new Map<string, Received>();
-export const rememberTicks = (number: string, received: Received) => void sentTicks.set(number, received);
-export const rememberedTicks = (number: string): Received | null => sentTicks.get(number) ?? null;
+// ponytail: a booking's ticks, kept in memory for this run of the app (the query cache would drop them after its five idle
+// minutes, mid-handover): the phone's own once every item is ticked, then the server's answer (`logged`). A restart forgets
+// them: the customer ticks again and the server answers the first ticks.
+const sentTicks = new Map<string, { received: Received; logged: boolean }>();
+export const rememberTicks = (number: string, received: Received, logged: boolean) => void sentTicks.set(number, { received, logged });
+export const rememberedTicks = (number: string) => sentTicks.get(number) ?? null;
 
 /** The body of `POST …/received/` once every live item is ticked one way; null until then, and the code stays hidden. */
 export function receivedBody(b: Lines, ticks: Ticks): Received | null {

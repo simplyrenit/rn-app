@@ -336,9 +336,13 @@ describe("the day-of ticks (D44, CT-34, CT-45)", () => {
   it("ticks several items only: one item left after a partial accept is handed over as one", () => {
     expect(manyItems(ready)).toBe(true);
     expect(manyItems(basket({ stage: "ready", lines: [camera, { ...lens, state: "refused" }] }))).toBe(false);
-    expect(dayOfCopy(basket({ stage: "ready", lines: [camera, { ...lens, state: "refused" }] }), NOW).title).toBe(
-      "Collect your Sony A7 IV camera + 2 more on Sat 24 Oct"
-    );
+    // The server's summary is the one live item's own title then (D31).
+    const one = basket({
+      stage: "ready",
+      product: { name: "PRO_1", title: "Sony A7 IV camera", cover_image: null },
+      lines: [camera, { ...lens, state: "refused" }],
+    });
+    expect(dayOfCopy(one, NOW).title).toBe("Collect your Sony A7 IV camera on Sat 24 Oct");
   });
 
   it("says the day's title for the items", () => {
