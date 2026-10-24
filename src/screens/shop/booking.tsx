@@ -113,7 +113,8 @@ const RECORD_TAGS = {
 function Items({ booking }: { booking: BookingShop }) {
   const moment = ["out", "returned", "closed"].includes(booking.stage) && !booking.exit ? "return" : "handover";
   const reads = recordWanted(moment, booking);
-  const list = useShotList(booking.number, reads).data;
+  // The list is read from the accept on, so each item says "Not started" before the handover.
+  const list = useShotList(booking.number, !booking.exit && booking.stage !== "ringing").data;
   const capture = useCaptures(booking.number, false, reads).data?.[moment]?.owner;
   const draft = useCaptureDraft(booking.number, moment, "owner");
   const records = Object.fromEntries(basketItems(list, draft, capture).map((item) => [item.id, RECORD_TAGS[item.word]]));

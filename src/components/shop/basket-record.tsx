@@ -10,6 +10,7 @@ import {
   CaptureDraft,
   Moment,
   ShotList,
+  recordWanted,
   setIdMatch,
   setReceived,
   startDraft,
@@ -197,6 +198,8 @@ export function BasketRecord({
     };
   }, [number]);
   const draft = record.draft;
+  // Nothing more is sent once the server has the whole record, or the booking no longer takes one (it ended early).
+  const locked = complete || !recordWanted(moment, booking);
   const list = draft?.list ?? query.data ?? kept;
   const capture = useCaptures(number, watching && !complete).data?.[moment]?.owner;
   const items = basketItems(list, draft, capture);
@@ -233,7 +236,7 @@ export function BasketRecord({
   const idTick = moment === "handover" && Boolean(list.id_match_required);
   const idTicked = Boolean(draft?.idMatch || capture?.id_match_ticked);
   const video = videoWord(draft, capture);
-  const left = complete ? [] : thingsLeft(items, { idTick: idTick && !idTicked, firstName: first, received: moment === "return" });
+  const left = locked ? [] : thingsLeft(items, { idTick: idTick && !idTicked, firstName: first, received: moment === "return" });
   const done = items.filter((i) => (moment === "return" ? i.received && i.word === "recorded" : i.word === "recorded")).length;
   const refusal = draft?.error && !draft.error.retry ? draft.error : null;
 
@@ -255,7 +258,7 @@ export function BasketRecord({
           key={item.id}
           item={item}
           moment={moment}
-          locked={complete}
+          locked={locked}
           onReceived={(on) => change((d) => setReceived(d, item.id, on))}
           onPart={(part) => change((d) => tick(d, part))}
           onTake={(shot) => (shot ? record.openAt(shot) : record.open())}
@@ -263,7 +266,7 @@ export function BasketRecord({
         />
       ))}
 
-      {moment === "return" && !complete && booking.stage === "out" && items.some((i) => !i.received) ? (
+      {moment === "return" && !locked && booking.stage === "out" && items.some((i) => !i.received) ? (
         // D51: the return can't be finished with an item unticked. Today's not-returned flow then runs on the booking.
         <View style={{ gap: space.sm }}>
           <Notice tone="warning" icon="warning" title="Something missing? Don't finish">
@@ -307,7 +310,7 @@ export function BasketRecord({
             <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, padding: space.md, borderTopWidth: 1, borderTopColor: color.line }}>
               <CheckBox
                 checked={idTicked}
-                onPress={() => (complete ? undefined : change((d) => setIdMatch(d, !d.idMatch)))}
+                onPress={() => (locked ? undefined : change((d) => setIdMatch(d, !d.idMatch)))}
                 accessibilityLabel={`I checked ${first}'s ID`}
               />
               <View style={{ flex: 1, gap: 2 }}>
@@ -351,7 +354,7 @@ export function BasketRecord({
         </Panel>
       ) : null}
 
-      {!complete && (record.state === "start" || record.state === "continue") ? (
+      {!locked && (record.state === "start" || record.state === "continue") ? (
         <Button onPress={record.open}>{record.state === "start" ? "Record the items" : "Continue recording"}</Button>
       ) : null}
     </View>
