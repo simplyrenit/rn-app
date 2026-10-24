@@ -15,6 +15,7 @@ import {
   legSteps,
   packByText,
   packSteps,
+  returnTitle,
   riderCard,
   ringCourierLine,
   sealOf,
@@ -354,6 +355,13 @@ describe("the return of a courier booking", () => {
       "Item arriving Mon 26 Oct, 4:00 – 6:00 pm: it is with the rider now"
     );
     expect(arrivingLine(courier({ return: { ...set, state: "at_shop" } }))).toBeNull();
+  });
+
+  it("titles the return 'Item arriving' until the rider has brought it back (ENG-333)", () => {
+    const set = { state: "picked_up", window: { from: "2026-10-26T10:30:00Z", to: "2026-10-26T12:30:00Z" }, earliest: "2026-10-26", seal: "R-2052" };
+    expect(returnTitle(courier())).toBe("Item arriving");
+    expect(returnTitle(courier({ return: set }))).toBe("Item arriving");
+    expect(returnTitle(courier({ return: { ...set, state: "at_shop" } }))).toBe("Back at your shop");
   });
 });
 

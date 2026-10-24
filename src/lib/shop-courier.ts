@@ -192,6 +192,11 @@ export function arrivingLine(courier: OwnerCourier): string | null {
   return state === "picked_up" ? `Item arriving ${when}: it is with the rider now` : `Item arriving ${when}`;
 }
 
+/** The owner's return heading while the booking is out: "Item arriving" until the rider has brought it back (ENG-333). */
+export function returnTitle(courier: OwnerCourier): string {
+  return courier.return.state === "at_shop" ? "Back at your shop" : "Item arriving";
+}
+
 /** The return steps the owner does itself: take it from the rider, record it, then report within 24 hours if needed. */
 export const RECEIPT_NOTE =
   "When the rider hands it over, check the seal, then record its condition before you open anything else. A problem can be reported with that record.";

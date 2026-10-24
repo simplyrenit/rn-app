@@ -31,6 +31,7 @@ import {
   legSteps,
   packByText,
   packSteps,
+  returnTitle,
   riderCard,
   sealOf,
 } from "@/lib/shop-courier";
@@ -313,7 +314,7 @@ export function CourierReturn({ booking, courier, receivedAt, watching }: Props)
     >
       <View style={{ gap: 2 }}>
         <Text role="screenTitle" accessibilityRole="header">
-          {out ? "Item arriving" : copy.title}
+          {out ? returnTitle(courier) : copy.title}
         </Text>
         <Text fontSize="text-md" tone="body">
           {[booking.product.title, number, customerName(booking.customer)].join(" · ")}

@@ -126,7 +126,7 @@ export function PhotoRow({
       ) : null}
       {photos.length >= max ? (
         <Text fontSize="text-sm" tone="body">
-          {`That is the most: ${max} photos.`}
+          {`That is the most: ${max} ${max === 1 ? "photo" : "photos"}.`}
         </Text>
       ) : (
         <TouchableOpacity
