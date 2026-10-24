@@ -338,6 +338,8 @@ export interface BookingCustomer {
   ring_state: RingState;
   exit: BookingExit;
   exit_reason: string;
+  /** Cart plan D46 (T10): the item the shop couldn't give when it cancelled, or null. Absent from an older server. */
+  exit_line?: { id: number; ref: string; title: string } | null;
   is_open: boolean;
   product: { name: string; title: string; cover_image: string | null };
   /** Cart plan T6: one row per item; a booking before lines has one. Absent from an older server. */
@@ -1606,7 +1608,8 @@ export interface CancelMoney {
 
 /** `GET /api/bookings/{number}/cancel/`: what cancelling would cost, before it is done. */
 export interface CancelOutcome {
-  case: "ringing" | "after_accept" | "free" | "inside_24h";
+  /** `shop_changed` (cart D11): the shop accepted only some items and the rent is unpaid, so the ₹99 comes back. */
+  case: "ringing" | "after_accept" | "shop_changed" | "free" | "inside_24h";
   back: CancelMoney[];
   kept: CancelMoney[];
   to_owner: string;
@@ -1655,7 +1658,12 @@ export function cancelCopy(outcome: CancelOutcome, courier = false): { title: st
   return {
     title: ringing ? "Cancel this request?" : "Cancel this booking?",
     lines: lines.length ? lines : ["Nothing has been paid, so there is nothing to refund."],
-    confirm: ringing ? "Cancel request" : "Cancel booking",
+    // Cart D11: after a partial accept the ₹99 comes back, and the button says so.
+    confirm: ringing
+      ? "Cancel request"
+      : outcome.case === "shop_changed" && outcome.back[0]
+        ? `Cancel · ${money(outcome.back[0].amount)} back`
+        : "Cancel booking",
   };
 }
 
@@ -1699,7 +1707,8 @@ export function cancelOutcomeOf(
   if (back.length === 0 && kept.length === 0) return null;
   const reason = booking.exit_reason;
   return {
-    case: reason === "free" || reason === "inside_24h" || reason === "after_accept" ? reason : "ringing",
+    case:
+      reason === "free" || reason === "inside_24h" || reason === "after_accept" || reason === "shop_changed" ? reason : "ringing",
     back,
     kept,
     to_owner: m.owner_share ?? "0.00",
@@ -1861,7 +1870,7 @@ export function bookingAmountCopy(
 // ---- Pay the rent (BK-06, ENG-174) -------------------------------------------------------------
 
 /** "by 10:13 am", and the day when it is not today. The server's own time: no length of time is written. */
-function byWhen(iso: string | null | undefined, now: Date): string {
+export function byWhen(iso: string | null | undefined, now: Date): string {
   const when = iso ? timeAndDay(iso, now) : null;
   if (!when) return "";
   return when.day === "today" ? ` by ${when.time}` : ` by ${when.time} ${when.day}`;
@@ -2406,6 +2415,8 @@ export function cancelHint(outcome: CancelOutcome, courier = false): string {
   switch (outcome.case) {
     case "ringing":
       return "The booking amount comes back in full.";
+    case "shop_changed":
+      return `The shop accepted only some items, so your ${money(outcome.back[0]?.amount)} comes back in full.`;
     case "free": {
       const day = dayOf(outcome.free_until);
       const until = day ? `Rent back in full until ${dayShort(day)}, ${clock(outcome.free_until)}.` : "Rent back in full if you cancel now.";
@@ -2469,7 +2480,8 @@ export function stagePill(
   }
   switch (booking.stage) {
     case "ringing":
-      if (booking.ring_state === "awaiting_payment") return { label: "Payment pending", tone: "warning" };
+      // Not "Payment pending": nothing is being paid, the request is simply not sent yet (Figma FIXES-r1 B3 row 7).
+      if (booking.ring_state === "awaiting_payment") return { label: "Not sent yet", tone: "neutral" };
       if (booking.ring_state === "waiting_to_open") return { label: "Asked at opening", tone: "warning" };
       return { label: "Asking the owner", tone: "warning" };
     case "accepted":

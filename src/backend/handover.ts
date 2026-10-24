@@ -1,4 +1,5 @@
 import { BookingCustomer, DayStatus, PaymentStart } from "@/lib/booking";
+import type { Received } from "@/lib/booking-lines";
 import { BOOKINGS_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import type { BookingShop } from "@/lib/shop-booking";
@@ -31,6 +32,14 @@ export async function payDeposit(number: string): Promise<{ payment: PaymentStar
 /** One of the three preset taps. `409 too_early` before `day.call_from`. */
 export async function setDayStatus<B = BookingCustomer>(number: string, status: Exclude<DayStatus, "">): Promise<B> {
   return (await axiosInstance.post<{ booking: B }>(url(number, "status/"), { status })).data.booking;
+}
+
+/**
+ * The day-of ticks on a booking of several items (cart D44): every live line once, Got it or Not here. Logged once; a
+ * repeat answers the ticks logged first. `409 too_early` before `day.call_from`; 400 when the lines don't match.
+ */
+export async function postReceived(number: string, ticks: Received): Promise<Received> {
+  return (await axiosInstance.post<{ received: Received }>(url(number, "received/"), ticks)).data.received;
 }
 
 /** "They did not come", with a photo taken on the spot. `409 too_early` before `day.no_show_from`; `409 claim_open`. */

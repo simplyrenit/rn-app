@@ -13,6 +13,7 @@ import {
   rentalsEmpty,
   stagePill,
 } from "@/lib/booking";
+import { basketNextLine, moreBadge } from "@/lib/booking-lines";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { selectionFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
@@ -31,7 +32,8 @@ const TOPBAR_PADDING = 16;
 function RentalCard({ booking, onPress }: { booking: BookingCustomer; onPress: () => void }) {
   const { color } = useTheme();
   const pill = stagePill(booking);
-  const next = rentalNextLine(booking);
+  // A partial accept names how many of the items the rent is for (cart plan §3.7).
+  const next = basketNextLine(booking) ?? rentalNextLine(booking);
   const sub = rentalSubLine(booking);
   const number = bookingLabel(booking.number);
   return (
@@ -45,6 +47,7 @@ function RentalCard({ booking, onPress }: { booking: BookingCustomer; onPress: (
       <SummaryCard
         title={booking.product.title}
         image={booking.product.cover_image}
+        more={moreBadge(booking)}
         lines={[sub, number]}
         right={<Pill label={pill.label} tone={pill.tone} />}
         footer={

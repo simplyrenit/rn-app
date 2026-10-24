@@ -63,7 +63,10 @@ export type EventName =
   // `product_viewed {product}` once per visit to someone else's listing, signed in;
   // `product_cta_tapped {product, cta}` on its bar's button. rn-api's catalogue lists both.
   | "product_viewed"
-  | "product_cta_tapped";
+  | "product_cta_tapped"
+  // Cart D44 (ENG-326): a basket's day-of ticks went in. `handover_items_ticked {booking, not_here}`: the booking's
+  // number and how many items were Not here.
+  | "handover_items_ticked";
 
 export interface QueuedEvent {
   name: EventName;

@@ -165,6 +165,11 @@ function Deposit({
           <Text fontSize="text-md" tone="body" style={{ textAlign: "center" }}>
             {copy.refund}
           </Text>
+          {copy.madeOf ? (
+            <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
+              {copy.madeOf}
+            </Text>
+          ) : null}
         </View>
 
         {changed ? (

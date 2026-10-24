@@ -1,6 +1,6 @@
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
 import { GetHelp } from "@/components/booking/get-help";
-import { BottomBar, MoneyLine, Panel, SummaryCard, TextButton } from "@/components/booking/parts";
+import { BottomBar, MoneyLine, Notice, Panel, SummaryCard, TextButton } from "@/components/booking/parts";
 import { PushNotice } from "@/components/booking/push-notice";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { Text } from "@/components/core";
@@ -159,14 +159,15 @@ export function Confirming({ booking, receivedAt }: { booking: BookingCustomer; 
           />
         </BottomBar>
       ) : limitReached ? (
+        // CT-49: say what still works and when, as a warning, with no button that does nothing (FIXES-r1 B3 row 6).
         <BottomBar>
-          <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
-            You have cancelled as many requests as you can today.
-          </Text>
+          <Notice tone="warning" icon="warning" title="You've cancelled as many requests as you can today">
+            {`You can't cancel while ${booking.shop.name} is deciding. If they accept, you can cancel then, but Renit keeps the ${amount}. You can cancel requests again after midnight.`}
+          </Notice>
         </BottomBar>
       ) : null}
 
-      <CancelSheet ref={cancelSheet} number={booking.number} courier={byRenit(booking)} />
+      <CancelSheet ref={cancelSheet} number={booking.number} courier={byRenit(booking)} booking={booking} />
     </View>
   );
 }

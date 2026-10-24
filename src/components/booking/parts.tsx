@@ -7,6 +7,7 @@ import React from "react";
 import { StyleProp, TouchableOpacity, View, ViewStyle } from "react-native";
 import {
   CameraIcon,
+  CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
@@ -43,15 +44,38 @@ export function Panel({ children, style }: { children: React.ReactNode; style?: 
 
 const THUMB = 56;
 
-/** The product's photo, or the frames' grey tile with a camera when there is none. */
-export function Thumb({ uri }: { uri?: string | null }) {
+/**
+ * The product's photo, or the frames' grey tile with a camera when there is none. `more`: a booking's other items, "+2",
+ * in the corner (cart plan §3.7, CT-30a).
+ */
+export function Thumb({ uri, more }: { uri?: string | null; more?: string | null }) {
   const { color } = useTheme();
   const box = { width: THUMB, height: THUMB, borderRadius: 8 } as const;
-  return uri ? (
+  const photo = uri ? (
     <Image source={{ uri }} style={box} contentFit="cover" transition={150} accessible={false} />
   ) : (
     <View style={[box, { backgroundColor: color.skeleton, alignItems: "center", justifyContent: "center" }]}>
       <CameraIcon size={24} color={color.textDim} />
+    </View>
+  );
+  if (!more) return photo;
+  return (
+    <View>
+      {photo}
+      <View
+        style={{
+          position: "absolute",
+          right: 4,
+          bottom: 4,
+          paddingHorizontal: 5,
+          borderRadius: radius.full,
+          backgroundColor: "rgba(0,0,0,0.65)",
+        }}
+      >
+        <Text fontSize="text-xs" fontWeight="font-bold" tone="onPhoto">
+          {more}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -64,12 +88,15 @@ export function Thumb({ uri }: { uri?: string | null }) {
 export function SummaryCard({
   title,
   image,
+  more,
   lines,
   right,
   footer,
 }: {
   title: string;
   image?: string | null;
+  /** A booking's other items on the photo: "+2". */
+  more?: string | null;
   lines: (string | null | undefined)[];
   /** Beside the title: the stage pill on the Rentals tab. */
   right?: React.ReactNode;
@@ -79,7 +106,7 @@ export function SummaryCard({
   return (
     <Panel>
       <View style={{ flexDirection: "row", gap: space.md, padding: space.md }}>
-        <Thumb uri={image} />
+        <Thumb uri={image} more={more} />
         <View style={{ flex: 1, gap: 2 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
             <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={2} style={{ flex: 1 }}>
@@ -144,7 +171,7 @@ export function MoneyLine({
   );
 }
 
-type NoticeTone = "info" | "warning" | "brand" | "danger";
+type NoticeTone = "info" | "warning" | "brand" | "danger" | "success";
 
 /**
  * A tinted note with an icon: the deposit note, the closed shop, a thing in the way. `danger` with a `title` is an alert
@@ -157,7 +184,7 @@ export function Notice({
   children,
 }: {
   tone?: NoticeTone;
-  icon?: "info" | "clock" | "warning";
+  icon?: "info" | "clock" | "warning" | "check";
   title?: string;
   children: React.ReactNode;
 }) {
@@ -167,9 +194,17 @@ export function Notice({
     warning: { bg: color.warningWash, fg: color.warning, line: color.warning },
     brand: { bg: color.brandPanel, fg: color.brandText, line: color.brandPanelLine },
     danger: { bg: color.dangerWash, fg: color.danger, line: color.danger },
+    // G10: money coming back (cart CT-29b, CT-47a).
+    success: { bg: color.successWash, fg: color.success, line: color.success },
   }[tone];
   const Icon =
-    icon === "clock" ? ClockIcon : icon === "warning" ? ExclamationTriangleIcon : InformationCircleIcon;
+    icon === "clock"
+      ? ClockIcon
+      : icon === "warning"
+        ? ExclamationTriangleIcon
+        : icon === "check"
+          ? CheckCircleIcon
+          : InformationCircleIcon;
   return (
     <View
       style={{

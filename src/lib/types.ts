@@ -434,7 +434,8 @@ export type RootStackParamList = {
   /** Picks how many more days; the price screen then asks with `extends`. */
   BookingExtend: { number: string };
   /** BK-20's "Something doesn't work?": the customer's fault report, with photos, within 24 hours of the handover (ENG-252). */
-  BookingFault: { number: string };
+  /** `lines`: a basket's items to report, picked already (the ones ticked Not here at the handover, cart CT-45c). */
+  BookingFault: { number: string; lines?: number[] };
   /**
    * One claim, for either side (ENG-252, ENG-253): who raised it, the amount, the deadline, the reply
    * (the customer's one reply is sent here), what was decided and what it did to the money. Which side of the
