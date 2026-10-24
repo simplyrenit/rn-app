@@ -379,7 +379,10 @@ export function withReceived(draft: CaptureDraft, onServer: readonly number[] | 
 }
 
 /** The booking is no longer out: the desk took the return by hand, and the record completes without the Received ticks. */
-export const waiveReceived = (draft: CaptureDraft): CaptureDraft => (draft.receivedWaived ? draft : { ...draft, receivedWaived: true });
+export const waiveReceived = (draft: CaptureDraft): CaptureDraft =>
+  draft.receivedWaived
+    ? draft
+    : { ...draft, receivedWaived: true, error: draft.error?.text === RECEIVED_NEEDED.text ? null : draft.error };
 
 export function setIdMatch(draft: CaptureDraft, ticked: boolean): CaptureDraft {
   return isBasketList(draft.list) ? { ...draft, idMatch: ticked, idTouched: true } : { ...draft, idMatch: ticked };

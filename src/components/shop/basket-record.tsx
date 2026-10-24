@@ -1,5 +1,5 @@
 import { captureQueue } from "@/backend/capture-jobs";
-import { readKeptShotList, useCaptures, useShotList } from "@/backend/captures";
+import { capturesQueryKey, readKeptShotList, useCaptures, useShotList } from "@/backend/captures";
 import { GetHelp } from "@/components/booking/get-help";
 import { Notice, Panel, TextButton } from "@/components/booking/parts";
 import type { RecordHandle } from "@/components/capture/record-card";
@@ -25,6 +25,7 @@ import { BasketItem, ItemShot, basketItems, itemTag, thingsLeft, videoWord } fro
 import { useTheme } from "@/lib/theme";
 import React, { useEffect, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
+import { useQueryClient } from "react-query";
 import { ArrowPathIcon, CameraIcon, ExclamationTriangleIcon, UserIcon, VideoCameraIcon } from "react-native-heroicons/outline";
 import { CheckCircleIcon } from "react-native-heroicons/solid";
 
@@ -214,6 +215,12 @@ export function BasketRecord({
     // Once for each new set of the server's ticks.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftId, receivedKey]);
+  // A send just landed: the server's lists are read again, so a read that left before it can't stand for long.
+  const queryClient = useQueryClient();
+  const synced = draft?.synced;
+  useEffect(() => {
+    if (synced) void queryClient.invalidateQueries(capturesQueryKey(number));
+  }, [synced, queryClient, number]);
   // The desk took the return by hand (an item missing, OR12): the record completes without the Received ticks (T11).
   const waived = moment === "return" && booking.stage !== "out";
   useEffect(() => {
@@ -317,7 +324,7 @@ export function BasketRecord({
             <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, padding: space.md, borderTopWidth: 1, borderTopColor: color.line }}>
               <CheckBox
                 checked={idTicked}
-                onPress={() => (locked ? undefined : change((d) => setIdMatch(d, !d.idMatch)))}
+                onPress={() => (locked ? undefined : change((d) => setIdMatch(d, !idTicked)))}
                 accessibilityLabel={`I checked ${first}'s ID`}
               />
               <View style={{ flex: 1, gap: 2 }}>

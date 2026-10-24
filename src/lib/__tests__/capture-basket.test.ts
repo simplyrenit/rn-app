@@ -188,7 +188,8 @@ describe("a basket's return is finished only with every item Received (D51)", ()
     expect(draft.received).toEqual([11]);
     expect(draft.sealed).toBe(false);
     expect(draft.error?.text).toMatch(/^Tick every item Received/);
-    // Ticking it again clears the words.
+    // Ticking it again clears the words, and so does the desk taking the return by hand.
     expect(setReceived(draft, 12, true).error).toBeNull();
+    expect(waiveReceived(draft).error).toBeNull();
   });
 });
