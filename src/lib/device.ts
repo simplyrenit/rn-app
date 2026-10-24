@@ -41,11 +41,13 @@ export function makeDeviceInfo({ id, modelName, deviceName, os }: DeviceFacts): 
  *
  * With the app's version too, at every signed-in start (ENG-323): the server keeps
  * it per session for the cart's gate, which lets a shop take baskets only once every
- * phone of its owner reports at least `CART_MIN_OWNER_APP` (cart plan §9.2). The store
- * versions are not bumped today (Android `versionName` 1.0.2, iOS `MARKETING_VERSION`
- * 2.0.0), so the gate tells builds apart only once the release with the owner's basket
- * screens gives both platforms one new version. The server ignores a version that is
- * not digits and dots, so it is sent as the store has it.
+ * phone of its owner reports at least `CART_MIN_OWNER_APP` (cart plan §9.2). Both
+ * platforms say 2.0.0 since ENG-338: Android's `versionName`, and iOS's literal
+ * `CFBundleShortVersionString` in Info.plist. iOS said 2.0.0 well before the owner's
+ * basket screens, so a 2.0.0 gate tells builds apart only because a build from before
+ * this function sent a version sends none, which the server counts as old. A higher
+ * gate needs both platforms bumped to match. The server ignores a version that is not
+ * digits and dots, so it is sent as the store has it.
  */
 export function sessionBody(
   token: string | null | undefined,
