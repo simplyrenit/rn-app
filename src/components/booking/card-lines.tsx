@@ -121,7 +121,8 @@ function Chip({ chip, onView }: { chip: LineChip; onView?: () => void }) {
 
 /**
  * One item. `left`: left in the cart for this checkout; G12 draws it with a dim title and struck amounts, never faded.
- * `action` is Leave in cart or Add back; `chips` say why it is in the way or left out.
+ * `action` is Leave in cart or Add back; `chips` say why it is in the way or left out. The chips take the row's full
+ * width under the item: between the photo and the action, at a large font, they wrapped two letters a line (ENG-336).
  */
 export function LineRow({
   title,
@@ -150,53 +151,51 @@ export function LineRow({
 }) {
   const strike = left ? ({ textDecorationLine: "line-through" } as const) : undefined;
   return (
-    <View style={{ flexDirection: "row", gap: space.md, paddingVertical: space.sm }}>
-      <Thumb uri={image} />
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text fontSize="text-md" fontWeight="font-bold" tone={left ? "dim" : "default"} numberOfLines={2}>
-          {title}
-        </Text>
-        <Text fontSize="text-sm" tone="body">
-          {meta}
-        </Text>
-        {amount || deposit ? (
-          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "baseline", columnGap: space.sm }}>
-            {amount ? (
-              <Text fontSize="text-md" fontWeight="font-bold" style={strike}>
-                {amount}
-              </Text>
-            ) : null}
-            {deposit ? (
-              <Text fontSize="text-sm" tone="body" style={strike}>
-                {deposit}
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
-        {chips.length ? (
-          <View style={{ gap: space.xs, marginTop: space.xs }}>
-            {chips.map(({ chip, onView }) => (
-              <Chip key={chip.text} chip={chip} onView={onView} />
-            ))}
-          </View>
-        ) : null}
-        {extra}
-      </View>
-      {action ? (
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel={`${action.label}: ${title}`}
-          accessibilityHint={action.hint}
-          accessibilityState={{ disabled: Boolean(action.disabled) }}
-          disabled={action.disabled}
-          onPress={action.onPress}
-          style={{ minHeight: MIN_TOUCH_TARGET, paddingLeft: space.sm, justifyContent: "flex-start" }}
-        >
-          <Text fontSize="text-sm" fontWeight="font-bold" tone={action.disabled ? "dim" : "brand"}>
-            {action.label}
+    <View style={{ gap: space.xs, paddingVertical: space.sm }}>
+      <View style={{ flexDirection: "row", gap: space.md }}>
+        <Thumb uri={image} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text fontSize="text-md" fontWeight="font-bold" tone={left ? "dim" : "default"} numberOfLines={2}>
+            {title}
           </Text>
-        </TouchableOpacity>
-      ) : null}
+          <Text fontSize="text-sm" tone="body">
+            {meta}
+          </Text>
+          {amount || deposit ? (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "baseline", columnGap: space.sm }}>
+              {amount ? (
+                <Text fontSize="text-md" fontWeight="font-bold" style={strike}>
+                  {amount}
+                </Text>
+              ) : null}
+              {deposit ? (
+                <Text fontSize="text-sm" tone="body" style={strike}>
+                  {deposit}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
+        {action ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={`${action.label}: ${title}`}
+            accessibilityHint={action.hint}
+            accessibilityState={{ disabled: Boolean(action.disabled) }}
+            disabled={action.disabled}
+            onPress={action.onPress}
+            style={{ minHeight: MIN_TOUCH_TARGET, paddingLeft: space.sm, justifyContent: "flex-start" }}
+          >
+            <Text fontSize="text-sm" fontWeight="font-bold" tone={action.disabled ? "dim" : "brand"}>
+              {action.label}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+      {chips.map(({ chip, onView }) => (
+        <Chip key={chip.text} chip={chip} onView={onView} />
+      ))}
+      {extra}
     </View>
   );
 }

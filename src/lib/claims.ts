@@ -595,10 +595,14 @@ export function faultNotice(booking: Pick<BookingCustomer, "money">): string {
   );
 }
 
-/** Why "Send to Renit" is off, or null: the words and at least one photo are both needed (a fault report needs evidence, N14). */
-export function faultHold(statement: string, photos: number): string | null {
+/**
+ * Why "Send to Renit" is off, or null: the words and at least one photo are both needed (a fault report needs evidence,
+ * N14). `missing`, "Didn't receive this": there is nothing to photograph, so the photo is of what was handed over.
+ */
+export function faultHold(statement: string, photos: number, missing = false): string | null {
   if (!statement.trim()) return "Say what does not work.";
-  return photos > 0 ? null : "Add at least one photo of the problem.";
+  if (photos > 0) return null;
+  return missing ? "Add a photo of what you were handed." : "Add at least one photo of the problem.";
 }
 
 export function faultErrorText(error: ApiError | null): string {

@@ -376,6 +376,8 @@ describe("the customer's fault report", () => {
     expect(faultHold("", 1)).toBe("Say what does not work.");
     expect(faultHold("It will not switch on", 0)).toBe("Add at least one photo of the problem.");
     expect(faultHold("It will not switch on", 1)).toBeNull();
+    expect(faultHold("Not in the bag", 0, true)).toBe("Add a photo of what you were handed.");
+    expect(faultHold("Not in the bag", 1, true)).toBeNull();
   });
 
   it("reads when the item must be back from the claim's own return_by; only a claim without it is counted here (report plus the return hours)", () => {

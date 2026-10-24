@@ -80,7 +80,10 @@ export default function FaultReportScreen() {
   const blocked = faultBlocked(booking, now);
   const basket = isBasket(booking);
   const chosen = basket ? liveLines(booking).filter((l) => picked.includes(l.id)) : [];
-  const hold = basket && !chosen.length ? "Pick the items with the problem." : faultHold(statement, photos.length);
+  // "Didn't receive this": the server needs a photo all the same, so it is of what came (ENG-336).
+  const absent = chosen.length > 0 && missing;
+  const hold =
+    basket && !chosen.length ? "Pick the items with the problem." : faultHold(statement, photos.length, absent);
   // What the desk reads first: CT-36b's "Didn't receive this" or "Not working".
   const said = basket
     ? `${missing ? (chosen.length > 1 ? "Didn't receive these" : "Didn't receive this") : "Not working"}: ${statement.trim()}`
@@ -243,8 +246,13 @@ export default function FaultReportScreen() {
               style={{ minHeight: 110 }}
             />
             <Text role="sectionTitle" accessibilityRole="header">
-              Photos of the problem
+              {absent ? "A photo of what you were handed" : "Photos of the problem"}
             </Text>
+            {absent ? (
+              <Text fontSize="text-sm" tone="body">
+                Lay out everything the shop gave you and take a photo of it, so Renit can see what is missing.
+              </Text>
+            ) : null}
             <PhotoRow
               photos={photos}
               onChange={setPhotos}
