@@ -206,7 +206,9 @@ function ClaimBody({ read, receivedAt }: { read: ClaimRead; receivedAt: number }
       retry: 1,
     }
   );
-  const returnLine = role === "customer" ? faultReturnLine(claim, faultReturnTarget(claim, first, chain.data), now) : null;
+  // A report on items of a basket never sends the item back first: the rental goes on (cart D45).
+  const returnLine =
+    role === "customer" && claim.lines.length === 0 ? faultReturnLine(claim, faultReturnTarget(claim, first, chain.data), now) : null;
   const raised = claim.created_at ? momentLabel(claim.created_at, now) : "";
 
   return (

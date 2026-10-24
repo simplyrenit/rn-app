@@ -1,5 +1,6 @@
 import { GetHelp } from "@/components/booking/get-help";
-import { BottomBar, Panel, SummaryCard, TextButton } from "@/components/booking/parts";
+import { LineRow } from "@/components/booking/card-lines";
+import { BottomBar, MoneyLine, Notice, Panel, SummaryCard, TextButton } from "@/components/booking/parts";
 import { usePay } from "@/components/booking/use-pay";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, Text } from "@/components/core";
@@ -7,6 +8,7 @@ import {
   BookingCustomer,
   bookingHow,
   datesLine,
+  daysLabel,
   money,
   payButtonLabel,
   payPhaseText,
@@ -84,6 +86,9 @@ export function PayBookingAmount({
   // "Today" and "tomorrow" by the server's day, not this phone's (P3-17).
   const opens = booking.shop.opens_at ? timeAndDay(booking.shop.opens_at, now) : null;
   const note = payPhaseText(phase);
+  // CT-24: a cart card's booking lists its items; only a cart checkout books more than one.
+  const items = (booking.lines ?? []).filter((line) => line.state === "live");
+  const many = items.length > 1 ? `about your ${items.length} items ` : "";
 
   return (
     <View style={{ flex: 1 }}>
@@ -96,14 +101,40 @@ export function PayBookingAmount({
         </Text>
         <Text fontSize="text-md" tone="body">
           {opens
-            ? `It counts toward the rent. The owner is closed now and will be asked at ${opens.time} ${opens.day}.`
-            : "It counts toward the rent. The owner is asked the moment it is paid."}
+            ? `It counts toward the rent. The owner is closed now and will be asked ${many}at ${opens.time} ${opens.day}.`
+            : `It counts toward the rent. The owner is asked ${many}the moment it is paid.`}
         </Text>
-        <SummaryCard
-          title={booking.product.title}
-          image={booking.product.cover_image}
-          lines={[datesLine(booking), `${bookingHow(booking)} · ${booking.shop.name}`]}
-        />
+        {many ? (
+          <>
+            <Panel style={{ padding: space.md, gap: space.xs }}>
+              <Text fontSize="text-sm" tone="body">
+                {`${datesLine(booking)} · ${bookingHow(booking)} · ${booking.shop.name}`}
+              </Text>
+              {items.map((line) => (
+                <LineRow
+                  key={line.id}
+                  title={line.product.title}
+                  image={line.product.cover_image}
+                  meta={daysLabel(booking.days)}
+                  amount={money(line.rent)}
+                />
+              ))}
+              <View style={{ gap: space.xs, paddingTop: space.sm }}>
+                <MoneyLine label="Total" amount={money(booking.money.total)} />
+                <MoneyLine label="Pay now · counts toward the rent" amount={amount} bold />
+              </View>
+            </Panel>
+            <Notice tone="info" icon="info">
+              {`Your ${items.length} items stay in your cart, marked "In checkout", until the rent is paid. Nothing more is charged until ${booking.shop.name} accepts.`}
+            </Notice>
+          </>
+        ) : (
+          <SummaryCard
+            title={booking.product.title}
+            image={booking.product.cover_image}
+            lines={[datesLine(booking), `${bookingHow(booking)} · ${booking.shop.name}`]}
+          />
+        )}
         <Panel>
           <GetHelp booking={booking} />
         </Panel>

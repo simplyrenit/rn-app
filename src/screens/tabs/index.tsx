@@ -73,7 +73,7 @@ export default function Home() {
             <View style={{ flex: 1, marginRight: -12 }}>
               <SearchBar />
             </View>
-            <CartButton style={{ marginRight: SCREEN_GUTTER - 10 }} />
+            <CartButton from="home" style={{ marginRight: SCREEN_GUTTER - 10 }} />
           </View>
         ) : (
           <SearchBar />

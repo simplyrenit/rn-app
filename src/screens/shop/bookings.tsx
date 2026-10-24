@@ -18,7 +18,7 @@ function BookingRow({ card, onPress }: { card: BookingCard; onPress: () => void 
   return (
     <TouchableOpacity
       accessibilityRole="button"
-      accessibilityLabel={[card.title, card.pill.label, card.dates, card.who, card.note, `You earn ${card.earn}`]
+      accessibilityLabel={[card.title, card.items, card.pill.label, card.dates, card.who, card.note, `You earn ${card.earn}`]
         .filter(Boolean)
         .join(". ")}
       accessibilityHint="Opens the booking"
@@ -41,6 +41,11 @@ function BookingRow({ card, onPress }: { card: BookingCard; onPress: () => void 
             <Text fontSize="text-sm" tone="body">
               {card.who}
             </Text>
+            {card.items ? (
+              <View style={{ flexDirection: "row", marginTop: space.xs }}>
+                <Pill label={card.items} tone="brand" />
+              </View>
+            ) : null}
           </View>
         </View>
         {card.note ? (

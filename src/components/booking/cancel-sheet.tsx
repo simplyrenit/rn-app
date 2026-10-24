@@ -2,8 +2,9 @@ import { bookingQueryKey, cancelBooking, fetchCancelOutcome, readUntilRefund } f
 import { Button, Skeleton, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { apiError } from "@/lib/api-error";
-import { CancelOutcome, cancelCopy, cancelErrorText, cancelledKey } from "@/lib/booking";
-import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
+import { BookingCustomer, CancelOutcome, cancelCopy, cancelErrorText, cancelledKey } from "@/lib/booking";
+import { cancelHead } from "@/lib/booking-lines";
+import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -27,8 +28,14 @@ const isOutcome = (value: unknown): value is CancelOutcome =>
  * server cancels nothing and sends the new outcome, which replaces the one on
  * screen and is asked about again. So a tap never costs more than the sheet said.
  */
-/** `courier`: a B1 courier booking, whose courier fee the sheet never says goes to the owner. */
-export const CancelSheet = forwardRef<CancelSheetHandle, { number: string; courier?: boolean }>(({ number, courier = false }, ref) => {
+/**
+ * `courier`: a B1 courier booking, whose courier fee the sheet never says goes to the owner. `booking`: with several items
+ * the sheet first says the cancel covers all of them, and whether they stay in the cart (CT-33).
+ */
+export const CancelSheet = forwardRef<
+  CancelSheetHandle,
+  { number: string; courier?: boolean; booking?: BookingCustomer }
+>(({ number, courier = false, booking }, ref) => {
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -94,9 +101,10 @@ export const CancelSheet = forwardRef<CancelSheetHandle, { number: string; couri
   };
 
   const copy = outcome ? cancelCopy(outcome, courier) : null;
+  const head = outcome && booking ? cancelHead(outcome, booking) : null;
 
   return (
-    <CustomBottomSheetModal ref={sheet} isDark={isDark} snapPoints={[380 + insets.bottom]} frame>
+    <CustomBottomSheetModal ref={sheet} isDark={isDark} snapPoints={[(head ? 500 : 380) + insets.bottom]} frame>
       <View
         style={{
           paddingHorizontal: SCREEN_GUTTER,
@@ -108,9 +116,21 @@ export const CancelSheet = forwardRef<CancelSheetHandle, { number: string; couri
         <Text role="sectionTitle" accessibilityRole="header">
           {copy?.title ?? "Cancel?"}
         </Text>
+        {head ? (
+          <View style={{ gap: 2, padding: space.md, borderRadius: radius.button, backgroundColor: color.surfaceRaised }}>
+            <Text fontSize="text-md" fontWeight="font-bold">
+              {head.title}
+            </Text>
+            {head.sub ? (
+              <Text fontSize="text-sm" tone="body">
+                {head.sub}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
         {copy ? (
           <View style={{ gap: space.xs }}>
-            {copy.lines.map((line) => (
+            {[...copy.lines, ...(head?.stay ? [head.stay] : [])].map((line) => (
               <Text key={line} fontSize="text-md" tone="body">
                 {line}
               </Text>

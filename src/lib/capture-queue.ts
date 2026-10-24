@@ -4,12 +4,14 @@ import {
   CaptureBody,
   CaptureDraft,
   applyAnswer,
+  applyPartial,
   captureBody,
   draftsToKeep,
   dropFile,
   files,
   localUris,
   nextWork,
+  partialBody,
   refuseDark,
   removedUris,
   resendLater,
@@ -45,7 +47,8 @@ export interface CaptureQueueDeps {
 /**
  * The queue of captures on their way to the server: one for the whole app,
  * outside any screen. A photo goes up as soon as it is taken; when the person has
- * finished the walk and every file is up, the record is sent in one call. Nothing
+ * finished the walk and every file is up, the record is sent in one call (a
+ * basket's is also sent as its photos go up, `partialDue`). Nothing
  * is finished until the server has every file, and nothing is lost before that:
  * the drafts are kept on the phone, so a dead connection, a closed app or a
  * restart only delays them. `kick` runs it again (the app came back to the front,
@@ -134,11 +137,14 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
         }
         continue;
       }
+      const partial = Boolean(work.partial);
       try {
-        const capture = await deps.send(draft, captureBody(draft));
-        change(draft.id, (d) => applyAnswer(d, capture));
+        const body = partial ? partialBody(draft) : captureBody(draft);
+        const capture = await deps.send(draft, body);
+        // A basket's record on its way: the answer is remembered; a missing file is the finished send's to name.
+        change(draft.id, (d) => (partial ? applyPartial(d, capture, body) : applyAnswer(d, capture)));
         const reopened = drafts.find((d) => d.id === draft.id);
-        if (reopened && !reopened.done && reopened.sealed && !reopened.desk) {
+        if (!partial && reopened && !reopened.done && reopened.sealed && !reopened.desk) {
           const times = (missed.get(draft.id) ?? 0) + 1;
           missed.set(draft.id, times);
           if (times >= 2) {

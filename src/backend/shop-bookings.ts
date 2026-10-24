@@ -3,6 +3,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { BOOKINGS_ENDPOINT, SHOP_BOOKINGS_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { BookingShop, ShopCancelWarning, ShopCounts, ShopTab } from "@/lib/shop-booking";
+import { cancelBody } from "@/lib/shop-lines";
 import { useInfiniteQuery, useQuery } from "react-query";
 
 export const bookingsQueryKey = (username: string | undefined, tab: ShopTab) => ["shop-bookings", username, tab];
@@ -64,12 +65,16 @@ export async function fetchShopCancelWarning(number: string): Promise<ShopCancel
   return (await axiosInstance.get<{ warning: ShopCancelWarning }>(shopBookingUrl(number, "cancel/"))).data.warning;
 }
 
-/** Cancels after accepting: the customer gets everything back and the shop is marked. */
-export async function cancelShopBooking(number: string): Promise<BookingShop> {
+/**
+ * Cancels after accepting: the customer gets everything back and the shop is marked. On a booking of several items the
+ * shop may name the one it can't give (`line`, cart D46): the whole booking is cancelled either way.
+ */
+export async function cancelShopBooking(number: string, line: number | null = null): Promise<BookingShop> {
   return (
-    await axiosInstance.post<{ warning: ShopCancelWarning; booking: BookingShop }>(shopBookingUrl(number, "cancel/"), {
-      confirm: true,
-    })
+    await axiosInstance.post<{ warning: ShopCancelWarning; booking: BookingShop }>(
+      shopBookingUrl(number, "cancel/"),
+      cancelBody(line)
+    )
   ).data.booking;
 }
 

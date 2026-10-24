@@ -1,14 +1,33 @@
-import { acceptBooking, refuseBooking, ringEndedQueryKey, useLive, useShopBooking } from "@/backend/shop-ring";
+import { acceptBooking, refuseBooking, ringEndedQueryKey, shopBookingQueryKey, useLive, useShopBooking } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
 import { dismissRingNotifications } from "@/backend/notifications";
-import { BottomBar, Panel, Thumb } from "@/components/booking/parts";
+import { BottomBar, MoneyLine, Notice, Panel, TextButton, Thumb } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { Button, EmptyState, Skeleton, Text } from "@/components/core";
+import { CheckBox } from "@/components/core/checkbox";
+import { LineChip, LineMoney } from "@/components/shop/lines";
 import { RefuseSheet } from "@/components/shop/refuse-sheet";
+import { UntickSheet, UntickSheetHandle } from "@/components/shop/untick-sheet";
 import { apiError } from "@/lib/api-error";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { errorFeedback, successFeedback } from "@/lib/haptics";
+import { clock, money, rangeLabel } from "@/lib/booking";
 import { ringCourierLine } from "@/lib/shop-courier";
+import {
+  ShopLine,
+  acceptBody,
+  acceptLabel,
+  acceptNote,
+  answeredLines,
+  isBasket,
+  raceCopy,
+  raceLost,
+  ringEyebrow,
+  ringMoney,
+  tickedIds,
+  unitsFree,
+  untickedMeta,
+} from "@/lib/shop-lines";
 import {
   Ring,
   RingEnding,
@@ -269,6 +288,236 @@ function RingingView({
   );
 }
 
+/**
+ * MR-01 to MR-03, a request for several items: a row a line with its tick (ticked by default), the units free, what it
+ * earns and its deposit; "You earn" as the ticks stand; Accept all, or Accept K of N; Can't do any. An unticked item
+ * names why and that it is blocked; an item lost to another booking (an Accept race, or taken while it rang) can't be
+ * ticked. An extension takes every item, so it has no ticks (D24).
+ */
+function BasketRingingView({
+  ring,
+  working,
+  note,
+  unticked,
+  lost,
+  race,
+  onTick,
+  onAccept,
+  onCantDoIt,
+  more,
+  onNext,
+}: {
+  ring: Ring;
+  working: "accept" | "refuse" | null;
+  note: string | null;
+  /** The owner's unticks on this phone, with the reason each was given. */
+  unticked: Map<number, string>;
+  /** Items the server said lost their unit in an Accept race. */
+  lost: ReadonlySet<number>;
+  race: { title: string; body: string } | null;
+  onTick: (line: ShopLine) => void;
+  onAccept: (ticked: number[]) => void;
+  onCantDoIt: () => void;
+  more: number;
+  onNext: () => void;
+}) {
+  const { color } = useTheme();
+  const insets = useSafeAreaInsets();
+  const lines = ring.lines ?? [];
+  const extension = Boolean(ring.extends);
+  const ticked = tickedIds(lines, extension ? new Set() : new Set(unticked.keys()), lost);
+  const sums = ringMoney(ring, ticked);
+  const range = rangeLabel(ring.first_day, ring.last_day);
+  const deadline = clock(ring.ring_ends_at);
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: space.md, paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.lg, gap: space.md }}
+      >
+        {more > 0 ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={`${moreText(more)}. See the next one.`}
+            activeOpacity={0.7}
+            onPress={onNext}
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              paddingHorizontal: space.md,
+              paddingVertical: space.sm,
+              borderRadius: radius.button,
+              backgroundColor: color.brandWash,
+            }}
+          >
+            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+              {moreText(more)}
+            </Text>
+            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+              See next
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+        {/* The header stays short, so the items start above the fold (Figma ruling G13). */}
+        <View style={{ gap: 2 }}>
+          <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+            {ringEyebrow(ring)}
+          </Text>
+          <Text fontSize="text-xl" fontWeight="font-bold" accessibilityRole="header">
+            {ring.product.title}
+          </Text>
+          <Text fontSize="text-sm" tone="body">
+            {ringDates(ring)}
+          </Text>
+          <Text fontSize="text-sm" tone="body">
+            {[ringWhere(ring), ringCourierLine(ring)].filter(Boolean).join(" · ")}
+          </Text>
+          {deadline ? (
+            <View style={{ marginTop: space.xs }}>
+              <LineChip label={`Answer by ${deadline}`} tone="neutral" />
+            </View>
+          ) : null}
+        </View>
+
+        <Panel style={{ flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md }}>
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: radius.full,
+              backgroundColor: color.brandPanel,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
+              {ring.customer.first_name.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text fontSize="text-md" fontWeight="font-bold">
+              {customerName(ring.customer)}
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}>
+              {ring.customer.id_checked === true ? <CheckCircleMini size={16} color={color.success} /> : null}
+              <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+                {customerLine(ring.customer)}
+              </Text>
+            </View>
+          </View>
+        </Panel>
+
+        {race ? (
+          <Notice tone="danger" icon="warning" title={race.title}>
+            {race.body}
+          </Notice>
+        ) : null}
+
+        <Panel>
+          <View style={{ padding: space.md, gap: 2 }}>
+            <View style={{ flexDirection: "row", gap: space.sm }}>
+              <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
+                {extension ? "Every item of the booking" : "Tick what you can give"}
+              </Text>
+              {extension ? null : (
+                <Text fontSize="text-sm" tone="body">
+                  {`${ticked.length} of ${lines.length} ticked`}
+                </Text>
+              )}
+            </View>
+            <Text fontSize="text-sm" tone="body">
+              {extension
+                ? "An extension takes every item, or none."
+                : "Untick what you can't give. We'll block it for these dates."}
+            </Text>
+          </View>
+          {lines.map((line) => {
+            const gone = line.state !== "live" || lost.has(line.id);
+            const reason = unticked.get(line.id);
+            const off = gone || (!extension && reason !== undefined);
+            const free = unitsFree(line.units);
+            return (
+              <View
+                key={line.id}
+                style={{ flexDirection: "row", gap: space.md, padding: space.md, borderTopWidth: 1, borderTopColor: color.line }}
+              >
+                <Thumb uri={line.product.cover_image} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text fontSize="text-md" fontWeight="font-bold" tone={off ? "dim" : "default"}>
+                    {line.product.title}
+                  </Text>
+                  <Text fontSize="text-sm" tone="body">
+                    {[line.ref, gone ? `0 of ${line.units?.quantity ?? 0} free` : free].filter(Boolean).join(" · ")}
+                  </Text>
+                  {!gone && reason !== undefined && !extension ? (
+                    <Text fontSize="text-sm" tone="body">
+                      {untickedMeta(reason, range)}
+                    </Text>
+                  ) : null}
+                  <LineMoney earn={money(line.owner_earns ?? line.rent)} deposit={`Deposit ${money(line.deposit)}`} off={off} />
+                  {gone ? (
+                    <LineChip label="No longer free" tone="danger" />
+                  ) : off ? (
+                    <LineChip label="Not available · dates blocked" tone="neutral" />
+                  ) : null}
+                </View>
+                {extension ? null : (
+                  <CheckBox
+                    checked={!off}
+                    onPress={() => (gone ? undefined : onTick(line))}
+                    accessibilityLabel={gone ? `${line.product.title}: no longer free` : `Give ${line.product.title}`}
+                  />
+                )}
+              </View>
+            );
+          })}
+        </Panel>
+
+        <Panel style={{ padding: space.md, gap: space.sm }}>
+          <MoneyLine label={sums.rentLabel} amount={sums.rent} />
+          {sums.delivery ? <MoneyLine label="Delivery" amount={sums.delivery} /> : null}
+          <View style={{ height: 1, backgroundColor: color.line }} />
+          <MoneyLine label="You earn" amount={sums.earn} bold />
+          <Text fontSize="text-xs" tone="body">
+            Amounts as Renit sends them for each item. They change as you tick.
+          </Text>
+        </Panel>
+        {note ? (
+          <Text fontSize="text-sm" accessibilityRole="alert" style={{ color: color.danger, textAlign: "center" }}>
+            {note}
+          </Text>
+        ) : null}
+      </ScrollView>
+
+      <View
+        style={{
+          paddingHorizontal: SCREEN_GUTTER,
+          paddingTop: space.sm,
+          paddingBottom: Math.max(insets.bottom, space.md),
+          gap: space.xs,
+          borderTopWidth: 1,
+          borderTopColor: color.line,
+          backgroundColor: color.canvas,
+        }}
+      >
+        <Text fontSize="text-md" accessibilityLiveRegion="polite">
+          <Text fontSize="text-md" fontWeight="font-bold">
+            {sums.earn}
+          </Text>
+          {" · You earn"}
+        </Text>
+        <Text fontSize="text-sm" tone="body">
+          {ticked.length === 0 ? "Tick an item to accept, or say you can't do any." : acceptNote(ring.customer.first_name, ticked.length, lines.length)}
+        </Text>
+        <Button loading={working === "accept"} disabled={working !== null || ticked.length === 0} onPress={() => onAccept(ticked)}>
+          {acceptLabel(ticked.length, lines.length)}
+        </Button>
+        <TextButton label="Can't do any" disabled={working !== null} onPress={onCantDoIt} />
+      </View>
+    </View>
+  );
+}
+
 /** SH-03: a request that is over. Another device's answer, this phone's own, or nobody's. */
 function EndedView({
   ending,
@@ -277,9 +526,12 @@ function EndedView({
   onSee,
   more = 0,
   onNext,
+  detail,
 }: {
   ending: RingEnding;
   summary: RingSummary | null;
+  /** A basket answered: what was accepted and what was left out (MR-03b). */
+  detail?: string | null;
   onDone: () => void;
   /** An accepted request has a booking to go and see. */
   onSee?: () => void;
@@ -316,6 +568,11 @@ function EndedView({
         <Text fontSize="text-md" tone="body" style={{ textAlign: "center" }}>
           {copy.sub}
         </Text>
+        {detail ? (
+          <Text fontSize="text-md" tone="body" style={{ textAlign: "center" }}>
+            {detail}
+          </Text>
+        ) : null}
         {summary ? (
           <Panel style={{ alignSelf: "stretch", marginTop: space.md }}>
             <View style={{ flexDirection: "row", gap: space.md, padding: space.md }}>
@@ -455,6 +712,11 @@ export default function ShopRingScreen() {
   // A second tap, before the first has been answered, is dropped here: state is not fast enough.
   const sending = useRef(false);
   const sheet = useRef<BottomSheetModal>(null);
+  // A basket's ticks (cart §4.1): the items unticked here with their reason, and those lost in an Accept race.
+  const untickSheet = useRef<UntickSheetHandle>(null);
+  const [unticked, setUnticked] = useState<Map<number, string>>(() => new Map());
+  const [lost, setLost] = useState<Set<number>>(() => new Set());
+  const [race, setRace] = useState<{ title: string; body: string } | null>(null);
 
   // What a `ring_ended` push said, when one arrived (written by the router in `nav.tsx`).
   const pushedEnd =
@@ -540,13 +802,24 @@ export default function ShopRingScreen() {
       const failure = apiError(error);
       const ending = endingFromError(failure);
       sheet.current?.dismiss();
-      if (ending) {
+      const taken = raceLost(failure);
+      if (taken && view.kind === "ringing") {
+        // An Accept race (D9): those items are unticked and named, and the request keeps ringing.
+        const lines = view.ring.lines ?? [];
+        const gone = new Set([...lost, ...taken]);
+        setLost(gone);
+        setRace(raceCopy(lines.filter((l) => taken.includes(l.id)), tickedIds(lines, new Set(unticked.keys()), gone).length));
+        void live.refetch();
+        errorFeedback();
+      } else if (ending) {
         setEnded(ending);
         errorFeedback();
         settle();
       } else {
         // No answer, or a fault: the tap may have gone through. Read what the server holds.
-        if (outcomeUnknown(failure) || failure?.code === "stage_not_allowed") void live.refetch();
+        // Cart: a basket's items changed (or a push left them out): the live answer has them as they are now.
+        const reread = ["stage_not_allowed", "update_app", "lines_unknown"].includes(failure?.code ?? "");
+        if (outcomeUnknown(failure) || reread) void live.refetch();
         if (failure?.code !== "stage_not_allowed") setNote(answerErrorText(failure));
         errorFeedback();
       }
@@ -556,9 +829,11 @@ export default function ShopRingScreen() {
     }
   };
 
-  const accept = () =>
+  const accept = (ticked: number[] = []) =>
     answer("accept", async () => {
-      const booking = await acceptBooking(params.number);
+      const booking = await acceptBooking(params.number, view.kind === "ringing" ? acceptBody(view.ring, ticked) : {});
+      // Kept for the answered view: a basket's says what was accepted and what was left out.
+      queryClient.setQueryData(shopBookingQueryKey(params.number), booking);
       // The server's clock as it answered: the pay-by time is its, not the phone's.
       return hereEnding("accepted", booking.answered?.at ?? null, null, rentByLabel(booking));
     });
@@ -573,10 +848,40 @@ export default function ShopRingScreen() {
       );
     });
 
-  const summary: RingSummary | null = known ? summaryOfRing(known) : booking.data ? summaryOfBooking(booking.data) : null;
+  // A basket answered: the booking's own card, whose earnings follow what was accepted.
+  const summary: RingSummary | null =
+    booking.data && isBasket(booking.data) && view.kind !== "ringing"
+      ? summaryOfBooking(booking.data)
+      : known
+        ? summaryOfRing(known)
+        : booking.data
+          ? summaryOfBooking(booking.data)
+          : null;
+  const detail = booking.data && view.kind !== "ringing" ? answeredLines(booking.data) : null;
 
   let body: React.ReactNode;
-  if (view.kind === "ringing") {
+  if (view.kind === "ringing" && isBasket(view.ring)) {
+    body = (
+      <BasketRingingView
+        ring={view.ring}
+        working={working}
+        note={note}
+        unticked={unticked}
+        lost={lost}
+        race={race}
+        onTick={(line) => {
+          if (!unticked.has(line.id)) return untickSheet.current?.present(line);
+          const next = new Map(unticked);
+          next.delete(line.id);
+          setUnticked(next);
+        }}
+        onAccept={(ticked) => void accept(ticked)}
+        onCantDoIt={() => sheet.current?.present()}
+        more={others.length}
+        onNext={goNext}
+      />
+    );
+  } else if (view.kind === "ringing") {
     body = (
       <RingingView
         ring={view.ring}
@@ -588,15 +893,31 @@ export default function ShopRingScreen() {
         onNext={goNext}
       />
     );
-  } else if (view.kind === "here") {
-    body = <EndedView ending={withRent(view.ending)} summary={summary} onDone={close} onSee={see} more={others.length} onNext={goNext} />;
-  } else if (view.kind === "ended") {
-    body = <EndedView ending={withRent(view.ending)} summary={summary} onDone={close} onSee={see} more={others.length} onNext={goNext} />;
+  } else if (view.kind === "here" || view.kind === "ended") {
+    body = (
+      <EndedView
+        ending={withRent(view.ending)}
+        summary={summary}
+        detail={view.ending.outcome === "accepted" ? detail : null}
+        onDone={close}
+        onSee={see}
+        more={others.length}
+        onNext={goNext}
+      />
+    );
   } else if (view.kind === "unknown") {
     const finished = booking.data ? endingFromBooking(booking.data, booking.dataUpdatedAt) : null;
     body = booking.data ? (
       finished ? (
-        <EndedView ending={finished} summary={summary} onDone={close} onSee={see} more={others.length} onNext={goNext} />
+        <EndedView
+          ending={finished}
+          summary={summary}
+          detail={finished.outcome === "accepted" ? detail : null}
+          onDone={close}
+          onSee={see}
+          more={others.length}
+          onNext={goNext}
+        />
       ) : (
         <View style={{ flex: 1, justifyContent: "center" }}>
           <EmptyState
@@ -632,6 +953,11 @@ export default function ShopRingScreen() {
         dates={summary?.range ?? ""}
         busy={working === "refuse"}
         onRefuse={(reason, block) => void refuse(reason, block)}
+      />
+      <UntickSheet
+        ref={untickSheet}
+        range={summary?.range ?? ""}
+        onUntick={(line, reason) => setUnticked(new Map(unticked).set(line.id, reason))}
       />
     </View>
   );

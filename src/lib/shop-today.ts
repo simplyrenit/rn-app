@@ -14,6 +14,7 @@ import { OpenState, dayLabel, istWhen } from "@/lib/shop";
 import type { Ring } from "@/lib/shop-ring";
 import { byRenit, type DeliveredBy } from "@/lib/delivery";
 import { packByText } from "@/lib/shop-courier";
+import { type ShopLine, itemsChip } from "@/lib/shop-lines";
 
 /**
  * The shop's Today and the quick block on the phone (SH-04, SH-05; API-CONTRACT
@@ -58,6 +59,8 @@ export interface GoingOut extends TodayPerson {
   /** Null until the customer has picked an arrival window. */
   window: TimeWindow | null;
   deposit_state: string;
+  /** Cart (ENG-332): the booking's items; `product_title` is then their summary ("Sony PS5 + 2 more"). */
+  lines?: ShopLine[];
 }
 
 export interface ComingBack extends TodayPerson {
@@ -67,6 +70,8 @@ export interface ComingBack extends TodayPerson {
   return_by: string | null;
   late_days: number;
   deposit_state: string;
+  /** Cart (ENG-332), as on `GoingOut`. */
+  lines?: ShopLine[];
   /** B1: a courier's return leg ("" for the shop's own). Absent from a server before ENG-333. */
   return_state?: string;
 }
@@ -191,6 +196,9 @@ export function depositPill(state: string): RowPill | null {
   }
 }
 
+/** A booking of several items carries its "3 items" chip; one item's row is as it was. */
+const items = (item: { lines?: ShopLine[] }) => (itemsChip(item) ? { items: itemsChip(item) } : {});
+
 const who = (p: TodayPerson) => `${p.customer_first_name} ${p.customer_last_initial}.`.replace(" .", "");
 
 export interface TodayRow {
@@ -198,6 +206,8 @@ export interface TodayRow {
   title: string;
   sub: string;
   pill: RowPill | null;
+  /** "3 items" for a booking of several (MR-06a). */
+  items?: string | null;
 }
 
 /** "Epson projector · Kabir A." over "Arrives 10:00 – 11:00 am"; B1's courier "Pack by 3:15 pm". */
@@ -214,6 +224,7 @@ export function goingOutRow(item: GoingOut, now: Date = new Date()): TodayRow {
           ? `${verb} ${windowLabel(item.window)}`
           : "No arrival time picked yet",
     pill: depositPill(item.deposit_state),
+    ...items(item),
   };
 }
 
@@ -234,10 +245,10 @@ export function comingBackRow(item: ComingBack, now: Date = new Date()): TodayRo
   // B1: Renit's rider has it, or brought it: not "due" any more, whatever the last day (ENG-333).
   if (item.return_state === "at_shop") {
     // Not "Record it": the feed has no record flag, and the row stays until the desk finishes the return.
-    return { number: item.number, title, sub: "Back at your shop", pill: { label: "Back", tone: "success" } };
+    return { number: item.number, title, sub: "Back at your shop", pill: { label: "Back", tone: "success" }, ...items(item) };
   }
   if (item.return_state === "picked_up") {
-    return { number: item.number, title, sub: "With the rider, on its way to you", pill: { label: "On its way", tone: "neutral" } };
+    return { number: item.number, title, sub: "With the rider, on its way to you", pill: { label: "On its way", tone: "neutral" }, ...items(item) };
   }
   const late = item.late_days > 0;
   const by = item.return_by;
@@ -252,6 +263,7 @@ export function comingBackRow(item: ComingBack, now: Date = new Date()): TodayRo
     pill: late
       ? { label: item.late_days === 1 ? "1 day late" : `${item.late_days} days late`, tone: "danger" }
       : { label: "Due today", tone: "neutral" },
+    ...items(item),
   };
 }
 
@@ -265,7 +277,7 @@ export function waitingLine(group: Pick<WaitingToRing, "ring_at" | "count">, now
 export function ringingRow(ring: Ring): { title: string; sub: string; earn: string } {
   return {
     title: ring.product.title,
-    sub: `${rangeLabel(ring.first_day, ring.last_day)} · ${ring.customer.first_name}`,
+    sub: [rangeLabel(ring.first_day, ring.last_day), ring.customer.first_name, itemsChip(ring)].filter(Boolean).join(" · "),
     earn: money(ring.you_earn),
   };
 }

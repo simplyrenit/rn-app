@@ -1,9 +1,10 @@
 import { answerWindowChange, bookingQueryKey, fetchCancelOutcome } from "@/backend/bookings";
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
+import { BookingItems, StillInCart } from "@/components/booking/items";
 import { GetHelp } from "@/components/booking/get-help";
 import { ClaimRows } from "@/components/claims/claim-rows";
 import { Records } from "@/components/capture/record-card";
-import { Panel, SummaryCard } from "@/components/booking/parts";
+import { Notice, Panel, SummaryCard } from "@/components/booking/parts";
 import { PaymentSchedule } from "@/components/booking/payment-schedule";
 import { PaymentsList } from "@/components/booking/payments-list";
 import { Timeline } from "@/components/booking/timeline";
@@ -25,6 +26,7 @@ import {
   windowErrorText,
   windowRequestCopy,
 } from "@/lib/booking";
+import { isBasket, lapseBanner, lapseNotice, moreBadge } from "@/lib/booking-lines";
 import { COURIER, byRenit } from "@/lib/delivery";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { correctedNow } from "@/lib/server-clock";
@@ -58,7 +60,12 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
   const [answering, setAnswering] = useState<"accept" | "decline" | null>(null);
   const busy = useRef(false);
 
-  const banner = bookingBanner(booking, queryClient.getQueryData<CancelOutcome>(cancelledKey(booking.number)));
+  // A basket's rent that wasn't paid says when, and what became of the ₹99 (CT-29); everything else is as before.
+  const banner = {
+    ...bookingBanner(booking, queryClient.getQueryData<CancelOutcome>(cancelledKey(booking.number))),
+    ...lapseBanner(booking),
+  };
+  const lapse = lapseNotice(booking);
   const rows = timelineRows(booking);
   const request = windowRequestCopy(booking);
   const can = (action: string) => booking.can.includes(action);
@@ -151,6 +158,15 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
         </View>
       </View>
 
+      {lapse ? (
+        <Notice tone={lapse.tone === "success" ? "success" : "info"} icon={lapse.tone === "success" ? "check" : "info"} title={lapse.title}>
+          {lapse.body}
+        </Notice>
+      ) : null}
+
+      {/* D6, CT-41: a basket that ended before the rent leaves its items in the cart. Drawn from the cart itself. */}
+      {booking.exit && isBasket(booking) ? <StillInCart booking={booking} /> : null}
+
       {can("set_window") ? (
         <Button onPress={() => navigation.navigate("BookingWindow", { number: booking.number })}>
           Pick your arrival window
@@ -215,6 +231,7 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
       <SummaryCard
         title={booking.product.title}
         image={booking.product.cover_image}
+        more={moreBadge(booking)}
         lines={[datesLine(booking), `${bookingHow(booking)} · rent ${money(booking.money.rent)}`]}
         footer={
           <View style={{ flexDirection: "row", gap: space.sm }}>
@@ -232,6 +249,8 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
           </View>
         }
       />
+
+      <BookingItems booking={booking} />
 
       {rows.length > 0 ? (
         <View style={{ gap: space.sm }}>
@@ -315,7 +334,7 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
         <GetHelp booking={booking} />
       </Panel>
 
-      <CancelSheet ref={cancelSheet} number={booking.number} courier={byRenit(booking)} />
+      <CancelSheet ref={cancelSheet} number={booking.number} courier={byRenit(booking)} booking={booking} />
     </ScrollView>
   );
 }

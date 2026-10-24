@@ -5,7 +5,7 @@ import {
 } from "@react-navigation/native";
 import { DimensionValue, FlexAlignType, ImageSourcePropType } from "react-native";
 import type { SavedAddress } from "@/lib/addresses";
-import type { BookItem, DeliveryMode, ProductShop } from "@/lib/booking";
+import type { BookItem, CartOthers, DeliveryMode, ProductShop } from "@/lib/booking";
 import type { Moment, Side } from "@/lib/capture";
 import type { Plan } from "@/lib/plans";
 import type { ListingDelivery } from "@/lib/delivery";
@@ -371,22 +371,28 @@ export type RootStackParamList = {
    * or unanswered booking whose ₹99 moves to the new one.
    */
   BookingDates: {
-    product: string;
+    /** Book Now: one listing. Its `book_flow` picks the classic quote or the card's (D41); the screen looks the same. */
+    product?: string;
+    /**
+     * A cart checkout (cart plan §3.3, CT-20): the card's listings in cart order, without `not_listed` and `in_checkout`
+     * lines. Lines past the checkout cap start left in the cart.
+     */
+    products?: string[];
+    /** From the cart: Book sends `from_cart`. The cart passes its dates (D5) as `first_day` / `last_day`. */
+    from_cart?: boolean;
+    /** The other cards' items that stay in the cart, for the line under this card. */
+    others?: CartOthers;
     first_day?: string;
     last_day?: string;
     moved_from?: string;
-    /**
-     * A cart card's checkout (cart plan §3.3, docs/feature/cart/build/CONTRACT-CHANGES.md): its products in cart order,
-     * and `from_cart`, which Book sends on. `product` is then `products[0]`.
-     */
-    products?: string[];
-    from_cart?: boolean;
-    /** The rest of the cart, outside this card: how many items, from how many other shops (A3's copy). */
-    others?: { items: number; shops: number };
   };
   /** BK-03 and BK-11: the whole price, then Book now. */
   ReviewAndBook: {
+    /** The listing booked; in card mode the first of `lines`. */
     item: BookItem;
+    /** Card mode: every listing in this booking, sent as `products[]` (Book Now on `book_flow=card` has just `item`). */
+    lines?: BookItem[];
+    others?: CartOthers;
     first_day: string;
     last_day: string;
     delivery_mode: DeliveryMode;
@@ -398,6 +404,8 @@ export type RootStackParamList = {
     extends?: string;
     /** Booked from a cart card: the stack after Book keeps the cart (`afterBookRoutes`). */
     from_cart?: boolean;
+    /** The checkout's events' id (cart plan §9.5), from the dates step; absent, the price screen starts one. */
+    attempt_id?: string;
   };
   /**
    * One booking at whatever stage the server says it is in. `pay` opens the pay
@@ -426,7 +434,8 @@ export type RootStackParamList = {
   /** Picks how many more days; the price screen then asks with `extends`. */
   BookingExtend: { number: string };
   /** BK-20's "Something doesn't work?": the customer's fault report, with photos, within 24 hours of the handover (ENG-252). */
-  BookingFault: { number: string };
+  /** `lines`: a basket's items to report, picked already (the ones ticked Not here at the handover, cart CT-45c). */
+  BookingFault: { number: string; lines?: number[] };
   /**
    * One claim, for either side (ENG-252, ENG-253): who raised it, the amount, the deadline, the reply
    * (the customer's one reply is sent here), what was decided and what it did to the money. Which side of the
@@ -477,6 +486,11 @@ export type RootStackParamList = {
     id_match_name?: string | null;
     /** B1: a booking Renit's courier partner carries (no place in the files; the customer's return asks for the seal). */
     courier?: boolean;
+    /** Cart: a booking of several items (its live count in `items`). Its keys name each item, so no general list. */
+    basket?: boolean;
+    items?: number;
+    /** Opens the walk on this shot of the list: to take it, or take it again. */
+    shot?: string;
   };
   [key: string]: object | undefined;
 };
@@ -746,6 +760,11 @@ export interface BackendProduct {
   live_booking?: boolean;
   book_for_morning?: boolean;
   id_check_needed?: "none" | "id" | "id_and_match";
+  /**
+   * Cart plan D41: which way Book Now books, the server's switch. `card` sends `products:[name]` through the same
+   * screens; anything else, and an older server without it, the classic `product`.
+   */
+  book_flow?: "classic" | "card";
   /**
    * Cart plan D28 (T12): whether this listing's shop takes cart lines now. Absent from an older server, which is
    * read as no: the Add to cart button shows only when this is true (§9.3).

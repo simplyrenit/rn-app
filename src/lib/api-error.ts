@@ -23,6 +23,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const asText = (value: unknown) =>
   typeof value === "string" && value.trim() ? value : null;
 
+/** A failure as one word for analytics: the API's code, else the HTTP status, else "network" when nothing answered. */
+export const failureCode = (failure: ApiError | null): string | number => failure?.code ?? (failure?.status || "network");
+
 /** The failed call as an `ApiError`, or null when it was not an HTTP failure at all. */
 export function apiError(error: unknown): ApiError | null {
   if (!axios.isAxiosError(error)) return null;
