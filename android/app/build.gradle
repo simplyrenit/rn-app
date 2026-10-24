@@ -106,12 +106,12 @@ def jscFlavor = 'org.webkit:android-jsc:+'
 
 // A local build keeps the literal default below. CI overrides it with the run
 // number (-PVERSION_CODE=…) so every distributed build is installable over the
-// last one — Android refuses an update with an equal or lower versionCode, and
-// the QA channel gets a build on every merge. The default sits above the last
-// CI upload (run 11, ENG-338), so a local QA build installs over the Firebase
-// one too. Computed here, not inside defaultConfig: that DSL closure's method
-// resolution does not reach Project.findProperty the way a plain script-scope
-// closure does.
+// last one — Android refuses an update with a lower versionCode, and the QA
+// channel gets a build on every `qa-*` tag or manual run. The default sits above
+// the last CI upload (run 11, ENG-338), so a local QA build installs over the
+// Firebase one too. Computed here, not inside defaultConfig: that DSL closure's
+// method resolution does not reach Project.findProperty the way a plain
+// script-scope closure does.
 def qaVersionCode = (findProperty('VERSION_CODE') ?: '12').toInteger()
 
 android {
