@@ -101,7 +101,10 @@ export function SummaryCard({
   );
 }
 
-/** A label on the left and an amount on the right; `struck` is drawn crossed out before it. */
+/**
+ * A label on the left and an amount on the right; `struck` is drawn crossed out before it, and the amount then reads as
+ * a saving (green) unless `amountTone` says otherwise: a price that went up (CT-23a) is `default`.
+ */
 export function MoneyLine({
   label,
   amount,
@@ -113,7 +116,7 @@ export function MoneyLine({
   amount: string;
   struck?: string;
   bold?: boolean;
-  amountTone?: "success";
+  amountTone?: "success" | "default";
 }) {
   return (
     <View

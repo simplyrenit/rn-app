@@ -56,6 +56,34 @@ describe("fetchQuote", () => {
       extends: null,
     });
   });
+
+  it("sends a card's products instead of product (cart plan §5.3)", async () => {
+    const { product: _product, ...rest } = dates;
+    await fetchQuote({ ...rest, products: ["camera", "lens"] });
+    const body = api.post.mock.calls[0][1] as Record<string, unknown>;
+    expect(body.products).toEqual(["camera", "lens"]);
+    expect(body).not.toHaveProperty("product");
+  });
+});
+
+describe("bookNow, card mode", () => {
+  it("sends the deposit seen and from_cart beside products", async () => {
+    const { product: _product, ...rest } = dates;
+    await bookNow({
+      ...rest,
+      products: ["camera", "lens"],
+      terms_version: "2026-10",
+      expected_total: "2900.00",
+      expected_deposit: "26000.00",
+      from_cart: true,
+      moved_from: null,
+      client_key: "k1",
+    });
+    expect(api.post).toHaveBeenCalledWith(
+      "https://api.test/bookings/book/",
+      expect.objectContaining({ products: ["camera", "lens"], expected_deposit: "26000.00", from_cart: true })
+    );
+  });
 });
 
 describe("bookNow", () => {
