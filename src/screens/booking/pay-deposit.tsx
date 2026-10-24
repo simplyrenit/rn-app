@@ -10,6 +10,7 @@ import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { apiError } from "@/lib/api-error";
+import { UPI_LIMIT } from "@/lib/card-checkout";
 import { BookingCustomer, SLOW_POLL_MS, money, payButtonLabel, payPhaseText } from "@/lib/booking";
 import { dayErrorText, depositCharge, depositCopy, depositOverdue } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
@@ -174,6 +175,13 @@ function Deposit({
         {changed ? (
           <Notice tone="warning" icon="warning">
             The amount to pay has changed. Check it above, then tap Pay.
+          </Notice>
+        ) : null}
+
+        {/* CT-43b, D48: one UPI payment can't be over ₹1 lakh. */}
+        {Number(depositCharge(booking).amount) > UPI_LIMIT ? (
+          <Notice tone="info" icon="info" title="Pay by card or net banking">
+            This deposit is over ₹1 lakh.
           </Notice>
         ) : null}
 

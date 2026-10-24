@@ -119,7 +119,6 @@ export function StillInCart({ booking, movedFrom }: { booking: BookingCustomer; 
         label="Pick other dates"
         onPress={() =>
           navigation.navigate("BookingDates", {
-            product: inCart[0].product.name,
             products: inCart.map((line) => line.product.name),
             from_cart: true,
             moved_from: movedFrom,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { apiError, fieldErrors, hasApiCode } from "../api-error";
+import { apiError, failureCode, fieldErrors, hasApiCode } from "../api-error";
 
 /** What axios throws for an HTTP failure; `isAxiosError` is the only marker it checks. */
 const failed = (status: number, data: unknown) => ({
@@ -84,5 +84,14 @@ describe("fieldErrors", () => {
   it("is empty without field details", () => {
     expect(fieldErrors(null)).toEqual({});
     expect(fieldErrors(apiError(failed(400, { error: "nope" })))).toEqual({});
+  });
+});
+
+describe("failureCode", () => {
+  it("is the code, else the status, else network", () => {
+    expect(failureCode({ status: 409, code: "cart_full", message: null, details: null })).toBe("cart_full");
+    expect(failureCode({ status: 502, code: null, message: null, details: null })).toBe(502);
+    expect(failureCode({ status: 0, code: null, message: null, details: null })).toBe("network");
+    expect(failureCode(null)).toBe("network");
   });
 });

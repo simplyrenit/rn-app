@@ -231,7 +231,6 @@ export function Outcome({ booking }: { booking: BookingCustomer }) {
             <Button
               onPress={() =>
                 navigation.navigate("BookingDates", {
-                  product: rest[0],
                   products: rest,
                   first_day: booking.first_day,
                   last_day: booking.last_day,
