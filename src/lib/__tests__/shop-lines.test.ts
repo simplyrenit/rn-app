@@ -2,7 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 import type { ApiError } from "../api-error";
 import { Capture, ShotList, addShot, setReceived, startDraft, tick } from "../capture";
 import { endingFromError } from "../shop-ring";
-import { goingOutRow } from "../shop-today";
+import { comingBackRow, goingOutRow } from "../shop-today";
 import {
   ShopLine,
   acceptBody,
@@ -75,6 +75,12 @@ describe("a booking of several items", () => {
     };
     expect(goingOutRow({ ...row, lines: ring.lines }).items).toBe("3 items");
     expect("items" in goingOutRow({ ...row, lines: [camera] })).toBe(false);
+  });
+
+  it("a courier return of several items keeps its chip with the rider and at the shop (ENG-333)", () => {
+    const back = { ...{ number: "RN-21345", product_title: "Sony A7 IV camera + 2 more", customer_first_name: "Aarav", customer_last_initial: "M" }, stage: "out", return_by: null, late_days: 0, deposit_state: "paid", lines: ring.lines };
+    expect(comingBackRow({ ...back, return_state: "at_shop" }).items).toBe("3 items");
+    expect(comingBackRow({ ...back, return_state: "picked_up" }).items).toBe("3 items");
   });
 });
 

@@ -72,6 +72,8 @@ export interface ComingBack extends TodayPerson {
   deposit_state: string;
   /** Cart (ENG-332), as on `GoingOut`. */
   lines?: ShopLine[];
+  /** B1: a courier's return leg ("" for the shop's own). Absent from a server before ENG-333. */
+  return_state?: string;
 }
 
 /** One thing that needs the shop. `kind` is open-ended: an unknown one is still shown as its `text`. */
@@ -239,11 +241,20 @@ function dayWord(iso: string, now: Date): string {
 
 /** "Sony PS5 · Isha T." over "Was due yesterday, 8:00 pm", with "1 day late". */
 export function comingBackRow(item: ComingBack, now: Date = new Date()): TodayRow {
+  const title = `${item.product_title} · ${who(item)}`;
+  // B1: Renit's rider has it, or brought it: not "due" any more, whatever the last day (ENG-333).
+  if (item.return_state === "at_shop") {
+    // Not "Record it": the feed has no record flag, and the row stays until the desk finishes the return.
+    return { number: item.number, title, sub: "Back at your shop", pill: { label: "Back", tone: "success" }, ...items(item) };
+  }
+  if (item.return_state === "picked_up") {
+    return { number: item.number, title, sub: "With the rider, on its way to you", pill: { label: "On its way", tone: "neutral" }, ...items(item) };
+  }
   const late = item.late_days > 0;
   const by = item.return_by;
   return {
     number: item.number,
-    title: `${item.product_title} · ${who(item)}`,
+    title,
     sub: !by
       ? "Due today"
       : late

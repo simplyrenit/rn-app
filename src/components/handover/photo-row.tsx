@@ -4,6 +4,7 @@ import { takePhoto } from "@/components/capture/camera";
 import { CameraOffNotice } from "@/components/capture/camera-off";
 import { Text } from "@/components/core";
 import { MAX_EVIDENCE_PHOTOS, uploadKeeping } from "@/lib/evidence";
+import { pluralize } from "@/lib/pluralize";
 import { MIN_TOUCH_TARGET, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { Image } from "expo-image";
@@ -126,7 +127,7 @@ export function PhotoRow({
       ) : null}
       {photos.length >= max ? (
         <Text fontSize="text-sm" tone="body">
-          {`That is the most: ${max} photos.`}
+          {`That is the most: ${pluralize(max, "photo")}.`}
         </Text>
       ) : (
         <TouchableOpacity
