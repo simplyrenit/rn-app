@@ -6,11 +6,12 @@ import {
   ShotList,
   addShot,
   applyPartial,
-  bodyKey,
   canSeal,
   captureBody,
   nextWork,
+  partialBody,
   partialDue,
+  receivedIds,
   reopenForMissing,
   seal,
   setIdMatch,
@@ -18,6 +19,7 @@ import {
   setVideo,
   startDraft,
   tick,
+  waiveReceived,
   withReceived,
 } from "../capture";
 import { CaptureQueueDeps, createCaptureQueue } from "../capture-queue";
@@ -65,10 +67,32 @@ describe("a basket's send names only what this phone did", () => {
     expect(captureBody(setReceived(owner("handover"), 11, true)).received).toBeUndefined();
   });
 
-  it("takes in another phone's Received ticks unless this phone said otherwise", () => {
-    const draft = setReceived(owner("return"), 12, false);
-    expect(withReceived(draft, [11, 12]).received).toEqual([11]);
-    expect(withReceived(draft, [])).toBe(draft);
+  it("counts another phone's Received ticks but never sends them as this phone's (review r1)", () => {
+    const draft = withReceived(setReceived(owner("return"), 12, false), [11, 12]);
+    expect(receivedIds(draft)).toEqual([11]);
+    expect(captureBody(draft)).toMatchObject({ not_received: [12] });
+    expect(captureBody(draft).received).toBeUndefined();
+    expect(withReceived(draft, [12, 11])).toBe(draft);
+  });
+
+  it("lets go of the ticks the server took, so a later send can't undo another phone's untick", () => {
+    const draft = setReceived(owner("return"), 11, true);
+    const body = partialBody(draft);
+    expect(body.received).toEqual([11]);
+    const after = applyPartial(draft, { complete: false, missing: [], received: [11] }, body);
+    expect(after.received).toEqual([]);
+    expect(receivedIds(after)).toEqual([11]);
+    expect(partialDue(after)).toBe(false);
+    // Phone B unticks it: this phone's next send (a part ticked) no longer names it.
+    const later = tick(withReceived(after, []), "Camera: Battery");
+    expect(captureBody(later).received).toBeUndefined();
+    expect(receivedIds(later)).toEqual([]);
+  });
+
+  it("sends the ID tick taken back on a basket, once this phone made it", () => {
+    const ticked = setIdMatch(owner(), true);
+    expect(captureBody(setIdMatch(ticked, false)).id_match_ticked).toBe(false);
+    expect(captureBody(owner()).id_match_ticked).toBeUndefined();
   });
 });
 
@@ -78,7 +102,7 @@ describe("a basket's record goes to the server as its photos go up", () => {
     expect(partialDue(fresh)).toBe(false);
     const draft = up(addShot(fresh, "l1_front", photo("a")), "l1_front");
     expect(partialDue(draft)).toBe(true);
-    const sent = applyPartial(draft, notYet, bodyKey(captureBody(draft)));
+    const sent = applyPartial(draft, notYet, partialBody(draft));
     expect(partialDue(sent)).toBe(false);
     expect(partialDue(up(addShot(sent, "l2_front", photo("b")), "l2_front"))).toBe(true);
     expect(partialDue({ ...draft, forOther: true })).toBe(false);
@@ -91,13 +115,26 @@ describe("a basket's record goes to the server as its photos go up", () => {
     let draft = up(up(addShot(addShot(owner(), "l1_front", photo("a")), "l2_front", photo("b")), "l1_front"), "l2_front");
     draft = setVideo(draft, video);
     expect(nextWork([draft])).toMatchObject({ kind: "send", partial: true });
-    const sent = applyPartial(draft, notYet, bodyKey(captureBody(draft)));
+    const sent = applyPartial(draft, notYet, partialBody(draft));
     expect(nextWork([sent])).toMatchObject({ kind: "upload", slot: "video" });
+  });
+
+  it("never carries the video before the person has finished: the server would lock the record (review r1)", () => {
+    let draft = up(addShot(owner(), "l1_front", photo("a")), "l1_front");
+    draft = setVideo(draft, video);
+    draft = { ...draft, video: { ...draft.video!, url: "https://bucket.test/video.mp4" } };
+    expect(partialBody(draft).video).toBeUndefined();
+    const sent = applyPartial(draft, notYet, partialBody(draft));
+    expect(nextWork([sent])).toBeNull();
+    // Done: the finished send carries it.
+    expect(nextWork([seal(setIdMatch(up(addShot(sent, "l2_front", photo("b")), "l2_front"), true))])).toMatchObject({
+      kind: "send",
+    });
   });
 
   it("is done when the answer is complete (another phone's video made it whole)", () => {
     const draft = up(addShot(owner(), "l1_front", photo("a")), "l1_front");
-    expect(applyPartial(draft, { complete: true, missing: [] }, "x").done).toBe(true);
+    expect(applyPartial(draft, { complete: true, missing: [] }, partialBody(draft)).done).toBe(true);
   });
 
   it("goes through the queue: shots first, then the video, then the finished send", async () => {
@@ -131,6 +168,13 @@ describe("a basket's record goes to the server as its photos go up", () => {
 });
 
 describe("a basket's return is finished only with every item Received (D51)", () => {
+  it("is not asked once the desk took the return by hand (T11, OR12)", () => {
+    const draft = setVideo(addShot(addShot(owner("return"), "l1_front", photo("a")), "l2_front", photo("b")), video);
+    expect(canSeal(draft)).toBe(false);
+    expect(canSeal(waiveReceived(draft))).toBe(true);
+    expect(captureBody(waiveReceived(setReceived(draft, 11, true))).received).toBeUndefined();
+  });
+
   it("can't be sealed with an item unticked", () => {
     let draft = owner("return");
     draft = setVideo(addShot(addShot(draft, "l1_front", photo("a")), "l2_front", photo("b")), video);

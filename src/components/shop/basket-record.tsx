@@ -15,6 +15,7 @@ import {
   setReceived,
   startDraft,
   tick,
+  waiveReceived,
   withReceived,
 } from "@/lib/capture";
 import { MIN_TOUCH_TARGET, radius, space } from "@/lib/design-tokens";
@@ -205,14 +206,19 @@ export function BasketRecord({
   const items = basketItems(list, draft, capture);
   const onServerReceived = capture?.received;
 
-  // Another phone's Received ticks count here too, so this phone can finish the record.
+  // Another phone's Received ticks count here too, so this phone can finish the record; they are never sent as its own.
   const draftId = draft?.id;
-  const receivedKey = (onServerReceived ?? []).join(",");
+  const receivedKey = onServerReceived ? onServerReceived.join(",") : null;
   useEffect(() => {
-    if (draftId && onServerReceived?.length) captureQueue.update(draftId, (d) => withReceived(d, onServerReceived));
+    if (draftId && onServerReceived) captureQueue.update(draftId, (d) => withReceived(d, onServerReceived));
     // Once for each new set of the server's ticks.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftId, receivedKey]);
+  // The desk took the return by hand (an item missing, OR12): the record completes without the Received ticks (T11).
+  const waived = moment === "return" && booking.stage !== "out";
+  useEffect(() => {
+    if (draftId && waived) captureQueue.update(draftId, waiveReceived);
+  }, [draftId, waived]);
 
   if (!list) {
     return query.isError ? (
@@ -234,9 +240,10 @@ export function BasketRecord({
   };
   const retry = () => (draft ? captureQueue.retry(draft.id) : undefined);
   const idTick = moment === "handover" && Boolean(list.id_match_required);
-  const idTicked = Boolean(draft?.idMatch || capture?.id_match_ticked);
+  // This phone's own word, once it ticked or unticked; else either phone's tick as the server has it.
+  const idTicked = draft?.idTouched ? draft.idMatch : Boolean(draft?.idMatch || capture?.id_match_ticked);
   const video = videoWord(draft, capture);
-  const left = locked ? [] : thingsLeft(items, { idTick: idTick && !idTicked, firstName: first, received: moment === "return" });
+  const left = locked ? [] : thingsLeft(items, { idTick: idTick && !idTicked, firstName: first, received: moment === "return" && !waived });
   const done = items.filter((i) => (moment === "return" ? i.received && i.word === "recorded" : i.word === "recorded")).length;
   const refusal = draft?.error && !draft.error.retry ? draft.error : null;
 
@@ -249,7 +256,7 @@ export function BasketRecord({
         <Text fontSize="text-sm" tone="body">
           {moment === "return"
             ? `Tick and record all ${pluralize(items.length, "item")} to finish the return.`
-            : "Record each item as you pack it. Shots save as you go, and another phone at the shop can record too."}
+            : "Record each item as you pack it. Shots save as you go."}
         </Text>
       </View>
 
@@ -328,8 +335,9 @@ export function BasketRecord({
       </View>
 
       {refusal ? (
-        <Notice tone="danger" icon="warning" title="Renit refused this record">
-          {`Renit said: ${refusal.text}${refusal.status ? ` (${refusal.status})` : ""}`}
+        // The server's own words and its status (D19: any 400 is shown); a problem on this phone in its own words.
+        <Notice tone="danger" icon="warning" title={refusal.status ? "Renit refused this record" : "This record needs you"}>
+          {refusal.status ? `Renit said: ${refusal.text} (${refusal.status})` : refusal.text}
         </Notice>
       ) : null}
 

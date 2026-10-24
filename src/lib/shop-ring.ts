@@ -651,7 +651,8 @@ export function answerErrorText(error: ApiError | null): string {
     case "lines_unknown":
       return "This request's items have changed. Check them and answer again. It is still ringing.";
     case "below_booking_amount":
-      return "The items ticked cost less than the booking amount the customer paid. Tick another item, or say you can't do any.";
+      // Also exactly the ₹99 on a partial accept (ENG-318 item 4): a partial accept always leaves rent to pay.
+      return "The items ticked come to no more than the ₹99 the customer paid to send the request. Tick another item, or say you can't do any.";
     case "not_owner":
     case "not_shop_owner":
     case "forbidden":

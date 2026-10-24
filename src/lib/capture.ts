@@ -197,11 +197,19 @@ export interface CaptureDraft {
   sealNumber?: string;
   // A booking of several items (`isBasketList`). Another phone of the shop may record it too, so a send names only what
   // this phone did: the server adds shots, checklist ticks and Received ticks up item by item (cart D19, D51).
-  /** The shop's return record: line ids ticked Received on this phone, and those it unticked. */
+  /**
+   * The shop's return record: Received ticks and unticks made on this phone and not yet taken by the server, and the
+   * server's own ticks from either phone as last read (`theirReceived`, never sent back as this phone's).
+   */
   received?: number[];
   unticked?: number[];
+  theirReceived?: number[];
+  /** The booking is no longer out (the desk took the return by hand, OR12): Received is not asked for any more (T11). */
+  receivedWaived?: boolean;
   /** Checklist items this phone ticked or unticked: only those are sent. */
   touched?: string[];
+  /** The ID tick was made or taken back on this phone: only then is it sent, so an untick reaches the server too. */
+  idTouched?: boolean;
   /** The last body the server took (`bodyKey`), so what changed since is sent as the photos go up (`partialDue`). */
   synced?: string;
 }
@@ -338,13 +346,23 @@ export function tick(draft: CaptureDraft, item: string): CaptureDraft {
 }
 
 /** The shop's return record of a basket ticks every item Received before it can be finished (D51). */
-export function needsReceived(draft: Pick<CaptureDraft, "list" | "moment" | "side">): boolean {
-  return isBasketList(draft.list) && draft.moment === "return" && draft.side === "owner";
+export function needsReceived(draft: Pick<CaptureDraft, "list" | "moment" | "side" | "receivedWaived">): boolean {
+  return isBasketList(draft.list) && draft.moment === "return" && draft.side === "owner" && !draft.receivedWaived;
 }
 
-/** Every live item is ticked Received on this phone (the server's ticks from another phone are added by `withReceived`). */
-export const allReceived = (draft: Pick<CaptureDraft, "list" | "received">): boolean =>
-  (draft.list.lines ?? []).every((line) => (draft.received ?? []).includes(line.id));
+/** The items ticked Received as this phone sees them: the server's ticks and this phone's own, less this phone's unticks. */
+export function receivedIds(
+  draft: Pick<CaptureDraft, "received" | "unticked" | "theirReceived">,
+  onServer: readonly number[] | null | undefined = draft.theirReceived
+): number[] {
+  const out = new Set([...(onServer ?? []), ...(draft.received ?? [])]);
+  for (const id of draft.unticked ?? []) out.delete(id);
+  return [...out];
+}
+
+/** Every live item is ticked Received, on this phone or another. */
+export const allReceived = (draft: Pick<CaptureDraft, "list" | "received" | "unticked" | "theirReceived">): boolean =>
+  (draft.list.lines ?? []).every((line) => receivedIds(draft).includes(line.id));
 
 /** One item ticked, or unticked, Received. An untick is sent as `not_received`, so a tick sent by mistake is taken back. */
 export function setReceived(draft: CaptureDraft, line: number, on: boolean): CaptureDraft {
@@ -354,14 +372,17 @@ export function setReceived(draft: CaptureDraft, line: number, on: boolean): Cap
   return on ? { ...draft, received: [...received, line], unticked, error } : { ...draft, received, unticked: [...unticked, line], error };
 }
 
-/** Received ticks the server has from another phone, taken in where this phone has not said otherwise. */
+/** The server's Received ticks as last read: they count here, and are never sent back as this phone's. */
 export function withReceived(draft: CaptureDraft, onServer: readonly number[] | null | undefined): CaptureDraft {
-  const fresh = (onServer ?? []).filter((id) => !(draft.received ?? []).includes(id) && !(draft.unticked ?? []).includes(id));
-  return fresh.length > 0 ? { ...draft, received: [...(draft.received ?? []), ...fresh] } : draft;
+  const next = [...(onServer ?? [])].sort((a, b) => a - b);
+  return next.join(",") === (draft.theirReceived ?? []).join(",") ? draft : { ...draft, theirReceived: next };
 }
 
+/** The booking is no longer out: the desk took the return by hand, and the record completes without the Received ticks. */
+export const waiveReceived = (draft: CaptureDraft): CaptureDraft => (draft.receivedWaived ? draft : { ...draft, receivedWaived: true });
+
 export function setIdMatch(draft: CaptureDraft, ticked: boolean): CaptureDraft {
-  return { ...draft, idMatch: ticked };
+  return isBasketList(draft.list) ? { ...draft, idMatch: ticked, idTouched: true } : { ...draft, idMatch: ticked };
 }
 
 /**
@@ -500,10 +521,9 @@ export const bodyKey = (body: CaptureBody): string => JSON.stringify(body);
 export function partialDue(draft: CaptureDraft): boolean {
   if (draft.done || draft.forOther || !isBasketList(draft.list) || readyToSend(draft)) return false;
   if (draft.error && !draft.error.retry) return false;
-  const body = captureBody(draft);
+  const body = partialBody(draft);
   const empty =
     body.shots.length === 0 &&
-    !body.video &&
     body.checklist.length === 0 &&
     body.id_match_ticked === undefined &&
     !body.received &&
@@ -512,13 +532,36 @@ export function partialDue(draft: CaptureDraft): boolean {
 }
 
 /**
+ * A basket's send before the person has finished: never the video. With the video in, the server would complete the
+ * record on the spot, and every tick after it would be refused as `capture_locked` (review r1). The code needs only the
+ * shots and the ID tick (D19); the video goes with the finished send.
+ */
+export function partialBody(draft: CaptureDraft): CaptureBody {
+  const { video: _video, ...body } = captureBody(draft);
+  return body;
+}
+
+/**
  * The server's answer to a basket's send before it is finished. Complete (another phone's video made it whole): done,
  * as for a finished send. Otherwise the record goes on; what was sent is remembered, and a file the server lacks is
- * named by the finished send's answer (`applyAnswer`).
+ * named by the finished send's answer (`applyAnswer`). The Received ticks sent have been taken: they leave this phone's
+ * list, so they are never sent again over another phone's later untick, and the server's answer says where they stand.
  */
-export function applyPartial(draft: CaptureDraft, capture: Pick<Capture, "complete" | "missing">, sent: string): CaptureDraft {
+export function applyPartial(
+  draft: CaptureDraft,
+  capture: Pick<Capture, "complete" | "missing" | "received">,
+  sent: CaptureBody
+): CaptureDraft {
   if (capture.complete) return applyAnswer(draft, capture);
-  return { ...draft, synced: sent, error: draft.error?.retry ? null : draft.error };
+  const { received: ticked = [], not_received: unticked = [], ...kept } = sent;
+  return {
+    ...draft,
+    received: (draft.received ?? []).filter((id) => !ticked.includes(id)),
+    unticked: (draft.unticked ?? []).filter((id) => !unticked.includes(id)),
+    theirReceived: capture.received ?? draft.theirReceived,
+    synced: bodyKey(kept),
+    error: draft.error?.retry ? null : draft.error,
+  };
 }
 
 /**
@@ -579,7 +622,7 @@ export function captureBody(draft: CaptureDraft): CaptureBody {
     });
   }
   if (draft.video?.url) body.video = { url: draft.video.url, taken_at: draft.video.taken_at };
-  if (needsIdMatch(draft) && (!basket || draft.idMatch)) body.id_match_ticked = draft.idMatch;
+  if (needsIdMatch(draft) && (!basket || draft.idMatch || draft.idTouched)) body.id_match_ticked = draft.idMatch;
   if (needsReceived(draft) && draft.received?.length) body.received = draft.received;
   if (needsReceived(draft) && draft.unticked?.length) body.not_received = draft.unticked;
   const sealNumber = needsSealNumber(draft) ? sealNumberOf(draft.sealNumber) : null;
@@ -661,7 +704,8 @@ export function reopenForMissing(draft: CaptureDraft, missing: string[]): Captur
     const line = next.list.lines?.find((l) => what === `${l.prefix}received`);
     if (line) {
       // An item not ticked Received (another phone took its tick back): it shows unticked again here.
-      next = { ...next, received: (next.received ?? []).filter((id) => id !== line.id), sealed: false };
+      const drop = (ids?: number[]) => (ids ?? []).filter((id) => id !== line.id);
+      next = { ...next, received: drop(next.received), theirReceived: drop(next.theirReceived), sealed: false };
     } else if (what === "id_match") next = { ...next, idMatch: false, sealed: false };
     else if (what === "video") {
       if (next.video) {

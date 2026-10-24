@@ -5,13 +5,13 @@ import {
   CaptureDraft,
   applyAnswer,
   applyPartial,
-  bodyKey,
   captureBody,
   draftsToKeep,
   dropFile,
   files,
   localUris,
   nextWork,
+  partialBody,
   refuseDark,
   removedUris,
   resendLater,
@@ -139,10 +139,10 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
       }
       const partial = Boolean(work.partial);
       try {
-        const body = captureBody(draft);
+        const body = partial ? partialBody(draft) : captureBody(draft);
         const capture = await deps.send(draft, body);
         // A basket's record on its way: the answer is remembered; a missing file is the finished send's to name.
-        change(draft.id, (d) => (partial ? applyPartial(d, capture, bodyKey(body)) : applyAnswer(d, capture)));
+        change(draft.id, (d) => (partial ? applyPartial(d, capture, body) : applyAnswer(d, capture)));
         const reopened = drafts.find((d) => d.id === draft.id);
         if (!partial && reopened && !reopened.done && reopened.sealed && !reopened.desk) {
           const times = (missed.get(draft.id) ?? 0) + 1;

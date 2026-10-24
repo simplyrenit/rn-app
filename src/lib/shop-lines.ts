@@ -1,6 +1,6 @@
 import type { ApiError } from "@/lib/api-error";
 import { money, rangeLabel } from "@/lib/booking";
-import type { Capture, CaptureDraft, ShotList } from "@/lib/capture";
+import { type Capture, type CaptureDraft, type ShotList, receivedIds } from "@/lib/capture";
 import { pluralize } from "@/lib/pluralize";
 
 /**
@@ -304,8 +304,7 @@ export function basketItems(
     const parts = line.included_items.map((item) => ({ item, label: bare(item, line.title), ticked: tickOf(item) }));
     const done = shots.filter((s) => s.state === "done").length;
     const taken = shots.filter((s) => s.state !== "missing").length;
-    const ticked = draft?.received ?? [];
-    const mine = ticked.includes(line.id) || (draft?.unticked ?? []).includes(line.id);
+    const ticked = draft ? receivedIds(draft, capture?.received ?? draft.theirReceived) : capture?.received ?? [];
     return {
       id: line.id,
       title: line.title,
@@ -313,7 +312,7 @@ export function basketItems(
       shots,
       done,
       parts,
-      received: mine ? ticked.includes(line.id) : Boolean(capture?.received?.includes(line.id)),
+      received: ticked.includes(line.id),
       word: taken === 0 ? "not_started" : done === shots.length ? "recorded" : "in_progress",
     };
   });

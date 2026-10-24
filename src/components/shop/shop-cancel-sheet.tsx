@@ -182,6 +182,11 @@ export const ShopCancelSheet = forwardRef<
             <Skeleton width="100%" height={72} />
           </View>
         )}
+        {basket ? (
+          <Text fontSize="text-md" fontWeight="font-bold">
+            You earn ₹0 from this booking.
+          </Text>
+        ) : null}
         {after ? (
           <Text fontSize="text-sm" tone="body">
             {after}
