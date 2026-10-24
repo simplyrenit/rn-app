@@ -42,6 +42,10 @@ import {
   markNoMoreCodes,
   needsDesk,
   needsIdMatch,
+  needsReceived,
+  allReceived,
+  receivedIds,
+  setReceived,
   nextStep,
   noticeRows,
   otherSide,
@@ -927,6 +931,29 @@ export default function CaptureScreen() {
                 />
               </Panel>
             ) : null}
+            {needsReceived(draft) ? (
+              // A basket's shop return (D51): each item is ticked Received here too, so Done is never out of reach.
+              <View style={{ gap: space.xs }}>
+                <Text fontSize="text-sm" fontWeight="font-bold">
+                  Received
+                </Text>
+                <Panel>
+                  {(draft.list.lines ?? []).map((line, index) => (
+                    <TickRow
+                      key={line.id}
+                      first={index === 0}
+                      label={line.title}
+                      sub={`${line.ref} · back with you`}
+                      ticked={receivedIds(draft).includes(line.id)}
+                      onPress={() => update((d) => setReceived(d, line.id, !receivedIds(d).includes(line.id)))}
+                    />
+                  ))}
+                </Panel>
+                <Text fontSize="text-sm" tone="body">
+                  Something missing? Leave it unticked and don't finish: the booking stays out. Call Renit.
+                </Text>
+              </View>
+            ) : null}
             {needsSealNumber(draft) ? (
               <View style={{ gap: space.xs }}>
                 <Text fontSize="text-sm" fontWeight="font-bold">
@@ -960,7 +987,9 @@ export default function CaptureScreen() {
               <Text fontSize="text-sm" tone="body">
                 {needsSealNumber(draft) && !sealNumberOf(draft.sealNumber)
                   ? "Type the seal's number (letters, digits and dashes) to finish."
-                  : "Tick the ID check to finish."}
+                  : needsReceived(draft) && !allReceived(draft)
+                    ? "Tick each item Received to finish."
+                    : "Tick the ID check to finish."}
               </Text>
             ) : null}
             <Button disabled={!canSeal(draft)} onPress={() => (commitFeedback(), update(seal))}>

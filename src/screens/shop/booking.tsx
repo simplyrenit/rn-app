@@ -20,6 +20,7 @@ import { WindowChangeSheet, WindowChangeSheetHandle } from "@/components/shop/wi
 import { apiError } from "@/lib/api-error";
 import { isMonthly, overduePeriod, shopOverdueAlert } from "@/lib/billing";
 import { datesLine, money, todayIst } from "@/lib/booking";
+import { byRenit } from "@/lib/delivery";
 import { correctedNow } from "@/lib/server-clock";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import {
@@ -120,7 +121,8 @@ function Items({ booking }: { booking: BookingShop }) {
   const records = Object.fromEntries(basketItems(list, draft, capture).map((item) => [item.id, RECORD_TAGS[item.word]]));
   const all = booking.lines?.length ?? 0;
   const live = liveLines(booking).length;
-  const delivery = Number(booking.money.delivery_fee) > 0 ? money(booking.money.delivery_fee) : null;
+  // B1: Renit's courier fee is Renit's, not the shop's (as `moneyView`).
+  const delivery = Number(booking.money.delivery_fee) > 0 && !byRenit(booking) ? money(booking.money.delivery_fee) : null;
   return (
     <ItemsTable
       title={live < all ? `${live} of ${all} items` : `${all} items`}

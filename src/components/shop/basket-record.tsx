@@ -21,7 +21,7 @@ import {
 import { MIN_TOUCH_TARGET, radius, space } from "@/lib/design-tokens";
 import { pluralize } from "@/lib/pluralize";
 import type { BookingShop } from "@/lib/shop-booking";
-import { BasketItem, ItemShot, basketItems, itemTag, thingsLeft, videoWord } from "@/lib/shop-lines";
+import { BasketItem, ItemShot, basketItems, itemTag, liveLines, thingsLeft, videoWord } from "@/lib/shop-lines";
 import { useTheme } from "@/lib/theme";
 import React, { useEffect, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
@@ -231,7 +231,7 @@ export function BasketRecord({
     return query.isError ? (
       <View style={{ gap: space.sm }}>
         <Notice tone="warning" icon="warning" title="Connect to start">
-          {`Shots for ${pluralize(booking.lines?.length ?? 0, "item")} need the internet.`}
+          {`Shots for ${pluralize(liveLines(booking).length, "item")} need the internet.`}
         </Notice>
         <Button onPress={() => void query.refetch()} loading={query.isFetching}>
           Try again
