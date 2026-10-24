@@ -4,6 +4,7 @@ import { DeliveredBy, byRenit } from "@/lib/delivery";
 import { correctedNow } from "@/lib/server-clock";
 import type { OpenState } from "@/lib/shop";
 import type { AnsweredVia, BookingShop } from "@/lib/shop-booking";
+import type { ShopLine } from "@/lib/shop-lines";
 
 /**
  * The shop's ring (SH-01 to SH-03; API-CONTRACT OE-F, Shared objects › Ring).
@@ -41,6 +42,14 @@ export interface Ring {
   ring_at: string;
   /** Null while the request waits for the shop to open. */
   ring_ends_at: string | null;
+  /**
+   * Cart: every item of the booking, in line order (T9). `product` and `units` are the first live item's, the title
+   * its summary ("Sony A7 IV + 2 more"). A ring push leaves the lines out once it would pass 3,000 bytes: the live
+   * answer has them. Absent from a server before lines.
+   */
+  lines?: ShopLine[];
+  /** The booking this one extends: an extension of several items takes them all, with no ticks (D24). */
+  extends?: string | null;
 }
 
 export type RingOutcome = "accepted" | "refused" | "cancelled" | "no_answer";
@@ -370,6 +379,8 @@ export function endingFromError(error: ApiError | null): RingEnding | null {
       };
     }
     case "no_unit_free":
+      // Cart: a ticked item lost its unit (`details.lines`) and the booking keeps ringing (`raceLost`).
+      if (Array.isArray(details.lines) && details.lines.length > 0) return null;
       // The request was ended in the same step, by the system: no mark, no missed request.
       return { ...ENDING, system: true, reason: "no_unit" };
     case "cannot_accept": {
@@ -485,6 +496,8 @@ export function ringView(input: {
     if (recent) return { kind: "ended", ending: endingFromRecent(recent) };
     return { kind: "unknown" };
   }
+  // A push past 3,000 bytes leaves a basket's items out (T9): the live answer, read at once, draws them; an Accept before
+  // it lands is refused (409 `update_app`) and the request keeps ringing.
   if (input.pushed) return { kind: "ringing", ring: input.pushed };
   return input.liveFailed ? { kind: "failed" } : { kind: "loading" };
 }
@@ -633,6 +646,12 @@ export function answerErrorText(error: ApiError | null): string {
     // B1: a courier booking needs a build that can pack it (409, the request keeps ringing).
     case "update_required":
       return "Update the Renit app to accept courier bookings. This request is still ringing.";
+    // Cart: the items Renit has for the request changed (or had not reached this phone yet): they are read again.
+    case "update_app":
+    case "lines_unknown":
+      return "This request's items have changed. Check them and answer again. It is still ringing.";
+    case "below_booking_amount":
+      return "The items ticked cost less than the booking amount the customer paid. Tick another item, or say you can't do any.";
     case "not_owner":
     case "not_shop_owner":
     case "forbidden":

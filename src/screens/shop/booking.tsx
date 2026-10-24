@@ -6,6 +6,11 @@ import { ClaimRows } from "@/components/claims/claim-rows";
 import { BookingLoadError, BookingLoading, MoneyLine, Notice, Panel, Pill, SummaryCard } from "@/components/booking/parts";
 import { PaymentSchedule } from "@/components/booking/payment-schedule";
 import { Records } from "@/components/capture/record-card";
+import { useCaptureDraft } from "@/backend/capture-jobs";
+import { useCaptures, useShotList } from "@/backend/captures";
+import { ItemsTable } from "@/components/shop/lines";
+import { recordWanted } from "@/lib/capture";
+import { basketItems, isBasket, lineRows, liveLines } from "@/lib/shop-lines";
 import { Timeline } from "@/components/booking/timeline";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { Button, SubpageHeader, Text } from "@/components/core";
@@ -14,7 +19,7 @@ import { ShopCancelSheet, ShopCancelSheetHandle } from "@/components/shop/shop-c
 import { WindowChangeSheet, WindowChangeSheetHandle } from "@/components/shop/window-change-sheet";
 import { apiError } from "@/lib/api-error";
 import { isMonthly, overduePeriod, shopOverdueAlert } from "@/lib/billing";
-import { datesLine, todayIst } from "@/lib/booking";
+import { datesLine, money, todayIst } from "@/lib/booking";
 import { correctedNow } from "@/lib/server-clock";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import {
@@ -92,6 +97,37 @@ function CustomerCard({ booking, now }: { booking: BookingShop; now: Date }) {
       ) : null}
       {c.note ? <Notice icon="info">{c.note}</Notice> : null}
     </Panel>
+  );
+}
+
+const RECORD_TAGS = {
+  not_started: { label: "Not started", tone: "neutral" },
+  in_progress: { label: "In progress", tone: "info" },
+  recorded: { label: "Recorded", tone: "success" },
+} as const;
+
+/**
+ * MR-07: a basket's items, each with its state, deposit share, its record and what the shop earns from it. The record
+ * is the handover's until the item is out, then the return's: both phones' shots as the server has them, and this one's.
+ */
+function Items({ booking }: { booking: BookingShop }) {
+  const moment = ["out", "returned", "closed"].includes(booking.stage) && !booking.exit ? "return" : "handover";
+  const reads = recordWanted(moment, booking);
+  const list = useShotList(booking.number, reads).data;
+  const capture = useCaptures(booking.number, false, reads).data?.[moment]?.owner;
+  const draft = useCaptureDraft(booking.number, moment, "owner");
+  const records = Object.fromEntries(basketItems(list, draft, capture).map((item) => [item.id, RECORD_TAGS[item.word]]));
+  const all = booking.lines?.length ?? 0;
+  const live = liveLines(booking).length;
+  const delivery = Number(booking.money.delivery_fee) > 0 ? money(booking.money.delivery_fee) : null;
+  return (
+    <ItemsTable
+      title={live < all ? `${live} of ${all} items` : `${all} items`}
+      rows={lineRows(booking)}
+      records={records}
+      delivery={delivery}
+      earn={money(booking.money.you_earn)}
+    />
   );
 }
 
@@ -266,6 +302,8 @@ function BookingPage({
           lines={[datesLine(booking), howLine(booking)]}
         />
 
+        {isBasket(booking) ? <Items booking={booking} /> : null}
+
         {alert ? (
           <Notice tone="danger" icon="warning" title={alert.title}>
             {alert.body}
@@ -367,7 +405,12 @@ function BookingPage({
           </View>
         ) : null}
       </ScrollView>
-      <ShopCancelSheet ref={cancelSheet} number={booking.number} />
+      <ShopCancelSheet
+        ref={cancelSheet}
+        number={booking.number}
+        lines={booking.lines ?? undefined}
+        firstName={booking.customer.first_name}
+      />
       <WindowChangeSheet ref={changeSheet} number={booking.number} firstName={booking.customer.first_name} />
     </>
   );

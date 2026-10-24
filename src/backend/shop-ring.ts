@@ -35,9 +35,11 @@ export async function fetchShopBooking(number: string): Promise<BookingShop> {
  * Accept. The first answer wins: if someone answered first, or the request
  * ended, the server says `409 ring_ended` with who answered and when; if the stock
  * check fails now it ends the request itself (`409 no_unit_free`, `403 cannot_accept`).
+ * A booking of several items sends its ticked lines (`acceptBody`, cart D18); a ticked
+ * item that lost its unit answers `409 no_unit_free` naming it, and the request keeps ringing.
  */
-export async function acceptBooking(number: string): Promise<BookingShop> {
-  return (await axiosInstance.post<{ booking: BookingShop }>(shopBookingUrl(number, "accept/"), {})).data.booking;
+export async function acceptBooking(number: string, body: { lines?: number[] } = {}): Promise<BookingShop> {
+  return (await axiosInstance.post<{ booking: BookingShop }>(shopBookingUrl(number, "accept/"), body)).data.booking;
 }
 
 export interface RefuseAnswer {
