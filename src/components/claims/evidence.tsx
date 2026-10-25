@@ -56,7 +56,7 @@ export function EvidenceStrip({ urls, label }: { urls: string[]; label: string }
             activeOpacity={0.8}
             onPress={() => setOpen({ key: url, label: name, uri: url })}
           >
-            <Image source={{ uri: url }} style={{ width: THUMB, height: THUMB, borderRadius: radius.input }} contentFit="cover" transition={150} accessible={false} />
+            <Image source={{ uri: url, cacheKey: url.split("?")[0] }} style={{ width: THUMB, height: THUMB, borderRadius: radius.input }} contentFit="cover" transition={150} accessible={false} />
           </TouchableOpacity>
         );
       })}
