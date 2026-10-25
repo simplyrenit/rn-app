@@ -17,6 +17,7 @@ import { ChevronDownIcon } from "react-native-heroicons/mini";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 
+import { apiError } from "@/lib/api-error";
 import { toast } from "@/lib/toast";
 import {
   MIN_TOUCH_TARGET,
@@ -102,7 +103,9 @@ export default function WriteReviewScreen() {
       await writeAReview(reviewData);
       toast.success("Review submitted");
       navigation.goBack();
-    } catch (error: any) {
+    } catch (error) {
+      // The API says why, e.g. `not_rented` before a rental of this product closed.
+      toast.error(apiError(error)?.message ?? "Your review was not sent. Try again.");
     }
   };
 

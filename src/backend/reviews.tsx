@@ -44,7 +44,6 @@ export default function useReviews() {
     try {
       const response = await axiosInstance.post(WRITE_REVIEW, data);
       return response.data;
-    } catch (error: any) {
     } finally {
       setIsLoading(false);
     }
