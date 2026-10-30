@@ -1,6 +1,6 @@
 import { answerWindowChange, bookingQueryKey, fetchCancelOutcome } from "@/backend/bookings";
 import { CancelSheet, CancelSheetHandle } from "@/components/booking/cancel-sheet";
-import { BookingItems, StillInCart } from "@/components/booking/items";
+import { BookingItems, ReviewItems, StillInCart } from "@/components/booking/items";
 import { GetHelp } from "@/components/booking/get-help";
 import { ClaimRows } from "@/components/claims/claim-rows";
 import { Records } from "@/components/capture/record-card";
@@ -166,6 +166,9 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
 
       {/* D6, CT-41: a basket that ended before the rent leaves its items in the cart. Drawn from the cart itself. */}
       {booking.exit && isBasket(booking) ? <StillInCart booking={booking} /> : null}
+
+      {/* ENG-342: once the rental closes, reviewing it is the one thing left to do here. */}
+      <ReviewItems booking={booking} />
 
       {can("set_window") ? (
         <Button onPress={() => navigation.navigate("BookingWindow", { number: booking.number })}>

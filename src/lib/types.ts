@@ -246,8 +246,15 @@ export type RootStackParamList = {
     };
   };
   WriteReviews: {
-    product: BackendProduct;
-    owner: {
+    /**
+     * A closed booking (ENG-342) knows only an item's name, title and photo, so
+     * the rest of the listing is optional and the form draws what it is given.
+     */
+    product: Pick<BackendProduct, "name" | "title"> & {
+      cover_image?: string | null;
+    } & Partial<Pick<BackendProduct, "location" | "rate" | "plans">>;
+    /** Absent from a booking, whose customer is never the owner. */
+    owner?: {
       username: string;
       first_name: string;
       last_name: string;

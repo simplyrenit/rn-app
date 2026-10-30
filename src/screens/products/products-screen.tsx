@@ -1079,6 +1079,21 @@ export default function DetailsScreen() {
                 {`See all ${reviews.length} ${reviews.length === 1 ? "review" : "reviews"}`}
               </Button>
             </View>
+          ) : isAuthenticated && !isOwner && product ? (
+            // ENG-342: with no reviews there is no "See all", and that list was
+            // the only way into the form, so the first review had no way in.
+            // The API still decides who may write one (`not_rented`).
+            <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+              <Button
+                onPress={() =>
+                  navigation.navigate("WriteReviews", { product, owner: product.owner! })
+                }
+                variant="outline"
+                size="compact"
+              >
+                Write a review
+              </Button>
+            </View>
           ) : null}
         </DetailSection>
 
