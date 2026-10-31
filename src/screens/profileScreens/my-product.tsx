@@ -47,6 +47,7 @@ const COLUMN_WIDTH =
 const MyProductScreen: React.FC = () => {
   const { authTokens, isAuthenticated, userDetails } = useGlobalContext();
   const { getOwnerDetails } = useOwner();
+  const [shopUrl, setShopUrl] = useState<string | null>(null);
   const [myProducts, setMyProducts] = useState<BackendProduct[]>([]);
   const [nextProductLink, setNextProductLink] = useState<string | null>(null);
   const { color, isDark } = useTheme();
@@ -87,7 +88,11 @@ const MyProductScreen: React.FC = () => {
       }
       setMyProducts([]);
       fetchProducts();
-    }, [isAuthenticated])
+      // The shop's public page for the share sheet (ENG-344), read here so Share opens at once.
+      if (userDetails?.username) {
+        void getOwnerDetails(userDetails.username).then((owner) => setShopUrl(owner?.shop_url ?? null));
+      }
+    }, [isAuthenticated, userDetails?.username])
   );
 
   const goToProfile = () =>
@@ -96,10 +101,6 @@ const MyProductScreen: React.FC = () => {
     });
 
   const handleShare = async () => {
-    // The shop's public page, once the business is verified (ENG-344).
-    const shopUrl = userDetails?.username
-      ? (await getOwnerDetails(userDetails.username))?.shop_url
-      : null;
     const line = `My listings on Renit — ${myProducts.length} ${
       myProducts.length === 1 ? "item" : "items"
     } to rent${shopUrl ? `\n${withSource(shopUrl, "wa")}` : ""}`;

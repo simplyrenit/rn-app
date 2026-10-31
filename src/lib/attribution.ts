@@ -25,12 +25,21 @@ function source(value: string | undefined): Source | null {
   return value === "qr" || value === "wa" ? value : null;
 }
 
+/** A bad escape (`%E0`) is any page's to send: it reads as no value, never a throw. */
+function decode(text: string): string | null {
+  try {
+    return decodeURIComponent(text.replace(/\+/g, " "));
+  } catch {
+    return null;
+  }
+}
+
 /** `a=1&b=2` as a map. RN's URLSearchParams can't read, so by hand. */
 function query(text: string): Record<string, string> {
   const out: Record<string, string> = {};
   for (const pair of text.split("&")) {
-    const [key, value = ""] = pair.split("=");
-    if (key) out[decodeURIComponent(key)] = decodeURIComponent(value.replace(/\+/g, " "));
+    const [key, value = ""] = pair.split("=").map(decode);
+    if (key && value !== null) out[key] = value;
   }
   return out;
 }
@@ -41,7 +50,8 @@ export function parseShopLink(
 ): { route: PushRoute; src: Source | null; shop: string | null } | null {
   const match = url?.match(/^[a-z][a-z0-9+.-]*:\/\/(shop|product)\/([^/?#]+)\/?(?:\?([^#]*))?/i);
   if (!match) return null;
-  const id = decodeURIComponent(match[2]);
+  const id = decode(match[2]);
+  if (!id) return null;
   const src = source(query(match[3] ?? "").src);
   return match[1] === "shop"
     ? { route: { screen: "UserDetail", id }, src, shop: id }
@@ -83,8 +93,20 @@ let installPending = false;
 let started = false;
 
 async function save(src: Source, shop: string | null) {
-  await write({ src, shop, at: Date.now(), install: installPending, sent: false });
+  // An install credit not yet sent survives a later link: the Play referrer is saved, then
+  // "Open in the Renit app" on the same page brings the link, all before sign-in.
+  const before = await read();
+  const install = installPending || (before?.install === true && !before.sent);
+  await write({ src, shop, at: Date.now(), install, sent: false });
   installPending = false;
+}
+
+/** The Play referrer, or null if Play doesn't answer in 3 s: the start link waits on it. */
+function playReferrer(): Promise<string | null> {
+  return Promise.race([
+    Application.getInstallReferrerAsync(),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+  ]);
 }
 
 /**
@@ -101,7 +123,7 @@ export async function startAttribution(): Promise<PushRoute | null> {
     if (!deviceIdMadeThisRun()) return null;
     installPending = true;
     if (Platform.OS !== "android") return null;
-    const found = parseReferrer(await Application.getInstallReferrerAsync());
+    const found = parseReferrer(await playReferrer());
     if (!found) return null;
     await save(found.src, found.shop);
     return found.shop ? { screen: "UserDetail", id: found.shop } : null;

@@ -10,8 +10,12 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
     }),
   },
 }));
-jest.mock("expo-application", () => ({ getInstallReferrerAsync: jest.fn() }));
-jest.mock("@/lib/device", () => ({ getDeviceInfo: jest.fn(), deviceIdMadeThisRun: () => false }));
+jest.mock("expo-application", () => ({
+  getInstallReferrerAsync: jest.fn(async () => "utm_source=qr&utm_content=U9"),
+}));
+let mockNewInstall = false;
+jest.mock("@/lib/device", () => ({ getDeviceInfo: jest.fn(), deviceIdMadeThisRun: () => mockNewInstall }));
+jest.mock("react-native", () => ({ Platform: { OS: "android" } }));
 const mockTrack = jest.fn();
 jest.mock("@/lib/events", () => ({ track: (...args: unknown[]) => mockTrack(...args) }));
 
@@ -20,6 +24,7 @@ import {
   parseReferrer,
   parseShopLink,
   sendAttribution,
+  startAttribution,
   takeLink,
   withSource,
 } from "../attribution";
@@ -48,6 +53,8 @@ describe("parseShopLink", () => {
     expect(parseShopLink("renit://kyc/return?result=success")).toBeNull();
     expect(parseShopLink("renit://expo-development-client/?url=x")).toBeNull();
     expect(parseShopLink(null)).toBeNull();
+    expect(parseShopLink("renit://shop/%E0?src=qr")).toBeNull();
+    expect(parseShopLink("renit://shop/U1?src=%E0")?.src).toBeNull();
   });
 });
 
@@ -83,6 +90,16 @@ describe("the saved source", () => {
 
     expect(mockTrack).toHaveBeenCalledTimes(1);
     expect(mockTrack).toHaveBeenCalledWith("link_attributed", { src: "qr", install: false, shop: "U1" });
+  });
+
+  it("keeps an Android install's credit when the page's link comes next, before sign-in", async () => {
+    mockNewInstall = true;
+    expect(await startAttribution()).toEqual({ screen: "UserDetail", id: "U9" });
+    await takeLink("renit://shop/U9?src=qr");
+    await sendAttribution();
+    mockNewInstall = false;
+
+    expect(mockTrack).toHaveBeenCalledWith("link_attributed", { src: "qr", install: true, shop: "U9" });
   });
 
   it("is not saved from a link with no source", async () => {

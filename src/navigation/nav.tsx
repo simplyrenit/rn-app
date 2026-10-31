@@ -439,7 +439,7 @@ export default function Navigation() {
   refreshDetails.current = fetchUserDetails;
   const queryClient = useQueryClient();
 
-  // A screen to open, from a tapped push or a payment that was in flight. On a
+  // A screen to open, from a tapped push, a payment that was in flight, or a shop link (ENG-344). On a
   // start from a closed app the answer can arrive before the navigator is
   // mounted, so it waits here and `onReady` below opens it (ENG-173).
   const toOpen = React.useRef<PushRoute | null>(null);
