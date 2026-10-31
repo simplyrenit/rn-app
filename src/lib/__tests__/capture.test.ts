@@ -355,6 +355,23 @@ describe("the body of the PUT", () => {
     expect(captureBody(d).video).toBeUndefined();
   });
 
+  it("carries each file's SHA-256 from its upload, and the mocked flag only beside a place (ENG-350)", () => {
+    const hash = "ab".repeat(32);
+    let d = addShot(start(), "front", { ...file("front.jpg"), mocked: true });
+    d = addShot(d, "back", { uri: "file:///captures/back.jpg", taken_at: "2026-10-24T04:41:00Z", mocked: true });
+    d = addShot(d, "serial", { ...file("serial.jpg"), mocked: false });
+    d = setUrl(d, { shot: "front" }, "file:///captures/front.jpg", "https://bucket.test/front.jpg", hash);
+    d = setUrl(d, { shot: "back" }, "file:///captures/back.jpg", "https://bucket.test/back.jpg");
+    d = setUrl(d, { shot: "serial" }, "file:///captures/serial.jpg", "https://bucket.test/serial.jpg");
+    const [front, back, serial] = captureBody(d).shots;
+    expect(front).toMatchObject({ mocked: true, sha256: hash });
+    expect("mocked" in back || "sha256" in back).toBe(false); // no place, no hash: neither is sent
+    expect(serial.mocked).toBe(false);
+    d = setVideo(d, file("video.mp4"));
+    d = setUrl(d, "video", "file:///captures/video.mp4", "https://bucket.test/video.mp4", hash);
+    expect(captureBody(d).video).toEqual({ url: "https://bucket.test/video.mp4", taken_at: "2026-10-24T04:41:00Z", sha256: hash });
+  });
+
   it("sends the ID tick only where it is asked for", () => {
     const owner = setIdMatch(taken(start({ side: "owner", list: list({ id_match_required: true }) })), true);
     expect(captureBody(owner).id_match_ticked).toBe(true);

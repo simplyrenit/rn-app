@@ -26,6 +26,8 @@ describe("pushRoute", () => {
       "returned",
       "closed",
       "late",
+      "return_reminder",
+      "return_due",
       "refund",
       "claim",
     ]) {
