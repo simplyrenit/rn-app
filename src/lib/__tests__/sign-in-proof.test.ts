@@ -73,6 +73,14 @@ describe("which call carries which token: sign-up", () => {
     expect(body).not.toHaveProperty("phone");
   });
 
+  it("sends renting for a business only for a customer who ticked it (ENG-352)", () => {
+    expect(signUpBody(user({ bills_to_business: true }))).toMatchObject({ bills_to_business: true });
+    expect(signUpBody(user({ bills_to_business: false }))).not.toHaveProperty("bills_to_business");
+    expect(signUpBody(user({ account_type: "merchant", business_name: "SoundBox", bills_to_business: true }))).not.toHaveProperty(
+      "bills_to_business"
+    );
+  });
+
   it("sends the business name only for a merchant", () => {
     expect(signUpBody(user({ business_name: "SoundBox" }))).not.toHaveProperty("business_name");
     expect(signUpBody(user({ account_type: "merchant", business_name: "SoundBox" }))).toMatchObject({ business_name: "SoundBox", account_type: "merchant" });

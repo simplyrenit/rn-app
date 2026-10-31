@@ -336,6 +336,8 @@ export type RootStackParamList = {
     initial?: { latitude: number; longitude: number };
   };
   SavedAddresses: undefined;
+  /** "Renting for a business" and the GSTIN bookings are billed to (ENG-352). No params: a GSTIN never goes in one. */
+  BusinessBilling: undefined;
   /**
    * `address` edits it; `pin` (fresh from the map) adds one. `requestId` is a
    * `location-request` the saved address is handed back through, for a caller
@@ -663,6 +665,8 @@ export interface AuthUser {
    */
   proof_token?: string;
   date_of_birth?: string;
+  /** A customer ticked "I'm renting for a business" (ENG-352). */
+  bills_to_business?: boolean;
   coordinates: {
     type: string;
     coordinates: [number, number];

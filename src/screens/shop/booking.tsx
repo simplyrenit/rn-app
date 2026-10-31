@@ -96,6 +96,12 @@ function CustomerCard({ booking, now }: { booking: BookingShop; now: Date }) {
           {`Deliver to: ${c.address}`}
         </Text>
       ) : null}
+      {/* ENG-352: who to invoice, from Ready on (the server sends it no earlier). */}
+      {booking.bill_to ? (
+        <Text fontSize="text-sm" tone="body">
+          {`Bill to: ${booking.bill_to.legal_name}, GSTIN ${booking.bill_to.gstin}, ${booking.bill_to.address}`}
+        </Text>
+      ) : null}
       {c.note ? <Notice icon="info">{c.note}</Notice> : null}
     </Panel>
   );

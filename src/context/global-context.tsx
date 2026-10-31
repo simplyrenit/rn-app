@@ -88,6 +88,9 @@ interface UserDetails {
   merchant_approval_status: MerchantApprovalStatus;
   /** The "Verified business" badge; the merchant's own status comes from the KYC status query. */
   business_verified: boolean;
+  /** "Renting for a business" as saved (ENG-352), and whether it applies: never to a merchant. */
+  bills_to_business: boolean;
+  billing_as_business: boolean;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -188,6 +191,8 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
         account_type: details.account_type,
         merchant_approval_status: details.merchant_approval_status,
         business_verified: details.business_verified === true,
+        bills_to_business: details.bills_to_business === true,
+        billing_as_business: details.billing_as_business === true,
       });
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -284,6 +289,8 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
               account_type: details.account_type,
               merchant_approval_status: details.merchant_approval_status,
               business_verified: details.business_verified === true,
+              bills_to_business: details.bills_to_business === true,
+              billing_as_business: details.billing_as_business === true,
             });
             setIsAuthenticated(true);
             authenticateFirebase(currentTokens.access_token).catch((error) =>

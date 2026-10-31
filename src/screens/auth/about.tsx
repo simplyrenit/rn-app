@@ -427,6 +427,8 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
 export default function AboutYourself() {
   const router = useTypedNavigation();
   const [isMerchant, setIsMerchant] = useState(false);
+  // "I'm renting for a business" (ENG-352): a customer's only; the GSTIN comes after sign-up.
+  const [forBusiness, setForBusiness] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -580,13 +582,14 @@ export default function AboutYourself() {
         account_type: isMerchant ? "merchant" : "user",
         business_name: isMerchant ? businessName.trim() : "",
         date_of_birth: !isMerchant ? formattedDob || "" : "",
+        bills_to_business: !isMerchant && forBusiness,
         owner_terms_accepted: isMerchant && ownerTermsChecked,
         // The version the link showed when the box was ticked; sent once the account exists.
         owner_terms_version: isMerchant && ownerTermsChecked ? ownerTerms?.version : undefined,
       });
       router.navigate("Password");
     }
-  }, [isMerchant, dob, firstName, lastName, businessName, ownerTermsChecked, ownerTerms?.version, validateForm, saveUser, router]);
+  }, [isMerchant, forBusiness, dob, firstName, lastName, businessName, ownerTermsChecked, ownerTerms?.version, validateForm, saveUser, router]);
 
   return (
     <StaticContainer>
@@ -646,6 +649,25 @@ export default function AboutYourself() {
                 >
                   Merchant accounts require admin approval before posting listings.
                 </Text>
+                {!isMerchant && (
+                  <>
+                    <View
+                      className={`mt-3 p-3 rounded-card border flex-row items-center justify-between ${
+                        isDarkMode
+                          ? "bg-surface-dark border-input-line-dark"
+                          : "bg-surface-light border-input-line-light"
+                      }`}
+                    >
+                      <Text fontSize="text-sm" className={isDarkMode ? "text-white" : "text-black"}>
+                        I'm renting for a business
+                      </Text>
+                      <CheckBox checked={forBusiness} onPress={() => setForBusiness((prev) => !prev)} />
+                    </View>
+                    <Text className={`mt-2 ${isDarkMode ? "text-muted-dark" : "text-muted-light"}`}>
+                      Add your GSTIN later in Profile to get GST invoices.
+                    </Text>
+                  </>
+                )}
               </View>
             </View>
 

@@ -134,6 +134,7 @@ import NetworkDiagnosticsScreen from "@/screens/profileScreens/network-diagnosti
 import OwnersReviewScreen from "@/screens/users/owners-review";
 import LocationModal from "@/screens/post-screens/location-modal";
 import SavedAddressesScreen from "@/screens/addresses/saved-addresses";
+import BusinessBillingScreen from "@/screens/profileScreens/business-billing";
 import AddressDetailsScreen from "@/screens/addresses/address-details";
 import ListAddPhotosScreen from "@/screens/list-flow/add-photos";
 import ListReadingScreen from "@/screens/list-flow/reading";
@@ -1002,6 +1003,7 @@ export default function Navigation() {
           name="SavedAddresses"
           component={SavedAddressesScreen}
         />
+        <Stack.Screen name="BusinessBilling" component={BusinessBillingScreen} />
         <Stack.Screen
           name="AddressDetails"
           component={AddressDetailsScreen}

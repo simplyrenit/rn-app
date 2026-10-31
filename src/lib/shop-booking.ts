@@ -1,3 +1,4 @@
+import type { BillTo } from "@/lib/business";
 import type { BookingDay, BookingExit, BookingStage, DeliveryMode, MonthlyMoney, RingState, TimeWindow } from "@/lib/booking";
 import type { CaptureFlags } from "@/lib/capture";
 import type { PlanUnit } from "@/lib/plans";
@@ -85,6 +86,8 @@ export interface ShopWindowRequest {
 }
 
 export interface BookingShop {
+  /** ENG-352: the business the customer is billed as, for the shop's GST invoice; from Ready on, else null. Absent from an older server. */
+  bill_to?: BillTo | null;
   number: string;
   stage: BookingStage;
   ring_state: RingState;
