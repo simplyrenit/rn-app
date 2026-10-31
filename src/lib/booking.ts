@@ -97,8 +97,6 @@ export interface RentPeriod {
   amount: string;
   /** The month's rent alone: no delivery fee, no Renit fee. Absent from an answer before it. */
   rent?: string;
-  /** ENG-343: the GST on the month's Renit fee, which `amount` already has. Absent from an older server. */
-  fee_gst?: string;
   state: PeriodState;
   /** The day the pay link is sent (3 days before `first_day`); the day it is due; the last day of the grace. */
   link_on: string | null;
