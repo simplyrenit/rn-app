@@ -27,6 +27,8 @@ import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { SCREEN_GUTTER, colors, density, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
+import useOwner from "@/backend/owner";
+import { withSource } from "@/lib/attribution";
 
 
 const GRID_GAP = 14;
@@ -43,7 +45,8 @@ const COLUMN_WIDTH =
   (Dimensions.get("window").width - SCREEN_GUTTER * 2 - GRID_GAP) / 2;
 
 const MyProductScreen: React.FC = () => {
-  const { authTokens, isAuthenticated } = useGlobalContext();
+  const { authTokens, isAuthenticated, userDetails } = useGlobalContext();
+  const { getOwnerDetails } = useOwner();
   const [myProducts, setMyProducts] = useState<BackendProduct[]>([]);
   const [nextProductLink, setNextProductLink] = useState<string | null>(null);
   const { color, isDark } = useTheme();
@@ -93,9 +96,13 @@ const MyProductScreen: React.FC = () => {
     });
 
   const handleShare = async () => {
+    // The shop's public page, once the business is verified (ENG-344).
+    const shopUrl = userDetails?.username
+      ? (await getOwnerDetails(userDetails.username))?.shop_url
+      : null;
     const line = `My listings on Renit — ${myProducts.length} ${
       myProducts.length === 1 ? "item" : "items"
-    } to rent`;
+    } to rent${shopUrl ? `\n${withSource(shopUrl, "wa")}` : ""}`;
     try {
       await Share.share({ message: line });
     } catch {
