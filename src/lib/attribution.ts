@@ -20,6 +20,7 @@ type Saved = { src: Source; shop: string | null; at: number; install: boolean; s
 
 const KEY = "renit.attribution";
 const WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+const REPEAT_MS = 10 * 60 * 1000;
 
 function source(value: string | undefined): Source | null {
   return value === "qr" || value === "wa" ? value : null;
@@ -103,10 +104,13 @@ async function save(src: Source, shop: string | null) {
 
 /** The Play referrer, or null if Play doesn't answer in 3 s: the start link waits on it. */
 function playReferrer(): Promise<string | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
   return Promise.race([
     Application.getInstallReferrerAsync(),
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
-  ]);
+    new Promise<null>((resolve) => {
+      timer = setTimeout(() => resolve(null), 3000);
+    }),
+  ]).finally(() => clearTimeout(timer));
 }
 
 /**
@@ -136,7 +140,12 @@ export async function startAttribution(): Promise<PushRoute | null> {
 export async function takeLink(url: string | null): Promise<PushRoute | null> {
   const link = parseShopLink(url);
   if (!link) return null;
-  if (link.src) await save(link.src, link.shop);
+  // The same link again within minutes is the same visit: Android hands the start link back
+  // when it restarts the app from recents. It must not count, or restart the window, twice.
+  const before = await read();
+  const again =
+    before?.src === link.src && before.shop === link.shop && Date.now() - before.at < REPEAT_MS;
+  if (link.src && !again) await save(link.src, link.shop);
   return link.route;
 }
 
@@ -146,8 +155,18 @@ export async function currentSource(): Promise<Source | undefined> {
   return saved && Date.now() - saved.at <= WINDOW_MS ? saved.src : undefined;
 }
 
+let sending: Promise<void> | null = null;
+
 /** Signed in: send the saved link once (events need an account). */
-export async function sendAttribution() {
+export function sendAttribution(): Promise<void> {
+  // Sign-in and a link can ask at the same moment: one send, never two.
+  sending ??= sendOnce().finally(() => {
+    sending = null;
+  });
+  return sending;
+}
+
+async function sendOnce() {
   const saved = await read();
   if (!saved || saved.sent) return;
   track("link_attributed", {

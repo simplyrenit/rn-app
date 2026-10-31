@@ -102,6 +102,22 @@ describe("the saved source", () => {
     expect(mockTrack).toHaveBeenCalledWith("link_attributed", { src: "qr", install: true, shop: "U9" });
   });
 
+  it("is sent once when sign-in and a link ask together", async () => {
+    await takeLink("renit://shop/U1?src=qr");
+    await Promise.all([sendAttribution(), sendAttribution()]);
+
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not count the same link handed back minutes later", async () => {
+    await takeLink("renit://shop/U1?src=qr");
+    await sendAttribution();
+    await takeLink("renit://shop/U1?src=qr");
+    await sendAttribution();
+
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+  });
+
   it("is not saved from a link with no source", async () => {
     expect(await takeLink("renit://product/P1")).toEqual({ screen: "ProductDetail", id: "P1" });
     expect(await currentSource()).toBeUndefined();
