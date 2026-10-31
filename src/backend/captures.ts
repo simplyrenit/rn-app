@@ -91,8 +91,12 @@ function typeOf(uri: string, kind: "photo" | "video"): { ext: string; type: stri
   return /\.mov$/i.test(uri.split("?")[0]) ? { ext: "mov", type: "video/quicktime" } : { ext: "mp4", type: "video/mp4" };
 }
 
-/** How much of a file is read at a time to hash it: a video is never held whole in memory. */
-const HASH_CHUNK_BYTES = 1024 * 1024;
+/**
+ * How much of a file is read at a time to hash it. Small, so a video is never held whole in memory and each piece of
+ * hashing (about 25 ms of the interpreter's time) leaves the screen free to draw and answer taps between pieces: the
+ * queue hashes while the person is still walking through the shots (review r1).
+ */
+const HASH_CHUNK_BYTES = 64 * 1024;
 
 /**
  * The SHA-256 of a file on the phone, as 32 bytes, read a chunk at a time. Null when it can't be read: the file is then
@@ -105,8 +109,10 @@ export async function fileSha256(uri: string): Promise<Uint8Array | null> {
     const hash = new Sha256();
     for (let position = 0; position < info.size; position += HASH_CHUNK_BYTES) {
       const length = Math.min(HASH_CHUNK_BYTES, info.size - position);
-      const chunk = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64, position, length });
-      hash.update(base64Bytes(chunk));
+      const chunk = base64Bytes(await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64, position, length }));
+      // A short read would hash other bytes than are sent, and the bucket would refuse the file every time.
+      if (chunk.length !== length) return null;
+      hash.update(chunk);
     }
     return hash.digest();
   } catch {
@@ -144,12 +150,21 @@ export async function uploadCaptureFile(uri: string, kind: "photo" | "video", wh
   });
   const presigned = data.presigned_urls?.[0];
   if (!presigned) throw new Error("No presigned URL returned");
+  // Sent only when the server signed it into the address: a server that does not know `sha256s` signs no checksum,
+  // and the bucket refuses an unsigned one. Without it the file goes up, and is recorded, with no hash.
+  const checked = Boolean(digest) && signsChecksum(presigned);
   const result = await FileSystem.uploadAsync(presigned, file, {
     httpMethod: "PUT",
     uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-    // The checksum header is signed into the address: without it, or with other bytes, the bucket refuses the upload.
-    headers: { "Content-Type": type, ...(digest ? { "x-amz-checksum-sha256": toBase64(digest) } : {}) },
+    // Signed into the address: without it, or with other bytes, the bucket refuses the upload.
+    headers: { "Content-Type": type, ...(checked && digest ? { "x-amz-checksum-sha256": toBase64(digest) } : {}) },
   });
   if (result.status < 200 || result.status >= 300) throw new Error(`Upload failed: ${result.status}`);
-  return { url: presigned.split("?")[0], ...(sha256 ? { sha256 } : {}) };
+  return { url: presigned.split("?")[0], ...(checked ? { sha256 } : {}) };
+}
+
+/** Whether a presigned PUT address requires the checksum header (SigV4 lists it in `X-Amz-SignedHeaders`). */
+function signsChecksum(presigned: string): boolean {
+  const signed = /[?&]X-Amz-SignedHeaders=([^&]*)/i.exec(presigned)?.[1] ?? "";
+  return decodeURIComponent(signed).split(";").includes("x-amz-checksum-sha256");
 }

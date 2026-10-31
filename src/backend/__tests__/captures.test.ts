@@ -50,9 +50,17 @@ beforeEach(() => {
   jest.clearAllMocks();
   sent = [];
   post.mockImplementation(async (...args: unknown[]) => {
-    const body = args[1] as { filenames: string[] };
+    const body = args[1] as { filenames: string[]; sha256s?: string[] };
     sent.push(...body.filenames);
-    return { data: { presigned_urls: body.filenames.map((name) => `https://bucket.s3.ap-south-1.amazonaws.com/${serverKey(name)}?X-Amz-Signature=abc`) } };
+    // As rn-api signs it: the checksum header is listed only when a hash was given.
+    const headers = body.sha256s ? "content-type%3Bhost%3Bx-amz-checksum-sha256" : "content-type%3Bhost";
+    return {
+      data: {
+        presigned_urls: body.filenames.map(
+          (name) => `https://bucket.s3.ap-south-1.amazonaws.com/${serverKey(name)}?X-Amz-SignedHeaders=${headers}&X-Amz-Signature=abc`,
+        ),
+      },
+    };
   });
 });
 
@@ -134,8 +142,8 @@ describe("the upload carries the SHA-256 of its bytes, so the bucket refuses any
   const uploadAsync = FileSystem.uploadAsync as unknown as jest.Mock;
   const info = FileSystem.getInfoAsync as unknown as Call;
   const read = FileSystem.readAsStringAsync as unknown as Call;
-  /** A file of 2.5 MB, so it is read in three pieces. */
-  const bytes = Buffer.from(Array.from({ length: 2.5 * 1024 * 1024 }, (_, i) => (i * 7) & 0xff));
+  /** A file of 2.5 MB and a bit, so the last piece is short. */
+  const bytes = Buffer.from(Array.from({ length: 2.5 * 1024 * 1024 + 100 }, (_, i) => (i * 7) & 0xff));
 
   beforeEach(() => {
     info.mockResolvedValue({ exists: true, size: bytes.length });
@@ -150,7 +158,7 @@ describe("the upload carries the SHA-256 of its bytes, so the bucket refuses any
 
     const uploaded = await uploadCaptureFile("file:///captures/clip.mp4", "video", "x");
 
-    expect(read).toHaveBeenCalledTimes(3);
+    expect(read).toHaveBeenCalledTimes(41); // 64 KB at a time
     expect(uploaded.sha256).toBe(digest.toString("hex"));
     expect((post.mock.calls[0][1] as { sha256s: string[] }).sha256s).toEqual([digest.toString("hex")]);
     expect(uploadAsync.mock.calls[0][2]).toMatchObject({
@@ -161,6 +169,21 @@ describe("the upload carries the SHA-256 of its bytes, so the bucket refuses any
   it("fails when the bucket refuses the bytes, so the queue sends the kept file again", async () => {
     (uploadAsync as unknown as Call).mockResolvedValueOnce({ status: 400 }); // S3's BadDigest
     await expect(uploadCaptureFile("file:///captures/front.jpg", "photo", "x")).rejects.toThrow("Upload failed: 400");
+  });
+
+  it("leaves the hash out when the server did not sign it (an rn-api without ENG-350), so the bucket still takes the file", async () => {
+    post.mockResolvedValueOnce({ data: { presigned_urls: ["https://bucket.s3.ap-south-1.amazonaws.com/uploads/x/capture-x.jpg?X-Amz-SignedHeaders=content-type%3Bhost"] } });
+
+    const uploaded = await uploadCaptureFile("file:///captures/front.jpg", "photo", "x");
+
+    expect(uploaded).toEqual({ url: "https://bucket.s3.ap-south-1.amazonaws.com/uploads/x/capture-x.jpg" });
+    expect(uploadAsync.mock.calls[0][2]).toEqual(expect.objectContaining({ headers: { "Content-Type": "image/jpeg" } }));
+  });
+
+  it("sends no hash when the file reads back shorter than its size", async () => {
+    read.mockImplementation(async () => Buffer.from("short").toString("base64"));
+
+    expect((await uploadCaptureFile("file:///captures/front.jpg", "photo", "x")).sha256).toBeUndefined();
   });
 
   it("sends a file it cannot read without a hash rather than not at all", async () => {

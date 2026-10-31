@@ -55,25 +55,32 @@ export class Sha256 {
   }
 
   private compress(bytes: Uint8Array, at: number) {
-    const { w, h } = this;
-    for (let i = 0; i < 16; i++) {
-      const j = at + i * 4;
-      w[i] = (bytes[j] << 24) | (bytes[j + 1] << 16) | (bytes[j + 2] << 8) | bytes[j + 3];
-    }
+    // Plain locals and no allocation per block: this loop is most of the time spent under Hermes's interpreter.
+    const w = this.w;
+    const h = this.h;
+    for (let i = 0, j = at; i < 16; i++, j += 4) w[i] = (bytes[j] << 24) | (bytes[j + 1] << 16) | (bytes[j + 2] << 8) | bytes[j + 3];
     for (let i = 16; i < 64; i++) {
-      const a = w[i - 15];
-      const b = w[i - 2];
-      const s0 = ((a >>> 7) | (a << 25)) ^ ((a >>> 18) | (a << 14)) ^ (a >>> 3);
-      const s1 = ((b >>> 17) | (b << 15)) ^ ((b >>> 19) | (b << 13)) ^ (b >>> 10);
-      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+      const x = w[i - 15];
+      const y = w[i - 2];
+      w[i] =
+        w[i - 16] +
+        (((x >>> 7) | (x << 25)) ^ ((x >>> 18) | (x << 14)) ^ (x >>> 3)) +
+        w[i - 7] +
+        (((y >>> 17) | (y << 15)) ^ ((y >>> 19) | (y << 13)) ^ (y >>> 10));
     }
-    let [a, b, c, d, e, f, g, hh] = h;
+    let a = h[0] | 0;
+    let b = h[1] | 0;
+    let c = h[2] | 0;
+    let d = h[3] | 0;
+    let e = h[4] | 0;
+    let f = h[5] | 0;
+    let g = h[6] | 0;
+    let k = h[7] | 0;
     for (let i = 0; i < 64; i++) {
-      const S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
-      const t1 = (hh + S1 + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0;
-      const S0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
-      const t2 = (S0 + ((a & b) ^ (a & c) ^ (b & c))) | 0;
-      hh = g;
+      const t1 =
+        (k + (((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7))) + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0;
+      const t2 = ((((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10))) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+      k = g;
       g = f;
       f = e;
       e = (d + t1) | 0;
@@ -89,7 +96,7 @@ export class Sha256 {
     h[4] += e;
     h[5] += f;
     h[6] += g;
-    h[7] += hh;
+    h[7] += k;
   }
 }
 
