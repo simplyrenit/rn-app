@@ -104,6 +104,9 @@ export function pushRoute(data: unknown): PushRoute | null {
       case "returned":
       case "closed":
       case "late":
+      // Before the return is due (ENG-347): the rental screen, where Extend is.
+      case "return_reminder":
+      case "return_due":
       // Monthly billing (ENG-282): a month's link, its due day, its grace, its lapse, and ending early. The rental
       // screen shows the schedule and the overdue alert, and opens Rent due from there.
       case "period_link":
