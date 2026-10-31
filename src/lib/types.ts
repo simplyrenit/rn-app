@@ -370,6 +370,8 @@ export type RootStackParamList = {
   /** The shop's address and pin, on the same map picker (ENG-265). */
   ShopAddress: undefined;
   RentalDelivery: undefined;
+  /** GST registration and the GSTIN (ENG-343). No params: a GSTIN never goes in one. */
+  RentalGst: undefined;
   /** Every area around the shop, on and off, editing the Delivery screen's draft (ENG-291). */
   DeliveryAreas: undefined;
   /**
