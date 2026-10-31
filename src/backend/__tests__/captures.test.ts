@@ -180,6 +180,19 @@ describe("the upload carries the SHA-256 of its bytes, so the bucket refuses any
     expect(uploadAsync.mock.calls[0][2]).toEqual(expect.objectContaining({ headers: { "Content-Type": "image/jpeg" } }));
   });
 
+  it("hashes a kept file once across failed tries, and afresh after the bucket refused it", async () => {
+    const network = new Error("Network request failed");
+    post.mockRejectedValueOnce(network).mockRejectedValueOnce(network);
+    await expect(uploadCaptureFile("file:///captures/kept.mp4", "video", "x")).rejects.toThrow(network);
+    await expect(uploadCaptureFile("file:///captures/kept.mp4", "video", "x")).rejects.toThrow(network);
+    expect(read).toHaveBeenCalledTimes(41); // one hash for both tries
+
+    (uploadAsync as unknown as Call).mockResolvedValueOnce({ status: 400 });
+    await expect(uploadCaptureFile("file:///captures/kept.mp4", "video", "x")).rejects.toThrow("Upload failed: 400");
+    await uploadCaptureFile("file:///captures/kept.mp4", "video", "x");
+    expect(read).toHaveBeenCalledTimes(82); // the refusal dropped it: hashed again
+  });
+
   it("sends no hash when the file reads back shorter than its size", async () => {
     read.mockImplementation(async () => Buffer.from("short").toString("base64"));
 

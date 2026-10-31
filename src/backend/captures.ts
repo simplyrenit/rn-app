@@ -120,6 +120,13 @@ export async function fileSha256(uri: string): Promise<Uint8Array | null> {
   }
 }
 
+/**
+ * The hash of each kept file still waiting to go up, so an upload tried again every 20 s at a door with no signal does
+ * not hash the whole clip each time. A kept file never changes (a retake is a new file), and it leaves on success. A
+ * file the bucket refused leaves too, so the next try hashes it afresh (review r2).
+ */
+const keptDigests = new Map<string, Uint8Array>();
+
 /** A file on Renit's bucket: its address, and the SHA-256 (hex) the bucket checked it against, when there was one. */
 export interface Uploaded {
   url: string;
@@ -141,7 +148,10 @@ export async function uploadCaptureFile(uri: string, kind: "photo" | "video", wh
   const file = info?.exists && overPhotoLimit(info.size) ? await prepareImage(uri) : uri;
   const { ext, type } = typeOf(file, kind);
   const safe = what.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  const digest = await fileSha256(file);
+  // Only the kept file is remembered: a resized copy is a new file each time.
+  const kept = file === uri ? uri : null;
+  const digest = (kept && keptDigests.get(kept)) || (await fileSha256(file));
+  if (kept && digest) keptDigests.set(kept, digest);
   const sha256 = digest ? toHex(digest) : undefined;
   const { data } = await axiosInstance.post<{ presigned_urls: string[] }>(GENERATE_SIGNED_URLS, {
     filenames: [`capture-${safe}-${uuidv4()}.${ext}`],
@@ -159,6 +169,7 @@ export async function uploadCaptureFile(uri: string, kind: "photo" | "video", wh
     // Signed into the address: without it, or with other bytes, the bucket refuses the upload.
     headers: { "Content-Type": type, ...(checked && digest ? { "x-amz-checksum-sha256": toBase64(digest) } : {}) },
   });
+  if (kept && (result.status === 400 || (result.status >= 200 && result.status < 300))) keptDigests.delete(kept);
   if (result.status < 200 || result.status >= 300) throw new Error(`Upload failed: ${result.status}`);
   return { url: presigned.split("?")[0], ...(checked ? { sha256 } : {}) };
 }
