@@ -129,6 +129,10 @@ export interface LocalFile {
   taken_at: string;
   lat?: number;
   long?: number;
+  /** ENG-350: Android said the place was mocked. Left out when the phone did not say (an iPhone). */
+  mocked?: boolean;
+  /** ENG-350: the SHA-256 (hex) of the bytes uploaded, which the bucket checked; set with `url`. */
+  sha256?: string;
   /** The video's real length, when the camera said; never a rounded-down guess. */
   seconds?: number;
   /** The file's size, when the phone could read it. Shown before it is sent. */
@@ -465,9 +469,10 @@ export function files(draft: CaptureDraft): { slot: Slot; file: LocalFile }[] {
  * The file is up. Written only if the slot still holds that file: a shot taken
  * again while the first one was going up keeps its own, new, file.
  */
-export function setUrl(draft: CaptureDraft, slot: Slot, uri: string, url: string): CaptureDraft {
+export function setUrl(draft: CaptureDraft, slot: Slot, uri: string, url: string, sha256?: string): CaptureDraft {
   const file = fileAt(draft, slot);
-  return file && file.uri === uri ? withFile(draft, slot, { ...file, url }) : draft;
+  // The hash belongs to this upload: a file sent again without one (it could not be read) carries none.
+  return file && file.uri === uri ? withFile(draft, slot, { ...file, url, sha256 }) : draft;
 }
 
 /** The file is no longer on the phone (the system cleared it): it has to be taken again. */
@@ -593,8 +598,8 @@ export function nextWork(drafts: readonly CaptureDraft[], skip: ReadonlySet<stri
 
 /** `PUT /api/bookings/{number}/captures/{moment}/{side}/`. */
 export interface CaptureBody {
-  shots: { key: string; url: string; taken_at: string; lat?: number; long?: number }[];
-  video?: { url: string; taken_at: string };
+  shots: { key: string; url: string; taken_at: string; lat?: number; long?: number; mocked?: boolean; sha256?: string }[];
+  video?: { url: string; taken_at: string; sha256?: string };
   checklist: ChecklistItem[];
   id_match_ticked?: boolean;
   /** B1: the customer's courier return, the spare seal's number. */
@@ -621,10 +626,15 @@ export function captureBody(draft: CaptureDraft): CaptureBody {
       url: file.url,
       taken_at: file.taken_at,
       // The place is left out when the phone could not give one; it is never made up.
-      ...(typeof file.lat === "number" && typeof file.long === "number" ? { lat: file.lat, long: file.long } : {}),
+      ...(typeof file.lat === "number" && typeof file.long === "number"
+        ? { lat: file.lat, long: file.long, ...(typeof file.mocked === "boolean" ? { mocked: file.mocked } : {}) }
+        : {}),
+      ...(file.sha256 ? { sha256: file.sha256 } : {}),
     });
   }
-  if (draft.video?.url) body.video = { url: draft.video.url, taken_at: draft.video.taken_at };
+  if (draft.video?.url) {
+    body.video = { url: draft.video.url, taken_at: draft.video.taken_at, ...(draft.video.sha256 ? { sha256: draft.video.sha256 } : {}) };
+  }
   if (needsIdMatch(draft) && (!basket || draft.idMatch || draft.idTouched)) body.id_match_ticked = draft.idMatch;
   if (needsReceived(draft) && draft.received?.length) body.received = draft.received;
   if (needsReceived(draft) && draft.unticked?.length) body.not_received = draft.unticked;

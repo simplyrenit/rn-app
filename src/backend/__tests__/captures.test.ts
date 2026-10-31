@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import axiosInstance from "@/lib/networkUtils";
 import * as FileSystem from "expo-file-system";
 import { prepareImage } from "../list-flow/images";
+import { createHash } from "crypto";
 import { uploadCaptureFile } from "../captures";
 
 jest.mock("@react-native-async-storage/async-storage", () => ({ __esModule: true, default: { getItem: jest.fn(), setItem: jest.fn() } }));
@@ -12,6 +13,11 @@ jest.mock("expo-file-system", () => ({
   getInfoAsync: jest.fn(async () => ({ exists: true, size: 4 * 1024 * 1024 })),
   uploadAsync: jest.fn(async () => ({ status: 200 })),
   FileSystemUploadType: { BINARY_CONTENT: 0 },
+  EncodingType: { Base64: "base64" },
+  // No file to read unless a test gives one: the upload then goes without a hash, as an older build's.
+  readAsStringAsync: jest.fn(async () => {
+    throw new Error("no file");
+  }),
 }));
 
 type Call = jest.MockedFunction<(...args: unknown[]) => Promise<unknown>>;
@@ -69,7 +75,7 @@ describe("every capture file is named so the server takes it (T-23: `uploads/…
   for (const [label, kind, uri] of uploads) {
     it(`names ${label} capture-… whatever it is for, and the server's key keeps that`, async () => {
       for (const what of whats) {
-        const url = await uploadCaptureFile(uri, kind, what);
+        const { url } = await uploadCaptureFile(uri, kind, what);
         const filename = sent[sent.length - 1];
         expect(filename.startsWith("capture-")).toBe(true);
         const key = new URL(url).pathname.slice(1);
@@ -121,5 +127,49 @@ describe("a photo over the size the server takes is made smaller, and sent (the 
     await uploadCaptureFile("file:///captures/odd.jpg", "photo", "x");
     expect(prepareImage).not.toHaveBeenCalled();
     expect(uploadAsync.mock.calls[0][1]).toBe("file:///captures/odd.jpg");
+  });
+});
+
+describe("the upload carries the SHA-256 of its bytes, so the bucket refuses any others (ENG-350)", () => {
+  const uploadAsync = FileSystem.uploadAsync as unknown as jest.Mock;
+  const info = FileSystem.getInfoAsync as unknown as Call;
+  const read = FileSystem.readAsStringAsync as unknown as Call;
+  /** A file of 2.5 MB, so it is read in three pieces. */
+  const bytes = Buffer.from(Array.from({ length: 2.5 * 1024 * 1024 }, (_, i) => (i * 7) & 0xff));
+
+  beforeEach(() => {
+    info.mockResolvedValue({ exists: true, size: bytes.length });
+    read.mockImplementation(async (...args: unknown[]) => {
+      const { position, length } = args[1] as { position: number; length: number };
+      return bytes.subarray(position, position + length).toString("base64");
+    });
+  });
+
+  it("hashes the file a piece at a time and signs the hash into the upload", async () => {
+    const digest = createHash("sha256").update(bytes).digest();
+
+    const uploaded = await uploadCaptureFile("file:///captures/clip.mp4", "video", "x");
+
+    expect(read).toHaveBeenCalledTimes(3);
+    expect(uploaded.sha256).toBe(digest.toString("hex"));
+    expect((post.mock.calls[0][1] as { sha256s: string[] }).sha256s).toEqual([digest.toString("hex")]);
+    expect(uploadAsync.mock.calls[0][2]).toMatchObject({
+      headers: { "Content-Type": "video/mp4", "x-amz-checksum-sha256": digest.toString("base64") },
+    });
+  });
+
+  it("fails when the bucket refuses the bytes, so the queue sends the kept file again", async () => {
+    (uploadAsync as unknown as Call).mockResolvedValueOnce({ status: 400 }); // S3's BadDigest
+    await expect(uploadCaptureFile("file:///captures/front.jpg", "photo", "x")).rejects.toThrow("Upload failed: 400");
+  });
+
+  it("sends a file it cannot read without a hash rather than not at all", async () => {
+    read.mockRejectedValue(new Error("unreadable"));
+
+    const uploaded = await uploadCaptureFile("file:///captures/front.jpg", "photo", "x");
+
+    expect(uploaded.sha256).toBeUndefined();
+    expect("sha256s" in (post.mock.calls[0][1] as object)).toBe(false);
+    expect(uploadAsync.mock.calls[0][2]).toEqual(expect.objectContaining({ headers: { "Content-Type": "image/jpeg" } }));
   });
 });
