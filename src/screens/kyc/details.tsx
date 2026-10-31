@@ -9,6 +9,10 @@ import { errorFeedback } from "@/lib/haptics";
 import {
   GSTIN_PATTERN,
   PAN_PATTERN,
+  SHOP_LICENCE_ERROR,
+  SHOP_LICENCE_PATTERN,
+  UDYAM_ERROR,
+  UDYAM_PATTERN,
   cleanId,
   fieldErrors,
   gstinMatchesPan,
@@ -19,7 +23,7 @@ import {
 import { KYC_CONSENT_VERSION } from "@/lib/kyc-consent";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
-import { RouteProps, useTypedNavigation } from "@/lib/types";
+import { BusinessRegistrationKind, RouteProps, useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React, { useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
@@ -35,13 +39,36 @@ const ID_INPUT = {
   importantForAutofill: "no",
 } as const;
 
+/** The optional Udyam or shop licence number (ENG-348), per kind. */
+const REGISTRATION = {
+  udyam: {
+    label: "Udyam registration number",
+    hint: "Like UDYAM-MH-19-0001234",
+    pattern: UDYAM_PATTERN,
+    error: UDYAM_ERROR,
+    maxLength: 19,
+  },
+  shop_licence: {
+    label: "Shop licence number",
+    hint: "As printed on your Shops & Establishments certificate",
+    pattern: SHOP_LICENCE_PATTERN,
+    error: SHOP_LICENCE_ERROR,
+    maxLength: 40,
+  },
+} as const;
+
+/** What the registration input keeps of what was typed. */
+const cleanRegistration = (text: string, length: number) =>
+  text.toUpperCase().replace(/[^A-Z0-9/-]/g, "").slice(0, length);
+
 /** A state that replaces the form: nothing the merchant types here can get past it. */
 type Blocked = { title: string; body?: string; support?: boolean } | null;
 
 /**
- * PAN, the GST question and the GSTIN, then the hand-off to DigiLocker.
+ * PAN, the GST question and the GSTIN, an optional Udyam or shop licence number (ENG-348), then
+ * the hand-off to DigiLocker.
  *
- * The PAN and GSTIN live in this component's state and nowhere else: not in route params,
+ * The PAN, GSTIN and registration number live in this component's state and nowhere else: not in route params,
  * storage, the query cache, an event or a log line. They are gone when the screen unmounts.
  * The server is the authority on both; the checks here only save a round trip.
  */
@@ -60,6 +87,10 @@ export default function KycDetailsScreen() {
   const [panError, setPanError] = useState<string | undefined>();
   const [gstError, setGstError] = useState<string | undefined>();
   const [gstinError, setGstinError] = useState<string | undefined>();
+  const [regOpen, setRegOpen] = useState(false);
+  const [regKind, setRegKind] = useState<BusinessRegistrationKind | null>(null);
+  const [regNumber, setRegNumber] = useState("");
+  const [regError, setRegError] = useState<string | undefined>();
   const [banner, setBanner] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<Blocked>(null);
   // Stays true from the request until the DigiLocker session has closed, so a second tap does nothing.
@@ -69,10 +100,22 @@ export default function KycDetailsScreen() {
   const inFlight = useRef(false);
   const panInput = useRef<TextInput>(null);
   const gstinInput = useRef<TextInput>(null);
+  const regInput = useRef<TextInput>(null);
 
   const panOk = PAN_PATTERN.test(pan);
   const gstinOk = GSTIN_PATTERN.test(gstin);
-  const ready = panOk && gst !== null && (gst === "no" || gstinOk);
+  const reg = regKind ? REGISTRATION[regKind] : null;
+  // Sent only when the block is open and both halves are filled; an open, empty block is skipped.
+  const regFilled = regOpen && reg !== null && regNumber !== "";
+  const regOk = !regFilled || reg.pattern.test(regNumber);
+  const ready = panOk && gst !== null && (gst === "no" || gstinOk) && regOk;
+
+  const closeRegistration = () => {
+    setRegOpen(false);
+    setRegKind(null);
+    setRegNumber("");
+    setRegError(undefined);
+  };
 
   const toStatus = (justReturned = false) =>
     // Back from the status screen lands on Profile, never on a form that held a PAN.
@@ -92,7 +135,9 @@ export default function KycDetailsScreen() {
     setPanError(panBad ? PAN_ERROR : undefined);
     setGstError(gstBad ? "Choose Yes or No." : undefined);
     setGstinError(gstinBad ? GSTIN_ERROR : undefined);
-    if (panBad || gstBad || gstinBad || inFlight.current) return;
+    const regBad = !regOk;
+    if (regBad) setRegError(reg?.error);
+    if (panBad || gstBad || gstinBad || regBad || inFlight.current) return;
 
     inFlight.current = true;
     setBusy(true);
@@ -102,6 +147,9 @@ export default function KycDetailsScreen() {
         gst_declared: gst === "yes",
         ...(gst === "yes" ? { gstin } : {}),
         consent_version: KYC_CONSENT_VERSION,
+        ...(regFilled && regKind
+          ? { business_registration_kind: regKind, business_registration_number: regNumber }
+          : {}),
         ...(supersede ? { supersede: true } : {}),
       });
       track("kyc_started", { gst_declared: gst === "yes", supersede });
@@ -133,6 +181,11 @@ export default function KycDetailsScreen() {
         errorFeedback();
         gstinInput.current?.focus();
         return;
+      case "udyam_unverifiable":
+        setRegError("We couldn't find this Udyam number. Check it, or remove it to continue without it.");
+        errorFeedback();
+        regInput.current?.focus();
+        return;
       case "provider_unavailable":
         setBanner("We couldn't reach our verification partner. Nothing was saved. Try again in a few minutes.");
         return;
@@ -144,7 +197,10 @@ export default function KycDetailsScreen() {
         if (fields.consent) return setBlocked({ title: "Please update the app to continue" });
         setPanError(fields.pan);
         setGstinError(fields.gstin);
-        if (fields.other || (!fields.pan && !fields.gstin)) setBanner("Check your details and try again.");
+        setRegError(fields.registration);
+        if (fields.other || (!fields.pan && !fields.gstin && !fields.registration)) {
+          setBanner("Check your details and try again.");
+        }
         return;
       }
       case "consent_outdated":
@@ -321,6 +377,58 @@ export default function KycDetailsScreen() {
               ) : null}
             </>
           ) : null}
+
+          {regOpen ? (
+            <View style={{ marginBottom: density.fieldGap }}>
+              <FieldLabel label="Udyam or shop licence (optional)" />
+              <SegmentedChoice
+                accessibilityLabel="Udyam or shop licence"
+                options={[
+                  { value: "udyam", label: "Udyam registration" },
+                  { value: "shop_licence", label: "Shop licence" },
+                ]}
+                value={regKind}
+                onChange={(value) => {
+                  setRegKind(value);
+                  // A Udyam number is not a licence number: switching starts the field empty.
+                  setRegNumber("");
+                  setRegError(undefined);
+                }}
+              />
+              {reg ? (
+                <View style={{ marginTop: density.fieldGap }}>
+                  <TextField
+                    inputRef={regInput}
+                    label={reg.label}
+                    hint={reg.hint}
+                    value={regNumber}
+                    maxLength={reg.maxLength}
+                    error={regError}
+                    {...ID_INPUT}
+                    onChangeText={(text) => {
+                      const value = cleanRegistration(text, reg.maxLength);
+                      setRegNumber(value);
+                      if (regError && (regError !== reg.error || reg.pattern.test(value))) setRegError(undefined);
+                    }}
+                    onBlur={() => {
+                      if (regNumber && !reg.pattern.test(regNumber)) setRegError(reg.error);
+                    }}
+                  />
+                </View>
+              ) : null}
+              <View style={{ alignItems: "flex-start" }}>
+                <Button variant="ghost" size="compact" onPress={closeRegistration}>
+                  Remove Udyam or shop licence
+                </Button>
+              </View>
+            </View>
+          ) : (
+            <View style={{ marginBottom: density.fieldGap, alignItems: "flex-start" }}>
+              <Button variant="ghost" size="compact" onPress={() => setRegOpen(true)}>
+                Add Udyam or shop licence (optional)
+              </Button>
+            </View>
+          )}
 
           <Text tone="body" fontSize="text-sm">
             Next you'll open DigiLocker in a secure browser window to share your Aadhaar. You'll return to

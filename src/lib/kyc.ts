@@ -2,13 +2,18 @@
  * Merchant verification: the copy for every state, the field rules, and how a KYC error is
  * read (ENG-12). No network and no React here, so all of it is unit-tested.
  *
- * The PAN and GSTIN live only in the details screen's state. Nothing in this module stores,
+ * The PAN, GSTIN and registration number live only in the details screen's state. Nothing in this module stores,
  * logs or returns one beyond the value it was handed.
  */
 import type { KycErrorCode, KycReasonCode, KycStatus, KycStatusResponse } from "@/lib/types";
 
 export const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 export const GSTIN_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+/** Optional business registration (ENG-348). A shop licence's format differs by state. */
+export const UDYAM_PATTERN = /^UDYAM-[A-Z]{2}-[0-9]{2}-[0-9]{7}$/;
+export const SHOP_LICENCE_PATTERN = /^[A-Z0-9/-]{4,40}$/;
+export const UDYAM_ERROR = "Enter a valid Udyam number, like UDYAM-MH-19-0001234.";
+export const SHOP_LICENCE_ERROR = "Enter the licence number as printed: 4 to 40 letters, digits, / or -.";
 
 /** What the PAN and GSTIN inputs keep of what was typed. */
 export const cleanId = (text: string, length: number) =>
@@ -113,7 +118,7 @@ export function kycStateCopy(
         cardTitle: "Verified business",
         cardBody: "Your badge shows on your profile and listings.",
         title: "You're a Verified business",
-        body: 'Renters now see the Verified business badge on your profile and your listings. Need to change your PAN or GSTIN? Use "Remove my verification data" below, then verify again. Your badge stays off until the new check is approved.',
+        body: 'Renters now see the Verified business badge on your profile and your listings. Need to change your PAN or GSTIN, or add a Udyam or shop licence number? Use "Remove my verification data" below, then verify again. Your badge stays off until the new check is approved.',
         cta: "See my public profile",
         ctaKind: "profile",
         secondary: null,
@@ -216,14 +221,18 @@ export function kycError(error: unknown): KycError {
  * segment. Returns the server's reason per form field, and whether a key matched none.
  */
 export function fieldErrors(details: Record<string, unknown> | null) {
-  const out: { pan?: string; gstin?: string; consent?: boolean; other: boolean } = { other: false };
+  const out: { pan?: string; gstin?: string; registration?: string; consent?: boolean; other: boolean } = {
+    other: false,
+  };
   const fields = details?.fields;
   if (!fields || typeof fields !== "object") return { ...out, other: true };
   for (const path of Object.keys(fields)) {
     const name = path.split(".").pop();
     if (name === "pan") out.pan = "Enter a valid 10-character PAN, like ABCDE1234F.";
     else if (name === "gstin") out.gstin = "Enter a valid 15-character GSTIN, like 22ABCDE1234F1Z5.";
-    else if (name === "consent_version") out.consent = true;
+    else if (name === "business_registration_number" || name === "business_registration_kind") {
+      out.registration = "Check the registration number and try again.";
+    } else if (name === "consent_version") out.consent = true;
     else out.other = true;
   }
   return out;

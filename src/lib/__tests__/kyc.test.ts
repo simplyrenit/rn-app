@@ -156,6 +156,9 @@ describe("errors", () => {
     expect(fieldErrors({ fields: { "inputs.gstin": "x" } }).gstin).toBeDefined();
     expect(fieldErrors({ fields: { consent_version: "unknown" } }).consent).toBe(true);
     expect(fieldErrors({ fields: { supersede: "x" } }).other).toBe(true);
+    const reg = fieldErrors({ fields: { "inputs.business_registration_number": "x" } });
+    expect(reg).toMatchObject({ other: false, registration: expect.any(String) });
+    expect(fieldErrors({ fields: { business_registration_kind: "x" } }).registration).toBeDefined();
     expect(fieldErrors(null).other).toBe(true);
   });
 
