@@ -21,7 +21,7 @@ export function PhotoViewer({ tile, onClose }: { tile: Tile | null; onClose: () 
       {/* A photo is looked at on black in both themes. */}
       <View style={{ flex: 1, backgroundColor: darkColors.canvas }}>
         {tile?.uri ? (
-          <Image source={{ uri: tile.uri }} style={{ flex: 1 }} contentFit="contain" accessibilityLabel={tile.label} />
+          <Image source={{ uri: tile.uri, cacheKey: tile.uri.split("?")[0] }} style={{ flex: 1 }} contentFit="contain" accessibilityLabel={tile.label} />
         ) : null}
         <View
           style={{
@@ -71,7 +71,9 @@ function PhotoTile({ tile, onOpen }: { tile: Tile; onOpen: (tile: Tile) => void 
       style={{ width: "48%", gap: 2 }}
     >
       {tile.uri ? (
-        <Image source={{ uri: tile.uri }} style={box} contentFit="cover" transition={150} accessible={false} />
+        // A record photo comes as a short-lived signed address, new on every answer (ENG-339):
+        // cache it by the file, not the signature, or each 5 s poll downloads it again.
+        <Image source={{ uri: tile.uri, cacheKey: tile.uri.split("?")[0] }} style={box} contentFit="cover" transition={150} accessible={false} />
       ) : (
         <View style={[box, { backgroundColor: color.surfaceRaised, alignItems: "center", justifyContent: "center" }]}>
           <CameraIcon size={20} color={color.textDim} />
