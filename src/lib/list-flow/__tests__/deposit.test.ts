@@ -32,6 +32,16 @@ describe("computeDepositDefault", () => {
     expect(computeDepositDefault(10, { multiplier: 3, floor: 1000, round_to: 100 })).toBe(1000);
   });
 
+  it("takes the worth share when it is the larger (ENG-349)", () => {
+    const rule = { multiplier: 5, floor: 500, round_to: 50, worth_share: 20 };
+    expect(computeDepositDefault(1500, rule, 180000)).toBe(36000);
+    expect(computeDepositDefault(1500, rule, 30001)).toBe(7500); // 6,000.2 < the rate rule
+    expect(computeDepositDefault(100, rule, 30001)).toBe(6050); // rounds up to a step
+    expect(computeDepositDefault(1500, rule, null)).toBe(7500);
+    expect(computeDepositDefault(1500, { ...rule, worth_share: null }, 180000)).toBe(7500);
+    expect(computeDepositDefault(1500, DEFAULT_DEPOSIT_RULE, 180000)).toBe(7500);
+  });
+
   it("returns null without a valid rate", () => {
     expect(computeDepositDefault(null)).toBeNull();
     expect(computeDepositDefault(0)).toBeNull();
@@ -43,7 +53,13 @@ describe("parseDepositRule", () => {
   it("reads the API's decimal strings", () => {
     expect(
       parseDepositRule({ parent: "Gaming", multiplier: "5.00", floor: "500.00", round_to: "50.00" })
-    ).toEqual({ parent: "Gaming", multiplier: 5, floor: 500, round_to: 50 });
+    ).toEqual({ parent: "Gaming", multiplier: 5, floor: 500, round_to: 50, worth_share: null });
+    expect(
+      parseDepositRule({ multiplier: "5.00", floor: "500.00", round_to: "50.00", worth_share: "20.00" })
+    ).toMatchObject({ worth_share: 20 });
+    expect(
+      parseDepositRule({ multiplier: "5", floor: "500", round_to: "50", worth_share: "x" })
+    ).toMatchObject({ multiplier: 5, worth_share: null });
   });
 
   it("drops an unreadable rule", () => {
