@@ -389,6 +389,7 @@ export default function KycDetailsScreen() {
                 ]}
                 value={regKind}
                 onChange={(value) => {
+                  if (value === regKind) return;
                   setRegKind(value);
                   // A Udyam number is not a licence number: switching starts the field empty.
                   setRegNumber("");

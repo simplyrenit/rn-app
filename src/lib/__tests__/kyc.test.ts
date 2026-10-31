@@ -116,7 +116,7 @@ describe("state copy", () => {
     });
     expect(copy.body).toContain("you can verify without it");
     expect(copy.cardBody).toBe(
-      "The GST records now show your GSTIN as cancelled or suspended, so we've taken the badge off your shop."
+      "The GST records no longer show your GSTIN as active, so we've taken the badge off your shop."
     );
     // A reviewer's rejection for the same code keeps its own copy.
     expect(kycStateCopy("rejected", "gstin_inactive").title).toBe("We couldn't verify your business");
@@ -209,7 +209,7 @@ describe("consent text", () => {
     expect(text).toContain("Cashfree Payments India Private Limited checks your PAN, GSTIN and Udyam number");
     expect(text).not.toContain("[VERIFICATION PARTNER");
     expect(text.match(/\[[^\]]*\]/g)).toEqual(["[CASHFREE PRIVACY POLICY LINK]"]);
-    // The version agreed to before stays as it was: the server can still be sent it.
+    // The retired versions stay as they were: git history is the consent record.
     expect(KYC_CONSENT_TEXTS["kyc-merchant-2026-10"]).toContain("[VERIFICATION PARTNER NAME]");
   });
 

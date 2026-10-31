@@ -161,7 +161,7 @@ export function kycStateCopy(
       if (reason === "gstin_inactive") {
         // The monthly GSTIN re-check took the badge off (ENG-348).
         const body =
-          "The GST records now show your GSTIN as cancelled or suspended, so we've taken the badge off your shop. Once it's active again, verify again. If your business is no longer registered for GST, you can verify without it.";
+          "The GST records no longer show your GSTIN as active, so we've taken the badge off your shop. Once it's active again, verify again. If your business is no longer registered for GST, you can verify without it.";
         return {
           cardTitle: "Your Verified badge was removed",
           cardBody: firstSentence(body),
