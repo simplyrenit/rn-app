@@ -26,7 +26,7 @@ const complete = { complete: true, missing: [] } as unknown as Capture;
 function setup(over: Partial<CaptureQueueDeps> = {}) {
   const saved: CaptureDraft[][] = [];
   const deps: CaptureQueueDeps = {
-    upload: jest.fn(async (uri: string) => `https://bucket.test/uploads/${uri.split("/").pop()}`),
+    upload: jest.fn(async (uri: string) => ({ url: `https://bucket.test/uploads/${uri.split("/").pop()}` })),
     send: jest.fn(async () => complete),
     load: jest.fn(async () => [] as CaptureDraft[]),
     save: jest.fn(async (_account: string, drafts: CaptureDraft[]) => {
@@ -53,12 +53,34 @@ function record(queue: ReturnType<typeof createCaptureQueue>, id = ID) {
 }
 
 describe("the capture queue", () => {
+  it("sends each file's SHA-256 from its upload, and tries a refused upload again from the kept file (ENG-350)", async () => {
+    let refuse = true;
+    const { queue, deps } = setup({
+      upload: jest.fn(async (uri: string) => {
+        if (refuse && uri.endsWith("back.jpg")) throw new Error("Upload failed: 400"); // the bucket's BadDigest
+        return { url: `https://bucket.test/${uri.split("/").pop()}`, sha256: `hash of ${uri.split("/").pop()}` };
+      }),
+    });
+    await queue.init("asha");
+    queue.start(draft());
+    record(queue);
+    await queue.idle();
+    expect(deps.send).not.toHaveBeenCalled();
+
+    refuse = false;
+    queue.kick();
+    await queue.idle();
+    const body = (deps.send as jest.Mock).mock.calls[0][1] as { shots: { sha256: string }[]; video: { sha256: string } };
+    expect(body.shots.map((s) => s.sha256)).toEqual(["hash of front.jpg", "hash of back.jpg"]);
+    expect(body.video.sha256).toBe("hash of video.mp4");
+  });
+
   it("uploads each file as it is taken, then sends the record once, when the person has finished", async () => {
     const order: string[] = [];
     const { queue, deps } = setup({
       upload: jest.fn(async (uri: string, kind: "photo" | "video") => {
         order.push(`${kind} ${uri.split("/").pop()}`);
-        return `https://bucket.test/${uri.split("/").pop()}`;
+        return { url: `https://bucket.test/${uri.split("/").pop()}` };
       }),
       send: jest.fn(async () => {
         order.push("send");
@@ -126,7 +148,7 @@ describe("the capture queue", () => {
     const { queue, deps } = setup({
       upload: jest.fn(async (uri: string) => {
         if (!online) throw new Error("Network request failed");
-        return `https://bucket.test/${uri.split("/").pop()}`;
+        return { url: `https://bucket.test/${uri.split("/").pop()}` };
       }),
     });
     await queue.init("asha");
@@ -153,7 +175,7 @@ describe("the capture queue", () => {
     const { queue, deps } = setup({
       upload: jest.fn(async (uri: string) => {
         if (lost && !uri.endsWith("front.jpg")) throw new Error("Network request failed");
-        return `https://bucket.test/${uri.split("/").pop()}`;
+        return { url: `https://bucket.test/${uri.split("/").pop()}` };
       }),
     });
     await queue.init("asha");
@@ -347,7 +369,7 @@ describe("the capture queue", () => {
           // Its file was cleared when the shot was taken again.
           throw new Error("no such file");
         }
-        return `https://bucket.test/${uri.split("/").pop()}`;
+        return { url: `https://bucket.test/${uri.split("/").pop()}` };
       }),
     });
     await queue.init("asha");
@@ -366,7 +388,7 @@ describe("the capture queue", () => {
     const { queue, deps } = setup({
       upload: jest.fn(async (uri: string) => {
         if (uri.endsWith("back.jpg")) throw new FileGone();
-        return `https://bucket.test/${uri.split("/").pop()}`;
+        return { url: `https://bucket.test/${uri.split("/").pop()}` };
       }),
     });
     await queue.init("asha");
@@ -386,7 +408,7 @@ describe("the capture queue", () => {
     const { queue, deps } = setup({
       upload: jest.fn(async (uri: string) => {
         if (uri.endsWith("back.jpg")) throw new FileGone();
-        return `https://bucket.test/${uri.split("/").pop()}`;
+        return { url: `https://bucket.test/${uri.split("/").pop()}` };
       }),
     });
     await queue.init("asha");
