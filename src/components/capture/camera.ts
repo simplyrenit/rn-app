@@ -204,17 +204,25 @@ export async function recoverLostShot(stamp: () => string = () => new Date().toI
   captureQueue.update(waiting.id, (draft) => (found ? recoverShot(draft, found) : { ...draft, shooting: null }));
 }
 
-let lastPlace: { lat: number; long: number; at: number } | null = null;
+/** Where the phone is. `mocked`: Android's word that a mock-location app gave it (ENG-350); an iPhone does not say. */
+export interface Place {
+  lat: number;
+  long: number;
+  mocked?: boolean;
+}
+
+let lastPlace: (Place & { at: number }) | null = null;
 const PLACE_FRESH_MS = 2 * 60_000;
 const PLACE_WAIT_MS = 3000;
 
 /**
  * Where the phone is, for the stamp on each shot. Asked once, kept for two
  * minutes, and never waited on for more than a few seconds: a handover at a door
- * with no GPS still goes ahead, and that shot carries its time only.
+ * with no GPS still goes ahead, and that shot carries its time only. A mocked
+ * place is kept and flagged for Renit's desk, never refused.
  */
-export async function placeNow(): Promise<{ lat: number; long: number } | null> {
-  if (lastPlace && Date.now() - lastPlace.at < PLACE_FRESH_MS) return { lat: lastPlace.lat, long: lastPlace.long };
+export async function placeNow(): Promise<Place | null> {
+  if (lastPlace && Date.now() - lastPlace.at < PLACE_FRESH_MS) return placeOf(lastPlace);
   try {
     let permission = await Location.getForegroundPermissionsAsync();
     if (permission.status === "undetermined") permission = await Location.requestForegroundPermissionsAsync();
@@ -223,11 +231,13 @@ export async function placeNow(): Promise<{ lat: number; long: number } | null> 
       Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
       new Promise<null>((resolve) => setTimeout(() => resolve(null), PLACE_WAIT_MS)),
     ]);
-    const coords = fix?.coords ?? (await Location.getLastKnownPositionAsync())?.coords;
-    if (!coords) return null;
-    lastPlace = { lat: coords.latitude, long: coords.longitude, at: Date.now() };
-    return { lat: lastPlace.lat, long: lastPlace.long };
+    const found = fix ?? (await Location.getLastKnownPositionAsync());
+    if (!found) return null;
+    lastPlace = { lat: found.coords.latitude, long: found.coords.longitude, mocked: found.mocked, at: Date.now() };
+    return placeOf(lastPlace);
   } catch {
     return null;
   }
 }
+
+const placeOf = ({ lat, long, mocked }: Place): Place => ({ lat, long, ...(typeof mocked === "boolean" ? { mocked } : {}) });
