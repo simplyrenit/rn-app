@@ -31,8 +31,8 @@ export class FileGone extends Error {
 
 /** What the queue needs from the outside, so it can be tested without a phone or a server. */
 export interface CaptureQueueDeps {
-  /** Presigns and PUTs one file; resolves to its address on Renit's bucket. Throws `FileGone` if it is not there. */
-  upload: (uri: string, kind: "photo" | "video", draft: CaptureDraft) => Promise<string>;
+  /** Presigns and PUTs one file; resolves to its address on Renit's bucket and its SHA-256. Throws `FileGone` if it is not there. */
+  upload: (uri: string, kind: "photo" | "video", draft: CaptureDraft) => Promise<{ url: string; sha256?: string }>;
   /** `PUT /api/bookings/{number}/captures/{moment}/{side}/`. */
   send: (draft: CaptureDraft, body: CaptureBody) => Promise<Capture>;
   /** The drafts kept for this account, and keeping them. */
@@ -123,8 +123,8 @@ export function createCaptureQueue(deps: CaptureQueueDeps) {
       if (work.kind === "upload") {
         const { slot, file } = work;
         try {
-          const url = await deps.upload(file.uri, slot === "video" ? "video" : "photo", draft);
-          change(draft.id, (d) => ({ ...setUrl(d, slot, file.uri, url), error: d.error?.retry ? null : d.error }));
+          const { url, sha256 } = await deps.upload(file.uri, slot === "video" ? "video" : "photo", draft);
+          change(draft.id, (d) => ({ ...setUrl(d, slot, file.uri, url, sha256), error: d.error?.retry ? null : d.error }));
         } catch (error) {
           if (!stillHolds(draft.id, file.uri)) {
             // The shot was taken again (and its first file cleared) while this one was going up: not a failure.
