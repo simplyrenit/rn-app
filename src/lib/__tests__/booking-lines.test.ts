@@ -20,6 +20,7 @@ import {
   partlyAccepted,
   receivedBody,
   restOf,
+  reviewableItems,
   theItems,
   ticksCaption,
   ticksOf,
@@ -387,5 +388,14 @@ describe("the rental and the return of a basket (CT-35, CT-35b, CT-37)", () => {
       "Made of: Sony A7 IV camera ₹20,000 · Sony FE lens ₹5,000 · Manfrotto tripod ₹1,000"
     );
     expect(depositCopy(single({ stage: "confirmed" })).madeOf).toBeNull();
+  });
+
+  it("offers a review of each live item only once the rental closed (ENG-342)", () => {
+    const names = (b: BookingCustomer) => reviewableItems(b).map((product) => product.name);
+    expect(names(basket({ stage: "closed", lines: [camera, lens, { ...tripod, state: "refused" }] }))).toEqual(["PRO_1", "PRO_2"]);
+    expect(names(single({ stage: "closed" }))).toEqual(["PRO_1"]);
+    expect(names(single({ stage: "closed", lines: undefined }))).toEqual(["PRO_1"]);
+    expect(names(basket({ stage: "returned" }))).toEqual([]);
+    expect(names(basket({ stage: "closed", exit: "cancelled_by_customer" }))).toEqual([]);
   });
 });

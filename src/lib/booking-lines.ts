@@ -52,6 +52,16 @@ export function madeOf(b: Lines): string | null {
     : null;
 }
 
+/**
+ * ENG-342: what a customer can review from this booking. Only a rental that closed (ENG-339 takes a review from no one
+ * else), so nothing for one that ended before the handover (`exit`); its live items, not the ones the shop left out.
+ */
+export function reviewableItems(b: Pick<BookingCustomer, "stage" | "exit" | "product" | "lines">): BookingCustomer["product"][] {
+  if (b.stage !== "closed" || b.exit) return [];
+  const products = b.lines?.length ? liveLines(b).map((line) => line.product) : [b.product];
+  return products.filter((product): product is BookingCustomer["product"] => Boolean(product.name));
+}
+
 /** G12's chip on an item that is not in the booking, and its tone. */
 export const leftOutChip = (line: BookingLine) =>
   line.state === "no_unit"

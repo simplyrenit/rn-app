@@ -78,7 +78,8 @@ export default function WriteReviewScreen() {
 
   const { color } = useTheme();
   const { userDetails } = useGlobalContext();
-  const isOwner = userDetails?.username === owner?.username;
+  const isOwner = Boolean(owner) && userDetails?.username === owner?.username;
+  const plan = smallestPlan(plansOf(product));
 
   const reviewValid =
     !isOwner &&
@@ -199,21 +200,26 @@ export default function WriteReviewScreen() {
             <Text fontSize="text-sm" fontWeight="font-bold" numberOfLines={1}>
               {product.title}
             </Text>
-            <Text fontSize="text-sm" tone="body" numberOfLines={1}>
-              {product.location}
-            </Text>
+            {product.location ? (
+              <Text fontSize="text-sm" tone="body" numberOfLines={1}>
+                {product.location}
+              </Text>
+            ) : null}
             {/* Baseline-aligned, so the unit sits on the price's own line
-                rather than on the middle of its digits. */}
-            <View
-              style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}
-            >
-              <Text fontSize="text-md" fontWeight="font-bold">
-                {formatCurrency(smallestPlan(plansOf(product))?.price ?? product.rate)}
-              </Text>
-              <Text fontSize="text-sm" tone="dim">
-                {`per ${smallestPlan(plansOf(product))?.unit ?? "day"}`}
-              </Text>
-            </View>
+                rather than on the middle of its digits. A closed booking
+                passes no price, and the line is left out rather than "₹0". */}
+            {plan ? (
+              <View
+                style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}
+              >
+                <Text fontSize="text-md" fontWeight="font-bold">
+                  {formatCurrency(plan.price)}
+                </Text>
+                <Text fontSize="text-sm" tone="dim">
+                  {`per ${plan.unit}`}
+                </Text>
+              </View>
+            ) : null}
           </View>
         </View>
 

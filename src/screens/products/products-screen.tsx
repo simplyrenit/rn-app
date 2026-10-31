@@ -1079,6 +1079,24 @@ export default function DetailsScreen() {
                 {`See all ${reviews.length} ${reviews.length === 1 ? "review" : "reviews"}`}
               </Button>
             </View>
+          ) : isAuthenticated && userDetails && !isOwner && product && !product.review_count ? (
+            // ENG-342: with no reviews there is no "See all", and that list was
+            // the only way into the form, so the first review had no way in.
+            // The API still decides who may write one (`not_rented`).
+            // `review_count`, not only `reviews`: the list loads after the
+            // product, and a listing with reviews must not flash this first.
+            // `userDetails`: until it loads, the owner would not read as one.
+            <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+              <Button
+                onPress={() =>
+                  navigation.navigate("WriteReviews", { product, owner: product.owner! })
+                }
+                variant="outline"
+                size="compact"
+              >
+                Write a review
+              </Button>
+            </View>
           ) : null}
         </DetailSection>
 

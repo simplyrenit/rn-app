@@ -2,7 +2,7 @@ import { useCart } from "@/backend/cart";
 import { Panel, Pill, TextButton, Thumb } from "@/components/booking/parts";
 import { Button, Text } from "@/components/core";
 import { BookingCustomer, BookingLine, money } from "@/lib/booking";
-import { isBasket, itemsText, leftOutChip, leftOutLines, liveLines, madeOf } from "@/lib/booking-lines";
+import { isBasket, itemsText, leftOutChip, leftOutLines, liveLines, madeOf, reviewableItems } from "@/lib/booking-lines";
 import { space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
@@ -206,6 +206,34 @@ export function BookingItems({ booking }: { booking: BookingCustomer }) {
         </View>
       ) : null}
     </>
+  );
+}
+
+/** ENG-342: a closed rental's items, each with the way into its review form, where one is most likely written. */
+export function ReviewItems({ booking }: { booking: BookingCustomer }) {
+  const navigation = useTypedNavigation();
+  const items = reviewableItems(booking);
+  if (!items.length) return null;
+  return (
+    <View style={{ gap: space.sm }}>
+      <Text role="sectionTitle" accessibilityRole="header">
+        Review your rental
+      </Text>
+      <Panel style={{ paddingHorizontal: space.md }}>
+        {items.map((product, index) => (
+          <ItemRow key={product.name} first={index === 0} title={product.title} image={product.cover_image}>
+            <Button
+              variant="outline"
+              size="compact"
+              accessibilityLabel={`Write a review of ${product.title}`}
+              onPress={() => navigation.navigate("WriteReviews", { product })}
+            >
+              Write a review
+            </Button>
+          </ItemRow>
+        ))}
+      </Panel>
+    </View>
   );
 }
 
