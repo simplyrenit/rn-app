@@ -212,7 +212,7 @@ export default function ReviewAndBookScreen() {
   const notice = morningNotice(quote, params.item.shop_name);
   const terms = quote.terms;
   const ticked = termsTicked(terms, tickedFor);
-  const idCheck = idCheckCopy(quote, idRefused, kyc?.kyc_status);
+  const idCheck = idCheckCopy(quote, idRefused, kyc?.kyc_status, kyc?.reason_code ?? null);
   const idNeeded = idCheck?.state === "needed";
 
   // ---- Card mode ----

@@ -859,6 +859,10 @@ describe("the ID check", () => {
     for (const status of ["in_review", "rejected"] as const) {
       expect(idCheckCopy(needed, null, status)?.body).toMatch(/Items that need no ID check can be booked now\./);
     }
+    // Why it failed, in the first sentence of the status screen's words.
+    expect(idCheckCopy(needed, null, "rejected", "pan_name_mismatch")?.body).toMatch(
+      /^The name on your PAN didn't match the name on your Renit account\. You can't book this item until it passes\./
+    );
     // An item that asks for no check (a cheap camera: `passed` null) says nothing, whatever the status.
     expect(idCheckCopy(withCheck("id_and_match", null), null, "rejected")).toBeNull();
   });

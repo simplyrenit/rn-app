@@ -79,7 +79,7 @@ export function pushRoute(data: unknown): PushRoute | null {
   if (!isRecord(data) || typeof data.type !== "string") return null;
   const number = typeof data.booking === "string" && data.booking ? data.booking : null;
 
-  // Sent by the KYC sweep with no booking, and only to the merchant it is about.
+  // Sent by the KYC sweep with no booking, and only to the person it is about (a merchant, or a customer's ID check).
   if (data.type === "kyc_status") return { screen: "KycStatus" };
 
   // B1: a desk alarm, pushed to Renit's desk staff (ENG-303). The notification itself is the message; the booking is

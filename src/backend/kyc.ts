@@ -202,8 +202,9 @@ export function useKycRefetch() {
   const refreshDetails = useRef(fetchUserDetails);
   refreshDetails.current = fetchUserDetails;
   return useCallback(() => {
-    void queryClient.invalidateQueries(["kyc", "status"]);
-    void queryClient.invalidateQueries("quote");
+    // The quote after the status: reading the status is what stores a new answer from rn-kyc, and
+    // the quote reads that stored answer. Read together, the quote could still say "not passed".
+    void queryClient.invalidateQueries(["kyc", "status"]).then(() => queryClient.invalidateQueries("quote"));
     void refreshDetails.current();
   }, [queryClient]);
 }

@@ -12,6 +12,7 @@ import { SavedAddress, addressLine, addressTitle } from "@/lib/addresses";
 import { ApiError, fieldErrors } from "@/lib/api-error";
 import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
+import { kycStateCopy } from "@/lib/kyc";
 import type { PlanUnit } from "@/lib/plans";
 import type { KycStatus } from "@/lib/types";
 import { ALL_DAY, DayHours, Hours, coversWholeDay, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
@@ -1170,12 +1171,13 @@ export const HANDOVER_ID = "Bring a photo ID in your own name to the handover. T
  * `blockers`, or Book now answering `403 id_check_needed`, whose `details.needed`
  * is passed as `refused`. No rupee figure is written: where the line falls is
  * the server's setting. `status`: the customer's own check (ENG-351), so a check on its way or one that failed says so
- * and what to do, instead of asking them to start one.
+ * and what to do, instead of asking them to start one; `reason`, why it failed.
  */
 export function idCheckCopy(
   quote: Pick<Quote, "id_check" | "blockers">,
   refused: string | null = null,
-  status: KycStatus | undefined = undefined
+  status: KycStatus | undefined = undefined,
+  reason: string | null = null
 ): IdCheckCopy | null {
   const notPassed =
     refused !== null ||
@@ -1201,7 +1203,7 @@ export function idCheckCopy(
       case "rejected":
         return needed(
           "Your ID check didn't pass",
-          "You can't book this item until it does. Try again with your own PAN and Aadhaar, or contact support. Items that need no ID check can be booked now.",
+          `${kycStateCopy("rejected", reason, true).cardBody} You can't book this item until it passes. Items that need no ID check can be booked now.`,
           "Try again"
         );
       case "verified":
