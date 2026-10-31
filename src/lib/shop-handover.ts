@@ -2,7 +2,7 @@ import { RECORD_FIRST } from "@/lib/capture";
 import { problemLine, problemState } from "@/lib/claims";
 import { clock, dayOf, dayShort, depositAfterLate, keptReasons, money, todayIst, windowLabel } from "@/lib/booking";
 import { captured, cameBackOn, dayBlock, handoverAt, returnedAt, theirStatusLine, whenShort } from "@/lib/day-of";
-import { BookingShop, howLine, moneyView } from "@/lib/shop-booking";
+import { BookingShop, MoneyView, howLine, moneyView } from "@/lib/shop-booking";
 import { courierOf } from "@/lib/shop-courier";
 import { customerName } from "@/lib/shop-ring";
 import { depositPill } from "@/lib/shop-today";
@@ -109,7 +109,7 @@ export interface StartedCopy {
   title: string;
   /** The payout: how much, and where it stands, in the server's words. */
   payout: string | null;
-  fee: { struck: string | null; charged: string };
+  fee: MoneyView["fee"];
   dueBack: string | null;
 }
 

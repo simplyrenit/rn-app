@@ -130,7 +130,8 @@ export function SummaryCard({
 
 /**
  * A label on the left and an amount on the right; `struck` is drawn crossed out before it, and the amount then reads as
- * a saving (green) unless `amountTone` says otherwise: a price that went up (CT-23a) is `default`.
+ * a saving (green) unless `amountTone` says otherwise: a price that went up (CT-23a) is `default`. `note` is a small line
+ * under it (ENG-343: the GST in it).
  */
 export function MoneyLine({
   label,
@@ -138,35 +139,41 @@ export function MoneyLine({
   struck,
   bold = false,
   amountTone,
+  note,
 }: {
   label: string;
   amount: string;
   struck?: string;
   bold?: boolean;
   amountTone?: "success" | "default";
+  note?: string;
 }) {
+  const said = struck ? `${label}: ${amount}, instead of ${struck}` : `${label}: ${amount}`;
   return (
-    <View
-      style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}
-      accessible
-      accessibilityLabel={struck ? `${label}: ${amount}, instead of ${struck}` : `${label}: ${amount}`}
-    >
-      <Text
-        fontSize="text-md"
-        fontWeight={bold ? "font-bold" : "font-normal"}
-        tone={bold ? "default" : "body"}
-        style={{ flex: 1 }}
-      >
-        {label}
-      </Text>
-      {struck ? (
-        <Text fontSize="text-md" tone="dim" style={{ textDecorationLine: "line-through" }}>
-          {struck}
+    <View accessible accessibilityLabel={note ? `${said}. ${note}` : said} style={{ gap: 2 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+        <Text
+          fontSize="text-md"
+          fontWeight={bold ? "font-bold" : "font-normal"}
+          tone={bold ? "default" : "body"}
+          style={{ flex: 1 }}
+        >
+          {label}
+        </Text>
+        {struck ? (
+          <Text fontSize="text-md" tone="dim" style={{ textDecorationLine: "line-through" }}>
+            {struck}
+          </Text>
+        ) : null}
+        <Text fontSize="text-md" fontWeight="font-bold" tone={amountTone ?? (struck ? "success" : "default")}>
+          {amount}
+        </Text>
+      </View>
+      {note ? (
+        <Text fontSize="text-xs" tone="body">
+          {note}
         </Text>
       ) : null}
-      <Text fontSize="text-md" fontWeight="font-bold" tone={amountTone ?? (struck ? "success" : "default")}>
-        {amount}
-      </Text>
     </View>
   );
 }

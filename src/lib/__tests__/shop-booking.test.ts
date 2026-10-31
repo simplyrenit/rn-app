@@ -292,6 +292,46 @@ describe("the Money card", () => {
     expect(moneyView(booking({ stage: "closed", exit: "cancelled_by_customer", money: m }))).toMatchObject({ rentLabel: "Rent", rent: "₹10,800" });
   });
 
+  it("says the GST in a registered shop's rent, and the fee with its GST (ENG-343)", () => {
+    const m = { ...booking().money, rent_gst: "279.15", fee_shown: "92.00", fee_charged: "92.00", fee_gst: "16.56", you_earn: "1721.44" };
+    expect(moneyView(booking({ money: m }))).toMatchObject({
+      rent: "₹1,830",
+      rentNote: "GST in rent ₹279.15 · yours to file",
+      fee: { struck: null, charged: "₹108.56", note: "₹92 + GST ₹16.56" },
+      earn: "₹1,721.44",
+    });
+    // Unregistered and no fee: no notes.
+    const plain = moneyView(booking());
+    expect(plain.rentNote).toBeUndefined();
+    expect(plain.fee.note).toBeUndefined();
+  });
+
+  it("shares a monthly booking's fee GST and rent GST out a month at a time (ENG-343)", () => {
+    const m = {
+      ...booking().money,
+      rent: "10800.00",
+      rent_gst: "1647.46",
+      fee_shown: "540.00",
+      fee_charged: "540.00",
+      fee_gst: "97.20",
+      you_earn: "10162.80",
+      plan: { unit: "month", price: "1800.00", min: 6 },
+      billing: "monthly",
+      periods: [
+        {
+          booking: "RN-24831", n: 1, label: "Month 1", kind: "rent", first_day: "2026-10-24", last_day: "2026-11-22",
+          amount: "1693.80", state: "paid", link_on: null, pay_by: null, grace_ends: null, paid_at: null, linked_at: null,
+        },
+      ],
+    };
+    expect(moneyView(booking({ stage: "out", money: m }))).toMatchObject({
+      rent: "₹1,800",
+      rentNote: "GST in rent ₹274.58 · yours to file",
+      fee: { struck: null, charged: "₹106.20", note: "₹90 + GST ₹16.20" },
+      earn: "₹1,693.80",
+    });
+  });
+
   it("keeps an unpaid notice out of what is returned from the deposit (ENG-282)", () => {
     const m = { ...booking().money, deposit: "5000.00", deposit_state: "settled", damage_deduction: "0.00", notice_deduction: "1800.00" };
     const view = moneyView(booking({ stage: "closed", money: m }));

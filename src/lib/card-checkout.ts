@@ -221,8 +221,8 @@ export function noDayNotice(count: number, culprits: string[]): { title: string;
 
 /** G5's price panel: "Rent (3 items)", then delivery and Renit's fee as the one-item screen says them. */
 export function cardPriceLines(quote: Quote, items: number): PriceLine[] {
-  const [, handover, fee] = priceLines(quote);
-  return [{ label: `Rent (${pluralize(items, "item")})`, amount: money(quote.rent) }, handover, fee];
+  const [rent, handover, fee] = priceLines(quote);
+  return [{ ...rent, label: `Rent (${pluralize(items, "item")})` }, handover, fee];
 }
 
 /** Step 3's second line (FIXES B2 row 12): "Sony A7 IV camera ₹20,000 · Lens ₹5,000". Null for one item. */
