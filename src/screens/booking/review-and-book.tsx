@@ -154,9 +154,10 @@ export default function ReviewAndBookScreen() {
   useFocusEffect(
     useCallback(() => {
       if (seen.current) {
-        // Back from the ID check (or anywhere else): the quote says afresh whether it is passed.
+        // Back from the ID check (or anywhere else): the quote says afresh whether it is passed, read after the
+        // status, which is what stores a new answer from the KYC service (ENG-351).
         setIdRefused(null);
-        void quoteQuery.refetch();
+        void queryClient.invalidateQueries(["kyc", "status"]).then(() => quoteQuery.refetch());
       }
       seen.current = true;
       // `refetch` is stable for the life of the query.

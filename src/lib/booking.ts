@@ -1204,7 +1204,7 @@ export function idCheckCopy(
         return needed(
           "Your ID check didn't pass",
           `${kycStateCopy("rejected", reason, true).cardBody} You can't book this item until it passes. Items that need no ID check can be booked now.`,
-          "Try again"
+          "See what to do"
         );
       case "verified":
         // The quote was read before the approval reached it; it is read again on focus and with the push.

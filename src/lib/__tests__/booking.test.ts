@@ -854,7 +854,8 @@ describe("the ID check", () => {
     expect(words("action_required")).toEqual(["needed", "Finish your ID check", "Continue ID check"]);
     expect(words("pending")).toEqual(["needed", "Your ID check is being reviewed", "See where it stands"]);
     expect(words("in_review")).toEqual(["needed", "Your ID check is being reviewed", "See where it stands"]);
-    expect(words("rejected")).toEqual(["needed", "Your ID check didn't pass", "Try again"]);
+    // The status screen has the whole reason and the right way on (try again, or support for a duplicate).
+    expect(words("rejected")).toEqual(["needed", "Your ID check didn't pass", "See what to do"]);
     // Pending or failed: the customer is told the cheaper items still book.
     for (const status of ["in_review", "rejected"] as const) {
       expect(idCheckCopy(needed, null, status)?.body).toMatch(/Items that need no ID check can be booked now\./);

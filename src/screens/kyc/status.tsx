@@ -41,8 +41,12 @@ export default function KycStatusScreen() {
   const { userDetails } = useGlobalContext();
   const route = useRoute<RouteProps<"KycStatus">>();
   const justReturned = route.params?.justReturned === true;
-  // Opened from a price screen (ENG-351): the way out is back to it, with its dates.
-  const fromBooking = route.params?.source === "booking";
+  // Opened from a price screen (ENG-351): the way out is back to it, with its dates. Also when the price screen is
+  // right under this one without the param: the approval push and the return link open this screen with params of
+  // their own, which replace `source`.
+  const navState = navigation.getState?.();
+  const below = navState ? navState.routes[navState.index - 1]?.name : undefined;
+  const fromBooking = route.params?.source === "booking" || below === "ReviewAndBook";
   // When the current polling window opened; null outside one.
   const [pollingSince, setPollingSince] = useState<number | null>(null);
   const [timedOut, setTimedOut] = useState(false);

@@ -3,11 +3,11 @@ import { describe, expect, it, jest } from "@jest/globals";
 import { startIdCheck } from "@/lib/id-check";
 
 describe("startIdCheck (ENG-351)", () => {
-  it("starts at the explanation with nothing on file or a check to take again, and opens where it stands otherwise", () => {
+  it("starts at the explanation with nothing on file, and opens where it stands otherwise", () => {
     const cases = [
       [undefined, "KycIntro"],
       ["none", "KycIntro"],
-      ["rejected", "KycIntro"],
+      ["rejected", "KycStatus"], // its whole reason, and "Contact support" for a duplicate
       ["action_required", "KycStatus"],
       ["pending", "KycStatus"],
       ["in_review", "KycStatus"],
