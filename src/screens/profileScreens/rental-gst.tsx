@@ -156,7 +156,8 @@ function GstForm({ shop }: { shop: Shop }) {
             {serverError}
           </Text>
         ) : null}
-        <Button disabled={!changed || (registered && !gstinOk)} loading={saving} onPress={() => void save()}>
+        {/* A partly typed GSTIN still taps through: `save` says what is wrong with it. */}
+        <Button disabled={!changed} loading={saving} onPress={() => void save()}>
           Save GST
         </Button>
       </View>

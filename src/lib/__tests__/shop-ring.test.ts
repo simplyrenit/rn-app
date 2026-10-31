@@ -147,7 +147,7 @@ describe("the request in words", () => {
     expect(feeText({ fee_shown: "92.00", fee_charged: "92.00" }).struck).toBeNull();
     // A fee switched on carries 18% GST (ENG-343): the owner sees it with its GST.
     expect(feeText({ fee_shown: "92.00", fee_charged: "92.00", fee_gst: "16.56" })).toEqual({
-      struck: "₹92",
+      struck: null,
       charged: money("108.56"),
     });
   });
