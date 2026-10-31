@@ -46,7 +46,7 @@ Version: kyc-merchant-2026-10b`,
 Your PAN. Your GSTIN, if you tell us you're registered for GST. Your Udyam registration or shop licence number, if you choose to add one. Your Aadhaar details from DigiLocker when you approve sharing; what DigiLocker shares can include your name, date of birth, gender, address and photo. We read them once to check them and keep only the few details listed below. We don't ask for photos or selfies.
 
 Why
-To check that you and your business are who you say you are, so we can show a Verified business badge, and to check every month that your GSTIN is still active. If the GST records show it cancelled or suspended, we remove the badge and tell you how to get it back. We don't use this information for anything else.
+To check that you and your business are who you say you are, so we can show a Verified business badge, and to check every month that your GSTIN is still active. If the GST records no longer show it as active, we remove the badge and tell you how to get it back. We don't use this information for anything else.
 
 Who handles it
 Cashfree Payments India Private Limited checks your PAN, GSTIN and Udyam number and connects you to DigiLocker for us. They handle your details under their own privacy policy: [CASHFREE PRIVACY POLICY LINK]. A member of the Renit team reviews each case before it's approved, and can see your name, your PAN's last 4 digits, the few Aadhaar details listed below, and your Udyam or shop licence number so they can check it.
