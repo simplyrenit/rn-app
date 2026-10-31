@@ -113,7 +113,7 @@ export default function BusinessBillingScreen() {
           </View>
 
           {/* Not loaded (an error, or the query not started because the profile didn't refresh): say so, never blank. */}
-          {on && row === undefined && !saved.isFetching ? (
+          {on && row === undefined && !saved.isFetching && !saving ? (
             <Text tone="warning" fontSize="text-sm" style={{ marginBottom: density.fieldGap }}>
               {"We couldn't load your GSTIN. "}
               <Text

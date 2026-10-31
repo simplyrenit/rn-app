@@ -16,7 +16,8 @@ export function useBuyerGstin() {
   return useQuery<BuyerGstin | null>(
     BUYER_GSTIN_KEY(userDetails?.username),
     () => axiosInstance.get<BuyerGstin | "">(BUSINESS_GSTIN_ENDPOINT).then((r) => r.data || null),
-    { enabled: Boolean(isAuthenticated && userDetails?.billing_as_business), staleTime: 60_000 }
+    // One retry: Book waits on this read, so a dead network should say so soon, not after three.
+    { enabled: Boolean(isAuthenticated && userDetails?.billing_as_business), staleTime: 60_000, retry: 1 }
   );
 }
 

@@ -673,6 +673,11 @@ export default function ReviewAndBookScreen() {
               </Text>
             ) : null}
           </Panel>
+        ) : billTo.kind === "loading" ? (
+          // Book waits for it (a booking's bill-to can't be added later), so say why.
+          <Text fontSize="text-sm" tone="body">
+            Loading your GSTIN…
+          </Text>
         ) : billTo.kind === "failed" ? (
           <Notice tone="warning" icon="warning">
             {"We couldn't load your GSTIN, so this booking won't be billed to your business."}
