@@ -23,6 +23,10 @@ describe("billToRow", () => {
   it("is hidden for anyone not billing as a business", () => {
     expect(billToRow(false, saved, false)).toEqual({ kind: "hidden" });
   });
+  it("is never 'none saved' while the GSTIN is unknown", () => {
+    expect(billToRow(true, undefined, false)).toEqual({ kind: "loading" });
+    expect(billToRow(true, undefined, false, true)).toEqual({ kind: "failed" });
+  });
   it("asks for a GSTIN when none is saved", () => {
     expect(billToRow(true, null, false)).toEqual({ kind: "add" });
   });

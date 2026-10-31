@@ -10,13 +10,13 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 
 export const BUYER_GSTIN_KEY = (username: string | undefined) => ["business", "gstin", username ?? ""];
 
-/** The saved GSTIN, or null (204). Only asked for a signed-in customer. */
+/** The saved GSTIN, or null (204). Only asked for a customer billing as a business. */
 export function useBuyerGstin() {
   const { isAuthenticated, userDetails } = useGlobalContext();
   return useQuery<BuyerGstin | null>(
     BUYER_GSTIN_KEY(userDetails?.username),
     () => axiosInstance.get<BuyerGstin | "">(BUSINESS_GSTIN_ENDPOINT).then((r) => r.data || null),
-    { enabled: Boolean(isAuthenticated && userDetails && userDetails.account_type !== "merchant"), staleTime: 60_000 }
+    { enabled: Boolean(isAuthenticated && userDetails?.billing_as_business), staleTime: 60_000 }
   );
 }
 

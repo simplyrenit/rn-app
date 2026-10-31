@@ -38,15 +38,20 @@ export default function BusinessBillingScreen() {
   const [gstin, setGstin] = useState("");
   const [error, setError] = useState<string | undefined>();
   const [changing, setChanging] = useState(false);
+  // One save at a time, so quick taps can't land out of order.
+  const [saving, setSaving] = useState(false);
 
   const toggle = async (value: boolean) => {
-    if (!userDetails) return;
+    if (!userDetails || saving) return;
     setOn(value);
+    setSaving(true);
     try {
       await updateMyDetails(userDetails.username, { bills_to_business: value });
     } catch {
       setOn(!value);
       toast.error("We couldn't save that", { message: "Check your connection and try again." });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -81,7 +86,8 @@ export default function BusinessBillingScreen() {
     ]);
 
   const row = saved.data;
-  const showForm = on && (!row || changing);
+  // Only once the saved GSTIN is known: `undefined` is still loading (or failed), not "none".
+  const showForm = on && (row === null || (Boolean(row) && changing));
 
   return (
     <NonScrollableContainer>
@@ -100,6 +106,7 @@ export default function BusinessBillingScreen() {
             </View>
             <AppSwitch
               value={on}
+              disabled={saving}
               onValueChange={(value) => void toggle(value)}
               accessibilityLabel="Renting for a business"
             />

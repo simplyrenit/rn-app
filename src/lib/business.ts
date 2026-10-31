@@ -62,16 +62,26 @@ export function gstinErrorText(failure: ApiError | null): string {
 
 /**
  * The Bill to row on Review and book: hidden unless the customer bills as a business; with a
- * saved GSTIN a switch, on unless they turned it off; without one, a way to add it.
+ * saved GSTIN a switch, on unless they turned it off; without one, a way to add it. Not known
+ * yet (`undefined`) is never "none saved": Book waits while it loads, and a failed read says the
+ * booking won't be billed, since a booking's bill-to can't be added afterwards.
  */
 export type BillToRow =
   | { kind: "hidden" }
+  | { kind: "loading" }
+  | { kind: "failed" }
   | { kind: "add" }
   | { kind: "switch"; gstin: BuyerGstin; on: boolean };
 
-export function billToRow(billingAsBusiness: boolean, gstin: BuyerGstin | null | undefined, off: boolean): BillToRow {
+export function billToRow(
+  billingAsBusiness: boolean,
+  gstin: BuyerGstin | null | undefined,
+  off: boolean,
+  failed = false
+): BillToRow {
   if (!billingAsBusiness) return { kind: "hidden" };
-  if (!gstin) return { kind: "add" };
+  if (gstin === undefined) return failed ? { kind: "failed" } : { kind: "loading" };
+  if (gstin === null) return { kind: "add" };
   return { kind: "switch", gstin, on: !off };
 }
 

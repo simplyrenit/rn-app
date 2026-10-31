@@ -161,7 +161,7 @@ export default function ReviewAndBookScreen() {
         setIdRefused(null);
         void quoteQuery.refetch();
         // Back from Business billing: the GSTIN may have been added.
-        void buyerGstin.refetch();
+        if (userDetails?.billing_as_business) void buyerGstin.refetch();
       }
       seen.current = true;
       // `refetch` is stable for the life of the query.
@@ -219,7 +219,9 @@ export default function ReviewAndBookScreen() {
   const ticked = termsTicked(terms, tickedFor);
   const idCheck = idCheckCopy(quote, idRefused);
   // An extension is billed as its booking, by the server: no row for it.
-  const billTo = extending ? ({ kind: "hidden" } as const) : billToRow(Boolean(userDetails?.billing_as_business), buyerGstin.data, billToOff);
+  const billTo = extending
+    ? ({ kind: "hidden" } as const)
+    : billToRow(Boolean(userDetails?.billing_as_business), buyerGstin.data, billToOff, buyerGstin.isError);
   const gstLine = billTo.kind === "hidden" ? null : gstInvoiceLine(quote.gst_invoice);
   const idNeeded = idCheck?.state === "needed";
 
@@ -658,7 +660,10 @@ export default function ReviewAndBookScreen() {
               fontWeight="font-bold"
               tone="brand"
               accessibilityRole="button"
-              onPress={() => navigation.navigate("BusinessBilling")}
+              onPress={() => {
+                setBillToOff(false); // a GSTIN added now is billed, as the switch's default
+                navigation.navigate("BusinessBilling");
+              }}
             >
               Add your GSTIN to get a GST invoice
             </Text>
@@ -668,6 +673,19 @@ export default function ReviewAndBookScreen() {
               </Text>
             ) : null}
           </Panel>
+        ) : billTo.kind === "failed" ? (
+          <Notice tone="warning" icon="warning">
+            {"We couldn't load your GSTIN, so this booking won't be billed to your business."}
+            <Text
+              fontSize="text-sm"
+              fontWeight="font-bold"
+              tone="brand"
+              accessibilityRole="button"
+              onPress={() => void buyerGstin.refetch()}
+            >
+              {"  Try again"}
+            </Text>
+          </Notice>
         ) : null}
 
         {terms ? (
@@ -761,7 +779,12 @@ export default function ReviewAndBookScreen() {
             loading={booking}
             // Signed out there are no terms in the quote: the tap asks to sign in instead.
             disabled={
-              booking || Boolean(blocker) || idNeeded || quoteQuery.isFetching || (terms !== null && !ticked)
+              booking ||
+              Boolean(blocker) ||
+              idNeeded ||
+              quoteQuery.isFetching ||
+              (terms !== null && !ticked) ||
+              billTo.kind === "loading"
             }
           >
             {extending ? `Extend · Pay ${money(quote.pay_now)}` : bookLabel(quote, moved)}
