@@ -182,10 +182,14 @@ export default function KycStatusScreen() {
       ]
     );
 
-  const onWithdraw = () =>
+  const onWithdraw = () => {
+    const hadBadge = data?.business_verified === true;
     Alert.alert(
       "Remove your verification data?",
-      "We'll delete the details we hold for your verification, including your Aadhaar record. Your Verified business badge will be removed. You can verify again later.",
+      // A badge the re-check already took off (ENG-348) is not "removed" again.
+      `We'll delete the details we hold for your verification, including your Aadhaar record.${
+        hadBadge ? " Your Verified business badge will be removed." : ""
+      } You can verify again later.`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -195,7 +199,10 @@ export default function KycStatusScreen() {
             try {
               await withdraw.mutateAsync();
               track("kyc_withdrawn");
-              toast.success("Verification data removed", { message: "Your badge has been removed." });
+              toast.success(
+                "Verification data removed",
+                hadBadge ? { message: "Your badge has been removed." } : undefined
+              );
             } catch {
               // Nothing is shown as removed unless the server said so.
               toast.error("We couldn't remove your data", { message: "Check your connection and try again." });
@@ -204,6 +211,7 @@ export default function KycStatusScreen() {
         },
       ]
     );
+  };
 
   const header = <SubpageHeader title="Business verification" onBack={toProfile} backLabel="Back to Profile" />;
 

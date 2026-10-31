@@ -870,6 +870,7 @@ export type KycReasonCode =
   | "business_name_unverifiable"
   | "other"
   // set by the system, and kept when the status falls back to `none`
+  // (`gstin_inactive` too, when the monthly GSTIN re-check removes the badge: ENG-348)
   | "case_expired";
 
 export type KycNextAction =

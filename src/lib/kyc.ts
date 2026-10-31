@@ -153,6 +153,22 @@ export function kycStateCopy(
           tone: "warning",
         };
       }
+      if (reason === "gstin_inactive") {
+        // The monthly GSTIN re-check took the badge off (ENG-348).
+        const body =
+          "The GST records now show your GSTIN as cancelled or suspended, so we've taken the badge off your shop. Once it's active again, verify again. If your business is no longer registered for GST, you can verify without it.";
+        return {
+          cardTitle: "Your Verified badge was removed",
+          cardBody: firstSentence(body),
+          title: "Your Verified badge was removed",
+          body,
+          cta: "Verify again",
+          ctaKind: "start",
+          secondary: "support",
+          icon: "exclamation",
+          tone: "warning",
+        };
+      }
       return {
         cardTitle: "Get a Verified business badge",
         cardBody: "Show renters your business is real. It takes a few minutes.",

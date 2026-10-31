@@ -100,7 +100,26 @@ describe("state copy", () => {
       cta: "Start again",
       tone: "warning",
     });
-    expect(kycStateCopy("none", "gstin_inactive")).toEqual(kycStateCopy("none", null));
+    expect(kycStateCopy("none", "pan_invalid")).toEqual(kycStateCopy("none", null));
+  });
+
+  it("says why the badge was removed when the monthly GSTIN re-check took it off", () => {
+    const copy = kycStateCopy("none", "gstin_inactive");
+    expect(copy).toMatchObject({
+      title: "Your Verified badge was removed",
+      cardTitle: "Your Verified badge was removed",
+      cta: "Verify again",
+      ctaKind: "start",
+      secondary: "support",
+      icon: "exclamation",
+      tone: "warning",
+    });
+    expect(copy.body).toContain("you can verify without it");
+    expect(copy.cardBody).toBe(
+      "The GST records now show your GSTIN as cancelled or suspended, so we've taken the badge off your shop."
+    );
+    // A reviewer's rejection for the same code keeps its own copy.
+    expect(kycStateCopy("rejected", "gstin_inactive").title).toBe("We couldn't verify your business");
   });
 
   it("never promises how long review takes", () => {
@@ -183,11 +202,19 @@ describe("consent text", () => {
 
   it("names the verification partner, and leaves only its privacy-policy link to fill", () => {
     const text = KYC_CONSENT_TEXTS[KYC_CONSENT_VERSION];
-    expect(KYC_CONSENT_VERSION).toBe("kyc-merchant-2026-10b");
-    expect(text).toContain("Cashfree Payments India Private Limited checks your PAN and GSTIN");
+    expect(KYC_CONSENT_VERSION).toBe("kyc-merchant-2026-11");
+    expect(text).toContain("Cashfree Payments India Private Limited checks your PAN, GSTIN and Udyam number");
     expect(text).not.toContain("[VERIFICATION PARTNER");
     expect(text.match(/\[[^\]]*\]/g)).toEqual(["[CASHFREE PRIVACY POLICY LINK]"]);
     // The version agreed to before stays as it was: the server can still be sent it.
     expect(KYC_CONSENT_TEXTS["kyc-merchant-2026-10"]).toContain("[VERIFICATION PARTNER NAME]");
+  });
+
+  it("says the GSTIN is kept encrypted for the monthly re-check, and covers the optional registration", () => {
+    const text = KYC_CONSENT_TEXTS[KYC_CONSENT_VERSION];
+    expect(text).toContain("check every month that your GSTIN is still active");
+    expect(text).toContain("While you're verified we keep your GSTIN encrypted");
+    expect(text).toContain("Your Udyam registration or shop licence number, if you choose to add one.");
+    expect(text).not.toContain("We don't store your full PAN or GSTIN");
   });
 });
