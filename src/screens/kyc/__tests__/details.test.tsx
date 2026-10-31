@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import React from "react";
 import { Text, TextInput } from "react-native";
 // No type package for it is installed (it comes with jest-expo); the tests only need create and act.
@@ -6,13 +6,23 @@ import { Text, TextInput } from "react-native";
 import TestRenderer, { act } from "react-test-renderer";
 
 const mockStart = jest.fn();
+let mockAccountType = "merchant";
+let mockParams: any = undefined;
+const mockDispatch = jest.fn();
 
 jest.mock("@/context/global-context", () => ({
-  useGlobalContext: () => ({ userDetails: { username: "ravi", name: "Ravi", business_name: "Ravi Rentals" } }),
+  useGlobalContext: () => ({
+    userDetails: { username: "ravi", name: "Ravi", business_name: "Ravi Rentals", account_type: mockAccountType },
+  }),
 }));
 jest.mock("@/backend/kyc", () => ({ useStartKyc: () => mockStart, openDigiLocker: jest.fn() }));
-jest.mock("@react-navigation/native", () => ({ useRoute: () => ({ params: undefined }) }));
-jest.mock("@/lib/types", () => ({ useTypedNavigation: () => ({ navigate: jest.fn(), reset: jest.fn() }) }));
+jest.mock("@react-navigation/native", () => ({
+  useRoute: () => ({ params: mockParams }),
+  CommonActions: { reset: (state: any) => ({ type: "RESET", state }) },
+}));
+jest.mock("@/lib/types", () => ({
+  useTypedNavigation: () => ({ navigate: jest.fn(), reset: jest.fn(), dispatch: mockDispatch }),
+}));
 jest.mock("@/lib/theme", () => ({ useTheme: () => ({ color: {} }) }));
 jest.mock("react-native-safe-area-context", () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0 }) }));
 jest.mock("@/components/core/non-scrollable-container", () => ({ NonScrollableContainer: ({ children }: any) => children }));
@@ -56,7 +66,8 @@ const render = () => {
   return renderer;
 };
 const texts = (renderer: any): string[] => renderer.root.findAllByType(Text).map((t: any) => String(t.props.children));
-const panInput = (renderer: any) => renderer.root.findAllByType(TextInput).find((i: any) => i.props.accessibilityLabel === "PAN");
+const panInput = (renderer: any) =>
+  renderer.root.findAllByType(TextInput).find((i: any) => ["PAN", "Your PAN"].includes(i.props.accessibilityLabel));
 const type = (renderer: any, value: string) => act(() => panInput(renderer).props.onChangeText(value));
 
 describe("the business details form, with a badly formed PAN", () => {
@@ -87,5 +98,60 @@ describe("the business details form, with a badly formed PAN", () => {
     type(renderer, "ABC123");
     act(() => panInput(renderer).props.onBlur());
     expect(texts(renderer)).toContain(PAN_ERROR);
+  });
+});
+
+describe("a person's ID check (ENG-351)", () => {
+  beforeEach(() => {
+    mockAccountType = "user";
+    mockParams = { source: "booking" };
+    mockStart.mockReset();
+    mockDispatch.mockReset();
+  });
+  afterEach(() => {
+    mockAccountType = "merchant";
+    mockParams = undefined;
+  });
+
+  const tapContinue = async (renderer: any) => {
+    const button = renderer.root.findAll((node: any) => node.props.accessibilityRole === "button")[0];
+    await act(async () => {
+      await button.props.onPress();
+    });
+  };
+
+  it("asks for the PAN alone and sends the individual consent, with no GST", async () => {
+    mockStart.mockImplementation(async () => ({ kyc_status: "action_required", next_action: { type: "wait" } }));
+    const renderer = render();
+    expect(texts(renderer)).not.toContain("Is your business registered for GST?");
+    expect(texts(renderer)).not.toContain("Business");
+    type(renderer, "ABCPE1234F");
+    await tapContinue(renderer);
+    expect(mockStart).toHaveBeenCalledWith({
+      pan: "ABCPE1234F",
+      gst_declared: false,
+      consent_version: "kyc-individual-2026-10b",
+    });
+  });
+
+  it("refuses a business PAN before sending it", async () => {
+    const renderer = render();
+    type(renderer, "ABCDE1234F"); // 4th letter D: not a person's
+    await tapContinue(renderer);
+    expect(texts(renderer)).toContain("Use your own PAN. A person's PAN has P as its 4th letter.");
+    expect(mockStart).not.toHaveBeenCalled();
+  });
+
+  it("from a booking, puts the status screen where the verification screens were, over the price screen", async () => {
+    mockStart.mockImplementation(async () => ({ kyc_status: "action_required", next_action: { type: "wait" } }));
+    const renderer = render();
+    type(renderer, "ABCPE1234F");
+    await tapContinue(renderer);
+    const reset = mockDispatch.mock.calls[0][0] as (state: any) => any;
+    const routes = [{ name: "MainTabs" }, { name: "ReviewAndBook" }, { name: "KycIntro" }, { name: "KycDetails" }];
+    const next = reset({ routes, index: 3 }).state;
+    expect(next.routes.map((r: any) => r.name)).toEqual(["MainTabs", "ReviewAndBook", "KycStatus"]);
+    expect(next.routes[2].params).toEqual({ source: "booking" });
+    expect(next.index).toBe(2);
   });
 });

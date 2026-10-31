@@ -25,7 +25,6 @@ jest.mock("@/context/global-context", () => ({
   useGlobalContext: () => ({ userDetails: { username: "asha", account_type: mockAccountType } }),
 }));
 jest.mock("@/backend/kyc", () => ({
-  // The real query is disabled for a non-merchant; it answers here so the guard is what is tested.
   useKycStatus: (poll: boolean) => {
     mockPolling = poll;
     return { data: actionRequired, error: null, isLoading: false, refetch: mockRefetch };
@@ -103,13 +102,14 @@ describe("the verification status screen", () => {
     mockResume.mockClear();
   });
 
-  it("tells a non-merchant it is for business accounts, and does not ask the server", () => {
-    // A return link or a kyc_status push can open it for anyone signed in.
-    mockAccountType = "personal";
+  it("shows anyone else their ID check (ENG-351), with no business in its words", () => {
+    // A customer's or an individual owner's check; a return link or a kyc_status push can open it.
+    mockAccountType = "user";
     const shown = texts(render());
-    expect(shown).toContain("Verification is for business accounts");
-    expect(shown).not.toContain("Continue verification");
-    expect(mockRefetch).not.toHaveBeenCalled();
+    expect(shown).toContain("ID check");
+    expect(shown).toContain("You started your ID check but haven't finished the DigiLocker step. It takes a couple of minutes.");
+    expect(shown).not.toContain("Business verification");
+    expect(mockRefetch).toHaveBeenCalled();
   });
 
   it("shows a merchant their state, read again on arrival", () => {

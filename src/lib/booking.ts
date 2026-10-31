@@ -13,6 +13,7 @@ import { ApiError, fieldErrors } from "@/lib/api-error";
 import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
 import type { PlanUnit } from "@/lib/plans";
+import type { KycStatus } from "@/lib/types";
 import { ALL_DAY, DayHours, Hours, coversWholeDay, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
 import {
   COURIER,
@@ -1148,6 +1149,8 @@ export interface IdCheckCopy {
   state: "needed" | "passed";
   title: string;
   body: string | null;
+  /** The button under a "needed" card: it opens the ID check where the customer's stands (`startIdCheck`). */
+  action?: string;
 }
 
 /**
@@ -1166,27 +1169,51 @@ export const HANDOVER_ID = "Bring a photo ID in your own name to the handover. T
  * "Needed" comes from any of three places: the quote's `id_check`, its
  * `blockers`, or Book now answering `403 id_check_needed`, whose `details.needed`
  * is passed as `refused`. No rupee figure is written: where the line falls is
- * the server's setting.
+ * the server's setting. `status`: the customer's own check (ENG-351), so a check on its way or one that failed says so
+ * and what to do, instead of asking them to start one.
  */
 export function idCheckCopy(
   quote: Pick<Quote, "id_check" | "blockers">,
-  refused: string | null = null
+  refused: string | null = null,
+  status: KycStatus | undefined = undefined
 ): IdCheckCopy | null {
-  const level = refused ?? quote.id_check?.needed ?? "none";
   const notPassed =
     refused !== null ||
     quote.blockers.includes("id_check_needed") ||
     // Only a check that was run and not passed asks for one; an unknown (`null`) says nothing (T-41).
     (quote.id_check !== null && quote.id_check.needed !== "none" && quote.id_check.passed === false);
   if (notPassed) {
-    return {
-      state: "needed",
-      title: "This item needs an ID check",
-      body:
-        level === "id_and_match"
-          ? "Renit checks your ID once, before you book an item like this."
-          : "Renit checks your ID once, before you book an item like this. It then covers every booking.",
-    };
+    const needed = (title: string, body: string, action: string): IdCheckCopy => ({ state: "needed", title, body, action });
+    switch (status) {
+      case "action_required":
+        return needed(
+          "Finish your ID check",
+          "You haven't finished the DigiLocker step. You can book this once your ID check has passed.",
+          "Continue ID check"
+        );
+      case "pending":
+      case "in_review":
+        return needed(
+          "Your ID check is being reviewed",
+          "You can book this once it's approved. We'll send you a notification. Items that need no ID check can be booked now.",
+          "See where it stands"
+        );
+      case "rejected":
+        return needed(
+          "Your ID check didn't pass",
+          "You can't book this item until it does. Try again with your own PAN and Aadhaar, or contact support. Items that need no ID check can be booked now.",
+          "Try again"
+        );
+      case "verified":
+        // The quote was read before the approval reached it; it is read again on focus and with the push.
+        return needed("Your ID check passed", "Checking this item again…", "See where it stands");
+      default:
+        return needed(
+          "This item needs an ID check",
+          "Renit checks your ID once, before you book an item like this. It takes a few minutes, then our team reviews it.",
+          "Start ID check"
+        );
+    }
   }
   if (quote.id_check && quote.id_check.needed !== "none" && quote.id_check.passed === true) {
     // The handover sentence is `handoverIdLine`, said by itself under the card.

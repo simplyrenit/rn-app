@@ -131,6 +131,12 @@ describe("the ID tick's words (T-44)", () => {
     });
   });
 
+  it("says the name is the one Renit checked when the customer passed the ID check (ENG-351)", () => {
+    expect(idMatchWords("Aarav", "Aarav Mehta", "Aarav M.", false, true).sub).toBe(
+      "Look at Aarav's ID. The name on the ID must be: Aarav Mehta. Renit checked this name against Aarav's PAN and Aadhaar."
+    );
+  });
+
   it("says what can be matched when it does not (null, absent or blank): the first name and last initial shown", () => {
     for (const full of [null, undefined, "", "   "]) {
       expect(idMatchWords("Aarav", full, "Aarav M.")).toEqual({

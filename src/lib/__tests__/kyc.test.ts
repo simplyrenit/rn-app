@@ -69,6 +69,22 @@ describe("state copy", () => {
     }
   });
 
+  it("words a person's ID check with no business in it (ENG-351)", () => {
+    const all: KycStatus[] = ["none", "pending", "action_required", "in_review", "verified", "rejected"];
+    for (const kycStatus of all) {
+      for (const reason of [null, "pan_name_mismatch", "gstin_inactive", "case_expired"]) {
+        const copy = kycStateCopy(kycStatus, reason, true);
+        for (const text of [copy.cardTitle, copy.cardBody, copy.title, copy.body]) {
+          expect(text).not.toMatch(/business|GST/i);
+        }
+      }
+    }
+    expect(kycStateCopy("none", null, true)).toMatchObject({ title: "Check your ID", ctaKind: "start" });
+    expect(kycStateCopy("rejected", "pan_name_mismatch", true)).toMatchObject({ title: "We couldn't verify your ID", ctaKind: "start" });
+    // No badge, so no public profile to show off: no button once passed.
+    expect(kycStateCopy("verified", null, true)).toMatchObject({ title: "Your ID check passed", cta: null, ctaKind: null });
+  });
+
   it("offers a button only where the merchant can act", () => {
     expect(kycStateCopy("none", null).ctaKind).toBe("start");
     expect(kycStateCopy("action_required", null)).toMatchObject({ ctaKind: "resume", secondary: "start_over" });

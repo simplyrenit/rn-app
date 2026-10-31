@@ -1,5 +1,5 @@
 /**
- * Merchant verification: the status query and the three mutations (ENG-12).
+ * Verification, a merchant's (ENG-12) or a person's ID check (ENG-351): the status query and the three mutations.
  *
  * The status endpoint is live: rn-api asks the KYC service and answers with what it found, or
  * with its cached fields and `stale: true` when that service is down. A stale answer is shown
@@ -39,8 +39,8 @@ function useStatusKey() {
 }
 
 /**
- * The merchant's verification status. Disabled for everyone who is not a signed-in business
- * account. A 403 (not a business account) or 404 (an API from before verification) is an
+ * The signed-in user's verification status: a business's check, or anyone else's ID check
+ * (rn-api picks which by account type). A 403 or 404 (an API from before verification) is an
  * answer, not a failure, so it is not retried.
  *
  * With `poll`, the status is read again every 3 seconds for as long as it is one that moves on
@@ -50,7 +50,7 @@ function useStatusKey() {
 export function useKycStatus(poll = false) {
   const { isAuthenticated, userDetails } = useGlobalContext();
   return useQuery<KycStatusResponse, unknown>(KYC_STATUS_KEY(userDetails?.username), fetchStatus, {
-    enabled: Boolean(isAuthenticated && userDetails?.account_type === "merchant"),
+    enabled: Boolean(isAuthenticated && userDetails?.username),
     staleTime: 30_000,
     refetchInterval: (data) =>
       poll && (data?.kyc_status === "pending" || data?.kyc_status === "action_required") ? 3000 : false,
@@ -191,8 +191,9 @@ export function useKycReturnLinking(onReturn: () => void) {
 }
 
 /**
- * Reads the verification status and the profile's badge again. The answer to anything that
- * says the status may have changed: a push, a return to the foreground.
+ * Reads the verification status and the profile's badge again, and any price on screen, which
+ * says whether the ID check is passed (ENG-351). The answer to anything that says the status may
+ * have changed: a push, a return to the foreground.
  */
 export function useKycRefetch() {
   const { fetchUserDetails } = useGlobalContext();
@@ -202,29 +203,29 @@ export function useKycRefetch() {
   refreshDetails.current = fetchUserDetails;
   return useCallback(() => {
     void queryClient.invalidateQueries(["kyc", "status"]);
+    void queryClient.invalidateQueries("quote");
     void refreshDetails.current();
   }, [queryClient]);
 }
 
 /**
  * Keeps verification state fresh without a refetch on every render: when the app returns to
- * the foreground, a signed-in merchant's status and badge are read again. Mounted once, at the
+ * the foreground, a signed-in user's status and badge are read again. Mounted once, at the
  * navigation root. (React Query's own focus refetch is not wired up for React Native.)
  */
 export function useKycRefresh() {
-  const { isAuthenticated, userDetails } = useGlobalContext();
-  const merchant = Boolean(isAuthenticated && userDetails?.account_type === "merchant");
+  const { isAuthenticated } = useGlobalContext();
   const refetch = useKycRefetch();
 
   useEffect(() => {
-    if (!merchant) return;
+    if (!isAuthenticated) return;
     let last = AppState.currentState;
     const subscription = AppState.addEventListener("change", (next) => {
       if (last !== "active" && next === "active") refetch();
       last = next;
     });
     return () => subscription.remove();
-  }, [merchant, refetch]);
+  }, [isAuthenticated, refetch]);
 }
 
 /**
