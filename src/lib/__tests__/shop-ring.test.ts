@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import type { ApiError } from "../api-error";
+import { money } from "../booking";
 import type { BookingShop } from "../shop-booking";
 import {
   LiveAnswer,
@@ -144,6 +145,11 @@ describe("the request in words", () => {
     expect(feeText(ring)).toEqual({ struck: "₹92", charged: "₹0" });
     expect(feeText({ fee_shown: "0.00", fee_charged: "0.00" })).toEqual({ struck: null, charged: "₹0" });
     expect(feeText({ fee_shown: "92.00", fee_charged: "92.00" }).struck).toBeNull();
+    // A fee switched on carries 18% GST (ENG-343): the owner sees it with its GST.
+    expect(feeText({ fee_shown: "92.00", fee_charged: "92.00", fee_gst: "16.56" })).toEqual({
+      struck: "₹92",
+      charged: money("108.56"),
+    });
   });
 
   it("gives the card of an ended request from the ring or from the booking", () => {
