@@ -32,7 +32,7 @@ export function discardEvidence(photos: EvidencePhoto[]): void {
 /** Puts every photo that is not up yet on the bucket and returns all the addresses, in order. */
 export async function uploadEvidence(photos: EvidencePhoto[], what: string): Promise<string[]> {
   const urls: string[] = [];
-  for (const photo of photos) urls.push(photo.url ?? (await uploadCaptureFile(photo.uri, "photo", what)));
+  for (const photo of photos) urls.push(photo.url ?? (await uploadCaptureFile(photo.uri, "photo", what)).url);
   return urls;
 }
 
@@ -43,7 +43,7 @@ export async function uploadEvidence(photos: EvidencePhoto[], what: string): Pro
  * one bad upload).
  */
 export const uploadPhotos = (photos: EvidencePhoto[], what: string) =>
-  uploadKeeping(photos, (uri) => uploadCaptureFile(uri, "photo", what));
+  uploadKeeping(photos, async (uri) => (await uploadCaptureFile(uri, "photo", what)).url);
 
 /**
  * The photos of a report, and the button that takes another. Camera only, as for

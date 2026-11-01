@@ -66,7 +66,9 @@ export type EventName =
   | "product_cta_tapped"
   // Cart D44 (ENG-326): a basket's day-of ticks went in. `handover_items_ticked {booking, not_here}`: the booking's
   // number and how many items were Not here.
-  | "handover_items_ticked";
+  | "handover_items_ticked"
+  // ENG-344: a shop link brought this app. `link_attributed {src, install, shop?}`, once per link, signed in.
+  | "link_attributed";
 
 export interface QueuedEvent {
   name: EventName;

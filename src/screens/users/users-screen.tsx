@@ -502,6 +502,7 @@ export default function UsersDetails() {
     navigation.navigate("OwnersProducts", {
       products: products,
       name: owner?.first_name!,
+      shopUrl: owner?.shop_url,
     });
   };
 

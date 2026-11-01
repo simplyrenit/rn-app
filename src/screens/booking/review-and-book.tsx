@@ -75,6 +75,7 @@ import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { uuidv4 } from "@/lib/uuid";
 import { StackActions, useFocusEffect, useRoute } from "@react-navigation/native";
+import { currentSource } from "@/lib/attribution";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Linking, ScrollView, View } from "react-native";
 import { CheckBadgeIcon, IdentificationIcon } from "react-native-heroicons/outline";
@@ -310,6 +311,7 @@ export default function ReviewAndBookScreen() {
             ...(asCard ? { expected_deposit: quote.deposit.amount } : {}),
             ...(params.from_cart ? { from_cart: true } : {}),
             ...(billTo.kind === "switch" && billTo.on ? { bill_to: true } : {}),
+            source: await currentSource(),
             moved_from: movedFrom,
             client_key: clientKey.current,
           });
