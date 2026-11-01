@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { depositCopy } from "../day-of";
-import { ProductShop, addressSheetLine, bookBy, courierQuote } from "../booking";
+import { ProductShop, addressSheetLine, bookBy, commonGstRate, courierQuote, rentGstNote } from "../booking";
 import {
   BookingCustomer,
   CourierBlock,
@@ -2335,5 +2335,14 @@ describe("B1, reading a courier booking while a leg is live", () => {
   it("a courier slot that filled or closed says so", () => {
     expect(windowErrorText({ status: 409, code: "window_taken", message: null, details: null })).toBe("That slot has just filled. Pick another.");
     expect(windowErrorText({ status: 409, code: "window_closed", message: null, details: null })).toMatch(/^That window can't be picked any more/);
+  });
+});
+
+describe("commonGstRate (ENG-343, the pay-rent note)", () => {
+  it("names the rate only when every item shares it", () => {
+    expect(commonGstRate([{ gst_rate: "18" }, { gst_rate: "18" }])).toBe("18");
+    expect(commonGstRate([{ gst_rate: "18" }, { gst_rate: "5" }])).toBeNull();
+    expect(commonGstRate([{}])).toBeNull(); // an older server
+    expect(rentGstNote("45.76", commonGstRate([{ gst_rate: "18" }]))).toBe("Includes GST ₹45.76 (18%)");
   });
 });

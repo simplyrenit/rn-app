@@ -467,12 +467,20 @@ export default function CaptureScreen() {
   const leave = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"));
 
   // The queue lets go of a record the booking no longer takes (it ended, or closed without it).
+  // A finished record is let go of too, once a booking screen reads it back complete: that is its
+  // success, not a record that stopped being wanted (a retried upload can keep the Done screen up that long).
   const had = useRef(false);
-  if (draft) had.current = true;
+  const hadDone = useRef(false);
+  if (draft) {
+    had.current = true;
+    hadDone.current = draft.done;
+  }
   const dropped = had.current && !draft;
   useEffect(() => {
     if (!dropped) return;
-    toast.info("This record is no longer needed", { message: "Renit already has it, or the booking has moved on." });
+    if (!hadDone.current) {
+      toast.info("This record is no longer needed", { message: "Renit already has it, or the booking has moved on." });
+    }
     leave();
     // Once, when the record goes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
