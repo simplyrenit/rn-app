@@ -10,6 +10,7 @@ import { TouchableOpacity, View } from "react-native";
 import {
   AdjustmentsHorizontalIcon,
   ArrowRightOnRectangleIcon,
+  BriefcaseIcon,
   BuildingLibraryIcon,
   CalendarDaysIcon,
   ChatBubbleLeftEllipsisIcon,
@@ -133,7 +134,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
           </View>
         )}
 
-        {/* Business verification. It hides itself for anyone who is not a business account. */}
+        {/* Business verification, or anyone else's ID check once they have one on file (ENG-351). It hides itself otherwise. */}
         <KycCard isDark={isDark} />
 
         <ProfileBlockRule />
@@ -178,6 +179,16 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
                 router.navigate("SavedAddresses");
               }}
             />
+            {/* GST invoices to a customer's GSTIN (ENG-352); a merchant has its own business flow. */}
+            {!isMerchant && (
+              <ProfileRow
+                icon={BriefcaseIcon}
+                label="Business billing"
+                onPress={() => {
+                  router.navigate("BusinessBilling");
+                }}
+              />
+            )}
           </ProfileSection>
 
           <ProfileSectionRule />

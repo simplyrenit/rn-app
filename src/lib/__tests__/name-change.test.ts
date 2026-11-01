@@ -49,7 +49,7 @@ describe("whether the name can be changed", () => {
       expect(nameLockNote(false, status)).toBe(NAME_LOCKED_IN_PROGRESS);
     }
     expect(NAME_LOCKED_IN_PROGRESS).toBe(
-      "Your name can't be changed while your business verification is in progress. Contact support to change it."
+      "Your name can't be changed while your verification is in progress. Contact support to change it."
     );
   });
 

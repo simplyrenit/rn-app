@@ -21,11 +21,14 @@ export function parseDepositRule(
   const floor = Number(wire.floor);
   const roundTo = Number(wire.round_to);
   if (!Number.isFinite(multiplier) || !Number.isFinite(floor)) return null;
+  // An older server sends no share; an unreadable one is dropped, not the rule.
+  const share = wire.worth_share === null || wire.worth_share === undefined ? NaN : Number(wire.worth_share);
   return {
     parent: wire.parent,
     multiplier,
     floor,
     round_to: Number.isFinite(roundTo) && roundTo > 0 ? roundTo : 50,
+    worth_share: Number.isFinite(share) && share > 0 ? share : null,
   };
 }
 
@@ -39,18 +42,22 @@ export function parseRate(rate: string | null | undefined): number | null {
 }
 
 /**
- * deposit = max(floor, ceil(k × rate / round_to) × round_to)  — §5.4.
+ * deposit = max(floor, ceil(k × rate / round_to) × round_to)  — §5.4,
+ * and, with a worth and the rule's `worth_share`, at least
+ * ceil(worth × share% / round_to) × round_to  — ENG-349.
  *
  * The epsilon keeps a float artefact (5 × 0.1 × 10 = 5.000000000000001) from
  * rounding a whole step up; money that is already on a step stays on it.
  */
 export function computeDepositDefault(
   rate: number | null,
-  rule: DepositRule | null = DEFAULT_DEPOSIT_RULE
+  rule: DepositRule | null = DEFAULT_DEPOSIT_RULE,
+  worth: number | null = null
 ): number | null {
   if (rate === null || !Number.isFinite(rate) || rate <= 0) return null;
-  const { multiplier, floor, round_to } = rule ?? DEFAULT_DEPOSIT_RULE;
+  const { multiplier, floor, round_to, worth_share } = rule ?? DEFAULT_DEPOSIT_RULE;
   const step = round_to > 0 ? round_to : 1;
-  const steps = Math.ceil((multiplier * rate) / step - 1e-9);
-  return Math.max(floor, steps * step);
+  const up = (amount: number) => Math.ceil(amount / step - 1e-9) * step;
+  const fromWorth = worth && worth > 0 && worth_share ? up((worth * worth_share) / 100) : 0;
+  return Math.max(floor, up(multiplier * rate), fromWorth);
 }

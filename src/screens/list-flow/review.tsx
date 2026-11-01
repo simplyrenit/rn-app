@@ -40,7 +40,7 @@ import {
   space,
 } from "@/lib/design-tokens";
 import { formatNumber } from "@/lib/format";
-import { DEFAULT_DEPOSIT_RULE } from "@/lib/list-flow/deposit";
+import { DEFAULT_DEPOSIT_RULE, computeDepositDefault } from "@/lib/list-flow/deposit";
 import { DraftPlan, defaultUnit, derivedRate, toPlans } from "@/lib/plans";
 import { PlanPricing } from "@/components/post/plan-pricing";
 import {
@@ -52,7 +52,7 @@ import {
   uploadedPhotos,
 } from "@/lib/list-flow/draft";
 import { currentSpecs, specsLoading } from "@/lib/list-flow/specs";
-import { MAX_QUANTITY_DIGITS, WORTH_HINT } from "@/lib/list-flow/stock";
+import { MAX_QUANTITY_DIGITS, WORTH_HINT, parseWorth } from "@/lib/list-flow/stock";
 import {
   CONDITIONS,
   CategoryValue,
@@ -327,7 +327,8 @@ export default function ListReviewScreen() {
       current &&
       current.multiplier === rule.multiplier &&
       current.floor === rule.floor &&
-      current.round_to === rule.round_to
+      current.round_to === rule.round_to &&
+      (current.worth_share ?? null) === (rule.worth_share ?? null)
     ) {
       return;
     }
@@ -471,6 +472,10 @@ export default function ListReviewScreen() {
   const shownPlans = f.plans.value ?? [{ unit: defaultUnit(parentSlug), price: "", min: 1 }];
   const rule = draft.depositRule ?? DEFAULT_DEPOSIT_RULE;
   const deposit = f.security_deposit.value;
+  // The default came from the worth share when the rate rule alone gives less (ENG-349).
+  const depositFromWorth =
+    computeDepositDefault(rate, rule, parseWorth(f.worth.value)) !==
+    computeDepositDefault(rate, { ...rule, worth_share: null });
   const photos = draft.photos;
   const streaming = run.status === "running";
   const note =
@@ -648,6 +653,8 @@ export default function ListReviewScreen() {
                 <Text fontSize="text-sm" tone="body" style={{ marginTop: 2 }}>
                   {draft.depositTouched
                     ? `Deposit Rs ${formatNumber(deposit)} · `
+                    : depositFromWorth
+                    ? `Deposit Rs ${formatNumber(deposit)} · ${formatNumber(rule.worth_share ?? 0)}% of what it's worth · `
                     : `Deposit Rs ${formatNumber(deposit)} · ${formatNumber(rule.multiplier)} × your price a day · `}
                   <Text
                     fontSize="text-sm"

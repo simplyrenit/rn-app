@@ -55,6 +55,7 @@ import {
 } from "@/backend/notifications";
 import { useKycRefetch, useKycRefresh, useKycReturnLinking } from "@/backend/kyc";
 import { PushRoute } from "@/lib/push-routes";
+import { sendAttribution, startAttribution, takeLink } from "@/lib/attribution";
 import { ringEndedQueryKey } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
 import { shouldGoToWelcome } from "@/lib/session-end";
@@ -93,6 +94,7 @@ import FAQScreen from "@/screens/profileScreens/faqs";
 import FeedbackNReviewScreen from "@/screens/profileScreens/feedback-review";
 import MyProductScreen from "@/screens/profileScreens/my-product";
 import RentalDeliveryScreen from "@/screens/profileScreens/rental-delivery";
+import RentalGstScreen from "@/screens/profileScreens/rental-gst";
 import DeliveryAreasScreen from "@/screens/profileScreens/delivery-areas";
 import RentalHoursScreen from "@/screens/profileScreens/rental-hours";
 import RentalSettingsScreen from "@/screens/profileScreens/rental-settings";
@@ -134,6 +136,7 @@ import NetworkDiagnosticsScreen from "@/screens/profileScreens/network-diagnosti
 import OwnersReviewScreen from "@/screens/users/owners-review";
 import LocationModal from "@/screens/post-screens/location-modal";
 import SavedAddressesScreen from "@/screens/addresses/saved-addresses";
+import BusinessBillingScreen from "@/screens/profileScreens/business-billing";
 import AddressDetailsScreen from "@/screens/addresses/address-details";
 import ListAddPhotosScreen from "@/screens/list-flow/add-photos";
 import ListReadingScreen from "@/screens/list-flow/reading";
@@ -427,6 +430,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 /** The link that started the app, once its payment has been resumed (below). */
 let startLinkSeen: string | null = null;
+/** The same for a shop link (ENG-344): Android hands the start link back on every rebuild. */
+let shopLinkSeen: string | null = null;
 
 export default function Navigation() {
   const { loading, hasSeenWelcome, theme, isAuthenticated, userDetails, fetchUserDetails } = useGlobalContext();
@@ -436,7 +441,7 @@ export default function Navigation() {
   refreshDetails.current = fetchUserDetails;
   const queryClient = useQueryClient();
 
-  // A screen to open, from a tapped push or a payment that was in flight. On a
+  // A screen to open, from a tapped push, a payment that was in flight, or a shop link (ENG-344). On a
   // start from a closed app the answer can arrive before the navigator is
   // mounted, so it waits here and `onReady` below opens it (ENG-173).
   const toOpen = React.useRef<PushRoute | null>(null);
@@ -446,6 +451,13 @@ export default function Navigation() {
       return;
     }
     switch (route.screen) {
+      // Pushed: a second shop or product link must open over the first, not reuse it.
+      case "UserDetail":
+        navigationRef.dispatch(StackActions.push("UserDetail", { id: route.id }));
+        break;
+      case "ProductDetail":
+        navigationRef.dispatch(StackActions.push("ProductDetail", { id: route.id }));
+        break;
       case "Booking":
         navigationRef.navigate("Booking", { number: route.number });
         break;
@@ -483,7 +495,7 @@ export default function Navigation() {
         navigationRef.navigate("MainTabs", { screen: "Profile" });
         break;
       case "KycStatus":
-        navigationRef.navigate("KycStatus");
+        navigationRef.navigate("KycStatus", route.justReturned ? { justReturned: true } : undefined);
         break;
     }
   }, []);
@@ -520,15 +532,18 @@ export default function Navigation() {
     }
   }, [isAuthenticated]);
 
-  // A merchant's verification status and badge are read again whenever the app comes back to
+  // A signed-in user's verification status and badge are read again whenever the app comes back to
   // the foreground: a reviewer may have decided while it was away.
   useKycRefresh();
   const refetchKyc = useKycRefetch();
 
-  // A return link only opens the status screen, which reads the real status from the server.
+  // A return link only opens the status screen, which reads the real status from the server. On a
+  // cold start it can come before the navigator is mounted: it then waits for `onReady` like a push.
   useKycReturnLinking(() => {
     if (navigationRef.isReady()) {
       navigationRef.navigate("KycStatus", { justReturned: true });
+    } else {
+      openRoute({ screen: "KycStatus", justReturned: true });
     }
   });
 
@@ -663,6 +678,36 @@ export default function Navigation() {
       stale = true;
     };
   }, [isAuthenticated, username, openBooking]);
+  // Shop and product links from the public shop page (ENG-344), signed in or out: never
+  // routed through onboarding, the screen is pushed over whatever shows. The install's own
+  // source (Android's Play referrer) is read first, so a link on the first run is the install's.
+  const signedIn = React.useRef(isAuthenticated);
+  signedIn.current = isAuthenticated;
+  React.useEffect(() => {
+    let alive = true;
+    const open = (route: PushRoute | null) => {
+      if (!alive) return;
+      if (signedIn.current) void sendAttribution();
+      if (route) openRoute(route);
+    };
+    void startAttribution()
+      .then(async (installed) => {
+        const url = await Linking.getInitialURL().catch(() => null);
+        const fresh = url !== shopLinkSeen;
+        shopLinkSeen = url;
+        open((fresh ? await takeLink(url) : null) ?? installed);
+      });
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      void takeLink(url).then(open);
+    });
+    return () => {
+      alive = false;
+      subscription.remove();
+    };
+  }, [openRoute]);
+  React.useEffect(() => {
+    if (isAuthenticated) void sendAttribution();
+  }, [isAuthenticated]);
   // Unmounted while the JS runs on only when Android rebuilds the screens, or by the error
   // screen's "Try again" (see `screens`).
   React.useEffect(
@@ -865,6 +910,10 @@ export default function Navigation() {
           component={RentalDeliveryScreen}
         />
         <Stack.Screen
+          name="RentalGst"
+          component={RentalGstScreen}
+        />
+        <Stack.Screen
           name="DeliveryAreas"
           component={DeliveryAreasScreen}
         />
@@ -1002,6 +1051,7 @@ export default function Navigation() {
           name="SavedAddresses"
           component={SavedAddressesScreen}
         />
+        <Stack.Screen name="BusinessBilling" component={BusinessBillingScreen} />
         <Stack.Screen
           name="AddressDetails"
           component={AddressDetailsScreen}

@@ -42,6 +42,9 @@ export interface MyDetailsResponse {
   business_verified?: boolean;
   date_joined?: string;
   currency?: string;
+  /** "Renting for a business" (ENG-352). Absent from an older API. */
+  bills_to_business?: boolean;
+  billing_as_business?: boolean;
 }
 
 let myDetailsRequest: Promise<MyDetailsResponse> | null = null;

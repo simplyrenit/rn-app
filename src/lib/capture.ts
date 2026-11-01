@@ -129,6 +129,10 @@ export interface LocalFile {
   taken_at: string;
   lat?: number;
   long?: number;
+  /** ENG-350: Android said the place was mocked. Left out when the phone did not say (an iPhone). */
+  mocked?: boolean;
+  /** ENG-350: the SHA-256 (hex) of the bytes uploaded, which the bucket checked; set with `url`. */
+  sha256?: string;
   /** The video's real length, when the camera said; never a rounded-down guess. */
   seconds?: number;
   /** The file's size, when the phone could read it. Shown before it is sent. */
@@ -394,6 +398,9 @@ export function setIdMatch(draft: CaptureDraft, ticked: boolean): CaptureDraft {
  * the first name and last initial the booking shows, which is all the tick can mean. `who` is the person whose ID it is and
  * `shown` the name as the booking shows it ("Aarav M.").
  *
+ * `verified`: the customer passed Renit's ID check (ENG-351), so the name is the one Renit checked against their PAN and
+ * Aadhaar. Not "the name on their ID": a reviewer may pass a name the ID prints a little differently.
+ *
  * `customerHolds`: the customer's phone records the owner's set (the owner's phone failed), so the tick is the shop's to say and
  * the customer is the one holding the phone: it is worded for them, with no name shown ("Aarav M." would be the shop's name there,
  * not the customer's).
@@ -402,7 +409,8 @@ export function idMatchWords(
   who: string,
   fullName: string | null | undefined,
   shown?: string | null,
-  customerHolds = false
+  customerHolds = false,
+  verified = false
 ): { label: string; sub: string } {
   if (customerHolds) {
     return {
@@ -412,7 +420,8 @@ export function idMatchWords(
   }
   const name = (fullName ?? "").trim();
   if (name) {
-    return { label: "ID matches the booking name", sub: `Look at ${who}'s ID. The name on the ID must be: ${name}.` };
+    const checked = verified ? ` Renit checked this name against ${who}'s PAN and Aadhaar.` : "";
+    return { label: "ID matches the booking name", sub: `Look at ${who}'s ID. The name on the ID must be: ${name}.${checked}` };
   }
   return {
     label: "ID matches the name shown",
@@ -465,9 +474,10 @@ export function files(draft: CaptureDraft): { slot: Slot; file: LocalFile }[] {
  * The file is up. Written only if the slot still holds that file: a shot taken
  * again while the first one was going up keeps its own, new, file.
  */
-export function setUrl(draft: CaptureDraft, slot: Slot, uri: string, url: string): CaptureDraft {
+export function setUrl(draft: CaptureDraft, slot: Slot, uri: string, url: string, sha256?: string): CaptureDraft {
   const file = fileAt(draft, slot);
-  return file && file.uri === uri ? withFile(draft, slot, { ...file, url }) : draft;
+  // The hash belongs to this upload: a file sent again without one (it could not be read) carries none.
+  return file && file.uri === uri ? withFile(draft, slot, { ...file, url, sha256 }) : draft;
 }
 
 /** The file is no longer on the phone (the system cleared it): it has to be taken again. */
@@ -593,8 +603,8 @@ export function nextWork(drafts: readonly CaptureDraft[], skip: ReadonlySet<stri
 
 /** `PUT /api/bookings/{number}/captures/{moment}/{side}/`. */
 export interface CaptureBody {
-  shots: { key: string; url: string; taken_at: string; lat?: number; long?: number }[];
-  video?: { url: string; taken_at: string };
+  shots: { key: string; url: string; taken_at: string; lat?: number; long?: number; mocked?: boolean; sha256?: string }[];
+  video?: { url: string; taken_at: string; sha256?: string };
   checklist: ChecklistItem[];
   id_match_ticked?: boolean;
   /** B1: the customer's courier return, the spare seal's number. */
@@ -621,10 +631,15 @@ export function captureBody(draft: CaptureDraft): CaptureBody {
       url: file.url,
       taken_at: file.taken_at,
       // The place is left out when the phone could not give one; it is never made up.
-      ...(typeof file.lat === "number" && typeof file.long === "number" ? { lat: file.lat, long: file.long } : {}),
+      ...(typeof file.lat === "number" && typeof file.long === "number"
+        ? { lat: file.lat, long: file.long, ...(typeof file.mocked === "boolean" ? { mocked: file.mocked } : {}) }
+        : {}),
+      ...(file.sha256 ? { sha256: file.sha256 } : {}),
     });
   }
-  if (draft.video?.url) body.video = { url: draft.video.url, taken_at: draft.video.taken_at };
+  if (draft.video?.url) {
+    body.video = { url: draft.video.url, taken_at: draft.video.taken_at, ...(draft.video.sha256 ? { sha256: draft.video.sha256 } : {}) };
+  }
   if (needsIdMatch(draft) && (!basket || draft.idMatch || draft.idTouched)) body.id_match_ticked = draft.idMatch;
   if (needsReceived(draft) && draft.received?.length) body.received = draft.received;
   if (needsReceived(draft) && draft.unticked?.length) body.not_received = draft.unticked;

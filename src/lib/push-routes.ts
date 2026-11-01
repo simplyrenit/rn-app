@@ -15,6 +15,9 @@ import { Ring, RingEndPush, parseRing, parseRingEnd } from "@/lib/shop-ring";
  * not know is ignored, as the contract asks.
  */
 export type PushRoute =
+  /** A shop (its owner's username) or a product (its name), from a shop page link (ENG-344). */
+  | { screen: "UserDetail"; id: string }
+  | { screen: "ProductDetail"; id: string }
   /** The customer's booking, at whatever stage the server says it is in. */
   | { screen: "Booking"; number: string }
   /** Pay the deposit (BK-13, ENG-222). The screen says "Deposit paid" if it already is. */
@@ -50,8 +53,11 @@ export type PushRoute =
   | { screen: "myProducts" }
   /** The admin approved or rejected the merchant (ENG-271): the Profile tab, whose status card shows which. */
   | { screen: "Profile" }
-  /** Business verification moved on (ENG-72). The screen reads the status; nothing in the push is shown. */
-  | { screen: "KycStatus" };
+  /**
+   * Business verification moved on (ENG-72). The screen reads the status; nothing in the push is shown.
+   * `justReturned`: back from DigiLocker (a return link), so the screen polls until the result lands.
+   */
+  | { screen: "KycStatus"; justReturned?: boolean };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -79,7 +85,7 @@ export function pushRoute(data: unknown): PushRoute | null {
   if (!isRecord(data) || typeof data.type !== "string") return null;
   const number = typeof data.booking === "string" && data.booking ? data.booking : null;
 
-  // Sent by the KYC sweep with no booking, and only to the merchant it is about.
+  // Sent by the KYC sweep with no booking, and only to the person it is about (a merchant, or a customer's ID check).
   if (data.type === "kyc_status") return { screen: "KycStatus" };
 
   // B1: a desk alarm, pushed to Renit's desk staff (ENG-303). The notification itself is the message; the booking is
@@ -104,6 +110,9 @@ export function pushRoute(data: unknown): PushRoute | null {
       case "returned":
       case "closed":
       case "late":
+      // Before the return is due (ENG-347): the rental screen, where Extend is.
+      case "return_reminder":
+      case "return_due":
       // Monthly billing (ENG-282): a month's link, its due day, its grace, its lapse, and ending early. The rental
       // screen shows the schedule and the overdue alert, and opens Rent due from there.
       case "period_link":

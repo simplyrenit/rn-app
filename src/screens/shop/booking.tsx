@@ -96,6 +96,12 @@ function CustomerCard({ booking, now }: { booking: BookingShop; now: Date }) {
           {`Deliver to: ${c.address}`}
         </Text>
       ) : null}
+      {/* ENG-352: who to invoice, from Ready on (the server sends it no earlier). */}
+      {booking.bill_to ? (
+        <Text fontSize="text-sm" tone="body">
+          {`Bill to: ${booking.bill_to.legal_name}, GSTIN ${booking.bill_to.gstin}, ${booking.bill_to.address}`}
+        </Text>
+      ) : null}
       {c.note ? <Notice icon="info">{c.note}</Notice> : null}
     </Panel>
   );
@@ -142,9 +148,9 @@ function MoneyCard({ booking }: { booking: BookingShop }) {
       <Text role="sectionTitle" accessibilityRole="header">
         Money
       </Text>
-      <MoneyLine label={m.rentLabel} amount={m.rent} />
+      <MoneyLine label={m.rentLabel} amount={m.rent} note={m.rentNote} />
       {m.delivery ? <MoneyLine label="Delivery fee" amount={m.delivery} /> : null}
-      <MoneyLine label="Renit's fee" amount={m.fee.charged} struck={m.fee.struck ?? undefined} />
+      <MoneyLine label="Renit's fee" amount={m.fee.charged} struck={m.fee.struck ?? undefined} note={m.fee.note} />
       <View style={{ height: 1, backgroundColor: color.line }} />
       <MoneyLine label={m.earnLabel} amount={m.earn} bold />
       {m.notes.map((note) => (

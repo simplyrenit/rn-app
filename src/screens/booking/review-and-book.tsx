@@ -1,6 +1,8 @@
 import { QuoteInput, bookNow, bookingQueryKey, useQuote } from "@/backend/bookings";
+import { useBuyerGstin } from "@/backend/business";
 import { cartQueryKey } from "@/backend/cart";
 import { extendBooking } from "@/backend/handover";
+import { useKycStatus } from "@/backend/kyc";
 import { LineRow, ShopHead } from "@/components/booking/card-lines";
 import {
   BookingLoadError,
@@ -12,10 +14,12 @@ import {
   SummaryCard,
 } from "@/components/booking/parts";
 import { Button, SubpageHeader, Text } from "@/components/core";
+import { AppSwitch } from "@/components/core/switch";
 import { RentalTermsTick } from "@/components/terms/owner-terms-tick";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError, failureCode } from "@/lib/api-error";
+import { billToRow, gstInvoiceLine, shortGstin } from "@/lib/business";
 import { Cart, afterBookRoutes, rememberDates } from "@/lib/cart";
 import {
   bookBy,
@@ -72,6 +76,7 @@ import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { uuidv4 } from "@/lib/uuid";
 import { StackActions, useFocusEffect, useRoute } from "@react-navigation/native";
+import { currentSource } from "@/lib/attribution";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Linking, ScrollView, View } from "react-native";
 import { CheckBadgeIcon, IdentificationIcon } from "react-native-heroicons/outline";
@@ -128,6 +133,8 @@ export default function ReviewAndBookScreen() {
   );
   const extending = params.extends ?? null;
   const quoteQuery = useQuote(input);
+  // The customer's own ID check (ENG-351): what the ID card says, and where its button leads.
+  const { data: kyc } = useKycStatus();
   // Book Now's one item on the card's quote reads its reasons as the quote's own, as for `product` (D41).
   const quote = quoteQuery.data && asCard && !card ? asOneItem(quoteQuery.data) : quoteQuery.data;
   // CT-23a: the quote on screen when Book now answered `price_changed`, to show what moved.
@@ -145,15 +152,21 @@ export default function ReviewAndBookScreen() {
   const [tickedFor, setTickedFor] = useState<string | null>(null);
   // Book now answered `id_check_needed` (ENG-176): the level it named. The quote usually says so first.
   const [idRefused, setIdRefused] = useState<string | null>(null);
+  // ENG-352: Bill to is on by default for a business customer with a GSTIN; this is them turning it off.
+  const buyerGstin = useBuyerGstin();
+  const [billToOff, setBillToOff] = useState(false);
 
   // Coming back to this screen (from the profile, from a sign-in) asks for the price again.
   const seen = useRef(false);
   useFocusEffect(
     useCallback(() => {
       if (seen.current) {
-        // Back from the ID check (or anywhere else): the quote says afresh whether it is passed.
+        // Back from the ID check (or anywhere else): the quote says afresh whether it is passed, read after the
+        // status, which is what stores a new answer from the KYC service (ENG-351).
         setIdRefused(null);
-        void quoteQuery.refetch();
+        void queryClient.invalidateQueries(["kyc", "status"]).then(() => quoteQuery.refetch());
+        // Back from Business billing: the GSTIN may have been added.
+        if (userDetails?.billing_as_business) void buyerGstin.refetch();
       }
       seen.current = true;
       // `refetch` is stable for the life of the query.
@@ -209,7 +222,12 @@ export default function ReviewAndBookScreen() {
   const notice = morningNotice(quote, params.item.shop_name);
   const terms = quote.terms;
   const ticked = termsTicked(terms, tickedFor);
-  const idCheck = idCheckCopy(quote, idRefused);
+  const idCheck = idCheckCopy(quote, idRefused, kyc?.kyc_status, kyc?.reason_code ?? null);
+  // An extension is billed as its booking, by the server: no row for it.
+  const billTo = extending
+    ? ({ kind: "hidden" } as const)
+    : billToRow(Boolean(userDetails?.billing_as_business), buyerGstin.data, billToOff, buyerGstin.isError);
+  const gstLine = billTo.kind === "hidden" ? null : gstInvoiceLine(quote.gst_invoice);
   const idNeeded = idCheck?.state === "needed";
 
   // ---- Card mode ----
@@ -250,14 +268,7 @@ export default function ReviewAndBookScreen() {
   };
   const depositPage = card ? depositOwnPage(quote) : null;
 
-  const openIdCheck = () => {
-    // The check is ENG-12's and has no customer flow in this build; see `startIdCheck`.
-    if (!startIdCheck(navigation)) {
-      toast.info("The ID check isn't open in the app yet", {
-        message: "Contact Renit from your profile and we will help.",
-      });
-    }
-  };
+  const openIdCheck = () => startIdCheck(navigation, kyc?.kyc_status);
 
   const book = async () => {
     if (busy.current) return;
@@ -296,6 +307,8 @@ export default function ReviewAndBookScreen() {
             // Card mode: the deposit seen too (D36), and whether the cart's lines go "in checkout" (D6).
             ...(asCard ? { expected_deposit: quote.deposit.amount } : {}),
             ...(params.from_cart ? { from_cart: true } : {}),
+            ...(billTo.kind === "switch" && billTo.on ? { bill_to: true } : {}),
+            source: await currentSource(),
             moved_from: movedFrom,
             client_key: clientKey.current,
           });
@@ -335,6 +348,11 @@ export default function ReviewAndBookScreen() {
       if (failure?.code === "move_not_allowed") setMovedFrom(null);
       // The terms moved on while the screen was open: the box empties and is asked for again.
       if (failure?.code === "terms_not_accepted") setTickedFor(null);
+      // The GSTIN was removed on another screen or phone: show what is saved now, with Bill to off.
+      if (failure?.code === "bill_to_unavailable") {
+        setBillToOff(true);
+        void buyerGstin.refetch();
+      }
       if (failure?.code === "id_check_needed") {
         setIdRefused(typeof failure.details?.needed === "string" ? failure.details.needed : "id");
       }
@@ -585,7 +603,7 @@ export default function ReviewAndBookScreen() {
               {idCheck.body}
             </Text>
             <Button variant="outline" onPress={openIdCheck}>
-              Start ID check
+              {idCheck.action}
             </Button>
           </Panel>
         ) : idCheck ? (
@@ -608,6 +626,69 @@ export default function ReviewAndBookScreen() {
         {handoverIdLine(quote, extending) ? (
           <Notice tone="info" icon="info">
             {handoverIdLine(quote, extending)}
+          </Notice>
+        ) : null}
+
+        {billTo.kind === "switch" ? (
+          <Panel style={{ padding: space.md, gap: space.xs }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
+              <View style={{ flex: 1 }}>
+                <Text fontSize="text-md" fontWeight="font-bold">
+                  {`Bill to ${billTo.gstin.legal_name}`}
+                </Text>
+                <Text fontSize="text-sm" tone="body">
+                  {`GSTIN ${shortGstin(billTo.gstin.gstin)}`}
+                </Text>
+              </View>
+              <AppSwitch
+                value={billTo.on}
+                onValueChange={(on) => setBillToOff(!on)}
+                accessibilityLabel={`Bill to ${billTo.gstin.legal_name}`}
+              />
+            </View>
+            {gstLine ? (
+              <Text fontSize="text-sm" tone="body">
+                {gstLine}
+              </Text>
+            ) : null}
+          </Panel>
+        ) : billTo.kind === "add" ? (
+          <Panel style={{ padding: space.md, gap: space.xs }}>
+            <Text
+              fontSize="text-sm"
+              fontWeight="font-bold"
+              tone="brand"
+              accessibilityRole="button"
+              onPress={() => {
+                setBillToOff(false); // a GSTIN added now is billed, as the switch's default
+                navigation.navigate("BusinessBilling");
+              }}
+            >
+              Add your GSTIN to get a GST invoice
+            </Text>
+            {gstLine ? (
+              <Text fontSize="text-sm" tone="body">
+                {gstLine}
+              </Text>
+            ) : null}
+          </Panel>
+        ) : billTo.kind === "loading" ? (
+          // Book waits for it (a booking's bill-to can't be added later), so say why.
+          <Text fontSize="text-sm" tone="body">
+            Loading your GSTIN…
+          </Text>
+        ) : billTo.kind === "failed" ? (
+          <Notice tone="warning" icon="warning">
+            {"We couldn't load your GSTIN, so this booking won't be billed to your business."}
+            <Text
+              fontSize="text-sm"
+              fontWeight="font-bold"
+              tone="brand"
+              accessibilityRole="button"
+              onPress={() => void buyerGstin.refetch()}
+            >
+              {"  Try again"}
+            </Text>
           </Notice>
         ) : null}
 
@@ -702,7 +783,12 @@ export default function ReviewAndBookScreen() {
             loading={booking}
             // Signed out there are no terms in the quote: the tap asks to sign in instead.
             disabled={
-              booking || Boolean(blocker) || idNeeded || quoteQuery.isFetching || (terms !== null && !ticked)
+              booking ||
+              Boolean(blocker) ||
+              idNeeded ||
+              quoteQuery.isFetching ||
+              (terms !== null && !ticked) ||
+              billTo.kind === "loading"
             }
           >
             {extending ? `Extend · Pay ${money(quote.pay_now)}` : bookLabel(quote, moved)}

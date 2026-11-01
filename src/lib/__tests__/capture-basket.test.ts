@@ -142,7 +142,7 @@ describe("a basket's record goes to the server as its photos go up", () => {
     const deps: CaptureQueueDeps = {
       upload: jest.fn(async (uri: string, kind: "photo" | "video") => {
         order.push(`${kind} ${uri.split("/").pop()}`);
-        return `https://bucket.test/${uri.split("/").pop()}`;
+        return { url: `https://bucket.test/${uri.split("/").pop()}` };
       }),
       send: jest.fn(async (_draft: CaptureDraft, body: CaptureBody) => {
         order.push(body.video ? "send with video" : `send ${body.shots.length} shots`);

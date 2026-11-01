@@ -10,9 +10,12 @@
 import { pluralize } from "@/lib/pluralize";
 import { SavedAddress, addressLine, addressTitle } from "@/lib/addresses";
 import { ApiError, fieldErrors } from "@/lib/api-error";
+import type { BillTo } from "@/lib/business";
 import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
+import { kycStateCopy } from "@/lib/kyc";
 import type { PlanUnit } from "@/lib/plans";
+import type { KycStatus } from "@/lib/types";
 import { ALL_DAY, DayHours, Hours, coversWholeDay, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
 import {
   COURIER,
@@ -123,6 +126,8 @@ export interface MonthlyMoney {
 
 /** `POST /api/bookings/quote/`. */
 export interface Quote {
+  /** ENG-352: whether the shop issues GST invoices; null unless the caller bills as a business, absent from an older server. */
+  gst_invoice?: boolean | null;
   product: string;
   first_day: string;
   last_day: string;
@@ -151,6 +156,14 @@ export interface Quote {
   };
   fee_shown: string;
   fee_charged: string;
+  /**
+   * ENG-343: listed prices include GST, so `rent_gst` is the part of `rent` that is GST, never added to it. `fee_gst` is the
+   * GST on `fee_charged`, which `total` already has. `gst_rate` ("18") is null for an unregistered shop or items at mixed
+   * rates. All absent from an older server: read as none.
+   */
+  rent_gst?: string;
+  fee_gst?: string;
+  gst_rate?: string | null;
   total: string;
   pay_now: string;
   pay_after_accept: string;
@@ -202,6 +215,9 @@ export interface QuoteLine {
   units_free: number;
   /** Where it is collected; named when it is `other_pickup_point`. */
   pickup_locality?: string | null;
+  /** ENG-343: the GST inside this item's rent, and its rate ("18", null when unregistered). Absent from an older server. */
+  rent_gst?: string;
+  gst_rate?: string | null;
   blockers: string[];
 }
 
@@ -216,6 +232,8 @@ export interface BookingLine {
   deposit: string;
   /** `refused`: the shop unticked it; `no_unit`: it lost its unit before the accept. */
   state: "live" | "refused" | "no_unit";
+  /** ENG-343: its rent's GST rate ("18", null when the shop was not registered). Absent from an older server. */
+  gst_rate?: string | null;
   /** The fault claim naming it, or null; absent from a server before ENG-337, which files one for an item ticked Not here. */
   claim?: number | null;
 }
@@ -335,6 +353,8 @@ export interface CourierBlock {
 
 /** A booking as its customer sees it (API-CONTRACT, BookingCustomer). */
 export interface BookingCustomer {
+  /** ENG-352: what the booking is billed to (a copy taken at Book now), or null. Absent from an older server. */
+  bill_to?: BillTo | null;
   number: string;
   stage: BookingStage;
   ring_state: RingState;
@@ -380,6 +400,9 @@ export interface BookingCustomer {
     delivery_fee: string;
     fee_shown: string;
     fee_charged: string;
+    /** ENG-343: as the quote's, inside `rent` and on `fee_charged`. Absent from an older server. */
+    rent_gst?: string;
+    fee_gst?: string;
     total: string;
     booking_amount: string;
     /** unpaid, paid, moved, refund_requested, refunded, kept */
@@ -899,17 +922,49 @@ export interface PriceLine {
   amount: string;
   /** Shown crossed out before the amount: Renit's fee, charged at zero. */
   struck?: string;
+  /** A small line under it (ENG-343): the GST inside the rent, or the fee and its GST. */
+  note?: string;
   /** Green: money already paid. */
   amountTone?: "success";
+}
+
+/** Two amounts added in paise, so a GST in paise doesn't drift. A missing one (an older server) is nothing. */
+export const plusMoney = (a: string | number | null | undefined, b: string | number | null | undefined) =>
+  (Math.round((Number(a) || 0) * 100) + Math.round((Number(b) || 0) * 100)) / 100;
+
+/** The one GST rate a booking's items share, for the rent's note; null when they differ or a server sent none. */
+export function commonGstRate(lines: { gst_rate?: string | null; state?: string }[] | undefined): string | null {
+  // An item the shop unticked is not in the rent.
+  const rates = new Set((lines ?? []).filter((l) => (l.state ?? "live") === "live").map((l) => l.gst_rate ?? null));
+  return rates.size === 1 ? [...rates][0] : null;
+}
+
+/**
+ * ENG-343: under the rent, the GST already inside it: "Includes GST ₹152.54 (18%)", without the rate for items at mixed
+ * rates. Undefined when there is none: an unregistered shop, or an older server.
+ */
+export function rentGstNote(rentGst: string | number | null | undefined, rate?: string | null): string | undefined {
+  if (!(Number(rentGst) > 0)) return undefined;
+  return Number(rate) > 0 ? `Includes GST ${money(rentGst)} (${Number(rate)}%)` : `Includes GST ${money(rentGst)}`;
+}
+
+/** ENG-343: under Renit's fee, whose amount includes its GST: "₹50 + GST ₹9". Undefined while the GST is nothing. */
+export function feeGstNote(fee: string | number, feeGst: string | number | null | undefined): string | undefined {
+  return Number(feeGst) > 0 ? `${money(fee)} + GST ${money(feeGst)}` : undefined;
 }
 
 /**
  * The three lines above the total. The fee is always shown, crossed out when
  * less is charged. Self pickup is said as itself, "Self pickup · Free" (ENG-284),
- * not as a ₹0 delivery; an extension keeps its old line.
+ * not as a ₹0 delivery; an extension keeps its old line. ENG-343: the fee's amount
+ * includes its GST, so the lines still add up to the total.
  */
 export function priceLines(quote: Quote, extending = false): PriceLine[] {
-  const fee: PriceLine = { label: "Renit's fee", amount: money(quote.fee_charged) };
+  const fee: PriceLine = {
+    label: "Renit's fee",
+    amount: money(plusMoney(quote.fee_charged, quote.fee_gst)),
+    note: feeGstNote(quote.fee_charged, quote.fee_gst),
+  };
   if (Number(quote.fee_shown) !== Number(quote.fee_charged)) fee.struck = money(quote.fee_shown);
   const plan = quote.plan;
   // ENG-281: a week or month plan names itself; a day plan reads as it always did.
@@ -924,7 +979,7 @@ export function priceLines(quote: Quote, extending = false): PriceLine[] {
         quote.delivery_mode === "owner_delivery" && quote.delivery.offer_pickup && !extending
         ? { label: "Delivery", amount: "Not available" }
         : { label: courierQuote(quote) && !extending ? COURIER : "Delivery", amount: money(quote.delivery.fee) };
-  return [{ label: rent, amount: money(quote.rent) }, handover, fee];
+  return [{ label: rent, amount: money(quote.rent), note: rentGstNote(quote.rent_gst, quote.gst_rate) }, handover, fee];
 }
 
 /** Under the rent of a week or month plan: "₹3,500 a week ÷ 7 = ₹500 a day". Null for a day plan or an older server. */
@@ -1148,6 +1203,8 @@ export interface IdCheckCopy {
   state: "needed" | "passed";
   title: string;
   body: string | null;
+  /** The button under a "needed" card: it opens the ID check where the customer's stands (`startIdCheck`). */
+  action?: string;
 }
 
 /**
@@ -1166,27 +1223,52 @@ export const HANDOVER_ID = "Bring a photo ID in your own name to the handover. T
  * "Needed" comes from any of three places: the quote's `id_check`, its
  * `blockers`, or Book now answering `403 id_check_needed`, whose `details.needed`
  * is passed as `refused`. No rupee figure is written: where the line falls is
- * the server's setting.
+ * the server's setting. `status`: the customer's own check (ENG-351), so a check on its way or one that failed says so
+ * and what to do, instead of asking them to start one; `reason`, why it failed.
  */
 export function idCheckCopy(
   quote: Pick<Quote, "id_check" | "blockers">,
-  refused: string | null = null
+  refused: string | null = null,
+  status: KycStatus | undefined = undefined,
+  reason: string | null = null
 ): IdCheckCopy | null {
-  const level = refused ?? quote.id_check?.needed ?? "none";
   const notPassed =
     refused !== null ||
     quote.blockers.includes("id_check_needed") ||
     // Only a check that was run and not passed asks for one; an unknown (`null`) says nothing (T-41).
     (quote.id_check !== null && quote.id_check.needed !== "none" && quote.id_check.passed === false);
   if (notPassed) {
-    return {
-      state: "needed",
-      title: "This item needs an ID check",
-      body:
-        level === "id_and_match"
-          ? "Renit checks your ID once, before you book an item like this."
-          : "Renit checks your ID once, before you book an item like this. It then covers every booking.",
-    };
+    const needed = (title: string, body: string, action: string): IdCheckCopy => ({ state: "needed", title, body, action });
+    switch (status) {
+      case "action_required":
+        return needed(
+          "Finish your ID check",
+          "You haven't finished the DigiLocker step. You can book this once your ID check has passed.",
+          "Continue ID check"
+        );
+      case "pending":
+      case "in_review":
+        return needed(
+          "Your ID check is being reviewed",
+          "You can book this once it's approved. We'll send you a notification. Items that need no ID check can be booked now.",
+          "See where it stands"
+        );
+      case "rejected":
+        return needed(
+          "Your ID check didn't pass",
+          `${kycStateCopy("rejected", reason, true).cardBody} You can't book this item until it passes. Items that need no ID check can be booked now.`,
+          "See what to do"
+        );
+      case "verified":
+        // The quote was read before the approval reached it; it is read again on focus and with the push.
+        return needed("Your ID check passed", "Checking this item again…", "See where it stands");
+      default:
+        return needed(
+          "This item needs an ID check",
+          "Renit checks your ID once, before you book an item like this. It takes a few minutes, then our team reviews it.",
+          "Start ID check"
+        );
+    }
   }
   if (quote.id_check && quote.id_check.needed !== "none" && quote.id_check.passed === true) {
     // The handover sentence is `handoverIdLine`, said by itself under the card.
@@ -1377,6 +1459,8 @@ export function bookErrorText(error: ApiError | null): string {
       return "The rental terms have changed. Read them and tick the box again.";
     case "price_changed":
       return "The price changed. Check the new total, then book again.";
+    case "bill_to_unavailable":
+      return "Your GSTIN is no longer saved. Check Bill to and book again.";
     case "validation_error":
       // Days the server will not take (more than 180 days ahead, in the past): its own sentence.
       return daysRefusal(error) ?? error?.message ?? "We couldn't book this. Check the dates and try again.";
@@ -1959,10 +2043,15 @@ export function payRentCopy(
     m.billing === "monthly"
       ? m.periods?.find((p) => p.booking === booking.number && p.n === 1 && p.kind === "rent") ?? null
       : null;
-  const lines: PriceLine[] = month1 ? [{ label: "Month 1", amount: money(month1.amount) }] : [{ label: "Rent", amount: money(m.rent) }];
+  // ENG-343: the rent's GST is inside it and the fee's is added to the fee, as on the price panel. Month 1's amount already
+  // has its fee GST.
+  const lines: PriceLine[] = month1
+    ? [{ label: "Month 1", amount: money(month1.amount) }]
+    : [{ label: "Rent", amount: money(m.rent), note: rentGstNote(m.rent_gst, commonGstRate(booking.lines)) }];
   if (!month1 && isPositive(m.delivery_fee))
     lines.push({ label: byRenit(booking) ? COURIER : "Delivery", amount: money(m.delivery_fee) });
-  if (!month1 && isPositive(m.fee_charged)) lines.push({ label: "Renit's fee", amount: money(m.fee_charged) });
+  if (!month1 && isPositive(m.fee_charged))
+    lines.push({ label: "Renit's fee", amount: money(plusMoney(m.fee_charged, m.fee_gst)), note: feeGstNote(m.fee_charged, m.fee_gst) });
   lines.push({ label: "Already paid", amount: money(m.booking_amount), amountTone: "success" });
   if (isPositive(depositPart)) lines.push({ label: "Deposit · refundable", amount: money(depositPart) });
 

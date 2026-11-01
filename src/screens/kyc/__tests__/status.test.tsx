@@ -8,6 +8,8 @@ import TestRenderer, { act } from "react-test-renderer";
 let mockAccountType = "merchant";
 let mockParams: any = undefined;
 let mockPolling = false;
+let mockData: any = undefined;
+let mockStack: string[] = ["MainTabs", "KycStatus"];
 const mockRefetch = jest.fn(async () => undefined);
 let mockResolveResume: (value: unknown) => void = () => undefined;
 const mockResume = jest.fn(() => new Promise((resolve) => (mockResolveResume = resolve)));
@@ -25,10 +27,9 @@ jest.mock("@/context/global-context", () => ({
   useGlobalContext: () => ({ userDetails: { username: "asha", account_type: mockAccountType } }),
 }));
 jest.mock("@/backend/kyc", () => ({
-  // The real query is disabled for a non-merchant; it answers here so the guard is what is tested.
   useKycStatus: (poll: boolean) => {
     mockPolling = poll;
-    return { data: actionRequired, error: null, isLoading: false, refetch: mockRefetch };
+    return { data: mockData ?? actionRequired, error: null, isLoading: false, refetch: mockRefetch };
   },
   useResumeKyc: () => mockResume,
   useWithdrawKyc: () => ({ mutateAsync: jest.fn() }),
@@ -48,6 +49,7 @@ const mockNavigation = {
   navigate: jest.fn(),
   setParams: jest.fn((next: any) => (mockParams = { ...mockParams, ...next })),
   isFocused: () => true,
+  getState: () => ({ index: mockStack.length - 1, routes: mockStack.map((name) => ({ name })) }),
 };
 jest.mock("@/lib/types", () => ({ useTypedNavigation: () => mockNavigation }));
 jest.mock("react-native-safe-area-context", () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0 }) }));
@@ -98,18 +100,29 @@ describe("the verification status screen", () => {
   });
 
   beforeEach(() => {
+    mockData = undefined;
+    mockStack = ["MainTabs", "KycStatus"];
     mockAccountType = "merchant";
     mockRefetch.mockClear();
     mockResume.mockClear();
   });
 
-  it("tells a non-merchant it is for business accounts, and does not ask the server", () => {
-    // A return link or a kyc_status push can open it for anyone signed in.
-    mockAccountType = "personal";
+  it("shows anyone else their ID check (ENG-351), with no business in its words", () => {
+    // A customer's or an individual owner's check; a return link or a kyc_status push can open it.
+    mockAccountType = "user";
     const shown = texts(render());
-    expect(shown).toContain("Verification is for business accounts");
-    expect(shown).not.toContain("Continue verification");
-    expect(mockRefetch).not.toHaveBeenCalled();
+    expect(shown).toContain("ID check");
+    expect(shown).toContain("You started your ID check but haven't finished the DigiLocker step. It takes a couple of minutes.");
+    expect(shown).not.toContain("Business verification");
+    expect(mockRefetch).toHaveBeenCalled();
+  });
+
+  it("leads back to the booking when it sits on the price screen, even opened by the push with no source (ENG-351)", () => {
+    mockAccountType = "user";
+    mockData = { ...actionRequired, kyc_status: "verified", next_action: null };
+    expect(texts(render())).not.toContain("Back to your booking");
+    mockStack = ["MainTabs", "ReviewAndBook", "KycStatus"];
+    expect(texts(render())).toContain("Back to your booking");
   });
 
   it("shows a merchant their state, read again on arrival", () => {
