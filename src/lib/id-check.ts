@@ -1,3 +1,5 @@
+import { StackActions } from "@react-navigation/native";
+
 import type { KycStatus, NavigationUseType } from "@/lib/types";
 
 /**
@@ -11,12 +13,15 @@ import type { KycStatus, NavigationUseType } from "@/lib/types";
  * reads the quote again when it comes back into view: the dates are kept, and "ID check passed"
  * shows by itself.
  *
+ * Pushed, not navigated: `navigate` would jump back to an ID check screen already in the stack
+ * and drop the price screen above it, with its product and dates.
+ *
  * `status` is the customer's verification status, when it has been read.
  */
 export function startIdCheck(navigation: NavigationUseType, status: KycStatus | undefined) {
   if (status === undefined || status === "none") {
-    navigation.navigate("KycIntro", { source: "booking" });
+    navigation.dispatch(StackActions.push("KycIntro", { source: "booking" }));
   } else {
-    navigation.navigate("KycStatus", { source: "booking" });
+    navigation.dispatch(StackActions.push("KycStatus", { source: "booking" }));
   }
 }

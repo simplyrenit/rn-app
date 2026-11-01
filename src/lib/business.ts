@@ -57,6 +57,8 @@ export function gstinErrorText(failure: ApiError | null): string {
       return "We can't check GSTINs right now. Try again in a few minutes.";
   }
   if (!failure || failure.status === 0) return "No connection. Check your internet and try again.";
+  // A 5xx body can be a proxy's page (Cloudflare's for a 502), never words for the customer.
+  if (failure.status >= 500) return "We can't check GSTINs right now. Try again in a few minutes.";
   return failure.message ?? "Something went wrong. Try again.";
 }
 

@@ -48,6 +48,9 @@ describe("gstinErrorText", () => {
   it("falls back to the server's sentence", () => {
     expect(gstinErrorText(failure("something_new"))).toBe("server words");
   });
+  it("never shows a 5xx body, such as Cloudflare's page for a 502", () => {
+    expect(gstinErrorText(failure(null, null, 502))).toMatch(/can't check GSTINs right now/);
+  });
 });
 
 it("shortens a GSTIN without its PAN", () => {
