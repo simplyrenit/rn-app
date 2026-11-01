@@ -188,12 +188,16 @@ export default function KycStatusScreen() {
       ]
     );
 
-  const onWithdraw = () =>
+  const onWithdraw = () => {
+    const hadBadge = data?.business_verified === true;
     Alert.alert(
       "Remove your verification data?",
       person
         ? "We'll delete the details we hold for your ID check, including your Aadhaar record. Items that need an ID check can't be booked until you check again."
-        : "We'll delete the details we hold for your verification, including your Aadhaar record. Your Verified business badge will be removed. You can verify again later.",
+        : // A badge the re-check already took off (ENG-348) is not "removed" again.
+          `We'll delete the details we hold for your verification, including your Aadhaar record.${
+            hadBadge ? " Your Verified business badge will be removed." : ""
+          } You can verify again later.`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -203,9 +207,14 @@ export default function KycStatusScreen() {
             try {
               await withdraw.mutateAsync();
               track("kyc_withdrawn");
-              toast.success("Verification data removed", {
-                message: person ? "You can check your ID again any time." : "Your badge has been removed.",
-              });
+              toast.success(
+                "Verification data removed",
+                person
+                  ? { message: "You can check your ID again any time." }
+                  : hadBadge
+                    ? { message: "Your badge has been removed." }
+                    : undefined
+              );
             } catch {
               // Nothing is shown as removed unless the server said so.
               toast.error("We couldn't remove your data", { message: "Check your connection and try again." });
@@ -214,6 +223,7 @@ export default function KycStatusScreen() {
         },
       ]
     );
+  };
 
   const toBooking = () => (navigation.canGoBack() ? navigation.goBack() : toProfile());
   const header = (

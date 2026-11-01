@@ -42,6 +42,22 @@ Your choices
 Verification is optional. You can remove your verification data any time from Business verification, without deleting your account, and you can delete your Renit account from Profile, Personal details. Copies in our backups are cleared within 30 days after the 180 days. Questions about your data: support@simplyrenit.com.
 
 Version: kyc-merchant-2026-10b`,
+  "kyc-merchant-2026-11": `What we collect
+Your PAN. Your GSTIN, if you tell us you're registered for GST. Your Udyam registration or shop licence number, if you choose to add one. Your Aadhaar details from DigiLocker when you approve sharing; what DigiLocker shares can include your name, date of birth, gender, address and photo. We read them once to check them and keep only the few details listed below. We don't ask for photos or selfies.
+
+Why
+To check that you and your business are who you say you are, so we can show a Verified business badge, and to check every month that your GSTIN is still active. If the GST records no longer show it as active, we remove the badge and tell you how to get it back. We don't use this information for anything else.
+
+Who handles it
+Cashfree Payments India Private Limited checks your PAN, GSTIN and Udyam number and connects you to DigiLocker for us. They handle your details under their own privacy policy: [CASHFREE PRIVACY POLICY LINK]. A member of the Renit team reviews each case before it's approved, and can see your name, your PAN's last 4 digits, the few Aadhaar details listed below, and your Udyam or shop licence number so they can check it.
+
+How long we keep it
+From your Aadhaar we keep only a few details: your name, year of birth, state, pincode and the last 4 digits of your Aadhaar number. We keep them for up to 180 days after we decide, then delete them. We never keep a copy of your Aadhaar itself. We don't store your full PAN. While you're verified we keep your GSTIN encrypted, only to re-check it each month, and delete it when your verification ends. We keep your full Udyam or shop licence number, encrypted, only until we decide. After that, for your PAN, GSTIN and Udyam or licence number we keep the last 4 characters and a scrambled code that helps us spot duplicates. We keep the result of your verification for as long as you have a Renit account.
+
+Your choices
+Verification is optional. You can remove your verification data any time from Business verification, without deleting your account, and you can delete your Renit account from Profile, Personal details. Copies in our backups are cleared within 30 days after the 180 days. Questions about your data: support@simplyrenit.com.
+
+Version: kyc-merchant-2026-11`,
   // The individual check's text (D-40, ENG-351): a customer's ID check, or an individual owner's.
   "kyc-individual-2026-10b": `What we collect
 Your PAN. Your Aadhaar details from DigiLocker when you approve sharing; what DigiLocker shares can include your name, date of birth, gender, address and photo. We read them once to check them and keep only the few details listed below. We don't ask for photos or selfies.
@@ -62,7 +78,7 @@ Version: kyc-individual-2026-10b`,
 };
 
 /** The newest merchant key of KYC_CONSENT_TEXTS: what a business's `start/` is sent. */
-export const KYC_CONSENT_VERSION = "kyc-merchant-2026-10b";
+export const KYC_CONSENT_VERSION = "kyc-merchant-2026-11";
 /** The newest individual key: what everyone else's `start/` is sent (the server picks the check by account type). */
 export const KYC_INDIVIDUAL_CONSENT_VERSION = "kyc-individual-2026-10b";
 

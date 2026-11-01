@@ -596,6 +596,8 @@ export interface PublicOwner {
   /** ENG-73: so an owner with no listings still shows the business name. */
   business_name?: string | null;
   account_type?: string;
+  /** ENG-348: the registration a reviewer accepted with the badge; null or absent when none. */
+  business_registration_kind?: BusinessRegistrationKind | null;
   /** ENG-344: the shop's public page, for the share sheet; null or absent when it has none. */
   shop_url?: string | null;
 }
@@ -877,6 +879,7 @@ export type KycReasonCode =
   | "business_name_unverifiable"
   | "other"
   // set by the system, and kept when the status falls back to `none`
+  // (`gstin_inactive` too, when the monthly GSTIN re-check removes the badge: ENG-348)
   | "case_expired";
 
 export type KycNextAction =
@@ -898,7 +901,12 @@ export interface KycStatusResponse {
   updated_at: string | null;
   /** Present, as true, only when the server could not refresh and served its cached fields. */
   stale?: boolean;
+  /** ENG-348: absent on an older API. */
+  business_registration_kind?: BusinessRegistrationKind | null;
 }
+
+/** Optional evidence a merchant can add when they verify (ENG-348). */
+export type BusinessRegistrationKind = "udyam" | "shop_licence";
 
 export interface StartKycBody {
   pan: string;
@@ -906,12 +914,16 @@ export interface StartKycBody {
   gstin?: string | null;
   consent_version: string;
   supersede?: boolean;
+  /** Both or neither. */
+  business_registration_kind?: BusinessRegistrationKind;
+  business_registration_number?: string;
 }
 
 export type KycErrorCode =
   | "validation_error"
   | "pan_unverifiable"
   | "gstin_unverifiable"
+  | "udyam_unverifiable"
   | "consent_outdated"
   | "profile_incomplete"
   | "not_merchant"
