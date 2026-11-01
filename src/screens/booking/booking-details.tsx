@@ -279,6 +279,19 @@ export function BookingDetails({ booking, receivedAt }: { booking: BookingCustom
 
       <PaymentsList booking={booking} />
 
+      {/* ENG-352: the business this booking is billed to, as it was at Book now. */}
+      {booking.bill_to ? (
+        <Panel style={{ padding: space.md, gap: 2 }}>
+          <Text fontSize="text-sm" tone="body">
+            Billed to
+          </Text>
+          <Text fontSize="text-md" fontWeight="font-bold">
+            {booking.bill_to.legal_name}
+          </Text>
+          <Text fontSize="text-sm" tone="body">{`GSTIN ${booking.bill_to.gstin}`}</Text>
+        </Panel>
+      ) : null}
+
       {can("request_window_change") || can("cancel") ? (
         <Panel>
           {can("request_window_change") ? (

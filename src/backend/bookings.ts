@@ -61,6 +61,8 @@ export interface BookInput extends QuoteInput {
   expected_deposit?: string;
   /** A cart checkout: the server marks the cart's lines "in checkout" (D6). */
   from_cart?: boolean;
+  /** ENG-352: bill the booking to the customer's saved GSTIN. Sent only when on. */
+  bill_to?: boolean;
   /** ENG-344: the shop link that brought the customer (`currentSource`), if any. */
   source?: Source;
 }

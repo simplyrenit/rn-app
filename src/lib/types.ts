@@ -336,6 +336,8 @@ export type RootStackParamList = {
     initial?: { latitude: number; longitude: number };
   };
   SavedAddresses: undefined;
+  /** "Renting for a business" and the GSTIN bookings are billed to (ENG-352). No params: a GSTIN never goes in one. */
+  BusinessBilling: undefined;
   /**
    * `address` edits it; `pin` (fresh from the map) adds one. `requestId` is a
    * `location-request` the saved address is handed back through, for a caller
@@ -672,6 +674,8 @@ export interface AuthUser {
    */
   proof_token?: string;
   date_of_birth?: string;
+  /** A customer ticked "I'm renting for a business" (ENG-352). */
+  bills_to_business?: boolean;
   coordinates: {
     type: string;
     coordinates: [number, number];
@@ -786,6 +790,8 @@ export interface BackendProduct {
    * read as no: the Add to cart button shows only when this is true (§9.3).
    */
   can_add_to_cart?: boolean;
+  /** ENG-352: for a business customer, whether the shop issues GST invoices; null for anyone else. */
+  gst_invoice?: boolean | null;
   /**
    * Cart plan D28, D39 (T8): the customer's live booking of this item, if any. The dates may be absent (plan §5.3
    * names only the number).

@@ -204,6 +204,8 @@ export const KYC_START_ENDPOINT = SERVERURL + "kyc/merchant/start/";
 export const KYC_RESUME_ENDPOINT = SERVERURL + "kyc/merchant/resume/";
 export const KYC_WITHDRAW_ENDPOINT = SERVERURL + "kyc/merchant/withdraw/";
 export const KYC_STATUS_ENDPOINT = SERVERURL + "kyc/merchant/status/";
+/** The GSTIN a business customer bills bookings to (ENG-352): GET, POST {gstin}, DELETE. */
+export const BUSINESS_GSTIN_ENDPOINT = SERVERURL + "business/gstin/";
 // Where the verification browser hands back to the app. The scheme is `renit` in every build.
 export const KYC_RETURN_URL = "renit://kyc/return";
 // Order execution (ENG-94). Paths are API-CONTRACT.md's; every one ends in "/".

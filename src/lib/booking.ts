@@ -10,6 +10,7 @@
 import { pluralize } from "@/lib/pluralize";
 import { SavedAddress, addressLine, addressTitle } from "@/lib/addresses";
 import { ApiError, fieldErrors } from "@/lib/api-error";
+import type { BillTo } from "@/lib/business";
 import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
 import { kycStateCopy } from "@/lib/kyc";
@@ -125,6 +126,8 @@ export interface MonthlyMoney {
 
 /** `POST /api/bookings/quote/`. */
 export interface Quote {
+  /** ENG-352: whether the shop issues GST invoices; null unless the caller bills as a business, absent from an older server. */
+  gst_invoice?: boolean | null;
   product: string;
   first_day: string;
   last_day: string;
@@ -348,6 +351,8 @@ export interface CourierBlock {
 
 /** A booking as its customer sees it (API-CONTRACT, BookingCustomer). */
 export interface BookingCustomer {
+  /** ENG-352: what the booking is billed to (a copy taken at Book now), or null. Absent from an older server. */
+  bill_to?: BillTo | null;
   number: string;
   stage: BookingStage;
   ring_state: RingState;
@@ -1445,6 +1450,8 @@ export function bookErrorText(error: ApiError | null): string {
       return "The rental terms have changed. Read them and tick the box again.";
     case "price_changed":
       return "The price changed. Check the new total, then book again.";
+    case "bill_to_unavailable":
+      return "Your GSTIN is no longer saved. Check Bill to and book again.";
     case "validation_error":
       // Days the server will not take (more than 180 days ahead, in the past): its own sentence.
       return daysRefusal(error) ?? error?.message ?? "We couldn't book this. Check the dates and try again.";

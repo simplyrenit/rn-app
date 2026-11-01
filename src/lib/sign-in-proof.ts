@@ -106,6 +106,8 @@ export function signUpBody(user: Partial<AuthUser>): Record<string, unknown> {
     date_of_birth: user.date_of_birth,
     email_verified: user.email_verified,
     proof_token: user.proof_token,
+    // "I'm renting for a business" (ENG-352): a customer's only; left out when not ticked.
+    bills_to_business: accountType === "user" && user.bills_to_business ? true : undefined,
   };
   return Object.fromEntries(Object.entries(body).filter(([, value]) => value !== undefined && value !== null && value !== ""));
 }
