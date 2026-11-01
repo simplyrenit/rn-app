@@ -121,6 +121,12 @@ const VERIFIED_CHECKS = [
   "Owner's identity through DigiLocker",
 ];
 
+/** ENG-348: the registration a reviewer accepted, listed after the checks every business went through. */
+const REGISTRATION_CHECK: Record<string, string> = {
+  udyam: "Udyam registration",
+  shop_licence: "Shops & Establishments licence",
+};
+
 /** Label to chevron. */
 const CHEVRON_GAP = 4;
 
@@ -405,6 +411,8 @@ export default function UsersDetails() {
       : null;
 
   const businessVerified = owner?.business_verified === true;
+  const registrationCheck = REGISTRATION_CHECK[owner?.business_registration_kind ?? ""];
+  const verifiedChecks = registrationCheck ? [...VERIFIED_CHECKS, registrationCheck] : VERIFIED_CHECKS;
   const verifiedOn = owner?.business_verified_at
     ? new Date(owner.business_verified_at).toLocaleDateString("en-IN", {
         day: "numeric",
@@ -673,7 +681,7 @@ export default function UsersDetails() {
                   accessible
                   accessibilityLabel={`Verified business. Checked by Renit${
                     verifiedOn ? ` on ${verifiedOn}` : ""
-                  }: ${VERIFIED_CHECKS.join(", ")}.`}
+                  }: ${verifiedChecks.join(", ")}.`}
                   style={{
                     marginHorizontal: SCREEN_GUTTER,
                     padding: density.block,
@@ -697,7 +705,7 @@ export default function UsersDetails() {
                     </View>
                   </View>
                   <View style={{ gap: 6 }}>
-                    {VERIFIED_CHECKS.map((check) => (
+                    {verifiedChecks.map((check) => (
                       <View
                         key={check}
                         style={{ flexDirection: "row", alignItems: "center", gap: 8 }}

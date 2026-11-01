@@ -360,9 +360,10 @@ export type RootStackParamList = {
   // `coverUrl` is additive to §8.1: the draft is cleared before L-17 opens.
   ListSubmitted: { productName: string; coverUrl?: string | null; status?: string | null; reasons?: FlagReason[]; waitsText?: string | null };
   // Merchant verification (ENG-12). Params are flags only: a PAN or GSTIN never goes in one.
-  KycIntro: { source?: "profile" | "post_listing" | "push"; supersede?: boolean } | undefined;
-  KycDetails: { supersede?: boolean } | undefined;
-  KycStatus: { justReturned?: boolean } | undefined;
+  // `source: "booking"`: the customer's ID check, opened from the price screen (ENG-351); the way out is back to it.
+  KycIntro: { source?: "profile" | "post_listing" | "push" | "booking"; supersede?: boolean } | undefined;
+  KycDetails: { supersede?: boolean; source?: "booking" } | undefined;
+  KycStatus: { justReturned?: boolean; source?: "booking" } | undefined;
   OwnersProducts: { products: BackendProduct[]; name: string; shopUrl?: string | null };
   /** The owner's bank account: add, verify, change (ENG-135). */
   BankAccount: undefined;
@@ -372,6 +373,8 @@ export type RootStackParamList = {
   /** The shop's address and pin, on the same map picker (ENG-265). */
   ShopAddress: undefined;
   RentalDelivery: undefined;
+  /** GST registration and the GSTIN (ENG-343). No params: a GSTIN never goes in one. */
+  RentalGst: undefined;
   /** Every area around the shop, on and off, editing the Delivery screen's draft (ENG-291). */
   DeliveryAreas: undefined;
   /**
@@ -493,6 +496,8 @@ export type RootStackParamList = {
     id_match?: boolean;
     /** The customer's full name from the shop's booking (T-44), for the ID tick's words; null or absent when it is not shown. */
     id_match_name?: string | null;
+    /** The customer has passed Renit's ID check (ENG-351): the name above is the one they verified with. */
+    id_verified?: boolean;
     /** B1: a booking Renit's courier partner carries (no place in the files; the customer's return asks for the seal). */
     courier?: boolean;
     /** Cart: a booking of several items (its live count in `items`). Its keys name each item, so no general list. */
@@ -593,6 +598,8 @@ export interface PublicOwner {
   /** ENG-73: so an owner with no listings still shows the business name. */
   business_name?: string | null;
   account_type?: string;
+  /** ENG-348: the registration a reviewer accepted with the badge; null or absent when none. */
+  business_registration_kind?: BusinessRegistrationKind | null;
   /** ENG-344: the shop's public page, for the share sheet; null or absent when it has none. */
   shop_url?: string | null;
 }
@@ -876,6 +883,7 @@ export type KycReasonCode =
   | "business_name_unverifiable"
   | "other"
   // set by the system, and kept when the status falls back to `none`
+  // (`gstin_inactive` too, when the monthly GSTIN re-check removes the badge: ENG-348)
   | "case_expired";
 
 export type KycNextAction =
@@ -897,7 +905,12 @@ export interface KycStatusResponse {
   updated_at: string | null;
   /** Present, as true, only when the server could not refresh and served its cached fields. */
   stale?: boolean;
+  /** ENG-348: absent on an older API. */
+  business_registration_kind?: BusinessRegistrationKind | null;
 }
+
+/** Optional evidence a merchant can add when they verify (ENG-348). */
+export type BusinessRegistrationKind = "udyam" | "shop_licence";
 
 export interface StartKycBody {
   pan: string;
@@ -905,12 +918,16 @@ export interface StartKycBody {
   gstin?: string | null;
   consent_version: string;
   supersede?: boolean;
+  /** Both or neither. */
+  business_registration_kind?: BusinessRegistrationKind;
+  business_registration_number?: string;
 }
 
 export type KycErrorCode =
   | "validation_error"
   | "pan_unverifiable"
   | "gstin_unverifiable"
+  | "udyam_unverifiable"
   | "consent_outdated"
   | "profile_incomplete"
   | "not_merchant"

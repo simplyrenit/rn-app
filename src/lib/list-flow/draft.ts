@@ -187,7 +187,8 @@ function withDerivedDeposit(draft: ListingDraft): ListingDraft {
   if (draft.depositTouched) return draft;
   const deposit = computeDepositDefault(
     derivedRate(toPlans(draft.fields.plans.value)),
-    draft.depositRule ?? undefined
+    draft.depositRule ?? undefined,
+    parseWorth(draft.fields.worth.value)
   );
   const current = draft.fields.security_deposit;
   const next =
@@ -397,6 +398,14 @@ export function draftReducer(
   draft: ListingDraft | null,
   action: DraftAction
 ): ListingDraft | null {
+  const next = reduce(draft, action);
+  // A worth typed, suggested or cleared moves the deposit default (ENG-349).
+  return next && draft && action.type !== "reset" && next.fields.worth.value !== draft.fields.worth.value
+    ? withDerivedDeposit(next)
+    : next;
+}
+
+function reduce(draft: ListingDraft | null, action: DraftAction): ListingDraft | null {
   if (action.type === "reset") return action.draft;
   if (!draft) return draft;
 

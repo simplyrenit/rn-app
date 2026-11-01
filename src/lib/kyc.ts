@@ -1,14 +1,19 @@
 /**
- * Merchant verification: the copy for every state, the field rules, and how a KYC error is
+ * Verification: a merchant's business check (ENG-12) or a person's ID check (ENG-351). The copy for every state, the field rules, and how a KYC error is
  * read (ENG-12). No network and no React here, so all of it is unit-tested.
  *
- * The PAN and GSTIN live only in the details screen's state. Nothing in this module stores,
+ * The PAN, GSTIN and registration number live only in the details screen's state. Nothing in this module stores,
  * logs or returns one beyond the value it was handed.
  */
 import type { KycErrorCode, KycReasonCode, KycStatus, KycStatusResponse } from "@/lib/types";
 
 export const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 export const GSTIN_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+/** Optional business registration (ENG-348). A shop licence's format differs by state. */
+export const UDYAM_PATTERN = /^UDYAM-[A-Z]{2}-[0-9]{2}-[0-9]{7}$/;
+export const SHOP_LICENCE_PATTERN = /^[A-Z0-9/-]{4,40}$/;
+export const UDYAM_ERROR = "Enter a valid Udyam number, like UDYAM-MH-19-0001234.";
+export const SHOP_LICENCE_ERROR = "Enter the licence number as printed: 4 to 40 letters, digits, / or -.";
 
 /** What the PAN and GSTIN inputs keep of what was typed. */
 export const cleanId = (text: string, length: number) =>
@@ -59,18 +64,77 @@ const REJECTED: Record<string, string> = {
     "We couldn't complete your verification this time. You can try again, or contact support and we'll help.",
 };
 
-const firstSentence = (text: string) => text.slice(0, text.indexOf(".") + 1) || text;
+export const firstSentence = (text: string) => text.slice(0, text.indexOf(".") + 1) || text;
+
+/** A person's ID check (ENG-351): their own PAN and Aadhaar, no business. Codes about a business or a GSTIN can't happen. */
+const PERSON_REJECTED: Record<string, string> = {
+  pan_invalid: "We couldn't verify the PAN you entered. Check the number and try again.",
+  pan_name_mismatch:
+    "The name on your PAN didn't match the name on your Renit account. Use your own PAN, then try again.",
+  aadhaar_signature_invalid: REJECTED.aadhaar_signature_invalid,
+  aadhaar_name_mismatch: REJECTED.aadhaar_name_mismatch,
+  duplicate_identity: REJECTED.duplicate_identity,
+  other: REJECTED.other,
+};
+
+/** `kycStateCopy` for a person's ID check: the same states, buttons and tones, with no business in the words. */
+function personCopy(status: KycStatus, reason: KycReasonCode | string | null | undefined): KycStateCopy {
+  const business = kycStateCopy(status, reason);
+  switch (status) {
+    case "pending":
+    case "in_review":
+      return business; // their words name no business
+    case "action_required":
+      return {
+        ...business,
+        body: "You started your ID check but haven't finished the DigiLocker step. It takes a couple of minutes.",
+      };
+    case "verified":
+      return {
+        ...business,
+        cardTitle: "ID check passed",
+        cardBody: "You can book items that need an ID check.",
+        title: "Your ID check passed",
+        body: 'You can now book items that need an ID check. Need to change your PAN? Use "Remove my verification data" below, then check again.',
+        cta: null,
+        ctaKind: null,
+      };
+    case "rejected": {
+      const code = reason && reason in PERSON_REJECTED ? reason : "other";
+      const body = PERSON_REJECTED[code];
+      return {
+        ...business,
+        cardTitle: "We couldn't verify your ID",
+        cardBody: firstSentence(body),
+        title: "We couldn't verify your ID",
+        body,
+      };
+    }
+    default:
+      if (reason === "case_expired") return business;
+      return {
+        ...business,
+        cardTitle: "Check your ID",
+        cardBody: "Needed once, before you rent some higher-value items.",
+        title: "Check your ID",
+        body: "Renit checks your ID once, before you rent some higher-value items.",
+        cta: "Start ID check",
+      };
+  }
+}
 
 /**
  * Title, body, button and tone for a status. The profile card and the status screen both read
  * this, so they cannot disagree. A reason code the app does not know reads as `other` (when
  * rejected) or as the plain start state (when there is no case), so a server that adds a code
- * never produces a blank screen.
+ * never produces a blank screen. `person`: the ID check of anyone who is not a business account.
  */
 export function kycStateCopy(
   status: KycStatus,
-  reason: KycReasonCode | string | null | undefined
+  reason: KycReasonCode | string | null | undefined,
+  person = false
 ): KycStateCopy {
+  if (person) return personCopy(status, reason);
   switch (status) {
     case "pending":
       return {
@@ -113,7 +177,7 @@ export function kycStateCopy(
         cardTitle: "Verified business",
         cardBody: "Your badge shows on your profile and listings.",
         title: "You're a Verified business",
-        body: 'Renters now see the Verified business badge on your profile and your listings. Need to change your PAN or GSTIN? Use "Remove my verification data" below, then verify again. Your badge stays off until the new check is approved.',
+        body: 'Renters now see the Verified business badge on your profile and your listings. Need to change your PAN or GSTIN, or add a Udyam or shop licence number? Use "Remove my verification data" below, then verify again. Your badge stays off until the new check is approved.',
         cta: "See my public profile",
         ctaKind: "profile",
         secondary: null,
@@ -147,6 +211,22 @@ export function kycStateCopy(
           title: "Your verification timed out",
           body,
           cta: "Start again",
+          ctaKind: "start",
+          secondary: "support",
+          icon: "exclamation",
+          tone: "warning",
+        };
+      }
+      if (reason === "gstin_inactive") {
+        // The monthly GSTIN re-check took the badge off (ENG-348).
+        const body =
+          "The GST records no longer show your GSTIN as active, so we've taken the badge off your shop. Once it's active again, verify again. If your business is no longer registered for GST, you can verify without it.";
+        return {
+          cardTitle: "Your Verified badge was removed",
+          cardBody: firstSentence(body),
+          title: "Your Verified badge was removed",
+          body,
+          cta: "Verify again",
           ctaKind: "start",
           secondary: "support",
           icon: "exclamation",
@@ -200,14 +280,18 @@ export function kycError(error: unknown): KycError {
  * segment. Returns the server's reason per form field, and whether a key matched none.
  */
 export function fieldErrors(details: Record<string, unknown> | null) {
-  const out: { pan?: string; gstin?: string; consent?: boolean; other: boolean } = { other: false };
+  const out: { pan?: string; gstin?: string; registration?: string; consent?: boolean; other: boolean } = {
+    other: false,
+  };
   const fields = details?.fields;
   if (!fields || typeof fields !== "object") return { ...out, other: true };
   for (const path of Object.keys(fields)) {
     const name = path.split(".").pop();
     if (name === "pan") out.pan = "Enter a valid 10-character PAN, like ABCDE1234F.";
     else if (name === "gstin") out.gstin = "Enter a valid 15-character GSTIN, like 22ABCDE1234F1Z5.";
-    else if (name === "consent_version") out.consent = true;
+    else if (name === "business_registration_number" || name === "business_registration_kind") {
+      out.registration = "Check the registration number and try again.";
+    } else if (name === "consent_version") out.consent = true;
     else out.other = true;
   }
   return out;

@@ -10,8 +10,10 @@ import {
   dayOf,
   dayShort,
   daysLabel,
+  feeGstNote,
   momentLabel,
   money,
+  plusMoney,
   rangeLabel,
   todayIst,
   windowLabel,
@@ -39,6 +41,12 @@ export interface ShopMoney extends MonthlyMoney {
   delivery_fee: string;
   fee_shown: string;
   fee_charged: string;
+  /**
+   * ENG-343: the GST inside `rent` (the shop's to file) and the GST on Renit's commission, which `you_earn` is already
+   * net of. Absent from an older server.
+   */
+  rent_gst?: string;
+  fee_gst?: string;
   you_earn: string;
   deposit: string;
   /** `none`, `not_due`, `due`, `paid`, `carried`, `settled`, `forfeited`. */
@@ -411,8 +419,11 @@ export interface MoneyView {
   rentLabel: string;
   earnLabel: string;
   rent: string;
+  /** ENG-343: under the rent, "GST in rent ₹X · yours to file"; absent for an unregistered shop. */
+  rentNote?: string;
   delivery: string | null;
-  fee: { struck: string | null; charged: string };
+  /** `charged` includes the fee's GST (ENG-343), which `note` then splits out. */
+  fee: { struck: string | null; charged: string; note?: string };
   earn: string;
   /** "Paid to your bank on the day of handover". */
   payout: string | null;
@@ -485,25 +496,29 @@ export function moneyView(b: BookingShop): MoneyView {
         ].join(", ")
       : null;
   // Monthly billing (ENG-282): the rent, the fee and what the shop earns are said for one month. The fee is a share of the
-  // rent, so a month's is the booking's in the same proportion.
+  // rent, so a month's is the booking's in the same proportion; so are the fee's GST and the rent's (ENG-343).
   // A booking that has ended, or come back, is said as a whole, as it settled.
   const running = !b.exit && b.stage !== "returned" && b.stage !== "closed";
   const plan = running && isMonthly(m) && m.plan && Number(m.rent) > 0 ? m.plan : null;
   const perMonth = (value: string) => (plan ? Math.round(((Number(value) * Number(plan.price)) / Number(m.rent)) * 100) / 100 : Number(value));
   const feeShown = perMonth(m.fee_shown);
   const feeCharged = perMonth(m.fee_charged);
+  const feeGst = perMonth(m.fee_gst ?? "0");
+  const rentGst = perMonth(m.rent_gst ?? "0");
   return {
     rentLabel: plan ? "Rent a month" : "Rent",
     earnLabel: plan ? "You earn a month" : "You earn",
     rent: money(plan ? plan.price : m.rent),
+    rentNote: rentGst > 0 ? `GST in rent ${money(rentGst)} · yours to file` : undefined,
     // Per month, the delivery fee (paid with month 1) would not add up to "You earn a month": it is left out.
     // B1: the courier fee is Renit's, never the shop's, whatever the server sends.
     delivery: !plan && !byRenit(b) && Number(m.delivery_fee) > 0 ? money(m.delivery_fee) : null,
     fee: {
       struck: Number.isFinite(shown) && shown > 0 && feeShown !== feeCharged ? money(feeShown) : null,
-      charged: money(feeCharged),
+      charged: money(plusMoney(feeCharged, feeGst)),
+      note: feeGstNote(feeCharged, feeGst),
     },
-    earn: plan ? money(Number(plan.price) - feeCharged) : money(m.you_earn),
+    earn: plan ? money(Number(plan.price) - plusMoney(feeCharged, feeGst)) : money(m.you_earn),
     // Each month is paid out on its own, the morning after it is paid, never before it starts (plan §6). A payout that has
     // moved past the plain default (failed, waiting for the bank, held) still says so.
     payout:

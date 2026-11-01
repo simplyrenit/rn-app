@@ -42,7 +42,7 @@ export interface RecordBookingProps {
   captures?: CaptureFlags | null;
   id_match_required?: boolean;
   /** The shop's booking: the customer, whose full name is shown from Ready on a booking that needs the ID match (T-44). */
-  customer?: { full_name?: string | null; first_name?: string; last_initial?: string } | null;
+  customer?: { full_name?: string | null; first_name?: string; last_initial?: string; id_checked?: boolean | null } | null;
   server_time?: string;
   /** The customer's booking: the booking this one extends. An extension has no handover record. */
   extends?: string | null;
@@ -121,6 +121,7 @@ export function useRecord({ moment, role, forOther = false, booking, receivedAt,
       other,
       id_match: Boolean(booking.id_match_required),
       id_match_name: booking.customer?.full_name ?? null,
+      ...(booking.customer?.id_checked === true ? { id_verified: true } : {}),
       skew_ms: clockSkewMs(booking.server_time, receivedAt),
       // The customer's set only: it is their home that must not reach the shop.
       ...(byRenit(booking) && side === "customer" ? { courier: true } : {}),

@@ -465,6 +465,32 @@ describe("the price before Book now", () => {
     expect(priceLines(quote({ fee_charged: "92.00" }))[2]).toEqual({ label: "Renit's fee", amount: "₹92" });
   });
 
+  it("says the GST inside a registered shop's rent, at its rate, and none for an unregistered shop (ENG-343)", () => {
+    expect(priceLines(quote({ rent_gst: "279.15", gst_rate: "18" }))[0]).toEqual({
+      label: "Rent · 3 days × ₹610",
+      amount: "₹1,830",
+      note: "Includes GST ₹279.15 (18%)",
+    });
+    // Items at mixed rates: the GST without a rate.
+    expect(priceLines(quote({ rent_gst: "180.40", gst_rate: null }))[0].note).toBe("Includes GST ₹180.40");
+    expect(priceLines(quote({ rent_gst: "0.00", gst_rate: null }))[0].note).toBeUndefined();
+    // An older server sends neither.
+    expect(priceLines(quote())[0].note).toBeUndefined();
+  });
+
+  it("adds the fee's GST to the fee, so the lines still add up to the total (ENG-343)", () => {
+    const on = quote({ fee_shown: "92.00", fee_charged: "92.00", fee_gst: "16.56", total: "1938.56" });
+    expect(priceLines(on)[2]).toEqual({ label: "Renit's fee", amount: "₹108.56", note: "₹92 + GST ₹16.56" });
+    // Charged at less than shown: the shown fee stays struck.
+    expect(priceLines(quote({ fee_charged: "46.00", fee_gst: "8.28" }))[2]).toEqual({
+      label: "Renit's fee",
+      amount: "₹54.28",
+      struck: "₹92",
+      note: "₹46 + GST ₹8.28",
+    });
+    expect(priceLines(quote())[2].note).toBeUndefined();
+  });
+
   it("calls the sum Total once a delivery fee is in it", () => {
     expect(totalLabel(quote())).toBe("Total rent");
     expect(
@@ -841,6 +867,31 @@ describe("the ID check", () => {
     // The gates are the server's: a blocker it names, or a Book now refusal, still asks for the check.
     expect(idCheckCopy(withCheck("id", null, ["id_check_needed"]))?.state).toBe("needed");
     expect(idCheckCopy(withCheck("id", null), "id")?.state).toBe("needed");
+  });
+
+  it("follows the customer's own check (ENG-351): what stands in the way, and what the button does", () => {
+    const needed = withCheck("id_and_match", false, ["id_check_needed"]);
+    const words = (status?: Parameters<typeof idCheckCopy>[2]) => {
+      const copy = idCheckCopy(needed, null, status);
+      return [copy?.state, copy?.title, copy?.action];
+    };
+    expect(words(undefined)).toEqual(["needed", "This item needs an ID check", "Start ID check"]);
+    expect(words("none")).toEqual(["needed", "This item needs an ID check", "Start ID check"]);
+    expect(words("action_required")).toEqual(["needed", "Finish your ID check", "Continue ID check"]);
+    expect(words("pending")).toEqual(["needed", "Your ID check is being reviewed", "See where it stands"]);
+    expect(words("in_review")).toEqual(["needed", "Your ID check is being reviewed", "See where it stands"]);
+    // The status screen has the whole reason and the right way on (try again, or support for a duplicate).
+    expect(words("rejected")).toEqual(["needed", "Your ID check didn't pass", "See what to do"]);
+    // Pending or failed: the customer is told the cheaper items still book.
+    for (const status of ["in_review", "rejected"] as const) {
+      expect(idCheckCopy(needed, null, status)?.body).toMatch(/Items that need no ID check can be booked now\./);
+    }
+    // Why it failed, in the first sentence of the status screen's words.
+    expect(idCheckCopy(needed, null, "rejected", "pan_name_mismatch")?.body).toMatch(
+      /^The name on your PAN didn't match the name on your Renit account\. You can't book this item until it passes\./
+    );
+    // An item that asks for no check (a cheap camera: `passed` null) says nothing, whatever the status.
+    expect(idCheckCopy(withCheck("id_and_match", null), null, "rejected")).toBeNull();
   });
 
   it("tells the customer to bring an ID to a handover that needs the match, by itself, whatever `passed` says (e2e-B r2 finding 14)", () => {
@@ -1323,6 +1374,21 @@ describe("pay the rent", () => {
       { label: "Month 1", amount: "₹1,950" },
       { label: "Already paid", amount: "₹99", amountTone: "success" },
     ]);
+  });
+
+  it("says the GST inside the rent and adds the fee's GST to the fee, so the lines add up (ENG-343)", () => {
+    const gst = accepted(
+      { pay_now: { purpose: "rent", amount: "1839.56", deposit_part: "0.00", due_at: "2026-10-13T04:43:00Z", payment: null } },
+      { rent_gst: "279.15", fee_charged: "92.00", fee_gst: "16.56" }
+    );
+    expect(payRentCopy(gst, NOW).lines).toEqual([
+      { label: "Rent", amount: "₹1,830", note: "Includes GST ₹279.15" },
+      { label: "Renit's fee", amount: "₹108.56", note: "₹92 + GST ₹16.56" },
+      { label: "Already paid", amount: "₹99", amountTone: "success" },
+    ]);
+    expect(payRentCopy(gst, NOW).total.amount).toBe("₹1,839.56");
+    // Unregistered, no fee: as before.
+    expect(payRentCopy(accepted(), NOW).lines[0].note).toBeUndefined();
   });
 
   it("gives the deadline as a clock time, never as a number of minutes", () => {

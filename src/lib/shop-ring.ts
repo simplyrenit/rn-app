@@ -1,5 +1,5 @@
 import type { ApiError } from "@/lib/api-error";
-import { DeliveryMode, RingState, clock, daysLabel, momentLabel, money, rangeLabel } from "@/lib/booking";
+import { DeliveryMode, RingState, clock, daysLabel, momentLabel, money, plusMoney, rangeLabel } from "@/lib/booking";
 import { DeliveredBy, byRenit } from "@/lib/delivery";
 import { correctedNow } from "@/lib/server-clock";
 import type { OpenState } from "@/lib/shop";
@@ -38,6 +38,8 @@ export interface Ring {
   you_earn: string;
   fee_shown: string;
   fee_charged: string;
+  /** GST on `fee_charged` (ENG-343), taken off with it; older servers send none. */
+  fee_gst?: string;
   ring_state: RingState;
   ring_at: string;
   /** Null while the request waits for the shop to open. */
@@ -176,12 +178,15 @@ export function unitDots(units: Ring["units"], max = 10): boolean[] | null {
   return Array.from({ length: units.quantity }, (_, i) => i < units.in_use);
 }
 
-/** Renit's fee as the frames draw it: the fee that was shown, crossed out, and what is charged. */
-export function feeText(ring: Pick<Ring, "fee_shown" | "fee_charged">): { struck: string | null; charged: string } {
+/** Renit's fee as the frames draw it: the fee that was shown, crossed out when less is charged, and what is charged with its GST. */
+export function feeText(ring: Pick<Ring, "fee_shown" | "fee_charged" | "fee_gst">): {
+  struck: string | null;
+  charged: string;
+} {
   const shown = Number(ring.fee_shown);
   return {
     struck: Number.isFinite(shown) && shown > 0 && shown !== Number(ring.fee_charged) ? money(ring.fee_shown) : null,
-    charged: money(ring.fee_charged),
+    charged: money(plusMoney(ring.fee_charged, ring.fee_gst)),
   };
 }
 

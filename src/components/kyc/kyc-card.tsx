@@ -11,7 +11,9 @@ import { KycChip } from "./kyc-chip";
 const CARD_HEIGHT = 76;
 
 /**
- * The Profile entry point to business verification. Business accounts only.
+ * The Profile entry point to business verification. For anyone else, the ID check (ENG-351), and only
+ * once they have one on file: it is taken from a booking, and its consent text promises that it can be
+ * removed from Profile.
  *
  * It reads the live status, because the profile payload carries only the badge. It never
  * shows an error: if the status cannot be read (an API from before verification, or an
@@ -23,7 +25,8 @@ export function KycCard({ isDark }: { isDark: boolean }) {
   const { data, errorUpdatedAt } = useKycStatus();
   useKycBadgeSync(data);
 
-  if (userDetails?.account_type !== "merchant") return null;
+  const person = userDetails?.account_type !== "merchant";
+  if (person && !(data && hasVerificationData(data))) return null;
   if (!data) {
     // Absent once a read has failed (and it stays absent while that read is retried); a card
     // that has shown a status keeps showing it through a failed refresh.
@@ -35,7 +38,7 @@ export function KycCard({ isDark }: { isDark: boolean }) {
     );
   }
 
-  const copy = kycStateCopy(data.kyc_status, data.reason_code);
+  const copy = kycStateCopy(data.kyc_status, data.reason_code, person);
   // A merchant with nothing on file starts at the explanation. Anyone else sees where it stands,
   // which is also where a timed-out verification's data can be removed.
   const open = () =>

@@ -94,6 +94,7 @@ import FAQScreen from "@/screens/profileScreens/faqs";
 import FeedbackNReviewScreen from "@/screens/profileScreens/feedback-review";
 import MyProductScreen from "@/screens/profileScreens/my-product";
 import RentalDeliveryScreen from "@/screens/profileScreens/rental-delivery";
+import RentalGstScreen from "@/screens/profileScreens/rental-gst";
 import DeliveryAreasScreen from "@/screens/profileScreens/delivery-areas";
 import RentalHoursScreen from "@/screens/profileScreens/rental-hours";
 import RentalSettingsScreen from "@/screens/profileScreens/rental-settings";
@@ -531,7 +532,7 @@ export default function Navigation() {
     }
   }, [isAuthenticated]);
 
-  // A merchant's verification status and badge are read again whenever the app comes back to
+  // A signed-in user's verification status and badge are read again whenever the app comes back to
   // the foreground: a reviewer may have decided while it was away.
   useKycRefresh();
   const refetchKyc = useKycRefetch();
@@ -904,6 +905,10 @@ export default function Navigation() {
         <Stack.Screen
           name="RentalDelivery"
           component={RentalDeliveryScreen}
+        />
+        <Stack.Screen
+          name="RentalGst"
+          component={RentalGstScreen}
         />
         <Stack.Screen
           name="DeliveryAreas"
