@@ -495,7 +495,7 @@ export default function Navigation() {
         navigationRef.navigate("MainTabs", { screen: "Profile" });
         break;
       case "KycStatus":
-        navigationRef.navigate("KycStatus");
+        navigationRef.navigate("KycStatus", route.justReturned ? { justReturned: true } : undefined);
         break;
     }
   }, []);
@@ -543,7 +543,7 @@ export default function Navigation() {
     if (navigationRef.isReady()) {
       navigationRef.navigate("KycStatus", { justReturned: true });
     } else {
-      openRoute({ screen: "KycStatus" });
+      openRoute({ screen: "KycStatus", justReturned: true });
     }
   });
 

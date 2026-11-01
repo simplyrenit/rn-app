@@ -53,8 +53,11 @@ export type PushRoute =
   | { screen: "myProducts" }
   /** The admin approved or rejected the merchant (ENG-271): the Profile tab, whose status card shows which. */
   | { screen: "Profile" }
-  /** Business verification moved on (ENG-72). The screen reads the status; nothing in the push is shown. */
-  | { screen: "KycStatus" };
+  /**
+   * Business verification moved on (ENG-72). The screen reads the status; nothing in the push is shown.
+   * `justReturned`: back from DigiLocker (a return link), so the screen polls until the result lands.
+   */
+  | { screen: "KycStatus"; justReturned?: boolean };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
