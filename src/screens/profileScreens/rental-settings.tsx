@@ -25,6 +25,7 @@ import {
   dayLabel,
   deliverySummary,
   deviceSignOutQuestion,
+  gstSummary,
   hasDashboard,
   hasHours,
   hoursRows,
@@ -104,10 +105,10 @@ function SettingsRow({
 
 /**
  * SH-13, the owner's rental settings: the Open switch, handover hours, Closed
- * until, shortest notice, delivery and signed-in devices. The page an individual
+ * until, shortest notice, delivery, GST and signed-in devices. The page an individual
  * owner has instead of the dashboard (a merchant has both).
  *
- * Every change saves as it is made; hours and delivery have their own screens
+ * Every change saves as it is made; hours, delivery and GST have their own screens
  * because they take several fields.
  */
 export default function RentalSettingsScreen() {
@@ -381,6 +382,12 @@ export default function RentalSettingsScreen() {
             label="Delivery"
             sub={deliverySummary(shop)}
             onPress={() => navigation.navigate("RentalDelivery")}
+            right={<ChevronRightIcon size={20} color={color.text} />}
+          />
+          <SettingsRow
+            label="GST"
+            sub={gstSummary(shop)}
+            onPress={() => navigation.navigate("RentalGst")}
             right={<ChevronRightIcon size={20} color={color.text} />}
           />
           {shop.is_merchant ? (

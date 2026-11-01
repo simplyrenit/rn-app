@@ -465,6 +465,32 @@ describe("the price before Book now", () => {
     expect(priceLines(quote({ fee_charged: "92.00" }))[2]).toEqual({ label: "Renit's fee", amount: "₹92" });
   });
 
+  it("says the GST inside a registered shop's rent, at its rate, and none for an unregistered shop (ENG-343)", () => {
+    expect(priceLines(quote({ rent_gst: "279.15", gst_rate: "18" }))[0]).toEqual({
+      label: "Rent · 3 days × ₹610",
+      amount: "₹1,830",
+      note: "Includes GST ₹279.15 (18%)",
+    });
+    // Items at mixed rates: the GST without a rate.
+    expect(priceLines(quote({ rent_gst: "180.40", gst_rate: null }))[0].note).toBe("Includes GST ₹180.40");
+    expect(priceLines(quote({ rent_gst: "0.00", gst_rate: null }))[0].note).toBeUndefined();
+    // An older server sends neither.
+    expect(priceLines(quote())[0].note).toBeUndefined();
+  });
+
+  it("adds the fee's GST to the fee, so the lines still add up to the total (ENG-343)", () => {
+    const on = quote({ fee_shown: "92.00", fee_charged: "92.00", fee_gst: "16.56", total: "1938.56" });
+    expect(priceLines(on)[2]).toEqual({ label: "Renit's fee", amount: "₹108.56", note: "₹92 + GST ₹16.56" });
+    // Charged at less than shown: the shown fee stays struck.
+    expect(priceLines(quote({ fee_charged: "46.00", fee_gst: "8.28" }))[2]).toEqual({
+      label: "Renit's fee",
+      amount: "₹54.28",
+      struck: "₹92",
+      note: "₹46 + GST ₹8.28",
+    });
+    expect(priceLines(quote())[2].note).toBeUndefined();
+  });
+
   it("calls the sum Total once a delivery fee is in it", () => {
     expect(totalLabel(quote())).toBe("Total rent");
     expect(
@@ -1348,6 +1374,21 @@ describe("pay the rent", () => {
       { label: "Month 1", amount: "₹1,950" },
       { label: "Already paid", amount: "₹99", amountTone: "success" },
     ]);
+  });
+
+  it("says the GST inside the rent and adds the fee's GST to the fee, so the lines add up (ENG-343)", () => {
+    const gst = accepted(
+      { pay_now: { purpose: "rent", amount: "1839.56", deposit_part: "0.00", due_at: "2026-10-13T04:43:00Z", payment: null } },
+      { rent_gst: "279.15", fee_charged: "92.00", fee_gst: "16.56" }
+    );
+    expect(payRentCopy(gst, NOW).lines).toEqual([
+      { label: "Rent", amount: "₹1,830", note: "Includes GST ₹279.15" },
+      { label: "Renit's fee", amount: "₹108.56", note: "₹92 + GST ₹16.56" },
+      { label: "Already paid", amount: "₹99", amountTone: "success" },
+    ]);
+    expect(payRentCopy(gst, NOW).total.amount).toBe("₹1,839.56");
+    // Unregistered, no fee: as before.
+    expect(payRentCopy(accepted(), NOW).lines[0].note).toBeUndefined();
   });
 
   it("gives the deadline as a clock time, never as a number of minutes", () => {

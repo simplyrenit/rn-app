@@ -153,6 +153,14 @@ export interface Quote {
   };
   fee_shown: string;
   fee_charged: string;
+  /**
+   * ENG-343: listed prices include GST, so `rent_gst` is the part of `rent` that is GST, never added to it. `fee_gst` is the
+   * GST on `fee_charged`, which `total` already has. `gst_rate` ("18") is null for an unregistered shop or items at mixed
+   * rates. All absent from an older server: read as none.
+   */
+  rent_gst?: string;
+  fee_gst?: string;
+  gst_rate?: string | null;
   total: string;
   pay_now: string;
   pay_after_accept: string;
@@ -204,6 +212,9 @@ export interface QuoteLine {
   units_free: number;
   /** Where it is collected; named when it is `other_pickup_point`. */
   pickup_locality?: string | null;
+  /** ENG-343: the GST inside this item's rent, and its rate ("18", null when unregistered). Absent from an older server. */
+  rent_gst?: string;
+  gst_rate?: string | null;
   blockers: string[];
 }
 
@@ -382,6 +393,9 @@ export interface BookingCustomer {
     delivery_fee: string;
     fee_shown: string;
     fee_charged: string;
+    /** ENG-343: as the quote's, inside `rent` and on `fee_charged`. Absent from an older server. */
+    rent_gst?: string;
+    fee_gst?: string;
     total: string;
     booking_amount: string;
     /** unpaid, paid, moved, refund_requested, refunded, kept */
@@ -901,17 +915,42 @@ export interface PriceLine {
   amount: string;
   /** Shown crossed out before the amount: Renit's fee, charged at zero. */
   struck?: string;
+  /** A small line under it (ENG-343): the GST inside the rent, or the fee and its GST. */
+  note?: string;
   /** Green: money already paid. */
   amountTone?: "success";
+}
+
+/** Two amounts added in paise, so a GST in paise doesn't drift. A missing one (an older server) is nothing. */
+export const plusMoney = (a: string | number | null | undefined, b: string | number | null | undefined) =>
+  (Math.round((Number(a) || 0) * 100) + Math.round((Number(b) || 0) * 100)) / 100;
+
+/**
+ * ENG-343: under the rent, the GST already inside it: "Includes GST ₹152.54 (18%)", without the rate for items at mixed
+ * rates. Undefined when there is none: an unregistered shop, or an older server.
+ */
+export function rentGstNote(rentGst: string | number | null | undefined, rate?: string | null): string | undefined {
+  if (!(Number(rentGst) > 0)) return undefined;
+  return Number(rate) > 0 ? `Includes GST ${money(rentGst)} (${Number(rate)}%)` : `Includes GST ${money(rentGst)}`;
+}
+
+/** ENG-343: under Renit's fee, whose amount includes its GST: "₹50 + GST ₹9". Undefined while the GST is nothing. */
+export function feeGstNote(fee: string | number, feeGst: string | number | null | undefined): string | undefined {
+  return Number(feeGst) > 0 ? `${money(fee)} + GST ${money(feeGst)}` : undefined;
 }
 
 /**
  * The three lines above the total. The fee is always shown, crossed out when
  * less is charged. Self pickup is said as itself, "Self pickup · Free" (ENG-284),
- * not as a ₹0 delivery; an extension keeps its old line.
+ * not as a ₹0 delivery; an extension keeps its old line. ENG-343: the fee's amount
+ * includes its GST, so the lines still add up to the total.
  */
 export function priceLines(quote: Quote, extending = false): PriceLine[] {
-  const fee: PriceLine = { label: "Renit's fee", amount: money(quote.fee_charged) };
+  const fee: PriceLine = {
+    label: "Renit's fee",
+    amount: money(plusMoney(quote.fee_charged, quote.fee_gst)),
+    note: feeGstNote(quote.fee_charged, quote.fee_gst),
+  };
   if (Number(quote.fee_shown) !== Number(quote.fee_charged)) fee.struck = money(quote.fee_shown);
   const plan = quote.plan;
   // ENG-281: a week or month plan names itself; a day plan reads as it always did.
@@ -926,7 +965,7 @@ export function priceLines(quote: Quote, extending = false): PriceLine[] {
         quote.delivery_mode === "owner_delivery" && quote.delivery.offer_pickup && !extending
         ? { label: "Delivery", amount: "Not available" }
         : { label: courierQuote(quote) && !extending ? COURIER : "Delivery", amount: money(quote.delivery.fee) };
-  return [{ label: rent, amount: money(quote.rent) }, handover, fee];
+  return [{ label: rent, amount: money(quote.rent), note: rentGstNote(quote.rent_gst, quote.gst_rate) }, handover, fee];
 }
 
 /** Under the rent of a week or month plan: "₹3,500 a week ÷ 7 = ₹500 a day". Null for a day plan or an older server. */
@@ -1988,10 +2027,15 @@ export function payRentCopy(
     m.billing === "monthly"
       ? m.periods?.find((p) => p.booking === booking.number && p.n === 1 && p.kind === "rent") ?? null
       : null;
-  const lines: PriceLine[] = month1 ? [{ label: "Month 1", amount: money(month1.amount) }] : [{ label: "Rent", amount: money(m.rent) }];
+  // ENG-343: the rent's GST is inside it and the fee's is added to the fee, as on the price panel. Month 1's amount already
+  // has its fee GST.
+  const lines: PriceLine[] = month1
+    ? [{ label: "Month 1", amount: money(month1.amount) }]
+    : [{ label: "Rent", amount: money(m.rent), note: rentGstNote(m.rent_gst) }];
   if (!month1 && isPositive(m.delivery_fee))
     lines.push({ label: byRenit(booking) ? COURIER : "Delivery", amount: money(m.delivery_fee) });
-  if (!month1 && isPositive(m.fee_charged)) lines.push({ label: "Renit's fee", amount: money(m.fee_charged) });
+  if (!month1 && isPositive(m.fee_charged))
+    lines.push({ label: "Renit's fee", amount: money(plusMoney(m.fee_charged, m.fee_gst)), note: feeGstNote(m.fee_charged, m.fee_gst) });
   lines.push({ label: "Already paid", amount: money(m.booking_amount), amountTone: "success" });
   if (isPositive(depositPart)) lines.push({ label: "Deposit · refundable", amount: money(depositPart) });
 

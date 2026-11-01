@@ -142,9 +142,9 @@ function MoneyCard({ booking }: { booking: BookingShop }) {
       <Text role="sectionTitle" accessibilityRole="header">
         Money
       </Text>
-      <MoneyLine label={m.rentLabel} amount={m.rent} />
+      <MoneyLine label={m.rentLabel} amount={m.rent} note={m.rentNote} />
       {m.delivery ? <MoneyLine label="Delivery fee" amount={m.delivery} /> : null}
-      <MoneyLine label="Renit's fee" amount={m.fee.charged} struck={m.fee.struck ?? undefined} />
+      <MoneyLine label="Renit's fee" amount={m.fee.charged} struck={m.fee.struck ?? undefined} note={m.fee.note} />
       <View style={{ height: 1, backgroundColor: color.line }} />
       <MoneyLine label={m.earnLabel} amount={m.earn} bold />
       {m.notes.map((note) => (

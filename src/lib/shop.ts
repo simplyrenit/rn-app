@@ -74,6 +74,9 @@ export interface Shop {
   is_merchant: boolean;
   /** Nothing in the shop's `missing` list stops it taking bookings, so its requests will ring. */
   can_take_bookings?: boolean;
+  /** ENG-343: registered for GST, and its GSTIN ("" when none). Absent from an older server: not registered. */
+  gst_registered?: boolean;
+  gstin?: string;
 }
 
 // ---- Times and days -------------------------------------------------------------
@@ -320,6 +323,10 @@ export function kmText(value: string | number | null | undefined): string {
 
 /** "1 area off", "3 areas off". */
 const areasOff = (n: number) => `${n} ${n === 1 ? "area" : "areas"} off`;
+
+/** The GST row's second line on SH-13 (ENG-343): "Registered · 27ABCDE1234F1Z5", or "Not registered". */
+export const gstSummary = (shop: Pick<Shop, "gst_registered" | "gstin">) =>
+  shop.gst_registered && shop.gstin ? `Registered · ${shop.gstin}` : "Not registered";
 
 /** The Delivery row's second line on SH-13: "Up to 5 km · 1 area off · ₹50 + ₹15 a km". */
 export function deliverySummary(

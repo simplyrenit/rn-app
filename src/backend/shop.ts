@@ -32,6 +32,9 @@ export interface ShopPatch {
   delivery_max_km?: string;
   /** Replaces the whole list. A PIN being added that the server doesn't know is a `400 validation_error`. */
   excluded_pincodes?: string[];
+  /** ENG-343. The server checks the GSTIN (400 `validation_error` on `gstin`), and registered needs one. */
+  gst_registered?: boolean;
+  gstin?: string;
 }
 
 export async function patchShop(patch: ShopPatch): Promise<Shop> {

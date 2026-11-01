@@ -31,6 +31,7 @@ import {
   devicesNote,
   hasDashboard,
   deliverySummary,
+  gstSummary,
   hasHours,
   hoursPayload,
   hoursRows,
@@ -233,6 +234,12 @@ describe("delivery", () => {
       "Up to 15 km · 2 areas off · ₹50 + ₹15 a km"
     );
     expect(deliverySummary({ ...shop, delivers: false })).toBe("We don't deliver");
+  });
+
+  it("says the GST row's line (ENG-343), an older server's shop as not registered", () => {
+    expect(gstSummary({ gst_registered: true, gstin: "27ABCDE1234F1Z5" })).toBe("Registered · 27ABCDE1234F1Z5");
+    expect(gstSummary({ gst_registered: false, gstin: "" })).toBe("Not registered");
+    expect(gstSummary({})).toBe("Not registered");
   });
 
   it("fills the form without trailing zeros", () => {
