@@ -473,7 +473,8 @@ export default function CaptureScreen() {
   const hadDone = useRef(false);
   if (draft) {
     had.current = true;
-    hadDone.current = draft.done;
+    // Still waiting for its code, it is not finished: a booking that ended then is worth saying.
+    hadDone.current = draft.done && !draft.awaitingCode;
   }
   const dropped = had.current && !draft;
   useEffect(() => {

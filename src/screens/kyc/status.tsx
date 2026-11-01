@@ -10,7 +10,7 @@ import { hasVerificationData, kycError, kycStateCopy } from "@/lib/kyc";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
-import { useFocusEffect, useIsFocused, useRoute } from "@react-navigation/native";
+import { StackActions, useFocusEffect, useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, AppState, RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -47,6 +47,13 @@ export default function KycStatusScreen() {
   const navState = navigation.getState?.();
   const below = navState ? navState.routes[navState.index - 1]?.name : undefined;
   const fromBooking = route.params?.source === "booking" || below === "ReviewAndBook";
+  // From a price screen the intro is pushed: `navigate` would jump back to an older intro under the price screen
+  // and drop it, with its product and dates.
+  const openIntro = (extra: { supersede?: true } = {}) => {
+    const params = { source: fromBooking ? ("booking" as const) : ("profile" as const), ...extra };
+    if (fromBooking) navigation.dispatch(StackActions.push("KycIntro", params));
+    else navigation.navigate("KycIntro", params);
+  };
   // When the current polling window opened; null outside one.
   const [pollingSince, setPollingSince] = useState<number | null>(null);
   const [timedOut, setTimedOut] = useState(false);
@@ -182,7 +189,7 @@ export default function KycStatusScreen() {
           text: "Start over",
           onPress: () => {
             track("kyc_start_over");
-            navigation.navigate("KycIntro", { source: fromBooking ? "booking" : "profile", supersede: true });
+            openIntro({ supersede: true });
           },
         },
       ]
@@ -272,7 +279,7 @@ export default function KycStatusScreen() {
     copy.ctaKind === "resume"
       ? onResume
       : copy.ctaKind === "start"
-      ? () => navigation.navigate("KycIntro", { source: fromBooking ? "booking" : "profile" })
+      ? () => openIntro()
       : copy.ctaKind === "profile"
       ? () => userDetails && navigation.navigate("UserDetail", { id: userDetails.username })
       : copy.ctaKind === "support"

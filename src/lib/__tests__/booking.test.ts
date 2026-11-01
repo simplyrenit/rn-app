@@ -2343,6 +2343,7 @@ describe("commonGstRate (ENG-343, the pay-rent note)", () => {
     expect(commonGstRate([{ gst_rate: "18" }, { gst_rate: "18" }])).toBe("18");
     expect(commonGstRate([{ gst_rate: "18" }, { gst_rate: "5" }])).toBeNull();
     expect(commonGstRate([{}])).toBeNull(); // an older server
+    expect(commonGstRate([{ gst_rate: "18" }, { gst_rate: "5", state: "refused" }])).toBe("18");
     expect(rentGstNote("45.76", commonGstRate([{ gst_rate: "18" }]))).toBe("Includes GST ₹45.76 (18%)");
   });
 });

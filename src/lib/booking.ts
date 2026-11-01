@@ -933,8 +933,9 @@ export const plusMoney = (a: string | number | null | undefined, b: string | num
   (Math.round((Number(a) || 0) * 100) + Math.round((Number(b) || 0) * 100)) / 100;
 
 /** The one GST rate a booking's items share, for the rent's note; null when they differ or a server sent none. */
-export function commonGstRate(lines: { gst_rate?: string | null }[] | undefined): string | null {
-  const rates = new Set((lines ?? []).map((l) => l.gst_rate ?? null));
+export function commonGstRate(lines: { gst_rate?: string | null; state?: string }[] | undefined): string | null {
+  // An item the shop unticked is not in the rent.
+  const rates = new Set((lines ?? []).filter((l) => (l.state ?? "live") === "live").map((l) => l.gst_rate ?? null));
   return rates.size === 1 ? [...rates][0] : null;
 }
 

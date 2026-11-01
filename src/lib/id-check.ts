@@ -19,6 +19,10 @@ import type { KycStatus, NavigationUseType } from "@/lib/types";
  * `status` is the customer's verification status, when it has been read.
  */
 export function startIdCheck(navigation: NavigationUseType, status: KycStatus | undefined) {
+  // A second tap while the first screen opens would push it twice.
+  const routes = navigation.getState?.()?.routes ?? [];
+  const top = routes[routes.length - 1]?.name;
+  if (top?.startsWith("Kyc")) return;
   if (status === undefined || status === "none") {
     navigation.dispatch(StackActions.push("KycIntro", { source: "booking" }));
   } else {
