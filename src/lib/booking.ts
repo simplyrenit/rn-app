@@ -232,6 +232,8 @@ export interface BookingLine {
   deposit: string;
   /** `refused`: the shop unticked it; `no_unit`: it lost its unit before the accept. */
   state: "live" | "refused" | "no_unit";
+  /** ENG-343: its rent's GST rate ("18", null when the shop was not registered). Absent from an older server. */
+  gst_rate?: string | null;
   /** The fault claim naming it, or null; absent from a server before ENG-337, which files one for an item ticked Not here. */
   claim?: number | null;
 }
@@ -929,6 +931,13 @@ export interface PriceLine {
 /** Two amounts added in paise, so a GST in paise doesn't drift. A missing one (an older server) is nothing. */
 export const plusMoney = (a: string | number | null | undefined, b: string | number | null | undefined) =>
   (Math.round((Number(a) || 0) * 100) + Math.round((Number(b) || 0) * 100)) / 100;
+
+/** The one GST rate a booking's items share, for the rent's note; null when they differ or a server sent none. */
+export function commonGstRate(lines: { gst_rate?: string | null; state?: string }[] | undefined): string | null {
+  // An item the shop unticked is not in the rent.
+  const rates = new Set((lines ?? []).filter((l) => (l.state ?? "live") === "live").map((l) => l.gst_rate ?? null));
+  return rates.size === 1 ? [...rates][0] : null;
+}
 
 /**
  * ENG-343: under the rent, the GST already inside it: "Includes GST ₹152.54 (18%)", without the rate for items at mixed
@@ -2038,7 +2047,7 @@ export function payRentCopy(
   // has its fee GST.
   const lines: PriceLine[] = month1
     ? [{ label: "Month 1", amount: money(month1.amount) }]
-    : [{ label: "Rent", amount: money(m.rent), note: rentGstNote(m.rent_gst) }];
+    : [{ label: "Rent", amount: money(m.rent), note: rentGstNote(m.rent_gst, commonGstRate(booking.lines)) }];
   if (!month1 && isPositive(m.delivery_fee))
     lines.push({ label: byRenit(booking) ? COURIER : "Delivery", amount: money(m.delivery_fee) });
   if (!month1 && isPositive(m.fee_charged))

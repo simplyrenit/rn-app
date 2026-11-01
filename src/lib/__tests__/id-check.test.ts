@@ -1,5 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
+import { StackActions } from "@react-navigation/native";
+
 import { startIdCheck } from "@/lib/id-check";
 
 describe("startIdCheck (ENG-351)", () => {
@@ -14,10 +16,17 @@ describe("startIdCheck (ENG-351)", () => {
       ["verified", "KycStatus"],
     ] as const;
     for (const [status, screen] of cases) {
-      const navigation = { navigate: jest.fn() };
+      const navigation = { dispatch: jest.fn(), getState: () => ({ routes: [{ name: "ReviewAndBook" }] }) };
       startIdCheck(navigation as never, status);
-      // Always on top of the price screen, which it goes back to.
-      expect(navigation.navigate).toHaveBeenCalledWith(screen, { source: "booking" });
+      // Always pushed on top of the price screen, which it goes back to, even when an earlier
+      // ID check screen is already in the stack.
+      expect(navigation.dispatch).toHaveBeenCalledWith(StackActions.push(screen, { source: "booking" }));
     }
+  });
+
+  it("does nothing on a second tap, while an ID check screen is already on top", () => {
+    const navigation = { dispatch: jest.fn(), getState: () => ({ routes: [{ name: "ReviewAndBook" }, { name: "KycStatus" }] }) };
+    startIdCheck(navigation as never, "rejected");
+    expect(navigation.dispatch).not.toHaveBeenCalled();
   });
 });

@@ -495,7 +495,7 @@ export default function Navigation() {
         navigationRef.navigate("MainTabs", { screen: "Profile" });
         break;
       case "KycStatus":
-        navigationRef.navigate("KycStatus");
+        navigationRef.navigate("KycStatus", route.justReturned ? { justReturned: true } : undefined);
         break;
     }
   }, []);
@@ -537,10 +537,13 @@ export default function Navigation() {
   useKycRefresh();
   const refetchKyc = useKycRefetch();
 
-  // A return link only opens the status screen, which reads the real status from the server.
+  // A return link only opens the status screen, which reads the real status from the server. On a
+  // cold start it can come before the navigator is mounted: it then waits for `onReady` like a push.
   useKycReturnLinking(() => {
     if (navigationRef.isReady()) {
       navigationRef.navigate("KycStatus", { justReturned: true });
+    } else {
+      openRoute({ screen: "KycStatus", justReturned: true });
     }
   });
 

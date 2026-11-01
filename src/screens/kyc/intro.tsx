@@ -7,7 +7,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { consentSections, KYC_CONSENT_VERSION, KYC_INDIVIDUAL_CONSENT_VERSION } from "@/lib/kyc-consent";
 import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
-import { useRoute } from "@react-navigation/native";
+import { StackActions, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import {
@@ -79,10 +79,10 @@ export default function KycIntroScreen() {
 
   const next = () => {
     track("kyc_consent_accepted", { version });
-    navigation.navigate("KycDetails", {
-      ...(supersede ? { supersede: true } : {}),
-      ...(source === "booking" ? { source } : {}),
-    });
+    const params = { ...(supersede ? { supersede: true as const } : {}), ...(source === "booking" ? { source } : {}) };
+    // From a price screen, pushed: `navigate` would jump back to an older form under it and drop the price screen.
+    if (source === "booking") navigation.dispatch(StackActions.push("KycDetails", params));
+    else navigation.navigate("KycDetails", params);
   };
 
   return (
