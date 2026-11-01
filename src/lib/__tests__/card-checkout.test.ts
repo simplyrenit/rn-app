@@ -223,6 +223,12 @@ describe("the review, card mode (CT-22)", () => {
       { label: "Renit's fee", amount: "₹0", struck: "₹135" },
     ]);
     expect(cardPriceLines(quote({ delivery_mode: "pickup" }), 1)[0].label).toBe("Rent (1 item)");
+    // ENG-343: items at mixed rates have no one rate to say.
+    expect(cardPriceLines(quote({ rent_gst: "411.86", gst_rate: null }), 3)[0]).toEqual({
+      label: "Rent (3 items)",
+      amount: "₹2,700",
+      note: "Includes GST ₹411.86",
+    });
   });
 
   it("names the shop in the steps and lists what the deposit is made of", () => {

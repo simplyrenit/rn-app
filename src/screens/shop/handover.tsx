@@ -294,7 +294,7 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
               {waits}
             </Text>
           ) : null}
-          <MoneyLine label="Renit's fee" amount={after.fee.charged} struck={after.fee.struck ?? undefined} />
+          <MoneyLine label="Renit's fee" amount={after.fee.charged} struck={after.fee.struck ?? undefined} note={after.fee.note} />
           {after.dueBack ? (
             <View style={{ flexDirection: "row", gap: space.sm }}>
               <ClockIcon size={20} color={color.text} />
