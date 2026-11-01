@@ -925,7 +925,10 @@ export default function CaptureScreen() {
                 <TickRow
                   first
                   label={idMatchWords("", params.id_match_name, null, role === "customer").label}
-                  sub={idMatchWords(otherName, params.id_match_name, otherName, role === "customer").sub}
+                  sub={
+                    idMatchWords(otherName, params.id_match_name, otherName, role === "customer", params.id_verified === true)
+                      .sub
+                  }
                   ticked={draft.idMatch}
                   onPress={() => update((d) => setIdMatch(d, !d.idMatch))}
                 />

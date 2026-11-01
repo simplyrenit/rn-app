@@ -1,5 +1,5 @@
 /**
- * Merchant verification: the copy for every state, the field rules, and how a KYC error is
+ * Verification: a merchant's business check (ENG-12) or a person's ID check (ENG-351). The copy for every state, the field rules, and how a KYC error is
  * read (ENG-12). No network and no React here, so all of it is unit-tested.
  *
  * The PAN and GSTIN live only in the details screen's state. Nothing in this module stores,
@@ -59,18 +59,77 @@ const REJECTED: Record<string, string> = {
     "We couldn't complete your verification this time. You can try again, or contact support and we'll help.",
 };
 
-const firstSentence = (text: string) => text.slice(0, text.indexOf(".") + 1) || text;
+export const firstSentence = (text: string) => text.slice(0, text.indexOf(".") + 1) || text;
+
+/** A person's ID check (ENG-351): their own PAN and Aadhaar, no business. Codes about a business or a GSTIN can't happen. */
+const PERSON_REJECTED: Record<string, string> = {
+  pan_invalid: "We couldn't verify the PAN you entered. Check the number and try again.",
+  pan_name_mismatch:
+    "The name on your PAN didn't match the name on your Renit account. Use your own PAN, then try again.",
+  aadhaar_signature_invalid: REJECTED.aadhaar_signature_invalid,
+  aadhaar_name_mismatch: REJECTED.aadhaar_name_mismatch,
+  duplicate_identity: REJECTED.duplicate_identity,
+  other: REJECTED.other,
+};
+
+/** `kycStateCopy` for a person's ID check: the same states, buttons and tones, with no business in the words. */
+function personCopy(status: KycStatus, reason: KycReasonCode | string | null | undefined): KycStateCopy {
+  const business = kycStateCopy(status, reason);
+  switch (status) {
+    case "pending":
+    case "in_review":
+      return business; // their words name no business
+    case "action_required":
+      return {
+        ...business,
+        body: "You started your ID check but haven't finished the DigiLocker step. It takes a couple of minutes.",
+      };
+    case "verified":
+      return {
+        ...business,
+        cardTitle: "ID check passed",
+        cardBody: "You can book items that need an ID check.",
+        title: "Your ID check passed",
+        body: 'You can now book items that need an ID check. Need to change your PAN? Use "Remove my verification data" below, then check again.',
+        cta: null,
+        ctaKind: null,
+      };
+    case "rejected": {
+      const code = reason && reason in PERSON_REJECTED ? reason : "other";
+      const body = PERSON_REJECTED[code];
+      return {
+        ...business,
+        cardTitle: "We couldn't verify your ID",
+        cardBody: firstSentence(body),
+        title: "We couldn't verify your ID",
+        body,
+      };
+    }
+    default:
+      if (reason === "case_expired") return business;
+      return {
+        ...business,
+        cardTitle: "Check your ID",
+        cardBody: "Needed once, before you rent some higher-value items.",
+        title: "Check your ID",
+        body: "Renit checks your ID once, before you rent some higher-value items.",
+        cta: "Start ID check",
+      };
+  }
+}
 
 /**
  * Title, body, button and tone for a status. The profile card and the status screen both read
  * this, so they cannot disagree. A reason code the app does not know reads as `other` (when
  * rejected) or as the plain start state (when there is no case), so a server that adds a code
- * never produces a blank screen.
+ * never produces a blank screen. `person`: the ID check of anyone who is not a business account.
  */
 export function kycStateCopy(
   status: KycStatus,
-  reason: KycReasonCode | string | null | undefined
+  reason: KycReasonCode | string | null | undefined,
+  person = false
 ): KycStateCopy {
+  if (person) return personCopy(status, reason);
   switch (status) {
     case "pending":
       return {

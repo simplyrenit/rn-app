@@ -1,6 +1,7 @@
 import { QuoteInput, bookNow, bookingQueryKey, useQuote } from "@/backend/bookings";
 import { cartQueryKey } from "@/backend/cart";
 import { extendBooking } from "@/backend/handover";
+import { useKycStatus } from "@/backend/kyc";
 import { LineRow, ShopHead } from "@/components/booking/card-lines";
 import {
   BookingLoadError,
@@ -129,6 +130,8 @@ export default function ReviewAndBookScreen() {
   );
   const extending = params.extends ?? null;
   const quoteQuery = useQuote(input);
+  // The customer's own ID check (ENG-351): what the ID card says, and where its button leads.
+  const { data: kyc } = useKycStatus();
   // Book Now's one item on the card's quote reads its reasons as the quote's own, as for `product` (D41).
   const quote = quoteQuery.data && asCard && !card ? asOneItem(quoteQuery.data) : quoteQuery.data;
   // CT-23a: the quote on screen when Book now answered `price_changed`, to show what moved.
@@ -152,9 +155,10 @@ export default function ReviewAndBookScreen() {
   useFocusEffect(
     useCallback(() => {
       if (seen.current) {
-        // Back from the ID check (or anywhere else): the quote says afresh whether it is passed.
+        // Back from the ID check (or anywhere else): the quote says afresh whether it is passed, read after the
+        // status, which is what stores a new answer from the KYC service (ENG-351).
         setIdRefused(null);
-        void quoteQuery.refetch();
+        void queryClient.invalidateQueries(["kyc", "status"]).then(() => quoteQuery.refetch());
       }
       seen.current = true;
       // `refetch` is stable for the life of the query.
@@ -210,7 +214,7 @@ export default function ReviewAndBookScreen() {
   const notice = morningNotice(quote, params.item.shop_name);
   const terms = quote.terms;
   const ticked = termsTicked(terms, tickedFor);
-  const idCheck = idCheckCopy(quote, idRefused);
+  const idCheck = idCheckCopy(quote, idRefused, kyc?.kyc_status, kyc?.reason_code ?? null);
   const idNeeded = idCheck?.state === "needed";
 
   // ---- Card mode ----
@@ -251,14 +255,7 @@ export default function ReviewAndBookScreen() {
   };
   const depositPage = card ? depositOwnPage(quote) : null;
 
-  const openIdCheck = () => {
-    // The check is ENG-12's and has no customer flow in this build; see `startIdCheck`.
-    if (!startIdCheck(navigation)) {
-      toast.info("The ID check isn't open in the app yet", {
-        message: "Contact Renit from your profile and we will help.",
-      });
-    }
-  };
+  const openIdCheck = () => startIdCheck(navigation, kyc?.kyc_status);
 
   const book = async () => {
     if (busy.current) return;
@@ -587,7 +584,7 @@ export default function ReviewAndBookScreen() {
               {idCheck.body}
             </Text>
             <Button variant="outline" onPress={openIdCheck}>
-              Start ID check
+              {idCheck.action}
             </Button>
           </Panel>
         ) : idCheck ? (

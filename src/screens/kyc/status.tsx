@@ -41,6 +41,12 @@ export default function KycStatusScreen() {
   const { userDetails } = useGlobalContext();
   const route = useRoute<RouteProps<"KycStatus">>();
   const justReturned = route.params?.justReturned === true;
+  // Opened from a price screen (ENG-351): the way out is back to it, with its dates. Also when the price screen is
+  // right under this one without the param: the approval push and the return link open this screen with params of
+  // their own, which replace `source`.
+  const navState = navigation.getState?.();
+  const below = navState ? navState.routes[navState.index - 1]?.name : undefined;
+  const fromBooking = route.params?.source === "booking" || below === "ReviewAndBook";
   // When the current polling window opened; null outside one.
   const [pollingSince, setPollingSince] = useState<number | null>(null);
   const [timedOut, setTimedOut] = useState(false);
@@ -54,9 +60,9 @@ export default function KycStatusScreen() {
   // the state from before the first one.
   const [resuming, setResuming] = useState(false);
   const resumeInFlight = useRef(false);
-  // A return link or a status push can open this screen for anyone signed in, and rn-api answers
-  // a non-merchant too (its individual check, which this build does not offer).
-  const merchant = userDetails?.account_type === "merchant";
+  // Anyone who is not a business account takes the ID check (D-40, ENG-351): rn-api picks it by account type.
+  const person = userDetails?.account_type !== "merchant";
+  const signedIn = Boolean(userDetails);
   useKycBadgeSync(data);
 
   const status = data?.kyc_status;
@@ -73,9 +79,9 @@ export default function KycStatusScreen() {
   // the screen closes any polling window.
   useFocusEffect(
     useCallback(() => {
-      if (merchant) void refetch(); // `refetch` ignores the query's `enabled`
+      if (signedIn) void refetch(); // `refetch` ignores the query's `enabled`
       return () => setPollingSince(null);
-    }, [refetch, merchant])
+    }, [refetch, signedIn])
   );
 
   // Back from DigiLocker. The flag is cleared so that the next return opens a new window.
@@ -176,7 +182,7 @@ export default function KycStatusScreen() {
           text: "Start over",
           onPress: () => {
             track("kyc_start_over");
-            navigation.navigate("KycIntro", { source: "profile", supersede: true });
+            navigation.navigate("KycIntro", { source: fromBooking ? "booking" : "profile", supersede: true });
           },
         },
       ]
@@ -185,7 +191,9 @@ export default function KycStatusScreen() {
   const onWithdraw = () =>
     Alert.alert(
       "Remove your verification data?",
-      "We'll delete the details we hold for your verification, including your Aadhaar record. Your Verified business badge will be removed. You can verify again later.",
+      person
+        ? "We'll delete the details we hold for your ID check, including your Aadhaar record. Items that need an ID check can't be booked until you check again."
+        : "We'll delete the details we hold for your verification, including your Aadhaar record. Your Verified business badge will be removed. You can verify again later.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -195,7 +203,9 @@ export default function KycStatusScreen() {
             try {
               await withdraw.mutateAsync();
               track("kyc_withdrawn");
-              toast.success("Verification data removed", { message: "Your badge has been removed." });
+              toast.success("Verification data removed", {
+                message: person ? "You can check your ID again any time." : "Your badge has been removed.",
+              });
             } catch {
               // Nothing is shown as removed unless the server said so.
               toast.error("We couldn't remove your data", { message: "Check your connection and try again." });
@@ -205,20 +215,14 @@ export default function KycStatusScreen() {
       ]
     );
 
-  const header = <SubpageHeader title="Business verification" onBack={toProfile} backLabel="Back to Profile" />;
-
-  if (!merchant) {
-    return (
-      <NonScrollableContainer>
-        {header}
-        <EmptyState
-          variant="error"
-          title="Verification is for business accounts"
-          body="Your account isn't set up as a business account."
-        />
-      </NonScrollableContainer>
-    );
-  }
+  const toBooking = () => (navigation.canGoBack() ? navigation.goBack() : toProfile());
+  const header = (
+    <SubpageHeader
+      title={person ? "ID check" : "Business verification"}
+      onBack={fromBooking ? toBooking : toProfile}
+      backLabel={fromBooking ? "Back to your booking" : "Back to Profile"}
+    />
+  );
 
   if (!data) {
     const http = error ? kycError(error).status : null;
@@ -253,12 +257,12 @@ export default function KycStatusScreen() {
     );
   }
 
-  const copy = kycStateCopy(data.kyc_status, reason);
+  const copy = kycStateCopy(data.kyc_status, reason, person);
   const primary =
     copy.ctaKind === "resume"
       ? onResume
       : copy.ctaKind === "start"
-      ? () => navigation.navigate("KycIntro", { source: "profile" })
+      ? () => navigation.navigate("KycIntro", { source: fromBooking ? "booking" : "profile" })
       : copy.ctaKind === "profile"
       ? () => userDetails && navigation.navigate("UserDetail", { id: userDetails.username })
       : copy.ctaKind === "support"
@@ -337,6 +341,10 @@ export default function KycStatusScreen() {
               </Button>
             ) : null}
           </View>
+        ) : null}
+
+        {fromBooking && data.kyc_status === "verified" ? (
+          <Button onPress={toBooking}>Back to your booking</Button>
         ) : null}
 
         <View style={{ flex: 1 }} />

@@ -530,7 +530,7 @@ export default function Navigation() {
     }
   }, [isAuthenticated]);
 
-  // A merchant's verification status and badge are read again whenever the app comes back to
+  // A signed-in user's verification status and badge are read again whenever the app comes back to
   // the foreground: a reviewer may have decided while it was away.
   useKycRefresh();
   const refetchKyc = useKycRefetch();

@@ -843,6 +843,31 @@ describe("the ID check", () => {
     expect(idCheckCopy(withCheck("id", null), "id")?.state).toBe("needed");
   });
 
+  it("follows the customer's own check (ENG-351): what stands in the way, and what the button does", () => {
+    const needed = withCheck("id_and_match", false, ["id_check_needed"]);
+    const words = (status?: Parameters<typeof idCheckCopy>[2]) => {
+      const copy = idCheckCopy(needed, null, status);
+      return [copy?.state, copy?.title, copy?.action];
+    };
+    expect(words(undefined)).toEqual(["needed", "This item needs an ID check", "Start ID check"]);
+    expect(words("none")).toEqual(["needed", "This item needs an ID check", "Start ID check"]);
+    expect(words("action_required")).toEqual(["needed", "Finish your ID check", "Continue ID check"]);
+    expect(words("pending")).toEqual(["needed", "Your ID check is being reviewed", "See where it stands"]);
+    expect(words("in_review")).toEqual(["needed", "Your ID check is being reviewed", "See where it stands"]);
+    // The status screen has the whole reason and the right way on (try again, or support for a duplicate).
+    expect(words("rejected")).toEqual(["needed", "Your ID check didn't pass", "See what to do"]);
+    // Pending or failed: the customer is told the cheaper items still book.
+    for (const status of ["in_review", "rejected"] as const) {
+      expect(idCheckCopy(needed, null, status)?.body).toMatch(/Items that need no ID check can be booked now\./);
+    }
+    // Why it failed, in the first sentence of the status screen's words.
+    expect(idCheckCopy(needed, null, "rejected", "pan_name_mismatch")?.body).toMatch(
+      /^The name on your PAN didn't match the name on your Renit account\. You can't book this item until it passes\./
+    );
+    // An item that asks for no check (a cheap camera: `passed` null) says nothing, whatever the status.
+    expect(idCheckCopy(withCheck("id_and_match", null), null, "rejected")).toBeNull();
+  });
+
   it("tells the customer to bring an ID to a handover that needs the match, by itself, whatever `passed` says (e2e-B r2 finding 14)", () => {
     const line = "Bring a photo ID in your own name to the handover. The owner checks the name on it.";
     // True, false and null (no real check): the sentence stands without the card, and says nothing of a check.

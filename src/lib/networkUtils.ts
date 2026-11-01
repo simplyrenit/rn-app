@@ -155,7 +155,9 @@ const getAuthAttached = (config?: AxiosRequestConfig): boolean => {
  */
 // 2 (ENG-309): the first build with the owner's courier screens (Packed, Handed to rider). The server's
 // `COURIER_MIN_CLIENT` is set to this number before `COURIER_ON`.
-export const RENIT_CLIENT = 2;
+// 3 (ENG-351): the first build with the customer's ID check. Below the server's `ID_CHECK_MIN_CLIENT`, a customer who
+// needs the check is told to update the app (`app_update_needed`).
+export const RENIT_CLIENT = 3;
 
 // Create axios instance with shared timeout/header defaults.
 const axiosInstance = axios.create({

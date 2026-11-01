@@ -398,6 +398,9 @@ export function setIdMatch(draft: CaptureDraft, ticked: boolean): CaptureDraft {
  * the first name and last initial the booking shows, which is all the tick can mean. `who` is the person whose ID it is and
  * `shown` the name as the booking shows it ("Aarav M.").
  *
+ * `verified`: the customer passed Renit's ID check (ENG-351), so the name is the one Renit checked against their PAN and
+ * Aadhaar. Not "the name on their ID": a reviewer may pass a name the ID prints a little differently.
+ *
  * `customerHolds`: the customer's phone records the owner's set (the owner's phone failed), so the tick is the shop's to say and
  * the customer is the one holding the phone: it is worded for them, with no name shown ("Aarav M." would be the shop's name there,
  * not the customer's).
@@ -406,7 +409,8 @@ export function idMatchWords(
   who: string,
   fullName: string | null | undefined,
   shown?: string | null,
-  customerHolds = false
+  customerHolds = false,
+  verified = false
 ): { label: string; sub: string } {
   if (customerHolds) {
     return {
@@ -416,7 +420,8 @@ export function idMatchWords(
   }
   const name = (fullName ?? "").trim();
   if (name) {
-    return { label: "ID matches the booking name", sub: `Look at ${who}'s ID. The name on the ID must be: ${name}.` };
+    const checked = verified ? ` Renit checked this name against ${who}'s PAN and Aadhaar.` : "";
+    return { label: "ID matches the booking name", sub: `Look at ${who}'s ID. The name on the ID must be: ${name}.${checked}` };
   }
   return {
     label: "ID matches the name shown",

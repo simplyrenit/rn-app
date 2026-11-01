@@ -358,9 +358,10 @@ export type RootStackParamList = {
   // `coverUrl` is additive to §8.1: the draft is cleared before L-17 opens.
   ListSubmitted: { productName: string; coverUrl?: string | null; status?: string | null; reasons?: FlagReason[]; waitsText?: string | null };
   // Merchant verification (ENG-12). Params are flags only: a PAN or GSTIN never goes in one.
-  KycIntro: { source?: "profile" | "post_listing" | "push"; supersede?: boolean } | undefined;
-  KycDetails: { supersede?: boolean } | undefined;
-  KycStatus: { justReturned?: boolean } | undefined;
+  // `source: "booking"`: the customer's ID check, opened from the price screen (ENG-351); the way out is back to it.
+  KycIntro: { source?: "profile" | "post_listing" | "push" | "booking"; supersede?: boolean } | undefined;
+  KycDetails: { supersede?: boolean; source?: "booking" } | undefined;
+  KycStatus: { justReturned?: boolean; source?: "booking" } | undefined;
   OwnersProducts: { products: BackendProduct[]; name: string; shopUrl?: string | null };
   /** The owner's bank account: add, verify, change (ENG-135). */
   BankAccount: undefined;
@@ -491,6 +492,8 @@ export type RootStackParamList = {
     id_match?: boolean;
     /** The customer's full name from the shop's booking (T-44), for the ID tick's words; null or absent when it is not shown. */
     id_match_name?: string | null;
+    /** The customer has passed Renit's ID check (ENG-351): the name above is the one they verified with. */
+    id_verified?: boolean;
     /** B1: a booking Renit's courier partner carries (no place in the files; the customer's return asks for the seal). */
     courier?: boolean;
     /** Cart: a booking of several items (its live count in `items`). Its keys name each item, so no general list. */
