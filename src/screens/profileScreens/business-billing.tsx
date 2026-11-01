@@ -146,8 +146,8 @@ export default function BusinessBillingScreen() {
               <Text fontWeight="font-semibold">{row.legal_name}</Text>
               <Text>GSTIN {row.gstin}</Text>
               <Text tone="dim" fontSize="text-sm">
+                {/* The address already names its state (the server adds it when the register's line doesn't). */}
                 {row.address}
-                {row.state ? ` · ${row.state}` : ""}
               </Text>
               <Text tone="dim" fontSize="text-sm" style={{ marginTop: space.sm }}>
                 From the GST register. To bill another GSTIN, change it.
