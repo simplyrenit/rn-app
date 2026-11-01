@@ -790,6 +790,8 @@ export interface BackendProduct {
    * read as no: the Add to cart button shows only when this is true (§9.3).
    */
   can_add_to_cart?: boolean;
+  /** ENG-352: for a business customer, whether the shop issues GST invoices; null for anyone else. */
+  gst_invoice?: boolean | null;
   /**
    * Cart plan D28, D39 (T8): the customer's live booking of this item, if any. The dates may be absent (plan §5.3
    * names only the number).

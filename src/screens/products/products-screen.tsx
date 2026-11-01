@@ -1116,6 +1116,12 @@ export default function DetailsScreen() {
             isDark={isDark}
             businessVerified={product?.owner?.business_verified}
           />
+          {/* ENG-352: told only to a business customer (null for anyone else). */}
+          {product?.gst_invoice ? (
+            <Text fontSize="text-sm" tone="dim">
+              GST invoice available
+            </Text>
+          ) : null}
           {/* Chat is off at launch (ENG-177, decision T-01): the bar's button is
               Book now, and this entry point is not drawn. `handleStartChat` and
               the chat screens are untouched, for the day it is switched back on. */}
