@@ -247,6 +247,31 @@ describe("edit transitions", () => {
     expect(d.fields.security_deposit.value).toBe("1000");
   });
 
+  it("follows the worth once the rule has a worth share (ENG-349)", () => {
+    const rule = { multiplier: 5, floor: 500, round_to: 50, worth_share: 20 };
+    let d = apply(
+      fresh(),
+      { type: "editField", field: "plans", value: dayPlan("1500") },
+      { type: "setDepositRule", rule }
+    );
+    expect(d.fields.security_deposit.value).toBe("7500"); // no worth yet: the rate rule
+    d = apply(d, { type: "editField", field: "worth", value: "180000" });
+    expect(d.fields.security_deposit.value).toBe("36000");
+    d = apply(d, { type: "editField", field: "worth", value: "" });
+    expect(d.fields.security_deposit.value).toBe("7500");
+    // A worth the model suggested counts too, until it is confirmed or changed.
+    const suggested = apply(
+      fresh(),
+      { type: "editField", field: "plans", value: dayPlan("1500") },
+      { type: "setDepositRule", rule },
+      filled("worth", 180000)
+    );
+    expect(suggested.fields.security_deposit.value).toBe("36000");
+    d = apply(d, { type: "editField", field: "security_deposit", value: "9000" });
+    d = apply(d, { type: "editField", field: "worth", value: "200000" });
+    expect(d.fields.security_deposit.value).toBe("9000");
+  });
+
   it("prefills a location only when nothing is set", () => {
     const home = { locality: "Thane West, Thane", fullAddress: "", lat: 19.2, long: 72.97 };
     const other = { locality: "Bandra, Mumbai", fullAddress: "", lat: 19.05, long: 72.83 };

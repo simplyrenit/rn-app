@@ -10,13 +10,12 @@ export const NAME_LOCKED = "Your name is locked while you're verified. Contact s
 
 /** The same lock while a verification case is open: the person is not verified (yet). */
 export const NAME_LOCKED_IN_PROGRESS =
-  "Your name can't be changed while your business verification is in progress. Contact support to change it.";
+  "Your name can't be changed while your verification is in progress. Contact support to change it.";
 
 /**
  * Why the name cannot be changed here, or null when it can. Mirrors rn-api's `kyc_locked`
  * (`business_verified`, or `kyc_status` open), read from what the app already holds: the profile's
- * badge and the cached verification status. An individually verified person (no badge) is not
- * known here; the server's refusal speaks for that case.
+ * badge and the cached verification status, a business's check or anyone else's ID check (ENG-351).
  */
 export function nameLockNote(businessVerified: boolean | undefined, kycStatus: KycStatus | undefined) {
   if (businessVerified || kycStatus === "verified") return NAME_LOCKED;
