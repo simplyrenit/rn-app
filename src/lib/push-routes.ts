@@ -15,6 +15,9 @@ import { Ring, RingEndPush, parseRing, parseRingEnd } from "@/lib/shop-ring";
  * not know is ignored, as the contract asks.
  */
 export type PushRoute =
+  /** A shop (its owner's username) or a product (its name), from a shop page link (ENG-344). */
+  | { screen: "UserDetail"; id: string }
+  | { screen: "ProductDetail"; id: string }
   /** The customer's booking, at whatever stage the server says it is in. */
   | { screen: "Booking"; number: string }
   /** Pay the deposit (BK-13, ENG-222). The screen says "Deposit paid" if it already is. */

@@ -362,7 +362,7 @@ export type RootStackParamList = {
   KycIntro: { source?: "profile" | "post_listing" | "push" | "booking"; supersede?: boolean } | undefined;
   KycDetails: { supersede?: boolean; source?: "booking" } | undefined;
   KycStatus: { justReturned?: boolean; source?: "booking" } | undefined;
-  OwnersProducts: { products: BackendProduct[]; name: string };
+  OwnersProducts: { products: BackendProduct[]; name: string; shopUrl?: string | null };
   /** The owner's bank account: add, verify, change (ENG-135). */
   BankAccount: undefined;
   /** The owner's hours, Open switch, notice and delivery (ENG-146). */
@@ -594,6 +594,8 @@ export interface PublicOwner {
   /** ENG-73: so an owner with no listings still shows the business name. */
   business_name?: string | null;
   account_type?: string;
+  /** ENG-344: the shop's public page, for the share sheet; null or absent when it has none. */
+  shop_url?: string | null;
 }
 
 export interface Conversation {

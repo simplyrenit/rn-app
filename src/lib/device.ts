@@ -62,6 +62,12 @@ export function sessionBody(
 }
 
 let cached: Promise<DeviceInfo> | null = null;
+let madeThisRun = false;
+
+/** True once `getDeviceInfo` has made this phone's id on this run: a new install (ENG-344). */
+export function deviceIdMadeThisRun() {
+  return madeThisRun;
+}
 
 async function readOrMakeId(): Promise<string> {
   try {
@@ -71,6 +77,7 @@ async function readOrMakeId(): Promise<string> {
     // Unreadable storage costs only the stability of the id, never the sign-in.
   }
   const made = uuidv4();
+  madeThisRun = true;
   try {
     await AsyncStorage.setItem(DEVICE_ID_KEY, made);
   } catch {

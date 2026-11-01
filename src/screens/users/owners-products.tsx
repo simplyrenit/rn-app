@@ -9,6 +9,7 @@ import { IOSShareIcon } from "@/icons/share";
 import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
+import { withSource } from "@/lib/attribution";
 
 const GRID_GAP = 14;
 
@@ -23,13 +24,13 @@ const COLUMN_WIDTH =
 
 const OwnersProductsScreen: React.FC = () => {
   const { params } = useRoute<RouteProps<"OwnersProducts">>();
-  const { products, name } = params;
+  const { products, name, shopUrl } = params;
   const { color } = useTheme();
 
   const handleShare = async () => {
     const line = `${name}'s listings on Renit — ${products.length} ${
       products.length === 1 ? "item" : "items"
-    } to rent`;
+    } to rent${shopUrl ? `\n${withSource(shopUrl, "wa")}` : ""}`;
     try {
       await Share.share({ message: line });
     } catch {

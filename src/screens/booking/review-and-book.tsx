@@ -73,6 +73,7 @@ import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { uuidv4 } from "@/lib/uuid";
 import { StackActions, useFocusEffect, useRoute } from "@react-navigation/native";
+import { currentSource } from "@/lib/attribution";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Linking, ScrollView, View } from "react-native";
 import { CheckBadgeIcon, IdentificationIcon } from "react-native-heroicons/outline";
@@ -293,6 +294,7 @@ export default function ReviewAndBookScreen() {
             // Card mode: the deposit seen too (D36), and whether the cart's lines go "in checkout" (D6).
             ...(asCard ? { expected_deposit: quote.deposit.amount } : {}),
             ...(params.from_cart ? { from_cart: true } : {}),
+            source: await currentSource(),
             moved_from: movedFrom,
             client_key: clientKey.current,
           });

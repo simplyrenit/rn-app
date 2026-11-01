@@ -125,6 +125,8 @@ export interface DepositRule {
   multiplier: number;
   floor: number;
   round_to: number;
+  /** Percent of the item's worth (ENG-349); null or absent: the rate rule alone. */
+  worth_share?: number | null;
 }
 
 // ---- Specs (ENG-34) -----------------------------------------------------------
@@ -247,6 +249,7 @@ export interface WireDepositRule {
   multiplier: string | number;
   floor: string | number;
   round_to: string | number;
+  worth_share?: string | number | null;
 }
 
 export interface DoneEvent {
