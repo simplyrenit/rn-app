@@ -4,7 +4,7 @@ import { ChipTone, LineChip } from "@/lib/card-checkout";
 import { MIN_TOUCH_TARGET, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import React from "react";
-import { TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View, useWindowDimensions } from "react-native";
 import {
   ChevronRightIcon,
   ExclamationTriangleIcon,
@@ -150,6 +150,11 @@ export function LineRow({
   extra?: React.ReactNode;
 }) {
   const strike = left ? ({ textDecorationLine: "line-through" } as const) : undefined;
+  // Below 375pt (360dp Android) a one-line "Leave in cart" left the item's text
+  // about 110dp, and "Deposit ₹3,000" broke across two lines; the action wraps
+  // to two short lines there instead. 375 and up keep the frame's single line.
+  const { width: windowWidth } = useWindowDimensions();
+  const narrow = windowWidth < 375;
   return (
     <View style={{ gap: space.xs, paddingVertical: space.sm }}>
       <View style={{ flexDirection: "row", gap: space.md }}>
@@ -184,9 +189,9 @@ export function LineRow({
             accessibilityState={{ disabled: Boolean(action.disabled) }}
             disabled={action.disabled}
             onPress={action.onPress}
-            style={{ minHeight: MIN_TOUCH_TARGET, paddingLeft: space.sm, justifyContent: "flex-start" }}
+            style={{ minHeight: MIN_TOUCH_TARGET, paddingLeft: space.sm, justifyContent: "flex-start", maxWidth: narrow ? 72 : undefined }}
           >
-            <Text fontSize="text-sm" fontWeight="font-bold" tone={action.disabled ? "dim" : "brand"}>
+            <Text fontSize="text-sm" fontWeight="font-bold" tone={action.disabled ? "dim" : "brand"} style={narrow ? { textAlign: "right" } : undefined}>
               {action.label}
             </Text>
           </TouchableOpacity>
