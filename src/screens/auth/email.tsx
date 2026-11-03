@@ -104,6 +104,7 @@ export default function LoginWithEmail() {
               } px-4 h-12
               `}
               style={AUTH_INPUT_TEXT}
+              maxFontSizeMultiplier={1.4}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -121,7 +122,7 @@ export default function LoginWithEmail() {
                   size={14}
                   color={ink.danger(true)}
                 />
-                <Text tone="danger"
+                <Text tone="danger" className="flex-shrink"
                   fontSize="text-sm"
                 >
                   Please enter a valid email address
@@ -135,7 +136,7 @@ export default function LoginWithEmail() {
                   size={14}
                   color={ink.danger(true)}
                 />
-                <Text tone="danger"
+                <Text tone="danger" className="flex-shrink"
                   fontSize="text-sm"
                 >
                   {otpSendError}

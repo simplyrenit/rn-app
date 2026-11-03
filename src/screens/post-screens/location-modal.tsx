@@ -943,7 +943,11 @@ const LocationModal = ({}) => {
                           onPress={handleCurrentLocation}
                         >
                           <View className="flex flex-row h-full w-full items-center justify-between">
-                            <View className="flex flex-row items-center space-x-4">
+                            {/* flex: 1 + flexShrink, so the longer "Fetching…"
+                                label ends in an ellipsis inside the 48pt row
+                                on a 360dp phone at a large font scale instead
+                                of running off its edge. */}
+                            <View className="flex flex-row items-center space-x-4" style={{ flex: 1 }}>
                               <ViewfinderCircleIcon
                                 color={colors.dark.brand}
                                 size={24}
@@ -951,6 +955,8 @@ const LocationModal = ({}) => {
                               <Text
                                 fontWeight="font-bold"
                                 className="text-brand"
+                                numberOfLines={1}
+                                style={{ flexShrink: 1 }}
                               >
                                 {isFetchingLocation
                                   ? "Fetching current location..."
@@ -985,7 +991,11 @@ const LocationModal = ({}) => {
                                 color={ink.text(isDarkMode)}
                                 size={20}
                               />
-                              <Text fontSize="text-sm">{item.name}</Text>
+                              {/* Shrinks so a long place name wraps beside the
+                                  pin rather than pushing past the screen edge. */}
+                              <Text fontSize="text-sm" style={{ flexShrink: 1 }}>
+                                {item.name}
+                              </Text>
                             </TouchableOpacity>
                           )}
                         />

@@ -36,12 +36,14 @@ import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
 
 function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; receivedAt: number; watching: boolean }) {
   const navigation = useTypedNavigation();
   const queryClient = useQueryClient();
   const keyboard = useKeyboardInset();
+  const insets = useSafeAreaInsets();
   const now = useServerNow(booking.server_time, receivedAt);
   const { running, run } = useGuardedTap();
   const { number } = booking;
@@ -98,10 +100,11 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
   const together = out && !byRenit(booking) ? basketReturnNote(booking) : null;
 
   return (
+    // No bottom bar on this screen: the scroll's end clears the home indicator (or the keyboard) itself.
     <ScrollView
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg + keyboard }}
+      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg + Math.max(keyboard, insets.bottom) }}
     >
       <View style={{ gap: 2 }}>
         <Text role="screenTitle" accessibilityRole="header">

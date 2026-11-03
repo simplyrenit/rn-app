@@ -8,7 +8,7 @@ import { useTheme } from "@/lib/theme";
 import { NO_TOKEN_MESSAGE, RESEND_SECONDS, e164, isCode, resendLabel, unlockErrorMessage } from "@/lib/unlock";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
 import { LockClosedIcon } from "react-native-heroicons/outline";
 import OTPTextView from "react-native-otp-textinput";
 
@@ -43,6 +43,7 @@ interface Props {
 export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
   ({ phoneMasked, minutes, phone, onUnlocked, onPhoneRequired }, ref) => {
     const { color, isDark } = useTheme();
+    const { width: windowWidth } = useWindowDimensions();
     const { requestPhoneNumberChangeOtp, verifyPhoneNumberChange } = useAuth();
     const modal = useRef<BottomSheetModal>(null);
     const [code, setCode] = useState("");
@@ -155,7 +156,9 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
       borderWidth: 1,
       borderBottomWidth: 1,
       color: ink.text(isDark),
-      width: 46,
+      // Six 46pt cells and the library's 5pt margins come to 336pt, more than a 360dp phone has inside
+      // the gutters, so the row ran into them. Narrower there; 46 wherever it fits, 390 included.
+      width: Math.min(46, Math.floor((windowWidth - SCREEN_GUTTER * 2 + 10) / 6) - 10),
       height: 52,
     };
 

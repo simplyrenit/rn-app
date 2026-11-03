@@ -1,8 +1,8 @@
-import { Button } from "@/components/core";
+import { Button, Text } from "@/components/core";
 import { DeleteProblem, itemLabel } from "@/lib/delete-account";
 import { useTheme } from "@/lib/theme";
 import { memo } from "react";
-import { Dimensions, Modal, StyleSheet, Text, View } from "react-native";
+import { Modal, StyleSheet, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { radius } from "@/lib/design-tokens";
 
@@ -36,20 +36,20 @@ const DeleteAccountModal = memo(({
     >
 
       <View style={[styles.container, shadow, { backgroundColor: color.surface }]}>
-        <Text style={{ color: color.text, fontSize: 16, lineHeight: 24 }}>
+        <Text fontSize="text-md">
           {problem?.blocked ? "Your account can't be closed yet" : "Are you sure you want to delete your account?"}
         </Text>
         {problem ? (
           <View accessibilityRole="alert" accessibilityLiveRegion="polite" style={{ marginTop: 12, gap: 12 }}>
-            <Text style={{ color: problem.blocked ? color.textBody : color.danger, fontSize: 14, lineHeight: 20 }}>{problem.text}</Text>
+            <Text fontSize="text-sm" lineHeight={20} tone={problem.blocked ? "body" : "danger"}>{problem.text}</Text>
             {problem.items.map((item, index) => (
               <View key={`${item.kind}-${item.booking ?? "none"}-${index}`} accessible style={{ gap: 2 }}>
-                <Text style={{ color: color.textBody, fontSize: 12 }}>{itemLabel(item)}</Text>
-                <Text style={{ color: color.text, fontSize: 14, lineHeight: 20 }}>{item.text}</Text>
+                <Text fontSize="text-xs" tone="body">{itemLabel(item)}</Text>
+                <Text fontSize="text-sm" lineHeight={20}>{item.text}</Text>
               </View>
             ))}
             {problem.blocked ? (
-              <Text style={{ color: color.textBody, fontSize: 14, lineHeight: 20 }}>You are still signed in. Nothing was changed.</Text>
+              <Text fontSize="text-sm" lineHeight={20} tone="body">You are still signed in. Nothing was changed.</Text>
             ) : null}
           </View>
         ) : null}
@@ -68,6 +68,10 @@ const DeleteAccountModal = memo(({
 export default DeleteAccountModal;
 
 
+// The scrim is pinned to all four edges, so it follows the window as it is now. The heights read
+// once from Dimensions at import were the launch-time window and went stale on a display-size or
+// split-screen change. The core Text above caps font scaling and picks the app face; the raw Text
+// here fell back to the system font, uncapped.
 const styles = StyleSheet.create({
   modalStyle: {
     position: 'absolute',
@@ -75,8 +79,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: Dimensions.get('window').height,
-    width: Dimensions.get('window').width,
   },
   modalBackground: {
     flex: 1,
@@ -87,7 +89,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: Dimensions.get('window').height,
   },
   container: {
     borderRadius: radius.input,

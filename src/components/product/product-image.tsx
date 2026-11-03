@@ -8,7 +8,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import Carousel from "pinar";
 import React, { useEffect, useState } from "react";
-import { Dimensions, Modal, Pressable, View } from "react-native";
+import { Modal, Pressable, View, useWindowDimensions } from "react-native";
 import { PhotoIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -43,8 +43,6 @@ interface Props {
   /** Lets a contained caller draw its own indicator. */
   onGalleryStateChange?: (state: { index: number; count: number }) => void;
 }
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 /**
  * The drop shadow the design puts under the contained photo: black at 31%,
@@ -83,10 +81,15 @@ export function ProductImage({
   title,
   showBack = true,
   contained = false,
-  frameWidth = SCREEN_WIDTH,
+  frameWidth: frameWidthProp,
   frameHeight,
   onGalleryStateChange,
 }: Props) {
+  // Read per render, not once at module load: a module-scope width is frozen
+  // at launch and goes stale with split-screen, foldables or a display-size
+  // change on Android.
+  const { width: windowWidth } = useWindowDimensions();
+  const frameWidth = frameWidthProp ?? windowWidth;
   const { color, isDark } = useTheme();
   const safeAreaInsets = useSafeAreaInsets();
   const [failedImages, setFailedImages] = useState<string[]>([]);
@@ -131,7 +134,7 @@ export function ProductImage({
           style={
             contained
               ? { height: boxHeight, width: frameWidth }
-              : { height: "100%", width: SCREEN_WIDTH }
+              : { height: "100%", width: windowWidth }
           }
           {...(contained ? { width: frameWidth, height: boxHeight } : null)}
           renderPrev={() => <></>}

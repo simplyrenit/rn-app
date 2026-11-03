@@ -129,6 +129,8 @@ function AmountInput({
         onChangeText={(v) => onChangeText(v.replace(/[^\d]/g, ""))}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
+        // The core Text's cap, so the Rs prefix and the figure scale together.
+        maxFontSizeMultiplier={1.4}
         style={{ flex: 1, color: color.text, fontFamily: fontFamily.regular, fontSize: fontSize.md }}
       />
     </FieldShell>

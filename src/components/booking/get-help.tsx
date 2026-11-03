@@ -5,7 +5,7 @@ import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal"
 import { useFieldSurfaceStyle } from "@/components/core/field";
 import { LinkRow } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
-import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, fontFamily, space } from "@/lib/design-tokens";
 import {
   HelpAnswer,
   HelpRequest,
@@ -67,9 +67,11 @@ function NoteBox({
       accessibilityLabel="What do you need help with"
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
+      // The core Text's cap: uncapped, a large system font outgrows the sheet.
+      maxFontSizeMultiplier={1.4}
       style={[
         surface,
-        { minHeight: 110, color: color.text, fontFamily: "PlusJakartaSans-Regular", fontSize: 16, textAlignVertical: "top" },
+        { minHeight: 110, color: color.text, fontFamily: fontFamily.regular, fontSize: 16, textAlignVertical: "top" },
       ]}
     />
   );

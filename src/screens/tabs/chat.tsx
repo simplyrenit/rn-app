@@ -120,6 +120,8 @@ export default function Chat() {
               autoCapitalize="none"
               autoCorrect={false}
               clearButtonMode="while-editing"
+              // The field is a fixed-height box; cap it with the app's Text.
+              maxFontSizeMultiplier={1.4}
               // The field used to set fontSize but never fontFamily, so it
               // rendered in system SF Pro while the rest of the app did not.
               style={{

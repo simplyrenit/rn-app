@@ -351,6 +351,8 @@ function SheetBody({
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="search"
+              // The core Text's cap, as the rest of the sheet.
+              maxFontSizeMultiplier={1.4}
               style={{ flex: 1, fontSize: 16, fontFamily: fontFamily.regular, color: color.text }}
             />
           </FieldShell>

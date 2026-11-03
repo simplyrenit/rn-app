@@ -147,7 +147,7 @@ export default function ReturnWindowScreen() {
                   }}
                 >
                   {selected ? <CheckIcon size={16} color={color.brandText} /> : null}
-                  <Text fontSize="text-sm" fontWeight={selected ? "font-bold" : "font-normal"} numberOfLines={1} adjustsFontSizeToFit>
+                  <Text fontSize="text-sm" fontWeight={selected ? "font-bold" : "font-normal"} numberOfLines={1} adjustsFontSizeToFit style={{ flexShrink: 1 }}>
                     {windowLabel(slot)}
                   </Text>
                 </TouchableOpacity>

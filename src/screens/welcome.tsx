@@ -4,7 +4,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { Image } from "expo-image";
 import { styled } from "nativewind";
 import React, { useState } from "react";
-import { Dimensions, View } from "react-native";
+import { View, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Carousel from "pinar";
 import { CarouselItem } from "../lib/types";
@@ -16,8 +16,6 @@ import Animated, {
 
 const StyledView = styled(View);
 const StyledImage = styled(Image);
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const carouselData: CarouselItem[] = [
   {
@@ -47,11 +45,14 @@ export default function OnboardingScreen(): JSX.Element {
   const isDarkMode = theme === "dark";
   const progress = useSharedValue(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+  // Read per render, not once at module load: a frozen launch-time width left
+  // the slides the wrong size after a split-screen or display-size change.
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   // The carousel is sized to whatever vertical space is left once the login
   // buttons and terms have taken theirs, rather than a fixed 60% of the screen
   // that overflowed onto the buttons on shorter devices.
   const [carouselHeight, setCarouselHeight] = useState(
-    Math.round(SCREEN_HEIGHT * 0.55)
+    Math.round(windowHeight * 0.55)
   );
 
   const AnimatedStyledView = Animated.createAnimatedComponent(StyledView);
@@ -71,7 +72,7 @@ export default function OnboardingScreen(): JSX.Element {
             loop
             autoplay
             height={carouselHeight}
-            width={SCREEN_WIDTH}
+            width={windowWidth}
             showsDots={false}
             autoplayInterval={3000}
             renderPrev={() => <></>}
@@ -93,7 +94,11 @@ export default function OnboardingScreen(): JSX.Element {
                 <StyledImage
                   source={isDarkMode ? item.darkImage : item.lightImage}
                   className="w-full"
-                  style={{ height: carouselHeight * 0.68 }}
+                  // Shrinks rather than overflows: on a 667pt SE (and at a large
+                  // font) the title and copy no longer fit under a 68% picture,
+                  // and the centred slide clipped the art's top and the copy's
+                  // last line. Where there is room it stays at 68%.
+                  style={{ height: carouselHeight * 0.68, flexShrink: 1 }}
                   contentFit="contain"
                 />
                 <Text

@@ -69,6 +69,7 @@ export default function LoginWithPhone() {
                   : "text-black bg-surface-light border-input-line-light"
               } px-4 h-12`}
               style={AUTH_INPUT_TEXT}
+              maxFontSizeMultiplier={1.4}
               keyboardType="phone-pad"
               autoComplete="tel"
               textContentType="telephoneNumber"
@@ -77,7 +78,7 @@ export default function LoginWithPhone() {
             {!!error && (
               <View className="flex flex-row items-center mt-4 space-x-3">
                 <InformationCircleIcon size={14} color={ink.danger(true)} />
-                <Text tone="danger" fontSize="text-sm">
+                <Text tone="danger" fontSize="text-sm" className="flex-shrink">
                   {error}
                 </Text>
               </View>

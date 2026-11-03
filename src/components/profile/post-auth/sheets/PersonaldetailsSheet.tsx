@@ -37,6 +37,7 @@ import {
   ink,
   colors,
   radius,
+  fontFamily,
   fontSize,
   lineHeight,
   MIN_TOUCH_TARGET,
@@ -751,7 +752,10 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         // The frame's sheet is exactly its rows tall; a fixed point (plus the
         // home-indicator inset it draws outside the sheet) keeps the bottom
         // from reading as dead space, which "62%" left on shorter phones.
-        snapPoints={[SHEET_HEIGHT + insets.bottom + (nameLock ? NOTE_GAP + noteHeight : 0)]}
+        // Capped at 90% of the window: on a 640dp Android phone the rows plus
+        // the name note came to more than the window, and the sheet's top ran
+        // up under the status bar. The rows scroll inside it past that.
+        snapPoints={[Math.min(SHEET_HEIGHT + insets.bottom + (nameLock ? NOTE_GAP + noteHeight : 0), winH * 0.9)]}
         frame
         isDark={isDarkMode}
       >
@@ -946,7 +950,11 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           <View></View>
         </View>
         <View className="p-4 space-y-4">
+          {/* The sheet's inputs are raw TextInputs: the app face and the core Text's 1.4 cap are set on each, or they
+              type in the system font and grow without limit at a large system font size. */}
           <TextInput
+            maxFontSizeMultiplier={1.4}
+            style={{ fontFamily: fontFamily.regular }}
             className={`rounded-card border p-3 ${isDark
               ? "border-input-line-dark text-white"
               : "border-input-line-light text-black"
@@ -1023,6 +1031,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           {!isOtpSent ? (
             <>
               <TextInput
+                maxFontSizeMultiplier={1.4}
+                style={{ fontFamily: fontFamily.regular }}
                 className={`rounded-button border p-3 ${isDark
                   ? "border-input-line-dark text-white"
                   : "border-input-line-light text-black"
@@ -1240,8 +1250,11 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                       +{country.callingCode}
                     </Text>
                   </View>
-                  <View>
+                  {/* flex-1: content-sized, the field was only as wide as its text and the rest of the box took no taps. */}
+                  <View className="flex-1">
                     <TextInput
+                      maxFontSizeMultiplier={1.4}
+                      style={{ fontFamily: fontFamily.regular }}
                       maxLength={10}
                       placeholder="Enter phone number"
                       value={updatedPhone}
@@ -1424,7 +1437,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               accessibilityLabel="Current password"
               placeholder="Enter your current password"
               placeholderTextColor={ink.dim(isDark)}
-              style={{ color: ink.text(isDarkMode) }}
+              maxFontSizeMultiplier={1.4}
+              style={{ color: ink.text(isDarkMode), fontFamily: fontFamily.regular }}
             />
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Show or hide password" onPress={() => setShowPassword(!showPassword)}>
               {showPassword ? (
@@ -1464,7 +1478,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
               autoCorrect={false}
               accessibilityLabel="New password"
               placeholder="Enter your new password"
-              style={{ color: ink.text(isDarkMode) }}
+              maxFontSizeMultiplier={1.4}
+              style={{ color: ink.text(isDarkMode), fontFamily: fontFamily.regular }}
               placeholderTextColor={ink.dim(isDark)}
             />
             <TouchableOpacity accessibilityRole="button" accessibilityLabel="Show or hide password"

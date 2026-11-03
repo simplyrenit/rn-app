@@ -12,6 +12,7 @@ import React, { useRef } from "react";
 import { ScrollView, View } from "react-native";
 import { BellIcon, ClockIcon, PhoneIcon } from "react-native-heroicons/outline";
 import { CheckIcon } from "react-native-heroicons/solid";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const MARK = 22;
 const ICONS = { bell: BellIcon, phone: PhoneIcon, clock: ClockIcon } as const;
@@ -78,6 +79,7 @@ function Step({ step, last }: { step: RingStep; last: boolean }) {
  */
 export function Confirming({ booking, receivedAt }: { booking: BookingCustomer; receivedAt: number }) {
   const { color } = useTheme();
+  const insets = useSafeAreaInsets();
   const cancelSheet = useRef<CancelSheetHandle>(null);
   // "Asked at 10:00 am tomorrow" is said against the server's day, not this phone's (P3-17).
   const copy = ringCopy(booking, useServerNow(booking.server_time, receivedAt));
@@ -92,7 +94,13 @@ export function Confirming({ booking, receivedAt }: { booking: BookingCustomer; 
     <View style={{ flex: 1 }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.lg }}
+        contentContainerStyle={{
+          paddingHorizontal: SCREEN_GUTTER,
+          paddingTop: space.md,
+          // With no bar below (nothing to cancel), the end of the scroll clears the home indicator itself.
+          paddingBottom: canCancel || limitReached ? space.md : space.md + insets.bottom,
+          gap: space.lg,
+        }}
       >
         <View style={{ alignItems: "center", gap: space.lg }}>
           <View

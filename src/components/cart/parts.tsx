@@ -58,7 +58,8 @@ export function CartButton({
             top: onPhoto ? -2 : 2,
             right: onPhoto ? -4 : 0,
             minWidth: 18,
-            height: 18,
+            // minHeight: the digit's line grows with the font scale and a fixed 18 clipped it at 1.3x and up.
+            minHeight: 18,
             paddingHorizontal: 4,
             borderRadius: radius.full,
             alignItems: "center",

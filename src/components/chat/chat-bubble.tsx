@@ -8,8 +8,9 @@ import {
   Platform,
   Pressable,
   Modal,
-  Dimensions,
+  useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View } from "react-native";
 import { useGlobalContext } from "@/context/global-context";
 import {
@@ -118,6 +119,10 @@ export function ChatBubble({
   const [imageError, setImageError] = useState(false);
   const [fullImage, setFullImage] = useState<string | null>(null)
   const router = useTypedNavigation();
+  // Live window, not Dimensions.get: that is a snapshot that goes stale with
+  // split-screen, foldables and Android display-size changes.
+  const { width: windowWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   const { offerOperations } = useChat();
 
@@ -320,7 +325,7 @@ export function ChatBubble({
       style={{ paddingHorizontal: SCREEN_GUTTER }}
     >
       {type === "product_post" && message.item && (
-        <Pressable className={`p-3 rounded-group`} style={{ width: Dimensions.get('window').width * 0.8 }}
+        <Pressable className={`p-3 rounded-group`} style={{ width: windowWidth * 0.8 }}
           onPress={() => {
             if (message.item?.id) {
               router.navigate("ProductDetail", { id: message.item.id });
@@ -438,7 +443,7 @@ export function ChatBubble({
           <View
             className={`border p-3 rounded-card ${isDark ? "bg-canvas-dark border-line-dark" : "bg-surface-light border-line-light"
               }`}
-            style={{ width: Dimensions.get('window').width * 0.8 }}
+            style={{ width: windowWidth * 0.8 }}
           >
             <View
               className={`flex-1 w-full border-b ${isDark ? "border-line-dark" : "border-line-light"
@@ -630,10 +635,16 @@ export function ChatBubble({
       }
       {
         !!fullImage && <Modal visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
-          <View style={{ position: 'relative', height: Dimensions.get('window').height, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
+          {/* flex: 1, not the window height: on Android the window height and the
+              modal's own area differ by the status/nav bars, which left a strip
+              of thread showing or pushed the image off-centre. */}
+          <View style={{ position: 'relative', flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
 
             <Pressable
-              style={{ position: "absolute", top: 60, right: 16, zIndex: 1 }}
+              // A flat top: 60 sat inside the 62pt Dynamic Island inset on a
+              // Pro Max, behind the island; the inset puts it below the status
+              // bar on every phone (20 on an SE).
+              style={{ position: "absolute", top: insets.top + 12, right: 16, zIndex: 1 }}
               onPress={() => setFullImage(null)}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               accessibilityRole="button"

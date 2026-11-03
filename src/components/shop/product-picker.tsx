@@ -1,6 +1,6 @@
 import { fetchPickerProducts } from "@/backend/shop-today";
 import { EmptyState, Skeleton, Text } from "@/components/core";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, fontFamily, radius, space } from "@/lib/design-tokens";
 import { PickerProduct, filterPicker } from "@/lib/shop-today";
 import { useTheme } from "@/lib/theme";
 import React, { useMemo, useState } from "react";
@@ -25,7 +25,14 @@ export function ProductPicker({
   const shown = useMemo(() => filterPicker(query.data ?? [], text), [query.data, text]);
 
   return (
-    <Modal visible animationType="slide" onRequestClose={onCancel}>
+    <Modal
+      visible
+      animationType="slide"
+      onRequestClose={onCancel}
+      // Drawn under the Android status bar, as the app is: the padding below is the app's
+      // status-bar inset, which the modal's own window would otherwise add a second time.
+      statusBarTranslucent
+    >
       <View style={{ flex: 1, backgroundColor: color.canvas, paddingTop: insets.top }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, padding: SCREEN_GUTTER }}>
           <View
@@ -50,7 +57,9 @@ export function ProductPicker({
               placeholderTextColor={color.placeholder}
               accessibilityLabel="Search your items"
               returnKeyType="search"
-              style={{ flex: 1, color: color.text, fontSize: 16, paddingVertical: 8 }}
+              // The core Text's cap, and the family by name: Android picks no face from a weight.
+              maxFontSizeMultiplier={1.4}
+              style={{ flex: 1, color: color.text, fontFamily: fontFamily.regular, fontSize: 16, paddingVertical: 8 }}
             />
           </View>
           <TouchableOpacity

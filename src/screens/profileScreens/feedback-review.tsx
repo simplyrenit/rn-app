@@ -74,6 +74,8 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
         </Text>
 
         <TextInput
+          // The core Text's cap, so the box's text cannot outgrow the copy around it.
+          maxFontSizeMultiplier={1.4}
           style={{
             textAlignVertical: "top",
             height: FIELD_HEIGHT,
@@ -118,7 +120,7 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
             accessibilityState={{ disabled: true }}
             accessibilityLabel="Submit feedback"
             style={{
-              height: MIN_TOUCH_TARGET,
+              minHeight: MIN_TOUCH_TARGET,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -138,7 +140,8 @@ const FeedbackNReviewScreen: React.FC<FeedbackNReviewProps> = () => {
         <Text fontSize="text-sm" tone="body">
           Have any more questions?
         </Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+        {/* Wraps: at a large font size on a 360dp phone the address and chevron ran off the edge. */}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 3 }}>
           <Text fontSize="text-sm" fontWeight="font-bold">
             Email us at
           </Text>

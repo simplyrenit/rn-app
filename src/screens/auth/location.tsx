@@ -947,7 +947,7 @@ export default function LocationScreen() {
                               color={ink.text(isDarkMode)}
                               size={20}
                             />
-                            <Text fontSize="text-sm">{item.name}</Text>
+                            <Text fontSize="text-sm" className="flex-shrink">{item.name}</Text>
                           </TouchableOpacity>
                         )}
                       />

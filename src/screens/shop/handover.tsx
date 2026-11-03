@@ -35,7 +35,6 @@ import { handoverCopy, handoverSteps, payoutPending, payoutWaits, recordFirstNot
 import { courierOf } from "@/lib/shop-courier";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
-import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { CourierPack } from "@/screens/shop/courier";
 import { BasketRecord } from "@/components/shop/basket-record";
@@ -45,12 +44,15 @@ import React, { useEffect, useState } from "react";
 import { Linking, Platform, ScrollView, View } from "react-native";
 import { BanknotesIcon, CheckCircleIcon, ClockIcon } from "react-native-heroicons/outline";
 import { useQueryClient } from "react-query";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function Handover({ booking, receivedAt, watching }: { booking: BookingShop; receivedAt: number; watching: boolean }) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const queryClient = useQueryClient();
-  const keyboard = useKeyboardInset();
+  // NonScrollableContainer already lifts the screen above the iOS keyboard and leaves the
+  // bottom edge to the screen: the last button clears the home indicator here.
+  const insets = useSafeAreaInsets();
   // Moved on twice a minute: the buttons and the no-show row open by the clock.
   const now = useServerNow(booking.server_time, receivedAt, 30_000);
   const { running, run } = useGuardedTap();
@@ -131,7 +133,7 @@ function Handover({ booking, receivedAt, watching }: { booking: BookingShop; rec
     <ScrollView
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg + keyboard }}
+      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg + insets.bottom }}
     >
       <View style={{ gap: 2 }}>
         <Text role="screenTitle" accessibilityRole="header">

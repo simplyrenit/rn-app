@@ -1,4 +1,4 @@
-import { fontSize as fontSizeScale } from "@/lib/design-tokens";
+import { fontFamily, fontSize as fontSizeScale } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useState } from "react";
 import { TextInput, View } from "react-native";
@@ -28,9 +28,13 @@ function PriceBox({
         placeholder={label}
         accessibilityLabel={`${label} price`}
         keyboardType="number-pad"
+        // A raw TextInput has no font of its own: it drew the price in the system
+        // face beside the app-font ₹, and its size was uncapped.
+        maxFontSizeMultiplier={1.4}
         style={{
           flex: 1,
           color: color.text,
+          fontFamily: fontFamily.regular,
           fontSize: fontSizeScale.base,
         }}
         value={value}

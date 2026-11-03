@@ -537,6 +537,8 @@ export default function SearchScreen() {
                     autoComplete: "off",
                     autoCorrect: false,
                     numberOfLines: 1,
+                    // The field is pinned at 48pt; uncapped Dynamic Type clipped it.
+                    maxFontSizeMultiplier: 1.4,
                     value: what && what === selectedItem ? what : selectedItem ?? undefined,
                     placeholderTextColor: color.placeholder,
                     style: {
@@ -824,7 +826,7 @@ export default function SearchScreen() {
                               color={ink.text(isDark)}
                               size={20}
                             />
-                            <Text fontSize="text-sm">{item.name}</Text>
+                            <Text fontSize="text-sm" className="flex-shrink">{item.name}</Text>
                           </TouchableOpacity>
                         ))}
                       </ScrollView>

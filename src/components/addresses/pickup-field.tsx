@@ -49,6 +49,8 @@ function FlatInput({ value, onChangeText }: { value: string; onChangeText: (v: s
   return (
     <FieldShell focused={focused} style={{ marginTop: space.sm }}>
       <TextInput
+        // The core Text's cap, so the field's text cannot outgrow its shell at a large system font size.
+        maxFontSizeMultiplier={1.4}
         accessibilityLabel="Flat, building and landmark"
         placeholder="Flat, building and landmark"
         placeholderTextColor={color.placeholder}

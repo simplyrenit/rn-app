@@ -226,6 +226,9 @@ export default function WriteReviewScreen() {
         {/* The frame labels this field with its placeholder alone. */}
         <TextInput
           style={fieldStyle}
+          // The core Text's cap, so the typed text and the page around it
+          // scale together instead of the input running uncapped.
+          maxFontSizeMultiplier={1.4}
           multiline
           placeholder="Share your thoughts..."
           placeholderTextColor={color.placeholder}
@@ -321,6 +324,7 @@ export default function WriteReviewScreen() {
           </Text>
           <TextInput
             style={fieldStyle}
+            maxFontSizeMultiplier={1.4}
             multiline
             placeholder="Share your thoughts..."
             placeholderTextColor={color.placeholder}

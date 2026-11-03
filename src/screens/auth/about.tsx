@@ -16,6 +16,7 @@ import { CheckBox } from "@/components/core/checkbox";
 import { OwnerTermsTick } from "@/components/terms/owner-terms-tick";
 import { ink } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Constants for date selections
 const DATES = Array.from({ length: 31 }, (_, i) =>
@@ -57,10 +58,13 @@ const Dropdown: React.FC<DropdownProps> = ({
   setDobError,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const insets = useSafeAreaInsets();
 
   return (
+    // flex-shrink: the three boxes are 320pt together, the whole 360dp content
+    // width, so with Android's display size raised the Year box ran off screen.
     <View
-      className={`relative ${placeholder === "Date"
+      className={`relative flex-shrink ${placeholder === "Date"
         ? "w-[100px]"
         : placeholder === "Month"
           ? "w-[120px]"
@@ -79,7 +83,12 @@ const Dropdown: React.FC<DropdownProps> = ({
           }`}
       >
         <View className="flex-row justify-between items-center">
-          <Text className={isDarkMode ? "text-white" : "text-black"}>
+          {/* "September" fills the Month box exactly at 1x; at a larger font it
+              pushed the chevron out of the box instead of truncating. */}
+          <Text
+            className={`flex-shrink ${isDarkMode ? "text-white" : "text-black"}`}
+            numberOfLines={1}
+          >
             {value || placeholder}
           </Text>
           <ChevronDownIcon
@@ -95,7 +104,9 @@ const Dropdown: React.FC<DropdownProps> = ({
 
             <View style={{ backgroundColor: ink.surface(isDarkMode), width: '100%' }}>
 
-              <ScrollView className="mb-[100px]" showsVerticalScrollIndicator={false} nestedScrollEnabled style={{ height: '100%' }} contentContainerStyle={{ paddingTop: 48 }}>
+              {/* The list starts under the status bar: 48 cleared a 47pt notch but
+                  left the first option under the Dynamic Island on a Pro Max. */}
+              <ScrollView className="mb-[100px]" showsVerticalScrollIndicator={false} nestedScrollEnabled style={{ height: '100%' }} contentContainerStyle={{ paddingTop: Math.max(48, insets.top) }}>
                 {options.map((option, index) => (
                   <TouchableOpacity
                     key={option}
@@ -209,6 +220,7 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
           : "bg-surface-light text-black border-input-line-light"
           }`}
         placeholderTextColor={ink.placeholder(isDarkMode)}
+        maxFontSizeMultiplier={1.4}
       />
       {errors.firstName && (
         <View className="flex flex-row items-center mt-4 space-x-3">
@@ -216,7 +228,7 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
             size={14}
             color={ink.danger(true)}
           />
-          <Text tone="danger">{errors.firstName}</Text>
+          <Text tone="danger" className="flex-shrink">{errors.firstName}</Text>
         </View>
       )}
     </View>
@@ -242,6 +254,7 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
           : "bg-surface-light text-black border-input-line-light"
           }`}
         placeholderTextColor={ink.placeholder(isDarkMode)}
+        maxFontSizeMultiplier={1.4}
       />
       {errors.lastName && (
         <View className="flex flex-row items-center mt-4 space-x-3">
@@ -249,7 +262,7 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
             size={14}
             color={ink.danger(true)}
           />
-          <Text tone="danger">{errors.lastName}</Text>
+          <Text tone="danger" className="flex-shrink">{errors.lastName}</Text>
         </View>
       )}
     </View>
@@ -300,7 +313,7 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
           />
           <Text
             tone={dobError.includes("not allowed") ? "danger" : "warning"}
-            className="flex-wrap"
+            className="flex-shrink"
           >
             {dobError}
           </Text>
@@ -344,6 +357,7 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
           : "bg-surface-light text-black border-input-line-light"
           }`}
         placeholderTextColor={ink.placeholder(isDarkMode)}
+        maxFontSizeMultiplier={1.4}
       />
       {errors.businessName && (
         <View className="flex flex-row items-center mt-4 space-x-3">
@@ -351,7 +365,7 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             size={14}
             color={ink.danger(true)}
           />
-          <Text tone="danger">{errors.businessName}</Text>
+          <Text tone="danger" className="flex-shrink">{errors.businessName}</Text>
         </View>
       )}
     </View>
@@ -377,6 +391,7 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
           : "bg-surface-light text-black border-input-line-light"
           }`}
         placeholderTextColor={ink.placeholder(isDarkMode)}
+        maxFontSizeMultiplier={1.4}
       />
       {errors.firstName && (
         <View className="flex flex-row items-center mt-4 space-x-3">
@@ -384,7 +399,7 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             size={14}
             color={ink.danger(true)}
           />
-          <Text tone="danger">{errors.firstName}</Text>
+          <Text tone="danger" className="flex-shrink">{errors.firstName}</Text>
         </View>
       )}
     </View>
@@ -410,6 +425,7 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
           : "bg-surface-light text-black border-input-line-light"
           }`}
         placeholderTextColor={ink.placeholder(isDarkMode)}
+        maxFontSizeMultiplier={1.4}
       />
       {errors.lastName && (
         <View className="flex flex-row items-center mt-4 space-x-3">
@@ -417,7 +433,7 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
             size={14}
             color={ink.danger(true)}
           />
-          <Text tone="danger">{errors.lastName}</Text>
+          <Text tone="danger" className="flex-shrink">{errors.lastName}</Text>
         </View>
       )}
     </View>
@@ -707,7 +723,7 @@ export default function AboutYourself() {
                   size={14}
                   color={ink.danger(true)}
                 />
-                <Text tone="danger">{errors.sameName}</Text>
+                <Text tone="danger" className="flex-shrink">{errors.sameName}</Text>
               </View>
             )}
           </View>
@@ -745,8 +761,11 @@ export default function AboutYourself() {
               checked={agreementChecked}
               onPress={() => setAgreementChecked(!agreementChecked)}
             />
+            {/* flex-1: the sentence is 350pt on one line, so beside the box it ran
+                ~30pt past the content edge and "information" was cut by the
+                screen, even at 390. */}
             <Text
-              className={`ml-2 ${isDarkMode ? "text-muted-dark" : "text-muted-light"
+              className={`ml-2 flex-1 ${isDarkMode ? "text-muted-dark" : "text-muted-light"
                 }`}
             >
               I agree to provide accurate and verifiable information

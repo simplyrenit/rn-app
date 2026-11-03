@@ -235,6 +235,10 @@ export default function VerifyEmail() {
                     tintColor={colors.dark.brand}
                     offTintColor={theme === "dark" ? ink.line(true) : ink.line(false)}
                     keyboardType="number-pad"
+                    // Each cell is a fixed 50pt box with a 22pt digit; uncapped
+                    // Dynamic Type drew the digit taller than the box.
+                    // @ts-ignore
+                    maxFontSizeMultiplier={1.4}
                     autoFocus
                     handleTextChange={(text) => setVerificationCode(text)}
                   />
@@ -246,7 +250,7 @@ export default function VerifyEmail() {
                       size={14}
                       color={ink.danger(true)}
                     />
-                    <Text tone="danger"
+                    <Text tone="danger" className="flex-shrink"
                       fontSize="text-sm"
                     >
                       Wrong OTP. Try again
@@ -260,7 +264,7 @@ export default function VerifyEmail() {
                       size={14}
                       color={ink.danger(true)}
                     />
-                    <Text tone="danger"
+                    <Text tone="danger" className="flex-shrink"
                       fontSize="text-sm"
                     >
                       {otpVerifyError}
@@ -283,7 +287,7 @@ export default function VerifyEmail() {
                       size={14}
                       color={ink.danger(true)}
                     />
-                    <Text tone="danger"
+                    <Text tone="danger" className="flex-shrink"
                       fontSize="text-sm"
                     >
                       {otpResendError}
@@ -320,6 +324,7 @@ export default function VerifyEmail() {
                   // The app font and the frame's 16pt inset, as on the other auth
                   // fields: a raw TextInput falls back to the system font.
                   style={{ fontFamily: fontFamily.regular, fontSize: fontSize.md }}
+                  maxFontSizeMultiplier={1.4}
                 />
 
                 {isIncorrect && (
@@ -328,7 +333,7 @@ export default function VerifyEmail() {
                       size={14}
                       color={ink.danger(true)}
                     />
-                    <Text tone="danger"
+                    <Text tone="danger" className="flex-shrink"
                       fontSize="text-sm"
                     >
                       Wrong password. Try again

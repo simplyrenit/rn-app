@@ -115,7 +115,8 @@ Review your listing carefully, then publish it to make it live.`,
           <Text fontSize="text-sm" tone="body">
             Have any more questions?
           </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+          {/* Wraps: at a large font size on a 360dp phone the address and chevron ran off the edge. */}
+          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 3 }}>
             <Text fontSize="text-sm" fontWeight="font-bold">
               Email us at
             </Text>

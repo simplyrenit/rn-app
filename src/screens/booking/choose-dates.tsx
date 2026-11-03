@@ -828,7 +828,10 @@ export default function BookingDatesScreen() {
           <View
             style={{
               flexDirection: "row",
-              gap: space.md,
+              // Wraps, as CT-20 draws it on two rows: four labels in one line ran past the panel at 360dp.
+              flexWrap: "wrap",
+              columnGap: space.md,
+              rowGap: space.xs,
               paddingTop: space.sm,
               paddingHorizontal: space.sm,
               paddingBottom: space.xs,

@@ -64,7 +64,8 @@ function ContactBlock({
         onPress={onPress}
         style={[
           {
-            height: MIN_TOUCH_TARGET,
+            // A floor, not a height: the label grows the button at a large font size instead of clipping.
+            minHeight: MIN_TOUCH_TARGET,
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",

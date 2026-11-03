@@ -14,7 +14,6 @@ import {
   ActivityIndicator,
   Image,
   Modal,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -25,6 +24,7 @@ import {
 } from "react-native-heroicons/outline";
 import { PaperAirplaneIcon, } from "react-native-heroicons/solid";
 import { IconButton } from "@/components/core/icon-button";
+import { Text } from "@/components/core/text";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, fontFamily, fontSize, radius, ink, colors } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { commitFeedback } from "@/lib/haptics";
@@ -339,6 +339,9 @@ export function ChatInput({
           placeholderTextColor={color.placeholder}
           accessibilityLabel="Message"
           onChangeText={handleMessageChange}
+          // The core Text's cap: uncapped, a large system font grew the field
+          // past the pill.
+          maxFontSizeMultiplier={1.4}
           style={{
             flex: 1,
             textAlignVertical: "center",
@@ -452,12 +455,13 @@ export function ChatInput({
                 borderBottomColor: ink.line(isDarkMode),
               }}
             >
+              {/* Core Text, not react-native's: a raw fontWeight "600" never
+                  picks the Plus Jakarta Bold face on Android, and the raw
+                  component scaled with the system font uncapped. */}
               <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: "600",
-                  color: ink.text(isDarkMode),
-                }}
+                fontSize="text-md"
+                fontWeight="font-semibold"
+                style={{ color: ink.text(isDarkMode) }}
               >
                 Preview
               </Text>
@@ -490,10 +494,10 @@ export function ChatInput({
                     resizeMode="contain"
                   />
                   <Text
+                    fontSize="text-sm"
                     style={{
                       marginTop: 8,
                       color: ink.body(isDarkMode),
-                      fontSize: 14,
                     }}
                   >
                     {selectedMedia.name} • {formatFileSize(selectedMedia.size)}
@@ -508,19 +512,17 @@ export function ChatInput({
                   }}
                 >
                   <Text
+                    fontSize="text-md"
                     style={{
                       color: ink.text(isDarkMode),
-                      fontSize: 16,
                       marginBottom: 4,
                     }}
                   >
                     {selectedFile.name}
                   </Text>
                   <Text
-                    style={{
-                      color: ink.body(isDarkMode),
-                      fontSize: 14,
-                    }}
+                    fontSize="text-sm"
+                    style={{ color: ink.body(isDarkMode) }}
                   >
                     {formatFileSize(selectedFile.size)}
                   </Text>
@@ -555,7 +557,9 @@ export function ChatInput({
                   />
                 ) : null}
                 <Text
-                  style={{ color: color.onBrand, fontSize: 16, fontFamily: fontFamily.bold }}
+                  fontSize="text-md"
+                  fontWeight="font-bold"
+                  style={{ color: color.onBrand }}
                 >
                   {isUploading ? "Sending..." : "Send"}
                 </Text>
