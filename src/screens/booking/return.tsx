@@ -31,7 +31,6 @@ import {
 import { COURIER, byRenit } from "@/lib/delivery";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { successFeedback } from "@/lib/haptics";
-import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
@@ -42,7 +41,6 @@ import { useQueryClient } from "react-query";
 function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; receivedAt: number; watching: boolean }) {
   const navigation = useTypedNavigation();
   const queryClient = useQueryClient();
-  const keyboard = useKeyboardInset();
   const insets = useSafeAreaInsets();
   const now = useServerNow(booking.server_time, receivedAt);
   const { running, run } = useGuardedTap();
@@ -100,11 +98,11 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
   const together = out && !byRenit(booking) ? basketReturnNote(booking) : null;
 
   return (
-    // No bottom bar on this screen: the scroll's end clears the home indicator (or the keyboard) itself.
+    // No bottom bar on this screen: the scroll's end clears the home indicator itself (NonScrollableContainer already lifts it above the keyboard).
     <ScrollView
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg + Math.max(keyboard, insets.bottom) }}
+      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg + insets.bottom }}
     >
       <View style={{ gap: 2 }}>
         <Text role="screenTitle" accessibilityRole="header">

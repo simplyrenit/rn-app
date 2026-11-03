@@ -136,8 +136,6 @@ const CustomBottomSheetModal = forwardRef<
         }}
         ref={modalRef}
         snapPoints={adjustedSnapPoints}
-        // Keeps percentage points ("90%") below the status bar / notch too.
-        topInset={insets.top}
         backdropComponent={renderBackdrop}
         onChange={(index) => setIsOpen(index >= 0)}
         onDismiss={onDismiss}

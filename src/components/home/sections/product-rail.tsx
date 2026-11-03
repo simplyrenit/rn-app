@@ -12,10 +12,11 @@ import type { Plan } from "@/lib/plans";
 // above them. Each section carries 16pt above and below, which is what makes
 // 16pt after the category grid and 32pt between two rails.
 //
-// 163 is two cards and the gap inside the gutters of the 390pt frame, with 8pt
-// to spare, so a sliver of the third card shows. A fixed 163 left the second
-// card cut 2pt by the screen edge at 360dp and showed most of a third at 440pt,
-// so the width is derived from the window the same way.
+// The rail starts at the left gutter and runs off the right edge: on the 390pt
+// frame that is gutter + card + gap + card + gap, with an 8pt sliver of the
+// third card showing. A fixed 163 cut the second card off at 360dp and showed
+// a third of the next card at 440pt, so the width is derived from the window
+// the same way: 163 at 390, 148 at 360, 188 at 440.
 const GAP = 16;
 const PEEK = 8;
 const SECTION_PADDING = 16;
@@ -63,7 +64,7 @@ export function ProductRail({
 }: Props) {
   const { favorites } = useSaved();
   const { width: windowWidth } = useWindowDimensions();
-  const cardWidth = Math.floor((windowWidth - 2 * SCREEN_GUTTER - GAP - PEEK) / 2);
+  const cardWidth = Math.floor((windowWidth - SCREEN_GUTTER - 2 * GAP - PEEK) / 2);
 
   // Three rankings over one small catalogue return the same items, so without
   // this the home screen showed the identical pair of listings under three
