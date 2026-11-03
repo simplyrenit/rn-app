@@ -60,6 +60,7 @@ if (Platform.OS === "android") {
 // discarded the entire query cache with it.
 const queryClient = new QueryClient();
 
+
 export default function App() {
   const [loaded, error] = useFonts({
     "PlusJakartaSans-Regular": require("./assets/fonts/PlusJakartaSans-Regular.ttf"),
@@ -122,15 +123,16 @@ export default function App() {
 
 /**
  * Toasts rise from above the tab bar on every phone. A fixed 64pt offset sat on
- * the tab icons (81pt + the home-indicator inset) and, on stack screens, on the
- * booking and shop bottom bars, by a different amount per device. The tab bar's
- * own height plus the inset clears both; the product page still passes its
- * measured bar height per call.
+ * the tab icons (81pt + the home-indicator inset) by a different amount per
+ * device. The tab bar's height plus the inset clears it and a one-button bottom
+ * bar; a taller bar (pay rent's) still needs a measured `bottomOffset` per call,
+ * as the product page passes. With the iOS keyboard up the toast keeps the same
+ * clearance above the keys, over a bar riding on them.
  */
 function AppToast() {
   const insets = useSafeAreaInsets();
   // @ts-ignore
-  return <Toast config={toastConfig} bottomOffset={TAB_BAR_CONTENT_HEIGHT + insets.bottom + 8} />;
+  return <Toast config={toastConfig} bottomOffset={TAB_BAR_CONTENT_HEIGHT + insets.bottom + 8} keyboardOffset={TAB_BAR_CONTENT_HEIGHT + 8} />;
 }
 
 const toastConfig = {
