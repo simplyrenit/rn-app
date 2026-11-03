@@ -215,6 +215,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   return (
     <Modal
+        // Android: draw under the status bar too, so the scrim covers it and
+        // insets.top means the same thing as on iOS.
+        statusBarTranslucent
       visible={true}
       transparent={true}
       animationType="fade"

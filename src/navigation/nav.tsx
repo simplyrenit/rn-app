@@ -101,7 +101,7 @@ import RentalSettingsScreen from "@/screens/profileScreens/rental-settings";
 import ShopAddressScreen from "@/screens/profileScreens/shop-address";
 import NotificationScreen from "@/screens/profileScreens/notification";
 import WhoWeAreScreen from "@/screens/profileScreens/who-we-are";
-import { AppState, BackHandler, Linking, PixelRatio, Platform, View } from "react-native";
+import { AppState, BackHandler, Linking, Platform, View } from "react-native";
 import {
   CalendarIcon,
   ChatBubbleLeftIcon,
@@ -259,17 +259,8 @@ function ProfileStackScreen() {
 const TAB_BAR_PADDING = 16;
 const TAB_ICON_SIZE = 24;
 const TAB_LABEL_GAP = 4;
-const TAB_BAR_CONTENT_HEIGHT =
+export const TAB_BAR_CONTENT_HEIGHT =
   TAB_BAR_PADDING * 2 + TAB_ICON_SIZE + TAB_LABEL_GAP + lineHeight.sm;
-
-/**
- * Beyond this Dynamic Type scale a five-slot tab bar cannot hold five labels.
- * At AX-Large they ran edge to edge with no gap and "Profile" was clipped by
- * the screen. iOS caps tab-label growth for exactly this reason and falls back
- * to the large-content HUD; the icons and the VoiceOver labels still carry the
- * meaning, so dropping the text is the correct degradation.
- */
-const TAB_LABEL_SCALE_LIMIT = 1.25;
 
 function MainTabs() {
   const { color, isDark } = useTheme();
@@ -283,9 +274,6 @@ function MainTabs() {
       userDetails?.account_type === "merchant" &&
       userDetails?.merchant_approval_status !== "approved"
     );
-  const fontScale = PixelRatio.getFontScale();
-  const showTabLabels = fontScale <= TAB_LABEL_SCALE_LIMIT;
-
   return (
     <Tab.Navigator
       screenListeners={{
@@ -301,16 +289,22 @@ function MainTabs() {
           backgroundColor: color.canvas,
           height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
           paddingBottom: insets.bottom + TAB_BAR_PADDING,
-          paddingTop: showTabLabels ? TAB_BAR_PADDING : 12,
+          paddingTop: TAB_BAR_PADDING,
           borderTopColor: color.navLine,
           borderTopWidth: 1,
+          // react-navigation adds elevation 8 on Android, a drop shadow the design
+          // (and iOS) does not have: only the 1px line above.
+          elevation: 0,
         },
-        tabBarShowLabel: showTabLabels,
+        // Labels always show. They used to drop above font scale 1.25, but they
+        // do not scale (below), so that only cost Android phones on "Large"
+        // font (1.3, common here) their labels while every other phone had them.
+        tabBarShowLabel: true,
         tabBarIconStyle: {
           marginTop: 0,
         },
         // The label is chrome, so it holds its size rather than tracking the
-        // content ramp; the cap above removes it entirely past 1.25.
+        // content ramp: five 14pt labels always fit five slots, at 360dp too.
         tabBarAllowFontScaling: false,
         tabBarLabelStyle: {
           fontSize: fontSize.sm,

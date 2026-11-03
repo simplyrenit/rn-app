@@ -23,6 +23,9 @@ const DeleteAccountModal = memo(({
 }) => {
   const { color, shadow } = useTheme();
   return <Modal
+        // Android: draw under the status bar too, so the scrim covers it and
+        // insets.top means the same thing as on iOS.
+        statusBarTranslucent
     visible={open}
     transparent={true}
     animationType="slide"

@@ -634,7 +634,10 @@ export function ChatBubble({
         )
       }
       {
-        !!fullImage && <Modal visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
+        !!fullImage && <Modal
+        // Android: draw under the status bar too, so the scrim covers it and
+        // insets.top means the same thing as on iOS.
+        statusBarTranslucent visible={!!fullImage} transparent={true} onRequestClose={() => setFullImage(null)}>
           {/* flex: 1, not the window height: on Android the window height and the
               modal's own area differ by the status/nav bars, which left a strip
               of thread showing or pushed the image off-centre. */}

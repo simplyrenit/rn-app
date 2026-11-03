@@ -99,7 +99,10 @@ const Dropdown: React.FC<DropdownProps> = ({
       </TouchableOpacity>
 
       {isOpen && (
-        <Modal visible={isOpen} transparent onDismiss={() => setIsOpen(false)} onRequestClose={() => setIsOpen(false)}>
+        <Modal
+        // Android: draw under the status bar too, so the scrim covers it and
+        // insets.top means the same thing as on iOS.
+        statusBarTranslucent visible={isOpen} transparent onDismiss={() => setIsOpen(false)} onRequestClose={() => setIsOpen(false)}>
           <View style={{ height: '100%', width: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: ink.scrim(isDarkMode), position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50 }} /* onTouchEnd={() => setIsOpen(false)} */>
 
             <View style={{ backgroundColor: ink.surface(isDarkMode), width: '100%' }}>

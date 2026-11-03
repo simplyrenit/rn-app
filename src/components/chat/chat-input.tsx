@@ -419,6 +419,9 @@ export function ChatInput({
 
       {/* Preview Modal */}
       <Modal
+        // Android: draw under the status bar too, so the scrim covers it and
+        // insets.top means the same thing as on iOS.
+        statusBarTranslucent
         visible={isPreviewVisible}
         transparent={true}
         animationType="slide"

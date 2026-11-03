@@ -95,7 +95,6 @@ import { ProductsSkeleton } from "./products-skeleton";
  */
 const RAIL_GAP = 16;
 const REVIEW_CARD_WIDTH = 285;
-const SIMILAR_CARD_WIDTH = 163;
 
 /** The pinned band's own height, below the safe-area inset. */
 const BAND_HEIGHT = 56;
@@ -1152,7 +1151,12 @@ export default function DetailsScreen() {
               }}
             >
               {similarProducts.map((item) => (
-                <View key={item.name} style={{ width: SIMILAR_CARD_WIDTH }}>
+                <View
+                  key={item.name}
+                  // Home's rail formula (product-rail.tsx): 163 at 390, and the
+                  // same 8pt peek of the next card at 360 and 440.
+                  style={{ width: Math.floor((windowWidth - SCREEN_GUTTER - 2 * RAIL_GAP - 8) / 2) }}
+                >
                   {/* The Home rails' tile, not a second one: same width, same
                       8pt photo radius, same bare corner heart. */}
                   <Card

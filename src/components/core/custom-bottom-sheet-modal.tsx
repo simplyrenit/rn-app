@@ -120,6 +120,9 @@ const CustomBottomSheetModal = forwardRef<
 
     return (
       <BottomSheetModal
+        // The window already shrinks for the keyboard (adjustResize); gorhom's
+        // default adjustPan lifted the sheet by the keyboard height again.
+        android_keyboardInputMode="adjustResize"
         // The radius has to sit on the background, not only on the handle:
         // gorhom clips the sheet to backgroundStyle, so a rounded handle over a
         // square background still rendered square top corners.

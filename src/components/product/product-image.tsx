@@ -330,6 +330,9 @@ export function ProductImage({
 
       {!!fullImage && (
         <Modal
+        // Android: draw under the status bar too, so the scrim covers it and
+        // insets.top means the same thing as on iOS.
+        statusBarTranslucent
           visible={!!fullImage}
           transparent
           onRequestClose={() => setFullImage(null)}

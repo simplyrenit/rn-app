@@ -5,13 +5,13 @@ import { Platform, StatusBar, Text, TextInput, View } from "react-native";
 import { GlobalProvider } from "@/context/global-context";
 import { ListDraftProvider } from "@/context/list-draft-context";
 import { AppErrorBoundary } from "@/components/error-boundary";
-import Navigation from "@/navigation/nav";
+import Navigation, { TAB_BAR_CONTENT_HEIGHT } from "@/navigation/nav";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { AutocompleteDropdownContextProvider } from "react-native-autocomplete-dropdown";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { ToastBody } from "@/components/core/toast";
 import "react-native-get-random-values";
@@ -108,8 +108,7 @@ export default function App() {
                     <AppErrorBoundary>
                       <Navigation />
                     </AppErrorBoundary>
-                    {/* @ts-ignore */}
-                    <Toast config={toastConfig} />
+                    <AppToast />
                   </BottomSheetModalProvider>
                 </SafeAreaProvider>
               </GestureHandlerRootView>
@@ -121,11 +120,23 @@ export default function App() {
   );
 }
 
+/**
+ * Toasts rise from above the tab bar on every phone. A fixed 64pt offset sat on
+ * the tab icons (81pt + the home-indicator inset) and, on stack screens, on the
+ * booking and shop bottom bars, by a different amount per device. The tab bar's
+ * own height plus the inset clears both; the product page still passes its
+ * measured bar height per call.
+ */
+function AppToast() {
+  const insets = useSafeAreaInsets();
+  // @ts-ignore
+  return <Toast config={toastConfig} bottomOffset={TAB_BAR_CONTENT_HEIGHT + insets.bottom + 8} />;
+}
+
 const toastConfig = {
-  // Rendered inside the provider tree so it can read the theme. The bottom
-  // offset clears the tab bar without hardcoding its height.
+  // Rendered inside the provider tree so it can read the theme.
   customToast: (props: any) => (
-    <View style={{ width: "100%", alignItems: "center", marginBottom: 24 }}>
+    <View style={{ width: "100%", alignItems: "center" }}>
       <ToastBody {...props} />
     </View>
   ),
