@@ -12,7 +12,6 @@ import { TopPicks } from "@/components/home/sections/top-picks";
 import { useGlobalContext } from "@/context/global-context";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 
@@ -48,7 +47,6 @@ export default function Home() {
     void getNotifications();
   }, [isAuthenticated]);
 
-  const tabBarHeight = useBottomTabBarHeight();
 
   return (
     <StaticContainer width={100} edges={["top", "left", "right"]}>
@@ -82,10 +80,10 @@ export default function Home() {
       <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
-        // Without this the last section renders behind the tab bar. The height
-        // is measured rather than hardcoded because the bar is a different
-        // height on iOS and Android and includes the safe-area inset.
-        contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
+        // The tab bar is part of the layout, not floating over the screen, so the
+        // scroll already ends above it; padding by its height again left a
+        // tab-bar-sized blank (105pt here) after the last item on every phone.
+        contentContainerStyle={{ paddingBottom: 24 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

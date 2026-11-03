@@ -10,7 +10,6 @@ import { useGlobalContext } from "@/context/global-context";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { BackendProduct, useTypedNavigation } from "@/lib/types";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { FlatList, RefreshControl, View, useWindowDimensions } from "react-native";
 import { HeartIcon } from "react-native-heroicons/outline";
@@ -26,7 +25,6 @@ const COLUMN_GAP = 16;
 const TOPBAR_PADDING = 16;
 
 export default function Saved() {
-  const tabBarHeight = useBottomTabBarHeight();
   const { favorites, loading, refreshing, refetch } = useSaved();
   const { authTokens, isAuthenticated } = useGlobalContext();
   const { color, isDark } = useTheme();
@@ -114,11 +112,11 @@ export default function Saved() {
                   colors={[color.brand]}
                 />
               }
-              // Measured rather than a fixed percentage: hp("10%") was less
-              // than the iOS tab bar height, so the last row stayed clipped.
+              // The tab bar is in the layout below this grid, so the scroll
+              // already ends above it; bar-height padding doubled the gap.
               contentContainerStyle={{
                 gap: 24,
-                paddingBottom: tabBarHeight,
+                paddingBottom: 24,
                 flexGrow: favorites.length ? 0 : 1,
                 justifyContent: favorites.length ? "flex-start" : "center",
               }}

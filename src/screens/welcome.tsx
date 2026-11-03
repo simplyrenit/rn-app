@@ -89,7 +89,10 @@ export default function OnboardingScreen(): JSX.Element {
               <StyledView
                 key={index}
                 className="items-center justify-center w-full border border-transparent"
-                style={{ height: carouselHeight }}
+                // The dots below are pulled up over the carousel's bottom edge, so
+                // keep the copy clear of them: on a 360x640 Android the two-line
+                // description ran under the dots.
+                style={{ height: carouselHeight, paddingBottom: 16 }}
               >
                 <StyledImage
                   source={isDarkMode ? item.darkImage : item.lightImage}

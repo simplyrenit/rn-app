@@ -8,7 +8,6 @@ import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { fontFamily } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { Conversation, useTypedNavigation } from "@/lib/types";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect } from "@react-navigation/native";
 import React from "react";
 import { FlatList, TextInput, View } from "react-native";
@@ -21,7 +20,6 @@ import {
 const SEARCH_HEIGHT = 48;
 
 export default function Chat() {
-  const tabBarHeight = useBottomTabBarHeight();
   const { authTokens, isAuthenticated, userDetails } = useGlobalContext();
   const [conversations, setConversations] = React.useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -162,10 +160,10 @@ export default function Chat() {
         >
           <FlatList
             data={filtered}
-            // Measured tab bar height, so the last conversation is not hidden
-            // behind the bar. Differs between iOS and Android.
+            // The tab bar sits below the list in the layout, so no bar-height
+            // padding is needed here (it doubled the gap).
             contentContainerStyle={{
-              paddingBottom: tabBarHeight,
+              paddingBottom: 24,
               flexGrow: filtered.length ? 0 : 1,
               justifyContent: filtered.length ? "flex-start" : "center",
             }}
