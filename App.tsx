@@ -60,7 +60,6 @@ if (Platform.OS === "android") {
 // discarded the entire query cache with it.
 const queryClient = new QueryClient();
 
-
 export default function App() {
   const [loaded, error] = useFonts({
     "PlusJakartaSans-Regular": require("./assets/fonts/PlusJakartaSans-Regular.ttf"),
