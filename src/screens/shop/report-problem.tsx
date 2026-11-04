@@ -26,7 +26,6 @@ import { failedPhotosText, forgetAddresses, refusedFiles, urlsOf } from "@/lib/e
 import { customerName } from "@/lib/shop-ring";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
-import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { StackActions, useRoute } from "@react-navigation/native";
 import React, { useRef, useState } from "react";
@@ -53,7 +52,6 @@ export default function ShopReportProblemScreen() {
   const { number } = params;
   const navigation = useTypedNavigation();
   const queryClient = useQueryClient();
-  const keyboard = useKeyboardInset();
   const query = useShopBooking(number);
   const booking = query.data;
   const now = useServerNow(booking?.server_time, query.dataUpdatedAt);
@@ -145,7 +143,7 @@ export default function ShopReportProblemScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.md + keyboard }}
+        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.md }}
       >
         <View style={{ gap: 2 }}>
           <Text role="screenTitle" accessibilityRole="header">

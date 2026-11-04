@@ -45,7 +45,10 @@ export function DayPickerModal({
   const [picked, setPicked] = useState<string | null>(value);
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onCancel}>
+    <Modal
+        // Android: draw under the status bar too, so the scrim covers it and
+        // insets.top means the same thing as on iOS.
+        statusBarTranslucent visible transparent animationType="fade" onRequestClose={onCancel}>
       <TouchableOpacity
         style={[styles.backdrop, { backgroundColor: color.scrim }]}
         activeOpacity={1}

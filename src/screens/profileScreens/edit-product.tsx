@@ -276,7 +276,8 @@ const EditProductScreen: React.FC = () => {
                 />
               </View>
 
-              <View className="py-4 justify-between items-center">
+              {/* Shrinks: content-sized, a long title pushed this column past the sheet's right edge. */}
+              <View className="py-4 justify-between items-center" style={{ flexShrink: 1 }}>
                 <View>
                   <Text
                     fontSize="text-lg"

@@ -23,13 +23,15 @@ const WITH_MINE = [...SHOP_MODES, { key: "mine", label: "My rentals" }] as const
  * For a merchant it is the Rentals tab, with the customer's own rentals one tap
  * away (`mine`), since the same account can rent too. Any other owner reaches it
  * from Profile, as a screen of its own with a back arrow. The tab bar's height
- * is read from where it is drawn: a tab has one, a stack screen does not.
+ * context says which: a tab has one, a stack screen does not.
  */
 export default function ShopHome({ mine }: { mine?: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   const tabBar = useContext(BottomTabBarHeightContext);
   const [mode, setMode] = useState<Mode>("today");
-  const bottomPad = tabBar ?? insets.bottom;
+  // In a tab the bar sits below this screen in the layout and already clears
+  // the home indicator, so nothing is added; as a stack screen, the inset.
+  const bottomPad = tabBar !== undefined ? 0 : insets.bottom;
 
   return (
     <NonScrollableContainer>

@@ -30,10 +30,13 @@ import React, { useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
 import { ScrollView, View } from "react-native";
 import { CheckCircleIcon } from "react-native-heroicons/outline";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function Return({ booking, receivedAt, watching }: { booking: BookingShop; receivedAt: number; watching: boolean }) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
+  // NonScrollableContainer leaves the bottom edge to the screen: clear the home indicator.
+  const insets = useSafeAreaInsets();
   const now = useServerNow(booking.server_time, receivedAt, 60_000);
   const { number } = booking;
   const first = booking.customer.first_name;
@@ -71,7 +74,7 @@ function Return({ booking, receivedAt, watching }: { booking: BookingShop; recei
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg }}
+      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg + insets.bottom }}
     >
       <View style={{ gap: 2 }}>
         <Text role="screenTitle" accessibilityRole="header">

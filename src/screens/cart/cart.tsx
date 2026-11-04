@@ -252,7 +252,8 @@ function ShopCard({
               <MapPinIcon size={16} color={color.textBody} />
             )}
             {/* The cart has no fee to show: it is worked out for the dates and address at checkout (FIXES-r1 B1 row 7). */}
-            <Text fontSize="text-sm" tone="body">
+            {/* flexShrink: beside the icon, at 360dp or a large font the words wrap instead of running past the card. */}
+            <Text fontSize="text-sm" tone="body" style={{ flexShrink: 1 }}>
               {shop.delivers ? "Delivers · fee at checkout" : "Self pickup only"}
             </Text>
           </View>

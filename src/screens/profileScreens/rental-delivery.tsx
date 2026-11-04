@@ -452,7 +452,8 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
               ) : noAreas ? null : (
                 <View style={card}>
                   <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                    <Text fontSize="text-md" fontWeight="font-bold" accessibilityRole="header">
+                    {/* Shrinks, so "N off" stays on screen at a large font size on a 360dp phone. */}
+                    <Text fontSize="text-md" fontWeight="font-bold" accessibilityRole="header" style={{ flexShrink: 1 }}>
                       Areas you deliver to
                     </Text>
                     {offCount > 0 ? (
@@ -561,7 +562,8 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
         style={{
           paddingHorizontal: SCREEN_GUTTER,
           paddingTop: space.sm,
-          paddingBottom: insets.bottom + space.sm,
+          // 14pt at least where there is no home indicator (iPhone SE, Android): 8 sat the button on the screen edge.
+          paddingBottom: Math.max(insets.bottom + space.sm, space.md),
           gap: space.sm,
           borderTopWidth: 1,
           borderTopColor: color.line,

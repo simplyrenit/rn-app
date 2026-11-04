@@ -54,6 +54,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   SpecFilterPanel,
   isBrowseLabel,
@@ -100,6 +101,9 @@ function sheetHeightForTab(tab: string, showSubCategory: boolean) {
       return "60%";
   }
 }
+
+/** The frame height the percentages above were tuned on (390x844). */
+const FRAME_HEIGHT = 844;
 
 /** Marks a tab whose filter is currently set, so active filters are findable. */
 function tabHasValue(tab: string, filters: any) {
@@ -197,7 +201,19 @@ export default function SearchResults() {
   const isDark = theme === "dark";
   const { color, shadow } = useTheme();
   const { favorites } = useSaved();
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  // The tab heights are content heights measured on the 844pt frame. As a share
+  // of a 667pt SE or a 640dp Android they came out ~80pt short and cut the Sort
+  // rows and the Show results footer, so they never shrink below the frame's
+  // size (the sheet caps itself at the screen). The home-indicator inset is
+  // added on top, since the footer now clears it.
+  const filterSheetHeight = (tab: string) =>
+    Math.round(
+      (parseFloat(sheetHeightForTab(tab, showSubCategory)) / 100) *
+        Math.max(screenHeight, FRAME_HEIGHT) +
+        insets.bottom
+    );
   const cardWidth = Math.floor(
     (screenWidth - 2 * SCREEN_GUTTER - COLUMN_GAP) / 2
   );
@@ -1112,7 +1128,7 @@ export default function SearchResults() {
           asks for the height it actually needs. */}
       <CustomBottomSheetModal
         ref={bottomSheetRef}
-        snapPoints={[sheetHeightForTab(activeTab, showSubCategory)]}
+        snapPoints={[filterSheetHeight(activeTab)]}
         isDark={isDark}
         scrollView={false}
       >
@@ -1284,6 +1300,9 @@ export default function SearchResults() {
               gap: 12,
               paddingHorizontal: SCREEN_GUTTER,
               paddingTop: 12,
+              // The sheet runs to the bottom of the screen, so without this the
+              // home indicator sat across the Show results button.
+              paddingBottom: insets.bottom,
               borderTopWidth: 1,
               borderTopColor: ink.line(isDark),
             }}

@@ -192,7 +192,8 @@ export default function ListReadingScreen() {
             alignItems: "center",
           }}
         >
-          <Text fontSize="text-md" fontWeight="font-bold">
+          {/* Wraps before the count does: at 360dp and a large font the count was pushed out of the panel. */}
+          <Text fontSize="text-md" fontWeight="font-bold" style={{ flexShrink: 1 }}>
             Filling in your listing
           </Text>
           <Text fontSize="text-sm" tone="dim">

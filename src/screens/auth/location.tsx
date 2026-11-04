@@ -721,6 +721,9 @@ export default function LocationScreen() {
 
               {/* Bottom sheet */}
               <BottomSheet
+        // The window already shrinks for the keyboard (adjustResize); gorhom's
+        // default adjustPan lifted the sheet by the keyboard height again.
+        android_keyboardInputMode="adjustResize"
                 ref={bottomSheetRef}
                 snapPoints={snapPoints}
                 enablePanDownToClose={false}
@@ -947,7 +950,7 @@ export default function LocationScreen() {
                               color={ink.text(isDarkMode)}
                               size={20}
                             />
-                            <Text fontSize="text-sm">{item.name}</Text>
+                            <Text fontSize="text-sm" className="flex-shrink">{item.name}</Text>
                           </TouchableOpacity>
                         )}
                       />

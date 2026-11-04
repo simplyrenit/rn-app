@@ -9,7 +9,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { BackHandler, Keyboard, StyleSheet } from "react-native";
+import { BackHandler, Keyboard, StyleSheet, useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollView } from "react-native-gesture-handler";
 
 interface CustomBottomSheetModalProps {
@@ -47,6 +48,8 @@ const CustomBottomSheetModal = forwardRef<
     const modalRef = useRef<BottomSheetModal>(null);
     const { theme } = useGlobalContext();
     const { color } = themeFor(theme);
+    const { height: windowHeight } = useWindowDimensions();
+    const insets = useSafeAreaInsets();
 
     useImperativeHandle(ref, () => modalRef.current as BottomSheetModal);
 
@@ -86,11 +89,20 @@ const CustomBottomSheetModal = forwardRef<
       return () => subscription.remove();
     }, [isOpen]);
 
+    // A fixed-height sheet sized on a 390x844 phone (600-640pt) is taller than
+    // a 360x640 Android or an SE once the status bar is taken off, and gorhom
+    // then pins it at y=0 with the grabber and title under the status bar.
+    // Cap every numeric point to the space below the top inset; the sheet's own
+    // scroll view takes the overflow.
+    const maxSheetHeight = windowHeight - insets.top;
+    const fittedSnapPoints = snapPoints.map((point) =>
+      typeof point === "number" ? Math.min(point, maxSheetHeight) : point
+    );
     const adjustedSnapPoints = isKeyboardVisible
-      ? snapPoints.map((point) =>
+      ? fittedSnapPoints.map((point) =>
           typeof point === "string" ? "90%" : point * 0.9
         )
-      : snapPoints;
+      : fittedSnapPoints;
 
     const renderBackdrop = (props: any) => (
       <BottomSheetBackdrop
@@ -108,6 +120,9 @@ const CustomBottomSheetModal = forwardRef<
 
     return (
       <BottomSheetModal
+        // The window already shrinks for the keyboard (adjustResize); gorhom's
+        // default adjustPan lifted the sheet by the keyboard height again.
+        android_keyboardInputMode="adjustResize"
         // The radius has to sit on the background, not only on the handle:
         // gorhom clips the sheet to backgroundStyle, so a rounded handle over a
         // square background still rendered square top corners.

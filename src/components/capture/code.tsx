@@ -91,12 +91,15 @@ export function CodeInput({
 
   return (
     <View style={{ alignItems: "center", opacity: disabled ? 0.5 : 1 }}>
-      <View style={{ flexDirection: "row", justifyContent: "center", gap: space.sm }}>
+      {/* Six 46pt boxes and their gaps are 316pt: wider than a card at 375pt or 360dp. The boxes
+          shrink to fit there and stay 46 wide where there is room. */}
+      <View style={{ alignSelf: "stretch", flexDirection: "row", justifyContent: "center", gap: space.sm }}>
         {cells.map((digit, index) => (
           <View
             key={index}
             style={{
-              width: 46,
+              flex: 1,
+              maxWidth: 46,
               height: 60,
               borderRadius: radius.button,
               borderWidth: 1,

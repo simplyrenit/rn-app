@@ -273,7 +273,8 @@ function BookingPage({
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.md }}>
-          <Text role="screenTitle" accessibilityRole="header">
+          {/* Shrinks before the pill does: at 360dp and a large font the number pushed it off the edge. */}
+          <Text role="screenTitle" accessibilityRole="header" style={{ flexShrink: 1 }}>
             {booking.number}
           </Text>
           <Pill label={pill.label} tone={pill.tone} />

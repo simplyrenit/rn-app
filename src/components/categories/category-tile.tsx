@@ -147,6 +147,10 @@ export function CategoryTile({
         numberOfLines={oneWord ? 1 : undefined}
         adjustsFontSizeToFit={oneWord}
         minimumFontScale={0.8}
+        // The label is held to its cell (70dp at 360), so it does not follow the
+        // system font size: at Android's "Large" (1.3) "Automobiles" and
+        // "categories" broke mid-word. The spoken label still carries the name.
+        maxFontSizeMultiplier={1}
         style={{ marginTop: LABEL_GAP, textAlign: "center", width: "100%" }}
       >
         {label}

@@ -13,6 +13,7 @@ import {
   InformationCircleIcon,
 } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 
 /**
  * The small pieces every booking screen is built from (BK-01 to BK-12): the
@@ -296,12 +297,17 @@ export function TextButton({
 export function BottomBar({ children }: { children: React.ReactNode }) {
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
+  // The button sits in the home-indicator zone, as BK-02 draws it (~22pt off the edge), not 16pt above
+  // it: the inset itself on notched phones, 14pt where there is none (SE, Android 3-button nav).
+  // iOS: with the keyboard up the bar sits on it (the screen's container lifts it), so the home-indicator
+  // inset would leave a 34pt gap above the keys. 0 on Android, where adjustResize does the lifting.
+  const keyboard = useKeyboardInset();
   return (
     <View
       style={{
         paddingHorizontal: SCREEN_GUTTER,
         paddingTop: space.md,
-        paddingBottom: space.md + insets.bottom,
+        paddingBottom: keyboard ? space.md : Math.max(insets.bottom, space.md),
         borderTopWidth: 1,
         borderTopColor: color.line,
         backgroundColor: color.canvas,

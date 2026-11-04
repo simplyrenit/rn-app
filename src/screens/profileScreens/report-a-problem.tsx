@@ -10,7 +10,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { toast } from "@/lib/toast";
-import { ink, colors } from "@/lib/design-tokens";
+import { ink, colors, fontFamily, space } from "@/lib/design-tokens";
 
 const ReportAProblemScreen: React.FC = () => {
   const { theme } = useGlobalContext();
@@ -51,8 +51,11 @@ const ReportAProblemScreen: React.FC = () => {
 
         <View className="py-3">
           <TextInput
+            // The app face and the core Text's 1.4 cap: bare, the box typed in the system font, uncapped.
+            maxFontSizeMultiplier={1.4}
             style={{
               textAlignVertical: "top",
+              fontFamily: fontFamily.regular,
               // borderBlockColor: isDarkMode ? "#333" : "#FFF",
               color: ink.text(isDarkMode),
               // borderColor: isDarkMode ? "#444" : "#CCC",
@@ -80,7 +83,8 @@ const ReportAProblemScreen: React.FC = () => {
         >
           Have any more questions?
         </Text>
-        <View className="flex-row items-center mt-1">
+        {/* Wraps: at a large font size on a 360dp phone the address and chevron ran off the edge. */}
+        <View className="flex-row flex-wrap items-center mt-1">
           <Text
             fontSize="text-sm"
             fontWeight="font-bold"
@@ -102,7 +106,8 @@ const ReportAProblemScreen: React.FC = () => {
           </View>
         </View>
       </View>
-      <View className="pt-2 px-gutter" style={{ paddingBottom: insets.bottom + 8 }}>
+      {/* 14pt at least where there is no home indicator (iPhone SE, Android). */}
+      <View className="pt-2 px-gutter" style={{ paddingBottom: Math.max(insets.bottom + space.sm, space.md) }}>
         <Button
           disabled={!feedback.trim() || submitting.current}
           onPress={handleReportPress}

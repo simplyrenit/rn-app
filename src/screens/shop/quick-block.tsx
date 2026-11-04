@@ -27,7 +27,7 @@ import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { forwardRef, useEffect, useRef, useState } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { CalendarIcon, InformationCircleIcon, MagnifyingGlassIcon, MinusIcon, PlusIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -44,6 +44,7 @@ export const QuickBlockSheet = forwardRef<BottomSheetModal, { onBlocked?: (block
   ({ onBlocked }, ref) => {
     const { color, isDark } = useTheme();
     const insets = useSafeAreaInsets();
+    const { height } = useWindowDimensions();
     const queryClient = useQueryClient();
     const [form, setForm] = useState<QuickBlockForm>(() => startForm());
     const [picking, setPicking] = useState(false);
@@ -111,7 +112,10 @@ export const QuickBlockSheet = forwardRef<BottomSheetModal, { onBlocked?: (block
         <CustomBottomSheetModal
           ref={ref}
           isDark={isDark}
-          snapPoints={[640 + insets.bottom]}
+          // The Figma height, but never taller than the window below the status bar: on a
+          // 640dp Android phone 640 is the whole screen and the grabber went under the clock.
+          // The sheet scrolls, so the rest is a scroll away.
+          snapPoints={[Math.min(640 + insets.bottom, height - insets.top)]}
           frame
           onDismiss={reset}
         >

@@ -94,6 +94,7 @@ export default function ConfirmPassword() {
                 textContentType="newPassword"
                 autoComplete="new-password"
                 accessibilityLabel="Confirm password"
+                maxFontSizeMultiplier={1.4}
                 style={{
                   color: ink.text(isDarkMode),
                   fontFamily: fontFamily.regular,
@@ -115,7 +116,7 @@ export default function ConfirmPassword() {
             {error && (
               <View className="flex flex-row items-center mt-4 space-x-3">
                 <InformationCircleIcon size={14} color={ink.danger(true)} />
-                <Text tone="danger" className="text-sm">{error}</Text>
+                <Text tone="danger" className="text-sm flex-shrink">{error}</Text>
               </View>
             )}
           </View>

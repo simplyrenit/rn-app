@@ -19,7 +19,6 @@ import { selectionFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import ShopHome from "@/screens/shop/home";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useMemo, useState } from "react";
 import { FlatList, RefreshControl, TouchableOpacity, View } from "react-native";
@@ -87,7 +86,6 @@ function Frame({ embedded, children }: { embedded?: boolean; children: React.Rea
 }
 
 function MyRentals({ embedded = false }: { embedded?: boolean }) {
-  const tabBarHeight = useBottomTabBarHeight();
   const navigation = useTypedNavigation();
   const { color, isDark } = useTheme();
   const { authTokens, isAuthenticated, userDetailsFailed, fetchUserDetails } = useGlobalContext();
@@ -199,7 +197,7 @@ function MyRentals({ embedded = false }: { embedded?: boolean }) {
             <Skeleton width="100%" height={88} />
           </View>
         ) : failed ? (
-          <View style={{ flex: 1, justifyContent: "center", paddingBottom: tabBarHeight }}>
+          <View style={{ flex: 1, justifyContent: "center" }}>
             <EmptyState
               variant="error"
               icon={<ExclamationTriangleIcon size={28} color={color.danger} />}
@@ -251,7 +249,8 @@ function MyRentals({ embedded = false }: { embedded?: boolean }) {
             }
             contentContainerStyle={{
               gap: space.md,
-              paddingBottom: tabBarHeight,
+              // The tab bar is in the layout below this list; no bar-height padding.
+              paddingBottom: 24,
               flexGrow: shown.length ? 0 : 1,
               justifyContent: shown.length ? "flex-start" : "center",
             }}

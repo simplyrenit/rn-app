@@ -81,6 +81,7 @@ export default function SetPassword() {
                 textContentType="newPassword"
                 autoComplete="new-password"
                 accessibilityLabel="Password"
+                maxFontSizeMultiplier={1.4}
                 style={{
                   color: ink.text(isDarkMode),
                   fontFamily: fontFamily.regular,

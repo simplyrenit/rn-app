@@ -193,6 +193,9 @@ export function ChatHeader({
       </TouchableOpacity>
 
       <Modal
+        // Android: draw under the status bar, so the menu's measured pageY and
+        // the modal's origin are the same frame.
+        statusBarTranslucent
         transparent={true}
         animationType="fade"
         visible={menuVisible}

@@ -73,6 +73,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { ArrowUturnLeftIcon, CameraIcon, CheckCircleIcon, ClockIcon, EyeIcon } from "react-native-heroicons/outline";
 import { CheckIcon } from "react-native-heroicons/solid";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
 
 const NOTICE_ICON = { camera: CameraIcon, eye: EyeIcon, clock: ClockIcon } as const;
@@ -199,7 +200,9 @@ function Viewfinder({
       onPress={onPress}
       style={{
         flex: 1,
-        minHeight: 240,
+        // The frame fills what is left; the floor gives way on a 640dp Android phone, where a
+        // notice above it would push the shutter off the screen.
+        minHeight: 200,
         borderRadius: radius.card,
         // A camera is dark in both themes, as the frames draw it.
         backgroundColor: darkColors.surface,
@@ -382,6 +385,9 @@ export default function CaptureScreen() {
   const otherName = params.other || (role === "customer" ? "the shop" : "the customer");
   const navigation = useTypedNavigation();
   const { color } = useTheme();
+  // The walk's shutter and caption are pinned to the foot, and NonScrollableContainer leaves
+  // that edge to the screen: they clear the home indicator themselves.
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { userDetails } = useGlobalContext();
   const username = userDetails?.username;
@@ -828,7 +834,7 @@ export default function CaptureScreen() {
     <NonScrollableContainer>
       <SubpageHeader title="Record condition" />
       {shot && shotIndex !== null ? (
-        <View style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.md, gap: space.md }}>
+        <View style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.md + insets.bottom, gap: space.md }}>
           {stuckNote ? (
             <Notice tone="warning" icon="warning">
               {stuckNote}
@@ -878,7 +884,7 @@ export default function CaptureScreen() {
           </View>
         </View>
       ) : step.kind === "video" ? (
-        <View style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.md, gap: space.md }}>
+        <View style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.md + insets.bottom, gap: space.md }}>
           <Viewfinder
             chip={`Video · up to ${durationLabel(VIDEO_SECONDS)}`}
             hint={videoHintText(draft.list.video_hint)}

@@ -18,9 +18,9 @@ import {
 } from "react-native-heroicons/outline";
 import {
   ActivityIndicator,
-  Dimensions,
   FlatList,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
@@ -37,14 +37,15 @@ const SHARE_ROW_HEIGHT = 51;
 /** The frame's Edit button under each card. */
 const EDIT_BUTTON_HEIGHT = 44;
 
-/**
- * An exact column width. Two cards at "48.5%" plus a 14pt gap comes to more
- * than the row, so the right-hand card was clipped against the screen edge.
- */
-const COLUMN_WIDTH =
-  (Dimensions.get("window").width - SCREEN_GUTTER * 2 - GRID_GAP) / 2;
-
 const MyProductScreen: React.FC = () => {
+  /**
+   * An exact column width. Two cards at "48.5%" plus a 14pt gap comes to more
+   * than the row, so the right-hand card was clipped against the screen edge.
+   * Read from the live window, not once at import: a display-size or
+   * split-screen change after launch left the columns sized for the old width.
+   */
+  const { width: windowWidth } = useWindowDimensions();
+  const columnWidth = (windowWidth - SCREEN_GUTTER * 2 - GRID_GAP) / 2;
   const { authTokens, isAuthenticated, userDetails } = useGlobalContext();
   const { getOwnerDetails } = useOwner();
   const [shopUrl, setShopUrl] = useState<string | null>(null);
@@ -203,7 +204,7 @@ const MyProductScreen: React.FC = () => {
           // row now says what state it is in, in one place and one language.
           const status = resolveListingStatus(item.status);
           return (
-            <View style={{ width: COLUMN_WIDTH }}>
+            <View style={{ width: columnWidth }}>
               <MyProductCard
                 id={item.name}
                 image={item.cover_image}
@@ -235,7 +236,8 @@ const MyProductScreen: React.FC = () => {
                 accessibilityLabel={`Edit ${item.title}`}
                 style={{
                   marginTop: 8,
-                  height: EDIT_BUTTON_HEIGHT,
+                  // A floor, so "Edit" at a large font size grows the button rather than clipping.
+                  minHeight: EDIT_BUTTON_HEIGHT,
                   flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "center",

@@ -4,15 +4,21 @@ import { EmptyState } from "@/components/core/empty-state";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useRailClaim } from "./rail-dedupe";
 import React from "react";
-import { ScrollView, View } from "react-native";
+import { ScrollView, View, useWindowDimensions } from "react-native";
 import type { Plan } from "@/lib/plans";
 
 // Measured off the Figma Home frame: 163pt cards (the photo is 176 tall, so the
 // tile's 163:176 ratio holds) with a 16pt gap, under a heading that sits 24pt
 // above them. Each section carries 16pt above and below, which is what makes
 // 16pt after the category grid and 32pt between two rails.
-const CARD_WIDTH = 163;
+//
+// The rail starts at the left gutter and runs off the right edge: on the 390pt
+// frame that is gutter + card + gap + card + gap, with an 8pt sliver of the
+// third card showing. A fixed 163 cut the second card off at 360dp and showed
+// a third of the next card at 440pt, so the width is derived from the window
+// the same way: 163 at 390, 148 at 360, 188 at 440.
 const GAP = 16;
+const PEEK = 8;
 const SECTION_PADDING = 16;
 const HEADING_GAP = 24;
 
@@ -57,6 +63,8 @@ export function ProductRail({
   emptyBody,
 }: Props) {
   const { favorites } = useSaved();
+  const { width: windowWidth } = useWindowDimensions();
+  const cardWidth = Math.floor((windowWidth - SCREEN_GUTTER - 2 * GAP - PEEK) / 2);
 
   // Three rankings over one small catalogue return the same items, so without
   // this the home screen showed the identical pair of listings under three
@@ -97,7 +105,7 @@ export function ProductRail({
           }}
         >
           {[0, 1, 2].map((key) => (
-            <ProductCardSkeleton key={key} width={CARD_WIDTH} />
+            <ProductCardSkeleton key={key} width={cardWidth} />
           ))}
         </View>
       ) : error ? (
@@ -119,7 +127,7 @@ export function ProductRail({
           }}
         >
           {visible.map((item) => (
-            <View key={item.name} style={{ width: CARD_WIDTH }}>
+            <View key={item.name} style={{ width: cardWidth }}>
               <Card
                 id={item.name}
                 image={item.cover_image ?? null}

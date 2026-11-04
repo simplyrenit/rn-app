@@ -571,7 +571,8 @@ export default function AddressDetailsScreen() {
         style={{
           paddingHorizontal: SCREEN_GUTTER,
           paddingTop: space.sm,
-          paddingBottom: insets.bottom + space.sm,
+          // 14pt at least where there is no home indicator (iPhone SE, Android): 8 sat the button on the screen edge.
+          paddingBottom: Math.max(insets.bottom + space.sm, space.md),
           borderTopWidth: 1,
           borderTopColor: color.line,
           backgroundColor: color.canvas,

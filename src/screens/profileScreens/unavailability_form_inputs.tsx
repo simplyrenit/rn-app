@@ -23,7 +23,8 @@ import moment from "moment-timezone";
 import { useProfile } from "@/backend/profile";
 
 import { toast } from "@/lib/toast";
-import { ink } from "@/lib/design-tokens";
+import { fontFamily, ink, space } from "@/lib/design-tokens";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/lib/theme";
 
 interface UnavailabilityProps {}
@@ -42,6 +43,7 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
   const { userDetails } = useGlobalContext();
   const isDarkMode = theme === "dark";
   const { color } = useTheme();
+  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [address, setAddress] = useState("");
@@ -170,6 +172,8 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
             What are you looking for? (Product Name)
           </Text>
           <View className="pt-3">
+            {/* Each input here sets the app face and the core Text's 1.4 cap: bare, they typed in the
+                system font and grew uncapped at a large system font size. */}
             <TextInput
               placeholder="e.g. Pressure washer"
               value={formData.productName}
@@ -177,6 +181,8 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
               onChangeText={(text) =>
                 setFormData({ ...formData, productName: text })
               }
+              maxFontSizeMultiplier={1.4}
+              style={{ fontFamily: fontFamily.regular }}
               className={`rounded-input h-11 border px-3  ${
                 isDarkMode
                   ? "border-input-line-dark text-white"
@@ -198,6 +204,8 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
               onChangeText={(text) =>
                 setFormData({ ...formData, noOfUnits: text })
               }
+              maxFontSizeMultiplier={1.4}
+              style={{ fontFamily: fontFamily.regular }}
               className={`rounded-input h-11 border px-3  ${
                 isDarkMode
                   ? "border-input-line-dark text-white"
@@ -224,13 +232,14 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
               } border px-2`}
             >
               <View className="flex flex-row h-full w-full items-center justify-between">
-                <View className="flex flex-row items-center space-x-4">
+                {/* Shrinks, one line: at a large font size on a 360dp phone the dates pushed the pencil out of the box. */}
+                <View className="flex flex-row items-center space-x-4" style={{ flexShrink: 1 }}>
                   <CalendarIcon
                     color={ink.text(isDarkMode)}
                     size={24}
                   />
                   {range.startDate && range.endDate ? (
-                    <Text fontSize="text-md">
+                    <Text fontSize="text-md" numberOfLines={1} style={{ flexShrink: 1 }}>
                       {formatDate(range.startDate)} -{" "}
                       {formatDate(range.endDate)}
                     </Text>
@@ -321,8 +330,10 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
                 ? "border-input-line-dark text-white"
                 : "border-input-line-light text-black"
             }`}
+            maxFontSizeMultiplier={1.4}
             style={{
               textAlignVertical: "top", // Ensures text starts at the top
+              fontFamily: fontFamily.regular,
             }}
           />
         </View>
@@ -359,6 +370,8 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
               value={contactDetail}
               placeholderTextColor={ink.dim(isDarkMode)}
               onChangeText={setContactDetail}
+              maxFontSizeMultiplier={1.4}
+              style={{ fontFamily: fontFamily.regular }}
               className={`rounded-input h-11 border px-3  ${
                 isDarkMode
                   ? "border-input-line-dark text-white"
@@ -368,7 +381,8 @@ const UnavailabilityFormInputs: React.FC<UnavailabilityProps> = () => {
           </View>
         </View>
       </KeyboardAwareScrollView>
-      <View className="py-2 px-gutter">
+      {/* The container leaves the bottom edge to the screen: py-2 alone put the button on the home indicator. */}
+      <View className="pt-2 px-gutter" style={{ paddingBottom: Math.max(insets.bottom + space.sm, space.md) }}>
         <Button
           disabled={
             !formData.productName ||

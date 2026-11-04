@@ -10,7 +10,11 @@ export function TermsAndPolicy(): JSX.Element {
   const isDark = theme === "dark";
 
   return (
-    <View className="flex w-[70%] self-center items-center">
+    // Full width with a wrapping link row: the two links and "&" are ~246pt at
+    // 14pt bold, wider than the old 70% box (245pt at 390), so they ran past it
+    // and, at 360dp with a larger font, off the screen edge. They now stay on one
+    // line wherever they fit and break before "Privacy Policy" where they do not.
+    <View className="flex w-full self-center items-center">
       <Text
         fontSize="text-xs"
         className={`text-center ${
@@ -19,7 +23,7 @@ export function TermsAndPolicy(): JSX.Element {
       >
         By continuing you agree to Renit’s
       </Text>
-      <View className="flex flex-row space-x-1">
+      <View className="flex flex-row flex-wrap justify-center space-x-1">
         <TouchableOpacity onPress={() => router.navigate("Terms")}>
           <Text
             fontSize="text-sm"

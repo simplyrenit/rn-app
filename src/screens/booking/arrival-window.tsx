@@ -167,6 +167,8 @@ export default function ArrivalWindowScreen() {
                     fontWeight={selected ? "font-bold" : "font-normal"}
                     numberOfLines={1}
                     adjustsFontSizeToFit
+                    // Bounded beside the tick: Android only shrinks text to fit a width it is held to.
+                    style={{ flexShrink: 1 }}
                   >
                     {windowLabel(slot)}
                   </Text>

@@ -38,12 +38,12 @@ import {
 import { payoutPending, returnCopy } from "@/lib/shop-handover";
 import { customerName } from "@/lib/shop-ring";
 import { useTheme } from "@/lib/theme";
-import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { useTypedNavigation } from "@/lib/types";
 import React, { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { CheckCircleIcon } from "react-native-heroicons/outline";
 import { useQueryClient } from "react-query";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Props {
   booking: BookingShop;
@@ -70,7 +70,9 @@ function Banner({ courier }: { courier: OwnerCourier }) {
 export function CourierPack({ booking, courier, receivedAt }: Props) {
   const navigation = useTypedNavigation();
   const queryClient = useQueryClient();
-  const keyboard = useKeyboardInset();
+  // NonScrollableContainer already lifts the screen above the iOS keyboard and leaves the
+  // bottom edge to the screen: the last button clears the home indicator here.
+  const insets = useSafeAreaInsets();
   const now = useServerNow(booking.server_time, receivedAt, 30_000);
   const { running, run } = useGuardedTap();
   const { number } = booking;
@@ -142,7 +144,7 @@ export function CourierPack({ booking, courier, receivedAt }: Props) {
     <ScrollView
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg + keyboard }}
+      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg + insets.bottom }}
     >
       <View style={{ gap: 2 }}>
         <Text role="screenTitle" accessibilityRole="header">
@@ -294,6 +296,8 @@ export function CourierPack({ booking, courier, receivedAt }: Props) {
 export function CourierReturn({ booking, courier, receivedAt, watching }: Props) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
+  // The container leaves the bottom edge to the screen: clear the home indicator.
+  const insets = useSafeAreaInsets();
   const now = useServerNow(booking.server_time, receivedAt, 60_000);
   const { number } = booking;
   const first = booking.customer.first_name;
@@ -310,7 +314,7 @@ export function CourierReturn({ booking, courier, receivedAt, watching }: Props)
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg }}
+      contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.md, paddingBottom: space.lg + insets.bottom }}
     >
       <View style={{ gap: 2 }}>
         <Text role="screenTitle" accessibilityRole="header">

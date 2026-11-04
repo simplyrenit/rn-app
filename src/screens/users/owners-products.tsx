@@ -4,7 +4,7 @@ import { IconButton } from "@/components/core/icon-button";
 import { RouteProps } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React from "react";
-import { Dimensions, FlatList, Share, View } from "react-native";
+import { FlatList, Share, View, useWindowDimensions } from "react-native";
 import { IOSShareIcon } from "@/icons/share";
 import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -13,19 +13,20 @@ import { withSource } from "@/lib/attribution";
 
 const GRID_GAP = 14;
 
-/**
- * An exact column width, not a percentage.
- *
- * Two cards at "48.5%" plus a 14pt gap comes to more than the row, so the
- * second card overflowed and was clipped on the right edge.
- */
-const COLUMN_WIDTH =
-  (Dimensions.get("window").width - SCREEN_GUTTER * 2 - GRID_GAP) / 2;
-
 const OwnersProductsScreen: React.FC = () => {
   const { params } = useRoute<RouteProps<"OwnersProducts">>();
   const { products, name, shopUrl } = params;
   const { color } = useTheme();
+  /**
+   * An exact column width, not a percentage.
+   *
+   * Two cards at "48.5%" plus a 14pt gap comes to more than the row, so the
+   * second card overflowed and was clipped on the right edge. Computed per
+   * render from the live window, not once at module load, so it follows
+   * split-screen, foldables and Android display-size changes.
+   */
+  const { width: windowWidth } = useWindowDimensions();
+  const COLUMN_WIDTH = (windowWidth - SCREEN_GUTTER * 2 - GRID_GAP) / 2;
 
   const handleShare = async () => {
     const line = `${name}'s listings on Renit — ${products.length} ${

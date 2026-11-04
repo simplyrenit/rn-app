@@ -95,7 +95,6 @@ import { ProductsSkeleton } from "./products-skeleton";
  */
 const RAIL_GAP = 16;
 const REVIEW_CARD_WIDTH = 285;
-const SIMILAR_CARD_WIDTH = 163;
 
 /** The pinned band's own height, below the safe-area inset. */
 const BAND_HEIGHT = 56;
@@ -181,10 +180,13 @@ function ConditionIcon({
 function CtaLabel({ children }: { children: string }) {
   const labelColor = useButtonLabelColor();
   return (
+    // Shrinks and centres when it wraps: at a 1.3x font scale on a 360dp
+    // phone the half-width buttons ("In cart · View" beside its check, "Book
+    // for the morning") are narrower than the label.
     <Text
       fontSize="text-sm"
       fontWeight="font-bold"
-      style={{ color: labelColor }}
+      style={{ color: labelColor, flexShrink: 1, textAlign: "center" }}
     >
       {children}
     </Text>
@@ -1149,7 +1151,12 @@ export default function DetailsScreen() {
               }}
             >
               {similarProducts.map((item) => (
-                <View key={item.name} style={{ width: SIMILAR_CARD_WIDTH }}>
+                <View
+                  key={item.name}
+                  // Home's rail formula (product-rail.tsx): 163 at 390, and the
+                  // same 8pt peek of the next card at 360 and 440.
+                  style={{ width: Math.floor((windowWidth - SCREEN_GUTTER - 2 * RAIL_GAP - 8) / 2) }}
+                >
                   {/* The Home rails' tile, not a second one: same width, same
                       8pt photo radius, same bare corner heart. */}
                   <Card
@@ -1179,7 +1186,11 @@ export default function DetailsScreen() {
         the primary action was confined to the other half. The price takes the
         room it needs and the CTA takes the rest. The bottom inset is reserved
         here rather than by a SafeAreaView that declared only its top edge,
-        which left the button 19pt off the screen edge.
+        which left the button 19pt off the screen edge. The inset replaces the
+        16pt floor rather than adding to it: 16 + 34 stood the buttons 50pt
+        off a notched iPhone's edge where CT-01 draws ~25, while an SE (inset
+        0) and an Android phone with the nav bar outside the window still get
+        the 16.
       */}
       {product ? (
       <View
@@ -1188,7 +1199,7 @@ export default function DetailsScreen() {
           gap: 12,
           paddingHorizontal: SCREEN_GUTTER,
           paddingTop: 16,
-          paddingBottom: 16 + insets.bottom,
+          paddingBottom: Math.max(insets.bottom, 16),
           borderTopWidth: 1,
           borderTopColor: color.line,
           backgroundColor: color.canvas,

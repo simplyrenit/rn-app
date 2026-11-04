@@ -29,7 +29,8 @@ import axios from "axios";
 import * as Location from "expo-location";
 import { useCallback, useEffect } from "react";
 import { Platform } from "react-native";
-import { ink, colors, radius } from "@/lib/design-tokens";
+import { ink, colors, fontFamily, radius, space } from "@/lib/design-tokens";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/lib/theme";
 
 interface Coordinates {
@@ -46,6 +47,7 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
   const { theme } = useGlobalContext();
   const isDarkMode = theme === "dark";
   const { color } = useTheme();
+  const insets = useSafeAreaInsets();
   const [address, setAddress] = useState("");
 
   const [selectedLocationName, setSelectedLocationName] = useState<
@@ -245,8 +247,11 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
         </View>
         <View className="">
           <TextInput
+            // The app face and the core Text's 1.4 cap: bare, the box typed in the system font, uncapped.
+            maxFontSizeMultiplier={1.4}
             style={{
               textAlignVertical: "top",
+              fontFamily: fontFamily.regular,
               // borderBlockColor: isDarkMode ? "#333" : "#FFF",
               color: ink.text(isDarkMode),
               // borderColor: isDarkMode ? "#444" : "#CCC",
@@ -267,7 +272,8 @@ const UnavailabilityFormScreen: React.FC<UnavailabilityProps> = () => {
           />
         </View>
       </KeyboardAwareScrollView>
-      <View className="py-2 px-gutter">
+      {/* The container leaves the bottom edge to the screen: py-2 alone put the button on the home indicator. */}
+      <View className="pt-2 px-gutter" style={{ paddingBottom: Math.max(insets.bottom + space.sm, space.md) }}>
         <Button
           disabled={!address.trim() || !selectedLocation}
           onPress={() => {
