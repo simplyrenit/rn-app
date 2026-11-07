@@ -60,6 +60,9 @@ export interface OwnerCourier {
   };
   attempt: number;
   not_delivered_reason: string | null;
+  /** ENG-408: the customer is OK with early delivery, and the soonest the rider may come. Absent from an older server. */
+  early_ok?: boolean;
+  early_from?: string | null;
 }
 
 /** What these functions read of a booking. */

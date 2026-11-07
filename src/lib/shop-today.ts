@@ -213,7 +213,8 @@ export interface TodayRow {
 /** "Epson projector · Kabir A." over "Arrives 10:00 – 11:00 am"; B1's courier "Pack by 3:15 pm". */
 export function goingOutRow(item: GoingOut, now: Date = new Date()): TodayRow {
   const courier = byRenit(item);
-  const verb = courier ? "Courier collects" : item.delivery_mode === "pickup" ? "Arrives" : "Deliver";
+  // A courier window is when it reaches the customer; the rider collects earlier (ENG-408).
+  const verb = courier ? "Arrives at the customer" : item.delivery_mode === "pickup" ? "Arrives" : "Deliver";
   return {
     number: item.number,
     title: `${item.product_title} · ${who(item)}`,

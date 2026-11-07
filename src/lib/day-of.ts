@@ -18,7 +18,7 @@ import {
   addDays,
   windowErrorText,
   windowLabel,
-  windowSummary,
+  arrivalWhen,
 } from "@/lib/booking";
 import { itemsText, liveLines, madeOf, manyItems } from "@/lib/booking-lines";
 import type { CaptureFlags, Moment, Side } from "@/lib/capture";
@@ -408,7 +408,7 @@ export function depositCopy(booking: BookingCustomer): DepositCopy {
     refund: "Refundable. Back within 48 hours of closing.",
     madeOf: madeOf(booking) ? `Made of: ${madeOf(booking)}` : null,
     payBy: dueDay ? `Pay by ${dayShort(dueDay)}, ${clock(due)}` : null,
-    when: booking.window ? `${pickup ? "Collecting" : "Arriving"} ${windowSummary(booking.window)}` : null,
+    when: booking.window ? `${pickup ? "Collecting" : "Arriving"} ${arrivalWhen({ ...booking, window: booking.window })}` : null,
     unlocks: pickup
       ? "Paying the deposit shows you the shop's address and unlocks your handover code."
       : "Paying the deposit unlocks your handover code.",

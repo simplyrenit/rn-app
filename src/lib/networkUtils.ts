@@ -157,7 +157,8 @@ const getAuthAttached = (config?: AxiosRequestConfig): boolean => {
 // `COURIER_MIN_CLIENT` is set to this number before `COURIER_ON`.
 // 3 (ENG-351): the first build with the customer's ID check. Below the server's `ID_CHECK_MIN_CLIENT`, a customer who
 // needs the check is told to update the app (`app_update_needed`).
-export const RENIT_CLIENT = 3;
+// 4 (ENG-408): courier slots at any hour, labelled "Fri night" before 4 am, and "OK if it arrives early" on the first pick.
+export const RENIT_CLIENT = 4;
 
 // Create axios instance with shared timeout/header defaults.
 const axiosInstance = axios.create({

@@ -226,7 +226,7 @@ describe("Today and the booking page of a courier booking", () => {
     };
     expect(goingOutRow({ ...out, pack_by: "2026-10-24T08:15:00Z" }, NOW).sub).toBe("Pack by 1:45 pm");
     // A server that does not send `pack_by` on Today yet.
-    expect(goingOutRow(out, NOW).sub).toBe("Courier collects 4:00 – 5:00 pm");
+    expect(goingOutRow(out, NOW).sub).toBe("Arrives at the customer 4:00 – 5:00 pm");
     expect(goingOutRow({ ...out, window: null }, NOW).sub).toBe("No arrival time picked yet");
   });
 
@@ -247,7 +247,7 @@ describe("Today and the booking page of a courier booking", () => {
     expect(cardNote(courierBooking({}, { seal: null, state: "awaiting_pack" }), NOW)).toBe("Pack by 1:45 pm");
     expect(cardNote(courierBooking({ stage: "confirmed" }, { seal: null, state: "awaiting_pack" }), NOW)).toBe("Pack by 1:45 pm");
     expect(cardNote(courierBooking({}, { seal: null, pack_by: "2026-10-25T08:15:00Z" }), NOW)).toBe("Pack by 1:45 pm, Sun 25 Oct");
-    expect(cardNote(courierBooking(), NOW)).toBe("Courier collects today, 4:00 – 5:00 pm");
+    expect(cardNote(courierBooking(), NOW)).toBe("Arrives at the customer today, 4:00 – 5:00 pm");
   });
 
   it("the day button packs first", () => {

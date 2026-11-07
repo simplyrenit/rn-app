@@ -247,15 +247,15 @@ export async function payRent(number: string): Promise<{ payment: PaymentStart; 
   ).data;
 }
 
-/** The one-hour windows left on the first day, inside the shop's hours. */
+/** The one-hour windows left on the first day: inside the shop's hours, or the courier's slots (ENG-408: any hour, each with `early_from`). */
 export async function fetchWindows(number: string): Promise<{ day: string; windows: TimeWindow[] }> {
   return (await axiosInstance.get<{ day: string; windows: TimeWindow[] }>(bookingUrl(number, "windows/"))).data;
 }
 
-/** The first pick, one tap. A later change is a request (`requestWindowChange`). */
-export async function setWindow(number: string, start: string): Promise<BookingCustomer> {
-  return (await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "window/"), { start })).data
-    .booking;
+/** The first pick, one tap. A later change is a request (`requestWindowChange`). `earlyOk`: a courier booking's "OK if it arrives early" (ENG-408). */
+export async function setWindow(number: string, start: string, earlyOk = false): Promise<BookingCustomer> {
+  const body = earlyOk ? { start, early_ok: true } : { start };
+  return (await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "window/"), body)).data.booking;
 }
 
 /** Asks the shop to move the window. Nothing moves until they accept. */

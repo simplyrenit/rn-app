@@ -7,9 +7,19 @@ import {
 } from "@/backend/bookings";
 import { BookingLoadError, BookingLoading, BottomBar, Notice } from "@/components/booking/parts";
 import { Button, SubpageHeader, Text } from "@/components/core";
+import { CheckBox } from "@/components/core/checkbox";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { apiError } from "@/lib/api-error";
-import { bookingLabel, TimeWindow, windowErrorText, windowHeading, windowLabel } from "@/lib/booking";
+import {
+  bookingLabel,
+  clock,
+  nightOf,
+  TimeWindow,
+  windowErrorText,
+  windowHeading,
+  windowLabel,
+  windowTime,
+} from "@/lib/booking";
 import { byRenit } from "@/lib/delivery";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -23,9 +33,11 @@ import { useQuery, useQueryClient } from "react-query";
 
 /**
  * BK-07, "When will you collect it?": the one-hour windows left on the first
- * day, inside the shop's hours. The first pick is one tap and the shop does not
- * have to answer it. Once a window is set, the same screen asks the shop to
- * change it: a request they can accept or decline, and nothing moves until then.
+ * day, inside the shop's hours (Renit's courier: any hour it can run, ENG-408,
+ * a night slot marked "Fri night"). The first pick is one tap and the shop does
+ * not have to answer it; a courier pick can say "OK if it arrives early". Once a
+ * window is set, the same screen asks the shop to change it: a request they can
+ * accept or decline, and nothing moves until then.
  */
 export default function ArrivalWindowScreen() {
   const { params } = useRoute<RouteProps<"BookingWindow">>();
@@ -39,6 +51,7 @@ export default function ArrivalWindowScreen() {
   });
 
   const [picked, setPicked] = useState<string | null>(null);
+  const [earlyOk, setEarlyOk] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const busy = useRef(false);
@@ -72,6 +85,8 @@ export default function ArrivalWindowScreen() {
   const changing = booking.window !== null;
   const waiting = booking.window_request !== null && !booking.window_request.expired;
   const choice = windows.find((w) => w.start === picked) ?? null;
+  // ENG-408: only on the first pick of a courier booking, and only for a slot the rider can come early for.
+  const early = !changing && byRenit(booking) && choice?.early_from ? choice.early_from : null;
 
   const save = async () => {
     if (!choice || busy.current) return;
@@ -81,7 +96,7 @@ export default function ArrivalWindowScreen() {
     try {
       const next = changing
         ? await requestWindowChange(params.number, choice.start)
-        : await setWindow(params.number, choice.start);
+        : await setWindow(params.number, choice.start, Boolean(early) && earlyOk);
       queryClient.setQueryData(bookingQueryKey(params.number), next);
       if (changing) {
         // B1: on a courier booking only Renit's desk answers a change (O12).
@@ -162,16 +177,23 @@ export default function ArrivalWindowScreen() {
                   }}
                 >
                   {selected ? <CheckIcon size={16} color={color.brandText} /> : null}
-                  <Text
-                    fontSize="text-sm"
-                    fontWeight={selected ? "font-bold" : "font-normal"}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    // Bounded beside the tick: Android only shrinks text to fit a width it is held to.
-                    style={{ flexShrink: 1 }}
-                  >
-                    {windowLabel(slot)}
-                  </Text>
+                  <View style={{ flexShrink: 1, alignItems: "center" }}>
+                    <Text
+                      fontSize="text-sm"
+                      fontWeight={selected ? "font-bold" : "font-normal"}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      // Bounded beside the tick: Android only shrinks text to fit a width it is held to.
+                      style={{ flexShrink: 1 }}
+                    >
+                      {windowTime(slot)}
+                    </Text>
+                    {nightOf(slot.start) ? (
+                      <Text fontSize="text-xs" tone="dim" numberOfLines={1}>
+                        {nightOf(slot.start)}
+                      </Text>
+                    ) : null}
+                  </View>
                 </TouchableOpacity>
               );
             })}
@@ -194,6 +216,23 @@ export default function ArrivalWindowScreen() {
       </ScrollView>
 
       <BottomBar>
+        {early ? (
+          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: space.sm }}>
+            <CheckBox
+              checked={earlyOk}
+              onPress={() => setEarlyOk(!earlyOk)}
+              accessibilityLabel="OK if it arrives early"
+            />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text fontSize="text-md" fontWeight="font-bold" onPress={() => setEarlyOk(!earlyOk)}>
+                OK if it arrives early?
+              </Text>
+              <Text fontSize="text-sm" tone="body">
+                {`The rider can come from ${clock(early)}, once the shop packs it. Be ready from then: a rider you miss counts as a missed delivery.`}
+              </Text>
+            </View>
+          </View>
+        ) : null}
         {error ? (
           <Text fontSize="text-sm" tone="danger" accessibilityRole="alert">
             {error}

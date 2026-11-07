@@ -22,7 +22,7 @@ describe("the network log", () => {
 
 describe("the client header (unified delivery B1)", () => {
   it("sends this build's contract number on every call", () => {
-    expect(RENIT_CLIENT).toBe(3);
-    expect(axiosInstance.defaults.headers["X-Renit-Client"]).toBe("3");
+    expect(RENIT_CLIENT).toBe(4);
+    expect(axiosInstance.defaults.headers["X-Renit-Client"]).toBe("4");
   });
 });
