@@ -84,8 +84,13 @@ export function ringCourierLine(ring: { delivered_by?: "shop" | "renit" | null; 
 
 /** "Pack by 3:15 pm", with the day when it is not today. */
 export function packByText(packBy: string, now: Date): string {
-  const day = dayOf(packBy);
-  return `Pack by ${clock(packBy)}${day && day !== todayIst(now) ? `, ${dayShort(day)}` : ""}`;
+  return `Pack by ${clockWithDay(packBy, now)}`;
+}
+
+/** "3:15 pm", with the day when it is not today. */
+function clockWithDay(iso: string, now: Date): string {
+  const day = dayOf(iso);
+  return `${clock(iso)}${day && day !== todayIst(now) ? `, ${dayShort(day)}` : ""}`;
 }
 
 /**
@@ -103,7 +108,7 @@ export function packNotice(
   if (!courier.early_from || !window) return `${packBy}. The rider is booked once you tap Packed, at pack-by time at the earliest.`;
   const sooner = new Date(window.start).getTime() - new Date(courier.early_from).getTime();
   const from = new Date(new Date(courier.pack_by).getTime() - sooner).toISOString();
-  return `${packBy}. The customer is OK with early delivery: pack sooner and the rider is booked from ${clock(from)}, or when you tap Packed if that is later.`;
+  return `${packBy}. The customer is OK with early delivery: pack sooner and the rider is booked from ${clockWithDay(from, now)}, or when you tap Packed if that is later.`;
 }
 
 // ---- "Pack it for the courier" (S2, S2b) -------------------------------------------------------------

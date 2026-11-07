@@ -158,9 +158,9 @@ export default function ArrivalWindowScreen() {
                   activeOpacity={0.7}
                   disabled={waiting}
                   onPress={() => {
-                    setPicked(slot.start);
                     // A new slot has its own "from" time: the customer ticks again for it.
-                    setEarlyOk(false);
+                    if (slot.start !== picked) setEarlyOk(false);
+                    setPicked(slot.start);
                     setError(null);
                   }}
                   style={{
