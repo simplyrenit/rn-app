@@ -144,7 +144,7 @@ export function CourierDayOf({ booking, receivedAt }: { booking: BookingCustomer
 
       {recorded ? null : (
         <Block title="When it arrives">
-          {courierDoorTips(courier?.seal).map((line) => (
+          {courierDoorTips(courier?.seal, courier?.early_from).map((line) => (
             <Text key={line} fontSize="text-sm" tone="body">
               {`•  ${line}`}
             </Text>

@@ -517,10 +517,12 @@ export function openByLine(openBy: string | null | undefined, now: Date): string
     : "The 30 minutes are up, so we take it that it arrived fine. You can still record it.";
 }
 
-/** What to do at the door (C3, C4). */
-export function courierDoorTips(seal: string | null | undefined): string[] {
+/** What to do at the door (C3, C4). `earlyFrom`: the customer said early is OK, so be there from then (ENG-408). */
+export function courierDoorTips(seal: string | null | undefined, earlyFrom?: string | null): string[] {
   return [
-    "Be there in your window. The rider hands it to you, not to the gate.",
+    earlyFrom
+      ? `Be there from ${clock(earlyFrom)}: you said it may come early. The rider hands it to you, not to the gate.`
+      : "Be there in your window. The rider hands it to you, not to the gate.",
     seal
       ? `Check seal ${seal} is unbroken. Broken seal or crushed box? Don't open it: record it first.`
       : "Check the seal is unbroken. Broken seal or crushed box? Don't open it: record it first.",
