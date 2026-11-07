@@ -454,7 +454,7 @@ export function dayOfCopy(booking: BookingCustomer, now: Date): DayOfCopy {
       : { name: delivery ? `${bringer} brings it to ${delivery.title}` : `${bringer} brings it to you`, address: delivery?.line ?? null },
     // ENG-408: the rider may come before the window when the customer said early is OK.
     window: booking.window
-      ? [windowLabel(booking.window), earlyNote(booking.courier)].filter(Boolean).join(" · ")
+      ? [windowLabel(booking.window), earlyNote(booking.courier)].filter(Boolean).join("\n")
       : null,
     codeNote: booking.claim_open
       ? "You reported this item as not as described. Renit decides within one day, and your code is paused until then."
