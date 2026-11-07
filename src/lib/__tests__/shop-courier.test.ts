@@ -14,6 +14,7 @@ import {
   courierPayoutLine,
   legSteps,
   packByText,
+  packNotice,
   packSteps,
   returnTitle,
   riderCard,
@@ -328,6 +329,18 @@ describe("Pack it for the courier", () => {
     expect(bannerTone({ tone: "bad", title: "x", body: null })).toBe("danger");
     expect(bannerTone({ tone: "warn", title: "x", body: null })).toBe("warning");
     expect(bannerTone({ tone: "info", title: "x", body: null })).toBe("info");
+  });
+
+  it("the pack notice says when the rider is booked, both ways (ENG-408)", () => {
+    // Window 4:00 pm India (10:30Z), pack-by 2:00 pm (08:30Z); early from 2:00 pm (08:30Z): two hours sooner.
+    const window = { start: "2026-10-24T10:30:00Z" };
+    expect(packNotice({ pack_by: "2026-10-24T08:30:00Z", early_from: null }, window, NOW)).toBe(
+      "Pack by 2:00 pm. The rider is booked once you tap Packed, at pack-by time at the earliest."
+    );
+    expect(packNotice({ pack_by: "2026-10-24T08:30:00Z", early_from: "2026-10-24T08:30:00Z" }, window, NOW)).toBe(
+      "Pack by 2:00 pm. The customer is OK with early delivery: pack sooner and the rider is booked from 12:00 pm, or when you tap Packed if that is later."
+    );
+    expect(packNotice({ pack_by: null }, window, NOW)).toBeNull();
   });
 
   it("pack by, with the day when it is not today", () => {

@@ -88,6 +88,24 @@ export function packByText(packBy: string, now: Date): string {
   return `Pack by ${clock(packBy)}${day && day !== todayIst(now) ? `, ${dayShort(day)}` : ""}`;
 }
 
+/**
+ * The owner's pack notice: pack-by, and when the rider is booked. rn-api books Borzo at pack-by, or later when Packed comes
+ * later. When the customer is OK with early (ENG-408), from as much sooner as the rider may come: pack-by less the gap
+ * between `early_from` and the window's start.
+ */
+export function packNotice(
+  courier: Pick<OwnerCourier, "pack_by" | "early_from">,
+  window: { start: string } | null,
+  now: Date
+): string | null {
+  if (!courier.pack_by) return null;
+  const packBy = packByText(courier.pack_by, now);
+  if (!courier.early_from || !window) return `${packBy}. The rider is booked once you tap Packed, at pack-by time at the earliest.`;
+  const sooner = new Date(window.start).getTime() - new Date(courier.early_from).getTime();
+  const from = new Date(new Date(courier.pack_by).getTime() - sooner).toISOString();
+  return `${packBy}. The customer is OK with early delivery: pack sooner and the rider is booked from ${clock(from)}, or when you tap Packed if that is later.`;
+}
+
 // ---- "Pack it for the courier" (S2, S2b) -------------------------------------------------------------
 
 /** The server's tracker for one leg, as the step list draws it. `now` reads as the step list's `next`. */

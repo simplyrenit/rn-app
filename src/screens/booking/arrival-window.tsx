@@ -159,6 +159,8 @@ export default function ArrivalWindowScreen() {
                   disabled={waiting}
                   onPress={() => {
                     setPicked(slot.start);
+                    // A new slot has its own "from" time: the customer ticks again for it.
+                    setEarlyOk(false);
                     setError(null);
                   }}
                   style={{

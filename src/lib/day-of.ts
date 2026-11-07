@@ -19,6 +19,7 @@ import {
   windowErrorText,
   windowLabel,
   arrivalWhen,
+  earlyNote,
 } from "@/lib/booking";
 import { itemsText, liveLines, madeOf, manyItems } from "@/lib/booking-lines";
 import type { CaptureFlags, Moment, Side } from "@/lib/capture";
@@ -451,7 +452,10 @@ export function dayOfCopy(booking: BookingCustomer, now: Date): DayOfCopy {
     place: pickup
       ? { name: booking.shop.name, address: address ?? booking.shop.locality }
       : { name: delivery ? `${bringer} brings it to ${delivery.title}` : `${bringer} brings it to you`, address: delivery?.line ?? null },
-    window: booking.window ? windowLabel(booking.window) : null,
+    // ENG-408: the rider may come before the window when the customer said early is OK.
+    window: booking.window
+      ? [windowLabel(booking.window), earlyNote(booking.courier)].filter(Boolean).join(" · ")
+      : null,
     codeNote: booking.claim_open
       ? "You reported this item as not as described. Renit decides within one day, and your code is paused until then."
       : basket
