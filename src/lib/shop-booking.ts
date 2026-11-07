@@ -279,7 +279,8 @@ export function cardNote(b: BookingShop, now: Date = new Date()): string | null 
   if (b.stage === "ready" && b.window) {
     const day = dayOf(b.window.start);
     const when = day === today ? "today" : day ? dayShort(day) : "";
-    return `${courier ? "Courier collects" : b.delivery_mode === "pickup" ? "Collects" : "Deliver"} ${when}, ${windowLabel(b.window)}`;
+    // A courier booking's window is when it reaches the customer; the rider collects earlier (ENG-408).
+    return `${courier ? "Arrives at the customer" : b.delivery_mode === "pickup" ? "Collects" : "Deliver"} ${when}, ${windowLabel(b.window)}`;
   }
   if (b.stage === "confirmed" && !b.window) return "Waiting for the customer to pick an arrival time";
   if (b.stage === "accepted") {

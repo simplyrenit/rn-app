@@ -18,7 +18,8 @@ import {
   addDays,
   windowErrorText,
   windowLabel,
-  windowSummary,
+  arrivalWhen,
+  earlyNote,
 } from "@/lib/booking";
 import { itemsText, liveLines, madeOf, manyItems } from "@/lib/booking-lines";
 import type { CaptureFlags, Moment, Side } from "@/lib/capture";
@@ -408,7 +409,7 @@ export function depositCopy(booking: BookingCustomer): DepositCopy {
     refund: "Refundable. Back within 48 hours of closing.",
     madeOf: madeOf(booking) ? `Made of: ${madeOf(booking)}` : null,
     payBy: dueDay ? `Pay by ${dayShort(dueDay)}, ${clock(due)}` : null,
-    when: booking.window ? `${pickup ? "Collecting" : "Arriving"} ${windowSummary(booking.window)}` : null,
+    when: booking.window ? `${pickup ? "Collecting" : "Arriving"} ${arrivalWhen({ ...booking, window: booking.window })}` : null,
     unlocks: pickup
       ? "Paying the deposit shows you the shop's address and unlocks your handover code."
       : "Paying the deposit unlocks your handover code.",
@@ -451,7 +452,10 @@ export function dayOfCopy(booking: BookingCustomer, now: Date): DayOfCopy {
     place: pickup
       ? { name: booking.shop.name, address: address ?? booking.shop.locality }
       : { name: delivery ? `${bringer} brings it to ${delivery.title}` : `${bringer} brings it to you`, address: delivery?.line ?? null },
-    window: booking.window ? windowLabel(booking.window) : null,
+    // ENG-408: the rider may come before the window when the customer said early is OK.
+    window: booking.window
+      ? [windowLabel(booking.window), earlyNote(booking.courier)].filter(Boolean).join("\n")
+      : null,
     codeNote: booking.claim_open
       ? "You reported this item as not as described. Renit decides within one day, and your code is paused until then."
       : basket
@@ -513,10 +517,12 @@ export function openByLine(openBy: string | null | undefined, now: Date): string
     : "The 30 minutes are up, so we take it that it arrived fine. You can still record it.";
 }
 
-/** What to do at the door (C3, C4). */
-export function courierDoorTips(seal: string | null | undefined): string[] {
+/** What to do at the door (C3, C4). `earlyFrom`: the customer said early is OK, so be there from then (ENG-408). */
+export function courierDoorTips(seal: string | null | undefined, earlyFrom?: string | null): string[] {
   return [
-    "Be there in your window. The rider hands it to you, not to the gate.",
+    earlyFrom
+      ? `Be there from ${clock(earlyFrom)}: you said it may come early. The rider hands it to you, not to the gate.`
+      : "Be there in your window. The rider hands it to you, not to the gate.",
     seal
       ? `Check seal ${seal} is unbroken. Broken seal or crushed box? Don't open it: record it first.`
       : "Check the seal is unbroken. Broken seal or crushed box? Don't open it: record it first.",

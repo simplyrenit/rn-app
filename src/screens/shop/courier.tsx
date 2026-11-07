@@ -29,7 +29,7 @@ import {
   courierErrorText,
   courierPayoutLine,
   legSteps,
-  packByText,
+  packNotice,
   packSteps,
   returnTitle,
   riderCard,
@@ -160,7 +160,7 @@ export function CourierPack({ booking, courier, receivedAt }: Props) {
 
       {packing && courier.pack_by ? (
         <Notice tone="brand" icon="clock">
-          {`${packByText(courier.pack_by, now)}. The rider is booked once you tap Packed.`}
+          {packNotice(courier, booking.window, now)}
         </Notice>
       ) : null}
 

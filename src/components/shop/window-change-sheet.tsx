@@ -22,7 +22,8 @@ export interface WindowChangeSheetHandle {
 
 /**
  * "Ask to change the time" (SH-07): the one-hour windows left on the first day,
- * inside the shop's hours, exactly as the server lists them. Picking one sends a
+ * exactly as the server lists them (inside the shop's hours, or the courier's
+ * slots at any hour, ENG-408). Picking one sends a
  * request; the arrival time stays as it is until the customer accepts, and the
  * request shows under their Today.
  */

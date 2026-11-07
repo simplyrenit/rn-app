@@ -3,6 +3,9 @@ import { depositCopy } from "../day-of";
 import { ProductShop, addressSheetLine, bookBy, commonGstRate, courierQuote, rentGstNote } from "../booking";
 import {
   BookingCustomer,
+  arrivalWhen,
+  nightOf,
+  windowTime,
   CourierBlock,
   Quote,
   courierLive,
@@ -1516,6 +1519,28 @@ describe("the arrival window", () => {
     expect(windowLabel({ start: "2026-10-24T05:30:00Z", end: "2026-10-24T06:30:00Z" })).toBe("11:00 am – 12:00 pm");
     expect(windowLabel({ start: "2026-10-24T13:30:00Z", end: "2026-10-24T14:30:00Z" })).toBe("7:00 – 8:00 pm");
     expect(windowSummary(ten)).toBe("Sat 24 Oct, 10:00 – 11:00 am");
+  });
+
+  it("names the night a slot before 4 am belongs to (ENG-408)", () => {
+    // Sat 24 Oct, 2:00 am India time is Friday night to people.
+    const two = { start: "2026-10-23T20:30:00Z", end: "2026-10-23T21:30:00Z" };
+    expect(nightOf(two.start)).toBe("Fri night");
+    expect(windowLabel(two)).toBe("2:00 – 3:00 am · Fri night");
+    expect(windowTime(two)).toBe("2:00 – 3:00 am");
+    expect(windowSummary(two)).toBe("Sat 24 Oct, 2:00 – 3:00 am · Fri night");
+    // 00:00 India is 18:30 UTC the day before; 04:00 India is no longer night.
+    expect(nightOf("2026-10-23T18:30:00Z")).toBe("Fri night");
+    expect(nightOf("2026-10-23T22:29:00Z")).toBe("Fri night");
+    expect(nightOf("2026-10-23T22:30:00Z")).toBeNull();
+    expect(windowLabel({ start: "2026-10-24T17:30:00Z", end: "2026-10-24T18:30:00Z" })).toBe("11:00 pm – 12:00 am");
+  });
+
+  it("says when the rider may come early (ENG-408)", () => {
+    expect(arrivalWhen({ window: ten, courier: { early_from: "2026-10-24T02:30:00Z" } })).toBe(
+      "Sat 24 Oct, 10:00 – 11:00 am · may come from 8:00 am"
+    );
+    expect(arrivalWhen({ window: ten, courier: { early_from: null } })).toBe("Sat 24 Oct, 10:00 – 11:00 am");
+    expect(arrivalWhen({ window: ten })).toBe("Sat 24 Oct, 10:00 – 11:00 am");
   });
 
   it("heads the picker with the day and the shop's hours on it", () => {

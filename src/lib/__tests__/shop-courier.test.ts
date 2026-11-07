@@ -14,6 +14,7 @@ import {
   courierPayoutLine,
   legSteps,
   packByText,
+  packNotice,
   packSteps,
   returnTitle,
   riderCard,
@@ -226,7 +227,7 @@ describe("Today and the booking page of a courier booking", () => {
     };
     expect(goingOutRow({ ...out, pack_by: "2026-10-24T08:15:00Z" }, NOW).sub).toBe("Pack by 1:45 pm");
     // A server that does not send `pack_by` on Today yet.
-    expect(goingOutRow(out, NOW).sub).toBe("Courier collects 4:00 – 5:00 pm");
+    expect(goingOutRow(out, NOW).sub).toBe("Arrives at the customer 4:00 – 5:00 pm");
     expect(goingOutRow({ ...out, window: null }, NOW).sub).toBe("No arrival time picked yet");
   });
 
@@ -247,7 +248,7 @@ describe("Today and the booking page of a courier booking", () => {
     expect(cardNote(courierBooking({}, { seal: null, state: "awaiting_pack" }), NOW)).toBe("Pack by 1:45 pm");
     expect(cardNote(courierBooking({ stage: "confirmed" }, { seal: null, state: "awaiting_pack" }), NOW)).toBe("Pack by 1:45 pm");
     expect(cardNote(courierBooking({}, { seal: null, pack_by: "2026-10-25T08:15:00Z" }), NOW)).toBe("Pack by 1:45 pm, Sun 25 Oct");
-    expect(cardNote(courierBooking(), NOW)).toBe("Courier collects today, 4:00 – 5:00 pm");
+    expect(cardNote(courierBooking(), NOW)).toBe("Arrives at the customer today, 4:00 – 5:00 pm");
   });
 
   it("the day button packs first", () => {
@@ -328,6 +329,18 @@ describe("Pack it for the courier", () => {
     expect(bannerTone({ tone: "bad", title: "x", body: null })).toBe("danger");
     expect(bannerTone({ tone: "warn", title: "x", body: null })).toBe("warning");
     expect(bannerTone({ tone: "info", title: "x", body: null })).toBe("info");
+  });
+
+  it("the pack notice says when the rider is booked, both ways (ENG-408)", () => {
+    // Window 4:00 pm India (10:30Z), pack-by 2:00 pm (08:30Z); early from 2:00 pm (08:30Z): two hours sooner.
+    const window = { start: "2026-10-24T10:30:00Z" };
+    expect(packNotice({ pack_by: "2026-10-24T08:30:00Z", early_from: null }, window, NOW)).toBe(
+      "Pack by 2:00 pm. The rider is booked once you tap Packed, at pack-by time at the earliest."
+    );
+    expect(packNotice({ pack_by: "2026-10-24T08:30:00Z", early_from: "2026-10-24T08:30:00Z" }, window, NOW)).toBe(
+      "Pack by 2:00 pm. The customer is OK with early delivery: pack sooner and the rider is booked from 12:00 pm, or when you tap Packed if that is later."
+    );
+    expect(packNotice({ pack_by: null }, window, NOW)).toBeNull();
   });
 
   it("pack by, with the day when it is not today", () => {

@@ -301,6 +301,8 @@ export type BookingAddress = Omit<SavedAddress, "is_default">;
 export interface TimeWindow {
   start: string;
   end: string;
+  /** ENG-408, a courier slot only: the soonest the rider may come if the customer is OK with early; null when no sooner. */
+  early_from?: string | null;
 }
 
 /** One of the three preset taps on the day (`POST …/status/`), or none yet. */
@@ -349,6 +351,9 @@ export interface CourierBlock {
   not_delivered_reason: string | null;
   /** The desk's "delivered" plus 30 minutes, by the server's clock: open it on camera by then. Null until delivered. */
   open_by: string | null;
+  /** ENG-408: the customer said "OK if it arrives early", and the soonest the rider may come (null: not early). Absent from an older server. */
+  early_ok?: boolean;
+  early_from?: string | null;
 }
 
 /** A booking as its customer sees it (API-CONTRACT, BookingCustomer). */
@@ -2088,11 +2093,39 @@ export function payRentErrorText(error: ApiError | null): string {
 // ---- The arrival window (BK-07) ------------------------------------------------------------------
 
 /** "10:00 – 11:00 am", and "11:00 am – 12:00 pm" when the hour crosses noon. */
-export function windowLabel(window: TimeWindow): string {
+export function windowTime(window: TimeWindow): string {
   const [start, startHalf] = clock(window.start).split(" ");
   const [end, endHalf] = clock(window.end).split(" ");
   if (!start || !end) return "";
   return startHalf === endHalf ? `${start} – ${end} ${endHalf}` : `${start} ${startHalf} – ${end} ${endHalf}`;
+}
+
+/**
+ * ENG-408: "Fri night" for a window that starts before 4 am India time. It is on that day, but people call it the night
+ * before: a Saturday 2 am slot is "Fri night". Null for any other window.
+ */
+export function nightOf(start: string): string | null {
+  const at = new Date(start);
+  if (Number.isNaN(at.getTime())) return null;
+  const ist = new Date(at.getTime() + IST_OFFSET_MS);
+  return ist.getUTCHours() < 4 ? `${WEEKDAYS[(ist.getUTCDay() + 6) % 7]} night` : null;
+}
+
+/** The window's time, and whose night it is before 4 am: "2:00 – 3:00 am · Fri night". */
+export function windowLabel(window: TimeWindow): string {
+  const night = nightOf(window.start);
+  return night ? `${windowTime(window)} · ${night}` : windowTime(window);
+}
+
+/** ENG-408: "may come from 7:00 am" when the customer said early is OK and the rider may come sooner. */
+export function earlyNote(courier: { early_from?: string | null } | null | undefined): string | null {
+  return courier?.early_from ? `may come from ${clock(courier.early_from)}` : null;
+}
+
+/** "Sat 24 Oct, 10:00 – 11:00 am", with " · may come from 8:00 am" when early is OK (ENG-408). */
+export function arrivalWhen(booking: { window: TimeWindow; courier?: { early_from?: string | null } | null }): string {
+  const early = earlyNote(booking.courier);
+  return early ? `${windowSummary(booking.window)} · ${early}` : windowSummary(booking.window);
 }
 
 /** "Sat 24 Oct, 10:00 – 11:00 am". */
@@ -2241,7 +2274,7 @@ export interface Banner {
 export function bookingBanner(booking: BookingCustomer, cancelled?: CancelOutcome | null): Banner {
   const m = booking.money;
   const arrive = arriveWord(booking);
-  const windowLine = booking.window ? `${arrive} ${windowSummary(booking.window)}` : "Pick your arrival window.";
+  const windowLine = booking.window ? `${arrive} ${arrivalWhen({ ...booking, window: booking.window })}` : "Pick your arrival window.";
   switch (booking.exit) {
     case "cancelled_by_customer":
       if (booking.exit_reason === "booking_amount_unpaid") {
@@ -2629,10 +2662,10 @@ export function rentalNextLine(booking: BookingCustomer, now: Date = new Date())
         const when = depositDueWhen(m, true);
         return `Deposit ${money(m.deposit)} due${when ? ` ${when}` : " before handover"}`;
       }
-      return `${arrive} ${windowSummary(booking.window)}`;
+      return `${arrive} ${arrivalWhen({ ...booking, window: booking.window })}`;
     }
     case "ready":
-      return booking.window ? `${arrive} ${windowSummary(booking.window)}` : null;
+      return booking.window ? `${arrive} ${arrivalWhen({ ...booking, window: booking.window })}` : null;
     case "out": {
       const day = dayOf(booking.return_by);
       return day ? `Return by ${dayShort(day)}, ${clock(booking.return_by)}` : null;

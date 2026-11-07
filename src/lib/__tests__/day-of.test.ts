@@ -824,6 +824,9 @@ describe("B1, the courier's day of the handover (C3, C4)", () => {
   it("names the seal at the door when the server sent it", () => {
     expect(courierDoorTips("R-1042")[1]).toBe("Check seal R-1042 is unbroken. Broken seal or crushed box? Don't open it: record it first.");
     expect(courierDoorTips(null)[1]).toMatch(/^Check the seal is unbroken/);
+    // ENG-408: early is OK, so be there from the early time.
+    expect(courierDoorTips(null)[0]).toMatch(/^Be there in your window/);
+    expect(courierDoorTips(null, "2026-10-24T15:30:00Z")[0]).toMatch(/^Be there from 9:00 pm: you said it may come early/);
   });
 });
 
