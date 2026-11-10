@@ -83,3 +83,16 @@ export function unlockNext(input: { force: boolean; believesNumber: boolean; unl
  * saving again.
  */
 export const noNumberStep = (force: boolean): "carry_on" | "tell" => (force ? "tell" : "carry_on");
+
+// ---- Which numbers skip Firebase app verification (ENG-412) ----------------------------------------
+
+/** The Firebase Console test numbers in renit-uat: fixed codes, no SMS. */
+export const FIREBASE_TEST_NUMBERS = ["+919000000001", "+919000000002", "+919876543210"];
+
+/**
+ * Firebase sends a code without app verification (APNs / Play Integrity / reCAPTCHA) only to its
+ * console test numbers; a real number then fails with "The request does not contain a client
+ * identifier". So QA and dev builds skip it for those numbers alone, and never in PROD.
+ */
+export const skipsAppVerification = (phone: string, devOrQa: boolean): boolean =>
+  devOrQa && FIREBASE_TEST_NUMBERS.includes(e164(phone) ?? "");

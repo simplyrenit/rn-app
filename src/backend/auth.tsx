@@ -3,6 +3,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { DEV_MODE, OTP } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
 import { readIdToken } from "@/lib/unlock";
+import { skipsAppVerification } from "@/lib/phone-change";
 import { acceptOwnerTerms } from "@/backend/terms";
 import { emailLogin, otpCheck, phoneLogin, signUp } from "@/backend/sign-in-calls";
 import { signInIntent } from "@/lib/return-to";
@@ -31,6 +32,23 @@ const getFirebaseAuth = () => {
   const { getAuth } = require("@react-native-firebase/auth");
   return getAuth();
 };
+
+// QA/dev builds skip app verification for the Firebase Console test numbers only;
+// a real number keeps APNs / Play Integrity / reCAPTCHA, as in PROD (ENG-412).
+// The setting sticks on the auth instance, so it is set both ways on every send.
+// The setter fires a native call it does not await, so await the native module
+// directly to avoid racing signInWithPhoneNumber. PROD never touches it.
+async function setAppVerificationFor(auth: any, phone: string): Promise<void> {
+  const devOrQa = __DEV__ || DEV_MODE === "QA";
+  if (!devOrQa) return;
+  const skip = skipsAppVerification(phone, devOrQa);
+  auth.settings.appVerificationDisabledForTesting = skip;
+  try {
+    await auth.native.setAppVerificationDisabledForTesting(skip);
+  } catch (settingError) {
+    console.warn("Could not confirm appVerificationDisabledForTesting", settingError);
+  }
+}
 
 export interface SignUpError {
   status?: number;
@@ -102,21 +120,7 @@ export function useAuth() {
         );
       }
       const auth = getFirebaseAuth();
-      // QA/dev builds: skip APNs/reCAPTCHA app verification. Pairs with Firebase
-      // Console test phone numbers; for a real number it just sends real SMS.
-      // Never on for PROD. The setter fires a native call it does not await, so
-      // await the native module directly to avoid racing signInWithPhoneNumber.
-      if (__DEV__ || DEV_MODE === "QA") {
-        auth.settings.appVerificationDisabledForTesting = true;
-        try {
-          await auth.native.setAppVerificationDisabledForTesting(true);
-        } catch (settingError) {
-          console.warn(
-            "Could not confirm appVerificationDisabledForTesting",
-            settingError
-          );
-        }
-      }
+      await setAppVerificationFor(auth, phone);
       phoneChangeConfirmation = await auth.signInWithPhoneNumber(phone);
     } catch (error: any) {
       throw toRequestError(
@@ -193,12 +197,7 @@ export function useAuth() {
         console.warn("App Check initialization failed before OTP send", appCheckError);
       }
       const auth = getFirebaseAuth();
-      // QA/dev builds have no APNs or reCAPTCHA app-verification wired; this flag
-      // plus a Firebase Console test phone number skips it. Never on for PROD —
-      // real verification stays on there.
-      if (__DEV__ || DEV_MODE === "QA") {
-        auth.settings.appVerificationDisabledForTesting = true;
-      }
+      await setAppVerificationFor(auth, phone);
       if (auth.currentUser) {
         await auth.signOut();
       }
