@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import type { ApiError } from "../api-error";
-import { needsCurrentNumberCode, noNumberStep, phoneChangeBody, phoneChangeOutcome, unlockNext, unlockStart, skipsAppVerification } from "../phone-change";
+import { needsCurrentNumberCode, noNumberStep, phoneChangeBody, phoneChangeOutcome, unlockNext, unlockStart, needsAppVerification } from "../phone-change";
 
 const err = (over: Partial<ApiError> = {}): ApiError => ({ status: 400, code: null, message: null, details: null, ...over });
 
@@ -87,17 +87,15 @@ describe("the code step before a change (review app-6 r1 #2): a refused save nev
   });
 });
 
-describe("skipsAppVerification (ENG-412)", () => {
-  it("skips only for the Firebase test numbers, in any spelling, on QA/dev", () => {
-    expect(skipsAppVerification("+919000000001", true)).toBe(true);
-    expect(skipsAppVerification("+91 98765 43210", true)).toBe(true);
-    expect(skipsAppVerification("9000000002", true)).toBe(true);
+describe("needsAppVerification (ENG-412)", () => {
+  it("spots Firebase's refusal of a number that needs app verification", () => {
+    expect(needsAppVerification({ code: "auth/unknown", message: "[auth/unknown] The request does not contain a client identifier." })).toBe(true);
+    expect(needsAppVerification({ code: "auth/missing-client-identifier", message: "" })).toBe(true);
+    expect(needsAppVerification({ message: "This request is missing a valid app identifier, meaning that Play Integrity checks, and reCAPTCHA checks were unsuccessful." })).toBe(true);
   });
-  it("keeps verification for a real number", () => {
-    expect(skipsAppVerification("+917823807161", true)).toBe(false);
-    expect(skipsAppVerification("", true)).toBe(false);
-  });
-  it("never skips in PROD", () => {
-    expect(skipsAppVerification("+919000000001", false)).toBe(false);
+  it("leaves every other error alone", () => {
+    expect(needsAppVerification({ code: "auth/too-many-requests", message: "We have blocked all requests from this device." })).toBe(false);
+    expect(needsAppVerification({ code: "auth/invalid-phone-number", message: "The format of the phone number provided is incorrect." })).toBe(false);
+    expect(needsAppVerification(null)).toBe(false);
   });
 });

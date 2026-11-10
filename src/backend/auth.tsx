@@ -3,7 +3,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { DEV_MODE, OTP } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
 import { readIdToken } from "@/lib/unlock";
-import { skipsAppVerification } from "@/lib/phone-change";
+import { needsAppVerification } from "@/lib/phone-change";
 import { acceptOwnerTerms } from "@/backend/terms";
 import { emailLogin, otpCheck, phoneLogin, signUp } from "@/backend/sign-in-calls";
 import { signInIntent } from "@/lib/return-to";
@@ -33,18 +33,30 @@ const getFirebaseAuth = () => {
   return getAuth();
 };
 
-// QA/dev builds skip app verification for the Firebase Console test numbers only;
-// a real number keeps APNs / Play Integrity / reCAPTCHA, as in PROD (ENG-412).
-// The setting sticks on the auth instance, so it is set both ways on every send.
-// The setter fires a native call it does not await, so await the native module
-// directly to avoid racing signInWithPhoneNumber. PROD never touches it.
-async function setAppVerificationFor(auth: any, phone: string): Promise<void> {
-  const devOrQa = __DEV__ || DEV_MODE === "QA";
-  if (!devOrQa) return;
-  const skip = skipsAppVerification(phone, devOrQa);
-  auth.settings.appVerificationDisabledForTesting = skip;
+// Sends the code. PROD always uses app verification (APNs / Play Integrity /
+// reCAPTCHA). QA/dev builds first try without it, which works for any Firebase
+// Console test number in renit-uat, whatever that list is today; a real number
+// is refused with no SMS sent, and is then sent again with verification on
+// (ENG-412). The setting sticks on the auth instance, so it is set every time,
+// and the native call is awaited so it lands before signInWithPhoneNumber.
+async function sendPhoneCode(auth: any, phone: string): Promise<any> {
+  if (!(__DEV__ || DEV_MODE === "QA")) {
+    return auth.signInWithPhoneNumber(phone);
+  }
+  await setAppVerificationDisabled(auth, true);
   try {
-    await auth.native.setAppVerificationDisabledForTesting(skip);
+    return await auth.signInWithPhoneNumber(phone);
+  } catch (error) {
+    if (!needsAppVerification(error)) throw error;
+  }
+  await setAppVerificationDisabled(auth, false);
+  return auth.signInWithPhoneNumber(phone);
+}
+
+async function setAppVerificationDisabled(auth: any, disabled: boolean): Promise<void> {
+  auth.settings.appVerificationDisabledForTesting = disabled;
+  try {
+    await auth.native.setAppVerificationDisabledForTesting(disabled);
   } catch (settingError) {
     console.warn("Could not confirm appVerificationDisabledForTesting", settingError);
   }
@@ -120,8 +132,7 @@ export function useAuth() {
         );
       }
       const auth = getFirebaseAuth();
-      await setAppVerificationFor(auth, phone);
-      phoneChangeConfirmation = await auth.signInWithPhoneNumber(phone);
+      phoneChangeConfirmation = await sendPhoneCode(auth, phone);
     } catch (error: any) {
       throw toRequestError(
         error,
@@ -197,11 +208,10 @@ export function useAuth() {
         console.warn("App Check initialization failed before OTP send", appCheckError);
       }
       const auth = getFirebaseAuth();
-      await setAppVerificationFor(auth, phone);
       if (auth.currentUser) {
         await auth.signOut();
       }
-      phoneConfirmation = await auth.signInWithPhoneNumber(phone);
+      phoneConfirmation = await sendPhoneCode(auth, phone);
     } catch (error: any) {
       throw toRequestError(
         error,
