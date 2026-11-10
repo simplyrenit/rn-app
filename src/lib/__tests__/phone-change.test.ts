@@ -118,7 +118,7 @@ describe("sendPhoneCodeWith (ENG-412)", () => {
 
   it("PROD sends once and never touches the testing flag", async () => {
     const { auth, flags } = fakeAuth(["confirmation"]);
-    await expect(sendPhoneCodeWith(auth, "+917823807161", false)).resolves.toBe("confirmation");
+    await expect(sendPhoneCodeWith(auth, "+915550000000", false)).resolves.toBe("confirmation");
     expect(auth.signInWithPhoneNumber).toHaveBeenCalledTimes(1);
     expect(flags).toEqual([]);
   });
@@ -129,14 +129,14 @@ describe("sendPhoneCodeWith (ENG-412)", () => {
   });
   it("QA: a real number is sent again with verification, and that confirmation is returned", async () => {
     const { auth, flags } = fakeAuth([refusal, "real-confirmation"]);
-    await expect(sendPhoneCodeWith(auth, "+917823807161", true)).resolves.toBe("real-confirmation");
+    await expect(sendPhoneCodeWith(auth, "+915550000000", true)).resolves.toBe("real-confirmation");
     expect(auth.signInWithPhoneNumber).toHaveBeenCalledTimes(2);
     expect(flags).toEqual([true, false]);
   });
   it("QA: any other error is not retried", async () => {
     const tooMany = { code: "auth/too-many-requests", message: "blocked" };
     const { auth } = fakeAuth([tooMany]);
-    await expect(sendPhoneCodeWith(auth, "+917823807161", true)).rejects.toBe(tooMany);
+    await expect(sendPhoneCodeWith(auth, "+915550000000", true)).rejects.toBe(tooMany);
     expect(auth.signInWithPhoneNumber).toHaveBeenCalledTimes(1);
   });
 });
