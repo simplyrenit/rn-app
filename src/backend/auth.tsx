@@ -3,7 +3,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { DEV_MODE, OTP } from "@/lib/config";
 import { getAuthTokens } from "@/lib/auth-fns";
 import { readIdToken } from "@/lib/unlock";
-import { needsAppVerification } from "@/lib/phone-change";
+import { sendPhoneCodeWith } from "@/lib/phone-change";
 import { acceptOwnerTerms } from "@/backend/terms";
 import { emailLogin, otpCheck, phoneLogin, signUp } from "@/backend/sign-in-calls";
 import { signInIntent } from "@/lib/return-to";
@@ -33,34 +33,9 @@ const getFirebaseAuth = () => {
   return getAuth();
 };
 
-// Sends the code. PROD always uses app verification (APNs / Play Integrity /
-// reCAPTCHA). QA/dev builds first try without it, which works for any Firebase
-// Console test number in renit-uat, whatever that list is today; a real number
-// is refused with no SMS sent, and is then sent again with verification on
-// (ENG-412). The setting sticks on the auth instance, so it is set every time,
-// and the native call is awaited so it lands before signInWithPhoneNumber.
-async function sendPhoneCode(auth: any, phone: string): Promise<any> {
-  if (!(__DEV__ || DEV_MODE === "QA")) {
-    return auth.signInWithPhoneNumber(phone);
-  }
-  await setAppVerificationDisabled(auth, true);
-  try {
-    return await auth.signInWithPhoneNumber(phone);
-  } catch (error) {
-    if (!needsAppVerification(error)) throw error;
-  }
-  await setAppVerificationDisabled(auth, false);
-  return auth.signInWithPhoneNumber(phone);
-}
-
-async function setAppVerificationDisabled(auth: any, disabled: boolean): Promise<void> {
-  auth.settings.appVerificationDisabledForTesting = disabled;
-  try {
-    await auth.native.setAppVerificationDisabledForTesting(disabled);
-  } catch (settingError) {
-    console.warn("Could not confirm appVerificationDisabledForTesting", settingError);
-  }
-}
+// QA/dev builds try without app verification first, then with it (ENG-412).
+const sendPhoneCode = (auth: any, phone: string) =>
+  sendPhoneCodeWith(auth, phone, __DEV__ || DEV_MODE === "QA");
 
 export interface SignUpError {
   status?: number;

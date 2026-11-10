@@ -97,3 +97,32 @@ export function needsAppVerification(error: any): boolean {
   const message = String(error?.message ?? "");
   return /missing-client-identifier|missing-app-identifier/i.test(code) || /(client|app) identifier/i.test(message);
 }
+
+/**
+ * Sends the code. PROD always uses app verification (APNs / Play Integrity / reCAPTCHA). QA/dev
+ * builds first try without it, which works for any Firebase Console test number in renit-uat,
+ * whatever that list is today; a real number is refused with no SMS sent and is then sent again
+ * with verification on. The setting sticks on the auth instance, so it is set before every send.
+ * Order: on Android the setter returns a promise we await; on iOS it is a void call that runs on
+ * the module's serial queue ahead of signInWithPhoneNumber.
+ */
+export async function sendPhoneCodeWith(auth: any, phone: string, devOrQa: boolean): Promise<any> {
+  if (!devOrQa) return auth.signInWithPhoneNumber(phone);
+  await setAppVerificationDisabled(auth, true);
+  try {
+    return await auth.signInWithPhoneNumber(phone);
+  } catch (error) {
+    if (!needsAppVerification(error)) throw error;
+  }
+  await setAppVerificationDisabled(auth, false);
+  return auth.signInWithPhoneNumber(phone);
+}
+
+async function setAppVerificationDisabled(auth: any, disabled: boolean): Promise<void> {
+  auth.settings.appVerificationDisabledForTesting = disabled;
+  try {
+    await auth.native.setAppVerificationDisabledForTesting(disabled);
+  } catch (settingError) {
+    console.warn("Could not confirm appVerificationDisabledForTesting", settingError);
+  }
+}
