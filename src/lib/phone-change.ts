@@ -83,3 +83,46 @@ export function unlockNext(input: { force: boolean; believesNumber: boolean; unl
  * saving again.
  */
 export const noNumberStep = (force: boolean): "carry_on" | "tell" => (force ? "tell" : "carry_on");
+
+// ---- When Firebase wants app verification (ENG-412) ------------------------------------------------
+
+/**
+ * Firebase sends a code without app verification (APNs / Play Integrity / reCAPTCHA) only to its
+ * console test numbers. For any other number it refuses with MISSING_CLIENT_IDENTIFIER, which
+ * reaches the app as "The request does not contain a client identifier" (iOS) or "This request is
+ * missing a valid app identifier" (Android). That refusal sends no SMS, so it is safe to repeat.
+ */
+export function needsAppVerification(error: any): boolean {
+  const code = String(error?.code ?? "");
+  const message = String(error?.message ?? "");
+  return /missing-client-identifier|missing-app-identifier/i.test(code) || /(client|app) identifier/i.test(message);
+}
+
+/**
+ * Sends the code. PROD always uses app verification (APNs / Play Integrity / reCAPTCHA). QA/dev
+ * builds first try without it, which works for any Firebase Console test number in renit-uat,
+ * whatever that list is today; a real number is refused with no SMS sent and is then sent again
+ * with verification on. The setting sticks on the auth instance, so it is set before every send.
+ * Order: on Android the setter returns a promise we await; on iOS it is a void call that runs on
+ * the module's serial queue ahead of signInWithPhoneNumber.
+ */
+export async function sendPhoneCodeWith(auth: any, phone: string, devOrQa: boolean): Promise<any> {
+  if (!devOrQa) return auth.signInWithPhoneNumber(phone);
+  await setAppVerificationDisabled(auth, true);
+  try {
+    return await auth.signInWithPhoneNumber(phone);
+  } catch (error) {
+    if (!needsAppVerification(error)) throw error;
+  }
+  await setAppVerificationDisabled(auth, false);
+  return auth.signInWithPhoneNumber(phone);
+}
+
+async function setAppVerificationDisabled(auth: any, disabled: boolean): Promise<void> {
+  auth.settings.appVerificationDisabledForTesting = disabled;
+  try {
+    await auth.native.setAppVerificationDisabledForTesting(disabled);
+  } catch (settingError) {
+    console.warn("Could not confirm appVerificationDisabledForTesting", settingError);
+  }
+}

@@ -1,6 +1,6 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, jest } from "@jest/globals";
 import type { ApiError } from "../api-error";
-import { needsCurrentNumberCode, noNumberStep, phoneChangeBody, phoneChangeOutcome, unlockNext, unlockStart } from "../phone-change";
+import { needsCurrentNumberCode, noNumberStep, phoneChangeBody, phoneChangeOutcome, unlockNext, unlockStart, needsAppVerification, sendPhoneCodeWith } from "../phone-change";
 
 const err = (over: Partial<ApiError> = {}): ApiError => ({ status: 400, code: null, message: null, details: null, ...over });
 
@@ -84,5 +84,59 @@ describe("the code step before a change (review app-6 r1 #2): a refused save nev
   it("says what is wrong, instead of saving again, when a forced unlock finds the account has no number", () => {
     expect(noNumberStep(false)).toBe("carry_on");
     expect(noNumberStep(true)).toBe("tell");
+  });
+});
+
+describe("needsAppVerification (ENG-412)", () => {
+  it("spots Firebase's refusal of a number that needs app verification", () => {
+    expect(needsAppVerification({ code: "auth/unknown", message: "[auth/unknown] The request does not contain a client identifier." })).toBe(true);
+    expect(needsAppVerification({ code: "auth/missing-client-identifier", message: "" })).toBe(true);
+    expect(needsAppVerification({ message: "This request is missing a valid app identifier, meaning that Play Integrity checks, and reCAPTCHA checks were unsuccessful." })).toBe(true);
+  });
+  it("leaves every other error alone", () => {
+    expect(needsAppVerification({ code: "auth/too-many-requests", message: "We have blocked all requests from this device." })).toBe(false);
+    expect(needsAppVerification({ code: "auth/invalid-phone-number", message: "The format of the phone number provided is incorrect." })).toBe(false);
+    expect(needsAppVerification(null)).toBe(false);
+  });
+});
+
+describe("sendPhoneCodeWith (ENG-412)", () => {
+  const refusal = { code: "auth/unknown", message: "The request does not contain a client identifier." };
+  const fakeAuth = (results: any[]) => {
+    const flags: boolean[] = [];
+    const auth: any = {
+      settings: {},
+      native: { setAppVerificationDisabledForTesting: async (on: boolean) => { flags.push(on); } },
+      signInWithPhoneNumber: jest.fn(async () => {
+        const next = results.shift();
+        if (next instanceof Error || next?.code) throw next;
+        return next;
+      }),
+    };
+    return { auth, flags };
+  };
+
+  it("PROD sends once and never touches the testing flag", async () => {
+    const { auth, flags } = fakeAuth(["confirmation"]);
+    await expect(sendPhoneCodeWith(auth, "+915550000000", false)).resolves.toBe("confirmation");
+    expect(auth.signInWithPhoneNumber).toHaveBeenCalledTimes(1);
+    expect(flags).toEqual([]);
+  });
+  it("QA: a test number goes through on the first try", async () => {
+    const { auth, flags } = fakeAuth(["test-confirmation"]);
+    await expect(sendPhoneCodeWith(auth, "+919000000002", true)).resolves.toBe("test-confirmation");
+    expect(flags).toEqual([true]);
+  });
+  it("QA: a real number is sent again with verification, and that confirmation is returned", async () => {
+    const { auth, flags } = fakeAuth([refusal, "real-confirmation"]);
+    await expect(sendPhoneCodeWith(auth, "+915550000000", true)).resolves.toBe("real-confirmation");
+    expect(auth.signInWithPhoneNumber).toHaveBeenCalledTimes(2);
+    expect(flags).toEqual([true, false]);
+  });
+  it("QA: any other error is not retried", async () => {
+    const tooMany = { code: "auth/too-many-requests", message: "blocked" };
+    const { auth } = fakeAuth([tooMany]);
+    await expect(sendPhoneCodeWith(auth, "+915550000000", true)).rejects.toBe(tooMany);
+    expect(auth.signInWithPhoneNumber).toHaveBeenCalledTimes(1);
   });
 });

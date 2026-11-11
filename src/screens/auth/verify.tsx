@@ -272,7 +272,7 @@ export default function VerifyEmail() {
                   </View>
                 )}
 
-                <TouchableOpacity onPress={handleResendOTP}>
+                <TouchableOpacity onPress={handleResendOTP} disabled={loading}>
                   <Text
                     fontWeight="font-bold"
                     className="text-brand mt-4"
