@@ -233,7 +233,7 @@ describe("riderContact (ENG-414)", () => {
 
   it("offers tracking and a call while the server sends them", () => {
     expect(riderContact({ ...ravi, phone: "+919811100000", tracking_url: "https://borzo.in/t/1" })).toEqual({
-      call: { label: "Call Ravi", number: "+919811100000", note: "The rider's own phone." },
+      call: { label: "Call Ravi", number: "+919811100000", note: "The rider's own phone: +919811100000" },
       trackUrl: "https://borzo.in/t/1",
     });
   });

@@ -67,7 +67,7 @@ export function riderContact(
   const trackUrl = rider?.tracking_url?.startsWith("https://") ? rider.tracking_url : null;
   const number = rider?.phone || null;
   if (!trackUrl && !number) return null;
-  const call = number ? { label: rider?.name ? `Call ${rider.name}` : "Call the rider", number, note: "The rider's own phone." } : null;
+  const call = number ? { label: rider?.name ? `Call ${rider.name}` : "Call the rider", number, note: `The rider's own phone: ${number}` } : null;
   return { call, trackUrl };
 }
 

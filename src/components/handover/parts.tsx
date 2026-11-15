@@ -90,7 +90,6 @@ export function StatusButtons({
   );
 }
 
-/** Call: a direct dial from the phone, with the line that says when calls are open. */
 /** ENG-414: "Track rider" and a call to the rider's own phone, while a rider is on the leg (the server sends them only then). */
 export function RiderContact({ rider }: { rider: CourierRider | null | undefined }) {
   const { color } = useTheme();
@@ -118,6 +117,7 @@ export function RiderContact({ rider }: { rider: CourierRider | null | undefined
   );
 }
 
+/** Call: a direct dial from the phone, with the line that says when calls are open. */
 export function CallButton({ copy }: { copy: CallCopy }) {
   const { color } = useTheme();
   const dial = () => {
