@@ -4,7 +4,7 @@ import { useServerNow } from "@/components/booking/use-server-now";
 import { ClaimRows } from "@/components/claims/claim-rows";
 import { RecordCardBody, useRecord } from "@/components/capture/record-card";
 import { Button, Text } from "@/components/core";
-import { Block, CallButton, LinkRow, StepList } from "@/components/handover/parts";
+import { Block, CallButton, LinkRow, RiderContact, StepList } from "@/components/handover/parts";
 import { BookingCustomer } from "@/lib/booking";
 import { recordOpens } from "@/lib/capture";
 import {
@@ -74,6 +74,7 @@ export function CourierDayOf({ booking, receivedAt }: { booking: BookingCustomer
       <Panel style={{ padding: space.md, gap: space.md }}>
         <StepList steps={courierRows(courier?.steps, "out", now)} />
       </Panel>
+      <RiderContact rider={courier?.rider} />
 
       {opening ? (
         <View style={{ gap: space.xs }}>

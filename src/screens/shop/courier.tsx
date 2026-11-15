@@ -9,7 +9,7 @@ import { ClaimRows } from "@/components/claims/claim-rows";
 import { ReturnSets } from "@/components/capture/moment-sets";
 import { RecordCardBody, Records, useRecord } from "@/components/capture/record-card";
 import { Button, Text, TextField } from "@/components/core";
-import { Block, CallButton, LinkRow, StepList, useGuardedTap } from "@/components/handover/parts";
+import { Block, CallButton, LinkRow, RiderContact, StepList, useGuardedTap } from "@/components/handover/parts";
 import { EvidencePhoto, PhotoRow, discardEvidence, uploadEvidence } from "@/components/handover/photo-row";
 import { apiError } from "@/lib/api-error";
 import { recordWanted } from "@/lib/capture";
@@ -275,6 +275,7 @@ export function CourierPack({ booking, courier, receivedAt }: Props) {
         </Text>
       ) : null}
 
+      {live ? <RiderContact rider={courier.rider} /> : null}
       {live ? <CallButton copy={courierCall(dayBlock(booking))} /> : null}
 
       <Panel>
@@ -358,6 +359,7 @@ export function CourierReturn({ booking, courier, receivedAt, watching }: Props)
           {courier.return.seal ? `${RECEIPT_NOTE} The seal should read ${courier.return.seal}.` : RECEIPT_NOTE}
         </Notice>
       ) : null}
+      {out ? <RiderContact rider={courier.rider} /> : null}
 
       {/* A handover record that was never made or finished: the payout still waits for it. */}
       <Records role="owner" moments={["handover"]} booking={booking} receivedAt={receivedAt} stake={payoutPending(booking)} {...names} />

@@ -10,6 +10,7 @@ import {
   deliverCountLine,
   deliveryLineText,
   deliveryReason,
+  riderContact,
   nobodyDeliversCopy,
   productHowLine,
   splitByDelivery,
@@ -224,5 +225,27 @@ describe("the Renit courier (unified delivery B1)", () => {
     expect(addressMayHelp({ reason: "courier_item" })).toBe(false);
     expect(addressMayHelp({ reason: "courier_value" })).toBe(false);
     expect(addressMayHelp({ reason: "id_match" })).toBe(false);
+  });
+});
+
+describe("riderContact (ENG-414)", () => {
+  const ravi = { name: "Ravi", vehicle: "Bike", plate: null };
+
+  it("offers tracking and a call while the server sends them", () => {
+    expect(riderContact({ ...ravi, phone: "+919811100000", tracking_url: "https://borzo.in/t/1" })).toEqual({
+      call: { label: "Call Ravi", number: "+919811100000", note: "The rider's own phone." },
+      trackUrl: "https://borzo.in/t/1",
+    });
+  });
+
+  it("offers nothing without a phone or a link, or from an older server", () => {
+    expect(riderContact(null)).toBeNull();
+    expect(riderContact(ravi)).toBeNull();
+    expect(riderContact({ ...ravi, phone: null, tracking_url: null })).toBeNull();
+  });
+
+  it("opens only a web page, and names no one it does not know", () => {
+    expect(riderContact({ ...ravi, tracking_url: "javascript:alert(1)" })).toBeNull();
+    expect(riderContact({ ...ravi, name: null, phone: "+919811100000" })?.call?.label).toBe("Call the rider");
   });
 });
