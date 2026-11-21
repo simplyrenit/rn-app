@@ -20,6 +20,7 @@ import {
   windowSummary,
 } from "@/lib/booking";
 import { isMonthly } from "@/lib/billing";
+import { problemState } from "@/lib/claims";
 import { DeliveredBy, byRenit } from "@/lib/delivery";
 import { kmText } from "@/lib/shop";
 import { COURIER_WAY, OwnerCourier, courierOf, packByText } from "@/lib/shop-courier";
@@ -287,9 +288,15 @@ export function cardNote(b: BookingShop, now: Date = new Date()): string | null 
     const due = b.money.rent_due_at;
     return due ? `Waiting for the customer to pay the rent by ${momentLabel(due, now)}` : "Waiting for the customer to pay the rent";
   }
-  // B1: the rider brought it back; it stays out until Renit's desk finishes the return (ENG-333).
-  if (b.stage === "out" && courier?.return.state === "at_shop") {
-    return b.captures?.return?.mine ? "Back at your shop" : "Back at your shop. Record it in the app";
+  // B1: the rider brought it back. Borzo's return ends the rental by itself (ENG-416), so it may be
+  // returned before the shop has recorded it: the record is what the shop does next, and a report needs it.
+  if (courier?.return.state === "at_shop" && (b.stage === "out" || (b.stage === "returned" && !b.captures?.return?.mine))) {
+    if (b.captures?.return?.mine) return "Back at your shop";
+    // "By when" only while recording the return is all a report waits for, as the server's tracker says:
+    // not past it, nor with nothing left to claim, nor while the handover record is missing too.
+    const reportable = b.stage === "returned" && b.captures?.handover?.mine && problemState(b, now) === "record_first";
+    const until = reportable ? b.report_problem_until : null;
+    return until ? `Back at your shop. Record it by ${momentLabel(until, now)}` : "Back at your shop. Record it in the app";
   }
   if (b.stage === "out" && b.return_by) {
     const day = dayOf(b.return_by);
