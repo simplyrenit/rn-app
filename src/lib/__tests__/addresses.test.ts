@@ -9,6 +9,7 @@ import {
   flatForPickedSpot,
   fullAddressForNewPin,
   inlineOfferPayload,
+  pickupAfterPick,
   pickupFields,
   pickupOfListing,
   validPin,
@@ -302,13 +303,7 @@ describe("pickup on the edit form", () => {
       addressLine2: home.address_line_2,
       saved: home,
     };
-    // What the form does with the sheet's pick.
-    const pickup = {
-      locality: picked.locality,
-      fullAddress: flatForPickedSpot(current, picked, [home]),
-      lat: picked.lat,
-      long: picked.long,
-    };
+    const pickup = pickupAfterPick(current, picked, [home]);
     expect(pickup).toEqual(toLocationValue(home));
     expect(pickupFields(pickup)).toEqual({
       location: "Thane West, Thane",

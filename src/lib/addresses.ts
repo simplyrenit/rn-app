@@ -122,6 +122,23 @@ interface PickupFields {
 }
 
 /**
+ * The pickup after the owner picks `picked` in the address sheet (ENG-419):
+ * its place line and pin, and the flat line `flatForPickedSpot` keeps.
+ */
+export function pickupAfterPick(
+  current: LocationValue | null,
+  picked: PickedAddress,
+  addresses: SavedAddress[]
+): LocationValue {
+  return {
+    locality: picked.locality,
+    fullAddress: flatForPickedSpot(current, picked, addresses),
+    lat: picked.lat,
+    long: picked.long,
+  };
+}
+
+/**
  * The pickup as a listing stores it: the public place line, the pin, and the
  * owner-only flat and landmark. Create and edit both send exactly this.
  */

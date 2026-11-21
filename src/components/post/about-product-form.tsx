@@ -15,7 +15,7 @@ import {
   useFieldSurfaceStyle,
 } from "@/components/core";
 import { SegmentedChoice } from "@/components/core/segmented-choice";
-import { PickedAddress, flatForPickedSpot } from "@/lib/addresses";
+import { PickedAddress, flatForPickedSpot, pickupAfterPick } from "@/lib/addresses";
 import { parseQuantity, parseWorth, MAX_QUANTITY_DIGITS, WORTH_HINT } from "@/lib/list-flow/stock";
 import type { LocationValue } from "@/lib/list-flow/types";
 import { createLocationRequest } from "@/lib/location-request";
@@ -220,12 +220,7 @@ export function AboutProductForm({
   // its own flat and landmark, a spot on the map keeps only text the owner
   // typed for a one-off spot. The saved address itself is never written here.
   const onPickAddress = (picked: PickedAddress) => {
-    setPickup((current) => ({
-      locality: picked.locality,
-      fullAddress: flatForPickedSpot(current, picked, addresses),
-      lat: picked.lat,
-      long: picked.long,
-    }));
+    setPickup((current) => pickupAfterPick(current, picked, addresses));
   };
 
   const openLocationPicker = () => {
