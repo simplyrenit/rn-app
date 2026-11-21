@@ -815,8 +815,8 @@ describe("B1, the courier's day of the handover (C3, C4)", () => {
 
   it("counts down to open_by on the server's clock", () => {
     const openBy = "2026-10-24T04:42:00Z";
-    expect(openByLine(openBy, new Date("2026-10-24T04:16:00Z"))).toBe("26 min left. After that, we take it that it arrived fine.");
-    expect(openByLine(openBy, new Date("2026-10-24T04:41:30Z"))).toBe("1 min left. After that, we take it that it arrived fine.");
+    expect(openByLine(openBy, new Date("2026-10-24T04:16:00Z"))).toBe("26 min left. Recording it starts your rental.");
+    expect(openByLine(openBy, new Date("2026-10-24T04:41:30Z"))).toBe("1 min left. Recording it starts your rental.");
     expect(openByLine(openBy, new Date("2026-10-24T04:42:00Z"))).toMatch(/^The 30 minutes are up/);
     expect(openByLine(null, NOW)).toMatch(/^Start recording as soon as the rider hands it to you/);
   });

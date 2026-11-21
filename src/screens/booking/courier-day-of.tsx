@@ -31,7 +31,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
  * instead of the preset buttons, no handover code and no "The shop isn't here?" (neither side meets the other), and Call
  * goes to Renit's desk. While a rider is on the leg there is also "Track rider" and a call to the rider (ENG-414). The customer opens it on camera: from the moment the rider has it, and within 30 minutes of the
  * desk's "delivered" (`courier.open_by`, the server's clock). That record starts the rental (ENG-415); without one,
- * the rider's proof does after two desk hours, and the server's steps say when.
+ * the courier company's own delivery proof does after two desk hours (never on a desk-booked leg), and the server's
+ * steps say when.
  *
  * Every step and its words are the server's; this screen only draws them.
  */
