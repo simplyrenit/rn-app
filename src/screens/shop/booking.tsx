@@ -35,7 +35,7 @@ import {
   shopPill,
   shopTimeline,
 } from "@/lib/shop-booking";
-import { dayButton, dayScreen, payoutPending } from "@/lib/shop-handover";
+import { dayButton, dayScreen, pageMoments, payoutPending } from "@/lib/shop-handover";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -296,9 +296,11 @@ function BookingPage({
 
         {/* A record that is not finished is never out of sight: it can be made or carried on
             from the booking for as long as the server takes it, and the card says when the
-            payout waits for it (review r1 #1). */}
+            payout waits for it (review r1 #1). The moment the day button opens is recorded
+            on that screen, so its card is not drawn here as a second button (ENG-418). */}
         <Records
           role="owner"
+          moments={pageMoments(booking)}
           booking={booking}
           receivedAt={receivedAt}
           title={`${booking.product.title} · ${booking.customer.first_name}`}
