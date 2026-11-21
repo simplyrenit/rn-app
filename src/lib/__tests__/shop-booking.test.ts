@@ -166,17 +166,25 @@ describe("a card on the list", () => {
   });
 
   it("a courier return Borzo ended before the shop recorded it asks for the record by when (ENG-416)", () => {
-    const back = (mine: boolean, until: string | null) =>
+    const back = (mine: boolean, until: string | null, over: Record<string, unknown> = {}) =>
       ({
         ...booking({ stage: "returned", report_problem_until: until }),
         delivered_by: "renit",
         courier: { return: { state: "at_shop", window: null, earliest: null, seal: "R-2052" } },
         captures: { handover: { mine: true, theirs: true }, return: { mine, theirs: false } },
+        ...over,
       }) as unknown as BookingShop;
     expect(cardNote(back(false, "2026-10-13T08:20:00Z"), NOW)).toBe("Back at your shop. Record it by 1:50 pm");
     expect(cardNote(back(false, "2026-10-14T08:20:00Z"), NOW)).toBe("Back at your shop. Record it by Wed 14 Oct, 1:50 pm");
-    // Nothing to claim against (forfeited): no "by when".
+    // No time from the server (a forfeit): no "by when".
     expect(cardNote(back(false, null), NOW)).toBe("Back at your shop. Record it in the app");
+    const later = "2026-10-13T08:20:00Z";
+    // Late days took all of the deposit: nothing to claim, so no "by when" though the server sends one.
+    const usedUp = { money: { ...booking().money, deposit: "3000.00", late_fee: "3000.00" } };
+    expect(cardNote(back(false, later, usedUp), NOW)).toBe("Back at your shop. Record it in the app");
+    // The handover record is missing too: a deadline alone would not make a report possible.
+    const noHandover = { captures: { handover: { mine: false, theirs: true }, return: { mine: false, theirs: false } } };
+    expect(cardNote(back(false, later, noHandover), NOW)).toBe("Back at your shop. Record it in the app");
     // Past the 24 hours: a report is no longer taken, so no time already gone.
     expect(cardNote(back(false, "2026-10-13T03:00:00Z"), NOW)).toBe("Back at your shop. Record it in the app");
     // Recorded once returned: the stage pill says the rest.

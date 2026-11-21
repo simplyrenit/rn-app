@@ -292,8 +292,10 @@ export function cardNote(b: BookingShop, now: Date = new Date()): string | null 
   // returned before the shop has recorded it: the record is what the shop does next, and a report needs it.
   if (courier?.return.state === "at_shop" && (b.stage === "out" || (b.stage === "returned" && !b.captures?.return?.mine))) {
     if (b.captures?.return?.mine) return "Back at your shop";
-    // "By when" only while a report would be taken once recorded: not past it, nor with nothing left to claim.
-    const until = b.stage === "returned" && problemState(b, now) === "record_first" ? b.report_problem_until : null;
+    // "By when" only while recording the return is all a report waits for, as the server's tracker says:
+    // not past it, nor with nothing left to claim, nor while the handover record is missing too.
+    const reportable = b.stage === "returned" && b.captures?.handover?.mine && problemState(b, now) === "record_first";
+    const until = reportable ? b.report_problem_until : null;
     return until ? `Back at your shop. Record it by ${momentLabel(until, now)}` : "Back at your shop. Record it in the app";
   }
   if (b.stage === "out" && b.return_by) {
