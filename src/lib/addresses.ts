@@ -96,6 +96,64 @@ export function toLocationValue(a: SavedAddress): LocationValue {
 }
 
 /**
+ * A listing's pickup as the address picker holds it (ENG-419), so editing
+ * starts from what listing stored. Null with no pin: 0/0 is the backend's
+ * "unset". The stored strings are kept as they are, never re-geocoded on open.
+ */
+export function pickupOfListing(product: {
+  location?: string | null;
+  full_address?: string | null;
+  coordinates?: { lat: number; long: number } | null;
+}): LocationValue | null {
+  const pin = product.coordinates;
+  if (!pin || (!pin.lat && !pin.long)) return null;
+  return {
+    locality: product.location ?? "",
+    fullAddress: product.full_address ?? "",
+    lat: pin.lat,
+    long: pin.long,
+  };
+}
+
+interface PickupFields {
+  coordinates: { lat: number; long: number } | null;
+  location: string;
+  full_address: string;
+}
+
+/**
+ * The pickup after the owner picks `picked` in the address sheet (ENG-419):
+ * its place line and pin, and the flat line `flatForPickedSpot` keeps.
+ */
+export function pickupAfterPick(
+  current: LocationValue | null,
+  picked: PickedAddress,
+  addresses: SavedAddress[]
+): LocationValue {
+  return {
+    locality: picked.locality,
+    fullAddress: flatForPickedSpot(current, picked, addresses),
+    lat: picked.lat,
+    long: picked.long,
+  };
+}
+
+/**
+ * The pickup as a listing stores it: the public place line, the pin, and the
+ * owner-only flat and landmark. Create and edit both send exactly this.
+ */
+export function pickupFields(pickup: LocationValue): PickupFields & { coordinates: { lat: number; long: number } };
+export function pickupFields(pickup: LocationValue | null | undefined): PickupFields;
+export function pickupFields(pickup: LocationValue | null | undefined): PickupFields {
+  return {
+    coordinates: pickup ? { lat: pickup.lat, long: pickup.long } : null,
+    location: pickup?.locality ?? "",
+    // `?.` on the text too: a draft stored before the field existed has none.
+    full_address: pickup?.fullAddress?.trim() ?? "",
+  };
+}
+
+/**
  * The flat/landmark text to keep when the pickup pin moves to a point that is
  * not a saved address. Text that came from a saved address describes that
  * place and must not follow a different pin; text the owner typed stays.

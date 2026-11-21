@@ -9,6 +9,9 @@ import {
   flatForPickedSpot,
   fullAddressForNewPin,
   inlineOfferPayload,
+  pickupAfterPick,
+  pickupFields,
+  pickupOfListing,
   validPin,
   showsSaveOffer,
   takenTypes,
@@ -258,5 +261,64 @@ describe("flatForPickedSpot", () => {
       "Flat 2, Sea View"
     );
     expect(flatForPickedSpot(null, elsewhere, [home])).toBe("");
+  });
+});
+
+// ENG-419: editing a live listing picks its pickup as listing does, and sends what listing sends.
+describe("pickup on the edit form", () => {
+  const listing = {
+    location: "Andheri West, Mumbai",
+    full_address: "Shop 4, Lokhandwala Complex",
+    coordinates: { lat: 19.1364, long: 72.8296 },
+  };
+
+  it("starts from the listing's place line, flat line and pin", () => {
+    expect(pickupOfListing(listing)).toEqual({
+      locality: "Andheri West, Mumbai",
+      fullAddress: "Shop 4, Lokhandwala Complex",
+      lat: 19.1364,
+      long: 72.8296,
+    });
+  });
+
+  it("has no pickup for a listing with no pin (0/0 is unset)", () => {
+    expect(pickupOfListing({ ...listing, coordinates: { lat: 0, long: 0 } })).toBeNull();
+    expect(pickupOfListing({ ...listing, coordinates: null })).toBeNull();
+  });
+
+  it("sends an untouched pickup back as it was stored, so the save changes nothing", () => {
+    expect(pickupFields(pickupOfListing(listing))).toEqual(listing);
+    // A listing without a flat line sends "", which the server reads as the same as its null.
+    expect(pickupFields(pickupOfListing({ ...listing, full_address: null })).full_address).toBe("");
+  });
+
+  it("sends a picked saved address as its place line, pin, and flat and landmark", () => {
+    const home = address();
+    const current = pickupOfListing(listing);
+    const picked = {
+      lat: home.coordinates.lat,
+      long: home.coordinates.long,
+      locality: home.locality,
+      addressLine1: home.address_line_1,
+      addressLine2: home.address_line_2,
+      saved: home,
+    };
+    const pickup = pickupAfterPick(current, picked, [home]);
+    expect(pickup).toEqual(toLocationValue(home));
+    expect(pickupFields(pickup)).toEqual({
+      location: "Thane West, Thane",
+      coordinates: { lat: 19.2437, long: 72.9781 },
+      full_address: "Flat 1203, Tower B, Near the clubhouse",
+    });
+  });
+
+  it("drops the old flat line when a map spot replaces a saved address", () => {
+    const home = address();
+    const spot = { lat: 19.1, long: 72.9 };
+    expect(flatForPickedSpot(toLocationValue(home), spot, [home])).toBe("");
+  });
+
+  it("sends nothing for no pickup, as create does", () => {
+    expect(pickupFields(null)).toEqual({ coordinates: null, location: "", full_address: "" });
   });
 });

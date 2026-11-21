@@ -8,6 +8,7 @@ import {
 import { EditStepHeader } from "@/components/post/edit-step-header";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
+import { pickupFields, pickupOfListing } from "@/lib/addresses";
 import { ListingAnswer, ownerView, readPendingEdit, saveOutcome } from "@/lib/listing-edit";
 import { HeldFormNotice } from "@/components/product/listing-status";
 import { toastSave } from "@/lib/save-toast";
@@ -37,12 +38,6 @@ export default function EditAboutProduct() {
 
   const { updateMyProductDetails } = useProfile();
   const { userDetails } = useGlobalContext();
-
-  // 0/0 is the backend's "unset", not a pin in the Gulf of Guinea.
-  const savedCoordinates =
-    data.coordinates && (data.coordinates.lat || data.coordinates.long)
-      ? { lat: data.coordinates.lat, long: data.coordinates.long }
-      : null;
 
   /**
    * The stored contact number, and the last ten digits of it that the form
@@ -82,7 +77,6 @@ export default function EditAboutProduct() {
         model_name: values.modelName,
         condition: values.condition,
         description: values.productDescription,
-        location: values.address,
         usage_description: values.usageDescription,
         // The form will not submit without a price for every plan picked (ENG-281).
         plans: toPlans(values.plans) ?? [],
@@ -91,10 +85,10 @@ export default function EditAboutProduct() {
         quantity: parseQuantity(values.quantity) ?? 1,
         worth: `${parseFloat(values.worth)}`,
         not_delivered: values.notDelivered,
-        coordinates: {
-          lat: values.coordinates?.lat ?? 0,
-          long: values.coordinates?.long ?? 0,
-        },
+        // ENG-419: the place line, the pin and the flat line, as listing sends them. This used to send the
+        // flat/landmark box as the public `location` (prefilled from `location`) and never `full_address`.
+        // The form does not submit without a pickup.
+        ...(values.pickup ? pickupFields(values.pickup) : {}),
         contact_name:
           values.contactPerson === "Other" ? values.otherName : userDetails?.name,
         contact_number:
@@ -156,8 +150,7 @@ export default function EditAboutProduct() {
             // "45000.00" from the server, "45000" in the box; empty while there is none.
             worth: data.worth ? String(Number(data.worth)) : "",
             notDelivered: Boolean(data.not_delivered),
-            address: data.location || "",
-            coordinates: savedCoordinates,
+            pickup: pickupOfListing(data),
             contactPerson: initialContactPerson,
             otherName: data.contact_name || "",
             otherPhoneNumber: savedLocalNumber,
