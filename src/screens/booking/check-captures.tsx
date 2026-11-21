@@ -104,7 +104,7 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
         ) : null}
         {!showCode && recorded && !booking.claim_open ? (
           <Text fontSize="text-xs" tone="body" style={{ textAlign: "center" }}>
-            {courier ? "Renit starts your rental once it has your recording." : "The shop types your code to start the rental."}
+            {courier ? "Your rental starts as soon as your recording reaches Renit." : "The shop types your code to start the rental."}
           </Text>
         ) : null}
       </BottomBar>
