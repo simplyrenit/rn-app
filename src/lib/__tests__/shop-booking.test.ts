@@ -164,6 +164,22 @@ describe("a card on the list", () => {
     expect(cardNote(leg("at_shop", true), NOW)).toBe("Back at your shop");
     expect(cardNote(leg("picked_up"), NOW)).toBe("Back by Mon 26 Oct, 8:00 pm");
   });
+
+  it("a courier return Borzo ended before the shop recorded it asks for the record by when (ENG-416)", () => {
+    const back = (mine: boolean, until: string | null) =>
+      ({
+        ...booking({ stage: "returned", report_problem_until: until }),
+        delivered_by: "renit",
+        courier: { return: { state: "at_shop", window: null, earliest: null, seal: "R-2052" } },
+        captures: { handover: { mine: true, theirs: true }, return: { mine, theirs: false } },
+      }) as unknown as BookingShop;
+    expect(cardNote(back(false, "2026-10-13T08:20:00Z"), NOW)).toBe("Back at your shop. Record it by 1:50 pm");
+    expect(cardNote(back(false, "2026-10-14T08:20:00Z"), NOW)).toBe("Back at your shop. Record it by Wed 14 Oct, 1:50 pm");
+    // Nothing to claim against (forfeited): no "by when".
+    expect(cardNote(back(false, null), NOW)).toBe("Back at your shop. Record it in the app");
+    // Recorded once returned: the stage pill says the rest.
+    expect(cardNote(back(true, "2026-10-13T08:20:00Z"), NOW)).toBeNull();
+  });
 });
 
 describe("a booking's timeline", () => {

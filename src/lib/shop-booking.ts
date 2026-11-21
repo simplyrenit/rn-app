@@ -287,9 +287,12 @@ export function cardNote(b: BookingShop, now: Date = new Date()): string | null 
     const due = b.money.rent_due_at;
     return due ? `Waiting for the customer to pay the rent by ${momentLabel(due, now)}` : "Waiting for the customer to pay the rent";
   }
-  // B1: the rider brought it back; it stays out until Renit's desk finishes the return (ENG-333).
-  if (b.stage === "out" && courier?.return.state === "at_shop") {
-    return b.captures?.return?.mine ? "Back at your shop" : "Back at your shop. Record it in the app";
+  // B1: the rider brought it back. Borzo's return ends the rental by itself (ENG-416), so it may be
+  // returned before the shop has recorded it: the record is what the shop does next, and a report needs it.
+  if (courier?.return.state === "at_shop" && (b.stage === "out" || (b.stage === "returned" && !b.captures?.return?.mine))) {
+    if (b.captures?.return?.mine) return "Back at your shop";
+    const until = b.stage === "returned" ? b.report_problem_until : null;
+    return until ? `Back at your shop. Record it by ${momentLabel(until, now)}` : "Back at your shop. Record it in the app";
   }
   if (b.stage === "out" && b.return_by) {
     const day = dayOf(b.return_by);

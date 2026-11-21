@@ -291,7 +291,7 @@ export function CourierPack({ booking, courier, receivedAt }: Props) {
 
 /**
  * SH-10 for a booking Renit's courier carries: "Item arriving {window}" from the server, the return leg's steps, the
- * owner's own record of the item as it comes back (the desk finishes the return after it), both sets side by side, and
+ * owner's own record of the item as it comes back (Borzo's return ends the rental by itself, ENG-416), both sets side by side, and
  * "Report a problem" once it is back. There is no code: the shop and the customer never meet.
  */
 export function CourierReturn({ booking, courier, receivedAt, watching }: Props) {
@@ -309,8 +309,10 @@ export function CourierReturn({ booking, courier, receivedAt, watching }: Props)
   const copy = returnCopy(booking, now, kinds);
   const out = booking.stage === "out" && !booking.exit;
   const arriving = out ? arrivingLine(courier) : null;
-  // The rider is on the way or has come: the record is what the shop does next.
-  const receiving = out && !flags.mine && ["rider_assigned", "picked_up", "at_shop"].includes(courier.return.state);
+  // The rider is on the way or has come: the record is what the shop does next. Borzo's return may end
+  // the rental before that record (ENG-416), so it is still asked for once returned.
+  const back = out || (booking.stage === "returned" && !booking.exit);
+  const receiving = back && !flags.mine && ["rider_assigned", "picked_up", "at_shop"].includes(courier.return.state);
 
   return (
     <ScrollView
