@@ -10,7 +10,7 @@ import { MomentSets } from "@/components/capture/moment-sets";
 import { RecordCardBody, Records, useRecord } from "@/components/capture/record-card";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { Block, LinkRow, StepList, useGuardedTap } from "@/components/handover/parts";
+import { Block, LinkRow, RiderContact, StepList, useGuardedTap } from "@/components/handover/parts";
 import { apiError } from "@/lib/api-error";
 import { returnNoticeLine } from "@/lib/billing";
 import { BookingCustomer, SLOW_POLL_MS, todayIst } from "@/lib/booking";
@@ -159,6 +159,7 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
           </>
         ) : null}
       </Panel>
+      {out ? <RiderContact rider={courier?.rider} /> : null}
 
       {out && closed ? (
         <>

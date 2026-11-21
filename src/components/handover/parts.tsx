@@ -1,6 +1,7 @@
 import { Panel } from "@/components/booking/parts";
 import { Button, Text } from "@/components/core";
 import { DayStatus } from "@/lib/booking";
+import { CourierRider, riderContact } from "@/lib/delivery";
 import { CallCopy, StatusButton, telUrl } from "@/lib/day-of";
 import { MIN_TOUCH_TARGET, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -8,7 +9,7 @@ import { toast } from "@/lib/toast";
 import React, { useRef, useState } from "react";
 import { ActivityIndicator, Linking, TouchableOpacity, View } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
-import { PhoneIcon } from "react-native-heroicons/outline";
+import { MapPinIcon, PhoneIcon } from "react-native-heroicons/outline";
 import { CheckIcon } from "react-native-heroicons/solid";
 
 /**
@@ -85,6 +86,33 @@ export function StatusButtons({
           </TouchableOpacity>
         );
       })}
+    </View>
+  );
+}
+
+/** ENG-414: "Track rider" and a call to the rider's own phone, while a rider is on the leg (the server sends them only then). */
+export function RiderContact({ rider }: { rider: CourierRider | null | undefined }) {
+  const { color } = useTheme();
+  const contact = riderContact(rider);
+  if (!contact) return null;
+  const { call, trackUrl } = contact;
+  const track = () => {
+    if (!trackUrl) return;
+    void Linking.openURL(trackUrl).catch(() => toast.error("The tracking page could not be opened"));
+  };
+  return (
+    <View style={{ gap: space.sm }}>
+      {trackUrl ? (
+        <Button variant="outline" onPress={track} accessibilityLabel="Track rider">
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+            <MapPinIcon size={20} color={color.text} />
+            <Text fontSize="text-md" fontWeight="font-bold">
+              Track rider
+            </Text>
+          </View>
+        </Button>
+      ) : null}
+      {call ? <CallButton copy={call} /> : null}
     </View>
   );
 }

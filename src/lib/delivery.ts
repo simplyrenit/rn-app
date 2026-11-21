@@ -53,6 +53,22 @@ export interface CourierRider {
   plate: string | null;
   /** The aggregator's OTP: the shop's side only. */
   otp?: string | null;
+  /** ENG-414: the rider's own phone (+91…), both sides, only while a rider is on the leg. Absent from an older server. */
+  phone?: string | null;
+  /** ENG-414: the courier's live tracking page, both sides, only while a rider is on the leg. */
+  tracking_url?: string | null;
+}
+
+/** ENG-414: what the rider card offers: call the rider, open the courier's tracking page. Null when neither. */
+export function riderContact(
+  rider: CourierRider | null | undefined
+): { call: { label: string; number: string; note: string } | null; trackUrl: string | null } | null {
+  // Only a web page opens from here: the link comes from the courier, through our server.
+  const trackUrl = rider?.tracking_url?.startsWith("https://") ? rider.tracking_url : null;
+  const number = rider?.phone || null;
+  if (!trackUrl && !number) return null;
+  const call = number ? { label: rider?.name ? `Call ${rider.name}` : "Call the rider", number, note: `The rider's own phone: ${number}` } : null;
+  return { call, trackUrl };
 }
 
 /** Where the return leg stands. A state this build does not know is drawn from the steps all the same. */
