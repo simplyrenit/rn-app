@@ -1,3 +1,4 @@
+import { pickupFields } from "@/lib/addresses";
 import { toPlans } from "@/lib/plans";
 import { specAttributes } from "./specs";
 import { parseQuantity, parseWorth } from "./stock";
@@ -64,9 +65,7 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
     brand_name: f.brand_name.value?.trim() ?? "",
     model_name: f.model_name.value?.trim() ?? "",
     usage_description: f.usage_description.value?.trim() ?? "",
-    coordinates: location ? { lat: location.lat, long: location.long } : null,
-    location: location?.locality ?? "",
-    full_address: location?.fullAddress?.trim() ?? "",
+    ...pickupFields(location),
     images: photos.map((p) => p.remoteUrl as string),
     cover_image: cover,
     contact_name: contact.name,

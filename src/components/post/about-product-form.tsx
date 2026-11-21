@@ -1,3 +1,10 @@
+import { localityFor } from "@/backend/list-flow/pickup-location";
+import useAddresses from "@/backend/useAddresses";
+import {
+  AddressPickerSheet,
+  AddressPickerSheetHandle,
+} from "@/components/addresses/address-picker-sheet";
+import { PickupField } from "@/components/addresses/pickup-field";
 import {
   Button,
   FieldFrame,
@@ -8,7 +15,9 @@ import {
   useFieldSurfaceStyle,
 } from "@/components/core";
 import { SegmentedChoice } from "@/components/core/segmented-choice";
+import { PickedAddress, flatForPickedSpot } from "@/lib/addresses";
 import { parseQuantity, parseWorth, MAX_QUANTITY_DIGITS, WORTH_HINT } from "@/lib/list-flow/stock";
+import type { LocationValue } from "@/lib/list-flow/types";
 import { createLocationRequest } from "@/lib/location-request";
 import {
   MIN_TOUCH_TARGET,
@@ -20,12 +29,10 @@ import {
   space,
 } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
-import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { MaterialIcons } from "@expo/vector-icons";
-import * as Location from "expo-location";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Platform, Pressable, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Pressable, TextInput, TouchableOpacity, View } from "react-native";
 import { AppSwitch } from "@/components/core/switch";
 import { PlanPricing } from "@/components/post/plan-pricing";
 import { DraftPlan, toPlans } from "@/lib/plans";
@@ -33,17 +40,7 @@ import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-mod
 import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  ChevronDownIcon,
-  MapPinIcon,
-  PencilSquareIcon,
-} from "react-native-heroicons/outline";
-
-/** A map pin, in the shape the backend and the product context both speak. */
-export interface ProductPoint {
-  lat: number;
-  long: number;
-}
+import { ChevronDownIcon } from "react-native-heroicons/outline";
 
 export type ContactPerson = "Owner" | "Other";
 
@@ -69,12 +66,13 @@ export interface AboutProductValues {
   quantity: string;
   worth: string;
   notDelivered: boolean;
-  /** Flat/building/landmark — the part a map cannot tell a renter. */
-  address: string;
-  /** The pin the customer chose, else the device, else the owner's saved point. */
-  coordinates: ProductPoint | null;
-  /** Reverse-geocoded label for `coordinates`, when we managed to resolve one. */
-  locationName: string | null;
+  /**
+   * ENG-419: the pickup, as the listing flow holds it — the public place line
+   * (`locality`), the pin, and the owner-only flat and landmark. Null while the
+   * listing has no pin. Only what the owner picked: the form never reads the
+   * device, so opening it elsewhere cannot move the listing.
+   */
+  pickup: LocationValue | null;
   contactPerson: ContactPerson | null;
   otherName: string;
   otherPhoneNumber: string;
@@ -117,29 +115,6 @@ const CONDITION_OPTIONS = [
   { label: "Fair", value: "fair" },
 ];
 
-/**
- * Currency glyph per country.
- *
- * Two vocabularies reach this map and both have to work: the location picker
- * hands back an address whose last component is a short form ("USA", "UK"),
- * while `reverseGeocodeAsync` returns the long form ("United States"). The
- * create twin only knew the short forms and so showed no currency glyph at all
- * for a US listing whose country came from the geocoder.
- *
- * An unlisted country renders no glyph, which is what both twins did before.
- */
-const CURRENCY_ICON: Record<
-  string,
-  React.ComponentProps<typeof MaterialIcons>["name"]
-> = {
-  India: "currency-rupee",
-  USA: "attach-money",
-  "United States": "attach-money",
-  UK: "currency-pound",
-  "United Kingdom": "currency-pound",
-};
-
-const SUPPORTED_COUNTRIES = ["USA", "UK", "India"];
 
 const isNonNegativeAmount = (value: string) =>
   /^\d+(\.\d{1,2})?$/.test(value) && Number(value) >= 0;
@@ -185,7 +160,6 @@ export function AboutProductForm({
   const [securityDeposit, setSecurityDeposit] = useState(
     initialValues?.securityDeposit ?? ""
   );
-  const [address, setAddress] = useState(initialValues?.address ?? "");
   const [quantity, setQuantity] = useState(initialValues?.quantity ?? "1");
   const [worth, setWorth] = useState(initialValues?.worth ?? "");
   const [notDelivered, setNotDelivered] = useState(initialValues?.notDelivered ?? false);
@@ -207,30 +181,19 @@ export function AboutProductForm({
     initialValues?.otherPhoneNumber ?? ""
   );
 
-  /**
-   * The pin, and nothing but the pin.
-   *
-   * This used to be three sources ranked by preference — an explicit pin, then
-   * the device's own position, then the owner's saved profile point — and the
-   * lower two were the bug. The edit twin let a mount-time
-   * `getCurrentPositionAsync` overwrite a saved pin, so an owner opening the
-   * screen in a different city and pressing Update moved their listing to
-   * wherever they were standing. Demoting the device below an explicit pin
-   * fixed only the route that bug was first found on: clearing the pin, or
-   * opening a listing stored at 0/0, dropped straight through to the device
-   * again, with the field reading empty and validation passing anyway.
-   *
-   * So there is one source. A listing's coordinates are what the customer
-   * pinned in the picker, or the coordinates it was already saved with. The
-   * form does not read the device at all, and never writes a coordinate the
-   * customer cannot see in the field above the button.
-   */
-  const [pinnedLocation, setPinnedLocation] = useState<ProductPoint | null>(
-    initialValues?.coordinates ?? null
-  );
-  const [locationName, setLocationName] = useState<string | null>(
-    initialValues?.locationName ?? null
-  );
+  const [pickup, setPickup] = useState<LocationValue | null>(initialValues?.pickup ?? null);
+  const addressSheet = useRef<AddressPickerSheetHandle>(null);
+  const { addresses, loading: addressesLoading } = useAddresses();
+  // The listing's pickup is there from the start, and may turn out to be a
+  // saved address: until the list is in, PickupField holds back the flat field
+  // that a card would replace. A list that never arrives must not hide it for
+  // good, so the wait ends, as on the listing flow's Review.
+  const [addressWaitOver, setAddressWaitOver] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setAddressWaitOver(true), 4000);
+    return () => clearTimeout(timer);
+  }, []);
+  const addressesSettled = !addressesLoading || addressWaitOver;
 
   const [submitting, setSubmitting] = useState(false);
   const mounted = useRef(true);
@@ -242,7 +205,6 @@ export function AboutProductForm({
     };
   }, []);
 
-  const [productCountry, setProductCountry] = useState("India");
   const [country, setCountry] = useState<{
     cca2: any;
     callingCode: string;
@@ -253,135 +215,42 @@ export function AboutProductForm({
     // This component renders the FieldFrame, so it cannot read it.
     frame: true,
   });
-  const currencyIcon = CURRENCY_ICON[productCountry];
 
-  /**
-   * What the location field shows.
-   *
-   * Never empty while a pin exists. Reverse geocoding is a network call and it
-   * fails; when it does we show the coordinate itself rather than the "Pin the
-   * location on a map" placeholder, because a placeholder over a real pin is
-   * how the field came to disagree with the validation beside it.
-   */
-  const locationLabel = useMemo(() => {
-    if (locationName) return locationName;
-    if (!pinnedLocation) return null;
-    return `${pinnedLocation.lat.toFixed(5)}, ${pinnedLocation.long.toFixed(5)}`;
-  }, [locationName, pinnedLocation]);
-
-  /**
-   * Turn a coordinate into something a person can read.
-   *
-   * `formattedAddress` is Android-only in expo-location, so the iOS branch has
-   * to compose the line itself. The edit twin had that branch commented out and
-   * so showed the bare fallback join on iOS.
-   */
-  const describeCoordinates = useCallback(
-    async (point: ProductPoint) => {
-      try {
-        const results = await Location.reverseGeocodeAsync({
-          latitude: point.lat,
-          longitude: point.long,
-        });
-
-        if (results.length === 0) {
-          return;
-        }
-
-        const {
-          name,
-          street,
-          streetNumber,
-          district,
-          city,
-          region,
-          postalCode,
-          country: geocodedCountry,
-        } = results[0];
-
-        let formatted = "";
-
-        if (Platform.OS === "ios") {
-          formatted = [
-            [streetNumber, street].filter(Boolean).join(" "),
-            [district, city].filter(Boolean).join(", "),
-            [region, postalCode].filter(Boolean).join(" "),
-          ]
-            .filter(Boolean)
-            .join(", ");
-        } else {
-          formatted = results[0].formattedAddress || "";
-        }
-
-        if (!formatted) {
-          formatted = [name, street, city, region, geocodedCountry]
-            .filter(Boolean)
-            .join(", ");
-        }
-
-        setLocationName(formatted);
-
-        if (geocodedCountry) {
-          setProductCountry(geocodedCountry);
-        }
-      } catch (error) {
-        // A pin we cannot name is still a valid pin; leave the coordinate be.
-        console.error(error);
-      }
-    },
-    []
-  );
-
-  const handleLocationPicked = useCallback(
-    (
-      coords: { latitude: number; longitude: number } | null,
-      pickedAddress: string | null
-    ) => {
-      // A null result means the customer cleared the pin. The edit twin
-      // returned early here and kept showing the old one.
-      if (!coords) {
-        setPinnedLocation(null);
-        setLocationName(null);
-        return;
-      }
-
-      setPinnedLocation({ lat: coords.latitude, long: coords.longitude });
-      setLocationName(pickedAddress);
-
-      if (!pickedAddress) {
-        return;
-      }
-
-      const parts = pickedAddress.split(",");
-      const pickedCountry = parts[parts.length - 1].trim();
-
-      if (!SUPPORTED_COUNTRIES.includes(pickedCountry)) {
-        toast.error("Country not supported!", {
-          message: "We are currently only available in India, USA and UK",
-        });
-        return;
-      }
-
-      setProductCountry(pickedCountry);
-    },
-    []
-  );
-
-  const openLocationPicker = () => {
-    navigation.navigate("LocationModal", {
-      requestId: createLocationRequest(handleLocationPicked),
-    });
+  // The listing flow's pickup, rule for rule (ENG-419): a saved address brings
+  // its own flat and landmark, a spot on the map keeps only text the owner
+  // typed for a one-off spot. The saved address itself is never written here.
+  const onPickAddress = (picked: PickedAddress) => {
+    setPickup((current) => ({
+      locality: picked.locality,
+      fullAddress: flatForPickedSpot(current, picked, addresses),
+      lat: picked.lat,
+      long: picked.long,
+    }));
   };
 
-  // A pin handed in without a label — the saved coordinates of a product being
-  // edited — gets named once, so the field does not read "Pin the location on a
-  // map" for a product that already has one.
-  useEffect(() => {
-    if (initialValues?.coordinates && !initialValues?.locationName) {
-      describeCoordinates(initialValues.coordinates);
+  const openLocationPicker = () => {
+    // The sheet, unless the owner is known to have nothing saved: then the map
+    // opens directly, as on Review. "Still loading" is not "none".
+    if (addressesLoading || addresses.length > 0) {
+      addressSheet.current?.present();
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    navigation.navigate("LocationModal", {
+      requestId: createLocationRequest(async (coords) => {
+        // The picker's "skip" is not a request to forget the pickup.
+        if (!coords) return;
+        // Never the picker's street-level line: `location` is public.
+        const locality = (await localityFor(coords.latitude, coords.longitude)) ?? "";
+        if (!mounted.current) return;
+        const point = { lat: coords.latitude, long: coords.longitude };
+        setPickup((current) => ({
+          locality,
+          fullAddress: flatForPickedSpot(current, point, addresses),
+          ...point,
+        }));
+      }),
+    });
+  };
 
   /**
    * What is still missing, named.
@@ -399,8 +268,9 @@ export function AboutProductForm({
     !isNonNegativeAmount(securityDeposit) && "a security deposit",
     parseWorth(worth) === null && "what it is worth",
     parseQuantity(quantity) === null && "how many you have",
-    !address.trim() && "a landmark",
-    !pinnedLocation && "a location on the map",
+    // As at listing: a pin with no name would reach the server as an empty
+    // public `location`. The flat line is the owner's to leave out.
+    !pickup?.locality.trim() && "a pickup location",
     !(
       contactPerson === "Owner" ||
       (otherName.trim() && otherPhoneNumber.trim())
@@ -443,9 +313,7 @@ export function AboutProductForm({
         quantity,
         worth,
         notDelivered,
-        address: address.trim(),
-        coordinates: pinnedLocation,
-        locationName,
+        pickup,
         contactPerson,
         otherName,
         otherPhoneNumber,
@@ -465,9 +333,11 @@ export function AboutProductForm({
     }
   };
 
-  const currencyAdornment = currencyIcon ? (
-    <MaterialIcons name={currencyIcon} color={color.brandText} size={20} />
-  ) : null;
+  // Listings are priced in rupees (the listing flow sends INR). The glyph used
+  // to follow the country the map named, which only the old picker reported.
+  const currencyAdornment = (
+    <MaterialIcons name="currency-rupee" color={color.brandText} size={20} />
+  );
 
   return (
     <FieldFrame>
@@ -626,45 +496,19 @@ export function AboutProductForm({
         multiline
       />
 
-      <View style={{ marginBottom: density.fieldGap }}>
-        <FieldLabel label="Product location" required />
-        <TouchableOpacity
-          onPress={openLocationPicker}
-          accessibilityRole="button"
-          accessibilityLabel={locationLabel ?? "Pin the location on a map"}
-        >
-          <FieldShell>
-            <MapPinIcon color={color.text} size={24} />
-            <View style={{ flex: 1 }}>
-              {locationLabel ? (
-                <Text fontSize="text-xs" numberOfLines={1} ellipsizeMode="tail">
-                  {locationLabel}
-                </Text>
-              ) : (
-                <Text fontSize="text-sm" tone="dim">
-                  Pin the location on a map
-                </Text>
-              )}
-            </View>
-            {locationLabel ? (
-              <PencilSquareIcon color={color.text} size={24} />
-            ) : null}
-          </FieldShell>
-        </TouchableOpacity>
-      </View>
-
-      {/* The map pin above sets the location that drives discovery. This
-          field is the detail a renter needs once they are on the street —
-          labelled as such, rather than as a second, free-text "address"
-          competing with the picker. */}
-      <TextField
-        label="Flat, building and landmark"
-        required
-        hint="The bit a map can’t tell them — floor, building name, the shop opposite."
-        placeholder="e.g. 2nd floor, Sunrise Apartments, opposite the bakery"
-        value={address}
-        onChangeText={setAddress}
-        multiline
+      {/* ENG-419: the listing flow's pickup, so editing offers the saved
+          addresses that listing did. The save-this-spot offer is left out
+          (addressesKnown false): it saves on publish, and an edit has none;
+          the sheet's "Add new address" saves one. */}
+      <PickupField
+        location={pickup}
+        addresses={addresses}
+        addressesKnown={false}
+        addressesSettled={addressesSettled}
+        saveAs={null}
+        onChange={openLocationPicker}
+        onChangeFlat={(text) => setPickup((current) => current && { ...current, fullAddress: text })}
+        onSaveAs={() => {}}
       />
 
       <View style={{ marginBottom: density.fieldGap }}>
@@ -918,6 +762,8 @@ export function AboutProductForm({
         {submitAccessory?.(submitLabelColor)}
       </Button>
     </KeyboardAwareScrollView>
+    {/* Outside the scroll view, as on Review: the sheet is a portal. */}
+    <AddressPickerSheet ref={addressSheet} selected={pickup ?? undefined} onPick={onPickAddress} />
     </FieldFrame>
   );
 }
