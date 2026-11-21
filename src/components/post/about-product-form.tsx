@@ -15,7 +15,7 @@ import {
   useFieldSurfaceStyle,
 } from "@/components/core";
 import { SegmentedChoice } from "@/components/core/segmented-choice";
-import { PickedAddress, flatForPickedSpot, pickupAfterPick } from "@/lib/addresses";
+import { PickedAddress, pickupAfterPick } from "@/lib/addresses";
 import { parseQuantity, parseWorth, MAX_QUANTITY_DIGITS, WORTH_HINT } from "@/lib/list-flow/stock";
 import type { LocationValue } from "@/lib/list-flow/types";
 import { createLocationRequest } from "@/lib/location-request";
@@ -237,12 +237,8 @@ export function AboutProductForm({
         // Never the picker's street-level line: `location` is public.
         const locality = (await localityFor(coords.latitude, coords.longitude)) ?? "";
         if (!mounted.current) return;
-        const point = { lat: coords.latitude, long: coords.longitude };
-        setPickup((current) => ({
-          locality,
-          fullAddress: flatForPickedSpot(current, point, addresses),
-          ...point,
-        }));
+        const spot = { lat: coords.latitude, long: coords.longitude, locality, addressLine1: "", addressLine2: "" };
+        setPickup((current) => pickupAfterPick(current, spot, addresses));
       }),
     });
   };
