@@ -177,6 +177,8 @@ describe("a card on the list", () => {
     expect(cardNote(back(false, "2026-10-14T08:20:00Z"), NOW)).toBe("Back at your shop. Record it by Wed 14 Oct, 1:50 pm");
     // Nothing to claim against (forfeited): no "by when".
     expect(cardNote(back(false, null), NOW)).toBe("Back at your shop. Record it in the app");
+    // Past the 24 hours: a report is no longer taken, so no time already gone.
+    expect(cardNote(back(false, "2026-10-13T03:00:00Z"), NOW)).toBe("Back at your shop. Record it in the app");
     // Recorded once returned: the stage pill says the rest.
     expect(cardNote(back(true, "2026-10-13T08:20:00Z"), NOW)).toBeNull();
   });

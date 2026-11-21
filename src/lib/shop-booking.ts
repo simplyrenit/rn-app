@@ -20,6 +20,7 @@ import {
   windowSummary,
 } from "@/lib/booking";
 import { isMonthly } from "@/lib/billing";
+import { problemState } from "@/lib/claims";
 import { DeliveredBy, byRenit } from "@/lib/delivery";
 import { kmText } from "@/lib/shop";
 import { COURIER_WAY, OwnerCourier, courierOf, packByText } from "@/lib/shop-courier";
@@ -291,7 +292,8 @@ export function cardNote(b: BookingShop, now: Date = new Date()): string | null 
   // returned before the shop has recorded it: the record is what the shop does next, and a report needs it.
   if (courier?.return.state === "at_shop" && (b.stage === "out" || (b.stage === "returned" && !b.captures?.return?.mine))) {
     if (b.captures?.return?.mine) return "Back at your shop";
-    const until = b.stage === "returned" ? b.report_problem_until : null;
+    // "By when" only while a report would be taken once recorded: not past it, nor with nothing left to claim.
+    const until = b.stage === "returned" && problemState(b, now) === "record_first" ? b.report_problem_until : null;
     return until ? `Back at your shop. Record it by ${momentLabel(until, now)}` : "Back at your shop. Record it in the app";
   }
   if (b.stage === "out" && b.return_by) {

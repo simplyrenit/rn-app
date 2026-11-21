@@ -132,6 +132,12 @@ describe("Today's lists", () => {
     });
   });
 
+  it("a courier return Borzo ended stays on Today as back until the shop records it (ENG-416)", () => {
+    // The server lists a returned one only while the shop's record is missing; the row reads the same.
+    const atShop = { ...back, stage: "returned", return_state: "at_shop", late_days: 0 } as ComingBack;
+    expect(comingBackRow(atShop, NOW)).toMatchObject({ sub: "Back at your shop", pill: { label: "Back", tone: "success" } });
+  });
+
   it("a return that is due today says by when", () => {
     expect(comingBackRow({ ...back, late_days: 0, return_by: "2026-10-13T12:30:00Z" }, NOW)).toMatchObject({
       sub: "Back by 6:00 pm",
