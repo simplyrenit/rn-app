@@ -5,6 +5,7 @@ import {
   dayScreen,
   handoverCopy,
   handoverSteps,
+  pageMoments,
   payoutPending,
   payoutWaits,
   reportFirstNote,
@@ -104,6 +105,22 @@ describe("which screen a booking's day is", () => {
     expect(dayButton(booking({ stage: "out" }))).toBe("Open the return");
     expect(dayButton(booking({ stage: "returned" }))).toBe("See the return");
     expect(dayButton(booking({ stage: "confirmed" }))).toBeNull();
+  });
+
+  // ENG-418: one way into each moment's record from the booking page.
+  it("leaves the moment the day button opens to its screen, and draws the rest", () => {
+    const courier = { delivered_by: "renit", courier: { seal: null } };
+    // Ready: the handover screen records the handover, by courier or not.
+    expect(pageMoments(booking())).toEqual(["return"]);
+    expect(pageMoments(booking({ delivery_mode: "owner_delivery" }))).toEqual(["return"]);
+    expect(dayButton(booking(courier))).toBe("Pack it for the courier");
+    expect(pageMoments(booking(courier))).toEqual(["return"]);
+    // Out or back: the return screen has the return; an unfinished handover record stays here.
+    expect(pageMoments(booking({ stage: "out" }))).toEqual(["handover"]);
+    expect(pageMoments(booking({ stage: "returned" }))).toEqual(["handover"]);
+    // No day screen: the page is the only place for both.
+    for (const stage of ["ringing", "accepted", "confirmed", "closed"]) expect(pageMoments(booking({ stage }))).toEqual(["handover", "return"]);
+    expect(pageMoments(booking({ exit: "no_show", exit_reason: "customer" }))).toEqual(["handover", "return"]);
   });
 });
 

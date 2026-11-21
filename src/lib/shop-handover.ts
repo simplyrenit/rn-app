@@ -1,4 +1,4 @@
-import { RECORD_FIRST } from "@/lib/capture";
+import { Moment, RECORD_FIRST } from "@/lib/capture";
 import { problemLine, problemState } from "@/lib/claims";
 import { clock, dayOf, dayShort, depositAfterLate, keptReasons, money, todayIst, windowLabel } from "@/lib/booking";
 import { captured, cameBackOn, dayBlock, handoverAt, returnedAt, theirStatusLine, whenShort } from "@/lib/day-of";
@@ -29,6 +29,19 @@ export function dayScreen(b: Pick<BookingShop, "stage" | "exit">): "ShopHandover
   if (b.exit) return null;
   if (b.stage === "ready") return "ShopHandover";
   return b.stage === "out" || b.stage === "returned" ? "ShopReturn" : null;
+}
+
+/**
+ * The records the shop's booking page draws itself: every moment but the one its day
+ * button opens, since that screen already records it (ENG-418: "Pack it for the courier"
+ * and "Record its condition" were two ways into the same job). A moment the button no
+ * longer opens keeps its card: an unfinished handover record on an `out` booking, with
+ * its payout line (review r1 #1).
+ */
+export function pageMoments(b: Pick<BookingShop, "stage" | "exit">): Moment[] {
+  const day = dayScreen(b);
+  const opened: Moment | null = day === "ShopHandover" ? "handover" : day === "ShopReturn" ? "return" : null;
+  return (["handover", "return"] as const).filter((moment) => moment !== opened);
 }
 
 /** The button on the shop's booking page that opens the day's screen. */
