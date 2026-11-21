@@ -7,7 +7,7 @@ import { ClaimRows } from "@/components/claims/claim-rows";
 import { Records } from "@/components/capture/record-card";
 import { useServerNow } from "@/components/booking/use-server-now";
 import { Button, Text } from "@/components/core";
-import { LinkRow } from "@/components/handover/parts";
+import { LinkRow, RiderContact } from "@/components/handover/parts";
 import { canPayPeriod, endingEarlyLine, isMonthly, overdueAlert, overduePeriod } from "@/lib/billing";
 import { BookingCustomer, RentPeriod, money, todayIst } from "@/lib/booking";
 import { basketActive, isBasket, liveLines, manyItems, rememberedTicks, theItems } from "@/lib/booking-lines";
@@ -88,6 +88,8 @@ export function RentalActive({ booking, receivedAt }: { booking: BookingCustomer
             {booking.courier.banner.body}
           </Notice>
         ) : null}
+        {/* ENG-414: the return push lands here, so the rider's call and tracker show without a tap to Return. */}
+        <RiderContact rider={booking.courier?.rider} />
 
         {overdue && alert ? (
           <TouchableOpacity

@@ -29,7 +29,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 /**
  * BK-14 for a booking Renit's courier partner carries (B1, Figma C3 and C4): the server's tracker and the desk's banner
  * instead of the preset buttons, no handover code and no "The shop isn't here?" (neither side meets the other), and Call
- * goes to Renit's desk. The customer opens it on camera: from the moment the rider has it, and within 30 minutes of the
+ * goes to Renit's desk. While a rider is on the leg there is also "Track rider" and a call to the rider (ENG-414). The customer opens it on camera: from the moment the rider has it, and within 30 minutes of the
  * desk's "delivered" (`courier.open_by`, the server's clock). Renit's desk starts the rental from that record.
  *
  * Every step and its words are the server's; this screen only draws them.
