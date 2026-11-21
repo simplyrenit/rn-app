@@ -30,7 +30,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
  * BK-14 for a booking Renit's courier partner carries (B1, Figma C3 and C4): the server's tracker and the desk's banner
  * instead of the preset buttons, no handover code and no "The shop isn't here?" (neither side meets the other), and Call
  * goes to Renit's desk. While a rider is on the leg there is also "Track rider" and a call to the rider (ENG-414). The customer opens it on camera: from the moment the rider has it, and within 30 minutes of the
- * desk's "delivered" (`courier.open_by`, the server's clock). Renit's desk starts the rental from that record.
+ * desk's "delivered" (`courier.open_by`, the server's clock). That record starts the rental (ENG-415); without one,
+ * the courier company's own delivery proof does after two desk hours (never on a desk-booked leg), and the server's
+ * steps say when.
  *
  * Every step and its words are the server's; this screen only draws them.
  */
@@ -101,7 +103,7 @@ export function CourierDayOf({ booking, receivedAt }: { booking: BookingCustomer
         </Notice>
       ) : recorded ? (
         <>
-          <Notice icon="info">Renit starts your rental once it has your recording.</Notice>
+          <Notice icon="info">Your rental starts as soon as your recording reaches Renit.</Notice>
           <Button variant="outline" onPress={() => navigation.navigate("BookingCheck", { number })}>
             Check it against the shop's photos
           </Button>

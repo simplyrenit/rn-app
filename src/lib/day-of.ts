@@ -507,14 +507,17 @@ export function bannerTone(banner: Pick<CourierBanner, "tone">): "brand" | "warn
 export const courierMayRecord = (courier: { state: string | null } | null | undefined) =>
   courier?.state === "picked_up" || courier?.state === "delivered";
 
-/** The line under "Open it on camera": the minutes left to `open_by`, by the server's clock. */
+/**
+ * The line under "Open it on camera": the minutes left to `open_by`, by the server's clock. Recording starts the rental
+ * (ENG-415); the server's Delivered step says what happens without it, so this line promises nothing more.
+ */
 export function openByLine(openBy: string | null | undefined, now: Date): string {
   const at = new Date(openBy ?? "").getTime();
   if (!Number.isFinite(at)) return "Start recording as soon as the rider hands it to you, with the seal in view.";
   const left = Math.ceil((at - now.getTime()) / 60_000);
   return left > 0
-    ? `${left} min left. After that, we take it that it arrived fine.`
-    : "The 30 minutes are up, so we take it that it arrived fine. You can still record it.";
+    ? `${left} min left. Recording it starts your rental.`
+    : "The 30 minutes are up. Record it now: the steps above say when your rental starts.";
 }
 
 /** What to do at the door (C3, C4). `earlyFrom`: the customer said early is OK, so be there from then (ENG-408). */

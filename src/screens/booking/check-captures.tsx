@@ -29,7 +29,7 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
   const record = useRecord({ moment: "handover", role: "customer", booking, receivedAt, ...names });
   const theirRecord = useRecord({ moment: "handover", role: "customer", forOther: true, booking, receivedAt, ...names });
   const recorded = !recordOpens(record.state);
-  // B1: on a courier booking nobody types a code; Renit's desk starts the rental from the customer's record.
+  // B1: on a courier booking nobody types a code; the customer's record starts the rental (ENG-415).
   const courier = byRenit(booking);
   const both = flags.mine && flags.theirs;
   const can = (action: string) => booking.can.includes(action);
@@ -104,7 +104,7 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
         ) : null}
         {!showCode && recorded && !booking.claim_open ? (
           <Text fontSize="text-xs" tone="body" style={{ textAlign: "center" }}>
-            {courier ? "Renit starts your rental once it has your recording." : "The shop types your code to start the rental."}
+            {courier ? "Your rental starts as soon as your recording reaches Renit." : "The shop types your code to start the rental."}
           </Text>
         ) : null}
       </BottomBar>
