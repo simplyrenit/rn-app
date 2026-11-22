@@ -7,7 +7,7 @@ import {
   matchesKey,
 } from "@/dev/design-fixtures/interceptor";
 import { parseDevLink } from "@/dev/links";
-import { GET_CATEGORIES } from "@/lib/config";
+import { EVENTS, GET_CATEGORIES } from "@/lib/config";
 
 jest.mock("@react-native-async-storage/async-storage", () => ({
   __esModule: true,
@@ -38,6 +38,7 @@ describe("design fixtures", () => {
     const instance = net();
     expect((await instance.get("https://qa.example/api/category/")).data).toBe("net");
     expect((await instance.post("https://qa.example/api/cart/", {})).data).toBe("net");
+    expect((await instance.post(EVENTS, { events: [] })).data).toBe("net");
   });
 
   it("serves the active fixture, passes other reads and refuses other writes", async () => {
@@ -48,7 +49,13 @@ describe("design fixtures", () => {
     expect(data).toHaveLength(15);
     expect(data[1]).toMatchObject({ title: "Photo & Video Production", slug: "photo-video-production" });
     expect((await instance.get("https://qa.example/api/home/")).data).toBe("net");
-    await expect(instance.post("https://qa.example/api/cart/", {})).rejects.toMatchObject({ code: "ERR_DESIGN_FIXTURE" });
+    // A refused write carries an HTTP answer, so callers show an error rather than treat it as offline and retry it.
+    await expect(instance.post("https://qa.example/api/cart/", {})).rejects.toMatchObject({
+      code: "ERR_DESIGN_FIXTURE",
+      response: { status: 409, data: { error: expect.stringContaining("POST /api/cart/") } },
+    });
+    // The analytics batch is swallowed, so the events queue does not keep it to replay against QA later.
+    expect(await instance.post(EVENTS, { events: [{ name: "x" }] })).toMatchObject({ status: 204, data: "" });
 
     deactivateFixture();
     expect((await instance.get("https://qa.example/api/category/")).data).toBe("net");

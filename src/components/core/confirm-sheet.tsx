@@ -26,7 +26,7 @@ interface Props {
 // The 2.1 kit's `Sheet · Confirm destructive` (figma/00 2110:30387), less the
 // home indicator: the 21pt grabber row, the 52pt title row, a body of up to
 // four 20pt lines with 8 under it, and the 124pt action column (16 + 56 + 4 +
-// 44 + 4). The height is fixed because gorhom 4 needs one; the sheet's own
+// 44 + 4; a default-tone sheet's 52 Primary leaves 4 spare). The height is fixed because gorhom 4 needs one; the sheet's own
 // scroll view takes over if a large text size needs more.
 const SHEET_HEIGHT = 21 + 52 + 4 * 20 + 8 + 124;
 
@@ -71,7 +71,12 @@ export const ConfirmSheet = forwardRef<BottomSheetModal, Props>(
             variant={tone === "danger" ? "warning" : "primary"}
             loading={loading}
             onPress={onConfirm}
-            style={{ alignSelf: "stretch" }}
+            // The kit draws this sheet's Destructive 56 high (2110:30387), taller
+            // than the 52 `warning` that other screens set beside a Secondary, so
+            // the 56 lives here. A minimum, so a large text size still grows it; the
+            // key is left out for the default tone, where an `undefined` would
+            // flatten over the Button's own 52.
+            style={[{ alignSelf: "stretch" }, tone === "danger" && { minHeight: 56 }]}
           >
             {confirmLabel}
           </Button>

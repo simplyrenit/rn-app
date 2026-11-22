@@ -92,7 +92,7 @@ A design fixture makes a screen show a Figma frame's content in a dev build, so 
   - The proof is `all-categories · Loaded` (2089:24546) in `03.ts`.
 - **Turn one on:** `xcrun simctl openurl booted 'renit-qa://dev/fixture/2089-24546'` (Android: `adb shell "am start -a android.intent.action.VIEW -p com.renit.app.qa -d 'renit-qa://dev/fixture/2089-24546'"`). The DevFixture screen turns it on, empties React Query, loads the user and the category list again, and replaces itself with the fixture's route.
 - **Turn it off:** `renit-qa://dev/fixture/off` does the same with no fixture and returns to the tabs.
-- **While a fixture is on:** the requests it lists are answered from it, other reads go to QA, and any other POST, PUT, PATCH or DELETE is refused (`ERR_DESIGN_FIXTURE`), so a screenshot session never changes QA data.
+- **While a fixture is on:** the requests it lists are answered from it, other reads go to QA, the analytics batch (`POST …/events/`) gets a no-op 204, and any other POST, PUT, PATCH or DELETE is refused with a 409 (`ERR_DESIGN_FIXTURE`), so the screen shows its error state rather than its offline one. Only `axiosInstance` is intercepted: bare `axios` (token refresh), the listing SSE stream, `fetch` and Firestore (chat) still reach QA, so don't send chat messages or run the listing flow under a fixture.
 - **Preconditions:** a signed-in QA account; fixtures fake no tokens.
 - **Not covered:** only `axiosInstance` requests are served. Bare `axios` (the token refresh), the listing flow's SSE stream, `fetch` and Firestore (chat) are not. Neither are location, permission, SSE or clock-only states. Check those with a jest render test (check `jest`).
 
@@ -112,6 +112,6 @@ The current app (origin/main ed1a950, QA debug build, iPhone 17e simulator) was 
 
 ## Decision: diff against design fixtures, not live QA data
 
-Live QA data (product photos, names, categories, prices) never matches the Figma's sample content, so a live screen can't reach ≤2% even when the code is a perfect match. Pixel diffs therefore run in a **dev-only design-fixture mode**. In this mode, the screen's API responses are replaced with the content shown in the frame: the same texts, and the same images exported from Figma with Figwright `save_image_fills`. The fixture is compiled out of release builds (`__DEV__` only) and never touches QA data.
+Live QA data (product photos, names, categories, prices) never matches the Figma's sample content, so a live screen can't reach ≤2% even when the code is a perfect match. Pixel diffs therefore run in a **dev-only design-fixture mode**. In this mode, the screen's API responses are replaced with the content shown in the frame: the same texts, and the same images exported from Figma with Figwright `save_image_fills`. The fixture is compiled out of release builds (`__DEV__` only) and refuses writes through `axiosInstance` (see the list above for what it does not cover).
 
 Live QA runs remain the behaviour check (navigation, real data and states). They do not count toward the pixel pass. Each flow story adds the fixtures for its own frames.

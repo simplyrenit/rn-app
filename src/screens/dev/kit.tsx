@@ -349,6 +349,8 @@ export default function DevKitScreen() {
             ref={box}
             collapsable={false}
             onLayout={measure}
+            // Drawn for a screenshot only: a live slot (the Listing card's heart, a card press) would write to QA.
+            pointerEvents="none"
             style={{
               marginLeft: left,
               width: HUG.has(kit.id) ? undefined : v.w,

@@ -43,17 +43,23 @@ interface ButtonLabelStyle {
  * Every number a `Button` draws, as plain data, from the 2.1 kit frames in
  * docs/renit-2.1-build/figma/00:
  *
- *  - Height is fixed (`height`, not `minHeight`) so a button is the kit's box
- *    whatever its label: 52 default and 44 compact for every boxed variant;
- *    Destructive is 56 (Sheet · Confirm destructive, 2110:30387); a Text button
- *    is the library's 44 whatever the size (Bottom bar CTA+Text, 2109:30149).
+ *  - Height is a `minHeight` with no vertical padding: a one-line label at the
+ *    default text size draws exactly the kit's box — 52 default and 44 compact
+ *    for every boxed variant, Destructive included — while a large accessibility
+ *    text size or a two-line label grows the button instead of spilling out of a
+ *    fixed `height`. A Text button is the library's 44 whatever the size (Bottom
+ *    bar CTA+Text, 2109:30149). Destructive is 52 like its neighbours because
+ *    several screens set it beside a 52 Secondary; the 56 of Sheet · Confirm
+ *    destructive (2110:30387) is ConfirmSheet's own, passed through `style`.
  *  - Primary is r11 and the other boxes r12, as the kit draws them side by side.
  *  - Labels: Primary 16/24 SemiBold (14/20 compact); Secondary and Destructive
  *    14/21 (the library's 150%); tonal 14/20 (Empty state, 2074:14392); Text and
  *    Destructive Bold, the rest SemiBold.
  *  - Disabled: only Primary changes fill — to #CAC8F7 with its white label, as
- *    SPEC asks. The others keep their box and drop the label to `textDim`, so a
- *    dead outline does not turn into a lavender bar that reads as tonal.
+ *    SPEC asks. In dark that fill is #292929, where a full-white label reads as
+ *    live, so the dark label drops to `textDim`. The others keep their box and
+ *    drop the label to `textDim`, so a dead outline does not turn into a
+ *    lavender bar that reads as tonal.
  */
 export function resolveButtonStyle(
   {
@@ -68,7 +74,7 @@ export function resolveButtonStyle(
   const compact = size === "compact";
   const ring = isDark ? buttonShadow.dark : buttonShadow.light;
   const base: ViewStyle = {
-    height: compact ? 44 : 52,
+    minHeight: compact ? 44 : 52,
     paddingHorizontal: 20, // the hugging kit button (Empty state Action)
     borderRadius: radius.button,
     alignItems: "center",
@@ -104,7 +110,6 @@ export function resolveButtonStyle(
         container: {
           ...base,
           ...ring,
-          height: compact ? 44 : 56,
           backgroundColor: color.surface,
           borderWidth: 1,
           borderColor: color.line,
@@ -120,7 +125,7 @@ export function resolveButtonStyle(
         // The library Text button hugs its label: no box, no inset, 44 tall.
         container: {
           ...base,
-          height: MIN_TOUCH_TARGET,
+          minHeight: MIN_TOUCH_TARGET,
           paddingHorizontal: 0,
           backgroundColor: "transparent",
         },
@@ -143,7 +148,7 @@ export function resolveButtonStyle(
           backgroundColor: blocked ? color.brandPanelLine : color.brand,
         },
         label: {
-          color: color.onBrand,
+          color: blocked && isDark ? color.textDim : color.onBrand,
           fontSize: compact ? "text-sm" : "text-md",
           fontWeight: "font-semibold",
           lineHeight: compact ? 20 : 24,

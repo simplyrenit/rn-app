@@ -45,16 +45,18 @@ Other tokens:
 
 Props are unchanged, plus `tone?: "tonal" | "brand" | "muted"`. `resolveButtonStyle()` is exported for tests.
 
+Every height below is a `minHeight` with no vertical padding: a one-line label at the default text size draws exactly that box, and a large accessibility text size or a two-line label grows it.
+
 | Kit instance (frame) | Use | Box | Label |
 |---|---|---|---|
 | Primary (Bottom bar, Sheet footer) | `<Button>` | 52 high, r11, #635BE8 | 16/24 SemiBold white |
 | Primary compact (Empty state with no other fill) | `size="compact"` | 44 | 14/20 SemiBold white |
-| Primary disabled | `disabled` | #CAC8F7 | white |
+| Primary disabled | `disabled` | #CAC8F7 (dark #292929) | white (dark `textDim`, so it does not read as live) |
 | Secondary (Bottom bar Secondary+Primary) | `variant="outline"` | 52, r12, white, 1px #CAC8F7, ring | 14/21 SemiBold purple |
 | Secondary tonal (Empty state Action) | `variant="outline" tone="tonal" size="compact"` | 44, r12, #EDEDFC, ring, padding 20 | 14/20 SemiBold purple |
 | Text link (Bottom bar CTA+Text "Not now") | `variant="ghost"` | 44 high whatever the `size`, no box, no padding | 14/21 **Bold** purple |
 | Cancel (Sheet · Confirm destructive) | `variant="ghost" tone="muted"` | as above | 14/21 Bold, 70% black |
-| Destructive (Sheet · Confirm destructive) | `variant="warning"` | 56 (44 compact), r12, white, 1px #E6E6E6, ring | 14/21 Bold #D92D20 |
+| Destructive | `variant="warning"` | 52 (44 compact), r12, white, 1px #E6E6E6, ring. `ConfirmSheet` passes `minHeight: 56` for Sheet · Confirm destructive (2110:30387); elsewhere it sits beside a 52 Secondary | 14/21 Bold #D92D20 |
 | Any non-primary, disabled | `disabled` | box unchanged | `textDim` |
 
 Two kit links are not the Text button, so build them as plain text, not with `Button`:
@@ -163,4 +165,21 @@ Props added; nothing renamed or removed.
 - **`SheetHeader`**: API as above; `grabber` default stays true (it draws the 21pt grabber row and the sheet's top radius, for standalone/DevKit use). Inside `CustomBottomSheetModal`, pass `grabber={false}`: gorhom draws the handle. The title row is `minHeight` 44, so a long title wraps. Close X is heroicons outline `XMarkIcon` 24 at `textDim`, 10pt hitSlop.
 - **`SheetFooter`**: API as above. The secondary link is plain SemiBold 14/20 `brandText` text (12pt hitSlop), not `Button`. `paddingBottom` 16 + `insets.bottom`.
 - **`CustomBottomSheetModal`**: every sheet now gets the kit grabber (44×5 `line`, 8 above and below, r24 top). `frame` now only selects the 60% scrim.
-- **`ConfirmSheet`**: props unchanged. Draws 2110:30387: `SheetHeader` (no X), body 14/20 `textBody`, actions column (padding 16/24/4, gap 4) with `warning` (danger) or `primary` (default) full width and `ghost tone="muted"` Cancel below. Fixed snap height 285 + inset (four body lines).
+- **`ConfirmSheet`**: props unchanged. Draws 2110:30387: `SheetHeader` (no X), body 14/20 `textBody`, actions column (padding 16/24/4, gap 4) with `warning` (danger, `minHeight` 56 passed by the sheet) or `primary` (default) full width and `ghost tone="muted"` Cancel below. Fixed snap height 285 + inset (four body lines).
+
+## Adoption
+
+Each new kit component replaces hand-rolled code that is still in the screens. The flow story that owns a screen moves its call sites; nothing here moves them early. A screen's story follows its frames' section in `figma/index.tsv` (02 auth → ENG-428, 03 home/discovery → ENG-427, 04 → ENG-429, 05 → ENG-430, 06 → ENG-431, 07 → ENG-432, 08 → ENG-433, 09 → ENG-434, 10 → ENG-435, 11 → ENG-436, 12 → ENG-437, 13 → ENG-438, 14 → ENG-439). Paths are under `src/`.
+
+The `StatusPill`, `Chip`, `StepProgress` and `MapPlaceholder` rows were read. The `BottomBar`, `SheetHeader`, `SheetFooter` and `ListRow` rows are **candidates** from a grep (a `Button` over `insets.bottom` without `BottomBar`, a sheet without `SheetHeader`, a `ChevronRightIcon` row); the owning story confirms each one. Chat (`chat-details.tsx`, `chat/attachment-sheet.tsx`) has no frames in the index, so it has no story and stays as it is.
+
+| Component | Replaces (hand-rolled today) | Moved by |
+|---|---|---|
+| `BottomBar` | Sticky CTA strips built from a `View`, `insets.bottom` and a `Button`. The booking screens already use it through `booking/parts` `BottomBar`. | ENG-427 `search-results.tsx`; ENG-429 `products-screen.tsx`, `cart/cart.tsx`, `addresses/address-details.tsx`; ENG-430 `kyc/intro`, `kyc/details`, `kyc/status`, `booking/outcome.tsx`; ENG-431 `booking/booking-details.tsx`, `booking/day-of.tsx`, `booking/courier-day-of.tsx`; ENG-432 `booking/return.tsx`, `booking/claim.tsx`; ENG-433 `shop/booking.tsx`, `shop/quick-block.tsx`; ENG-434 `shop/handover.tsx`, `shop/return.tsx`, `shop/courier.tsx`; ENG-435 `list-flow/*`, `shop/draft-photos.tsx`; ENG-437 `bank-account.tsx`, `rental-delivery.tsx`, `rental-hours.tsx`, `rental-gst.tsx`, `delivery-areas.tsx`, `shop-address.tsx`; ENG-438 `addresses/saved-addresses.tsx`; ENG-439 `unavailability_form*.tsx`, `report-a-problem.tsx`, `feedback-review.tsx` |
+| `SheetHeader` | A sheet's own title row (and close X) inside `CustomBottomSheetModal`. `ConfirmSheet` already uses it. | ENG-427 `search-results.tsx`, `addresses/address-picker-sheet.tsx`; ENG-429 `products-screen.tsx`, `product/product-specs.tsx`; ENG-430 `booking/cancel-sheet.tsx`; ENG-431 `booking/day-of.tsx`, `booking/collect-items.tsx`, `booking/get-help.tsx`; ENG-432 `booking/end-early-sheet.tsx`, `booking/fault-report.tsx`, `booking/claim.tsx`; ENG-433 `shop/today.tsx`, `shop/ring.tsx`, `shop/quick-block.tsx`, `shop/*-sheet.tsx`, `shop/pick-sheets.tsx`; ENG-434 `shop/report-problem.tsx`; ENG-435 `list-flow/sheets.tsx`, `list-flow/category-sheet.tsx`, `list-flow/specs-card.tsx`, `list-flow/add-photos.tsx`, `list-flow/review.tsx`; ENG-436 `edit-product.tsx`, `post/product-image-grid.tsx`; ENG-437 `rental-settings.tsx`, `rental-delivery.tsx`, `rental-hours.tsx`, `bank/unlock-sheet.tsx`; ENG-438 `profile/post-auth/*`, `profile/pre-auth/profile-pre-auth.tsx`, `addresses/address-details.tsx` (its ConfirmSheet frame); ENG-439 `unavailability_form.tsx` |
+| `SheetFooter` | The `Button` column at the bottom of those sheets. | The same stories and files as `SheetHeader` |
+| `ListRow` | Rows built from a label and a `ChevronRightIcon`. `ProfileRow` already draws through it. | ENG-429 `products-screen.tsx`, `product/product-owner.tsx`, `cart/parts.tsx`; ENG-431 `booking/booking-details.tsx`; ENG-433 `shop/today.tsx`, `shop/booking.tsx`; ENG-434 `handover/parts.tsx`; ENG-435 `post/taxonomy-list.tsx`, `list-flow/review.tsx`; ENG-436 `post/unavailability-editor.tsx` (EditProductAvailability); ENG-437 `rental-settings.tsx`, `rental-delivery.tsx`, `bank-account.tsx`; ENG-438 `addresses/address-row.tsx`; ENG-439 `faqs.tsx`, `contactUs.tsx`, `who-we-are.tsx`, `report-a-problem.tsx` |
+| `StatusPill` | `bank-account.tsx` `StatusChip` (a tinted label with an icon). `booking/parts` `Pill` and `ListingStatusPill` already draw through it. `booking/card-lines.tsx` `Chip` is tinted too but carries a View action, which `StatusPill` has no slot for: ENG-431 decides. | ENG-437 `bank-account.tsx`; ENG-431 decides `card-lines.tsx` |
+| `Chip` | `search/results-rails.tsx` `Pill` (the search-results filter chips) and `post/plan-pricing.tsx` `Chip`. Not `list-flow/scan-panel.tsx` `Chip`: that is an animated, display-only detection chip, not a choice. | ENG-427 `results-rails.tsx`; ENG-435 `plan-pricing.tsx` |
+| `StepProgress` | `core/page-indicator.tsx`, which now draws through it, so the auth `HeaderIndicator` already shows the kit bar. | ENG-428 switches the auth headers to `StepProgress` directly (with its label if the frames show one) and deletes `PageIndicator` |
+| `MapPlaceholder` | None found: no screen has a hand-rolled map stand-in. It stands in for `MapView` in state frames and design fixtures. | Where a fixture shows a map: ENG-428 `auth/location.tsx`; ENG-429 `product/product-map.tsx`, `addresses/address-details.tsx`, `post-screens/location-modal.tsx`; ENG-437 `rental-delivery.tsx` |

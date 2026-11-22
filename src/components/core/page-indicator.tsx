@@ -1,7 +1,6 @@
-import { radius } from "@/lib/design-tokens";
-import { useTheme } from "@/lib/theme";
 import React from "react";
 import { View } from "react-native";
+import { StepProgress } from "./step-progress";
 
 interface PageIndicatorProps {
   /** 0–100. Kept for existing call sites. */
@@ -13,74 +12,32 @@ interface PageIndicatorProps {
 }
 
 /**
- * Step progress for a multi-screen flow.
+ * The auth header's step progress, kept for its `percentage` call sites and drawn
+ * by the kit `StepProgress` so the app has one segmented bar, not two that drift.
  *
- * The previous version was hardcoded to three segments and divided by 33.33,
- * so a five-step flow showed the same partial fill on segment 1 for two
- * consecutive screens — the customer completed a step and got no feedback.
- * Pass `totalSteps`/`currentStep` and each step gets its own segment.
+ * The kit fills whole segments only, so a percentage rounds up to the step it is
+ * in (20% of three is step 1, 50% step 2); the first screen shows step 1 rather
+ * than an empty bar, as StepProgress's steps are 1-based.
  */
 export const PageIndicator: React.FC<PageIndicatorProps> = ({
   percentage,
   totalSteps,
   currentStep,
 }) => {
-  const { color } = useTheme();
-
   const steps = totalSteps ?? 3;
   const filled =
-    currentStep !== undefined
-      ? Math.max(0, Math.min(steps, currentStep))
-      : ((Math.max(0, Math.min(100, percentage ?? 0)) / 100) * steps);
+    currentStep ?? (Math.max(0, Math.min(100, percentage ?? 0)) / 100) * steps;
 
   return (
-    <View
-      accessible
-      accessibilityRole="progressbar"
-      accessibilityValue={{
-        min: 0,
-        max: steps,
-        now: Math.round(filled),
-        text: `Step ${Math.max(1, Math.ceil(filled))} of ${steps}`,
-      }}
-      // An explicit width: the segments are flex children, so inside a parent
-      // that only wraps its content they would collapse to nothing.
-      style={{
-        // This component has a deliberate fixed width. Center it in whichever
-        // header owns it rather than leaving it pinned to that header's start.
-        alignSelf: "center",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 4,
-        width: 220,
-      }}
-    >
-      {Array.from({ length: steps }).map((_, index) => {
-        const fill = Math.max(0, Math.min(1, filled - index));
-        return (
-          <View
-            key={index}
-            style={{
-              flex: 1,
-              maxWidth: 44,
-              height: 4,
-              // A 4pt-tall bar is a pill, not a card corner — radius.full.
-              borderRadius: radius.full,
-              overflow: "hidden",
-              backgroundColor: color.line,
-            }}
-          >
-            <View
-              style={{
-                width: `${fill * 100}%`,
-                height: "100%",
-                backgroundColor: color.brand,
-              }}
-            />
-          </View>
-        );
-      })}
+    // An explicit width: StepProgress's segments are flex children, so inside a
+    // parent that only wraps its content they would collapse to nothing. 44 per
+    // segment, centred, is the width the auth header has always drawn.
+    <View style={{ alignSelf: "center", width: steps * 44 + (steps - 1) * 4 }}>
+      <StepProgress
+        step={Math.max(1, Math.min(steps, Math.ceil(filled)))}
+        total={steps}
+        showLabel={false}
+      />
     </View>
   );
 };

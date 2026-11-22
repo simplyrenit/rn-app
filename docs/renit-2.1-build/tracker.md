@@ -30,7 +30,7 @@ Pass = mismatch ≤ 2% **and** a clean heat map (see README). Check: `live` on d
 | 00 | `2073:14386` | Chip · State=Selected | ENG-426 | devkit | pass 0.85% | text-width  | As State=Default: label 1.33pt narrower on Android; at the chip's own width it matches: 1.35%. |
 | 00 | `2073:14392` | Form field · State=Default | ENG-426 | devkit | pass 0.30% | pass 1.38% |  |
 | 00 | `2073:14397` | Form field · State=Filled | ENG-426 | devkit | pass 0.36% | pass 1.21% |  |
-| 00 | `2073:14402` | Form field · State=Focused | ENG-426 | devkit | pass 1.30% | pass 1.13% |  |
+| 00 | `2073:14402` | Form field · State=Focused | ENG-426 | devkit | pass 1.25% | pass 1.06% |  |
 | 00 | `2073:14408` | Form field · State=Error | ENG-426 | devkit | pass 0.45% | pass 1.81% |  |
 | 00 | `2074:14332` | Timeline step · State=Done | ENG-426 | devkit | pass 0.27% | pass 0.26% |  |
 | 00 | `2074:14341` | Timeline step · State=Current | ENG-426 | devkit | pass 0.62% | pass 1.05% |  |
