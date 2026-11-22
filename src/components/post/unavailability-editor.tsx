@@ -51,7 +51,7 @@ const ISO = "YYYY-MM-DD";
 /**
  * The tone that reads on the danger fill.
  *
- * `danger` is not one colour: it is a deep red on light (#B3261E) and a light
+ * `danger` is not one colour: it is a deep red on light (#B42318) and a light
  * salmon on dark (#EB6F62). White clears AA on the first (6.6:1) and fails it
  * on the second (3.0:1), which is what a single `onBrand` for both produced.
  * The dark canvas measures 6.3:1 against that salmon, so it is what the label

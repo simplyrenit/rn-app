@@ -1,6 +1,6 @@
 {
- "ref": "/Users/zineone/git/renit/rn-app-eng426/docs/renit-2.1-build/tools/../figma/00/2073-14341.png",
- "app": "/tmp/kit-ios-2073-14341.png",
+ "ref": "../figma/00/2073-14341.png",
+ "app": "kit-ios-2073-14341.png",
  "platform": "ios",
  "mismatch_pct": 1.148,
  "threshold_pct": 2.0,

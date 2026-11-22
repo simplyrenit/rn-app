@@ -144,7 +144,8 @@ export function BottomBar({
       case "cta-text":
         return (
           <>
-            {primary ? <PrimaryButton action={primary} style={{ alignSelf: "stretch" }} /> : null}
+            {/* Without a link the bar is a row, where only flex fills the width. */}
+            {primary ? <PrimaryButton action={primary} style={isLinkLayout ? { alignSelf: "stretch" } : { flex: 1 }} /> : null}
             {secondary ? (
               <Button
                 variant="ghost"

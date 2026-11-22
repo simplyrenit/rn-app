@@ -15,9 +15,9 @@ interface PageIndicatorProps {
  * The auth header's step progress, kept for its `percentage` call sites and drawn
  * by the kit `StepProgress` so the app has one segmented bar, not two that drift.
  *
- * The kit fills whole segments only, so a percentage rounds up to the step it is
- * in (20% of three is step 1, 50% step 2); the first screen shows step 1 rather
- * than an empty bar, as StepProgress's steps are 1-based.
+ * A percentage fills the bar to that exact point (StepProgress `fill`), so every
+ * sign-up screen shows its own progress, as the bar always has; `step` (rounded
+ * up) only feeds the accessibility value.
  */
 export const PageIndicator: React.FC<PageIndicatorProps> = ({
   percentage,
@@ -36,6 +36,7 @@ export const PageIndicator: React.FC<PageIndicatorProps> = ({
       <StepProgress
         step={Math.max(1, Math.min(steps, Math.ceil(filled)))}
         total={steps}
+        fill={Math.max(0, Math.min(steps, filled))}
         showLabel={false}
       />
     </View>

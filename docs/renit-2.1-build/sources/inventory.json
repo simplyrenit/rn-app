@@ -1,7 +1,7 @@
 {
  "areas": [
   {
-   "area": "App shell and navigation (navigators, tab bar, role variants, flags, push/deep-link entry, global overlays) plus Welcome and all auth / sign-up / sign-in screens. Source: /Users/zineone/git/renit/rn-app-eng417 at 4538a2f (origin/main, 2026-11-22). Navigation truth is src/navigation/nav.tsx. AGENTS.md still describes the tabs as \"Home, Saved, Post, Chat, Profile\", which is stale.",
+   "area": "App shell and navigation (navigators, tab bar, role variants, flags, push/deep-link entry, global overlays) plus Welcome and all auth / sign-up / sign-in screens. Source: rn-app-eng417 at 4538a2f (origin/main, 2026-11-22). Navigation truth is src/navigation/nav.tsx. AGENTS.md still describes the tabs as \"Home, Saved, Post, Chat, Profile\", which is stale.",
    "screens": [
     {
      "id": "app-boot",
@@ -1630,7 +1630,7 @@
    ]
   },
   {
-   "area": "Product detail through booking (rn-app-eng417 @ origin/main 4538a2f, 2026-11-22). Covers: ProductDetail with its specs sheet and photo viewer, reviews and the review form, the Cart, Choose dates (single item and cart-card modes) with the delivery/pickup choice and the address sheet, address add/edit, Review and book (price breakdown, payment schedule, terms, ID check, Bill to GSTIN), the customer ID check (KYC) entered from booking, the external pay page hand-off, and the Booking screen views up to confirmation: pay ₹99, Confirming (owner is rung), Outcome (refused / no answer), Pay rent, arrival window, Booking confirmed details, and Deposit. All file paths are relative to /Users/zineone/git/renit/rn-app-eng417.",
+   "area": "Product detail through booking (rn-app-eng417 @ origin/main 4538a2f, 2026-11-22). Covers: ProductDetail with its specs sheet and photo viewer, reviews and the review form, the Cart, Choose dates (single item and cart-card modes) with the delivery/pickup choice and the address sheet, address add/edit, Review and book (price breakdown, payment schedule, terms, ID check, Bill to GSTIN), the customer ID check (KYC) entered from booking, the external pay page hand-off, and the Booking screen views up to confirmation: pay ₹99, Confirming (owner is rung), Outcome (refused / no answer), Pay rent, arrival window, Booking confirmed details, and Deposit. All file paths are relative to rn-app-eng417.",
    "screens": [
     {
      "id": "pdp",
@@ -2644,7 +2644,7 @@
    ]
   },
   {
-   "area": "Customer side after booking: Rentals tab (my orders), the one Booking screen and every stage view it draws (status banner, timeline, payments), arrival window, deposit, day-of handover (meet in person and Renit courier, which is Borzo underneath), check and refuse at the door, active rental, extend, end early (monthly), return and courier return window, cancel, fault reports and claims, deposit refund, reviews after a closed rental, order pushes and the in-app notification list. Source: /Users/zineone/git/renit/rn-app-eng417 @ 4538a2f. Server-written copy was checked in /Users/zineone/git/renit/rn-api-eng417.",
+   "area": "Customer side after booking: Rentals tab (my orders), the one Booking screen and every stage view it draws (status banner, timeline, payments), arrival window, deposit, day-of handover (meet in person and Renit courier, which is Borzo underneath), check and refuse at the door, active rental, extend, end early (monthly), return and courier return window, cancel, fault reports and claims, deposit refund, reviews after a closed rental, order pushes and the in-app notification list. Source: rn-app-eng417 @ 4538a2f. Server-written copy was checked in rn-api-eng417.",
    "screens": [
     {
      "id": "rentals-tab",
@@ -5916,12 +5916,12 @@
    ]
   },
   {
-   "area": "Account and trust: Profile tab (signed out and signed in), personal details and its sheets, KYC (business verification for merchants, ID check for everyone else), saved addresses, notifications, appearance, FAQs, report a problem, feedback, contact, who we are, terms, privacy, request an item (unavailability form), logout and delete account. Source: /Users/zineone/git/renit/rn-app-eng417 at 4538a2f (origin/main, 2026-11-22). Audience is decided only by userDetails.account_type === \"merchant\" (there is no customer/shop mode toggle; src/lib/switch.ts is about iOS switch widths). Chat is off: CHAT_ENABLED = false in src/lib/config.ts:271, so there is no Chat tab (nav.tsx:410). Tabs are Home, Saved, Post, Rentals, Profile.",
+   "area": "Account and trust: Profile tab (signed out and signed in), personal details and its sheets, KYC (business verification for merchants, ID check for everyone else), saved addresses, notifications, appearance, FAQs, report a problem, feedback, contact, who we are, terms, privacy, request an item (unavailability form), logout and delete account. Source: rn-app-eng417 at 4538a2f (origin/main, 2026-11-22). Audience is decided only by userDetails.account_type === \"merchant\" (there is no customer/shop mode toggle; src/lib/switch.ts is about iOS switch widths). Chat is off: CHAT_ENABLED = false in src/lib/config.ts:271, so there is no Chat tab (nav.tsx:410). Tabs are Home, Saved, Post, Rentals, Profile.",
    "screens": [
     {
      "id": "profile-signed-out",
      "route": "MainTabs > Profile (tab)",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/tabs/profile.tsx + /Users/zineone/git/renit/rn-app-eng417/src/components/profile/pre-auth/profile-pre-auth.tsx",
+     "file": "rn-app-eng417/src/screens/tabs/profile.tsx + rn-app-eng417/src/components/profile/pre-auth/profile-pre-auth.tsx",
      "kind": "tab",
      "audience": "guest",
      "status": "live",
@@ -5976,7 +5976,7 @@
     {
      "id": "profile-signed-in",
      "route": "MainTabs > Profile (tab)",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/tabs/profile.tsx + /Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/profile-post-auth.tsx + /Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/profile-img.tsx",
+     "file": "rn-app-eng417/src/screens/tabs/profile.tsx + rn-app-eng417/src/components/profile/post-auth/profile-post-auth.tsx + rn-app-eng417/src/components/profile/post-auth/profile-img.tsx",
      "kind": "tab",
      "audience": "both",
      "status": "live",
@@ -6051,7 +6051,7 @@
     {
      "id": "profile-root-duplicate",
      "route": "profile (root stack)",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/tabs/profile.tsx",
+     "file": "rn-app-eng417/src/screens/tabs/profile.tsx",
      "kind": "screen",
      "audience": "both",
      "status": "live",
@@ -6077,7 +6077,7 @@
     {
      "id": "merchant-status-card",
      "route": "MainTabs > Profile (inline card)",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/profile-post-auth.tsx",
+     "file": "rn-app-eng417/src/components/profile/post-auth/profile-post-auth.tsx",
      "kind": "state",
      "audience": "shop",
      "status": "live",
@@ -6107,7 +6107,7 @@
     {
      "id": "kyc-card",
      "route": "MainTabs > Profile (inline card)",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/kyc/kyc-card.tsx + /Users/zineone/git/renit/rn-app-eng417/src/components/kyc/kyc-chip.tsx + /Users/zineone/git/renit/rn-app-eng417/src/lib/kyc.ts",
+     "file": "rn-app-eng417/src/components/kyc/kyc-card.tsx + rn-app-eng417/src/components/kyc/kyc-chip.tsx + rn-app-eng417/src/lib/kyc.ts",
      "kind": "state",
      "audience": "both",
      "status": "live",
@@ -6147,7 +6147,7 @@
     {
      "id": "personal-details-sheet",
      "route": "Profile > bottom sheet",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
+     "file": "rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
      "kind": "sheet",
      "audience": "both",
      "status": "live",
@@ -6190,7 +6190,7 @@
     {
      "id": "profile-picture-sheet",
      "route": "Profile > Personal details > sheet",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
+     "file": "rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
      "kind": "sheet",
      "audience": "both",
      "status": "live",
@@ -6219,7 +6219,7 @@
     {
      "id": "edit-name-sheet",
      "route": "Profile > Personal details > sheet",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
+     "file": "rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
      "kind": "sheet",
      "audience": "both",
      "status": "live",
@@ -6249,7 +6249,7 @@
     {
      "id": "unlock-code-sheet",
      "route": "Profile > Personal details > sheet",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/bank/unlock-sheet.tsx",
+     "file": "rn-app-eng417/src/components/bank/unlock-sheet.tsx",
      "kind": "sheet",
      "audience": "both",
      "status": "live",
@@ -6288,7 +6288,7 @@
     {
      "id": "edit-email-sheet",
      "route": "Profile > Personal details > sheet",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
+     "file": "rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
      "kind": "sheet",
      "audience": "both",
      "status": "live",
@@ -6321,7 +6321,7 @@
     {
      "id": "edit-phone-sheet",
      "route": "Profile > Personal details > sheet",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
+     "file": "rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
      "kind": "sheet",
      "audience": "both",
      "status": "live",
@@ -6353,7 +6353,7 @@
     {
      "id": "edit-password-sheet",
      "route": "Profile > Personal details > sheet",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
+     "file": "rn-app-eng417/src/components/profile/post-auth/sheets/PersonaldetailsSheet.tsx",
      "kind": "sheet",
      "audience": "both",
      "status": "live",
@@ -6384,7 +6384,7 @@
     {
      "id": "delete-account-modal",
      "route": "Profile > Personal details > modal",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/sheets/DeleteAccountModal.tsx + /Users/zineone/git/renit/rn-app-eng417/src/lib/delete-account.ts",
+     "file": "rn-app-eng417/src/components/profile/post-auth/sheets/DeleteAccountModal.tsx + rn-app-eng417/src/lib/delete-account.ts",
      "kind": "modal",
      "audience": "both",
      "status": "live",
@@ -6420,7 +6420,7 @@
     {
      "id": "appearance-sheet",
      "route": "Profile > bottom sheet",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/sheets/AppearanceSheet.tsx",
+     "file": "rn-app-eng417/src/components/profile/post-auth/sheets/AppearanceSheet.tsx",
      "kind": "sheet",
      "audience": "all",
      "status": "live",
@@ -6446,7 +6446,7 @@
     {
      "id": "currency-sheet",
      "route": "Profile > bottom sheet",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/profile/post-auth/sheets/currency-sheet.tsx",
+     "file": "rn-app-eng417/src/components/profile/post-auth/sheets/currency-sheet.tsx",
      "kind": "sheet",
      "audience": "all",
      "status": "unreachable",
@@ -6465,7 +6465,7 @@
     {
      "id": "logout",
      "route": "Profile > Logout button",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/tabs/profile.tsx",
+     "file": "rn-app-eng417/src/screens/tabs/profile.tsx",
      "kind": "state",
      "audience": "both",
      "status": "live",
@@ -6491,7 +6491,7 @@
     {
      "id": "kyc-intro",
      "route": "KycIntro {source?: 'profile'|'post_listing'|'push'|'booking', supersede?}",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/kyc/intro.tsx + /Users/zineone/git/renit/rn-app-eng417/src/lib/kyc-consent.ts",
+     "file": "rn-app-eng417/src/screens/kyc/intro.tsx + rn-app-eng417/src/lib/kyc-consent.ts",
      "kind": "screen",
      "audience": "both",
      "status": "live",
@@ -6532,7 +6532,7 @@
     {
      "id": "kyc-details",
      "route": "KycDetails {supersede?, source?}",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/kyc/details.tsx",
+     "file": "rn-app-eng417/src/screens/kyc/details.tsx",
      "kind": "screen",
      "audience": "both",
      "status": "live",
@@ -6574,7 +6574,7 @@
     {
      "id": "kyc-details-blocked",
      "route": "KycDetails (replaced body)",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/kyc/details.tsx",
+     "file": "rn-app-eng417/src/screens/kyc/details.tsx",
      "kind": "state",
      "audience": "both",
      "status": "live",
@@ -6603,7 +6603,7 @@
     {
      "id": "kyc-digilocker",
      "route": "External secure browser (openDigiLocker)",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/backend/kyc.ts",
+     "file": "rn-app-eng417/src/backend/kyc.ts",
      "kind": "overlay",
      "audience": "both",
      "status": "live",
@@ -6631,7 +6631,7 @@
     {
      "id": "kyc-status",
      "route": "KycStatus {justReturned?, source?: 'booking'}",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/kyc/status.tsx",
+     "file": "rn-app-eng417/src/screens/kyc/status.tsx",
      "kind": "screen",
      "audience": "both",
      "status": "live",
@@ -6687,7 +6687,7 @@
     {
      "id": "kyc-start-over-alert",
      "route": "KycStatus > native Alert",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/kyc/status.tsx",
+     "file": "rn-app-eng417/src/screens/kyc/status.tsx",
      "kind": "modal",
      "audience": "both",
      "status": "live",
@@ -6713,7 +6713,7 @@
     {
      "id": "kyc-remove-data-alert",
      "route": "KycStatus > native Alert",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/kyc/status.tsx",
+     "file": "rn-app-eng417/src/screens/kyc/status.tsx",
      "kind": "modal",
      "audience": "both",
      "status": "live",
@@ -6743,7 +6743,7 @@
     {
      "id": "kyc-nudge",
      "route": "ListSubmitted (inline card)",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/kyc/kyc-nudge.tsx",
+     "file": "rn-app-eng417/src/components/kyc/kyc-nudge.tsx",
      "kind": "state",
      "audience": "shop",
      "status": "live",
@@ -6773,7 +6773,7 @@
     {
      "id": "saved-addresses",
      "route": "SavedAddresses",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/addresses/saved-addresses.tsx + /Users/zineone/git/renit/rn-app-eng417/src/components/addresses/address-row.tsx",
+     "file": "rn-app-eng417/src/screens/addresses/saved-addresses.tsx + rn-app-eng417/src/components/addresses/address-row.tsx",
      "kind": "screen",
      "audience": "both",
      "status": "live",
@@ -6806,7 +6806,7 @@
     {
      "id": "address-details",
      "route": "AddressDetails {address? | pin?, requestId?}",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/addresses/address-details.tsx",
+     "file": "rn-app-eng417/src/screens/addresses/address-details.tsx",
      "kind": "screen",
      "audience": "both",
      "status": "live",
@@ -6851,7 +6851,7 @@
     {
      "id": "address-delete-sheet",
      "route": "AddressDetails > ConfirmSheet",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/addresses/address-details.tsx",
+     "file": "rn-app-eng417/src/screens/addresses/address-details.tsx",
      "kind": "sheet",
      "audience": "both",
      "status": "live",
@@ -6879,7 +6879,7 @@
     {
      "id": "notifications",
      "route": "notification",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/profileScreens/notification.tsx",
+     "file": "rn-app-eng417/src/screens/profileScreens/notification.tsx",
      "kind": "screen",
      "audience": "both",
      "status": "live",
@@ -6905,7 +6905,7 @@
     {
      "id": "faq",
      "route": "faq",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/profileScreens/faqs.tsx",
+     "file": "rn-app-eng417/src/screens/profileScreens/faqs.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "live",
@@ -6931,7 +6931,7 @@
     {
      "id": "report-a-problem",
      "route": "ReportAProblem",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/profileScreens/report-a-problem.tsx",
+     "file": "rn-app-eng417/src/screens/profileScreens/report-a-problem.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "live",
@@ -6961,7 +6961,7 @@
     {
      "id": "feedback",
      "route": "feedback",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/profileScreens/feedback-review.tsx",
+     "file": "rn-app-eng417/src/screens/profileScreens/feedback-review.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "live",
@@ -6992,7 +6992,7 @@
     {
      "id": "contact-us",
      "route": "contactUs",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/profileScreens/contactUs.tsx",
+     "file": "rn-app-eng417/src/screens/profileScreens/contactUs.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "live",
@@ -7025,7 +7025,7 @@
     {
      "id": "who-we-are",
      "route": "whoWeAre",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/profileScreens/who-we-are.tsx",
+     "file": "rn-app-eng417/src/screens/profileScreens/who-we-are.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "live",
@@ -7049,7 +7049,7 @@
     {
      "id": "terms",
      "route": "Terms",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/terms.tsx",
+     "file": "rn-app-eng417/src/screens/terms.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "live",
@@ -7081,7 +7081,7 @@
     {
      "id": "privacy",
      "route": "Privacy",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/privacy.tsx",
+     "file": "rn-app-eng417/src/screens/privacy.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "live",
@@ -7107,7 +7107,7 @@
     {
      "id": "request-categories",
      "route": "unavailabilityFormCategories",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/profileScreens/unavailability_categories.tsx",
+     "file": "rn-app-eng417/src/screens/profileScreens/unavailability_categories.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "live",
@@ -7139,7 +7139,7 @@
     {
      "id": "request-subcategory",
      "route": "UnavailabilitySubCat {category, subcategories}",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/profileScreens/unavailability_subCat.tsx",
+     "file": "rn-app-eng417/src/screens/profileScreens/unavailability_subCat.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "live",
@@ -7166,7 +7166,7 @@
     {
      "id": "request-form",
      "route": "unavailabilityFormInputs {category, subcategory}",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/profileScreens/unavailability_form_inputs.tsx",
+     "file": "rn-app-eng417/src/screens/profileScreens/unavailability_form_inputs.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "live",
@@ -7205,7 +7205,7 @@
     {
      "id": "request-date-picker",
      "route": "unavailabilityFormInputs > DateRangePicker",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/components/core/date-range-picker.tsx",
+     "file": "rn-app-eng417/src/components/core/date-range-picker.tsx",
      "kind": "overlay",
      "audience": "all",
      "status": "live",
@@ -7229,7 +7229,7 @@
     {
      "id": "request-legacy-intro",
      "route": "unavailabilityForm",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/profileScreens/unavailability_form.tsx",
+     "file": "rn-app-eng417/src/screens/profileScreens/unavailability_form.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "unreachable",
@@ -7252,7 +7252,7 @@
     {
      "id": "network-diagnostics",
      "route": "NetworkDiagnostics",
-     "file": "/Users/zineone/git/renit/rn-app-eng417/src/screens/profileScreens/network-diagnostics.tsx",
+     "file": "rn-app-eng417/src/screens/profileScreens/network-diagnostics.tsx",
      "kind": "screen",
      "audience": "all",
      "status": "unreachable",
@@ -7775,10 +7775,10 @@
    "WC9sbe4VezvRqUqW3LbTSv 'Renit_Garvit': not in any repo doc. Title comes only from Figma desktop tab history (closed 20 Sep 2026). Contents not opened.",
    "lYW4Js0ImETnSTAYfxZk7h 'Agentic FLow': not in any repo doc. Title comes only from Figma desktop tab history. get_metadata returned 'Figma could not access the requested file', so contents are unknown.",
    "QcEXWawE8WhI3BKyBDQUhP 'ENG-25 write test (safe to delete)': a scratch write-test file, title from Figma tab history only. Not a design source.",
-   "/Users/zineone/git/renit/docs/feature/order-journey-phase-1/research/figma-inventory.md (stale: says 15 pages and lists D-01..D-12 and N-01..N-06 as Current)",
-   "/Users/zineone/git/renit/docs/feature/order-journey-phase-1/research/figma-gap-check.md",
-   "/Users/zineone/git/renit/docs/feature/cart/figma/figma-links.md",
-   "/Users/zineone/git/renit/docs/renit-2.0-original-rebuild/HANDOFF.md"
+   "docs/feature/order-journey-phase-1/research/figma-inventory.md (stale: says 15 pages and lists D-01..D-12 and N-01..N-06 as Current)",
+   "docs/feature/order-journey-phase-1/research/figma-gap-check.md",
+   "docs/feature/cart/figma/figma-links.md",
+   "docs/renit-2.0-original-rebuild/HANDOFF.md"
   ],
   "matches": [
    {

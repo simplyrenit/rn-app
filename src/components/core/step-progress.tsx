@@ -15,9 +15,14 @@ export interface StepProgressProps {
   label?: string;
   /** Hide the label line. Default true. */
   showLabel?: boolean;
+  /**
+   * Filled steps as a fraction (0..total), for progress that moves within a step. The auth header uses it so
+   * each sign-up screen still shows its own point on the bar. Without it, `step` whole segments fill.
+   */
+  fill?: number;
 }
 
-export function StepProgress({ step, total, label, showLabel = true }: StepProgressProps) {
+export function StepProgress({ step, total, label, showLabel = true, fill }: StepProgressProps) {
   const { color } = useTheme();
   const text = label ?? `Step ${step} of ${total}`;
   return (
@@ -36,9 +41,20 @@ export function StepProgress({ step, total, label, showLabel = true }: StepProgr
               flex: 1,
               height: 4,
               borderRadius: 2,
-              backgroundColor: index < step ? color.brand : color.line,
+              overflow: "hidden",
+              backgroundColor: fill === undefined && index < step ? color.brand : color.line,
             }}
-          />
+          >
+            {fill !== undefined ? (
+              <View
+                style={{
+                  width: `${Math.max(0, Math.min(1, fill - index)) * 100}%`,
+                  height: 4,
+                  backgroundColor: color.brand,
+                }}
+              />
+            ) : null}
+          </View>
         ))}
       </View>
       {showLabel ? (

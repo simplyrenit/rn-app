@@ -125,7 +125,9 @@ def main():
         canvas[hh:H, 2 * w + 40:] = [230, 30, 30]
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     Image.fromarray(canvas.clip(0, 255).astype(np.uint8)).save(a.out + '.heat.png')
-    res = {'ref': a.ref, 'app': a.app, 'platform': a.platform, 'mismatch_pct': round(float(pct), 3),
+    here = os.path.dirname(os.path.abspath(__file__))
+    rel = lambda f: os.path.basename(f) if f.startswith('/tmp') else os.path.relpath(os.path.abspath(f), here)
+    res = {'ref': rel(a.ref), 'app': rel(a.app), 'platform': a.platform, 'mismatch_pct': round(float(pct), 3),
            'threshold_pct': a.threshold, 'pass': bool(pct <= a.threshold),
            'compared_px': [w, H], 'app_scaled_height': h, 'uncovered_rows': H - hh}
     json.dump(res, open(a.out + '.json', 'w'), indent=1)

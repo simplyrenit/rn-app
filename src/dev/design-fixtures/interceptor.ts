@@ -24,6 +24,8 @@ export function activeFixture() {
 
 /** Turns on the fixture for a frame id; false when there is none. */
 export function activateFixture(frameId: string): boolean {
+  // Leaving a fixture for another frame: its queued events go too (see deactivateFixture).
+  if (active) resetEvents();
   const fixture = FIXTURES[frameId];
   active = fixture ? { frameId, fixture } : null;
   return Boolean(fixture);
@@ -31,7 +33,8 @@ export function activateFixture(frameId: string): boolean {
 
 export function deactivateFixture() {
   // Anything tracked on a fixture screen describes fixture data; posting it after the switch would file it in QA.
-  if (active) resetEvents();
+  // Always reset: activateFixture() may already have cleared `active` for an unknown frame id.
+  resetEvents();
   active = null;
 }
 
