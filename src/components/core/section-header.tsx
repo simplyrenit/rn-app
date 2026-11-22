@@ -1,6 +1,6 @@
 import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
 import React from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Platform, TouchableOpacity, View } from "react-native";
 import { Text } from "./text";
 
 interface Props {
@@ -49,7 +49,14 @@ export function SectionHeader({
       }}
     >
       <View style={{ flex: 1, gap: 2 }}>
-        <Text accessibilityRole="header" role="sectionTitle" numberOfLines={1}>
+        <Text
+          accessibilityRole="header"
+          role="sectionTitle"
+          numberOfLines={1}
+          // iOS sets 18/24 Bold Plus Jakarta Sans 1/3pt lower in its line than Figma does; measured against
+          // the kit frame (ENG-426: 2.65% before, 1.16% after). Android is checked separately.
+          style={Platform.OS === "ios" ? { transform: [{ translateY: -1 / 3 }] } : undefined}
+        >
           {title}
         </Text>
         {subtitle ? (

@@ -1,0 +1,14 @@
+{
+ "ref": "/Users/zineone/git/renit/rn-app-eng426/docs/renit-2.1-build/tools/../figma/00/2074-14392.png",
+ "app": "/tmp/kit-android-2074-14392.png",
+ "platform": "android",
+ "mismatch_pct": 0.298,
+ "threshold_pct": 2.0,
+ "pass": true,
+ "compared_px": [
+  1026,
+  756
+ ],
+ "app_scaled_height": 756,
+ "uncovered_rows": 0
+}

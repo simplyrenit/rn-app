@@ -247,7 +247,11 @@ const pt = (n: number) => `${+(Math.round(n * 3) / 3).toFixed(2)}`;
 function logBox(kit: KitItem, v: KitVariant, box: { x: number; y: number; w: number; h: number }, windowWidth: number, note?: string) {
   const left = Math.max(0, box.x);
   const right = Math.min(windowWidth, box.x + box.w);
-  const refBox = [v.x + (left - box.x), v.y, right - left, v.h - v.homeIndicator].map(pt).join(",");
+  // The reference keeps the kit's own size (clipped like the app box), never the app's: a component that is wider or
+  // taller than its kit frame must fail the diff tool's size check instead of being compared against a stretched box.
+  const clipLeft = left - box.x;
+  const clipRight = box.x + box.w - right;
+  const refBox = [kit.refDx + v.x + clipLeft, kit.refDy + v.y, v.w - clipLeft - clipRight, v.h - v.homeIndicator].map(pt).join(",");
   const appBox = [left, box.y, right - left, box.h].map(pt).join(",");
   const file = `../figma/00/${kit.id.replace(":", "-")}.png`;
   console.log(
@@ -270,12 +274,18 @@ function ConfirmSlot({ kit, v }: { kit: KitItem; v: KitVariant }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   useEffect(() => {
-    ref.current?.present();
+    // Captured here: React clears ref.current before this effect's cleanup runs.
+    const sheet = ref.current;
+    sheet?.present();
     const timer = setTimeout(() => {
       const top = height - CONFIRM_SHEET_HEIGHT - insets.bottom;
       logBox(kit, v, { x: 0, y: top, w: width, h: v.h - v.homeIndicator }, width, "computed from the sheet's snap height, not measured");
     }, SETTLE_MS * 2);
-    return () => clearTimeout(timer);
+    // A gorhom modal outlives the screen that presented it; without this it covers the next DevKit item.
+    return () => {
+      clearTimeout(timer);
+      sheet?.dismiss();
+    };
   }, []);
   return (
     <ConfirmSheet

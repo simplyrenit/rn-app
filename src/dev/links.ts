@@ -57,8 +57,11 @@ export function listenForDevLinks(ref: Ref): () => void {
       if (tries < 100) setTimeout(() => open(url, tries + 1), 100);
       return;
     }
-    // Pushed, so the same screen with other params (the next variant) opens fresh and measures again.
-    ref.dispatch(StackActions.push(route.name, route.params));
+    // A new screen each time, so the next variant mounts fresh and measures again. Over a dev screen it replaces
+    // that screen instead of stacking on it: the old one must unmount, or a sheet it presented stays on top.
+    const current = ref.getCurrentRoute()?.name;
+    const action = current === "DevKit" || current === "DevFixture" ? StackActions.replace : StackActions.push;
+    ref.dispatch(action(route.name, route.params));
   };
   void Linking.getInitialURL()
     .catch(() => null)

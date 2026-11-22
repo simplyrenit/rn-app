@@ -8,7 +8,7 @@ import {
 import { useTheme } from "@/lib/theme";
 import { styled } from "nativewind";
 import React from "react";
-import { Text as RNText, StyleSheet, TextProps } from "react-native";
+import { Platform, Text as RNText, StyleSheet, TextProps, TextStyle } from "react-native";
 
 type TailwindFontSize =
   | "text-xs"
@@ -162,11 +162,14 @@ export function resolveTextMetrics({
   const weight: TailwindFontWeight = fontWeight ?? spec?.weight ?? "font-normal";
   const sizeClass: TailwindFontSize | undefined =
     fontSize ?? (spec ? (`text-${spec.size}` as TailwindFontSize) : undefined);
-  const token = sizeTokenMap[sizeClass ?? classNameSize(className) ?? "text-base"];
+  const fromClass = classNameSize(className);
+  const token = sizeTokenMap[sizeClass ?? fromClass ?? "text-base"];
   return {
     fontFamily: fontWeightMap[weight],
     fontSize: sizeClass ? fontSizeScale[token] : undefined,
     lineHeight: lineHeight ?? lineHeightScale[token],
+    /** The size the text actually renders at: the prop, the role, the className, else React Native's 14. */
+    renderedSize: sizeClass || fromClass ? fontSizeScale[token] : 14,
   };
 }
 
@@ -181,6 +184,14 @@ function hasColorClass(className: string): boolean {
         !/^text-\[\d/.test(token)
     );
 }
+
+// Android draws Plus Jakarta Sans glyphs of 14pt and up about 2/3pt lower in their line than Figma and iOS do
+// (ENG-426 kit diffs: List row, Notice, Price row and Section header all matched best 2/3pt higher; 12pt pills
+// already matched, and moving them made them fail). Line boxes are already
+// right, so only the glyphs move: a transform never changes layout. includeFontPadding: false was tried and
+// rejected, because it also shrinks every line box (a 20pt line measured 17.67). Skipped when the caller sets its
+// own transform, so an animated Text keeps working.
+const ANDROID_GLYPH_SHIFT: TextStyle = { transform: [{ translateY: -2 / 3 }] };
 
 export function Text({
   className = "",
@@ -246,6 +257,9 @@ export function Text({
         { fontFamily: metrics.fontFamily },
         metrics.fontSize ? { fontSize: metrics.fontSize } : null,
         { lineHeight: metrics.lineHeight },
+        Platform.OS === "android" && metrics.renderedSize >= 14 && !StyleSheet.flatten(style)?.transform
+          ? ANDROID_GLYPH_SHIFT
+          : null,
       ]}
       {...props}
     >

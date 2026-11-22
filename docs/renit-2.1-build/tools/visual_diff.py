@@ -23,8 +23,8 @@ from PIL import Image
 DEVICE_BARS = {
     # iPhone 17e simulator (390x844 pt @3x = 1170x2532): status bar 47pt, home indicator 34pt.
     'ios': (47 * 3, 34 * 3),
-    # Realme RMX3151 (1080x2412, 480dpi = 3x): status bar ~22dp, 3-button nav bar 44dp. Re-measure per phone.
-    'android': (66, 132),
+    # Realme RMX3151 (1080x2412, 480dpi = 3x): status bar 119px, 3-button nav bar 132px. Re-measure per phone.
+    'android': (119, 132),
 }
 
 
@@ -84,10 +84,13 @@ def main():
             sys.exit('--ref-box needs --app-box')
         ax, ay, aw, ah = (float(v) for v in a.app_box.split(','))
         k = a.app_scale or 3.0  # iPhone 17e @3x; Realme RMX3151 is 480dpi = 3.0
-        app_img = app_img.crop((round(ax * k), round(ay * k), round((ax + aw) * k), round((ay + ah) * k)))
-        # The boxes must describe the same thing; a size mismatch would be silently resampled.
-        if abs(aw - w_) > 0.5 or abs(ah - h_) > 0.5:
+        # The boxes must describe the same thing; a size mismatch would be silently resampled. Figma rounds
+        # hug-sized frames up to whole points while React Native measures exact text, so a box that is under 1pt
+        # smaller is compared at the reference size: the extra edge pixels then count as mismatch.
+        if abs(aw - w_) >= 1 or abs(ah - h_) >= 1:
             sys.exit(f'--app-box {aw}x{ah} pt differs from --ref-box {w_}x{h_} pt')
+        aw, ah = w_, h_
+        app_img = app_img.crop((round(ax * k), round(ay * k), round((ax + aw) * k), round((ay + ah) * k)))
     else:
         ref = ref[int(a.ref_top * s): int(min(ref.shape[0], a.ref_height * s) - a.ref_bottom * s)]
         top, bottom = DEVICE_BARS[a.platform]

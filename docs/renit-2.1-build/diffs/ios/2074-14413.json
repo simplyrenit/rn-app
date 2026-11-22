@@ -1,0 +1,14 @@
+{
+ "ref": "/Users/zineone/git/renit/rn-app-eng426/docs/renit-2.1-build/tools/../figma/00/2074-14416.png",
+ "app": "/tmp/kit-2074-14413.png",
+ "platform": "ios",
+ "mismatch_pct": 0.681,
+ "threshold_pct": 2.0,
+ "pass": true,
+ "compared_px": [
+  1026,
+  111
+ ],
+ "app_scaled_height": 111,
+ "uncovered_rows": 0
+}
