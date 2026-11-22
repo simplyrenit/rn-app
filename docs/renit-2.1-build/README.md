@@ -36,3 +36,13 @@ python3 -m venv .venv && .venv/bin/pip install pillow numpy   # once
 Android is compared against the iOS frames, with Android's own status and navigation bars cropped. Dark mode is mapped, but it is not diffed.
 
 States that can't be reached live, such as error states, are checked with a dev-only state fixture or a jest render. The check method is recorded in `figma/index.tsv`.
+
+## Proof run (ENG-425, 2026-11-23)
+
+The current app (origin/main ed1a950, QA debug build, iPhone 17e simulator) was compared with the three Home frames in `proof/`. All three fail, as expected: 2083:15120 29.09%, 2083:15347 29.45%, 2083:15579 29.34%. The heat map catches the layout differences: category tiles that are photos instead of line icons, label weights, the tab-bar labels, and the toast.
+
+## Decision: diff against design fixtures, not live QA data
+
+Live QA data (product photos, names, categories, prices) never matches the Figma's sample content, so a live screen can't reach ≤2% even when the code is a perfect match. Pixel diffs therefore run in a **dev-only design-fixture mode**. In this mode, the screen's API responses are replaced with the content shown in the frame: the same texts, and the same images exported from Figma with Figwright `save_image_fills`. The fixture is compiled out of release builds (`__DEV__` only) and never touches QA data.
+
+Live QA runs remain the behaviour check (navigation, real data and states). They do not count toward the pixel pass. Each flow story adds the fixtures for its own frames.
