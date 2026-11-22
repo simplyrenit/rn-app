@@ -1,9 +1,10 @@
+import { density, radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import React from "react";
 import { TouchableOpacity } from "react-native";
 import { Text } from "./text";
 
-// STUB (ENG-426 foundation): the public API below is final; Group B replaces the
-// body with the kit Chip (figma/00 2073:14388: Default / Selected, 40 high).
+// The kit Chip (figma/00 2073:14388): Default / Selected, 40 high, r12.
 
 export interface ChipProps {
   label: string;
@@ -14,15 +15,36 @@ export interface ChipProps {
 }
 
 export function Chip({ label, selected = false, onPress, leading }: ChipProps) {
+  const { color } = useTheme();
   return (
     <TouchableOpacity
       accessibilityRole="button"
       accessibilityState={{ selected }}
+      activeOpacity={0.6}
+      disabled={!onPress}
       onPress={onPress}
-      style={{ height: 40, paddingHorizontal: 16, flexDirection: "row", alignItems: "center" }}
+      style={{
+        minHeight: density.chip,
+        // The kit counts its 1pt inside stroke into the layout, so the label
+        // sits at 17: RN's border plus 16 of padding is the same box.
+        paddingHorizontal: 16,
+        gap: 6,
+        flexDirection: "row",
+        alignItems: "center",
+        borderRadius: radius.button,
+        borderWidth: 1,
+        borderColor: selected ? color.brand : color.line,
+        backgroundColor: selected ? color.brandPanel : color.surface,
+      }}
     >
       {leading}
-      <Text>{label}</Text>
+      <Text
+        fontSize="text-sm"
+        fontWeight={selected ? "font-semibold" : "font-medium"}
+        style={selected ? { color: color.brandText } : undefined}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }

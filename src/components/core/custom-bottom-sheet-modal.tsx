@@ -19,9 +19,9 @@ interface CustomBottomSheetModalProps {
   children: React.ReactNode;
   scrollView?: boolean;
   /**
-   * Opt-in. The grabber and scrim as the Figma sheets draw them: a 44x5 grabber in
-   * the hairline tone on a 37pt row (24 above, 8 below) and a 60% scrim. Every
-   * other sheet keeps the default 40x4 grabber and 50% scrim.
+   * Opt-in: the 60% scrim the Figma sheets draw. Every other sheet keeps 50%.
+   * (It used to opt into the Figma grabber too; every sheet has the 2.1 kit
+   * grabber now.)
    */
   frame?: boolean;
   /** Opt-in: runs when the sheet has closed, however it was closed. */
@@ -131,10 +131,13 @@ const CustomBottomSheetModal = forwardRef<
           borderTopLeftRadius: radius.sheet,
           borderTopRightRadius: radius.sheet,
         }}
+        // The 2.1 kit's grabber (Sheet header, figma/00 2071:14471) on every
+        // sheet: 44x5 in the hairline tone on a 21pt row, 8 above and below.
+        // `SheetHeader` is drawn with `grabber={false}` under it.
         handleIndicatorStyle={{
-          backgroundColor: frame ? color.line : color.inputLine,
-          width: frame ? 44 : 40,
-          height: frame ? 5 : 4,
+          backgroundColor: color.line,
+          width: 44,
+          height: 5,
           borderRadius: radius.full,
         }}
         ref={modalRef}
@@ -145,8 +148,8 @@ const CustomBottomSheetModal = forwardRef<
         enablePanDownToClose
         enableOverDrag={false}
         handleStyle={{
-          paddingTop: frame ? 24 : 10,
-          paddingBottom: frame ? 8 : 6,
+          paddingTop: 8,
+          paddingBottom: 8,
           borderTopLeftRadius: radius.sheet,
           borderTopRightRadius: radius.sheet,
         }}

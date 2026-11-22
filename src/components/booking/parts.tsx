@@ -1,4 +1,8 @@
 import { EmptyState, Skeleton, Text } from "@/components/core";
+// By path, not the barrel: tests mock the barrel, and these two are new kit
+// pieces the mocks do not carry.
+import { BottomBar as KitBottomBar } from "@/components/core/bottom-bar";
+import { StatusPill } from "@/components/core/status-pill";
 import { apiError } from "@/lib/api-error";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -12,8 +16,6 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
 } from "react-native-heroicons/outline";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 
 /**
  * The small pieces every booking screen is built from (BK-01 to BK-12): the
@@ -130,15 +132,19 @@ export function SummaryCard({
 }
 
 /**
- * A label on the left and an amount on the right; `struck` is drawn crossed out before it, and the amount then reads as
- * a saving (green) unless `amountTone` says otherwise: a price that went up (CT-23a) is `default`. `note` is a small line
- * under it (ENG-343: the GST in it).
+ * The kit Price row (figma/00 2074:14416): a label on the left at 70% and an amount on the right, both 14. `struck` is
+ * drawn crossed out before it, and the amount then reads as a saving (green) unless `amountTone` says otherwise: a price
+ * that went up (CT-23a) is `default`. `note` is a small line under it (ENG-343: the GST in it).
+ *
+ * `total` is the kit's Total row: 16 Bold both sides, under its own hairline. `bold` is the older emphasis, kept so its
+ * screens (which draw their own divider) do not get a second one: the Total type without the hairline.
  */
 export function MoneyLine({
   label,
   amount,
   struck,
   bold = false,
+  total = false,
   amountTone,
   note,
 }: {
@@ -146,27 +152,39 @@ export function MoneyLine({
   amount: string;
   struck?: string;
   bold?: boolean;
+  total?: boolean;
   amountTone?: "success" | "default";
   note?: string;
 }) {
+  const { color } = useTheme();
   const said = struck ? `${label}: ${amount}, instead of ${struck}` : `${label}: ${amount}`;
+  const strong = bold || total;
+  const size = strong ? "text-md" : "text-sm";
   return (
-    <View accessible accessibilityLabel={note ? `${said}. ${note}` : said} style={{ gap: 2 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+    <View
+      accessible
+      accessibilityLabel={note ? `${said}. ${note}` : said}
+      style={[{ gap: 2 }, total && { borderTopWidth: 1, borderTopColor: color.line, paddingTop: 12 }]}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <Text
-          fontSize="text-md"
-          fontWeight={bold ? "font-bold" : "font-normal"}
-          tone={bold ? "default" : "body"}
+          fontSize={size}
+          fontWeight={strong ? "font-bold" : "font-normal"}
+          tone={strong ? "default" : "body"}
           style={{ flex: 1 }}
         >
           {label}
         </Text>
         {struck ? (
-          <Text fontSize="text-md" tone="dim" style={{ textDecorationLine: "line-through" }}>
+          <Text fontSize={size} tone="dim" style={{ textDecorationLine: "line-through" }}>
             {struck}
           </Text>
         ) : null}
-        <Text fontSize="text-md" fontWeight="font-bold" tone={amountTone ?? (struck ? "success" : "default")}>
+        <Text
+          fontSize={size}
+          fontWeight={strong ? "font-bold" : "font-semibold"}
+          tone={amountTone ?? (struck ? "success" : "default")}
+        >
           {amount}
         </Text>
       </View>
@@ -182,8 +200,10 @@ export function MoneyLine({
 type NoticeTone = "info" | "warning" | "brand" | "danger" | "success";
 
 /**
- * A tinted note with an icon: the deposit note, the closed shop, a thing in the way. `danger` with a `title` is an alert
- * that costs the rental (ENG-282: a month overdue), its title in the danger colour above the words.
+ * The kit Notice card (figma/00 2074:14388): a tinted note with an icon in the tone's colour — the deposit note, the
+ * closed shop, a thing in the way. `danger` with a `title` is an alert that costs the rental (ENG-282: a month overdue).
+ * The title is black over the words at 70%; the tint and the icon carry the tone. `brand` is a pre-kit tone and draws as
+ * `info`: the kit has no purple notice. Without `icon` the glyph follows the tone, as the kit draws it.
  */
 export function Notice({
   tone = "info",
@@ -197,72 +217,58 @@ export function Notice({
   children: React.ReactNode;
 }) {
   const { color } = useTheme();
+  const kitTone = tone === "brand" ? "info" : tone;
   const tint = {
-    info: { bg: color.surfaceRaised, fg: color.textBody, line: "transparent" },
-    warning: { bg: color.warningWash, fg: color.warning, line: color.warning },
-    brand: { bg: color.brandPanel, fg: color.brandText, line: color.brandPanelLine },
-    danger: { bg: color.dangerWash, fg: color.danger, line: color.danger },
+    info: { bg: color.infoWash, fg: color.info },
+    warning: { bg: color.warningWash, fg: color.warning },
+    danger: { bg: color.dangerWash, fg: color.danger },
     // G10: money coming back (cart CT-29b, CT-47a).
-    success: { bg: color.successWash, fg: color.success, line: color.success },
-  }[tone];
+    success: { bg: color.successWash, fg: color.success },
+  }[kitTone];
+  const glyph = icon ?? { info: "info", warning: "warning", danger: "warning", success: "check" }[kitTone];
   const Icon =
-    icon === "clock"
+    glyph === "clock"
       ? ClockIcon
-      : icon === "warning"
+      : glyph === "warning"
         ? ExclamationTriangleIcon
-        : icon === "check"
+        : glyph === "check"
           ? CheckCircleIcon
           : InformationCircleIcon;
   return (
     <View
       style={{
+        alignSelf: "stretch",
         flexDirection: "row",
-        gap: space.sm,
-        padding: space.md,
-        borderRadius: radius.button,
-        borderWidth: 1,
-        borderColor: tint.line,
+        gap: 12,
+        padding: 16,
+        borderRadius: 12, // kit Notice card r12, no border
         backgroundColor: tint.bg,
       }}
     >
       <Icon size={20} color={tint.fg} />
-      {title ? (
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text fontSize="text-md" fontWeight="font-bold" style={{ color: tint.fg }}>
+      <View style={{ flex: 1, gap: 4 }}>
+        {title ? (
+          <Text fontSize="text-sm" fontWeight="font-semibold">
             {title}
           </Text>
-          <Text fontSize="text-sm">{children}</Text>
-        </View>
-      ) : (
-        <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+        ) : null}
+        <Text fontSize="text-sm" tone="body">
           {children}
         </Text>
-      )}
+      </View>
     </View>
   );
 }
 
 type PillTone = "brand" | "success" | "warning" | "danger" | "neutral";
 
-/** A stage on a card: "Confirmed", "Ready", "Asking the owner". */
+/**
+ * A stage on a card: "Confirmed", "Ready", "Asking the owner". Drawn by the kit `StatusPill`. The kit has no brand
+ * pill, so the legacy `brand` tone falls back to `info` (blue, the fix pass's "Out"); the per-label remaps belong to the
+ * flow stories (ENG-431, ENG-433).
+ */
 export function Pill({ label, tone }: { label: string; tone: PillTone }) {
-  const { color } = useTheme();
-  const tint = {
-    brand: { fg: color.brandText, bg: color.brandWash },
-    success: { fg: color.success, bg: color.successWash },
-    warning: { fg: color.warning, bg: color.warningWash },
-    danger: { fg: color.danger, bg: color.dangerWash },
-    neutral: { fg: color.textBody, bg: color.surfaceRaised },
-  }[tone];
-  return (
-    <View
-      style={{ backgroundColor: tint.bg, borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 3 }}
-    >
-      <Text fontSize="text-xs" fontWeight="font-bold" style={{ color: tint.fg }}>
-        {label}
-      </Text>
-    </View>
-  );
+  return <StatusPill label={label} tone={tone === "brand" ? "info" : tone} />;
 }
 
 /** A quiet action written as words: "Cancel request · ₹99 comes back", "No thanks, refund my ₹99". */
@@ -293,29 +299,16 @@ export function TextButton({
   );
 }
 
-/** The bar pinned under a booking screen's scroll: a hairline above, the home-indicator inset below. */
+/**
+ * The bar pinned under a booking screen's scroll. The kit `BottomBar` draws it — hairline, padding, home-indicator and
+ * keyboard insets — with these children in its content strip. The inner column keeps the 8pt between stacked children
+ * (a button over a text link) that this bar always had, whatever the kit bar does with its own strip.
+ */
 export function BottomBar({ children }: { children: React.ReactNode }) {
-  const { color } = useTheme();
-  const insets = useSafeAreaInsets();
-  // The button sits in the home-indicator zone, as BK-02 draws it (~22pt off the edge), not 16pt above
-  // it: the inset itself on notched phones, 14pt where there is none (SE, Android 3-button nav).
-  // iOS: with the keyboard up the bar sits on it (the screen's container lifts it), so the home-indicator
-  // inset would leave a 34pt gap above the keys. 0 on Android, where adjustResize does the lifting.
-  const keyboard = useKeyboardInset();
   return (
-    <View
-      style={{
-        paddingHorizontal: SCREEN_GUTTER,
-        paddingTop: space.md,
-        paddingBottom: keyboard ? space.md : Math.max(insets.bottom, space.md),
-        borderTopWidth: 1,
-        borderTopColor: color.line,
-        backgroundColor: color.canvas,
-        gap: space.sm,
-      }}
-    >
-      {children}
-    </View>
+    <KitBottomBar>
+      <View style={{ gap: space.sm }}>{children}</View>
+    </KitBottomBar>
   );
 }
 

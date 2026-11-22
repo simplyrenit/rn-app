@@ -37,7 +37,8 @@ import TermsScreen from "../screens/terms";
 import UserDetailScreen from "../screens/users/users-screen";
 
 import { HomeIcon, HomeIconSolid } from "@/icons/home";
-import { PlusSquareIcon } from "@/icons/plus-square";
+import { PlusSquareIcon, PlusSquareIconSolid } from "@/icons/plus-square";
+import { ClipboardDocumentIconSolid } from "@/icons/clipboard-document-solid";
 import { CHAT_ENABLED } from "@/lib/config";
 import { retryPendingSignOut } from "@/lib/sign-out";
 import { RootStackParamList } from "@/lib/types";
@@ -101,15 +102,14 @@ import RentalSettingsScreen from "@/screens/profileScreens/rental-settings";
 import ShopAddressScreen from "@/screens/profileScreens/shop-address";
 import NotificationScreen from "@/screens/profileScreens/notification";
 import WhoWeAreScreen from "@/screens/profileScreens/who-we-are";
-import { AppState, BackHandler, Linking, Platform, View } from "react-native";
+import { AppState, BackHandler, Linking, Platform, Text, View } from "react-native";
 import {
-  CalendarIcon,
   ChatBubbleLeftIcon,
+  ClipboardDocumentIcon,
   HeartIcon,
   UserIcon,
 } from "react-native-heroicons/outline";
 import {
-  CalendarIcon as CalendarIconSolid,
   ChatBubbleLeftIcon as ChatBubbleLeftIconSolid,
   HeartIcon as HeartIconSolid,
   UserIcon as UserIconSolid,
@@ -117,7 +117,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
 import { darkColors, lightColors, radius } from "@/lib/design-tokens";
-import { fontFamily, fontSize, lineHeight } from "@/lib/design-tokens";
+import { fontFamily, fontSize } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { selectionFeedback } from "@/lib/haptics";
 import { useUnreadCount } from "@/backend/chat";
@@ -250,17 +250,25 @@ function ProfileStackScreen() {
 }
 
 /**
- * The tab bar follows the design's navbar rather than the HIG default: 24pt
- * icons over a 14pt label, 4pt apart, inside 8pt of navbar padding plus 8pt of
- * tab padding top and bottom — 81pt of bar above the home-indicator inset. The
- * active tab is drawn in the primary text tone and the rest in the tertiary
- * one; the brand purple no longer marks the current tab.
+ * The tab bar is the 2.1 kit's (figma/00 2071:14393): 24pt icons over a 12/16
+ * label, 4pt apart, in an 81pt strip above the home-indicator inset. The strip
+ * is a constant, not derived from the type scale, so a token change cannot
+ * resize the bar (it drifted to 80 when `lineHeight.sm` moved). 81 less the
+ * 44 of icon, gap and label leaves 18.5 above and below. The kit's 1px top
+ * hairline is stroked OUTSIDE the 81, and an RN border sits inside the box, so
+ * the bar is one taller to keep the 81 clear. The kit's 1pt "Post" spacer
+ * frame between the tabs is an artefact of the component and is not copied.
+ *
+ * The current tab is brand purple with a solid icon and a SemiBold label; the
+ * rest are 60% black outlines with a Medium label.
  */
-const TAB_BAR_PADDING = 16;
+export const TAB_BAR_CONTENT_HEIGHT = 81;
+const TAB_BAR_HAIRLINE = 1;
 const TAB_ICON_SIZE = 24;
 const TAB_LABEL_GAP = 4;
-export const TAB_BAR_CONTENT_HEIGHT =
-  TAB_BAR_PADDING * 2 + TAB_ICON_SIZE + TAB_LABEL_GAP + lineHeight.sm;
+const TAB_LABEL_LINE = 16;
+const TAB_BAR_PADDING =
+  (TAB_BAR_CONTENT_HEIGHT - TAB_ICON_SIZE - TAB_LABEL_GAP - TAB_LABEL_LINE) / 2;
 
 function MainTabs() {
   const { color, isDark } = useTheme();
@@ -280,18 +288,17 @@ function MainTabs() {
         tabPress: () => selectionFeedback(),
       }}
       screenOptions={({ route }) => ({
-        // Primary for the current tab, tertiary for the rest, as the design
-        // draws them.
-        tabBarActiveTintColor: color.text,
+        // Brand for the current tab, tertiary for the rest, as the kit draws them.
+        tabBarActiveTintColor: color.brandText,
         tabBarInactiveTintColor: color.textDim,
         headerShown: false,
         tabBarStyle: {
           backgroundColor: color.canvas,
-          height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
+          height: TAB_BAR_CONTENT_HEIGHT + TAB_BAR_HAIRLINE + insets.bottom,
           paddingBottom: insets.bottom + TAB_BAR_PADDING,
           paddingTop: TAB_BAR_PADDING,
           borderTopColor: color.navLine,
-          borderTopWidth: 1,
+          borderTopWidth: TAB_BAR_HAIRLINE,
           // react-navigation adds elevation 8 on Android, a drop shadow the design
           // (and iOS) does not have: only the 1px line above.
           elevation: 0,
@@ -303,15 +310,27 @@ function MainTabs() {
         tabBarIconStyle: {
           marginTop: 0,
         },
-        // The label is chrome, so it holds its size rather than tracking the
-        // content ramp: five 14pt labels always fit five slots, at 360dp too.
-        tabBarAllowFontScaling: false,
-        tabBarLabelStyle: {
-          fontSize: fontSize.sm,
-          lineHeight: lineHeight.sm,
-          fontFamily: fontFamily.regular,
-          marginTop: TAB_LABEL_GAP,
-        },
+        // The label is our own Text because the kit changes its weight with the
+        // state (SemiBold current, Medium otherwise) and `tabBarLabelStyle` has
+        // one style for both. A custom label skips `tabBarAllowFontScaling`, so
+        // the Text holds its size itself: the label is chrome, not the content
+        // ramp, and five labels must fit five slots at 360dp on "Large" font.
+        tabBarLabel: ({ focused, color: tintColor, children }) => (
+          <Text
+            numberOfLines={1}
+            allowFontScaling={false}
+            style={{
+              color: tintColor,
+              fontSize: fontSize.xs,
+              lineHeight: TAB_LABEL_LINE,
+              fontFamily: focused ? fontFamily.semibold : fontFamily.medium,
+              marginTop: TAB_LABEL_GAP,
+              textAlign: "center",
+            }}
+          >
+            {children}
+          </Text>
+        ),
         tabBarAccessibilityLabel:
           route.name === "Chat" && unreadCount > 0
             ? `Chat, ${unreadCount} unread`
@@ -326,10 +345,10 @@ function MainTabs() {
               Icon = focused ? HeartIconSolid : HeartIcon;
               break;
             case "Post":
-              Icon = PlusSquareIcon;
+              Icon = focused ? PlusSquareIconSolid : PlusSquareIcon;
               break;
             case "Rentals":
-              Icon = focused ? CalendarIconSolid : CalendarIcon;
+              Icon = focused ? ClipboardDocumentIconSolid : ClipboardDocumentIcon;
               break;
             case "Chat":
               Icon = focused ? ChatBubbleLeftIconSolid : ChatBubbleLeftIcon;
@@ -345,15 +364,17 @@ function MainTabs() {
           return (
             <View>
               <Icon
-                size={TAB_ICON_SIZE}
+                // The outline house is drawn on a 20 viewBox, so at 24 it grew to
+                // 21.6pt; the kit's is 18 in a 24 box. At 20 it is 18 wide, and the
+                // tab centres it in the 24 slot where the kit puts it.
+                size={route.name === "Home" && !focused ? 20 : TAB_ICON_SIZE}
                 color={tintColor}
-                // The design outlines the filled house in the opposite tone.
-                {...(route.name === "Home" && focused
+                // The kit's solid Post and Rentals glyphs knock their plus and
+                // lines out of the fill; the knockout is the bar's canvas, so it
+                // is right in dark mode too. The solid house strokes in its own
+                // fill colour, which is HomeIconSolid's default.
+                {...((route.name === "Post" || route.name === "Rentals") && focused
                   ? { edge: color.canvas }
-                  : null)}
-                // The active Post tab is a solid square with the plus knocked out.
-                {...(route.name === "Post" && focused
-                  ? { filled: true, edge: color.canvas }
                   : null)}
               />
               {showBadge ? (
@@ -422,6 +443,10 @@ function MainTabs() {
 }
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+// Dev builds only (ENG-426): never import these statically, or release bundles would carry them.
+const DevKitScreen = __DEV__ ? require("@/screens/dev/kit").default : null;
+const DevFixtureScreen = __DEV__ ? require("@/screens/dev/fixture").default : null;
+
 /** The link that started the app, once its payment has been resumed (below). */
 let startLinkSeen: string | null = null;
 /** The same for a shop link (ENG-344): Android hands the start link back on every rebuild. */
@@ -434,6 +459,8 @@ export default function Navigation() {
   const refreshDetails = React.useRef(fetchUserDetails);
   refreshDetails.current = fetchUserDetails;
   const queryClient = useQueryClient();
+  // Dev builds only (ENG-426): renit-qa://dev/kit and renit-qa://dev/fixture links.
+  React.useEffect(() => (__DEV__ ? require("@/dev/links").listenForDevLinks(navigationRef) : undefined), []);
 
   // A screen to open, from a tapped push, a payment that was in flight, or a shop link (ENG-344). On a
   // start from a closed app the answer can arrive before the navigator is
@@ -1122,6 +1149,8 @@ export default function Navigation() {
           name="EditCoverImage"
           component={EditCoverImage}
         />
+        {DevKitScreen ? <Stack.Screen name="DevKit" component={DevKitScreen} /> : null}
+        {DevFixtureScreen ? <Stack.Screen name="DevFixture" component={DevFixtureScreen} /> : null}
       </Stack.Navigator>
     </NavigationContainer>
   );

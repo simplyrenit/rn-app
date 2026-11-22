@@ -23,13 +23,19 @@ from PIL import Image
 DEVICE_BARS = {
     # iPhone 17e simulator (390x844 pt @3x = 1170x2532): status bar 47pt, home indicator 34pt.
     'ios': (47 * 3, 34 * 3),
-    # Realme RMX3151 (1080x2400): status bar 24dp*2.75, 3-button nav bar 48dp*2.75. Re-measure per phone.
+    # Realme RMX3151 (1080x2412, 480dpi = 3x): status bar ~22dp, 3-button nav bar 44dp. Re-measure per phone.
     'android': (66, 132),
 }
 
 
-def load(p):
-    return np.asarray(Image.open(p).convert('RGB'), dtype=np.float32)
+def flatten(im, bg):
+    # Kit PNGs are partly transparent; .convert('RGB') alone would turn those pixels black.
+    im = im.convert('RGBA')
+    return Image.alpha_composite(Image.new('RGBA', im.size, bg), im).convert('RGB')
+
+
+def load(p, bg='#FFFFFF'):
+    return np.asarray(flatten(Image.open(p), bg), dtype=np.float32)
 
 
 def yiq(a):
@@ -59,16 +65,35 @@ def main():
     ap.add_argument('--app-bottom', type=int)
     ap.add_argument('--threshold', type=float, default=2.0, help='max %% mismatched pixels (do not raise it)')
     ap.add_argument('--color-t', type=float, default=0.1, help='per-pixel colour threshold (pixelmatch t)')
+    ap.add_argument('--ref-box', help='x,y,w,h in pt: compare only this box of the reference (kit variants); '
+                    'replaces --ref-top/--ref-bottom/--ref-height')
+    ap.add_argument('--app-box', help='x,y,w,h in pt of the screenshot (device points, status bar included); '
+                    'replaces --app-top/--app-bottom. Requires --ref-box.')
+    ap.add_argument('--app-scale', type=float, help='device px per pt (default 3: iPhone 17e and Realme RMX3151 both 3x)')
+    ap.add_argument('--ref-bg', default='#FFFFFF', help='colour behind transparent reference pixels '
+                    '(#F5F5F7 for kit set variants)')
     a = ap.parse_args()
 
-    ref = load(a.ref)
+    ref = load(a.ref, a.ref_bg)
     s = a.ref_scale
-    ref = ref[int(a.ref_top * s): int(min(ref.shape[0], a.ref_height * s) - a.ref_bottom * s)]
-    app_img = Image.open(a.app).convert('RGB')
-    top, bottom = DEVICE_BARS[a.platform]
-    top = a.app_top if a.app_top is not None else top
-    bottom = a.app_bottom if a.app_bottom is not None else bottom
-    app_img = app_img.crop((0, top, app_img.width, app_img.height - bottom))
+    app_img = flatten(Image.open(a.app), a.ref_bg)
+    if a.ref_box:
+        x, y, w_, h_ = (float(v) for v in a.ref_box.split(','))
+        ref = ref[round(y * s): round((y + h_) * s), round(x * s): round((x + w_) * s)]
+        if not a.app_box:
+            sys.exit('--ref-box needs --app-box')
+        ax, ay, aw, ah = (float(v) for v in a.app_box.split(','))
+        k = a.app_scale or 3.0  # iPhone 17e @3x; Realme RMX3151 is 480dpi = 3.0
+        app_img = app_img.crop((round(ax * k), round(ay * k), round((ax + aw) * k), round((ay + ah) * k)))
+        # The boxes must describe the same thing; a size mismatch would be silently resampled.
+        if abs(aw - w_) > 0.5 or abs(ah - h_) > 0.5:
+            sys.exit(f'--app-box {aw}x{ah} pt differs from --ref-box {w_}x{h_} pt')
+    else:
+        ref = ref[int(a.ref_top * s): int(min(ref.shape[0], a.ref_height * s) - a.ref_bottom * s)]
+        top, bottom = DEVICE_BARS[a.platform]
+        top = a.app_top if a.app_top is not None else top
+        bottom = a.app_bottom if a.app_bottom is not None else bottom
+        app_img = app_img.crop((0, top, app_img.width, app_img.height - bottom))
     w = ref.shape[1]
     h = round(app_img.height * w / app_img.width)
     app = np.asarray(app_img.resize((w, h), Image.LANCZOS), dtype=np.float32)

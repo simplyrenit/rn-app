@@ -1,33 +1,23 @@
 import { Text } from "@/components/core";
+import { ListRow } from "@/components/core/list-row";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import React from "react";
-import { TouchableOpacity, View } from "react-native";
-import { ChevronRightIcon } from "react-native-heroicons/mini";
+import { View } from "react-native";
 import type { NumberProp, SvgProps } from "react-native-svg";
 
 /** A heroicons component, exactly as the outline set exports them. */
 export type HeroIcon = React.ComponentType<SvgProps & { size?: NumberProp }>;
 
 /**
- * The Profile list's metrics, measured off the signed-in Figma frame.
+ * The Profile list's rhythm, measured off the signed-in Figma frame.
  *
- * They live here rather than in `density` because they describe one screen's
- * list, not a scale the rest of the app shares — the app's grouped lists run on
- * `density.row` (44) with inset separators, and this frame runs a taller, airier
- * row with no separators at all.
- *
- * The rhythm is a single number: 16 sits under a section header, above and below
- * the rule between two sections, and inside a row above and below its 24pt line
- * box — which is what makes the row 56.
+ * It lives here rather than in `density` because it describes one screen's
+ * list, not a scale the rest of the app shares. 16 sits under a section header
+ * and above and below the rule between two sections; the rows themselves are
+ * the kit List row's 56.
  */
 export const PROFILE_LIST_GAP = 16;
-const ROW_MIN_HEIGHT = 56;
-const ROW_GAP = 8;
-/** Glyph box for both the leading icon and the trailing chevron. */
-const ROW_ICON_SIZE = 20;
-/** The frame's outline weight. Heroicons default to 1.5 only on `outline`. */
-const ROW_ICON_STROKE = 1.5;
 
 interface ProfileRowProps {
   icon: HeroIcon;
@@ -36,38 +26,11 @@ interface ProfileRowProps {
 }
 
 /**
- * One tappable line of the Profile list: icon, label, chevron.
- *
- * `minHeight` rather than a fixed height so a customer at an accessibility text
- * size gets a taller row instead of a clipped one.
+ * One tappable line of the Profile list: icon, label, chevron. The kit List row
+ * (figma/00 2073:14364) draws it; this keeps the props both Profile screens pass.
  */
-export function ProfileRow({ icon: Icon, label, onPress }: ProfileRowProps) {
-  const { color } = useTheme();
-
-  return (
-    <TouchableOpacity
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      activeOpacity={0.6}
-      onPress={onPress}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: ROW_GAP,
-        minHeight: ROW_MIN_HEIGHT,
-        paddingVertical: PROFILE_LIST_GAP,
-        paddingHorizontal: SCREEN_GUTTER,
-      }}
-    >
-      <Icon size={ROW_ICON_SIZE} color={color.text} strokeWidth={ROW_ICON_STROKE} />
-      <Text fontSize="text-md" numberOfLines={1} style={{ flex: 1 }}>
-        {label}
-      </Text>
-      {/* The mini set, not outline: at 20pt the outline chevron reads as a
-          second full-weight glyph competing with the row's leading icon. */}
-      <ChevronRightIcon size={ROW_ICON_SIZE} color={color.text} />
-    </TouchableOpacity>
-  );
+export function ProfileRow({ icon, label, onPress }: ProfileRowProps) {
+  return <ListRow leadingIcon={icon} label={label} onPress={onPress} />;
 }
 
 interface ProfileSectionProps {
@@ -78,9 +41,9 @@ interface ProfileSectionProps {
 /**
  * A titled group of rows.
  *
- * The header is Body Bold at full contrast, not the app's usual grouped-list
- * header — the design draws these as small headings, and `role="groupHeader"`
- * would set them in dimmed, tracked caps, which this frame does not.
+ * The header is still the previous design's Body Bold at full contrast. The
+ * 2.1 kit sets a group header as `role="groupHeader"` (14 SemiBold at 60%); the
+ * switch belongs to the Profile flow story, which owns the screen's spacing.
  */
 export function ProfileSection({ title, children }: ProfileSectionProps) {
   return (

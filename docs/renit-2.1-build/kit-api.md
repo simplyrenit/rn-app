@@ -97,3 +97,70 @@ Shared types:
 - `chevron?: boolean` (default true).
 - `tone?: "default" | "danger"`: `danger` uses `dangerStrong` on the label and icon.
 - `onPress?`, `accessibilityLabel?` (defaults to `label`).
+
+## Group B (implemented)
+
+Props added; nothing renamed or removed.
+
+- **`StatusPill`:**
+  - Added `style?: StyleProp<ViewStyle>`, for placement only.
+  - The pill sets no `alignSelf`, because in a row with `alignItems: "center"` that would pin it to the top. A column parent passes `{ alignSelf: "flex-start" }`.
+  - Added the export `statusPillColors(tone, color)`, which returns `{ fg, bg }` for tests.
+  - Neutral is `surfaceMuted` with `textBody`.
+- **`SectionHeader`:**
+  - Added `onSeeAll?: () => void` and `seeAllLabel?: string` (default "See all"). This is the kit link, 14/20 SemiBold `brandText`, plain text with a 12pt hitSlop.
+  - `accessory`, `subtitle`, `gutter` and `flush` are kept.
+  - The title is `role="sectionTitle"`, one line.
+- **`ListRow`:** API as above.
+  - It has no fill. The kit's #FFFFFF is the light canvas; in dark mode a `surface` fill would band on the #000 canvas. A DevKit slot that diffs it needs a white backing.
+  - `minHeight` is 56/72 with no vertical padding.
+- **`ProfileRow`:** same props, drawn by `ListRow`.
+  - `ProfileSection` keeps its Body Bold header. The kit's `groupHeader` is left for the Profile story.
+- **`Card`:**
+  - It always draws the kit Listing card. `tile` is kept but does nothing.
+  - Added the export `LISTING_IMAGE = { aspectRatio: 162/176, radius: 8 }`, which `MyProductCard` also uses.
+  - The delivery or distance line takes the location slot (12/16 at 60%) below the price.
+  - The Verified chip stays on the photo, bottom-left.
+- **`FavouriteButton`:**
+  - `tile` now draws the kit heart: a 32 disc of #FFFFFFEB with a 0/1 blur-3 shadow of #0000002E (Android uses `elevation: 1`) in a 44 box, holding a black 24 outline heart at stroke 1.5. It looks the same in both themes.
+  - The saved heart keeps `darkColors.danger`.
+
+## Group C (implemented)
+
+`StepProgress` and `MapPlaceholder` keep the props above unchanged. Added optional props, and changes to existing APIs:
+
+- **`EmptyState`** (`core/empty-state.tsx`)
+  - Added `actionTone?: "tonal" | "primary"`, default `tonal`. It draws the kit Secondary tonal 44; use `primary` (compact 44) on a screen with no other filled button.
+  - The icon element is cloned at size 32, whatever size the call site passes; its colour is the caller's.
+  - `compact` is accepted but no longer changes anything, because the kit pads 24 top and bottom.
+- **`MoneyLine`** (`booking/parts.tsx`)
+  - Added `total?: boolean`: the kit Total row, 16 Bold on both sides, a hairline above and 12 padding.
+  - `bold` keeps its meaning (the same 16 Bold type) but draws **no** hairline, because its screens draw their own divider.
+- **`Notice`** (`booking/parts.tsx`)
+  - Props are unchanged. `tone="brand"` draws as `info`.
+  - With no `icon`, the glyph follows the tone: info ⓘ, warning and danger ⚠, success ✓.
+  - The kit's Link node is hidden in every tone, so it is not built.
+- **`Pill`** (`booking/parts.tsx`) is now `<StatusPill>`, with `brand` falling back to `info`.
+- **`BottomBar`** (`booking/parts.tsx`) is now `<BottomBar>` from `core/bottom-bar` in children mode.
+- **`TextField`** (`core/field.tsx`)
+  - Props are unchanged.
+  - `hint` now renders **under** the input, as the kit's Helper does, and the error replaces it.
+  - `FieldLabel hint=` still renders under the label, for group labels.
+- **`FieldFrame` and `useFieldSurfaceStyle({ frame })`** are kept but are no-ops. Every field is now the kit box: 48 high, padding 16, r12, a `line` border, 1.5 purple on focus, and `dangerStrong` on error.
+
+## Group A (implemented)
+
+Props added; nothing renamed or removed.
+
+- **Tab bar** (`navigation/nav.tsx` MainTabs):
+  - `TAB_BAR_CONTENT_HEIGHT` is the literal 81 (it was derived from `lineHeight.sm` and drifted to 80). The bar is 81 + 1 hairline + `insets.bottom`: the kit strokes the hairline OUTSIDE the 81, an RN border sits inside. Padding 18.5 above and below 24 icon + 4 + 16 label.
+  - Custom `tabBarLabel`: 12/16, SemiBold `brandText` when focused, Medium `textDim` otherwise, `allowFontScaling={false}`.
+  - Icons: active tint `brandText`, inactive `textDim`. Home/Saved/Profile solid heroicons when active; Post `PlusSquareIconSolid` and Rentals `ClipboardDocumentIconSolid` (new, `src/icons/`) drawn from 2110:30274 / 2110:30278, knockout = `canvas`. Rentals inactive is heroicons outline `ClipboardDocumentIcon` (was a calendar).
+- **`SubpageHeader`** (kit Top bar):
+  - Added `variant?: "back-title" | "tab-title" | "back-only"` (default `back-title`) and `trailing?: ReactNode`. `title` is now optional (ignored by `back-only`).
+  - 56 high, left-aligned title at x72 (back-title 18/24 Bold) or on the 24 gutter (tab-title 20/28 Bold), one line, truncating. No fill (the kit's white is the canvas the screens already paint).
+- **`BottomBar`**: API as above. Strip padding 16/24, `paddingBottom` 16 + `insets.bottom` (16 with the iOS keyboard up); `cta-text` 4 + inset with a 4 gap (drawn as `full-cta` when `secondary` is missing). `children` mode is a column with gap 8 and the same insets.
+- **`SheetHeader`**: API as above; `grabber` default stays true (it draws the 21pt grabber row and the sheet's top radius, for standalone/DevKit use). Inside `CustomBottomSheetModal`, pass `grabber={false}`: gorhom draws the handle. The title row is `minHeight` 44, so a long title wraps. Close X is heroicons outline `XMarkIcon` 24 at `textDim`, 10pt hitSlop.
+- **`SheetFooter`**: API as above. The secondary link is plain SemiBold 14/20 `brandText` text (12pt hitSlop), not `Button`. `paddingBottom` 16 + `insets.bottom`.
+- **`CustomBottomSheetModal`**: every sheet now gets the kit grabber (44×5 `line`, 8 above and below, r24 top). `frame` now only selects the 60% scrim.
+- **`ConfirmSheet`**: props unchanged. Draws 2110:30387: `SheetHeader` (no X), body 14/20 `textBody`, actions column (padding 16/24/4, gap 4) with `warning` (danger) or `primary` (default) full width and `ghost tone="muted"` Cancel below. Fixed snap height 285 + inset (four body lines).

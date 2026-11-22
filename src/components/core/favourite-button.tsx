@@ -5,7 +5,7 @@ import { tapFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Easing } from "react-native";
+import { Animated, Easing, Platform, View } from "react-native";
 import { HeartIcon as HeartOutline } from "react-native-heroicons/outline";
 import { HeartIcon as HeartSolid } from "react-native-heroicons/solid";
 import { IconButton } from "./icon-button";
@@ -14,6 +14,21 @@ const GLYPH_SIZE = 18;
 const TILE_GLYPH_SIZE = 24;
 const INK_GLYPH_SIZE = 20;
 const INK_STROKE = 1.5;
+
+/**
+ * The kit Listing card's heart backing (figma/00 2073:14326, review #32): a
+ * 32pt disc of #FFFFFFEB with a 0/1 blur-3 shadow of #0000002E, inset 6 from
+ * the photo's corner, under a black 1.5 outline heart. It sits on a photo, so
+ * like `onPhoto` it is the same in both themes: white disc, black heart.
+ */
+const TILE_DISC_SIZE = 32;
+const TILE_DISC_FILL = "rgba(255,255,255,0.92)";
+const TILE_HEART_INK = "#000000";
+const TILE_DISC_SHADOW = Platform.select({
+  // Figma's blur 3 is about an iOS shadowRadius of 1.5, as in `fieldShadow`.
+  ios: { shadowColor: "#000000", shadowOpacity: 0.18, shadowRadius: 1.5, shadowOffset: { width: 0, height: 1 } },
+  android: { elevation: 1 },
+});
 
 interface Props {
   /** Product name — this API's identifier for a listing. */
@@ -29,9 +44,9 @@ interface Props {
    */
   photoSize?: number;
   /**
-   * The design's product-tile heart: a bare 44pt box in the photo's corner, no
-   * chip behind it, a 24pt white-stroked outline with a translucent dark fill.
-   * The Home rails, Saved, Search results and the owner profile use it; the rest keep the chip.
+   * The kit Listing card's heart: a 44pt box in the photo's corner holding a
+   * 32pt white disc and a 24pt black outline. Every product card uses it; the
+   * PDP hero keeps the chip or `ink`.
    */
   tile?: boolean;
   /**
@@ -121,10 +136,22 @@ export function FavouriteButton({
 
   const Glyph = active ? HeartSolid : HeartOutline;
 
-  // Over a photo the chip behind the glyph is always dark, so the heart takes
-  // the dark-theme values in both app themes; off a photo it follows the theme.
+  // Over a photo the heart takes the dark-theme values in both app themes, as
+  // the PDP's dark chip needs; off a photo it follows the theme. The card's
+  // white disc keeps that saved red on purpose (review #32 changed only the
+  // unsaved look), and its unsaved outline is black.
   const activeColor = onPhoto ? darkColors.danger : color.danger;
-  const inactiveColor = onPhoto ? color.onPhoto : ink ? color.text : color.textBody;
+  const inactiveColor = tile ? TILE_HEART_INK : onPhoto ? color.onPhoto : ink ? color.text : color.textBody;
+
+  const glyph = (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Glyph
+        size={tile ? TILE_GLYPH_SIZE : ink ? INK_GLYPH_SIZE : GLYPH_SIZE}
+        color={active ? activeColor : inactiveColor}
+        strokeWidth={active ? 0 : tile || ink ? INK_STROKE : 2}
+      />
+    </Animated.View>
+  );
 
   return (
     <IconButton
@@ -141,18 +168,27 @@ export function FavouriteButton({
       }
       accessibilityHint="Adds or removes this listing from your Saved tab"
     >
-      <Animated.View style={{ transform: [{ scale }] }}>
-        <Glyph
-          size={tile ? TILE_GLYPH_SIZE : ink ? INK_GLYPH_SIZE : GLYPH_SIZE}
-          color={active ? activeColor : inactiveColor}
-          strokeWidth={active ? 0 : ink ? INK_STROKE : 2}
-          // A translucent fill inside the white outline is what keeps the heart
-          // legible over a bright sky without a chip to sit on. Spread rather
-          // than passed as `undefined`, which would override the solid icon's
-          // own fill and paint it black.
-          {...(tile && !active ? { fill: color.photoScrimSoft } : null)}
-        />
-      </Animated.View>
+      {tile ? (
+        // The disc is a child, not IconButton's scrim: the hit area stays 44
+        // while the visible backing is the kit's 32.
+        <View
+          style={[
+            {
+              width: TILE_DISC_SIZE,
+              height: TILE_DISC_SIZE,
+              borderRadius: TILE_DISC_SIZE / 2,
+              backgroundColor: TILE_DISC_FILL,
+              alignItems: "center",
+              justifyContent: "center",
+            },
+            TILE_DISC_SHADOW,
+          ]}
+        >
+          {glyph}
+        </View>
+      ) : (
+        glyph
+      )}
     </IconButton>
   );
 }

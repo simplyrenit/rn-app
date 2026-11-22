@@ -1,6 +1,6 @@
-import { MIN_TOUCH_TARGET, density, radius } from "@/lib/design-tokens";
+import { density, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
-import React, { createContext, useContext, useState } from "react";
+import React, { useState } from "react";
 import {
   StyleProp,
   TextInput,
@@ -10,14 +10,22 @@ import {
 } from "react-native";
 import { Text } from "./text";
 
-const FRAME_FIELD_HEIGHT = 48;
+// 2.1 kit Form field (figma/00 2073:14413): a 48pt input, padded 16, 8pt
+// between the label, the input and the helper or error line.
+const FIELD_HEIGHT = 48;
+const FIELD_PADDING = 16;
+const FIELD_GAP = 8;
+/** The kit draws the focused border 1.5 wide; the resting one is 1. */
+const BORDER = 1;
+const FOCUS_BORDER = 1.5;
 
 export function RequiredMark() {
   const { color } = useTheme();
   // One red for one meaning. The asterisk and the validation message under it
-  // used to be two different reds — #E50914 (Netflix's) and #EF4444.
+  // used to be two different reds — #E50914 (Netflix's) and #EF4444. Both are
+  // now the kit's status/danger/strong, the red the Form field error uses.
   return (
-    <Text style={{ color: color.danger }} accessibilityLabel="required">
+    <Text style={{ color: color.dangerStrong }} accessibilityLabel="required">
       {" *"}
     </Text>
   );
@@ -32,7 +40,7 @@ interface FieldLabelProps {
 
 export function FieldLabel({ label, required, hint }: FieldLabelProps) {
   return (
-    <View style={{ gap: 1, marginBottom: 6 }}>
+    <View style={{ gap: 1, marginBottom: FIELD_GAP }}>
       {/* A label must not outrank the value the customer types into the field
           below it. This was 16pt bold — the same weight and nearly the same
           size as a section heading — over a 16pt helper line, which is how a
@@ -54,13 +62,15 @@ interface FieldErrorProps {
   children?: React.ReactNode;
 }
 
+/** The kit's error line: 12 Medium in status/danger/strong, 8pt under the input. */
 export function FieldError({ children }: FieldErrorProps) {
   const { color } = useTheme();
   if (!children) return null;
   return (
     <Text
       fontSize="text-xs"
-      style={{ color: color.danger, marginTop: 4 }}
+      fontWeight="font-medium"
+      style={{ color: color.dangerStrong, marginTop: FIELD_GAP }}
       accessibilityLiveRegion="polite"
     >
       {children}
@@ -68,21 +78,15 @@ export function FieldError({ children }: FieldErrorProps) {
   );
 }
 
-const FieldFrameContext = createContext(false);
-
 /**
- * Opt-in. Fields inside are drawn as the Figma Post form draws them: 48pt tall,
- * padded 16, radius 12 and the hairline edge rather than the stronger control
- * edge. Everything outside keeps the default box, so no other screen moves. The
- * hairline is a deliberate step below the 3:1 control-edge rule the default box
- * keeps (WCAG 1.4.11); the frame's ruling was accepted for this form only.
+ * Kept so its call sites compile; it no longer changes anything. It used to opt
+ * the Post form into the 48pt, padded-16, hairline-edged box, and the 2.1 kit
+ * made that box every field's. The hairline is a deliberate step below the 3:1
+ * control-edge rule (WCAG 1.4.11); the approved kit draws it, so it was accepted
+ * app-wide. `inputLine` stays for checkbox and radio controls.
  */
 export function FieldFrame({ children }: { children: React.ReactNode }) {
-  return (
-    <FieldFrameContext.Provider value={true}>
-      {children}
-    </FieldFrameContext.Provider>
-  );
+  return <>{children}</>;
 }
 
 interface FieldSurfaceOptions {
@@ -90,7 +94,7 @@ interface FieldSurfaceOptions {
   error?: boolean;
   disabled?: boolean;
   multiline?: boolean;
-  /** Override the `FieldFrame` context: for a caller that renders it. */
+  /** Kept for back-compat; every field is now the kit box (see `FieldFrame`). */
   frame?: boolean;
 }
 
@@ -104,36 +108,32 @@ interface FieldSurfaceOptions {
  * screen showed two kinds of field.
  *
  * The settled answer is one filled box on the canvas, and on focus the border
- * changes colour and nothing else. No halo, no shadow, and the border width is
- * held constant so focusing a field never nudges the form.
+ * turns purple and thickens to the kit's 1.5. No halo, no shadow. The padding
+ * gives back the extra half point, so the text inside never moves when the
+ * field takes focus. (The kit itself lets the value shift 0.5pt; holding it
+ * still is the ENG-426 plan's call.)
  */
 export function useFieldSurfaceStyle({
   focused = false,
   error = false,
   disabled = false,
   multiline = false,
-  frame,
 }: FieldSurfaceOptions = {}): ViewStyle {
   const { color } = useTheme();
-  const inFrame = useContext(FieldFrameContext);
-  const framed = frame ?? inFrame;
+  // Error outranks focus — the field is still wrong while you are fixing it —
+  // so an errored field keeps the kit Error state's 1pt red edge while focused.
+  const focusEdge = focused && !error;
+  const border = focusEdge ? FOCUS_BORDER : BORDER;
+  const inset = border - BORDER;
 
   return {
-    minHeight: multiline ? 76 : framed ? FRAME_FIELD_HEIGHT : MIN_TOUCH_TARGET,
-    paddingHorizontal: framed ? 16 : 12,
-    paddingVertical: multiline ? 10 : 8,
-    borderRadius: framed ? radius.button : radius.input,
-    borderWidth: 1,
-    // Control borders use input-line, not the hairline token: a 1.13:1 border
-    // fails WCAG 1.4.11 and reads as no border at all. Error outranks focus —
-    // the field is still wrong while you are fixing it.
-    borderColor: error
-      ? color.danger
-      : focused
-      ? color.focus
-      : framed
-      ? color.line
-      : color.inputLine,
+    minHeight: multiline ? 76 : FIELD_HEIGHT,
+    paddingHorizontal: FIELD_PADDING - inset,
+    paddingVertical: (multiline ? 10 : 8) - inset,
+    borderRadius: radius.input,
+    borderWidth: border,
+    // The kit's border/default hairline, not `inputLine` (see `FieldFrame`).
+    borderColor: error ? color.dangerStrong : focusEdge ? color.focus : color.line,
     backgroundColor: color.surface,
     opacity: disabled ? 0.5 : 1,
   };
@@ -206,12 +206,12 @@ export function TextField({
 
   return (
     <View style={{ marginBottom: density.fieldGap }}>
-      {label ? (
-        <FieldLabel label={label} hint={hint} required={required} />
-      ) : null}
+      {label ? <FieldLabel label={label} required={required} /> : null}
       <TextInput
         ref={inputRef}
         placeholderTextColor={color.placeholder}
+        // The kit's Focused state draws a brand caret, not the platform blue.
+        selectionColor={color.brand}
         accessibilityLabel={label}
         onFocus={(event) => {
           setFocused(true);
@@ -234,7 +234,15 @@ export function TextField({
         multiline={multiline}
         {...props}
       />
-      <FieldError>{error}</FieldError>
+      {/* The kit puts the helper under the input and swaps the error into its
+          place, so the field never grows taller when it goes wrong. */}
+      {error ? (
+        <FieldError>{error}</FieldError>
+      ) : hint ? (
+        <Text role="fieldHint" style={{ marginTop: FIELD_GAP }}>
+          {hint}
+        </Text>
+      ) : null}
     </View>
   );
 }
