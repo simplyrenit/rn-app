@@ -1,0 +1,395 @@
+{
+ "nodes": [
+  {
+   "id": "2089:22279",
+   "name": "pdp-photo-viewer · open",
+   "type": "FRAME",
+   "x": 80,
+   "y": 120,
+   "width": 390,
+   "height": 844,
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": true,
+   "boundVariables": {
+    "fills": [
+     "VariableID:2071:14163"
+    ]
+   },
+   "fill": "fill_nll9eq",
+   "children": [
+    {
+     "id": "2089:22280",
+     "name": "Status Bar",
+     "type": "FRAME",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 54,
+     "fills": [],
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2089:22281",
+       "name": "Time",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 136.94656372070312,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2089:22282",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 50.610687255859375,
+         "y": 18.339622497558594,
+         "width": 37,
+         "height": 22,
+         "constraints": {
+          "horizontal": "SCALE",
+          "vertical": "SCALE"
+         },
+         "characters": "9:41",
+         "fontSize": 17,
+         "fontName": "mixed",
+         "lineHeight": {
+          "value": 22,
+          "unit": "PIXELS"
+         },
+         "textAlignHorizontal": "CENTER",
+         "segments": [
+          {
+           "characters": "9:41",
+           "start": 0,
+           "end": 4,
+           "fontName": {
+            "family": "SF Pro",
+            "style": "Semibold"
+           },
+           "fontSize": 17,
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000"
+            }
+           ],
+           "textDecoration": "NONE",
+           "textCase": "ORIGINAL",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           }
+          }
+         ],
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      },
+      {
+       "id": "2089:22283",
+       "name": "Levels",
+       "type": "FRAME",
+       "x": 248.0915985107422,
+       "y": 0,
+       "width": 141.9084014892578,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2089:22284",
+         "name": "Battery",
+         "type": "GROUP",
+         "x": 82,
+         "y": 23,
+         "width": 27.32803726196289,
+         "height": 13,
+         "children": [
+          {
+           "id": "2089:22285",
+           "name": "Border",
+           "type": "RECTANGLE",
+           "x": 82,
+           "y": 23,
+           "width": 25,
+           "height": 13,
+           "opacity": 0.3499999940395355,
+           "cornerRadius": 4.300000190734863,
+           "blendMode": "NORMAL",
+           "fills": [],
+           "strokeWeight": 1,
+           "strokeAlign": "INSIDE",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "stroke": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "stroke": "fill_1s3vosi"
+          },
+          {
+           "id": "2089:22286",
+           "name": "Cap",
+           "type": "VECTOR",
+           "x": 108,
+           "y": 27.7811279296875,
+           "width": 1.328037977218628,
+           "height": 4.075471878051758,
+           "opacity": 0.4000000059604645,
+           "blendMode": "NORMAL",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          },
+          {
+           "id": "2089:22287",
+           "name": "Capacity",
+           "type": "RECTANGLE",
+           "x": 84,
+           "y": 25,
+           "width": 21,
+           "height": 9,
+           "cornerRadius": 2.5,
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          }
+         ]
+        },
+        {
+         "id": "2089:22288",
+         "name": "Wifi",
+         "type": "VECTOR",
+         "x": 57.69922637939453,
+         "y": 23.63775634765625,
+         "width": 17.141666412353516,
+         "height": 12.328306198120117,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        },
+        {
+         "id": "2089:22289",
+         "name": "Cellular Connection",
+         "type": "VECTOR",
+         "x": 31,
+         "y": 23.535823822021484,
+         "width": 19.200000762939453,
+         "height": 12.226415634155273,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2089:22290",
+     "name": "Scrim 92%",
+     "type": "RECTANGLE",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 844,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "fill": "fill_jcab95"
+    },
+    {
+     "id": "2089:22291",
+     "name": "Photo (contain)",
+     "type": "RECTANGLE",
+     "x": 0,
+     "y": 91,
+     "width": 390,
+     "height": 661,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "fill": "fill_1peukxw"
+    },
+    {
+     "id": "2089:22292",
+     "name": "Close image (icon button, scrim)",
+     "type": "FRAME",
+     "x": 338,
+     "y": 62,
+     "width": 40,
+     "height": 40,
+     "cornerRadius": 20,
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": "CENTER",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "fill": "fill_lyh6s7",
+     "children": [
+      {
+       "id": "2089:22293",
+       "name": "heroicons-outline/x-mark",
+       "type": "INSTANCE",
+       "x": 9,
+       "y": 9,
+       "width": 22,
+       "height": 22,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "mainComponentId": "1:3808",
+       "mainComponent": {
+        "id": "1:3808",
+        "name": "heroicons-outline/x-mark",
+        "key": "06f6277dedddff223111468b37bee28688ef91f0"
+       },
+       "children": [
+        {
+         "id": "I2089:22293;341:8882",
+         "name": "Icon",
+         "type": "VECTOR",
+         "x": 5.5,
+         "y": 5.5,
+         "width": 11,
+         "height": 11,
+         "fills": [],
+         "strokeWeight": 1.5,
+         "strokeAlign": "CENTER",
+         "strokeCap": "ROUND",
+         "strokeJoin": "ROUND",
+         "constraints": {
+          "horizontal": "SCALE",
+          "vertical": "SCALE"
+         },
+         "boundVariables": {
+          "strokes": [
+           "VariableID:2071:14168"
+          ]
+         },
+         "stroke": "fill_nll9eq"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14163": {
+   "name": "color/surface/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14168": {
+   "name": "color/text/on-brand",
+   "type": "COLOR"
+  }
+ },
+ "styles": {
+  "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493": {
+   "name": "Text - Light mode/Primary",
+   "type": "PAINT"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ],
+   "fill_1s3vosi": [
+    {
+     "type": "SOLID",
+     "color": "#000000"
+    }
+   ],
+   "fill_jcab95": [
+    {
+     "type": "SOLID",
+     "color": "#000000EB"
+    }
+   ],
+   "fill_1peukxw": [
+    {
+     "type": "IMAGE",
+     "scaleMode": "FIT"
+    }
+   ],
+   "fill_lyh6s7": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF29"
+    }
+   ]
+  }
+ },
+ "metrics": {
+  "nodeCount": 16,
+  "maxDepth": 5,
+  "styleCount": 5,
+  "tokenCount": 3,
+  "inlineSizeKb": 5.45,
+  "dedupedSizeKb": 4.97
+ }
+}

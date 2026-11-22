@@ -1,0 +1,221 @@
+{
+ "nodes": [
+  {
+   "id": "2100:29942",
+   "name": "Map (neutral placeholder)",
+   "type": "COMPONENT",
+   "x": 4030,
+   "y": 120,
+   "width": 300,
+   "height": 300,
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": true,
+   "fill": "fill_13vru56",
+   "children": [
+    {
+     "id": "2100:29943",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 20,
+     "y": 20,
+     "width": 85,
+     "height": 60,
+     "cornerRadius": 8,
+     "constraints": {
+      "horizontal": "SCALE",
+      "vertical": "SCALE"
+     },
+     "fill": "fill_1lvzxls"
+    },
+    {
+     "id": "2100:29944",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 190,
+     "y": 210,
+     "width": 110,
+     "height": 90,
+     "constraints": {
+      "horizontal": "SCALE",
+      "vertical": "SCALE"
+     },
+     "fill": "fill_khvgtw"
+    },
+    {
+     "id": "2100:29945",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 165,
+     "y": 30,
+     "width": 100,
+     "height": 55,
+     "cornerRadius": 6,
+     "constraints": {
+      "horizontal": "SCALE",
+      "vertical": "SCALE"
+     },
+     "fill": "fill_1iaxrsi"
+    },
+    {
+     "id": "2100:29946",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 30,
+     "y": 165,
+     "width": 80,
+     "height": 75,
+     "cornerRadius": 6,
+     "constraints": {
+      "horizontal": "SCALE",
+      "vertical": "SCALE"
+     },
+     "fill": "fill_1iaxrsi"
+    },
+    {
+     "id": "2100:29947",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 0,
+     "y": 125,
+     "width": 300,
+     "height": 11,
+     "constraints": {
+      "horizontal": "SCALE",
+      "vertical": "SCALE"
+     },
+     "fill": "fill_nll9eq"
+    },
+    {
+     "id": "2100:29948",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 140,
+     "y": 0,
+     "width": 9,
+     "height": 300,
+     "constraints": {
+      "horizontal": "SCALE",
+      "vertical": "SCALE"
+     },
+     "fill": "fill_nll9eq"
+    },
+    {
+     "id": "2100:29949",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 0,
+     "y": 235,
+     "width": 300,
+     "height": 6,
+     "constraints": {
+      "horizontal": "SCALE",
+      "vertical": "SCALE"
+     },
+     "fill": "fill_nll9eq"
+    },
+    {
+     "id": "2100:29950",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 70,
+     "y": 0,
+     "width": 6,
+     "height": 300,
+     "constraints": {
+      "horizontal": "SCALE",
+      "vertical": "SCALE"
+     },
+     "fill": "fill_nll9eq"
+    },
+    {
+     "id": "2100:29951",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 230,
+     "y": 0,
+     "width": 6,
+     "height": 300,
+     "constraints": {
+      "horizontal": "SCALE",
+      "vertical": "SCALE"
+     },
+     "fill": "fill_nll9eq"
+    },
+    {
+     "id": "2100:29952",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 0,
+     "y": 60,
+     "width": 300,
+     "height": 6,
+     "constraints": {
+      "horizontal": "SCALE",
+      "vertical": "SCALE"
+     },
+     "fill": "fill_nll9eq"
+    },
+    {
+     "id": "2100:29953",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": -50,
+     "y": 260,
+     "width": 450,
+     "height": 8,
+     "rotation": 28.000001235984353,
+     "constraints": {
+      "horizontal": "SCALE",
+      "vertical": "SCALE"
+     },
+     "fill": "fill_nll9eq"
+    }
+   ]
+  }
+ ],
+ "globalVars": {
+  "styles": {
+   "fill_13vru56": [
+    {
+     "type": "SOLID",
+     "color": "#EFF0F1"
+    }
+   ],
+   "fill_1lvzxls": [
+    {
+     "type": "SOLID",
+     "color": "#D6EBD9"
+    }
+   ],
+   "fill_khvgtw": [
+    {
+     "type": "SOLID",
+     "color": "#CCE0F5"
+    }
+   ],
+   "fill_1iaxrsi": [
+    {
+     "type": "SOLID",
+     "color": "#E8E9EB"
+    }
+   ],
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ]
+  }
+ },
+ "metrics": {
+  "nodeCount": 12,
+  "maxDepth": 2,
+  "styleCount": 5,
+  "tokenCount": 0,
+  "inlineSizeKb": 3.11,
+  "dedupedSizeKb": 2.44
+ }
+}

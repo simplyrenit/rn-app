@@ -1,0 +1,693 @@
+{
+ "nodes": [
+  {
+   "id": "2074:14448",
+   "name": "Stepper",
+   "type": "COMPONENT_SET",
+   "x": 3560,
+   "y": 640,
+   "width": 390,
+   "height": 232,
+   "cornerRadius": 5,
+   "layout": {
+    "mode": "VERTICAL",
+    "paddingTop": 24,
+    "paddingRight": 24,
+    "paddingBottom": 24,
+    "paddingLeft": 24,
+    "itemSpacing": 24,
+    "primaryAxisAlignItems": "MIN",
+    "counterAxisAlignItems": "MIN",
+    "layoutWrap": "NO_WRAP",
+    "strokesIncludedInLayout": true
+   },
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": true,
+   "fill": "fill_udpb2x",
+   "children": [
+    {
+     "id": "2074:14420",
+     "name": "Step=1",
+     "type": "COMPONENT",
+     "x": 24,
+     "y": 24,
+     "width": 342,
+     "height": 28,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 8,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "layoutSizingHorizontal": "FIXED",
+     "layoutSizingVertical": "HUG",
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2074:14421",
+       "name": "Segments",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 342,
+       "height": 4,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2074:14422",
+         "name": "Segment 1",
+         "type": "RECTANGLE",
+         "x": 0,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        },
+        {
+         "id": "2074:14423",
+         "name": "Segment 2",
+         "type": "RECTANGLE",
+         "x": 86.5,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_w6fqb5"
+        },
+        {
+         "id": "2074:14424",
+         "name": "Segment 3",
+         "type": "RECTANGLE",
+         "x": 173,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_w6fqb5"
+        },
+        {
+         "id": "2074:14425",
+         "name": "Segment 4",
+         "type": "RECTANGLE",
+         "x": 259.5,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_w6fqb5"
+        }
+       ]
+      },
+      {
+       "id": "2074:14426",
+       "name": "Step label",
+       "type": "TEXT",
+       "x": 0,
+       "y": 12,
+       "width": 59,
+       "height": 16,
+       "layoutSizingHorizontal": "HUG",
+       "layoutSizingVertical": "HUG",
+       "characters": "Step 1 of 4",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14167"
+        ]
+       },
+       "fill": "fill_acfx0",
+       "textStyle": "text_15py5a9"
+      }
+     ]
+    },
+    {
+     "id": "2074:14427",
+     "name": "Step=2",
+     "type": "COMPONENT",
+     "x": 24,
+     "y": 76,
+     "width": 342,
+     "height": 28,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 8,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "layoutSizingHorizontal": "FIXED",
+     "layoutSizingVertical": "HUG",
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2074:14428",
+       "name": "Segments",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 342,
+       "height": 4,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2074:14429",
+         "name": "Segment 1",
+         "type": "RECTANGLE",
+         "x": 0,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        },
+        {
+         "id": "2074:14430",
+         "name": "Segment 2",
+         "type": "RECTANGLE",
+         "x": 86.5,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        },
+        {
+         "id": "2074:14431",
+         "name": "Segment 3",
+         "type": "RECTANGLE",
+         "x": 173,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_w6fqb5"
+        },
+        {
+         "id": "2074:14432",
+         "name": "Segment 4",
+         "type": "RECTANGLE",
+         "x": 259.5,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_w6fqb5"
+        }
+       ]
+      },
+      {
+       "id": "2074:14433",
+       "name": "Step label",
+       "type": "TEXT",
+       "x": 0,
+       "y": 12,
+       "width": 62,
+       "height": 16,
+       "layoutSizingHorizontal": "HUG",
+       "layoutSizingVertical": "HUG",
+       "characters": "Step 2 of 4",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14167"
+        ]
+       },
+       "fill": "fill_acfx0",
+       "textStyle": "text_15py5a9"
+      }
+     ]
+    },
+    {
+     "id": "2074:14434",
+     "name": "Step=3",
+     "type": "COMPONENT",
+     "x": 24,
+     "y": 128,
+     "width": 342,
+     "height": 28,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 8,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "layoutSizingHorizontal": "FIXED",
+     "layoutSizingVertical": "HUG",
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2074:14435",
+       "name": "Segments",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 342,
+       "height": 4,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2074:14436",
+         "name": "Segment 1",
+         "type": "RECTANGLE",
+         "x": 0,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        },
+        {
+         "id": "2074:14437",
+         "name": "Segment 2",
+         "type": "RECTANGLE",
+         "x": 86.5,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        },
+        {
+         "id": "2074:14438",
+         "name": "Segment 3",
+         "type": "RECTANGLE",
+         "x": 173,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        },
+        {
+         "id": "2074:14439",
+         "name": "Segment 4",
+         "type": "RECTANGLE",
+         "x": 259.5,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_w6fqb5"
+        }
+       ]
+      },
+      {
+       "id": "2074:14440",
+       "name": "Step label",
+       "type": "TEXT",
+       "x": 0,
+       "y": 12,
+       "width": 62,
+       "height": 16,
+       "layoutSizingHorizontal": "HUG",
+       "layoutSizingVertical": "HUG",
+       "characters": "Step 3 of 4",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14167"
+        ]
+       },
+       "fill": "fill_acfx0",
+       "textStyle": "text_15py5a9"
+      }
+     ]
+    },
+    {
+     "id": "2074:14441",
+     "name": "Step=4",
+     "type": "COMPONENT",
+     "x": 24,
+     "y": 180,
+     "width": 342,
+     "height": 28,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 8,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "layoutSizingHorizontal": "FIXED",
+     "layoutSizingVertical": "HUG",
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2074:14442",
+       "name": "Segments",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 342,
+       "height": 4,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2074:14443",
+         "name": "Segment 1",
+         "type": "RECTANGLE",
+         "x": 0,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        },
+        {
+         "id": "2074:14444",
+         "name": "Segment 2",
+         "type": "RECTANGLE",
+         "x": 86.5,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        },
+        {
+         "id": "2074:14445",
+         "name": "Segment 3",
+         "type": "RECTANGLE",
+         "x": 173,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        },
+        {
+         "id": "2074:14446",
+         "name": "Segment 4",
+         "type": "RECTANGLE",
+         "x": 259.5,
+         "y": 0,
+         "width": 82.5,
+         "height": 4,
+         "cornerRadius": 2,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        }
+       ]
+      },
+      {
+       "id": "2074:14447",
+       "name": "Step label",
+       "type": "TEXT",
+       "x": 0,
+       "y": 12,
+       "width": 62,
+       "height": 16,
+       "layoutSizingHorizontal": "HUG",
+       "layoutSizingVertical": "HUG",
+       "characters": "Step 4 of 4",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14167"
+        ]
+       },
+       "fill": "fill_acfx0",
+       "textStyle": "text_15py5a9"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14159": {
+   "name": "color/brand/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14162": {
+   "name": "color/border/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14167": {
+   "name": "color/text/tertiary",
+   "type": "COLOR"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_udpb2x": [
+    {
+     "type": "SOLID",
+     "color": "#F5F5F7"
+    }
+   ],
+   "fill_1prthe7": [
+    {
+     "type": "SOLID",
+     "color": "#635BE8"
+    }
+   ],
+   "fill_w6fqb5": [
+    {
+     "type": "SOLID",
+     "color": "#E6E6E6"
+    }
+   ],
+   "fill_acfx0": [
+    {
+     "type": "SOLID",
+     "color": "#00000099"
+    }
+   ],
+   "text_15py5a9": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Medium",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   }
+  }
+ },
+ "metrics": {
+  "nodeCount": 29,
+  "maxDepth": 4,
+  "styleCount": 5,
+  "tokenCount": 3,
+  "inlineSizeKb": 12.72,
+  "dedupedSizeKb": 9.44
+ }
+}

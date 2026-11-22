@@ -1,0 +1,4180 @@
+{
+ "nodes": [
+  {
+   "id": "2089:29905",
+   "name": "date-range-picker · Range picked",
+   "type": "FRAME",
+   "x": 3840,
+   "y": 120,
+   "width": 390,
+   "height": 844,
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": true,
+   "boundVariables": {
+    "fills": [
+     "VariableID:2071:14163"
+    ]
+   },
+   "fill": "fill_nll9eq",
+   "children": [
+    {
+     "id": "2089:29906",
+     "name": "Status Bar",
+     "type": "FRAME",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 54,
+     "fills": [],
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2089:29907",
+       "name": "Time",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 136.94656372070312,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2089:29908",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 50.610687255859375,
+         "y": 18.339622497558594,
+         "width": 37,
+         "height": 22,
+         "constraints": {
+          "horizontal": "SCALE",
+          "vertical": "SCALE"
+         },
+         "characters": "9:41",
+         "fontSize": 17,
+         "fontName": "mixed",
+         "lineHeight": {
+          "value": 22,
+          "unit": "PIXELS"
+         },
+         "textAlignHorizontal": "CENTER",
+         "segments": [
+          {
+           "characters": "9:41",
+           "start": 0,
+           "end": 4,
+           "fontName": {
+            "family": "SF Pro",
+            "style": "Semibold"
+           },
+           "fontSize": 17,
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000"
+            }
+           ],
+           "textDecoration": "NONE",
+           "textCase": "ORIGINAL",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           }
+          }
+         ],
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      },
+      {
+       "id": "2089:29909",
+       "name": "Levels",
+       "type": "FRAME",
+       "x": 248.0915985107422,
+       "y": 0,
+       "width": 141.9084014892578,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2089:29910",
+         "name": "Battery",
+         "type": "GROUP",
+         "x": 82,
+         "y": 23,
+         "width": 27.32803726196289,
+         "height": 13,
+         "children": [
+          {
+           "id": "2089:29911",
+           "name": "Border",
+           "type": "RECTANGLE",
+           "x": 82,
+           "y": 23,
+           "width": 25,
+           "height": 13,
+           "opacity": 0.3499999940395355,
+           "cornerRadius": 4.300000190734863,
+           "blendMode": "NORMAL",
+           "fills": [],
+           "strokeWeight": 1,
+           "strokeAlign": "INSIDE",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "stroke": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "stroke": "fill_1s3vosi"
+          },
+          {
+           "id": "2089:29912",
+           "name": "Cap",
+           "type": "VECTOR",
+           "x": 108,
+           "y": 27.7811279296875,
+           "width": 1.328037977218628,
+           "height": 4.075471878051758,
+           "opacity": 0.4000000059604645,
+           "blendMode": "NORMAL",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          },
+          {
+           "id": "2089:29913",
+           "name": "Capacity",
+           "type": "RECTANGLE",
+           "x": 84,
+           "y": 25,
+           "width": 21,
+           "height": 9,
+           "cornerRadius": 2.5,
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          }
+         ]
+        },
+        {
+         "id": "2089:29914",
+         "name": "Wifi",
+         "type": "VECTOR",
+         "x": 57.69922637939453,
+         "y": 23.63775634765625,
+         "width": 17.141666412353516,
+         "height": 12.328306198120117,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        },
+        {
+         "id": "2089:29915",
+         "name": "Cellular Connection",
+         "type": "VECTOR",
+         "x": 31,
+         "y": 23.535823822021484,
+         "width": 19.200000762939453,
+         "height": 12.226415634155273,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2089:29916",
+     "name": "Top bar",
+     "type": "INSTANCE",
+     "x": 0,
+     "y": 54,
+     "width": 390,
+     "height": 56,
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 0,
+      "paddingRight": 16,
+      "paddingBottom": 0,
+      "paddingLeft": 16,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "CENTER",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14163"
+      ]
+     },
+     "componentProperties": {
+      "Show trailing#2071:5": {
+       "type": "BOOLEAN",
+       "value": false
+      },
+      "Title#2071:4": {
+       "type": "TEXT",
+       "value": "Search anything"
+      },
+      "Type": {
+       "type": "VARIANT",
+       "value": "Back+Title"
+      }
+     },
+     "mainComponentId": "2071:14397",
+     "mainComponent": {
+      "id": "2071:14397",
+      "name": "Type=Back+Title",
+      "key": "2d86bc97ffd4ce7ca2691914aa60c114f9d130b4",
+      "componentSetId": "2071:14418",
+      "componentSetName": "Top bar"
+     },
+     "fill": "fill_nll9eq",
+     "children": [
+      {
+       "id": "I2089:29916;2071:14398",
+       "name": "Back",
+       "type": "INSTANCE",
+       "x": 16,
+       "y": 6,
+       "width": 44,
+       "height": 44,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "componentProperties": {
+        "Icon#602:12": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:7"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Regular"
+        }
+       },
+       "mainComponentId": "1:17",
+       "mainComponent": {
+        "id": "1:17",
+        "name": "Type=Regular",
+        "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+        "componentSetId": "1:16",
+        "componentSetName": "Icon Button"
+       },
+       "children": [
+        {
+         "id": "I2089:29916;2071:14398;602:8477",
+         "name": "heroicons-outline/arrow-left",
+         "type": "INSTANCE",
+         "x": 10,
+         "y": 10,
+         "width": 24,
+         "height": 24,
+         "fills": [],
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "CENTER"
+         },
+         "clipsContent": true,
+         "mainComponentId": "1:7",
+         "mainComponent": {
+          "id": "1:7",
+          "name": "heroicons-outline/arrow-left",
+          "key": "19dc99d1329bdca58d1d8eab3753f04d874fbe26"
+         },
+         "children": [
+          {
+           "id": "I2089:29916;2071:14398;602:8477;341:6186",
+           "name": "Icon",
+           "type": "VECTOR",
+           "x": 3,
+           "y": 4.5,
+           "width": 18,
+           "height": 15,
+           "fills": [],
+           "strokeWeight": 1.5,
+           "strokeAlign": "CENTER",
+           "strokeCap": "ROUND",
+           "strokeJoin": "ROUND",
+           "constraints": {
+            "horizontal": "SCALE",
+            "vertical": "SCALE"
+           },
+           "boundVariables": {
+            "strokes": [
+             "VariableID:34abe88c0a84c614d02927ab00afcde5fb279ded/253:420"
+            ]
+           },
+           "stroke": "fill_1s3vosi"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "I2089:29916;2071:14402",
+       "name": "Title",
+       "type": "TEXT",
+       "x": 72,
+       "y": 16,
+       "width": 302,
+       "height": 24,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutGrow": 1,
+       "characters": "Search anything",
+       "textTruncation": "ENDING",
+       "maxLines": 1,
+       "textAutoResize": "HEIGHT",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14165"
+        ]
+       },
+       "fill": "fill_1s3vosi",
+       "textStyle": "text_5i882y"
+      },
+      {
+       "id": "I2089:29916;2071:14403",
+       "name": "Trailing",
+       "type": "INSTANCE",
+       "visible": false,
+       "x": 330,
+       "y": 6,
+       "width": 44,
+       "height": 44,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "componentProperties": {
+        "Icon#602:12": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:3268"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Regular"
+        }
+       },
+       "mainComponentId": "1:17",
+       "mainComponent": {
+        "id": "1:17",
+        "name": "Type=Regular",
+        "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+        "componentSetId": "1:16",
+        "componentSetName": "Icon Button"
+       },
+       "deduped": true
+      }
+     ]
+    },
+    {
+     "id": "2089:29924",
+     "name": "Divider",
+     "type": "RECTANGLE",
+     "x": 0,
+     "y": 110,
+     "width": 390,
+     "height": 1,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14162"
+      ]
+     },
+     "fill": "fill_w6fqb5"
+    },
+    {
+     "id": "2089:29925",
+     "name": "Content",
+     "type": "FRAME",
+     "x": 0,
+     "y": 111,
+     "width": 390,
+     "height": 411,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "children": [
+      {
+       "id": "2089:29931",
+       "name": "Block · What?",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 390,
+       "height": 136,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 24,
+        "paddingRight": 24,
+        "paddingBottom": 24,
+        "paddingLeft": 24,
+        "itemSpacing": 16,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2089:29930",
+         "name": "What?",
+         "type": "TEXT",
+         "x": 24,
+         "y": 24,
+         "width": 342,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "What?",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_16e9vtq"
+        },
+        {
+         "id": "2089:29926",
+         "name": "What field",
+         "type": "FRAME",
+         "x": 24,
+         "y": 64,
+         "width": 342,
+         "height": 48,
+         "cornerRadius": 12,
+         "strokeWeight": 1,
+         "strokeAlign": "INSIDE",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 12,
+          "paddingBottom": 0,
+          "paddingLeft": 12,
+          "itemSpacing": 8,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14163"
+          ],
+          "strokes": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_nll9eq",
+         "stroke": "fill_w6fqb5",
+         "children": [
+          {
+           "id": "2089:29927",
+           "name": "icon/MagnifyingGlass",
+           "type": "INSTANCE",
+           "x": 13,
+           "y": 14,
+           "width": 20,
+           "height": 20,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "2089:24477",
+           "mainComponent": {
+            "id": "2089:24477",
+            "name": "icon/MagnifyingGlass",
+            "key": "ee796df7b8551fbc22e5a27fc350781461323666"
+           },
+           "children": [
+            {
+             "id": "I2089:29927;2089:24476",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 2.4993486404418945,
+             "y": 2.4993486404418945,
+             "width": 15.000651359558105,
+             "height": 15.000651359558105,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "stroke": "stroke_acfx0"
+            }
+           ]
+          },
+          {
+           "id": "2089:29929",
+           "name": "“Washing machine”",
+           "type": "TEXT",
+           "x": 41,
+           "y": 12,
+           "width": 288,
+           "height": 24,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutGrow": 1,
+           "characters": "“Washing machine”",
+           "textTruncation": "ENDING",
+           "maxLines": 1,
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "fill": "stroke_acfx0",
+           "textStyle": "text_1u8a8v1"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2089:29932",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 0,
+       "y": 136,
+       "width": 390,
+       "height": 1,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_w6fqb5"
+      },
+      {
+       "id": "2089:29941",
+       "name": "Block · Where?",
+       "type": "FRAME",
+       "x": 0,
+       "y": 137,
+       "width": 390,
+       "height": 136,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 24,
+        "paddingRight": 24,
+        "paddingBottom": 24,
+        "paddingLeft": 24,
+        "itemSpacing": 16,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2089:29940",
+         "name": "Where?",
+         "type": "TEXT",
+         "x": 24,
+         "y": 24,
+         "width": 342,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Where?",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_16e9vtq"
+        },
+        {
+         "id": "2089:29933",
+         "name": "Where row",
+         "type": "FRAME",
+         "x": 24,
+         "y": 64,
+         "width": 342,
+         "height": 48,
+         "cornerRadius": 12,
+         "strokeWeight": 1,
+         "strokeAlign": "INSIDE",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 12,
+          "paddingBottom": 0,
+          "paddingLeft": 12,
+          "itemSpacing": 8,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14163"
+          ],
+          "strokes": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_nll9eq",
+         "stroke": "fill_w6fqb5",
+         "children": [
+          {
+           "id": "2089:29934",
+           "name": "icon/MapPin",
+           "type": "INSTANCE",
+           "x": 13,
+           "y": 14,
+           "width": 20,
+           "height": 20,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "2089:24468",
+           "mainComponent": {
+            "id": "2089:24468",
+            "name": "icon/MapPin",
+            "key": "e947761be42a8634f14bd508eff2e98fed498f9d"
+           },
+           "children": [
+            {
+             "id": "I2089:29934;2089:24466",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 7.5,
+             "y": 6.25,
+             "width": 5,
+             "height": 5,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "stroke": "stroke_acfx0"
+            },
+            {
+             "id": "I2089:29934;2089:24467",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 3.75,
+             "y": 2.5,
+             "width": 12.5,
+             "height": 15.625,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "stroke": "stroke_acfx0"
+            }
+           ]
+          },
+          {
+           "id": "2089:29937",
+           "name": "Anywhere",
+           "type": "TEXT",
+           "x": 41,
+           "y": 12,
+           "width": 260,
+           "height": 24,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutGrow": 1,
+           "characters": "Anywhere",
+           "textTruncation": "ENDING",
+           "maxLines": 1,
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "fill": "stroke_acfx0",
+           "textStyle": "text_1u8a8v1"
+          },
+          {
+           "id": "2089:29938",
+           "name": "icon/PencilSquare",
+           "type": "INSTANCE",
+           "x": 309,
+           "y": 14,
+           "width": 20,
+           "height": 20,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "2089:24440",
+           "mainComponent": {
+            "id": "2089:24440",
+            "name": "icon/PencilSquare",
+            "key": "797edd6e90f7a2bdc477ce928fa2bdf9b015d8d2"
+           },
+           "children": [
+            {
+             "id": "I2089:29938;2089:24439",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 2.5,
+             "y": 1.8747940063476562,
+             "width": 15.62520694732666,
+             "height": 15.62520694732666,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "stroke": "stroke_acfx0"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2089:29942",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 0,
+       "y": 273,
+       "width": 390,
+       "height": 1,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_w6fqb5"
+      },
+      {
+       "id": "2089:29950",
+       "name": "Block · When?",
+       "type": "FRAME",
+       "x": 0,
+       "y": 274,
+       "width": 390,
+       "height": 136,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 24,
+        "paddingRight": 24,
+        "paddingBottom": 24,
+        "paddingLeft": 24,
+        "itemSpacing": 16,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2089:29949",
+         "name": "When?",
+         "type": "TEXT",
+         "x": 24,
+         "y": 24,
+         "width": 342,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "When?",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_16e9vtq"
+        },
+        {
+         "id": "2089:29943",
+         "name": "When row",
+         "type": "FRAME",
+         "x": 24,
+         "y": 64,
+         "width": 342,
+         "height": 48,
+         "cornerRadius": 12,
+         "strokeWeight": 1,
+         "strokeAlign": "INSIDE",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 12,
+          "paddingBottom": 0,
+          "paddingLeft": 12,
+          "itemSpacing": 8,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14163"
+          ],
+          "strokes": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_nll9eq",
+         "stroke": "fill_w6fqb5",
+         "children": [
+          {
+           "id": "2089:29944",
+           "name": "icon/Calendar",
+           "type": "INSTANCE",
+           "x": 13,
+           "y": 14,
+           "width": 20,
+           "height": 20,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "2089:24464",
+           "mainComponent": {
+            "id": "2089:24464",
+            "name": "icon/Calendar",
+            "key": "3f13ac54e11801acddec5e25924153d80bc0647d"
+           },
+           "children": [
+            {
+             "id": "I2089:29944;2089:24463",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 2.5,
+             "y": 2.5,
+             "width": 15,
+             "height": 15,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "stroke": "stroke_acfx0"
+            }
+           ]
+          },
+          {
+           "id": "2089:29946",
+           "name": "Select dates",
+           "type": "TEXT",
+           "x": 41,
+           "y": 12,
+           "width": 260,
+           "height": 24,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutGrow": 1,
+           "characters": "Select dates",
+           "textTruncation": "ENDING",
+           "maxLines": 1,
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "fill": "stroke_acfx0",
+           "textStyle": "text_1u8a8v1"
+          },
+          {
+           "id": "2089:29947",
+           "name": "icon/PencilSquare",
+           "type": "INSTANCE",
+           "x": 309,
+           "y": 14,
+           "width": 20,
+           "height": 20,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "2089:24440",
+           "mainComponent": {
+            "id": "2089:24440",
+            "name": "icon/PencilSquare",
+            "key": "797edd6e90f7a2bdc477ce928fa2bdf9b015d8d2"
+           },
+           "deduped": true,
+           "propertyOverrides": [
+            {
+             "name": "Vector",
+             "fills": [],
+             "strokes": [
+              {
+               "type": "SOLID",
+               "color": "#00000099"
+              }
+             ],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2089:29951",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 0,
+       "y": 410,
+       "width": 390,
+       "height": 1,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_w6fqb5"
+      }
+     ]
+    },
+    {
+     "id": "2089:29952",
+     "name": "Bottom bar",
+     "type": "INSTANCE",
+     "x": 0,
+     "y": 738,
+     "width": 390,
+     "height": 106,
+     "strokeWeight": "mixed",
+     "strokeWeights": {
+      "top": 1,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+     },
+     "strokeAlign": "INSIDE",
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14163"
+      ],
+      "strokes": [
+       "VariableID:2071:14162"
+      ]
+     },
+     "componentProperties": {
+      "Sub-line#2071:14": {
+       "type": "TEXT",
+       "value": "Deposit ₹2,000"
+      },
+      "Unit#2071:13": {
+       "type": "TEXT",
+       "value": "/day"
+      },
+      "Show sub-line#2071:15": {
+       "type": "BOOLEAN",
+       "value": true
+      },
+      "Value#2071:12": {
+       "type": "TEXT",
+       "value": "₹1,200"
+      },
+      "Layout": {
+       "type": "VARIANT",
+       "value": "Full CTA"
+      }
+     },
+     "mainComponentId": "2071:14439",
+     "mainComponent": {
+      "id": "2071:14439",
+      "name": "Layout=Full CTA",
+      "key": "74de30aee88fdd36735e8f9e840cf11c4fa31c43",
+      "componentSetId": "2071:14467",
+      "componentSetName": "Bottom bar"
+     },
+     "fill": "fill_nll9eq",
+     "stroke": "fill_w6fqb5",
+     "children": [
+      {
+       "id": "I2089:29952;2071:14440",
+       "name": "Content",
+       "type": "FRAME",
+       "x": 0,
+       "y": 1,
+       "width": 390,
+       "height": 84,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 16,
+        "paddingRight": 24,
+        "paddingBottom": 16,
+        "paddingLeft": 24,
+        "itemSpacing": 12,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "I2089:29952;2071:14441",
+         "name": "Primary button",
+         "type": "INSTANCE",
+         "x": 24,
+         "y": 16,
+         "width": 342,
+         "height": 52,
+         "cornerRadius": 11,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP"
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "clipsContent": true,
+         "styleIds": {
+          "fill": "S:5c15c1a604344c5206427b7ab6e6ca41532a2923,394:377"
+         },
+         "componentProperties": {
+          "Left Icon#309:6": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:131"
+          },
+          "Right Icon#309:5": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:129"
+          },
+          "Label#309:8": {
+           "type": "TEXT",
+           "value": "Browse all"
+          },
+          "Show Left Icon#309:4": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show Right Icon#309:7": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Type": {
+           "type": "VARIANT",
+           "value": "Primary"
+          }
+         },
+         "mainComponentId": "1:137",
+         "mainComponent": {
+          "id": "1:137",
+          "name": "Type=Primary",
+          "key": "175833b4a97630ee89956b2e11889f4ab2a13f2b",
+          "componentSetId": "1:136",
+          "componentSetName": "Button"
+         },
+         "deduped": true,
+         "textOverrides": [
+          {
+           "name": "Label",
+           "characters": "Browse all"
+          }
+         ],
+         "fill": "fill_1prthe7"
+        }
+       ]
+      },
+      {
+       "id": "I2089:29952;2071:14447",
+       "name": "Home Indicator",
+       "type": "FRAME",
+       "x": 0,
+       "y": 85,
+       "width": 390,
+       "height": 21,
+       "fills": [],
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "I2089:29952;2071:14448",
+         "name": "Home Indicator",
+         "type": "RECTANGLE",
+         "x": 128,
+         "y": 8,
+         "width": 134,
+         "height": 5,
+         "cornerRadius": 100,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "MIN"
+         },
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2089:29962",
+     "name": "Scrim",
+     "type": "RECTANGLE",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 844,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "fill": "fill_19x4rpm"
+    },
+    {
+     "id": "2089:29963",
+     "name": "Date picker card",
+     "type": "FRAME",
+     "x": 24,
+     "y": 178,
+     "width": 342,
+     "height": 484,
+     "cornerRadius": 16,
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 24,
+      "paddingRight": 24,
+      "paddingBottom": 24,
+      "paddingLeft": 24,
+      "itemSpacing": 16,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14163"
+      ]
+     },
+     "fill": "fill_nll9eq",
+     "children": [
+      {
+       "id": "2089:29966",
+       "name": "Header",
+       "type": "FRAME",
+       "x": 24,
+       "y": 24,
+       "width": 294,
+       "height": 48,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2089:29964",
+         "name": "When do you need it?",
+         "type": "TEXT",
+         "x": 0,
+         "y": 0,
+         "width": 294,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "When do you need it?",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_5i882y"
+        },
+        {
+         "id": "2089:29965",
+         "name": "Nov 28 — Nov 30",
+         "type": "TEXT",
+         "x": 0,
+         "y": 28,
+         "width": 294,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Nov 28 — Nov 30",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7",
+         "textStyle": "text_1ryrdh0"
+        }
+       ]
+      },
+      {
+       "id": "2089:29967",
+       "name": "Calendar · November 2026",
+       "type": "FRAME",
+       "x": 24,
+       "y": 88,
+       "width": 294,
+       "height": 304,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2089:29973",
+         "name": "Month",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 294,
+         "height": 40,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "SPACE_BETWEEN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:29968",
+           "name": "icon/ChevronLeft",
+           "type": "INSTANCE",
+           "x": 0,
+           "y": 10,
+           "width": 20,
+           "height": 20,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "2089:24492",
+           "mainComponent": {
+            "id": "2089:24492",
+            "name": "icon/ChevronLeft",
+            "key": "e97baaa79e68a9c8d63b5fef6f6d45382578c72b"
+           },
+           "children": [
+            {
+             "id": "I2089:29968;2089:24491",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 6.875,
+             "y": 3.75,
+             "width": 6.25,
+             "height": 12.5,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:2071:14159"
+              ]
+             },
+             "stroke": "fill_1prthe7"
+            }
+           ]
+          },
+          {
+           "id": "2089:29970",
+           "name": "November 2026",
+           "type": "TEXT",
+           "x": 84.5,
+           "y": 8,
+           "width": 125,
+           "height": 24,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "November 2026",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14165"
+            ]
+           },
+           "fill": "fill_1s3vosi",
+           "textStyle": "text_16e9vtq"
+          },
+          {
+           "id": "2089:29971",
+           "name": "icon/ChevronRight",
+           "type": "INSTANCE",
+           "x": 274,
+           "y": 10,
+           "width": 20,
+           "height": 20,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "2089:24489",
+           "mainComponent": {
+            "id": "2089:24489",
+            "name": "icon/ChevronRight",
+            "key": "cf84bb24d38cce72c47eae2d563f9050c12f0040"
+           },
+           "children": [
+            {
+             "id": "I2089:29971;2089:24488",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 6.875,
+             "y": 3.75,
+             "width": 6.25,
+             "height": 12.5,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:2071:14159"
+              ]
+             },
+             "stroke": "fill_1prthe7"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2089:29988",
+         "name": "Weekdays",
+         "type": "FRAME",
+         "x": 0,
+         "y": 44,
+         "width": 294,
+         "height": 40,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:29974",
+           "name": "Day S",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29975",
+             "name": "S",
+             "type": "TEXT",
+             "x": 17,
+             "y": 12,
+             "width": 8,
+             "height": 16,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "S",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_15py5a9"
+            }
+           ]
+          },
+          {
+           "id": "2089:29976",
+           "name": "Day M",
+           "type": "FRAME",
+           "x": 42,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29977",
+             "name": "M",
+             "type": "TEXT",
+             "x": 15.5,
+             "y": 12,
+             "width": 11,
+             "height": 16,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "M",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_15py5a9"
+            }
+           ]
+          },
+          {
+           "id": "2089:29978",
+           "name": "Day T",
+           "type": "FRAME",
+           "x": 84,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29979",
+             "name": "T",
+             "type": "TEXT",
+             "x": 17.5,
+             "y": 12,
+             "width": 7,
+             "height": 16,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "T",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_15py5a9"
+            }
+           ]
+          },
+          {
+           "id": "2089:29980",
+           "name": "Day W",
+           "type": "FRAME",
+           "x": 126,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29981",
+             "name": "W",
+             "type": "TEXT",
+             "x": 15,
+             "y": 12,
+             "width": 12,
+             "height": 16,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "W",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_15py5a9"
+            }
+           ]
+          },
+          {
+           "id": "2089:29982",
+           "name": "Day T",
+           "type": "FRAME",
+           "x": 168,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29983",
+             "name": "T",
+             "type": "TEXT",
+             "x": 17.5,
+             "y": 12,
+             "width": 7,
+             "height": 16,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "T",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_15py5a9"
+            }
+           ]
+          },
+          {
+           "id": "2089:29984",
+           "name": "Day F",
+           "type": "FRAME",
+           "x": 210,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29985",
+             "name": "F",
+             "type": "TEXT",
+             "x": 17.5,
+             "y": 12,
+             "width": 7,
+             "height": 16,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "F",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_15py5a9"
+            }
+           ]
+          },
+          {
+           "id": "2089:29986",
+           "name": "Day S",
+           "type": "FRAME",
+           "x": 252,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29987",
+             "name": "S",
+             "type": "TEXT",
+             "x": 17,
+             "y": 12,
+             "width": 8,
+             "height": 16,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "S",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_15py5a9"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2089:29989",
+         "name": "Week 1",
+         "type": "FRAME",
+         "x": 0,
+         "y": 88,
+         "width": 294,
+         "height": 40,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:29990",
+           "name": "Day 1",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29991",
+             "name": "1",
+             "type": "TEXT",
+             "x": 18,
+             "y": 10,
+             "width": 6,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "1",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:29992",
+           "name": "Day 2",
+           "type": "FRAME",
+           "x": 42,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29993",
+             "name": "2",
+             "type": "TEXT",
+             "x": 16.5,
+             "y": 10,
+             "width": 9,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "2",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:29994",
+           "name": "Day 3",
+           "type": "FRAME",
+           "x": 84,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29995",
+             "name": "3",
+             "type": "TEXT",
+             "x": 16.5,
+             "y": 10,
+             "width": 9,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "3",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:29996",
+           "name": "Day 4",
+           "type": "FRAME",
+           "x": 126,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29997",
+             "name": "4",
+             "type": "TEXT",
+             "x": 16.5,
+             "y": 10,
+             "width": 9,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "4",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:29998",
+           "name": "Day 5",
+           "type": "FRAME",
+           "x": 168,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:29999",
+             "name": "5",
+             "type": "TEXT",
+             "x": 16.5,
+             "y": 10,
+             "width": 9,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "5",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30000",
+           "name": "Day 6",
+           "type": "FRAME",
+           "x": 210,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30001",
+             "name": "6",
+             "type": "TEXT",
+             "x": 16.5,
+             "y": 10,
+             "width": 9,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "6",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30002",
+           "name": "Day 7",
+           "type": "FRAME",
+           "x": 252,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30003",
+             "name": "7",
+             "type": "TEXT",
+             "x": 17,
+             "y": 10,
+             "width": 8,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "7",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2089:30004",
+         "name": "Week 2",
+         "type": "FRAME",
+         "x": 0,
+         "y": 132,
+         "width": 294,
+         "height": 40,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:30005",
+           "name": "Day 8",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30006",
+             "name": "8",
+             "type": "TEXT",
+             "x": 16.5,
+             "y": 10,
+             "width": 9,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "8",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30007",
+           "name": "Day 9",
+           "type": "FRAME",
+           "x": 42,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30008",
+             "name": "9",
+             "type": "TEXT",
+             "x": 16.5,
+             "y": 10,
+             "width": 9,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "9",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30009",
+           "name": "Day 10",
+           "type": "FRAME",
+           "x": 84,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30010",
+             "name": "10",
+             "type": "TEXT",
+             "x": 13,
+             "y": 10,
+             "width": 16,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "10",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30011",
+           "name": "Day 11",
+           "type": "FRAME",
+           "x": 126,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30012",
+             "name": "11",
+             "type": "TEXT",
+             "x": 15.5,
+             "y": 10,
+             "width": 11,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "11",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30013",
+           "name": "Day 12",
+           "type": "FRAME",
+           "x": 168,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30014",
+             "name": "12",
+             "type": "TEXT",
+             "x": 14,
+             "y": 10,
+             "width": 14,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "12",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30015",
+           "name": "Day 13",
+           "type": "FRAME",
+           "x": 210,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30016",
+             "name": "13",
+             "type": "TEXT",
+             "x": 14,
+             "y": 10,
+             "width": 14,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "13",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30017",
+           "name": "Day 14",
+           "type": "FRAME",
+           "x": 252,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30018",
+             "name": "14",
+             "type": "TEXT",
+             "x": 13.5,
+             "y": 10,
+             "width": 15,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "14",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2089:30019",
+         "name": "Week 3",
+         "type": "FRAME",
+         "x": 0,
+         "y": 176,
+         "width": 294,
+         "height": 40,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:30020",
+           "name": "Day 15",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30021",
+             "name": "15",
+             "type": "TEXT",
+             "x": 14,
+             "y": 10,
+             "width": 14,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "15",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30022",
+           "name": "Day 16",
+           "type": "FRAME",
+           "x": 42,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30023",
+             "name": "16",
+             "type": "TEXT",
+             "x": 14,
+             "y": 10,
+             "width": 14,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "16",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30024",
+           "name": "Day 17",
+           "type": "FRAME",
+           "x": 84,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30025",
+             "name": "17",
+             "type": "TEXT",
+             "x": 14.5,
+             "y": 10,
+             "width": 13,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "17",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30026",
+           "name": "Day 18",
+           "type": "FRAME",
+           "x": 126,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30027",
+             "name": "18",
+             "type": "TEXT",
+             "x": 14,
+             "y": 10,
+             "width": 14,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "18",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30028",
+           "name": "Day 19",
+           "type": "FRAME",
+           "x": 168,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30029",
+             "name": "19",
+             "type": "TEXT",
+             "x": 14,
+             "y": 10,
+             "width": 14,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "19",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30030",
+           "name": "Day 20",
+           "type": "FRAME",
+           "x": 210,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30031",
+             "name": "20",
+             "type": "TEXT",
+             "x": 11.5,
+             "y": 10,
+             "width": 19,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "20",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30032",
+           "name": "Day 21",
+           "type": "FRAME",
+           "x": 252,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30033",
+             "name": "21",
+             "type": "TEXT",
+             "x": 14,
+             "y": 10,
+             "width": 14,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "21",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2089:30034",
+         "name": "Week 4",
+         "type": "FRAME",
+         "x": 0,
+         "y": 220,
+         "width": 294,
+         "height": 40,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:30035",
+           "name": "Day 22",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30036",
+             "name": "22",
+             "type": "TEXT",
+             "x": 12.5,
+             "y": 10,
+             "width": 17,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "22",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14159"
+              ]
+             },
+             "fill": "fill_1prthe7",
+             "textStyle": "text_1ryrdh0"
+            }
+           ]
+          },
+          {
+           "id": "2089:30037",
+           "name": "Day 23",
+           "type": "FRAME",
+           "x": 42,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30038",
+             "name": "23",
+             "type": "TEXT",
+             "x": 12.5,
+             "y": 10,
+             "width": 17,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "23",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30039",
+           "name": "Day 24",
+           "type": "FRAME",
+           "x": 84,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30040",
+             "name": "24",
+             "type": "TEXT",
+             "x": 12,
+             "y": 10,
+             "width": 18,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "24",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30041",
+           "name": "Day 25",
+           "type": "FRAME",
+           "x": 126,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30042",
+             "name": "25",
+             "type": "TEXT",
+             "x": 12,
+             "y": 10,
+             "width": 18,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "25",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30043",
+           "name": "Day 26",
+           "type": "FRAME",
+           "x": 168,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30044",
+             "name": "26",
+             "type": "TEXT",
+             "x": 12.5,
+             "y": 10,
+             "width": 17,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "26",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30045",
+           "name": "Day 27",
+           "type": "FRAME",
+           "x": 210,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30046",
+             "name": "27",
+             "type": "TEXT",
+             "x": 13,
+             "y": 10,
+             "width": 16,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "27",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30047",
+           "name": "Day 28",
+           "type": "FRAME",
+           "x": 252,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "cornerRadius": "mixed",
+           "cornerRadii": {
+            "topLeft": 20,
+            "topRight": 0,
+            "bottomRight": 0,
+            "bottomLeft": 20
+           },
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14160"
+            ]
+           },
+           "fill": "fill_rjbcqp",
+           "children": [
+            {
+             "id": "2089:30049",
+             "name": "Selected",
+             "type": "FRAME",
+             "x": 3,
+             "y": 2,
+             "width": 36,
+             "height": 36,
+             "cornerRadius": 18,
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14159"
+              ]
+             },
+             "fill": "fill_1prthe7",
+             "children": [
+              {
+               "id": "2089:30048",
+               "name": "28",
+               "type": "TEXT",
+               "x": 9,
+               "y": 8,
+               "width": 18,
+               "height": 20,
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "HUG",
+               "characters": "28",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14168"
+                ]
+               },
+               "fill": "fill_nll9eq",
+               "textStyle": "text_1ryrdh0"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2089:30050",
+         "name": "Week 5",
+         "type": "FRAME",
+         "x": 0,
+         "y": 264,
+         "width": 294,
+         "height": 40,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:30051",
+           "name": "Day 29",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14160"
+            ]
+           },
+           "fill": "fill_rjbcqp",
+           "children": [
+            {
+             "id": "2089:30052",
+             "name": "29",
+             "type": "TEXT",
+             "x": 12.5,
+             "y": 10,
+             "width": 17,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "29",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "2089:30053",
+           "name": "Day 30",
+           "type": "FRAME",
+           "x": 42,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "cornerRadius": "mixed",
+           "cornerRadii": {
+            "topLeft": 0,
+            "topRight": 20,
+            "bottomRight": 20,
+            "bottomLeft": 0
+           },
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14160"
+            ]
+           },
+           "fill": "fill_rjbcqp",
+           "children": [
+            {
+             "id": "2089:30055",
+             "name": "Selected",
+             "type": "FRAME",
+             "x": 3,
+             "y": 2,
+             "width": 36,
+             "height": 36,
+             "cornerRadius": 18,
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14159"
+              ]
+             },
+             "fill": "fill_1prthe7",
+             "children": [
+              {
+               "id": "2089:30054",
+               "name": "30",
+               "type": "TEXT",
+               "x": 8.5,
+               "y": 8,
+               "width": 19,
+               "height": 20,
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "HUG",
+               "characters": "30",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14168"
+                ]
+               },
+               "fill": "fill_nll9eq",
+               "textStyle": "text_1ryrdh0"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "2089:30056",
+           "name": "Day ",
+           "type": "FRAME",
+           "x": 84,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true
+          },
+          {
+           "id": "2089:30057",
+           "name": "Day ",
+           "type": "FRAME",
+           "x": 126,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true
+          },
+          {
+           "id": "2089:30058",
+           "name": "Day ",
+           "type": "FRAME",
+           "x": 168,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true
+          },
+          {
+           "id": "2089:30059",
+           "name": "Day ",
+           "type": "FRAME",
+           "x": 210,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true
+          },
+          {
+           "id": "2089:30060",
+           "name": "Day ",
+           "type": "FRAME",
+           "x": 252,
+           "y": 0,
+           "width": 42,
+           "height": 40,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2089:30073",
+       "name": "Footer",
+       "type": "FRAME",
+       "x": 24,
+       "y": 408,
+       "width": 294,
+       "height": 52,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 12,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2089:30061",
+         "name": "Button",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 16,
+         "width": 141,
+         "height": 20,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP"
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "clipsContent": true,
+         "componentProperties": {
+          "Left Icon#309:6": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:131"
+          },
+          "Right Icon#309:5": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:129"
+          },
+          "Label#309:8": {
+           "type": "TEXT",
+           "value": "Cancel"
+          },
+          "Show Left Icon#309:4": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show Right Icon#309:7": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Type": {
+           "type": "VARIANT",
+           "value": "Text"
+          }
+         },
+         "mainComponentId": "1:149",
+         "mainComponent": {
+          "id": "1:149",
+          "name": "Type=Text",
+          "key": "ed044a482522ccf193743207ac244f7cc4648b51",
+          "componentSetId": "1:136",
+          "componentSetName": "Button"
+         },
+         "children": [
+          {
+           "id": "I2089:30061;331:5410",
+           "name": "heroicons-solid/chevron-left",
+           "type": "INSTANCE",
+           "visible": false,
+           "x": 0,
+           "y": 0,
+           "width": 24,
+           "height": 24,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "1:131",
+           "mainComponent": {
+            "id": "1:131",
+            "name": "heroicons-solid/chevron-left",
+            "key": "72ba17451143ba73cefad130ee48312c7756b9f0"
+           },
+           "children": [
+            {
+             "id": "I2089:30061;331:5410;309:1676",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7.5,
+             "y": 3.749999523162842,
+             "width": 9,
+             "height": 16.5,
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "fills": [
+               "VariableID:c97438616004f48d8e0f4f7d5794d01e0f75e05a/394:474"
+              ]
+             },
+             "fill": "fill_nll9eq"
+            }
+           ]
+          },
+          {
+           "id": "I2089:30061;331:5411",
+           "name": "Label",
+           "type": "TEXT",
+           "x": 46.5,
+           "y": 0,
+           "width": 48,
+           "height": 20,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "Cancel",
+           "textAlignHorizontal": "CENTER",
+           "styleIds": {
+            "fill": "S:5c15c1a604344c5206427b7ab6e6ca41532a2923,394:377"
+           },
+           "fill": "fill_1prthe7",
+           "textStyle": "text_1ryrdh0"
+          },
+          {
+           "id": "I2089:30061;331:5412",
+           "name": "heroicons-solid/chevron-right",
+           "type": "INSTANCE",
+           "visible": false,
+           "x": 40,
+           "y": 0,
+           "width": 24,
+           "height": 24,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "1:129",
+           "mainComponent": {
+            "id": "1:129",
+            "name": "heroicons-solid/chevron-right",
+            "key": "428341dede1ae4cd79bd64b40f66664464ae3150"
+           },
+           "children": [
+            {
+             "id": "I2089:30061;331:5412;309:1685",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7.499999046325684,
+             "y": 3.749999523162842,
+             "width": 9.000000953674316,
+             "height": 16.5,
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "fills": [
+               "VariableID:c97438616004f48d8e0f4f7d5794d01e0f75e05a/394:474"
+              ]
+             },
+             "fill": "fill_nll9eq"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2089:30067",
+         "name": "Button",
+         "type": "INSTANCE",
+         "x": 153,
+         "y": 0,
+         "width": 141,
+         "height": 52,
+         "cornerRadius": 11,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP"
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutGrow": 1,
+         "clipsContent": true,
+         "styleIds": {
+          "fill": "S:5c15c1a604344c5206427b7ab6e6ca41532a2923,394:377"
+         },
+         "componentProperties": {
+          "Left Icon#309:6": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:131"
+          },
+          "Right Icon#309:5": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:129"
+          },
+          "Label#309:8": {
+           "type": "TEXT",
+           "value": "Confirm"
+          },
+          "Show Left Icon#309:4": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show Right Icon#309:7": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Type": {
+           "type": "VARIANT",
+           "value": "Primary"
+          }
+         },
+         "mainComponentId": "1:137",
+         "mainComponent": {
+          "id": "1:137",
+          "name": "Type=Primary",
+          "key": "175833b4a97630ee89956b2e11889f4ab2a13f2b",
+          "componentSetId": "1:136",
+          "componentSetName": "Button"
+         },
+         "fill": "fill_1prthe7",
+         "children": [
+          {
+           "id": "I2089:30067;309:3534",
+           "name": "heroicons-solid/chevron-left",
+           "type": "INSTANCE",
+           "visible": false,
+           "x": 137,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "1:131",
+           "mainComponent": {
+            "id": "1:131",
+            "name": "heroicons-solid/chevron-left",
+            "key": "72ba17451143ba73cefad130ee48312c7756b9f0"
+           },
+           "deduped": true
+          },
+          {
+           "id": "I2089:30067;309:676",
+           "name": "Label",
+           "type": "TEXT",
+           "x": 39,
+           "y": 14,
+           "width": 63,
+           "height": 24,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "Confirm",
+           "textAlignHorizontal": "CENTER",
+           "styleIds": {
+            "fill": "S:0a4ce740204f1c0fab834716ffa833445733194a,394:507"
+           },
+           "fill": "fill_nll9eq",
+           "textStyle": "text_16e9vtq"
+          },
+          {
+           "id": "I2089:30067;309:3532",
+           "name": "heroicons-solid/chevron-right",
+           "type": "INSTANCE",
+           "visible": false,
+           "x": 189,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "1:129",
+           "mainComponent": {
+            "id": "1:129",
+            "name": "heroicons-solid/chevron-right",
+            "key": "428341dede1ae4cd79bd64b40f66664464ae3150"
+           },
+           "deduped": true
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2089:30074",
+     "name": "Home Indicator",
+     "type": "RECTANGLE",
+     "x": 128,
+     "y": 831,
+     "width": 134,
+     "height": 5,
+     "cornerRadius": 100,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14165"
+      ]
+     },
+     "fill": "fill_1s3vosi"
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14163": {
+   "name": "color/surface/default",
+   "type": "COLOR"
+  },
+  "VariableID:34abe88c0a84c614d02927ab00afcde5fb279ded/253:420": {
+   "name": "Primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14165": {
+   "name": "color/text/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14162": {
+   "name": "color/border/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14167": {
+   "name": "color/text/tertiary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14159": {
+   "name": "color/brand/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14160": {
+   "name": "color/brand/tint",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14168": {
+   "name": "color/text/on-brand",
+   "type": "COLOR"
+  },
+  "VariableID:c97438616004f48d8e0f4f7d5794d01e0f75e05a/394:474": {
+   "name": "Brand/OnPrimary",
+   "type": "COLOR"
+  }
+ },
+ "styles": {
+  "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493": {
+   "name": "Text - Light mode/Primary",
+   "type": "PAINT"
+  },
+  "S:5c15c1a604344c5206427b7ab6e6ca41532a2923,394:377": {
+   "name": "Purple/400",
+   "type": "PAINT"
+  },
+  "S:0a4ce740204f1c0fab834716ffa833445733194a,394:507": {
+   "name": "Text - Dark mode/Primary",
+   "type": "PAINT"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ],
+   "fill_1s3vosi": [
+    {
+     "type": "SOLID",
+     "color": "#000000"
+    }
+   ],
+   "text_5i882y": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Bold",
+    "fontSize": 18,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_w6fqb5": [
+    {
+     "type": "SOLID",
+     "color": "#E6E6E6"
+    }
+   ],
+   "text_16e9vtq": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 16,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "stroke_acfx0": [
+    {
+     "type": "SOLID",
+     "color": "#00000099"
+    }
+   ],
+   "text_1u8a8v1": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 16,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_1prthe7": [
+    {
+     "type": "SOLID",
+     "color": "#635BE8"
+    }
+   ],
+   "fill_19x4rpm": [
+    {
+     "type": "SOLID",
+     "color": "#00000066"
+    }
+   ],
+   "text_1ryrdh0": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "text_15py5a9": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Medium",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   },
+   "text_l60mqv": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_rjbcqp": [
+    {
+     "type": "SOLID",
+     "color": "#EDEDFC"
+    }
+   ]
+  }
+ },
+ "metrics": {
+  "nodeCount": 160,
+  "maxDepth": 7,
+  "styleCount": 13,
+  "tokenCount": 12,
+  "inlineSizeKb": 76.95,
+  "dedupedSizeKb": 61.26
+ }
+}

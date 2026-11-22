@@ -1,0 +1,108 @@
+{
+ "nodes": [
+  {
+   "id": "2110:30278",
+   "name": "icon/solid/clipboard-document",
+   "type": "COMPONENT",
+   "x": 4940,
+   "y": 90,
+   "width": 24,
+   "height": 24,
+   "fills": [],
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": false,
+   "children": [
+    {
+     "id": "2110:30279",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 4,
+     "y": 4,
+     "width": 16,
+     "height": 18,
+     "cornerRadius": 3,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "fill": "fill_1prthe7"
+    },
+    {
+     "id": "2110:30280",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 8,
+     "y": 2,
+     "width": 8,
+     "height": 5,
+     "cornerRadius": 1.5,
+     "strokeWeight": 1.5,
+     "strokeAlign": "OUTSIDE",
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "fill": "fill_1prthe7",
+     "stroke": "stroke_nll9eq"
+    },
+    {
+     "id": "2110:30281",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 8,
+     "y": 11,
+     "width": 8,
+     "height": 1.5,
+     "cornerRadius": 0.75,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "fill": "stroke_nll9eq"
+    },
+    {
+     "id": "2110:30282",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 8,
+     "y": 15,
+     "width": 6,
+     "height": 1.5,
+     "cornerRadius": 0.75,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "fill": "stroke_nll9eq"
+    }
+   ]
+  }
+ ],
+ "globalVars": {
+  "styles": {
+   "fill_1prthe7": [
+    {
+     "type": "SOLID",
+     "color": "#635BE8"
+    }
+   ],
+   "stroke_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ]
+  }
+ },
+ "metrics": {
+  "nodeCount": 5,
+  "maxDepth": 2,
+  "styleCount": 2,
+  "tokenCount": 0,
+  "inlineSizeKb": 1.4,
+  "dedupedSizeKb": 1.14
+ }
+}

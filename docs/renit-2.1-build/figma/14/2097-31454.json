@@ -1,0 +1,1885 @@
+{
+ "nodes": [
+  {
+   "id": "2097:31454",
+   "name": "notifications · list",
+   "type": "FRAME",
+   "x": 80,
+   "y": 120,
+   "width": 390,
+   "height": 844,
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": true,
+   "boundVariables": {
+    "fills": [
+     "VariableID:2071:14163"
+    ]
+   },
+   "fill": "fill_nll9eq",
+   "children": [
+    {
+     "id": "2097:31455",
+     "name": "Status Bar",
+     "type": "FRAME",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 54,
+     "fills": [],
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2097:31456",
+       "name": "Time",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 136.94656372070312,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2097:31457",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 50.610687255859375,
+         "y": 18.339622497558594,
+         "width": 37,
+         "height": 22,
+         "constraints": {
+          "horizontal": "SCALE",
+          "vertical": "SCALE"
+         },
+         "characters": "9:41",
+         "fontSize": 17,
+         "fontName": "mixed",
+         "lineHeight": {
+          "value": 22,
+          "unit": "PIXELS"
+         },
+         "textAlignHorizontal": "CENTER",
+         "segments": [
+          {
+           "characters": "9:41",
+           "start": 0,
+           "end": 4,
+           "fontName": {
+            "family": "SF Pro",
+            "style": "Semibold"
+           },
+           "fontSize": 17,
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000"
+            }
+           ],
+           "textDecoration": "NONE",
+           "textCase": "ORIGINAL",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           }
+          }
+         ],
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      },
+      {
+       "id": "2097:31458",
+       "name": "Levels",
+       "type": "FRAME",
+       "x": 248.0915985107422,
+       "y": 0,
+       "width": 141.9084014892578,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2097:31459",
+         "name": "Battery",
+         "type": "GROUP",
+         "x": 82,
+         "y": 23,
+         "width": 27.32803726196289,
+         "height": 13,
+         "children": [
+          {
+           "id": "2097:31460",
+           "name": "Border",
+           "type": "RECTANGLE",
+           "x": 82,
+           "y": 23,
+           "width": 25,
+           "height": 13,
+           "opacity": 0.3499999940395355,
+           "cornerRadius": 4.300000190734863,
+           "blendMode": "NORMAL",
+           "fills": [],
+           "strokeWeight": 1,
+           "strokeAlign": "INSIDE",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "stroke": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "stroke": "fill_1s3vosi"
+          },
+          {
+           "id": "2097:31461",
+           "name": "Cap",
+           "type": "VECTOR",
+           "x": 108,
+           "y": 27.7811279296875,
+           "width": 1.328037977218628,
+           "height": 4.075471878051758,
+           "opacity": 0.4000000059604645,
+           "blendMode": "NORMAL",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          },
+          {
+           "id": "2097:31462",
+           "name": "Capacity",
+           "type": "RECTANGLE",
+           "x": 84,
+           "y": 25,
+           "width": 21,
+           "height": 9,
+           "cornerRadius": 2.5,
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          }
+         ]
+        },
+        {
+         "id": "2097:31463",
+         "name": "Wifi",
+         "type": "VECTOR",
+         "x": 57.69922637939453,
+         "y": 23.63775634765625,
+         "width": 17.141666412353516,
+         "height": 12.328306198120117,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        },
+        {
+         "id": "2097:31464",
+         "name": "Cellular Connection",
+         "type": "VECTOR",
+         "x": 31,
+         "y": 23.535823822021484,
+         "width": 19.200000762939453,
+         "height": 12.226415634155273,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2097:31465",
+     "name": "Top bar",
+     "type": "INSTANCE",
+     "x": 0,
+     "y": 54,
+     "width": 390,
+     "height": 56,
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 0,
+      "paddingRight": 16,
+      "paddingBottom": 0,
+      "paddingLeft": 16,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "CENTER",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14163"
+      ]
+     },
+     "componentProperties": {
+      "Show trailing#2071:5": {
+       "type": "BOOLEAN",
+       "value": false
+      },
+      "Title#2071:4": {
+       "type": "TEXT",
+       "value": "Notifications"
+      },
+      "Type": {
+       "type": "VARIANT",
+       "value": "Back+Title"
+      }
+     },
+     "mainComponentId": "2071:14397",
+     "mainComponent": {
+      "id": "2071:14397",
+      "name": "Type=Back+Title",
+      "key": "2d86bc97ffd4ce7ca2691914aa60c114f9d130b4",
+      "componentSetId": "2071:14418",
+      "componentSetName": "Top bar"
+     },
+     "fill": "fill_nll9eq",
+     "children": [
+      {
+       "id": "I2097:31465;2071:14398",
+       "name": "Back",
+       "type": "INSTANCE",
+       "x": 16,
+       "y": 6,
+       "width": 44,
+       "height": 44,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "componentProperties": {
+        "Icon#602:12": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:7"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Regular"
+        }
+       },
+       "mainComponentId": "1:17",
+       "mainComponent": {
+        "id": "1:17",
+        "name": "Type=Regular",
+        "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+        "componentSetId": "1:16",
+        "componentSetName": "Icon Button"
+       },
+       "children": [
+        {
+         "id": "I2097:31465;2071:14398;602:8477",
+         "name": "heroicons-outline/arrow-left",
+         "type": "INSTANCE",
+         "x": 10,
+         "y": 10,
+         "width": 24,
+         "height": 24,
+         "fills": [],
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "CENTER"
+         },
+         "clipsContent": true,
+         "mainComponentId": "1:7",
+         "mainComponent": {
+          "id": "1:7",
+          "name": "heroicons-outline/arrow-left",
+          "key": "19dc99d1329bdca58d1d8eab3753f04d874fbe26"
+         },
+         "children": [
+          {
+           "id": "I2097:31465;2071:14398;602:8477;341:6186",
+           "name": "Icon",
+           "type": "VECTOR",
+           "x": 3,
+           "y": 4.5,
+           "width": 18,
+           "height": 15,
+           "fills": [],
+           "strokeWeight": 1.5,
+           "strokeAlign": "CENTER",
+           "strokeCap": "ROUND",
+           "strokeJoin": "ROUND",
+           "constraints": {
+            "horizontal": "SCALE",
+            "vertical": "SCALE"
+           },
+           "boundVariables": {
+            "strokes": [
+             "VariableID:34abe88c0a84c614d02927ab00afcde5fb279ded/253:420"
+            ]
+           },
+           "stroke": "fill_1s3vosi"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "I2097:31465;2071:14402",
+       "name": "Title",
+       "type": "TEXT",
+       "x": 72,
+       "y": 16,
+       "width": 302,
+       "height": 24,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutGrow": 1,
+       "characters": "Notifications",
+       "textTruncation": "ENDING",
+       "maxLines": 1,
+       "textAutoResize": "HEIGHT",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14165"
+        ]
+       },
+       "fill": "fill_1s3vosi",
+       "textStyle": "text_5i882y"
+      },
+      {
+       "id": "I2097:31465;2071:14403",
+       "name": "Trailing",
+       "type": "INSTANCE",
+       "visible": false,
+       "x": 330,
+       "y": 6,
+       "width": 44,
+       "height": 44,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "componentProperties": {
+        "Icon#602:12": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:3268"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Regular"
+        }
+       },
+       "mainComponentId": "1:17",
+       "mainComponent": {
+        "id": "1:17",
+        "name": "Type=Regular",
+        "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+        "componentSetId": "1:16",
+        "componentSetName": "Icon Button"
+       },
+       "deduped": true
+      }
+     ]
+    },
+    {
+     "id": "2097:31473",
+     "name": "Hairline",
+     "type": "RECTANGLE",
+     "x": 0,
+     "y": 110,
+     "width": 390,
+     "height": 1,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14162"
+      ]
+     },
+     "fill": "fill_w6fqb5"
+    },
+    {
+     "id": "2097:31474",
+     "name": "Body (scroll)",
+     "type": "FRAME",
+     "x": 0,
+     "y": 111,
+     "width": 390,
+     "height": 617.8159790039062,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 24,
+      "paddingLeft": 0,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "children": [
+      {
+       "id": "2097:31475",
+       "name": "Notification row · unread",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 390,
+       "height": 99,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 16,
+        "paddingRight": 24,
+        "paddingBottom": 16,
+        "paddingLeft": 24,
+        "itemSpacing": 12,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2097:31476",
+         "name": "Avatar 48",
+         "type": "FRAME",
+         "x": 24,
+         "y": 25.5,
+         "width": 48,
+         "height": 48,
+         "cornerRadius": 24,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14160"
+          ]
+         },
+         "fill": "fill_rjbcqp",
+         "children": [
+          {
+           "id": "2097:31477",
+           "name": "R",
+           "type": "TEXT",
+           "x": 18.5,
+           "y": 12,
+           "width": 11,
+           "height": 24,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "R",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14159"
+            ]
+           },
+           "fill": "fill_1prthe7",
+           "textStyle": "text_16e9vtq"
+          }
+         ]
+        },
+        {
+         "id": "2097:31478",
+         "name": "Text",
+         "type": "FRAME",
+         "x": 84,
+         "y": 16,
+         "width": 260,
+         "height": 67,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2097:31479",
+           "name": "Kabir Your arrival window is Sat 22 Nov,",
+           "type": "TEXT",
+           "x": 0,
+           "y": 0,
+           "width": 260,
+           "height": 45,
+           "fills": "mixed",
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Riya Your arrival window is Sat 22 Nov, 10:00 – 11:00 am.",
+           "fontSize": "mixed",
+           "fontName": "mixed",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "textTruncation": "ENDING",
+           "maxLines": 2,
+           "textAutoResize": "HEIGHT",
+           "segments": [
+            {
+             "characters": "Riya",
+             "start": 0,
+             "end": 4,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Bold"
+             },
+             "fontSize": 16,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            },
+            {
+             "characters": " Your arrival window is Sat 22 Nov, 10:00 – 11:00 am.",
+             "start": 4,
+             "end": 57,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Regular"
+             },
+             "fontSize": 14,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000B2"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            }
+           ],
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ],
+            "textRangeFills": [
+             "VariableID:2071:14165",
+             "VariableID:2071:14166"
+            ]
+           }
+          },
+          {
+           "id": "2097:31480",
+           "name": "2 hours ago",
+           "type": "TEXT",
+           "x": 0,
+           "y": 49,
+           "width": 260,
+           "height": 18,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "2 hours ago",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "fill": "fill_acfx0",
+           "textStyle": "text_j8ty0e"
+          }
+         ]
+        },
+        {
+         "id": "2097:31481",
+         "name": "Unread dot",
+         "type": "ELLIPSE",
+         "x": 356,
+         "y": 44.5,
+         "width": 10,
+         "height": 10,
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        }
+       ]
+      },
+      {
+       "id": "2097:31482",
+       "name": "Notification row · unread",
+       "type": "FRAME",
+       "x": 0,
+       "y": 99,
+       "width": 390,
+       "height": 98.81600189208984,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 16,
+        "paddingRight": 24,
+        "paddingBottom": 16,
+        "paddingLeft": 24,
+        "itemSpacing": 12,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2097:31483",
+         "name": "Avatar 48",
+         "type": "FRAME",
+         "x": 24,
+         "y": 25.408000946044922,
+         "width": 48,
+         "height": 48,
+         "cornerRadius": 24,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14160"
+          ]
+         },
+         "fill": "fill_rjbcqp",
+         "children": [
+          {
+           "id": "2097:31484",
+           "name": "R",
+           "type": "TEXT",
+           "x": 18.5,
+           "y": 12,
+           "width": 11,
+           "height": 24,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "R",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14159"
+            ]
+           },
+           "fill": "fill_1prthe7",
+           "textStyle": "text_16e9vtq"
+          }
+         ]
+        },
+        {
+         "id": "2097:31485",
+         "name": "Text",
+         "type": "FRAME",
+         "x": 84,
+         "y": 16,
+         "width": 260,
+         "height": 66.81600189208984,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2097:31486",
+           "name": "Kabir Bluetooth speaker: your handover c",
+           "type": "TEXT",
+           "x": 0,
+           "y": 0,
+           "width": 260,
+           "height": 44.816001892089844,
+           "fills": "mixed",
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Riya Bluetooth speaker: your handover code is ready. Arrival Sat 22 Nov, 10:00 am.",
+           "fontSize": "mixed",
+           "fontName": "mixed",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "textTruncation": "ENDING",
+           "maxLines": 2,
+           "textAutoResize": "HEIGHT",
+           "segments": [
+            {
+             "characters": "Riya",
+             "start": 0,
+             "end": 4,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Bold"
+             },
+             "fontSize": 16,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            },
+            {
+             "characters": " Bluetooth speaker: your handover code is ready. Arrival Sat 22 Nov, 10:00 am.",
+             "start": 4,
+             "end": 82,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Regular"
+             },
+             "fontSize": 14,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000B2"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            }
+           ],
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ],
+            "textRangeFills": [
+             "VariableID:2071:14165",
+             "VariableID:2071:14166"
+            ]
+           }
+          },
+          {
+           "id": "2097:31487",
+           "name": "3 hours ago",
+           "type": "TEXT",
+           "x": 0,
+           "y": 48.816001892089844,
+           "width": 260,
+           "height": 18,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "3 hours ago",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "fill": "fill_acfx0",
+           "textStyle": "text_j8ty0e"
+          }
+         ]
+        },
+        {
+         "id": "2097:31488",
+         "name": "Unread dot",
+         "type": "ELLIPSE",
+         "x": 356,
+         "y": 44.40800094604492,
+         "width": 10,
+         "height": 10,
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        }
+       ]
+      },
+      {
+       "id": "2097:31489",
+       "name": "Notification row",
+       "type": "FRAME",
+       "x": 0,
+       "y": 197.81600952148438,
+       "width": 390,
+       "height": 99,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 16,
+        "paddingRight": 24,
+        "paddingBottom": 16,
+        "paddingLeft": 24,
+        "itemSpacing": 12,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2097:31490",
+         "name": "Avatar 48",
+         "type": "FRAME",
+         "x": 24,
+         "y": 25.5,
+         "width": 48,
+         "height": 48,
+         "cornerRadius": 24,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14160"
+          ]
+         },
+         "fill": "fill_rjbcqp",
+         "children": [
+          {
+           "id": "2097:31491",
+           "name": "R",
+           "type": "TEXT",
+           "x": 18.5,
+           "y": 12,
+           "width": 11,
+           "height": 24,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "R",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14159"
+            ]
+           },
+           "fill": "fill_1prthe7",
+           "textStyle": "text_16e9vtq"
+          }
+         ]
+        },
+        {
+         "id": "2097:31492",
+         "name": "Text",
+         "type": "FRAME",
+         "x": 84,
+         "y": 16,
+         "width": 282,
+         "height": 67,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2097:31493",
+           "name": "Kabir Bluetooth speaker is with you. Ret",
+           "type": "TEXT",
+           "x": 0,
+           "y": 0,
+           "width": 282,
+           "height": 45,
+           "fills": "mixed",
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Riya Bluetooth speaker is with you. Return it by the end of the last day.",
+           "fontSize": "mixed",
+           "fontName": "mixed",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "textTruncation": "ENDING",
+           "maxLines": 2,
+           "textAutoResize": "HEIGHT",
+           "segments": [
+            {
+             "characters": "Riya",
+             "start": 0,
+             "end": 4,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Bold"
+             },
+             "fontSize": 16,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            },
+            {
+             "characters": " Bluetooth speaker is with you. Return it by the end of the last day.",
+             "start": 4,
+             "end": 73,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Regular"
+             },
+             "fontSize": 14,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000B2"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            }
+           ],
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ],
+            "textRangeFills": [
+             "VariableID:2071:14165",
+             "VariableID:2071:14166"
+            ]
+           }
+          },
+          {
+           "id": "2097:31494",
+           "name": "a day ago",
+           "type": "TEXT",
+           "x": 0,
+           "y": 49,
+           "width": 282,
+           "height": 18,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "a day ago",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "fill": "fill_acfx0",
+           "textStyle": "text_j8ty0e"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2097:31495",
+       "name": "Notification row",
+       "type": "FRAME",
+       "x": 0,
+       "y": 296.8160095214844,
+       "width": 390,
+       "height": 99,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 16,
+        "paddingRight": 24,
+        "paddingBottom": 16,
+        "paddingLeft": 24,
+        "itemSpacing": 12,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2097:31496",
+         "name": "Avatar 48",
+         "type": "FRAME",
+         "x": 24,
+         "y": 25.5,
+         "width": 48,
+         "height": 48,
+         "cornerRadius": 24,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14160"
+          ]
+         },
+         "fill": "fill_rjbcqp",
+         "children": [
+          {
+           "id": "2097:31497",
+           "name": "R",
+           "type": "TEXT",
+           "x": 18.5,
+           "y": 12,
+           "width": 11,
+           "height": 24,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "R",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14159"
+            ]
+           },
+           "fill": "fill_1prthe7",
+           "textStyle": "text_16e9vtq"
+          }
+         ]
+        },
+        {
+         "id": "2097:31498",
+         "name": "Text",
+         "type": "FRAME",
+         "x": 84,
+         "y": 16,
+         "width": 282,
+         "height": 67,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2097:31499",
+           "name": "Kabir Rohan Mehta left a review on your ",
+           "type": "TEXT",
+           "x": 0,
+           "y": 0,
+           "width": 282,
+           "height": 45,
+           "fills": "mixed",
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Riya Rohan Mehta left a review on your product.",
+           "fontSize": "mixed",
+           "fontName": "mixed",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "textTruncation": "ENDING",
+           "maxLines": 2,
+           "textAutoResize": "HEIGHT",
+           "segments": [
+            {
+             "characters": "Riya",
+             "start": 0,
+             "end": 4,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Bold"
+             },
+             "fontSize": 16,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            },
+            {
+             "characters": " Rohan Mehta left a review on your product.",
+             "start": 4,
+             "end": 47,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Regular"
+             },
+             "fontSize": 14,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000B2"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            }
+           ],
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ],
+            "textRangeFills": [
+             "VariableID:2071:14165",
+             "VariableID:2071:14166"
+            ]
+           }
+          },
+          {
+           "id": "2097:31500",
+           "name": "2 days ago",
+           "type": "TEXT",
+           "x": 0,
+           "y": 49,
+           "width": 282,
+           "height": 18,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "2 days ago",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "fill": "fill_acfx0",
+           "textStyle": "text_j8ty0e"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2097:31501",
+       "name": "Notification row",
+       "type": "FRAME",
+       "x": 0,
+       "y": 395.8160095214844,
+       "width": 390,
+       "height": 99,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 16,
+        "paddingRight": 24,
+        "paddingBottom": 16,
+        "paddingLeft": 24,
+        "itemSpacing": 12,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2097:31502",
+         "name": "Avatar 48",
+         "type": "FRAME",
+         "x": 24,
+         "y": 25.5,
+         "width": 48,
+         "height": 48,
+         "cornerRadius": 24,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14160"
+          ]
+         },
+         "fill": "fill_rjbcqp",
+         "children": [
+          {
+           "id": "2097:31503",
+           "name": "R",
+           "type": "TEXT",
+           "x": 18.5,
+           "y": 12,
+           "width": 11,
+           "height": 24,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "R",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14159"
+            ]
+           },
+           "fill": "fill_1prthe7",
+           "textStyle": "text_16e9vtq"
+          }
+         ]
+        },
+        {
+         "id": "2097:31504",
+         "name": "Text",
+         "type": "FRAME",
+         "x": 84,
+         "y": 16,
+         "width": 282,
+         "height": 67,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2097:31505",
+           "name": "Kabir ₹3,000 sent to your bank account e",
+           "type": "TEXT",
+           "x": 0,
+           "y": 0,
+           "width": 282,
+           "height": 45,
+           "fills": "mixed",
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Riya ₹3,000 sent to your bank account ending 4821",
+           "fontSize": "mixed",
+           "fontName": "mixed",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "textTruncation": "ENDING",
+           "maxLines": 2,
+           "textAutoResize": "HEIGHT",
+           "segments": [
+            {
+             "characters": "Riya",
+             "start": 0,
+             "end": 4,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Bold"
+             },
+             "fontSize": 16,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            },
+            {
+             "characters": " ₹3,000 sent to your bank account ending 4821",
+             "start": 4,
+             "end": 49,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Regular"
+             },
+             "fontSize": 14,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000B2"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            }
+           ],
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ],
+            "textRangeFills": [
+             "VariableID:2071:14165",
+             "VariableID:2071:14166"
+            ]
+           }
+          },
+          {
+           "id": "2097:31506",
+           "name": "5 days ago",
+           "type": "TEXT",
+           "x": 0,
+           "y": 49,
+           "width": 282,
+           "height": 18,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "5 days ago",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "fill": "fill_acfx0",
+           "textStyle": "text_j8ty0e"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2097:31507",
+       "name": "Notification row",
+       "type": "FRAME",
+       "x": 0,
+       "y": 494.8160095214844,
+       "width": 390,
+       "height": 99,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 16,
+        "paddingRight": 24,
+        "paddingBottom": 16,
+        "paddingLeft": 24,
+        "itemSpacing": 12,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2097:31508",
+         "name": "Avatar 48",
+         "type": "FRAME",
+         "x": 24,
+         "y": 25.5,
+         "width": 48,
+         "height": 48,
+         "cornerRadius": 24,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14160"
+          ]
+         },
+         "fill": "fill_rjbcqp",
+         "children": [
+          {
+           "id": "2097:31509",
+           "name": "R",
+           "type": "TEXT",
+           "x": 18.5,
+           "y": 12,
+           "width": 11,
+           "height": 24,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "R",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14159"
+            ]
+           },
+           "fill": "fill_1prthe7",
+           "textStyle": "text_16e9vtq"
+          }
+         ]
+        },
+        {
+         "id": "2097:31510",
+         "name": "Text",
+         "type": "FRAME",
+         "x": 84,
+         "y": 16,
+         "width": 282,
+         "height": 67,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2097:31511",
+           "name": "Kabir Verify your bank account to receiv",
+           "type": "TEXT",
+           "x": 0,
+           "y": 0,
+           "width": 282,
+           "height": 45,
+           "fills": "mixed",
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Riya Verify your bank account to receive ₹1,830",
+           "fontSize": "mixed",
+           "fontName": "mixed",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "textTruncation": "ENDING",
+           "maxLines": 2,
+           "textAutoResize": "HEIGHT",
+           "segments": [
+            {
+             "characters": "Riya",
+             "start": 0,
+             "end": 4,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Bold"
+             },
+             "fontSize": 16,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            },
+            {
+             "characters": " Verify your bank account to receive ₹1,830",
+             "start": 4,
+             "end": 47,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Regular"
+             },
+             "fontSize": 14,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000B2"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             }
+            }
+           ],
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ],
+            "textRangeFills": [
+             "VariableID:2071:14165",
+             "VariableID:2071:14166"
+            ]
+           }
+          },
+          {
+           "id": "2097:31512",
+           "name": "a week ago",
+           "type": "TEXT",
+           "x": 0,
+           "y": 49,
+           "width": 282,
+           "height": 18,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "a week ago",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "fill": "fill_acfx0",
+           "textStyle": "text_j8ty0e"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2097:31513",
+     "name": "Home Indicator",
+     "type": "RECTANGLE",
+     "x": 128,
+     "y": 831,
+     "width": 134,
+     "height": 5,
+     "cornerRadius": 100,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14165"
+      ]
+     },
+     "fill": "fill_1s3vosi"
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14163": {
+   "name": "color/surface/default",
+   "type": "COLOR"
+  },
+  "VariableID:34abe88c0a84c614d02927ab00afcde5fb279ded/253:420": {
+   "name": "Primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14165": {
+   "name": "color/text/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14162": {
+   "name": "color/border/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14160": {
+   "name": "color/brand/tint",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14159": {
+   "name": "color/brand/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14166": {
+   "name": "color/text/secondary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14167": {
+   "name": "color/text/tertiary",
+   "type": "COLOR"
+  }
+ },
+ "styles": {
+  "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493": {
+   "name": "Text - Light mode/Primary",
+   "type": "PAINT"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ],
+   "fill_1s3vosi": [
+    {
+     "type": "SOLID",
+     "color": "#000000"
+    }
+   ],
+   "text_5i882y": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Bold",
+    "fontSize": 18,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_w6fqb5": [
+    {
+     "type": "SOLID",
+     "color": "#E6E6E6"
+    }
+   ],
+   "fill_rjbcqp": [
+    {
+     "type": "SOLID",
+     "color": "#EDEDFC"
+    }
+   ],
+   "fill_1prthe7": [
+    {
+     "type": "SOLID",
+     "color": "#635BE8"
+    }
+   ],
+   "text_16e9vtq": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 16,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_acfx0": [
+    {
+     "type": "SOLID",
+     "color": "#00000099"
+    }
+   ],
+   "text_j8ty0e": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 18,
+     "unit": "PIXELS"
+    }
+   }
+  }
+ },
+ "metrics": {
+  "nodeCount": 58,
+  "maxDepth": 5,
+  "styleCount": 9,
+  "tokenCount": 9,
+  "inlineSizeKb": 31.6,
+  "dedupedSizeKb": 26.67
+ }
+}

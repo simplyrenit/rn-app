@@ -1,0 +1,90 @@
+{
+ "nodes": [
+  {
+   "id": "2110:30274",
+   "name": "icon/solid/plus-square",
+   "type": "COMPONENT",
+   "x": 4900,
+   "y": 90,
+   "width": 24,
+   "height": 24,
+   "fills": [],
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": false,
+   "children": [
+    {
+     "id": "2110:30275",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 3,
+     "y": 3,
+     "width": 18,
+     "height": 18,
+     "cornerRadius": 4,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "fill": "fill_1prthe7"
+    },
+    {
+     "id": "2110:30276",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 7,
+     "y": 11,
+     "width": 10,
+     "height": 2,
+     "cornerRadius": 1,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "fill": "fill_nll9eq"
+    },
+    {
+     "id": "2110:30277",
+     "name": "Rectangle",
+     "type": "RECTANGLE",
+     "x": 11,
+     "y": 7,
+     "width": 2,
+     "height": 10,
+     "cornerRadius": 1,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "fill": "fill_nll9eq"
+    }
+   ]
+  }
+ ],
+ "globalVars": {
+  "styles": {
+   "fill_1prthe7": [
+    {
+     "type": "SOLID",
+     "color": "#635BE8"
+    }
+   ],
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ]
+  }
+ },
+ "metrics": {
+  "nodeCount": 4,
+  "maxDepth": 2,
+  "styleCount": 2,
+  "tokenCount": 0,
+  "inlineSizeKb": 0.97,
+  "dedupedSizeKb": 0.88
+ }
+}

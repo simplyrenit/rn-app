@@ -1,0 +1,2240 @@
+{
+ "nodes": [
+  {
+   "id": "2094:25168",
+   "name": "add-photo-sheet · on list-add-photos",
+   "type": "FRAME",
+   "x": 5250,
+   "y": 120,
+   "width": 390,
+   "height": 844,
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": true,
+   "boundVariables": {
+    "fills": [
+     "VariableID:2071:14163"
+    ]
+   },
+   "fill": "fill_nll9eq",
+   "children": [
+    {
+     "id": "2094:25179",
+     "name": "Backdrop · list-add-photos · fresh",
+     "type": "FRAME",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 844,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14163"
+      ]
+     },
+     "fill": "fill_nll9eq",
+     "children": [
+      {
+       "id": "2094:25180",
+       "name": "Status Bar",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 390,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "MIN",
+        "vertical": "MIN"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2094:25181",
+         "name": "Time",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 136.94656372070312,
+         "height": 54,
+         "fills": [],
+         "constraints": {
+          "horizontal": "SCALE",
+          "vertical": "CENTER"
+         },
+         "clipsContent": false,
+         "children": [
+          {
+           "id": "2094:25182",
+           "name": "Time",
+           "type": "TEXT",
+           "x": 50.610687255859375,
+           "y": 18.339622497558594,
+           "width": 37,
+           "height": 22,
+           "constraints": {
+            "horizontal": "SCALE",
+            "vertical": "SCALE"
+           },
+           "characters": "9:41",
+           "fontSize": 17,
+           "fontName": "mixed",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "textAlignHorizontal": "CENTER",
+           "segments": [
+            {
+             "characters": "9:41",
+             "start": 0,
+             "end": 4,
+             "fontName": {
+              "family": "SF Pro",
+              "style": "Semibold"
+             },
+             "fontSize": 17,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 22,
+              "unit": "PIXELS"
+             },
+             "styleIds": {
+              "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+             }
+            }
+           ],
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          }
+         ]
+        },
+        {
+         "id": "2094:25183",
+         "name": "Levels",
+         "type": "FRAME",
+         "x": 248.0915985107422,
+         "y": 0,
+         "width": 141.9084014892578,
+         "height": 54,
+         "fills": [],
+         "constraints": {
+          "horizontal": "SCALE",
+          "vertical": "CENTER"
+         },
+         "clipsContent": false,
+         "children": [
+          {
+           "id": "2094:25184",
+           "name": "Battery",
+           "type": "GROUP",
+           "x": 82,
+           "y": 23,
+           "width": 27.32803726196289,
+           "height": 13,
+           "children": [
+            {
+             "id": "2094:25185",
+             "name": "Border",
+             "type": "RECTANGLE",
+             "x": 82,
+             "y": 23,
+             "width": 25,
+             "height": 13,
+             "opacity": 0.3499999940395355,
+             "cornerRadius": 4.300000190734863,
+             "blendMode": "NORMAL",
+             "fills": [],
+             "strokeWeight": 1,
+             "strokeAlign": "INSIDE",
+             "constraints": {
+              "horizontal": "CENTER",
+              "vertical": "SCALE"
+             },
+             "styleIds": {
+              "stroke": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+             },
+             "stroke": "fill_1s3vosi"
+            },
+            {
+             "id": "2094:25186",
+             "name": "Cap",
+             "type": "VECTOR",
+             "x": 108,
+             "y": 27.7811279296875,
+             "width": 1.328037977218628,
+             "height": 4.075471878051758,
+             "opacity": 0.4000000059604645,
+             "blendMode": "NORMAL",
+             "constraints": {
+              "horizontal": "CENTER",
+              "vertical": "SCALE"
+             },
+             "styleIds": {
+              "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+             },
+             "fill": "fill_1s3vosi"
+            },
+            {
+             "id": "2094:25187",
+             "name": "Capacity",
+             "type": "RECTANGLE",
+             "x": 84,
+             "y": 25,
+             "width": 21,
+             "height": 9,
+             "cornerRadius": 2.5,
+             "constraints": {
+              "horizontal": "CENTER",
+              "vertical": "SCALE"
+             },
+             "styleIds": {
+              "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+             },
+             "fill": "fill_1s3vosi"
+            }
+           ]
+          },
+          {
+           "id": "2094:25188",
+           "name": "Wifi",
+           "type": "VECTOR",
+           "x": 57.69922637939453,
+           "y": 23.63775634765625,
+           "width": 17.141666412353516,
+           "height": 12.328306198120117,
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          },
+          {
+           "id": "2094:25189",
+           "name": "Cellular Connection",
+           "type": "VECTOR",
+           "x": 31,
+           "y": 23.535823822021484,
+           "width": 19.200000762939453,
+           "height": 12.226415634155273,
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2094:25190",
+       "name": "Top bar",
+       "type": "INSTANCE",
+       "x": 0,
+       "y": 54,
+       "width": 390,
+       "height": 56,
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 0,
+        "paddingRight": 16,
+        "paddingBottom": 0,
+        "paddingLeft": 16,
+        "itemSpacing": 12,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "constraints": {
+        "horizontal": "MIN",
+        "vertical": "MIN"
+       },
+       "clipsContent": false,
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14163"
+        ]
+       },
+       "componentProperties": {
+        "Show trailing#2071:5": {
+         "type": "BOOLEAN",
+         "value": false
+        },
+        "Title#2071:4": {
+         "type": "TEXT",
+         "value": "List an item"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Back+Title"
+        }
+       },
+       "mainComponentId": "2071:14397",
+       "mainComponent": {
+        "id": "2071:14397",
+        "name": "Type=Back+Title",
+        "key": "2d86bc97ffd4ce7ca2691914aa60c114f9d130b4",
+        "componentSetId": "2071:14418",
+        "componentSetName": "Top bar"
+       },
+       "fill": "fill_nll9eq",
+       "children": [
+        {
+         "id": "I2094:25190;2071:14398",
+         "name": "Back",
+         "type": "INSTANCE",
+         "x": 16,
+         "y": 6,
+         "width": 44,
+         "height": 44,
+         "fills": [],
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "componentProperties": {
+          "Icon#602:12": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:7"
+          },
+          "Type": {
+           "type": "VARIANT",
+           "value": "Regular"
+          }
+         },
+         "mainComponentId": "1:17",
+         "mainComponent": {
+          "id": "1:17",
+          "name": "Type=Regular",
+          "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+          "componentSetId": "1:16",
+          "componentSetName": "Icon Button"
+         },
+         "children": [
+          {
+           "id": "I2094:25190;2071:14398;602:8477",
+           "name": "heroicons-outline/arrow-left",
+           "type": "INSTANCE",
+           "x": 10,
+           "y": 10,
+           "width": 24,
+           "height": 24,
+           "fills": [],
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "CENTER"
+           },
+           "clipsContent": true,
+           "mainComponentId": "1:7",
+           "mainComponent": {
+            "id": "1:7",
+            "name": "heroicons-outline/arrow-left",
+            "key": "19dc99d1329bdca58d1d8eab3753f04d874fbe26"
+           },
+           "children": [
+            {
+             "id": "I2094:25190;2071:14398;602:8477;341:6186",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 3,
+             "y": 4.5,
+             "width": 18,
+             "height": 15,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:34abe88c0a84c614d02927ab00afcde5fb279ded/253:420"
+              ]
+             },
+             "stroke": "fill_1s3vosi"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "I2094:25190;2071:14402",
+         "name": "Title",
+         "type": "TEXT",
+         "x": 72,
+         "y": 16,
+         "width": 302,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "characters": "List an item",
+         "textTruncation": "ENDING",
+         "maxLines": 1,
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_5i882y"
+        },
+        {
+         "id": "I2094:25190;2071:14403",
+         "name": "Trailing",
+         "type": "INSTANCE",
+         "visible": false,
+         "x": 330,
+         "y": 6,
+         "width": 44,
+         "height": 44,
+         "fills": [],
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "componentProperties": {
+          "Icon#602:12": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:3268"
+          },
+          "Type": {
+           "type": "VARIANT",
+           "value": "Regular"
+          }
+         },
+         "mainComponentId": "1:17",
+         "mainComponent": {
+          "id": "1:17",
+          "name": "Type=Regular",
+          "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+          "componentSetId": "1:16",
+          "componentSetName": "Icon Button"
+         },
+         "deduped": true
+        }
+       ]
+      },
+      {
+       "id": "2094:25191",
+       "name": "Content",
+       "type": "FRAME",
+       "x": 24,
+       "y": 110,
+       "width": 342,
+       "height": 415,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 8,
+        "paddingRight": 0,
+        "paddingBottom": 24,
+        "paddingLeft": 0,
+        "itemSpacing": 24,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "constraints": {
+        "horizontal": "MIN",
+        "vertical": "MIN"
+       },
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2094:25192",
+         "name": "Stepper",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 8,
+         "width": 342,
+         "height": 4,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 8,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": false,
+         "componentProperties": {
+          "Show label#2074:60": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Step": {
+           "type": "VARIANT",
+           "value": "1"
+          }
+         },
+         "mainComponentId": "2074:14420",
+         "mainComponent": {
+          "id": "2074:14420",
+          "name": "Step=1",
+          "key": "bfcda8b9a541f3663955bd278a4d51a642e6701f",
+          "componentSetId": "2074:14448",
+          "componentSetName": "Stepper"
+         },
+         "children": [
+          {
+           "id": "I2094:25192;2074:14421",
+           "name": "Segments",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 342,
+           "height": 4,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "I2094:25192;2074:14422",
+             "name": "Segment 1",
+             "type": "RECTANGLE",
+             "x": 0,
+             "y": 0,
+             "width": 82.5,
+             "height": 4,
+             "cornerRadius": 2,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "FIXED",
+             "layoutGrow": 1,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14159"
+              ]
+             },
+             "fill": "fill_1prthe7"
+            },
+            {
+             "id": "I2094:25192;2074:14423",
+             "name": "Segment 2",
+             "type": "RECTANGLE",
+             "x": 86.5,
+             "y": 0,
+             "width": 82.5,
+             "height": 4,
+             "cornerRadius": 2,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "FIXED",
+             "layoutGrow": 1,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14162"
+              ]
+             },
+             "fill": "fill_w6fqb5"
+            },
+            {
+             "id": "I2094:25192;2074:14424",
+             "name": "Segment 3",
+             "type": "RECTANGLE",
+             "x": 173,
+             "y": 0,
+             "width": 82.5,
+             "height": 4,
+             "cornerRadius": 2,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "FIXED",
+             "layoutGrow": 1,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14162"
+              ]
+             },
+             "fill": "fill_w6fqb5"
+            },
+            {
+             "id": "I2094:25192;2074:14425",
+             "name": "Segment 4",
+             "type": "RECTANGLE",
+             "x": 259.5,
+             "y": 0,
+             "width": 82.5,
+             "height": 4,
+             "cornerRadius": 2,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "FIXED",
+             "layoutGrow": 1,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14162"
+              ]
+             },
+             "fill": "fill_w6fqb5"
+            }
+           ]
+          },
+          {
+           "id": "I2094:25192;2074:14426",
+           "name": "Step label",
+           "type": "TEXT",
+           "visible": false,
+           "x": 0,
+           "y": 12,
+           "width": 59,
+           "height": 16,
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "characters": "Step 1 of 4",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "fill": "fill_acfx0",
+           "textStyle": "text_15py5a9"
+          }
+         ]
+        },
+        {
+         "id": "2094:25193",
+         "name": "Intro",
+         "type": "FRAME",
+         "x": 0,
+         "y": 36,
+         "width": 342,
+         "height": 128,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 8,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2094:25194",
+           "name": "Snap it.\nWe'll write the listing.",
+           "type": "TEXT",
+           "x": 0,
+           "y": 0,
+           "width": 342,
+           "height": 56,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Snap it.\nWe'll write the listing.",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14165"
+            ]
+           },
+           "fill": "fill_1s3vosi",
+           "textStyle": "text_1ff8wkp"
+          },
+          {
+           "id": "2094:25195",
+           "name": "Start with one photo — it becomes your c",
+           "type": "TEXT",
+           "x": 0,
+           "y": 64,
+           "width": 342,
+           "height": 40,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Start with one photo — it becomes your cover. Add more if you like.",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ]
+           },
+           "fill": "fill_1jtzctu",
+           "textStyle": "text_l60mqv"
+          },
+          {
+           "id": "2094:25196",
+           "name": "Photos are read by AI to fill in your li",
+           "type": "TEXT",
+           "x": 0,
+           "y": 112,
+           "width": 342,
+           "height": 16,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Photos are read by AI to fill in your listing.",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "fill": "fill_acfx0",
+           "textStyle": "text_exm4rc"
+          }
+         ]
+        },
+        {
+         "id": "2094:25197",
+         "name": "Photo grid (3 columns)",
+         "type": "FRAME",
+         "x": 0,
+         "y": 188,
+         "width": 342,
+         "height": 107,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 10,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "WRAP",
+          "counterAxisSpacing": 10,
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2094:25198",
+           "name": "Add tile",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 107,
+           "height": 107,
+           "cornerRadius": 12,
+           "fills": [],
+           "strokeWeight": 1,
+           "strokeAlign": "INSIDE",
+           "dashPattern": [
+            6,
+            4
+           ],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "strokes": [
+             "VariableID:2071:14162"
+            ]
+           },
+           "stroke": "fill_w6fqb5",
+           "children": [
+            {
+             "id": "2094:25199",
+             "name": "Frame",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 107,
+             "height": 107,
+             "fills": [],
+             "layout": {
+              "mode": "VERTICAL",
+              "paddingTop": 8,
+              "paddingRight": 8,
+              "paddingBottom": 8,
+              "paddingLeft": 8,
+              "itemSpacing": 6,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "constraints": {
+              "horizontal": "MIN",
+              "vertical": "MIN"
+             },
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2094:25200",
+               "name": "heroicons-outline/Plus",
+               "type": "FRAME",
+               "x": 41.5,
+               "y": 22.5,
+               "width": 24,
+               "height": 24,
+               "fills": [],
+               "layoutSizingHorizontal": "FIXED",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": true,
+               "children": [
+                {
+                 "id": "2094:25201",
+                 "name": "Vector",
+                 "type": "VECTOR",
+                 "x": 4.5,
+                 "y": 4.5,
+                 "width": 15,
+                 "height": 15,
+                 "fills": [],
+                 "strokeWeight": 1.5,
+                 "strokeAlign": "CENTER",
+                 "strokeCap": "ROUND",
+                 "strokeJoin": "ROUND",
+                 "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "SCALE"
+                 },
+                 "boundVariables": {
+                  "strokes": [
+                   "VariableID:2071:14167"
+                  ]
+                 },
+                 "stroke": "fill_acfx0"
+                }
+               ]
+              },
+              {
+               "id": "2094:25202",
+               "name": "Add a photo · up to 5",
+               "type": "TEXT",
+               "x": 8,
+               "y": 52.5,
+               "width": 91,
+               "height": 32,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "HUG",
+               "layoutAlign": "STRETCH",
+               "characters": "Add a photo · up to 5",
+               "textAlignHorizontal": "CENTER",
+               "textAutoResize": "HEIGHT",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14167"
+                ]
+               },
+               "fill": "fill_acfx0",
+               "textStyle": "text_exm4rc"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2094:25203",
+         "name": "Tip panel",
+         "type": "FRAME",
+         "x": 0,
+         "y": 319,
+         "width": 342,
+         "height": 72,
+         "cornerRadius": 12,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 16,
+          "paddingRight": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14164"
+          ]
+         },
+         "fill": "fill_d2q9wm",
+         "children": [
+          {
+           "id": "2094:25204",
+           "name": "Tip: a clear shot of the label helps the",
+           "type": "TEXT",
+           "x": 16,
+           "y": 16,
+           "width": 310,
+           "height": 40,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Tip: a clear shot of the label helps the AI get the exact model right.",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ]
+           },
+           "fill": "fill_1jtzctu",
+           "textStyle": "text_l60mqv"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2114:31148",
+       "name": "Owner terms (above bar)",
+       "type": "FRAME",
+       "x": 0,
+       "y": 636,
+       "width": 390,
+       "height": 67,
+       "strokeWeight": "mixed",
+       "strokeWeights": {
+        "top": 1,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+       },
+       "strokeAlign": "INSIDE",
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 12,
+        "paddingRight": 24,
+        "paddingBottom": 4,
+        "paddingLeft": 24,
+        "itemSpacing": 8,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "constraints": {
+        "horizontal": "MIN",
+        "vertical": "MIN"
+       },
+       "clipsContent": true,
+       "fill": "fill_nll9eq",
+       "stroke": "fill_w6fqb5",
+       "children": [
+        {
+         "id": "2094:25206",
+         "name": "Owner terms tick",
+         "type": "FRAME",
+         "x": 24,
+         "y": 13,
+         "width": 342,
+         "height": 22,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 10,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2094:25207",
+           "name": "Checkbox (unticked)",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 22,
+           "height": 22,
+           "cornerRadius": 6,
+           "fills": [],
+           "strokeWeight": 1.5,
+           "strokeAlign": "INSIDE",
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "strokes": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "stroke": "fill_acfx0"
+          },
+          {
+           "id": "2094:25208",
+           "name": "I accept the owner terms",
+           "type": "TEXT",
+           "x": 32,
+           "y": 1,
+           "width": 166,
+           "height": 20,
+           "fills": "mixed",
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "I accept the owner terms",
+           "fontSize": 14,
+           "fontName": "mixed",
+           "lineHeight": {
+            "value": 20,
+            "unit": "PIXELS"
+           },
+           "textDecoration": "mixed",
+           "segments": [
+            {
+             "characters": "I accept the ",
+             "start": 0,
+             "end": 13,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Regular"
+             },
+             "fontSize": 14,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000B2"
+              }
+             ],
+             "textDecoration": "NONE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 20,
+              "unit": "PIXELS"
+             }
+            },
+            {
+             "characters": "owner terms",
+             "start": 13,
+             "end": 24,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "SemiBold"
+             },
+             "fontSize": 14,
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#635BE8"
+              }
+             ],
+             "textDecoration": "UNDERLINE",
+             "textCase": "ORIGINAL",
+             "lineHeight": {
+              "value": 20,
+              "unit": "PIXELS"
+             }
+            }
+           ],
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ],
+            "textRangeFills": [
+             "VariableID:2071:14159",
+             "VariableID:2071:14166"
+            ]
+           }
+          }
+         ]
+        },
+        {
+         "id": "2094:25209",
+         "name": "Tick the owner terms to continue.",
+         "type": "TEXT",
+         "x": 24,
+         "y": 43,
+         "width": 342,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Tick the owner terms to continue.",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14167"
+          ]
+         },
+         "fill": "fill_acfx0",
+         "textStyle": "text_l60mqv"
+        }
+       ]
+      },
+      {
+       "id": "2114:31129",
+       "name": "Bottom bar",
+       "type": "INSTANCE",
+       "x": 0,
+       "y": 703,
+       "width": 390,
+       "height": 141,
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "constraints": {
+        "horizontal": "MIN",
+        "vertical": "MIN"
+       },
+       "clipsContent": false,
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14163"
+        ]
+       },
+       "componentProperties": {
+        "Sub-line#2071:14": {
+         "type": "TEXT",
+         "value": "Deposit ₹2,000"
+        },
+        "Unit#2071:13": {
+         "type": "TEXT",
+         "value": "/day"
+        },
+        "Show sub-line#2071:15": {
+         "type": "BOOLEAN",
+         "value": true
+        },
+        "Value#2071:12": {
+         "type": "TEXT",
+         "value": "₹1,200"
+        },
+        "Layout": {
+         "type": "VARIANT",
+         "value": "CTA+Text"
+        }
+       },
+       "mainComponentId": "2109:30149",
+       "mainComponent": {
+        "id": "2109:30149",
+        "name": "Layout=CTA+Text",
+        "key": "f4f431ee4e099661f8f0a0025c050468f831f587",
+        "componentSetId": "2071:14467",
+        "componentSetName": "Bottom bar"
+       },
+       "fill": "fill_nll9eq",
+       "children": [
+        {
+         "id": "I2114:31129;2109:30150",
+         "name": "Content",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 390,
+         "height": 120,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 16,
+          "paddingRight": 24,
+          "paddingBottom": 4,
+          "paddingLeft": 24,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "I2114:31129;2109:30151",
+           "name": "Primary button",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 342,
+           "height": 52,
+           "cornerRadius": 12,
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP"
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "FIXED",
+           "layoutAlign": "STRETCH",
+           "clipsContent": true,
+           "componentProperties": {
+            "Left Icon#309:6": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:131"
+            },
+            "Right Icon#309:5": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:129"
+            },
+            "Label#309:8": {
+             "type": "TEXT",
+             "value": "Continue"
+            },
+            "Show Left Icon#309:4": {
+             "type": "BOOLEAN",
+             "value": false
+            },
+            "Show Right Icon#309:7": {
+             "type": "BOOLEAN",
+             "value": false
+            },
+            "Type": {
+             "type": "VARIANT",
+             "value": "Disabled"
+            }
+           },
+           "mainComponentId": "1:145",
+           "mainComponent": {
+            "id": "1:145",
+            "name": "Type=Disabled",
+            "key": "1aa14161bba1f9044bab898cd81da3ce68e95a92",
+            "componentSetId": "1:136",
+            "componentSetName": "Button"
+           },
+           "fill": "fill_1n3g806",
+           "children": [
+            {
+             "id": "I2114:31129;2109:30151;309:3977",
+             "name": "heroicons-solid/chevron-left",
+             "type": "INSTANCE",
+             "visible": false,
+             "x": 137,
+             "y": 18,
+             "width": 20,
+             "height": 20,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "mainComponentId": "1:131",
+             "mainComponent": {
+              "id": "1:131",
+              "name": "heroicons-solid/chevron-left",
+              "key": "72ba17451143ba73cefad130ee48312c7756b9f0"
+             },
+             "children": [
+              {
+               "id": "I2114:31129;2109:30151;309:3977;309:1676",
+               "name": "Icon",
+               "type": "VECTOR",
+               "x": 6.25,
+               "y": 3.124999523162842,
+               "width": 7.5,
+               "height": 13.75,
+               "constraints": {
+                "horizontal": "SCALE",
+                "vertical": "SCALE"
+               },
+               "boundVariables": {
+                "fills": [
+                 "VariableID:c97438616004f48d8e0f4f7d5794d01e0f75e05a/394:474"
+                ]
+               },
+               "fill": "fill_nll9eq"
+              }
+             ]
+            },
+            {
+             "id": "I2114:31129;2109:30151;309:3978",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 135,
+             "y": 14,
+             "width": 72,
+             "height": 24,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "Continue",
+             "textAlignHorizontal": "CENTER",
+             "fill": "fill_nll9eq",
+             "textStyle": "text_16e9vtq"
+            },
+            {
+             "id": "I2114:31129;2109:30151;309:3979",
+             "name": "heroicons-solid/chevron-right",
+             "type": "INSTANCE",
+             "visible": false,
+             "x": 189,
+             "y": 18,
+             "width": 20,
+             "height": 20,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "mainComponentId": "1:129",
+             "mainComponent": {
+              "id": "1:129",
+              "name": "heroicons-solid/chevron-right",
+              "key": "428341dede1ae4cd79bd64b40f66664464ae3150"
+             },
+             "children": [
+              {
+               "id": "I2114:31129;2109:30151;309:3979;309:1685",
+               "name": "Icon",
+               "type": "VECTOR",
+               "x": 6.249999046325684,
+               "y": 3.124999523162842,
+               "width": 7.500000953674316,
+               "height": 13.75,
+               "constraints": {
+                "horizontal": "SCALE",
+                "vertical": "SCALE"
+               },
+               "boundVariables": {
+                "fills": [
+                 "VariableID:c97438616004f48d8e0f4f7d5794d01e0f75e05a/394:474"
+                ]
+               },
+               "fill": "fill_nll9eq"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "I2114:31129;2109:30154",
+           "name": "Tertiary link",
+           "type": "INSTANCE",
+           "x": 140.5,
+           "y": 72,
+           "width": 109,
+           "height": 44,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP"
+           },
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "minHeight": 44,
+           "clipsContent": true,
+           "componentProperties": {
+            "Left Icon#309:6": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:131"
+            },
+            "Right Icon#309:5": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:129"
+            },
+            "Label#309:8": {
+             "type": "TEXT",
+             "value": "I'll fill it in myself"
+            },
+            "Show Left Icon#309:4": {
+             "type": "BOOLEAN",
+             "value": false
+            },
+            "Show Right Icon#309:7": {
+             "type": "BOOLEAN",
+             "value": false
+            },
+            "Type": {
+             "type": "VARIANT",
+             "value": "Text"
+            }
+           },
+           "mainComponentId": "1:149",
+           "mainComponent": {
+            "id": "1:149",
+            "name": "Type=Text",
+            "key": "ed044a482522ccf193743207ac244f7cc4648b51",
+            "componentSetId": "1:136",
+            "componentSetName": "Button"
+           },
+           "children": [
+            {
+             "id": "I2114:31129;2109:30154;331:5410",
+             "name": "heroicons-solid/chevron-left",
+             "type": "INSTANCE",
+             "visible": false,
+             "x": 0,
+             "y": 0,
+             "width": 24,
+             "height": 24,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "mainComponentId": "1:131",
+             "mainComponent": {
+              "id": "1:131",
+              "name": "heroicons-solid/chevron-left",
+              "key": "72ba17451143ba73cefad130ee48312c7756b9f0"
+             },
+             "deduped": true
+            },
+            {
+             "id": "I2114:31129;2109:30154;331:5411",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 11.5,
+             "width": 109,
+             "height": 21,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "I'll fill it in myself",
+             "textAlignHorizontal": "CENTER",
+             "styleIds": {
+              "text": "S:508e259292845ea3ba0539591982aa29753fcf40,523:7"
+             },
+             "fill": "fill_1n3g806",
+             "textStyle": "text_1wjvu5m"
+            },
+            {
+             "id": "I2114:31129;2109:30154;331:5412",
+             "name": "heroicons-solid/chevron-right",
+             "type": "INSTANCE",
+             "visible": false,
+             "x": 40,
+             "y": 0,
+             "width": 24,
+             "height": 24,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "mainComponentId": "1:129",
+             "mainComponent": {
+              "id": "1:129",
+              "name": "heroicons-solid/chevron-right",
+              "key": "428341dede1ae4cd79bd64b40f66664464ae3150"
+             },
+             "deduped": true
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "I2114:31129;2109:30152",
+         "name": "Home Indicator",
+         "type": "FRAME",
+         "x": 0,
+         "y": 120,
+         "width": 390,
+         "height": 21,
+         "fills": [],
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "I2114:31129;2109:30153",
+           "name": "Home Indicator",
+           "type": "RECTANGLE",
+           "x": 128,
+           "y": 8,
+           "width": 134,
+           "height": 5,
+           "cornerRadius": 100,
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "MIN"
+           },
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14165"
+            ]
+           },
+           "fill": "fill_1s3vosi"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2094:25215",
+     "name": "Scrim",
+     "type": "RECTANGLE",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 844,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "fill": "fill_19x4rpm"
+    },
+    {
+     "id": "2094:25216",
+     "name": "Sheet",
+     "type": "FRAME",
+     "x": 0,
+     "y": 590,
+     "width": 390,
+     "height": 254,
+     "cornerRadius": "mixed",
+     "cornerRadii": {
+      "topLeft": 24,
+      "topRight": 24,
+      "bottomRight": 0,
+      "bottomLeft": 0
+     },
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14163"
+      ]
+     },
+     "fill": "fill_nll9eq",
+     "children": [
+      {
+       "id": "2094:25217",
+       "name": "NEW · Sheet title \"Add a photo\" (code has no title)",
+       "type": "INSTANCE",
+       "x": 0,
+       "y": 0,
+       "width": 390,
+       "height": 73,
+       "cornerRadius": "mixed",
+       "cornerRadii": {
+        "topLeft": 24,
+        "topRight": 24,
+        "bottomRight": 0,
+        "bottomLeft": 0
+       },
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 8,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": false,
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14163"
+        ]
+       },
+       "componentProperties": {
+        "Show close#2071:25": {
+         "type": "BOOLEAN",
+         "value": false
+        },
+        "Title#2071:24": {
+         "type": "TEXT",
+         "value": "Add a photo"
+        }
+       },
+       "mainComponentId": "2071:14471",
+       "mainComponent": {
+        "id": "2071:14471",
+        "name": "Sheet header",
+        "key": "e05e9be498f8195cf63b3dc1d0aa3e3a82dcaf7b"
+       },
+       "fill": "fill_nll9eq",
+       "children": [
+        {
+         "id": "I2094:25217;2071:14472",
+         "name": "Grabber",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 390,
+         "height": 21,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 8,
+          "paddingRight": 0,
+          "paddingBottom": 8,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "I2094:25217;2071:14473",
+           "name": "Bar",
+           "type": "RECTANGLE",
+           "x": 173,
+           "y": 8,
+           "width": 44,
+           "height": 5,
+           "cornerRadius": 100,
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14162"
+            ]
+           },
+           "fill": "fill_w6fqb5"
+          }
+         ]
+        },
+        {
+         "id": "I2094:25217;2071:14474",
+         "name": "Header",
+         "type": "FRAME",
+         "x": 0,
+         "y": 21,
+         "width": 390,
+         "height": 44,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 12,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "I2094:25217;2071:14475",
+           "name": "Title",
+           "type": "TEXT",
+           "x": 24,
+           "y": 10,
+           "width": 342,
+           "height": 24,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutGrow": 1,
+           "characters": "Add a photo",
+           "textTruncation": "ENDING",
+           "maxLines": 1,
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14165"
+            ]
+           },
+           "fill": "fill_1s3vosi",
+           "textStyle": "text_5i882y"
+          },
+          {
+           "id": "I2094:25217;2071:14476",
+           "name": "Close",
+           "type": "INSTANCE",
+           "visible": false,
+           "x": 342,
+           "y": 10,
+           "width": 24,
+           "height": 24,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "1:3808",
+           "mainComponent": {
+            "id": "1:3808",
+            "name": "heroicons-outline/x-mark",
+            "key": "06f6277dedddff223111468b37bee28688ef91f0"
+           },
+           "children": [
+            {
+             "id": "I2094:25217;2071:14476;341:8882",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 6,
+             "y": 6,
+             "width": 12,
+             "height": 12,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "stroke": "fill_acfx0"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2094:25224",
+       "name": "Content (padding 0 24)",
+       "type": "FRAME",
+       "x": 0,
+       "y": 73,
+       "width": 390,
+       "height": 160,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 8,
+        "paddingRight": 24,
+        "paddingBottom": 24,
+        "paddingLeft": 24,
+        "itemSpacing": 8,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2094:25225",
+         "name": "Row · Take photo",
+         "type": "FRAME",
+         "x": 24,
+         "y": 8,
+         "width": 342,
+         "height": 60,
+         "cornerRadius": 12,
+         "fills": [],
+         "strokeWeight": 1,
+         "strokeAlign": "INSIDE",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 16,
+          "paddingBottom": 0,
+          "paddingLeft": 16,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "boundVariables": {
+          "strokes": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "stroke": "fill_w6fqb5",
+         "children": [
+          {
+           "id": "2094:25226",
+           "name": "heroicons-outline/Camera",
+           "type": "FRAME",
+           "x": 17,
+           "y": 18,
+           "width": 24,
+           "height": 24,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2094:25227",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 2.25,
+             "y": 3.7497947216033936,
+             "width": 19.5,
+             "height": 16.500205993652344,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "stroke": "fill_1s3vosi"
+            },
+            {
+             "id": "2094:25228",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 7.5,
+             "y": 8.25,
+             "width": 11.257999420166016,
+             "height": 9,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "stroke": "fill_1s3vosi"
+            }
+           ]
+          },
+          {
+           "id": "2094:25229",
+           "name": "Take photo",
+           "type": "TEXT",
+           "x": 57,
+           "y": 18,
+           "width": 86,
+           "height": 24,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "Take photo",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14165"
+            ]
+           },
+           "fill": "fill_1s3vosi",
+           "textStyle": "text_16e9vtq"
+          }
+         ]
+        },
+        {
+         "id": "2094:25230",
+         "name": "Row · Choose from gallery",
+         "type": "FRAME",
+         "x": 24,
+         "y": 76,
+         "width": 342,
+         "height": 60,
+         "cornerRadius": 12,
+         "fills": [],
+         "strokeWeight": 1,
+         "strokeAlign": "INSIDE",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 16,
+          "paddingBottom": 0,
+          "paddingLeft": 16,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "FIXED",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "boundVariables": {
+          "strokes": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "stroke": "fill_w6fqb5",
+         "children": [
+          {
+           "id": "2094:25231",
+           "name": "heroicons-outline/Photo",
+           "type": "FRAME",
+           "x": 17,
+           "y": 18,
+           "width": 24,
+           "height": 24,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2094:25232",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 2.25,
+             "y": 4.5,
+             "width": 19.5,
+             "height": 15,
+             "fills": [],
+             "strokeWeight": 1.5,
+             "strokeAlign": "CENTER",
+             "strokeCap": "ROUND",
+             "strokeJoin": "ROUND",
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "strokes": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "stroke": "fill_1s3vosi"
+            }
+           ]
+          },
+          {
+           "id": "2094:25233",
+           "name": "Choose from gallery",
+           "type": "TEXT",
+           "x": 57,
+           "y": 18,
+           "width": 156,
+           "height": 24,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "Choose from gallery",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14165"
+            ]
+           },
+           "fill": "fill_1s3vosi",
+           "textStyle": "text_16e9vtq"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2094:25234",
+       "name": "Home Indicator",
+       "type": "FRAME",
+       "x": 0,
+       "y": 233,
+       "width": 390,
+       "height": 21,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2094:25235",
+         "name": "Home Indicator",
+         "type": "RECTANGLE",
+         "x": 128,
+         "y": 8,
+         "width": 134,
+         "height": 5,
+         "cornerRadius": 100,
+         "constraints": {
+          "horizontal": "MIN",
+          "vertical": "MIN"
+         },
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14163": {
+   "name": "color/surface/default",
+   "type": "COLOR"
+  },
+  "VariableID:34abe88c0a84c614d02927ab00afcde5fb279ded/253:420": {
+   "name": "Primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14165": {
+   "name": "color/text/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14159": {
+   "name": "color/brand/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14162": {
+   "name": "color/border/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14167": {
+   "name": "color/text/tertiary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14166": {
+   "name": "color/text/secondary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14164": {
+   "name": "color/surface/muted",
+   "type": "COLOR"
+  },
+  "VariableID:c97438616004f48d8e0f4f7d5794d01e0f75e05a/394:474": {
+   "name": "Brand/OnPrimary",
+   "type": "COLOR"
+  }
+ },
+ "styles": {
+  "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493": {
+   "name": "Text - Light mode/Primary",
+   "type": "PAINT"
+  },
+  "S:508e259292845ea3ba0539591982aa29753fcf40,523:7": {
+   "name": "Body Small - Bold",
+   "type": "TEXT"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ],
+   "fill_1s3vosi": [
+    {
+     "type": "SOLID",
+     "color": "#000000"
+    }
+   ],
+   "text_5i882y": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Bold",
+    "fontSize": 18,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_1prthe7": [
+    {
+     "type": "SOLID",
+     "color": "#635BE8"
+    }
+   ],
+   "fill_w6fqb5": [
+    {
+     "type": "SOLID",
+     "color": "#E6E6E6"
+    }
+   ],
+   "fill_acfx0": [
+    {
+     "type": "SOLID",
+     "color": "#00000099"
+    }
+   ],
+   "text_15py5a9": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Medium",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   },
+   "text_1ff8wkp": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Bold",
+    "fontSize": 20,
+    "lineHeight": {
+     "value": 28,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_1jtzctu": [
+    {
+     "type": "SOLID",
+     "color": "#000000B2"
+    }
+   ],
+   "text_l60mqv": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "text_exm4rc": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_d2q9wm": [
+    {
+     "type": "SOLID",
+     "color": "#F2F2F2"
+    }
+   ],
+   "fill_1n3g806": [
+    {
+     "type": "SOLID",
+     "color": "#CAC8F7"
+    }
+   ],
+   "text_16e9vtq": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 16,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "text_1wjvu5m": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Bold",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 150,
+     "unit": "PERCENT"
+    }
+   },
+   "fill_19x4rpm": [
+    {
+     "type": "SOLID",
+     "color": "#00000066"
+    }
+   ]
+  }
+ },
+ "metrics": {
+  "nodeCount": 78,
+  "maxDepth": 8,
+  "styleCount": 16,
+  "tokenCount": 11,
+  "inlineSizeKb": 38.37,
+  "dedupedSizeKb": 32.56
+ }
+}

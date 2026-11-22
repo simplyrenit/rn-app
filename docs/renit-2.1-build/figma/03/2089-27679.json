@@ -1,0 +1,2202 @@
+{
+ "nodes": [
+  {
+   "id": "2089:27679",
+   "name": "category-landing · Empty",
+   "type": "FRAME",
+   "x": 1490,
+   "y": 120,
+   "width": 390,
+   "height": 844,
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": true,
+   "boundVariables": {
+    "fills": [
+     "VariableID:2071:14163"
+    ]
+   },
+   "fill": "fill_nll9eq",
+   "children": [
+    {
+     "id": "2089:27680",
+     "name": "Status Bar",
+     "type": "FRAME",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 54,
+     "fills": [],
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2089:27681",
+       "name": "Time",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 136.94656372070312,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2089:27682",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 50.610687255859375,
+         "y": 18.339622497558594,
+         "width": 37,
+         "height": 22,
+         "constraints": {
+          "horizontal": "SCALE",
+          "vertical": "SCALE"
+         },
+         "characters": "9:41",
+         "fontSize": 17,
+         "fontName": "mixed",
+         "lineHeight": {
+          "value": 22,
+          "unit": "PIXELS"
+         },
+         "textAlignHorizontal": "CENTER",
+         "segments": [
+          {
+           "characters": "9:41",
+           "start": 0,
+           "end": 4,
+           "fontName": {
+            "family": "SF Pro",
+            "style": "Semibold"
+           },
+           "fontSize": 17,
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000"
+            }
+           ],
+           "textDecoration": "NONE",
+           "textCase": "ORIGINAL",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           }
+          }
+         ],
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      },
+      {
+       "id": "2089:27683",
+       "name": "Levels",
+       "type": "FRAME",
+       "x": 248.0915985107422,
+       "y": 0,
+       "width": 141.9084014892578,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2089:27684",
+         "name": "Battery",
+         "type": "GROUP",
+         "x": 82,
+         "y": 23,
+         "width": 27.32803726196289,
+         "height": 13,
+         "children": [
+          {
+           "id": "2089:27685",
+           "name": "Border",
+           "type": "RECTANGLE",
+           "x": 82,
+           "y": 23,
+           "width": 25,
+           "height": 13,
+           "opacity": 0.3499999940395355,
+           "cornerRadius": 4.300000190734863,
+           "blendMode": "NORMAL",
+           "fills": [],
+           "strokeWeight": 1,
+           "strokeAlign": "INSIDE",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "stroke": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "stroke": "fill_1s3vosi"
+          },
+          {
+           "id": "2089:27686",
+           "name": "Cap",
+           "type": "VECTOR",
+           "x": 108,
+           "y": 27.7811279296875,
+           "width": 1.328037977218628,
+           "height": 4.075471878051758,
+           "opacity": 0.4000000059604645,
+           "blendMode": "NORMAL",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          },
+          {
+           "id": "2089:27687",
+           "name": "Capacity",
+           "type": "RECTANGLE",
+           "x": 84,
+           "y": 25,
+           "width": 21,
+           "height": 9,
+           "cornerRadius": 2.5,
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          }
+         ]
+        },
+        {
+         "id": "2089:27688",
+         "name": "Wifi",
+         "type": "VECTOR",
+         "x": 57.69922637939453,
+         "y": 23.63775634765625,
+         "width": 17.141666412353516,
+         "height": 12.328306198120117,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        },
+        {
+         "id": "2089:27689",
+         "name": "Cellular Connection",
+         "type": "VECTOR",
+         "x": 31,
+         "y": 23.535823822021484,
+         "width": 19.200000762939453,
+         "height": 12.226415634155273,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2089:27690",
+     "name": "Top bar",
+     "type": "INSTANCE",
+     "x": 0,
+     "y": 54,
+     "width": 390,
+     "height": 56,
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 0,
+      "paddingRight": 16,
+      "paddingBottom": 0,
+      "paddingLeft": 16,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "CENTER",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14163"
+      ]
+     },
+     "componentProperties": {
+      "Show trailing#2071:5": {
+       "type": "BOOLEAN",
+       "value": false
+      },
+      "Title#2071:4": {
+       "type": "TEXT",
+       "value": "Fitness & Sports"
+      },
+      "Type": {
+       "type": "VARIANT",
+       "value": "Back+Title"
+      }
+     },
+     "mainComponentId": "2071:14397",
+     "mainComponent": {
+      "id": "2071:14397",
+      "name": "Type=Back+Title",
+      "key": "2d86bc97ffd4ce7ca2691914aa60c114f9d130b4",
+      "componentSetId": "2071:14418",
+      "componentSetName": "Top bar"
+     },
+     "fill": "fill_nll9eq",
+     "children": [
+      {
+       "id": "I2089:27690;2071:14398",
+       "name": "Back",
+       "type": "INSTANCE",
+       "x": 16,
+       "y": 6,
+       "width": 44,
+       "height": 44,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "componentProperties": {
+        "Icon#602:12": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:7"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Regular"
+        }
+       },
+       "mainComponentId": "1:17",
+       "mainComponent": {
+        "id": "1:17",
+        "name": "Type=Regular",
+        "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+        "componentSetId": "1:16",
+        "componentSetName": "Icon Button"
+       },
+       "children": [
+        {
+         "id": "I2089:27690;2071:14398;602:8477",
+         "name": "heroicons-outline/arrow-left",
+         "type": "INSTANCE",
+         "x": 10,
+         "y": 10,
+         "width": 24,
+         "height": 24,
+         "fills": [],
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "CENTER"
+         },
+         "clipsContent": true,
+         "mainComponentId": "1:7",
+         "mainComponent": {
+          "id": "1:7",
+          "name": "heroicons-outline/arrow-left",
+          "key": "19dc99d1329bdca58d1d8eab3753f04d874fbe26"
+         },
+         "children": [
+          {
+           "id": "I2089:27690;2071:14398;602:8477;341:6186",
+           "name": "Icon",
+           "type": "VECTOR",
+           "x": 3,
+           "y": 4.5,
+           "width": 18,
+           "height": 15,
+           "fills": [],
+           "strokeWeight": 1.5,
+           "strokeAlign": "CENTER",
+           "strokeCap": "ROUND",
+           "strokeJoin": "ROUND",
+           "constraints": {
+            "horizontal": "SCALE",
+            "vertical": "SCALE"
+           },
+           "boundVariables": {
+            "strokes": [
+             "VariableID:34abe88c0a84c614d02927ab00afcde5fb279ded/253:420"
+            ]
+           },
+           "stroke": "fill_1s3vosi"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "I2089:27690;2071:14402",
+       "name": "Title",
+       "type": "TEXT",
+       "x": 72,
+       "y": 16,
+       "width": 302,
+       "height": 24,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutGrow": 1,
+       "characters": "Fitness & Sports",
+       "textTruncation": "ENDING",
+       "maxLines": 1,
+       "textAutoResize": "HEIGHT",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14165"
+        ]
+       },
+       "fill": "fill_1s3vosi",
+       "textStyle": "text_5i882y"
+      },
+      {
+       "id": "I2089:27690;2071:14403",
+       "name": "Trailing",
+       "type": "INSTANCE",
+       "visible": false,
+       "x": 330,
+       "y": 6,
+       "width": 44,
+       "height": 44,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "componentProperties": {
+        "Icon#602:12": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:3268"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Regular"
+        }
+       },
+       "mainComponentId": "1:17",
+       "mainComponent": {
+        "id": "1:17",
+        "name": "Type=Regular",
+        "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+        "componentSetId": "1:16",
+        "componentSetName": "Icon Button"
+       },
+       "deduped": true
+      }
+     ]
+    },
+    {
+     "id": "2089:27698",
+     "name": "Content",
+     "type": "FRAME",
+     "x": 0,
+     "y": 110,
+     "width": 390,
+     "height": 536,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 16,
+      "paddingRight": 0,
+      "paddingBottom": 32,
+      "paddingLeft": 0,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "children": [
+      {
+       "id": "2089:27699",
+       "name": "Sub-category grid · 4 columns",
+       "type": "FRAME",
+       "x": 0,
+       "y": 16,
+       "width": 390,
+       "height": 120,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 24,
+        "paddingBottom": 0,
+        "paddingLeft": 24,
+        "itemSpacing": 16,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2089:27700",
+         "name": "Row",
+         "type": "FRAME",
+         "x": 24,
+         "y": 0,
+         "width": 340,
+         "height": 52,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 12,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "HUG",
+         "layoutSizingVertical": "HUG",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:27705",
+           "name": "Sub-category · Tennis",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 76,
+           "height": 52,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:27703",
+             "name": "Tile",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 76,
+             "height": 52,
+             "cornerRadius": 12,
+             "strokeWeight": 1,
+             "strokeAlign": "INSIDE",
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 2,
+              "paddingBottom": 0,
+              "paddingLeft": 2,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14163"
+              ],
+              "strokes": [
+               "VariableID:2071:14162"
+              ]
+             },
+             "fill": "fill_nll9eq",
+             "stroke": "stroke_w6fqb5",
+             "children": [
+              {
+               "id": "2089:27704",
+               "name": "Tennis",
+               "type": "TEXT",
+               "x": 3,
+               "y": 1,
+               "width": 70,
+               "height": 50,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "FILL",
+               "layoutGrow": 1,
+               "layoutAlign": "STRETCH",
+               "characters": "Tennis",
+               "textAlignHorizontal": "CENTER",
+               "textAlignVertical": "CENTER",
+               "textAutoResize": "NONE",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14166"
+                ]
+               },
+               "fill": "fill_1jtzctu",
+               "textStyle": "text_15py5a9"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "2089:27710",
+           "name": "Sub-category · Badminton",
+           "type": "FRAME",
+           "x": 88,
+           "y": 0,
+           "width": 76,
+           "height": 52,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:27708",
+             "name": "Tile",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 76,
+             "height": 52,
+             "cornerRadius": 12,
+             "strokeWeight": 1,
+             "strokeAlign": "INSIDE",
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 2,
+              "paddingBottom": 0,
+              "paddingLeft": 2,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14163"
+              ],
+              "strokes": [
+               "VariableID:2071:14162"
+              ]
+             },
+             "fill": "fill_nll9eq",
+             "stroke": "stroke_w6fqb5",
+             "children": [
+              {
+               "id": "2089:27709",
+               "name": "Badminton",
+               "type": "TEXT",
+               "x": 3,
+               "y": 1,
+               "width": 70,
+               "height": 50,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "FILL",
+               "layoutGrow": 1,
+               "layoutAlign": "STRETCH",
+               "characters": "Badminton",
+               "textAlignHorizontal": "CENTER",
+               "textAlignVertical": "CENTER",
+               "textAutoResize": "NONE",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14166"
+                ]
+               },
+               "fill": "fill_1jtzctu",
+               "textStyle": "text_15py5a9"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "2089:27715",
+           "name": "Sub-category · Cricket",
+           "type": "FRAME",
+           "x": 176,
+           "y": 0,
+           "width": 76,
+           "height": 52,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:27713",
+             "name": "Tile",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 76,
+             "height": 52,
+             "cornerRadius": 12,
+             "strokeWeight": 1,
+             "strokeAlign": "INSIDE",
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 2,
+              "paddingBottom": 0,
+              "paddingLeft": 2,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14163"
+              ],
+              "strokes": [
+               "VariableID:2071:14162"
+              ]
+             },
+             "fill": "fill_nll9eq",
+             "stroke": "stroke_w6fqb5",
+             "children": [
+              {
+               "id": "2089:27714",
+               "name": "Cricket",
+               "type": "TEXT",
+               "x": 3,
+               "y": 1,
+               "width": 70,
+               "height": 50,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "FILL",
+               "layoutGrow": 1,
+               "layoutAlign": "STRETCH",
+               "characters": "Cricket",
+               "textAlignHorizontal": "CENTER",
+               "textAlignVertical": "CENTER",
+               "textAutoResize": "NONE",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14166"
+                ]
+               },
+               "fill": "fill_1jtzctu",
+               "textStyle": "text_15py5a9"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "2089:27720",
+           "name": "Sub-category · Football",
+           "type": "FRAME",
+           "x": 264,
+           "y": 0,
+           "width": 76,
+           "height": 52,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:27718",
+             "name": "Tile",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 76,
+             "height": 52,
+             "cornerRadius": 12,
+             "strokeWeight": 1,
+             "strokeAlign": "INSIDE",
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 2,
+              "paddingBottom": 0,
+              "paddingLeft": 2,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14163"
+              ],
+              "strokes": [
+               "VariableID:2071:14162"
+              ]
+             },
+             "fill": "fill_nll9eq",
+             "stroke": "stroke_w6fqb5",
+             "children": [
+              {
+               "id": "2089:27719",
+               "name": "Football",
+               "type": "TEXT",
+               "x": 3,
+               "y": 1,
+               "width": 70,
+               "height": 50,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "FILL",
+               "layoutGrow": 1,
+               "layoutAlign": "STRETCH",
+               "characters": "Football",
+               "textAlignHorizontal": "CENTER",
+               "textAlignVertical": "CENTER",
+               "textAutoResize": "NONE",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14166"
+                ]
+               },
+               "fill": "fill_1jtzctu",
+               "textStyle": "text_15py5a9"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2089:27721",
+         "name": "Row",
+         "type": "FRAME",
+         "x": 24,
+         "y": 68,
+         "width": 340,
+         "height": 52,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 12,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "HUG",
+         "layoutSizingVertical": "HUG",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:27726",
+           "name": "Sub-category · Gym",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 76,
+           "height": 52,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:27724",
+             "name": "Tile",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 76,
+             "height": 52,
+             "cornerRadius": 12,
+             "strokeWeight": 1,
+             "strokeAlign": "INSIDE",
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 2,
+              "paddingBottom": 0,
+              "paddingLeft": 2,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14163"
+              ],
+              "strokes": [
+               "VariableID:2071:14162"
+              ]
+             },
+             "fill": "fill_nll9eq",
+             "stroke": "stroke_w6fqb5",
+             "children": [
+              {
+               "id": "2089:27725",
+               "name": "Gym",
+               "type": "TEXT",
+               "x": 3,
+               "y": 1,
+               "width": 70,
+               "height": 50,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "FILL",
+               "layoutGrow": 1,
+               "layoutAlign": "STRETCH",
+               "characters": "Gym",
+               "textAlignHorizontal": "CENTER",
+               "textAlignVertical": "CENTER",
+               "textAutoResize": "NONE",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14166"
+                ]
+               },
+               "fill": "fill_1jtzctu",
+               "textStyle": "text_15py5a9"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "2089:27731",
+           "name": "Sub-category · Cycle",
+           "type": "FRAME",
+           "x": 88,
+           "y": 0,
+           "width": 76,
+           "height": 52,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:27729",
+             "name": "Tile",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 76,
+             "height": 52,
+             "cornerRadius": 12,
+             "strokeWeight": 1,
+             "strokeAlign": "INSIDE",
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 2,
+              "paddingBottom": 0,
+              "paddingLeft": 2,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14163"
+              ],
+              "strokes": [
+               "VariableID:2071:14162"
+              ]
+             },
+             "fill": "fill_nll9eq",
+             "stroke": "stroke_w6fqb5",
+             "children": [
+              {
+               "id": "2089:27730",
+               "name": "Cycle",
+               "type": "TEXT",
+               "x": 3,
+               "y": 1,
+               "width": 70,
+               "height": 50,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "FILL",
+               "layoutGrow": 1,
+               "layoutAlign": "STRETCH",
+               "characters": "Cycle",
+               "textAlignHorizontal": "CENTER",
+               "textAlignVertical": "CENTER",
+               "textAutoResize": "NONE",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14166"
+                ]
+               },
+               "fill": "fill_1jtzctu",
+               "textStyle": "text_15py5a9"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "2089:27736",
+           "name": "Sub-category · Boxing & martial arts",
+           "type": "FRAME",
+           "x": 176,
+           "y": 0,
+           "width": 76,
+           "height": 52,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:27734",
+             "name": "Tile",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 76,
+             "height": 52,
+             "cornerRadius": 12,
+             "strokeWeight": 1,
+             "strokeAlign": "INSIDE",
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 2,
+              "paddingBottom": 0,
+              "paddingLeft": 2,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14163"
+              ],
+              "strokes": [
+               "VariableID:2071:14162"
+              ]
+             },
+             "fill": "fill_nll9eq",
+             "stroke": "stroke_w6fqb5",
+             "children": [
+              {
+               "id": "2089:27735",
+               "name": "Boxing & martial arts",
+               "type": "TEXT",
+               "x": 3,
+               "y": 1,
+               "width": 70,
+               "height": 50,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "FILL",
+               "layoutGrow": 1,
+               "layoutAlign": "STRETCH",
+               "characters": "Boxing & martial arts",
+               "textAlignHorizontal": "CENTER",
+               "textAlignVertical": "CENTER",
+               "textAutoResize": "NONE",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14166"
+                ]
+               },
+               "fill": "fill_1jtzctu",
+               "textStyle": "text_15py5a9"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "2089:27741",
+           "name": "Sub-category · Board games",
+           "type": "FRAME",
+           "x": 264,
+           "y": 0,
+           "width": 76,
+           "height": 52,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:27739",
+             "name": "Tile",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 76,
+             "height": 52,
+             "cornerRadius": 12,
+             "strokeWeight": 1,
+             "strokeAlign": "INSIDE",
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 2,
+              "paddingBottom": 0,
+              "paddingLeft": 2,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14163"
+              ],
+              "strokes": [
+               "VariableID:2071:14162"
+              ]
+             },
+             "fill": "fill_nll9eq",
+             "stroke": "stroke_w6fqb5",
+             "children": [
+              {
+               "id": "2089:27740",
+               "name": "Board games",
+               "type": "TEXT",
+               "x": 3,
+               "y": 1,
+               "width": 70,
+               "height": 50,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "FILL",
+               "layoutGrow": 1,
+               "layoutAlign": "STRETCH",
+               "characters": "Board games",
+               "textAlignHorizontal": "CENTER",
+               "textAlignVertical": "CENTER",
+               "textAutoResize": "NONE",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14166"
+                ]
+               },
+               "fill": "fill_1jtzctu",
+               "textStyle": "text_15py5a9"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2089:27742",
+       "name": "Near you",
+       "type": "FRAME",
+       "x": 0,
+       "y": 136,
+       "width": 390,
+       "height": 108,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 32,
+        "paddingRight": 24,
+        "paddingBottom": 0,
+        "paddingLeft": 24,
+        "itemSpacing": 12,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2089:27743",
+         "name": "Section header",
+         "type": "INSTANCE",
+         "x": 24,
+         "y": 32,
+         "width": 342,
+         "height": 24,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 12,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": false,
+         "componentProperties": {
+          "Link#2073:6": {
+           "type": "TEXT",
+           "value": "See all"
+          },
+          "Show link#2073:7": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Title#2073:5": {
+           "type": "TEXT",
+           "value": "Near you"
+          }
+         },
+         "mainComponentId": "2073:14341",
+         "mainComponent": {
+          "id": "2073:14341",
+          "name": "Section header",
+          "key": "8e24cf7a4f907935ee952b35eda1e5cb1928a9c2"
+         },
+         "children": [
+          {
+           "id": "I2089:27743;2073:14342",
+           "name": "Title",
+           "type": "TEXT",
+           "x": 0,
+           "y": 0,
+           "width": 342,
+           "height": 24,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutGrow": 1,
+           "characters": "Near you",
+           "textTruncation": "ENDING",
+           "maxLines": 1,
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14165"
+            ]
+           },
+           "fill": "fill_1s3vosi",
+           "textStyle": "text_5i882y"
+          },
+          {
+           "id": "I2089:27743;2073:14343",
+           "name": "See all",
+           "type": "TEXT",
+           "visible": false,
+           "x": 298,
+           "y": 2,
+           "width": 44,
+           "height": 20,
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "characters": "See all",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14159"
+            ]
+           },
+           "fill": "fill_1prthe7",
+           "textStyle": "text_1ryrdh0"
+          }
+         ]
+        },
+        {
+         "id": "2089:27754",
+         "name": "Filter bar",
+         "type": "FRAME",
+         "x": 24,
+         "y": 68,
+         "width": 252,
+         "height": 40,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 8,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "HUG",
+         "layoutSizingVertical": "HUG",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:27746",
+           "name": "Filter pill · Filters",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 99,
+           "height": 40,
+           "cornerRadius": 12,
+           "strokeWeight": 1,
+           "strokeAlign": "INSIDE",
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 16,
+            "paddingBottom": 0,
+            "paddingLeft": 16,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14163"
+            ],
+            "strokes": [
+             "VariableID:2071:14162"
+            ]
+           },
+           "fill": "fill_nll9eq",
+           "stroke": "stroke_w6fqb5",
+           "children": [
+            {
+             "id": "2089:27747",
+             "name": "icon/AdjustmentsHorizontal",
+             "type": "INSTANCE",
+             "x": 17,
+             "y": 12,
+             "width": 16,
+             "height": 16,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "mainComponentId": "2089:24443",
+             "mainComponent": {
+              "id": "2089:24443",
+              "name": "icon/AdjustmentsHorizontal",
+              "key": "0b490d47091459449229c98da6a98788d80612cb"
+             },
+             "children": [
+              {
+               "id": "I2089:27747;2089:24442",
+               "name": "Vector",
+               "type": "VECTOR",
+               "x": 2.5,
+               "y": 3,
+               "width": 11,
+               "height": 10,
+               "fills": [],
+               "strokeWeight": 1.5,
+               "strokeAlign": "CENTER",
+               "strokeCap": "ROUND",
+               "strokeJoin": "ROUND",
+               "constraints": {
+                "horizontal": "SCALE",
+                "vertical": "SCALE"
+               },
+               "boundVariables": {
+                "strokes": [
+                 "VariableID:2071:14165"
+                ]
+               },
+               "stroke": "fill_1s3vosi"
+              }
+             ]
+            },
+            {
+             "id": "2089:27749",
+             "name": "Filters",
+             "type": "TEXT",
+             "x": 41,
+             "y": 10,
+             "width": 41,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "Filters",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_8g6dbu"
+            }
+           ]
+          },
+          {
+           "id": "2089:27750",
+           "name": "Filter pill · Sort",
+           "type": "FRAME",
+           "x": 107,
+           "y": 0,
+           "width": 63,
+           "height": 40,
+           "cornerRadius": 12,
+           "strokeWeight": 1,
+           "strokeAlign": "INSIDE",
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 16,
+            "paddingBottom": 0,
+            "paddingLeft": 16,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14163"
+            ],
+            "strokes": [
+             "VariableID:2071:14162"
+            ]
+           },
+           "fill": "fill_nll9eq",
+           "stroke": "stroke_w6fqb5",
+           "children": [
+            {
+             "id": "2089:27751",
+             "name": "Sort",
+             "type": "TEXT",
+             "x": 17,
+             "y": 10,
+             "width": 29,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "Sort",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_8g6dbu"
+            }
+           ]
+          },
+          {
+           "id": "2089:27752",
+           "name": "Filter pill · Dates",
+           "type": "FRAME",
+           "x": 178,
+           "y": 0,
+           "width": 74,
+           "height": 40,
+           "cornerRadius": 12,
+           "strokeWeight": 1,
+           "strokeAlign": "INSIDE",
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 16,
+            "paddingBottom": 0,
+            "paddingLeft": 16,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14163"
+            ],
+            "strokes": [
+             "VariableID:2071:14162"
+            ]
+           },
+           "fill": "fill_nll9eq",
+           "stroke": "stroke_w6fqb5",
+           "children": [
+            {
+             "id": "2089:27753",
+             "name": "Dates",
+             "type": "TEXT",
+             "x": 17,
+             "y": 10,
+             "width": 40,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "Dates",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_8g6dbu"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2089:27770",
+       "name": "Empty",
+       "type": "FRAME",
+       "x": 0,
+       "y": 244,
+       "width": 390,
+       "height": 260,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 48,
+        "paddingRight": 24,
+        "paddingBottom": 0,
+        "paddingLeft": 24,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2089:27755",
+         "name": "Empty state",
+         "type": "INSTANCE",
+         "x": 24,
+         "y": 48,
+         "width": 342,
+         "height": 212,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 24,
+          "paddingRight": 0,
+          "paddingBottom": 24,
+          "paddingLeft": 0,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "HUG",
+         "clipsContent": false,
+         "componentProperties": {
+          "Body#2074:43": {
+           "type": "TEXT",
+           "value": "Nobody near you lists anything in Fitness & Sports yet."
+          },
+          "Title#2074:42": {
+           "type": "TEXT",
+           "value": "Nothing near you yet"
+          },
+          "Show action#2074:44": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Icon#2074:41": {
+           "type": "INSTANCE_SWAP",
+           "value": "2089:24468"
+          }
+         },
+         "mainComponentId": "2074:14392",
+         "mainComponent": {
+          "id": "2074:14392",
+          "name": "Empty state",
+          "key": "bd2f0d112f97f30cd8ddd6063a7d95d04776ba0e"
+         },
+         "children": [
+          {
+           "id": "I2089:27755;2074:14393",
+           "name": "Icon circle",
+           "type": "FRAME",
+           "x": 131,
+           "y": 24,
+           "width": 80,
+           "height": 80,
+           "cornerRadius": 40,
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14160"
+            ]
+           },
+           "fill": "fill_rjbcqp",
+           "children": [
+            {
+             "id": "I2089:27755;2074:14394",
+             "name": "Icon",
+             "type": "INSTANCE",
+             "x": 24,
+             "y": 24,
+             "width": 32,
+             "height": 32,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "mainComponentId": "2089:24468",
+             "mainComponent": {
+              "id": "2089:24468",
+              "name": "icon/MapPin",
+              "key": "e947761be42a8634f14bd508eff2e98fed498f9d"
+             },
+             "children": [
+              {
+               "id": "I2089:27755;2074:14394;2089:24466",
+               "name": "Vector",
+               "type": "VECTOR",
+               "x": 12,
+               "y": 10,
+               "width": 8,
+               "height": 8,
+               "fills": [],
+               "strokeWeight": 1.5,
+               "strokeAlign": "CENTER",
+               "strokeCap": "ROUND",
+               "strokeJoin": "ROUND",
+               "constraints": {
+                "horizontal": "SCALE",
+                "vertical": "SCALE"
+               },
+               "boundVariables": {
+                "strokes": [
+                 "VariableID:2071:14165"
+                ]
+               },
+               "stroke": "fill_1s3vosi"
+              },
+              {
+               "id": "I2089:27755;2074:14394;2089:24467",
+               "name": "Vector",
+               "type": "VECTOR",
+               "x": 6,
+               "y": 4,
+               "width": 20,
+               "height": 25,
+               "fills": [],
+               "strokeWeight": 1.5,
+               "strokeAlign": "CENTER",
+               "strokeCap": "ROUND",
+               "strokeJoin": "ROUND",
+               "constraints": {
+                "horizontal": "SCALE",
+                "vertical": "SCALE"
+               },
+               "boundVariables": {
+                "strokes": [
+                 "VariableID:2071:14165"
+                ]
+               },
+               "stroke": "fill_1s3vosi"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "I2089:27755;2074:14396",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 0,
+           "y": 120,
+           "width": 342,
+           "height": 68,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "I2089:27755;2074:14397",
+             "name": "Title",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 342,
+             "height": 24,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "characters": "Nothing near you yet",
+             "textAlignHorizontal": "CENTER",
+             "textAutoResize": "HEIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_5i882y"
+            },
+            {
+             "id": "I2089:27755;2074:14398",
+             "name": "Body",
+             "type": "TEXT",
+             "x": 0,
+             "y": 28,
+             "width": 342,
+             "height": 40,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "characters": "Nobody near you lists anything in Fitness & Sports yet.",
+             "textAlignHorizontal": "CENTER",
+             "textAutoResize": "HEIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14166"
+              ]
+             },
+             "fill": "fill_1jtzctu",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          },
+          {
+           "id": "I2089:27755;2074:14399",
+           "name": "Action",
+           "type": "INSTANCE",
+           "visible": false,
+           "x": 105,
+           "y": 184,
+           "width": 132,
+           "height": 44,
+           "cornerRadius": 12,
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 20,
+            "paddingBottom": 0,
+            "paddingLeft": 20,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP"
+           },
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": false,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14160"
+            ]
+           },
+           "componentProperties": {
+            "Left Icon#309:6": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:131"
+            },
+            "Right Icon#309:5": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:129"
+            },
+            "Label#309:8": {
+             "type": "TEXT",
+             "value": "Browse items"
+            },
+            "Show Left Icon#309:4": {
+             "type": "BOOLEAN",
+             "value": false
+            },
+            "Show Right Icon#309:7": {
+             "type": "BOOLEAN",
+             "value": false
+            },
+            "Type": {
+             "type": "VARIANT",
+             "value": "Secondary"
+            }
+           },
+           "mainComponentId": "1:141",
+           "mainComponent": {
+            "id": "1:141",
+            "name": "Type=Secondary",
+            "key": "5fbd635430b7a7da4c06f10bd48a1201e977d0a8",
+            "componentSetId": "1:136",
+            "componentSetName": "Button"
+           },
+           "fill": "fill_rjbcqp",
+           "effect": "effect_1rc2i7z",
+           "children": [
+            {
+             "id": "I2089:27755;2074:14399;309:3550",
+             "name": "heroicons-solid/chevron-left",
+             "type": "INSTANCE",
+             "visible": false,
+             "x": 133,
+             "y": 16,
+             "width": 24,
+             "height": 24,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "mainComponentId": "1:131",
+             "mainComponent": {
+              "id": "1:131",
+              "name": "heroicons-solid/chevron-left",
+              "key": "72ba17451143ba73cefad130ee48312c7756b9f0"
+             },
+             "children": [
+              {
+               "id": "I2089:27755;2074:14399;309:3550;309:1676",
+               "name": "Icon",
+               "type": "VECTOR",
+               "x": 7.5,
+               "y": 3.749999523162842,
+               "width": 9,
+               "height": 16.5,
+               "constraints": {
+                "horizontal": "SCALE",
+                "vertical": "SCALE"
+               },
+               "styleIds": {
+                "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+               },
+               "fill": "fill_1s3vosi"
+              }
+             ]
+            },
+            {
+             "id": "I2089:27755;2074:14399;309:3551",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 20,
+             "y": 12,
+             "width": 92,
+             "height": 20,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "Browse items",
+             "textAlignHorizontal": "CENTER",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14159"
+              ]
+             },
+             "fill": "fill_1prthe7",
+             "textStyle": "text_1ryrdh0"
+            },
+            {
+             "id": "I2089:27755;2074:14399;309:3552",
+             "name": "heroicons-solid/chevron-right",
+             "type": "INSTANCE",
+             "visible": false,
+             "x": 187,
+             "y": 16,
+             "width": 24,
+             "height": 24,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "mainComponentId": "1:129",
+             "mainComponent": {
+              "id": "1:129",
+              "name": "heroicons-solid/chevron-right",
+              "key": "428341dede1ae4cd79bd64b40f66664464ae3150"
+             },
+             "children": [
+              {
+               "id": "I2089:27755;2074:14399;309:3552;309:1685",
+               "name": "Icon",
+               "type": "VECTOR",
+               "x": 7.499999046325684,
+               "y": 3.749999523162842,
+               "width": 9.000000953674316,
+               "height": 16.5,
+               "constraints": {
+                "horizontal": "SCALE",
+                "vertical": "SCALE"
+               },
+               "styleIds": {
+                "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+               },
+               "fill": "fill_1s3vosi"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2089:27771",
+     "name": "Home Indicator",
+     "type": "RECTANGLE",
+     "x": 128,
+     "y": 831,
+     "width": 134,
+     "height": 5,
+     "cornerRadius": 100,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14165"
+      ]
+     },
+     "fill": "fill_1s3vosi"
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14163": {
+   "name": "color/surface/default",
+   "type": "COLOR"
+  },
+  "VariableID:34abe88c0a84c614d02927ab00afcde5fb279ded/253:420": {
+   "name": "Primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14165": {
+   "name": "color/text/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14162": {
+   "name": "color/border/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14166": {
+   "name": "color/text/secondary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14159": {
+   "name": "color/brand/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14160": {
+   "name": "color/brand/tint",
+   "type": "COLOR"
+  }
+ },
+ "styles": {
+  "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493": {
+   "name": "Text - Light mode/Primary",
+   "type": "PAINT"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ],
+   "fill_1s3vosi": [
+    {
+     "type": "SOLID",
+     "color": "#000000"
+    }
+   ],
+   "text_5i882y": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Bold",
+    "fontSize": 18,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "stroke_w6fqb5": [
+    {
+     "type": "SOLID",
+     "color": "#E6E6E6"
+    }
+   ],
+   "fill_1jtzctu": [
+    {
+     "type": "SOLID",
+     "color": "#000000B2"
+    }
+   ],
+   "text_15py5a9": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Medium",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_1prthe7": [
+    {
+     "type": "SOLID",
+     "color": "#635BE8"
+    }
+   ],
+   "text_1ryrdh0": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "text_8g6dbu": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Medium",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_rjbcqp": [
+    {
+     "type": "SOLID",
+     "color": "#EDEDFC"
+    }
+   ],
+   "text_l60mqv": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "effect_1rc2i7z": [
+    {
+     "type": "DROP_SHADOW",
+     "color": "#0000000A",
+     "offset": {
+      "x": 0,
+      "y": 0
+     },
+     "radius": 4,
+     "spread": 2
+    }
+   ]
+  }
+ },
+ "metrics": {
+  "nodeCount": 74,
+  "maxDepth": 7,
+  "styleCount": 12,
+  "tokenCount": 8,
+  "inlineSizeKb": 40.47,
+  "dedupedSizeKb": 32.8
+ }
+}

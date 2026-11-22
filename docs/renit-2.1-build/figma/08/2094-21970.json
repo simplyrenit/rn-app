@@ -1,0 +1,1175 @@
+{
+ "nodes": [
+  {
+   "id": "2094:21970",
+   "name": "product-picker-sheet · your items (full-screen modal)",
+   "type": "FRAME",
+   "x": 4780,
+   "y": 120,
+   "width": 390,
+   "height": 844,
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": true,
+   "boundVariables": {
+    "fills": [
+     "VariableID:2071:14163"
+    ]
+   },
+   "fill": "fill_nll9eq",
+   "children": [
+    {
+     "id": "2094:21971",
+     "name": "Status Bar",
+     "type": "FRAME",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 54,
+     "fills": [],
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2094:21972",
+       "name": "Time",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 136.94656372070312,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2094:21973",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 50.610687255859375,
+         "y": 18.339622497558594,
+         "width": 37,
+         "height": 22,
+         "constraints": {
+          "horizontal": "SCALE",
+          "vertical": "SCALE"
+         },
+         "characters": "9:41",
+         "fontSize": 17,
+         "fontName": "mixed",
+         "lineHeight": {
+          "value": 22,
+          "unit": "PIXELS"
+         },
+         "textAlignHorizontal": "CENTER",
+         "segments": [
+          {
+           "characters": "9:41",
+           "start": 0,
+           "end": 4,
+           "fontName": {
+            "family": "SF Pro",
+            "style": "Semibold"
+           },
+           "fontSize": 17,
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000"
+            }
+           ],
+           "textDecoration": "NONE",
+           "textCase": "ORIGINAL",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           }
+          }
+         ],
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      },
+      {
+       "id": "2094:21974",
+       "name": "Levels",
+       "type": "FRAME",
+       "x": 248.0915985107422,
+       "y": 0,
+       "width": 141.9084014892578,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2094:21975",
+         "name": "Battery",
+         "type": "GROUP",
+         "x": 82,
+         "y": 23,
+         "width": 27.32803726196289,
+         "height": 13,
+         "children": [
+          {
+           "id": "2094:21976",
+           "name": "Border",
+           "type": "RECTANGLE",
+           "x": 82,
+           "y": 23,
+           "width": 25,
+           "height": 13,
+           "opacity": 0.3499999940395355,
+           "cornerRadius": 4.300000190734863,
+           "blendMode": "NORMAL",
+           "fills": [],
+           "strokeWeight": 1,
+           "strokeAlign": "INSIDE",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "stroke": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "stroke": "fill_1s3vosi"
+          },
+          {
+           "id": "2094:21977",
+           "name": "Cap",
+           "type": "VECTOR",
+           "x": 108,
+           "y": 27.7811279296875,
+           "width": 1.328037977218628,
+           "height": 4.075471878051758,
+           "opacity": 0.4000000059604645,
+           "blendMode": "NORMAL",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          },
+          {
+           "id": "2094:21978",
+           "name": "Capacity",
+           "type": "RECTANGLE",
+           "x": 84,
+           "y": 25,
+           "width": 21,
+           "height": 9,
+           "cornerRadius": 2.5,
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          }
+         ]
+        },
+        {
+         "id": "2094:21979",
+         "name": "Wifi",
+         "type": "VECTOR",
+         "x": 57.69922637939453,
+         "y": 23.63775634765625,
+         "width": 17.141666412353516,
+         "height": 12.328306198120117,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        },
+        {
+         "id": "2094:21980",
+         "name": "Cellular Connection",
+         "type": "VECTOR",
+         "x": 31,
+         "y": 23.535823822021484,
+         "width": 19.200000762939453,
+         "height": 12.226415634155273,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2094:21981",
+     "name": "Search header",
+     "type": "FRAME",
+     "x": 0,
+     "y": 54,
+     "width": 390,
+     "height": 80,
+     "fills": [],
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 16,
+      "paddingRight": 24,
+      "paddingBottom": 16,
+      "paddingLeft": 24,
+      "itemSpacing": 8,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "CENTER",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "children": [
+      {
+       "id": "2094:21982",
+       "name": "Search field",
+       "type": "FRAME",
+       "x": 24,
+       "y": 16,
+       "width": 290,
+       "height": 48,
+       "cornerRadius": 12,
+       "strokeWeight": 1,
+       "strokeAlign": "INSIDE",
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 0,
+        "paddingRight": 16,
+        "paddingBottom": 0,
+        "paddingLeft": 16,
+        "itemSpacing": 8,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutGrow": 1,
+       "clipsContent": true,
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14163"
+        ],
+        "strokes": [
+         "VariableID:2071:14159"
+        ]
+       },
+       "fill": "fill_nll9eq",
+       "stroke": "stroke_1prthe7",
+       "children": [
+        {
+         "id": "2094:21983",
+         "name": "icon/search",
+         "type": "INSTANCE",
+         "x": 17,
+         "y": 14,
+         "width": 20,
+         "height": 20,
+         "fills": [],
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "mainComponentId": "1:1227",
+         "mainComponent": {
+          "id": "1:1227",
+          "name": "heroicons-outline/magnifying-glass",
+          "key": "b2f9316e223fd2662aa8cc5fd1716c2d4bbb001b"
+         },
+         "children": [
+          {
+           "id": "I2094:21983;341:7955",
+           "name": "Icon",
+           "type": "VECTOR",
+           "x": 2.5,
+           "y": 2.5,
+           "width": 15,
+           "height": 15,
+           "fills": [],
+           "strokeWeight": 1.5,
+           "strokeAlign": "CENTER",
+           "strokeCap": "ROUND",
+           "strokeJoin": "ROUND",
+           "constraints": {
+            "horizontal": "SCALE",
+            "vertical": "SCALE"
+           },
+           "boundVariables": {
+            "strokes": [
+             "VariableID:2071:14167"
+            ]
+           },
+           "stroke": "stroke_acfx0"
+          }
+         ]
+        },
+        {
+         "id": "2094:21985",
+         "name": "Search your items",
+         "type": "TEXT",
+         "x": 45,
+         "y": 12,
+         "width": 228,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "characters": "Search your items",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14167"
+          ]
+         },
+         "fill": "stroke_acfx0",
+         "textStyle": "text_1u8a8v1"
+        }
+       ]
+      },
+      {
+       "id": "2094:21986",
+       "name": "Close",
+       "type": "FRAME",
+       "x": 322,
+       "y": 18,
+       "width": 44,
+       "height": 44,
+       "fills": [],
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "CENTER",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2094:21987",
+         "name": "icon/x",
+         "type": "INSTANCE",
+         "x": 10,
+         "y": 10,
+         "width": 24,
+         "height": 24,
+         "fills": [],
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "mainComponentId": "1:3808",
+         "mainComponent": {
+          "id": "1:3808",
+          "name": "heroicons-outline/x-mark",
+          "key": "06f6277dedddff223111468b37bee28688ef91f0"
+         },
+         "children": [
+          {
+           "id": "I2094:21987;341:8882",
+           "name": "Icon",
+           "type": "VECTOR",
+           "x": 6,
+           "y": 6,
+           "width": 12,
+           "height": 12,
+           "fills": [],
+           "strokeWeight": 1.5,
+           "strokeAlign": "CENTER",
+           "strokeCap": "ROUND",
+           "strokeJoin": "ROUND",
+           "constraints": {
+            "horizontal": "SCALE",
+            "vertical": "SCALE"
+           },
+           "boundVariables": {
+            "strokes": [
+             "VariableID:2071:14165"
+            ]
+           },
+           "stroke": "fill_1s3vosi"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2094:21989",
+     "name": "Items list",
+     "type": "FRAME",
+     "x": 0,
+     "y": 134,
+     "width": 390,
+     "height": 548,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 24,
+      "paddingBottom": 24,
+      "paddingLeft": 24,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "children": [
+      {
+       "id": "2094:21990",
+       "name": "Item · Canon EOS R6 Mark II",
+       "type": "FRAME",
+       "x": 24,
+       "y": 0,
+       "width": 342,
+       "height": 74,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 14,
+        "paddingRight": 0,
+        "paddingBottom": 14,
+        "paddingLeft": 0,
+        "itemSpacing": 2,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2094:21991",
+         "name": "Canon EOS R6 Mark II",
+         "type": "TEXT",
+         "x": 0,
+         "y": 14,
+         "width": 342,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Canon EOS R6 Mark II",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_16e9vtq"
+        },
+        {
+         "id": "2094:21992",
+         "name": "CAN-R6 · 3 in stock",
+         "type": "TEXT",
+         "x": 0,
+         "y": 40,
+         "width": 342,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "CAN-R6 · 3 in stock",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14166"
+          ]
+         },
+         "fill": "fill_1jtzctu",
+         "textStyle": "text_l60mqv"
+        }
+       ]
+      },
+      {
+       "id": "2094:21993",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 24,
+       "y": 74,
+       "width": 342,
+       "height": 1,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_w6fqb5"
+      },
+      {
+       "id": "2094:21994",
+       "name": "Item · Sony A7 IV mirrorless camera",
+       "type": "FRAME",
+       "x": 24,
+       "y": 75,
+       "width": 342,
+       "height": 74,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 14,
+        "paddingRight": 0,
+        "paddingBottom": 14,
+        "paddingLeft": 0,
+        "itemSpacing": 2,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2094:21995",
+         "name": "Sony A7 IV mirrorless camera",
+         "type": "TEXT",
+         "x": 0,
+         "y": 14,
+         "width": 342,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Sony A7 IV mirrorless camera",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_16e9vtq"
+        },
+        {
+         "id": "2094:21996",
+         "name": "SNY-A7 · 3 in stock",
+         "type": "TEXT",
+         "x": 0,
+         "y": 40,
+         "width": 342,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "SNY-A7 · 3 in stock",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14166"
+          ]
+         },
+         "fill": "fill_1jtzctu",
+         "textStyle": "text_l60mqv"
+        }
+       ]
+      },
+      {
+       "id": "2094:21997",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 24,
+       "y": 149,
+       "width": 342,
+       "height": 1,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_w6fqb5"
+      },
+      {
+       "id": "2094:21998",
+       "name": "Item · Electric guitar",
+       "type": "FRAME",
+       "x": 24,
+       "y": 150,
+       "width": 342,
+       "height": 74,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 14,
+        "paddingRight": 0,
+        "paddingBottom": 14,
+        "paddingLeft": 0,
+        "itemSpacing": 2,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2094:21999",
+         "name": "Electric guitar",
+         "type": "TEXT",
+         "x": 0,
+         "y": 14,
+         "width": 342,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Electric guitar",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_16e9vtq"
+        },
+        {
+         "id": "2094:22000",
+         "name": "GTR-01 · 1 in stock",
+         "type": "TEXT",
+         "x": 0,
+         "y": 40,
+         "width": 342,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "GTR-01 · 1 in stock",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14166"
+          ]
+         },
+         "fill": "fill_1jtzctu",
+         "textStyle": "text_l60mqv"
+        }
+       ]
+      },
+      {
+       "id": "2094:22001",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 24,
+       "y": 224,
+       "width": 342,
+       "height": 1,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_w6fqb5"
+      },
+      {
+       "id": "2094:22002",
+       "name": "Item · Epson projector",
+       "type": "FRAME",
+       "x": 24,
+       "y": 225,
+       "width": 342,
+       "height": 74,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 14,
+        "paddingRight": 0,
+        "paddingBottom": 14,
+        "paddingLeft": 0,
+        "itemSpacing": 2,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2094:22003",
+         "name": "Epson projector",
+         "type": "TEXT",
+         "x": 0,
+         "y": 14,
+         "width": 342,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Epson projector",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_16e9vtq"
+        },
+        {
+         "id": "2094:22004",
+         "name": "EPS-02 · 2 in stock",
+         "type": "TEXT",
+         "x": 0,
+         "y": 40,
+         "width": 342,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "EPS-02 · 2 in stock",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14166"
+          ]
+         },
+         "fill": "fill_1jtzctu",
+         "textStyle": "text_l60mqv"
+        }
+       ]
+      },
+      {
+       "id": "2094:22005",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 24,
+       "y": 299,
+       "width": 342,
+       "height": 1,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_w6fqb5"
+      },
+      {
+       "id": "2094:22006",
+       "name": "Item · JBL party speaker",
+       "type": "FRAME",
+       "x": 24,
+       "y": 300,
+       "width": 342,
+       "height": 74,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 14,
+        "paddingRight": 0,
+        "paddingBottom": 14,
+        "paddingLeft": 0,
+        "itemSpacing": 2,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2094:22007",
+         "name": "JBL party speaker",
+         "type": "TEXT",
+         "x": 0,
+         "y": 14,
+         "width": 342,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "JBL party speaker",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_16e9vtq"
+        },
+        {
+         "id": "2094:22008",
+         "name": "JBL-01 · 4 in stock",
+         "type": "TEXT",
+         "x": 0,
+         "y": 40,
+         "width": 342,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "JBL-01 · 4 in stock",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14166"
+          ]
+         },
+         "fill": "fill_1jtzctu",
+         "textStyle": "text_l60mqv"
+        }
+       ]
+      },
+      {
+       "id": "2094:22009",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 24,
+       "y": 374,
+       "width": 342,
+       "height": 1,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_w6fqb5"
+      },
+      {
+       "id": "2094:22010",
+       "name": "Item · Manfrotto tripod",
+       "type": "FRAME",
+       "x": 24,
+       "y": 375,
+       "width": 342,
+       "height": 74,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 14,
+        "paddingRight": 0,
+        "paddingBottom": 14,
+        "paddingLeft": 0,
+        "itemSpacing": 2,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2094:22011",
+         "name": "Manfrotto tripod",
+         "type": "TEXT",
+         "x": 0,
+         "y": 14,
+         "width": 342,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Manfrotto tripod",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_16e9vtq"
+        },
+        {
+         "id": "2094:22012",
+         "name": "MFT-190 · 1 in stock",
+         "type": "TEXT",
+         "x": 0,
+         "y": 40,
+         "width": 342,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "MFT-190 · 1 in stock",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14166"
+          ]
+         },
+         "fill": "fill_1jtzctu",
+         "textStyle": "text_l60mqv"
+        }
+       ]
+      },
+      {
+       "id": "2094:22013",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 24,
+       "y": 449,
+       "width": 342,
+       "height": 1,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_w6fqb5"
+      },
+      {
+       "id": "2094:22014",
+       "name": "Item · Treadmill",
+       "type": "FRAME",
+       "x": 24,
+       "y": 450,
+       "width": 342,
+       "height": 74,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 14,
+        "paddingRight": 0,
+        "paddingBottom": 14,
+        "paddingLeft": 0,
+        "itemSpacing": 2,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2094:22015",
+         "name": "Treadmill",
+         "type": "TEXT",
+         "x": 0,
+         "y": 14,
+         "width": 342,
+         "height": 24,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Treadmill",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_16e9vtq"
+        },
+        {
+         "id": "2094:22016",
+         "name": "1 in stock",
+         "type": "TEXT",
+         "x": 0,
+         "y": 40,
+         "width": 342,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "1 in stock",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14166"
+          ]
+         },
+         "fill": "fill_1jtzctu",
+         "textStyle": "text_l60mqv"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14163": {
+   "name": "color/surface/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14159": {
+   "name": "color/brand/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14167": {
+   "name": "color/text/tertiary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14165": {
+   "name": "color/text/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14166": {
+   "name": "color/text/secondary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14162": {
+   "name": "color/border/default",
+   "type": "COLOR"
+  }
+ },
+ "styles": {
+  "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493": {
+   "name": "Text - Light mode/Primary",
+   "type": "PAINT"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ],
+   "fill_1s3vosi": [
+    {
+     "type": "SOLID",
+     "color": "#000000"
+    }
+   ],
+   "stroke_1prthe7": [
+    {
+     "type": "SOLID",
+     "color": "#635BE8"
+    }
+   ],
+   "stroke_acfx0": [
+    {
+     "type": "SOLID",
+     "color": "#00000099"
+    }
+   ],
+   "text_1u8a8v1": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 16,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "text_16e9vtq": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 16,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_1jtzctu": [
+    {
+     "type": "SOLID",
+     "color": "#000000B2"
+    }
+   ],
+   "text_l60mqv": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_w6fqb5": [
+    {
+     "type": "SOLID",
+     "color": "#E6E6E6"
+    }
+   ]
+  }
+ },
+ "metrics": {
+  "nodeCount": 47,
+  "maxDepth": 5,
+  "styleCount": 9,
+  "tokenCount": 7,
+  "inlineSizeKb": 21.59,
+  "dedupedSizeKb": 16.84
+ }
+}

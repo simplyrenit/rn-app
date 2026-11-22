@@ -1,0 +1,496 @@
+{
+ "nodes": [
+  {
+   "id": "2089:34660",
+   "name": "push-notice · ask + deadline",
+   "type": "FRAME",
+   "x": 13710,
+   "y": 120,
+   "width": 390,
+   "height": 440,
+   "layout": {
+    "mode": "VERTICAL",
+    "paddingTop": 24,
+    "paddingRight": 24,
+    "paddingBottom": 24,
+    "paddingLeft": 24,
+    "itemSpacing": 12,
+    "primaryAxisAlignItems": "MIN",
+    "counterAxisAlignItems": "MIN",
+    "layoutWrap": "NO_WRAP",
+    "strokesIncludedInLayout": true
+   },
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": true,
+   "boundVariables": {
+    "fills": [
+     "VariableID:2071:14163"
+    ]
+   },
+   "fill": "fill_nll9eq",
+   "children": [
+    {
+     "id": "2089:34661",
+     "name": "push-notice",
+     "type": "TEXT",
+     "x": 24,
+     "y": 24,
+     "width": 342,
+     "height": 24,
+     "layoutSizingHorizontal": "FILL",
+     "layoutSizingVertical": "HUG",
+     "layoutAlign": "STRETCH",
+     "characters": "push-notice",
+     "textAutoResize": "HEIGHT",
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14165"
+      ]
+     },
+     "fill": "fill_1s3vosi",
+     "textStyle": "text_5i882y"
+    },
+    {
+     "id": "2089:34662",
+     "name": "One warning line, only when this phone c",
+     "type": "TEXT",
+     "x": 24,
+     "y": 60,
+     "width": 342,
+     "height": 60,
+     "layoutSizingHorizontal": "FILL",
+     "layoutSizingVertical": "HUG",
+     "layoutAlign": "STRETCH",
+     "characters": "One warning line, only when this phone can't show pushes. Tapping it opens the phone's settings. Hidden when pushes work.",
+     "textAutoResize": "HEIGHT",
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14166"
+      ]
+     },
+     "fill": "fill_1jtzctu",
+     "textStyle": "text_l60mqv"
+    },
+    {
+     "id": "2089:34663",
+     "name": "Ask · on Confirming (asks the OS once, r",
+     "type": "TEXT",
+     "x": 24,
+     "y": 132,
+     "width": 342,
+     "height": 32,
+     "layoutSizingHorizontal": "FILL",
+     "layoutSizingVertical": "HUG",
+     "layoutAlign": "STRETCH",
+     "characters": "Ask · on Confirming (asks the OS once, right after Book now)",
+     "textAutoResize": "HEIGHT",
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14167"
+      ]
+     },
+     "fill": "fill_acfx0",
+     "textStyle": "text_gfqytr"
+    },
+    {
+     "id": "2089:34664",
+     "name": "Notice card",
+     "type": "INSTANCE",
+     "x": 24,
+     "y": 176,
+     "width": 342,
+     "height": 92,
+     "cornerRadius": 12,
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 16,
+      "paddingRight": 16,
+      "paddingBottom": 16,
+      "paddingLeft": 16,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "layoutSizingHorizontal": "FILL",
+     "layoutSizingVertical": "HUG",
+     "layoutAlign": "STRETCH",
+     "clipsContent": false,
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14172"
+      ]
+     },
+     "componentProperties": {
+      "Show link#2074:40": {
+       "type": "BOOLEAN",
+       "value": false
+      },
+      "Show title#2074:37": {
+       "type": "BOOLEAN",
+       "value": false
+      },
+      "Tone": {
+       "type": "VARIANT",
+       "value": "Warning"
+      }
+     },
+     "mainComponentId": "2074:14367",
+     "mainComponent": {
+      "id": "2074:14367",
+      "name": "Tone=Warning",
+      "key": "aed1eaf7e45a6dcd0ca90aaea2dbd38fa41c2de2",
+      "componentSetId": "2074:14388",
+      "componentSetName": "Notice card"
+     },
+     "fill": "fill_tur0vw",
+     "children": [
+      {
+       "id": "I2089:34664;2074:14368",
+       "name": "Icon",
+       "type": "INSTANCE",
+       "x": 16,
+       "y": 16,
+       "width": 20,
+       "height": 20,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "mainComponentId": "1:3822",
+       "mainComponent": {
+        "id": "1:3822",
+        "name": "heroicons-outline/exclamation-triangle",
+        "key": "fad47accb1bae6f7bb005f8e633bcabe527db969"
+       },
+       "children": [
+        {
+         "id": "I2089:34664;2074:14368;341:7516",
+         "name": "Icon",
+         "type": "VECTOR",
+         "x": 1.993408203125,
+         "y": 1.87713623046875,
+         "width": 16.01280403137207,
+         "height": 14.372918128967285,
+         "cornerRadius": "mixed",
+         "fills": [],
+         "strokeWeight": 1.5,
+         "strokeAlign": "CENTER",
+         "strokeCap": "ROUND",
+         "strokeJoin": "ROUND",
+         "constraints": {
+          "horizontal": "SCALE",
+          "vertical": "SCALE"
+         },
+         "boundVariables": {
+          "strokes": [
+           "VariableID:2071:14171"
+          ]
+         },
+         "stroke": "stroke_1u1qhti"
+        }
+       ]
+      },
+      {
+       "id": "I2089:34664;2074:14370",
+       "name": "Text",
+       "type": "FRAME",
+       "x": 48,
+       "y": 16,
+       "width": 278,
+       "height": 60,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutGrow": 1,
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "I2089:34664;2074:14371",
+         "name": "Title",
+         "type": "TEXT",
+         "visible": false,
+         "x": 0,
+         "y": 0,
+         "width": 278,
+         "height": 20,
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "layoutAlign": "STRETCH",
+         "characters": "Not taking bookings right now",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_1ryrdh0"
+        },
+        {
+         "id": "I2089:34664;2074:14372",
+         "name": "Body",
+         "type": "TEXT",
+         "x": 0,
+         "y": 0,
+         "width": 278,
+         "height": 60,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Notifications are off, so we can't tell you when the owner answers. Turn them on in Settings.",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14166"
+          ]
+         },
+         "fill": "fill_1jtzctu",
+         "textStyle": "text_l60mqv"
+        },
+        {
+         "id": "I2089:34664;2074:14373",
+         "name": "Link",
+         "type": "TEXT",
+         "visible": false,
+         "x": 0,
+         "y": 68,
+         "width": 142,
+         "height": 20,
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "characters": "Book for the morning",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7",
+         "textStyle": "text_1ryrdh0"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2089:34671",
+     "name": "Deadline · on Pay rent and Deposit due (",
+     "type": "TEXT",
+     "x": 24,
+     "y": 280,
+     "width": 342,
+     "height": 32,
+     "layoutSizingHorizontal": "FILL",
+     "layoutSizingVertical": "HUG",
+     "layoutAlign": "STRETCH",
+     "characters": "Deadline · on Pay rent and Deposit due (no second OS prompt)",
+     "textAutoResize": "HEIGHT",
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14167"
+      ]
+     },
+     "fill": "fill_acfx0",
+     "textStyle": "text_gfqytr"
+    },
+    {
+     "id": "2089:34672",
+     "name": "Notice card",
+     "type": "INSTANCE",
+     "x": 24,
+     "y": 324,
+     "width": 342,
+     "height": 92,
+     "cornerRadius": 12,
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 16,
+      "paddingRight": 16,
+      "paddingBottom": 16,
+      "paddingLeft": 16,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "layoutSizingHorizontal": "FILL",
+     "layoutSizingVertical": "HUG",
+     "layoutAlign": "STRETCH",
+     "clipsContent": false,
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14172"
+      ]
+     },
+     "componentProperties": {
+      "Show link#2074:40": {
+       "type": "BOOLEAN",
+       "value": false
+      },
+      "Show title#2074:37": {
+       "type": "BOOLEAN",
+       "value": false
+      },
+      "Tone": {
+       "type": "VARIANT",
+       "value": "Warning"
+      }
+     },
+     "mainComponentId": "2074:14367",
+     "mainComponent": {
+      "id": "2074:14367",
+      "name": "Tone=Warning",
+      "key": "aed1eaf7e45a6dcd0ca90aaea2dbd38fa41c2de2",
+      "componentSetId": "2074:14388",
+      "componentSetName": "Notice card"
+     },
+     "deduped": true,
+     "textOverrides": [
+      {
+       "name": "Body",
+       "characters": "Notifications are off, so we can't remind you before this runs out. Turn them on in Settings."
+      }
+     ],
+     "fill": "fill_tur0vw"
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14163": {
+   "name": "color/surface/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14165": {
+   "name": "color/text/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14166": {
+   "name": "color/text/secondary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14167": {
+   "name": "color/text/tertiary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14172": {
+   "name": "color/status/warning/bg",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14171": {
+   "name": "color/status/warning/text",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14159": {
+   "name": "color/brand/primary",
+   "type": "COLOR"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ],
+   "fill_1s3vosi": [
+    {
+     "type": "SOLID",
+     "color": "#000000"
+    }
+   ],
+   "text_5i882y": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Bold",
+    "fontSize": 18,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_1jtzctu": [
+    {
+     "type": "SOLID",
+     "color": "#000000B2"
+    }
+   ],
+   "text_l60mqv": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_acfx0": [
+    {
+     "type": "SOLID",
+     "color": "#00000099"
+    }
+   ],
+   "text_gfqytr": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_tur0vw": [
+    {
+     "type": "SOLID",
+     "color": "#FFFAEB"
+    }
+   ],
+   "stroke_1u1qhti": [
+    {
+     "type": "SOLID",
+     "color": "#B54708"
+    }
+   ],
+   "text_1ryrdh0": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_1prthe7": [
+    {
+     "type": "SOLID",
+     "color": "#635BE8"
+    }
+   ]
+  }
+ },
+ "metrics": {
+  "nodeCount": 13,
+  "maxDepth": 4,
+  "styleCount": 11,
+  "tokenCount": 7,
+  "inlineSizeKb": 8.56,
+  "dedupedSizeKb": 7.18
+ }
+}

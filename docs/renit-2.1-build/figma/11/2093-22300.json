@@ -1,0 +1,2889 @@
+{
+ "nodes": [
+  {
+   "id": "2093:22300",
+   "name": "my-products · statuses (full scroll)",
+   "type": "FRAME",
+   "x": 550,
+   "y": 120,
+   "width": 390,
+   "height": 844,
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": false,
+   "overflowDirection": "VERTICAL",
+   "numberOfFixedChildren": 3,
+   "boundVariables": {
+    "fills": [
+     "VariableID:2071:14163"
+    ]
+   },
+   "fill": "fill_nll9eq",
+   "children": [
+    {
+     "id": "2093:22319",
+     "name": "Body",
+     "type": "FRAME",
+     "x": 0,
+     "y": 110,
+     "width": 390,
+     "height": 1092,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "children": [
+      {
+       "id": "2093:22320",
+       "name": "Share row",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 390,
+       "height": 52,
+       "fills": [],
+       "strokeWeight": "mixed",
+       "strokeWeights": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 0
+       },
+       "strokeAlign": "INSIDE",
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 0,
+        "paddingRight": 24,
+        "paddingBottom": 0,
+        "paddingLeft": 24,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "SPACE_BETWEEN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "boundVariables": {
+        "strokes": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "stroke": "stroke_w6fqb5",
+       "children": [
+        {
+         "id": "2093:22321",
+         "name": "Share entire catalogue",
+         "type": "TEXT",
+         "x": 24,
+         "y": 13.5,
+         "width": 173,
+         "height": 24,
+         "layoutSizingHorizontal": "HUG",
+         "layoutSizingVertical": "HUG",
+         "characters": "Share entire catalogue",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_eydnuo"
+        },
+        {
+         "id": "2093:22322",
+         "name": "heroicons-outline/share",
+         "type": "INSTANCE",
+         "x": 342,
+         "y": 13.5,
+         "width": 24,
+         "height": 24,
+         "fills": [],
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "mainComponentId": "1:3268",
+         "mainComponent": {
+          "id": "1:3268",
+          "name": "heroicons-outline/share",
+          "key": "58b60c333f17c8f17a065a059b1ffd2e01b411a6"
+         },
+         "children": [
+          {
+           "id": "I2093:22322;341:8456",
+           "name": "Icon",
+           "type": "VECTOR",
+           "x": 3,
+           "y": 2.25,
+           "width": 18,
+           "height": 19.5,
+           "fills": [],
+           "strokeWeight": 1.5,
+           "strokeAlign": "CENTER",
+           "strokeCap": "ROUND",
+           "strokeJoin": "ROUND",
+           "constraints": {
+            "horizontal": "SCALE",
+            "vertical": "SCALE"
+           },
+           "boundVariables": {
+            "strokes": [
+             "VariableID:2071:14166"
+            ]
+           },
+           "stroke": "stroke_1jtzctu"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2093:22324",
+       "name": "Grid (2 columns, gap 18)",
+       "type": "FRAME",
+       "x": 0,
+       "y": 52,
+       "width": 390,
+       "height": 1040,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 24,
+        "paddingRight": 24,
+        "paddingBottom": 32,
+        "paddingLeft": 24,
+        "itemSpacing": 24,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2093:22325",
+         "name": "Row",
+         "type": "FRAME",
+         "x": 24,
+         "y": 24,
+         "width": 342,
+         "height": 318,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 18,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2093:22326",
+           "name": "Listing · PS5 with FIFA 24",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 162,
+           "height": 318,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2093:22338",
+             "name": "Card",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 162,
+             "height": 230,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": false,
+             "children": [
+              {
+               "id": "2093:22327",
+               "name": "Listing card",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 162,
+               "height": 230,
+               "fills": [],
+               "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "constraints": {
+                "horizontal": "MIN",
+                "vertical": "MIN"
+               },
+               "clipsContent": false,
+               "componentProperties": {
+                "Price#2073:2": {
+                 "type": "TEXT",
+                 "value": "₹1,500"
+                },
+                "Location#2073:4": {
+                 "type": "TEXT",
+                 "value": "Indiranagar, Bengaluru"
+                },
+                "Title#2073:1": {
+                 "type": "TEXT",
+                 "value": "PS5 with FIFA 24"
+                },
+                "Unit#2073:3": {
+                 "type": "TEXT",
+                 "value": "/day"
+                },
+                "Show heart#2073:0": {
+                 "type": "BOOLEAN",
+                 "value": false
+                }
+               },
+               "mainComponentId": "2073:14326",
+               "mainComponent": {
+                "id": "2073:14326",
+                "name": "Listing card",
+                "key": "44ba326f2e67c0a2af80b83c39ac54196e9db732"
+               },
+               "children": [
+                {
+                 "id": "I2093:22327;2073:14327",
+                 "name": "Image",
+                 "type": "FRAME",
+                 "x": 0,
+                 "y": 0,
+                 "width": 162,
+                 "height": 176,
+                 "cornerRadius": 8,
+                 "layoutSizingHorizontal": "FIXED",
+                 "layoutSizingVertical": "FIXED",
+                 "clipsContent": true,
+                 "fill": "fill_1r7ub26",
+                 "children": [
+                  {
+                   "id": "I2093:22327;2109:30148",
+                   "name": "Heart backing",
+                   "type": "ELLIPSE",
+                   "visible": false,
+                   "x": 124,
+                   "y": 6,
+                   "width": 32,
+                   "height": 32,
+                   "constraints": {
+                    "horizontal": "MAX",
+                    "vertical": "MIN"
+                   },
+                   "fill": "fill_l36ahl",
+                   "effect": "effect_gi2stx"
+                  },
+                  {
+                   "id": "I2093:22327;2073:14328",
+                   "name": "Heart",
+                   "type": "INSTANCE",
+                   "visible": false,
+                   "x": 118,
+                   "y": 0,
+                   "width": 44,
+                   "height": 44,
+                   "fills": [],
+                   "constraints": {
+                    "horizontal": "MAX",
+                    "vertical": "MIN"
+                   },
+                   "clipsContent": true,
+                   "componentProperties": {
+                    "Icon#602:12": {
+                     "type": "INSTANCE_SWAP",
+                     "value": "1:12"
+                    },
+                    "Type": {
+                     "type": "VARIANT",
+                     "value": "Regular"
+                    }
+                   },
+                   "mainComponentId": "1:17",
+                   "mainComponent": {
+                    "id": "1:17",
+                    "name": "Type=Regular",
+                    "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+                    "componentSetId": "1:16",
+                    "componentSetName": "Icon Button"
+                   },
+                   "children": [
+                    {
+                     "id": "I2093:22327;2073:14328;602:8477",
+                     "name": "heroicons-outline/heart",
+                     "type": "INSTANCE",
+                     "x": 10,
+                     "y": 10,
+                     "width": 24,
+                     "height": 24,
+                     "fills": [],
+                     "constraints": {
+                      "horizontal": "CENTER",
+                      "vertical": "CENTER"
+                     },
+                     "clipsContent": true,
+                     "mainComponentId": "1:12",
+                     "mainComponent": {
+                      "id": "1:12",
+                      "name": "heroicons-outline/heart",
+                      "key": "139906b381f864c1d175555f8770b91fc082d618"
+                     },
+                     "children": [
+                      {
+                       "id": "I2093:22327;2073:14328;602:8477;341:7803",
+                       "name": "Icon",
+                       "type": "VECTOR",
+                       "x": 3,
+                       "y": 3.75,
+                       "width": 18,
+                       "height": 16.5,
+                       "fills": [],
+                       "strokeWeight": 1.5,
+                       "strokeAlign": "CENTER",
+                       "strokeCap": "ROUND",
+                       "strokeJoin": "ROUND",
+                       "constraints": {
+                        "horizontal": "SCALE",
+                        "vertical": "SCALE"
+                       },
+                       "stroke": "fill_1s3vosi"
+                      }
+                     ]
+                    }
+                   ]
+                  }
+                 ]
+                },
+                {
+                 "id": "I2093:22327;2073:14332",
+                 "name": "Text",
+                 "type": "FRAME",
+                 "x": 0,
+                 "y": 176,
+                 "width": 162,
+                 "height": 54,
+                 "fills": [],
+                 "layout": {
+                  "mode": "VERTICAL",
+                  "paddingTop": 8,
+                  "paddingRight": 0,
+                  "paddingBottom": 0,
+                  "paddingLeft": 0,
+                  "itemSpacing": 2,
+                  "primaryAxisAlignItems": "MIN",
+                  "counterAxisAlignItems": "MIN",
+                  "layoutWrap": "NO_WRAP",
+                  "strokesIncludedInLayout": true
+                 },
+                 "layoutSizingHorizontal": "FILL",
+                 "layoutSizingVertical": "HUG",
+                 "layoutAlign": "STRETCH",
+                 "clipsContent": true,
+                 "children": [
+                  {
+                   "id": "I2093:22327;2073:14333",
+                   "name": "Title",
+                   "type": "TEXT",
+                   "x": 0,
+                   "y": 8,
+                   "width": 162,
+                   "height": 20,
+                   "layoutSizingHorizontal": "FILL",
+                   "layoutSizingVertical": "HUG",
+                   "layoutAlign": "STRETCH",
+                   "characters": "PS5 with FIFA 24",
+                   "textTruncation": "ENDING",
+                   "maxLines": 1,
+                   "textAutoResize": "HEIGHT",
+                   "boundVariables": {
+                    "fills": [
+                     "VariableID:2071:14165"
+                    ]
+                   },
+                   "fill": "fill_1s3vosi",
+                   "textStyle": "text_1ryrdh0"
+                  },
+                  {
+                   "id": "I2093:22327;2073:14334",
+                   "name": "Price row",
+                   "type": "FRAME",
+                   "x": 0,
+                   "y": 30,
+                   "width": 85,
+                   "height": 24,
+                   "fills": [],
+                   "layout": {
+                    "mode": "HORIZONTAL",
+                    "paddingTop": 0,
+                    "paddingRight": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "itemSpacing": 2,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "BASELINE",
+                    "layoutWrap": "NO_WRAP",
+                    "strokesIncludedInLayout": true
+                   },
+                   "layoutSizingHorizontal": "HUG",
+                   "layoutSizingVertical": "HUG",
+                   "clipsContent": true,
+                   "children": [
+                    {
+                     "id": "I2093:22327;2073:14335",
+                     "name": "Price",
+                     "type": "TEXT",
+                     "x": 0,
+                     "y": 0,
+                     "width": 56,
+                     "height": 24,
+                     "layoutSizingHorizontal": "HUG",
+                     "layoutSizingVertical": "HUG",
+                     "characters": "₹1,500",
+                     "boundVariables": {
+                      "fills": [
+                       "VariableID:2071:14165"
+                      ]
+                     },
+                     "fill": "fill_1s3vosi",
+                     "textStyle": "text_1uikdpk"
+                    },
+                    {
+                     "id": "I2093:22327;2073:14336",
+                     "name": "Unit",
+                     "type": "TEXT",
+                     "x": 58,
+                     "y": 6,
+                     "width": 27,
+                     "height": 16,
+                     "layoutSizingHorizontal": "HUG",
+                     "layoutSizingVertical": "HUG",
+                     "characters": "/day",
+                     "boundVariables": {
+                      "fills": [
+                       "VariableID:2071:14167"
+                      ]
+                     },
+                     "fill": "fill_acfx0",
+                     "textStyle": "text_exm4rc"
+                    }
+                   ]
+                  },
+                  {
+                   "id": "I2093:22327;2073:14337",
+                   "name": "Location",
+                   "type": "TEXT",
+                   "visible": false,
+                   "x": 0,
+                   "y": 56,
+                   "width": 162,
+                   "height": 16,
+                   "layoutSizingHorizontal": "FIXED",
+                   "layoutSizingVertical": "FIXED",
+                   "layoutAlign": "STRETCH",
+                   "characters": "Indiranagar, Bengaluru",
+                   "textTruncation": "ENDING",
+                   "maxLines": 1,
+                   "textAutoResize": "HEIGHT",
+                   "boundVariables": {
+                    "fills": [
+                     "VariableID:2071:14167"
+                    ]
+                   },
+                   "fill": "fill_acfx0",
+                   "textStyle": "text_exm4rc"
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "2093:22339",
+             "name": "Status",
+             "type": "FRAME",
+             "x": 0,
+             "y": 238,
+             "width": 162,
+             "height": 24,
+             "fills": [],
+             "layout": {
+              "mode": "VERTICAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 4,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2093:22340",
+               "name": "Status pill",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 44,
+               "height": 24,
+               "cornerRadius": 999,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 10,
+                "paddingBottom": 0,
+                "paddingLeft": 10,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": false,
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14170"
+                ]
+               },
+               "componentProperties": {
+                "Tone": {
+                 "type": "VARIANT",
+                 "value": "Success"
+                }
+               },
+               "mainComponentId": "2073:14372",
+               "mainComponent": {
+                "id": "2073:14372",
+                "name": "Tone=Success",
+                "key": "1db3f5cade47578f34c62dbbf2890b56d4367c89",
+                "componentSetId": "2073:14380",
+                "componentSetName": "Status pill"
+               },
+               "fill": "fill_svr7hz",
+               "children": [
+                {
+                 "id": "I2093:22340;2073:14373",
+                 "name": "Label",
+                 "type": "TEXT",
+                 "x": 10,
+                 "y": 4,
+                 "width": 24,
+                 "height": 16,
+                 "layoutSizingHorizontal": "HUG",
+                 "layoutSizingVertical": "HUG",
+                 "characters": "Live",
+                 "boundVariables": {
+                  "fills": [
+                   "VariableID:2071:14169"
+                  ]
+                 },
+                 "fill": "fill_qwr4yw",
+                 "textStyle": "text_gfqytr"
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "2093:22342",
+             "name": "Held change",
+             "type": "TEXT",
+             "x": 0,
+             "y": 270,
+             "width": 162,
+             "height": 48,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "characters": "Being checked: price. Customers still see the earlier version.",
+             "textAutoResize": "HEIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14171"
+              ]
+             },
+             "fill": "fill_1u1qhti",
+             "textStyle": "text_exm4rc"
+            }
+           ]
+          },
+          {
+           "id": "2093:22350",
+           "name": "Listing · Meta Quest 3 VR headset",
+           "type": "FRAME",
+           "x": 180,
+           "y": 0,
+           "width": 162,
+           "height": 262,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2093:22362",
+             "name": "Card",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 162,
+             "height": 230,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": false,
+             "children": [
+              {
+               "id": "2093:22351",
+               "name": "Listing card",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 162,
+               "height": 230,
+               "fills": [],
+               "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "constraints": {
+                "horizontal": "MIN",
+                "vertical": "MIN"
+               },
+               "clipsContent": false,
+               "componentProperties": {
+                "Price#2073:2": {
+                 "type": "TEXT",
+                 "value": "₹900"
+                },
+                "Location#2073:4": {
+                 "type": "TEXT",
+                 "value": "Indiranagar, Bengaluru"
+                },
+                "Title#2073:1": {
+                 "type": "TEXT",
+                 "value": "Meta Quest 3 VR headset"
+                },
+                "Unit#2073:3": {
+                 "type": "TEXT",
+                 "value": "/day"
+                },
+                "Show heart#2073:0": {
+                 "type": "BOOLEAN",
+                 "value": false
+                }
+               },
+               "mainComponentId": "2073:14326",
+               "mainComponent": {
+                "id": "2073:14326",
+                "name": "Listing card",
+                "key": "44ba326f2e67c0a2af80b83c39ac54196e9db732"
+               },
+               "deduped": true,
+               "textOverrides": [
+                {
+                 "name": "Title",
+                 "characters": "Meta Quest 3 VR headset"
+                },
+                {
+                 "name": "Price",
+                 "characters": "₹900"
+                },
+                {
+                 "name": "Unit",
+                 "characters": "/day"
+                }
+               ],
+               "propertyOverrides": [
+                {
+                 "name": "Image",
+                 "fills": [
+                  {
+                   "type": "IMAGE",
+                   "scaleMode": "FILL"
+                  }
+                 ],
+                 "cornerRadius": 8
+                },
+                {
+                 "name": "Heart backing",
+                 "visible": false,
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#FFFFFFEB"
+                  }
+                 ],
+                 "effects": [
+                  {
+                   "type": "DROP_SHADOW",
+                   "visible": true,
+                   "radius": 3,
+                   "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 0.18000000715255737
+                   },
+                   "offset": {
+                    "x": 0,
+                    "y": 1
+                   },
+                   "spread": 0
+                  }
+                 ]
+                },
+                {
+                 "name": "Location",
+                 "visible": false,
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#00000099"
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "2093:22363",
+             "name": "Status",
+             "type": "FRAME",
+             "x": 0,
+             "y": 238,
+             "width": 162,
+             "height": 24,
+             "fills": [],
+             "layout": {
+              "mode": "VERTICAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 4,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2093:22364",
+               "name": "Status pill",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 76,
+               "height": 24,
+               "cornerRadius": 999,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 10,
+                "paddingBottom": 0,
+                "paddingLeft": 10,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": false,
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14177"
+                ]
+               },
+               "componentProperties": {
+                "Tone": {
+                 "type": "VARIANT",
+                 "value": "Info"
+                }
+               },
+               "mainComponentId": "2073:14378",
+               "mainComponent": {
+                "id": "2073:14378",
+                "name": "Tone=Info",
+                "key": "b0e39da8e64faad433ceddecc9f28e5cf9c73cd0",
+                "componentSetId": "2073:14380",
+                "componentSetName": "Status pill"
+               },
+               "fill": "fill_cmp1lv",
+               "children": [
+                {
+                 "id": "I2093:22364;2073:14379",
+                 "name": "Label",
+                 "type": "TEXT",
+                 "x": 10,
+                 "y": 4,
+                 "width": 56,
+                 "height": 16,
+                 "layoutSizingHorizontal": "HUG",
+                 "layoutSizingVertical": "HUG",
+                 "characters": "Checking",
+                 "boundVariables": {
+                  "fills": [
+                   "VariableID:2071:14176"
+                  ]
+                 },
+                 "fill": "fill_1biphrn",
+                 "textStyle": "text_gfqytr"
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2093:22373",
+         "name": "Row",
+         "type": "FRAME",
+         "x": 24,
+         "y": 366,
+         "width": 342,
+         "height": 314,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 18,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2093:22374",
+           "name": "Listing · Wilson Pro Staff racquet",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 162,
+           "height": 314,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2093:22386",
+             "name": "Card",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 162,
+             "height": 230,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": false,
+             "children": [
+              {
+               "id": "2093:22375",
+               "name": "Listing card",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 162,
+               "height": 230,
+               "fills": [],
+               "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "constraints": {
+                "horizontal": "MIN",
+                "vertical": "MIN"
+               },
+               "clipsContent": false,
+               "componentProperties": {
+                "Price#2073:2": {
+                 "type": "TEXT",
+                 "value": "₹250"
+                },
+                "Location#2073:4": {
+                 "type": "TEXT",
+                 "value": "Indiranagar, Bengaluru"
+                },
+                "Title#2073:1": {
+                 "type": "TEXT",
+                 "value": "Wilson Pro Staff racquet"
+                },
+                "Unit#2073:3": {
+                 "type": "TEXT",
+                 "value": "/day"
+                },
+                "Show heart#2073:0": {
+                 "type": "BOOLEAN",
+                 "value": false
+                }
+               },
+               "mainComponentId": "2073:14326",
+               "mainComponent": {
+                "id": "2073:14326",
+                "name": "Listing card",
+                "key": "44ba326f2e67c0a2af80b83c39ac54196e9db732"
+               },
+               "deduped": true,
+               "textOverrides": [
+                {
+                 "name": "Title",
+                 "characters": "Wilson Pro Staff racquet"
+                },
+                {
+                 "name": "Price",
+                 "characters": "₹250"
+                },
+                {
+                 "name": "Unit",
+                 "characters": "/day"
+                }
+               ],
+               "propertyOverrides": [
+                {
+                 "name": "Image",
+                 "fills": [
+                  {
+                   "type": "IMAGE",
+                   "scaleMode": "FILL"
+                  }
+                 ],
+                 "cornerRadius": 8
+                },
+                {
+                 "name": "Heart backing",
+                 "visible": false,
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#FFFFFFEB"
+                  }
+                 ],
+                 "effects": [
+                  {
+                   "type": "DROP_SHADOW",
+                   "visible": true,
+                   "radius": 3,
+                   "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 0.18000000715255737
+                   },
+                   "offset": {
+                    "x": 0,
+                    "y": 1
+                   },
+                   "spread": 0
+                  }
+                 ]
+                },
+                {
+                 "name": "Location",
+                 "visible": false,
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#00000099"
+                  }
+                 ]
+                }
+               ]
+              },
+              {
+               "id": "2093:22387",
+               "name": "Flagged overlay",
+               "type": "FRAME",
+               "x": 0,
+               "y": 0,
+               "width": 162,
+               "height": 176,
+               "cornerRadius": 8,
+               "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 0,
+                "paddingRight": 8,
+                "paddingBottom": 0,
+                "paddingLeft": 8,
+                "itemSpacing": 6,
+                "primaryAxisAlignItems": "CENTER",
+                "counterAxisAlignItems": "CENTER",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "constraints": {
+                "horizontal": "MIN",
+                "vertical": "MIN"
+               },
+               "clipsContent": true,
+               "fill": "fill_1o5eyu9",
+               "children": [
+                {
+                 "id": "2093:22388",
+                 "name": "heroicons-outline/information-circle",
+                 "type": "INSTANCE",
+                 "x": 70,
+                 "y": 66,
+                 "width": 22,
+                 "height": 22,
+                 "fills": [],
+                 "layoutSizingHorizontal": "FIXED",
+                 "layoutSizingVertical": "FIXED",
+                 "clipsContent": true,
+                 "mainComponentId": "1:162",
+                 "mainComponent": {
+                  "id": "1:162",
+                  "name": "heroicons-outline/information-circle",
+                  "key": "cdfa92f23c95102cda70808bbd1227d354321415"
+                 },
+                 "children": [
+                  {
+                   "id": "I2093:22388;341:7868",
+                   "name": "Icon",
+                   "type": "VECTOR",
+                   "x": 2.75,
+                   "y": 2.75,
+                   "width": 16.5,
+                   "height": 16.5,
+                   "cornerRadius": "mixed",
+                   "fills": [],
+                   "strokeWeight": 1.375,
+                   "strokeAlign": "CENTER",
+                   "strokeCap": "ROUND",
+                   "strokeJoin": "ROUND",
+                   "constraints": {
+                    "horizontal": "SCALE",
+                    "vertical": "SCALE"
+                   },
+                   "boundVariables": {
+                    "strokes": [
+                     "VariableID:2071:14175"
+                    ]
+                   },
+                   "stroke": "stroke_1g28kz1"
+                  }
+                 ]
+                },
+                {
+                 "id": "2093:22390",
+                 "name": "Flagged for review",
+                 "type": "TEXT",
+                 "x": 27,
+                 "y": 94,
+                 "width": 108,
+                 "height": 16,
+                 "layoutSizingHorizontal": "HUG",
+                 "layoutSizingVertical": "HUG",
+                 "characters": "Flagged for review",
+                 "boundVariables": {
+                  "fills": [
+                   "VariableID:2071:14175"
+                  ]
+                 },
+                 "fill": "stroke_1g28kz1",
+                 "textStyle": "text_gfqytr"
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "2093:22391",
+             "name": "Status",
+             "type": "FRAME",
+             "x": 0,
+             "y": 238,
+             "width": 162,
+             "height": 76,
+             "fills": [],
+             "layout": {
+              "mode": "VERTICAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 4,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2093:22392",
+               "name": "Status pill",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 69,
+               "height": 24,
+               "cornerRadius": 999,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 10,
+                "paddingBottom": 0,
+                "paddingLeft": 10,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": false,
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14174"
+                ]
+               },
+               "componentProperties": {
+                "Tone": {
+                 "type": "VARIANT",
+                 "value": "Danger"
+                }
+               },
+               "mainComponentId": "2073:14376",
+               "mainComponent": {
+                "id": "2073:14376",
+                "name": "Tone=Danger",
+                "key": "0b12324f7e5a08e356b83b22d7316af94ae68906",
+                "componentSetId": "2073:14380",
+                "componentSetName": "Status pill"
+               },
+               "fill": "fill_jizne8",
+               "children": [
+                {
+                 "id": "I2093:22392;2073:14377",
+                 "name": "Label",
+                 "type": "TEXT",
+                 "x": 10,
+                 "y": 4,
+                 "width": 49,
+                 "height": 16,
+                 "layoutSizingHorizontal": "HUG",
+                 "layoutSizingVertical": "HUG",
+                 "characters": "Flagged",
+                 "boundVariables": {
+                  "fills": [
+                   "VariableID:2071:14173"
+                  ]
+                 },
+                 "fill": "fill_qgafhi",
+                 "textStyle": "text_gfqytr"
+                }
+               ]
+              },
+              {
+               "id": "2093:22394",
+               "name": "Reason",
+               "type": "TEXT",
+               "x": 0,
+               "y": 28,
+               "width": 162,
+               "height": 48,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "HUG",
+               "layoutAlign": "STRETCH",
+               "characters": "Needs a change: The photos show a different racquet. Edit it and we will look again.",
+               "textAutoResize": "HEIGHT",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14166"
+                ]
+               },
+               "fill": "stroke_1jtzctu",
+               "textStyle": "text_exm4rc"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "2093:22402",
+           "name": "Listing · Saregama Carvaan",
+           "type": "FRAME",
+           "x": 180,
+           "y": 0,
+           "width": 162,
+           "height": 262,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2093:22414",
+             "name": "Card",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 162,
+             "height": 230,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": false,
+             "children": [
+              {
+               "id": "2093:22403",
+               "name": "Listing card",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 162,
+               "height": 230,
+               "fills": [],
+               "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "constraints": {
+                "horizontal": "MIN",
+                "vertical": "MIN"
+               },
+               "clipsContent": false,
+               "componentProperties": {
+                "Price#2073:2": {
+                 "type": "TEXT",
+                 "value": "₹300"
+                },
+                "Location#2073:4": {
+                 "type": "TEXT",
+                 "value": "Indiranagar, Bengaluru"
+                },
+                "Title#2073:1": {
+                 "type": "TEXT",
+                 "value": "Saregama Carvaan"
+                },
+                "Unit#2073:3": {
+                 "type": "TEXT",
+                 "value": "/day"
+                },
+                "Show heart#2073:0": {
+                 "type": "BOOLEAN",
+                 "value": false
+                }
+               },
+               "mainComponentId": "2073:14326",
+               "mainComponent": {
+                "id": "2073:14326",
+                "name": "Listing card",
+                "key": "44ba326f2e67c0a2af80b83c39ac54196e9db732"
+               },
+               "deduped": true,
+               "textOverrides": [
+                {
+                 "name": "Title",
+                 "characters": "Saregama Carvaan"
+                },
+                {
+                 "name": "Price",
+                 "characters": "₹300"
+                },
+                {
+                 "name": "Unit",
+                 "characters": "/day"
+                }
+               ],
+               "propertyOverrides": [
+                {
+                 "name": "Image",
+                 "fills": [
+                  {
+                   "type": "IMAGE",
+                   "scaleMode": "FILL"
+                  }
+                 ],
+                 "cornerRadius": 8
+                },
+                {
+                 "name": "Heart backing",
+                 "visible": false,
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#FFFFFFEB"
+                  }
+                 ],
+                 "effects": [
+                  {
+                   "type": "DROP_SHADOW",
+                   "visible": true,
+                   "radius": 3,
+                   "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 0.18000000715255737
+                   },
+                   "offset": {
+                    "x": 0,
+                    "y": 1
+                   },
+                   "spread": 0
+                  }
+                 ]
+                },
+                {
+                 "name": "Location",
+                 "visible": false,
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#00000099"
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "2093:22415",
+             "name": "Status",
+             "type": "FRAME",
+             "x": 0,
+             "y": 238,
+             "width": 162,
+             "height": 24,
+             "fills": [],
+             "layout": {
+              "mode": "VERTICAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 4,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2093:22416",
+               "name": "Status pill",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 63,
+               "height": 24,
+               "cornerRadius": 999,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 10,
+                "paddingBottom": 0,
+                "paddingLeft": 10,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": false,
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14172"
+                ]
+               },
+               "componentProperties": {
+                "Tone": {
+                 "type": "VARIANT",
+                 "value": "Warning"
+                }
+               },
+               "mainComponentId": "2073:14374",
+               "mainComponent": {
+                "id": "2073:14374",
+                "name": "Tone=Warning",
+                "key": "6635b2d4c82e4b38091559a5e5ac3b1e2aab9bc5",
+                "componentSetId": "2073:14380",
+                "componentSetName": "Status pill"
+               },
+               "fill": "fill_tur0vw",
+               "children": [
+                {
+                 "id": "I2093:22416;2073:14375",
+                 "name": "Label",
+                 "type": "TEXT",
+                 "x": 10,
+                 "y": 4,
+                 "width": 43,
+                 "height": 16,
+                 "layoutSizingHorizontal": "HUG",
+                 "layoutSizingVertical": "HUG",
+                 "characters": "Paused",
+                 "boundVariables": {
+                  "fills": [
+                   "VariableID:2071:14171"
+                  ]
+                 },
+                 "fill": "fill_1u1qhti",
+                 "textStyle": "text_gfqytr"
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2093:22425",
+         "name": "Row",
+         "type": "FRAME",
+         "x": 24,
+         "y": 704,
+         "width": 342,
+         "height": 304,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 18,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2093:22426",
+           "name": "Listing · Boxing bag with stand",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 162,
+           "height": 304,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2093:22438",
+             "name": "Card",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 162,
+             "height": 230,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": false,
+             "children": [
+              {
+               "id": "2093:22427",
+               "name": "Listing card",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 162,
+               "height": 230,
+               "fills": [],
+               "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "constraints": {
+                "horizontal": "MIN",
+                "vertical": "MIN"
+               },
+               "clipsContent": false,
+               "componentProperties": {
+                "Price#2073:2": {
+                 "type": "TEXT",
+                 "value": "₹2,100"
+                },
+                "Location#2073:4": {
+                 "type": "TEXT",
+                 "value": "Indiranagar, Bengaluru"
+                },
+                "Title#2073:1": {
+                 "type": "TEXT",
+                 "value": "Boxing bag with stand"
+                },
+                "Unit#2073:3": {
+                 "type": "TEXT",
+                 "value": "/week"
+                },
+                "Show heart#2073:0": {
+                 "type": "BOOLEAN",
+                 "value": false
+                }
+               },
+               "mainComponentId": "2073:14326",
+               "mainComponent": {
+                "id": "2073:14326",
+                "name": "Listing card",
+                "key": "44ba326f2e67c0a2af80b83c39ac54196e9db732"
+               },
+               "deduped": true,
+               "textOverrides": [
+                {
+                 "name": "Title",
+                 "characters": "Boxing bag with stand"
+                },
+                {
+                 "name": "Price",
+                 "characters": "₹2,100"
+                },
+                {
+                 "name": "Unit",
+                 "characters": "/week"
+                }
+               ],
+               "propertyOverrides": [
+                {
+                 "name": "Image",
+                 "fills": [
+                  {
+                   "type": "IMAGE",
+                   "scaleMode": "FILL"
+                  }
+                 ],
+                 "cornerRadius": 8
+                },
+                {
+                 "name": "Heart backing",
+                 "visible": false,
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#FFFFFFEB"
+                  }
+                 ],
+                 "effects": [
+                  {
+                   "type": "DROP_SHADOW",
+                   "visible": true,
+                   "radius": 3,
+                   "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 0.18000000715255737
+                   },
+                   "offset": {
+                    "x": 0,
+                    "y": 1
+                   },
+                   "spread": 0
+                  }
+                 ]
+                },
+                {
+                 "name": "Location",
+                 "visible": false,
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#00000099"
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "2093:22439",
+             "name": "Status",
+             "type": "FRAME",
+             "x": 0,
+             "y": 238,
+             "width": 162,
+             "height": 24,
+             "fills": [],
+             "layout": {
+              "mode": "VERTICAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 4,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2093:22440",
+               "name": "Status pill",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 44,
+               "height": 24,
+               "cornerRadius": 999,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 10,
+                "paddingBottom": 0,
+                "paddingLeft": 10,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": false,
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14170"
+                ]
+               },
+               "componentProperties": {
+                "Tone": {
+                 "type": "VARIANT",
+                 "value": "Success"
+                }
+               },
+               "mainComponentId": "2073:14372",
+               "mainComponent": {
+                "id": "2073:14372",
+                "name": "Tone=Success",
+                "key": "1db3f5cade47578f34c62dbbf2890b56d4367c89",
+                "componentSetId": "2073:14380",
+                "componentSetName": "Status pill"
+               },
+               "deduped": true,
+               "textOverrides": [
+                {
+                 "name": "Label",
+                 "characters": "Live"
+                }
+               ],
+               "fill": "fill_svr7hz"
+              }
+             ]
+            },
+            {
+             "id": "2093:22442",
+             "name": "Prompts",
+             "type": "FRAME",
+             "x": 0,
+             "y": 270,
+             "width": 162,
+             "height": 34,
+             "fills": [],
+             "layout": {
+              "mode": "VERTICAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 2,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2093:22443",
+               "name": "Confirm your price",
+               "type": "TEXT",
+               "x": 0,
+               "y": 0,
+               "width": 162,
+               "height": 16,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "HUG",
+               "layoutAlign": "STRETCH",
+               "characters": "Confirm your price",
+               "textAutoResize": "HEIGHT",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14171"
+                ]
+               },
+               "fill": "fill_1u1qhti",
+               "textStyle": "text_gfqytr"
+              },
+              {
+               "id": "2093:22444",
+               "name": "Add its worth",
+               "type": "TEXT",
+               "x": 0,
+               "y": 18,
+               "width": 162,
+               "height": 16,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "HUG",
+               "layoutAlign": "STRETCH",
+               "characters": "Add its worth",
+               "textAutoResize": "HEIGHT",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14171"
+                ]
+               },
+               "fill": "fill_1u1qhti",
+               "textStyle": "text_gfqytr"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "2093:22452",
+           "name": "Listing · Studio light kit",
+           "type": "FRAME",
+           "x": 180,
+           "y": 0,
+           "width": 162,
+           "height": 286,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "HUG",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2093:22464",
+             "name": "Card",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 162,
+             "height": 230,
+             "fills": [],
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": false,
+             "children": [
+              {
+               "id": "2093:22453",
+               "name": "Listing card",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 162,
+               "height": 230,
+               "fills": [],
+               "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "constraints": {
+                "horizontal": "MIN",
+                "vertical": "MIN"
+               },
+               "clipsContent": false,
+               "componentProperties": {
+                "Price#2073:2": {
+                 "type": "TEXT",
+                 "value": "No price yet"
+                },
+                "Location#2073:4": {
+                 "type": "TEXT",
+                 "value": "Indiranagar, Bengaluru"
+                },
+                "Title#2073:1": {
+                 "type": "TEXT",
+                 "value": "Studio light kit"
+                },
+                "Unit#2073:3": {
+                 "type": "TEXT",
+                 "value": " "
+                },
+                "Show heart#2073:0": {
+                 "type": "BOOLEAN",
+                 "value": false
+                }
+               },
+               "mainComponentId": "2073:14326",
+               "mainComponent": {
+                "id": "2073:14326",
+                "name": "Listing card",
+                "key": "44ba326f2e67c0a2af80b83c39ac54196e9db732"
+               },
+               "deduped": true,
+               "textOverrides": [
+                {
+                 "name": "Title",
+                 "characters": "Studio light kit"
+                },
+                {
+                 "name": "Price",
+                 "characters": "No price yet"
+                },
+                {
+                 "name": "Unit",
+                 "characters": " "
+                }
+               ],
+               "propertyOverrides": [
+                {
+                 "name": "Image",
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#F2F2F2"
+                  }
+                 ],
+                 "cornerRadius": 8
+                },
+                {
+                 "name": "Heart backing",
+                 "visible": false,
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#FFFFFFEB"
+                  }
+                 ],
+                 "effects": [
+                  {
+                   "type": "DROP_SHADOW",
+                   "visible": true,
+                   "radius": 3,
+                   "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 0.18000000715255737
+                   },
+                   "offset": {
+                    "x": 0,
+                    "y": 1
+                   },
+                   "spread": 0
+                  }
+                 ]
+                },
+                {
+                 "name": "Price",
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#00000099"
+                  }
+                 ]
+                },
+                {
+                 "name": "Location",
+                 "visible": false,
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#00000099"
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "2093:22465",
+             "name": "Status",
+             "type": "FRAME",
+             "x": 0,
+             "y": 238,
+             "width": 162,
+             "height": 24,
+             "fills": [],
+             "layout": {
+              "mode": "VERTICAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 4,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2093:22466",
+               "name": "Status pill",
+               "type": "INSTANCE",
+               "x": 0,
+               "y": 0,
+               "width": 51,
+               "height": 24,
+               "cornerRadius": 999,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 10,
+                "paddingBottom": 0,
+                "paddingLeft": 10,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": false,
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14164"
+                ]
+               },
+               "componentProperties": {
+                "Tone": {
+                 "type": "VARIANT",
+                 "value": "Neutral"
+                }
+               },
+               "mainComponentId": "2073:14368",
+               "mainComponent": {
+                "id": "2073:14368",
+                "name": "Tone=Neutral",
+                "key": "16df67e74cf484ca13dd122daec9ec7c70ad017c",
+                "componentSetId": "2073:14380",
+                "componentSetName": "Status pill"
+               },
+               "fill": "fill_d2q9wm",
+               "children": [
+                {
+                 "id": "I2093:22466;2073:14369",
+                 "name": "Label",
+                 "type": "TEXT",
+                 "x": 10,
+                 "y": 4,
+                 "width": 31,
+                 "height": 16,
+                 "layoutSizingHorizontal": "HUG",
+                 "layoutSizingVertical": "HUG",
+                 "characters": "Draft",
+                 "boundVariables": {
+                  "fills": [
+                   "VariableID:2071:14166"
+                  ]
+                 },
+                 "fill": "stroke_1jtzctu",
+                 "textStyle": "text_gfqytr"
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "2093:22468",
+             "name": "Prompts",
+             "type": "FRAME",
+             "x": 0,
+             "y": 270,
+             "width": 162,
+             "height": 16,
+             "fills": [],
+             "layout": {
+              "mode": "VERTICAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 2,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2093:22469",
+               "name": "Needs photos",
+               "type": "TEXT",
+               "x": 0,
+               "y": 0,
+               "width": 162,
+               "height": 16,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "HUG",
+               "layoutAlign": "STRETCH",
+               "characters": "Needs photos",
+               "textAutoResize": "HEIGHT",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14171"
+                ]
+               },
+               "fill": "fill_1u1qhti",
+               "textStyle": "text_gfqytr"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2132:30649",
+     "name": "Scroll end (prototype)",
+     "type": "RECTANGLE",
+     "x": 0,
+     "y": 1235,
+     "width": 390,
+     "height": 1,
+     "fills": [],
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     }
+    },
+    {
+     "id": "2093:22301",
+     "name": "Status Bar",
+     "type": "FRAME",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 54,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "fill": "fill_nll9eq",
+     "children": [
+      {
+       "id": "2093:22302",
+       "name": "Time",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 136.94656372070312,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2093:22303",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 50.610687255859375,
+         "y": 18.339622497558594,
+         "width": 37,
+         "height": 22,
+         "constraints": {
+          "horizontal": "SCALE",
+          "vertical": "SCALE"
+         },
+         "characters": "9:41",
+         "fontSize": 17,
+         "fontName": "mixed",
+         "lineHeight": {
+          "value": 22,
+          "unit": "PIXELS"
+         },
+         "textAlignHorizontal": "CENTER",
+         "segments": [
+          {
+           "characters": "9:41",
+           "start": 0,
+           "end": 4,
+           "fontName": {
+            "family": "SF Pro",
+            "style": "Semibold"
+           },
+           "fontSize": 17,
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000"
+            }
+           ],
+           "textDecoration": "NONE",
+           "textCase": "ORIGINAL",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           }
+          }
+         ],
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      },
+      {
+       "id": "2093:22304",
+       "name": "Levels",
+       "type": "FRAME",
+       "x": 248.0915985107422,
+       "y": 0,
+       "width": 141.9084014892578,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2093:22305",
+         "name": "Battery",
+         "type": "GROUP",
+         "x": 82,
+         "y": 23,
+         "width": 27.32803726196289,
+         "height": 13,
+         "children": [
+          {
+           "id": "2093:22306",
+           "name": "Border",
+           "type": "RECTANGLE",
+           "x": 82,
+           "y": 23,
+           "width": 25,
+           "height": 13,
+           "opacity": 0.3499999940395355,
+           "cornerRadius": 4.300000190734863,
+           "blendMode": "NORMAL",
+           "fills": [],
+           "strokeWeight": 1,
+           "strokeAlign": "INSIDE",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "stroke": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "stroke": "fill_1s3vosi"
+          },
+          {
+           "id": "2093:22307",
+           "name": "Cap",
+           "type": "VECTOR",
+           "x": 108,
+           "y": 27.7811279296875,
+           "width": 1.328037977218628,
+           "height": 4.075471878051758,
+           "opacity": 0.4000000059604645,
+           "blendMode": "NORMAL",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          },
+          {
+           "id": "2093:22308",
+           "name": "Capacity",
+           "type": "RECTANGLE",
+           "x": 84,
+           "y": 25,
+           "width": 21,
+           "height": 9,
+           "cornerRadius": 2.5,
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          }
+         ]
+        },
+        {
+         "id": "2093:22309",
+         "name": "Wifi",
+         "type": "VECTOR",
+         "x": 57.69922637939453,
+         "y": 23.63775634765625,
+         "width": 17.141666412353516,
+         "height": 12.328306198120117,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        },
+        {
+         "id": "2093:22310",
+         "name": "Cellular Connection",
+         "type": "VECTOR",
+         "x": 31,
+         "y": 23.535823822021484,
+         "width": 19.200000762939453,
+         "height": 12.226415634155273,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2093:22311",
+     "name": "Top bar",
+     "type": "INSTANCE",
+     "x": 0,
+     "y": 54,
+     "width": 390,
+     "height": 56,
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 0,
+      "paddingRight": 16,
+      "paddingBottom": 0,
+      "paddingLeft": 16,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "CENTER",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14163"
+      ]
+     },
+     "componentProperties": {
+      "Show trailing#2071:5": {
+       "type": "BOOLEAN",
+       "value": false
+      },
+      "Title#2071:4": {
+       "type": "TEXT",
+       "value": "My products"
+      },
+      "Type": {
+       "type": "VARIANT",
+       "value": "Back+Title"
+      }
+     },
+     "mainComponentId": "2071:14397",
+     "mainComponent": {
+      "id": "2071:14397",
+      "name": "Type=Back+Title",
+      "key": "2d86bc97ffd4ce7ca2691914aa60c114f9d130b4",
+      "componentSetId": "2071:14418",
+      "componentSetName": "Top bar"
+     },
+     "fill": "fill_nll9eq",
+     "children": [
+      {
+       "id": "I2093:22311;2071:14398",
+       "name": "Back",
+       "type": "INSTANCE",
+       "x": 16,
+       "y": 6,
+       "width": 44,
+       "height": 44,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "componentProperties": {
+        "Icon#602:12": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:7"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Regular"
+        }
+       },
+       "mainComponentId": "1:17",
+       "mainComponent": {
+        "id": "1:17",
+        "name": "Type=Regular",
+        "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+        "componentSetId": "1:16",
+        "componentSetName": "Icon Button"
+       },
+       "deduped": true
+      },
+      {
+       "id": "I2093:22311;2071:14402",
+       "name": "Title",
+       "type": "TEXT",
+       "x": 72,
+       "y": 16,
+       "width": 302,
+       "height": 24,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutGrow": 1,
+       "characters": "My products",
+       "textTruncation": "ENDING",
+       "maxLines": 1,
+       "textAutoResize": "HEIGHT",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14165"
+        ]
+       },
+       "fill": "fill_1s3vosi",
+       "textStyle": "text_5i882y"
+      },
+      {
+       "id": "I2093:22311;2071:14403",
+       "name": "Trailing",
+       "type": "INSTANCE",
+       "visible": false,
+       "x": 330,
+       "y": 6,
+       "width": 44,
+       "height": 44,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "componentProperties": {
+        "Icon#602:12": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:3268"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Regular"
+        }
+       },
+       "mainComponentId": "1:17",
+       "mainComponent": {
+        "id": "1:17",
+        "name": "Type=Regular",
+        "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+        "componentSetId": "1:16",
+        "componentSetName": "Icon Button"
+       },
+       "deduped": true
+      }
+     ]
+    },
+    {
+     "id": "2093:22477",
+     "name": "Home Indicator",
+     "type": "RECTANGLE",
+     "x": 128,
+     "y": 831,
+     "width": 134,
+     "height": 5,
+     "cornerRadius": 100,
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14165"
+      ]
+     },
+     "fill": "fill_1s3vosi"
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14163": {
+   "name": "color/surface/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14162": {
+   "name": "color/border/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14165": {
+   "name": "color/text/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14166": {
+   "name": "color/text/secondary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14167": {
+   "name": "color/text/tertiary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14170": {
+   "name": "color/status/success/bg",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14169": {
+   "name": "color/status/success/text",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14171": {
+   "name": "color/status/warning/text",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14177": {
+   "name": "color/status/info/bg",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14176": {
+   "name": "color/status/info/text",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14175": {
+   "name": "color/status/danger/strong",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14174": {
+   "name": "color/status/danger/bg",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14173": {
+   "name": "color/status/danger/text",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14172": {
+   "name": "color/status/warning/bg",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14164": {
+   "name": "color/surface/muted",
+   "type": "COLOR"
+  }
+ },
+ "styles": {
+  "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493": {
+   "name": "Text - Light mode/Primary",
+   "type": "PAINT"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ],
+   "stroke_w6fqb5": [
+    {
+     "type": "SOLID",
+     "color": "#E6E6E6"
+    }
+   ],
+   "fill_1s3vosi": [
+    {
+     "type": "SOLID",
+     "color": "#000000"
+    }
+   ],
+   "text_eydnuo": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Medium",
+    "fontSize": 16,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "stroke_1jtzctu": [
+    {
+     "type": "SOLID",
+     "color": "#000000B2"
+    }
+   ],
+   "fill_1r7ub26": [
+    {
+     "type": "IMAGE",
+     "scaleMode": "FILL"
+    }
+   ],
+   "fill_l36ahl": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFFEB"
+    }
+   ],
+   "effect_gi2stx": [
+    {
+     "type": "DROP_SHADOW",
+     "color": "#0000002E",
+     "offset": {
+      "x": 0,
+      "y": 1
+     },
+     "radius": 3,
+     "spread": 0
+    }
+   ],
+   "text_1ryrdh0": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "text_1uikdpk": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Bold",
+    "fontSize": 16,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_acfx0": [
+    {
+     "type": "SOLID",
+     "color": "#00000099"
+    }
+   ],
+   "text_exm4rc": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_svr7hz": [
+    {
+     "type": "SOLID",
+     "color": "#ECFDF3"
+    }
+   ],
+   "fill_qwr4yw": [
+    {
+     "type": "SOLID",
+     "color": "#067647"
+    }
+   ],
+   "text_gfqytr": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_1u1qhti": [
+    {
+     "type": "SOLID",
+     "color": "#B54708"
+    }
+   ],
+   "fill_cmp1lv": [
+    {
+     "type": "SOLID",
+     "color": "#EFF8FF"
+    }
+   ],
+   "fill_1biphrn": [
+    {
+     "type": "SOLID",
+     "color": "#175CD3"
+    }
+   ],
+   "fill_1o5eyu9": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFFD9"
+    }
+   ],
+   "stroke_1g28kz1": [
+    {
+     "type": "SOLID",
+     "color": "#D92D20"
+    }
+   ],
+   "fill_jizne8": [
+    {
+     "type": "SOLID",
+     "color": "#FEF3F2"
+    }
+   ],
+   "fill_qgafhi": [
+    {
+     "type": "SOLID",
+     "color": "#B42318"
+    }
+   ],
+   "fill_tur0vw": [
+    {
+     "type": "SOLID",
+     "color": "#FFFAEB"
+    }
+   ],
+   "fill_d2q9wm": [
+    {
+     "type": "SOLID",
+     "color": "#F2F2F2"
+    }
+   ],
+   "text_5i882y": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Bold",
+    "fontSize": 18,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   }
+  }
+ },
+ "metrics": {
+  "nodeCount": 83,
+  "maxDepth": 11,
+  "styleCount": 25,
+  "tokenCount": 16,
+  "inlineSizeKb": 44.62,
+  "dedupedSizeKb": 39.54
+ }
+}

@@ -1,0 +1,2339 @@
+{
+ "nodes": [
+  {
+   "id": "2089:30215",
+   "name": "rentals-tab · Past",
+   "type": "FRAME",
+   "x": 550,
+   "y": 120,
+   "width": 390,
+   "height": 844,
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": true,
+   "boundVariables": {
+    "fills": [
+     "VariableID:2071:14163"
+    ]
+   },
+   "fill": "fill_nll9eq",
+   "children": [
+    {
+     "id": "2089:30216",
+     "name": "Status Bar",
+     "type": "FRAME",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 54,
+     "fills": [],
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2089:30217",
+       "name": "Time",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 136.94656372070312,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2089:30218",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 50.610687255859375,
+         "y": 18.339622497558594,
+         "width": 37,
+         "height": 22,
+         "constraints": {
+          "horizontal": "SCALE",
+          "vertical": "SCALE"
+         },
+         "characters": "9:41",
+         "fontSize": 17,
+         "fontName": "mixed",
+         "lineHeight": {
+          "value": 22,
+          "unit": "PIXELS"
+         },
+         "textAlignHorizontal": "CENTER",
+         "segments": [
+          {
+           "characters": "9:41",
+           "start": 0,
+           "end": 4,
+           "fontName": {
+            "family": "SF Pro",
+            "style": "Semibold"
+           },
+           "fontSize": 17,
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000"
+            }
+           ],
+           "textDecoration": "NONE",
+           "textCase": "ORIGINAL",
+           "lineHeight": {
+            "value": 22,
+            "unit": "PIXELS"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           }
+          }
+         ],
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      },
+      {
+       "id": "2089:30219",
+       "name": "Levels",
+       "type": "FRAME",
+       "x": 248.0915985107422,
+       "y": 0,
+       "width": 141.9084014892578,
+       "height": 54,
+       "fills": [],
+       "constraints": {
+        "horizontal": "SCALE",
+        "vertical": "CENTER"
+       },
+       "clipsContent": false,
+       "children": [
+        {
+         "id": "2089:30220",
+         "name": "Battery",
+         "type": "GROUP",
+         "x": 82,
+         "y": 23,
+         "width": 27.32803726196289,
+         "height": 13,
+         "children": [
+          {
+           "id": "2089:30221",
+           "name": "Border",
+           "type": "RECTANGLE",
+           "x": 82,
+           "y": 23,
+           "width": 25,
+           "height": 13,
+           "opacity": 0.3499999940395355,
+           "cornerRadius": 4.300000190734863,
+           "blendMode": "NORMAL",
+           "fills": [],
+           "strokeWeight": 1,
+           "strokeAlign": "INSIDE",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "stroke": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "stroke": "fill_1s3vosi"
+          },
+          {
+           "id": "2089:30222",
+           "name": "Cap",
+           "type": "VECTOR",
+           "x": 108,
+           "y": 27.7811279296875,
+           "width": 1.328037977218628,
+           "height": 4.075471878051758,
+           "opacity": 0.4000000059604645,
+           "blendMode": "NORMAL",
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          },
+          {
+           "id": "2089:30223",
+           "name": "Capacity",
+           "type": "RECTANGLE",
+           "x": 84,
+           "y": 25,
+           "width": 21,
+           "height": 9,
+           "cornerRadius": 2.5,
+           "constraints": {
+            "horizontal": "CENTER",
+            "vertical": "SCALE"
+           },
+           "styleIds": {
+            "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+           },
+           "fill": "fill_1s3vosi"
+          }
+         ]
+        },
+        {
+         "id": "2089:30224",
+         "name": "Wifi",
+         "type": "VECTOR",
+         "x": 57.69922637939453,
+         "y": 23.63775634765625,
+         "width": 17.141666412353516,
+         "height": 12.328306198120117,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        },
+        {
+         "id": "2089:30225",
+         "name": "Cellular Connection",
+         "type": "VECTOR",
+         "x": 31,
+         "y": 23.535823822021484,
+         "width": 19.200000762939453,
+         "height": 12.226415634155273,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "SCALE"
+         },
+         "styleIds": {
+          "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2089:30226",
+     "name": "Top bar",
+     "type": "INSTANCE",
+     "x": 0,
+     "y": 54,
+     "width": 390,
+     "height": 56,
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 0,
+      "paddingRight": 24,
+      "paddingBottom": 0,
+      "paddingLeft": 24,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "CENTER",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "boundVariables": {
+      "fills": [
+       "VariableID:2071:14163"
+      ]
+     },
+     "componentProperties": {
+      "Title#2071:4": {
+       "type": "TEXT",
+       "value": "Booking details"
+      },
+      "Show trailing#2071:5": {
+       "type": "BOOLEAN",
+       "value": false
+      },
+      "Type": {
+       "type": "VARIANT",
+       "value": "Tab title"
+      }
+     },
+     "mainComponentId": "2071:14407",
+     "mainComponent": {
+      "id": "2071:14407",
+      "name": "Type=Tab title",
+      "key": "3813db9b545c0dc0fb7df398e9d76be9b039a85f",
+      "componentSetId": "2071:14418",
+      "componentSetName": "Top bar"
+     },
+     "fill": "fill_nll9eq",
+     "children": [
+      {
+       "id": "I2089:30226;2071:14408",
+       "name": "Title",
+       "type": "TEXT",
+       "x": 24,
+       "y": 14,
+       "width": 342,
+       "height": 28,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutGrow": 1,
+       "characters": "Rentals",
+       "textTruncation": "ENDING",
+       "maxLines": 1,
+       "textAutoResize": "HEIGHT",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14165"
+        ]
+       },
+       "fill": "fill_1s3vosi",
+       "textStyle": "text_1ff8wkp"
+      },
+      {
+       "id": "I2089:30226;2071:14409",
+       "name": "Trailing",
+       "type": "INSTANCE",
+       "visible": false,
+       "x": 322,
+       "y": 6,
+       "width": 44,
+       "height": 44,
+       "fills": [],
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "FIXED",
+       "clipsContent": true,
+       "componentProperties": {
+        "Icon#602:12": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:3309"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Regular"
+        }
+       },
+       "mainComponentId": "1:17",
+       "mainComponent": {
+        "id": "1:17",
+        "name": "Type=Regular",
+        "key": "8c1cb0a2891797712b6f3c3a7681d73999fda331",
+        "componentSetId": "1:16",
+        "componentSetName": "Icon Button"
+       },
+       "children": [
+        {
+         "id": "I2089:30226;2071:14409;602:8477",
+         "name": "heroicons-outline/bell",
+         "type": "INSTANCE",
+         "x": 10,
+         "y": 10,
+         "width": 24,
+         "height": 24,
+         "fills": [],
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "CENTER"
+         },
+         "clipsContent": true,
+         "mainComponentId": "1:3309",
+         "mainComponent": {
+          "id": "1:3309",
+          "name": "heroicons-outline/bell",
+          "key": "a54c53d2c42679665596b7ca2cbace2dd8f67790"
+         },
+         "children": [
+          {
+           "id": "I2089:30226;2071:14409;602:8477;341:6649",
+           "name": "Icon",
+           "type": "VECTOR",
+           "x": 3.6884765625,
+           "y": 3,
+           "width": 16.622652053833008,
+           "height": 18,
+           "fills": [],
+           "strokeWeight": 1.5,
+           "strokeAlign": "CENTER",
+           "strokeCap": "ROUND",
+           "strokeJoin": "ROUND",
+           "constraints": {
+            "horizontal": "SCALE",
+            "vertical": "SCALE"
+           },
+           "boundVariables": {
+            "strokes": [
+             "VariableID:34abe88c0a84c614d02927ab00afcde5fb279ded/253:420"
+            ]
+           },
+           "stroke": "fill_1s3vosi"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2089:30229",
+     "name": "Body (scroll)",
+     "type": "FRAME",
+     "x": 0,
+     "y": 110,
+     "width": 390,
+     "height": 576,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 8,
+      "paddingRight": 24,
+      "paddingBottom": 24,
+      "paddingLeft": 24,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "CENTER",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "children": [
+      {
+       "id": "2089:30230",
+       "name": "Segments",
+       "type": "FRAME",
+       "x": 24,
+       "y": 8,
+       "width": 342,
+       "height": 44,
+       "cornerRadius": 12,
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 4,
+        "paddingRight": 4,
+        "paddingBottom": 4,
+        "paddingLeft": 4,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "HUG",
+       "clipsContent": true,
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14164"
+        ]
+       },
+       "fill": "fill_d2q9wm",
+       "children": [
+        {
+         "id": "2089:30231",
+         "name": "Segment · Active",
+         "type": "FRAME",
+         "x": 4,
+         "y": 4,
+         "width": 164,
+         "height": 36,
+         "cornerRadius": 9,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 8,
+          "paddingRight": 0,
+          "paddingBottom": 8,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:30232",
+           "name": "Active",
+           "type": "TEXT",
+           "x": 60.5,
+           "y": 8,
+           "width": 43,
+           "height": 20,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "Active",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14165"
+            ]
+           },
+           "fill": "fill_1s3vosi",
+           "textStyle": "text_8g6dbu"
+          }
+         ]
+        },
+        {
+         "id": "2089:30233",
+         "name": "Segment · Past (selected)",
+         "type": "FRAME",
+         "x": 172,
+         "y": 4,
+         "width": 166,
+         "height": 36,
+         "cornerRadius": 9,
+         "strokeWeight": 1,
+         "strokeAlign": "INSIDE",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 8,
+          "paddingRight": 0,
+          "paddingBottom": 8,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP"
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:1:44046"
+          ],
+          "strokes": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_nll9eq",
+         "stroke": "stroke_w6fqb5",
+         "children": [
+          {
+           "id": "2089:30234",
+           "name": "Past",
+           "type": "TEXT",
+           "x": 68,
+           "y": 8,
+           "width": 30,
+           "height": 20,
+           "layoutSizingHorizontal": "HUG",
+           "layoutSizingVertical": "HUG",
+           "characters": "Past",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14165"
+            ]
+           },
+           "fill": "fill_1s3vosi",
+           "textStyle": "text_1ryrdh0"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2089:30237",
+       "name": "Rental card · Wilson Pro Staff 97 tennis racket",
+       "type": "FRAME",
+       "x": 24,
+       "y": 64,
+       "width": 342,
+       "height": 126,
+       "cornerRadius": 12,
+       "strokeWeight": 1,
+       "strokeAlign": "INSIDE",
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "boundVariables": {
+        "fills": [
+         "VariableID:1:44046"
+        ],
+        "strokes": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_nll9eq",
+       "stroke": "stroke_w6fqb5",
+       "children": [
+        {
+         "id": "2089:30238",
+         "name": "Top",
+         "type": "FRAME",
+         "x": 1,
+         "y": 1,
+         "width": 340,
+         "height": 124,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 16,
+          "paddingRight": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "itemSpacing": 12,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:30239",
+           "name": "Thumb",
+           "type": "FRAME",
+           "x": 16,
+           "y": 16,
+           "width": 64,
+           "height": 64,
+           "cornerRadius": 8,
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14164"
+            ]
+           },
+           "fill": "fill_d2q9wm",
+           "children": [
+            {
+             "id": "2089:30240",
+             "name": "Image",
+             "type": "RECTANGLE",
+             "x": 6,
+             "y": 6,
+             "width": 52,
+             "height": 52,
+             "constraints": {
+              "horizontal": "MIN",
+              "vertical": "MIN"
+             },
+             "fill": "fill_1r7ub26"
+            }
+           ]
+          },
+          {
+           "id": "2089:30241",
+           "name": "Details",
+           "type": "FRAME",
+           "x": 92,
+           "y": 16,
+           "width": 232,
+           "height": 92,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutGrow": 1,
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30242",
+             "name": "Title row",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 232,
+             "height": 48,
+             "fills": [],
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 8,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2089:30243",
+               "name": "Wilson Pro Staff 97 tennis racket",
+               "type": "TEXT",
+               "x": 0,
+               "y": 0,
+               "width": 137,
+               "height": 48,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "HUG",
+               "layoutGrow": 1,
+               "characters": "Wilson Pro Staff 97 tennis racket",
+               "textAutoResize": "HEIGHT",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14165"
+                ]
+               },
+               "fill": "fill_1s3vosi",
+               "textStyle": "text_16e9vtq"
+              },
+              {
+               "id": "2089:30244",
+               "name": "Status pill · Completed",
+               "type": "INSTANCE",
+               "x": 145,
+               "y": 0,
+               "width": 87,
+               "height": 24,
+               "cornerRadius": 999,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 10,
+                "paddingBottom": 0,
+                "paddingLeft": 10,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": false,
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14164"
+                ]
+               },
+               "componentProperties": {
+                "Tone": {
+                 "type": "VARIANT",
+                 "value": "Neutral"
+                }
+               },
+               "mainComponentId": "2073:14368",
+               "mainComponent": {
+                "id": "2073:14368",
+                "name": "Tone=Neutral",
+                "key": "16df67e74cf484ca13dd122daec9ec7c70ad017c",
+                "componentSetId": "2073:14380",
+                "componentSetName": "Status pill"
+               },
+               "fill": "fill_d2q9wm",
+               "children": [
+                {
+                 "id": "I2089:30244;2073:14369",
+                 "name": "Label",
+                 "type": "TEXT",
+                 "x": 10,
+                 "y": 4,
+                 "width": 67,
+                 "height": 16,
+                 "layoutSizingHorizontal": "HUG",
+                 "layoutSizingVertical": "HUG",
+                 "characters": "Completed",
+                 "boundVariables": {
+                  "fills": [
+                   "VariableID:2071:14166"
+                  ]
+                 },
+                 "fill": "fill_1jtzctu",
+                 "textStyle": "text_gfqytr"
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "2089:30245",
+             "name": "Ace Sports · Sat 10 – Sun 11 Oct",
+             "type": "TEXT",
+             "x": 0,
+             "y": 50,
+             "width": 232,
+             "height": 20,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "characters": "Ace Sports · Sat 10 – Sun 11 Oct",
+             "textAutoResize": "HEIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            },
+            {
+             "id": "2089:30246",
+             "name": "Booking RN-24702",
+             "type": "TEXT",
+             "x": 0,
+             "y": 72,
+             "width": 232,
+             "height": 20,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "characters": "Booking RN-24702",
+             "textAutoResize": "HEIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2089:30255",
+       "name": "Rental card · Boxing Bag",
+       "type": "FRAME",
+       "x": 24,
+       "y": 202,
+       "width": 342,
+       "height": 102,
+       "cornerRadius": 12,
+       "strokeWeight": 1,
+       "strokeAlign": "INSIDE",
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "boundVariables": {
+        "fills": [
+         "VariableID:1:44046"
+        ],
+        "strokes": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_nll9eq",
+       "stroke": "stroke_w6fqb5",
+       "children": [
+        {
+         "id": "2089:30256",
+         "name": "Top",
+         "type": "FRAME",
+         "x": 1,
+         "y": 1,
+         "width": 340,
+         "height": 100,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 16,
+          "paddingRight": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "itemSpacing": 12,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:30257",
+           "name": "Thumb",
+           "type": "FRAME",
+           "x": 16,
+           "y": 16,
+           "width": 64,
+           "height": 64,
+           "cornerRadius": 8,
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14164"
+            ]
+           },
+           "fill": "fill_d2q9wm",
+           "children": [
+            {
+             "id": "2089:30258",
+             "name": "Image",
+             "type": "RECTANGLE",
+             "x": 6,
+             "y": 6,
+             "width": 52,
+             "height": 52,
+             "constraints": {
+              "horizontal": "MIN",
+              "vertical": "MIN"
+             },
+             "fill": "fill_1r7ub26"
+            }
+           ]
+          },
+          {
+           "id": "2089:30259",
+           "name": "Details",
+           "type": "FRAME",
+           "x": 92,
+           "y": 16,
+           "width": 232,
+           "height": 68,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutGrow": 1,
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30260",
+             "name": "Title row",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 232,
+             "height": 24,
+             "fills": [],
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 8,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2089:30261",
+               "name": "Boxing Bag",
+               "type": "TEXT",
+               "x": 0,
+               "y": 0,
+               "width": 144,
+               "height": 24,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "HUG",
+               "layoutGrow": 1,
+               "characters": "Boxing Bag",
+               "textAutoResize": "HEIGHT",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14165"
+                ]
+               },
+               "fill": "fill_1s3vosi",
+               "textStyle": "text_16e9vtq"
+              },
+              {
+               "id": "2089:30262",
+               "name": "Status pill · Cancelled",
+               "type": "INSTANCE",
+               "x": 152,
+               "y": 0,
+               "width": 80,
+               "height": 24,
+               "cornerRadius": 999,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 10,
+                "paddingBottom": 0,
+                "paddingLeft": 10,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": false,
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14164"
+                ]
+               },
+               "componentProperties": {
+                "Tone": {
+                 "type": "VARIANT",
+                 "value": "Neutral"
+                }
+               },
+               "mainComponentId": "2073:14368",
+               "mainComponent": {
+                "id": "2073:14368",
+                "name": "Tone=Neutral",
+                "key": "16df67e74cf484ca13dd122daec9ec7c70ad017c",
+                "componentSetId": "2073:14380",
+                "componentSetName": "Status pill"
+               },
+               "deduped": true,
+               "textOverrides": [
+                {
+                 "name": "Label",
+                 "characters": "Cancelled"
+                }
+               ],
+               "fill": "fill_d2q9wm"
+              }
+             ]
+            },
+            {
+             "id": "2089:30263",
+             "name": "FitRent · Sat 3 – Mon 5 Oct",
+             "type": "TEXT",
+             "x": 0,
+             "y": 26,
+             "width": 232,
+             "height": 20,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "characters": "FitRent · Sat 3 – Mon 5 Oct",
+             "textAutoResize": "HEIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            },
+            {
+             "id": "2089:30264",
+             "name": "Booking RN-24655",
+             "type": "TEXT",
+             "x": 0,
+             "y": 48,
+             "width": 232,
+             "height": 20,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "characters": "Booking RN-24655",
+             "textAutoResize": "HEIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2089:30273",
+       "name": "Rental card · PS5 with FIFA",
+       "type": "FRAME",
+       "x": 24,
+       "y": 316,
+       "width": 342,
+       "height": 122,
+       "cornerRadius": 12,
+       "strokeWeight": 1,
+       "strokeAlign": "INSIDE",
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "boundVariables": {
+        "fills": [
+         "VariableID:1:44046"
+        ],
+        "strokes": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_nll9eq",
+       "stroke": "stroke_w6fqb5",
+       "children": [
+        {
+         "id": "2089:30274",
+         "name": "Top",
+         "type": "FRAME",
+         "x": 1,
+         "y": 1,
+         "width": 340,
+         "height": 120,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 16,
+          "paddingRight": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "itemSpacing": 12,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:30275",
+           "name": "Thumb",
+           "type": "FRAME",
+           "x": 16,
+           "y": 16,
+           "width": 64,
+           "height": 64,
+           "cornerRadius": 8,
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14164"
+            ]
+           },
+           "fill": "fill_d2q9wm",
+           "children": [
+            {
+             "id": "2089:30276",
+             "name": "Image",
+             "type": "RECTANGLE",
+             "x": 6,
+             "y": 6,
+             "width": 52,
+             "height": 52,
+             "constraints": {
+              "horizontal": "MIN",
+              "vertical": "MIN"
+             },
+             "fill": "fill_1r7ub26"
+            }
+           ]
+          },
+          {
+           "id": "2089:30277",
+           "name": "Details",
+           "type": "FRAME",
+           "x": 92,
+           "y": 16,
+           "width": 232,
+           "height": 88,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutGrow": 1,
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30278",
+             "name": "Title row",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 232,
+             "height": 24,
+             "fills": [],
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 8,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2089:30279",
+               "name": "PS5 with FIFA",
+               "type": "TEXT",
+               "x": 0,
+               "y": 0,
+               "width": 161,
+               "height": 24,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "HUG",
+               "layoutGrow": 1,
+               "characters": "PS5 with FIFA",
+               "textAutoResize": "HEIGHT",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14165"
+                ]
+               },
+               "fill": "fill_1s3vosi",
+               "textStyle": "text_16e9vtq"
+              },
+              {
+               "id": "2089:30280",
+               "name": "Status pill · Lapsed",
+               "type": "INSTANCE",
+               "x": 169,
+               "y": 0,
+               "width": 63,
+               "height": 24,
+               "cornerRadius": 999,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 10,
+                "paddingBottom": 0,
+                "paddingLeft": 10,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": false,
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14164"
+                ]
+               },
+               "componentProperties": {
+                "Tone": {
+                 "type": "VARIANT",
+                 "value": "Neutral"
+                }
+               },
+               "mainComponentId": "2073:14368",
+               "mainComponent": {
+                "id": "2073:14368",
+                "name": "Tone=Neutral",
+                "key": "16df67e74cf484ca13dd122daec9ec7c70ad017c",
+                "componentSetId": "2073:14380",
+                "componentSetName": "Status pill"
+               },
+               "deduped": true,
+               "textOverrides": [
+                {
+                 "name": "Label",
+                 "characters": "Lapsed"
+                }
+               ],
+               "fill": "fill_d2q9wm"
+              }
+             ]
+            },
+            {
+             "id": "2089:30281",
+             "name": "GameZone Rentals · Fri 2 – Sun 4 Oct",
+             "type": "TEXT",
+             "x": 0,
+             "y": 26,
+             "width": 232,
+             "height": 40,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "characters": "GameZone Rentals · Fri 2 – Sun 4 Oct",
+             "textAutoResize": "HEIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            },
+            {
+             "id": "2089:30282",
+             "name": "Booking RN-24610",
+             "type": "TEXT",
+             "x": 0,
+             "y": 68,
+             "width": 232,
+             "height": 20,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "characters": "Booking RN-24610",
+             "textAutoResize": "HEIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2089:30291",
+       "name": "Rental card · Meta VR Glasses",
+       "type": "FRAME",
+       "x": 24,
+       "y": 450,
+       "width": 342,
+       "height": 102,
+       "cornerRadius": 12,
+       "strokeWeight": 1,
+       "strokeAlign": "INSIDE",
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "boundVariables": {
+        "fills": [
+         "VariableID:1:44046"
+        ],
+        "strokes": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "fill": "fill_nll9eq",
+       "stroke": "stroke_w6fqb5",
+       "children": [
+        {
+         "id": "2089:30292",
+         "name": "Top",
+         "type": "FRAME",
+         "x": 1,
+         "y": 1,
+         "width": 340,
+         "height": 100,
+         "fills": [],
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 16,
+          "paddingRight": 16,
+          "paddingBottom": 16,
+          "paddingLeft": 16,
+          "itemSpacing": 12,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2089:30293",
+           "name": "Thumb",
+           "type": "FRAME",
+           "x": 16,
+           "y": 16,
+           "width": 64,
+           "height": 64,
+           "cornerRadius": 8,
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14164"
+            ]
+           },
+           "fill": "fill_d2q9wm",
+           "children": [
+            {
+             "id": "2089:30294",
+             "name": "Image",
+             "type": "RECTANGLE",
+             "x": 6,
+             "y": 6,
+             "width": 52,
+             "height": 52,
+             "constraints": {
+              "horizontal": "MIN",
+              "vertical": "MIN"
+             },
+             "fill": "fill_1r7ub26"
+            }
+           ]
+          },
+          {
+           "id": "2089:30295",
+           "name": "Details",
+           "type": "FRAME",
+           "x": 92,
+           "y": 16,
+           "width": 232,
+           "height": 68,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutGrow": 1,
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2089:30296",
+             "name": "Title row",
+             "type": "FRAME",
+             "x": 0,
+             "y": 0,
+             "width": 232,
+             "height": 24,
+             "fills": [],
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 8,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "clipsContent": true,
+             "children": [
+              {
+               "id": "2089:30297",
+               "name": "Meta VR Glasses",
+               "type": "TEXT",
+               "x": 0,
+               "y": 0,
+               "width": 129,
+               "height": 24,
+               "layoutSizingHorizontal": "FILL",
+               "layoutSizingVertical": "HUG",
+               "layoutGrow": 1,
+               "characters": "Meta VR Glasses",
+               "textAutoResize": "HEIGHT",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14165"
+                ]
+               },
+               "fill": "fill_1s3vosi",
+               "textStyle": "text_16e9vtq"
+              },
+              {
+               "id": "2089:30298",
+               "name": "Status pill · Not available",
+               "type": "INSTANCE",
+               "x": 137,
+               "y": 0,
+               "width": 95,
+               "height": 24,
+               "cornerRadius": 999,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 10,
+                "paddingBottom": 0,
+                "paddingLeft": 10,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER",
+                "layoutWrap": "NO_WRAP",
+                "strokesIncludedInLayout": true
+               },
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": false,
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14164"
+                ]
+               },
+               "componentProperties": {
+                "Tone": {
+                 "type": "VARIANT",
+                 "value": "Neutral"
+                }
+               },
+               "mainComponentId": "2073:14368",
+               "mainComponent": {
+                "id": "2073:14368",
+                "name": "Tone=Neutral",
+                "key": "16df67e74cf484ca13dd122daec9ec7c70ad017c",
+                "componentSetId": "2073:14380",
+                "componentSetName": "Status pill"
+               },
+               "deduped": true,
+               "textOverrides": [
+                {
+                 "name": "Label",
+                 "characters": "Not available"
+                }
+               ],
+               "fill": "fill_d2q9wm"
+              }
+             ]
+            },
+            {
+             "id": "2089:30299",
+             "name": "PlayHub · Sat 26 – Sun 27 Sep",
+             "type": "TEXT",
+             "x": 0,
+             "y": 26,
+             "width": 232,
+             "height": 20,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "characters": "PlayHub · Sat 26 – Sun 27 Sep",
+             "textAutoResize": "HEIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            },
+            {
+             "id": "2089:30300",
+             "name": "Booking RN-24533",
+             "type": "TEXT",
+             "x": 0,
+             "y": 48,
+             "width": 232,
+             "height": 20,
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "HUG",
+             "layoutAlign": "STRETCH",
+             "characters": "Booking RN-24533",
+             "textAutoResize": "HEIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_l60mqv"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2089:30309",
+     "name": "Tab bar · Rentals",
+     "type": "INSTANCE",
+     "x": 0,
+     "y": 742,
+     "width": 390,
+     "height": 102,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP"
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": false,
+     "componentProperties": {
+      "Active": {
+       "type": "VARIANT",
+       "value": "Rentals"
+      }
+     },
+     "mainComponentId": "2071:14346",
+     "mainComponent": {
+      "id": "2071:14346",
+      "name": "Active=Rentals",
+      "key": "1f2e34caf585a7da0dfb7b12ba8aa0c132b2a3ab",
+      "componentSetId": "2071:14393",
+      "componentSetName": "Tab bar"
+     },
+     "children": [
+      {
+       "id": "I2089:30309;2071:14305",
+       "name": "Navbar",
+       "type": "INSTANCE",
+       "x": 0,
+       "y": 0,
+       "width": 390,
+       "height": 81,
+       "strokeWeight": "mixed",
+       "strokeWeights": {
+        "top": 1,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+       },
+       "strokeAlign": "OUTSIDE",
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 8,
+        "paddingRight": 0,
+        "paddingBottom": 8,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "CENTER",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP"
+       },
+       "layoutSizingHorizontal": "FIXED",
+       "layoutSizingVertical": "HUG",
+       "clipsContent": false,
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14163"
+        ],
+        "strokes": [
+         "VariableID:2071:14162"
+        ]
+       },
+       "componentProperties": {
+        "State": {
+         "type": "VARIANT",
+         "value": "Dark"
+        }
+       },
+       "mainComponentId": "1:82",
+       "mainComponent": {
+        "id": "1:82",
+        "name": "State=Dark",
+        "key": "d2ae4292df6136d7196868ca91fb2d54925d91fb",
+        "componentSetId": "1:74",
+        "componentSetName": "Navbar"
+       },
+       "fill": "fill_nll9eq",
+       "stroke": "stroke_w6fqb5",
+       "children": [
+        {
+         "id": "I2089:30309;2071:14305;395:23622",
+         "name": "Tab - Light mode",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 8,
+         "width": 78,
+         "height": 65,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP"
+         },
+         "layoutSizingHorizontal": "HUG",
+         "layoutSizingVertical": "HUG",
+         "clipsContent": false,
+         "componentProperties": {
+          "Tab": {
+           "type": "VARIANT",
+           "value": "Dark"
+          }
+         },
+         "mainComponentId": "1:64",
+         "mainComponent": {
+          "id": "1:64",
+          "name": "Tab=Dark",
+          "key": "828d45e92ec2afed66a61c8f0e3bd7117ade4562",
+          "componentSetId": "1:61",
+          "componentSetName": "Tab - Light mode"
+         },
+         "fill": "fill_16zfsl5",
+         "children": [
+          {
+           "id": "I2089:30309;2071:14305;395:23622;394:23510",
+           "name": "Tab - Light mode",
+           "type": "INSTANCE",
+           "x": 0,
+           "y": 0,
+           "width": 78,
+           "height": 65,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 8,
+            "paddingRight": 0,
+            "paddingBottom": 8,
+            "paddingLeft": 0,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP"
+           },
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FILL",
+           "layoutGrow": 1,
+           "clipsContent": true,
+           "componentProperties": {
+            "Icon Selecetd State#395:36": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:30"
+            },
+            "Label#394:30": {
+             "type": "TEXT",
+             "value": "Home"
+            },
+            "Icon Unselected State#394:27": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:35"
+            },
+            "State": {
+             "type": "VARIANT",
+             "value": "Default"
+            }
+           },
+           "mainComponentId": "1:55",
+           "mainComponent": {
+            "id": "1:55",
+            "name": "State=Default",
+            "key": "2ba702145cc960cc42a8acd370db7d8ae80eb612",
+            "componentSetId": "1:54",
+            "componentSetName": "Tab - Light mode"
+           },
+           "children": [
+            {
+             "id": "I2089:30309;2071:14305;395:23622;394:23510;394:23489",
+             "name": "home-outline",
+             "type": "INSTANCE",
+             "x": 27,
+             "y": 10.5,
+             "width": 24,
+             "height": 24,
+             "layoutSizingHorizontal": "FIXED",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": true,
+             "mainComponentId": "1:35",
+             "mainComponent": {
+              "id": "1:35",
+              "name": "home-outline",
+              "key": "6268ee3896d83b0aceb4da3c19b1e261fb0f8ba4"
+             },
+             "fill": "fill_16zfsl5",
+             "children": [
+              {
+               "id": "I2089:30309;2071:14305;395:23622;394:23510;394:23489;431:34585",
+               "name": "Icon",
+               "type": "VECTOR",
+               "x": 2.999690532684326,
+               "y": 3,
+               "width": 18.000137329101562,
+               "height": 18,
+               "fills": [],
+               "strokeWeight": 1.5,
+               "strokeAlign": "CENTER",
+               "strokeCap": "ROUND",
+               "strokeJoin": "ROUND",
+               "constraints": {
+                "horizontal": "SCALE",
+                "vertical": "SCALE"
+               },
+               "boundVariables": {
+                "strokes": [
+                 "VariableID:2071:14167"
+                ]
+               },
+               "stroke": "stroke_acfx0"
+              }
+             ]
+            },
+            {
+             "id": "I2089:30309;2071:14305;395:23622;394:23510;394:23490",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 21,
+             "y": 38.5,
+             "width": 36,
+             "height": 16,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "Home",
+             "textAlignHorizontal": "RIGHT",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14167"
+              ]
+             },
+             "fill": "stroke_acfx0",
+             "textStyle": "text_15py5a9"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "I2089:30309;2071:14305;395:23623",
+         "name": "Tab - Light mode",
+         "type": "INSTANCE",
+         "x": 78,
+         "y": 8,
+         "width": 78,
+         "height": 65,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP"
+         },
+         "layoutSizingHorizontal": "HUG",
+         "layoutSizingVertical": "HUG",
+         "clipsContent": false,
+         "componentProperties": {
+          "Tab": {
+           "type": "VARIANT",
+           "value": "Dark"
+          }
+         },
+         "mainComponentId": "1:64",
+         "mainComponent": {
+          "id": "1:64",
+          "name": "Tab=Dark",
+          "key": "828d45e92ec2afed66a61c8f0e3bd7117ade4562",
+          "componentSetId": "1:61",
+          "componentSetName": "Tab - Light mode"
+         },
+         "deduped": true,
+         "textOverrides": [
+          {
+           "name": "Label",
+           "characters": "Saved"
+          }
+         ],
+         "fill": "fill_16zfsl5"
+        },
+        {
+         "id": "I2089:30309;2071:14305;431:33953",
+         "name": "Tab - Light mode",
+         "type": "INSTANCE",
+         "x": 156,
+         "y": 8,
+         "width": 78,
+         "height": 65,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP"
+         },
+         "layoutSizingHorizontal": "HUG",
+         "layoutSizingVertical": "HUG",
+         "clipsContent": false,
+         "componentProperties": {
+          "Tab": {
+           "type": "VARIANT",
+           "value": "Dark"
+          }
+         },
+         "mainComponentId": "1:64",
+         "mainComponent": {
+          "id": "1:64",
+          "name": "Tab=Dark",
+          "key": "828d45e92ec2afed66a61c8f0e3bd7117ade4562",
+          "componentSetId": "1:61",
+          "componentSetName": "Tab - Light mode"
+         },
+         "deduped": true,
+         "textOverrides": [
+          {
+           "name": "Label",
+           "characters": "Post"
+          }
+         ],
+         "fill": "fill_16zfsl5"
+        },
+        {
+         "id": "I2089:30309;2071:14305;395:23994",
+         "name": "Post",
+         "type": "FRAME",
+         "x": 234,
+         "y": 8,
+         "width": 1,
+         "height": 65,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 8,
+          "paddingRight": 0,
+          "paddingBottom": 8,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP"
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutGrow": 1,
+         "clipsContent": false
+        },
+        {
+         "id": "I2089:30309;2071:14305;395:23627",
+         "name": "Tab - Light mode",
+         "type": "INSTANCE",
+         "x": 235,
+         "y": 8,
+         "width": 78,
+         "height": 65,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP"
+         },
+         "layoutSizingHorizontal": "HUG",
+         "layoutSizingVertical": "HUG",
+         "clipsContent": false,
+         "componentProperties": {
+          "Tab": {
+           "type": "VARIANT",
+           "value": "Dark"
+          }
+         },
+         "mainComponentId": "1:64",
+         "mainComponent": {
+          "id": "1:64",
+          "name": "Tab=Dark",
+          "key": "828d45e92ec2afed66a61c8f0e3bd7117ade4562",
+          "componentSetId": "1:61",
+          "componentSetName": "Tab - Light mode"
+         },
+         "deduped": true,
+         "textOverrides": [
+          {
+           "name": "Label",
+           "characters": "Rentals"
+          }
+         ],
+         "fill": "fill_16zfsl5"
+        },
+        {
+         "id": "I2089:30309;2071:14305;395:23628",
+         "name": "Tab - Light mode",
+         "type": "INSTANCE",
+         "x": 313,
+         "y": 8,
+         "width": 78,
+         "height": 65,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP"
+         },
+         "layoutSizingHorizontal": "HUG",
+         "layoutSizingVertical": "HUG",
+         "clipsContent": false,
+         "componentProperties": {
+          "Tab": {
+           "type": "VARIANT",
+           "value": "Dark"
+          }
+         },
+         "mainComponentId": "1:64",
+         "mainComponent": {
+          "id": "1:64",
+          "name": "Tab=Dark",
+          "key": "828d45e92ec2afed66a61c8f0e3bd7117ade4562",
+          "componentSetId": "1:61",
+          "componentSetName": "Tab - Light mode"
+         },
+         "deduped": true,
+         "textOverrides": [
+          {
+           "name": "Label",
+           "characters": "Profile"
+          }
+         ],
+         "fill": "fill_16zfsl5"
+        }
+       ]
+      },
+      {
+       "id": "I2089:30309;2075:14347",
+       "name": "Home Indicator",
+       "type": "FRAME",
+       "x": 0,
+       "y": 81,
+       "width": 390,
+       "height": 21,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "FIXED",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14163"
+        ]
+       },
+       "fill": "fill_nll9eq",
+       "children": [
+        {
+         "id": "I2089:30309;2075:14348",
+         "name": "Home Indicator",
+         "type": "RECTANGLE",
+         "x": 128,
+         "y": 8,
+         "width": 134,
+         "height": 5,
+         "cornerRadius": 100,
+         "constraints": {
+          "horizontal": "CENTER",
+          "vertical": "MIN"
+         },
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14163": {
+   "name": "color/surface/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14165": {
+   "name": "color/text/primary",
+   "type": "COLOR"
+  },
+  "VariableID:34abe88c0a84c614d02927ab00afcde5fb279ded/253:420": {
+   "name": "Primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14164": {
+   "name": "color/surface/muted",
+   "type": "COLOR"
+  },
+  "VariableID:1:44046": {
+   "name": "Light/50",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14162": {
+   "name": "color/border/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14166": {
+   "name": "color/text/secondary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14167": {
+   "name": "color/text/tertiary",
+   "type": "COLOR"
+  }
+ },
+ "styles": {
+  "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493": {
+   "name": "Text - Light mode/Primary",
+   "type": "PAINT"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ],
+   "fill_1s3vosi": [
+    {
+     "type": "SOLID",
+     "color": "#000000"
+    }
+   ],
+   "text_1ff8wkp": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Bold",
+    "fontSize": 20,
+    "lineHeight": {
+     "value": 28,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_d2q9wm": [
+    {
+     "type": "SOLID",
+     "color": "#F2F2F2"
+    }
+   ],
+   "text_8g6dbu": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Medium",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "stroke_w6fqb5": [
+    {
+     "type": "SOLID",
+     "color": "#E6E6E6"
+    }
+   ],
+   "text_1ryrdh0": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_1r7ub26": [
+    {
+     "type": "IMAGE",
+     "scaleMode": "FILL"
+    }
+   ],
+   "text_16e9vtq": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 16,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_1jtzctu": [
+    {
+     "type": "SOLID",
+     "color": "#000000B2"
+    }
+   ],
+   "text_gfqytr": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   },
+   "text_l60mqv": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_16zfsl5": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF",
+     "visible": false
+    }
+   ],
+   "stroke_acfx0": [
+    {
+     "type": "SOLID",
+     "color": "#00000099"
+    }
+   ],
+   "text_15py5a9": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Medium",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   }
+  }
+ },
+ "metrics": {
+  "nodeCount": 77,
+  "maxDepth": 8,
+  "styleCount": 15,
+  "tokenCount": 9,
+  "inlineSizeKb": 41.81,
+  "dedupedSizeKb": 34.6
+ }
+}

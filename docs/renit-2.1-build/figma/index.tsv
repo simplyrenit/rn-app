@@ -1,0 +1,369 @@
+frameId	section	frameName	inventoryId	route	state	check
+2082:14565	01	list-reading · running	list-reading	ListReading	running	live
+2083:14468	01	booking-rental-active · on time	booking-rental-active	Booking (view active, stage out)	on time	live
+2083:14562	01	booking-details-view · rental active	booking-details-view	Booking (view details) — also rendered by BookingDetails	rental active	live
+2083:14692	01	list-review · checks pending	list-review	ListReview	checks pending	live
+2083:15971	01	pdp · top (live booking)	pdp	ProductDetail	top (live booking)	live
+2083:16177	01	pdp · full scroll	pdp	ProductDetail	full scroll	live
+2083:16201	01	pdp-all-specs · default	pdp-all-specs	ProductDetail (AllSpecsSheet)	default	live
+2083:15120	01	home · Signed in	home	Home (tab inside MainTabs)	Signed in	live
+2083:15347	01	home · Signed in · full scroll	home	Home (tab inside MainTabs)	Signed in · full scroll	live
+2083:15579	01	home · Cart has items	home	Home (tab inside MainTabs)	Cart has items	live
+2083:16603	01	shop-today · merchant tab, busy, phone won't ring	shop-today	ShopToday / Rentals tab, Today segment	merchant tab, busy, phone won't ring	live
+2083:16747	01	shop-bookings · merchant tab, Ready	shop-bookings	ShopToday / Rentals tab, Bookings segment	merchant tab, Ready	live
+2089:15349	02	welcome · slide 1 (Rent anything)	welcome	Welcome	slide 1 (Rent anything)	live
+2089:15444	02	welcome · slide 2 (Rent anywhere)	welcome	Welcome	slide 2 (Rent anywhere)	live
+2089:15529	02	welcome · slide 3 (Rent anytime, NEW copy)	welcome	Welcome	slide 3 (Rent anytime, NEW copy)	live
+2089:15649	02	sign-in-panel · Saved tab (signed out)	sign-in-panel	(component in Saved / Post / Rentals / Chat / Profile tabs)	Saved tab (signed out)	live
+2089:15719	02	sign-in-panel · Profile tab (signed out, full scroll)	sign-in-panel	(component in Saved / Post / Rentals / Chat / Profile tabs)	Profile tab (signed out, full scroll)	live
+2089:21637	02	email · filled	email	Email	filled	live
+2089:21681	02	email · invalid email	email	Email	invalid email	live
+2089:21726	02	phone · filled	phone	Phone	filled	live
+2089:21763	02	phone · invalid number	phone	Phone	invalid number	live
+2089:21800	02	verify · email code (entering)	verify	Verify	email code (entering)	live
+2089:21853	02	verify · phone code	verify	Verify	phone code	live
+2089:21903	02	verify · wrong code	verify	Verify	wrong code	fixture
+2089:21957	02	verify · password	verify	Verify	password	live
+2089:25271	02	about · individual (default)	about	About	individual (default)	live
+2089:25343	02	about · validation errors	about	About	validation errors	fixture
+2089:25419	02	about · merchant	about	About	merchant	live
+2089:25483	02	password · rules partly met	password	Password	rules partly met	live
+2089:25541	02	password · rules met	password	Password	rules met	live
+2089:25599	02	confirm-password · filled	confirm-password	ConfirmPassword	filled	live
+2089:25642	02	confirm-password · mismatch	confirm-password	ConfirmPassword	mismatch	live
+2089:28033	02	location · allow location (no permission)	location	Location	allow location (no permission)	live
+2089:28076	02	location · fetching	location	Location	fetching	fixture
+2089:28104	02	location · could not fetch	location	Location	could not fetch	fixture
+2089:28140	02	location · map and address sheet	location	Location	map and address sheet	live
+2089:28209	02	terms · loading (before opening the browser)	terms	Terms	loading (before opening the browser)	fixture
+2089:28232	02	terms · bundled fallback	terms	Terms	bundled fallback	live
+2089:28263	02	privacy · default	privacy	Privacy	default	live
+2089:21997	07	booking-fault · single item, filled	booking-fault	BookingFault {number, lines?}	single item, filled	live
+2089:22073	07	end-early-sheet · notice owed (monthly)	end-early-sheet	(bottom sheet on rental-active, monthly only)	notice owed (monthly)	live
+2089:22208	07	return-window · slot picked	return-window	BookingReturnWindow {number}	slot picked	live
+2089:25685	07	booking-report · owner absent, no photo yet	booking-report	BookingReport {number, kind: no_show|owner_absent, role, name?, mode?}	owner absent, no photo yet	live
+2089:25743	07	booking-report · shop did not come (handover), photo taken	booking-report	BookingReport {number, kind: no_show|owner_absent, role, name?, mode?}	shop did not come (handover), photo taken	live
+2089:25800	07	booking-report · owner absent, too early (refused)	booking-report	BookingReport {number, kind: no_show|owner_absent, role, name?, mode?}	owner absent, too early (refused)	live
+2089:25858	07	camera-off-notice · on the report photo row	booking-report*	BookingReport {number, kind: no_show|owner_absent, role, name?, mode?}	on the report photo row	live
+2089:25925	07	capture · intro (return)	capture	Capture {number, moment: handover|return, role, forOther?, courier?, items?, tit	intro (return)	live
+2089:26022	07	capture · photo 5 of 6	capture	Capture {number, moment: handover|return, role, forOther?, courier?, items?, tit	photo 5 of 6	live
+2089:26079	07	capture · video	capture	Capture {number, moment: handover|return, role, forOther?, courier?, items?, tit	video	live
+2089:26132	07	capture · what's included (courier return, seal)	capture	Capture {number, moment: handover|return, role, forOther?, courier?, items?, tit	what's included (courier return, seal)	live
+2089:26215	07	capture · uploading	capture	Capture {number, moment: handover|return, role, forOther?, courier?, items?, tit	uploading	fixture
+2089:26263	07	capture · the shop's set, code (phone fallback)	capture	Capture {number, moment: handover|return, role, forOther?, courier?, items?, tit	the shop's set, code (phone fallback)	live
+2089:29085	07	booking-extend · default	booking-extend	BookingExtend {number}	default	live
+2089:29135	07	end-early-sheet · minimum over (monthly)	end-early-sheet	(bottom sheet on rental-active, monthly only)	minimum over (monthly)	live
+2089:29262	07	end-early-sheet · quote failed	end-early-sheet	(bottom sheet on rental-active, monthly only)	quote failed	fixture
+2089:29373	07	pay-period · rent due	pay-period	PayPeriod {number, n}	rent due	live
+2089:29436	07	pay-period · rent overdue	pay-period	PayPeriod {number, n}	rent overdue	live
+2089:29499	07	pay-period · notice due	pay-period	PayPeriod {number, n}	notice due	live
+2089:29562	07	pay-period · paid	pay-period	PayPeriod {number, n}	paid	live
+2089:31299	07	booking-return · in person, before recording	booking-return	BookingReturn {number}	in person, before recording	live
+2089:31397	07	booking-return · wrong code	booking-return	BookingReturn {number}	wrong code	fixture
+2089:31511	07	booking-return · courier, pick a window	booking-return	BookingReturn {number}	courier, pick a window	live
+2089:31607	07	booking-return · courier, rider booked	booking-return	BookingReturn {number}	courier, rider booked	live
+2089:31702	07	booking-return · returned	booking-return	BookingReturn {number}	returned	live
+2089:31804	07	return-window · nothing picked, no slot on the last day	return-window	BookingReturnWindow {number}	nothing picked, no slot on the last day	live
+2089:31867	07	return-window · no slots left	return-window	BookingReturnWindow {number}	no slots left	fixture
+2089:33572	07	booking-fault · single item, empty	booking-fault	BookingFault {number, lines?}	single item, empty	live
+2089:33643	07	booking-fault · basket (several items)	booking-fault	BookingFault {number, lines?}	basket (several items)	live
+2089:33745	07	booking-fault · blocked (24 hours passed)	booking-fault	BookingFault {number, lines?}	blocked (24 hours passed)	fixture
+2089:33797	07	claim · fault report, open (you raised it)	claim	Claim {id}	fault report, open (you raised it)	live
+2089:33857	07	claim · damage against you, reply form	claim	Claim {id}	damage against you, reply form	live
+2089:33929	07	claim · damage, your reply sent	claim	Claim {id}	damage, your reply sent	live
+2089:33989	07	claim · decided (upheld)	claim	Claim {id}	decided (upheld)	live
+2089:34057	07	report-confirm-sheets · fault report (on BookingFault)	booking-fault*	BookingFault {number, lines?}	fault report (on BookingFault)	live
+2089:34117	07	report-confirm-sheets · claim reply (on Claim)	booking-fault*	BookingFault {number, lines?}	claim reply (on Claim)	live
+2089:34192	07	report-confirm-sheets · shop damage claim (on ShopReportProblem, neutral backdrop)	booking-fault*	BookingFault {number, lines?}	shop damage claim (on ShopReportProblem, neutral backdrop)	live
+2089:34230	07	report-confirm-sheets · discard delivery changes (on RentalDelivery, neutral backdrop)	booking-fault*	BookingFault {number, lines?}	discard delivery changes (on RentalDelivery, neutral backdrop)	live
+2089:22279	04	pdp-photo-viewer · open	pdp-photo-viewer	ProductDetail (ProductImage Modal)	open	live
+2089:22295	04	pdp · closed now (book for the morning)	pdp	ProductDetail	closed now (book for the morning)	live
+2089:22597	04	pdp · not taking bookings	pdp	ProductDetail	not taking bookings	live
+2089:22896	04	pdp · cart bar (add to cart + book now)	pdp	ProductDetail	cart bar (add to cart + book now)	live
+2089:23201	04	pdp · cart bar · in cart, closed now	pdp	ProductDetail	cart bar · in cart, closed now	live
+2089:23523	04	pdp · cart bar · not taking bookings	pdp	ProductDetail	cart bar · not taking bookings	live
+2089:23841	04	pdp-owner · live	pdp-owner	ProductDetail (isOwner)	live	live
+2089:24130	04	pdp-owner · hidden while Renit checks it	pdp-owner	ProductDetail (isOwner)	hidden while Renit checks it	live
+2089:24972	04	reviews · 24 reviews	reviews	ReviewsScreen	24 reviews	live
+2089:25040	04	reviews · no reviews yet	reviews	ReviewsScreen	no reviews yet	live
+2089:25101	04	write-review · empty (submit off)	write-review	WriteReviews {product, owner?}	empty (submit off)	live
+2089:25181	04	write-review · ready to submit	write-review	WriteReviews {product, owner?}	ready to submit	live
+2089:26744	04	cart · one shop	cart	Cart	one shop	live
+2089:26814	04	cart · rent due elsewhere, closed shop, one item per booking	cart	Cart	rent due elsewhere, closed shop, one item per booking	live
+2089:26957	04	cart · empty	cart	Cart	empty	live
+2089:28290	04	booking-dates · dates picked, delivery	booking-dates	BookingDates	dates picked, delivery	live
+2089:28473	04	booking-dates · delivery not available	booking-dates	BookingDates	delivery not available	live
+2089:28666	04	booking-dates · no dates yet	booking-dates	BookingDates	no dates yet	live
+2089:28848	04	booking-dates-card · cart checkout, one item blocked	booking-dates-card	BookingDates (from_cart / products[])	cart checkout, one item blocked	fixture
+2089:31103	04	location-modal · pin dropped	location-modal	LocationModal	pin dropped	live
+2089:31157	04	address-details · add	address-details	AddressDetails {address? | pin?, requestId?}	add	live
+2089:31227	04	address-details · edit, with errors	address-details	AddressDetails {address? | pin?, requestId?}	edit, with errors	fixture
+2089:24546	03	all-categories · Loaded	all-categories	AllCategories	Loaded	fixture
+2089:24644	03	all-categories · Error	all-categories	AllCategories	Error	fixture
+2089:24680	03	owners-products · Grid	owners-products	OwnersProducts {products, name, shopUrl?}	Grid	live
+2089:24740	03	owners-reviews · List	owners-reviews	OwnersReviewScreen {owner, reviews}	List	live
+2089:27555	03	category-landing · Loaded	category-landing	CategoryLanding {slug,title}	Loaded	fixture
+2089:27679	03	category-landing · Empty	category-landing	CategoryLanding {slug,title}	Empty	live
+2089:27772	03	saved · Signed in	saved	Saved (tab inside MainTabs)	Signed in	live
+2089:27893	03	saved · Empty	saved	Saved (tab inside MainTabs)	Empty	live
+2089:27951	03	saved · Signed out	saved	Saved (tab inside MainTabs)	Signed out	live
+2089:29597	03	search · Empty	search	Search {what?, where?, coords?}	Empty	live
+2089:29654	03	search · Filled	search	Search {what?, where?, coords?}	Filled	live
+2089:29719	03	search-suggestions · Matches	search-suggestions	Search (dropdown overlay)	Matches	live
+2089:29793	03	search-where-sheet · Nearby places	search-where-sheet	Search (bottom sheet)	Nearby places	live
+2089:29905	03	date-range-picker · Range picked	date-range-picker	(modal used by Search and SearchResults)	Range picked	live
+2089:31917	03	search-results · Search results	search-results	SearchResults {selectedItem, range, address, coords, products, category?, subCat	Search results	live
+2089:32001	03	search-results · Delivers to me on	search-results	SearchResults {selectedItem, range, address, coords, products, category?, subCat	Delivers to me on	live
+2089:32064	03	search-results · Category browse, signed out	search-results	SearchResults {selectedItem, range, address, coords, products, category?, subCat	Category browse, signed out	live
+2089:32165	03	search-results · Empty	search-results	SearchResults {selectedItem, range, address, coords, products, category?, subCat	Empty	live
+2089:32240	03	search-results · Nobody delivers	search-results	SearchResults {selectedItem, range, address, coords, products, category?, subCat	Nobody delivers	live
+2089:32313	03	address-picker-sheet · Saved addresses	address-picker-sheet	(sheet)	Saved addresses	live
+2089:34679	03	filter-sheet · Specs tab	filter-sheet	SearchResults (CustomBottomSheetModal)	Specs tab	live
+2089:34809	03	filter-sheet · Sort tab	filter-sheet	SearchResults (CustomBottomSheetModal)	Sort tab	live
+2089:34929	03	filter-sheet · Category tab (sub-categories)	filter-sheet	SearchResults (CustomBottomSheetModal)	Category tab (sub-categories)	live
+2089:35060	03	filter-sheet · Price tab	filter-sheet	SearchResults (CustomBottomSheetModal)	Price tab	live
+2089:35166	03	filter-sheet · Ratings tab	filter-sheet	SearchResults (CustomBottomSheetModal)	Ratings tab	live
+2089:35291	03	filter-sheet · Condition tab	filter-sheet	SearchResults (CustomBottomSheetModal)	Condition tab	live
+2089:35398	03	filter-sheet · Seller tab	filter-sheet	SearchResults (CustomBottomSheetModal)	Seller tab	live
+2089:36248	03	owner-profile · Verified business	owner-profile	UserDetail {id}	Verified business	live
+2089:36415	03	owner-profile · Verified business (full scroll)	owner-profile	UserDetail {id}	Verified business (full scroll)	live
+2089:36523	03	owner-profile · New host	owner-profile	UserDetail {id}	New host	live
+2089:24809	05	booking-pay-amount · pay ₹99	booking-pay-amount	Booking (view pay_booking_amount)	pay ₹99	live
+2089:24858	05	booking-confirming · ringing (notifications off)	booking-confirming	Booking (view confirming)	ringing (notifications off)	fixture
+2089:26998	05	review-and-book · full scroll	review-and-book	ReviewAndBook	full scroll	live
+2089:27091	05	review-and-book · top	review-and-book	ReviewAndBook	top	live
+2089:27180	05	review-and-book · ID check needed	review-and-book	ReviewAndBook	ID check needed	live
+2089:27264	05	review-and-book · shop closed (morning)	review-and-book	ReviewAndBook	shop closed (morning)	live
+2089:27349	05	review-and-book-card · 2 items	review-and-book-card	ReviewAndBook (lines[] / from_cart)	2 items	live
+2089:27469	05	review-and-book-card · item just booked	review-and-book-card	ReviewAndBook (lines[] / from_cart)	item just booked	live
+2089:30670	05	kyc-intro · unticked (full scroll)	kyc-intro	KycIntro {source?: 'profile'|'post_listing'|'push'|'booking', supersede?}	unticked (full scroll)	live
+2089:30754	05	kyc-details · PAN entered	kyc-details	KycDetails {supersede?, source?}	PAN entered	live
+2089:30794	05	kyc-details · PAN error	kyc-details	KycDetails {supersede?, source?}	PAN error	fixture
+2089:30837	05	kyc-details · partner unreachable	kyc-details	KycDetails {supersede?, source?}	partner unreachable	fixture
+2089:30876	05	kyc-details · hand-off to DigiLocker	kyc-details	KycDetails {supersede?, source?}	hand-off to DigiLocker	live
+2089:30920	05	kyc-details-blocked · too many attempts	kyc-details-blocked	KycDetails (replaced body)	too many attempts	fixture
+2089:30955	05	kyc-status · pending (just returned)	kyc-status	KycStatus {justReturned?, source?: 'booking'}	pending (just returned)	live
+2089:31007	05	kyc-status · verified (from booking)	kyc-status	KycStatus {justReturned?, source?: 'booking'}	verified (from booking)	live
+2089:31055	05	kyc-status · rejected	kyc-status	KycStatus {justReturned?, source?: 'booking'}	rejected	live
+2089:32441	05	booking-pay-amount · pay page hand-off (pending)	booking-pay-amount	Booking (view pay_booking_amount)	pay page hand-off (pending)	live
+2089:32490	05	booking-confirming · shop closed	booking-confirming	Booking (view confirming)	shop closed	live
+2089:32561	05	booking-confirming · cancel limit reached	booking-confirming	Booking (view confirming)	cancel limit reached	live
+2089:32636	05	booking-cancel-sheet · cancel request	booking-cancel-sheet	Booking (CancelSheet)	cancel request	live
+2089:32732	05	booking-outcome · can't do these dates	booking-outcome	Booking (view outcome)	can't do these dates	live
+2089:32824	05	booking-outcome · no answer, no options	booking-outcome	Booking (view outcome)	no answer, no options	live
+2089:34317	05	booking-window · pickup, time picked	booking-window	BookingWindow	pickup, time picked	live
+2089:34379	05	booking-window · courier, OK if early	booking-window	BookingWindow	courier, OK if early	live
+2089:34444	05	booking-window · no times left	booking-window	BookingWindow	no times left	fixture
+2089:34494	05	booking-deposit · due	booking-deposit	BookingDeposit	due	live
+2089:34564	05	booking-deposit · window first	booking-deposit	BookingDeposit	window first	live
+2089:34623	05	booking-deposit · paid	booking-deposit	BookingDeposit	paid	live
+2089:34660	05	push-notice · ask + deadline	booking-confirming*	Booking (view confirming)	ask + deadline	live
+2089:30076	06	rentals-tab · Active	rentals-tab	MainTabs > Rentals	Active	live
+2089:30215	06	rentals-tab · Past	rentals-tab	MainTabs > Rentals	Past	live
+2089:30339	06	rentals-tab · Empty (Active)	rentals-tab	MainTabs > Rentals	Empty (Active)	live
+2089:30410	06	rentals-tab · Load error	rentals-tab	MainTabs > Rentals	Load error	fixture
+2089:30477	06	rentals-tab · Signed out	rentals-tab	MainTabs > Rentals	Signed out	live
+2089:30544	06	rentals-merchant-mine · My rentals	rentals-merchant-mine	MainTabs > Rentals (account_type merchant)	My rentals	live
+2089:32884	06	booking · Asking the owner (ringing)	booking	Booking {number, pay?}	Asking the owner (ringing)	fixture
+2089:32972	06	booking · Shop closed, asked at opening	booking	Booking {number, pay?}	Shop closed, asked at opening	live
+2089:33060	06	booking · Load error	booking	Booking {number, pay?}	Load error	fixture
+2089:33096	06	booking-pay-rent · Accepted	booking-pay-rent	Booking (view pay_rent)	Accepted	live
+2089:33177	06	booking-pay-rent · Partial accept (basket, full scroll)	booking-pay-rent	Booking (view pay_rent)	Partial accept (basket, full scroll)	live
+2089:33282	06	booking-details-route · Ready (opened from day-of)	booking-details-route	BookingDetails {number}	Ready (opened from day-of)	live
+2089:35767	06	booking-day-of · Pickup, calls open (full scroll)	booking-day-of	Booking (view day_of, delivered_by shop or pickup)	Pickup, calls open (full scroll)	live
+2089:35891	06	booking-day-of · Pickup, calls open	booking-day-of	Booking (view day_of, delivered_by shop or pickup)	Pickup, calls open	live
+2089:35964	06	booking-day-of · Basket, 1 of 3 ticked (full scroll)	booking-day-of	Booking (view day_of, delivered_by shop or pickup)	Basket, 1 of 3 ticked (full scroll)	live
+2089:36101	06	booking-day-of · Delivery by the shop, before calls open	booking-day-of	Booking (view day_of, delivered_by shop or pickup)	Delivery by the shop, before calls open	live
+2089:36633	06	get-help-sheet · New request	get-help-sheet	(sheet)	New request	live
+2089:36742	06	get-help-sheet · Request sent	get-help-sheet	(sheet)	Request sent	live
+2089:36846	06	not-here-sheet · Default (Ask the shop)	not-here-sheet	(bottom sheet on day-of, basket only)	Default (Ask the shop)	live
+2089:36971	06	booking-courier-day-of · Rider on the way (full scroll)	booking-courier-day-of	Booking (view day_of, delivered_by renit)	Rider on the way (full scroll)	live
+2089:37117	06	booking-courier-day-of · Rider on the way	booking-courier-day-of	Booking (view day_of, delivered_by renit)	Rider on the way	live
+2089:37174	06	booking-courier-day-of · Delivered, open it on camera	booking-courier-day-of	Booking (view day_of, delivered_by renit)	Delivered, open it on camera	live
+2090:20802	06	booking-check · Both sets in	booking-check	BookingCheck {number}	Both sets in	live
+2090:20980	06	booking-check · Code shown (full scroll)	booking-check	BookingCheck {number}	Code shown (full scroll)	live
+2090:21117	06	booking-refuse · Not as described	booking-refuse	BookingRefuse {number}	Not as described	live
+2090:21182	06	booking-refuse · Courier, problem at the door	booking-refuse	BookingRefuse {number}	Courier, problem at the door	live
+2091:20870	08	shop-today · quiet · phone can't ring (ring-permission-card settings)	shop-today	ShopToday / Rentals tab, Today segment	quiet · phone can't ring (ring-permission-card settings)	live
+2091:20977	08	shop-today · ringing now + waiting to ring + walk-in back	shop-today	ShopToday / Rentals tab, Today segment	ringing now + waiting to ring + walk-in back	fixture
+2091:21106	08	shop-today · closed after two missed requests	shop-today	ShopToday / Rentals tab, Today segment	closed after two missed requests	fixture
+2091:21216	08	shop-today · closed by you (follow my hours again)	shop-today	ShopToday / Rentals tab, Today segment	closed by you (follow my hours again)	live
+2091:21309	08	shop-today · not owner (nothing listed)	shop-today	ShopToday / Rentals tab, Today segment	not owner (nothing listed)	live
+2091:21412	08	shop-today · load error	shop-today	ShopToday / Rentals tab, Today segment	load error	fixture
+2091:21515	08	shop-bookings · Ended tab (exits)	shop-bookings	ShopToday / Rentals tab, Bookings segment	Ended tab (exits)	fixture
+2091:21610	08	shop-bookings · empty (Ringing tab)	shop-bookings	ShopToday / Rentals tab, Bookings segment	empty (Ringing tab)	fixture
+2092:21207	08	shop-ring · ringing (single item, more waiting)	shop-ring	ShopRing	ringing (single item, more waiting)	fixture
+2092:21288	08	shop-ring · ringing (basket, one item unticked) · full	shop-ring	ShopRing	ringing (basket, one item unticked) · full	fixture
+2092:21395	08	shop-ring · answered (accepted on this phone)	shop-ring	ShopRing	answered (accepted on this phone)	live
+2092:21444	08	shop-ring · ended (not answered in time)	shop-ring	ShopRing	ended (not answered in time)	fixture
+2093:21585	08	shop-booking · ringing (answer this request)	shop-booking	ShopBooking	ringing (answer this request)	fixture
+2093:21659	08	shop-booking · confirmed · customer asked to move the time	shop-booking	ShopBooking	confirmed · customer asked to move the time	live
+2093:21769	08	shop-booking · ready · full	shop-booking	ShopBooking	ready · full	live
+2093:21944	08	shop-booking · cancelled by you (exit)	shop-booking	ShopBooking	cancelled by you (exit)	live
+2094:21684	08	quick-block-sheet · no item picked yet	quick-block-sheet	(sheet in Today)	no item picked yet	live
+2094:21828	08	quick-block-sheet · filled (2 units, repair)	quick-block-sheet	(sheet in Today)	filled (2 units, repair)	live
+2094:21970	08	product-picker-sheet · your items (full-screen modal)	product-picker-sheet	(sheet)	your items (full-screen modal)	live
+2094:22017	08	product-picker-sheet · no match	product-picker-sheet	(sheet)	no match	live
+2094:22055	08	remove-block-sheet · block has begun	remove-block-sheet	(ConfirmSheet in Today)	block has begun	live
+2094:22168	08	extend-block-modal · day picked	extend-block-modal	(DayPickerModal in Today)	day picked	live
+2094:24052	08	refuse-sheet · not available on these dates	refuse-sheet	(sheet)	not available on these dates	live
+2094:24156	08	refuse-sheet · other reason	refuse-sheet	(sheet)	other reason	live
+2094:24240	08	untick-sheet · Manfrotto tripod	untick-sheet	(sheet)	Manfrotto tripod	live
+2094:24377	08	window-change-sheet · times left on the day	window-change-sheet	(sheet)	times left on the day	live
+2094:24457	08	window-change-sheet · no other time left	window-change-sheet	(sheet)	no other time left	fixture
+2094:24524	08	shop-cancel-sheet · one item	shop-cancel-sheet	(sheet)	one item	live
+2094:24597	08	shop-cancel-sheet · basket (which item)	shop-cancel-sheet	(sheet)	basket (which item)	live
+2095:26567	08	shop-booking · out (rental running)	shop-booking	ShopBooking	out (rental running)	live
+2095:24982	13	profile-signed-out · guest (full scroll)	profile-signed-out	MainTabs > Profile (tab)	guest (full scroll)	live
+2095:25130	13	profile-signed-out · guest	profile-signed-out	MainTabs > Profile (tab)	guest	live
+2095:25349	13	profile-signed-in · customer (full scroll)	profile-signed-in	MainTabs > Profile (tab)	customer (full scroll)	live
+2095:25572	13	profile-signed-in · customer	profile-signed-in	MainTabs > Profile (tab)	customer	live
+2095:25822	13	profile-signed-in · shop, pending approval	profile-signed-in	MainTabs > Profile (tab)	shop, pending approval	live
+2095:26102	13	profile-signed-in · shop, not approved	profile-signed-in	MainTabs > Profile (tab)	shop, not approved	live
+2095:26235	13	merchant-status-card · states	merchant-status-card	MainTabs > Profile (inline card)	states	live
+2095:26508	13	kyc-card · states	kyc-card	MainTabs > Profile (inline card)	states	live
+2096:27684	13	personal-details-sheet · default	personal-details-sheet	Profile > bottom sheet	default	live
+2096:27788	13	personal-details-sheet · name locked	personal-details-sheet	Profile > bottom sheet	name locked	live
+2096:27891	13	personal-details-sheet · picture chosen	personal-details-sheet	Profile > bottom sheet	picture chosen	live
+2096:28005	13	profile-picture-sheet · default	profile-picture-sheet	Profile > Personal details > sheet	default	live
+2096:28081	13	edit-name-sheet · default	edit-name-sheet	Profile > Personal details > sheet	default	live
+2096:28163	13	appearance-sheet · default	appearance-sheet	Profile > bottom sheet	default	live
+2096:30504	13	unlock-code-sheet · code sent	unlock-code-sheet	Profile > Personal details > sheet	code sent	live
+2096:30599	13	edit-email-sheet · new email	edit-email-sheet	Profile > Personal details > sheet	new email	live
+2096:30681	13	edit-email-sheet · enter code	edit-email-sheet	Profile > Personal details > sheet	enter code	live
+2096:30773	13	edit-phone-sheet · new number	edit-phone-sheet	Profile > Personal details > sheet	new number	live
+2096:30862	13	edit-phone-sheet · enter code	edit-phone-sheet	Profile > Personal details > sheet	enter code	live
+2096:30954	13	edit-password-sheet · default	edit-password-sheet	Profile > Personal details > sheet	default	live
+2096:31063	13	delete-account-modal · confirm	delete-account-modal	Profile > Personal details > modal	confirm	live
+2096:31168	13	delete-account-modal · blocked	delete-account-modal	Profile > Personal details > modal	blocked	fixture
+2097:28843	13	saved-addresses · list	saved-addresses	SavedAddresses	list	live
+2097:28908	13	saved-addresses · empty	saved-addresses	SavedAddresses	empty	live
+2097:28950	13	saved-addresses · load error	saved-addresses	SavedAddresses	load error	fixture
+2097:28985	13	address-delete-sheet · default (on AddressDetails)	address-delete-sheet	AddressDetails > ConfirmSheet	default (on AddressDetails)	live
+2097:29036	13	business-billing · GSTIN saved	business-billing (profile area)	BusinessBilling	GSTIN saved	live
+2097:29097	13	business-billing · add GSTIN	business-billing (profile area)	BusinessBilling	add GSTIN	live
+2097:29139	13	business-billing · switch off	business-billing (profile area)	BusinessBilling	switch off	live
+2097:30662	13	profile-signed-in · shop, pending approval (full scroll)	profile-signed-in	MainTabs > Profile (tab)	shop, pending approval (full scroll)	live
+2093:22122	11	my-products · statuses	my-products	myProducts	statuses	live
+2093:22300	11	my-products · statuses (full scroll)	my-products	myProducts	statuses (full scroll)	live
+2093:22478	11	my-products · empty	my-products	myProducts	empty	live
+2094:23609	11	edit-product · live, change being checked	edit-product	editProduct	live, change being checked	live
+2094:23693	11	edit-product · flagged	edit-product	editProduct	flagged	live
+2094:23771	11	edit-product · product not found	edit-product	editProduct	product not found	fixture
+2094:23806	11	archive-sheet · confirm	archive-sheet	(sheet)	confirm	live
+2094:23925	11	archive-sheet · open booking error	archive-sheet	(sheet)	open booking error	fixture
+2095:23112	11	edit-category · categories	edit-category	EditCategory → EditSubCategories	categories	live
+2095:23240	11	edit-category · sub-categories, saving	edit-category	EditCategory → EditSubCategories	sub-categories, saving	live
+2095:23328	11	edit-availability · no dates yet, range picked	edit-availability	EditProductAvailability	no dates yet, range picked	live
+2095:23467	11	edit-availability · dates blocked	edit-availability	EditProductAvailability	dates blocked	fixture
+2095:24163	11	edit-images · photos	edit-images	EditProductImages → EditCoverImage	photos	live
+2095:24211	11	edit-images · add photo sheet	edit-images	EditProductImages → EditCoverImage	add photo sheet	live
+2095:24280	11	edit-images · cover, none selected	edit-images	EditProductImages → EditCoverImage	cover, none selected	live
+2095:24328	11	edit-images · cover set	edit-images	EditProductImages → EditCoverImage	cover set	live
+2096:25867	11	edit-about-product · change waiting, prompts	edit-about-product	EditAboutProduct	change waiting, prompts	live
+2096:26057	11	edit-about-product · full scroll (someone else contact)	edit-about-product	EditAboutProduct	full scroll (someone else contact)	live
+2094:22625	10	post-tab-gate · signed out	post-tab-gate	MainTabs > Post	signed out	live
+2094:22718	10	post-tab-gate · merchant pending	post-tab-gate	MainTabs > Post	merchant pending	live
+2094:22770	10	post-tab-gate · merchant rejected	post-tab-gate	MainTabs > Post	merchant rejected	live
+2094:22828	10	post-tab-gate · approved (fallback, normally skipped)	post-tab-gate	MainTabs > Post	approved (fallback, normally skipped)	live
+2094:22877	10	draft-photos · walking (full scroll)	draft-photos	DraftPhotos	walking (full scroll)	live
+2094:22940	10	draft-photos · skipped left	draft-photos	DraftPhotos	skipped left	live
+2094:22989	10	draft-photos · all done	draft-photos	DraftPhotos	all done	live
+2094:23035	10	draft-photos · error	draft-photos	DraftPhotos	error	fixture
+2094:24997	10	list-add-photos · fresh (owner terms to tick)	list-add-photos	ListAddPhotos	fresh (owner terms to tick)	live
+2094:25067	10	list-add-photos · photos uploading	list-add-photos	ListAddPhotos	photos uploading	fixture
+2094:25123	10	list-add-photos · L-12b retake warning	list-add-photos	ListAddPhotos	L-12b retake warning	live
+2094:25168	10	add-photo-sheet · on list-add-photos	add-photo-sheet	(sheet)	on list-add-photos	live
+2094:25236	10	resume-draft-sheet · on list-add-photos	resume-draft-sheet	(sheet)	on list-add-photos	live
+2095:24375	10	list-reading · unreadable (L-13b)	list-reading	ListReading	unreadable (L-13b)	fixture
+2095:24471	10	list-reading · retake warning	list-reading	ListReading	retake warning	live
+2095:24558	10	list-reading · failed → lands on Review with a note	list-reading	ListReading	failed → lands on Review with a note	fixture
+2095:24717	10	list-reading · quota (rate limited) → lands on Review with a note	list-reading	ListReading	quota (rate limited) → lands on Review with a note	fixture
+2096:24835	10	category-sheet · parents	category-sheet	(sheet)	parents	live
+2096:25059	10	category-sheet · subcategories (Books)	category-sheet	(sheet)	subcategories (Books)	live
+2096:25258	10	spec-sheet · one choice (radios)	spec-sheet	(sheet)	one choice (radios)	live
+2096:25440	10	spec-sheet · brand (searchable list)	spec-sheet	(sheet)	brand (searchable list)	live
+2096:29125	10	list-preview · full scroll	list-preview	ListPreview	full scroll	live
+2096:29335	10	list-submitted · checking + KYC nudge	list-submitted	ListSubmitted	checking + KYC nudge	fixture
+2096:29395	10	list-submitted · live	list-submitted	ListSubmitted	live	live
+2096:29435	10	list-submitted · flagged	list-submitted	ListSubmitted	flagged	live
+2097:30938	10	list-preview · idle (top)	list-preview	ListPreview	idle (top)	live
+2097:31046	10	list-submitted · live + ring permission card	list-submitted	ListSubmitted	live + ring permission card	live
+2097:31093	10	spec-sheet · several choices (checkboxes)	spec-sheet	(sheet)	several choices (checkboxes)	live
+2094:23133	09	shop-handover · pickup, code entry (full scroll)	shop-handover	ShopHandover	pickup, code entry (full scroll)	live
+2094:23337	09	shop-handover · owner delivery, before the window (full scroll)	shop-handover	ShopHandover	owner delivery, before the window (full scroll)	live
+2094:23454	09	shop-handover · rental started, payout waits for the record (full scroll)	shop-handover	ShopHandover	rental started, payout waits for the record (full scroll)	live
+2095:23664	09	shop-handover-courier · packing (full scroll)	shop-handover-courier	ShopHandover (courierOf(booking) set)	packing (full scroll)	live
+2095:23805	09	shop-handover-courier · rider at your shop (full scroll)	shop-handover-courier	ShopHandover (courierOf(booking) set)	rider at your shop (full scroll)	live
+2095:23918	09	booking-report-noshow · photo taken	booking-report-noshow	BookingReport	photo taken	live
+2095:23972	09	capture-owner · intro, customer's phone can't record (full scroll)	capture-owner	Capture	intro, customer's phone can't record (full scroll)	live
+2095:24071	09	capture-owner · what's included, ID check (handover) (full scroll)	capture-owner	Capture	what's included, ID check (handover) (full scroll)	live
+2096:26964	09	shop-return · out, before the code (full scroll)	shop-return	ShopReturn	out, before the code (full scroll)	live
+2096:27115	09	shop-return · code shown (full scroll)	shop-return	ShopReturn	code shown (full scroll)	live
+2096:27261	09	shop-return · returned, problem window open (full scroll)	shop-return	ShopReturn	returned, problem window open (full scroll)	live
+2096:27377	09	shop-return-courier · item arriving, with the rider (full scroll)	shop-return-courier	ShopReturn (courier)	item arriving, with the rider (full scroll)	live
+2096:27556	09	shop-return-courier · back at your shop, ended by the courier (full scroll)	shop-return-courier	ShopReturn (courier)	back at your shop, ended by the courier (full scroll)	fixture
+2097:28524	09	shop-report-problem · filled (full scroll)	shop-report-problem	ShopReportProblem	filled (full scroll)	live
+2097:28598	09	shop-report-problem · blocked, nothing left of the deposit	shop-report-problem	ShopReportProblem	blocked, nothing left of the deposit	fixture
+2097:28652	09	claim-owner · damage you raised, waiting for the reply (full scroll)	claim-owner	Claim	damage you raised, waiting for the reply (full scroll)	live
+2097:28706	09	claim-owner · not as described, reply form (full scroll)	claim-owner	Claim	not as described, reply form (full scroll)	live
+2097:28775	09	claim-owner · damage, decided (full scroll)	claim-owner	Claim	damage, decided (full scroll)	live
+2095:26754	12	profile-shop-entry · merchant approved	profile-shop-entry	MainTabs > Profile	merchant approved	live
+2095:26883	12	profile-shop-entry · merchant not approved	profile-shop-entry	MainTabs > Profile	merchant not approved	live
+2095:27019	12	profile-shop-entry · individual owner	profile-shop-entry	MainTabs > Profile	individual owner	live
+2096:26244	12	rental-settings · open, merchant (full scroll)	rental-settings	RentalSettings	open, merchant (full scroll)	live
+2096:26342	12	rental-settings · open, merchant	rental-settings	RentalSettings	open, merchant	live
+2096:26392	12	rental-settings · closed, no hours yet (individual owner)	rental-settings	RentalSettings	closed, no hours yet (individual owner)	live
+2096:26472	12	rental-settings · closed by hand, phone cannot ring	rental-settings	RentalSettings	closed by hand, phone cannot ring	live
+2096:26578	12	rental-settings · not an owner	rental-settings	RentalSettings	not an owner	live
+2096:26620	12	rental-settings · could not load	rental-settings	RentalSettings	could not load	fixture
+2096:26658	12	rental-settings · closed-until day picker	rental-settings	RentalSettings	closed-until day picker	live
+2096:29485	12	notice-sheet · 3 hours selected	notice-sheet	(sheet)	3 hours selected	live
+2096:29570	12	devices-sheet · list	devices-sheet	(sheet)	list	live
+2096:29658	12	devices-sheet · could not load	devices-sheet	(sheet)	could not load	fixture
+2096:29735	12	devices-sheet · no devices listed	devices-sheet	(sheet)	no devices listed	live
+2096:29799	12	rental-hours · default (full scroll)	rental-hours	RentalHours	default (full scroll)	live
+2096:29910	12	rental-hours · default	rental-hours	RentalHours	default	live
+2096:30017	12	rental-hours · opening after closing	rental-hours	RentalHours	opening after closing	live
+2096:30129	12	rental-hours-time-sheet · Monday opens at	rental-hours	RentalHours	Monday opens at	live
+2097:29184	12	rental-delivery · delivers, unsaved changes (full scroll)	rental-delivery	RentalDelivery	delivers, unsaved changes (full scroll)	live
+2097:29301	12	rental-delivery · delivers, unsaved changes	rental-delivery	RentalDelivery	delivers, unsaved changes	live
+2097:29393	12	rental-delivery · delivery off	rental-delivery	RentalDelivery	delivery off	live
+2097:29434	12	rental-delivery · no shop address (full scroll)	rental-delivery	RentalDelivery	no shop address (full scroll)	live
+2097:29504	12	rental-delivery · every area off	rental-delivery	RentalDelivery	every area off	live
+2097:29629	12	rental-delivery · discard changes sheet	rental-delivery	RentalDelivery	discard changes sheet	live
+2097:29740	12	delivery-areas · list	delivery-areas	DeliveryAreas	list	live
+2097:29835	12	delivery-areas · no shop address	delivery-areas	DeliveryAreas	no shop address	live
+2097:29872	12	delivery-areas · could not load	delivery-areas	DeliveryAreas	could not load	fixture
+2097:30015	12	rental-gst · registered	rental-gst	RentalGst	registered	live
+2097:30055	12	rental-gst · not registered	rental-gst	RentalGst	not registered	live
+2097:30090	12	rental-gst · GSTIN not valid	rental-gst	RentalGst	GSTIN not valid	live
+2097:30130	12	shop-address · not set yet	shop-address	ShopAddress	not set yet	live
+2097:30162	12	shop-address · confirmed	shop-address	ShopAddress	confirmed	live
+2097:30195	12	shop-address · new place picked	shop-address	ShopAddress	new place picked	live
+2097:30247	12	bank-account · no account yet	bank-account	BankAccount	no account yet	live
+2097:30281	12	bank-account · checking	bank-account	BankAccount	checking	fixture
+2097:30326	12	bank-account · verified	bank-account	BankAccount	verified	live
+2097:30370	12	bank-account · check failed	bank-account	BankAccount	check failed	fixture
+2097:30421	12	bank-account · add account form	bank-account	BankAccount	add account form	live
+2097:30474	12	bank-account · not an owner	bank-account	BankAccount	not an owner	live
+2097:30513	12	bank-unlock-sheet · waiting for code	bank-account*	BankAccount	waiting for code	live
+2097:30585	12	bank-unlock-sheet · wrong or expired code	bank-account*	BankAccount	wrong or expired code	fixture
+2097:31454	14	notifications · list	notifications	notification	list	live
+2097:31514	14	notifications · empty	notifications	notification	empty	live
+2097:31549	14	faq · first answer open (full scroll)	faq	faq	first answer open (full scroll)	live
+2097:31631	14	contact-us · default	contact-us	contactUs	default	live
+2097:31688	14	who-we-are · default	who-we-are	whoWeAre	default	live
+2097:31776	14	report-a-problem · empty (Report disabled)	report-a-problem	ReportAProblem	empty (Report disabled)	live
+2097:31820	14	report-a-problem · filled	report-a-problem	ReportAProblem	filled	live
+2097:31861	14	toast · error (report failed, stays on screen)	toast	(global, App.tsx AppToast)	error (report failed, stays on screen)	fixture
+2097:31908	14	feedback · empty (Submit disabled)	feedback	feedback	empty (Submit disabled)	live
+2097:31952	14	feedback · filled	feedback	feedback	filled	live
+2097:32040	14	error-boundary · crash fallback	error-boundary	(wraps Navigation)	crash fallback	fixture
+2097:32179	14	toast · success, simple (back on Profile)	toast	(global, App.tsx AppToast)	success, simple (back on Profile)	live
+2097:32382	14	request-categories · list	request-categories	unavailabilityFormCategories	list	live
+2097:32557	14	request-categories · search (hit goes straight to the form)	request-categories	unavailabilityFormCategories	search (hit goes straight to the form)	live
+2097:32606	14	request-subcategory · Electronics & computing	request-subcategory	UnavailabilitySubCat {category, subcategories}	Electronics & computing	live
+2097:32751	14	request-form · empty (Submit disabled)	request-form	unavailabilityFormInputs {category, subcategory}	empty (Submit disabled)	live
+2097:32832	14	request-date-picker · range picked	request-date-picker	unavailabilityFormInputs > DateRangePicker	range picked	live
+2097:33083	14	request-form · filled (full scroll)	request-form	unavailabilityFormInputs {category, subcategory}	filled (full scroll)	live

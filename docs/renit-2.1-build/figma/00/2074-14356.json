@@ -1,0 +1,734 @@
+{
+ "nodes": [
+  {
+   "id": "2074:14356",
+   "name": "Timeline step",
+   "type": "COMPONENT_SET",
+   "x": 3100,
+   "y": 90,
+   "width": 390,
+   "height": 270,
+   "cornerRadius": 5,
+   "layout": {
+    "mode": "VERTICAL",
+    "paddingTop": 24,
+    "paddingRight": 24,
+    "paddingBottom": 24,
+    "paddingLeft": 24,
+    "itemSpacing": 24,
+    "primaryAxisAlignItems": "MIN",
+    "counterAxisAlignItems": "MIN",
+    "layoutWrap": "NO_WRAP",
+    "strokesIncludedInLayout": true
+   },
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": true,
+   "fill": "fill_udpb2x",
+   "children": [
+    {
+     "id": "2074:14332",
+     "name": "State=Done",
+     "type": "COMPONENT",
+     "x": 24,
+     "y": 24,
+     "width": 342,
+     "height": 58,
+     "fills": [],
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "layoutSizingHorizontal": "FIXED",
+     "layoutSizingVertical": "HUG",
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2074:14333",
+       "name": "Rail",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 20,
+       "height": 58,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "HUG",
+       "layoutSizingVertical": "FILL",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2074:14334",
+         "name": "Dot",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 20,
+         "height": 20,
+         "cornerRadius": 10,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7",
+         "children": [
+          {
+           "id": "2074:14335",
+           "name": "Check",
+           "type": "INSTANCE",
+           "x": 4,
+           "y": 4,
+           "width": 12,
+           "height": 12,
+           "fills": [],
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "clipsContent": true,
+           "mainComponentId": "1:127",
+           "mainComponent": {
+            "id": "1:127",
+            "name": "heroicons-solid/check",
+            "key": "8cf7e1ffea837e8768e13bd41fe521311e975002"
+           },
+           "children": [
+            {
+             "id": "I2074:14335;341:6961",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 1.875,
+             "y": 2.2499618530273438,
+             "width": 8.250040054321289,
+             "height": 7.500041961669922,
+             "constraints": {
+              "horizontal": "SCALE",
+              "vertical": "SCALE"
+             },
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14168"
+              ]
+             },
+             "fill": "fill_nll9eq"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2074:14337",
+         "name": "Line",
+         "type": "RECTANGLE",
+         "x": 9,
+         "y": 24,
+         "width": 2,
+         "height": 34,
+         "cornerRadius": 1,
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FILL",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_1prthe7"
+        }
+       ]
+      },
+      {
+       "id": "2074:14338",
+       "name": "Text",
+       "type": "FRAME",
+       "x": 32,
+       "y": 0,
+       "width": 310,
+       "height": 58,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 20,
+        "paddingLeft": 0,
+        "itemSpacing": 2,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutGrow": 1,
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2074:14339",
+         "name": "Title",
+         "type": "TEXT",
+         "x": 0,
+         "y": 0,
+         "width": 310,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Paid ₹99",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_1ryrdh0"
+        },
+        {
+         "id": "2074:14340",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 0,
+         "y": 22,
+         "width": 310,
+         "height": 16,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Today, 4:50 pm",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14167"
+          ]
+         },
+         "fill": "fill_acfx0",
+         "textStyle": "text_exm4rc"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2074:14341",
+     "name": "State=Current",
+     "type": "COMPONENT",
+     "x": 24,
+     "y": 106,
+     "width": 342,
+     "height": 58,
+     "fills": [],
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "layoutSizingHorizontal": "FIXED",
+     "layoutSizingVertical": "HUG",
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2074:14342",
+       "name": "Rail",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 20,
+       "height": 58,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "HUG",
+       "layoutSizingVertical": "FILL",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2074:14343",
+         "name": "Dot",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 20,
+         "height": 20,
+         "cornerRadius": 10,
+         "strokeWeight": 2,
+         "strokeAlign": "INSIDE",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14160"
+          ],
+          "strokes": [
+           "VariableID:2071:14159"
+          ]
+         },
+         "fill": "fill_rjbcqp",
+         "stroke": "fill_1prthe7",
+         "children": [
+          {
+           "id": "2074:14344",
+           "name": "Core",
+           "type": "ELLIPSE",
+           "x": 6,
+           "y": 6,
+           "width": 8,
+           "height": 8,
+           "layoutSizingHorizontal": "FIXED",
+           "layoutSizingVertical": "FIXED",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14159"
+            ]
+           },
+           "fill": "fill_1prthe7"
+          }
+         ]
+        },
+        {
+         "id": "2074:14345",
+         "name": "Line",
+         "type": "RECTANGLE",
+         "x": 9,
+         "y": 24,
+         "width": 2,
+         "height": 34,
+         "cornerRadius": 1,
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FILL",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_w6fqb5"
+        }
+       ]
+      },
+      {
+       "id": "2074:14346",
+       "name": "Text",
+       "type": "FRAME",
+       "x": 32,
+       "y": 0,
+       "width": 310,
+       "height": 58,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 20,
+        "paddingLeft": 0,
+        "itemSpacing": 2,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutGrow": 1,
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2074:14347",
+         "name": "Title",
+         "type": "TEXT",
+         "x": 0,
+         "y": 0,
+         "width": 310,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Asking Lens House",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14165"
+          ]
+         },
+         "fill": "fill_1s3vosi",
+         "textStyle": "text_1ryrdh0"
+        },
+        {
+         "id": "2074:14348",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 0,
+         "y": 22,
+         "width": 310,
+         "height": 16,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "The owner has up to 10 minutes to answer.",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14167"
+          ]
+         },
+         "fill": "fill_acfx0",
+         "textStyle": "text_exm4rc"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2074:14349",
+     "name": "State=Upcoming",
+     "type": "COMPONENT",
+     "x": 24,
+     "y": 188,
+     "width": 342,
+     "height": 58,
+     "fills": [],
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "layoutSizingHorizontal": "FIXED",
+     "layoutSizingVertical": "HUG",
+     "clipsContent": false,
+     "children": [
+      {
+       "id": "2074:14350",
+       "name": "Rail",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 20,
+       "height": 58,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "HUG",
+       "layoutSizingVertical": "FILL",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2074:14351",
+         "name": "Dot",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 20,
+         "height": 20,
+         "cornerRadius": 10,
+         "strokeWeight": 2,
+         "strokeAlign": "INSIDE",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FIXED",
+         "clipsContent": true,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14163"
+          ],
+          "strokes": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_nll9eq",
+         "stroke": "fill_w6fqb5"
+        },
+        {
+         "id": "2074:14352",
+         "name": "Line",
+         "type": "RECTANGLE",
+         "x": 9,
+         "y": 24,
+         "width": 2,
+         "height": 34,
+         "cornerRadius": 1,
+         "layoutSizingHorizontal": "FIXED",
+         "layoutSizingVertical": "FILL",
+         "layoutGrow": 1,
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14162"
+          ]
+         },
+         "fill": "fill_w6fqb5"
+        }
+       ]
+      },
+      {
+       "id": "2074:14353",
+       "name": "Text",
+       "type": "FRAME",
+       "x": 32,
+       "y": 0,
+       "width": 310,
+       "height": 58,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 20,
+        "paddingLeft": 0,
+        "itemSpacing": 2,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutGrow": 1,
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2074:14354",
+         "name": "Title",
+         "type": "TEXT",
+         "x": 0,
+         "y": 0,
+         "width": 310,
+         "height": 20,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Pay rent",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14167"
+          ]
+         },
+         "fill": "fill_acfx0",
+         "textStyle": "text_1ryrdh0"
+        },
+        {
+         "id": "2074:14355",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 0,
+         "y": 22,
+         "width": 310,
+         "height": 16,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "After the owner accepts",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14167"
+          ]
+         },
+         "fill": "fill_acfx0",
+         "textStyle": "text_exm4rc"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14159": {
+   "name": "color/brand/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14168": {
+   "name": "color/text/on-brand",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14165": {
+   "name": "color/text/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14167": {
+   "name": "color/text/tertiary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14160": {
+   "name": "color/brand/tint",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14162": {
+   "name": "color/border/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14163": {
+   "name": "color/surface/default",
+   "type": "COLOR"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_udpb2x": [
+    {
+     "type": "SOLID",
+     "color": "#F5F5F7"
+    }
+   ],
+   "fill_1prthe7": [
+    {
+     "type": "SOLID",
+     "color": "#635BE8"
+    }
+   ],
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ],
+   "fill_1s3vosi": [
+    {
+     "type": "SOLID",
+     "color": "#000000"
+    }
+   ],
+   "text_1ryrdh0": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_acfx0": [
+    {
+     "type": "SOLID",
+     "color": "#00000099"
+    }
+   ],
+   "text_exm4rc": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_rjbcqp": [
+    {
+     "type": "SOLID",
+     "color": "#EDEDFC"
+    }
+   ],
+   "fill_w6fqb5": [
+    {
+     "type": "SOLID",
+     "color": "#E6E6E6"
+    }
+   ]
+  }
+ },
+ "metrics": {
+  "nodeCount": 25,
+  "maxDepth": 6,
+  "styleCount": 9,
+  "tokenCount": 7,
+  "inlineSizeKb": 12.5,
+  "dedupedSizeKb": 10.08
+ }
+}

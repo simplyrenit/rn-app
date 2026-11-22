@@ -1,0 +1,1440 @@
+{
+ "nodes": [
+  {
+   "id": "2095:26235",
+   "name": "merchant-status-card · states",
+   "type": "FRAME",
+   "x": 3370,
+   "y": 120,
+   "width": 390,
+   "height": 838,
+   "constraints": {
+    "horizontal": "MIN",
+    "vertical": "MIN"
+   },
+   "clipsContent": false,
+   "boundVariables": {
+    "fills": [
+     "VariableID:2071:14163"
+    ]
+   },
+   "fill": "fill_nll9eq",
+   "children": [
+    {
+     "id": "2095:26246",
+     "name": "States",
+     "type": "FRAME",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 642,
+     "fills": [],
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 70,
+      "paddingRight": 24,
+      "paddingBottom": 40,
+      "paddingLeft": 24,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN",
+      "layoutWrap": "NO_WRAP",
+      "strokesIncludedInLayout": true
+     },
+     "constraints": {
+      "horizontal": "MIN",
+      "vertical": "MIN"
+     },
+     "clipsContent": true,
+     "children": [
+      {
+       "id": "2095:26247",
+       "name": "merchant-status-card",
+       "type": "TEXT",
+       "x": 24,
+       "y": 70,
+       "width": 342,
+       "height": 24,
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "characters": "merchant-status-card",
+       "textAutoResize": "HEIGHT",
+       "boundVariables": {
+        "fills": [
+         "VariableID:2071:14165"
+        ]
+       },
+       "fill": "fill_1s3vosi",
+       "textStyle": "text_5i882y"
+      },
+      {
+       "id": "2095:26248",
+       "name": "State · Approved: status line only",
+       "type": "FRAME",
+       "x": 24,
+       "y": 106,
+       "width": 342,
+       "height": 60,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 12,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 8,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2095:26249",
+         "name": "Approved: status line only",
+         "type": "TEXT",
+         "x": 0,
+         "y": 12,
+         "width": 342,
+         "height": 16,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Approved: status line only",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14167"
+          ]
+         },
+         "fill": "fill_acfx0",
+         "textStyle": "text_15py5a9"
+        },
+        {
+         "id": "2095:26151",
+         "name": "Merchant status card",
+         "type": "FRAME",
+         "x": 0,
+         "y": 36,
+         "width": 342,
+         "height": 24,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2095:26152",
+           "name": "Status line",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 342,
+           "height": 24,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2095:26153",
+             "name": "Merchant status",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 125,
+             "height": 24,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "Merchant status",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_16e9vtq"
+            },
+            {
+             "id": "2095:26154",
+             "name": "Status pill",
+             "type": "INSTANCE",
+             "x": 133,
+             "y": 0,
+             "width": 79,
+             "height": 24,
+             "cornerRadius": 999,
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 10,
+              "paddingBottom": 0,
+              "paddingLeft": 10,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": false,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14170"
+              ]
+             },
+             "componentProperties": {
+              "Tone": {
+               "type": "VARIANT",
+               "value": "Success"
+              }
+             },
+             "mainComponentId": "2073:14372",
+             "mainComponent": {
+              "id": "2073:14372",
+              "name": "Tone=Success",
+              "key": "1db3f5cade47578f34c62dbbf2890b56d4367c89",
+              "componentSetId": "2073:14380",
+              "componentSetName": "Status pill"
+             },
+             "fill": "fill_svr7hz",
+             "children": [
+              {
+               "id": "I2095:26154;2073:14373",
+               "name": "Label",
+               "type": "TEXT",
+               "x": 10,
+               "y": 4,
+               "width": 59,
+               "height": 16,
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "HUG",
+               "characters": "Approved",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14169"
+                ]
+               },
+               "fill": "fill_qwr4yw",
+               "textStyle": "text_gfqytr"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2095:26250",
+       "name": "State · Pending approval: plus the listings note",
+       "type": "FRAME",
+       "x": 24,
+       "y": 178,
+       "width": 342,
+       "height": 84,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 12,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 8,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2095:26251",
+         "name": "Pending approval: plus the listings note",
+         "type": "TEXT",
+         "x": 0,
+         "y": 12,
+         "width": 342,
+         "height": 16,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Pending approval: plus the listings note",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14167"
+          ]
+         },
+         "fill": "fill_acfx0",
+         "textStyle": "text_15py5a9"
+        },
+        {
+         "id": "2095:26156",
+         "name": "Merchant status card",
+         "type": "FRAME",
+         "x": 0,
+         "y": 36,
+         "width": 342,
+         "height": 48,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2095:26157",
+           "name": "Status line",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 342,
+           "height": 24,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2095:26158",
+             "name": "Merchant status",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 125,
+             "height": 24,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "Merchant status",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_16e9vtq"
+            },
+            {
+             "id": "2095:26159",
+             "name": "Status pill",
+             "type": "INSTANCE",
+             "x": 133,
+             "y": 0,
+             "width": 122,
+             "height": 24,
+             "cornerRadius": 999,
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 10,
+              "paddingBottom": 0,
+              "paddingLeft": 10,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": false,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14172"
+              ]
+             },
+             "componentProperties": {
+              "Tone": {
+               "type": "VARIANT",
+               "value": "Warning"
+              }
+             },
+             "mainComponentId": "2073:14374",
+             "mainComponent": {
+              "id": "2073:14374",
+              "name": "Tone=Warning",
+              "key": "6635b2d4c82e4b38091559a5e5ac3b1e2aab9bc5",
+              "componentSetId": "2073:14380",
+              "componentSetName": "Status pill"
+             },
+             "fill": "fill_tur0vw",
+             "children": [
+              {
+               "id": "I2095:26159;2073:14375",
+               "name": "Label",
+               "type": "TEXT",
+               "x": 10,
+               "y": 4,
+               "width": 102,
+               "height": 16,
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "HUG",
+               "characters": "Pending approval",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14171"
+                ]
+               },
+               "fill": "fill_1u1qhti",
+               "textStyle": "text_gfqytr"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "2095:26161",
+           "name": "Listings will be enabled after merchant approval.",
+           "type": "TEXT",
+           "x": 0,
+           "y": 28,
+           "width": 342,
+           "height": 20,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Listings will be enabled after merchant approval.",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ]
+           },
+           "fill": "fill_1jtzctu",
+           "textStyle": "text_l60mqv"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2095:26252",
+       "name": "State · Not approved: note plus \"Request review again\" (label \"Requesting review...\" while busy)",
+       "type": "FRAME",
+       "x": 24,
+       "y": 274,
+       "width": 342,
+       "height": 156,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 12,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 8,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2095:26253",
+         "name": "Not approved: note plus \"Request review again\" (label \"Requesting review...\" while busy)",
+         "type": "TEXT",
+         "x": 0,
+         "y": 12,
+         "width": 342,
+         "height": 32,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Not approved: note plus \"Request review again\" (label \"Requesting review...\" while busy)",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14167"
+          ]
+         },
+         "fill": "fill_acfx0",
+         "textStyle": "text_15py5a9"
+        },
+        {
+         "id": "2095:26162",
+         "name": "Merchant status card",
+         "type": "FRAME",
+         "x": 0,
+         "y": 52,
+         "width": 342,
+         "height": 104,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2095:26163",
+           "name": "Status line",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 342,
+           "height": 24,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2095:26164",
+             "name": "Merchant status",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 125,
+             "height": 24,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "Merchant status",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_16e9vtq"
+            },
+            {
+             "id": "2095:26165",
+             "name": "Status pill",
+             "type": "INSTANCE",
+             "x": 133,
+             "y": 0,
+             "width": 101,
+             "height": 24,
+             "cornerRadius": 999,
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 10,
+              "paddingBottom": 0,
+              "paddingLeft": 10,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": false,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14174"
+              ]
+             },
+             "componentProperties": {
+              "Tone": {
+               "type": "VARIANT",
+               "value": "Danger"
+              }
+             },
+             "mainComponentId": "2073:14376",
+             "mainComponent": {
+              "id": "2073:14376",
+              "name": "Tone=Danger",
+              "key": "0b12324f7e5a08e356b83b22d7316af94ae68906",
+              "componentSetId": "2073:14380",
+              "componentSetName": "Status pill"
+             },
+             "fill": "fill_jizne8",
+             "children": [
+              {
+               "id": "I2095:26165;2073:14377",
+               "name": "Label",
+               "type": "TEXT",
+               "x": 10,
+               "y": 4,
+               "width": 81,
+               "height": 16,
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "HUG",
+               "characters": "Not approved",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14173"
+                ]
+               },
+               "fill": "fill_qgafhi",
+               "textStyle": "text_gfqytr"
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "id": "2095:26167",
+           "name": "Listings will be enabled after merchant approval.",
+           "type": "TEXT",
+           "x": 0,
+           "y": 28,
+           "width": 342,
+           "height": 20,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Listings will be enabled after merchant approval.",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ]
+           },
+           "fill": "fill_1jtzctu",
+           "textStyle": "text_l60mqv"
+          },
+          {
+           "id": "2095:26168",
+           "name": "Action",
+           "type": "FRAME",
+           "x": 0,
+           "y": 52,
+           "width": 342,
+           "height": 52,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 8,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2095:26186",
+             "name": "Action",
+             "type": "INSTANCE",
+             "x": 0,
+             "y": 8,
+             "width": 342,
+             "height": 44,
+             "cornerRadius": 12,
+             "strokeWeight": 1,
+             "strokeAlign": "INSIDE",
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 20,
+              "paddingBottom": 0,
+              "paddingLeft": 20,
+              "itemSpacing": 4,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP"
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "FIXED",
+             "layoutAlign": "STRETCH",
+             "clipsContent": false,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14163"
+              ],
+              "strokes": [
+               "VariableID:2071:14161"
+              ]
+             },
+             "componentProperties": {
+              "Left Icon#309:6": {
+               "type": "INSTANCE_SWAP",
+               "value": "1:131"
+              },
+              "Right Icon#309:5": {
+               "type": "INSTANCE_SWAP",
+               "value": "1:129"
+              },
+              "Label#309:8": {
+               "type": "TEXT",
+               "value": "Request review again"
+              },
+              "Show Left Icon#309:4": {
+               "type": "BOOLEAN",
+               "value": false
+              },
+              "Show Right Icon#309:7": {
+               "type": "BOOLEAN",
+               "value": false
+              },
+              "Type": {
+               "type": "VARIANT",
+               "value": "Secondary"
+              }
+             },
+             "mainComponentId": "1:141",
+             "mainComponent": {
+              "id": "1:141",
+              "name": "Type=Secondary",
+              "key": "5fbd635430b7a7da4c06f10bd48a1201e977d0a8",
+              "componentSetId": "1:136",
+              "componentSetName": "Button"
+             },
+             "fill": "fill_nll9eq",
+             "stroke": "stroke_1n3g806",
+             "effect": "effect_1rc2i7z",
+             "children": [
+              {
+               "id": "I2095:26186;309:3550",
+               "name": "heroicons-solid/chevron-left",
+               "type": "INSTANCE",
+               "visible": false,
+               "x": 133,
+               "y": 16,
+               "width": 24,
+               "height": 24,
+               "fills": [],
+               "layoutSizingHorizontal": "FIXED",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": true,
+               "mainComponentId": "1:131",
+               "mainComponent": {
+                "id": "1:131",
+                "name": "heroicons-solid/chevron-left",
+                "key": "72ba17451143ba73cefad130ee48312c7756b9f0"
+               },
+               "children": [
+                {
+                 "id": "I2095:26186;309:3550;309:1676",
+                 "name": "Icon",
+                 "type": "VECTOR",
+                 "x": 7.5,
+                 "y": 3.749999523162842,
+                 "width": 9,
+                 "height": 16.5,
+                 "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "SCALE"
+                 },
+                 "styleIds": {
+                  "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+                 },
+                 "fill": "fill_1s3vosi"
+                }
+               ]
+              },
+              {
+               "id": "I2095:26186;309:3551",
+               "name": "Label",
+               "type": "TEXT",
+               "x": 99,
+               "y": 12,
+               "width": 144,
+               "height": 20,
+               "layoutSizingHorizontal": "HUG",
+               "layoutSizingVertical": "HUG",
+               "characters": "Request review again",
+               "textAlignHorizontal": "CENTER",
+               "boundVariables": {
+                "fills": [
+                 "VariableID:2071:14159"
+                ]
+               },
+               "fill": "fill_1prthe7",
+               "textStyle": "text_1ryrdh0"
+              },
+              {
+               "id": "I2095:26186;309:3552",
+               "name": "heroicons-solid/chevron-right",
+               "type": "INSTANCE",
+               "visible": false,
+               "x": 187,
+               "y": 16,
+               "width": 24,
+               "height": 24,
+               "fills": [],
+               "layoutSizingHorizontal": "FIXED",
+               "layoutSizingVertical": "FIXED",
+               "clipsContent": true,
+               "mainComponentId": "1:129",
+               "mainComponent": {
+                "id": "1:129",
+                "name": "heroicons-solid/chevron-right",
+                "key": "428341dede1ae4cd79bd64b40f66664464ae3150"
+               },
+               "children": [
+                {
+                 "id": "I2095:26186;309:3552;309:1685",
+                 "name": "Icon",
+                 "type": "VECTOR",
+                 "x": 7.499999046325684,
+                 "y": 3.749999523162842,
+                 "width": 9.000000953674316,
+                 "height": 16.5,
+                 "constraints": {
+                  "horizontal": "SCALE",
+                  "vertical": "SCALE"
+                 },
+                 "styleIds": {
+                  "fill": "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493"
+                 },
+                 "fill": "fill_1s3vosi"
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2095:26254",
+       "name": "State · Request failed: error line under the button",
+       "type": "FRAME",
+       "x": 24,
+       "y": 442,
+       "width": 342,
+       "height": 160,
+       "fills": [],
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 12,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 8,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN",
+        "layoutWrap": "NO_WRAP",
+        "strokesIncludedInLayout": true
+       },
+       "layoutSizingHorizontal": "FILL",
+       "layoutSizingVertical": "HUG",
+       "layoutAlign": "STRETCH",
+       "clipsContent": true,
+       "children": [
+        {
+         "id": "2095:26255",
+         "name": "Request failed: error line under the button",
+         "type": "TEXT",
+         "x": 0,
+         "y": 12,
+         "width": 342,
+         "height": 16,
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "characters": "Request failed: error line under the button",
+         "textAutoResize": "HEIGHT",
+         "boundVariables": {
+          "fills": [
+           "VariableID:2071:14167"
+          ]
+         },
+         "fill": "fill_acfx0",
+         "textStyle": "text_15py5a9"
+        },
+        {
+         "id": "2095:26198",
+         "name": "Merchant status card",
+         "type": "FRAME",
+         "x": 0,
+         "y": 36,
+         "width": 342,
+         "height": 124,
+         "fills": [],
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN",
+          "layoutWrap": "NO_WRAP",
+          "strokesIncludedInLayout": true
+         },
+         "layoutSizingHorizontal": "FILL",
+         "layoutSizingVertical": "HUG",
+         "layoutAlign": "STRETCH",
+         "clipsContent": true,
+         "children": [
+          {
+           "id": "2095:26199",
+           "name": "Status line",
+           "type": "FRAME",
+           "x": 0,
+           "y": 0,
+           "width": 342,
+           "height": 24,
+           "fills": [],
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 8,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2095:26200",
+             "name": "Merchant status",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 125,
+             "height": 24,
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "HUG",
+             "characters": "Merchant status",
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14165"
+              ]
+             },
+             "fill": "fill_1s3vosi",
+             "textStyle": "text_16e9vtq"
+            },
+            {
+             "id": "2095:26201",
+             "name": "Status pill",
+             "type": "INSTANCE",
+             "x": 133,
+             "y": 0,
+             "width": 101,
+             "height": 24,
+             "cornerRadius": 999,
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 10,
+              "paddingBottom": 0,
+              "paddingLeft": 10,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP",
+              "strokesIncludedInLayout": true
+             },
+             "layoutSizingHorizontal": "HUG",
+             "layoutSizingVertical": "FIXED",
+             "clipsContent": false,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14174"
+              ]
+             },
+             "componentProperties": {
+              "Tone": {
+               "type": "VARIANT",
+               "value": "Danger"
+              }
+             },
+             "mainComponentId": "2073:14376",
+             "mainComponent": {
+              "id": "2073:14376",
+              "name": "Tone=Danger",
+              "key": "0b12324f7e5a08e356b83b22d7316af94ae68906",
+              "componentSetId": "2073:14380",
+              "componentSetName": "Status pill"
+             },
+             "deduped": true,
+             "textOverrides": [
+              {
+               "name": "Label",
+               "characters": "Not approved"
+              }
+             ],
+             "fill": "fill_jizne8"
+            }
+           ]
+          },
+          {
+           "id": "2095:26203",
+           "name": "Listings will be enabled after merchant approval.",
+           "type": "TEXT",
+           "x": 0,
+           "y": 28,
+           "width": 342,
+           "height": 20,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Listings will be enabled after merchant approval.",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14166"
+            ]
+           },
+           "fill": "fill_1jtzctu",
+           "textStyle": "text_l60mqv"
+          },
+          {
+           "id": "2095:26204",
+           "name": "Action",
+           "type": "FRAME",
+           "x": 0,
+           "y": 52,
+           "width": 342,
+           "height": 52,
+           "fills": [],
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 8,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN",
+            "layoutWrap": "NO_WRAP",
+            "strokesIncludedInLayout": true
+           },
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "clipsContent": true,
+           "children": [
+            {
+             "id": "2095:26222",
+             "name": "Action",
+             "type": "INSTANCE",
+             "x": 0,
+             "y": 8,
+             "width": 342,
+             "height": 44,
+             "cornerRadius": 12,
+             "strokeWeight": 1,
+             "strokeAlign": "INSIDE",
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 20,
+              "paddingBottom": 0,
+              "paddingLeft": 20,
+              "itemSpacing": 4,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER",
+              "layoutWrap": "NO_WRAP"
+             },
+             "layoutSizingHorizontal": "FILL",
+             "layoutSizingVertical": "FIXED",
+             "layoutAlign": "STRETCH",
+             "clipsContent": false,
+             "boundVariables": {
+              "fills": [
+               "VariableID:2071:14163"
+              ],
+              "strokes": [
+               "VariableID:2071:14161"
+              ]
+             },
+             "componentProperties": {
+              "Left Icon#309:6": {
+               "type": "INSTANCE_SWAP",
+               "value": "1:131"
+              },
+              "Right Icon#309:5": {
+               "type": "INSTANCE_SWAP",
+               "value": "1:129"
+              },
+              "Label#309:8": {
+               "type": "TEXT",
+               "value": "Request review again"
+              },
+              "Show Left Icon#309:4": {
+               "type": "BOOLEAN",
+               "value": false
+              },
+              "Show Right Icon#309:7": {
+               "type": "BOOLEAN",
+               "value": false
+              },
+              "Type": {
+               "type": "VARIANT",
+               "value": "Secondary"
+              }
+             },
+             "mainComponentId": "1:141",
+             "mainComponent": {
+              "id": "1:141",
+              "name": "Type=Secondary",
+              "key": "5fbd635430b7a7da4c06f10bd48a1201e977d0a8",
+              "componentSetId": "1:136",
+              "componentSetName": "Button"
+             },
+             "deduped": true,
+             "textOverrides": [
+              {
+               "name": "Label",
+               "characters": "Request review again"
+              }
+             ],
+             "propertyOverrides": [
+              {
+               "name": "Label",
+               "fills": [
+                {
+                 "type": "SOLID",
+                 "color": "#635BE8"
+                }
+               ]
+              }
+             ],
+             "fill": "fill_nll9eq",
+             "stroke": "stroke_1n3g806",
+             "effect": "effect_1rc2i7z"
+            }
+           ]
+          },
+          {
+           "id": "2095:26234",
+           "name": "Unable to request review right now. Please try again.",
+           "type": "TEXT",
+           "x": 0,
+           "y": 108,
+           "width": 342,
+           "height": 16,
+           "layoutSizingHorizontal": "FILL",
+           "layoutSizingVertical": "HUG",
+           "layoutAlign": "STRETCH",
+           "characters": "Unable to request review right now. Please try again.",
+           "textAutoResize": "HEIGHT",
+           "boundVariables": {
+            "fills": [
+             "VariableID:2071:14175"
+            ]
+           },
+           "fill": "fill_1g28kz1",
+           "textStyle": "text_15py5a9"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "variables": {
+  "VariableID:2071:14163": {
+   "name": "color/surface/default",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14165": {
+   "name": "color/text/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14167": {
+   "name": "color/text/tertiary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14170": {
+   "name": "color/status/success/bg",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14169": {
+   "name": "color/status/success/text",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14172": {
+   "name": "color/status/warning/bg",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14171": {
+   "name": "color/status/warning/text",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14166": {
+   "name": "color/text/secondary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14174": {
+   "name": "color/status/danger/bg",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14173": {
+   "name": "color/status/danger/text",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14161": {
+   "name": "color/brand/tint-strong",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14159": {
+   "name": "color/brand/primary",
+   "type": "COLOR"
+  },
+  "VariableID:2071:14175": {
+   "name": "color/status/danger/strong",
+   "type": "COLOR"
+  }
+ },
+ "styles": {
+  "S:0b9adeee02b3d48a6322f56735ed6d7d94572000,394:493": {
+   "name": "Text - Light mode/Primary",
+   "type": "PAINT"
+  }
+ },
+ "globalVars": {
+  "styles": {
+   "fill_nll9eq": [
+    {
+     "type": "SOLID",
+     "color": "#FFFFFF"
+    }
+   ],
+   "fill_1s3vosi": [
+    {
+     "type": "SOLID",
+     "color": "#000000"
+    }
+   ],
+   "text_5i882y": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Bold",
+    "fontSize": 18,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_acfx0": [
+    {
+     "type": "SOLID",
+     "color": "#00000099"
+    }
+   ],
+   "text_15py5a9": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Medium",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   },
+   "text_16e9vtq": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 16,
+    "lineHeight": {
+     "value": 24,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_svr7hz": [
+    {
+     "type": "SOLID",
+     "color": "#ECFDF3"
+    }
+   ],
+   "fill_qwr4yw": [
+    {
+     "type": "SOLID",
+     "color": "#067647"
+    }
+   ],
+   "text_gfqytr": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 12,
+    "lineHeight": {
+     "value": 16,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_tur0vw": [
+    {
+     "type": "SOLID",
+     "color": "#FFFAEB"
+    }
+   ],
+   "fill_1u1qhti": [
+    {
+     "type": "SOLID",
+     "color": "#B54708"
+    }
+   ],
+   "fill_1jtzctu": [
+    {
+     "type": "SOLID",
+     "color": "#000000B2"
+    }
+   ],
+   "text_l60mqv": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "Regular",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_jizne8": [
+    {
+     "type": "SOLID",
+     "color": "#FEF3F2"
+    }
+   ],
+   "fill_qgafhi": [
+    {
+     "type": "SOLID",
+     "color": "#B42318"
+    }
+   ],
+   "stroke_1n3g806": [
+    {
+     "type": "SOLID",
+     "color": "#CAC8F7"
+    }
+   ],
+   "effect_1rc2i7z": [
+    {
+     "type": "DROP_SHADOW",
+     "color": "#0000000A",
+     "offset": {
+      "x": 0,
+      "y": 0
+     },
+     "radius": 4,
+     "spread": 2
+    }
+   ],
+   "fill_1prthe7": [
+    {
+     "type": "SOLID",
+     "color": "#635BE8"
+    }
+   ],
+   "text_1ryrdh0": {
+    "fontFamily": "Plus Jakarta Sans",
+    "fontStyle": "SemiBold",
+    "fontSize": 14,
+    "lineHeight": {
+     "value": 20,
+     "unit": "PIXELS"
+    }
+   },
+   "fill_1g28kz1": [
+    {
+     "type": "SOLID",
+     "color": "#D92D20"
+    }
+   ]
+  }
+ },
+ "metrics": {
+  "nodeCount": 43,
+  "maxDepth": 8,
+  "styleCount": 20,
+  "tokenCount": 14,
+  "inlineSizeKb": 25.63,
+  "dedupedSizeKb": 21.31
+ }
+}
