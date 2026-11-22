@@ -191,6 +191,11 @@ export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly stri
   const open = problem === "open";
   const nothingLeft = problem === "none_left" || problem === "forfeited";
   const until = open ? b.report_problem_until : null;
+  // F3: a courier return can end before the shop's record (ENG-416). The report then waits only for that record, and
+  // closes at the server's own time, as its tracker says ("Record it by …"): not while the handover record is missing too.
+  const recordBy = problem === "record_first" && b.stage === "returned" && captured(b, "handover").mine ? b.report_problem_until : null;
+  // Without a report the server settles the deposit 48 hours after the return, with the records or without (damage_window_end).
+  const courier = Boolean(courierOf(b));
   // Late days come out of the deposit to the shop (N11): neither line may say the whole deposit goes back (review r1 #3).
   const late = depositAfterLate(b.money);
   // ENG-282: an unpaid notice comes to the shop from the deposit too.
@@ -226,7 +231,11 @@ export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly stri
         : {
             title: cameBack ? `Came back on ${dayShort(cameBack)}` : returnAt ? `Returned · ${whenShort(returnAt, now)}` : "Returned",
             body: [
-              until ? `You can report a problem until ${whenShort(until, now)}.` : problemLine(problem),
+              until
+                ? `You can report a problem until ${whenShort(until, now)}.`
+                : recordBy
+                  ? `Record it by ${whenShort(recordBy, now)} to report a problem.`
+                  : problemLine(problem),
               !held
                 ? open
                   ? null
@@ -237,10 +246,12 @@ export function returnCopy(b: BookingShop, now: Date, claimKinds?: readonly stri
                     : `${lateShare}. Nothing goes back to ${first}.`
                   : problem === "reported"
                     ? `The part of the deposit that is not claimed goes back to ${first}.`
-                    : open
+                    : open || recordBy
                       ? // No "all good" call exists: with no report the server sends the deposit back by itself (D-26).
                         `If nothing is reported by then, the deposit goes back to ${first} by itself.`
-                      : `The deposit is settled with ${first} once both return records are in.`,
+                      : courier
+                        ? `The deposit goes back to ${first} by itself.`
+                        : `The deposit is settled with ${first} once both return records are in.`,
             ]
               .filter(Boolean)
               .join(" "),

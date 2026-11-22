@@ -375,6 +375,27 @@ describe("SH-10, the return", () => {
     );
   });
 
+  it("a courier return that ended before the shop's record says the server's deadline, not a promise tied to the records (F3)", () => {
+    const back = (over: Record<string, unknown> = {}) =>
+      returnCopy(
+        out({
+          stage: "returned",
+          delivered_by: "renit",
+          courier: { seal: "R-1042" },
+          captures: flags(true, true, false, false),
+          can: ["get_help"],
+          report_problem_until: "2026-10-27T13:10:00Z",
+          ...over,
+        }),
+        new Date("2026-10-26T13:11:00Z")
+      ).returned?.body;
+    expect(back()).toBe("Record it by 6:40 pm on Tue 27 Oct to report a problem. If nothing is reported by then, the deposit goes back to Aarav by itself.");
+    // The handover record is missing too: no deadline (the server says "Record it in the app"), and still no promise.
+    expect(back({ captures: flags(false, true, false, false) })).toBe(
+      "Record the item first: it is your proof if anything is wrong. The deposit goes back to Aarav by itself."
+    );
+  });
+
   it("the steps, and the code before the report (A-35)", () => {
     expect(shopReturnSteps(out({ captures: flags(true, true, false, false) }), false).map((s) => s.state)).toEqual(["next", "todo", "todo"]);
     expect(shopReturnSteps(out({ captures: flags(true, true, true, true) }), false).map((s) => s.state)).toEqual(["done", "next", "todo"]);
