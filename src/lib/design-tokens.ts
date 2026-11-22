@@ -12,6 +12,9 @@
  *      uses `brandText`, which is lightened on dark so it clears AA.
  *   2. Control borders use `inputLine`, never `line`. A hairline is a divider;
  *      it fails WCAG 1.4.11 (3:1) as the edge of an interactive control.
+ *      Exception, by the user's approval of the 2.1 kit: the kit's Form field,
+ *      Chip and white buttons are edged in `line` #E6E6E6. `inputLine` stays for
+ *      checkboxes and radios.
  */
 
 export type ThemeName = "light" | "dark";
@@ -23,6 +26,12 @@ export interface ColorTokens {
   surface: string;
   /** Second elevation step: sheets over cards, pressed rows. */
   surfaceRaised: string;
+  /**
+   * The 2.1 kit's neutral fill (color/surface/muted): the Neutral status pill,
+   * category tiles. A separate key from `surfaceRaised` because the kit draws it
+   * a step darker (#F2F2F2 vs #F5F5F5) and the legacy screens still use the latter.
+   */
+  surfaceMuted: string;
   /** Hairlines, borders, dividers. Never the edge of a control. */
   line: string;
   /** The tab bar's top edge — a step quieter than `line` on dark, per the design. */
@@ -95,6 +104,11 @@ export interface ColorTokens {
   success: string;
   warning: string;
   danger: string;
+  /**
+   * The 2.1 kit's stronger red (color/status/danger/strong): an error border and
+   * message, a destructive button's label. `danger` stays the pill/notice text red.
+   */
+  dangerStrong: string;
   info: string;
   /** Tinted grounds for status pills — paired with the matching semantic hue. */
   successWash: string;
@@ -110,6 +124,7 @@ export const darkColors: ColorTokens = {
   canvas: "#000000", // Black and White/1300
   surface: "#0F0F0F", // Black and White/1200
   surfaceRaised: "#292929", // Black and White/1000
+  surfaceMuted: "#1A1A1A", // Black and White/1100 — one step up from the canvas, as #F2F2F2 is on light
   line: "#292929", // Black and White/1000
   navLine: "#1A1A1A", // Black and White/1100
   controlFill: "#1A1A1A", // Black and White/1100
@@ -141,17 +156,21 @@ export const darkColors: ColorTokens = {
   success: "#6FCF97",
   warning: "#FFD479",
   danger: "#EB6F62",
+  dangerStrong: "#F97066", // the light #D92D20's family two steps lighter, so it reads on black
   info: "#7FB4E8",
-  successWash: "rgba(111,207,151,0.10)",
-  warningWash: "rgba(255,212,121,0.10)",
-  dangerWash: "rgba(235,111,98,0.10)",
-  infoWash: "rgba(127,180,232,0.10)",
+  // The kit has no dark mode. 16% of each foreground over the black canvas gives a
+  // wash that still reads as a tint; at the old 10% the pills vanished into the page.
+  successWash: "rgba(111,207,151,0.16)",
+  warningWash: "rgba(255,212,121,0.16)",
+  dangerWash: "rgba(235,111,98,0.16)",
+  infoWash: "rgba(127,180,232,0.16)",
 };
 
 export const lightColors: ColorTokens = {
   canvas: "#FFFFFF", // Black and White/50
   surface: "#FFFFFF",
   surfaceRaised: "#F5F5F5", // Black and White/100
+  surfaceMuted: "#F2F2F2", // 2.1 kit color/surface/muted
   line: "#E6E6E6", // Black and White/200
   navLine: "#E6E6E6", // Black and White/200
   controlFill: "#FFFFFF", // Black and White/50
@@ -159,7 +178,7 @@ export const lightColors: ColorTokens = {
   text: "#000000", // Text - Light mode/Primary, 21:1 AAA
   textHi: "rgba(0,0,0,0.70)", // Text/Secondary
   textBody: "rgba(0,0,0,0.70)",
-  textDim: "rgba(0,0,0,0.58)", // Text/Tertiary — design says 0.50 (3.95:1, below AA); 0.58 is the smallest step that clears 4.5 on both light grounds
+  textDim: "rgba(0,0,0,0.60)", // 2.1 kit color/text/tertiary (#00000099). The old design's 0.50 failed AA (3.95:1); 0.60 clears 4.5 on both light grounds
   brand: "#635BE8", // Purple/400
   brandText: "#635BE8", // 4.85:1 AA on white
   brandTextHi: "#363280", // Purple/700
@@ -168,7 +187,7 @@ export const lightColors: ColorTokens = {
   brandPanel: "#EDEDFC", // Purple/50
   brandPanelLine: "#CAC8F7", // Purple/100
   inputLine: "#C4C4C4", // Black and White/300
-  placeholder: "rgba(0,0,0,0.58)", // as textDim — 0.50 fails AA on white
+  placeholder: "rgba(0,0,0,0.60)", // as textDim — the kit Form field draws its placeholder #00000099
   focus: "#635BE8",
   onBrand: "#FFFFFF",
   onPhoto: "#FFFFFF",
@@ -178,14 +197,17 @@ export const lightColors: ColorTokens = {
   photoScrimSoft: "rgba(0,0,0,0.32)",
   skeleton: "#F5F5F5",
   skeletonHighlight: "#E6E6E6",
-  success: "#1E7A47",
-  warning: "#7A5200",
-  danger: "#B3261E",
-  info: "#1F5F94",
-  successWash: "rgba(30,122,71,0.08)",
-  warningWash: "rgba(122,82,0,0.08)",
-  dangerWash: "rgba(179,38,30,0.08)",
-  infoWash: "rgba(31,95,148,0.08)",
+  // The 2.1 kit's status pairs (color/status/*/text · /bg). Solid grounds, not a
+  // wash of the text colour, because the kit binds each bg to its own variable.
+  success: "#067647",
+  warning: "#B54708",
+  danger: "#B42318",
+  dangerStrong: "#D92D20",
+  info: "#175CD3",
+  successWash: "#ECFDF3",
+  warningWash: "#FFFAEB",
+  dangerWash: "#FEF3F2",
+  infoWash: "#EFF8FF",
 };
 
 export const colors: Record<ThemeName, ColorTokens> = {
@@ -197,8 +219,7 @@ export const colors: Record<ThemeName, ColorTokens> = {
  * Type ramp. Fixed point sizes — never a percentage of screen width. Reading
  * distance does not change with device size, so type size must not either.
  *
- * Leading loosens as size shrinks, which is the direction it has to run: body
- * copy needs the most air, display type the least.
+ * Leading is the 2.1 kit's fixed pairs (see `lineHeight`), not a ratio.
  */
 export const fontSize = {
   xs: 12,
@@ -212,12 +233,14 @@ export const fontSize = {
 } as const;
 
 export const lineHeight = {
-  // The new system sets body text at 1.5 and headings at 1.2.
-  xs: 18, // 1.5
-  sm: 21, // 1.5
-  md: 24, // 1.5
-  base: 27, // 1.5
-  lg: 24, // 1.2  H3
+  // The 2.1 kit (SPEC "Sizes only 20 / 18 / 16 / 14 / 12, with line heights
+  // 28 / 24 / 24 / 20 / 16"). Every text style in figma/00 uses one of these.
+  xs: 16,
+  sm: 20,
+  md: 24,
+  base: 24,
+  lg: 28,
+  // Not in the kit; legacy screens still use these until their flow story lands.
   xl: 29, // 1.2  H2
   "2xl": 34, // 1.2 — no Figma equivalent above 24; retained for existing call sites
   "3xl": 41, // 1.2 — as above
@@ -236,12 +259,9 @@ export const chromeFontSize = {
 } as const;
 
 /**
- * The design system uses two weights: Regular 400 and Bold 700.
- *
- * `light`, `medium` and `semibold` are retained only so the five-name
- * `fontWeight` prop keeps type-checking; nothing resolves to them any more
- * (see `fontWeightMap` in components/core/text.tsx). The three faces can be
- * dropped from the App.tsx font load once the design is settled.
+ * The 2.1 kit uses four weights: Regular, Medium, SemiBold and Bold (SPEC
+ * "Weights"). All five faces are loaded in App.tsx; `light` has no use in the kit
+ * and still resolves to Regular (see `fontWeightMap` in components/core/text.tsx).
  */
 export const fontFamily = {
   light: "PlusJakartaSans-Light",
@@ -267,15 +287,21 @@ export const space = {
  * `full` is for pills and avatars only — never a card.
  */
 export const radius = {
-  button: 12, // the Figma Button component's cornerRadius (Primary/Secondary/Disabled)
-  input: 11,
+  /** Secondary, tonal and destructive buttons (2.1 kit, figma/00 Bottom bar and Confirm sheet). */
+  button: 12,
+  /**
+   * The primary button. The kit's library Primary is drawn at 11, one point
+   * tighter than the Secondary beside it in the same bar; SPEC allows 11–12.
+   */
+  buttonPrimary: 11,
+  input: 12, // kit Form field input, r12
   card: 16,
   group: 14,
   /**
-   * The top corners of a bottom sheet. Three files hardcoded this as a bare 20;
-   * the design measures 16, matching `card` — sheets and tiles share a radius.
+   * The top corners of a bottom sheet. The 2.1 kit Sheet header draws 24, a step
+   * rounder than the cards; three files once hardcoded a bare 20 here.
    */
-  sheet: 16,
+  sheet: 24,
   full: 999,
 } as const;
 
@@ -310,8 +336,11 @@ export const SCREEN_GUTTER = 24;
  * 44 looked nice. Do not add a vertical constant anywhere else.
  */
 export const density = {
-  /** Single-line list row. The platform standard, and still a full target. */
-  row: MIN_TOUCH_TARGET,
+  /**
+   * Single-line list row: the 2.1 kit List row Size=Single (56). Taller than the
+   * 44pt platform minimum, which stays the floor for any other target.
+   */
+  row: 56,
   /** Row carrying a two-line stack — a title over a subtitle. */
   rowStacked: 62,
   /** Space between two sections of a scrolling screen. */
@@ -322,8 +351,8 @@ export const density = {
   fieldGap: 18,
   /** Inset for a list separator, so it aligns to the label and not the icon. */
   separatorInset: 33,
-  /** Height of a filter/category chip. */
-  chip: 36,
+  /** Height of a filter/category chip: the 2.1 kit Chip (40). */
+  chip: 40,
   /** Padding inside a content block (card body, section body). */
   block: 14,
   /**
@@ -344,16 +373,16 @@ export const density = {
  * with four sections had four things all shouting at title volume.
  */
 export const typeRole = {
-  /** The one title of a screen. At most one per screen. */
-  screenTitle: { size: "xl", weight: "font-bold" },
-  /** A section inside a screen. There may be several. */
-  sectionTitle: { size: "lg", weight: "font-bold" },
-  /** A grouped-list header — "Account", "Support". Quiet, not a title. */
-  groupHeader: { size: "xs", weight: "font-bold" },
-  /** A form field's label. Must never outrank the value the reader types. */
-  fieldLabel: { size: "sm", weight: "font-bold" },
-  /** Helper text under a field label. */
-  fieldHint: { size: "sm", weight: "font-normal" },
+  /** The one title of a screen. At most one per screen. 20 Bold (kit Top bar Tab title). */
+  screenTitle: { size: "lg", weight: "font-bold" },
+  /** A section inside a screen. There may be several. 18 Bold (kit Section header). */
+  sectionTitle: { size: "base", weight: "font-bold" },
+  /** A grouped-list header — "Account", "Support". Quiet, not a title. 14 SemiBold at 60%. */
+  groupHeader: { size: "sm", weight: "font-semibold" },
+  /** A form field's label. 14 SemiBold at 100% (kit Form field). */
+  fieldLabel: { size: "sm", weight: "font-semibold" },
+  /** Helper text under a field. 12 Regular at 60% (kit Form field). */
+  fieldHint: { size: "xs", weight: "font-normal" },
 } as const;
 
 /** Light theme elevates with a shadow; dark elevates with a hairline only. */
@@ -394,6 +423,28 @@ export const fieldShadow = {
     shadowRadius: 0,
     shadowOffset: { width: 0, height: 0 },
     elevation: 0,
+  },
+} as const;
+
+/**
+ * The faint ring under the kit's white and tonal buttons (Secondary, tonal,
+ * Destructive): DROP_SHADOW #0000000A, offset 0/0, blur 4, spread 2. RN has no
+ * spread, so the blur radius takes it (4/2 + 2 ≈ 3). No Android `elevation`: even
+ * elevation 1 draws a far heavier shadow than 4% black, so Android goes without.
+ * Dark has none, as elsewhere.
+ */
+export const buttonShadow = {
+  light: {
+    shadowColor: "#000000",
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  dark: {
+    shadowColor: "transparent",
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
   },
 } as const;
 

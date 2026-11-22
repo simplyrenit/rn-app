@@ -64,40 +64,33 @@ interface CustomTextProps extends Omit<TextProps, "role"> {
 }
 
 /**
- * Presentation a role implies beyond size and weight.
- *
- * A grouped-list header is not just small text: iOS sets it in caps with open
- * tracking, and that treatment is a large part of what tells the reader it
- * labels a group rather than titling the screen.
+ * The tone a role implies. The 2.1 kit sets a grouped-list header in sentence
+ * case at 60% with no tracking (SPEC "List rows"), so the caps-and-tracking
+ * treatment the old iOS-style header had is gone, and a field label is 100%.
  */
-const roleExtras: Record<
-  TypeRole,
-  { tone: TextTone; uppercase?: boolean; letterSpacing?: number }
-> = {
-  screenTitle: { tone: "default" },
-  sectionTitle: { tone: "default" },
-  groupHeader: { tone: "dim", uppercase: true, letterSpacing: 0.6 },
-  fieldLabel: { tone: "hi" },
-  fieldHint: { tone: "body" },
+const roleTone: Record<TypeRole, TextTone> = {
+  screenTitle: "default",
+  sectionTitle: "default",
+  groupHeader: "dim",
+  fieldLabel: "default",
+  fieldHint: "dim",
 };
 
 const StyledText = styled(RNText);
 
 /**
- * The new type system has two weights, not five: Regular 400 and Bold 700.
- * Every style in the Figma resolves to one of those, so the three in-between
- * faces have nothing to map to.
+ * The 2.1 kit uses four weights — Regular, Medium, SemiBold, Bold — and each
+ * resolves to its own face. Until ENG-426 `font-medium` read as Regular and
+ * `font-semibold` as Bold, because the previous design had only two weights;
+ * the kit's chips, tab labels and button labels need the real faces.
  *
- * The public `fontWeight` prop keeps all five names — 269 call sites use them
- * and renaming would be churn without meaning — but they resolve onto two
- * families. `font-medium` reads as Regular and `font-semibold` as Bold, which
- * is the weight the design intends at those sites.
+ * `font-light` has no use in the kit and stays on Regular.
  */
 const fontWeightMap: Record<TailwindFontWeight, string> = {
   "font-light": fontFamily.regular,
   "font-normal": fontFamily.regular,
-  "font-medium": fontFamily.regular,
-  "font-semibold": fontFamily.bold,
+  "font-medium": fontFamily.medium,
+  "font-semibold": fontFamily.semibold,
   "font-bold": fontFamily.bold,
 };
 
@@ -135,6 +128,47 @@ const NON_COLOR_TEXT_UTILITIES = new Set([
   "text-2xl",
   "text-3xl",
 ]);
+
+/** The last `text-<size>` utility in a className, if it carries one. */
+function classNameSize(className: string): TailwindFontSize | undefined {
+  let found: TailwindFontSize | undefined;
+  for (const token of className.split(/\s+/)) {
+    if (Object.prototype.hasOwnProperty.call(sizeTokenMap, token)) found = token as TailwindFontSize;
+  }
+  return found;
+}
+
+/**
+ * Face, size and leading for a `Text`, as plain data so it can be tested
+ * without rendering.
+ *
+ * Precedence, most specific first:
+ *   fontWeight  >  role's weight  >  regular
+ *   fontSize    >  role's size    (else NativeWind's className size applies)
+ *   lineHeight  >  the leading of fontSize / role / className `text-*`  >  base
+ *
+ * The className step matters because this component always sets `lineHeight`
+ * as style, which beats the leading NativeWind attaches to a `text-sm` class:
+ * before it, `className="text-sm"` drew 14pt text on the 18pt line box.
+ */
+export function resolveTextMetrics({
+  className = "",
+  fontSize,
+  fontWeight,
+  lineHeight,
+  role,
+}: Pick<CustomTextProps, "className" | "fontSize" | "fontWeight" | "lineHeight" | "role">) {
+  const spec = role ? typeRole[role] : undefined;
+  const weight: TailwindFontWeight = fontWeight ?? spec?.weight ?? "font-normal";
+  const sizeClass: TailwindFontSize | undefined =
+    fontSize ?? (spec ? (`text-${spec.size}` as TailwindFontSize) : undefined);
+  const token = sizeTokenMap[sizeClass ?? classNameSize(className) ?? "text-base"];
+  return {
+    fontFamily: fontWeightMap[weight],
+    fontSize: sizeClass ? fontSizeScale[token] : undefined,
+    lineHeight: lineHeight ?? lineHeightScale[token],
+  };
+}
 
 function hasColorClass(className: string): boolean {
   return className
@@ -177,20 +211,13 @@ export function Text({
     onPhoto: color.onPhoto,
   };
 
-  // Precedence, most specific first:
+  // Colour precedence, most specific first:
   //   style.color  >  className colour  >  tone  >  role's tone  >  "default"
-  //   fontSize     >  role's size       >  17pt base
-  //   fontWeight   >  role's weight     >  regular
-  // A role only ever supplies defaults, so a call site can adopt `role` and
-  // still override one axis of it without losing the rest.
-  const spec = role ? typeRole[role] : undefined;
-  const extras = role ? roleExtras[role] : undefined;
-
-  const resolvedTone: TextTone = tone ?? extras?.tone ?? "default";
-  const resolvedWeight: TailwindFontWeight =
-    fontWeight ?? spec?.weight ?? "font-normal";
-  const resolvedSizeClass: TailwindFontSize | undefined =
-    fontSize ?? (spec ? (`text-${spec.size}` as TailwindFontSize) : undefined);
+  // Size, weight and leading: see `resolveTextMetrics`. A role only ever
+  // supplies defaults, so a call site can adopt `role` and still override one
+  // axis of it without losing the rest.
+  const resolvedTone: TextTone = tone ?? (role ? roleTone[role] : "default");
+  const metrics = resolveTextMetrics({ className, fontSize, fontWeight, lineHeight, role });
 
   // An explicit colour on `style` still wins, so existing call sites that pass
   // one keep working; `tone` only supplies the default.
@@ -205,10 +232,6 @@ export function Text({
   const classNameSetsColor = hasColorClass(className);
   const toneIsExplicit = tone !== undefined && tone !== "default";
 
-  const token = sizeTokenMap[resolvedSizeClass ?? "text-base"];
-  const resolvedSize = resolvedSizeClass ? fontSizeScale[token] : undefined;
-  const resolvedLeading = lineHeight ?? lineHeightScale[token];
-
   return (
     <StyledText
       className={className}
@@ -218,21 +241,15 @@ export function Text({
         classNameSetsColor && !toneIsExplicit
           ? null
           : { color: toneColor[resolvedTone] },
-        extras?.letterSpacing ? { letterSpacing: extras.letterSpacing } : null,
         style,
         customColor ? { color: customColor } : null,
-        { fontFamily: fontWeightMap[resolvedWeight] },
-        resolvedSize ? { fontSize: resolvedSize } : null,
-        { lineHeight: resolvedLeading },
+        { fontFamily: metrics.fontFamily },
+        metrics.fontSize ? { fontSize: metrics.fontSize } : null,
+        { lineHeight: metrics.lineHeight },
       ]}
       {...props}
     >
-      {/* Caps are a presentation choice, so they are applied here rather than
-          asked of every call site — and `textTransform` is unreliable on
-          Android, which is where this app's headers lost their treatment. */}
-      {extras?.uppercase && typeof children === "string"
-        ? children.toUpperCase()
-        : children}
+      {children}
     </StyledText>
   );
 }

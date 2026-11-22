@@ -1,4 +1,9 @@
-import { MIN_TOUCH_TARGET, radius } from "@/lib/design-tokens";
+import {
+  ColorTokens,
+  MIN_TOUCH_TARGET,
+  buttonShadow,
+  radius,
+} from "@/lib/design-tokens";
 import { tapFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 import React, { createContext, useContext } from "react";
@@ -12,8 +17,140 @@ import {
 import { Text } from "./text";
 import { usePressFeedback } from "./use-press-feedback";
 
-type ButtonVariant = "primary" | "outline" | "warning" | "ghost";
-type ButtonSize = "default" | "compact";
+/**
+ * The variant names predate the 2.1 kit and are kept so ~250 call sites still
+ * compile; each now draws a kit button:
+ *   primary → Primary, outline → Secondary (or tonal), ghost → Text,
+ *   warning → Destructive (red label on a neutral button, never filled).
+ */
+export type ButtonVariant = "primary" | "outline" | "warning" | "ghost";
+export type ButtonSize = "default" | "compact";
+/**
+ * `tonal` applies to `outline` only: the kit's #EDEDFC Secondary with no edge.
+ * `brand` (default) and `muted` apply to `ghost` only: a purple link, or the
+ * 70% black of the Confirm sheet's Cancel. Any other pairing is ignored.
+ */
+export type ButtonTone = "tonal" | "brand" | "muted";
+
+interface ButtonLabelStyle {
+  color: string;
+  fontSize: "text-sm" | "text-md";
+  fontWeight: "font-semibold" | "font-bold";
+  lineHeight: number;
+}
+
+/**
+ * Every number a `Button` draws, as plain data, from the 2.1 kit frames in
+ * docs/renit-2.1-build/figma/00:
+ *
+ *  - Height is fixed (`height`, not `minHeight`) so a button is the kit's box
+ *    whatever its label: 52 default and 44 compact for every boxed variant;
+ *    Destructive is 56 (Sheet · Confirm destructive, 2110:30387); a Text button
+ *    is the library's 44 whatever the size (Bottom bar CTA+Text, 2109:30149).
+ *  - Primary is r11 and the other boxes r12, as the kit draws them side by side.
+ *  - Labels: Primary 16/24 SemiBold (14/20 compact); Secondary and Destructive
+ *    14/21 (the library's 150%); tonal 14/20 (Empty state, 2074:14392); Text and
+ *    Destructive Bold, the rest SemiBold.
+ *  - Disabled: only Primary changes fill — to #CAC8F7 with its white label, as
+ *    SPEC asks. The others keep their box and drop the label to `textDim`, so a
+ *    dead outline does not turn into a lavender bar that reads as tonal.
+ */
+export function resolveButtonStyle(
+  {
+    variant,
+    size,
+    tone,
+    blocked,
+  }: { variant: ButtonVariant; size: ButtonSize; tone?: ButtonTone; blocked: boolean },
+  color: ColorTokens,
+  isDark: boolean
+): { container: ViewStyle; label: ButtonLabelStyle } {
+  const compact = size === "compact";
+  const ring = isDark ? buttonShadow.dark : buttonShadow.light;
+  const base: ViewStyle = {
+    height: compact ? 44 : 52,
+    paddingHorizontal: 20, // the hugging kit button (Empty state Action)
+    borderRadius: radius.button,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  };
+  const secondaryLabel: ButtonLabelStyle = {
+    color: blocked ? color.textDim : color.brandText,
+    fontSize: "text-sm",
+    fontWeight: "font-semibold",
+    lineHeight: 21,
+  };
+
+  switch (variant) {
+    case "outline":
+      return tone === "tonal"
+        ? {
+            container: { ...base, ...ring, backgroundColor: color.brandPanel },
+            label: { ...secondaryLabel, lineHeight: 20 },
+          }
+        : {
+            container: {
+              ...base,
+              ...ring,
+              backgroundColor: color.surface,
+              borderWidth: 1,
+              borderColor: color.brandPanelLine,
+            },
+            label: secondaryLabel,
+          };
+    case "warning":
+      return {
+        container: {
+          ...base,
+          ...ring,
+          height: compact ? 44 : 56,
+          backgroundColor: color.surface,
+          borderWidth: 1,
+          borderColor: color.line,
+        },
+        label: {
+          ...secondaryLabel,
+          color: blocked ? color.textDim : color.dangerStrong,
+          fontWeight: "font-bold",
+        },
+      };
+    case "ghost":
+      return {
+        // The library Text button hugs its label: no box, no inset, 44 tall.
+        container: {
+          ...base,
+          height: MIN_TOUCH_TARGET,
+          paddingHorizontal: 0,
+          backgroundColor: "transparent",
+        },
+        label: {
+          ...secondaryLabel,
+          color: blocked
+            ? color.textDim
+            : tone === "muted"
+            ? color.textBody
+            : color.brandText,
+          fontWeight: "font-bold",
+        },
+      };
+    case "primary":
+    default:
+      return {
+        container: {
+          ...base,
+          borderRadius: radius.buttonPrimary,
+          backgroundColor: blocked ? color.brandPanelLine : color.brand,
+        },
+        label: {
+          color: color.onBrand,
+          fontSize: compact ? "text-sm" : "text-md",
+          fontWeight: "font-semibold",
+          lineHeight: compact ? 20 : 24,
+        },
+      };
+  }
+}
 
 /**
  * The foreground colour a live `Button` has already resolved for its own
@@ -30,6 +167,8 @@ interface Props extends React.ComponentProps<typeof TouchableOpacity> {
   children: React.ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
+  /** See `ButtonTone`: `tonal` for `outline`, `brand` | `muted` for `ghost`. */
+  tone?: ButtonTone;
   /**
    * Shows a spinner beside the label and blocks further presses. Use this for
    * anything that makes a network call — an un-disabled button with a spinner
@@ -58,6 +197,7 @@ export function Button({
   style,
   variant = "primary",
   size = "default",
+  tone,
   disabled,
   loading = false,
   haptic = true,
@@ -71,73 +211,14 @@ export function Button({
   const isBlocked = Boolean(disabled) || loading;
   const feedback = usePressFeedback({ disabled: isBlocked });
 
-  const container: ViewStyle = (() => {
-    const base: ViewStyle = {
-      minHeight: size === "compact" ? 36 : MIN_TOUCH_TARGET,
-      paddingHorizontal: 16,
-      paddingVertical: size === "compact" ? 6 : 11,
-      borderRadius: radius.button,
-      alignItems: "center",
-      justifyContent: "center",
-      flexDirection: "row",
-    };
-
-    // One disabled treatment for the whole app: a neutral fill, never the brand
-    // held at reduced opacity.
-    //
-    // The previous version composited the brand at 40% and left the label pure
-    // white, which measured 1.82:1 — and, worse for the customer, still read as
-    // a live button, so people tapped it and nothing happened. It also meant a
-    // disabled button on a transparent parent let the page show straight
-    // through it; that is what made the date picker's Confirm unreadable.
-    if (isBlocked) {
-      return {
-        ...base,
-        backgroundColor: color.surfaceRaised,
-        borderWidth: 1,
-        borderColor: color.line,
-      };
-    }
-
-    switch (variant) {
-      case "outline":
-        return {
-          ...base,
-          backgroundColor: color.surface,
-          borderWidth: 1,
-          borderColor: color.inputLine,
-        };
-      case "warning":
-        return { ...base, backgroundColor: color.danger };
-      case "ghost":
-        return { ...base, backgroundColor: "transparent" };
-      case "primary":
-      default:
-        return { ...base, backgroundColor: color.brand };
-    }
-  })();
-
-  // 4.53:1 on the light disabled fill, 4.12:1 on the dark one — and at 16pt
-  // bold both clear the 3:1 large-text threshold comfortably.
-  //
-  // `warning` cannot share `primary`'s `onBrand` label: `danger` is a deep red
-  // on light (#B3261E) and a light salmon on dark (#EB6F62). White clears AA
-  // on the first (6.6:1) and fails it on the second (3.0:1). There is no
-  // `onDanger` token yet — design-tokens.ts is frozen this phase — so this
-  // derives the label from the two tokens that already exist: dark canvas
-  // reads at 6.3:1 on the salmon fill, which is the same derivation
-  // `unavailability-editor.tsx` already uses for the calendar's danger marks,
-  // now shared here instead of staying a second, undiscoverable answer to the
-  // same problem.
-  const labelColor = isBlocked
-    ? color.textDim
-    : variant === "warning"
-    ? isDark
-      ? color.canvas
-      : color.onBrand
-    : variant === "primary"
-    ? color.onBrand
-    : color.text;
+  // A loading button is blocked too, so it shows the disabled look while the
+  // request runs — the same treatment, so a spinner never sits on a live control.
+  const { container, label } = resolveButtonStyle(
+    { variant, size, tone, blocked: isBlocked },
+    color,
+    isDark
+  );
+  const labelColor = label.color;
 
   const handlePress = (event: GestureResponderEvent) => {
     if (isBlocked) return;
@@ -183,8 +264,9 @@ export function Button({
       )}
       {isTextChild ? (
         <Text
-          fontWeight="font-bold"
-          fontSize="text-md"
+          fontWeight={label.fontWeight}
+          fontSize={label.fontSize}
+          lineHeight={label.lineHeight}
           style={{ color: labelColor, textAlign: "center" }}
         >
           {children}
@@ -225,10 +307,16 @@ export function Button({
  * `Button` rather than inside one). That path cannot know about `disabled`,
  * so it does not attempt to.
  */
-export function useButtonLabelColor(variant: ButtonVariant = "primary") {
+export function useButtonLabelColor(
+  variant: ButtonVariant = "primary",
+  tone?: ButtonTone
+) {
   const { color, isDark } = useTheme();
   const fromButton = useContext(ButtonForegroundContext);
   if (fromButton !== null) return fromButton;
-  if (variant === "warning") return isDark ? color.canvas : color.onBrand;
-  return variant === "primary" ? color.onBrand : color.text;
+  return resolveButtonStyle(
+    { variant, size: "default", tone, blocked: false },
+    color,
+    isDark
+  ).label.color;
 }
