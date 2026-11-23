@@ -81,7 +81,7 @@ export default function ConfirmPassword() {
             maxFontSizeMultiplier={1.4}
             style={{ paddingRight: 48 }}
           />
-          <PasswordEye shown={showPassword} onPress={() => setShowPassword(!showPassword)} top={12} />
+          <PasswordEye shown={showPassword} onPress={() => setShowPassword(!showPassword)} />
         </View>
       </ScrollContainer>
 

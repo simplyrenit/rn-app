@@ -1,6 +1,7 @@
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
 import {
   BottomBar,
+  FieldLabel,
   NonScrollableContainer,
   ScrollContainer,
   Text,
@@ -27,7 +28,13 @@ type PasswordDesign = { password: string; focused?: boolean };
  * The eye over the kit field (25483): 24 at x326, centred on the 48 input. `TextField` has no trailing slot, so
  * it is laid over the field by `top` (40 under a label, 12 without), and the input keeps 48 clear on its right.
  */
-export function PasswordEye({ shown, onPress, top }: { shown: boolean; onPress: () => void; top: number }) {
+export function PasswordEye({
+  shown,
+  onPress,
+}: {
+  shown: boolean;
+  onPress: () => void;
+}) {
   const { color } = useTheme();
   const Icon = shown ? EyeSlashIcon : EyeIcon;
   return (
@@ -36,7 +43,7 @@ export function PasswordEye({ shown, onPress, top }: { shown: boolean; onPress: 
       accessibilityLabel="Show or hide password"
       onPress={onPress}
       hitSlop={10}
-      style={{ position: "absolute", right: 16, top }}
+      style={{ position: "absolute", right: 16, top: 12 }}
     >
       <Icon size={24} color={color.textDim} />
     </TouchableOpacity>
@@ -45,7 +52,9 @@ export function PasswordEye({ shown, onPress, top }: { shown: boolean; onPress: 
 
 export default function SetPassword() {
   const route = useRoute();
-  const design = __DEV__ ? (route.params as { design?: PasswordDesign } | undefined)?.design : undefined;
+  const design = __DEV__
+    ? (route.params as { design?: PasswordDesign } | undefined)?.design
+    : undefined;
   const [password, setPassword] = useState(design?.password ?? "");
   const [showPassword, setShowPassword] = useState(false);
   const router = useTypedNavigation();
@@ -59,7 +68,7 @@ export default function SetPassword() {
       hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
       hasNumber: /\d/.test(password),
     }),
-    [password]
+    [password],
   );
 
   const onSubmit = () => {
@@ -76,26 +85,41 @@ export default function SetPassword() {
     <NonScrollableContainer>
       <HeaderIndicator percentage={50} />
 
-      <ScrollContainer containerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: 24 }}>
+      <ScrollContainer
+        containerStyle={{
+          paddingHorizontal: SCREEN_GUTTER,
+          paddingTop: 8,
+          paddingBottom: 24,
+        }}
+      >
         <Text role="screenTitle">Set a password for your new account</Text>
 
+        {/* The label sits outside the eye's wrapper, so the eye stays on the input at any font size. */}
         <View style={{ marginTop: 24 }}>
-          <TextField
-            label="Create password"
-            keyboardType="default"
-            autoCapitalize="none"
-            placeholder="Enter password"
-            secureTextEntry={!showPassword}
-            value={password}
-            onChangeText={setPassword}
-            autoCorrect={false}
-            textContentType="newPassword"
-            autoComplete="new-password"
-            accessibilityLabel="Password"
-            maxFontSizeMultiplier={1.4}
-            style={[design?.focused ? focusedBox : null, { paddingRight: 48 }]}
-          />
-          <PasswordEye shown={showPassword} onPress={() => setShowPassword(!showPassword)} top={40} />
+          <FieldLabel label="Create password" />
+          <View>
+            <TextField
+              keyboardType="default"
+              autoCapitalize="none"
+              placeholder="Enter password"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+              autoCorrect={false}
+              textContentType="newPassword"
+              autoComplete="new-password"
+              accessibilityLabel="Password"
+              maxFontSizeMultiplier={1.4}
+              style={[
+                design?.focused ? focusedBox : null,
+                { paddingRight: 48 },
+              ]}
+            />
+            <PasswordEye
+              shown={showPassword}
+              onPress={() => setShowPassword(!showPassword)}
+            />
+          </View>
         </View>
 
         {/* Rules (25483): 24 under the field (TextField keeps 18), a SemiBold heading, rows 28 apart. A met rule is
@@ -106,17 +130,33 @@ export default function SetPassword() {
           </Text>
 
           {[
-            { label: "Minimum 8 characters", valid: passwordValidations.hasMinChars },
-            { label: "At least 1 special character", valid: passwordValidations.hasSpecialChar },
-            { label: "At least 1 number", valid: passwordValidations.hasNumber },
+            {
+              label: "Minimum 8 characters",
+              valid: passwordValidations.hasMinChars,
+            },
+            {
+              label: "At least 1 special character",
+              valid: passwordValidations.hasSpecialChar,
+            },
+            {
+              label: "At least 1 number",
+              valid: passwordValidations.hasNumber,
+            },
           ].map((item) => (
-            <View key={item.label} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View
+              key={item.label}
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
               {item.valid ? (
                 <CheckCircleIcon size={20} color={color.success} />
               ) : (
                 <InformationCircleIcon size={20} color={color.textDim} />
               )}
-              <Text fontSize="text-sm" lineHeight={20} tone={item.valid ? "default" : "body"}>
+              <Text
+                fontSize="text-sm"
+                lineHeight={20}
+                tone={item.valid ? "default" : "body"}
+              >
                 {item.label}
               </Text>
             </View>
@@ -124,7 +164,9 @@ export default function SetPassword() {
         </View>
       </ScrollContainer>
 
-      <BottomBar primary={{ label: "Continue", onPress: onSubmit, disabled: !allValid }} />
+      <BottomBar
+        primary={{ label: "Continue", onPress: onSubmit, disabled: !allValid }}
+      />
     </NonScrollableContainer>
   );
 }

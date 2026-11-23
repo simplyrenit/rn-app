@@ -42,6 +42,7 @@ jest.mock("@/components/core", () => {
   return {
     Text: ({ children }: any) => <T>{children}</T>,
     TextField: () => null,
+    FieldLabel: () => null,
     useFieldSurfaceStyle: () => ({}),
     NonScrollableContainer: ({ children }: any) => <V>{children}</V>,
     ScrollContainer: ({ children }: any) => <V>{children}</V>,

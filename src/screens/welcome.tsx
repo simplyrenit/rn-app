@@ -39,6 +39,8 @@ const carouselData: CarouselItem[] = [
 // 20/28 title 8 below, the 16/24 body 8 below that. The dots (8, 4 apart) and the sign-in
 // block are bottom-anchored: dots 44 above the providers, the block ending 30 above the
 // screen's bottom edge (844 − 814), into the home-indicator strip as the frame draws it.
+// Kept on review (not max(30, insets.bottom)): the 34pt iOS inset would move the block 4pt off the
+// frame; Android here is not edge-to-edge, so its nav bar cannot cover the Terms links.
 // The art sizes are maximums: on a 667pt SE or at a large font the art shrinks instead.
 const ART_TOP = 8;
 const ART_HEIGHT = 326;

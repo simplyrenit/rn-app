@@ -144,7 +144,7 @@ function MapPinActive() {
           height: 36,
           borderRadius: 18,
           padding: 6,
-          backgroundColor: "#FFFFFF",
+          backgroundColor: color.surface,
           shadowColor: "#000000",
           shadowOffset: { width: 0, height: 3 },
           shadowRadius: 0.75,
@@ -162,9 +162,10 @@ function MapPinActive() {
  * centred and clipped to the screen, faded to the canvas by a radial gradient,
  * with two rings (132 and 84), a teal sweep and the active pin at its centre.
  * Every number is the frame's; the 459 height gives way on a short screen.
+ * Light is the frame's colours (the 84 ring's #DEDEDE has no token, so dark takes `line`).
  */
 function AllowLocationArt() {
-  const { color } = useTheme();
+  const { color, isDark } = useTheme();
   return (
     <View style={{ height: 459, flexShrink: 1, marginTop: 16, overflow: "hidden", alignItems: "center" }}>
       <View style={{ width: 459, height: 459 }}>
@@ -189,12 +190,12 @@ function AllowLocationArt() {
           height: 132,
           borderRadius: 66,
           borderWidth: 1,
-          borderColor: "#C4C4C4",
+          borderColor: color.inputLine,
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <View style={{ width: 84, height: 84, borderRadius: 42, borderWidth: 1, borderColor: "#DEDEDE" }} />
+        <View style={{ width: 84, height: 84, borderRadius: 42, borderWidth: 1, borderColor: isDark ? color.line : "#DEDEDE" }} />
         {/* Polygon 1: a triangle rotated 135°, apex on the pin, fading from
             #12837F at 25% to nothing 75% of the way to its base. Points are in
             the ring's box, moved down 24 so the svg holds the part above it. */}
@@ -969,9 +970,11 @@ export default function LocationScreen() {
 
                   <View
                     style={{
-                      height: 48,
+                      // minHeight, not height: the Places suggestions draw inside this row and must grow it.
+                      // Top-aligned so the field stays put when they open; the icon's 13 centres it in the 46.
+                      minHeight: 48,
                       flexDirection: "row",
-                      alignItems: "center",
+                      alignItems: "flex-start",
                       gap: 8,
                       paddingHorizontal: 12,
                       borderWidth: 1,
@@ -980,7 +983,7 @@ export default function LocationScreen() {
                       backgroundColor: color.surface,
                     }}
                   >
-                    <MagnifyingGlassIcon color={color.textDim} size={20} />
+                    <MagnifyingGlassIcon color={color.textDim} size={20} style={{ marginTop: 13 }} />
                     <GooglePlacesAutocomplete
                       ref={googlePlacesRef}
                       placeholder="Search area or street name"
