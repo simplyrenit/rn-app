@@ -1,20 +1,19 @@
 import useSaved from "@/backend/useSaved";
 import { useSearch } from "@/backend/search";
 import {
-  CategoryTile,
+  SubCategoryTile,
   TileGrid,
 } from "@/components/categories/category-tile";
 import {
   Card,
   EmptyState,
   ProductCardSkeleton,
+  SectionHeader,
   SubpageHeader,
-  Text,
 } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useRailData } from "@/components/home/sections/use-rail-data";
 import { useGlobalContext } from "@/context/global-context";
-import { CategoryIcon } from "@/lib/category-icons";
 import { FilterBar } from "@/components/search/results-rails";
 import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
 import { getDiscoveryLocationData } from "@/lib/location";
@@ -24,19 +23,23 @@ import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/nativ
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useCallback, useRef } from "react";
 import { FlatList, View, useWindowDimensions } from "react-native";
+import { MapPinIcon } from "react-native-heroicons/outline";
 
-// Measured off the v3 Appliances landing frame (C-09): 16 under the header, four
-// 78 x 64 sub-category tiles 12 apart and 12 between rows, 24 down to "Near you"
-// (14 bold), 16 to the pills (44 tall, 8 apart), 16 to the listings. The
-// listings are the search results' grid: two columns 16 apart, 24 between rows.
+// The 2.1 landing frames (2089:27555, 2089:27679): 16 under the top bar, four
+// 76 x 52 text-only sub-category tiles 12 apart and 16 between rows, 32 down to
+// the "Near you" section header, 12 to the pills, 16 to the listings. The
+// listings are two columns of 162 cards 18 apart, 24 between rows. The empty
+// state sits 48 under the pills.
 const TOP_INSET = 16;
 const GAP = 12;
-const ROW_GAP = 12;
-const RATIO = 78 / 64;
-const SECTION_GAP = 24;
+const ROW_GAP = 16;
+const RATIO = 76 / 52;
+const SECTION_GAP = 32;
+const HEADING_GAP = 12;
 const BLOCK_GAP = 16;
-const COLUMN_GAP = 16;
+const COLUMN_GAP = 18;
 const RESULTS_GAP = 24;
+const EMPTY_TOP = 48;
 
 /**
  * One category: its sub-categories as tiles, then listings in it near the
@@ -68,6 +71,7 @@ export default function CategoryLandingScreen() {
     (category) => (category.slug ?? category.title) === params.slug
   );
   const title = parent?.title ?? params.title;
+  const hasSubcategories = Boolean(parent?.subcategories.length);
   // Without the loaded list (cold start, offline) there is only the slug, which
   // the search's category filter also matches (ENG-29).
   const searchCategory = parent?.title ?? params.slug;
@@ -139,23 +143,15 @@ export default function CategoryLandingScreen() {
 
   const header = (
     <View style={{ paddingTop: TOP_INSET, paddingBottom: BLOCK_GAP }}>
-      {parent && parent.subcategories.length > 0 ? (
+      {parent && hasSubcategories ? (
         <View style={{ marginBottom: SECTION_GAP }}>
           <TileGrid columns={4} gap={GAP} rowGap={ROW_GAP} ratio={RATIO}>
             {(size) =>
               parent.subcategories.map((sub) => (
-                <CategoryTile
+                <SubCategoryTile
                   key={sub.slug ?? sub.title}
                   size={size}
                   label={sub.title}
-                  icon={
-                    <CategoryIcon
-                      name={sub.title}
-                      slug={sub.slug}
-                      size={24}
-                      color={color.text}
-                    />
-                  }
                   onPress={() => openResults(sub.title)}
                 />
               ))
@@ -164,24 +160,24 @@ export default function CategoryLandingScreen() {
         </View>
       ) : null}
 
-      <View style={{ paddingHorizontal: SCREEN_GUTTER, gap: BLOCK_GAP }}>
-        <Text accessibilityRole="header" fontSize="text-sm" fontWeight="font-bold">
-          Near you
-        </Text>
-        {/* The results screen's own bar, so the two match; each pill opens
-            the full results, which own filtering, sorting and dates. */}
-        <FilterBar
-          filtersActive={false}
-          sortActive={false}
-          datesLabel="Dates"
-          datesActive={false}
-          hint={`Opens all results in ${title}`}
-          onFilters={() => openResults()}
-          onSort={() => openResults()}
-          onDates={() => openResults()}
-          chips={[]}
-          onChip={() => {}}
-        />
+      <View style={{ gap: HEADING_GAP }}>
+        <SectionHeader title="Near you" flush />
+        <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+          {/* The results screen's own bar, so the two match; each pill opens
+              the full results, which own filtering, sorting and dates. */}
+          <FilterBar
+            filtersActive={false}
+            sortActive={false}
+            datesLabel="Dates"
+            datesActive={false}
+            hint={`Opens all results in ${title}`}
+            onFilters={() => openResults()}
+            onSort={() => openResults()}
+            onDates={() => openResults()}
+            chips={[]}
+            onChip={() => {}}
+          />
+        </View>
       </View>
     </View>
   );
@@ -229,20 +225,24 @@ export default function CategoryLandingScreen() {
               ))}
             </View>
           ) : error ? (
-            <EmptyState
-              compact
-              variant="error"
-              title="Couldn’t load this"
-              body="Check your connection and try again."
-              actionLabel="Retry"
-              onAction={reload}
-            />
+            <View style={{ marginTop: EMPTY_TOP - BLOCK_GAP }}>
+              <EmptyState
+                variant="error"
+                title="Couldn’t load this"
+                body="Check your connection and try again."
+                actionLabel="Retry"
+                onAction={reload}
+              />
+            </View>
           ) : (
-            <EmptyState
-              compact
-              title="Nothing near you yet"
-              body={`Nobody near you lists anything in ${title} yet.`}
-            />
+            // The frame hides the kit's action, so none is offered (plan Decision 6).
+            <View style={{ marginTop: EMPTY_TOP - BLOCK_GAP }}>
+              <EmptyState
+                icon={<MapPinIcon color={color.text} strokeWidth={1.5} />}
+                title="Nothing near you yet"
+                body={`Nobody near you lists anything in ${title} yet.`}
+              />
+            </View>
           )
         }
       />

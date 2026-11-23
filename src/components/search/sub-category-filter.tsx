@@ -1,13 +1,11 @@
 import { categoryDisplayName } from "@/lib/category-icons";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
-import { ChevronLeftIcon } from "react-native-heroicons/outline";
-import { CheckIcon } from "react-native-heroicons/solid";
-import { Image } from "expo-image";
+import { CheckIcon, ChevronLeftIcon } from "react-native-heroicons/outline";
 import { Text } from "@/components/core";
 import { Subcategory } from "@/lib/types";
 import { FlatList } from "react-native-gesture-handler";
-import { ink } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, ink } from "@/lib/design-tokens";
 
 interface SubCategoryFilterProps {
   selectedCategory: string;
@@ -20,6 +18,10 @@ interface SubCategoryFilterProps {
   closeSheet: () => void;
 }
 
+// 2089:34929: a 48pt back row, then 48pt rows of the label alone (REVIEW b1-01:
+// sub-categories repeat no icon), the chosen one brand SemiBold with a 20 check.
+const ROW = 48;
+
 const SubCategoryFilter: React.FC<SubCategoryFilterProps> = ({
   selectedCategory,
   selectedSubCategory,
@@ -27,53 +29,47 @@ const SubCategoryFilter: React.FC<SubCategoryFilterProps> = ({
   onClose,
   isDark,
   subcategories,
-  isLoading,
-  closeSheet,
 }) => (
-  <View style={{ flex: 1, }}>
-    <TouchableOpacity onPress={onClose}>
-      <View
-        className={`flex-row items-center space-x-2 border-b p-3 mb-0 ${isDark ? "border-line-dark" : "border-line-light"
-          }`}
-      >
-        <ChevronLeftIcon
-          size={24}
-          color={ink.text(isDark)}
-        />
-        <Text
-          fontSize="text-sm"
-          fontWeight="font-bold"
-        >
-          {categoryDisplayName(selectedCategory)}
-        </Text>
-      </View>
-    </TouchableOpacity>
-    <FlatList showsVerticalScrollIndicator={false} data={subcategories} style={{ flex: 1, }} renderItem={({ item, index }) => (<TouchableOpacity
-      key={index}
-      className="p-3 mb-1"
-      onPress={() => onSelect(item.title)}
+  <View style={{ flex: 1, paddingTop: 8, paddingHorizontal: SCREEN_GUTTER }}>
+    {/* Pinned over the list, so the way back stays in reach on a long one. */}
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={`Back to categories, ${categoryDisplayName(selectedCategory)}`}
+      onPress={onClose}
+      style={{ minHeight: ROW, flexDirection: "row", alignItems: "center", gap: 8 }}
     >
-      <View className="flex flex-row items-center justify-between">
-        <View className="flex flex-row items-center">
-          <Image
-            source={{
-              uri: isDark ? item.dark_icon || "" : item.light_icon || "",
-            }}
-            style={{ width: 20, height: 20 }}
-          />
-          <Text
-            fontSize="text-base"
-            className="ml-3"
+      <ChevronLeftIcon size={20} strokeWidth={1.5} color={ink.text(isDark)} />
+      <Text fontSize="text-md" fontWeight="font-semibold">
+        {categoryDisplayName(selectedCategory)}
+      </Text>
+    </TouchableOpacity>
+    <FlatList
+      showsVerticalScrollIndicator={false}
+      data={subcategories}
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingBottom: 16 }}
+      keyExtractor={(item) => item.title}
+      renderItem={({ item }) => {
+        const selected = selectedSubCategory === item.title;
+        return (
+          <TouchableOpacity
+            accessibilityRole="radio"
+            accessibilityState={{ selected }}
+            onPress={() => onSelect(item.title)}
+            style={{ minHeight: ROW, flexDirection: "row", alignItems: "center", gap: 12 }}
           >
-            {categoryDisplayName(item.title)}
-          </Text>
-        </View>
-
-        {selectedSubCategory === item.title && (
-          <CheckIcon size={20} color={ink.brandText(isDark)} />
-        )}
-      </View>
-    </TouchableOpacity>)} />
+            <Text
+              fontSize="text-md"
+              fontWeight={selected ? "font-semibold" : "font-normal"}
+              style={{ flex: 1, color: selected ? ink.brandText(isDark) : ink.text(isDark) }}
+            >
+              {categoryDisplayName(item.title)}
+            </Text>
+            {selected && <CheckIcon size={20} strokeWidth={1.5} color={ink.brandText(isDark)} />}
+          </TouchableOpacity>
+        );
+      }}
+    />
   </View>
 );
 

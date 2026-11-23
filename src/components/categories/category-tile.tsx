@@ -1,28 +1,29 @@
 import { Text } from "@/components/core";
-import { CATEGORIES } from "@/lib/categories";
 import { CategoryIcon } from "@/lib/category-icons";
 import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import type { BrowseCategory } from "@/lib/home-categories";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
-import { Image } from "expo-image";
-import React, { useState } from "react";
-import {
-  ImageSourcePropType,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import React from "react";
+import { TouchableOpacity, View, useWindowDimensions } from "react-native";
 
-const ICON_SIZE = 24;
-// Measured off the v3 frames: the label starts 8pt under the tile, at 12pt bold.
+// The 2.1 frames (Home 2083:15120, All categories 2089:24546): a 24 line icon at
+// stroke 1.5, centred on the tile, and the 12/16 Medium label 8 under it.
+export const TILE_ICON_SIZE = 24;
+export const TILE_ICON_STROKE = 1.5;
 const LABEL_GAP = 8;
+// The parent tile's neutral fill. The frames draw #F5F5F7 unbound: no kit
+// variable and no token, so it stays local (ENG-427 plan); dark uses the kit's
+// muted surface, one step up from the canvas.
+const TILE_FILL_LIGHT = "#F5F5F7";
 
 export interface TileSize {
-  /** The whole cell, which is also the tap target and the label's width. */
+  /** The whole cell, which is also the tap target. */
   cell: number;
   width: number;
   height: number;
+  /** The label's width: the cell on Home, the tile on All categories. */
+  label: number;
 }
 
 /**
@@ -30,15 +31,16 @@ export interface TileSize {
  *
  * Each cell is the tile plus the gap, with the tile centred, and the row starts
  * half a gap inside the gutter, so the tiles still sit on the gutter and the
- * gaps are the design's. The point is the label: it gets the cell's width, not
- * the tile's. "Automobiles" is 75pt at 12pt bold and a Home tile is 70pt at
- * 360dp; inside the tile it broke mid-word.
+ * gaps are the design's. Home's label gets the cell's width (the frame draws
+ * 88 under a 78 tile); All categories' gets the tile's (106), which is where
+ * the frame wraps "Art, Decor & Hobby".
  */
 export function TileGrid({
   columns,
   gap,
   rowGap,
   ratio,
+  labelWidth = "cell",
   children,
 }: {
   columns: number;
@@ -46,6 +48,7 @@ export function TileGrid({
   rowGap: number;
   /** The tile's width over its height. */
   ratio: number;
+  labelWidth?: "cell" | "tile";
   children: (size: TileSize) => React.ReactNode;
 }) {
   const { width: screenWidth } = useWindowDimensions();
@@ -62,42 +65,34 @@ export function TileGrid({
         rowGap,
       }}
     >
-      {children({ cell, width, height: width / ratio })}
+      {children({
+        cell,
+        width,
+        height: width / ratio,
+        label: labelWidth === "tile" ? width : cell,
+      })}
     </View>
   );
 }
 
 /**
- * One tile: a picture when there is one, otherwise an outlined square with a
- * line icon, and the label under it.
- *
- * `uri` is the admin-uploaded picture and `image` the bundled one. A remote
- * picture that fails to load falls back to the bundled one and then to the
- * icon, rather than leaving an empty square.
+ * One parent tile: a line icon on a neutral r12 tile, and the label under it
+ * (REVIEW b1-01: no pictures, admin's or bundled).
  */
 export function CategoryTile({
   size,
   label,
-  uri,
-  image,
   icon,
   accessibilityLabel,
   onPress,
 }: {
   size: TileSize;
   label: string;
-  uri?: string | null;
-  image?: ImageSourcePropType | null;
   icon: React.ReactNode;
   accessibilityLabel?: string;
   onPress: () => void;
 }) {
-  const { color } = useTheme();
-  // Which URI failed, not whether one did: a tile handed a new picture (admin
-  // replaced it, or the theme flipped to the other one) gets to try it.
-  const [failedUri, setFailedUri] = useState<string | null>(null);
-  const remote = uri && uri !== failedUri ? uri : null;
-  const source = remote ? { uri: remote } : image ?? null;
+  const { color, isDark } = useTheme();
   // A label with nowhere to wrap ("Mountaineering", 92pt) shrinks to fit its one
   // line instead of breaking mid-word; anything with a space wraps as it needs.
   const oneWord = !/[\s-]/.test(label.trim());
@@ -115,61 +110,88 @@ export function CategoryTile({
           width: size.width,
           height: size.height,
           borderRadius: radius.button,
-          overflow: "hidden",
           alignItems: "center",
           justifyContent: "center",
-          // The outline is the design's hairline, not `inputLine`: the whole cell
-          // is the control, and a picture tile has no edge at all.
-          ...(source
-            ? { backgroundColor: color.skeleton }
-            : {
-                backgroundColor: color.surface,
-                borderWidth: 1,
-                borderColor: color.line,
-              }),
+          backgroundColor: isDark ? color.surfaceMuted : TILE_FILL_LIGHT,
         }}
       >
-        {source ? (
-          <Image
-            source={source}
-            style={{ width: "100%", height: "100%" }}
-            contentFit="cover"
-            onError={remote ? () => setFailedUri(remote) : undefined}
-            accessible={false}
-          />
-        ) : (
-          icon
-        )}
+        {icon}
       </View>
-      <Text
-        fontSize="text-xs"
-        fontWeight="font-bold"
-        numberOfLines={oneWord ? 1 : undefined}
-        adjustsFontSizeToFit={oneWord}
-        minimumFontScale={0.8}
-        // The label is held to its cell (70dp at 360), so it does not follow the
-        // system font size: at Android's "Large" (1.3) "Automobiles" and
-        // "categories" broke mid-word. The spoken label still carries the name.
-        maxFontSizeMultiplier={1}
-        style={{ marginTop: LABEL_GAP, textAlign: "center", width: "100%" }}
-      >
-        {label}
-      </Text>
+      <TileLabel label={label} oneWord={oneWord} style={{ marginTop: LABEL_GAP, width: size.label }} />
     </TouchableOpacity>
   );
 }
 
-/** The admin-uploaded picture for the theme, if any. */
-export function remotePictureFor(category: BrowseCategory, isDark: boolean) {
-  return (isDark ? category.dark_icon : category.light_icon) || category.main_icon || null;
+function TileLabel({
+  label,
+  oneWord,
+  style,
+}: {
+  label: string;
+  oneWord: boolean;
+  style: { marginTop?: number; width?: number | "100%" };
+}) {
+  return (
+    <Text
+      fontSize="text-xs"
+      fontWeight="font-medium"
+      tone="body"
+      numberOfLines={oneWord ? 1 : undefined}
+      adjustsFontSizeToFit={oneWord}
+      minimumFontScale={0.8}
+      // The label is held to its cell (70dp at 360), so it does not follow the
+      // system font size: at Android's "Large" (1.3) "Automobiles" and
+      // "categories" broke mid-word. The spoken label still carries the name.
+      maxFontSizeMultiplier={1}
+      style={{ textAlign: "center", ...style }}
+    >
+      {label}
+    </Text>
+  );
 }
 
-/** The bundled picture for a v2 slug, while admin has none uploaded. */
-export function bundledPictureFor(category: BrowseCategory) {
-  return CATEGORIES.find((item) => item.slug === category.slug)?.image ?? null;
+/**
+ * A sub-category on the Category landing (2089:27555): its name alone, centred
+ * in a white r12 tile with the hairline edge. It repeats no icon (REVIEW b1-01).
+ */
+export function SubCategoryTile({
+  size,
+  label,
+  onPress,
+}: {
+  size: TileSize;
+  label: string;
+  onPress: () => void;
+}) {
+  const { color } = useTheme();
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={{ width: size.cell, alignItems: "center" }}
+    >
+      <View
+        style={{
+          width: size.width,
+          height: size.height,
+          borderRadius: radius.button,
+          borderWidth: 1,
+          borderColor: color.line,
+          backgroundColor: color.surface,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 2,
+        }}
+      >
+        <TileLabel label={label} oneWord={!/[\s-]/.test(label.trim())} style={{ width: "100%" }} />
+      </View>
+    </TouchableOpacity>
+  );
 }
 
-/** A parent category's tile, with the full picture fallback chain. */
+/** A parent category's tile, with its icon from the kit's Category icon map. */
 export function ParentCategoryTile({
   category,
   label,
@@ -179,20 +201,19 @@ export function ParentCategoryTile({
   label: string;
   size: TileSize;
 }) {
-  const { color, isDark } = useTheme();
+  const { color } = useTheme();
   const openCategory = useOpenCategory();
   return (
     <CategoryTile
       size={size}
       label={label}
-      uri={remotePictureFor(category, isDark)}
-      image={bundledPictureFor(category)}
       icon={
         <CategoryIcon
           name={category.title}
           slug={category.slug}
-          size={ICON_SIZE}
+          size={TILE_ICON_SIZE}
           color={color.text}
+          strokeWidth={TILE_ICON_STROKE}
         />
       }
       accessibilityLabel={`Browse ${category.title}`}

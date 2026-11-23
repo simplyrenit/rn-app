@@ -1,19 +1,15 @@
-import {
-  BadCondition,
-  ExcellentCondition,
-  GoodCondition,
-} from "@/icons/conditions";
-import { MIN_TOUCH_TARGET } from "@/lib/design-tokens";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { selectionFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 import { TouchableOpacity, View } from "react-native";
-import { CheckIcon } from "react-native-heroicons/solid";
+import { CheckIcon } from "react-native-heroicons/outline";
 import { Text } from "../core";
 
+// Labels only: the 2.1 frames drop the lightbulb icons (REVIEW b1-01).
 const options = [
-  { icon: BadCondition, option: "Fair", value: "fair" },
-  { icon: GoodCondition, option: "Good", value: "good" },
-  { icon: ExcellentCondition, option: "Excellent", value: "excellent" },
+  { option: "Fair", value: "fair" },
+  { option: "Good", value: "good" },
+  { option: "Excellent", value: "excellent" },
 ];
 
 interface Props {
@@ -23,14 +19,14 @@ interface Props {
   isLoading: boolean;
 }
 
-/** Same selected-row treatment as Sort and the Appearance sheet — one pattern
- *  for "this is the one that is on", not three. */
+/** 2089:35291: 48pt rows with no rules between them; the chosen one is a brand
+ *  SemiBold label and a 20 check, as on Sort. */
 export function ConditionFilter({ selectedFilter, onSelect }: Props) {
   const { color } = useTheme();
 
   return (
-    <View className="flex-1">
-      {options.map((item, index) => {
+    <View style={{ flex: 1, paddingTop: 8, paddingBottom: 16, paddingHorizontal: SCREEN_GUTTER }}>
+      {options.map((item) => {
         const selected = selectedFilter === item.value;
         return (
           <TouchableOpacity
@@ -41,30 +37,22 @@ export function ConditionFilter({ selectedFilter, onSelect }: Props) {
             style={{
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "space-between",
-              minHeight: MIN_TOUCH_TARGET + 8,
-              borderBottomWidth: index === options.length - 1 ? 0 : 1,
-              borderBottomColor: color.line,
+              gap: 12,
+              minHeight: 48,
             }}
             onPress={() => {
               selectionFeedback();
               onSelect(item.value);
             }}
           >
-            <View className="flex flex-row items-center">
-              <item.icon
-                color={selected ? color.brandText : color.text}
-                size={20}
-              />
-              <Text
-                fontSize="text-md"
-                fontWeight={selected ? "font-semibold" : "font-normal"}
-                className="ml-3"
-              >
-                {item.option}
-              </Text>
-            </View>
-            {selected && <CheckIcon size={20} color={color.brandText} />}
+            <Text
+              fontSize="text-md"
+              fontWeight={selected ? "font-semibold" : "font-normal"}
+              style={{ flex: 1, color: selected ? color.brandText : color.text }}
+            >
+              {item.option}
+            </Text>
+            {selected && <CheckIcon size={20} strokeWidth={1.5} color={color.brandText} />}
           </TouchableOpacity>
         );
       })}

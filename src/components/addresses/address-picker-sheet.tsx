@@ -1,9 +1,9 @@
 import { localityFor, localityOfSaved } from "@/backend/list-flow/pickup-location";
 import useAddresses, { useAddAddress } from "@/backend/useAddresses";
-import { Text } from "@/components/core";
+import { SheetHeader, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { MAX_ADDRESSES, PickedAddress, SavedAddress, addressAtPoint } from "@/lib/addresses";
-import { SCREEN_GUTTER, density, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { createLocationRequest } from "@/lib/location-request";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
@@ -38,6 +38,15 @@ interface Props {
   savedOnly?: boolean;
 }
 
+// 2089:32313, the 2.1 "Where should we deliver?" sheet: the kit Sheet header
+// (21 grabber row + 52), a 28pt description block, 72pt rows on the gutter, a
+// hairline, the action rows, and 40 under them, of which the frame's 21pt
+// home-indicator strip is the device's inset instead.
+const HEADER = 73;
+const DESCRIPTION = 28;
+const ROW = 72;
+const BOTTOM = 40 - 21;
+
 function ActionRow({
   icon,
   label,
@@ -65,10 +74,8 @@ function ActionRow({
       style={{
         flexDirection: "row",
         alignItems: "center",
-        gap: space.md,
-        minHeight: density.rowStacked,
-        paddingVertical: space.sm,
-        paddingHorizontal: space.md,
+        gap: 12,
+        minHeight: ROW,
         borderTopWidth: first ? 0 : 1,
         borderTopColor: color.line,
         opacity: disabled ? 0.5 : 1,
@@ -76,10 +83,10 @@ function ActionRow({
     >
       {icon}
       <View style={{ flex: 1 }}>
-        <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
+        <Text fontSize="text-md" fontWeight="font-medium" tone="brand">
           {label}
         </Text>
-        <Text fontSize="text-sm" tone="body">
+        <Text fontSize="text-sm" tone="dim">
           {sub}
         </Text>
       </View>
@@ -184,47 +191,28 @@ export const AddressPickerSheet = forwardRef<AddressPickerSheetHandle, Props>(
       : addresses.find((a) => a.is_default)?.id;
     const full = addresses.length >= MAX_ADDRESSES;
 
-    const card = {
-      borderWidth: 1,
-      borderColor: color.line,
-      borderRadius: radius.card,
-      backgroundColor: color.surface,
-      overflow: "hidden",
-    } as const;
+    // One snap at the content's height, not 65% of the screen (549pt for three
+    // rows that need 409). Loading, an error and no addresses are about a row
+    // or two; more than fits scrolls inside the modal's own cap.
+    const listRows = loading ? 2 : isError || addresses.length === 0 ? 1 : addresses.length;
+    const actionRows = savedOnly ? 1 : 2;
+    const snap = HEADER + DESCRIPTION + ROW * (listRows + actionRows) + 1 + BOTTOM + insets.bottom;
 
     return (
-      <CustomBottomSheetModal ref={sheet} isDark={isDark} snapPoints={["65%"]} frame>
+      <CustomBottomSheetModal ref={sheet} isDark={isDark} snapPoints={[snap]} frame>
+        <SheetHeader title={title} grabber={false} onClose={() => sheet.current?.dismiss()} />
         <View
           style={{
             paddingHorizontal: SCREEN_GUTTER,
-            paddingTop: space.sm,
-            paddingBottom: insets.bottom + space.md,
-            gap: space.md,
+            paddingBottom: insets.bottom + BOTTOM,
           }}
         >
-          <View style={{ gap: space.xs }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
-              <Text role="sectionTitle" accessibilityRole="header" style={{ flex: 1 }}>
-                {title}
-              </Text>
-              <TouchableOpacity
-                accessibilityRole="button"
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                onPress={() => sheet.current?.dismiss()}
-              >
-                <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <Text fontSize="text-sm" tone="body">
-              {description}
-            </Text>
-          </View>
+          <Text fontSize="text-sm" tone="body" style={{ paddingBottom: 8 }}>
+            {description}
+          </Text>
 
           {loading ? (
             <View
-              style={card}
               accessible
               accessibilityRole="progressbar"
               accessibilityLabel="Loading your addresses"
@@ -234,7 +222,7 @@ export const AddressPickerSheet = forwardRef<AddressPickerSheetHandle, Props>(
               <AddressRowSkeleton first={false} />
             </View>
           ) : isError ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, minHeight: ROW }}>
               <Text fontSize="text-sm" tone="body" style={{ flexShrink: 1 }}>
                 Couldn't load your addresses.
               </Text>
@@ -264,7 +252,7 @@ export const AddressPickerSheet = forwardRef<AddressPickerSheetHandle, Props>(
               </Text>
             </View>
           ) : (
-            <View style={card} accessibilityRole="radiogroup">
+            <View accessibilityRole="radiogroup">
               {addresses.map((address, index) => (
                 <AddressRow
                   key={address.id}
@@ -278,7 +266,8 @@ export const AddressPickerSheet = forwardRef<AddressPickerSheetHandle, Props>(
             </View>
           )}
 
-          <View style={card}>
+          <View style={{ height: 1, backgroundColor: color.line }} />
+          <View>
             {savedOnly ? null : (
               <ActionRow
                 first

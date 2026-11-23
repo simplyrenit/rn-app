@@ -1,10 +1,11 @@
-import { useGlobalContext } from "@/context/global-context";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import { useState } from "react";
 import { View } from "react-native";
+import { StarIcon as StarOutline } from "react-native-heroicons/outline";
+import { StarIcon as StarSolid } from "react-native-heroicons/solid";
 import StarRating from "react-native-star-rating-widget";
 import { Text } from "../core";
-import { Rating } from "react-native-ratings";
-import { colors } from "@/lib/design-tokens";
 
 interface Props {
   productRating: number;
@@ -14,82 +15,88 @@ interface Props {
   isLoading: boolean;
 }
 
-export function RatingFilter({
-  productRating,
-  ownerRating,
-  onSelect,
-  closeSheet,
-  isLoading,
-}: Props) {
-  const { theme } = useGlobalContext();
+// 2089:35166: 28pt stars 8 apart, solid brand when on and a 1.5 outline at 60%
+// when off, with the value 8 after the last one. The widget spaces its stars
+// by a margin either side, so the row is pulled back by one margin.
+const STAR = 28;
+const HALF_GAP = 4;
 
-  const isDark = theme === "dark";
+type StarProps = { size: number; color: string; type: "full" | "half" | "empty" };
+
+/** The heroicons stars; a half star is the outline under the solid one's left half. */
+function Star({ size, color, type }: StarProps) {
+  if (type === "full") return <StarSolid size={size} color={color} />;
+  if (type === "empty") return <StarOutline size={size} strokeWidth={1.5} color={color} />;
+  return (
+    <View style={{ width: size, height: size }}>
+      <StarOutline size={size} strokeWidth={1.5} color={color} />
+      <View style={{ position: "absolute", left: 0, top: 0, width: size / 2, height: size, overflow: "hidden" }}>
+        <StarSolid size={size} color={color} />
+      </View>
+    </View>
+  );
+}
+
+function RatingRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (next: number) => void;
+}) {
+  const { color } = useTheme();
+  return (
+    <View style={{ gap: 8 }}>
+      <Text role="fieldLabel">{label}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: HALF_GAP }}>
+        {/* Half steps by tap or swipe, as the react-native-ratings control before
+            it; onChange also carries the screen reader's increment/decrement. */}
+        <StarRating
+          rating={value}
+          onChange={onChange}
+          starSize={STAR}
+          color={color.brand}
+          emptyColor={color.textDim}
+          starStyle={{ marginHorizontal: HALF_GAP }}
+          style={{ marginLeft: -HALF_GAP }}
+          StarIconComponent={Star}
+        />
+        <Text fontSize="text-md" fontWeight="font-semibold">
+          {value}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+export function RatingFilter({ productRating, ownerRating, onSelect }: Props) {
   const [rating, setRating] = useState({
     product: productRating,
     owner: ownerRating,
   });
 
   return (
-    <View className="flex-1">
-      <View className="mt-0 w-[90%] mx-auto flex-1">
-        {/* A label must not outrank the value beside it — this was 17pt bold
-            over a rating the customer actually reads. */}
-        <Text role="fieldLabel" className="mb-3">
-          Product Review
-        </Text>
-        <View
-          className={`flex flex-row items-center justify-between border ${
-            isDark ? "bg-canvas-dark border-line-dark" : "bg-surface-light border-line-light"
-          } w-full h-16 rounded-group p-3`}
-        >
-          <Rating
-            ratingCount={5}
-            type="custom"
-            fractions={1}
-            jumpValue={0.5}
-            ratingColor={colors.dark.brand}
-            startingValue={rating.product}
-            imageSize={24}
-            onFinishRating={(newRating: number) => {
-              setRating((prev) => ({
-                ...prev,
-                product: newRating,
-              }));
-              onSelect(rating.product, newRating);
-            }}
-          />
-
-          <Text fontSize="text-2xl">{rating.product}</Text>
-        </View>
-        <Text role="fieldLabel" className="mt-8 mb-3">
-          Owner Review
-        </Text>
-        <View
-          className={`flex flex-row items-center justify-between border ${
-            isDark ? "bg-canvas-dark border-line-dark" : "bg-surface-light border-line-light"
-          } w-full h-16 rounded-group p-3`}
-        >
-          <Rating
-            ratingCount={5}
-            type="custom"
-            fractions={1}
-            jumpValue={0.5}
-            // ratingImage={require("../../../assets/star.png")}
-            ratingColor={colors.dark.brand}
-            style={{ gap: 10}}
-            startingValue={rating.owner}
-            imageSize={24}
-            onFinishRating={(newRating: number) => {
-              setRating((prev) => ({
-                ...prev,
-                owner: newRating,
-              }));
-              onSelect(rating.product, newRating);
-            }}
-          />
-          <Text fontSize="text-2xl">{rating.owner}</Text>
-        </View>
-      </View>
+    <View style={{ flex: 1, paddingVertical: 16, paddingHorizontal: SCREEN_GUTTER, gap: 20 }}>
+      <RatingRow
+        label="Product review"
+        value={rating.product}
+        onChange={(product) => {
+          setRating((prev) => ({ ...prev, product }));
+          // As before the 2.1 restyle, the product row hands its new value over
+          // in the owner slot. ENG-427 reports it; a look-only story does not change it.
+          onSelect(rating.product, product);
+        }}
+      />
+      <RatingRow
+        label="Owner review"
+        value={rating.owner}
+        onChange={(owner) => {
+          setRating((prev) => ({ ...prev, owner }));
+          onSelect(rating.product, owner);
+        }}
+      />
     </View>
   );
 }
