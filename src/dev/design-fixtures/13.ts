@@ -162,8 +162,14 @@ export const fixtures: Record<string, DevFixture> = {
   "2096:30599": overProfile,
   "2096:30773": overProfile,
   "2096:31063": overProfile,
-  // Delete address on AddressDetails: Home is the default and Work is next. No DELETE key is listed (plan rule 4).
-  "2097:28985": { route: "AddressDetails", params: { address: HOME }, responses: ADDRESSES, session: { user: riya } },
+  // Delete address on AddressDetails: Home is the default, and the newest left (highest id) takes over, so Work gets
+  // the top id to read "Your default will move to Work." No DELETE key is listed (plan rule 4).
+  "2097:28985": {
+    route: "AddressDetails",
+    params: { address: HOME },
+    responses: { "GET /my/addresses/": [HOME, MOMS_PLACE, { ...WORK, id: 4 }] },
+    session: { user: riya },
+  },
   // Group 3: saved addresses and business billing. 28950 lists nothing, so the session 404s the read.
   "2097:28843": { route: "SavedAddresses", responses: ADDRESSES, session: { user: riya } },
   "2097:28908": { route: "SavedAddresses", responses: { "GET /my/addresses/": [] }, session: { user: riya } },

@@ -57,7 +57,10 @@ export default function Profile() {
         }
       />
 
+      {/* flex 1 bounds the scroll view to the space under the header. Without it the scroll view took the container's
+          whole height, ran 56pt (the header) under the tab bar, and hid the end of the list (Logout) behind it. */}
       <CrossFade
+        style={{ flex: 1 }}
         loading={loading}
         placeholder={
           <View className="p-6">

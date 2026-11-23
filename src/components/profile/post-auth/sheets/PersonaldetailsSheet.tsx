@@ -4,7 +4,7 @@ import { useKycStatus } from "@/backend/kyc";
 import { useProfile } from "@/backend/profile";
 import { fetchUnlock } from "@/backend/unlock";
 import { UnlockSheet, UnlockSheetHandle, otpBox, otpRow } from "@/components/bank/unlock-sheet";
-import { Avatar, FieldError, SheetFooter, SheetHeader, Text, TextField } from "@/components/core";
+import { FieldError, SheetFooter, SheetHeader, Text, TextField } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
 import * as ImagePicker from "expo-image-picker";
@@ -29,6 +29,7 @@ import {
 } from "react-native-heroicons/outline";
 import { ChevronDownIcon } from "react-native-heroicons/mini";
 import OTPTextView from "react-native-otp-textinput";
+import { ProfileAvatar } from "../profile-img";
 import DeleteAccountModal from "./DeleteAccountModal";
 import { density, radius, SCREEN_GUTTER } from "@/lib/design-tokens";
 import { apiError } from "@/lib/api-error";
@@ -812,7 +813,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
           }}
         >
           {/* Initials until there is a photo; the picked one shows before it is uploaded (2096:27891). */}
-          <Avatar uri={selectedImage || details.profilePic || undefined} name={details.fullName} size={48} />
+          <ProfileAvatar uri={selectedImage || details.profilePic || undefined} name={details.fullName} />
           <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24} style={{ flex: 1 }}>
             Profile picture
           </Text>

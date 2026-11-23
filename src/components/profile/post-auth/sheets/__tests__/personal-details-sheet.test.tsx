@@ -99,6 +99,10 @@ jest.mock("@/components/core/custom-bottom-sheet-modal", () => {
   });
   return { __esModule: true, default: Sheet };
 });
+jest.mock("../../profile-img", () => {
+  const { View } = require("react-native");
+  return { ProfileAvatar: (props: any) => <View testID="avatar" {...props} /> };
+});
 jest.mock("@/components/core", () => {
   const { Text, View } = require("react-native");
   return {
@@ -160,7 +164,7 @@ describe("PersonalDetailsSheet", () => {
     const header = details.findAllByType(SheetHeader)[0].props;
     expect(header).toMatchObject({ grabber: false });
     expect(header.onClose).toEqual(expect.any(Function));
-    expect(details.findByProps({ testID: "avatar" }).props).toMatchObject({ name: "Riya Sharma", size: 48, uri: undefined });
+    expect(details.findByProps({ testID: "avatar" }).props).toMatchObject({ name: "Riya Sharma", uri: undefined });
     expect(texts(details)).toEqual(
       expect.arrayContaining(["Profile picture", "Upload", "Full name", "Riya Sharma", "Email address", "riya.sharma@gmail.com", "Phone number", "+91 98765 43210", "Password", "Delete my account"])
     );

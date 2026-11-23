@@ -23,6 +23,38 @@ const initialsOf = (name: string) => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
+/**
+ * The 48 account avatar (2095:25572, 2096:27684): the photo through kit `Avatar`, else the brand tint with brand
+ * SemiBold 16/24 initials. Shared by the Profile block and the Personal details sheet, so both draw the person alike.
+ */
+export function ProfileAvatar({ uri, name }: { uri?: React.ComponentProps<typeof Avatar>["uri"]; name: string }) {
+  const { color } = useTheme();
+  if (photoUrlOf(uri)) return <Avatar uri={uri} name={name} size={AVATAR_SIZE} />;
+  // ponytail: the kit Avatar's monogram is a hued disc with white initials; section 13 draws the brand tint with brand
+  // SemiBold initials, so the no-photo disc is drawn here until the kit Avatar matches (ENG-426).
+  return (
+    <View
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={name ? `${name}'s profile photo` : "Profile photo"}
+      style={{
+        width: AVATAR_SIZE,
+        height: AVATAR_SIZE,
+        borderRadius: radius.full,
+        borderWidth: 1,
+        borderColor: color.line,
+        backgroundColor: color.brandPanel,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Text fontSize="text-md" fontWeight="font-semibold" tone="brand">
+        {initialsOf(name)}
+      </Text>
+    </View>
+  );
+}
+
 interface ProfileImgContainerProps {
   isDarkMode: boolean;
   handlePersonalDetailsSheetPress: () => void;
@@ -52,30 +84,8 @@ const ProfileImgContainer: React.FC<ProfileImgContainerProps> = ({
     >
       {loading ? (
         <Skeleton height={AVATAR_SIZE} width={AVATAR_SIZE} borderRadius={999} />
-      ) : photoUrlOf(userDetails.image) ? (
-        <Avatar uri={userDetails.image} name={name} size={AVATAR_SIZE} />
       ) : (
-        // ponytail: the kit Avatar's monogram is a hued disc with white initials; this frame draws the brand tint
-        // with brand SemiBold 16/24 initials, so the no-photo disc is drawn here until the kit Avatar matches.
-        <View
-          accessible
-          accessibilityRole="image"
-          accessibilityLabel={name ? `${name}'s profile photo` : "Profile photo"}
-          style={{
-            width: AVATAR_SIZE,
-            height: AVATAR_SIZE,
-            borderRadius: radius.full,
-            borderWidth: 1,
-            borderColor: color.line,
-            backgroundColor: color.brandPanel,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text fontSize="text-md" fontWeight="font-semibold" tone="brand">
-            {initialsOf(name)}
-          </Text>
-        </View>
+        <ProfileAvatar uri={userDetails.image} name={name} />
       )}
 
       <View style={{ flex: 1, gap: 2 }}>

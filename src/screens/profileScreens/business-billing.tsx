@@ -112,6 +112,7 @@ export default function BusinessBillingScreen() {
             <AppSwitch
               value={on}
               disabled={saving}
+              trackColor={{ true: color.brand, false: color.inputLine }}
               onValueChange={(value) => void toggle(value)}
               accessibilityLabel="Renting for a business"
             />

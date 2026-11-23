@@ -83,7 +83,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
 
   return (
     <>
-      {/* Body (2095:25572): the tab bar sits below the scroll view, so the list ends 24 under Logout. */}
+      {/* Body (2095:25349): the scroll view ends at the tab bar (profile.tsx bounds it), so the list ends 24 under Logout. */}
       <View style={{ paddingBottom: SCREEN_GUTTER }}>
         <ProfileImgContainer
           isDarkMode={isDarkMode}
