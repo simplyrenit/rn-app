@@ -110,8 +110,11 @@ const CustomBottomSheetModal = forwardRef<
     //   edge. It grows by the keyboard less the home-indicator inset (the footer already pads that, and the
     //   keyboard covers it), and the content is padded by the same amount, so the footer ends on the keyboard.
     // - Android: adjustResize already puts the sheet's bottom on the keyboard; only the room above it shrinks.
+    // - scrollView={false} sheets keep the old x0.9 path: their content may hold a gorhom BottomSheetTextInput
+    //   (the search-results filter sheet's taxonomy search), which gorhom already lifts over the keyboard, and
+    //   adding our lift on top pushed that sheet under the status bar with its footer behind the keyboard.
     const keyboardLift =
-      keyboardHeight > 0 && Platform.OS === "ios" ? Math.max(0, keyboardHeight - insets.bottom) : 0;
+      keyboardHeight > 0 && scrollView && Platform.OS === "ios" ? Math.max(0, keyboardHeight - insets.bottom) : 0;
     const roomWithKeyboard =
       Platform.OS === "ios" ? maxSheetHeight : maxSheetHeight - keyboardHeight;
     const numericSnaps = fittedSnapPoints.some((point) => typeof point === "number");
@@ -120,7 +123,9 @@ const CustomBottomSheetModal = forwardRef<
         ? fittedSnapPoints.map((point) =>
             typeof point === "string"
               ? "90%"
-              : Math.min(point + keyboardLift, roomWithKeyboard)
+              : scrollView
+                ? Math.min(point + keyboardLift, roomWithKeyboard)
+                : point * 0.9
           )
         : fittedSnapPoints;
     const contentLift = numericSnaps ? keyboardLift : 0;

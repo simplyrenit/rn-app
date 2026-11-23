@@ -845,7 +845,12 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Delete my account"
-          onPress={() => setDeleteAccountModal(true)}
+          onPress={() => {
+            // A blocked failure that lands after the sheet was panned away must not open the next one on the
+            // "can't be closed yet" card.
+            setDeleteIssue(null);
+            setDeleteAccountModal(true);
+          }}
           style={{
             flexDirection: "row",
             alignItems: "center",

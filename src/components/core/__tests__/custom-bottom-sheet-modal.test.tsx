@@ -33,7 +33,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-function render(snapPoints: number[] | string[]) {
+function render(snapPoints: number[] | string[], scrollView = true) {
   const listeners: Record<string, (event: any) => void> = {};
   jest.spyOn(Keyboard, "addListener").mockImplementation(((name: string, cb: (event: any) => void) => {
     listeners[name] = cb;
@@ -42,7 +42,7 @@ function render(snapPoints: number[] | string[]) {
   let root: any;
   act(() => {
     root = TestRenderer.create(
-      <CustomBottomSheetModal snapPoints={snapPoints} isDark={false}>
+      <CustomBottomSheetModal snapPoints={snapPoints} isDark={false} scrollView={scrollView}>
         <Text>body</Text>
       </CustomBottomSheetModal>
     );
@@ -97,5 +97,14 @@ describe("CustomBottomSheetModal with the keyboard up", () => {
     keyboard(336);
     expect(sheet().snapPoints).toEqual(["90%"]);
     expect(padding(scroll().contentContainerStyle)).toBe(0);
+  });
+
+  it("scrollView={false} sheets keep the old x0.9 (their content may hold a BottomSheetTextInput gorhom lifts itself)", () => {
+    Platform.OS = "ios";
+    const { sheet, keyboard } = render([557], false);
+    keyboard(336);
+    expect(sheet().snapPoints).toEqual([557 * 0.9]);
+    keyboard(0);
+    expect(sheet().snapPoints).toEqual([557]);
   });
 });
