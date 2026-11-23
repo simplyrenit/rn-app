@@ -3,47 +3,34 @@ import { useAuth } from "@/backend/auth";
 import { useKycStatus } from "@/backend/kyc";
 import { useProfile } from "@/backend/profile";
 import { fetchUnlock } from "@/backend/unlock";
-import { UnlockSheet, UnlockSheetHandle } from "@/components/bank/unlock-sheet";
-import { Button, Text } from "@/components/core";
+import { UnlockSheet, UnlockSheetHandle, otpBox, otpRow } from "@/components/bank/unlock-sheet";
+import { Avatar, FieldError, SheetFooter, SheetHeader, Text, TextField } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
-import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
-  StyleSheet,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
-import CountryPicker, { DARK_THEME, Flag } from "react-native-country-picker-modal";
+import CountryPicker, { DARK_THEME } from "react-native-country-picker-modal";
 import {
-  ArrowLeftIcon,
   CameraIcon,
-  ChevronDownIcon,
+  CheckIcon,
+  ExclamationCircleIcon,
   EyeIcon,
   EyeSlashIcon,
   PencilSquareIcon,
-  PhoneIcon,
   PhotoIcon,
   TrashIcon,
 } from "react-native-heroicons/outline";
+import { ChevronDownIcon } from "react-native-heroicons/mini";
 import OTPTextView from "react-native-otp-textinput";
 import DeleteAccountModal from "./DeleteAccountModal";
-import {
-  ink,
-  colors,
-  radius,
-  fontFamily,
-  fontSize,
-  lineHeight,
-  MIN_TOUCH_TARGET,
-  space,
-  SCREEN_GUTTER,
-} from "@/lib/design-tokens";
+import { density, radius, SCREEN_GUTTER } from "@/lib/design-tokens";
 import { apiError } from "@/lib/api-error";
 import { DeleteProblem, deleteProblem } from "@/lib/delete-account";
 import { nameLockNote, nameSaveOutcome } from "@/lib/name-change";
@@ -58,20 +45,101 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 // seven asterisks previously meant "this password is seven characters".
 const PASSWORD_MASK = "••••••••";
 
-// Measured off the Figma Personal details sheet: the 21pt grabber row that
-// CustomBottomSheetModal draws (8 + 5 + 8, the 2.1 kit's), a 44pt title, an
-// 80pt picture row and four 85pt fields (16 above and below a 21pt label, 8,
-// and a 24pt value). The delete row below is ours, not the frame's.
-const HEADER_HEIGHT = 44;
-const ROW_PAD_V = 16;
-const AVATAR = 48;
-const FIELD_HEIGHT = 85;
-const SHEET_HEIGHT =
-  21 + HEADER_HEIGHT + (AVATAR + 2 * ROW_PAD_V + 1) + 4 * FIELD_HEIGHT + 1 + MIN_TOUCH_TARGET;
-// The locked name's note under its row is added to the sheet, so it does not push the delete row out
-// of the bottom: 8 above it, and its measured height (two lines of small text until it is measured).
-const NOTE_GAP = 8;
-const NOTE_FIRST_GUESS = 2 * lineHeight.sm;
+// The 2.1 frames (2096:27684 …), less the home indicator, which `insets.bottom` stands in for. Every sheet opens with
+// the kit Sheet header: the 21pt grabber gorhom draws, a 44 title row, 8 under it.
+const SHEET_HEADER = 73;
+// Personal details: the 72 picture row, four 70 detail rows, a hairline under each, and the 48 delete row (478).
+const PICTURE_ROW = 72;
+const FIELD_ROW = 70;
+const DELETE_ROW = 48;
+const DETAILS_HEIGHT = SHEET_HEADER + PICTURE_ROW + 1 + 4 * (FIELD_ROW + 1) + DELETE_ROW;
+// The locked name's note under its value (2096:27788): 2 below the value, and its measured height (two 16pt lines until
+// it is measured), so it does not push the delete row out of the bottom.
+const NOTE_GAP = 2;
+const NOTE_FIRST_GUESS = 2 * 16;
+// The kit Sheet footer: a hairline, 16, the 52 Primary, 16 (its `insets.bottom` is the one in the snap).
+const FOOTER = 85;
+// The edit sheets' content boxes (padded 8 above, 24 below): Full name 80, the email and number steps 108 / 80, a code
+// step 156 (label, boxes, Resend OTP), Edit password 200 (two fields 16 apart) or 340 with its rules (2096:30954).
+const NAME_CONTENT = 80;
+const EMAIL_CONTENT = 108;
+const PHONE_CONTENT = 80;
+const CODE_CONTENT = 156;
+const PASSWORD_CONTENT = 200;
+const PASSWORD_RULES = 16 + 124;
+// An error line under a field has no frame: room for two 16pt lines and the 8 above them, so Save stays in view.
+const ERROR_ROOM = 8 + 2 * 16;
+// The kit TextField keeps its form gap below itself; the frames' content boxes end 24 under the field.
+const FIELD_GAP_BACK = 24 - density.fieldGap;
+
+const PASSWORD_RULE_LIST: { text: string; test: (password: string) => boolean }[] = [
+  { text: "Password must be at least 8 characters.", test: (p) => p.length >= 8 },
+  { text: "Password must include at least 1 special character.", test: (p) => /[!@#$%^&*]/.test(p) },
+  { text: "Password must include at least 1 number.", test: (p) => /[0-9]/.test(p) },
+];
+
+function Divider() {
+  const { color } = useTheme();
+  return <View style={{ height: 1, backgroundColor: color.line }} />;
+}
+
+/** "Resend OTP": the code steps' tertiary text link (2096:30681), SemiBold 14/20 in a 24 box. */
+function TextLink({ label, onPress, disabled = false }: { label: string; onPress: () => void; disabled?: boolean }) {
+  const { color } = useTheme();
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      hitSlop={12}
+      style={{ alignSelf: "flex-start", paddingTop: 4 }}
+    >
+      <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} style={{ color: disabled ? color.textDim : color.brandText }}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+/** The code step of the email and number sheets: a label, six boxes, the errors, and Resend OTP. */
+function CodeStep({
+  onCode,
+  wrong,
+  error,
+  onResend,
+  resendDisabled,
+}: {
+  onCode: (code: string) => void;
+  wrong: boolean;
+  error: string;
+  onResend: () => void;
+  resendDisabled: boolean;
+}) {
+  const { color } = useTheme();
+  const { width } = useWindowDimensions();
+  return (
+    <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: 24, gap: 12 }}>
+      <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20}>
+        Enter verification code
+      </Text>
+      <OTPTextView
+        containerStyle={otpRow}
+        textInputStyle={otpBox(width, color)}
+        inputCount={6}
+        inputCellLength={1}
+        tintColor={color.brand}
+        offTintColor={color.line}
+        keyboardType="number-pad"
+        autoFocus
+        handleTextChange={onCode}
+      />
+      {wrong ? <FieldError>Wrong OTP. Try again</FieldError> : null}
+      {error ? <FieldError>{error}</FieldError> : null}
+      <TextLink label="Resend OTP" onPress={onResend} disabled={resendDisabled} />
+    </View>
+  );
+}
 
 function DetailField({
   label,
@@ -98,35 +166,49 @@ function DetailField({
   error?: string | null;
 }) {
   const { color } = useTheme();
+  // 2096:27684: 70 high, padded 12 / 24; the label 14/20 at 60% over the 16/24 Medium value, and the 20pt pencil
+  // centred on the right.
   return (
-    <View style={{ minHeight: FIELD_HEIGHT, paddingVertical: ROW_PAD_V, paddingHorizontal: SCREEN_GUTTER, gap: 8 }}>
-      <Text fontSize="text-sm" fontWeight="font-bold">
-        {label}
-      </Text>
-      <Text fontSize="text-md" numberOfLines={1} style={{ paddingRight: 32 }}>
-        {value}
-      </Text>
-      {note ? (
-        <Text fontSize="text-sm" tone="dim" onLayout={(event) => onNoteHeight?.(event.nativeEvent.layout.height)}>
-          {note}
+    <View
+      style={{
+        minHeight: FIELD_ROW,
+        paddingVertical: 12,
+        paddingHorizontal: SCREEN_GUTTER,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+      }}
+    >
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text fontSize="text-sm" lineHeight={20} tone="dim">
+          {label}
         </Text>
-      ) : null}
-      {error ? (
-        <Text fontSize="text-sm" tone="danger" accessibilityRole="alert">
-          {error}
+        <Text fontSize="text-md" fontWeight="font-medium" lineHeight={24} numberOfLines={1}>
+          {value}
         </Text>
+        {note ? (
+          <Text fontSize="text-xs" lineHeight={16} tone="dim" onLayout={(event) => onNoteHeight?.(event.nativeEvent.layout.height)}>
+            {note}
+          </Text>
+        ) : null}
+        {error ? (
+          <Text fontSize="text-xs" fontWeight="font-medium" lineHeight={16} accessibilityRole="alert" style={{ color: color.dangerStrong }}>
+            {error}
+          </Text>
+        ) : null}
+      </View>
+      {onEdit ? (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          accessibilityState={{ busy, disabled: busy }}
+          disabled={busy}
+          hitSlop={12}
+          onPress={onEdit}
+        >
+          {busy ? <ActivityIndicator size="small" color={color.brandText} /> : <PencilSquareIcon size={20} color={color.textDim} />}
+        </TouchableOpacity>
       ) : null}
-      {onEdit ? <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        accessibilityState={{ busy, disabled: busy }}
-        disabled={busy}
-        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        onPress={onEdit}
-        style={{ position: "absolute", top: ROW_PAD_V, right: SCREEN_GUTTER }}
-      >
-        {busy ? <ActivityIndicator size="small" color={color.brandText} /> : <PencilSquareIcon size={20} color={color.brandText} />}
-      </TouchableOpacity> : null}
     </View>
   );
 }
@@ -151,11 +233,11 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const { sendOTP, verifyOTP, requestPhoneNumberChangeOtp, verifyPhoneNumberChange } =
     useAuth();
   const isDark = theme === "dark";
-  const { width: winW, height: winH } = useWindowDimensions();
+  const { height: winH } = useWindowDimensions();
   const [deleteAccountModal, setDeleteAccountModal] = useState(false);
 
   const [details, setDetails] = useState({
-    profilePic: "https://via.placeholder.com/150",
+    profilePic: "",
     fullName: "Garvit Babel",
     email: "garvit.babel200@gmail.com",
     phone: "9999999999",
@@ -177,9 +259,8 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
 
     setNameId(details.username);
     setDetails({
-      profilePic: details.image
-        ? details.image.image_url
-        : "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Default_pfp.svg/2048px-Default_pfp.svg.png",
+      // No photo is "": the avatar draws the initials (2096:27684).
+      profilePic: details.image?.image_url ?? "",
       fullName: details.first_name + " " + details.last_name,
       email: details.email,
       phone: details.phone,
@@ -218,14 +299,7 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
   const profileImageSheetRef = useRef<any>(null);
 
   const validatePassword = (password: string) => {
-    const errors: string[] = [];
-    if (password.length < 8)
-      errors.push("Password must be at least 8 characters.");
-    if (!/[!@#$%^&*]/.test(password))
-      errors.push("Password must include at least 1 special character.");
-    if (!/[0-9]/.test(password))
-      errors.push("Password must include at least 1 number.");
-    setPasswordErrors(errors);
+    setPasswordErrors(PASSWORD_RULE_LIST.filter((rule) => !rule.test(password)).map((rule) => rule.text));
   };
 
   const handleNewPasswordChange = (password: string) => {
@@ -611,56 +685,6 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     }
   };
 
-  const styles = StyleSheet.create({
-    emailInput: {
-      backgroundColor: ink.surfaceRaised(theme === "dark"),
-      color: ink.text(isDark),
-      padding: space.md,
-      borderWidth: 1,
-      borderRadius: radius.input,
-      marginVertical: space.md,
-      borderColor: ink.inputLine(theme === "dark"),
-    },
-    otpInputContainer: {
-      marginHorizontal: -5,
-    },
-    otpInput: {
-      backgroundColor: ink.surface(isDark),
-      borderRadius: radius.input,
-      borderWidth: 3,
-      color: ink.text(isDark),
-    },
-    input: {
-      fontSize: fontSize.md,
-      borderColor: ink.line(true),
-      borderWidth: 1,
-      padding: space.sm,
-      marginVertical: space.md,
-      borderRadius: radius.group,
-    },
-    saveButton: {
-      backgroundColor: colors.dark.brand,
-      padding: space.md,
-      alignItems: "center",
-      borderRadius: radius.card,
-    },
-    textInputContainer: {
-      marginHorizontal: -5,
-    },
-    roundedTextInput: {
-      backgroundColor: ink.surface(isDark),
-      borderRadius: radius.input,
-      borderWidth: 3,
-      color: ink.text(isDark),
-    },
-  });
-  // roundedTextInput's width is proportional to the viewport, so it can't
-  // live inside StyleSheet.create (which can't see the useWindowDimensions
-  // hook). Compose it in the component body instead.
-  const roundedTextInputStyle = useMemo(
-    () => ({ ...styles.roundedTextInput, width: winW * 0.125 }),
-    [isDark, winW]
-  );
   const handleProfileUpdate = async () => {
     if (selectedImage) {
       try {
@@ -742,6 +766,27 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
     }
   };
 
+  // Sheets are sized to their content plus the home-indicator inset, once (the footer pads with that same inset).
+  // Capped at 90% of the window: on a 640dp Android phone the rows plus the name note came to more than the window,
+  // and the sheet's top ran up under the status bar. The rows scroll inside it past that.
+  const fit = (height: number) => Math.min(height + insets.bottom, winH * 0.9);
+  const detailsHeight =
+    DETAILS_HEIGHT + (nameLock ? NOTE_GAP + noteHeight : 0) + (selectedImage ? FOOTER : 0);
+  const nameHeight = SHEET_HEADER + NAME_CONTENT + (nameError ? ERROR_ROOM : 0) + FOOTER;
+  const emailHeight =
+    SHEET_HEADER + (isOtpSent ? CODE_CONTENT : EMAIL_CONTENT) + (emailError || isIncorrect ? ERROR_ROOM : 0) + FOOTER;
+  const phoneHeight =
+    SHEET_HEADER + (isMobileOtpSent ? CODE_CONTENT : PHONE_CONTENT) + (phoneOtpError || isIncorrect ? ERROR_ROOM : 0) + FOOTER;
+  const passwordHeight = SHEET_HEADER + PASSWORD_CONTENT + (passwordErrors.length > 0 ? PASSWORD_RULES : 0) + FOOTER;
+
+  const closePhoneSheet = () => {
+    setPhoneOtpError("");
+    setIsIncorrect(false);
+    setIsMobileOtpSent(false);
+    phoneToken.current = "";
+    editPhoneModalRef.current?.close();
+  };
+
   return (
     <>
       {deleteAccountModal && <DeleteAccountModal open={deleteAccountModal} busy={deleteBusy} problem={deleteIssue} onDelete={() => void handleDeleteAccount()} onCancel={() => {
@@ -750,295 +795,147 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
       }} />}
       {!deleteAccountModal && <CustomBottomSheetModal
         ref={bottomSheetModalRef}
-        // The frame's sheet is exactly its rows tall; a fixed point (plus the
-        // home-indicator inset it draws outside the sheet) keeps the bottom
-        // from reading as dead space, which "62%" left on shorter phones.
-        // Capped at 90% of the window: on a 640dp Android phone the rows plus
-        // the name note came to more than the window, and the sheet's top ran
-        // up under the status bar. The rows scroll inside it past that.
-        snapPoints={[Math.min(SHEET_HEIGHT + insets.bottom + (nameLock ? NOTE_GAP + noteHeight : 0), winH * 0.9)]}
+        snapPoints={[fit(detailsHeight)]}
         frame
         isDark={isDarkMode}
       >
-        <View style={{ height: HEADER_HEIGHT, alignItems: "center", justifyContent: "center" }}>
-          <Text accessibilityRole="header" fontSize="text-base" fontWeight="font-bold">
-            Personal details
-          </Text>
-        </View>
+        <SheetHeader title="Personal details" grabber={false} onClose={() => bottomSheetModalRef.current?.dismiss()} />
 
         <View
           style={{
+            minHeight: PICTURE_ROW,
             flexDirection: "row",
             alignItems: "center",
             gap: 12,
-            paddingVertical: ROW_PAD_V,
+            paddingVertical: 12,
             paddingHorizontal: SCREEN_GUTTER,
-            borderBottomWidth: 1,
-            borderBottomColor: color.line,
           }}
         >
-          <Image
-            source={{ uri: selectedImage || details.profilePic }}
-            style={{ width: AVATAR, height: AVATAR, borderRadius: AVATAR / 2 }}
-          />
-          <Text fontSize="text-sm" fontWeight="font-bold" style={{ flex: 1 }}>
+          {/* Initials until there is a photo; the picked one shows before it is uploaded (2096:27891). */}
+          <Avatar uri={selectedImage || details.profilePic || undefined} name={details.fullName} size={48} />
+          <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24} style={{ flex: 1 }}>
             Profile picture
           </Text>
-          {/* Hidden once a picture is picked: the Update button below takes over. */}
+          {/* Hidden once a picture is picked: the Update button in the footer takes over. */}
           {!selectedImage && (
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Upload profile picture"
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              hitSlop={12}
               onPress={openProfileImageSheet}
             >
-              <Text fontSize="text-sm" fontWeight="font-bold" style={{ color: color.brandText }}>
+              <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} style={{ color: color.brandText }}>
                 Upload
               </Text>
             </TouchableOpacity>
           )}
         </View>
-
+        <Divider />
         <DetailField label="Full name" value={details.fullName} accessibilityLabel="Edit full name" onEdit={nameLock ? undefined : openEditNameModal} note={nameLock} onNoteHeight={setNoteHeight} />
+        <Divider />
         <DetailField label="Email address" value={details.email} accessibilityLabel="Edit email address" onEdit={openEditEmailModal} busy={opening === "email"} error={openError?.field === "email" ? openError.text : null} />
+        <Divider />
         <DetailField label="Phone number" value={details.phone} accessibilityLabel="Edit phone number" onEdit={openEditPhoneModal} busy={opening === "phone"} error={openError?.field === "phone" ? openError.text : null} />
+        <Divider />
         <DetailField label="Password" value={details.password} accessibilityLabel="Edit password" onEdit={openEditPasswordModal} />
+        <Divider />
 
-        {selectedImage && (
-          <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
-            <TouchableOpacity
-              onPress={handleProfileUpdate}
-              style={[styles.saveButton, { marginTop: space.md }]}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Text
-                  className="text-white"
-                  fontSize="text-sm"
-                  fontWeight="font-bold"
-                >
-                  Update Profile Picture
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* The frame has no delete action; it stays as a contained destructive
-            row under the fields rather than being dropped. */}
-        <View
+        {/* Centred danger text (the frames keep it above the Update button too). */}
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Delete my account"
+          onPress={() => setDeleteAccountModal(true)}
           style={{
-            borderTopWidth: 1,
-            borderTopColor: color.line,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            minHeight: DELETE_ROW,
             paddingHorizontal: SCREEN_GUTTER,
           }}
         >
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Delete my account"
-            onPress={() => setDeleteAccountModal(true)}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              minHeight: MIN_TOUCH_TARGET,
-            }}
-          >
-            <TrashIcon size={18} color={ink.danger(isDark)} />
-            <Text fontWeight="font-semibold" style={{ color: ink.danger(isDark) }}>
-              Delete my account
-            </Text>
-          </TouchableOpacity>
-        </View>
+          <TrashIcon size={18} color={color.dangerStrong} />
+          <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} style={{ color: color.dangerStrong }}>
+            Delete my account
+          </Text>
+        </TouchableOpacity>
+
+        {selectedImage ? (
+          <SheetFooter primary={{ label: "Update profile picture", onPress: () => void handleProfileUpdate(), loading }} />
+        ) : null}
       </CustomBottomSheetModal>}
 
-      {/* Profile Picture Sheet */}
+      {/* Profile Picture Sheet (2096:28005) */}
       <CustomBottomSheetModal
-        snapPoints={["40%"]}
+        snapPoints={[fit(SHEET_HEADER + 200)]}
         ref={profileImageSheetRef}
         isDark={isDark}
       >
-        <View className="w-full px-gutter py-2 flex flex-col justify-start flex-1">
-          <View className="py-4 flex-row items-center justify-between space-x-5">
+        <SheetHeader title="Profile picture" grabber={false} onClose={() => profileImageSheetRef.current?.close()} />
+        <View style={{ flexDirection: "row", gap: 12, paddingTop: 8, paddingBottom: 24, paddingHorizontal: SCREEN_GUTTER }}>
+          {[
+            { label: "Choose from gallery", Icon: PhotoIcon, onPress: pickImageFromGallery },
+            { label: "Take a photo", Icon: CameraIcon, onPress: takePhoto },
+          ].map(({ label, Icon, onPress }) => (
             <TouchableOpacity
-              onPress={pickImageFromGallery}
-              className=" flex-1 space-y-4"
+              key={label}
+              accessibilityRole="button"
+              onPress={onPress}
               style={{
-                borderStyle: "dashed",
-                borderColor: ink.line(false),
-                borderWidth: 1,
-                height: winH * 0.20,
+                flex: 1,
+                height: 168,
                 borderRadius: radius.input,
+                borderWidth: 1,
+                borderStyle: "dashed",
+                borderColor: color.line,
                 alignItems: "center",
                 justifyContent: "center",
+                gap: 12,
               }}
             >
-              <PhotoIcon
-                size={24}
-                color={isDark ? ink.line(false) : ink.line(true)}
-              />
-              <Text
-                className={`${isDark ? "text-muted-dark" : "text-muted-light"
-                  } text-center`}
-              >
-                Choose from gallery
+              <Icon size={24} color={color.textDim} />
+              <Text fontSize="text-sm" fontWeight="font-medium" lineHeight={20} tone="body" style={{ textAlign: "center" }}>
+                {label}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={takePhoto}
-              className="space-y-4 flex-1"
-              style={{
-                borderStyle: "dashed",
-                borderColor: ink.line(false),
-                borderWidth: 1,
-                height: winH * 0.20,
-                borderRadius: radius.input,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <CameraIcon
-                size={24}
-                color={isDark ? ink.line(false) : ink.line(true)}
-              />
-              <Text
-                className={`${isDark ? "text-muted-dark" : "text-muted-light"
-                  } text-center`}
-              >
-                Take a photo
-              </Text>
-            </TouchableOpacity>
-          </View>
+          ))}
         </View>
       </CustomBottomSheetModal>
 
-      {/* Full Name Modal */}
+      {/* Full Name Modal (2096:28081): the field has no label. */}
       <CustomBottomSheetModal
         ref={editNameModalRef}
-        snapPoints={["50%"]}
+        snapPoints={[fit(nameHeight)]}
         isDark={isDarkMode}
       >
-        <View
-          className="flex-row items-center justify-between px-6"
-          style={{ paddingVertical: SCREEN_GUTTER }}
-        >
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-            className="items-start"
-            onPress={() => {
-              editNameModalRef.current?.close();
-            }}
-          >
-            <ArrowLeftIcon
-              size={26}
-              color={ink.body(isDarkMode)}
-            />
-          </TouchableOpacity>
-
-          <View
-            className="items-center justify-center"
-            style={{ left: 0, right: 0, top: 0, bottom: 0 }}
-          >
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
-            >
-              Full Name
-            </Text>
-          </View>
-
-          <View></View>
-        </View>
-        <View className="p-4 space-y-4">
-          {/* The sheet's inputs are raw TextInputs: the app face and the core Text's 1.4 cap are set on each, or they
-              type in the system font and grow without limit at a large system font size. */}
-          <TextInput
-            maxFontSizeMultiplier={1.4}
-            style={{ fontFamily: fontFamily.regular }}
-            className={`rounded-card border p-3 ${isDark
-              ? "border-input-line-dark text-white"
-              : "border-input-line-light text-black"
-              }`}
-            placeholderTextColor={ink.dim(isDark)}
+        <SheetHeader title="Full name" grabber={false} onClose={() => editNameModalRef.current?.close()} />
+        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: FIELD_GAP_BACK }}>
+          <TextField
             value={updatedName}
             onChangeText={(text) => {
               setUpdatedName(text);
               setNameError("");
             }}
+            accessibilityLabel="Full name"
             placeholder="Enter your full name"
+            error={nameError || undefined}
           />
-          {nameError ? (
-            <Text fontSize="text-sm" tone="danger" accessibilityRole="alert">
-              {nameError}
-            </Text>
-          ) : null}
-          <TouchableOpacity
-            onPress={handleSaveName}
-            style={styles.saveButton}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Text
-                className="text-white"
-                fontSize="text-sm"
-                fontWeight="font-bold"
-              >
-                Save
-              </Text>
-            )}
-          </TouchableOpacity>
         </View>
+        <SheetFooter primary={{ label: "Save", onPress: () => void handleSaveName(), loading }} />
       </CustomBottomSheetModal>
 
-      {/* Email Modal */}
+      {/* Email Modal (2096:30599, then the code, 30681) */}
       <CustomBottomSheetModal
         ref={editEmailModalRef}
-        snapPoints={["50%"]}
+        snapPoints={[fit(emailHeight)]}
         isDark={isDarkMode}
       >
-        <View
-          className="flex-row items-center justify-between relative px-6"
-          style={{ paddingVertical: SCREEN_GUTTER }}
-        >
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-            className="items-start"
-            onPress={() => {
-              editEmailModalRef.current?.close();
-            }}
-          >
-            <ArrowLeftIcon
-              size={26}
-              color={ink.body(isDarkMode)}
-            />
-          </TouchableOpacity>
-          <View
-            className="items-center justify-center"
-            style={{ left: 0, right: 0, top: 0, bottom: 0 }}
-          >
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
-            >
-              Edit Email Address
-            </Text>
-          </View>
-
-          <View></View>
-        </View>
-
-        <View className="p-4 space-y-4">
-          {!isOtpSent ? (
-            <>
-              <TextInput
-                maxFontSizeMultiplier={1.4}
-                style={{ fontFamily: fontFamily.regular }}
-                className={`rounded-button border p-3 ${isDark
-                  ? "border-input-line-dark text-white"
-                  : "border-input-line-light text-black"
-                  }`}
-                placeholderTextColor={ink.dim(isDark)}
+        <SheetHeader title="Edit email address" grabber={false} onClose={() => editEmailModalRef.current?.close()} />
+        {!isOtpSent ? (
+          <>
+            <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: FIELD_GAP_BACK }}>
+              <TextField
+                label="New email address"
                 value={updatedEmail}
                 onChangeText={setUpdatedEmail}
                 editable={!loading}
@@ -1046,103 +943,31 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
                 autoComplete="email"
                 textContentType="emailAddress"
                 autoCorrect={false}
-                accessibilityLabel="New email address"
                 placeholder="Enter your new email"
                 keyboardType="email-address"
+                error={emailError || undefined}
               />
-
-              <Button onPress={handleSendOtp} loading={isEmailBusy} disabled={isEmailBusy}>
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-bold"
-                  className="text-white"
-                >
-                  Verify
-                </Text>
-              </Button>
-              {emailError ? (
-                <Text tone="danger" fontSize="text-sm" fontWeight="font-bold" accessibilityRole="alert">
-                  {emailError}
-                </Text>
-              ) : null}
-            </>
-          ) : (
-            <>
-              <Text
-                fontSize="text-base"
-                fontWeight="font-bold"
-                className="mt-6"
-              >
-                Enter verification code
-              </Text>
-              <View className="w-[90%] ">
-                <OTPTextView
-                  containerStyle={styles.textInputContainer}
-                  textInputStyle={roundedTextInputStyle}
-                  // @ts-ignore
-                  placeholder="*"
-                  placeholderTextColor={
-                    ink.dim(isDark)
-                  }
-                  inputCount={6}
-                  inputCellLength={1}
-                  tintColor={colors.dark.brand}
-                  offTintColor={ink.line(isDark)}
-                  keyboardType="number-pad"
-                  autoFocus
-                  handleTextChange={setVerificationCode}
-                />
-              </View>
-
-              {isIncorrect && (
-                <View className="flex mt-2 flex-row items-center space-x-2">
-                  <Text tone="danger"
-                    fontSize="text-sm"
-                    fontWeight="font-bold"
-                  >
-                    Wrong OTP. Try again
-                  </Text>
-                </View>
-              )}
-
-              {emailError ? (
-                <Text tone="danger" fontSize="text-sm" fontWeight="font-bold" accessibilityRole="alert">
-                  {emailError}
-                </Text>
-              ) : null}
-
-              <View className=" flex-row space-x-3 ">
-                <View className="flex-1">
-                  <Button variant="outline" onPress={handleSendOtp} disabled={isEmailBusy}>
-                    <Text
-                      fontSize="text-sm"
-                      fontWeight="font-bold"
-                    // className="text-white"
-                    >
-                      Resend OTP
-                    </Text>
-                  </Button>
-                </View>
-                <View className="flex-1">
-                  <Button onPress={handleSubmitOtp} loading={isEmailBusy} disabled={isEmailBusy}>
-                    <Text
-                      fontSize="text-sm"
-                      fontWeight="font-bold"
-                      className="text-white"
-                    >
-                      Done
-                    </Text>
-                  </Button>
-                </View>
-              </View>
-            </>
-          )}
-        </View>
+            </View>
+            <SheetFooter primary={{ label: "Verify", onPress: () => void handleSendOtp(), loading: isEmailBusy, disabled: isEmailBusy }} />
+          </>
+        ) : (
+          <>
+            <CodeStep
+              onCode={setVerificationCode}
+              wrong={isIncorrect}
+              error={emailError}
+              onResend={() => void handleSendOtp()}
+              resendDisabled={isEmailBusy}
+            />
+            <SheetFooter primary={{ label: "Done", onPress: () => void handleSubmitOtp(), loading: isEmailBusy, disabled: isEmailBusy }} />
+          </>
+        )}
       </CustomBottomSheetModal>
 
       {/* The code to the number the account has now, before a new one is taken (decision T-14). */}
       <UnlockSheet
         ref={unlockSheet}
+        layout="sheet"
         phoneMasked={codeGoesTo.phoneMasked}
         minutes={codeGoesTo.minutes}
         phone={details.phone}
@@ -1162,387 +987,169 @@ const PersonalDetailsSheet: React.FC<PersonalDetailsSheetProps> = ({
         }}
       />
 
-      {/* Phone Modal */}
+      {/* Phone Modal (2096:30773, then the code, 30862) */}
       <CustomBottomSheetModal
         ref={editPhoneModalRef}
-        snapPoints={["50%"]}
+        snapPoints={[fit(phoneHeight)]}
         isDark={isDarkMode}
       >
-        <View
-          className="flex-row items-center justify-between px-6"
-          style={{ paddingVertical: SCREEN_GUTTER }}
-        >
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-            className="items-start"
-            onPress={() => {
-              setPhoneOtpError("");
-              setIsIncorrect(false);
-              setIsMobileOtpSent(false);
-              phoneToken.current = "";
-              editPhoneModalRef.current?.close();
-            }}
-          >
-            <ArrowLeftIcon
-              size={26}
-              color={ink.body(isDarkMode)}
-            />
-          </TouchableOpacity>
-          <View
-            className="items-center justify-center"
-            style={{ left: 0, right: 0, top: 0, bottom: 0 }}
-          >
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
-            >
-              Edit Phone Number
-            </Text>
-          </View>
-
-          <View></View>
-        </View>
-
-        <View className="p-4 space-y-4  flex-1">
-          {!isMobileOtpSent ? (
-            <>
-              <View className="flex-row space-x-2 ">
-                <View
-                  className={` rounded-card flex-[0.5] border h-12  flex-row items-center justify-center ${isDark
-                    ? "border-input-line-dark text-white"
-                    : "border-input-line-light text-black"
-                    }`}
-                >
-                  <CountryPicker
-                    {...(isDark && { theme: DARK_THEME })}
-                    withFlag
-                    withCallingCode
-                    renderFlagButton={({ onOpen }) => <Pressable onPress={onOpen}>
-                      <Flag countryCode={country.cca2} flagSize={16} />
+        <SheetHeader title="Edit phone number" grabber={false} onClose={closePhoneSheet} />
+        {!isMobileOtpSent ? (
+          <>
+            <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: FIELD_GAP_BACK }}>
+              {/* The country trigger (100×48: "IN", "+91", a mini chevron) and the number field beside it. */}
+              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
+                <CountryPicker
+                  {...(isDark && { theme: DARK_THEME })}
+                  withFlag
+                  withCallingCode
+                  renderFlagButton={({ onOpen }) => (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Country code, +${country.callingCode}`}
+                      onPress={onOpen}
+                      style={{
+                        width: 100,
+                        height: 48,
+                        borderRadius: radius.input,
+                        borderWidth: 1,
+                        borderColor: color.line,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <Text fontSize="text-xs" fontWeight="font-semibold" lineHeight={16} tone="dim">
+                        {country.cca2}
+                      </Text>
+                      <Text fontSize="text-md" lineHeight={24}>
+                        {`+${country.callingCode}`}
+                      </Text>
+                      <ChevronDownIcon size={16} color={color.textDim} />
                     </Pressable>
-                    }
-                    withFilter
-                    withCallingCodeButton
-                    countryCode={country.cca2}
-                    onSelect={(country) => {
-                      setCountry({
-                        cca2: country.cca2,
-                        callingCode: country.callingCode[0],
-                        flag: country.flag,
-                      });
-                    }}
-                  />
-                  <View className="ml-2 ">
-                    <ChevronDownIcon
-                      size={16}
-                      color={ink.text(isDark)}
-                      className="mt-1"
-                    />
-                  </View>
-                </View>
-
-                <View
-                  className={`flex-row items-center rounded-card flex-1 border px-3 h-12 ${isDark
-                    ? "border-input-line-dark text-white"
-                    : "border-input-line-light text-black"
-                    }`}
-                >
-                  <View className="pr-2 items-center justify-center">
-                    <Text>
-                      +{country.callingCode}
-                    </Text>
-                  </View>
-                  {/* flex-1: content-sized, the field was only as wide as its text and the rest of the box took no taps. */}
-                  <View className="flex-1">
-                    <TextInput
-                      maxFontSizeMultiplier={1.4}
-                      style={{ fontFamily: fontFamily.regular }}
-                      maxLength={10}
-                      placeholder="Enter phone number"
-                      value={updatedPhone}
-                      onChangeText={setUpdatedPhone}
-                      keyboardType="number-pad"
-                      placeholderTextColor={ink.dim(isDark)}
-                      className={`flex-1 h-12 p-3 pl-0  ${isDark ? "text-white" : "text-black"
-                        }`}
-                    />
-                  </View>
-                </View>
-              </View>
-              <Button onPress={handleSendOtpToMobile} loading={isPhoneOtpLoading}>
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-bold"
-                  className="text-white"
-                >
-                  Verify
-                </Text>
-              </Button>
-              {phoneOtpError ? (
-                <View className="flex mt-2 flex-row items-center space-x-2">
-                  <Text
-                    tone="danger"
-                    fontSize="text-sm"
-                    fontWeight="font-bold"
-                  >
-                    {phoneOtpError}
-                  </Text>
-                </View>
-              ) : null}
-            </>
-          ) : (
-            <>
-              <Text
-                fontSize="text-base"
-                fontWeight="font-bold"
-                className="mt-6"
-              >
-                Enter verification code
-              </Text>
-              <View className="w-[90%] self-center">
-                <OTPTextView
-                  containerStyle={styles.textInputContainer}
-                  textInputStyle={roundedTextInputStyle}
-                  // @ts-ignore
-                  placeholder="*"
-                  placeholderTextColor={
-                    ink.dim(isDark)
-                  }
-                  inputCount={6}
-                  inputCellLength={1}
-                  tintColor={colors.dark.brand}
-                  offTintColor={ink.line(isDark)}
-                  keyboardType="number-pad"
-                  autoFocus
-                  handleTextChange={setMobileOtpVerificationCode}
+                  )}
+                  withFilter
+                  withCallingCodeButton
+                  countryCode={country.cca2}
+                  onSelect={(country) => {
+                    setCountry({
+                      cca2: country.cca2,
+                      callingCode: country.callingCode[0],
+                      flag: country.flag,
+                    });
+                  }}
                 />
-              </View>
-
-              {isIncorrect && (
-                <View className="flex mt-2 flex-row items-center space-x-2">
-                  <Text tone="danger"
-                    fontSize="text-sm"
-                    fontWeight="font-bold"
-                  >
-                    Wrong OTP. Try again
-                  </Text>
-                </View>
-              )}
-
-              {phoneOtpError ? (
-                <View className="flex mt-2 flex-row items-center space-x-2">
-                  <Text
-                    tone="danger"
-                    fontSize="text-sm"
-                    fontWeight="font-bold"
-                  >
-                    {phoneOtpError}
-                  </Text>
-                </View>
-              ) : null}
-
-              <View className=" flex-row space-x-3 ">
-                <View className="flex-1">
-                  <Button
-                    variant="outline"
-                    onPress={handleSendOtpToMobile}
-                    loading={isPhoneOtpLoading}
-                  >
-                    <Text
-                      fontSize="text-sm"
-                      fontWeight="font-bold"
-                    >
-                      Resend OTP
-                    </Text>
-                  </Button>
-                </View>
-                <View className="flex-1">
-                  <Button onPress={handleSubmitOtpForMobile} loading={isSavingPhone}>
-                    <Text
-                      fontSize="text-sm"
-                      fontWeight="font-bold"
-                      className="text-white"
-                    >
-                      Done
-                    </Text>
-                  </Button>
+                <View style={{ flex: 1 }}>
+                  <TextField
+                    maxLength={10}
+                    accessibilityLabel="Phone number"
+                    placeholder="Enter phone number"
+                    value={updatedPhone}
+                    onChangeText={setUpdatedPhone}
+                    keyboardType="number-pad"
+                  />
                 </View>
               </View>
-            </>
-          )}
-
-          {/* <TouchableOpacity onPress={handleSavePhone} style={styles.saveButton}>
-            <Text
-              fontSize="text-base"
-              fontWeight="font-bold"
-              className="text-white"
-            >
-              Save
-            </Text>
-          </TouchableOpacity> */}
-        </View>
+              {phoneOtpError ? <FieldError>{phoneOtpError}</FieldError> : null}
+            </View>
+            <SheetFooter primary={{ label: "Verify", onPress: () => void handleSendOtpToMobile(), loading: isPhoneOtpLoading }} />
+          </>
+        ) : (
+          <>
+            <CodeStep
+              onCode={setMobileOtpVerificationCode}
+              wrong={isIncorrect}
+              error={phoneOtpError}
+              onResend={() => void handleSendOtpToMobile()}
+              resendDisabled={isPhoneOtpLoading}
+            />
+            <SheetFooter primary={{ label: "Done", onPress: () => void handleSubmitOtpForMobile(), loading: isSavingPhone }} />
+          </>
+        )}
       </CustomBottomSheetModal>
 
-      {/* Password Modal */}
+      {/* Password Modal (2096:30954) */}
       <CustomBottomSheetModal
         ref={editPasswordModalRef}
-        snapPoints={["70%"]}
+        snapPoints={[fit(passwordHeight)]}
         isDark={isDarkMode}
       >
-        <View
-          className="flex-row items-center justify-between px-6"
-          style={{ paddingVertical: SCREEN_GUTTER }}
-        >
-          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back"
-            className="items-start"
-            onPress={() => editPasswordModalRef.current?.close()}
-          >
-            <ArrowLeftIcon
-              size={26}
-              color={ink.body(isDarkMode)}
-            />
-          </TouchableOpacity>
-          <View className="items-center justify-center ">
-            <Text
-              fontSize="text-xl"
-              fontWeight="font-bold"
-            >
-              Edit Password
-            </Text>
-          </View>
-
-          <View></View>
-        </View>
-
-        <View className="p-4 space-x-4">
-          <Text
-            fontSize="text-base"
-            fontWeight="font-bold"
-          >
-            Current Password
-          </Text>
-          <View
-            className={`flex flex-row items-center border mt-2 rounded-button p-2 h-12  ${isDark
-              ? "border-input-line-dark text-white"
-              : "border-input-line-light text-black"
-              }`}
-          >
-            <TextInput
-              className="flex-1"
-              secureTextEntry={!showPassword}
-              value={updatedPassword}
-              onChangeText={setUpdatedPassword}
-              textContentType="password"
-              autoComplete="current-password"
-              autoCapitalize="none"
-              autoCorrect={false}
-              accessibilityLabel="Current password"
-              placeholder="Enter your current password"
-              placeholderTextColor={ink.dim(isDark)}
-              maxFontSizeMultiplier={1.4}
-              style={{ color: ink.text(isDarkMode), fontFamily: fontFamily.regular }}
-            />
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Show or hide password" onPress={() => setShowPassword(!showPassword)}>
-              {showPassword ? (
-                <EyeSlashIcon
-                  size={22}
-                  color={ink.text(isDarkMode)}
-                />
-              ) : (
-                <EyeIcon
-                  size={22}
-                  color={ink.text(isDarkMode)}
-                />
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <Text
-            fontSize="text-base"
-            fontWeight="font-bold"
-          >
-            New Password
-          </Text>
-          <View
-            className={`flex flex-row items-center border mt-2 rounded-button p-2 h-12  ${isDark
-              ? "border-input-line-dark text-white"
-              : "border-input-line-light text-black"
-              }`}
-          >
-            <TextInput
-              className="flex-1"
-              secureTextEntry={!showNewPassoword}
-              value={newPassword}
-              onChangeText={handleNewPasswordChange}
-              textContentType="newPassword"
-              autoComplete="new-password"
-              autoCapitalize="none"
-              autoCorrect={false}
-              accessibilityLabel="New password"
-              placeholder="Enter your new password"
-              maxFontSizeMultiplier={1.4}
-              style={{ color: ink.text(isDarkMode), fontFamily: fontFamily.regular }}
-              placeholderTextColor={ink.dim(isDark)}
-            />
-            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Show or hide password"
-              onPress={() => setShowNewPassword(!showNewPassoword)}
-            >
-              {showNewPassoword ? (
-                <EyeSlashIcon
-                  size={22}
-                  color={ink.text(isDarkMode)}
-                />
-              ) : (
-                <EyeIcon
-                  size={22}
-                  color={ink.text(isDarkMode)}
-                />
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {/* Display password validation errors */}
-          {passwordErrors.length > 0 && (
-            <View className="mt-2">
-              <Text
-                fontSize="text-xs"
-                fontWeight="font-bold"
-                style={{ color: ink.danger(isDark) }}
+        <SheetHeader title="Edit password" grabber={false} onClose={() => editPasswordModalRef.current?.close()} />
+        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: 8 }}>
+          {[
+            {
+              label: "Current password",
+              value: updatedPassword,
+              onChange: setUpdatedPassword,
+              shown: showPassword,
+              toggle: () => setShowPassword(!showPassword),
+              textContentType: "password" as const,
+              autoComplete: "current-password" as const,
+              placeholder: "Enter your current password",
+            },
+            {
+              label: "New password",
+              value: newPassword,
+              onChange: handleNewPasswordChange,
+              shown: showNewPassoword,
+              toggle: () => setShowNewPassword(!showNewPassoword),
+              textContentType: "newPassword" as const,
+              autoComplete: "new-password" as const,
+              placeholder: "Enter your new password",
+            },
+          ].map((field) => (
+            // 16 between the two 76 fields (the TextField keeps its own form gap below it).
+            <View key={field.label} style={{ marginBottom: 16 - density.fieldGap }}>
+              <TextField
+                label={field.label}
+                secureTextEntry={!field.shown}
+                value={field.value}
+                onChangeText={field.onChange}
+                textContentType={field.textContentType}
+                autoComplete={field.autoComplete}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholder={field.placeholder}
+                // Room for the eye, so the dots never run under it.
+                style={{ paddingRight: 16 + 20 + 12 }}
+              />
+              {/* The eye sits over the field: 20pt, 16 in from its right edge, centred on the 48 box under the label. */}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Show or hide password"
+                hitSlop={12}
+                onPress={field.toggle}
+                style={{ position: "absolute", right: 16, top: 42 }}
               >
+                {field.shown ? <EyeSlashIcon size={20} color={color.textDim} /> : <EyeIcon size={20} color={color.textDim} />}
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          {/* Every rule, met or not, while the new password misses one. */}
+          {passwordErrors.length > 0 && (
+            <View style={{ marginBottom: 16, gap: 8 }}>
+              <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20}>
                 Your password must include:
               </Text>
-              {passwordErrors.map((error, index) => (
-                <Text
-                  key={index}
-                  fontSize="text-xs"
-                  fontWeight="font-bold"
-                  style={{ color: ink.danger(isDark) }}
-                >
-                  {error}
-                </Text>
-              ))}
+              {PASSWORD_RULE_LIST.map((rule) => {
+                const met = rule.test(newPassword);
+                return (
+                  <View key={rule.text} style={{ flexDirection: "row", gap: 8 }} accessibilityLabel={`${met ? "Met" : "Not met"}: ${rule.text}`} accessible>
+                    <View style={{ paddingTop: 2 }}>
+                      {met ? <CheckIcon size={16} color={color.success} /> : <ExclamationCircleIcon size={16} color={color.textDim} />}
+                    </View>
+                    <Text fontSize="text-sm" lineHeight={20} tone={met ? "body" : "dim"} style={{ flex: 1 }}>
+                      {rule.text}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           )}
-
-          <View className="py-3">
-            <TouchableOpacity
-              onPress={handleSavePassword}
-              style={{
-                backgroundColor: colors.dark.brand,
-                padding: space.md,
-                alignItems: "center",
-                borderRadius: radius.card,
-              }}
-            >
-              <Text
-                fontSize="text-sm"
-                fontWeight="font-bold"
-                style={{ color: "white" }}
-              >
-                Verify & Change
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
+        <SheetFooter primary={{ label: "Verify & change", onPress: handleSavePassword }} />
       </CustomBottomSheetModal>
     </>
   );
