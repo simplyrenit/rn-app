@@ -1,21 +1,22 @@
 import useAddresses, { useAddAddress } from "@/backend/useAddresses";
 import { AddressRow, AddressRowSkeleton } from "@/components/addresses/address-row";
-import { Button, EmptyState, SubpageHeader, Text } from "@/components/core";
+import { BottomBar, EmptyState, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { MAX_ADDRESSES } from "@/lib/addresses";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { ExclamationTriangleIcon, MapPinIcon } from "react-native-heroicons/outline";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// Empty and error states sit 140 below the top bar (2097:28908 / 28950 Body), not centred.
+const EMPTY_TOP = 140;
 
 /** A-01 (ENG-25 §8.2): the addresses a user has saved, from Profile. */
 export default function SavedAddressesScreen() {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
-  const insets = useSafeAreaInsets();
   const { addresses, loading, isError, refreshing, refetch } = useAddresses();
   const addAddress = useAddAddress();
   const full = addresses.length >= MAX_ADDRESSES;
@@ -23,7 +24,7 @@ export default function SavedAddressesScreen() {
   const card = {
     borderWidth: 1,
     borderColor: color.line,
-    borderRadius: radius.card,
+    borderRadius: 12,
     backgroundColor: color.surface,
     overflow: "hidden",
   } as const;
@@ -31,7 +32,7 @@ export default function SavedAddressesScreen() {
   let body: React.ReactNode;
   if (loading) {
     body = (
-      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.md }}>
+      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16 }}>
         <View
           style={card}
           accessible
@@ -47,10 +48,10 @@ export default function SavedAddressesScreen() {
     );
   } else if (isError) {
     body = (
-      <View style={{ flex: 1, justifyContent: "center" }}>
+      <View style={{ paddingTop: EMPTY_TOP }}>
         <EmptyState
           variant="error"
-          icon={<ExclamationTriangleIcon size={28} color={color.danger} />}
+          icon={<ExclamationTriangleIcon size={28} color={color.dangerStrong} />}
           title="Couldn't load your addresses"
           body="Check your connection and try again."
           actionLabel="Try again"
@@ -60,12 +61,13 @@ export default function SavedAddressesScreen() {
     );
   } else if (addresses.length === 0) {
     body = (
-      <View style={{ flex: 1, justifyContent: "center" }}>
+      <View style={{ paddingTop: EMPTY_TOP }}>
         <EmptyState
           icon={<MapPinIcon size={28} color={color.brandText} />}
           title="No saved addresses yet"
           body="Save your home or work once and pick it in one tap when you list."
           actionLabel="Add new address"
+          actionTone="primary"
           onAction={addAddress}
         />
       </View>
@@ -75,8 +77,8 @@ export default function SavedAddressesScreen() {
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.md,
-          paddingBottom: space.xl,
+          paddingTop: 16,
+          paddingBottom: 24,
         }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor={color.textDim} />
@@ -106,24 +108,22 @@ export default function SavedAddressesScreen() {
       <SubpageHeader title="Saved addresses" />
       <View style={{ flex: 1 }}>{body}</View>
       {showFooter ? (
-        <View
-          style={{
-            paddingHorizontal: SCREEN_GUTTER,
-            paddingTop: space.sm,
-            // 14pt at least where there is no home indicator (iPhone SE, Android): 8 sat the button on the screen edge.
-            paddingBottom: Math.max(insets.bottom + space.sm, space.md),
-            gap: space.sm,
-          }}
-        >
+        <>
+          {/* No frame draws the cap; the note sits above the bar, since a bar with children drops its primary. */}
           {full ? (
-            <Text fontSize="text-sm" tone="dim" style={{ textAlign: "center" }}>
+            <Text
+              fontSize="text-sm"
+              tone="dim"
+              style={{ textAlign: "center", paddingHorizontal: SCREEN_GUTTER, paddingBottom: 8 }}
+            >
               You can save up to 20 addresses.
             </Text>
           ) : null}
-          <Button disabled={loading || full} onPress={addAddress}>
-            Add new address
-          </Button>
-        </View>
+          <BottomBar
+            layout="full-cta"
+            primary={{ label: "Add new address", onPress: addAddress, disabled: loading || full }}
+          />
+        </>
       ) : null}
     </NonScrollableContainer>
   );

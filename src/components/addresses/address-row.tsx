@@ -1,4 +1,4 @@
-import { Skeleton, Text } from "@/components/core";
+import { Skeleton, StatusPill, Text } from "@/components/core";
 import { SavedAddress, addressLine, addressTitle } from "@/lib/addresses";
 import { density, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
@@ -9,6 +9,8 @@ import { BriefcaseIcon, HomeIcon, MapPinIcon } from "react-native-heroicons/outl
 
 const TYPE_ICON = { home: HomeIcon, work: BriefcaseIcon, other: MapPinIcon } as const;
 const ICON_DISC = 36;
+// The list row's type disc (2097:28843); the skeleton and the other rows keep 36.
+const LIST_DISC = 40;
 const RADIO = 20;
 
 interface Props {
@@ -43,6 +45,56 @@ export function AddressRow({
   // In use on a form: the whole address is read, not scanned, and whether it
   // is the default says nothing about this listing.
   const inUse = trailing === "change";
+
+  // The list (saved-addresses · list, 2097:28843). The picker's `radio` and the
+  // form's `change` rows below keep their own look until their stories
+  // (ENG-427 / ENG-429, 2089:32313) restyle them.
+  if (trailing === "chevron") {
+    return (
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={`${title}${address.is_default ? ", default" : ""}. ${line}`}
+        accessibilityHint="Opens this address to edit it"
+        activeOpacity={0.6}
+        onPress={onPress}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 12,
+          padding: 16,
+          borderTopWidth: first ? 0 : 1,
+          borderTopColor: color.line,
+        }}
+      >
+        <View
+          style={{
+            width: LIST_DISC,
+            height: LIST_DISC,
+            borderRadius: radius.full,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: color.surfaceMuted,
+          }}
+        >
+          <Icon size={20} color={color.text} strokeWidth={1.5} />
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Text fontSize="text-md" fontWeight="font-semibold" numberOfLines={1} style={{ flexShrink: 1 }}>
+              {title}
+            </Text>
+            {address.is_default ? <StatusPill tone="neutral" label="Default" /> : null}
+          </View>
+          {line ? (
+            <Text fontSize="text-sm" tone="body" numberOfLines={3}>
+              {line}
+            </Text>
+          ) : null}
+        </View>
+        <ChevronRightIcon size={20} color={color.textDim} />
+      </TouchableOpacity>
+    );
+  }
 
   return (
     <TouchableOpacity

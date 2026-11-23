@@ -9,7 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { BackHandler, Keyboard, StyleSheet, useWindowDimensions } from "react-native";
+import { BackHandler, Keyboard, Platform, StyleSheet, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollView } from "react-native-gesture-handler";
 
@@ -43,7 +43,7 @@ const CustomBottomSheetModal = forwardRef<
     },
     ref
   ) => {
-    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const modalRef = useRef<BottomSheetModal>(null);
     const { theme } = useGlobalContext();
@@ -54,16 +54,19 @@ const CustomBottomSheetModal = forwardRef<
     useImperativeHandle(ref, () => modalRef.current as BottomSheetModal);
 
     useEffect(() => {
+      // iOS announces the keyboard before it moves, so the sheet makes room alongside it rather than after it has
+      // covered the footer; Android only has the did-events.
+      const ios = Platform.OS === "ios";
       const keyboardDidShowListener = Keyboard.addListener(
-        "keyboardDidShow",
-        () => {
-          setKeyboardVisible(true);
+        ios ? "keyboardWillShow" : "keyboardDidShow",
+        (event) => {
+          setKeyboardHeight(event.endCoordinates.height);
         }
       );
       const keyboardDidHideListener = Keyboard.addListener(
-        "keyboardDidHide",
+        ios ? "keyboardWillHide" : "keyboardDidHide",
         () => {
-          setKeyboardVisible(false);
+          setKeyboardHeight(0);
         }
       );
 
@@ -98,11 +101,34 @@ const CustomBottomSheetModal = forwardRef<
     const fittedSnapPoints = snapPoints.map((point) =>
       typeof point === "number" ? Math.min(point, maxSheetHeight) : point
     );
-    const adjustedSnapPoints = isKeyboardVisible
-      ? fittedSnapPoints.map((point) =>
-          typeof point === "string" ? "90%" : point * 0.9
-        )
-      : fittedSnapPoints;
+    // With the keyboard up, a percentage sheet goes to 90% (its fields sit high enough to clear the keyboard).
+    // A numeric sheet is sized to its content, so it keeps its height and makes room for the keyboard instead; it
+    // used to be scaled by 0.9, which made it shorter just when it needed more room (ENG-438: the name, email and
+    // phone sheets went behind the keyboard on iOS and lost half their Save button on Android).
+    // - iOS: gorhom 4 lifts a sheet over the keyboard only for its own BottomSheetTextInput (useKeyboard's
+    //   shouldHandleKeyboardEvents); our fields are plain TextInputs, so the sheet stays on the screen's bottom
+    //   edge. It grows by the keyboard less the home-indicator inset (the footer already pads that, and the
+    //   keyboard covers it), and the content is padded by the same amount, so the footer ends on the keyboard.
+    // - Android: adjustResize already puts the sheet's bottom on the keyboard; only the room above it shrinks.
+    // - scrollView={false} sheets keep the old x0.9 path: their content may hold a gorhom BottomSheetTextInput
+    //   (the search-results filter sheet's taxonomy search), which gorhom already lifts over the keyboard, and
+    //   adding our lift on top pushed that sheet under the status bar with its footer behind the keyboard.
+    const keyboardLift =
+      keyboardHeight > 0 && scrollView && Platform.OS === "ios" ? Math.max(0, keyboardHeight - insets.bottom) : 0;
+    const roomWithKeyboard =
+      Platform.OS === "ios" ? maxSheetHeight : maxSheetHeight - keyboardHeight;
+    const numericSnaps = fittedSnapPoints.some((point) => typeof point === "number");
+    const adjustedSnapPoints =
+      keyboardHeight > 0
+        ? fittedSnapPoints.map((point) =>
+            typeof point === "string"
+              ? "90%"
+              : scrollView
+                ? Math.min(point + keyboardLift, roomWithKeyboard)
+                : point * 0.9
+          )
+        : fittedSnapPoints;
+    const contentLift = numericSnaps ? keyboardLift : 0;
 
     const renderBackdrop = (props: any) => (
       <BottomSheetBackdrop
@@ -157,7 +183,7 @@ const CustomBottomSheetModal = forwardRef<
         {scrollView ? (
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={styles.contentContainer}
+            contentContainerStyle={[styles.contentContainer, { paddingBottom: contentLift }]}
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled={true}
           >

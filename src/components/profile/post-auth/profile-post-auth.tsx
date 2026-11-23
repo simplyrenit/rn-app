@@ -1,12 +1,11 @@
 import { KycCard } from "@/components/kyc/kyc-card";
-import { Button, Text } from "@/components/core";
+import { ListRow } from "@/components/core";
 import { useProfile } from "@/backend/profile";
 import { useGlobalContext } from "@/context/global-context";
-import { merchantStatusLabel } from "@/lib/shop";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { useRef, useState } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
 import {
   AdjustmentsHorizontalIcon,
   ArrowRightOnRectangleIcon,
@@ -25,9 +24,9 @@ import {
   QuestionMarkCircleIcon,
   UsersIcon,
 } from "react-native-heroicons/outline";
+import { MerchantStatusCard } from "./merchant-status-card";
 import ProfileImgContainer from "./profile-img";
 import {
-  PROFILE_LIST_GAP,
   ProfileBlockRule,
   ProfileRow,
   ProfileSection,
@@ -36,17 +35,12 @@ import {
 import AppearanceSheet from "./sheets/AppearanceSheet";
 import { CurrencySheet } from "./sheets/currency-sheet";
 import PersonalDetailsSheet from "./sheets/PersonaldetailsSheet";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, radius } from "@/lib/design-tokens";
-import { useTheme } from "@/lib/theme";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 
 interface ProfilePostAuthProps {
   isDarkMode: boolean;
   handleLogout: () => void;
 }
-
-/** Gap between the logout glyph and its label, off the frame. */
-const LOGOUT_ICON_GAP = 4;
-const LOGOUT_ICON_SIZE = 24;
 
 const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   isDarkMode,
@@ -62,7 +56,6 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
   const appearanceSheetRef = useRef<BottomSheetModal>(null);
   const personalDetailsSheetRef = useRef<BottomSheetModal>(null);
   const currencySheetRef = useRef<BottomSheetModal>(null);
-  const { color, shadow } = useTheme();
 
   const handleCurrencyModal = () => {
     currencySheetRef.current?.present();
@@ -90,59 +83,33 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
 
   return (
     <>
-      {/* The tab bar floats over this list, so the last block needs air under it
-          or the logout button sits behind the bar. */}
-      <View style={{ paddingBottom: density.listFooter }}>
+      {/* Body (2095:25349): the scroll view ends at the tab bar (profile.tsx bounds it), so the list ends 24 under Logout. */}
+      <View style={{ paddingBottom: SCREEN_GUTTER }}>
         <ProfileImgContainer
           isDarkMode={isDarkMode}
           handlePersonalDetailsSheetPress={handlePersonalDetailsSheetPress}
         />
-        {isMerchant && (
-          <View className="px-gutter">
-            <View
-              className={`mb-4 rounded-card border px-3 py-2 ${
-                isDark ? "border-line-dark bg-surface-dark" : "border-line-light bg-surface-light"
-              }`}
-            >
-              <Text fontWeight="font-semibold">
-                Merchant status: {merchantStatusLabel(merchantStatus)}
-              </Text>
-              {merchantStatus !== "approved" && (
-                <Text
-                  className={`mt-1 ${isDark ? "text-muted-dark" : "text-muted-light"}`}
-                >
-                  Listings will be enabled after merchant approval.
-                </Text>
-              )}
-              {merchantStatus === "rejected" && (
-                <>
-                  <Button
-                    className="mt-3"
-                    onPress={handleRequestReviewAgain}
-                    disabled={profileActionLoading}
-                  >
-                    {profileActionLoading
-                      ? "Requesting review..."
-                      : "Request review again"}
-                  </Button>
-                  {requestReviewError && (
-                    <Text tone="danger" className="mt-2">{requestReviewError}</Text>
-                  )}
-                </>
-              )}
-            </View>
+        {/* Status cards (2095:25822 / 26102): padding 0 24 16, gap 12 between the merchant status and the KYC card. */}
+        {isMerchant ? (
+          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: 16, gap: 12 }}>
+            <MerchantStatusCard
+              status={merchantStatus}
+              onRequestReview={handleRequestReviewAgain}
+              loading={profileActionLoading}
+              error={requestReviewError}
+            />
+            <KycCard isDark={isDark} />
           </View>
+        ) : (
+          // Anyone else's ID check (ENG-351), once they have one on file. It hides itself otherwise, and its margins
+          // go with it.
+          <KycCard isDark={isDark} style={{ marginHorizontal: SCREEN_GUTTER, marginBottom: 16 }} />
         )}
-
-        {/* Business verification, or anyone else's ID check once they have one on file (ENG-351). It hides itself otherwise. */}
-        <KycCard isDark={isDark} />
 
         <ProfileBlockRule />
 
-        {/* One list, four sections. The sections carry no borders of their own:
-            the design separates them with a single centred hairline, and rows
-            inside a section run edge to edge with nothing between them. */}
-        <View style={{ paddingVertical: PROFILE_LIST_GAP }}>
+        {/* Four sections stacked with a 1pt rule between them and no other air; rows run edge to edge. */}
+        <View>
           <ProfileSection title="Account">
             <ProfileRow
               icon={CalendarDaysIcon}
@@ -271,45 +238,17 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
           </ProfileSection>
         </View>
 
-        {/* Logout is a bordered button at the foot of the screen, not a row in
-            the list. It reads in the danger tone because the design says so —
-            signing out is recoverable, so the colour is the design's emphasis
-            and not this app's usual "destructive" signal. */}
-        <View
-          style={{
-            paddingVertical: PROFILE_LIST_GAP,
-            paddingHorizontal: SCREEN_GUTTER,
-          }}
-        >
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Logout"
-            activeOpacity={0.6}
+        <ProfileSectionRule />
+
+        {/* Logout is a kit List row in the danger tone (frame "Logout", 64 high: 8 above the 56 row). */}
+        <View style={{ paddingTop: 8 }}>
+          <ListRow
+            leadingIcon={ArrowRightOnRectangleIcon}
+            label="Logout"
+            tone="danger"
+            chevron={false}
             onPress={handleLogout}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: LOGOUT_ICON_GAP,
-              minHeight: MIN_TOUCH_TARGET,
-              borderRadius: radius.button,
-              borderWidth: 1,
-              borderColor: color.line,
-              backgroundColor: color.surface,
-              // Light lifts the button off the canvas; dark draws the edge only,
-              // which is what this token pair already encodes.
-              ...shadow,
-            }}
-          >
-            <ArrowRightOnRectangleIcon
-              size={LOGOUT_ICON_SIZE}
-              color={color.danger}
-              strokeWidth={1.5}
-            />
-            <Text fontSize="text-sm" fontWeight="font-bold" tone="danger">
-              Logout
-            </Text>
-          </TouchableOpacity>
+          />
         </View>
 
         <CurrencySheet

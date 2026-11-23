@@ -1,14 +1,15 @@
 import { postUnlock } from "@/backend/unlock";
 import { useAuth } from "@/backend/auth";
-import { Button, Text } from "@/components/core";
+import { Button, SheetFooter, SheetHeader, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { apiError } from "@/lib/api-error";
-import { SCREEN_GUTTER, colors, ink, radius, space } from "@/lib/design-tokens";
-import { useTheme } from "@/lib/theme";
+import { SCREEN_GUTTER, colors, fontFamily, ink, radius, space } from "@/lib/design-tokens";
+import { Theme, useTheme } from "@/lib/theme";
 import { NO_TOKEN_MESSAGE, RESEND_SECONDS, e164, isCode, resendLabel, unlockErrorMessage } from "@/lib/unlock";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { useWindowDimensions, View } from "react-native";
+import { TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LockClosedIcon } from "react-native-heroicons/outline";
 import OTPTextView from "react-native-otp-textinput";
 
@@ -29,6 +30,11 @@ interface Props {
   onUnlocked: () => void;
   /** The account has no phone number (409 `phone_required`): the screen sends them to add one. */
   onPhoneRequired: () => void;
+  /**
+   * `centred` (default): the bank account's dialog (ENG-437). `sheet`: Personal details' left-aligned kit sheet
+   * (2096:30504), header, body, boxes, and the footer's Unlock with Cancel under it.
+   */
+  layout?: "centred" | "sheet";
 }
 
 /**
@@ -41,7 +47,7 @@ interface Props {
  * point payouts at another account.
  */
 export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
-  ({ phoneMasked, minutes, phone, onUnlocked, onPhoneRequired }, ref) => {
+  ({ phoneMasked, minutes, phone, onUnlocked, onPhoneRequired, layout = "centred" }, ref) => {
     const { color, isDark } = useTheme();
     const { width: windowWidth } = useWindowDimensions();
     const { requestPhoneNumberChangeOtp, verifyPhoneNumberChange } = useAuth();
@@ -162,6 +168,8 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
       height: 52,
     };
 
+    if (layout === "sheet") return <UnlockSheetBody modal={modal} isDark={isDark} minutes={minutes} phoneMasked={phoneMasked} round={round} code={code} setCode={setCode} error={error} setError={setError} secondsLeft={secondsLeft} sending={sending} busy={busy} sendCode={sendCode} unlock={unlock} />;
+
     return (
       <CustomBottomSheetModal ref={modal} isDark={isDark} snapPoints={["70%"]} frame>
         <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.sm, paddingBottom: space.xl, alignItems: "center" }}>
@@ -240,3 +248,129 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
   }
 );
 UnlockSheet.displayName = "UnlockSheet";
+
+// ─── The kit-sheet layout (ENG-438, 2096:30504) ─────────────────────────────
+// Below everything above on purpose: the centred dialog is ENG-437's, and this block is the only part ENG-438 adds.
+
+/**
+ * One code box, 50×56 (2096:30504, 30681, 30862): r12, a hairline edge (the library turns it brand while the box has
+ * focus), 8 between boxes, SemiBold 20/28 digits. Six 50s and five 8s are 340, wider than a 360dp phone has inside the
+ * gutters, so the box narrows there. Pass the container style with it to the library (`otpRow`).
+ */
+export function otpBox(windowWidth: number, color: Theme["color"]) {
+  return {
+    width: Math.min(50, Math.floor((windowWidth - SCREEN_GUTTER * 2 + 8) / 6) - 8),
+    height: 56,
+    margin: 0,
+    borderRadius: radius.input,
+    borderWidth: 1,
+    borderBottomWidth: 1,
+    backgroundColor: color.surface,
+    // The library types the cell as a view style but draws a text input in it, so these are text styles too.
+    color: color.text,
+    fontFamily: fontFamily.semibold,
+    fontWeight: "normal" as const,
+    fontSize: 20,
+  };
+}
+
+/** The row the boxes sit in: from the left, 8 apart (the library spaces them across the width with 5pt margins). */
+export const otpRow = { justifyContent: "flex-start" as const, gap: 8 };
+
+// 21 grabber + 48 two-line title + 8, the content (8 + 40 body + 12 + 20 "Sent to" + 12 + 8 + 56 boxes + 12 + 20
+// countdown + 24), and the footer (1 + 16 + 52 + 8 + 20 + 16). The frame draws its title over a 44 row (73), the kit
+// row grows to the two lines (77), so the sheet is 4 taller than 30504.
+const UNLOCK_SHEET_HEIGHT = 21 + 48 + 8 + 212 + 113;
+
+function UnlockSheetBody({
+  modal,
+  isDark,
+  minutes,
+  phoneMasked,
+  round,
+  code,
+  setCode,
+  error,
+  setError,
+  secondsLeft,
+  sending,
+  busy,
+  sendCode,
+  unlock,
+}: {
+  modal: React.RefObject<BottomSheetModal>;
+  isDark: boolean;
+  minutes: number;
+  phoneMasked: string;
+  round: number;
+  code: string;
+  setCode: (code: string) => void;
+  error: string | null;
+  setError: (error: string | null) => void;
+  secondsLeft: number;
+  sending: boolean;
+  busy: boolean;
+  sendCode: () => void;
+  unlock: () => void;
+}) {
+  const { color } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  return (
+    <CustomBottomSheetModal ref={modal} isDark={isDark} snapPoints={[UNLOCK_SHEET_HEIGHT + insets.bottom]} frame>
+      <SheetHeader title="Enter the code we sent to the owner's phone" grabber={false} />
+      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: 24, gap: 12 }}>
+        <Text fontSize="text-sm" lineHeight={20} tone="body">
+          {`Changing where you're paid needs a fresh code. It unlocks this phone for ${minutes} minutes.`}
+        </Text>
+        <Text fontSize="text-sm" lineHeight={20} tone="dim">
+          {`Sent to ${phoneMasked}`}
+        </Text>
+        <View style={{ paddingTop: 8, gap: 12 }}>
+          <OTPTextView
+            key={round}
+            containerStyle={otpRow}
+            textInputStyle={otpBox(windowWidth, color)}
+            inputCount={6}
+            inputCellLength={1}
+            tintColor={color.brand}
+            offTintColor={color.line}
+            keyboardType="number-pad"
+            autoFocus
+            handleTextChange={(value: string) => {
+              setCode(value.replace(/\D/g, "").slice(0, 6));
+              setError(null);
+            }}
+          />
+          {secondsLeft > 0 ? (
+            <Text fontSize="text-sm" lineHeight={20} tone="dim" accessibilityLiveRegion="polite">
+              {resendLabel(secondsLeft)}
+            </Text>
+          ) : (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityState={{ disabled: busy || sending, busy: sending }}
+              disabled={busy || sending}
+              onPress={sendCode}
+              hitSlop={12}
+              style={{ alignSelf: "flex-start" }}
+            >
+              <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} style={{ color: busy || sending ? color.textDim : color.brandText }}>
+                Send again
+              </Text>
+            </TouchableOpacity>
+          )}
+          {error ? (
+            <Text fontSize="text-sm" lineHeight={20} accessibilityRole="alert" accessibilityLiveRegion="polite" style={{ color: color.dangerStrong }}>
+              {error}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+      <SheetFooter
+        primary={{ label: "Unlock", onPress: unlock, loading: busy, disabled: !isCode(code) }}
+        secondary={{ label: "Cancel", onPress: () => modal.current?.dismiss(), disabled: busy }}
+      />
+    </CustomBottomSheetModal>
+  );
+}
