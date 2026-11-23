@@ -1,4 +1,4 @@
-import { Text } from "@/components/core";
+import { SheetHeader, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { useGlobalContext } from "@/context/global-context";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
@@ -6,7 +6,7 @@ import { selectionFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
-import { CheckIcon } from "react-native-heroicons/solid";
+import { CheckIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface AppearanceSheetProps {
@@ -21,13 +21,11 @@ const OPTIONS = [
   { value: "light", label: "Light mode" },
 ] as const;
 
-// Measured off the Figma sheet: a 44pt header holding a centred 18pt title, then
-// three 56pt rows (24 side padding, 16 above and below), with no rules between
-// them. 44 + 3 x 56 = 212, plus the 21pt grabber row (8 + 5 + 8, custom-bottom-sheet-modal); the safe-area inset is added
-// where it is used, because the frame draws the home indicator outside the sheet.
-const HEADER_HEIGHT = 44;
+// Sheet · Appearance (2096:28163): the kit Sheet header (21 grabber, drawn by the modal, + 44 title row + 8), then
+// three 56 rows (label at x24, the selected one SemiBold with an outline check 20 at x346) and no rules. 21 + 52 + 168
+// = 241; the frame's 42 home strip is the safe-area inset, added where it is used.
 const ROW_HEIGHT = 56;
-const SHEET_HEIGHT = 233;
+const SHEET_HEIGHT = 241;
 
 const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
   bottomSheetModalRef,
@@ -45,21 +43,11 @@ const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
       isDark={isDarkMode}
     >
       <View>
-        <View
-          style={{
-            height: HEADER_HEIGHT,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text
-            accessibilityRole="header"
-            fontSize="text-base"
-            fontWeight="font-bold"
-          >
-            Appearance
-          </Text>
-        </View>
+        <SheetHeader
+          title="Appearance"
+          grabber={false}
+          onClose={() => bottomSheetModalRef.current?.dismiss()}
+        />
 
         {OPTIONS.map((option) => {
           const selected = themePreference === option.value;
@@ -83,10 +71,10 @@ const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
                 setTheme(option.value);
               }}
             >
-              <Text fontSize="text-md" fontWeight="font-bold">
+              <Text fontSize="text-md" fontWeight={selected ? "font-semibold" : "font-medium"}>
                 {option.label}
               </Text>
-              {selected && <CheckIcon size={20} color={color.brandText} />}
+              {selected && <CheckIcon size={20} color={color.brandText} strokeWidth={1.5} />}
             </TouchableOpacity>
           );
         })}

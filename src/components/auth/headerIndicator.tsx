@@ -1,28 +1,34 @@
-import { useGlobalContext } from "@/context/global-context";
-import { useNavigation } from "@react-navigation/native";
+import { StepProgress, SubpageHeader } from "@/components/core";
 import React from "react";
-import { TouchableOpacity, View } from "react-native";
-import { ArrowLeftIcon } from "react-native-heroicons/outline";
-import { PageIndicator } from "../core/page-indicator";
-import { ink } from "@/lib/design-tokens";
+import { View } from "react-native";
 
 interface Props {
   percentage: number;
 }
 
+const STEPS = 3;
+
+/**
+ * The sign-up header (figma/02): the kit Top bar `back-only`, with the 3-segment progress laid over it at x72,
+ * 26 into the 56 row, inset 72 each side (246 wide on the 390 frame: three 78 segments, 6 apart). The top bar has no centre slot, so the bar is
+ * absolutely placed and lets touches through to the back control.
+ *
+ * A percentage fills the bar to that exact point (0 / 20 / 30 / 50 / 85 %), so every sign-up screen keeps its
+ * own point on it; `step` (rounded up) only feeds the accessibility value.
+ */
 export function HeaderIndicator({ percentage }: Props) {
-  const { theme } = useGlobalContext();
-  const isDarkMode = theme === "dark";
-
-  const router = useNavigation();
-
+  const filled = (Math.max(0, Math.min(100, percentage)) / 100) * STEPS;
   return (
-    <View className="flex flex-row items-center py-4">
-      <TouchableOpacity accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.goBack()} className="w-[10%]">
-        <ArrowLeftIcon size={24} color={ink.text(isDarkMode)} />
-      </TouchableOpacity>
-      <View className="w-[80%]">
-        <PageIndicator percentage={percentage} />
+    <View>
+      <SubpageHeader variant="back-only" />
+      <View pointerEvents="none" style={{ position: "absolute", left: 72, right: 72, top: 26 }}>
+        <StepProgress
+          step={Math.max(1, Math.min(STEPS, Math.ceil(filled)))}
+          total={STEPS}
+          fill={filled}
+          gap={6}
+          showLabel={false}
+        />
       </View>
     </View>
   );

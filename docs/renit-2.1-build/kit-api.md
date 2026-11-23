@@ -76,7 +76,7 @@ Two kit links are not the Text button, so build them as plain text, not with `Bu
 | `ListRow` | `core/list-row.tsx` | B | 2073:14364 | see below |
 | `StatusPill` | `core/status-pill.tsx` | B | 2073:14380 | `label: string`, `tone: StatusTone` |
 | `Chip` | `core/chip.tsx` | B | 2073:14388 | `label: string`, `selected?: boolean`, `onPress?: () => void`, `leading?: ReactNode` |
-| `StepProgress` | `core/step-progress.tsx` | C | 2074:14448 | `step: number` (1-based), `total: number`, `label?: string` (default "Step N of M"), `showLabel?: boolean` (default true) |
+| `StepProgress` | `core/step-progress.tsx` | C | 2074:14448 | `step: number` (1-based), `total: number`, `label?: string` (default "Step N of M"), `showLabel?: boolean` (default true), `fill?: number` (0..total, partial fill per segment), `gap?: number` (default 4; fill drawn r2, ENG-428) |
 | `MapPlaceholder` | `core/map-placeholder.tsx` | C | 2100:29942 | `style?: StyleProp<ViewStyle>` (fills the box it is given) |
 
 Shared types:
@@ -128,6 +128,10 @@ Props added; nothing renamed or removed.
   - `tile` now draws the kit heart: a 32 disc of #FFFFFFEB with a 0/1 blur-3 shadow of #0000002E (Android uses `elevation: 1`) in a 44 box, holding a black 24 outline heart at stroke 1.5. It looks the same in both themes.
   - The saved heart keeps `darkColors.danger`.
 
+## ENG-428 additions
+
+- **`RingSpinner`** (`core/ring-spinner.tsx`, import by path): `{ size = 40, spinning = true }`. A full `brandPanel` track plus a 270° `brand` arc (12 to 9 o'clock), stroke `size × 0.08`, native-driver rotation; `spinning={false}` draws the still pose for fixtures. From 02/2089:28209.
+
 ## Group C (implemented)
 
 `StepProgress` and `MapPlaceholder` keep the props above unchanged. Added optional props, and changes to existing APIs:
@@ -165,8 +169,8 @@ Props added; nothing renamed or removed.
 - **`BottomBar`**: API as above. Strip padding 16/24, `paddingBottom` 16 + `insets.bottom` (16 with the iOS keyboard up); `cta-text` 4 + inset with a 4 gap (drawn as `full-cta` when `secondary` is missing). `children` mode is a column with gap 8 and the same insets.
 - **`SheetHeader`**: API as above; `grabber` default stays true (it draws the 21pt grabber row and the sheet's top radius, for standalone/DevKit use). Inside `CustomBottomSheetModal`, pass `grabber={false}`: gorhom draws the handle. The title row is `minHeight` 44, so a long title wraps. Close X is heroicons outline `XMarkIcon` 24 at `textDim`, 10pt hitSlop.
 - **`SheetFooter`**: API as above. The secondary link is plain SemiBold 14/20 `brandText` text (12pt hitSlop), not `Button`. `paddingBottom` 16 + `insets.bottom`.
-- **`CustomBottomSheetModal`**: every sheet now gets the kit grabber (44×5 `line`, 8 above and below, r24 top). `frame` now only selects the 60% scrim.
-- **`ConfirmSheet`**: props unchanged. Draws 2110:30387: `SheetHeader` (no X), body 14/20 `textBody`, actions column (padding 16/24/4, gap 4) with `warning` (danger, `minHeight` 56 passed by the sheet) or `primary` (default) full width and `ghost tone="muted"` Cancel below. Fixed snap height 285 + inset (four body lines).
+- **`CustomBottomSheetModal`**: every sheet now gets the kit grabber (44×5 `line`, 8 above and below, r24 top). `frame` now only selects the 60% scrim. With the keyboard up (ENG-438), a numeric snap keeps its height and makes room for the keyboard (iOS: grows by keyboard − inset and pads its scroll content by the same; Android: capped to the room above the keyboard) instead of being scaled by 0.9; percentage snaps still go to 90%.
+- **`ConfirmSheet`**: props as before, plus (ENG-438) `onDismiss`, `onReady(height)` and `error`. Draws 2110:30387: `SheetHeader` (no X), body 14/20 `textBody`, actions column (padding 16/24/4, gap 4) with `warning` (danger, `minHeight` 56 passed by the sheet) or `primary` (default) full width and `ghost tone="muted"` Cancel below. Snap height from the measured title and body lines (`confirmSheetHeight`; 285 + inset before they are measured), handed to `onReady(height)`; an error that appears keeps the last measured height until its lines are in.
 
 ## ENG-427 (implemented)
 
@@ -198,5 +202,5 @@ The `StatusPill`, `Chip`, `StepProgress` and `MapPlaceholder` rows were read. Th
 | `ListRow` | Rows built from a label and a `ChevronRightIcon`. `ProfileRow` already draws through it. | ENG-429 `products-screen.tsx`, `product/product-owner.tsx`, `cart/parts.tsx`; ENG-431 `booking/booking-details.tsx`; ENG-433 `shop/today.tsx`, `shop/booking.tsx`; ENG-434 `handover/parts.tsx`; ENG-435 `post/taxonomy-list.tsx`, `list-flow/review.tsx`; ENG-436 `post/unavailability-editor.tsx` (EditProductAvailability); ENG-437 `rental-settings.tsx`, `rental-delivery.tsx`, `bank-account.tsx`; ENG-438 `addresses/address-row.tsx`; ENG-439 `faqs.tsx`, `contactUs.tsx`, `who-we-are.tsx`, `report-a-problem.tsx` |
 | `StatusPill` | `bank-account.tsx` `StatusChip` (a tinted label with an icon). `booking/parts` `Pill` and `ListingStatusPill` already draw through it. `booking/card-lines.tsx` `Chip` is tinted too but carries a View action, which `StatusPill` has no slot for: ENG-431 decides. | ENG-437 `bank-account.tsx`; ENG-431 decides `card-lines.tsx` |
 | `Chip` | The search-results category rail and the filter sheet's spec chips (done, ENG-427; the Filters bar's `Pill` stays its own: the frame's Filter pill has gap 8 and a 16 icon) and `post/plan-pricing.tsx` `Chip`. Not `list-flow/scan-panel.tsx` `Chip`: that is an animated, display-only detection chip, not a choice. | ENG-427 `results-rails.tsx`; ENG-435 `plan-pricing.tsx` |
-| `StepProgress` | `core/page-indicator.tsx`, which now draws through it, so the auth `HeaderIndicator` already shows the kit bar. | ENG-428 switches the auth headers to `StepProgress` directly (with its label if the frames show one) and deletes `PageIndicator` |
+| `StepProgress` | `auth/headerIndicator.tsx` draws it directly over `SubpageHeader variant="back-only"` (ENG-428, with `fill` and `gap={6}`, no label); `PageIndicator` is deleted. | Done (ENG-428) |
 | `MapPlaceholder` | None found: no screen has a hand-rolled map stand-in. It stands in for `MapView` in state frames and design fixtures. | Where a fixture shows a map: ENG-428 `auth/location.tsx`; ENG-429 `product/product-map.tsx`, `addresses/address-details.tsx`, `post-screens/location-modal.tsx`; ENG-437 `rental-delivery.tsx` |

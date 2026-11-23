@@ -1,52 +1,43 @@
 import { Text } from "@/components/core/text";
-import { useGlobalContext } from "@/context/global-context";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 
+// 02 Welcome "TermsAndPolicy" (2089:15437): a 12/16 `textDim` line, 2 above a row of two
+// SemiBold underlined `textBody` links and a dim "&", 4 apart. The links draw 16 high, so the
+// slop keeps them tappable.
+const LINK_SLOP = { top: 12, bottom: 12, left: 4, right: 4 };
+
 export function TermsAndPolicy(): JSX.Element {
   const router = useTypedNavigation();
-  const { theme } = useGlobalContext();
-  const isDark = theme === "dark";
 
-  return (
-    // Full width with a wrapping link row: the two links and "&" are ~246pt at
-    // 14pt bold, wider than the old 70% box (245pt at 390), so they ran past it
-    // and, at 360dp with a larger font, off the screen edge. They now stay on one
-    // line wherever they fit and break before "Privacy Policy" where they do not.
-    <View className="flex w-full self-center items-center">
+  const Link = ({ label, to }: { label: string; to: "Terms" | "Privacy" }) => (
+    <TouchableOpacity onPress={() => router.navigate(to)} hitSlop={LINK_SLOP} accessibilityRole="link">
       <Text
         fontSize="text-xs"
-        className={`text-center ${
-          isDark ? "text-subtle-dark" : "text-subtle-light"
-        }`}
+        fontWeight="font-semibold"
+        lineHeight={16}
+        tone="body"
+        style={{ textDecorationLine: "underline" }}
       >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    // The link row wraps: at 360dp with a larger font it breaks before "Privacy Policy"
+    // instead of running off the screen edge.
+    <View style={{ width: "100%", alignItems: "center", gap: 2 }}>
+      <Text fontSize="text-xs" lineHeight={16} tone="dim" style={{ textAlign: "center" }}>
         By continuing you agree to Renit’s
       </Text>
-      <View className="flex flex-row flex-wrap justify-center space-x-1">
-        <TouchableOpacity onPress={() => router.navigate("Terms")}>
-          <Text
-            fontSize="text-sm"
-            fontWeight="font-semibold"
-            className={`text-center underline ${
-              isDark ? "text-subtle-dark" : "text-subtle-light"
-            } mb-4`}
-          >
-            Terms & Conditions
-          </Text>
-        </TouchableOpacity>
-        <Text tone="body" className="text-center text-sm mb-4">&</Text>
-        <TouchableOpacity onPress={() => router.navigate("Privacy")}>
-          <Text
-            fontSize="text-sm"
-            fontWeight="font-semibold"
-            className={`text-center underline ${
-              isDark ? "text-subtle-dark" : "text-subtle-light"
-            } mb-4`}
-          >
-            Privacy Policy
-          </Text>
-        </TouchableOpacity>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 4 }}>
+        <Link label="Terms & Conditions" to="Terms" />
+        <Text fontSize="text-xs" lineHeight={16} tone="dim">
+          &
+        </Text>
+        <Link label="Privacy Policy" to="Privacy" />
       </View>
     </View>
   );

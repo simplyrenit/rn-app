@@ -1,20 +1,25 @@
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
-import { Button, StaticContainer, Text } from "@/components/core";
-import { ScrollContainer } from "@/components/core/scroll-container";
+import {
+  BottomBar,
+  Button,
+  FieldShell,
+  NonScrollableContainer,
+  ScrollContainer,
+  Text,
+  TextField,
+} from "@/components/core";
 import { useAuthContext } from "@/context/auth-context";
-import { useGlobalContext } from "@/context/global-context";
-import { usePublicTerms } from "@/backend/terms";
+import { usePublicTerms, TermsKind } from "@/backend/terms";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
+import { useRoute } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
-import { Linking, Modal, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
-import {
-  InformationCircleIcon,
-  ChevronDownIcon,
-} from "react-native-heroicons/outline";
+import { Linking, Modal, ScrollView, TouchableOpacity, View } from "react-native";
+import { InformationCircleIcon } from "react-native-heroicons/outline";
+import { ChevronDownIcon } from "react-native-heroicons/mini";
 import { CheckBox } from "@/components/core/checkbox";
 import { OwnerTermsTick } from "@/components/terms/owner-terms-tick";
-import { ink } from "@/lib/design-tokens";
+import { density, ink, SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -40,14 +45,96 @@ const YEARS = Array.from({ length: 100 }, (_, i) =>
   String(new Date().getFullYear() - i)
 );
 
+/** Dev-only design seed (ENG-428 plan §1/§2): only DevFixture passes it. */
+type AboutDesign = {
+  merchant?: boolean;
+  businessName?: string;
+  firstName?: string;
+  lastName?: string;
+  dob?: { date: string; month: string; year: string };
+  errors?: Partial<ErrorState>;
+  agreed?: boolean;
+  ownerTerms?: TermsKind;
+  ownerTermsAccepted?: boolean;
+};
+
+// figma/02 2089:25271: the form is a column 24 apart. The kit TextField keeps
+// its own 18 below itself, which `Field` cancels so the column's gap applies.
+const SECTION_GAP = 24;
+
+/** The 2.1 Form field (label, 48 input, error), spaced as the frame's column. */
+function Field(props: React.ComponentProps<typeof TextField>) {
+  return (
+    <View style={{ marginBottom: -density.fieldGap }}>
+      <TextField maxFontSizeMultiplier={1.4} {...props} />
+    </View>
+  );
+}
+
+/**
+ * The non-field message row (25343 "Message"): an information-circle 16 and a
+ * 12/16 Medium line 6 to its right. Used for the DOB message and `sameName`.
+ */
+function MessageRow({ children, tone }: { children: React.ReactNode; tone: "danger" | "warning" }) {
+  const { color } = useTheme();
+  const ink = tone === "danger" ? color.dangerStrong : color.warning;
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+      <InformationCircleIcon size={16} color={ink} />
+      <Text fontSize="text-xs" fontWeight="font-medium" lineHeight={16} style={{ flexShrink: 1, color: ink }}>
+        {children}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * The kit card row (25271 "Card row"): 342×50, padded 14/16, a 14/20 Medium
+ * label and the checkbox on the right; ticked, it takes the brand panel fill and
+ * a brand edge (25419). The checkbox's 44 target is cancelled vertically so the
+ * row stays 50, and pulled 11 right so its box sits at the frame's x329.
+ */
+function CardRow({ label, checked, onPress }: { label: string; checked: boolean; onPress: () => void }) {
+  const { color } = useTheme();
+  return (
+    <View
+      style={{
+        minHeight: 50,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: checked ? color.brand : color.line,
+        backgroundColor: checked ? color.brandPanel : color.surface,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <Text fontSize="text-sm" fontWeight="font-medium" lineHeight={20} style={{ flexShrink: 1 }}>
+        {label}
+      </Text>
+      <View style={{ marginVertical: -12, marginRight: -11 }}>
+        <CheckBox checked={checked} onPress={onPress} accessibilityLabel={label} />
+      </View>
+    </View>
+  );
+}
+
 interface DropdownProps {
   value: string;
   placeholder: string;
   options: string[];
   onSelect: (value: string) => void;
   isDarkMode: boolean;
-  setDobError: (error: string) => void;
+  /** 25343: a blocking DOB message gives all three boxes the kit error edge. */
+  error: boolean;
 }
+
+// 25271 "Dropdowns": 88 / 138 / 100, 8 apart. These are maximums: flexShrink
+// lets them fit 312pt of content on a 360dp Android screen, or a raised
+// display size, where the Year box used to run off screen.
+const DROPDOWN_WIDTH: Record<string, number> = { Date: 88, Month: 138, Year: 100 };
 
 const Dropdown: React.FC<DropdownProps> = ({
   value,
@@ -55,47 +142,35 @@ const Dropdown: React.FC<DropdownProps> = ({
   options,
   onSelect,
   isDarkMode,
-  setDobError,
+  error,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const insets = useSafeAreaInsets();
+  const { color } = useTheme();
 
   return (
-    // flex-shrink: the three boxes are 320pt together, the whole 360dp content
-    // width, so with Android's display size raised the Year box ran off screen.
-    <View
-      className={`relative flex-shrink ${placeholder === "Date"
-        ? "w-[100px]"
-        : placeholder === "Month"
-          ? "w-[120px]"
-          : "w-[100px]"
-        }`}
-      style={{ zIndex: 123 }}
-    >
+    <View style={{ width: DROPDOWN_WIDTH[placeholder], flexShrink: 1, zIndex: 123 }}>
       <TouchableOpacity
-        onPress={() => {
-          setIsOpen(!isOpen);
-          // setDobError("");
-        }}
-        className={`p-3 border rounded-card ${isDarkMode
-          ? "bg-surface-dark border-input-line-dark"
-          : "bg-surface-light border-input-line-light"
-          }`}
+        onPress={() => setIsOpen(!isOpen)}
+        accessibilityRole="button"
+        accessibilityLabel={value ? `${placeholder}, ${value}` : placeholder}
       >
-        <View className="flex-row justify-between items-center">
+        <FieldShell
+          error={error}
+          style={{ paddingHorizontal: 12, paddingVertical: 0, justifyContent: "space-between", gap: 0 }}
+        >
           {/* "September" fills the Month box exactly at 1x; at a larger font it
               pushed the chevron out of the box instead of truncating. */}
           <Text
-            className={`flex-shrink ${isDarkMode ? "text-white" : "text-black"}`}
+            fontSize="text-md"
+            lineHeight={24}
             numberOfLines={1}
+            style={{ flexShrink: 1, color: value ? color.text : color.placeholder }}
           >
             {value || placeholder}
           </Text>
-          <ChevronDownIcon
-            color={ink.text(isDarkMode)}
-            size={20}
-          />
-        </View>
+          <ChevronDownIcon color={color.textDim} size={20} />
+        </FieldShell>
       </TouchableOpacity>
 
       {isOpen && (
@@ -152,7 +227,6 @@ interface BusinessFormProps {
   setLastName: (value: string) => void;
   setBusinessName: (value: string) => void;
   errors: ErrorState;
-  isDarkMode: boolean;
   setError: React.Dispatch<React.SetStateAction<ErrorState>>;
 }
 
@@ -185,7 +259,6 @@ interface IndividualFormProps {
     }>
   >;
   dobError: string;
-  setDobError: (error: string) => void;
 }
 
 const IndividualForm: React.FC<IndividualFormProps> = ({
@@ -199,18 +272,15 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
   dob,
   setDob,
   dobError,
-  setDobError,
-}) => (
-  <>
-    <View className="mt-4">
-      <Text
-        fontSize="text-sm"
-        fontWeight="font-semibold"
-        className="mb-2"
-      >
-        First name
-      </Text>
-      <TextInput
+}) => {
+  // Required and under-13 block sign-up, so they draw the error edge; the
+  // 13-18 note is only a warning and leaves the boxes as they are.
+  const dobWarning = dobError.startsWith("Warning");
+  const dobBlocking = Boolean(dobError) && !dobWarning;
+  return (
+    <>
+      <Field
+        label="First name"
         value={firstName}
         onChangeText={(text) => {
           setFirstName(text);
@@ -218,33 +288,11 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
             setError((prev) => ({ ...prev, firstName: "" }));
           }
         }}
-        className={`p-2 border rounded-card ${isDarkMode
-          ? "bg-surface-dark text-white border-input-line-dark"
-          : "bg-surface-light text-black border-input-line-light"
-          }`}
-        placeholderTextColor={ink.placeholder(isDarkMode)}
-        maxFontSizeMultiplier={1.4}
+        error={errors.firstName || undefined}
       />
-      {errors.firstName && (
-        <View className="flex flex-row items-center mt-4 space-x-3">
-          <InformationCircleIcon
-            size={14}
-            color={ink.danger(true)}
-          />
-          <Text tone="danger" className="flex-shrink">{errors.firstName}</Text>
-        </View>
-      )}
-    </View>
 
-    <View className="mt-4">
-      <Text
-        fontSize="text-sm"
-        fontWeight="font-semibold"
-        className="mb-2"
-      >
-        Last name
-      </Text>
-      <TextInput
+      <Field
+        label="Last name"
         value={lastName}
         onChangeText={(text) => {
           setLastName(text);
@@ -252,81 +300,45 @@ const IndividualForm: React.FC<IndividualFormProps> = ({
             setError((prev) => ({ ...prev, lastName: "" }));
           }
         }}
-        className={`p-2 border rounded-card ${isDarkMode
-          ? "bg-surface-dark text-white border-input-line-dark"
-          : "bg-surface-light text-black border-input-line-light"
-          }`}
-        placeholderTextColor={ink.placeholder(isDarkMode)}
-        maxFontSizeMultiplier={1.4}
+        error={errors.lastName || undefined}
       />
-      {errors.lastName && (
-        <View className="flex flex-row items-center mt-4 space-x-3">
-          <InformationCircleIcon
-            size={14}
-            color={ink.danger(true)}
-          />
-          <Text tone="danger" className="flex-shrink">{errors.lastName}</Text>
-        </View>
-      )}
-    </View>
 
-    <View className="mt-4">
-      <Text
-        fontSize="text-sm"
-        fontWeight="font-semibold"
-        className="mb-2"
-      >
-        Date of birth
-      </Text>
-      <View className=" flex-1 flex-row justify-between pb-2">
-        <Dropdown
-          value={dob.date}
-          placeholder="Date"
-          options={DATES}
-          onSelect={(value) => setDob((prev) => ({ ...prev, date: value }))}
-          isDarkMode={isDarkMode}
-          setDobError={setDobError}
-        />
-        <Dropdown
-          value={dob.month}
-          placeholder="Month"
-          options={MONTHS}
-          onSelect={(value) => setDob((prev) => ({ ...prev, month: value }))}
-          isDarkMode={isDarkMode}
-          setDobError={setDobError}
-        />
-        <Dropdown
-          value={dob.year}
-          placeholder="Year"
-          options={YEARS}
-          onSelect={(value) => { setDob((prev) => ({ ...prev, year: value })) }}
-          isDarkMode={isDarkMode}
-          setDobError={setDobError}
-        />
+      <View style={{ gap: 8 }}>
+        <Text role="fieldLabel">Date of birth</Text>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <Dropdown
+            value={dob.date}
+            placeholder="Date"
+            options={DATES}
+            onSelect={(value) => setDob((prev) => ({ ...prev, date: value }))}
+            isDarkMode={isDarkMode}
+            error={dobBlocking}
+          />
+          <Dropdown
+            value={dob.month}
+            placeholder="Month"
+            options={MONTHS}
+            onSelect={(value) => setDob((prev) => ({ ...prev, month: value }))}
+            isDarkMode={isDarkMode}
+            error={dobBlocking}
+          />
+          <Dropdown
+            value={dob.year}
+            placeholder="Year"
+            options={YEARS}
+            onSelect={(value) => { setDob((prev) => ({ ...prev, year: value })) }}
+            isDarkMode={isDarkMode}
+            error={dobBlocking}
+          />
+        </View>
+        {dobError ? (
+          <MessageRow tone={dobWarning ? "warning" : "danger"}>{dobError}</MessageRow>
+        ) : null}
       </View>
-      {dobError && (
-        <View className="flex flex-row items-center mt-2 mr-2 space-x-3" style={{ bottom: 0, left: 0, right: 0 }}>
-          <InformationCircleIcon
-            size={14}
-            color={
-              dobError.includes("not allowed")
-                ? ink.danger(isDarkMode)
-                : ink.warning(isDarkMode)
-            }
-          />
-          <Text
-            tone={dobError.includes("not allowed") ? "danger" : "warning"}
-            className="flex-shrink"
-          >
-            {dobError}
-          </Text>
-        </View>
-      )}
-    </View>
-  </>
-);
+    </>
+  );
+};
 
-// Business Form component remains unchanged
 const BusinessForm: React.FC<BusinessFormProps> = ({
   firstName,
   lastName,
@@ -335,123 +347,58 @@ const BusinessForm: React.FC<BusinessFormProps> = ({
   setLastName,
   setBusinessName,
   errors,
-  isDarkMode,
   setError,
 }) => (
   <>
-    <View className="mt-4">
-      <Text
-        fontSize="text-sm"
-        fontWeight="font-semibold"
-        className="mb-2"
-      >
-        Legal name of the business
-      </Text>
-      <TextInput
-        value={businessName}
-        onChangeText={(text) => {
-          setBusinessName(text);
-          if (errors.businessName) {
-            setError((prev) => ({ ...prev, businessName: "" }));
-          }
-        }}
-        className={`p-2 border rounded-card ${isDarkMode
-          ? "bg-surface-dark text-white border-input-line-dark"
-          : "bg-surface-light text-black border-input-line-light"
-          }`}
-        placeholderTextColor={ink.placeholder(isDarkMode)}
-        maxFontSizeMultiplier={1.4}
-      />
-      {errors.businessName && (
-        <View className="flex flex-row items-center mt-4 space-x-3">
-          <InformationCircleIcon
-            size={14}
-            color={ink.danger(true)}
-          />
-          <Text tone="danger" className="flex-shrink">{errors.businessName}</Text>
-        </View>
-      )}
-    </View>
+    <Field
+      label="Legal name of the business"
+      value={businessName}
+      onChangeText={(text) => {
+        setBusinessName(text);
+        if (errors.businessName) {
+          setError((prev) => ({ ...prev, businessName: "" }));
+        }
+      }}
+      error={errors.businessName || undefined}
+    />
 
-    <View className="mt-4">
-      <Text
-        fontSize="text-sm"
-        fontWeight="font-semibold"
-        className="mb-2"
-      >
-        Owner's first name
-      </Text>
-      <TextInput
-        value={firstName}
-        onChangeText={(text) => {
-          setFirstName(text);
-          if (errors.firstName) {
-            setError((prev) => ({ ...prev, firstName: "" }));
-          }
-        }}
-        className={`p-2 border rounded-card ${isDarkMode
-          ? "bg-surface-dark text-white border-input-line-dark"
-          : "bg-surface-light text-black border-input-line-light"
-          }`}
-        placeholderTextColor={ink.placeholder(isDarkMode)}
-        maxFontSizeMultiplier={1.4}
-      />
-      {errors.firstName && (
-        <View className="flex flex-row items-center mt-4 space-x-3">
-          <InformationCircleIcon
-            size={14}
-            color={ink.danger(true)}
-          />
-          <Text tone="danger" className="flex-shrink">{errors.firstName}</Text>
-        </View>
-      )}
-    </View>
+    <Field
+      label="Owner’s first name"
+      value={firstName}
+      onChangeText={(text) => {
+        setFirstName(text);
+        if (errors.firstName) {
+          setError((prev) => ({ ...prev, firstName: "" }));
+        }
+      }}
+      error={errors.firstName || undefined}
+    />
 
-    <View className="mt-4">
-      <Text
-        fontSize="text-sm"
-        fontWeight="font-semibold"
-        className="mb-2"
-      >
-        Owner's last name
-      </Text>
-      <TextInput
-        value={lastName}
-        onChangeText={(text) => {
-          setLastName(text);
-          if (errors.lastName) {
-            setError((prev) => ({ ...prev, lastName: "" }));
-          }
-        }}
-        className={`p-2 border rounded-card ${isDarkMode
-          ? "bg-surface-dark text-white border-input-line-dark"
-          : "bg-surface-light text-black border-input-line-light"
-          }`}
-        placeholderTextColor={ink.placeholder(isDarkMode)}
-        maxFontSizeMultiplier={1.4}
-      />
-      {errors.lastName && (
-        <View className="flex flex-row items-center mt-4 space-x-3">
-          <InformationCircleIcon
-            size={14}
-            color={ink.danger(true)}
-          />
-          <Text tone="danger" className="flex-shrink">{errors.lastName}</Text>
-        </View>
-      )}
-    </View>
+    <Field
+      label="Owner’s last name"
+      value={lastName}
+      onChangeText={(text) => {
+        setLastName(text);
+        if (errors.lastName) {
+          setError((prev) => ({ ...prev, lastName: "" }));
+        }
+      }}
+      error={errors.lastName || undefined}
+    />
   </>
 );
 
 export default function AboutYourself() {
   const router = useTypedNavigation();
-  const [isMerchant, setIsMerchant] = useState(false);
+  const route = useRoute();
+  const design = __DEV__ ? (route.params as { design?: AboutDesign } | undefined)?.design : undefined;
+  const [isMerchant, setIsMerchant] = useState(design?.merchant ?? false);
   // "I'm renting for a business" (ENG-352): a customer's only; the GSTIN comes after sign-up.
   const [forBusiness, setForBusiness] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [dob, setDob] = useState({
+  const [firstName, setFirstName] = useState(design?.firstName ?? "");
+  const [lastName, setLastName] = useState(design?.lastName ?? "");
+  const [businessName, setBusinessName] = useState(design?.businessName ?? "");
+  const [dob, setDob] = useState(design?.dob ?? {
     date: "",
     month: "",
     year: "",
@@ -462,18 +409,20 @@ export default function AboutYourself() {
     ownerName: "",
     businessName: "",
     sameName: "",
+    ...design?.errors,
   });
   const [dobError, setDobError] = useState("");
-  const [agreementChecked, setAgreementChecked] = useState(false);
+  const [agreementChecked, setAgreementChecked] = useState(design?.agreed ?? false);
   // A merchant also accepts the owner terms (ENG-122). The account does not exist
   // yet, so the tick is kept on the sign-up draft and sent once it does, against
   // the page and the version read here, signed out, and shown by the link below.
-  const [ownerTermsChecked, setOwnerTermsChecked] = useState(false);
+  const [ownerTermsChecked, setOwnerTermsChecked] = useState(design?.ownerTermsAccepted ?? false);
   const publicTerms = usePublicTerms();
-  const ownerTerms = publicTerms.data?.owner;
+  // A seed brings its own terms, so the frame does not depend on QA's.
+  const ownerTerms = design?.ownerTerms ?? publicTerms.data?.owner;
 
   const openOwnerTerms = () => {
-    if (!ownerTerms?.url) return;
+    if (design || !ownerTerms?.url) return;
     // The owner terms themselves, not the app's general Terms screen: what is
     // recorded is an acceptance of this page.
     Linking.openURL(ownerTerms.url).catch(() =>
@@ -481,9 +430,7 @@ export default function AboutYourself() {
     );
   };
 
-  const { color } = useTheme();
-  const { theme } = useGlobalContext();
-  const isDarkMode = theme === "dark";
+  const { color, isDark: isDarkMode } = useTheme();
   const { saveUser } = useAuthContext();
 
   const calculateAge = useCallback(
@@ -583,6 +530,8 @@ export default function AboutYourself() {
   }, [dob, isMerchant, calculateAge]);
 
   const handleSubmit = useCallback(() => {
+    // A design seed never saves the draft or moves on.
+    if (design) return;
     if (validateForm()) {
       const monthIndex = MONTHS.indexOf(dob.month);
       const formattedDob =
@@ -608,181 +557,147 @@ export default function AboutYourself() {
       });
       router.navigate("Password");
     }
-  }, [isMerchant, forBusiness, dob, firstName, lastName, businessName, ownerTermsChecked, ownerTerms?.version, validateForm, saveUser, router]);
+  }, [design, isMerchant, forBusiness, dob, firstName, lastName, businessName, ownerTermsChecked, ownerTerms?.version, validateForm, saveUser, router]);
 
   return (
-    <StaticContainer>
-      <View className="flex-1 ">
-        <HeaderIndicator percentage={30} />
+    <NonScrollableContainer>
+      <HeaderIndicator percentage={30} />
 
-        <ScrollContainer>
-          <View className="flex-1 mb-[100px]">
-            <View className="flex">
-              <Text
-                fontSize="text-2xl"
-                fontWeight="font-bold"
-              >
-                Tell us about yourself
-              </Text>
-              <Text
-                fontSize="text-base"
-                className={`${isDarkMode ? "text-muted-dark" : "text-muted-light"
-                  } mt-1`}
-              >
-                Spill the beans already
-              </Text>
-            </View>
+      <ScrollContainer
+        containerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: 24, gap: SECTION_GAP }}
+      >
+        <View style={{ gap: 4 }}>
+          <Text role="screenTitle">Tell us about yourself</Text>
+          <Text fontSize="text-sm" lineHeight={20} tone="body">
+            Spill the beans already
+          </Text>
+        </View>
 
-            <View>
-              <View className="mt-4">
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-bold"
-                  className="mb-2"
-                >
-                  Account type
-                </Text>
-                <View
-                  className={`mt-2 p-3 rounded-card border flex-row items-center justify-between ${
-                    isDarkMode
-                      ? "bg-surface-dark border-input-line-dark"
-                      : "bg-surface-light border-input-line-light"
-                  }`}
-                >
-                  <Text
-                    fontSize="text-sm"
-                    className={isDarkMode ? "text-white" : "text-black"}
-                  >
-                    Are you a merchant?
-                  </Text>
-                  <CheckBox
-                    checked={isMerchant}
-                    onPress={() => {
-                      setIsMerchant((prev) => !prev);
-                      setDobError("");
-                    }}
-                  />
-                </View>
-                <Text
-                  className={`mt-2 ${isDarkMode ? "text-muted-dark" : "text-muted-light"}`}
-                >
-                  Merchant accounts require admin approval before posting listings.
-                </Text>
-                {!isMerchant && (
-                  <>
-                    <View
-                      className={`mt-3 p-3 rounded-card border flex-row items-center justify-between ${
-                        isDarkMode
-                          ? "bg-surface-dark border-input-line-dark"
-                          : "bg-surface-light border-input-line-light"
-                      }`}
-                    >
-                      <Text fontSize="text-sm" className={isDarkMode ? "text-white" : "text-black"}>
-                        I'm renting for a business
-                      </Text>
-                      <CheckBox checked={forBusiness} onPress={() => setForBusiness((prev) => !prev)} />
-                    </View>
-                    <Text className={`mt-2 ${isDarkMode ? "text-muted-dark" : "text-muted-light"}`}>
-                      Add your GSTIN later in Profile to get GST invoices.
-                    </Text>
-                  </>
-                )}
-              </View>
-            </View>
-
-            {!isMerchant && (
-              <IndividualForm
-                firstName={firstName}
-                lastName={lastName}
-                setFirstName={setFirstName}
-                setLastName={setLastName}
-                errors={errors}
-                isDarkMode={isDarkMode}
-                setError={setErrors}
-                dob={dob}
-                setDob={setDob}
-                dobError={dobError}
-                setDobError={setDobError}
+        {/* 25271 "Account type": label, card, helper, 8 apart; a 4pt spacer
+            before the second card. */}
+        <View style={{ gap: 8 }}>
+          <Text role="fieldLabel">Account type</Text>
+          <CardRow
+            label="Are you a merchant?"
+            checked={isMerchant}
+            onPress={() => {
+              setIsMerchant((prev) => !prev);
+              setDobError("");
+            }}
+          />
+          <Text role="fieldHint">
+            Merchant accounts require admin approval before posting listings.
+          </Text>
+          {!isMerchant && (
+            <>
+              <View style={{ height: 4 }} />
+              <CardRow
+                label="I’m renting for a business"
+                checked={forBusiness}
+                onPress={() => setForBusiness((prev) => !prev)}
               />
-            )}
-
-            {isMerchant && (
-              <BusinessForm
-                firstName={firstName}
-                lastName={lastName}
-                businessName={businessName}
-                setFirstName={setFirstName}
-                setLastName={setLastName}
-                setBusinessName={setBusinessName}
-                errors={errors}
-                isDarkMode={isDarkMode}
-                setError={setErrors}
-              />
-            )}
-
-            {errors.sameName && (
-              <View className="flex flex-row items-center mt-4 space-x-3">
-                <InformationCircleIcon
-                  size={14}
-                  color={ink.danger(true)}
-                />
-                <Text tone="danger" className="flex-shrink">{errors.sameName}</Text>
-              </View>
-            )}
-          </View>
-        </ScrollContainer>
-
-        <View className="py-5">
-          {isMerchant && (
-            <View className="mb-1">
-              {ownerTerms ? (
-                <OwnerTermsTick
-                  checked={ownerTermsChecked}
-                  onChange={setOwnerTermsChecked}
-                  onOpenTerms={openOwnerTerms}
-                />
-              ) : publicTerms.isError ? (
-                // No page and no version means nothing to tick: say so and offer
-                // another try, rather than a box that records a page nobody saw.
-                <View className="flex-row items-center justify-between mb-2">
-                  <Text tone="danger" fontSize="text-sm" style={{ flex: 1 }}>
-                    We couldn't load the owner terms.
-                  </Text>
-                  <Button variant="outline" size="compact" onPress={() => void publicTerms.refetch()}>
-                    Try again
-                  </Button>
-                </View>
-              ) : (
-                <Text tone="dim" fontSize="text-sm" className="mb-2">
-                  Loading the owner terms…
-                </Text>
-              )}
-            </View>
+              <Text role="fieldHint">
+                Add your GSTIN later in Profile to get GST invoices.
+              </Text>
+            </>
           )}
-          <View className="flex-row items-center mb-4">
+        </View>
+
+        {!isMerchant && (
+          <IndividualForm
+            firstName={firstName}
+            lastName={lastName}
+            setFirstName={setFirstName}
+            setLastName={setLastName}
+            errors={errors}
+            isDarkMode={isDarkMode}
+            setError={setErrors}
+            dob={dob}
+            setDob={setDob}
+            dobError={dobError}
+          />
+        )}
+
+        {isMerchant && (
+          <BusinessForm
+            firstName={firstName}
+            lastName={lastName}
+            businessName={businessName}
+            setFirstName={setFirstName}
+            setLastName={setLastName}
+            setBusinessName={setBusinessName}
+            errors={errors}
+            setError={setErrors}
+          />
+        )}
+
+        {/* No frame draws it: the non-field message row (plan §3). */}
+        {errors.sameName ? <MessageRow tone="danger">{errors.sameName}</MessageRow> : null}
+      </ScrollContainer>
+
+      {/* 25271/25419 "Footer": the ticks above the bar, 16 apart, under the
+          footer's own hairline; the bar below draws none (its strip starts at
+          the footer's end, y739). Each 44pt checkbox target is cancelled
+          vertically so a tick row is as tall as its text (20 / 40). */}
+      <View
+        style={{
+          borderTopWidth: 1,
+          borderTopColor: color.line,
+          backgroundColor: color.canvas,
+          paddingTop: 16,
+          paddingHorizontal: SCREEN_GUTTER,
+          gap: 16,
+        }}
+      >
+        {isMerchant && (
+          ownerTerms ? (
+            <View style={{ marginVertical: -12 }}>
+              <OwnerTermsTick
+                checked={ownerTermsChecked}
+                onChange={setOwnerTermsChecked}
+                onOpenTerms={openOwnerTerms}
+              />
+            </View>
+          ) : publicTerms.isError ? (
+            // No page and no version means nothing to tick: say so and offer
+            // another try, rather than a box that records a page nobody saw.
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+              <Text fontSize="text-xs" lineHeight={16} style={{ flex: 1, color: color.dangerStrong }}>
+                We couldn't load the owner terms.
+              </Text>
+              <Button variant="outline" tone="tonal" size="compact" onPress={() => void publicTerms.refetch()}>
+                Try again
+              </Button>
+            </View>
+          ) : (
+            <Text role="fieldHint">Loading the owner terms…</Text>
+          )
+        )}
+        <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+          <View style={{ marginVertical: -12 }}>
             <CheckBox
               checked={agreementChecked}
               onPress={() => setAgreementChecked(!agreementChecked)}
+              accessibilityLabel="I agree to provide accurate and verifiable information"
             />
-            {/* flex-1: the sentence is 350pt on one line, so beside the box it ran
-                ~30pt past the content edge and "information" was cut by the
-                screen, even at 390. */}
-            <Text
-              className={`ml-2 flex-1 ${isDarkMode ? "text-muted-dark" : "text-muted-light"
-                }`}
-            >
-              I agree to provide accurate and verifiable information
-            </Text>
           </View>
-          <Button
-            variant="primary"
-            onPress={handleSubmit}
-            disabled={!agreementChecked || (isMerchant && !(ownerTerms && ownerTermsChecked))}
-          >
-            Continue
-          </Button>
+          {/* flex-1: the sentence is 350pt on one line, so beside the box it ran
+              ~30pt past the content edge and "information" was cut by the
+              screen, even at 390. */}
+          <Text fontSize="text-sm" lineHeight={20} tone="body" style={{ flex: 1, marginLeft: 8 }}>
+            I agree to provide accurate and verifiable information
+          </Text>
         </View>
       </View>
-    </StaticContainer>
+
+      <BottomBar
+        style={{ borderTopWidth: 0 }}
+        primary={{
+          label: "Continue",
+          onPress: handleSubmit,
+          disabled: !agreementChecked || (isMerchant && !(ownerTerms && ownerTermsChecked)),
+        }}
+      />
+    </NonScrollableContainer>
   );
 }

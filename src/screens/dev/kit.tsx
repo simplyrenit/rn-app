@@ -46,9 +46,6 @@ const noop = () => {};
 const CAMERA = Image.resolveAssetSource(require("../../dev/assets/kit-listing-camera.png")).uri;
 // Wait for fonts, the photo and the scroll to settle before measuring.
 const SETTLE_MS = 600;
-// ConfirmSheet's snap height (SHEET_HEIGHT in core/confirm-sheet.tsx). Its box cannot be measured from outside the
-// gorhom modal, so it is computed from this; change both together.
-const CONFIRM_SHEET_HEIGHT = 21 + 52 + 4 * 20 + 8 + 124;
 // Components that hug their content (kit HUG width): the slot must not hand them the kit width, or a pill drawn too
 // wide or too narrow would still measure as the kit's box and the diff's size check could not catch it.
 const HUG = new Set(["2073:14326", "2073:14380", "2073:14388", "2100:29942"]);
@@ -268,28 +265,35 @@ function logBox(kit: KitItem, v: KitVariant, box: { x: number; y: number; w: num
   );
 }
 
-/** The confirm sheet is a gorhom modal: presented on open, its box computed from the window (see CONFIRM_SHEET_HEIGHT). */
+/**
+ * The confirm sheet is a gorhom modal whose box cannot be measured from outside it. It sizes itself from its measured
+ * line counts, so it is presented from `onReady`, which hands over that height, and the box is computed from it.
+ */
 function ConfirmSlot({ kit, v }: { kit: KitItem; v: KitVariant }) {
   const ref = useRef<BottomSheetModal>(null);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const onReady = (sheetHeight: number) => {
+    ref.current?.present();
+    timer.current = setTimeout(() => {
+      const top = height - sheetHeight - insets.bottom;
+      logBox(kit, v, { x: 0, y: top, w: width, h: v.h - v.homeIndicator }, width, "computed from the sheet's snap height, not measured");
+    }, SETTLE_MS * 2);
+  };
   useEffect(() => {
     // Captured here: React clears ref.current before this effect's cleanup runs.
     const sheet = ref.current;
-    sheet?.present();
-    const timer = setTimeout(() => {
-      const top = height - CONFIRM_SHEET_HEIGHT - insets.bottom;
-      logBox(kit, v, { x: 0, y: top, w: width, h: v.h - v.homeIndicator }, width, "computed from the sheet's snap height, not measured");
-    }, SETTLE_MS * 2);
     // A gorhom modal outlives the screen that presented it; without this it covers the next DevKit item.
     return () => {
-      clearTimeout(timer);
+      clearTimeout(timer.current);
       sheet?.dismiss();
     };
   }, []);
   return (
     <ConfirmSheet
       ref={ref}
+      onReady={onReady}
       tone="danger"
       title="Archive this product?"
       body="Customers can no longer find or book it. You can bring it back from Archived."

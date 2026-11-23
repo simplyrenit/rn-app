@@ -133,6 +133,15 @@ def main():
     os.makedirs(SHOTS, exist_ok=True)
     vd = os.path.join(HERE, 'visual_diff.py')
 
+    try:
+        run_frames(a, rows, device, cfg, vd)
+    finally:
+        # Leave the device as it was found, even after a failure or Ctrl-C: fixtures (and any design session) off.
+        open_url(a.platform, device, 'renit-qa://dev/fixture/off')
+        subprocess.run([sys.executable, os.path.join(HERE, 'tracker.py')])
+
+
+def run_frames(a, rows, device, cfg, vd):
     for r in rows:
         fid, sec = r['frameId'], r['section']
         name = fid.replace(':', '-')
@@ -164,9 +173,6 @@ def main():
         verdict = 'pass' if res['pass'] else 'fail'
         print(f"{fid}\t{a.platform}\t{verdict} {res['mismatch_pct']:.2f}%\tsplit={b and f'{b:g}pt (ref bottom {ref_bottom:g}pt)'}\t{os.path.relpath(out, ROOT)}.heat.png")
 
-    # Leave the device as it was found: fixtures (and any design session) off.
-    open_url(a.platform, device, 'renit-qa://dev/fixture/off')
-    subprocess.run([sys.executable, os.path.join(HERE, 'tracker.py')])
 
 
 if __name__ == '__main__':
