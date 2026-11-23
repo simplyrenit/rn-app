@@ -19,7 +19,8 @@ interface CustomBottomSheetModalProps {
   children: React.ReactNode;
   scrollView?: boolean;
   /**
-   * Opt-in: the 60% scrim the Figma sheets draw. Every other sheet keeps 50%.
+   * Dark mode only: the 60% scrim (every other dark sheet keeps 50%). In light
+   * mode every sheet draws the 2.1 frames' 40% (#00000066), with or without it.
    * (It used to opt into the Figma grabber too; every sheet has the 2.1 kit
    * grabber now.)
    */
@@ -47,7 +48,7 @@ const CustomBottomSheetModal = forwardRef<
     const [isOpen, setIsOpen] = useState(false);
     const modalRef = useRef<BottomSheetModal>(null);
     const { theme } = useGlobalContext();
-    const { color } = themeFor(theme);
+    const { color, isDark: darkTheme } = themeFor(theme);
     const { height: windowHeight } = useWindowDimensions();
     const insets = useSafeAreaInsets();
 
@@ -139,7 +140,7 @@ const CustomBottomSheetModal = forwardRef<
         // modal at all.
         appearsOnIndex={0}
         disappearsOnIndex={-1}
-        opacity={frame ? 0.6 : 0.5}
+        opacity={sheetScrimOpacity(darkTheme, frame)}
         pressBehavior="close"
       />
     );
@@ -196,6 +197,15 @@ const CustomBottomSheetModal = forwardRef<
     );
   }
 );
+
+/**
+ * The scrim behind a sheet. Light: 40% black on every sheet, as every 2.1 flow frame draws it (#00000066, ENG-427
+ * D1; it was 50%, or 60% with `frame`). Dark is unchanged: 60% with `frame`, else 50%.
+ */
+export function sheetScrimOpacity(dark: boolean, frame: boolean) {
+  if (!dark) return 0.4;
+  return frame ? 0.6 : 0.5;
+}
 
 const styles = StyleSheet.create({
   contentContainer: {

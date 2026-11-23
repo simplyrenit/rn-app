@@ -71,6 +71,14 @@ describe("DateRangePicker on the 2.1 frame (ENG-427)", () => {
     expect(letters).toEqual(["S", "M", "T", "W", "T", "F", "S"]);
   });
 
+  it("draws the frames' 40% scrim in light (ENG-427 D1), not the 45% ink.scrim token", () => {
+    const renderer = render();
+    const scrim = renderer.root.findAll(
+      (node: any) => node.props.accessibilityLabel === "Dismiss date picker" && node.props.style
+    )[0];
+    expect(style(scrim).backgroundColor).toBe("#00000066");
+  });
+
   it("marks the range as one band capped on the outer sides, with discs on the ends", () => {
     const renderer = render();
     const start = style(dayCell(renderer, "2026-11-28"));

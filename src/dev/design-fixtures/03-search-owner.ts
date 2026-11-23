@@ -129,14 +129,24 @@ const aarav: PublicOwner = {
   shop_url: null,
 };
 
+// search.tsx's dev-only seed: What? does not autofocus, so the frames' unfocused field is reachable. Not on 2089:29719,
+// whose field is typed into (and so focused) anyway.
+const resting = { resting: true } as const;
+
 /** Design fixtures for ENG-427 group C, keyed by frame id (registry.ts). */
 export const fixtures: Record<string, DevFixture> = {
-  // search · Empty. Hide the simulator keyboard before diffing: What? autofocuses (plan precondition 6).
-  "2089:29597": { route: "Search", responses: {}, session },
+  // search · Empty. `design.resting` keeps What? unfocused (no ring, no keyboard), as the frame draws it; in real use
+  // it autofocuses (ENG-427 D7).
+  "2089:29597": { route: "Search", params: { design: resting }, responses: {}, session },
   // search · Filled. The range has no route param: tap When → 28 → 30 → Confirm (until ENG-428's design-state seed).
   "2089:29654": {
     route: "Search",
-    params: { what: "Bluetooth speaker", where: "Andheri West, Mumbai", coords: { lat: 19.1364, lng: 72.8296 } },
+    params: {
+      what: "Bluetooth speaker",
+      where: "Andheri West, Mumbai",
+      coords: { lat: 19.1364, lng: 72.8296 },
+      design: resting,
+    },
     responses: {},
     session,
   },
@@ -156,9 +166,9 @@ export const fixtures: Record<string, DevFixture> = {
     session,
   },
   // search-where-sheet · Nearby places: tap Where. The rows are Google nearbysearch (bare axios), not servable here.
-  "2089:29793": { route: "Search", responses: {}, session },
+  "2089:29793": { route: "Search", params: { design: resting }, responses: {}, session },
   // date-range-picker · Range picked: tap When → 28 → 30.
-  "2089:29905": { route: "Search", responses: {}, session },
+  "2089:29905": { route: "Search", params: { design: resting }, responses: {}, session },
   // owners-products · Grid. The app passes the owner's first name (plan Decision 9).
   "2089:24680": {
     route: "OwnersProducts",

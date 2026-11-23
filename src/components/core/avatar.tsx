@@ -17,23 +17,6 @@ interface Props {
   size?: number;
 }
 
-/**
- * A stable colour per person, so a screen full of monograms is scannable
- * instead of being one repeated shape. Hues are spaced around the wheel and
- * held at a saturation/lightness that clears AA against white text.
- */
-const MONOGRAM_HUES = [262, 210, 172, 145, 32, 350, 288, 196];
-
-function hueFor(name?: string | null) {
-  const key = (name ?? "").trim().toLowerCase();
-  if (!key) return MONOGRAM_HUES[0];
-  let hash = 0;
-  for (let i = 0; i < key.length; i += 1) {
-    hash = (hash * 31 + key.charCodeAt(i)) % 100000;
-  }
-  return MONOGRAM_HUES[hash % MONOGRAM_HUES.length];
-}
-
 function initialsOf(name?: string | null) {
   const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "";
@@ -42,19 +25,24 @@ function initialsOf(name?: string | null) {
 }
 
 /**
+ * The frames' size-keyed initials (03 2089:36248 / 36523 72pt, 2089:24740 40pt; 01 and 04 draw the same "Avatar
+ * (initials)" at 40 and 48): 72 and up is SemiBold 20/28 in brand, anything smaller SemiBold 14/20 at 70% black.
+ */
+const LARGE_AVATAR = 72;
+
+/**
  * A circular avatar that always holds its silhouette.
  *
- * The hairline ring is the point: without it a light-coloured photo bleeds into
- * a light background and the circle simply disappears. When there is no photo it
- * falls back to initials on a brand wash rather than an anonymous grey disc.
+ * A photo keeps a hairline ring: without it a light-coloured photo bleeds into a light background and the circle
+ * simply disappears. With no photo it draws the 2.1 frames' "Avatar (initials)": the brand tint (#EDEDFC) disc with
+ * no ring and the initials above (ENG-427 D3; it was a per-person hued disc with white initials).
  */
 export function Avatar({ uri, name, size = 40 }: Props) {
-  const { color, isDark } = useTheme();
+  const { color } = useTheme();
   const initials = initialsOf(name);
   const photo = photoUrlOf(uri);
   const showPhoto = photo !== null;
-  const hue = hueFor(name);
-  const monogramFill = `hsl(${hue}, 46%, ${isDark ? 30 : 42}%)`;
+  const large = size >= LARGE_AVATAR;
 
   return (
     <View
@@ -66,9 +54,9 @@ export function Avatar({ uri, name, size = 40 }: Props) {
         height: size,
         borderRadius: radius.full,
         overflow: "hidden",
-        borderWidth: 1,
+        borderWidth: showPhoto ? 1 : 0,
         borderColor: color.line,
-        backgroundColor: showPhoto ? color.brandWash : monogramFill,
+        backgroundColor: showPhoto ? color.brandWash : color.brandPanel,
         alignItems: "center",
         justifyContent: "center",
       }}
@@ -81,9 +69,12 @@ export function Avatar({ uri, name, size = 40 }: Props) {
           transition={150}
         />
       ) : (
+        // The disc is a fixed size, so the initials do not scale with the text size (the label is on the disc).
         <Text
-          fontWeight="font-bold"
-          style={{ color: color.onPhoto, fontSize: size * 0.38 }}
+          fontSize={large ? "text-lg" : "text-sm"}
+          fontWeight="font-semibold"
+          tone={large ? "brand" : "body"}
+          allowFontScaling={false}
         >
           {initials}
         </Text>

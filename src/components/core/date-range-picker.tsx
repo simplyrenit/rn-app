@@ -262,7 +262,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       onRequestClose={onCancel}
     >
       <TouchableOpacity
-        style={[styles.modalBackground, { backgroundColor: ink.scrim(isDark) }]}
+        // Light: the 2.1 frames' 40% (#00000066, ENG-427 D1), here only; the shared `ink.scrim` token stays 45% for
+        // its other users. Dark keeps the token's 60%.
+        style={[styles.modalBackground, { backgroundColor: isDark ? ink.scrim(true) : "#00000066" }]}
         activeOpacity={1}
         accessibilityLabel="Dismiss date picker"
         onPress={onCancel}

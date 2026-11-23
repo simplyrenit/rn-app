@@ -126,7 +126,7 @@ Props added; nothing renamed or removed.
   - The Verified chip stays on the photo, bottom-left.
 - **`FavouriteButton`:**
   - `tile` now draws the kit heart: a 32 disc of #FFFFFFEB with a 0/1 blur-3 shadow of #0000002E (Android uses `elevation: 1`) in a 44 box, holding a black 24 outline heart at stroke 1.5. It looks the same in both themes.
-  - The saved heart keeps `darkColors.danger`.
+  - The saved heart keeps `darkColors.danger`. (Superseded for `tile` by ENG-427 D4: brand purple; see below.)
 
 ## ENG-428 additions
 
@@ -169,7 +169,7 @@ Props added; nothing renamed or removed.
 - **`BottomBar`**: API as above. Strip padding 16/24, `paddingBottom` 16 + `insets.bottom` (16 with the iOS keyboard up); `cta-text` 4 + inset with a 4 gap (drawn as `full-cta` when `secondary` is missing). `children` mode is a column with gap 8 and the same insets.
 - **`SheetHeader`**: API as above; `grabber` default stays true (it draws the 21pt grabber row and the sheet's top radius, for standalone/DevKit use). Inside `CustomBottomSheetModal`, pass `grabber={false}`: gorhom draws the handle. The title row is `minHeight` 44, so a long title wraps. Close X is heroicons outline `XMarkIcon` 24 at `textDim`, 10pt hitSlop.
 - **`SheetFooter`**: API as above. The secondary link is plain SemiBold 14/20 `brandText` text (12pt hitSlop), not `Button`. `paddingBottom` 16 + `insets.bottom`.
-- **`CustomBottomSheetModal`**: every sheet now gets the kit grabber (44×5 `line`, 8 above and below, r24 top). `frame` now only selects the 60% scrim. With the keyboard up (ENG-438), a numeric snap keeps its height and makes room for the keyboard (iOS: grows by keyboard − inset and pads its scroll content by the same; Android: capped to the room above the keyboard) instead of being scaled by 0.9; percentage snaps still go to 90%.
+- **`CustomBottomSheetModal`**: every sheet now gets the kit grabber (44×5 `line`, 8 above and below, r24 top). `frame` now only selects the 60% scrim (dark mode only since ENG-427 D1; light is 40% on every sheet, see below). With the keyboard up (ENG-438), a numeric snap keeps its height and makes room for the keyboard (iOS: grows by keyboard − inset and pads its scroll content by the same; Android: capped to the room above the keyboard) instead of being scaled by 0.9; percentage snaps still go to 90%.
 - **`ConfirmSheet`**: props as before, plus (ENG-438) `onDismiss`, `onReady(height)` and `error`. Draws 2110:30387: `SheetHeader` (no X), body 14/20 `textBody`, actions column (padding 16/24/4, gap 4) with `warning` (danger, `minHeight` 56 passed by the sheet) or `primary` (default) full width and `ghost tone="muted"` Cancel below. Snap height from the measured title and body lines (`confirmSheetHeight`; 285 + inset before they are measured), handed to `onReady(height)`; an error that appears keeps the last measured height until its lines are in.
 
 ## ENG-427 (implemented)
@@ -186,6 +186,11 @@ Props added; nothing renamed or removed.
   - `Card`: the "Delivery" word's fee is green with the word (2089:31917), and the Verified chip sits 8/8 from the photo's corner (was 6/6).
   - `VerifiedBusinessBadge`: `variant="chip"` is the 2.1 pill: the word alone, 12 SemiBold success green on `successWash`, 24 high, 10 each side, over an opaque `surface` so dark mode's 16% wash still reads on a photo (was a solid brand fill with the shield). New prop `size?: "sm" | "md"` (default `"sm"`, `mark` only): `"md"` is the owner profile's 14/20 SemiBold word, 4 from the shield (2089:36248).
   - `SectionHeader`: the subtitle is `dim` (was `body`) and sits 4 under the title (was 2); only `owners-review.tsx` passes one (2089:24740).
+- **Pass 2 kit changes (main-thread decisions D1, D3, D4; props unchanged, every story's call sites inherit them):**
+  - `CustomBottomSheetModal` scrim (D1): **light mode is 40% black on every sheet**, `frame` or not, as every flow frame's scrim layer draws it (`#00000066`). Dark is unchanged (60% with `frame`, else 50%). `frame` now only matters in dark mode. Exported `sheetScrimOpacity(dark, frame)` for tests. Sheet frames in every section (04, 05, 06, 09, 10, 13, …) lose their scrim note in light; re-diff them.
+  - `DateRangePicker` scrim (D1): `#00000066` in light, set in the picker only; dark keeps `ink.scrim(true)` (60%). The shared `ink.scrim` token is **unchanged** (45% light), so anything else drawing it still gets 45%.
+  - `Avatar` with no photo (D3): the frames' "Avatar (initials)": a `brandPanel` (#EDEDFC) disc, **no ring**, initials SemiBold, `allowFontScaling={false}`. Size-keyed: `size >= 72` is 20/28 `brandText` (03 2089:36248 / 36523); smaller is 14/20 `textBody` 70% (03 2089:24740, 01 chat at 48, 04 reviews/owner at 40/48). The per-person hued disc with white initials is gone. A photo still has the 1px `line` ring over `brandWash`. Frames that draw a **different** avatar, which this does not match (the owning story adds an optional prop or draws its own): 04 cart / booking-dates-card / 2089:24972 (40, brand 14/20; `cart/cart.tsx`, ENG-429), 05 review-and-book-card (40, brand Bold 16/24; `booking/card-lines.tsx`, ENG-430), 08 shop-booking (40, brand SemiBold 16/24; `card-lines.tsx`, ENG-433), 14 notifications (48, brand 16/24; `profileScreens/notification.tsx`, ENG-439). 12/13 draw the 48 brand 16/24 with a ring, which ENG-438's local `ProfileAvatar` (`profile/post-auth/profile-img.tsx`) already draws; left as is.
+  - `FavouriteButton` `tile` (D4): the **saved** heart is solid `#635BE8` (brand; the disc is white in both themes), as Saved 2089:27772 fills it (was `darkColors.danger`). The unsaved black outline is unchanged. The PDP's chip (`onPhoto`) and `ink` hearts keep red: no frame draws them saved.
 - **Adoption correction:** `search-results.tsx` has no bottom bar in any frame. Its "Button over `insets.bottom`" was the filter sheet's footer, now `SheetFooter`; the `BottomBar` row below no longer lists it.
 
 ## Adoption

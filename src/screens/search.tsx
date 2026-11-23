@@ -21,7 +21,7 @@ import { useRoute } from "@react-navigation/native";
 import axios from "axios";
 import * as Location from "expo-location";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { BackHandler, Platform, TouchableOpacity, View } from "react-native";
+import { BackHandler, Dimensions, Platform, TouchableOpacity, View } from "react-native";
 import { AutocompleteDropdown } from "react-native-autocomplete-dropdown";
 import {
   GestureHandlerRootView,
@@ -71,12 +71,20 @@ const SHEET_ROW = 56;
 const SHEET_ICON = 24;
 // Every overlay frame in the 2.1 file draws its scrim at #00000066.
 const SHEET_SCRIM = 0.4;
+// The where-sheet's 50/75/90% stops, of the screen: gorhom's percentages are of its container, which starts under
+// the status bar, so 75% came out ~47pt short of the frame's 633 (2089:29793, 75% of 844).
+const WHERE_SNAPS = [0.5, 0.75, 0.9];
+
+type SearchDesign = { resting: true };
 
 export default function SearchScreen() {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const route = useRoute<RouteProps<"Search">>();
   const { what, where, coords } = route?.params ?? {};
+  // Dev-only design seed (ENG-427 D7): only DevFixture passes it. What? stays unfocused, so a frame's resting state
+  // (2089:29597, 29654) is on screen without the focus ring and the keyboard.
+  const design = __DEV__ ? (route?.params as { design?: SearchDesign } | undefined)?.design : undefined;
 
   const [selectedItem, setSelectedItem] = useState<string | null>(what ?? null);
   const [selectedLocationName, setSelectedLocationName] = useState<string | null>(
@@ -486,6 +494,9 @@ export default function SearchScreen() {
                     <MagnifyingGlassIcon color={color.textDim} size={ICON_SIZE} strokeWidth={1.5} />
                   }
                   rightButtonsContainerStyle={{ right: CLEAR_OFFSET }}
+                  // The library keys its X on the text typed into it, so a search reopened with its words (Edit
+                  // this search) had no X; the field's own value decides, as 2089:29654 draws it.
+                  showClear={Boolean(selectedItem)}
                   useFilter={false}
                   onFocus={() => {
                     setTimeout(() => setIsFocus(true), 100);
@@ -499,7 +510,7 @@ export default function SearchScreen() {
                     placeholder: "“Washing machine”",
                     // The screen exists for exactly one purpose, so the field it
                     // exists for takes focus on open rather than costing a tap.
-                    autoFocus: true,
+                    autoFocus: !design?.resting,
                     autoCapitalize: "none",
                     autoComplete: "off",
                     autoCorrect: false,
@@ -618,7 +629,7 @@ export default function SearchScreen() {
               ref={bottomSheetRef}
               backdropComponent={renderBackdrop}
               index={1}
-              snapPoints={["50%", "75%", "90%"]}
+              snapPoints={WHERE_SNAPS.map((share) => Math.round(share * Dimensions.get("screen").height))}
               enablePanDownToClose={true}
               // The kit Sheet header draws the grabber and the sheet's 24 top
               // corners, so gorhom's own handle is off.
