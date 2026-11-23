@@ -64,8 +64,8 @@ function RatingRow({
           StarIconComponent={Star}
         />
         <Text fontSize="text-md" fontWeight="font-semibold">
-          {/* One decimal once set ("4.0", "3.5"), a bare "0" when not, as the frame prints them (2089:35166). */}
-          {value ? value.toFixed(1) : 0}
+          {/* The value as before ("4", "3.5"); the frame's "4.0" is a copy change this story does not make. */}
+          {value}
         </Text>
       </View>
     </View>

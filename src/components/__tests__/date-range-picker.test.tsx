@@ -22,7 +22,7 @@ import { lightColors } from "@/lib/design-tokens";
 /**
  * date-range-picker · Range picked (Figma 2089:29905): November 2026, Nov 28 – Nov 30. The device check only works
  * while the 28th is ahead and on an en-US region, so this render is the lasting check: the clock is pinned before
- * the 28th and the header copy is read in en-US (run with LANG=en_US.UTF-8).
+ * the 28th and the header copy is read in en-US (skipped on another locale; run with LANG=en_US.UTF-8).
  */
 describe("DateRangePicker on the 2.1 frame (ENG-427)", () => {
   beforeAll(() => {
@@ -37,8 +37,10 @@ describe("DateRangePicker on the 2.1 frame (ENG-427)", () => {
     act(() => {
       renderer = TestRenderer.create(
         <DateRangePicker
-          startDate={new Date("2026-11-28")}
-          endDate={new Date("2026-11-30")}
+          // Noon UTC: the picker keys days by toISOString (UTC) and prints them in local time, and noon is the
+          // same calendar day for both in every timezone from UTC-11 to UTC+11.
+          startDate={new Date(Date.UTC(2026, 10, 28, 12))}
+          endDate={new Date(Date.UTC(2026, 10, 30, 12))}
           onConfirm={() => {}}
           onCancel={() => {}}
           maxDaysAhead={180}
@@ -54,8 +56,9 @@ describe("DateRangePicker on the 2.1 frame (ENG-427)", () => {
   const dayCell = (renderer: any, iso: string) =>
     renderer.root.findAll((node: any) => node.props.accessibilityLabel === iso && node.props.style)[0];
 
-  it("prints the frame's header in en-US", () => {
-    expect(Intl.DateTimeFormat().resolvedOptions().locale.startsWith("en-US")).toBe(true);
+  // The picker formats with the device locale, so the copy is only checked where that is en-US.
+  const enUS = Intl.DateTimeFormat().resolvedOptions().locale.startsWith("en-US");
+  (enUS ? it : it.skip)("prints the frame's header in en-US", () => {
     const renderer = render();
     expect(textNode(renderer, "When do you need it?")).toBeTruthy();
     const range = textNode(renderer, "Nov 28 — Nov 30");

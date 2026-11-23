@@ -124,7 +124,7 @@ export function Card({
             <View style={[imageStyle, { backgroundColor: color.skeleton }]} />
           )}
 
-          {/* Solid, not the bare mark: it has to read on any photo. */}
+          {/* The chip, not the bare mark: it has to read on any photo. */}
           <View style={{ position: "absolute", left: 8, bottom: 8 }}>
             <VerifiedBusinessBadge verified={businessVerified} variant="chip" />
           </View>
@@ -163,11 +163,11 @@ export function Card({
               so it leads the line when we have it; with delivery facts the
               delivery line takes the slot instead. */}
           {delivery ? (
-            // The word is what the customer scans for: green when the shop
-            // delivers to their address; the fee keeps the line's own tone.
+            // The word is what the customer scans for: green, with its fee, when
+            // the shop delivers to their address.
             <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-xs" tone="dim">
               {delivery.km ? `${delivery.km} · ` : ""}
-              {/* The frames (2089:31917) draw the fee in the word's green too. */}
+              {/* The frames (2089:31917) draw the fee in the word's green too (ENG-427). */}
               <Text fontSize="text-xs" tone={delivery.word === "Delivery" ? "success" : "dim"}>
                 {delivery.word}
                 {delivery.fee ? ` ${delivery.fee}` : ""}

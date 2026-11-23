@@ -168,13 +168,20 @@ const SUMMARY_BOTTOM = 12;
 const BLOCK_GAP = 16;
 const RESULTS_GAP = 24;
 const COLUMN_GAP = 18;
-/** The summary bar's card shadow, #0000000F 0/4 blur 16; dark keeps the hairline alone. */
 /**
  * The empty states sit 24 under the count, full width: the kit EmptyState pads
  * itself by the gutter, so the wrap bleeds out of the screen's own one and the
  * words get the frame's 342.
  */
 const EMPTY_WRAP = { marginHorizontal: -SCREEN_GUTTER, paddingTop: 24 } as const;
+/**
+ * A 20pt text link grown to a 44pt target by padding that the margin takes back,
+ * so the line stays where drawn. Android hit-tests a child only inside its
+ * parent's bounds (hitSlop too), so the links' parents get the same, to hold the
+ * whole target.
+ */
+const LINK_TARGET = { paddingVertical: 12, marginVertical: -12 } as const;
+/** The summary bar's card shadow, #0000000F 0/4 blur 16; dark keeps the hairline alone. */
 const SUMMARY_SHADOW = {
   shadowColor: "#000000",
   shadowOpacity: 0.06,
@@ -949,16 +956,19 @@ export default function SearchResults() {
 
         {/* Results */}
         <View
-          style={{
-            flexDirection: "row",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 8,
-          }}
+          style={[
+            {
+              flexDirection: "row",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 8,
+            },
+            LINK_TARGET,
+          ]}
         >
           {filterOn && !(isLoading && products.length === 0) ? (
             // Two lines, as drawn: the count, then "N more for self pickup" as its own button.
-            <View style={{ flexShrink: 1 }}>
+            <View style={[{ flexShrink: 1 }, LINK_TARGET]}>
               <Text accessibilityRole="header" fontSize="text-sm" fontWeight="font-semibold">
                 {deliverCountLine(split.deliver.length, split.pickup.length).shown}
               </Text>
@@ -967,9 +977,7 @@ export default function SearchResults() {
                   accessibilityRole="button"
                   accessibilityHint="Shows self pickup too"
                   onPress={() => setDeliversToMe(false)}
-                  // Its 20pt line, as drawn; the slop keeps the 44pt target.
-                  hitSlop={12}
-                  style={{ alignSelf: "flex-start" }}
+                  style={[{ alignSelf: "flex-start" }, LINK_TARGET]}
                 >
                   <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
                     {deliverCountLine(split.deliver.length, split.pickup.length).more}
@@ -990,7 +998,7 @@ export default function SearchResults() {
           )}
 
           {isFilterActive() && (
-            <TouchableOpacity accessibilityRole="button" onPress={clearFiltersAndSearch} hitSlop={12}>
+            <TouchableOpacity accessibilityRole="button" onPress={clearFiltersAndSearch} style={LINK_TARGET}>
               <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
                 Clear filters
               </Text>

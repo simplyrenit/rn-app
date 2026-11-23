@@ -178,6 +178,10 @@ Props added; nothing renamed or removed.
   - `accessibilityState?`: replaces the default `{ selected }` (the rail's radios and the spec checkboxes pass `{ checked }`);
   - `hitSlop?: Insets`: the chip is 40 high, so callers pass 2 top and bottom for a 44pt target.
   - Chip has no haptic; a caller that wants one wraps `onPress` with `selectionFeedback()`.
+- **Look changes to kit components (frames proved them wrong; every story's call sites see them):**
+  - `Card`: the "Delivery" word's fee is green with the word (2089:31917), and the Verified chip sits 8/8 from the photo's corner (was 6/6).
+  - `VerifiedBusinessBadge`: `variant="chip"` is the 2.1 pill: the word alone, 12 SemiBold success green on `successWash`, 24 high, 10 each side, over an opaque `surface` so dark mode's 16% wash still reads on a photo (was a solid brand fill with the shield). New prop `size?: "sm" | "md"` (default `"sm"`, `mark` only): `"md"` is the owner profile's 14/20 SemiBold word, 4 from the shield (2089:36248).
+  - `SectionHeader`: the subtitle is `dim` (was `body`) and sits 4 under the title (was 2); only `owners-review.tsx` passes one (2089:24740).
 - **Adoption correction:** `search-results.tsx` has no bottom bar in any frame. Its "Button over `insets.bottom`" was the filter sheet's footer, now `SheetFooter`; the `BottomBar` row below no longer lists it.
 
 ## Adoption

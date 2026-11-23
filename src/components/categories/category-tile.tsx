@@ -125,10 +125,13 @@ export function CategoryTile({
 function TileLabel({
   label,
   oneWord,
+  maxLines,
   style,
 }: {
   label: string;
   oneWord: boolean;
+  /** A cap for a label inside a fixed tile; under a tile it wraps freely. */
+  maxLines?: number;
   style: { marginTop?: number; width?: number | "100%" };
 }) {
   return (
@@ -136,8 +139,8 @@ function TileLabel({
       fontSize="text-xs"
       fontWeight="font-medium"
       tone="body"
-      numberOfLines={oneWord ? 1 : undefined}
-      adjustsFontSizeToFit={oneWord}
+      numberOfLines={oneWord ? 1 : maxLines}
+      adjustsFontSizeToFit={oneWord || maxLines !== undefined}
       minimumFontScale={0.8}
       // The label is held to its cell (70dp at 360), so it does not follow the
       // system font size: at Android's "Large" (1.3) "Automobiles" and
@@ -185,7 +188,9 @@ export function SubCategoryTile({
           paddingHorizontal: 2,
         }}
       >
-        <TileLabel label={label} oneWord={!/[\s-]/.test(label.trim())} style={{ width: "100%" }} />
+        {/* Three 16pt lines fill the 52pt tile, so a long taxonomy name ("Surveying &
+            Measuring Instruments") shrinks to fit rather than spilling out of it. */}
+        <TileLabel label={label} oneWord={!/[\s-]/.test(label.trim())} maxLines={3} style={{ width: "100%" }} />
       </View>
     </TouchableOpacity>
   );
