@@ -192,18 +192,23 @@ export default function VerifyEmail() {
           <Text role="screenTitle">
             {isCodeVerification ? "Enter verification code" : "Enter password"}
           </Text>
-          <Text fontSize="text-sm" lineHeight={20} tone="body">
-            {isCodeVerification ? (
-              <>
-                {"We've sent a 6 digit verification code to "}
-                <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20}>
-                  {phone || email}
-                </Text>
-              </>
-            ) : (
-              "Enter your password to continue"
-            )}
-          </Text>
+          {isCodeVerification ? (
+            // The address is its own line, as the frames draw it, not a SemiBold span in the sentence: on Android a
+            // line holding only that span lost its 20pt line height (RN's line-height span keeps the SemiBold face's
+            // natural 17.67pt when its padded box is taller than the line), lifting everything below by 2.33pt.
+            <View>
+              <Text fontSize="text-sm" lineHeight={20} tone="body">
+                We've sent a 6 digit verification code to
+              </Text>
+              <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20}>
+                {phone || email}
+              </Text>
+            </View>
+          ) : (
+            <Text fontSize="text-sm" lineHeight={20} tone="body">
+              Enter your password to continue
+            </Text>
+          )}
         </View>
 
         {isCodeVerification ? (
