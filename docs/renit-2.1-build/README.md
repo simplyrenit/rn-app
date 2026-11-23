@@ -140,6 +140,12 @@ For each frame, the script:
 
 At the end, it turns fixtures off and rebuilds the tracker. It only navigates by link and never taps.
 
+Before a run, check three things. Each one stops the script, which then prints `timeout`:
+
+- **The app is in front and attached to this worktree's Metro.** Attach it with the `exp+renit://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081` link while the dev client is open. A link sent to a closed app makes iOS ask "Open in Renit?".
+- **After a full reload, the dev client is back in the app.** A reload can leave the dev launcher showing its "Deep link received" chooser. Attach again with the link above.
+- **The emulator's first-run dev-menu sheet is closed.** Close it once with `adb -s emulator-5554 shell input keyevent 4` (Back).
+
 ### Devices and crops
 
 The crops are px at 3x.
