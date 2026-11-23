@@ -1,5 +1,6 @@
 import { Button, Text } from "@/components/core";
 import { useGlobalContext } from "@/context/global-context";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTypedNavigation } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
@@ -21,8 +22,6 @@ import {
   UsersIcon,
 } from "react-native-heroicons/outline";
 import {
-  PROFILE_LIST_GAP,
-  ProfileBlockRule,
   ProfileRow,
   ProfileSection,
   ProfileSectionRule,
@@ -69,16 +68,16 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
 
   return (
     <View className="flex-1 justify-end">
-      <View className="px-gutter py-4">
-        {/* This is the moment a customer decides to commit an account to
-            you. It used to read " Enjoy Renit to the fullest..." — default
-            size, no weight, a trailing ellipsis and a literal leading space. */}
-        <View style={{ gap: 6, marginBottom: 24 }}>
-          <Text fontSize="text-2xl" fontWeight="font-bold">
+      {/* The 2.1 sign-in panel (Saved 2089:15649, Profile 2095:25130): 16 above, 24 below, a 20/28 Bold
+          heading and a 14/20 sub-line, 24 above the providers. The sub-line says "book items", not
+          "message owners", while chat is off. The heading-to-sub gap is 6 on Saved and 8 on Profile. */}
+      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16, paddingBottom: 24 }}>
+        <View style={{ gap: onProfile ? 8 : 6, marginBottom: 24 }}>
+          <Text fontSize="text-lg" fontWeight="font-bold" lineHeight={28}>
             Rent what you need, from people near you.
           </Text>
-          <Text fontSize="text-md" tone="body">
-            Sign in to save listings, message owners and track your rentals.
+          <Text fontSize="text-sm" lineHeight={20} tone="body">
+            Sign in to save listings, book items and track your rentals.
           </Text>
         </View>
 
@@ -87,21 +86,9 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
 
       {onProfile && (
         <>
-          {/* The same list, rows and rules the signed-in Profile draws, so the
-              two states of one tab read as one screen. This used to be its own
-              copy of the list, inside the hero's 24pt gutter and then a second
-              24pt gutter per section, so every row sat 48pt in from the edge
-              with an inset rule and an older glyph set. */}
-          <ProfileBlockRule />
-
-          {/* The list's own padding, as signed in, plus a second gap at the foot
-              so the last row clears the tab bar (there is no Logout below it). */}
-          <View
-            style={{
-              paddingTop: PROFILE_LIST_GAP,
-              paddingBottom: PROFILE_LIST_GAP * 2,
-            }}
-          >
+          {/* The same sections, rows and rules the signed-in Profile draws (2095:25130 / 2095:24982): the App
+              section starts right under the panel with no rule, and the list ends 24 above the tab bar. */}
+          <View style={{ paddingBottom: 24 }}>
             <ProfileSection title="App">
               <ProfileRow
                 icon={DevicePhoneMobileIcon}

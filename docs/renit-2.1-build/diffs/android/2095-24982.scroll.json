@@ -2,13 +2,13 @@
  "ref": "../figma/13/2095-24982.png",
  "app": "../../../../../../../../private/tmp/claude-501/-Users-zineone--claude-spares-spare-52eBRw/40ee769d-a6d6-4852-bbfe-b809dd24e0bd/scratchpad/android-2095-24982-end.png",
  "platform": "android",
- "mismatch_pct": 3.211,
+ "mismatch_pct": 1.229,
  "threshold_pct": 2.0,
- "pass": false,
+ "pass": true,
  "compared_px": [
-  1170,
+  1173,
   816
  ],
- "app_scaled_height": 816,
+ "app_scaled_height": 818,
  "uncovered_rows": 0
 }

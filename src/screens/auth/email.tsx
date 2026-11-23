@@ -1,33 +1,31 @@
 import { SignUpError, useAuth } from "@/backend/auth";
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
-import { Button, StaticContainer, Text } from "@/components/core";
-import { ScrollContainer } from "@/components/core/scroll-container";
+import { BottomBar, NonScrollableContainer, ScrollContainer, Text, TextField } from "@/components/core";
 import { useAuthContext } from "@/context/auth-context";
-import { useGlobalContext } from "@/context/global-context";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
+import { useRoute } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
-import { TextInput, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
-import { fontFamily, fontSize, ink } from "@/lib/design-tokens";
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
-/**
- * A raw `TextInput` has no font of its own, so it fell back to the system font
- * while everything around it is Plus Jakarta; the frame draws the value in the app
- * font at 16pt.
- */
-const AUTH_INPUT_TEXT = { fontFamily: fontFamily.regular, fontSize: fontSize.md };
+/** Dev-only design seed (ENG-428 plan §1): only DevFixture passes it. */
+type EmailDesign = { email: string; touched?: boolean };
 
 export default function LoginWithEmail() {
-  const { theme } = useGlobalContext();
+  const { color } = useTheme();
+  const route = useRoute();
+  const design = __DEV__ ? (route.params as { design?: EmailDesign } | undefined)?.design : undefined;
 
-  const [email, setEmail] = useState("");
-  const [isValid, setIsValid] = useState(true);
-  const [isTouched, setIsTouched] = useState(false);
+  const [email, setEmail] = useState(design?.email ?? "");
+  const [isValid, setIsValid] = useState(design ? validateEmail(design.email) : true);
+  const [isTouched, setIsTouched] = useState(design?.touched ?? false);
   const [otpSendError, setOtpSendError] = useState("");
 
   const { saveUser } = useAuthContext();
@@ -44,6 +42,8 @@ export default function LoginWithEmail() {
 
   const handleSubmit = useCallback(
     async (verificationType: "otp" | "password") => {
+      // A design seed never sends a code or opens the next step.
+      if (design) return;
       if (validateEmail(email)) {
         setOtpSendError("");
         saveUser({ email });
@@ -66,108 +66,74 @@ export default function LoginWithEmail() {
         setIsValid(false);
       }
     },
-    [email, router, saveUser, sendOTP]
+    [design, email, router, saveUser, sendOTP]
   );
 
+  const passwordDisabled = !isValid || !email;
+
   return (
-    <StaticContainer>
-      <View className="flex-1">
-        <HeaderIndicator percentage={0} />
+    <NonScrollableContainer>
+      <HeaderIndicator percentage={0} />
 
-        <ScrollContainer>
-          <View className="flex">
-            <Text
-              fontSize="text-2xl"
-              fontWeight="font-bold"
-            >
-              Welcome to Renit
-            </Text>
+      <ScrollContainer containerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: 24 }}>
+        <Text role="screenTitle">Welcome to Renit</Text>
 
-            <Text
-              fontSize="text-sm"
-              fontWeight="font-semibold"
-              className="mt-6 mb-2"
-            >
-              Enter your email
-            </Text>
-            <TextInput
-              placeholder="Enter email"
-              placeholderTextColor={
-                theme === "dark" ? ink.dim(true) : ink.dim(false)
-              }
-              value={email}
-              onChangeText={handleEmailChange}
-              className={`border mt-2 rounded-button ${
-                theme === "dark"
-                  ? "text-white bg-surface-dark border-input-line-dark"
-                  : "text-black bg-surface-light border-input-line-light"
-              } px-4 h-12
-              `}
-              style={AUTH_INPUT_TEXT}
-              maxFontSizeMultiplier={1.4}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              // Without textContentType/autoComplete, iCloud Keychain will not
-              // offer to fill or save this credential at all.
-              textContentType="emailAddress"
-              autoComplete="email"
-              accessibilityLabel="Email address"
-              returnKeyType="next"
-            />
-
-            {!isValid && isTouched && (
-              <View className="flex flex-row items-center mt-4 space-x-3">
-                <InformationCircleIcon
-                  size={14}
-                  color={ink.danger(true)}
-                />
-                <Text tone="danger" className="flex-shrink"
-                  fontSize="text-sm"
-                >
-                  Please enter a valid email address
-                </Text>
-              </View>
-            )}
-
-            {!!otpSendError && (
-              <View className="flex flex-row items-center mt-4 space-x-3">
-                <InformationCircleIcon
-                  size={14}
-                  color={ink.danger(true)}
-                />
-                <Text tone="danger" className="flex-shrink"
-                  fontSize="text-sm"
-                >
-                  {otpSendError}
-                </Text>
-              </View>
-            )}
-          </View>
-        </ScrollContainer>
-
-        <View className="py-5 space-y-3">
-          {/* One screen, one primary action. Three stacked buttons with two
-              of them in brand fill gave the customer no lead to follow. */}
-          <Button
-            variant="primary"
-            onPress={() => handleSubmit("otp")}
-            disabled={!isValid || !email}
-          >
-            Email me a code
-          </Button>
-          <Button
-            variant="outline"
-            onPress={() => handleSubmit("password")}
-            disabled={!isValid || !email}
-          >
-            Use my password
-          </Button>
-          <Button variant="ghost" onPress={() => router.navigate("Phone")}>
-            Use my phone number instead
-          </Button>
+        <View style={{ marginTop: 24 }}>
+          <TextField
+            label="Enter your email"
+            placeholder="Enter email"
+            value={email}
+            onChangeText={handleEmailChange}
+            error={!isValid && isTouched ? "Please enter a valid email address" : undefined}
+            maxFontSizeMultiplier={1.4}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            // Without textContentType/autoComplete, iCloud Keychain will not
+            // offer to fill or save this credential at all.
+            textContentType="emailAddress"
+            autoComplete="email"
+            accessibilityLabel="Email address"
+            returnKeyType="next"
+          />
         </View>
-      </View>
-    </StaticContainer>
+
+        {!!otpSendError && (
+          // No frame draws it: the non-field message row (plan §3), where the code always showed it.
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 18 }}>
+            <InformationCircleIcon size={16} color={color.text} />
+            <Text fontSize="text-xs" fontWeight="font-medium" lineHeight={16} style={{ flexShrink: 1, color: color.dangerStrong }}>
+              {otpSendError}
+            </Text>
+          </View>
+        )}
+
+        {/* "Other ways in" (21637): two 14/20 SemiBold links, 36 apart, 24 under the field (TextField keeps 18
+            below itself). The password link keeps today's rule, disabled while the address is not valid, and is
+            dimmed to the frame's 38% then (21681). */}
+        <View style={{ marginTop: 6, gap: 16, alignItems: "flex-start" }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: passwordDisabled }}
+            disabled={passwordDisabled}
+            hitSlop={8}
+            onPress={() => handleSubmit("password")}
+          >
+            <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} tone="brand" style={{ opacity: passwordDisabled ? 0.38 : 1 }}>
+              Use my password
+            </Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.navigate("Phone")}>
+            <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} tone="brand">
+              Use my phone number instead
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollContainer>
+
+      <BottomBar
+        primary={{ label: "Email me a code", onPress: () => handleSubmit("otp"), disabled: !isValid || !email }}
+      />
+    </NonScrollableContainer>
   );
 }

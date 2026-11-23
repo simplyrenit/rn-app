@@ -75,7 +75,7 @@ Two kit links are not the Text button, so build them as plain text, not with `Bu
 | `ListRow` | `core/list-row.tsx` | B | 2073:14364 | see below |
 | `StatusPill` | `core/status-pill.tsx` | B | 2073:14380 | `label: string`, `tone: StatusTone` |
 | `Chip` | `core/chip.tsx` | B | 2073:14388 | `label: string`, `selected?: boolean`, `onPress?: () => void`, `leading?: ReactNode` |
-| `StepProgress` | `core/step-progress.tsx` | C | 2074:14448 | `step: number` (1-based), `total: number`, `label?: string` (default "Step N of M"), `showLabel?: boolean` (default true) |
+| `StepProgress` | `core/step-progress.tsx` | C | 2074:14448 | `step: number` (1-based), `total: number`, `label?: string` (default "Step N of M"), `showLabel?: boolean` (default true), `fill?: number` (0..total, partial fill per segment), `gap?: number` (default 4; fill drawn r2, ENG-428) |
 | `MapPlaceholder` | `core/map-placeholder.tsx` | C | 2100:29942 | `style?: StyleProp<ViewStyle>` (fills the box it is given) |
 
 Shared types:
@@ -126,6 +126,10 @@ Props added; nothing renamed or removed.
 - **`FavouriteButton`:**
   - `tile` now draws the kit heart: a 32 disc of #FFFFFFEB with a 0/1 blur-3 shadow of #0000002E (Android uses `elevation: 1`) in a 44 box, holding a black 24 outline heart at stroke 1.5. It looks the same in both themes.
   - The saved heart keeps `darkColors.danger`.
+
+## ENG-428 additions
+
+- **`RingSpinner`** (`core/ring-spinner.tsx`, import by path): `{ size = 40, spinning = true }`. A full `brandPanel` track plus a 270° `brand` arc (12 to 9 o'clock), stroke `size × 0.08`, native-driver rotation; `spinning={false}` draws the still pose for fixtures. From 02/2089:28209.
 
 ## Group C (implemented)
 
@@ -181,5 +185,5 @@ The `StatusPill`, `Chip`, `StepProgress` and `MapPlaceholder` rows were read. Th
 | `ListRow` | Rows built from a label and a `ChevronRightIcon`. `ProfileRow` already draws through it. | ENG-429 `products-screen.tsx`, `product/product-owner.tsx`, `cart/parts.tsx`; ENG-431 `booking/booking-details.tsx`; ENG-433 `shop/today.tsx`, `shop/booking.tsx`; ENG-434 `handover/parts.tsx`; ENG-435 `post/taxonomy-list.tsx`, `list-flow/review.tsx`; ENG-436 `post/unavailability-editor.tsx` (EditProductAvailability); ENG-437 `rental-settings.tsx`, `rental-delivery.tsx`, `bank-account.tsx`; ENG-438 `addresses/address-row.tsx`; ENG-439 `faqs.tsx`, `contactUs.tsx`, `who-we-are.tsx`, `report-a-problem.tsx` |
 | `StatusPill` | `bank-account.tsx` `StatusChip` (a tinted label with an icon). `booking/parts` `Pill` and `ListingStatusPill` already draw through it. `booking/card-lines.tsx` `Chip` is tinted too but carries a View action, which `StatusPill` has no slot for: ENG-431 decides. | ENG-437 `bank-account.tsx`; ENG-431 decides `card-lines.tsx` |
 | `Chip` | `search/results-rails.tsx` `Pill` (the search-results filter chips) and `post/plan-pricing.tsx` `Chip`. Not `list-flow/scan-panel.tsx` `Chip`: that is an animated, display-only detection chip, not a choice. | ENG-427 `results-rails.tsx`; ENG-435 `plan-pricing.tsx` |
-| `StepProgress` | `core/page-indicator.tsx`, which now draws through it, so the auth `HeaderIndicator` already shows the kit bar. | ENG-428 switches the auth headers to `StepProgress` directly (with its label if the frames show one) and deletes `PageIndicator` |
+| `StepProgress` | `auth/headerIndicator.tsx` draws it directly over `SubpageHeader variant="back-only"` (ENG-428, with `fill` and `gap={6}`, no label); `PageIndicator` is deleted. | Done (ENG-428) |
 | `MapPlaceholder` | None found: no screen has a hand-rolled map stand-in. It stands in for `MapView` in state frames and design fixtures. | Where a fixture shows a map: ENG-428 `auth/location.tsx`; ENG-429 `product/product-map.tsx`, `addresses/address-details.tsx`, `post-screens/location-modal.tsx`; ENG-437 `rental-delivery.tsx` |

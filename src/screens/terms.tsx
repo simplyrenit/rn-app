@@ -1,36 +1,60 @@
 import { SubpageHeader, Text } from "@/components/core";
+import { RingSpinner } from "@/components/core/ring-spinner";
 import { fetchPublicTerms } from "@/backend/terms";
 import { openCustomerTerms } from "@/lib/terms-link";
-import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import React, { useEffect, useState } from "react";
 
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { TERMS_CONTENT } from "@/lib/content";
 import { styled } from "nativewind";
-import { ActivityIndicator, Linking, ScrollView, View } from "react-native";
+import { Linking, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { SCREEN_GUTTER, ink } from "@/lib/design-tokens";
-import { useGlobalContext } from "@/context/global-context";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 
 const StyledScroll = styled(ScrollView);
 
-// Measured off the Figma legal frames: the text is padded 24 at the sides, sits 28 under
-// the header, and its blocks are 20 apart.
-const TOP_INSET = 28;
+// 02 Terms (2089:28232, bundled fallback): the text starts 16 under the top bar (y126), padded
+// 24 at the sides. Its blocks are 12 apart; a section pads 12 above its 16/24 Bold title and
+// keeps 8 between the title and each 14/20 `textBody` paragraph. The date line is 14/20 SemiBold.
+const TOP_INSET = 16;
 const BOTTOM_INSET = 24;
-const BLOCK_GAP = 20;
+const BLOCK_GAP = 12;
+// 2089:28209: a 40 ring at y402, 292 under the top bar's bottom edge (y110).
+const SPINNER_TOP = 292;
 // How long the server page's address is waited for before the bundled text shows.
 const READ_TIMEOUT_MS = 8000;
+
+type TermsDesign = { state: "loading" | "fallback" };
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={{ paddingTop: 12, gap: 8 }}>
+      <Text fontSize="text-md" fontWeight="font-bold">{title}</Text>
+      {children}
+    </View>
+  );
+}
+
+// Android breaks lines "highQuality" (balanced) by default, so a paragraph wrapped a word earlier than iOS and
+// the frame; "simple" is the greedy break both of those use.
+function P({ children }: { children: React.ReactNode }) {
+  return <Text fontSize="text-sm" tone="body" textBreakStrategy="simple">{children}</Text>;
+}
 
 export default function Terms() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const { theme } = useGlobalContext();
+  // Dev-only design seed (ENG-428 plan §1): pins the loading or fallback state and skips the
+  // server read and browser open, so a frame diff never leaves the screen.
+  const route = useRoute();
+  const design = __DEV__ ? (route.params as { design?: TermsDesign } | undefined)?.design : undefined;
   // The server's terms page opens in the browser and this screen steps back; the
   // bundled text below shows only when that page cannot be read or opened.
-  const [useBundled, setUseBundled] = useState(false);
+  const [useBundled, setUseBundled] = useState(design?.state === "fallback");
 
   useEffect(() => {
+    if (design) return;
     let live = true;
     openCustomerTerms(() => fetchPublicTerms(READ_TIMEOUT_MS), (url) => Linking.openURL(url), () => live).then((opened) => {
       if (!live) return;
@@ -40,14 +64,14 @@ export default function Terms() {
     return () => {
       live = false;
     };
-  }, [navigation]);
+  }, [navigation, design]);
 
   if (!useBundled) {
     return (
       <NonScrollableContainer>
         <SubpageHeader title="Terms & Conditions" />
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={ink.brandText(theme === "dark")} />
+        <View style={{ flex: 1, alignItems: "center", paddingTop: SPINNER_TOP }}>
+          <RingSpinner size={40} spinning={!design} />
         </View>
       </NonScrollableContainer>
     );
@@ -57,10 +81,7 @@ export default function Terms() {
     <NonScrollableContainer>
       <SubpageHeader title="Terms & Conditions" />
 
-      <View
-        className="flex-1 justify-between"
-        style={{ paddingBottom: insets.bottom }}
-      >
+      <View style={{ flex: 1, paddingBottom: insets.bottom }}>
         <StyledScroll
           style={{ flex: 1 }}
           contentContainerStyle={{
@@ -71,117 +92,96 @@ export default function Terms() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <Text fontSize="text-sm" fontWeight="font-bold">
+          <Text fontSize="text-sm" fontWeight="font-semibold">
             {TERMS_CONTENT["effectiveDate"]}
           </Text>
-          <Text fontSize="text-sm">{TERMS_CONTENT["intro"]}</Text>
+          <P>{TERMS_CONTENT["intro"]}</P>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">1. Acceptance of Terms</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section1.1"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section1.2"]}</Text>
-          </View>
+          <Section title="1. Acceptance of Terms">
+            <P>{TERMS_CONTENT["section1.1"]}</P>
+            <P>{TERMS_CONTENT["section1.2"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">2. General Terms</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section2.1"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section2.2"]}</Text>
-          </View>
+          <Section title="2. General Terms">
+            <P>{TERMS_CONTENT["section2.1"]}</P>
+            <P>{TERMS_CONTENT["section2.2"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">3. User Obligations</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section3.1"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section3.2"]}</Text>
-          </View>
+          <Section title="3. User Obligations">
+            <P>{TERMS_CONTENT["section3.1"]}</P>
+            <P>{TERMS_CONTENT["section3.2"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">4. User Content</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section4.1"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section4.2"]}</Text>
-          </View>
+          <Section title="4. User Content">
+            <P>{TERMS_CONTENT["section4.1"]}</P>
+            <P>{TERMS_CONTENT["section4.2"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">5. Prohibited Content</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section5.1"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section5.2"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section5.3"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section5.4"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section5.5"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section5.6"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section5.7"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section5.8"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section5.9"]}</Text>
-          </View>
+          <Section title="5. Prohibited Content">
+            <P>{TERMS_CONTENT["section5.1"]}</P>
+            <P>{TERMS_CONTENT["section5.2"]}</P>
+            <P>{TERMS_CONTENT["section5.3"]}</P>
+            <P>{TERMS_CONTENT["section5.4"]}</P>
+            <P>{TERMS_CONTENT["section5.5"]}</P>
+            <P>{TERMS_CONTENT["section5.6"]}</P>
+            <P>{TERMS_CONTENT["section5.7"]}</P>
+            <P>{TERMS_CONTENT["section5.8"]}</P>
+            <P>{TERMS_CONTENT["section5.9"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">6. Intellectual Property Rights</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section6.1"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section6.2"]}</Text>
-          </View>
+          <Section title="6. Intellectual Property Rights">
+            <P>{TERMS_CONTENT["section6.1"]}</P>
+            <P>{TERMS_CONTENT["section6.2"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">
-              7. Disclaimer of Warranty and Limitation of Liability
-            </Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section7.1"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section7.2"]}</Text>
-          </View>
+          <Section title="7. Disclaimer of Warranty and Limitation of Liability">
+            <P>{TERMS_CONTENT["section7.1"]}</P>
+            <P>{TERMS_CONTENT["section7.2"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">8. Indemnification</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section8.1"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section8.2"]}</Text>
-          </View>
+          <Section title="8. Indemnification">
+            <P>{TERMS_CONTENT["section8.1"]}</P>
+            <P>{TERMS_CONTENT["section8.2"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">9. Third-Party Websites</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section9.1"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section9.2"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section9.3"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section9.4"]}</Text>
-          </View>
+          <Section title="9. Third-Party Websites">
+            <P>{TERMS_CONTENT["section9.1"]}</P>
+            <P>{TERMS_CONTENT["section9.2"]}</P>
+            <P>{TERMS_CONTENT["section9.3"]}</P>
+            <P>{TERMS_CONTENT["section9.4"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">10. Termination</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section10.1"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section10.2"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section10.3"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section10.4"]}</Text>
-          </View>
+          <Section title="10. Termination">
+            <P>{TERMS_CONTENT["section10.1"]}</P>
+            <P>{TERMS_CONTENT["section10.2"]}</P>
+            <P>{TERMS_CONTENT["section10.3"]}</P>
+            <P>{TERMS_CONTENT["section10.4"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">
-              11. Governing Law and Jurisdiction
-            </Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section11.1"]}</Text>
-          </View>
+          <Section title="11. Governing Law and Jurisdiction">
+            <P>{TERMS_CONTENT["section11.1"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">12. Contact Information</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section12.1"]}</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section12.2"]}</Text>
-          </View>
+          <Section title="12. Contact Information">
+            <P>{TERMS_CONTENT["section12.1"]}</P>
+            <P>{TERMS_CONTENT["section12.2"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">13. Grievance Redressal</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section13.1"]}</Text>
-          </View>
+          <Section title="13. Grievance Redressal">
+            <P>{TERMS_CONTENT["section13.1"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">14. Termination</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section14.1"]}</Text>
-          </View>
+          <Section title="14. Termination">
+            <P>{TERMS_CONTENT["section14.1"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">15. Contact Us</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section15.1"]}</Text>
-          </View>
+          <Section title="15. Contact Us">
+            <P>{TERMS_CONTENT["section15.1"]}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">16. Grievance Redressal Officer</Text>
-            <Text fontSize="text-sm">{TERMS_CONTENT["section16.1"]}</Text>
-            <Text fontSize="text-sm"> </Text>
-          </View>
+          <Section title="16. Grievance Redressal Officer">
+            <P>{TERMS_CONTENT["section16.1"]}</P>
+          </Section>
         </StyledScroll>
       </View>
     </NonScrollableContainer>

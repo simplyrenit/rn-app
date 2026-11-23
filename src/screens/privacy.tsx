@@ -2,6 +2,7 @@ import { SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { PRIVACY_CONTENT } from "@/lib/content";
 
+import React from "react";
 import { styled } from "nativewind";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,25 +10,36 @@ import { SCREEN_GUTTER } from "@/lib/design-tokens";
 
 const StyledScroll = styled(ScrollView);
 
-// Measured off the Figma Privacy frame: the text is padded 24 at the sides, sits 24 under
-// the header (the Terms frame has it 28 down), and its blocks are 20 apart.
-const TOP_INSET = 24;
+// 02 Privacy (2089:28263), as Terms: the text starts 16 under the top bar (y126), padded 24 at
+// the sides. Blocks are 12 apart; a section pads 12 above its 16/24 Bold title and keeps 8
+// between the title and each 14/20 `textBody` paragraph. The date line is 14/20 SemiBold.
+const TOP_INSET = 16;
 const BOTTOM_INSET = 24;
-const BLOCK_GAP = 20;
+const BLOCK_GAP = 12;
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={{ paddingTop: 12, gap: 8 }}>
+      <Text fontSize="text-md" fontWeight="font-bold">{title}</Text>
+      {children}
+    </View>
+  );
+}
+
+// Android breaks lines "highQuality" (balanced) by default, so a paragraph wrapped a word earlier than iOS and
+// the frame; "simple" is the greedy break both of those use.
+function P({ children }: { children: React.ReactNode }) {
+  return <Text fontSize="text-sm" tone="body" textBreakStrategy="simple">{children}</Text>;
+}
 
 export default function Privacy() {
   const insets = useSafeAreaInsets();
-
-
 
   return (
     <NonScrollableContainer>
       <SubpageHeader title="Privacy Policy" />
 
-      <View
-        className="flex-1 justify-between"
-        style={{ paddingBottom: insets.bottom }}
-      >
+      <View style={{ flex: 1, paddingBottom: insets.bottom }}>
         <StyledScroll
           style={{ flex: 1 }}
           contentContainerStyle={{
@@ -38,85 +50,75 @@ export default function Privacy() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <Text fontSize="text-sm" fontWeight="font-bold">
+          <Text fontSize="text-sm" fontWeight="font-semibold">
             {PRIVACY_CONTENT.effectiveDate}
           </Text>
-          <Text fontSize="text-sm">{PRIVACY_CONTENT.intro}</Text>
+          <P>{PRIVACY_CONTENT.intro}</P>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">1. Information We Collect</Text>
-            <Text fontSize="text-sm">
+          <Section title="1. Information We Collect">
+            <P>
               {PRIVACY_CONTENT.informationWeCollect.personalData}
-            </Text>
-            <Text fontSize="text-sm">
+            </P>
+            <P>
               {PRIVACY_CONTENT.informationWeCollect.nonPersonalInformation}
-            </Text>
-          </View>
+            </P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">2. Use of Information</Text>
-            <Text fontSize="text-sm">
+          <Section title="2. Use of Information">
+            <P>
               {PRIVACY_CONTENT.useOfInformation.personalData}
-            </Text>
-            <Text fontSize="text-sm">
+            </P>
+            <P>
               {PRIVACY_CONTENT.useOfInformation.nonPersonalInformation}
-            </Text>
-          </View>
+            </P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">3. Sharing of Information</Text>
-            <Text fontSize="text-sm">
+          <Section title="3. Sharing of Information">
+            <P>
               {PRIVACY_CONTENT.sharingOfInformation.serviceProviders}
-            </Text>
-            <Text fontSize="text-sm">
+            </P>
+            <P>
               {PRIVACY_CONTENT.sharingOfInformation.legalRequirements}
-            </Text>
-            <Text fontSize="text-sm">
+            </P>
+            <P>
               {PRIVACY_CONTENT.sharingOfInformation.affiliates}
-            </Text>
-            <Text fontSize="text-sm">
+            </P>
+            <P>
               {PRIVACY_CONTENT.sharingOfInformation.businessTransfers}
-            </Text>
-          </View>
+            </P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">4. Data Security</Text>
-            <Text fontSize="text-sm">{PRIVACY_CONTENT.dataSecurity}</Text>
-          </View>
+          <Section title="4. Data Security">
+            <P>{PRIVACY_CONTENT.dataSecurity}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">5. Your Rights</Text>
-            <Text fontSize="text-sm">{PRIVACY_CONTENT.otherGeneralRights}</Text>
-          </View>
+          <Section title="5. Your Rights">
+            <P>{PRIVACY_CONTENT.otherGeneralRights}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">6. Children's Privacy</Text>
-            <Text fontSize="text-sm">{PRIVACY_CONTENT.childrensPrivacy}</Text>
-          </View>
+          <Section title="6. Children's Privacy">
+            <P>{PRIVACY_CONTENT.childrensPrivacy}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">7. Changes to the Privacy Policy</Text>
-            <Text fontSize="text-sm">{PRIVACY_CONTENT.changesToPolicy}</Text>
-          </View>
+          <Section title="7. Changes to the Privacy Policy">
+            <P>{PRIVACY_CONTENT.changesToPolicy}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">8. Contact Us</Text>
-            <Text fontSize="text-sm">{PRIVACY_CONTENT.contactUs}</Text>
-          </View>
+          <Section title="8. Contact Us">
+            <P>{PRIVACY_CONTENT.contactUs}</P>
+          </Section>
 
-          <View>
-            <Text fontSize="text-sm" fontWeight="font-bold">9. Grievance Redressal Officer</Text>
-            <Text fontSize="text-sm">
+          <Section title="9. Grievance Redressal Officer">
+            <P>
               Name: {PRIVACY_CONTENT.grievanceRedressalOfficer.name}
-            </Text>
-            <Text fontSize="text-sm">
+            </P>
+            <P>
               Email: {PRIVACY_CONTENT.grievanceRedressalOfficer.email}
-            </Text>
-            <Text fontSize="text-sm">
+            </P>
+            <P>
               Address: {PRIVACY_CONTENT.grievanceRedressalOfficer.address}
-            </Text>
-            <Text></Text>
-          </View>
+            </P>
+          </Section>
         </StyledScroll>
       </View>
     </NonScrollableContainer>

@@ -29,11 +29,14 @@ export function TermsTick({
   return (
     <View style={{ flexDirection: "row", alignItems: "center" }}>
       <CheckBox checked={checked} onPress={() => onChange(!checked)} accessibilityLabel={`${lead}${link}`} />
-      <Text tone="body" style={{ flex: 1, marginLeft: 8 }}>
+      {/* 14/20: a bare Text sits 14pt on a 24pt line. The link is SemiBold, as
+          the 2.1 frames draw it (02 2089:25419, 05, 10). */}
+      <Text tone="body" fontSize="text-sm" style={{ flex: 1, marginLeft: 8 }}>
         {lead}
         <Text
           tone="brand"
-          fontWeight="font-bold"
+          fontSize="text-sm"
+          fontWeight="font-semibold"
           accessibilityRole="link"
           style={{ textDecorationLine: "underline" }}
           onPress={onOpenTerms}
