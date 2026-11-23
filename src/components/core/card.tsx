@@ -125,7 +125,7 @@ export function Card({
           )}
 
           {/* Solid, not the bare mark: it has to read on any photo. */}
-          <View style={{ position: "absolute", left: 6, bottom: 6 }}>
+          <View style={{ position: "absolute", left: 8, bottom: 8 }}>
             <VerifiedBusinessBadge verified={businessVerified} variant="chip" />
           </View>
 
@@ -167,10 +167,11 @@ export function Card({
             // delivers to their address; the fee keeps the line's own tone.
             <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-xs" tone="dim">
               {delivery.km ? `${delivery.km} · ` : ""}
+              {/* The frames (2089:31917) draw the fee in the word's green too. */}
               <Text fontSize="text-xs" tone={delivery.word === "Delivery" ? "success" : "dim"}>
                 {delivery.word}
+                {delivery.fee ? ` ${delivery.fee}` : ""}
               </Text>
-              {delivery.fee ? ` ${delivery.fee}` : ""}
             </Text>
           ) : (
             <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-xs" tone="dim">

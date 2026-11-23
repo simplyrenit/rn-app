@@ -329,7 +329,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             </TouchableOpacity>
             <Button
               disabled={!tempStartDate || !tempEndDate}
-              style={styles.footerButton}
+              // No side padding: Yoga counts it into the flex basis, which made Confirm 160 to Cancel's 121; the
+              // frame splits the footer 141 / 141 (2089:29905).
+              style={[styles.footerButton, { paddingHorizontal: 0 }]}
               onPress={handleConfirm}
             >
               Confirm

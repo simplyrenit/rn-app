@@ -205,6 +205,13 @@ export const fixtures: Record<string, DevFixture> = {
   "2089:27951": {
     route: "MainTabs",
     params: { screen: "Saved" },
-    responses: { "GET /category/": categories, "GET /favorites/": [] },
+    // The Home tab mounts under it and reads its rails; listed empty so they don't reach QA (Metro log, 2026-11-23).
+    responses: {
+      "GET /category/": categories,
+      "GET /favorites/": [],
+      "GET /top-experiences/": { results: [] },
+      "GET /top-rated-experiences/": { results: [] },
+      "GET /popular-products-in-area/": { results: [] },
+    },
   },
 };

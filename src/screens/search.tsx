@@ -21,7 +21,7 @@ import { useRoute } from "@react-navigation/native";
 import axios from "axios";
 import * as Location from "expo-location";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { BackHandler, Platform, TouchableOpacity, View } from "react-native";
+import { BackHandler, Platform, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { AutocompleteDropdown } from "react-native-autocomplete-dropdown";
 import {
   GestureHandlerRootView,
@@ -73,6 +73,8 @@ const SHEET_ICON = 24;
 const SHEET_SCRIM = 0.4;
 
 export default function SearchScreen() {
+  const { height: windowHeight } = useWindowDimensions();
+  const whereSnapPoints = [0.5, 0.75, 0.9].map((share) => Math.round(windowHeight * share));
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const route = useRoute<RouteProps<"Search">>();
@@ -618,7 +620,9 @@ export default function SearchScreen() {
               ref={bottomSheetRef}
               backdropComponent={renderBackdrop}
               index={1}
-              snapPoints={["50%", "75%", "90%"]}
+              // 50/75/90% of the screen, as the frame measures them (2089:29793: 633 of 844), not of the container
+              // the sheet sits in, which starts under the status bar.
+              snapPoints={whereSnapPoints}
               enablePanDownToClose={true}
               // The kit Sheet header draws the grabber and the sheet's 24 top
               // corners, so gorhom's own handle is off.

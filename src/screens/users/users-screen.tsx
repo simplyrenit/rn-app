@@ -448,7 +448,7 @@ export default function UsersDetails() {
                     >
                       {businessName}
                     </Text>
-                    <VerifiedBusinessBadge verified iconSize={16} />
+                    <VerifiedBusinessBadge verified iconSize={16} size="md" />
                   </View>
                 ) : (
                   <Text fontSize="text-xs" tone="dim">

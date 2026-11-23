@@ -1,0 +1,16 @@
+{
+ "ref": "../figma/03/2089-34809.png",
+ "app": "../../../../../../../../private/tmp/claude-501/-Users-zineone--claude-spares-spare-52eBRw/40ee769d-a6d6-4852-bbfe-b809dd24e0bd/scratchpad/i427/s34809.png",
+ "platform": "ios",
+ "mismatch_pct": 10.939,
+ "threshold_pct": 2.0,
+ "pass": false,
+ "compared_px": [
+  1170,
+  2289
+ ],
+ "app_scaled_height": 2289,
+ "uncovered_rows": 0,
+ "split_bottom_pt": 470.0,
+ "seam_hidden_rows": 18
+}

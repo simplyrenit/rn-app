@@ -1058,7 +1058,7 @@ export default function SearchResults() {
                 // app): the address row's Change above does that.
                 <View style={EMPTY_WRAP}>
                   <EmptyState
-                    icon={<TruckIcon size={32} color={color.brandText} />}
+                    icon={<TruckIcon size={32} color={color.text} />}
                     title={nobodyDelivers(deliverTo).title}
                     body={nobodyDelivers(deliverTo).body ?? undefined}
                     actionLabel="Show self pickup too"
@@ -1069,7 +1069,7 @@ export default function SearchResults() {
               <View>
                 <View style={[EMPTY_WRAP, { marginBottom: BLOCK_GAP }]}>
                 <EmptyState
-                  icon={<MagnifyingGlassIcon size={32} color={color.brandText} />}
+                  icon={<MagnifyingGlassIcon size={32} color={color.text} />}
                   title="No matches"
                   body={
                     isFilterActive()

@@ -79,13 +79,17 @@ export default function Saved() {
               // — 1.82:1 on white, effectively invisible — with a fontWeight iOS
               // silently ignored, and no route out of the screen.
               ListEmptyComponent={
-                <EmptyState
-                  icon={<HeartIcon color={color.text} strokeWidth={1.5} />}
-                  title="Nothing saved yet"
-                  body="Tap the heart on any listing and it will wait for you here."
-                  actionLabel="Browse listings"
-                  onAction={() => navigation.navigate("MainTabs")}
-                />
+                // EmptyState pads its own gutter, so it spans the screen, not the grid's inset: the frame's body is
+                // 342 wide (2089:27893).
+                <View style={{ marginHorizontal: -SCREEN_GUTTER }}>
+                  <EmptyState
+                    icon={<HeartIcon color={color.text} strokeWidth={1.5} />}
+                    title="Nothing saved yet"
+                    body="Tap the heart on any listing and it will wait for you here."
+                    actionLabel="Browse listings"
+                    onAction={() => navigation.navigate("MainTabs")}
+                  />
+                </View>
               }
               data={favorites}
               renderItem={renderItem}

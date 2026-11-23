@@ -12,3 +12,24 @@
 2110:30278	android	fluid	Covered by the Android Active=Rentals tab bar comparison (fluid width, visual match).
 2110:30274	ios	n/a	Drawn only on Active=Post (signed out or merchant awaiting approval); checked in ENG-435.
 2110:30274	android	n/a	Drawn only on Active=Post; checked in ENG-435.
+2083:15579	ios	fail-heatmap	Cart badge sits 0/2 from the corner where the frame has 2/4; CartButton is ENG-429's (components/cart/parts.tsx).
+2083:15347	ios	pending	Full-scroll segments not diffed yet (ENG-427); the first screen is the 2083:15120 diff.
+2089:24680	ios	fail-heatmap	Sub-line prints "3 items from Rohan" where the frame has "Rohan Mehta" (Decision 9, first_name kept).
+2089:24740	ios	fail-heatmap	Review dates print "21 days ago"/"a month ago" (Decision 8) and the kit Avatar draws a hue monogram where every frame draws a #EDEDFC disc.
+2089:27555	ios	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
+2089:27772	ios	fail-heatmap	Saved hearts are the kit FavouriteButton red where the frame draws them brand purple.
+2089:27951	ios	blocked	Sign-in panel is profile-pre-auth.tsx (ENG-428 / ENG-438, Decision 10); Home rail reads now listed so nothing reaches QA.
+2089:29905	ios	fail-heatmap	Card matches; today marker is the clock (Nov 23 vs the frame's Nov 22), and the centred card sits 2pt below the frame's y 178.
+2089:29793	ios	fail-heatmap	Sheet shell matches at 633pt (diffed bottom-aligned); nearby rows are Google live data via bare axios, checked by nearby-place-row jest.
+2089:32064	ios	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
+2089:32313	ios	blocked	Saved rows wait on the address-row radio restyle (ENG-438 owns the file, Decision 11).
+2089:34679	ios	fail-heatmap	Sheet content matches (split 650); behind the scrim the app draws the category rail and the live-applied filters the frame omits; scrim is Decision 4.
+2089:34809	ios	fail-heatmap	Sheet content matches (split 470); background behind the scrim differs as on 2089:34679 (category rail, live filters); scrim is Decision 4.
+2089:34929	ios	pending	Category tab not diffed; the sheet shell is checked on 34679/34809/35060/35166.
+2089:35060	ios	fail-heatmap	Sheet content matches (split 339); background behind the scrim differs as on 2089:34679; scrim is Decision 4.
+2089:35166	ios	fail-heatmap	Sheet content matches (split 390, "4.0" now printed); background behind the scrim differs as on 2089:34679; scrim is Decision 4.
+2089:35291	ios	pending	Condition tab not diffed; the sheet shell is checked on 34679/34809/35060/35166.
+2089:35398	ios	pending	Seller tab not diffed; the sheet shell is checked on 34679/34809/35060/35166.
+2089:36248	ios	fail-heatmap	Kit Avatar draws a hue monogram with a ring where the frame draws a #EDEDFC disc with brand initials; rest clean.
+2089:36415	ios	pending	Full-scroll segments not diffed yet (ENG-427); the first screen is the 2089:36248 diff.
+2089:36523	ios	fail-heatmap	Kit Avatar draws a hue monogram with a ring where the frame draws a #EDEDFC disc with brand initials; rest clean.

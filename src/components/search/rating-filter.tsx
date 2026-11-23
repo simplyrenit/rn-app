@@ -64,7 +64,8 @@ function RatingRow({
           StarIconComponent={Star}
         />
         <Text fontSize="text-md" fontWeight="font-semibold">
-          {value}
+          {/* One decimal once set ("4.0", "3.5"), a bare "0" when not, as the frame prints them (2089:35166). */}
+          {value ? value.toFixed(1) : 0}
         </Text>
       </View>
     </View>
