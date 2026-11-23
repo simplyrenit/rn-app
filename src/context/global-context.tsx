@@ -1,5 +1,6 @@
 import { forgetDates } from "@/lib/cart";
-import { cancelMyDetailsRequest, fetchMyDetailsRequest } from "@/lib/my-details";
+import type { DesignSession } from "@/dev/design-fixtures/session";
+import { MyDetailsResponse, cancelMyDetailsRequest, fetchMyDetailsRequest } from "@/lib/my-details";
 import {
   getAuthTokens,
   getHasSeenWelcome,
@@ -31,6 +32,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { AppState, useColorScheme } from "react-native";
@@ -93,6 +95,28 @@ interface UserDetails {
   billing_as_business: boolean;
 }
 
+function toUserDetails(details: MyDetailsResponse): UserDetails {
+  return {
+    username: details.username,
+    firebase_uid: details.firebase_uid,
+    name: `${details.first_name} ${details.last_name}`,
+    email: details.email,
+    phone: details.phone || "",
+    image: details.image?.image_url || "",
+    business_name: details.business_name,
+    account_type: details.account_type,
+    merchant_approval_status: details.merchant_approval_status,
+    business_verified: details.business_verified === true,
+    bills_to_business: details.bills_to_business === true,
+    billing_as_business: details.billing_as_business === true,
+  };
+}
+
+// Dev builds only (ENG-424): a design fixture's signed-in session. Behind `__DEV__` so release bundles drop the
+// require; there it is always null.
+const designSessionNow = (): DesignSession | null =>
+  __DEV__ ? require("@/dev/design-fixtures/session").designSession() : null;
+
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
 
 export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -108,6 +132,11 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [userDetailsFailed, setUserDetailsFailed] = useState(false);
+  const [designSession, setDesignSession] = useState<DesignSession | null>(null);
+  useEffect(
+    () => (__DEV__ ? require("@/dev/design-fixtures/session").subscribeDesignSession(setDesignSession) : undefined),
+    []
+  );
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const queryClient = useQueryClient();
@@ -171,6 +200,9 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [authTokens?.access_token, isAuthenticated]);
 
   const fetchUserDetails = async () => {
+    // A design session shows the fixture's user over the real state, which must come back untouched when it ends:
+    // a fetch now would write the fixture's user (or its refusal) into it. Read at call time, as callers hold old closures.
+    if (designSessionNow()) return;
     if (!isAuthenticated || !authTokens?.access_token) {
       setUserDetails(null);
       setUserDetailsFailed(false);
@@ -180,20 +212,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     setUserDetailsFailed(false);
     try {
       const details = await getMyDetails();
-      setUserDetails({
-        username: details.username,
-        firebase_uid: details.firebase_uid,
-        name: `${details.first_name} ${details.last_name}`,
-        email: details.email,
-        phone: details.phone || "",
-        image: details.image?.image_url || "",
-        business_name: details.business_name,
-        account_type: details.account_type,
-        merchant_approval_status: details.merchant_approval_status,
-        business_verified: details.business_verified === true,
-        bills_to_business: details.bills_to_business === true,
-        billing_as_business: details.billing_as_business === true,
-      });
+      setUserDetails(toUserDetails(details));
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         await logout("server_ended");
@@ -278,20 +297,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
             const currentTokens = (await getAuthTokens()) ?? tokens;
             setAuthTokensState(currentTokens);
             axiosInstance.defaults.headers.Authorization = `Bearer ${currentTokens.access_token}`;
-            setUserDetails({
-              username: details.username,
-              firebase_uid: details.firebase_uid,
-              name: `${details.first_name} ${details.last_name}`,
-              email: details.email,
-              phone: details.phone || "",
-              image: details.image?.image_url || "",
-              business_name: details.business_name,
-              account_type: details.account_type,
-              merchant_approval_status: details.merchant_approval_status,
-              business_verified: details.business_verified === true,
-              bills_to_business: details.bills_to_business === true,
-              billing_as_business: details.billing_as_business === true,
-            });
+            setUserDetails(toUserDetails(details));
             setIsAuthenticated(true);
             authenticateFirebase(currentTokens.access_token).catch((error) =>
               console.warn("Unable to authenticate Firebase:", error)
@@ -368,6 +374,8 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     loadUserDataFromStorage();
   }, []);
 
+  const designDetails = useMemo(() => (designSession ? toUserDetails(designSession.user) : null), [designSession]);
+
   const value: GlobalContextType = {
     authTokens,
     setAuthTokens,
@@ -391,6 +399,14 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchUserDetails,
     userDetailsFailed,
     themePreference: theme,
+    // The design session only overlays what the context reports: tokens, storage, headers and the real state stay as
+    // they are, so ending it restores the previous auth state exactly. A signed-in device keeps its own tokens.
+    ...(designSession && {
+      authTokens: authTokens ?? designSession.tokens,
+      isAuthenticated: true,
+      userDetails: designDetails,
+      userDetailsFailed: false,
+    }),
   };
 
   return (

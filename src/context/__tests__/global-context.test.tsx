@@ -72,3 +72,95 @@ describe("logout", () => {
     expect(queryClient.getQueryData(["booking", "RN-24831"])).toBeUndefined();
   });
 });
+
+describe("design session (dev builds)", () => {
+  const { setDesignSession } = require("@/dev/design-fixtures/session") as typeof import("@/dev/design-fixtures/session");
+  const authFns = require("@/lib/auth-fns");
+  const myDetails = require("@/lib/my-details");
+  const firebase = require("@/lib/firebase");
+  const storage = require("@react-native-async-storage/async-storage").default;
+  const axiosInstance = require("@/lib/networkUtils").default;
+  const person = (first: string, username: string) => ({
+    username,
+    firebase_uid: "",
+    email: `${username}@example.com`,
+    first_name: first,
+    last_name: "Test",
+    phone: "",
+    image: null,
+    business_name: null,
+    account_type: "user",
+    merchant_approval_status: null,
+  });
+
+  const mount = async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { cacheTime: Infinity } } });
+    await act(async () => {
+      TestRenderer.create(
+        <QueryClientProvider client={queryClient}>
+          <GlobalProvider>
+            <Probe />
+          </GlobalProvider>
+        </QueryClientProvider>
+      );
+    });
+  };
+  const authState = () => ({
+    authTokens: ctx.authTokens,
+    isAuthenticated: ctx.isAuthenticated,
+    userDetails: ctx.userDetails,
+    userDetailsFailed: ctx.userDetailsFailed,
+    header: axiosInstance.defaults.headers.Authorization,
+  });
+  // Everything that would write or end a real session.
+  const writes = () =>
+    [
+      authFns.setAuthTokens,
+      authFns.removeAuthTokens,
+      storage.setItem,
+      storage.removeItem,
+      firebase.authenticateFirebase,
+      firebase.signOutFirebase,
+      myDetails.fetchMyDetailsRequest,
+    ].map((fn: jest.Mock) => fn.mock.calls.length);
+
+  it("overlays a signed-in device and restores it exactly, writing nothing", async () => {
+    const tokens = { access_token: "real-access", refresh_token: "real-refresh" };
+    authFns.getAuthTokens.mockImplementation(async () => tokens);
+    myDetails.fetchMyDetailsRequest.mockImplementation(async () => person("Real", "real_user"));
+    await mount();
+    const before = authState();
+    expect(before).toMatchObject({ isAuthenticated: true, userDetails: { name: "Real Test" }, header: "Bearer real-access" });
+    const calls = writes();
+
+    await act(async () => setDesignSession(person("Riya", "riya_sharma") as never));
+    // The device keeps its own tokens; only the user on screen changes.
+    expect(authState()).toEqual({ ...before, userDetails: expect.objectContaining({ name: "Riya Test", username: "riya_sharma" }) });
+    // A refetch in the session (the AppState listener, DevFixture's reload) must not touch the real state.
+    await act(async () => ctx.fetchUserDetails());
+
+    await act(async () => setDesignSession(null));
+    expect(authState()).toEqual(before);
+    expect(writes()).toEqual(calls);
+  });
+
+  it("signs a signed-out device in for the session only, with in-memory tokens", async () => {
+    authFns.getAuthTokens.mockImplementation(async () => null);
+    await mount();
+    const before = authState();
+    expect(before).toMatchObject({ isAuthenticated: false, authTokens: null, header: undefined });
+    const calls = writes();
+
+    await act(async () => setDesignSession(person("Riya", "riya_sharma") as never));
+    expect(authState()).toMatchObject({
+      isAuthenticated: true,
+      authTokens: { access_token: "design-session" },
+      userDetails: { name: "Riya Test" },
+      header: undefined,
+    });
+
+    await act(async () => setDesignSession(null));
+    expect(authState()).toEqual(before);
+    expect(writes()).toEqual(calls);
+  });
+});

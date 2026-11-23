@@ -4,7 +4,8 @@
  *
  * Switching empties React Query and loads again what the app loads at launch (the user, the category list), so
  * nothing from before the switch is left on screen. It runs here, inside the providers, because those loaders
- * live in the global context.
+ * live in the global context. A fixture with a `session` signs the app in as its user for as long as it is on
+ * (design-fixtures/session.ts); turning it off brings back the device's own auth state.
  *
  * Reached only through `__DEV__ ? require(...) : null` in nav.tsx: release bundles never contain it.
  */
@@ -14,7 +15,7 @@ import { FIXTURES } from "@/dev/design-fixtures/registry";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { StackActions, useRoute } from "@react-navigation/native";
 import React, { useEffect } from "react";
-import { View } from "react-native";
+import { LogBox, View } from "react-native";
 import { useQueryClient } from "react-query";
 
 // Exported so a release bundle that contained this module would show it (README, release safety).
@@ -30,6 +31,9 @@ export default function DevFixtureScreen() {
     const { frameId } = params;
     const on = frameId !== "off" && activateFixture(frameId);
     if (!on) deactivateFixture();
+    // A fixture's refused requests log errors, and LogBox's toasts would sit over the bottom bar in every screenshot.
+    // They still reach the Metro log.
+    LogBox.ignoreAllLogs(on);
     if (frameId !== "off" && !on) console.warn("[design-fixture]", `no fixture for ${frameId}; fixtures are off`);
     else console.log("[design-fixture]", on ? `on: ${frameId}` : "off");
     queryClient.clear();

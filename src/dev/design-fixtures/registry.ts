@@ -4,10 +4,12 @@
  *
  * One file per Figma section, so the flow stories (ENG-427..439) each add to their own file. A fixture lists its
  * responses as `"METHOD /path/suffix/"` (a `*` matches one path segment) to the JSON body; see interceptor.ts.
- * Fixtures need a signed-in QA account and fake no tokens; images are bundled `require()` assets resolved to URIs.
+ * A fixture without a `session` needs a signed-in QA account; one with a `session` shows its user signed in on any
+ * device (session.ts) and serves every read itself. Images are bundled `require()` assets resolved to URIs.
  *
  * Reached only through the `__DEV__` require in networkUtils.ts: release bundles never contain it.
  */
+import type { MyDetailsResponse } from "@/lib/my-details";
 import type { RootStackParamList } from "@/lib/types";
 import { fixtures as s02 } from "./02";
 import { fixtures as s03 } from "./03";
@@ -29,6 +31,11 @@ export type DevFixture = {
   params?: object;
   /** `"GET /category/"` → the response body, served with status 200. */
   responses: Record<string, unknown>;
+  /**
+   * Signed in as `user` (the me-request's body) without a token: the design session (session.ts). Reads the fixture
+   * does not list then get a 404 rather than going to QA. Keep `firebase_uid` empty so chat's Firestore stays off.
+   */
+  session?: { user: MyDetailsResponse };
 };
 
 // Exported so a release bundle that contained this module would show it (README, release safety).

@@ -6,8 +6,10 @@ import {
   installDesignFixtures,
   matchesKey,
 } from "@/dev/design-fixtures/interceptor";
+import { FIXTURES } from "@/dev/design-fixtures/registry";
+import { designSession } from "@/dev/design-fixtures/session";
 import { parseDevLink } from "@/dev/links";
-import { EVENTS, GET_CATEGORIES } from "@/lib/config";
+import { EVENTS, GET_CATEGORIES, MY_DETAILS_ENDPOINT } from "@/lib/config";
 
 jest.mock("@react-native-async-storage/async-storage", () => ({
   __esModule: true,
@@ -63,6 +65,41 @@ describe("design fixtures", () => {
 
   it("turns off for an unknown frame", () => {
     expect(activateFixture("0:0")).toBe(false);
+  });
+
+  it("runs a design session for a fixture with a session: its user, and a 404 for any read it does not list", async () => {
+    const instance = net();
+    expect(activateFixture("2095:25572")).toBe(true);
+    expect(designSession()?.user).toMatchObject({ first_name: "Riya", last_name: "Sharma", firebase_uid: "" });
+    // The app's real me-request is answered with the session's user.
+    expect((await instance.get(MY_DETAILS_ENDPOINT)).data).toMatchObject({ email: "riya.sharma@gmail.com" });
+    // Nothing reaches QA: an unlisted read is a 404 with a response (not "offline"), never a 401 that would refresh.
+    await expect(instance.get("https://qa.example/api/bookings/")).rejects.toMatchObject({
+      code: "ERR_DESIGN_FIXTURE",
+      response: { status: 404 },
+    });
+    await expect(instance.post("https://qa.example/api/cart/", {})).rejects.toMatchObject({ response: { status: 409 } });
+
+    // A sessionless fixture ends the session and lets reads through again.
+    activateFixture("2089:24546");
+    expect(designSession()).toBeNull();
+    expect((await instance.get("https://qa.example/api/home/")).data).toBe("net");
+
+    activateFixture("2095:25572");
+    deactivateFixture();
+    expect(designSession()).toBeNull();
+    expect((await instance.get(MY_DETAILS_ENDPOINT)).data).toBe("net");
+  });
+
+  it("lets a session fixture's own responses win over the session's user", async () => {
+    const instance = net();
+    FIXTURES["test:1"] = { route: "MainTabs", responses: { "GET /users/me/": { first_name: "Listed" } }, session: FIXTURES["2095:25572"].session };
+    try {
+      activateFixture("test:1");
+      expect((await instance.get(MY_DETAILS_ENDPOINT)).data).toEqual({ first_name: "Listed" });
+    } finally {
+      delete FIXTURES["test:1"];
+    }
   });
 });
 
