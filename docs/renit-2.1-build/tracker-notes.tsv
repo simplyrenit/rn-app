@@ -44,17 +44,17 @@
 2096:27788	android	pass	Sheet strip, fixture riyaLocked; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
 2096:28005	ios	pass	Sheet strip via Personal details > Upload, tiles not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
 2096:28005	android	pass	Sheet strip via Personal details > Upload, tiles not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
-2096:28081	ios	pass	Sheet strip, field focused, hardware keyboard so no on-screen keyboard; Save not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
-2096:28081	android	pass	Sheet strip after Back hid the keyboard. With the keyboard up the kit scales the numeric snap by 0.9 and clips the Save button in half (evidence and-28081-kb); raised for ENG-426; scrim 40% vs kit 0.5/0.6.
-2096:30599	ios	pass	Sheet strip, typed riya.work@outlook.com, Verify not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
-2096:30599	android	pass	Sheet strip, Verify not tapped. Keyboard up clips Verify in half (kit 0.9 numeric snap, ENG-426); scrim 40% in frame vs kit 0.5/0.6.
-2096:30773	ios	pass	Sheet strip; the field keeps 10 characters, so the typed spaced number shows 98765 4321; Verify not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
-2096:30773	android	pass	As iOS (10-character field cuts the spaced number to 98765 4321); Verify not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:28081	ios	pass	Sheet strip, field focused, keyboard hidden; Save not tapped. With the on-screen keyboard up the sheet stays behind it, field and Save hidden (diffs/ios/2096-28081.keyboard.png; kit scales numeric snaps by 0.9, ENG-426). Scrim 40% vs kit 0.5/0.6.
+2096:28081	android	pass	Sheet strip after Back hid the keyboard. Keyboard up: kit 0.9 numeric snap clips Save in half (diffs/android/2096-28081.keyboard.png), ENG-426. Scrim 40% vs kit 0.5/0.6.
+2096:30599	ios	pass	Sheet strip, typed riya.work@outlook.com, Verify not tapped. Keyboard up behaves as 2096:28081 (sheet behind the keyboard). Scrim 40% vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:30599	android	pass	Sheet strip, Verify not tapped. Keyboard up clips Verify in half (diffs/android/2096-30599.keyboard.png; kit 0.9 numeric snap, ENG-426). Scrim 40% vs kit 0.5/0.6.
+2096:30773	ios	fail-heatmap	Typed 9876543210 as the plan says; the field shows it unspaced vs the frame's 98765 43210 (no formatting code added: behaviour unchanged), and the fixture's spaced phone pre-fills as 8765 43210 (slice(-10)). Keyboard up hides the whole sheet (diffs/ios/2096-30773.keyboard.png, kit 0.9 numeric snap, ENG-426). Verify not tapped; scrim 40% vs kit 0.5/0.6.
+2096:30773	android	fail-heatmap	As iOS: typed 9876543210 shows unspaced vs the frame's 98765 43210, pre-fill reads 8765 43210. Keyboard up clips Verify (diffs/android/2096-30773.keyboard.png). Verify not tapped; scrim 40% vs kit 0.5/0.6 (ENG-426).
 2096:31063	ios	pass	Confirm destructive strip, 217 measured + inset; Delete not tapped (Cancel); scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
 2096:31063	android	pass	Confirm destructive strip; Delete not tapped (Cancel); scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
 2097:28985	ios	pass	Sheet strip only (backdrop is address-details.tsx, ENG-429); fixture gives Work the newest id so the body reads Work; Delete address not tapped; scrim 40% vs kit 0.5/0.6 (ENG-426).
-2097:28985	android	text-width	Android wraps the body to 3 lines (Work. on the third), and the measured ConfirmSheet grows 20pt as designed; evidence diffs/android/2097-28985.wrap (2.46%); Delete address not tapped.
-2097:29036	ios	fail-heatmap	0.79%, but the header text wraps one word early: the iOS 26 native switch is 63pt wide (lib/switch.ts), so the text column is 263 vs the frame's 275. Android wraps as drawn.
+2097:28985	android	text-width	Android wraps the body to 3 lines (Work. on the third) and the measured ConfirmSheet grows 20pt as designed; full diff diffs/android/2097-28985.wrap 2.46% (renamed aside so this status shows); bottom-aligned diffs/android/2097-28985.wrap-split 1.34% shows header and buttons match. Delete address not tapped.
+2097:29036	ios	fail-heatmap	0.79%, but the header text wraps one word early: the iOS 26 native switch measures 63pt wide (x303-366 in the screenshot; lib/switch.ts), so the text column is 263 vs the frame's 275. Android wraps as drawn.
 2097:29036	android	pass	1.85%: rows sit up to 1.7pt high from Android text metrics (kit glyph shift); Material switch shape differs from the iOS-style frame switch.
 2097:29097	ios	fail-heatmap	0.71% typed 29ABCDE1234F1Z5 and blurred, Check GSTIN not tapped; only difference is the iOS 26 63pt switch wrapping the header text one word early (as 2097:29036).
 2097:29097	android	pass	1.31% typed and blurred, Check GSTIN not tapped; the required label line was 24 on Android until RequiredMark took the label role (kit field.tsx).
