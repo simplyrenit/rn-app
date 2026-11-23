@@ -24,8 +24,10 @@ export function RequiredMark() {
   // One red for one meaning. The asterisk and the validation message under it
   // used to be two different reds — #E50914 (Netflix's) and #EF4444. Both are
   // now the kit's status/danger/strong, the red the Form field error uses.
+  // The label's own role, so the nested span keeps its 14/20 line: without one it took the base 24pt leading, and
+  // Android grew the label line to 24 (GSTIN, 2097:29097, sat 4pt low).
   return (
-    <Text style={{ color: color.dangerStrong }} accessibilityLabel="required">
+    <Text role="fieldLabel" style={{ color: color.dangerStrong }} accessibilityLabel="required">
       {" *"}
     </Text>
   );

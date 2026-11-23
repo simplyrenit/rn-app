@@ -113,6 +113,7 @@ export default function BusinessBillingScreen() {
               value={on}
               disabled={saving}
               trackColor={{ true: color.brand, false: color.inputLine }}
+              thumbColor="#FFFFFF"
               onValueChange={(value) => void toggle(value)}
               accessibilityLabel="Renting for a business"
             />

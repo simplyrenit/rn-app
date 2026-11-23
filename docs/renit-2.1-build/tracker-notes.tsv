@@ -12,3 +12,51 @@
 2110:30278	android	fluid	Covered by the Android Active=Rentals tab bar comparison (fluid width, visual match).
 2110:30274	ios	n/a	Drawn only on Active=Post (signed out or merchant awaiting approval); checked in ENG-435.
 2110:30274	android	n/a	Drawn only on Active=Post; checked in ENG-435.
+2095:26235	ios	n/a	State board: the 4 states checked by jest src/components/profile/post-auth/__tests__/merchant-status-card.test.tsx; pending and rejected also pixel-checked through 2095:25822 and 2095:26102.
+2095:26235	android	n/a	State board: the 4 states checked by jest src/components/profile/post-auth/__tests__/merchant-status-card.test.tsx; pending and rejected also pixel-checked through 2095:25822 and 2095:26102.
+2095:26508	ios	n/a	State board: all 11 states checked by jest src/components/kyc/__tests__/kyc-card.test.tsx; merchant none and rejected also pixel-checked through 2095:25822 and 2095:26102.
+2095:26508	android	n/a	State board: all 11 states checked by jest src/components/kyc/__tests__/kyc-card.test.tsx; merchant none and rejected also pixel-checked through 2095:25822 and 2095:26102.
+2096:27891	ios	n/a	Needs the system photo picker and its permission prompt; checked by jest src/components/profile/post-auth/sheets/__tests__/personal-details-sheet.test.tsx.
+2096:27891	android	n/a	Needs the system photo picker and its permission prompt; checked by jest src/components/profile/post-auth/sheets/__tests__/personal-details-sheet.test.tsx.
+2096:30681	ios	n/a	Verify sends a real email code through bare axios (plan safety rule 1); checked by jest src/components/profile/post-auth/sheets/__tests__/personal-details-sheet.test.tsx.
+2096:30681	android	n/a	Verify sends a real email code through bare axios (plan safety rule 1); checked by jest src/components/profile/post-auth/sheets/__tests__/personal-details-sheet.test.tsx.
+2096:30862	ios	n/a	Verify sends a real Firebase SMS (plan safety rule 2); checked by jest src/components/profile/post-auth/sheets/__tests__/personal-details-sheet.test.tsx.
+2096:30862	android	n/a	Verify sends a real Firebase SMS (plan safety rule 2); checked by jest src/components/profile/post-auth/sheets/__tests__/personal-details-sheet.test.tsx.
+2096:30954	ios	n/a	No passwords are typed on a device; checked by jest src/components/profile/post-auth/sheets/__tests__/personal-details-sheet.test.tsx.
+2096:30954	android	n/a	No passwords are typed on a device; checked by jest src/components/profile/post-auth/sheets/__tests__/personal-details-sheet.test.tsx.
+2096:30504	ios	n/a	Opening it sends a Firebase SMS and the timer runs on the clock; checked by jest src/components/bank/__tests__/unlock-sheet.test.tsx (kit SheetHeader draws the 2-line title 77 high vs 73, so the sheet is 4pt taller).
+2096:30504	android	n/a	Opening it sends a Firebase SMS and the timer runs on the clock; checked by jest src/components/bank/__tests__/unlock-sheet.test.tsx.
+2096:31168	ios	n/a	Needs a 409 open_bookings body no fixture can produce (plan rule 4); checked by jest src/components/profile/post-auth/sheets/__tests__/delete-account-modal.test.tsx.
+2096:31168	android	n/a	Needs a 409 open_bookings body no fixture can produce (plan rule 4); checked by jest src/components/profile/post-auth/sheets/__tests__/delete-account-modal.test.tsx.
+2095:25130	ios	fail-heatmap	Signed-out device; the panel headline, sub-line, sign-in buttons and the rule under the panel are profile-pre-auth.tsx and sign-in-options.tsx (ENG-428); the Profile title and 44/y20 group headers owned here match.
+2095:25130	android	fail-heatmap	As iOS: the panel and sign-in buttons are ENG-428's (profile-pre-auth.tsx, sign-in-options.tsx); title and group headers match.
+2095:24982	ios	fail-heatmap	First screen as 2095:25130 (ENG-428 panel); scroll end (diffs/ios/2095-24982.scroll) sits 8pt high because profile-pre-auth.tsx pads the list 32 below vs the frame's 24 (ENG-428).
+2095:24982	android	fail-heatmap	As iOS: ENG-428 panel on the first screen; scroll end (diffs/android/2095-24982.scroll, 3.21%) 8pt high from the ENG-428 32pt list bottom padding.
+2095:25349	ios	pass	First screen 0.97%; scroll end diffs/ios/2095-25349.scroll 0.38% (Logout visible after the scroll view was bounded under the header).
+2095:25349	android	pass	First screen 1.31%; scroll end diffs/android/2095-25349.scroll 0.69%.
+2097:30662	ios	pass	First screen 1.42% (the 1173px-wide scroll PNG is scaled to 1170, so rows drift about 1pt by y600; 2095:25822 shows the same content at 0.68%); scroll end diffs/ios/2097-30662.scroll 0.34%.
+2097:30662	android	pass	First screen 1.25%; scroll end diffs/android/2097-30662.scroll 0.65%.
+2096:28163	ios	pass	Sheet strip top-aligned (frame draws a 42 home strip, app 241 + inset); labels 0.7pt high from iOS glyph placement; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:28163	android	pass	Sheet strip; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:27684	ios	pass	Sheet strip; the avatar is the shared brand-tint ProfileAvatar; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:27684	android	pass	Sheet strip; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:27788	ios	pass	Sheet strip, fixture riyaLocked; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:27788	android	pass	Sheet strip, fixture riyaLocked; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:28005	ios	pass	Sheet strip via Personal details > Upload, tiles not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:28005	android	pass	Sheet strip via Personal details > Upload, tiles not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:28081	ios	pass	Sheet strip, field focused, hardware keyboard so no on-screen keyboard; Save not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:28081	android	pass	Sheet strip after Back hid the keyboard. With the keyboard up the kit scales the numeric snap by 0.9 and clips the Save button in half (evidence and-28081-kb); raised for ENG-426; scrim 40% vs kit 0.5/0.6.
+2096:30599	ios	pass	Sheet strip, typed riya.work@outlook.com, Verify not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:30599	android	pass	Sheet strip, Verify not tapped. Keyboard up clips Verify in half (kit 0.9 numeric snap, ENG-426); scrim 40% in frame vs kit 0.5/0.6.
+2096:30773	ios	pass	Sheet strip; the field keeps 10 characters, so the typed spaced number shows 98765 4321; Verify not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:30773	android	pass	As iOS (10-character field cuts the spaced number to 98765 4321); Verify not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:31063	ios	pass	Confirm destructive strip, 217 measured + inset; Delete not tapped (Cancel); scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:31063	android	pass	Confirm destructive strip; Delete not tapped (Cancel); scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2097:28985	ios	pass	Sheet strip only (backdrop is address-details.tsx, ENG-429); fixture gives Work the newest id so the body reads Work; Delete address not tapped; scrim 40% vs kit 0.5/0.6 (ENG-426).
+2097:28985	android	text-width	Android wraps the body to 3 lines (Work. on the third), and the measured ConfirmSheet grows 20pt as designed; evidence diffs/android/2097-28985.wrap (2.46%); Delete address not tapped.
+2097:29036	ios	fail-heatmap	0.79%, but the header text wraps one word early: the iOS 26 native switch is 63pt wide (lib/switch.ts), so the text column is 263 vs the frame's 275. Android wraps as drawn.
+2097:29036	android	pass	1.85%: rows sit up to 1.7pt high from Android text metrics (kit glyph shift); Material switch shape differs from the iOS-style frame switch.
+2097:29097	ios	fail-heatmap	0.71% typed 29ABCDE1234F1Z5 and blurred, Check GSTIN not tapped; only difference is the iOS 26 63pt switch wrapping the header text one word early (as 2097:29036).
+2097:29097	android	pass	1.31% typed and blurred, Check GSTIN not tapped; the required label line was 24 on Android until RequiredMark took the label role (kit field.tsx).
+2097:29139	ios	fail-heatmap	0.59%; the iOS 26 63pt switch wraps the header text one word early (as 2097:29036).
+2097:29139	android	pass	0.40%.
