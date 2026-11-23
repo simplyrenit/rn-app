@@ -1,27 +1,29 @@
 import { blockReturned, extendBlock, refreshShop, removeBlock, useOpenBlocks, useToday } from "@/backend/shop-today";
 import { setOpenState, shopQueryKey, useShop } from "@/backend/shop";
-import { Notice, Panel, Pill } from "@/components/booking/parts";
+import { acceptRing, ringEndedQueryKey, settleRing } from "@/backend/shop-ring";
+import { Notice } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
-import { Button, EmptyState, Skeleton, Text } from "@/components/core";
+import { Button, EmptyState, SectionHeader, Skeleton, StatusPill, Text } from "@/components/core";
 import { ConfirmSheet } from "@/components/core/confirm-sheet";
 import { useButtonLabelColor } from "@/components/core/button";
-import { useRingPermission } from "@/backend/ring-permission";
+import { RingPermissionControl, useRingPermission } from "@/backend/ring-permission";
+import { BrandNote } from "@/components/shop/brand-note";
 import { DayPickerModal } from "@/components/shop/day-picker-modal";
 import { RingPermissionCard } from "@/components/shop/ring-permission-card";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError } from "@/lib/api-error";
 import { dayShort, todayIst } from "@/lib/booking";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { OPEN_BUT_QUIET, quietBody, ringCaption, ringsHere } from "@/lib/ring-permission";
 import { cannotOpenMessage } from "@/lib/shop";
 import { isQuiet } from "@/lib/shop-today";
 import { BookingShop } from "@/lib/shop-booking";
 import { dayScreen } from "@/lib/shop-handover";
-import { ringToOpen } from "@/lib/shop-ring";
+import { isBasket } from "@/lib/shop-lines";
+import { Ring, answerErrorText, endingFromError, ringToOpen } from "@/lib/shop-ring";
 import {
   Block,
   NeedsRow,
-  RowPill,
   TodayRow,
   blockErrorText,
   blockRowLine,
@@ -43,43 +45,51 @@ import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useIsFocused } from "@react-navigation/native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { RefreshControl, ScrollView, TouchableOpacity, View } from "react-native";
 import { AppSwitch } from "@/components/core/switch";
-import { ChevronRightIcon } from "react-native-heroicons/mini";
-import {
-  BellIcon,
-  CameraIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  PlusIcon,
-} from "react-native-heroicons/outline";
+import { ChevronRightIcon, PlusIcon } from "react-native-heroicons/mini";
+import { BellIcon, CameraIcon, ClockIcon, ExclamationTriangleIcon, InformationCircleIcon } from "react-native-heroicons/outline";
 import { useQueryClient } from "react-query";
+import type { ShopDesign } from "./home";
 import { QuickBlockSheet } from "./quick-block";
 
-function PillView({ pill }: { pill: RowPill }) {
-  const { color } = useTheme();
-  const tint = {
-    success: { fg: color.success, bg: color.successWash },
-    warning: { fg: color.warning, bg: color.warningWash },
-    danger: { fg: color.danger, bg: color.dangerWash },
-    neutral: { fg: color.textBody, bg: color.surfaceRaised },
-  }[pill.tone];
+// Every number below is from the 08 frames (2091:20977, 2094:21684): rows padded 14 above and below, 12 between
+// their parts; the bordered cards r12 with rows inset 16.
+
+/** A section of Today: 16 above it, the kit Section header, 12 to its content. */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <View style={{ backgroundColor: tint.bg, borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 4 }}>
-      <Text fontSize="text-xs" fontWeight="font-bold" style={{ color: tint.fg }}>
-        {pill.label}
-      </Text>
+    <View style={{ paddingTop: 16, gap: 12 }}>
+      <SectionHeader title={title} gutter={false} flush />
+      {children}
     </View>
   );
 }
 
-/** A list of bookings in one card: a title, a quiet line, and a pill on the right. */
+/** The bordered card of "Ringing now", "Going out" and "Coming back". "Blocked now" and "Needs you" have none. */
+function Card({ children }: { children: React.ReactNode }) {
+  const { color } = useTheme();
+  return (
+    <View
+      style={{
+        borderWidth: 1,
+        borderColor: color.line,
+        borderRadius: 12,
+        backgroundColor: color.surface,
+        overflow: "hidden",
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+/** A list of bookings in one card: a title, a line under it, and a pill on the right. */
 function RowList({ rows, onOpen }: { rows: TodayRow[]; onOpen: (number: string) => void }) {
   const { color } = useTheme();
   return (
-    <Panel>
+    <Card>
       {rows.map((row, index) => (
         <TouchableOpacity
           key={row.number}
@@ -91,40 +101,26 @@ function RowList({ rows, onOpen }: { rows: TodayRow[]; onOpen: (number: string) 
           style={{
             flexDirection: "row",
             alignItems: "center",
-            gap: space.sm,
-            padding: space.md,
+            gap: 12,
+            paddingVertical: 14,
+            paddingHorizontal: 16,
             borderTopWidth: index === 0 ? 0 : 1,
             borderTopColor: color.line,
           }}
         >
           <View style={{ flex: 1, gap: 2 }}>
-            <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={2}>
+            <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24} numberOfLines={2}>
               {row.title}
             </Text>
-            <Text fontSize="text-sm" tone="body">
+            <Text fontSize="text-sm" lineHeight={20}>
               {row.sub}
             </Text>
-            {row.items ? (
-              <View style={{ flexDirection: "row", marginTop: space.xs }}>
-                <Pill label={row.items} tone="brand" />
-              </View>
-            ) : null}
+            {row.items ? <StatusPill label={row.items} tone="info" style={{ alignSelf: "flex-start", marginTop: 4 }} /> : null}
           </View>
-          {row.pill ? <PillView pill={row.pill} /> : null}
+          {row.pill ? <StatusPill label={row.pill.label} tone={row.pill.tone} /> : null}
         </TouchableOpacity>
       ))}
-    </Panel>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View style={{ gap: space.sm }}>
-      <Text role="sectionTitle" accessibilityRole="header">
-        {title}
-      </Text>
-      {children}
-    </View>
+    </Card>
   );
 }
 
@@ -132,9 +128,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function CounterLabel() {
   const label = useButtonLabelColor();
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-      <PlusIcon size={20} color={label} />
-      <Text fontSize="text-md" fontWeight="font-bold" style={{ color: label }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <PlusIcon size={24} color={label} />
+      <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24} style={{ color: label }}>
         Rented at the counter
       </Text>
     </View>
@@ -151,7 +147,6 @@ const NEEDS_ICON = {
 /** One item of "Needs you": the server's words, and what the phone can do about it. */
 function NeedsItem({
   row,
-  first,
   busy,
   onBooking,
   onClaim,
@@ -163,7 +158,6 @@ function NeedsItem({
   onExtend,
 }: {
   row: NeedsRow;
-  first: boolean;
   busy: boolean;
   onBooking: (number: string) => void;
   onClaim: (id: number) => void;
@@ -184,8 +178,8 @@ function NeedsItem({
       : row.icon === "clock"
       ? color.warningWash
       : row.icon === "camera"
-      ? color.brandWash
-      : color.surfaceRaised;
+      ? color.brandPanel
+      : color.surfaceMuted;
   const action = row.action;
   // The photos row has its own button ("Start"), so the row itself is not one.
   const open =
@@ -201,28 +195,27 @@ function NeedsItem({
       ? onAddress
       : null;
   const body = (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
       <View
-        style={{ width: 40, height: 40, borderRadius: radius.full, backgroundColor: wash, alignItems: "center", justifyContent: "center" }}
+        style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: wash, alignItems: "center", justifyContent: "center" }}
       >
-        <Icon size={22} color={tint} />
+        <Icon size={22} color={tint} strokeWidth={1.5} />
       </View>
-      <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
+      <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} style={{ flex: 1 }}>
         {row.text}
       </Text>
       {action?.kind === "photos" ? (
+        // Kit Secondary 44: the frame's stroke is the neutral #E6E6E6, the kit's is brandPanelLine (ENG-426).
         <Button size="compact" variant="outline" accessibilityLabel="Start taking photos" onPress={onPhotos}>
           Start
         </Button>
       ) : open ? (
-        <ChevronRightIcon size={20} color={color.textBody} />
+        <ChevronRightIcon size={20} color={color.textDim} />
       ) : null}
     </View>
   );
   return (
-    <View
-      style={{ padding: space.md, gap: space.sm, borderTopWidth: first ? 0 : 1, borderTopColor: color.line }}
-    >
+    <View style={{ paddingVertical: 14, gap: 8 }}>
       {open ? (
         <TouchableOpacity accessibilityRole="button" accessibilityLabel={row.text} activeOpacity={0.7} onPress={open}>
           {body}
@@ -233,7 +226,7 @@ function NeedsItem({
         </View>
       )}
       {action?.kind === "block_back" ? (
-        <View style={{ flexDirection: "row", gap: space.sm, paddingLeft: 40 + space.md }}>
+        <View style={{ flexDirection: "row", gap: 8, paddingLeft: 40 + 12 }}>
           <Button size="compact" variant="outline" loading={busy} disabled={busy} onPress={() => onReturned(action.block)}>
             Returned
           </Button>
@@ -246,6 +239,69 @@ function NeedsItem({
   );
 }
 
+/** One request in "Ringing now". One item answers here; a basket opens the ring screen, where its items are ticked. */
+function RingingItem({
+  ring,
+  first,
+  accepting,
+  onOpen,
+  onAccept,
+}: {
+  ring: Ring;
+  first: boolean;
+  accepting: boolean;
+  onOpen: () => void;
+  onAccept: () => void;
+}) {
+  const { color } = useTheme();
+  const row = ringingRow(ring);
+  const basket = isBasket(ring);
+  const content = (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={`Ringing. ${row.title}. ${row.sub}. You earn ${row.earn}.`}
+      accessibilityHint="Opens the request to answer it"
+      activeOpacity={0.7}
+      onPress={onOpen}
+      style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, paddingHorizontal: 16 }}
+    >
+      <BellIcon size={24} color={color.brandText} strokeWidth={1.5} />
+      <View style={{ flex: 1, gap: 4, alignItems: "flex-start" }}>
+        <StatusPill label="Ringing" tone="warning" />
+        <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24}>
+          {row.title}
+        </Text>
+        <Text fontSize="text-sm" lineHeight={20} tone="body">
+          {row.sub}
+        </Text>
+      </View>
+      <Text fontSize="text-base" fontWeight="font-bold" lineHeight={26}>
+        {row.earn}
+      </Text>
+    </TouchableOpacity>
+  );
+  return (
+    <View style={{ borderTopWidth: first ? 0 : 1, borderTopColor: color.line }}>
+      {content}
+      {/* NEW · Accept (inline on ringing card), 2091:20977: a sibling of the row's touchable, not inside it. */}
+      {basket ? null : (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+          <Button
+            accessibilityLabel={`Accept ${row.title}`}
+            loading={accepting}
+            disabled={accepting}
+            onPress={onAccept}
+          >
+            Accept
+          </Button>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const noop = async () => undefined;
+
 /**
  * SH-04, the shop's Today: the Open switch, "Rented at the counter", what is
  * ringing, what goes out and comes back today, and what needs the shop. The
@@ -254,8 +310,11 @@ function NeedsItem({
  * pull down and after a push about the shop; a request that starts ringing takes
  * the screen, once. Nothing here keeps a verdict of its own. The Open switch is the dashboard's switch: what it says
  * is what the server holds.
+ *
+ * `design` (dev builds, design fixtures only) seeds this phone's ring permission and the quick block's day, and stops
+ * a ringing request from taking the screen, so a frame draws the same on any device and any day.
  */
-export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
+export function ShopTodayView({ bottomPad, design }: { bottomPad: number; design?: ShopDesign }) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const queryClient = useQueryClient();
@@ -270,7 +329,16 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   const quickBlock = useRef<BottomSheetModal>(null);
   // Whether this phone will ring for a request: the system's notification permission. Only a
   // shop whose requests will ring has anything to say about it (review round 1, finding 2).
-  const ringPerm = useRingPermission();
+  // Under a design fixture the state is the fixture's and nothing asks the system (no prompt on any device).
+  const realPerm = useRingPermission();
+  const designPerm = design?.ringPermission ?? "unavailable";
+  const seeded = useMemo<RingPermissionControl>(
+    () => ({ ...realPerm, state: designPerm, ask: noop, askOnce: noop, openSettings: () => undefined }),
+    // `realPerm` is spread for its shape only; the seeded control must stay the same object for `askOnce`'s effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [designPerm]
+  );
+  const ringPerm = design ? seeded : realPerm;
   const canTake = shop?.can_take_bookings === true;
   const phone = canTake ? ringPerm.state : null;
   const [refreshing, setRefreshing] = useState(false);
@@ -282,6 +350,9 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   const removeSheet = useRef<BottomSheetModal>(null);
   const blocks = useOpenBlocks();
   const busy = useRef(false);
+  // The inline Accept: one at a time, and a second tap before the answer is dropped.
+  const accepting = useRef(false);
+  const [acceptingNumber, setAcceptingNumber] = useState<string | null>(null);
 
   const { refetch } = today;
   // When Today last came into view: only an answer fetched since then may open a ring, never a copy kept from before.
@@ -293,12 +364,46 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
   }, [focused, active, refetch]);
 
   // A request that starts ringing while this screen is open takes the screen, as a ring push does (once for each).
+  // Not while an inline Accept is in flight: its answer opens the ring screen itself. Never under a design fixture.
   const ringing = feed?.ringing;
   const fetchedAt = today.dataUpdatedAt;
   useEffect(() => {
+    if (design || accepting.current) return;
     const ring = focused && active && ringing && fetchedAt >= since.current ? ringToOpen(ringing) : null;
     if (ring) navigation.navigate("ShopRing", { number: ring.number, ring });
-  }, [focused, active, fetchedAt, ringing, navigation]);
+  }, [design, focused, active, fetchedAt, ringing, navigation]);
+
+  /**
+   * Accept on the card (one item), exactly as the ring screen sends it (`acceptRing`). The ring screen then opens on
+   * how it ended: the ending is in `ringEndedQueryKey` before it opens, so it never draws a cached ringing view first.
+   */
+  const acceptInline = async (ring: Ring) => {
+    if (accepting.current) return;
+    accepting.current = true;
+    setAcceptingNumber(ring.number);
+    try {
+      await acceptRing(queryClient, ring.number, ring);
+      settleRing(queryClient, ring.number);
+      navigation.navigate("ShopRing", { number: ring.number });
+    } catch (error) {
+      const failure = apiError(error);
+      const ending = endingFromError(failure);
+      if (ending) {
+        // It ended another way (answered elsewhere, no unit free, it can't be accepted): the ring screen says how.
+        queryClient.setQueryData(ringEndedQueryKey(ring.number), ending);
+        settleRing(queryClient, ring.number);
+        navigation.navigate("ShopRing", { number: ring.number });
+      } else {
+        // It is still ringing, or the tap may have gone through: Today is read again. The ring screen shows no note
+        // for `stage_not_allowed` either.
+        if (failure?.code !== "stage_not_allowed") toast.error(answerErrorText(failure));
+        void refetch();
+      }
+    } finally {
+      accepting.current = false;
+      setAcceptingNumber(null);
+    }
+  };
 
   const changeOpen = async (state: "open" | "closed" | "auto") => {
     if (!shop || openBusy) return;
@@ -357,12 +462,13 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
 
   if (!feed) {
     // An account with nothing to rent out has no shop: that is not a fault to retry.
+    // 2091:21309 / 21412: the empty state sits 160 under the top of the content, not centred.
     const notOwner = today.isError && ["not_owner", "not_shop_owner"].includes(apiError(today.error)?.code ?? "");
     if (notOwner) {
       return (
-        <View style={{ flex: 1, justifyContent: "center" }}>
+        <View style={{ flex: 1, paddingTop: 160 }}>
           <EmptyState
-            icon={<BellIcon size={28} color={color.brandText} />}
+            icon={<BellIcon size={32} color={color.brandText} strokeWidth={1.5} />}
             title="Nothing here yet"
             body="Today and bookings show up here once you have listed something to rent out."
           />
@@ -370,10 +476,10 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
       );
     }
     return today.isError ? (
-      <View style={{ flex: 1, justifyContent: "center" }}>
+      <View style={{ flex: 1, paddingTop: 160 }}>
         <EmptyState
           variant="error"
-          icon={<ExclamationTriangleIcon size={28} color={color.danger} />}
+          icon={<ExclamationTriangleIcon size={32} color={color.dangerStrong} strokeWidth={1.5} />}
           title="We couldn't load today"
           body="Check your connection and try again."
           actionLabel="Try again"
@@ -386,10 +492,10 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
         accessibilityRole="progressbar"
         accessibilityLabel="Loading today"
         accessibilityState={{ busy: true }}
-        style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.md, gap: space.md }}
+        style={{ paddingHorizontal: SCREEN_GUTTER, gap: 16 }}
       >
-        <Skeleton width="100%" height={64} />
-        <Skeleton width="100%" height={48} />
+        <Skeleton width="100%" height={55} />
+        <Skeleton width="100%" height={52} />
         <Skeleton width="100%" height={180} />
       </View>
     );
@@ -424,18 +530,18 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
         }
         contentContainerStyle={{
           paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          paddingBottom: bottomPad + space.lg,
-          gap: space.lg,
+          paddingBottom: bottomPad + 32,
+          gap: 16,
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
-          <Text role="screenTitle" accessibilityRole="header" numberOfLines={2} style={{ flex: 1 }}>
-            {shop?.name ? softBreaks(shop.name) : "Your shop"}
-          </Text>
-          <View style={{ alignItems: "flex-end" }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-              <Text fontSize="text-md" fontWeight="font-bold" tone={open.is_open ? "success" : "body"}>
+        {/* Shop header: the name and the Open switch in a row, the line under them full width, 4 apart. */}
+        <View style={{ gap: 4 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+            <Text role="screenTitle" accessibilityRole="header" numberOfLines={2} style={{ flex: 1 }}>
+              {shop?.name ? softBreaks(shop.name) : "Your shop"}
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} tone={open.is_open ? "success" : "body"}>
                 {open.is_open ? "Open" : "Closed"}
               </Text>
               <AppSwitch
@@ -443,63 +549,56 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
                 value={open.is_open}
                 disabled={!shop || openBusy}
                 onValueChange={(next) => void changeOpen(next ? "open" : "closed")}
-                trackColor={{ true: color.brand, false: color.inputLine }}
+                trackColor={{ true: color.brand, false: color.line }}
                 thumbColor="#FFFFFF"
               />
             </View>
-            <Text fontSize="text-sm" tone="body" style={{ maxWidth: 190, textAlign: "right" }}>
-              {ringCaption(copy.line, open.is_open, phone)}
-            </Text>
-            {open.reason === "manual" ? (
-              <Text
-                fontSize="text-sm"
-                fontWeight="font-bold"
-                tone="brand"
-                accessibilityRole="button"
-                onPress={() => void changeOpen("auto")}
-                style={{ paddingVertical: space.xs }}
-              >
+          </View>
+          <Text fontSize="text-sm" lineHeight={20} tone="body">
+            {ringCaption(copy.line, open.is_open, phone)}
+          </Text>
+          {open.reason === "manual" ? (
+            <TouchableOpacity
+              accessibilityRole="button"
+              activeOpacity={0.6}
+              hitSlop={12}
+              onPress={() => void changeOpen("auto")}
+              style={{ alignSelf: "flex-start" }}
+            >
+              <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} tone="brand">
                 Follow my hours again
               </Text>
-            ) : null}
-          </View>
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {copy.hint ? <Notice tone="warning" icon="warning">{copy.hint}</Notice> : null}
 
-        <RingPermissionCard enabled={canTake} permission={ringPerm} />
+        <RingPermissionCard enabled={canTake} permission={ringPerm} layout="inline" />
 
-        <Button accessibilityLabel="Rented at the counter" onPress={() => quickBlock.current?.present()}>
+        {/* Fix pass b3-07: the kit Secondary, not a filled primary. */}
+        <Button variant="outline" accessibilityLabel="Rented at the counter" onPress={() => quickBlock.current?.present()}>
           <CounterLabel />
         </Button>
 
         {/* The blocks the shop has made that are not over: one made by mistake is taken off here, also after it began. */}
         {removableBlocks(blocks.data).length > 0 ? (
           <Section title="Blocked now">
-            <Panel>
-              {removableBlocks(blocks.data).map((block, index) => (
-                <View
-                  key={block.id}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: space.md,
-                    padding: space.md,
-                    borderTopWidth: index === 0 ? 0 : 1,
-                    borderTopColor: color.line,
-                  }}
-                >
+            <View>
+              {removableBlocks(blocks.data).map((block) => (
+                <View key={block.id} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14 }}>
                   <View style={{ flex: 1, gap: 2 }} accessible accessibilityLabel={`${block.product.title}. ${blockRowLine(block, todayIst(now))}`}>
-                    <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={1}>
+                    <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24} numberOfLines={1}>
                       {block.product.title}
                     </Text>
-                    <Text fontSize="text-sm" tone="body">
+                    <Text fontSize="text-sm" lineHeight={20}>
                       {blockRowLine(block, todayIst(now))}
                     </Text>
                   </View>
+                  {/* The frame's Secondary with a #D92D20 label on a #E6E6E6 stroke: the kit's compact Destructive. */}
                   <Button
                     size="compact"
-                    variant="outline"
+                    variant="warning"
                     accessibilityLabel={`Take off the block on ${block.product.title}`}
                     loading={blockBusy === block.id}
                     disabled={blockBusy !== null}
@@ -512,58 +611,33 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
                   </Button>
                 </View>
               ))}
-            </Panel>
+            </View>
           </Section>
         ) : null}
 
         {feed.ringing.length > 0 ? (
           <Section title="Ringing now">
-            <Panel>
-              {feed.ringing.map((ring, index) => {
-                const row = ringingRow(ring);
-                return (
-                  <TouchableOpacity
-                    key={ring.number}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${row.title}. ${row.sub}. You earn ${row.earn}.`}
-                    accessibilityHint="Opens the request to answer it"
-                    activeOpacity={0.7}
-                    onPress={() => navigation.navigate("ShopRing", { number: ring.number, ring })}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: space.md,
-                      padding: space.md,
-                      borderTopWidth: index === 0 ? 0 : 1,
-                      borderTopColor: color.line,
-                      backgroundColor: color.brandPanel,
-                    }}
-                  >
-                    <BellIcon size={24} color={color.brandText} />
-                    <View style={{ flex: 1, gap: 2 }}>
-                      <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={1}>
-                        {row.title}
-                      </Text>
-                      <Text fontSize="text-sm" tone="body">
-                        {row.sub}
-                      </Text>
-                    </View>
-                    <Text fontSize="text-md" fontWeight="font-bold">
-                      {row.earn}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </Panel>
+            <Card>
+              {feed.ringing.map((ring, index) => (
+                <RingingItem
+                  key={ring.number}
+                  ring={ring}
+                  first={index === 0}
+                  accepting={acceptingNumber === ring.number}
+                  onOpen={() => navigation.navigate("ShopRing", { number: ring.number, ring })}
+                  onAccept={() => void acceptInline(ring)}
+                />
+              ))}
+            </Card>
           </Section>
         ) : null}
 
         {feed.waiting_to_ring.length > 0 ? (
-          <View style={{ gap: space.sm }}>
+          <View style={{ gap: 8 }}>
             {feed.waiting_to_ring.map((group) => (
-              <Notice key={group.ring_at} tone="brand" icon="clock">
+              <BrandNote key={group.ring_at} icon="clock">
                 {waitingLine(group, now)}
-              </Notice>
+              </BrandNote>
             ))}
           </View>
         ) : null}
@@ -588,14 +662,13 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
 
         {feed.needs_you.length > 0 ? (
           <Section title="Needs you">
-            <Panel>
+            <View>
               {feed.needs_you.map((item, index) => {
                 const row = needsRow(item, index);
                 return (
                   <NeedsItem
                     key={row.key}
                     row={row}
-                    first={index === 0}
                     busy={row.action?.kind === "block_back" && blockBusy === row.action.block.id}
                     onBooking={openBooking}
                     onClaim={(id) => navigation.navigate("Claim", { id })}
@@ -613,21 +686,23 @@ export function ShopTodayView({ bottomPad }: { bottomPad: number }) {
                   />
                 );
               })}
-            </Panel>
+            </View>
           </Section>
         ) : null}
 
         {quiet ? (
-          <EmptyState
-            compact
-            icon={<BellIcon size={26} color={color.brandText} />}
-            title="Nothing needs you right now"
-            body={quietBody(phone)}
-          />
+          // 2091:20870: 24 above the empty state, whose words run the content's full 342 (it pads its own gutter).
+          <View style={{ paddingTop: 24, marginHorizontal: -SCREEN_GUTTER }}>
+            <EmptyState
+              icon={<BellIcon size={32} color={color.brandText} strokeWidth={1.5} />}
+              title="Nothing needs you right now"
+              body={quietBody(phone)}
+            />
+          </View>
         ) : null}
       </ScrollView>
 
-      <QuickBlockSheet ref={quickBlock} />
+      <QuickBlockSheet ref={quickBlock} today={design?.today} />
       {/* Always mounted, so its ref is there when a row asks for it; the words are the block's that was asked about. */}
       <ConfirmSheet
         ref={removeSheet}

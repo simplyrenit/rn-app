@@ -1,44 +1,17 @@
 import { Panel } from "@/components/booking/parts";
-import { Text } from "@/components/core";
-import { radius, space } from "@/lib/design-tokens";
+import { StatusPill, Text } from "@/components/core";
+import { space } from "@/lib/design-tokens";
 import { ChipTone, LineRow } from "@/lib/shop-lines";
 import { useTheme } from "@/lib/theme";
 import React from "react";
 import { View } from "react-native";
-import { ExclamationTriangleIcon, InformationCircleIcon } from "react-native-heroicons/outline";
 
-/** An item's state on every owner screen: "Accepted", "Not available · dates blocked", "No longer free" (FIXES-r1 §3). */
+/**
+ * An item's state on every owner screen: "Accepted", "Not available · dates blocked", "No longer free" (FIXES-r1 §3).
+ * The kit Status pill (2092:21288 draws "Not available · dates blocked" as Tone=Neutral, no glyph).
+ */
 export function LineChip({ label, tone }: { label: string; tone: ChipTone | "info" }) {
-  const { color } = useTheme();
-  const tint = {
-    success: { fg: color.success, bg: color.successWash },
-    danger: { fg: color.danger, bg: color.dangerWash },
-    info: { fg: color.brandText, bg: color.brandWash },
-    neutral: { fg: color.textBody, bg: color.surfaceRaised },
-  }[tone];
-  const Icon = tone === "danger" ? ExclamationTriangleIcon : tone === "neutral" ? InformationCircleIcon : null;
-  return (
-    <View
-      style={{
-        alignSelf: "flex-start",
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: radius.full,
-        // A 1 px border in its tone, so it reads in dark too (Figma ruling G15).
-        borderWidth: 1,
-        borderColor: tint.fg,
-        backgroundColor: tint.bg,
-      }}
-    >
-      {Icon ? <Icon size={14} color={tint.fg} /> : null}
-      <Text fontSize="text-xs" fontWeight="font-bold" style={{ color: tint.fg }}>
-        {label}
-      </Text>
-    </View>
-  );
+  return <StatusPill label={label} tone={tone} style={{ alignSelf: "flex-start" }} />;
 }
 
 /** A line's money, struck through once it is out of the booking (G12: no dimming). */

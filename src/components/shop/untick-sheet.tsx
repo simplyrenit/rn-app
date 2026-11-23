@@ -1,18 +1,20 @@
 import { Notice } from "@/components/booking/parts";
-import { Button, Text } from "@/components/core";
+import { Chip, SheetFooter, SheetHeader, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { ShopLine, UNTICK_REASONS, UntickReason, untickCopy } from "@/lib/shop-lines";
 import { useTheme } from "@/lib/theme";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import { TouchableOpacity, View } from "react-native";
-import { CheckIcon } from "react-native-heroicons/mini";
+import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export interface UntickSheetHandle {
   present: (line: ShopLine) => void;
 }
+
+// 2094:24240 (515) less the 21pt home indicator, which `insets.bottom` stands in for. A longer name or notice scrolls.
+const SHEET_HEIGHT = 515 - 21;
 
 /**
  * MR-02, "Why can't you give it?": an item unticked on the ring. Every reason means `not_available` to the server
@@ -20,7 +22,7 @@ export interface UntickSheetHandle {
  */
 export const UntickSheet = forwardRef<UntickSheetHandle, { range: string; onUntick: (line: ShopLine, reason: UntickReason) => void }>(
   ({ range, onUntick }, ref) => {
-    const { color, isDark } = useTheme();
+    const { isDark } = useTheme();
     const insets = useSafeAreaInsets();
     const sheet = useRef<BottomSheetModal>(null);
     const [line, setLine] = useState<ShopLine | null>(null);
@@ -36,65 +38,38 @@ export const UntickSheet = forwardRef<UntickSheetHandle, { range: string; onUnti
 
     const copy = line ? untickCopy(line, range) : null;
     return (
-      <CustomBottomSheetModal ref={sheet} isDark={isDark} snapPoints={[470 + insets.bottom]} frame>
-        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.sm, paddingBottom: insets.bottom + space.sm, gap: space.md }}>
-          <Text role="sectionTitle" accessibilityRole="header">
-            {line ? `Why can't you give ${line.product.title}?` : ""}
-          </Text>
+      <CustomBottomSheetModal ref={sheet} isDark={isDark} snapPoints={[SHEET_HEIGHT + insets.bottom]} frame>
+        <SheetHeader title={line ? `Why can't you give ${line.product.title}?` : ""} grabber={false} />
+        <View style={{ paddingTop: 8, paddingHorizontal: SCREEN_GUTTER, paddingBottom: 24, gap: 16 }}>
           {line ? (
-            <Text fontSize="text-sm" tone="body">
+            <Text fontSize="text-sm" lineHeight={20} tone="body">
               {`${line.ref} · ${range}`}
             </Text>
           ) : null}
-          <View accessibilityRole="radiogroup" style={{ flexDirection: "row", flexWrap: "wrap", gap: space.sm }}>
-            {UNTICK_REASONS.map((r) => {
-              const selected = r === reason;
-              return (
-                <TouchableOpacity
-                  key={r}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  activeOpacity={0.8}
-                  onPress={() => setReason(r)}
-                  style={{
-                    minHeight: MIN_TOUCH_TARGET,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: space.xs,
-                    paddingHorizontal: space.md,
-                    borderRadius: radius.full,
-                    borderWidth: selected ? 1.5 : 1,
-                    borderColor: selected ? color.brand : color.line,
-                    backgroundColor: selected ? color.brandWash : color.surface,
-                  }}
-                >
-                  {selected ? <CheckIcon size={16} color={color.brandText} /> : null}
-                  <Text fontSize="text-md" fontWeight="font-bold" tone={selected ? "brand" : "default"}>
-                    {r}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+          {/* Kit Chips; the role and state sit on a wrapper, as the kit Chip forces role "button" (plan: chip wrapper). */}
+          <View accessibilityRole="radiogroup" style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {UNTICK_REASONS.map((r) => (
+              <View key={r} accessible accessibilityRole="radio" accessibilityLabel={r} accessibilityState={{ selected: r === reason }}>
+                <Chip label={r} selected={r === reason} onPress={() => setReason(r)} />
+              </View>
+            ))}
           </View>
           {copy ? (
             <Notice icon="info" title={copy.title}>
               {copy.body}
             </Notice>
           ) : null}
-          <View style={{ gap: space.sm }}>
-            <Button
-              onPress={() => {
-                if (line) onUntick(line, reason);
-                sheet.current?.dismiss();
-              }}
-            >
-              Untick this item
-            </Button>
-            <Button variant="outline" onPress={() => sheet.current?.dismiss()}>
-              Keep it ticked
-            </Button>
-          </View>
         </View>
+        <SheetFooter
+          primary={{
+            label: "Untick this item",
+            onPress: () => {
+              if (line) onUntick(line, reason);
+              sheet.current?.dismiss();
+            },
+          }}
+          secondary={{ label: "Keep it ticked", onPress: () => sheet.current?.dismiss() }}
+        />
       </CustomBottomSheetModal>
     );
   }

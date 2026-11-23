@@ -1,10 +1,11 @@
 import { Button, Text } from "@/components/core";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, fontFamily } from "@/lib/design-tokens";
 import { dayLabel } from "@/lib/shop";
 import { useTheme } from "@/lib/theme";
 import React, { useState } from "react";
-import { Modal, StyleSheet, TouchableOpacity } from "react-native";
+import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
+import { ChevronLeftIcon, ChevronRightIcon } from "react-native-heroicons/mini";
 
 interface Props {
   /** The day now set, `YYYY-MM-DD`, or null. */
@@ -26,10 +27,17 @@ interface Props {
 const closedUntilLine = (picked: string | null) =>
   picked ? `You open again on ${dayLabel(picked)}.` : "Pick the day you open again.";
 
+// The frame's day cell (2094:22168): 40 round, seven to a 308 row with the space between them.
+const CELL = 40;
+
 /**
  * One day, for "Closed until". The range picker next door picks two; this is the
  * same modal surface with a single selected day, because Closed until is a day
  * the shop opens on, not a stretch.
+ *
+ * Drawn to 2094:22168 (`Modal · Extend until`): a 342 card, r16, a hairline; the heading padded 20/24/8 with its
+ * line 2 under it; the month padded 8/16/12 (a 36 month row, 40 weekday and day rows, 4 apart); a hairline, then the
+ * footer padded 16/24 with two 52 buttons 8 apart. The month's today marker is the library's, from the phone's clock.
  */
 export function DayPickerModal({
   value,
@@ -43,6 +51,50 @@ export function DayPickerModal({
 }: Props) {
   const { color } = useTheme();
   const [picked, setPicked] = useState<string | null>(value);
+
+  // react-native-calendars takes its inner styles by stylesheet key; these keys are not in its `Theme` type.
+  const stylesheets = {
+    "stylesheet.calendar.main": {
+      container: { paddingLeft: 0, paddingRight: 0, backgroundColor: color.surface },
+      week: { marginTop: 4, marginBottom: 0, flexDirection: "row", justifyContent: "space-between" },
+      dayContainer: { width: CELL, alignItems: "center" },
+      emptyDayContainer: { width: CELL },
+    },
+    "stylesheet.calendar.header": {
+      header: {
+        height: 36,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingTop: 4,
+        paddingBottom: 8,
+        paddingHorizontal: 4,
+        marginTop: 0,
+      },
+      monthText: { margin: 0, fontSize: 16, lineHeight: 24, fontFamily: fontFamily.semibold, color: color.text },
+      // A 20 chevron in a 44 target that takes no room of its own.
+      arrow: { padding: 12, margin: -12 },
+      week: { marginTop: 4, height: CELL, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+      dayHeader: {
+        width: CELL,
+        marginTop: 0,
+        marginBottom: 0,
+        textAlign: "center",
+        fontSize: 12,
+        lineHeight: 16,
+        fontFamily: fontFamily.medium,
+        color: color.textDim,
+      },
+    },
+    "stylesheet.day.basic": {
+      base: { width: CELL, height: CELL, alignItems: "center", justifyContent: "center" },
+      text: { marginTop: 0, fontSize: 14, lineHeight: 20, fontFamily: fontFamily.medium, color: color.text },
+      selected: { backgroundColor: color.brand, borderRadius: CELL / 2 },
+      selectedText: { color: color.onBrand, fontFamily: fontFamily.semibold },
+      // A day before the first that can be picked: Regular at 60%, at 60% again.
+      disabledText: { color: color.textDim, fontFamily: fontFamily.regular, opacity: 0.6 },
+    },
+  } as object;
 
   return (
     <Modal
@@ -60,38 +112,52 @@ export function DayPickerModal({
           style={[styles.card, { backgroundColor: color.surface, borderColor: color.line }]}
           onPress={() => {}}
         >
-          <Text fontSize="text-md" fontWeight="font-bold" style={styles.heading}>
-            {title}
-          </Text>
-          <Text fontSize="text-sm" tone="body" style={styles.sub}>
-            {line(picked)}
-          </Text>
-          <Calendar
-            current={picked ?? minDate}
-            minDate={minDate}
-            maxDate={maxDate}
-            markedDates={picked ? { [picked]: { selected: true } } : {}}
-            onDayPress={(day: { dateString: string }) => setPicked(day.dateString)}
-            theme={{
-              backgroundColor: color.surface,
-              calendarBackground: color.surface,
-              textSectionTitleColor: color.textBody,
-              monthTextColor: color.text,
-              arrowColor: color.brandText,
-              dayTextColor: color.text,
-              textDisabledColor: color.textDim,
-              todayTextColor: color.brandText,
-              selectedDayBackgroundColor: color.brand,
-              selectedDayTextColor: color.onBrand,
-            }}
-          />
+          <View style={styles.heading}>
+            <Text role="sectionTitle" accessibilityRole="header">
+              {title}
+            </Text>
+            <Text fontSize="text-sm" lineHeight={20} tone="body">
+              {line(picked)}
+            </Text>
+          </View>
+          <View style={styles.month}>
+            <Calendar
+              current={picked ?? minDate}
+              minDate={minDate}
+              maxDate={maxDate}
+              hideExtraDays
+              markedDates={picked ? { [picked]: { selected: true } } : {}}
+              onDayPress={(day: { dateString: string }) => setPicked(day.dateString)}
+              renderArrow={(direction: "left" | "right") =>
+                direction === "left" ? (
+                  <ChevronLeftIcon size={20} color={color.brandText} />
+                ) : (
+                  <ChevronRightIcon size={20} color={color.brandText} />
+                )
+              }
+              theme={{
+                backgroundColor: color.surface,
+                calendarBackground: color.surface,
+                textSectionTitleColor: color.textDim,
+                monthTextColor: color.text,
+                arrowColor: color.brandText,
+                dayTextColor: color.text,
+                textDisabledColor: color.textDim,
+                todayTextColor: color.brandText,
+                selectedDayBackgroundColor: color.brand,
+                selectedDayTextColor: color.onBrand,
+                ...stylesheets,
+              }}
+            />
+          </View>
           <TouchableOpacity activeOpacity={1} style={[styles.footer, { borderTopColor: color.line }]}>
+            {/* Kit Secondary: the frame's stroke is the neutral #E6E6E6, the kit's is brandPanelLine (ENG-426). */}
             {onClear ? (
-              <Button variant="ghost" style={styles.button} onPress={onClear}>
+              <Button variant="outline" style={styles.button} onPress={onClear}>
                 Clear date
               </Button>
             ) : (
-              <Button variant="ghost" style={styles.button} onPress={onCancel}>
+              <Button variant="outline" style={styles.button} onPress={onCancel}>
                 Cancel
               </Button>
             )}
@@ -114,17 +180,17 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "100%",
-    borderRadius: radius.group,
+    borderRadius: 16,
     borderWidth: 1,
     overflow: "hidden",
   },
-  heading: { paddingHorizontal: SCREEN_GUTTER, paddingTop: space.md },
-  sub: { paddingHorizontal: SCREEN_GUTTER, paddingTop: 2, paddingBottom: space.sm },
+  heading: { paddingTop: 20, paddingHorizontal: 24, paddingBottom: 8, gap: 2 },
+  month: { paddingTop: 8, paddingHorizontal: 16, paddingBottom: 12 },
   footer: {
     flexDirection: "row",
-    gap: space.sm,
-    paddingHorizontal: SCREEN_GUTTER,
-    paddingVertical: space.md,
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     borderTopWidth: 1,
   },
   button: { flex: 1 },

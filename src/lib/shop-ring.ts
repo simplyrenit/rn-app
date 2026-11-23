@@ -597,7 +597,7 @@ export interface RingSummary {
   range: string;
   /** "Sat 24 – Mon 26 Oct · 3 days". */
   dates: string;
-  /** "Self pickup · Aarav M.". */
+  /** "Aarav M. · Self pickup" (2092:21395). */
   how: string;
   firstName: string;
   earn: string;
@@ -609,7 +609,7 @@ export function summaryOfRing(ring: Ring): RingSummary {
     image: ring.product.cover_image,
     range: rangeLabel(ring.first_day, ring.last_day),
     dates: ringDates(ring),
-    how: `${wayWord(ring)} · ${customerName(ring.customer)}`,
+    how: `${customerName(ring.customer)} · ${wayWord(ring)}`,
     firstName: ring.customer.first_name,
     earn: money(ring.you_earn),
   };
@@ -621,7 +621,7 @@ export function summaryOfBooking(booking: BookingShop): RingSummary {
     image: booking.product.cover_image,
     range: rangeLabel(booking.first_day, booking.last_day),
     dates: ringDates(booking),
-    how: `${wayWord(booking)} · ${customerName(booking.customer)}`,
+    how: `${customerName(booking.customer)} · ${wayWord(booking)}`,
     firstName: booking.customer.first_name,
     earn: money(booking.money.you_earn),
   };

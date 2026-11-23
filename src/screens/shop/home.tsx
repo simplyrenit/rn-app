@@ -1,8 +1,10 @@
 import { SubpageHeader } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { Segments } from "@/components/shop/segments";
-import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import type { ShopTab } from "@/lib/shop-booking";
 import { BottomTabBarHeightContext } from "@react-navigation/bottom-tabs";
+import { useRoute } from "@react-navigation/native";
 import React, { useContext, useState } from "react";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -10,6 +12,21 @@ import { ShopBookingsView } from "./bookings";
 import { ShopTodayView } from "./today";
 
 type Mode = "today" | "bookings" | "mine";
+
+/**
+ * Dev builds only (design fixtures, section 08): the state a frame shows that no response can set. Read from the
+ * route's `design` param, which inside the Rentals tab is the tab's own route; a release build never reads it.
+ */
+export type ShopDesign = {
+  /** The segment it opens on (default "today", as always). */
+  segment?: "today" | "bookings";
+  /** The Bookings chip it opens on (default `defaultTab(counts)`, as always). */
+  tab?: ShopTab;
+  /** Today: this phone's ring permission, in place of the phone's own (default "unavailable", no system prompt). */
+  ringPermission?: "ask" | "settings" | "unavailable" | "granted";
+  /** Today: the quick block's day (`YYYY-MM-DD`), in place of the phone's clock. */
+  today?: string;
+};
 
 const SHOP_MODES = [
   { key: "today", label: "Today" },
@@ -28,7 +45,9 @@ const WITH_MINE = [...SHOP_MODES, { key: "mine", label: "My rentals" }] as const
 export default function ShopHome({ mine }: { mine?: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   const tabBar = useContext(BottomTabBarHeightContext);
-  const [mode, setMode] = useState<Mode>("today");
+  const route = useRoute();
+  const design = __DEV__ ? (route.params as { design?: ShopDesign } | undefined)?.design : undefined;
+  const [mode, setMode] = useState<Mode>(design?.segment ?? "today");
   // In a tab the bar sits below this screen in the layout and already clears
   // the home indicator, so nothing is added; as a stack screen, the inset.
   const bottomPad = tabBar !== undefined ? 0 : insets.bottom;
@@ -36,14 +55,15 @@ export default function ShopHome({ mine }: { mine?: React.ReactNode }) {
   return (
     <NonScrollableContainer>
       {mine ? null : <SubpageHeader title="Your shop" />}
-      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.sm }}>
+      {/* 2091:20977: 8 above the segments, 16 under them to the content. */}
+      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: 16 }}>
         <Segments options={mine ? WITH_MINE : SHOP_MODES} value={mode} onChange={setMode} />
       </View>
       <View style={{ flex: 1 }}>
         {mode === "today" ? (
-          <ShopTodayView bottomPad={bottomPad} />
+          <ShopTodayView bottomPad={bottomPad} design={design} />
         ) : mode === "bookings" ? (
-          <ShopBookingsView bottomPad={bottomPad} />
+          <ShopBookingsView bottomPad={bottomPad} design={design} />
         ) : (
           mine
         )}
