@@ -142,6 +142,12 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
   const queryClient = useQueryClient();
 
   const logout = useCallback(async (reason?: SignOutReason) => {
+    // A design session (dev only) shows a fixture user over the device's real one: signing out here would end the
+    // real user's QA session with their stored token and wipe it from the device. Always null in release.
+    if (designSessionNow()) {
+      console.warn("[design-fixture] logout ignored in a design session");
+      return;
+    }
     cancelMyDetailsRequest();
     // First, while the token is still in place: ends this phone's session so it
     // stops ringing (ENG-146). If the call cannot reach the server the tokens are
