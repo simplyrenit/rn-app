@@ -1,4 +1,3 @@
-import { aspect, radius } from "@/lib/design-tokens";
 import { useDistanceTo } from "@/lib/distance";
 import { formatCurrency } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
@@ -13,8 +12,12 @@ import { Text } from "./text";
 import { usePressFeedback } from "./use-press-feedback";
 import { VerifiedBusinessBadge } from "./verified-business-badge";
 
-// The design's Home tile rounds its photo to 8; the shared tile uses `radius.card`.
-const TILE_IMAGE_RADIUS = 8;
+/**
+ * The kit Listing card's photo (figma/00 2073:14326): 162x176 at r8. Exported so
+ * MyProductCard draws the same tile. `aspect.productImage` (163/176) is the
+ * previous design's measure, still used by the skeleton.
+ */
+export const LISTING_IMAGE = { aspectRatio: 162 / 176, radius: 8 } as const;
 
 export interface CardProps extends ItemCard {
   /**
@@ -26,9 +29,9 @@ export interface CardProps extends ItemCard {
   /** A distance the caller has already worked out. Wins over `coordinates`. */
   distance?: string | null;
   /**
-   * The Home rails' tile, as the design draws it: an 8pt-radius photo with no
-   * hairline over it and the bare corner heart. Saved, Search results and the
-   * owner profile use it too.
+   * Kept so call sites compile; it no longer changes the look. It used to pick
+   * the Home tile (8pt photo, no hairline, bare heart) over the older bordered
+   * card, and the 2.1 kit has one Listing card for every grid.
    */
   tile?: boolean;
   /**
@@ -66,7 +69,6 @@ export function Card({
   alignItems,
   coordinates,
   distance,
-  tile = false,
   specFilters,
   dates,
   businessVerified,
@@ -90,8 +92,8 @@ export function Card({
 
   const imageStyle = {
     width: "100%",
-    aspectRatio: aspect.productImage,
-    borderRadius: tile ? TILE_IMAGE_RADIUS : radius.card,
+    aspectRatio: LISTING_IMAGE.aspectRatio,
+    borderRadius: LISTING_IMAGE.radius,
   } as const;
 
   return (
@@ -122,21 +124,6 @@ export function Card({
             <View style={[imageStyle, { backgroundColor: color.skeleton }]} />
           )}
 
-          {/* A hairline over the photo. Without it a product shot on a white
-              background bleeds into a light canvas and the tile loses its edge.
-              The Home tile omits it, as the design does. */}
-          {tile ? null : (
-            <View
-              pointerEvents="none"
-              style={{
-                ...imageStyle,
-                position: "absolute",
-                borderWidth: 1,
-                borderColor: color.line,
-              }}
-            />
-          )}
-
           {/* Solid, not the bare mark: it has to read on any photo. */}
           <View style={{ position: "absolute", left: 6, bottom: 6 }}>
             <VerifiedBusinessBadge verified={businessVerified} variant="chip" />
@@ -147,56 +134,49 @@ export function Card({
               id={id}
               isFavorite={Boolean(checked)}
               title={title}
-              tile={tile}
+              tile
             />
           </View>
         </View>
 
-        <View style={{ marginTop: 8 }}>
-          {/* Body Small - Bold at Primary, per the design's tile.
-              This deliberately reverses an earlier call to hold the title at
-              `hi` (70%) to soften a grid of full-white titles on a dark canvas.
-              The redesign sets Primary here, so Primary is what ships; if the
-              glare reads badly on a long grid, `tone="hi"` is the one-word
-              revert and the reason is recorded here.
-
-              One line, not two: the design's tile is a fixed 250pt tall, and a
-              wrapping title makes neighbouring grid rows different heights. */}
+        {/* The kit's text block: title, price, then where. Title 14 SemiBold
+            at Primary, one line: a wrapping title makes neighbouring grid rows
+            different heights. */}
+        <View style={{ paddingTop: 8, gap: 2 }}>
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
             fontSize="text-sm"
-            fontWeight="font-bold"
+            fontWeight="font-semibold"
           >
             {title}
           </Text>
-          {/* Distance is the more useful of the two, so it takes the line when
-              we have it and the place name follows it. */}
+          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 2 }}>
+            <Text fontSize="text-md" fontWeight="font-bold">
+              {formatCurrency(shownPlan?.price ?? price)}
+            </Text>
+            <Text fontSize="text-xs" tone="dim">
+              {`/${shownPlan?.unit ?? "day"}`}
+            </Text>
+          </View>
+          {/* The kit's location line. Distance is the more useful of the two,
+              so it leads the line when we have it; with delivery facts the
+              delivery line takes the slot instead. */}
           {delivery ? (
             // The word is what the customer scans for: green when the shop
             // delivers to their address; the fee keeps the line's own tone.
-            <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="dim">
+            <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-xs" tone="dim">
               {delivery.km ? `${delivery.km} · ` : ""}
-              <Text fontSize="text-sm" tone={delivery.word === "Delivery" ? "success" : "dim"}>
+              <Text fontSize="text-xs" tone={delivery.word === "Delivery" ? "success" : "dim"}>
                 {delivery.word}
               </Text>
               {delivery.fee ? ` ${delivery.fee}` : ""}
             </Text>
           ) : (
-            <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="dim">
+            <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-xs" tone="dim">
               {distanceLine ? `${distanceLine} · ${location}` : location}
             </Text>
           )}
-          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
-            <Text fontSize="text-md" fontWeight="font-bold">
-              {formatCurrency(shownPlan?.price ?? price)}
-            </Text>
-            {/* Same tone as the location line above it. These two adjacent lines
-                of secondary text used to sit at visibly different weights. */}
-            <Text fontSize="text-sm" tone="dim">
-              {`per ${shownPlan?.unit ?? "day"}`}
-            </Text>
-          </View>
         </View>
       </View>
     </TouchableOpacity>

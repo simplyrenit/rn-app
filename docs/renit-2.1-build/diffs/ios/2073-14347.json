@@ -1,0 +1,14 @@
+{
+ "ref": "../figma/00/2073-14364.png",
+ "app": "kit-ios-2073-14347.png",
+ "platform": "ios",
+ "mismatch_pct": 0.525,
+ "threshold_pct": 2.0,
+ "pass": true,
+ "compared_px": [
+  1170,
+  168
+ ],
+ "app_scaled_height": 168,
+ "uncovered_rows": 0
+}

@@ -1,1 +1,14 @@
 # frameId	platform	status	note
+2071:14303	ios	n/a	Active=Post shows only when the Post tab is the screen: signed out or merchant awaiting approval; a signed-in customer's Post tap opens the listing flow. Checked in ENG-435 (post-tab-gate frames).
+2071:14303	android	n/a	As iOS: Active=Post only shows for signed-out users or merchants awaiting approval. Checked in ENG-435.
+2071:14211	android	fluid	Tab bar spreads its 5 tabs over the 360dp screen (72dp each vs the kit's 78), so it cannot be boxed against the 390pt frame. Icons, colours, weights and sizes match; side by side in diffs/android/2071-14211-tabbar-compare.png.
+2071:14259	android	fluid	Same as Active=Home: fluid tab width at 360dp; visual match.
+2071:14346	android	fluid	Same as Active=Home: fluid tab width at 360dp; visual match.
+2071:14392	android	fluid	Same as Active=Home: fluid tab width at 360dp; visual match.
+2073:14384	android	text-width	Android measures the 14pt label 'Good' 1.33pt narrower than Figma and the chip hugs its label (72.67 vs 74pt). At the chip's own width it matches: 0.77%.
+2073:14386	android	text-width	As State=Default: label 1.33pt narrower on Android; at the chip's own width it matches: 1.35%.
+2110:30387	android	fluid	The confirm sheet is a modal that fills the 360dp window, not the 390pt kit frame. Left/right halves 2.26%/2.06%: centred text moves 15pt and the body wraps differently at 360dp; padding, colours, type and buttons match (diffs/android/2110-30387-left|right.heat.png).
+2110:30278	ios	pass	Covered by the live Tab bar · Active=Rentals diff (1.61%), which draws this icon.
+2110:30278	android	fluid	Covered by the Android Active=Rentals tab bar comparison (fluid width, visual match).
+2110:30274	ios	n/a	Drawn only on Active=Post (signed out or merchant awaiting approval); checked in ENG-435.
+2110:30274	android	n/a	Drawn only on Active=Post; checked in ENG-435.

@@ -1,0 +1,14 @@
+{
+ "ref": "../figma/00/2073-14413.png",
+ "app": "kit-android-2073-14402.png",
+ "platform": "android",
+ "mismatch_pct": 1.06,
+ "threshold_pct": 2.0,
+ "pass": true,
+ "compared_px": [
+  1026,
+  300
+ ],
+ "app_scaled_height": 300,
+ "uncovered_rows": 0
+}

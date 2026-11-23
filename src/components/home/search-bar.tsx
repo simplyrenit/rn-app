@@ -7,9 +7,9 @@ import { TouchableOpacity, View } from "react-native";
 import { MagnifyingGlassIcon } from "react-native-heroicons/outline";
 import { Text } from "../core";
 
-// Measured off the Figma topbar: a 48pt box (12 + 24 + 12) with a 12pt radius,
-// which is one point off `radius.input` — the design draws this field a little
-// rounder than a form input, so it keeps its own number.
+// Measured off the Figma topbar: a 48pt box (12 + 24 + 12) with a 12pt radius.
+// That equals `radius.input` today, but it is the search frame's own number, not
+// the form-input token, so it stays separate.
 const SEARCH_HEIGHT = 48;
 const SEARCH_RADIUS = 12;
 

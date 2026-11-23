@@ -1,4 +1,5 @@
 import { Text } from "@/components/core";
+import { StatusPill, StatusTone } from "@/components/core/status-pill";
 import { radius, space } from "@/lib/design-tokens";
 import { PIN_WAITS, PendingEdit, changedSinceSentBack, flagLine, pendingLine, waitsForStaff } from "@/lib/listing-edit";
 import {
@@ -30,6 +31,19 @@ interface PillProps {
 }
 
 /**
+ * Each status's kit Status pill tone. The kit has no brand tone, so nothing here
+ * is purple.
+ */
+const LISTING_STATUS_TONE: Record<ListingStatus, StatusTone> = {
+  draft: "neutral",
+  checking: "info",
+  live: "success",
+  paused: "warning",
+  flagged: "danger",
+  archived: "neutral",
+};
+
+/**
  * One status treatment for all six, on the shelf and on the listing's own page.
  * Draft and Archived are neutral, Checking is informational, Live is good news,
  * Paused asks for attention and Flagged is the one that needs action.
@@ -38,35 +52,14 @@ interface PillProps {
  * the narrow shelf tile, in the detail line where there is room for one.
  */
 export function ListingStatusPill({ status, reasons, withDetail = false, fullReason = false, waitsText: waits }: PillProps) {
-  const { color } = useTheme();
-
-  const tint = {
-    draft: { fg: color.textBody, bg: color.surfaceRaised },
-    checking: { fg: color.info, bg: color.infoWash },
-    live: { fg: color.success, bg: color.successWash },
-    paused: { fg: color.warning, bg: color.warningWash },
-    flagged: { fg: color.danger, bg: color.dangerWash },
-    archived: { fg: color.textBody, bg: color.surfaceRaised },
-  }[status];
-
   const flagged = status === "flagged" || (status === "checking" && changedSinceSentBack(reasons)) ? flagLine(reasons) : null;
   // A listing waiting for Renit's first look or fill says what for (T-45); a reason, when there is one, comes first.
   const reason = flagged ?? (status === "checking" || status === "draft" ? waitsText(waits) : null);
 
+  // `flex-start`, as this pill always sat: in the column below it would
+  // otherwise stretch to the tile's width instead of hugging its label.
   const pill = (
-    <View
-      style={{
-        alignSelf: "flex-start",
-        backgroundColor: tint.bg,
-        borderRadius: radius.full,
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-      }}
-    >
-      <Text fontSize="text-xs" fontWeight="font-semibold" style={{ color: tint.fg }}>
-        {STATUS_COPY[status].label}
-      </Text>
-    </View>
+    <StatusPill label={STATUS_COPY[status].label} tone={LISTING_STATUS_TONE[status]} style={{ alignSelf: "flex-start" }} />
   );
 
   if (withDetail) {

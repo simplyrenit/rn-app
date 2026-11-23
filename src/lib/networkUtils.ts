@@ -364,6 +364,10 @@ axiosInstance.interceptors.response.use(
   }
 );
 
+// Dev builds only (ENG-426): design fixtures answer a screen's requests with a Figma frame's content while one is on.
+// Behind `__DEV__` so release bundles drop the require and never contain the fixtures (README, release safety).
+if (__DEV__) require("../dev/design-fixtures/interceptor").installDesignFixtures(axiosInstance);
+
 interface RetryConfig extends AxiosRequestConfig {
   retries?: number;
   retryDelay?: number;

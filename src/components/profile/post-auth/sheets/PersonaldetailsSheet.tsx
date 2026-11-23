@@ -58,15 +58,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 // seven asterisks previously meant "this password is seven characters".
 const PASSWORD_MASK = "••••••••";
 
-// Measured off the Figma Personal details sheet: a 37pt grabber row, a 44pt
-// title, an 80pt picture row and four 85pt fields (16 above and below a 21pt
-// label, 8, and a 24pt value). The delete row below is ours, not the frame's.
+// Measured off the Figma Personal details sheet: the 21pt grabber row that
+// CustomBottomSheetModal draws (8 + 5 + 8, the 2.1 kit's), a 44pt title, an
+// 80pt picture row and four 85pt fields (16 above and below a 21pt label, 8,
+// and a 24pt value). The delete row below is ours, not the frame's.
 const HEADER_HEIGHT = 44;
 const ROW_PAD_V = 16;
 const AVATAR = 48;
 const FIELD_HEIGHT = 85;
 const SHEET_HEIGHT =
-  37 + HEADER_HEIGHT + (AVATAR + 2 * ROW_PAD_V + 1) + 4 * FIELD_HEIGHT + 1 + MIN_TOUCH_TARGET;
+  21 + HEADER_HEIGHT + (AVATAR + 2 * ROW_PAD_V + 1) + 4 * FIELD_HEIGHT + 1 + MIN_TOUCH_TARGET;
 // The locked name's note under its row is added to the sheet, so it does not push the delete row out
 // of the bottom: 8 above it, and its measured height (two lines of small text until it is measured).
 const NOTE_GAP = 8;

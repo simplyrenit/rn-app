@@ -506,6 +506,13 @@ export type RootStackParamList = {
     /** Opens the walk on this shot of the list: to take it, or take it again. */
     shot?: string;
   };
+  /**
+   * Dev builds only (ENG-426): one kit variant, drawn for the visual diff. `item` is the kit node id
+   * (`2073:14380` or `2073-14380`), `variant` its name or id, `x` a horizontal scroll in pt.
+   */
+  DevKit: { item: string; variant?: string; x?: number };
+  /** Dev builds only (ENG-426): turns on a design fixture (`off` turns it off) and opens its screen. */
+  DevFixture: { frameId: string };
   [key: string]: object | undefined;
 };
 

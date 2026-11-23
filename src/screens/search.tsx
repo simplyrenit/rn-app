@@ -67,8 +67,8 @@ const SECTION_PADDING = 24;
 const SECTION_GAP = 16;
 const HEADER_HEIGHT = 44;
 const FIELD_HEIGHT = 48;
-// One point off `radius.input`: the design draws these controls a little rounder
-// than a form input, as it does the Home search field.
+// The same 12 as `radius.input` today, but kept as its own number: it is the
+// search frame's radius (as the Home search field's is), not the form-input token.
 const FIELD_RADIUS = 12;
 const FIELD_PADDING = 16;
 const ICON_SIZE = 24;

@@ -1,4 +1,3 @@
-import { aspect, radius } from "@/lib/design-tokens";
 import { formatCurrency } from "@/lib/format";
 import { plansOf, smallestPlan } from "@/lib/plans";
 import { useTheme } from "@/lib/theme";
@@ -9,6 +8,7 @@ import { TouchableOpacity, View } from "react-native";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
 import { listingStatusLabel } from "@/components/product/listing-status";
 import { hasPrice } from "@/lib/listing-status";
+import { LISTING_IMAGE } from "./card";
 import { Text } from "./text";
 import { usePressFeedback } from "./use-press-feedback";
 
@@ -54,8 +54,8 @@ export function MyProductCard({
 
   const imageStyle = {
     width: "100%",
-    aspectRatio: aspect.productImage,
-    borderRadius: radius.card,
+    aspectRatio: LISTING_IMAGE.aspectRatio,
+    borderRadius: LISTING_IMAGE.radius,
   } as const;
 
   return (
@@ -119,35 +119,37 @@ export function MyProductCard({
 
         </View>
 
-        {/* Kept identical to Card's text block on purpose: My Listings sits a
-            tap away from Saved, and the two grids read as one system only if the
-            tile below the photo is the same tile. */}
-        <View style={{ marginTop: 8 }}>
+        {/* Kept identical to Card's text block (the kit Listing card: title,
+            price, location) on purpose: My Listings sits a tap away from Saved,
+            and the two grids read as one system only if the tile below the
+            photo is the same tile. */}
+        <View style={{ paddingTop: 8, gap: 2 }}>
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
             fontSize="text-sm"
-            fontWeight="font-bold"
+            fontWeight="font-semibold"
           >
             {title}
           </Text>
-          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-sm" tone="dim">
-            {location}
-          </Text>
           {priced ? (
-            <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+            <View style={{ flexDirection: "row", alignItems: "baseline", gap: 2 }}>
               <Text fontSize="text-md" fontWeight="font-bold">
                 {formatCurrency(shownPlan?.price ?? price)}
               </Text>
-              <Text fontSize="text-sm" tone="dim">
-                {`per ${shownPlan?.unit ?? "day"}`}
+              <Text fontSize="text-xs" tone="dim">
+                {`/${shownPlan?.unit ?? "day"}`}
               </Text>
             </View>
           ) : (
+            // On the price's own 16/24 line, so a draft's tile is the same height.
             <Text fontSize="text-md" tone="dim">
               No price yet
             </Text>
           )}
+          <Text numberOfLines={1} ellipsizeMode="tail" fontSize="text-xs" tone="dim">
+            {location}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>

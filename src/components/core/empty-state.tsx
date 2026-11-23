@@ -6,7 +6,10 @@ import { Button } from "./button";
 import { Text } from "./text";
 
 interface Props {
-  /** A heroicon element, sized 28. */
+  /**
+   * A heroicon element in the colour it should draw in. It is drawn at the
+   * kit's 32 whatever size the call site passes (they predate the kit's 32).
+   */
   icon?: React.ReactNode;
   title: string;
   /** One sentence explaining what will fill this space, or what went wrong. */
@@ -21,8 +24,17 @@ interface Props {
   onSecondaryAction?: () => void;
   /** `error` tints the icon chip with the danger colour. */
   variant?: "empty" | "error";
+  /**
+   * The action's weight. Default `tonal`, the kit's Secondary tonal 44; pass
+   * `primary` on a screen that has no other filled button.
+   */
+  actionTone?: "tonal" | "primary";
+  /** Kept for back-compat; the kit pads every empty state 24 top and bottom. */
   compact?: boolean;
 }
+
+const ICON = 32;
+const CIRCLE = 80;
 
 /**
  * The app's single empty/error state.
@@ -40,7 +52,7 @@ export function EmptyState({
   secondaryActionLabel,
   onSecondaryAction,
   variant = "empty",
-  compact = false,
+  actionTone = "tonal",
 }: Props) {
   const { color } = useTheme();
 
@@ -52,54 +64,65 @@ export function EmptyState({
       style={{
         alignItems: "center",
         justifyContent: "center",
+        // Kit Empty state (figma/00 2074:14392): 24 above and below, 16
+        // between the circle, the words and the action.
         paddingHorizontal: SCREEN_GUTTER,
-        paddingVertical: compact ? 28 : 48,
-        gap: 8,
+        paddingVertical: 24,
+        gap: 16,
       }}
     >
       {icon ? (
         <View
           style={{
-            width: 56,
-            height: 56,
-            borderRadius: radius.group,
+            width: CIRCLE,
+            height: CIRCLE,
+            borderRadius: radius.full,
             alignItems: "center",
             justifyContent: "center",
-            marginBottom: 6,
             backgroundColor:
-              variant === "error" ? color.dangerWash : color.brandWash,
+              variant === "error" ? color.dangerWash : color.brandPanel,
           }}
         >
-          {icon}
+          {React.isValidElement<{ size?: number }>(icon)
+            ? React.cloneElement(icon, { size: ICON })
+            : icon}
         </View>
       ) : null}
 
-      <Text
-        fontSize="text-lg"
-        fontWeight="font-bold"
-        style={{ textAlign: "center" }}
-      >
-        {title}
-      </Text>
-
-      {body ? (
+      <View style={{ alignSelf: "stretch", gap: 4 }}>
         <Text
-          fontSize="text-md"
-          tone="body"
-          style={{ textAlign: "center", maxWidth: 320 }}
+          fontSize="text-base"
+          fontWeight="font-bold"
+          style={{ textAlign: "center" }}
         >
-          {body}
+          {title}
         </Text>
-      ) : null}
+
+        {body ? (
+          <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
+            {body}
+          </Text>
+        ) : null}
+      </View>
 
       {actionLabel && onAction ? (
-        <View style={{ marginTop: 12, minWidth: 180, gap: 4 }}>
-          <Button
-            variant={variant === "error" ? "outline" : "primary"}
-            onPress={onAction}
-          >
-            {actionLabel}
-          </Button>
+        // The action hugs its label, as the kit draws it, rather than
+        // stretching to a minimum width.
+        <View style={{ alignItems: "center", gap: 4 }}>
+          {actionTone === "primary" ? (
+            <Button size="compact" onPress={onAction}>
+              {actionLabel}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              tone="tonal"
+              size="compact"
+              onPress={onAction}
+            >
+              {actionLabel}
+            </Button>
+          )}
           {secondaryActionLabel && onSecondaryAction ? (
             <Button variant="ghost" onPress={onSecondaryAction}>
               {secondaryActionLabel}

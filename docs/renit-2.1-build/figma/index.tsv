@@ -1,4 +1,52 @@
 frameId	section	frameName	inventoryId	route	state	check
+2071:14397	00	Top bar · Type=Back+Title	kit-top-bar	DevKit	Type=Back+Title	devkit
+2071:14407	00	Top bar · Type=Tab title	kit-top-bar	DevKit	Type=Tab title	devkit
+2071:14413	00	Top bar · Type=Back only	kit-top-bar	DevKit	Type=Back only	devkit
+2071:14422	00	Bottom bar · Layout=Summary+CTA	kit-bottom-bar	DevKit	Layout=Summary+CTA	devkit
+2071:14439	00	Bottom bar · Layout=Full CTA	kit-bottom-bar	DevKit	Layout=Full CTA	devkit
+2071:14449	00	Bottom bar · Layout=Secondary+Primary	kit-bottom-bar	DevKit	Layout=Secondary+Primary	devkit
+2109:30149	00	Bottom bar · Layout=CTA+Text	kit-bottom-bar	DevKit	Layout=CTA+Text	devkit
+2071:14471	00	Sheet header	kit-sheet-header	DevKit	-	devkit
+2071:14481	00	Sheet footer	kit-sheet-footer	DevKit	-	devkit
+2071:14501	00	Sheet · usage example	kit-sheet-usage-example	DevKit	-	devkit
+2073:14326	00	Listing card	kit-listing-card	DevKit	-	devkit
+2073:14341	00	Section header	kit-section-header	DevKit	-	devkit
+2073:14347	00	List row · Size=Single	kit-list-row	DevKit	Size=Single	devkit
+2073:14355	00	List row · Size=Two-line	kit-list-row	DevKit	Size=Two-line	devkit
+2073:14368	00	Status pill · Tone=Neutral	kit-status-pill	DevKit	Tone=Neutral	devkit
+2073:14372	00	Status pill · Tone=Success	kit-status-pill	DevKit	Tone=Success	devkit
+2073:14374	00	Status pill · Tone=Warning	kit-status-pill	DevKit	Tone=Warning	devkit
+2073:14376	00	Status pill · Tone=Danger	kit-status-pill	DevKit	Tone=Danger	devkit
+2073:14378	00	Status pill · Tone=Info	kit-status-pill	DevKit	Tone=Info	devkit
+2073:14384	00	Chip · State=Default	kit-chip	DevKit	State=Default	devkit
+2073:14386	00	Chip · State=Selected	kit-chip	DevKit	State=Selected	devkit
+2073:14392	00	Form field · State=Default	kit-form-field	DevKit	State=Default	devkit
+2073:14397	00	Form field · State=Filled	kit-form-field	DevKit	State=Filled	devkit
+2073:14402	00	Form field · State=Focused	kit-form-field	DevKit	State=Focused	devkit
+2073:14408	00	Form field · State=Error	kit-form-field	DevKit	State=Error	devkit
+2074:14332	00	Timeline step · State=Done	kit-timeline-step	DevKit	State=Done	devkit
+2074:14341	00	Timeline step · State=Current	kit-timeline-step	DevKit	State=Current	devkit
+2074:14349	00	Timeline step · State=Upcoming	kit-timeline-step	DevKit	State=Upcoming	devkit
+2074:14360	00	Notice card · Tone=Info	kit-notice-card	DevKit	Tone=Info	devkit
+2074:14367	00	Notice card · Tone=Warning	kit-notice-card	DevKit	Tone=Warning	devkit
+2074:14374	00	Notice card · Tone=Success	kit-notice-card	DevKit	Tone=Success	devkit
+2074:14381	00	Notice card · Tone=Danger	kit-notice-card	DevKit	Tone=Danger	devkit
+2074:14392	00	Empty state	kit-empty-state	DevKit	-	devkit
+2074:14410	00	Price row · Type=Default	kit-price-row	DevKit	Type=Default	devkit
+2074:14413	00	Price row · Type=Total	kit-price-row	DevKit	Type=Total	devkit
+2074:14420	00	Stepper · Step=1	kit-stepper	DevKit	Step=1	devkit
+2074:14427	00	Stepper · Step=2	kit-stepper	DevKit	Step=2	devkit
+2074:14434	00	Stepper · Step=3	kit-stepper	DevKit	Step=3	devkit
+2074:14441	00	Stepper · Step=4	kit-stepper	DevKit	Step=4	devkit
+2100:29942	00	Map (neutral placeholder)	kit-map	DevKit	-	devkit
+2110:30387	00	Sheet · Confirm destructive	kit-sheet-confirm-destructive	DevKit	-	devkit
+2071:14211	00	Tab bar · Active=Home	kit-tab-bar	MainTabs (Home tab root)	Active=Home	live
+2071:14259	00	Tab bar · Active=Saved	kit-tab-bar	MainTabs (Saved tab root)	Active=Saved	live
+2071:14303	00	Tab bar · Active=Post	kit-tab-bar	MainTabs (Post tab root)	Active=Post	live
+2071:14346	00	Tab bar · Active=Rentals	kit-tab-bar	MainTabs (Rentals tab root)	Active=Rentals	live
+2071:14392	00	Tab bar · Active=Profile	kit-tab-bar	MainTabs (Profile tab root)	Active=Profile	live
+2110:30274	00	icon/solid/plus-square	kit-icon-solid-plus-square	MainTabs (Post tab root)	-	live
+2110:30278	00	icon/solid/clipboard-document	kit-icon-solid-clipboard-document	MainTabs (Rentals tab root)	-	live
 2082:14565	01	list-reading · running	list-reading	ListReading	running	live
 2083:14468	01	booking-rental-active · on time	booking-rental-active	Booking (view active, stage out)	on time	live
 2083:14562	01	booking-details-view · rental active	booking-details-view	Booking (view details) — also rendered by BookingDetails	rental active	live

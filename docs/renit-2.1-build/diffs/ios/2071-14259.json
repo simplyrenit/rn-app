@@ -1,0 +1,14 @@
+{
+ "ref": "../figma/00/2071-14393.png",
+ "app": "tab-saved.png",
+ "platform": "ios",
+ "mismatch_pct": 1.627,
+ "threshold_pct": 2.0,
+ "pass": true,
+ "compared_px": [
+  1170,
+  243
+ ],
+ "app_scaled_height": 243,
+ "uncovered_rows": 0
+}

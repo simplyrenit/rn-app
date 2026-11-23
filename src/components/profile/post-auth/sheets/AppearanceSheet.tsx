@@ -23,11 +23,11 @@ const OPTIONS = [
 
 // Measured off the Figma sheet: a 44pt header holding a centred 18pt title, then
 // three 56pt rows (24 side padding, 16 above and below), with no rules between
-// them. 44 + 3 x 56 = 212, plus the 37pt grabber row; the safe-area inset is added
+// them. 44 + 3 x 56 = 212, plus the 21pt grabber row (8 + 5 + 8, custom-bottom-sheet-modal); the safe-area inset is added
 // where it is used, because the frame draws the home indicator outside the sheet.
 const HEADER_HEIGHT = 44;
 const ROW_HEIGHT = 56;
-const SHEET_HEIGHT = 249;
+const SHEET_HEIGHT = 233;
 
 const AppearanceSheet: React.FC<AppearanceSheetProps> = ({
   bottomSheetModalRef,
