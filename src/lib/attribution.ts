@@ -159,6 +159,9 @@ let sending: Promise<void> | null = null;
 
 /** Signed in: send the saved link once (events need an account). */
 export function sendAttribution(): Promise<void> {
+  // A design session (dev only) flips the app to signed in with a fixture user; sending then would mark the saved
+  // link as sent while the fixture drops the event, so a real pending attribution would be lost. Null in release.
+  if (__DEV__ && require("@/dev/design-fixtures/session").designSession()) return Promise.resolve();
   // Sign-in and a link can ask at the same moment: one send, never two.
   sending ??= sendOnce().finally(() => {
     sending = null;

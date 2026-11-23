@@ -10,12 +10,8 @@ import type { NumberProp, SvgProps } from "react-native-svg";
 export type HeroIcon = React.ComponentType<SvgProps & { size?: NumberProp }>;
 
 /**
- * The Profile list's rhythm, measured off the signed-in Figma frame.
- *
- * It lives here rather than in `density` because it describes one screen's
- * list, not a scale the rest of the app shares. 16 sits under a section header
- * and above and below the rule between two sections; the rows themselves are
- * the kit List row's 56.
+ * The old list rhythm (16). The 2.1 Profile frames stack sections with no gap, so the signed-in list no longer uses
+ * it; it stays exported because the guest list (`profile-pre-auth.tsx`, ENG-428) still pads with it.
  */
 export const PROFILE_LIST_GAP = 16;
 
@@ -39,50 +35,28 @@ interface ProfileSectionProps {
 }
 
 /**
- * A titled group of rows.
- *
- * The header is still the previous design's Body Bold at full contrast. The
- * 2.1 kit sets a group header as `role="groupHeader"` (14 SemiBold at 60%); the
- * switch belongs to the Profile flow story, which owns the screen's spacing.
+ * A titled group of rows: the kit group header (Profile 2095:25572 "Group header", 44 high, padding 20 24 4, text
+ * `role="groupHeader"`), then the rows with nothing between them.
  */
 export function ProfileSection({ title, children }: ProfileSectionProps) {
   return (
     <View>
-      <Text
-        accessibilityRole="header"
-        fontSize="text-md"
-        fontWeight="font-bold"
-        style={{ paddingHorizontal: SCREEN_GUTTER }}
-      >
-        {title}
-      </Text>
-      <View style={{ marginTop: PROFILE_LIST_GAP }}>{children}</View>
+      <View style={{ minHeight: 44, paddingTop: 20, paddingBottom: 4, paddingHorizontal: SCREEN_GUTTER }}>
+        <Text accessibilityRole="header" role="groupHeader">
+          {title}
+        </Text>
+      </View>
+      {children}
     </View>
   );
 }
 
-/** The hairline between two sections, with its 16pt of air on either side. */
+/** The 1pt `line` divider between two sections (the frame's "Divider", 390x1), with no air around it. */
 export function ProfileSectionRule() {
   const { color } = useTheme();
 
-  return (
-    <View
-      style={{
-        height: 1,
-        marginVertical: PROFILE_LIST_GAP,
-        backgroundColor: color.line,
-      }}
-    />
-  );
+  return <View style={{ height: 1, backgroundColor: color.line }} />;
 }
 
-/**
- * The heavier rule that closes the profile block above the list. The frame
- * stacks two 1pt rules here; `line` is opaque in both themes, so one 2pt rule is
- * the same pixels for half the views.
- */
-export function ProfileBlockRule() {
-  const { color } = useTheme();
-
-  return <View style={{ height: 2, backgroundColor: color.line }} />;
-}
+/** The divider under the account block: the same 1pt rule (the frame draws one, not two). */
+export const ProfileBlockRule = ProfileSectionRule;

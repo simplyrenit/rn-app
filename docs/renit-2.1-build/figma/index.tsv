@@ -59,33 +59,33 @@ frameId	section	frameName	inventoryId	route	state	check
 2083:15579	01	home · Cart has items	home	Home (tab inside MainTabs)	Cart has items	live
 2083:16603	01	shop-today · merchant tab, busy, phone won't ring	shop-today	ShopToday / Rentals tab, Today segment	merchant tab, busy, phone won't ring	live
 2083:16747	01	shop-bookings · merchant tab, Ready	shop-bookings	ShopToday / Rentals tab, Bookings segment	merchant tab, Ready	live
-2089:15349	02	welcome · slide 1 (Rent anything)	welcome	Welcome	slide 1 (Rent anything)	live
-2089:15444	02	welcome · slide 2 (Rent anywhere)	welcome	Welcome	slide 2 (Rent anywhere)	live
-2089:15529	02	welcome · slide 3 (Rent anytime, NEW copy)	welcome	Welcome	slide 3 (Rent anytime, NEW copy)	live
-2089:15649	02	sign-in-panel · Saved tab (signed out)	sign-in-panel	(component in Saved / Post / Rentals / Chat / Profile tabs)	Saved tab (signed out)	live
-2089:15719	02	sign-in-panel · Profile tab (signed out, full scroll)	sign-in-panel	(component in Saved / Post / Rentals / Chat / Profile tabs)	Profile tab (signed out, full scroll)	live
-2089:21637	02	email · filled	email	Email	filled	live
-2089:21681	02	email · invalid email	email	Email	invalid email	live
-2089:21726	02	phone · filled	phone	Phone	filled	live
-2089:21763	02	phone · invalid number	phone	Phone	invalid number	live
-2089:21800	02	verify · email code (entering)	verify	Verify	email code (entering)	live
-2089:21853	02	verify · phone code	verify	Verify	phone code	live
-2089:21903	02	verify · wrong code	verify	Verify	wrong code	fixture
-2089:21957	02	verify · password	verify	Verify	password	live
-2089:25271	02	about · individual (default)	about	About	individual (default)	live
+2089:15349	02	welcome · slide 1 (Rent anything)	welcome	Welcome	slide 1 (Rent anything)	fixture
+2089:15444	02	welcome · slide 2 (Rent anywhere)	welcome	Welcome	slide 2 (Rent anywhere)	fixture
+2089:15529	02	welcome · slide 3 (Rent anytime, NEW copy)	welcome	Welcome	slide 3 (Rent anytime, NEW copy)	fixture
+2089:15649	02	sign-in-panel · Saved tab (signed out)	sign-in-panel	(component in Saved / Post / Rentals / Chat / Profile tabs)	Saved tab (signed out)	fixture
+2089:15719	02	sign-in-panel · Profile tab (signed out, full scroll)	sign-in-panel	(component in Saved / Post / Rentals / Chat / Profile tabs)	Profile tab (signed out, full scroll)	fixture
+2089:21637	02	email · filled	email	Email	filled	fixture
+2089:21681	02	email · invalid email	email	Email	invalid email	fixture
+2089:21726	02	phone · filled	phone	Phone	filled	fixture+jest
+2089:21763	02	phone · invalid number	phone	Phone	invalid number	fixture
+2089:21800	02	verify · email code (entering)	verify	Verify	email code (entering)	fixture
+2089:21853	02	verify · phone code	verify	Verify	phone code	fixture
+2089:21903	02	verify · wrong code	verify	Verify	wrong code	fixture+jest
+2089:21957	02	verify · password	verify	Verify	password	fixture
+2089:25271	02	about · individual (default)	about	About	individual (default)	fixture
 2089:25343	02	about · validation errors	about	About	validation errors	fixture
-2089:25419	02	about · merchant	about	About	merchant	live
-2089:25483	02	password · rules partly met	password	Password	rules partly met	live
-2089:25541	02	password · rules met	password	Password	rules met	live
-2089:25599	02	confirm-password · filled	confirm-password	ConfirmPassword	filled	live
-2089:25642	02	confirm-password · mismatch	confirm-password	ConfirmPassword	mismatch	live
-2089:28033	02	location · allow location (no permission)	location	Location	allow location (no permission)	live
+2089:25419	02	about · merchant	about	About	merchant	fixture
+2089:25483	02	password · rules partly met	password	Password	rules partly met	fixture
+2089:25541	02	password · rules met	password	Password	rules met	fixture
+2089:25599	02	confirm-password · filled	confirm-password	ConfirmPassword	filled	fixture
+2089:25642	02	confirm-password · mismatch	confirm-password	ConfirmPassword	mismatch	fixture
+2089:28033	02	location · allow location (no permission)	location	Location	allow location (no permission)	fixture
 2089:28076	02	location · fetching	location	Location	fetching	fixture
-2089:28104	02	location · could not fetch	location	Location	could not fetch	fixture
-2089:28140	02	location · map and address sheet	location	Location	map and address sheet	live
-2089:28209	02	terms · loading (before opening the browser)	terms	Terms	loading (before opening the browser)	fixture
-2089:28232	02	terms · bundled fallback	terms	Terms	bundled fallback	live
-2089:28263	02	privacy · default	privacy	Privacy	default	live
+2089:28104	02	location · could not fetch	location	Location	could not fetch	fixture+jest
+2089:28140	02	location · map and address sheet	location	Location	map and address sheet	fixture
+2089:28209	02	terms · loading (before opening the browser)	terms	Terms	loading (before opening the browser)	fixture+jest
+2089:28232	02	terms · bundled fallback	terms	Terms	bundled fallback	fixture+jest
+2089:28263	02	privacy · default	privacy	Privacy	default	fixture
 2089:21997	07	booking-fault · single item, filled	booking-fault	BookingFault {number, lines?}	single item, filled	live
 2089:22073	07	end-early-sheet · notice owed (monthly)	end-early-sheet	(bottom sheet on rental-active, monthly only)	notice owed (monthly)	live
 2089:22208	07	return-window · slot picked	return-window	BookingReturnWindow {number}	slot picked	live
