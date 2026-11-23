@@ -9,12 +9,6 @@ import type { NumberProp, SvgProps } from "react-native-svg";
 /** A heroicons component, exactly as the outline set exports them. */
 export type HeroIcon = React.ComponentType<SvgProps & { size?: NumberProp }>;
 
-/**
- * The old list rhythm (16). The 2.1 Profile frames stack sections with no gap, so the signed-in list no longer uses
- * it; it stays exported because the guest list (`profile-pre-auth.tsx`, ENG-428) still pads with it.
- */
-export const PROFILE_LIST_GAP = 16;
-
 interface ProfileRowProps {
   icon: HeroIcon;
   label: string;

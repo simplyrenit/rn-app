@@ -18,10 +18,10 @@
 2089:15349	android	fail-heatmap	Android has no Apple button (iOS-only), so 2 providers where the frame has 3; otherwise the split-bottom run (B=322, app-bottom 102) is clean at 0.82%: diffs/android/2089-15349-split.
 2089:15444	android	fail-heatmap	As 15349 Android: no Apple button; split-bottom run 0.85%.
 2089:15529	android	fail-heatmap	As 15349 Android: no Apple button; split-bottom run 0.82%.
-2089:15649	ios	fail-heatmap	Provider buttons (ENG-428) match; the panel heading and sub-line (profile-pre-auth.tsx) are ENG-438's and the Saved title position ENG-427's. Split run B=407: 3.53%.
-2089:15649	android	fail-heatmap	As iOS (ENG-438 panel copy and type, ENG-427 Saved title), plus no Apple button on Android.
-2089:15719	ios	fail-heatmap	Provider buttons match; heading size, sub-line copy, group headers, leading row icons and panel spacing belong to ENG-438 (profile-pre-auth.tsx, profile tab).
-2089:15719	android	fail-heatmap	As iOS (ENG-438), plus no Apple button on Android.
+2089:15649	ios	fail-heatmap	Panel matches: split run B=407 (diffs/ios/2089-15649-split) 1.14%; the default run is 6pt off at the seam. Left: the Saved title sits 2pt low (saved.tsx 16/16 padding), fixed by the ENG-427 SubpageHeader, not merged here yet.
+2089:15649	android	fail-heatmap	Android has no Apple sign-in button (iOS-only provider), so the bottom-anchored panel shows 2 providers vs 3 and its heading sits 62dp lower (split run 2.77%); plus the ENG-427 Saved title as iOS.
+2089:15719	ios	fail-heatmap	Panel matches; the list under it is the older layout (My Profile title, rule under the panel, no row icons, 48pt headers, 8pt spacers, 32pt foot), superseded by section 13 (2095:25130 0.53%, 2095:24982 1.06%), which the code follows; scroll end diffs/ios/2089-15719.scroll 3.09% for the same reason.
+2089:15719	android	fail-heatmap	As iOS (older list layout, superseded by 2095:25130/24982), plus no Apple button on Android (iOS-only), so the list sits 62dp higher; scroll end diffs/android/2089-15719.scroll 3.05%.
 2089:21763	ios	fail-heatmap	Value text only: the screen strips spaces, so "98123 45678" can never show (plan D4); seeded 9812345678.
 2089:21763	android	fail-heatmap	As iOS: value text only (D4).
 2089:25271	ios	fail-heatmap	Kit checkbox (D5, ENG-426): 22 box r12 vs the frame's 20 r6, and the tick text sits at x64 vs 52 (44pt target with -12 margin + 8). Split-bottom run (B=141) 0.69%: diffs/ios/2089-25271-split.
@@ -57,10 +57,9 @@
 2096:30504	android	n/a	Opening it sends a Firebase SMS and the timer runs on the clock; checked by jest src/components/bank/__tests__/unlock-sheet.test.tsx.
 2096:31168	ios	n/a	Needs a 409 open_bookings body no fixture can produce (plan rule 4); checked by jest src/components/profile/post-auth/sheets/__tests__/delete-account-modal.test.tsx.
 2096:31168	android	n/a	Needs a 409 open_bookings body no fixture can produce (plan rule 4); checked by jest src/components/profile/post-auth/sheets/__tests__/delete-account-modal.test.tsx.
-2095:25130	ios	fail-heatmap	Signed-out device; the panel headline, sub-line, sign-in buttons and the rule under the panel are profile-pre-auth.tsx and sign-in-options.tsx (ENG-428); the Profile title and 44/y20 group headers owned here match.
-2095:25130	android	fail-heatmap	As iOS: the panel and sign-in buttons are ENG-428's (profile-pre-auth.tsx, sign-in-options.tsx); title and group headers match.
-2095:24982	ios	fail-heatmap	First screen as 2095:25130 (ENG-428 panel); scroll end (diffs/ios/2095-24982.scroll) sits 8pt high because profile-pre-auth.tsx pads the list 32 below vs the frame's 24 (ENG-428).
-2095:24982	android	fail-heatmap	As iOS: ENG-428 panel on the first screen; scroll end (diffs/android/2095-24982.scroll, 3.21%) 8pt high from the ENG-428 32pt list bottom padding.
+2095:25130	android	fail-heatmap	Android has no Apple sign-in button (iOS-only provider): the panel shows 2 providers vs the frame's 3, so everything below it sits 62dp higher; the iOS run passes at 0.53%.
+2095:24982	ios	pass	First screen 1.06%; scroll end diffs/ios/2095-24982.scroll 0.45% (list foot now 24 as drawn).
+2095:24982	android	fail-heatmap	First screen as 2095:25130 (no Apple button on Android, 2 providers vs 3, list 62dp higher); scroll end diffs/android/2095-24982.scroll 1.23% passes.
 2095:25349	ios	pass	First screen 0.97%; scroll end diffs/ios/2095-25349.scroll 0.38% (Logout visible after the scroll view was bounded under the header).
 2095:25349	android	pass	First screen 1.31%; scroll end diffs/android/2095-25349.scroll 0.69%.
 2097:30662	ios	pass	First screen 1.42% (the 1173px-wide scroll PNG is scaled to 1170, so rows drift about 1pt by y600; 2095:25822 shows the same content at 0.68%); scroll end diffs/ios/2097-30662.scroll 0.34%.
