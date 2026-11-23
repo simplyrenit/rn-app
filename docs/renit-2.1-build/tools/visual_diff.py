@@ -13,6 +13,13 @@ What it does (see ../README.md, "Visual diff"):
      and a 1px shift tolerance, so sub-pixel antialiasing is not counted.
      Reference rows the app does not cover count as mismatched.
   4. Writes <out>.heat.png (reference | app | heat map) and <out>.json; prints one JSON line.
+
+--split-bottom B (pt): for screens with bottom-anchored chrome (tab bar, bottom bar, sheet footer). The device's
+status bar and home indicator differ from the frame's, so the scroll content (under the top bar) and the bottom
+chrome cannot both line up in one crop. With it, the reference rows above the last B pt are compared top-aligned
+with the app crop, and the last B pt of each crop bottom-aligned; both parts are stacked into one comparison and one
+heat map (blue ticks in the gutters mark the seam), and the mismatch is over the whole reference area, except the
+reference rows just above the chrome that the device's shorter content area cannot show (`seam_hidden_rows`).
 Exit code 0 = pass (mismatch <= --threshold %), 1 = fail.
 """
 import argparse, json, os, sys
@@ -70,6 +77,8 @@ def main():
     ap.add_argument('--app-box', help='x,y,w,h in pt of the screenshot (device points, status bar included); '
                     'replaces --app-top/--app-bottom. Requires --ref-box.')
     ap.add_argument('--app-scale', type=float, help='device px per pt (default 3: iPhone 17e and Realme RMX3151 both 3x)')
+    ap.add_argument('--split-bottom', type=float, help='pt of bottom-anchored chrome above the bottom crop, compared '
+                    'bottom-aligned while the rest is compared top-aligned (see the docstring)')
     ap.add_argument('--ref-bg', default='#FFFFFF', help='colour behind transparent reference pixels '
                     '(#F5F5F7 for kit set variants)')
     a = ap.parse_args()
@@ -102,34 +111,74 @@ def main():
     app = np.asarray(app_img.resize((w, h), Image.LANCZOS), dtype=np.float32)
 
     H = ref.shape[0]
-    hh = min(H, app.shape[0])
-    r, p = ref[:hh], app[:hh]
-    # 1px shift tolerance: a pixel matches if any of the 3x3 neighbours in the app matches.
-    pad = np.pad(p, ((1, 1), (1, 1), (0, 0)), mode='edge')
-    best = np.full(r.shape[:2], np.inf, dtype=np.float32)
-    for dy in (0, 1, 2):
-        for dx in (0, 1, 2):
-            best = np.minimum(best, delta(r, pad[dy:dy + hh, dx:dx + w]))
-    mism = best > 35215 * a.color_t ** 2
-    uncovered = (H - hh) * w
-    pct = 100.0 * (mism.sum() + uncovered) / (H * w)
+    # (reference part, app part) pairs, stacked in this order. Each app part is compared from its first row; reference
+    # rows it does not cover count as mismatched.
+    if a.split_bottom:
+        if a.ref_box:
+            sys.exit('--split-bottom does not apply to --ref-box')
+        b = round(a.split_bottom * s)
+        if not 0 < b < min(H, h):
+            sys.exit(f'--split-bottom {a.split_bottom}pt does not fit the crops')
+        # Reference rows the device cannot show at all (its content area above the chrome is shorter than the
+        # frame's) would sit behind the chrome: they are left out, not counted, or no such screen could ever pass.
+        # They are recorded as `seam_hidden_rows`; scroll the app to check that content.
+        top = min(H - b, h - b)
+        hidden = H - b - top
+        ref = np.concatenate([ref[:top], ref[H - b:]])
+        H = ref.shape[0]
+        parts = [(ref[:top], app[:top]), (ref[top:], app[h - b:])]
+    else:
+        parts = [(ref, app)]
 
-    # heat map: reference | app | faded reference with mismatches in red
-    gray = (r.mean(axis=2, keepdims=True) * 0.25 + 191).repeat(3, axis=2)
+    def compare(r, p):
+        hh = min(r.shape[0], p.shape[0])
+        r, p = r[:hh], p[:hh]
+        # 1px shift tolerance: a pixel matches if any of the 3x3 neighbours in the app matches.
+        pad = np.pad(p, ((1, 1), (1, 1), (0, 0)), mode='edge')
+        best = np.full(r.shape[:2], np.inf, dtype=np.float32)
+        for dy in (0, 1, 2):
+            for dx in (0, 1, 2):
+                best = np.minimum(best, delta(r, pad[dy:dy + hh, dx:dx + w]))
+        return best > 35215 * a.color_t ** 2, p
+
+    mism_parts, shown, covered = [], [], []
+    for r, p in parts:
+        m, p = compare(r, p)
+        rows = r.shape[0]
+        full = np.ones((rows, w), bool)
+        full[:m.shape[0]] = m
+        mism_parts.append(full)
+        app_rows = np.full((rows, w, 3), 255, np.float32)
+        app_rows[:p.shape[0]] = p
+        shown.append(app_rows)
+        cov = np.zeros(rows, bool)
+        cov[:p.shape[0]] = True
+        covered.append(cov)
+    mism, p, cov = np.concatenate(mism_parts), np.concatenate(shown), np.concatenate(covered)
+    uncovered = int((~cov).sum())
+    pct = 100.0 * mism.sum() / (H * w)
+
+    # heat map: reference | app | faded reference with mismatches (and rows the app does not cover) in red
+    gray = (ref.mean(axis=2, keepdims=True) * 0.25 + 191).repeat(3, axis=2)
     heat = np.where(mism[..., None], np.array([230, 30, 30], np.float32), gray)
     canvas = np.full((H, w * 3 + 40, 3), 255, np.float32)
-    canvas[:H, :w] = ref
-    canvas[:hh, w + 20:2 * w + 20] = p
-    canvas[:hh, 2 * w + 40:] = heat
-    if H > hh:
-        canvas[hh:H, 2 * w + 40:] = [230, 30, 30]
+    canvas[:, :w] = ref
+    canvas[:, w + 20:2 * w + 20] = p
+    canvas[:, 2 * w + 40:] = heat
+    if len(parts) > 1:
+        seam = parts[0][0].shape[0]
+        for x0 in (w, 2 * w + 20):
+            canvas[max(0, seam - 2):seam + 2, x0:x0 + 20] = [30, 90, 230]
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     Image.fromarray(canvas.clip(0, 255).astype(np.uint8)).save(a.out + '.heat.png')
     here = os.path.dirname(os.path.abspath(__file__))
     rel = lambda f: os.path.basename(f) if f.startswith('/tmp') else os.path.relpath(os.path.abspath(f), here)
     res = {'ref': rel(a.ref), 'app': rel(a.app), 'platform': a.platform, 'mismatch_pct': round(float(pct), 3),
            'threshold_pct': a.threshold, 'pass': bool(pct <= a.threshold),
-           'compared_px': [w, H], 'app_scaled_height': h, 'uncovered_rows': H - hh}
+           'compared_px': [w, H], 'app_scaled_height': h, 'uncovered_rows': uncovered}
+    if a.split_bottom:
+        res['split_bottom_pt'] = a.split_bottom
+        res['seam_hidden_rows'] = hidden
     json.dump(res, open(a.out + '.json', 'w'), indent=1)
     print(json.dumps(res))
     sys.exit(0 if res['pass'] else 1)
