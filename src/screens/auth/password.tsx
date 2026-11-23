@@ -26,7 +26,8 @@ type PasswordDesign = { password: string; focused?: boolean };
 
 /**
  * The eye over the kit field (25483): 24 at x326, centred on the 48 input. `TextField` has no trailing slot, so
- * it is laid over the field by `top` (40 under a label, 12 without), and the input keeps 48 clear on its right.
+ * it is laid over the field at top 12, with the field's label kept outside the wrapper, and the input keeps 48
+ * clear on its right.
  */
 export function PasswordEye({
   shown,
