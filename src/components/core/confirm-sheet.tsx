@@ -24,8 +24,11 @@ interface Props {
   loading?: boolean;
   /** The sheet has closed, however it was closed (scrim, pan, Cancel, or the caller's dismiss). */
   onDismiss?: () => void;
-  /** Fired once, when the title and body have been measured and the snap height is final: present from here when presenting on mount. */
-  onReady?: () => void;
+  /**
+   * Fired once, when the title and body have been measured and the snap height is final: present from here when
+   * presenting on mount. Gets that height without the home indicator (DevKit computes the sheet's box from it).
+   */
+  onReady?: (height: number) => void;
   /** Why the confirmed action failed, said in the body slot in danger 14/20. */
   error?: string;
 }
@@ -46,7 +49,7 @@ const ACTIONS = 124;
 
 /**
  * The sheet's height without the home indicator, from its measured line counts. 2097:28985 (one-line title, two-line
- * body): 245; 2096:31063 (two-line title, no body): 217. Exported for DevKit, which computes the sheet's box from it.
+ * body): 245; 2096:31063 (two-line title, no body): 217. Exported for the tests; DevKit gets the result from `onReady`.
  */
 export function confirmSheetHeight(titleLines: number, bodyLines: number): number {
   const titleRow = titleLines > 1 ? titleLines * TITLE_LINE + 2 * WRAPPED_TITLE_PAD : 44;
@@ -77,18 +80,22 @@ export const ConfirmSheet = forwardRef<BottomSheetModal, Props>(
     const [bodyLines, setBodyLines] = useState<number | null>(null);
     const [errorLines, setErrorLines] = useState<number | null>(null);
     const ready = useRef(false);
+    // An error that appears while the sheet is open is unmeasured for a frame: it keeps the height it had until the
+    // error's lines are in, rather than dropping to the start height and back (a visible double jump).
+    const lastHeight = useRef<number | null>(null);
 
     const hasBody = Boolean(body);
     const measured = titleLines !== null && (!body || bodyLines !== null) && (!error || errorLines !== null);
     const height = measured
       ? confirmSheetHeight(titleLines, (body ? bodyLines ?? 0 : 0) + (error ? errorLines ?? 0 : 0))
-      : startHeight(hasBody || Boolean(error));
+      : lastHeight.current ?? startHeight(hasBody || Boolean(error));
+    if (measured) lastHeight.current = height;
 
     // After the measured height has committed, so a present() from here opens at it.
     useEffect(() => {
       if (!measured || ready.current) return;
       ready.current = true;
-      onReady?.();
+      onReady?.(height);
     }, [measured]);
 
     const dismiss = () => {
