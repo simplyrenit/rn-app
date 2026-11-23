@@ -7,7 +7,7 @@
 2071:14392	android	fluid	Same as Active=Home: fluid tab width at 360dp; visual match.
 2073:14384	android	text-width	Android measures the 14pt label 'Good' 1.33pt narrower than Figma and the chip hugs its label (72.67 vs 74pt). At the chip's own width it matches: 0.77%.
 2073:14386	android	text-width	As State=Default: label 1.33pt narrower on Android; at the chip's own width it matches: 1.35%.
-2110:30387	android	fluid	The confirm sheet is a modal that fills the 360dp window, not the 390pt kit frame. Left/right halves 2.26%/2.06%: centred text moves 15pt and the body wraps differently at 360dp; padding, colours, type and buttons match (diffs/android/2110-30387-left|right.heat.png).
+2110:30387	android	pass	ENG-438 re-run on the 390dp emulator (eng424_390), presented from onReady with the box from the measured height (245): 0.88%, the body's second line sits ~1pt lower (Android line metrics). The 360dp Realme left/right halves (2.26%/2.06%, diffs/android/2110-30387-left|right.heat.png) predate it.
 2110:30278	ios	pass	Covered by the live Tab bar · Active=Rentals diff (1.61%), which draws this icon.
 2110:30278	android	fluid	Covered by the Android Active=Rentals tab bar comparison (fluid width, visual match).
 2110:30274	ios	n/a	Drawn only on Active=Post (signed out or merchant awaiting approval); checked in ENG-435.
@@ -44,12 +44,12 @@
 2096:27788	android	pass	Sheet strip, fixture riyaLocked; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
 2096:28005	ios	pass	Sheet strip via Personal details > Upload, tiles not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
 2096:28005	android	pass	Sheet strip via Personal details > Upload, tiles not tapped; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
-2096:28081	ios	pass	Sheet strip, field focused, keyboard hidden; Save not tapped. With the on-screen keyboard up the sheet stays behind it, field and Save hidden (diffs/ios/2096-28081.keyboard.png; kit scales numeric snaps by 0.9, ENG-426). Scrim 40% vs kit 0.5/0.6.
-2096:28081	android	pass	Sheet strip after Back hid the keyboard. Keyboard up: kit 0.9 numeric snap clips Save in half (diffs/android/2096-28081.keyboard.png), ENG-426. Scrim 40% vs kit 0.5/0.6.
-2096:30599	ios	pass	Sheet strip, typed riya.work@outlook.com, Verify not tapped. Keyboard up behaves as 2096:28081 (sheet behind the keyboard). Scrim 40% vs kit 0.5/0.6, kit-owned (ENG-426).
-2096:30599	android	pass	Sheet strip, Verify not tapped. Keyboard up clips Verify in half (diffs/android/2096-30599.keyboard.png; kit 0.9 numeric snap, ENG-426). Scrim 40% vs kit 0.5/0.6.
-2096:30773	ios	fail-heatmap	Typed 9876543210 as the plan says; the field shows it unspaced vs the frame's 98765 43210 (no formatting code added: behaviour unchanged), and the fixture's spaced phone pre-fills as 8765 43210 (slice(-10)). Keyboard up hides the whole sheet (diffs/ios/2096-30773.keyboard.png, kit 0.9 numeric snap, ENG-426). Verify not tapped; scrim 40% vs kit 0.5/0.6.
-2096:30773	android	fail-heatmap	As iOS: typed 9876543210 shows unspaced vs the frame's 98765 43210, pre-fill reads 8765 43210. Keyboard up clips Verify (diffs/android/2096-30773.keyboard.png). Verify not tapped; scrim 40% vs kit 0.5/0.6 (ENG-426).
+2096:28081	ios	pass	Sheet strip, field focused, keyboard hidden; Save not tapped. Keyboard up (ENG-438 review fix: numeric snaps make room for the keyboard): field and Save fully visible, Save 16pt above the keyboard (diffs/ios/2096-28081.keyboard.png); return hides it and the sheet goes back to its height. Scrim 40% vs kit 0.5/0.6.
+2096:28081	android	pass	Sheet strip after Back hid the keyboard. Keyboard up: the sheet sits on the keyboard with Save whole (diffs/android/2096-28081.keyboard.png). Scrim 40% vs kit 0.5/0.6.
+2096:30599	ios	pass	Sheet strip, typed riya.work@outlook.com, Verify not tapped. Keyboard up: field and Verify fully visible above it (diffs/ios/2096-30599.keyboard.png); closing the sheet with the keyboard up returns Personal details to its height. Scrim 40% vs kit 0.5/0.6, kit-owned (ENG-426).
+2096:30599	android	pass	Sheet strip, Verify not tapped. Keyboard up: Verify whole above the keyboard (diffs/android/2096-30599.keyboard.png); Back hides the keyboard and the sheet goes back to its height. Scrim 40% vs kit 0.5/0.6.
+2096:30773	ios	fail-heatmap	Typed 9876543210 as the plan says; the field shows it unspaced vs the frame's 98765 43210 (no formatting code added: behaviour unchanged), and the fixture's spaced phone pre-fills as 8765 43210 (slice(-10)). Keyboard up: field and Verify fully visible above the number pad (diffs/ios/2096-30773.keyboard.png), so a phone change is reachable. Verify not tapped; scrim 40% vs kit 0.5/0.6.
+2096:30773	android	fail-heatmap	As iOS: typed 9876543210 shows unspaced vs the frame's 98765 43210, pre-fill reads 8765 43210. Keyboard up: Verify whole above the keypad (diffs/android/2096-30773.keyboard.png). Verify not tapped; scrim 40% vs kit 0.5/0.6 (ENG-426).
 2096:31063	ios	pass	Confirm destructive strip, 217 measured + inset; Delete not tapped (Cancel); scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
 2096:31063	android	pass	Confirm destructive strip; Delete not tapped (Cancel); scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
 2097:28985	ios	pass	Sheet strip only (backdrop is address-details.tsx, ENG-429); fixture gives Work the newest id so the body reads Work; Delete address not tapped; scrim 40% vs kit 0.5/0.6 (ENG-426).

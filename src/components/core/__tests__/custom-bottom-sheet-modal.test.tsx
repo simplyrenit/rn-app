@@ -51,8 +51,9 @@ function render(snapPoints: number[] | string[]) {
   const scroll = () => root.root.findByType("Scroll" as any).props;
   const keyboard = (height: number) =>
     act(() => {
-      if (height > 0) listeners.keyboardDidShow({ endCoordinates: { height } });
-      else listeners.keyboardDidHide({});
+      const ios = Platform.OS === "ios";
+      if (height > 0) listeners[ios ? "keyboardWillShow" : "keyboardDidShow"]({ endCoordinates: { height } });
+      else listeners[ios ? "keyboardWillHide" : "keyboardDidHide"]({});
     });
   return { sheet, scroll, keyboard };
 }

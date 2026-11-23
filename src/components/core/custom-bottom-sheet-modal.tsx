@@ -54,14 +54,17 @@ const CustomBottomSheetModal = forwardRef<
     useImperativeHandle(ref, () => modalRef.current as BottomSheetModal);
 
     useEffect(() => {
+      // iOS announces the keyboard before it moves, so the sheet makes room alongside it rather than after it has
+      // covered the footer; Android only has the did-events.
+      const ios = Platform.OS === "ios";
       const keyboardDidShowListener = Keyboard.addListener(
-        "keyboardDidShow",
+        ios ? "keyboardWillShow" : "keyboardDidShow",
         (event) => {
           setKeyboardHeight(event.endCoordinates.height);
         }
       );
       const keyboardDidHideListener = Keyboard.addListener(
-        "keyboardDidHide",
+        ios ? "keyboardWillHide" : "keyboardDidHide",
         () => {
           setKeyboardHeight(0);
         }
