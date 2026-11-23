@@ -33,3 +33,25 @@
 2089:36248	ios	fail-heatmap	Kit Avatar draws a hue monogram with a ring where the frame draws a #EDEDFC disc with brand initials; rest clean.
 2089:36415	ios	pending	Full-scroll segments not diffed yet (ENG-427); the first screen is the 2089:36248 diff.
 2089:36523	ios	fail-heatmap	Kit Avatar draws a hue monogram with a ring where the frame draws a #EDEDFC disc with brand initials; rest clean.
+2083:15579	android	fail-heatmap	Cart badge sits 0/2 from the corner where the frame has 2/4; CartButton is ENG-429's (components/cart/parts.tsx).
+2083:15347	android	pending	Full-scroll segments not diffed yet (ENG-427); the first screen is the 2083:15120 diff.
+2089:24680	android	fail-heatmap	Sub-line prints "3 items from Rohan" where the frame has "Rohan Mehta" (Decision 9, first_name kept).
+2089:24740	android	fail-heatmap	Review dates print "21 days ago"/"a month ago" (Decision 8) and the kit Avatar draws a hue monogram where every frame draws a #EDEDFC disc.
+2089:27555	android	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
+2089:27772	android	fail-heatmap	Saved hearts are the kit FavouriteButton red where the frame draws them brand purple.
+2089:27951	android	blocked	Sign-in panel is profile-pre-auth.tsx (ENG-428 / ENG-438, Decision 10).
+2089:29793	android	fail-heatmap	Sheet measured 633pt as the frame; the diff is offset by the 24dp status bar and the nearby rows are Google live data (jest covers the row).
+2089:29905	android	pass	Card diffed aligned on the card (--app-top 168): 0.98%; the centred modal sits under a 24dp status bar, and today is the clock.
+2089:32064	android	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
+2089:32165	android	pending	Needs a filter applied by hand; iOS diff passes at 0.39%.
+2089:32313	android	blocked	Saved rows wait on the address-row radio restyle (ENG-438 owns the file, Decision 11).
+2089:34679	android	pending	Filter sheet frames not diffed on Android; iOS shows the sheet content matching.
+2089:34809	android	pending	Filter sheet frames not diffed on Android; iOS shows the sheet content matching.
+2089:34929	android	pending	Filter sheet frames not diffed on Android.
+2089:35060	android	pending	Filter sheet frames not diffed on Android; iOS shows the sheet content matching.
+2089:35166	android	pending	Filter sheet frames not diffed on Android; iOS shows the sheet content matching.
+2089:35291	android	pending	Filter sheet frames not diffed on Android.
+2089:35398	android	pending	Filter sheet frames not diffed on Android.
+2089:36248	android	fail-heatmap	Kit Avatar draws a hue monogram with a ring where the frame draws a #EDEDFC disc with brand initials; rest clean.
+2089:36415	android	pending	Full-scroll segments not diffed yet (ENG-427); the first screen is the 2089:36248 diff.
+2089:36523	android	fail-heatmap	Kit Avatar draws a hue monogram with a ring where the frame draws a #EDEDFC disc with brand initials; rest clean.

@@ -21,7 +21,7 @@ import { useRoute } from "@react-navigation/native";
 import axios from "axios";
 import * as Location from "expo-location";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { BackHandler, Platform, TouchableOpacity, View, useWindowDimensions } from "react-native";
+import { BackHandler, Dimensions, Platform, TouchableOpacity, View } from "react-native";
 import { AutocompleteDropdown } from "react-native-autocomplete-dropdown";
 import {
   GestureHandlerRootView,
@@ -73,8 +73,9 @@ const SHEET_ICON = 24;
 const SHEET_SCRIM = 0.4;
 
 export default function SearchScreen() {
-  const { height: windowHeight } = useWindowDimensions();
-  const whereSnapPoints = [0.5, 0.75, 0.9].map((share) => Math.round(windowHeight * share));
+  // The screen, not the window: Android's window leaves out the status bar.
+  const screenHeight = Dimensions.get("screen").height;
+  const whereSnapPoints = [0.5, 0.75, 0.9].map((share) => Math.round(screenHeight * share));
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const route = useRoute<RouteProps<"Search">>();

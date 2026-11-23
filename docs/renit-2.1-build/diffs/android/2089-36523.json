@@ -1,0 +1,14 @@
+{
+ "ref": "../figma/03/2089-36523.png",
+ "app": "android-emu-2089-36523.png",
+ "platform": "android",
+ "mismatch_pct": 1.372,
+ "threshold_pct": 2.0,
+ "pass": true,
+ "compared_px": [
+  1170,
+  2268
+ ],
+ "app_scaled_height": 2460,
+ "uncovered_rows": 0
+}
