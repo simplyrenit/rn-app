@@ -237,6 +237,10 @@ export const fixtures: Record<string, DevFixture> = {
       "GET /category/": categories,
       "GET /search/filters/": { subcategory: null, total: 0, filters: [] },
       "GET /favorites/": [],
+      // The Home tab under the stack reads its rails; listed empty so they don't reach QA (Metro log, 2026-11-23).
+      "GET /top-experiences/": { results: [] },
+      "GET /top-rated-experiences/": { results: [] },
+      "GET /popular-products-in-area/": { results: [] },
     },
   },
   // Tap Filters → Condition → Excellent → Show results.

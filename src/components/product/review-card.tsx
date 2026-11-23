@@ -70,8 +70,9 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
           // `w-[${size}%]` was an interpolated arbitrary class, which NativeWind
           // cannot resolve at build time, so the width was silently dropped.
           width: width ?? (size ? `${size}%` : "100%"),
-          // The frames' 16 is to the card's outer edge (the stroke is outside the layout), so 15 + the 1 border.
-          padding: 15,
+          // `default`: the frame's 16 is to the card's outer edge (the stroke is outside the layout), so 15 + the
+          // 1 border (2089:24740). `detail` (ENG-429) keeps its 16.
+          padding: detail ? 16 : 15,
           borderRadius: radius.card,
           borderWidth: 1,
           borderColor: color.line,
