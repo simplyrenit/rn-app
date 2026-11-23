@@ -90,7 +90,7 @@ Pass = mismatch ≤ 2% **and** a clean heat map (see README). Check: `live` on d
 | 02 | `2089:28033` | location · allow location (no permission) | ENG-428 | live | pass 0.17% | pass 0.19% |  |
 | 02 | `2089:28076` | location · fetching | ENG-428 | fixture | pass 0.03% | pass 0.02% |  |
 | 02 | `2089:28104` | location · could not fetch | ENG-428 | fixture | pass 0.15% | pass 0.31% |  |
-| 02 | `2089:28140` | location · map and address sheet | ENG-428 | live | pass 0.38% | pass 1.26% | Each multi-line Regular Text is 2px (2/3pt) shorter on Android (measured line runs), so sheet rows below the two addresses sit up to 1pt high; sheet top, bar and rows otherwise align. |
+| 02 | `2089:28140` | location · map and address sheet | ENG-428 | live | pass 0.38% | pass 1.25% | Each multi-line Regular Text is 2px (2/3pt) shorter on Android (measured line runs), so sheet rows below the two addresses sit up to 1pt high; sheet top, bar and rows otherwise align. |
 | 02 | `2089:28209` | terms · loading (before opening the browser) | ENG-428 | fixture | pass 0.04% | pass 0.04% |  |
 | 02 | `2089:28232` | terms · bundled fallback | ENG-428 | live | pass 0.93% | fail 6.24% | Text only: after greedy breaks (textBreakStrategy simple) the wraps match, but each multi-line paragraph is 2px (2/3pt) shorter on Android and the drift accumulates down the page (measured line runs: 0, -2, -4, -6 px by paragraph). |
 | 02 | `2089:28263` | privacy · default | ENG-428 | live | fail 3.83% | fail 6.72% | The frame cuts the intro and section 1 short; the app shows the full content.ts text (content not changed). Down to y515 it passes at 1.11%: diffs/ios/2089-28263-to515.; As iOS (frame truncates the content), plus the Android multi-line drift of 28232. |
