@@ -193,9 +193,10 @@ export default function VerifyEmail() {
             {isCodeVerification ? "Enter verification code" : "Enter password"}
           </Text>
           {isCodeVerification ? (
-            // The address is its own line, as the frames draw it, not a SemiBold span in the sentence: on Android a
-            // line holding only that span lost its 20pt line height (RN's line-height span keeps the SemiBold face's
-            // natural 17.67pt when its padded box is taller than the line), lifting everything below by 2.33pt.
+            // The address is its own line, not a SemiBold span in the sentence. Measured on Android: the second line,
+            // holding only the span, had a 17.67pt pitch instead of 20, lifting everything below by 2.33pt (likely
+            // RN's line-height span keeping the SemiBold face's natural height). The frame flows one text node, so on
+            // a screen wide enough to fit the address on line 1 it now still wraps; at 342pt line 1 is already full.
             <View>
               <Text fontSize="text-sm" lineHeight={20} tone="body">
                 We've sent a 6 digit verification code to
