@@ -14,6 +14,12 @@ export interface BarAction {
   disabled?: boolean;
   loading?: boolean;
   accessibilityLabel?: string;
+  /**
+   * The primary's 14/20 label in the default 52 box: the kit Primary at half
+   * width when its label would wrap at 16/24 ("Book for the morning", 04
+   * 2089:23201; "Continue with self pickup", 2089:28473).
+   */
+  labelSize?: "compact";
 }
 
 export type BottomBarLayout =
@@ -39,6 +45,11 @@ export interface BottomBarProps {
   /** `summary-cta`: "Deposit ₹2,000" (12 at 60%). Omit to hide the line. */
   subLine?: string;
   /**
+   * `summary-cta` with no `primary`: a 14/20 body note right-aligned in the
+   * primary's place ("Not taking bookings right now", 04 2089:22597).
+   */
+  note?: string;
+  /**
    * Legacy passthrough for `booking/parts` `BottomBar`: rendered in the bar's
    * content strip in place of a layout, keeping the hairline and insets.
    */
@@ -63,7 +74,9 @@ function PrimaryButton({ action, style }: { action: BarAction; style?: StyleProp
       disabled={action.disabled}
       loading={action.loading}
       accessibilityLabel={action.accessibilityLabel}
-      style={style}
+      size={action.labelSize === "compact" ? "compact" : undefined}
+      // `compact` is a 44 box; the kit keeps the bar's 52.
+      style={action.labelSize === "compact" ? [{ minHeight: 52 }, style] : style}
     >
       {action.label}
     </Button>
@@ -87,6 +100,7 @@ export function BottomBar({
   value,
   unit,
   subLine,
+  note,
   children,
   style,
 }: BottomBarProps) {
@@ -120,7 +134,13 @@ export function BottomBar({
                 </Text>
               ) : null}
             </View>
-            {primary ? <PrimaryButton action={primary} style={{ flex: 1 }} /> : null}
+            {primary ? (
+              <PrimaryButton action={primary} style={{ flex: 1 }} />
+            ) : note ? (
+              <Text fontSize="text-sm" lineHeight={20} tone="dim" style={{ flex: 1, textAlign: "right" }}>
+                {note}
+              </Text>
+            ) : null}
           </>
         );
       case "secondary-primary":

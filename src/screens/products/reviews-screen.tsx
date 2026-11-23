@@ -9,44 +9,34 @@ import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { StarIcon as StarFilled } from "react-native-heroicons/solid";
 
 import { toast } from "@/lib/toast";
-import {
-  MIN_TOUCH_TARGET,
-  SCREEN_GUTTER,
-  density,
-  radius,
-} from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
-// Measured off the Figma "All reviews" frame (1:17697). The screen is one 24pt
-// column under the shared 44pt header, with the gaps the frame draws between
-// its blocks rather than a single rhythm.
-const TOP_INSET = 24;
-/** "Product Reviews" to the score line, and the last bar to the write row. */
-const HEADING_GAP = 24;
-/** The score line to the histogram, and the list heading to the first card. */
-const BLOCK_GAP = 16;
-/** Between two bars, and inside the histogram only. */
-const BAR_GAP = 8;
-/** The write row to the "N reviews" heading. */
-const LIST_HEADING_GAP = 32;
-/** The star the frame sets beside the score and beside each bar. */
-const STAR = 20;
-/** Height of a bar's track. */
+// Figma 2089:24972 / 2089:25040 ("All reviews"). One 24pt column under the
+// kit top bar: 16 above the first block, 20 between blocks, 24 at the end.
+const CONTENT_TOP = 16;
+const CONTENT_BOTTOM = 24;
+const BLOCK_GAP = 20;
+/** Between two histogram rows. */
+const BAR_GAP = 12;
+/** The glyph beside the score, and the one beside each bar. */
+const SCORE_STAR = 20;
+const BAR_STAR = 16;
+/** The row's own spacing: digit, star, track and count sit 8 apart. */
+const ROW_GAP = 8;
+const DIGIT_WIDTH = 12;
 const BAR_HEIGHT = 8;
-/** The rating digit to its star. */
-const LABEL_GAP = 8;
-/** The star to the track, and the track to the count. */
-const BAR_INSET = 12;
-/** The count column the frame right of each bar; left-aligned, not ragged. */
-const COUNT_WIDTH = 30;
-const ROW_RADIUS = radius.button;
-/** The row's label sits on 16; its chevron measures ~13 from the edge. */
+/** The count column right of each bar; counts are right-aligned in it. */
+const COUNT_WIDTH = 24;
+/** "Write a review": a 44 outline row, label on 16, mini chevron on 12. */
 const ROW_PAD_LEFT = 16;
 const ROW_PAD_RIGHT = 12;
+const CHEVRON = 16;
 
 interface ReviewData {
   rating: number;
@@ -66,6 +56,7 @@ export default function ReviewsScreen() {
   const { fetchReviews } = useProduct();
   const { isAuthenticated, userDetails } = useGlobalContext();
   const { color } = useTheme();
+  const insets = useSafeAreaInsets();
   const isOwner = userDetails?.username === owner?.username;
 
   useFocusEffect(
@@ -110,8 +101,6 @@ export default function ReviewsScreen() {
 
   return (
     <NonScrollableContainer>
-      {/* The frame titles this screen "All reviews"; the product page's own
-          section stays "Reviews", so the two do not read as the same list. */}
       <SubpageHeader title="All reviews" />
 
       <ScrollView
@@ -119,12 +108,13 @@ export default function ReviewsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: TOP_INSET,
-          paddingBottom: density.listFooterCompact,
+          paddingTop: CONTENT_TOP,
+          paddingBottom: CONTENT_BOTTOM + insets.bottom,
+          gap: BLOCK_GAP,
         }}
       >
         <Text accessibilityRole="header" role="sectionTitle">
-          Product Reviews
+          Product reviews
         </Text>
 
         <View
@@ -138,20 +128,13 @@ export default function ReviewsScreen() {
                 )}`
               : "No reviews yet"
           }
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
-            marginTop: HEADING_GAP,
-          }}
+          style={{ flexDirection: "row", alignItems: "center", gap: ROW_GAP }}
         >
-          {/* One star, not five: the frame sets the score as a line of text with
-              a single glyph in front of it, a step quieter than the ink the
-              bars below are drawn in. */}
-          <StarFilled size={STAR} color={color.textBody} />
+          {/* One star, not five, at the score's own 70% ink. */}
+          <StarFilled size={SCORE_STAR} color={color.textBody} />
           {totalReviews ? (
             // Three runs on the row's own 8pt gap, not one string: set inline,
-            // the bullet's own spaces measure 12pt tighter than the frame's.
+            // the bullet's own spaces measure tighter than the frame's.
             <>
               <Text fontSize="text-md" tone="body">
                 {averageRating.toFixed(1)}
@@ -170,7 +153,7 @@ export default function ReviewsScreen() {
           )}
         </View>
 
-        <View style={{ marginTop: BLOCK_GAP, gap: BAR_GAP }}>
+        <View style={{ gap: BAR_GAP }}>
           {RATING_ROWS.map((rating) => {
             const count = countFor(rating);
             return (
@@ -182,23 +165,23 @@ export default function ReviewsScreen() {
                   rating,
                   "star"
                 )}, ${pluralize(count, "review")}`}
-                style={{ flexDirection: "row", alignItems: "center" }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: ROW_GAP,
+                }}
               >
-                <Text fontSize="text-md" tone="dim">
+                <Text fontSize="text-md" tone="dim" style={{ width: DIGIT_WIDTH }}>
                   {rating}
                 </Text>
-                {/* Ink, not gold: the frame draws this histogram monochrome, the
-                    way the product page's own rating is drawn. */}
-                <View style={{ marginLeft: LABEL_GAP }}>
-                  <StarFilled size={STAR} color={color.text} />
-                </View>
+                {/* Ink, not gold: the frame draws this histogram monochrome. */}
+                <StarFilled size={BAR_STAR} color={color.text} />
                 <View
                   style={{
                     flex: 1,
-                    marginHorizontal: BAR_INSET,
                     height: BAR_HEIGHT,
                     backgroundColor: color.line,
-                    borderRadius: radius.full,
+                    borderRadius: BAR_HEIGHT / 2,
                     overflow: "hidden",
                   }}
                 >
@@ -209,14 +192,14 @@ export default function ReviewsScreen() {
                         ? `${(count / totalReviews) * 100}%`
                         : 0,
                       backgroundColor: color.text,
-                      borderRadius: radius.full,
+                      borderRadius: BAR_HEIGHT / 2,
                     }}
                   />
                 </View>
                 <Text
                   fontSize="text-md"
                   tone="dim"
-                  style={{ width: COUNT_WIDTH }}
+                  style={{ width: COUNT_WIDTH, textAlign: "right" }}
                 >
                   {count}
                 </Text>
@@ -226,68 +209,54 @@ export default function ReviewsScreen() {
         </View>
 
         {isOwner ? (
-          <Text
-            fontSize="text-sm"
-            tone="dim"
-            style={{ marginTop: HEADING_GAP }}
-          >
+          <Text fontSize="text-sm" tone="dim">
             You can’t review your own listing.
           </Text>
         ) : (
-          // The frame replaces the old outline button with a list row: a 44pt
-          // hairline box, the label on the gutter's own 16 inset and a mini
-          // chevron at the far edge.
+          // A local 44 row, not a 56 kit ListRow: the frame draws it as an
+          // outline box on the brand hairline with a brand label and chevron.
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Write a review"
             accessibilityHint="Opens the review form for this listing"
             onPress={handleWriteReview}
             style={{
-              marginTop: HEADING_GAP,
               height: MIN_TOUCH_TARGET,
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
               paddingLeft: ROW_PAD_LEFT,
               paddingRight: ROW_PAD_RIGHT,
-              borderRadius: ROW_RADIUS,
+              borderRadius: radius.button,
               borderWidth: 1,
-              borderColor: color.line,
-              backgroundColor: color.surface,
+              borderColor: color.brandPanelLine,
             }}
           >
-            <Text fontSize="text-sm">Write a review</Text>
-            <ChevronRightIcon size={STAR} color={color.text} />
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
+              Write a review
+            </Text>
+            <ChevronRightIcon size={CHEVRON} color={color.brandText} />
           </TouchableOpacity>
         )}
 
-        <Text
-          accessibilityRole="header"
-          fontSize="text-md"
-          fontWeight="font-bold"
-          style={{ marginTop: LIST_HEADING_GAP }}
-        >
+        <Text accessibilityRole="header" fontSize="text-md" fontWeight="font-bold">
           {currentReviews.length === 0
             ? "No reviews yet"
             : pluralize(currentReviews.length, "review")}
         </Text>
 
-        <View style={{ marginTop: BLOCK_GAP, gap: BLOCK_GAP }}>
-          {currentReviews.map((review, index) => (
-            // The same card the product page's rail draws, full width: the
-            // frame clamps the body to three lines in a 185pt box with an
-            // underlined control. No `onShowMore` here, so the control opens
-            // the review in place rather than pushing this screen onto itself.
-            <ReviewCard
-              key={index}
-              variant="detail"
-              reviewText={review.comment}
-              reviewerName={`${review.user.first_name} ${review.user.last_name}`}
-              reviewDate={review.created_at}
-              reviewerImage={review.user.image?.image_url}
-            />
-          ))}
-        </View>
+        {currentReviews.map((review, index) => (
+          // No `onShowMore` here, so the control opens the review in place
+          // rather than pushing this screen onto itself.
+          <ReviewCard
+            key={index}
+            variant="list"
+            reviewText={review.comment}
+            reviewerName={`${review.user.first_name} ${review.user.last_name}`}
+            reviewDate={review.created_at}
+            reviewerImage={review.user.image?.image_url}
+          />
+        ))}
       </ScrollView>
     </NonScrollableContainer>
   );

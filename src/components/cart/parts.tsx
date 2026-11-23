@@ -1,6 +1,6 @@
 import { useBookings } from "@/backend/bookings";
 import { useCart } from "@/backend/cart";
-import { Button, IconButton, Text } from "@/components/core";
+import { IconButton, Text } from "@/components/core";
 import { Pill } from "@/components/booking/parts";
 import { clock, rangeLabel, rentCharge, timeLeft } from "@/lib/booking";
 import { CartNoteTone, waitingForRent } from "@/lib/cart";
@@ -12,12 +12,7 @@ import { BackendProduct, useTypedNavigation } from "@/lib/types";
 import React, { useEffect, useState } from "react";
 import { StyleProp, TouchableOpacity, View, ViewStyle } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
-import {
-  ClockIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  ShoppingBagIcon,
-} from "react-native-heroicons/outline";
+import { ClockIcon, ShoppingBagIcon } from "react-native-heroicons/outline";
 
 /**
  * The cart's way in (cart plan D29, Figma CT-04, CT-05): the bag, with the
@@ -55,8 +50,9 @@ export function CartButton({
           pointerEvents="none"
           style={{
             position: "absolute",
+            // 2089:23201 "Cart count badge": 18 at 28, 2 in the 44 button.
             top: onPhoto ? -2 : 2,
-            right: onPhoto ? -4 : 0,
+            right: onPhoto ? -4 : -2,
             minWidth: 18,
             // minHeight: the digit's line grows with the font scale and a fixed 18 clipped it at 1.3x and up.
             minHeight: 18,
@@ -122,13 +118,16 @@ export function RequestedLine({
   );
 }
 
-/** A cart line's warning chip; with `onPress` it ends in "View ›" and opens what it names. */
+/**
+ * A cart line's warning chip (2089:26744 "Cart chip"): the tone's wash, r8, Medium 12/16, no border and no icon. With
+ * `onPress` it ends in "View ›" and opens what it names.
+ */
 export function CartChip({ text, tone, onPress }: { text: string; tone: CartNoteTone; onPress?: () => void }) {
   const { color } = useTheme();
   const tint = {
-    info: { fg: color.info, bg: color.infoWash, Icon: InformationCircleIcon },
-    warning: { fg: color.warning, bg: color.warningWash, Icon: ExclamationTriangleIcon },
-    neutral: { fg: color.textBody, bg: color.surfaceRaised, Icon: InformationCircleIcon },
+    info: { fg: color.info, bg: color.infoWash },
+    warning: { fg: color.warning, bg: color.warningWash },
+    neutral: { fg: color.textBody, bg: color.surfaceMuted },
   }[tone];
   const body = (
     <View
@@ -136,17 +135,15 @@ export function CartChip({ text, tone, onPress }: { text: string; tone: CartNote
         flexDirection: "row",
         alignItems: "center",
         alignSelf: "flex-start",
-        gap: 6,
+        gap: 4,
         paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: color.line,
+        borderRadius: 8,
         backgroundColor: tint.bg,
+        maxWidth: "100%",
       }}
     >
-      <tint.Icon size={14} color={tint.fg} />
-      <Text fontSize="text-xs" style={{ color: tint.fg, flexShrink: 1 }}>
+      <Text fontSize="text-xs" fontWeight="font-medium" style={{ color: tint.fg, flexShrink: 1 }}>
         {text}
       </Text>
       {onPress ? (
@@ -165,7 +162,8 @@ export function CartChip({ text, tone, onPress }: { text: string; tone: CartNote
       accessibilityLabel={`${text}. View`}
       activeOpacity={0.7}
       onPress={onPress}
-      style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center", alignSelf: "flex-start" }}
+      hitSlop={{ top: 10, bottom: 10 }}
+      style={{ alignSelf: "flex-start", maxWidth: "100%" }}
     >
       {body}
     </TouchableOpacity>
@@ -177,36 +175,30 @@ export function CartChip({ text, tone, onPress }: { text: string; tone: CartNote
 /**
  * "Pay {shop} ₹X by 4:34 pm" (§3.2, Figma CT-42): while another booking of
  * this customer waits for its rent, that payment comes before a new checkout,
- * so it sits on top of the cart as its loudest action. The countdown is for the
- * eye only; the server ends the request.
+ * so it sits on top of the cart, above every card. The countdown is for the
+ * eye only; the server ends the request. `now` freezes it (design fixtures).
  */
-export function RentStrip() {
+export function RentStrip({ now: frozen }: { now?: Date } = {}) {
   const { data } = useBookings(true, true);
   const navigation = useTypedNavigation();
-  const { color } = useTheme();
   const booking = waitingForRent(data?.pages.flatMap((page) => page.results) ?? []);
-  const [now, setNow] = useState(() => new Date());
+  const [ticking, setNow] = useState(() => new Date());
   useEffect(() => {
-    if (!booking) return;
+    // A fixed `now` (a design fixture's) draws one still frame: no tick.
+    if (!booking || frozen) return;
     const tick = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(tick);
-  }, [booking?.number]);
+  }, [booking?.number, frozen]);
+  const { color } = useTheme();
   if (!booking) return null;
   const due = booking.money.rent_due_at;
-  const left = timeLeft(due, now);
+  const left = timeLeft(due, frozen ?? ticking);
   const shop = booking.shop.name;
+  const pay = `Pay ${shop} ${formatCurrency(rentCharge(booking).amount)}`;
+  // 2089:26814 "Rent strip": the warning wash edge to edge, 12/24 padding, the pill and the sentence, then the pay link.
   return (
-    <View
-      style={{
-        paddingHorizontal: SCREEN_GUTTER,
-        paddingVertical: 16,
-        gap: space.sm,
-        backgroundColor: color.warningWash,
-        borderBottomWidth: 1,
-        borderBottomColor: color.line,
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+    <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: 12, gap: 12, backgroundColor: color.warningWash }}>
+      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
         {left ? <Pill label={`${left} left`} tone="warning" /> : null}
         <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
           {due
@@ -214,9 +206,18 @@ export function RentStrip() {
             : `${shop} accepted. Pay now or the request ends.`}
         </Text>
       </View>
-      <Button onPress={() => navigation.navigate("Booking", { number: booking.number })}>
-        {`Pay ${shop} ${formatCurrency(rentCharge(booking).amount)}`}
-      </Button>
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={pay}
+        activeOpacity={0.6}
+        hitSlop={12}
+        onPress={() => navigation.navigate("Booking", { number: booking.number })}
+        style={{ alignSelf: "flex-start" }}
+      >
+        <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
+          {pay}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }

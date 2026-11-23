@@ -51,9 +51,18 @@ const THUMB = 56;
  * The product's photo, or the frames' grey tile with a camera when there is none. `more`: a booking's other items, "+2",
  * in the corner (cart plan §3.7, CT-30a).
  */
-export function Thumb({ uri, more }: { uri?: string | null; more?: string | null }) {
+export function Thumb({
+  uri,
+  more,
+  size = THUMB,
+}: {
+  uri?: string | null;
+  more?: string | null;
+  /** The cart's lines draw it at 64 (2089:26744, 28848); every other booking screen keeps 56. */
+  size?: number;
+}) {
   const { color } = useTheme();
-  const box = { width: THUMB, height: THUMB, borderRadius: 8 } as const;
+  const box = { width: size, height: size, borderRadius: 8 } as const;
   const photo = uri ? (
     <Image source={{ uri }} style={box} contentFit="cover" transition={150} accessible={false} />
   ) : (

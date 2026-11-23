@@ -15,12 +15,13 @@ interface ReviewCardProps {
   /** Width as a percentage of the parent, when the caller needs to set one. */
   size?: number;
   /**
-   * Opt-in. `detail` is the card the product page's review rail is drawn with
-   * in Figma 1:9120: a fixed 185pt so a row of them lines up, the body clamped
-   * to three lines in a fixed box, and the control set as a link rather than
-   * as brand-coloured text. Every other screen keeps `default`.
+   * Opt-in. `detail` is the rail card (Figma 2083:16177): 182pt so a row of
+   * them lines up, the body clamped to three lines in a fixed box, then the
+   * author. `list` is the All reviews card (2089:24972): no box, the author
+   * first, two lines of body and the control. Every other screen keeps
+   * `default`.
    */
-  variant?: "default" | "detail";
+  variant?: "default" | "detail" | "list";
   /**
    * `detail` only. The card cannot grow inside a fixed-height rail, so its
    * control opens the full list instead of expanding in place.
@@ -32,12 +33,112 @@ interface ReviewCardProps {
 
 const PREVIEW_CHARS = 140;
 
-/** The frame's card: 16 + 64 + 4 + 21 + 24 + 40 + 16. */
-const DETAIL_HEIGHT = 185;
+/** The rail card (2083:16177): 16 + 64 + 4 + 18 + 24 + 40 + 16. */
+const DETAIL_HEIGHT = 182;
 /** Three lines of 14/21 body, as a fixed box so short reviews still align. */
 const DETAIL_BODY_HEIGHT = 64;
 
-export const ReviewCard: React.FC<ReviewCardProps> = ({
+export const ReviewCard: React.FC<ReviewCardProps> = (props) => {
+  // `variant` is fixed per call site, so this never swaps hooks mid-life.
+  if (props.variant === "detail") return <DetailCard {...props} />;
+  if (props.variant === "list") return <ListCard {...props} />;
+  return <DefaultCard {...props} />;
+};
+
+/** The product page's (and owner page's) rail card, 2083:16177. */
+function DetailCard({
+  reviewText,
+  reviewerName,
+  reviewDate,
+  reviewerImage,
+  size,
+  onShowMore,
+  showMoreHint = "Opens every review for this listing",
+}: ReviewCardProps) {
+  const { color } = useTheme();
+  return (
+    <View
+      style={{
+        width: size ? `${size}%` : "100%",
+        minHeight: DETAIL_HEIGHT,
+        padding: 16,
+        borderRadius: radius.card,
+        borderWidth: 1,
+        borderColor: color.line,
+        backgroundColor: color.surface,
+        gap: 24,
+        // Holds the author row on the bottom edge, so a rail mixing reviews
+        // that are cut off with ones that are not still lines its avatars up.
+        justifyContent: "space-between",
+      }}
+    >
+      <ExpandableText
+        text={reviewText ?? ""}
+        fontSize="text-sm"
+        tone="body"
+        lines={3}
+        collapsedHeight={DETAIL_BODY_HEIGHT}
+        controlGap={4}
+        control="link"
+        controlLineHeight={18}
+        onPress={onShowMore}
+        accessibilityHint={onShowMore ? showMoreHint : undefined}
+      />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Avatar uri={reviewerImage} name={reviewerName} size={40} />
+        <View style={{ flex: 1 }}>
+          <Text
+            fontSize="text-sm"
+            lineHeight={21}
+            fontWeight="font-semibold"
+            numberOfLines={1}
+          >
+            {reviewerName}
+          </Text>
+          <Text fontSize="text-xs" lineHeight={18} tone="dim">
+            {moment(reviewDate).fromNow()}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** The All reviews card, 2089:24972: author, two lines of body, control. */
+function ListCard({
+  reviewText,
+  reviewerName,
+  reviewDate,
+  reviewerImage,
+}: ReviewCardProps) {
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <Avatar uri={reviewerImage} name={reviewerName} size={40} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text fontSize="text-sm" fontWeight="font-semibold" numberOfLines={1}>
+            {reviewerName}
+          </Text>
+          {/* The frame prints "12 Oct 2026"; the relative date is kept. */}
+          <Text fontSize="text-xs" tone="dim">
+            {moment(reviewDate).fromNow()}
+          </Text>
+        </View>
+      </View>
+      <ExpandableText
+        text={reviewText ?? ""}
+        fontSize="text-sm"
+        tone="body"
+        lines={2}
+        controlGap={8}
+        control="link"
+        controlLineHeight={20}
+      />
+    </View>
+  );
+}
+
+const DefaultCard: React.FC<ReviewCardProps> = ({
   reviewText,
   reviewerName,
   reviewDate,

@@ -1,5 +1,5 @@
 import useReviews from "@/backend/reviews";
-import { Button, SubpageHeader, Text } from "@/components/core";
+import { BottomBar, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import Rating from "@/components/core/rating";
 import { useGlobalContext } from "@/context/global-context";
@@ -20,44 +20,42 @@ import { Dropdown as RNEDropdown } from "react-native-element-dropdown";
 import { apiError } from "@/lib/api-error";
 import { toast } from "@/lib/toast";
 import {
-  MIN_TOUCH_TARGET,
   SCREEN_GUTTER,
-  density,
   fontFamily,
   fontSize,
+  lineHeight,
   radius,
 } from "@/lib/design-tokens";
 import { formatCurrency } from "@/lib/format";
 import { plansOf, smallestPlan } from "@/lib/plans";
 import { useTheme } from "@/lib/theme";
 
-// Measured off the Figma "Write a review" frame (1:18034): a 24pt column under
-// the shared 44pt header, 27 from it, with 16 between blocks and 8 between a
-// heading and the control it introduces. 27, not the 24 the All reviews frame
-// uses — the two frames disagree, and this is the one that lands on the frame.
-const TOP_INSET = 27;
-const BLOCK_GAP = 16;
-const HEADING_GAP = 8;
-/** The listing thumbnail, and the gap to the text beside it. */
+// Figma 2089:25101 / 2089:25181: a 24pt column under the kit top bar, 16 above
+// the first block, 24 between blocks and 12 from a heading to its control.
+const CONTENT_TOP = 16;
+const CONTENT_BOTTOM = 24;
+const BLOCK_GAP = 24;
+const HEADING_GAP = 12;
+/** The listing thumbnail (r8), and the gap to the text beside it. */
 const THUMB = 72;
+const THUMB_RADIUS = 8;
 const THUMB_GAP = 16;
-/**
- * The three lines of the summary column measure 5 apart in the frame — wider
- * than the type ramp's own leading, and the only place the number appears.
- */
-const SUMMARY_LINE_GAP = 5;
-/** The frame's text area, and the box the extra sections reuse. */
-const FIELD_HEIGHT = 200;
-const FIELD_PADDING = 16;
-/** The condition control, and the star rows modelled on it. */
+/** The summary column's three lines sit 2 apart; so do price and unit. */
+const SUMMARY_LINE_GAP = 2;
+/** The kit field box at the frame's text-area height: r12, a hairline, 12/16 padding. */
+const FIELD_HEIGHT = 112;
+const FIELD_PAD_V = 12;
+const FIELD_PAD_H = 16;
+/** The condition dropdown (48) and the star rows (52), on the field's 16 sides. */
 const CONTROL_HEIGHT = 48;
+const RATING_HEIGHT = 52;
 const CONTROL_PAD_H = 16;
-const CONTROL_PAD_V = 8;
 const CONTROL_GAP = 8;
 const GLYPH = 20;
-// The frame draws the thumbnail, the condition control and the star rows at the
-// button radius.
-const CONTROL_RADIUS = radius.button;
+/** The rating stars: 28pt, 8 apart. */
+const STAR = 28;
+const STAR_GAP = 8;
+const CONTROL_RADIUS = radius.input;
 
 type ConditionOption = {
   label: string;
@@ -128,43 +126,56 @@ export default function WriteReviewScreen() {
     },
   ];
 
-  /** The frame's box: a hairline, no fill, and the page's own ground inside. */
+  /**
+   * The frame's text area: the kit field box at 112 high with 16/24 type. Not
+   * `TextField`, which is the 48pt single-line kit field.
+   */
   const fieldStyle = {
     textAlignVertical: "top" as const,
     height: FIELD_HEIGHT,
-    padding: FIELD_PADDING,
-    fontSize: fontSize.sm,
+    paddingTop: FIELD_PAD_V,
+    paddingBottom: FIELD_PAD_V,
+    paddingHorizontal: FIELD_PAD_H,
+    fontSize: fontSize.md,
+    lineHeight: lineHeight.md,
     fontFamily: fontFamily.regular,
-    // No `lineHeight`: the ramp's 21pt leading pushes the first line 2pt below
-    // where the frame sets it, and an input is a single block of typing rather
-    // than body copy that needs the extra air.
     color: color.text,
     borderWidth: 1,
     borderColor: color.line,
-    borderRadius: radius.card,
+    borderRadius: CONTROL_RADIUS,
   };
 
-  /** The condition control's box, reused by the two star rows. */
+  /** The condition control's box, reused by the two star rows at 52. */
   const controlBox = {
     height: CONTROL_HEIGHT,
     paddingHorizontal: CONTROL_PAD_H,
-    paddingVertical: CONTROL_PAD_V,
     borderRadius: CONTROL_RADIUS,
     borderWidth: 1,
     borderColor: color.line,
   };
+  const ratingBox = [
+    controlBox,
+    {
+      height: RATING_HEIGHT,
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      justifyContent: "space-between" as const,
+    },
+  ];
 
   return (
     <NonScrollableContainer>
       <SubpageHeader title="Write a review" />
 
+      {/* The container already pads by the iOS keyboard (Android resizes),
+          so the sticky bar below rides on the keys without a second lift. */}
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: TOP_INSET,
-          paddingBottom: density.listFooterCompact,
+          paddingTop: CONTENT_TOP,
+          paddingBottom: CONTENT_BOTTOM,
           gap: BLOCK_GAP,
         }}
       >
@@ -181,7 +192,7 @@ export default function WriteReviewScreen() {
               style={{
                 width: THUMB,
                 height: THUMB,
-                borderRadius: CONTROL_RADIUS,
+                borderRadius: THUMB_RADIUS,
               }}
               contentFit="cover"
               accessibilityLabel={product.title}
@@ -191,13 +202,13 @@ export default function WriteReviewScreen() {
               style={{
                 width: THUMB,
                 height: THUMB,
-                borderRadius: CONTROL_RADIUS,
+                borderRadius: THUMB_RADIUS,
                 backgroundColor: color.skeleton,
               }}
             />
           )}
           <View style={{ flex: 1, gap: SUMMARY_LINE_GAP }}>
-            <Text fontSize="text-sm" fontWeight="font-bold" numberOfLines={1}>
+            <Text fontSize="text-sm" fontWeight="font-semibold" numberOfLines={1}>
               {product.title}
             </Text>
             {product.location ? (
@@ -210,13 +221,17 @@ export default function WriteReviewScreen() {
                 passes no price, and the line is left out rather than "₹0". */}
             {plan ? (
               <View
-                style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "baseline",
+                  gap: SUMMARY_LINE_GAP,
+                }}
               >
                 <Text fontSize="text-md" fontWeight="font-bold">
                   {formatCurrency(plan.price)}
                 </Text>
-                <Text fontSize="text-sm" tone="dim">
-                  {`per ${plan.unit}`}
+                <Text fontSize="text-xs" tone="dim">
+                  {`/${plan.unit}`}
                 </Text>
               </View>
             ) : null}
@@ -250,7 +265,7 @@ export default function WriteReviewScreen() {
             style={controlBox}
             activeColor={color.surfaceRaised}
             containerStyle={{
-              marginTop: HEADING_GAP,
+              marginTop: CONTROL_GAP,
               backgroundColor: color.surface,
               borderRadius: CONTROL_RADIUS,
               borderWidth: 1,
@@ -282,15 +297,10 @@ export default function WriteReviewScreen() {
             value={selectedValue}
             onChange={(item) => setSelectedValue(item.value)}
             accessibilityLabel="Condition"
-            renderLeftIcon={() => (
-              <View style={{ marginRight: CONTROL_GAP }}>
-                {options.find((option) => option.value === selectedValue)?.icon}
-              </View>
-            )}
-            // The frame's caret is the mini chevron the rest of the app uses;
-            // the library's default is a larger filled triangle.
+            // The closed control is the label alone; the glyphs stay in the
+            // open list. The caret is the mini chevron at 60%.
             renderRightIcon={() => (
-              <ChevronDownIcon size={GLYPH} color={color.text} />
+              <ChevronDownIcon size={GLYPH} color={color.textDim} />
             )}
             renderItem={(item) => (
               <View
@@ -342,20 +352,12 @@ export default function WriteReviewScreen() {
           >
             Rate the product
           </Text>
-          <View
-            style={[
-              controlBox,
-              {
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              },
-            ]}
-          >
+          <View style={ratingBox}>
             <Rating
               tone="ink"
               value={rating.product}
-              size={GLYPH}
+              size={STAR}
+              gap={STAR_GAP}
               onChange={(next) =>
                 setRating((prev) => ({ ...prev, product: next }))
               }
@@ -374,20 +376,12 @@ export default function WriteReviewScreen() {
           >
             Rate the owner
           </Text>
-          <View
-            style={[
-              controlBox,
-              {
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              },
-            ]}
-          >
+          <View style={ratingBox}>
             <Rating
               tone="ink"
               value={rating.owner}
-              size={GLYPH}
+              size={STAR}
+              gap={STAR_GAP}
               onChange={(next) =>
                 setRating((prev) => ({ ...prev, owner: next }))
               }
@@ -398,38 +392,18 @@ export default function WriteReviewScreen() {
           </View>
         </View>
 
-        {reviewValid ? (
-          <Button loading={isLoading} onPress={handleSubmit}>
-            <Text tone="onBrand" fontWeight="font-bold" fontSize="text-sm">
-              Submit feedback
-            </Text>
-          </Button>
-        ) : (
-          // The frame draws the inactive state as bare tertiary text in a 44pt
-          // row with no fill; it becomes the primary button once the review is
-          // complete. Same treatment as Feedback & Review.
-          <View
-            accessible
-            accessibilityRole="button"
-            accessibilityState={{ disabled: true }}
-            accessibilityLabel="Submit feedback"
-            accessibilityHint={
-              isOwner
-                ? "You can’t review your own listing"
-                : "Write both reviews and set both ratings to submit"
-            }
-            style={{
-              height: MIN_TOUCH_TARGET,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text fontSize="text-sm" fontWeight="font-bold" tone="dim">
-              Submit feedback
-            </Text>
-          </View>
-        )}
       </KeyboardAwareScrollView>
+
+      {/* The kit Full CTA bar; its disabled Primary replaces the old dimmed
+          text until both reviews and both ratings are in. */}
+      <BottomBar
+        primary={{
+          label: "Submit feedback",
+          onPress: handleSubmit,
+          disabled: !reviewValid,
+          loading: isLoading,
+        }}
+      />
     </NonScrollableContainer>
   );
 }
