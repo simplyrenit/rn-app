@@ -36,8 +36,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+// Android breaks lines "highQuality" (balanced) by default, so a paragraph wrapped a word earlier than iOS and
+// the frame; "simple" is the greedy break both of those use.
 function P({ children }: { children: React.ReactNode }) {
-  return <Text fontSize="text-sm" tone="body">{children}</Text>;
+  return <Text fontSize="text-sm" tone="body" textBreakStrategy="simple">{children}</Text>;
 }
 
 export default function Terms() {
