@@ -1,7 +1,4 @@
-import { Image } from "expo-image";
 import * as Location from "expo-location";
-import { StatusBar } from "expo-status-bar";
-import { styled } from "nativewind";
 import React, {
   useCallback,
   useEffect,
@@ -10,21 +7,23 @@ import React, {
   useState,
 } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
+  LayoutChangeEvent,
   Linking,
   Platform,
+  StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Defs, LinearGradient, Polygon, RadialGradient, Rect, Stop } from "react-native-svg";
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
-import { Button, StaticContainer, Text } from "@/components/core";
-import AddressChoiceModal from "@/components/modals/AddressChoiceModalProps";
-import { useGlobalContext } from "@/context/global-context";
+import { BottomBar, MapPlaceholder, NonScrollableContainer, Text } from "@/components/core";
+import { RingSpinner } from "@/components/core/ring-spinner";
+import { useTheme } from "@/lib/theme";
+import { useRoute } from "@react-navigation/native";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { GOOGLE_MAP_API_KEY } from "@/lib/config";
@@ -32,40 +31,215 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 import { NearbyPlace, useTypedNavigation } from "@/lib/types";
 import { goAfterSignIn } from "@/lib/return-to";
 import axios from "axios";
-import {
-  MagnifyingGlassIcon,
-  MapPinIcon,
-  ViewfinderCircleIcon,
-} from "react-native-heroicons/outline";
+import { MagnifyingGlassIcon, MapPinIcon } from "react-native-heroicons/outline";
+// heroicons 2.1 renamed the mini "viewfinder-circle" glyph; this one draws the frame's viewfinder-dot.
+import { ViewfinderCircleIcon } from "react-native-heroicons/mini";
 import { useAuthContext } from "@/context/auth-context";
 import { SignUpError, useAuth } from "@/backend/auth";
-import { ink, colors, radius, SCREEN_GUTTER, density } from "@/lib/design-tokens";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 
-const StyledImage = styled(Image);
 const LOCATION_FETCH_TIMEOUT_MS = 12000;
 const LOCATION_LOG_PREFIX = "[auth/location]";
 
+/** Dev-only design seed (ENG-428 plan §1/§2): only DevFixture passes it. */
+type LocationDesign =
+  | { state: "no-permission" | "fetching" | "failed" }
+  | {
+      state: "map";
+      coords: { latitude: number; longitude: number };
+      selected: { latitude: number; longitude: number } | null;
+      address: string;
+      selectedAddress: string | null;
+      nearby: NearbyPlace[];
+    };
+
+/** Builds the `LocationObject` a `map` seed stands for (plan §2). */
+const seedLocation = (design: LocationDesign | undefined): Location.LocationObject | null =>
+  design?.state === "map"
+    ? {
+        coords: {
+          ...design.coords,
+          altitude: null,
+          accuracy: null,
+          altitudeAccuracy: null,
+          heading: null,
+          speed: null,
+        },
+        timestamp: 0,
+      }
+    : null;
+
+// figma/02 2089:28140: content under the 56pt top bar starts at frame y110.
+// The sheet's top sits at y338 ("snap 60%"), 228 under it.
+const HEADER_BOTTOM = 110;
+const SHEET_TOP = 338 - HEADER_BOTTOM;
+
+/**
+ * The "You are here" marker (28140): a 28 disc of brand-panel-line at 60% with
+ * a 14 brand dot edged 2 in white. Drawn in the live `Marker` and, under a seed,
+ * over the placeholder map.
+ */
+function YouAreHereMarker() {
+  const { color } = useTheme();
+  return (
+    <View style={{ width: 28, height: 28, alignItems: "center", justifyContent: "center" }}>
+      <View
+        style={{
+          ...StyleSheet.absoluteFillObject,
+          borderRadius: 14,
+          backgroundColor: color.brandPanelLine,
+          opacity: 0.6,
+        }}
+      />
+      <View
+        style={{
+          width: 14,
+          height: 14,
+          borderRadius: 7,
+          borderWidth: 2,
+          borderColor: "#FFFFFF",
+          backgroundColor: color.brand,
+        }}
+      />
+    </View>
+  );
+}
+
+/** The selected-location marker (28140): a "Selected location" chip 4 above an outline map-pin 32. */
+function SelectedMarker() {
+  const { color } = useTheme();
+  return (
+    <View style={{ alignItems: "center", gap: 4 }}>
+      <View style={{ backgroundColor: color.text, borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8 }}>
+        <Text fontSize="text-xs" fontWeight="font-semibold" lineHeight={16} style={{ color: color.canvas }}>
+          Selected location
+        </Text>
+      </View>
+      <MapPinIcon size={32} color={color.brand} />
+    </View>
+  );
+}
+
+/**
+ * The design system's Map Pin (Active) (1:3280), which has no code: a 36 white
+ * disc padded 6 around a brand dot, with the kit's two drop shadows (0/3 blur
+ * 1.5 at 25%, 0/9 blur 12 at 10%).
+ */
+function MapPinActive() {
+  const { color } = useTheme();
+  return (
+    <View
+      style={{
+        borderRadius: 18,
+        shadowColor: "#000000",
+        shadowOffset: { width: 0, height: 9 },
+        shadowRadius: 6,
+        shadowOpacity: 0.1,
+        elevation: 4,
+      }}
+    >
+      <View
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          padding: 6,
+          backgroundColor: "#FFFFFF",
+          shadowColor: "#000000",
+          shadowOffset: { width: 0, height: 3 },
+          shadowRadius: 0.75,
+          shadowOpacity: 0.25,
+        }}
+      >
+        <View style={{ flex: 1, borderRadius: 12, backgroundColor: color.brand }} />
+      </View>
+    </View>
+  );
+}
+
+/**
+ * "Allow location" art (28033, NEW neutral map): the kit map tile 459×459,
+ * centred and clipped to the screen, faded to the canvas by a radial gradient,
+ * with two rings (132 and 84), a teal sweep and the active pin at its centre.
+ * Every number is the frame's; the 459 height gives way on a short screen.
+ */
+function AllowLocationArt() {
+  const { color } = useTheme();
+  return (
+    <View style={{ height: 459, flexShrink: 1, marginTop: 16, overflow: "hidden", alignItems: "center" }}>
+      <View style={{ width: 459, height: 459 }}>
+        <MapPlaceholder style={StyleSheet.absoluteFill} />
+      </View>
+      {/* Frame 3455: clear at the centre to the canvas at an ellipse 88.6% of
+          the box across each way (its gradientTransform), centred. */}
+      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+        <Defs>
+          <RadialGradient id="fade" cx="50%" cy="50%" rx="56.4%" ry="56.4%" fx="50%" fy="50%">
+            <Stop offset="0" stopColor={color.canvas} stopOpacity={0} />
+            <Stop offset="1" stopColor={color.canvas} stopOpacity={1} />
+          </RadialGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#fade)" />
+      </Svg>
+      <View
+        style={{
+          position: "absolute",
+          top: 164,
+          width: 132,
+          height: 132,
+          borderRadius: 66,
+          borderWidth: 1,
+          borderColor: "#C4C4C4",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <View style={{ width: 84, height: 84, borderRadius: 42, borderWidth: 1, borderColor: "#DEDEDE" }} />
+        {/* Polygon 1: a triangle rotated 135°, apex on the pin, fading from
+            #12837F at 25% to nothing 75% of the way to its base. Points are in
+            the ring's box, moved down 24 so the svg holds the part above it. */}
+        <Svg width={160} height={160} style={{ position: "absolute", left: 0, top: -24 }}>
+          <Defs>
+            <LinearGradient id="sweep" gradientUnits="userSpaceOnUse" x1="62.3" y1="94.3" x2="103.2" y2="53.4">
+              <Stop offset="0" stopColor="#12837F" stopOpacity={0.25} />
+              <Stop offset="1" stopColor="#12837F" stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          <Polygon points="62.3,94.3 81,4.1 152.4,75.6" fill="url(#sweep)" />
+        </Svg>
+        <View style={{ position: "absolute" }}>
+          <MapPinActive />
+        </View>
+      </View>
+    </View>
+  );
+}
+
 export default function LocationScreen() {
-  const { theme } = useGlobalContext();
+  const { color, isDark: isDarkMode } = useTheme();
   const { signUpUser, loading: signUpLoading } = useAuth();
   const navigation = useTypedNavigation();
+  const route = useRoute();
+  const design = __DEV__ ? (route.params as { design?: LocationDesign } | undefined)?.design : undefined;
+  const mapSeed = design?.state === "map" ? design : undefined;
 
-  const isDarkMode = theme === "dark";
   const { saveUser } = useAuthContext();
 
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [location, setLocation] = useState<Location.LocationObject | null>(
-    null
+  const [hasPermission, setHasPermission] = useState<boolean | null>(
+    design ? design.state !== "no-permission" : null
   );
-  const [address, setAddress] = useState<string | null>(null);
+  const [location, setLocation] = useState<Location.LocationObject | null>(
+    () => seedLocation(design)
+  );
+  const [address, setAddress] = useState<string | null>(mapSeed?.address ?? null);
   const [selectedLocation, setSelectedLocation] = useState<{
     latitude: number;
     longitude: number;
-  } | null>(null);
-  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
-  const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
+  } | null>(mapSeed?.selected ?? null);
+  const [selectedAddress, setSelectedAddress] = useState<string | null>(mapSeed?.selectedAddress ?? null);
+  const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>(mapSeed?.nearby ?? []);
   const [loading, setLoading] = useState(false);
-  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(design?.state === "fetching");
   const [locationError, setLocationError] = useState<string | null>(null);
 
   const fetchAddress = useCallback(async (loc: Location.LocationObject) => {
@@ -347,6 +521,8 @@ export default function LocationScreen() {
   );
 
   useEffect(() => {
+    // A design seed is its own state: no permission check, no location fix.
+    if (design) return;
     (async () => {
       try {
         console.log(`${LOCATION_LOG_PREFIX} checking existing foreground permission`);
@@ -373,9 +549,10 @@ export default function LocationScreen() {
         );
       }
     })();
-  }, [resolveCurrentLocation]);
+  }, [design, resolveCurrentLocation]);
 
   const handleSubmit = useCallback(async () => {
+    if (design) return;
     console.log(`${LOCATION_LOG_PREFIX} primary CTA pressed`, {
       hasPermission,
     });
@@ -385,10 +562,11 @@ export default function LocationScreen() {
     }
 
     await requestLocationPermission();
-  }, [hasPermission, requestLocationPermission, resolveCurrentLocation]);
+  }, [design, hasPermission, requestLocationPermission, resolveCurrentLocation]);
 
   const handleMapPress = useCallback(
     (event: any) => {
+      if (design) return;
       const { latitude, longitude } = event.nativeEvent.coordinate;
       console.log(`${LOCATION_LOG_PREFIX} map pressed`, {
         latitude,
@@ -397,7 +575,7 @@ export default function LocationScreen() {
       setSelectedLocation({ latitude, longitude });
       fetchSelectedAddress(latitude, longitude);
     },
-    [fetchSelectedAddress]
+    [design, fetchSelectedAddress]
   );
 
   const fetchNearbyPlaces = async () => {
@@ -425,12 +603,14 @@ export default function LocationScreen() {
   };
 
   useEffect(() => {
-    if (location) {
+    // A seed brings its own places; Google Places is never asked.
+    if (location && !design) {
       fetchNearbyPlaces();
     }
   }, [location]);
 
   const handleSelectNearbyPlace = (place: any) => {
+    if (design) return;
     console.log(`${LOCATION_LOG_PREFIX} nearby place selected`, {
       placeId: place.place_id,
       name: place.name,
@@ -460,6 +640,8 @@ export default function LocationScreen() {
     selectedAddress: string | null,
     selectedLocation: { latitude: number; longitude: number } | null
   ) => {
+    // A design seed never signs up.
+    if (design) return;
     const coordinatesPayload =
       selectedLocation
         ? {
@@ -527,6 +709,7 @@ export default function LocationScreen() {
   };
 
   const handleSkipLocation = useCallback(async () => {
+    if (design) return;
     console.log(`${LOCATION_LOG_PREFIX} skipping location during onboarding`);
     try {
       const response = await signUpUser();
@@ -552,17 +735,32 @@ export default function LocationScreen() {
         signUpError.message || "Unable to complete signup right now."
       );
     }
-  }, [navigation, signUpUser]);
+  }, [design, navigation, signUpUser]);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const googlePlacesRef = useRef<any>(null);
   const mapRef = useRef<MapView>(null);
 
-  // const snapPoints = useMemo(() => ["40%", "60%", "100%"], []);
-  const initialSnapPoints = useMemo(() => ["50%", "60%", "90%"], []);
-  const [snapPoints, setSnapPoints] = useState(initialSnapPoints);
+  // The resting snap puts the sheet's top 228 under the top bar, as 28140
+  // draws it (y338, "snap 60%" of the 844 frame). gorhom measures snap points
+  // in the sheet's container (the area between the top bar and the sticky
+  // bar), not the frame, so it is a number from that height. Snap points must
+  // rise and the rest is above 60% of the container, so the middle stop moves
+  // from 60% to halfway up to the 90% the keyboard opens it to. Until the
+  // container is measured, the old points stand.
+  const [sheetArea, setSheetArea] = useState(0);
+  const snapPoints = useMemo<(string | number)[]>(() => {
+    if (!sheetArea) return ["50%", "60%", "90%"];
+    const top = sheetArea * 0.9;
+    const rest = Math.min(Math.max(sheetArea - SHEET_TOP, 1), top);
+    return [rest, (rest + top) / 2, top];
+  }, [sheetArea]);
+  const onSheetAreaLayout = useCallback((event: LayoutChangeEvent) => {
+    setSheetArea(Math.round(event.nativeEvent.layout.height));
+  }, []);
 
   const handlePlaceSelected = (data: any, details: any) => {
+    if (design) return;
     const lat = details.geometry.location.lat;
     const lng = details.geometry.location.lng;
     console.log(`${LOCATION_LOG_PREFIX} place autocomplete selected`, {
@@ -586,6 +784,7 @@ export default function LocationScreen() {
   };
 
   const handleCurrentLocation = async () => {
+    if (design) return;
     console.log(`${LOCATION_LOG_PREFIX} use current location pressed`);
     setSelectedAddress(null);
     setSelectedLocation(null);
@@ -613,445 +812,295 @@ export default function LocationScreen() {
     };
   }, []);
 
+  const skipAction = {
+    label: "Skip for now",
+    onPress: handleSkipLocation,
+    disabled: signUpLoading,
+    loading: signUpLoading,
+  };
+
   return (
-    <SafeAreaView
-      className={`flex-1 ${isDarkMode ? "bg-canvas-dark" : "bg-surface-light"}`}
-    >
-      <StatusBar style={isDarkMode ? "light" : "dark"} />
-      <View className="flex-1 ">
-        <View className="px-gutter">
-          <HeaderIndicator percentage={85} />
-        </View>
+    <NonScrollableContainer>
+      <HeaderIndicator percentage={85} />
 
-        <View className="space-y-5 flex-1 ">
-          {!hasPermission && (
-            <>
-              <StaticContainer>
-                <View className="flex">
-                  <Text
-                    fontSize="text-2xl"
-                    fontWeight="font-semibold"
-                  >
-                    Allow location
-                  </Text>
-                  <Text tone="body"
-                    fontSize="text-lg"
-                  >
-                    This allows Renit to fetch products near you
-                  </Text>
-                </View>
-
-                <StyledImage
-                  source={
-                    isDarkMode
-                      ? require("assets/auth/allow-location-dark.png")
-                      : require("assets/auth/allow-location-light.png")
-                  }
-                  className="w-full flex-1"
+      {!hasPermission ? (
+        <>
+          {/* 28033: title block 8 under the top bar, the art 16 below it. */}
+          <View style={{ flex: 1, paddingTop: 8 }}>
+            <View style={{ paddingHorizontal: SCREEN_GUTTER, gap: 4 }}>
+              <Text role="screenTitle">Allow location</Text>
+              <Text fontSize="text-sm" lineHeight={20} tone="body">
+                This allows Renit to fetch products near you
+              </Text>
+            </View>
+            <AllowLocationArt />
+          </View>
+          {/* No frame draws it: today's denied/blocked line, kept above the bar. */}
+          {locationError ? (
+            <Text
+              fontSize="text-sm"
+              lineHeight={20}
+              tone="danger"
+              style={{ textAlign: "center", paddingHorizontal: SCREEN_GUTTER, marginBottom: 16 }}
+            >
+              {locationError}
+            </Text>
+          ) : null}
+          <BottomBar
+            layout="cta-text"
+            primary={{ label: "Provide location access", onPress: handleSubmit, disabled: isFetchingLocation }}
+            secondary={skipAction}
+          />
+        </>
+      ) : location ? (
+        <>
+          {/* The sheet's container: the area between the top bar and the
+              sticky bar, measured for the resting snap point. */}
+          <View style={{ flex: 1 }} onLayout={onSheetAreaLayout}>
+            {mapSeed ? (
+              // 28140 under a seed: the kit map tile where the live map would be,
+              // placed as the frame places it (520×844 at x−65, y0), with the
+              // markers at the frame's positions.
+              <View style={{ flex: 1, overflow: "hidden" }}>
+                <MapPlaceholder
+                  style={{ position: "absolute", left: -65, top: -HEADER_BOTTOM, width: 520, height: 844 }}
                 />
-              </StaticContainer>
-            </>
-          )}
-
-          {hasPermission && location ? (
-            <>
-              <View className="flex-1 ">
-                <MapView
-                  ref={mapRef}
-                  provider={
-                    // Platform.OS === "android" ? PROVIDER_GOOGLE : undefined
-                    PROVIDER_GOOGLE
-                  }
-                  style={{ flex: 1 }}
-                  initialRegion={{
+                <View style={{ position: "absolute", left: 150, top: 250 - HEADER_BOTTOM }}>
+                  <YouAreHereMarker />
+                </View>
+                {selectedLocation ? (
+                  <View style={{ position: "absolute", left: 200, top: 196 - HEADER_BOTTOM }}>
+                    <SelectedMarker />
+                  </View>
+                ) : null}
+              </View>
+            ) : (
+              <MapView
+                ref={mapRef}
+                provider={
+                  // Platform.OS === "android" ? PROVIDER_GOOGLE : undefined
+                  PROVIDER_GOOGLE
+                }
+                style={{ flex: 1 }}
+                initialRegion={{
+                  latitude: location.coords.latitude,
+                  longitude: location.coords.longitude,
+                  latitudeDelta: 0.0922,
+                  longitudeDelta: 0.0421,
+                }}
+                customMapStyle={isDarkMode ? darkModeMapStyle : []}
+                onPress={handleMapPress}
+              >
+                <Marker
+                  coordinate={{
                     latitude: location.coords.latitude,
                     longitude: location.coords.longitude,
-                    latitudeDelta: 0.0922,
-                    longitudeDelta: 0.0421,
                   }}
-                  customMapStyle={isDarkMode ? darkModeMapStyle : []}
-                  onPress={handleMapPress}
+                  title="You are here"
+                  anchor={{ x: 0.5, y: 0.5 }}
                 >
-                  <Marker
-                    coordinate={{
-                      latitude: location.coords.latitude,
-                      longitude: location.coords.longitude,
-                    }}
-                    title="You are here"
-                  >
-                    <View
-                      style={{
-                        height: 30,
-                        width: 30,
-                        borderRadius: radius.group,
-                        backgroundColor: colors.dark.brand,
-                        borderColor: ink.canvas(isDarkMode),
-                        borderWidth: 5,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      <View
-                        style={{
-                          height: 15,
-                          width: 15,
-                          borderRadius: radius.full,
-                          backgroundColor: colors.dark.brand,
-                        }}
-                      />
-                    </View>
+                  <YouAreHereMarker />
+                </Marker>
+
+                {selectedLocation && (
+                  <Marker coordinate={selectedLocation} title="Selected location" anchor={{ x: 0.5, y: 1 }}>
+                    <SelectedMarker />
                   </Marker>
+                )}
+              </MapView>
+            )}
 
-                  {selectedLocation && (
-                    <Marker
-                      coordinate={selectedLocation}
-                      title="Selected location"
-                    />
-                  )}
-                </MapView>
-              </View>
-
-              <View
-                style={{
-                  paddingVertical: SCREEN_GUTTER,
-                  paddingHorizontal: SCREEN_GUTTER,
-                }}
-                className="rounded-t-3xl"
-              ></View>
-
-              {/* Bottom sheet */}
-              <BottomSheet
-        // The window already shrinks for the keyboard (adjustResize); gorhom's
-        // default adjustPan lifted the sheet by the keyboard height again.
-        android_keyboardInputMode="adjustResize"
-                ref={bottomSheetRef}
-                snapPoints={snapPoints}
-                enablePanDownToClose={false}
-                index={0}
-                enableHandlePanningGesture={true}
-                enableContentPanningGesture={true}
-                backgroundStyle={{
-                  backgroundColor: ink.canvas(isDarkMode),
-                }}
-                handleIndicatorStyle={{ backgroundColor: ink.line(true) }}
-                handleStyle={{
-                  borderTopWidth: 2,
-                  borderLeftWidth: 2,
-                  borderRightWidth: 2,
-                  borderTopColor: ink.line(isDarkMode),
-                  borderLeftColor: ink.line(isDarkMode),
-                  borderRightColor: ink.line(isDarkMode),
-                  borderTopRightRadius: 12,
-                  borderTopLeftRadius: 12,
-                  flex: 1,
-                }}
+            {/* Bottom sheet (28140): white, r24 top, a 0/−4 blur-24 shadow at
+                12%, the 36×5 grabber 8 from the top and the content 16 under it. */}
+            <BottomSheet
+              // The window already shrinks for the keyboard (adjustResize); gorhom's
+              // default adjustPan lifted the sheet by the keyboard height again.
+              android_keyboardInputMode="adjustResize"
+              ref={bottomSheetRef}
+              snapPoints={snapPoints}
+              enablePanDownToClose={false}
+              index={0}
+              enableHandlePanningGesture={true}
+              enableContentPanningGesture={true}
+              style={{
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                shadowColor: "#000000",
+                shadowOffset: { width: 0, height: -4 },
+                shadowRadius: 12,
+                shadowOpacity: 0.12,
+                elevation: 8,
+              }}
+              backgroundStyle={{
+                backgroundColor: color.canvas,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+              }}
+              handleStyle={{ paddingTop: 8, paddingBottom: 16 }}
+              handleIndicatorStyle={{ width: 36, height: 5, borderRadius: 100, backgroundColor: color.line }}
+            >
+              <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+                style={{ flex: 1 }}
               >
-                <KeyboardAvoidingView
-                  behavior={Platform.OS === "ios" ? "padding" : undefined}
-                  keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-                  style={{ flex: 1 }}
-                >
-                  <View
-                    style={{
-                      paddingVertical: SCREEN_GUTTER,
-                      paddingHorizontal: SCREEN_GUTTER,
-                      flex: 1,
-                    }}
-                  >
-                    <View className="rounded-t-3xl">
-                      <Text
-                        fontSize="text-md"
-                        fontWeight="font-bold"
-                      >
-                        Your Address:
+                <View style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER, gap: 16 }}>
+                  <View style={{ gap: 12 }}>
+                    <View style={{ gap: 2 }}>
+                      <Text fontSize="text-xs" fontWeight="font-semibold" lineHeight={16} tone="dim">
+                        Your address
                       </Text>
-                      <Text
-                        fontSize="text-sm"
-                        className={`${
-                          isDarkMode ? "text-muted-dark" : "text-muted-light"
-                        }`}
-                      >
+                      <Text fontSize="text-sm" lineHeight={20}>
                         {address ? address : "Fetching address..."}
                       </Text>
-
-                      {selectedLocation && (
-                        <>
-                          <Text
-                            fontSize="text-md"
-                            fontWeight="font-bold"
-                            className="mt-4"
-                          >
-                            Selected Address:
-                          </Text>
-                          <Text
-                            fontSize="text-sm"
-                            className={`${
-                              isDarkMode
-                                ? "text-muted-dark"
-                                : "text-muted-light"
-                            }`}
-                          >
-                            {selectedAddress
-                              ? selectedAddress
-                              : "Fetching selected address..."}
-                          </Text>
-                        </>
-                      )}
-
-                      <View className="py-3 mt-2">
-                        <Button
-                          variant="primary"
-                          onPress={() => {
-                            handleConfirmLocation(
-                              location,
-                              selectedAddress,
-                              selectedLocation
-                            );
-                          }}
-                          className="flex-row justify-center"
-                        >
-                          {signUpLoading ? (
-                            <ActivityIndicator
-                              size="small"
-                              color={ink.onBrand()}
-                            />
-                          ) : (
-                            "Confirm location"
-                          )}
-                        </Button>
-                      </View>
-
-                      {/* <GooglePlacesAutocomplete
-                        ref={googlePlacesRef}
-                        placeholder="Search for a place"
-                        query={{ key: GOOGLE_MAP_API_KEY }}
-                        fetchDetails={true}
-                        onPress={handlePlaceSelected}
-                        onFail={(error) => console.log(error)}
-                        onNotFound={() => console.log("no results")}
-                        enablePoweredByContainer={false}
-                        disableScroll={true}
-                        styles={{
-                          textInput: {
-                            height: 50,
-                            backgroundColor: ink.surface(isDarkMode),
-                            borderRadius: radius.input,
-                            paddingHorizontal: 8,
-                            zIndex: 10,
-                            color: ink.text(isDarkMode),
-                            borderWidth: 1,
-                            borderColor: ink.line(isDarkMode),
-                          },
-                          row: {
-                            backgroundColor: ink.canvas(isDarkMode),
-                          },
-                          description: {
-                            color: ink.text(isDarkMode),
-                          },
-                          separator: { backgroundColor: ink.line(true) },
-                        }}
-                      /> */}
-
-                      <View
-                        className={`flex-row pl-3 min-h-11 rounded-card border ${
-                          isDarkMode
-                            ? "border-line-dark bg-surface-dark"
-                            : "border-line-light bg-surface-light"
-                        }`}
-                        style={{ alignItems: "center" }}
-                      >
-                        <MagnifyingGlassIcon
-                          color={ink.body(isDarkMode)}
-                          size={24}
-                        />
-                        <GooglePlacesAutocomplete
-                          ref={googlePlacesRef}
-                          placeholder="Search area or street name"
-                          query={{ key: GOOGLE_MAP_API_KEY }}
-                          fetchDetails={true}
-                          onPress={handlePlaceSelected}
-                          onFail={(error) => console.log(error)}
-                          onNotFound={() => console.log("no results")}
-                          enablePoweredByContainer={false}
-                          disableScroll={true}
-                          styles={{
-                            textInput: {
-                              height: "100%",
-                              backgroundColor: ink.surface(isDarkMode),
-                              borderRadius: radius.card,
-                              zIndex: 10,
-                              color: ink.text(isDarkMode),
-                              fontSize: 16,
-                            },
-                            row: {
-                              backgroundColor: ink.surface(isDarkMode),
-                            },
-                            description: {
-                              color: ink.text(isDarkMode),
-                            },
-                            separator: { backgroundColor: ink.line(true) },
-                          }}
-                          textInputProps={{
-                            placeholderTextColor: ink.body(isDarkMode),
-                          }}
-                        />
-                      </View>
-
-                      <TouchableOpacity
-                        className={`h-[48px] rounded-card w-full border-b ${
-                          isDarkMode ? "border-line-dark" : "border-line-light"
-                        } px-2 mt-4`}
-                        onPress={handleCurrentLocation}
-                      >
-                        <View className="flex flex-row h-full w-full items-center justify-between">
-                          <View className="flex flex-row items-center space-x-4">
-                            <ViewfinderCircleIcon
-                              color={colors.dark.brand}
-                              size={24}
-                            />
-                            <Text
-                              fontWeight="font-bold"
-                              className="text-brand"
-                            >
-                              Use current location
-                            </Text>
-                          </View>
-                        </View>
-                      </TouchableOpacity>
-
-                      {/* <AddressChoiceModal
-                        isVisible={isModalVisible}
-                        onClose={() => setModalVisible(false)}
-                        onConfirm={confirmAddressChoice}
-                      /> */}
                     </View>
 
-                    {loading ? (
-                      <Text className="mt-3">Loading nearby places...</Text>
-                    ) : (
-                      <BottomSheetFlatList
-                        data={nearbyPlaces}
-                        keyExtractor={(item) => item.place_id}
-                        style={{ maxHeight: 450 }}
-                        contentContainerStyle={{
-                          paddingBottom: density.listFooterCompact,
-                        }}
-                        keyboardShouldPersistTaps="handled"
-                        renderItem={({ item }) => (
-                          <TouchableOpacity
-                            onPress={() => handleSelectNearbyPlace(item)}
-                            className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${
-                              isDarkMode
-                                ? "border-line-dark"
-                                : "border-line-light"
-                            }`}
-                          >
-                            <MapPinIcon
-                              color={ink.text(isDarkMode)}
-                              size={20}
-                            />
-                            <Text fontSize="text-sm" className="flex-shrink">{item.name}</Text>
-                          </TouchableOpacity>
-                        )}
-                      />
+                    {selectedLocation && (
+                      <View style={{ gap: 2 }}>
+                        <Text fontSize="text-xs" fontWeight="font-semibold" lineHeight={16} tone="dim">
+                          Selected address
+                        </Text>
+                        <Text fontSize="text-sm" lineHeight={20}>
+                          {selectedAddress ? selectedAddress : "Fetching selected address..."}
+                        </Text>
+                      </View>
                     )}
                   </View>
-                </KeyboardAvoidingView>
-              </BottomSheet>
-            </>
-          ) : hasPermission ? (
-            <View className="w-[90%] mx-auto flex-1 items-center justify-center py-5">
-              {isFetchingLocation ? (
-                <>
-                  <ActivityIndicator
-                    size="large"
-                    color={colors.dark.brand}
-                  />
-                  <Text
-                    fontSize="text-lg"
-                    className="mt-4 text-center"
+
+                  <View
+                    style={{
+                      height: 48,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                      paddingHorizontal: 12,
+                      borderWidth: 1,
+                      borderColor: color.line,
+                      borderRadius: 12,
+                      backgroundColor: color.surface,
+                    }}
                   >
-                    Fetching your current location...
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text
-                    fontSize="text-2xl"
-                    fontWeight="font-semibold"
-                    className="text-center"
+                    <MagnifyingGlassIcon color={color.textDim} size={20} />
+                    <GooglePlacesAutocomplete
+                      ref={googlePlacesRef}
+                      placeholder="Search area or street name"
+                      query={{ key: GOOGLE_MAP_API_KEY }}
+                      fetchDetails={true}
+                      onPress={handlePlaceSelected}
+                      onFail={(error) => console.log(error)}
+                      onNotFound={() => console.log("no results")}
+                      enablePoweredByContainer={false}
+                      disableScroll={true}
+                      styles={{
+                        container: { flex: 1 },
+                        textInput: {
+                          height: 46,
+                          marginBottom: 0,
+                          paddingHorizontal: 0,
+                          paddingVertical: 0,
+                          backgroundColor: "transparent",
+                          color: color.text,
+                          fontFamily: "PlusJakartaSans-Regular",
+                          fontSize: 16,
+                        },
+                        row: {
+                          backgroundColor: color.surface,
+                        },
+                        description: {
+                          color: color.text,
+                        },
+                        separator: { backgroundColor: color.line },
+                      }}
+                      textInputProps={{
+                        placeholderTextColor: color.placeholder,
+                      }}
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={handleCurrentLocation}
+                    hitSlop={12}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start" }}
                   >
-                    We need your current location
-                  </Text>
-                  <Text tone="body"
-                    fontSize="text-lg"
-                    className="mt-2 text-center"
-                  >
-                    {locationError ||
-                      "Location access is granted, but we couldn’t fetch your current location yet."}
-                  </Text>
-                  <Button
-                    variant="primary"
-                    onPress={handleSubmit}
-                    className="mt-6 w-full"
-                    disabled={isFetchingLocation}
-                  >
-                    Try again
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onPress={handleSkipLocation}
-                    className="mt-3 w-full"
-                    disabled={signUpLoading}
-                  >
-                    {signUpLoading ? (
-                      <ActivityIndicator
-                        size="small"
-                        color={ink.text(isDarkMode)}
-                      />
-                    ) : (
-                      "Skip for now"
-                    )}
-                  </Button>
-                </>
-              )}
-            </View>
-          ) : (
-            <View className="w-[90%] mx-auto py-5">
-              {locationError ? (
-                <Text tone="danger"
-                  fontSize="text-sm"
-                  className="mb-3 text-center"
-                >
-                  {locationError}
-                </Text>
-              ) : null}
-              <Button
-                variant="primary"
-                onPress={handleSubmit}
-                disabled={isFetchingLocation}
-              >
-                Provide location access
-              </Button>
-              <Button
-                variant="outline"
-                onPress={handleSkipLocation}
-                className="mt-3"
-                disabled={signUpLoading}
-              >
-                {signUpLoading ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={ink.text(isDarkMode)}
-                  />
-                ) : (
-                  "Skip for now"
-                )}
-              </Button>
-            </View>
-          )}
+                    <ViewfinderCircleIcon size={20} color={color.brandText} />
+                    <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} tone="brand">
+                      Use current location
+                    </Text>
+                  </TouchableOpacity>
+
+                  {loading ? (
+                    <Text fontSize="text-sm" lineHeight={20} tone="body">
+                      Loading nearby places...
+                    </Text>
+                  ) : (
+                    <BottomSheetFlatList
+                      data={nearbyPlaces}
+                      keyExtractor={(item) => item.place_id}
+                      style={{ maxHeight: 450 }}
+                      contentContainerStyle={{ paddingBottom: SCREEN_GUTTER }}
+                      keyboardShouldPersistTaps="handled"
+                      renderItem={({ item }) => (
+                        // 28140 "Place": 45 high, a map-pin 20, the name 12 after it.
+                        <TouchableOpacity
+                          accessibilityRole="button"
+                          onPress={() => handleSelectNearbyPlace(item)}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 12,
+                            paddingVertical: 12,
+                            borderBottomWidth: 1,
+                            borderBottomColor: color.line,
+                          }}
+                        >
+                          <MapPinIcon color={color.textDim} size={20} />
+                          <Text fontSize="text-sm" lineHeight={20} style={{ flexShrink: 1 }}>
+                            {item.name}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    />
+                  )}
+                </View>
+              </KeyboardAvoidingView>
+            </BottomSheet>
+          </View>
+
+          {/* Fix pass: "Confirm location" moves from the sheet to the sticky bar. */}
+          <BottomBar
+            primary={{
+              label: "Confirm location",
+              onPress: () => handleConfirmLocation(location, selectedAddress, selectedLocation),
+              loading: signUpLoading,
+            }}
+          />
+        </>
+      ) : isFetchingLocation ? (
+        // 28076: the ring 40 at frame y384 (274 under the top bar), the line 16 below.
+        <View style={{ flex: 1, paddingTop: 384 - HEADER_BOTTOM, paddingHorizontal: SCREEN_GUTTER, alignItems: "center", gap: 16 }}>
+          <RingSpinner size={40} spinning={!design} />
+          <Text fontSize="text-sm" lineHeight={20} tone="body" style={{ textAlign: "center" }}>
+            Fetching your current location...
+          </Text>
         </View>
-      </View>
-    </SafeAreaView>
+      ) : (
+        <>
+          {/* 28104: title and body on the gutter, CTA+Text in the bar. */}
+          <View style={{ flex: 1, paddingTop: 8, paddingHorizontal: SCREEN_GUTTER, gap: 4 }}>
+            <Text role="screenTitle">We need your current location</Text>
+            <Text fontSize="text-sm" lineHeight={20} tone="body">
+              {locationError ||
+                "Location access is granted, but we couldn’t fetch your current location yet."}
+            </Text>
+          </View>
+          <BottomBar
+            layout="cta-text"
+            primary={{ label: "Try again", onPress: handleSubmit, disabled: isFetchingLocation }}
+            secondary={skipAction}
+          />
+        </>
+      )}
+    </NonScrollableContainer>
   );
 }

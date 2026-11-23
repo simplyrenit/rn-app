@@ -1,38 +1,49 @@
 import { SignUpError, useAuth } from "@/backend/auth";
 import { HeaderIndicator } from "@/components/auth/headerIndicator";
-import { Button, StaticContainer, Text } from "@/components/core";
-import { ScrollContainer } from "@/components/core/scroll-container";
+import { activeCell, codeCells, codeDigits, CODE_LENGTH } from "@/components/capture/code";
+import { BottomBar, NonScrollableContainer, ScrollContainer, Text, TextField } from "@/components/core";
 import { useAuthContext } from "@/context/auth-context";
 import { useGlobalContext } from "@/context/global-context";
+import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { emailProof, phoneProof } from "@/lib/sign-in-proof";
+import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { goAfterSignIn } from "@/lib/return-to";
 import { useRoute } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
-import {
-  ActivityIndicator,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from "react-native";
-import { XCircleIcon } from "react-native-heroicons/outline";
-import OTPTextView from "react-native-otp-textinput";
+import { TextInput, TouchableOpacity, View } from "react-native";
+import { InformationCircleIcon } from "react-native-heroicons/outline";
 import axiosInstance from "@/lib/networkUtils";
-import { colors, fontFamily, fontSize, ink, radius } from "@/lib/design-tokens";
+
+/** Dev-only design seed (ENG-428 plan §1): only DevFixture passes it. */
+type VerifyDesign = { code?: string; wrong?: boolean; password?: string };
+
+/** The non-field message row (21903): an information-circle 16 in `text`, then 12/16 Medium in `dangerStrong`. */
+function MessageRow({ children }: { children: string }) {
+  const { color } = useTheme();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }} accessibilityLiveRegion="polite">
+      <InformationCircleIcon size={16} color={color.text} />
+      <Text fontSize="text-xs" fontWeight="font-medium" lineHeight={16} style={{ flexShrink: 1, color: color.dangerStrong }}>
+        {children}
+      </Text>
+    </View>
+  );
+}
 
 export default function VerifyEmail() {
-  const [verificationCode, setVerificationCode] = useState("");
-  const [password, setPassword] = useState("");
-  const [isIncorrect, setIsIncorrect] = useState(false);
-  const [otpVerifyError, setOtpVerifyError] = useState("");
-  const [otpResendError, setOtpResendError] = useState("");
-  const { theme, setAuthTokens } = useGlobalContext();
-
   const route = useRoute<RouteProps<"Verify">>();
+  const design = __DEV__ ? (route.params as { design?: VerifyDesign }).design : undefined;
   const { email, phone, verificationType } = route.params;
   const isCodeVerification = verificationType !== "password";
+
+  const [verificationCode, setVerificationCode] = useState(codeDigits(design?.code ?? ""));
+  const [password, setPassword] = useState(design?.password ?? "");
+  const [isIncorrect, setIsIncorrect] = useState(design?.wrong ?? false);
+  const [otpVerifyError, setOtpVerifyError] = useState("");
+  const [otpResendError, setOtpResendError] = useState("");
+  const { setAuthTokens } = useGlobalContext();
+  const { color } = useTheme();
 
   const router = useTypedNavigation();
 
@@ -47,6 +58,8 @@ export default function VerifyEmail() {
   } = useAuth();
 
   const handleSubmit = useCallback(async () => {
+    // A design seed never checks a code or a password.
+    if (design) return;
     setIsIncorrect(false);
     setOtpVerifyError("");
     if (isCodeVerification) {
@@ -133,6 +146,7 @@ export default function VerifyEmail() {
       }
     }
   }, [
+    design,
     verificationCode,
     password,
     verificationType,
@@ -148,6 +162,8 @@ export default function VerifyEmail() {
   ]);
 
   const handleResendOTP = useCallback(async () => {
+    // A design seed never sends a code.
+    if (design) return;
     setOtpResendError("");
     try {
       if (verificationType === "phone") {
@@ -161,209 +177,142 @@ export default function VerifyEmail() {
         otpError.message || "Unable to resend OTP right now. Please try again."
       );
     }
-  }, [email, phone, sendOTP, sendPhoneOTP, verificationType]);
+  }, [design, email, phone, sendOTP, sendPhoneOTP, verificationType]);
 
-  const { width: winW } = useWindowDimensions();
-
-  const styles = StyleSheet.create({
-    textInputContainer: {
-      marginHorizontal: -5,
-    },
-  });
-
-  const roundedTextInputStyle = {
-    backgroundColor: ink.surface(theme === "dark"),
-    borderRadius: radius.input,
-    borderWidth: 3,
-    color: theme === "dark" ? "white" : "black",
-    width: winW * 0.125,
-  };
+  const cells = codeCells(verificationCode);
+  // The box the next digit goes in, only while the code is incomplete: a whole code (21853) has none.
+  const active = verificationCode.length < CODE_LENGTH ? activeCell(verificationCode) : -1;
 
   return (
-    <StaticContainer>
-      <View className="flex-1">
-        <HeaderIndicator percentage={20} />
+    <NonScrollableContainer>
+      <HeaderIndicator percentage={20} />
 
-        <ScrollContainer>
-          <View className="flex">
-            <Text
-              fontSize="text-2xl"
-              fontWeight="font-bold"
-            >
-              {isCodeVerification
-                ? "Enter verification code"
-                : "Enter password"}
-            </Text>
-            <Text
-              fontSize="text-md"
-              className={`${theme === "dark" ? "text-muted-dark" : "text-muted-light"
-                }`}
-            >
-              {isCodeVerification
-                ? `We've sent a 6 digit verification code to ${phone || email}`
-                : "Enter your password to continue"}
-            </Text>
-
+      <ScrollContainer containerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: 24 }}>
+        <View style={{ gap: 4 }}>
+          <Text role="screenTitle">
+            {isCodeVerification ? "Enter verification code" : "Enter password"}
+          </Text>
+          <Text fontSize="text-sm" lineHeight={20} tone="body">
             {isCodeVerification ? (
               <>
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-semibold"
-                  className="mt-8 mb-2"
-                >
-                  Verification Code
+                {"We've sent a 6 digit verification code to "}
+                <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20}>
+                  {phone || email}
                 </Text>
-
-                <View className="w-[70%]">
-                  <OTPTextView
-                    // Lets iOS surface the code from Messages above the
-                    // keyboard. The library forwards unknown props to its
-                    // TextInputs but does not type them.
-                    // @ts-ignore
-                    textContentType="oneTimeCode"
-                    // @ts-ignore
-                    autoComplete="sms-otp"
-                    containerStyle={styles.textInputContainer}
-                    textInputStyle={roundedTextInputStyle}
-                    // @ts-ignore
-                    placeholder="*"
-                    placeholderTextColor={
-                      ink.dim(theme === "dark")
-                    }
-                    inputCount={6}
-                    inputCellLength={1}
-                    tintColor={colors.dark.brand}
-                    offTintColor={theme === "dark" ? ink.line(true) : ink.line(false)}
-                    keyboardType="number-pad"
-                    // Each cell is a fixed 50pt box with a 22pt digit; uncapped
-                    // Dynamic Type drew the digit taller than the box.
-                    // @ts-ignore
-                    maxFontSizeMultiplier={1.4}
-                    autoFocus
-                    handleTextChange={(text) => setVerificationCode(text)}
-                  />
-                </View>
-
-                {isIncorrect && (
-                  <View className="flex mt-2 flex-row items-center space-x-2">
-                    <XCircleIcon
-                      size={14}
-                      color={ink.danger(true)}
-                    />
-                    <Text tone="danger" className="flex-shrink"
-                      fontSize="text-sm"
-                    >
-                      Wrong OTP. Try again
-                    </Text>
-                  </View>
-                )}
-
-                {!!otpVerifyError && (
-                  <View className="flex mt-2 flex-row items-center space-x-2">
-                    <XCircleIcon
-                      size={14}
-                      color={ink.danger(true)}
-                    />
-                    <Text tone="danger" className="flex-shrink"
-                      fontSize="text-sm"
-                    >
-                      {otpVerifyError}
-                    </Text>
-                  </View>
-                )}
-
-                <TouchableOpacity onPress={handleResendOTP} disabled={loading}>
-                  <Text
-                    fontWeight="font-bold"
-                    className="text-brand mt-4"
-                  >
-                    Resend OTP
-                  </Text>
-                </TouchableOpacity>
-
-                {!!otpResendError && (
-                  <View className="flex mt-2 flex-row items-center space-x-2">
-                    <XCircleIcon
-                      size={14}
-                      color={ink.danger(true)}
-                    />
-                    <Text tone="danger" className="flex-shrink"
-                      fontSize="text-sm"
-                    >
-                      {otpResendError}
-                    </Text>
-                  </View>
-                )}
               </>
             ) : (
-              <>
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-semibold"
-                  className="mt-8 mb-2"
-                >
-                  Password
-                </Text>
-                <TextInput
-                  placeholder="Enter password"
-                  placeholderTextColor={
-                    theme === "dark" ? ink.dim(true) : ink.dim(false)
-                  }
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  textContentType="password"
-                  autoComplete="password"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  accessibilityLabel="Password"
-                  className={`border mt-2 rounded-button ${theme === "dark"
-                      ? "text-white bg-surface-dark border-input-line-dark"
-                      : "text-black bg-surface-light border-input-line-light"
-                    } px-4 h-12`}
-                  // The app font and the frame's 16pt inset, as on the other auth
-                  // fields: a raw TextInput falls back to the system font.
-                  style={{ fontFamily: fontFamily.regular, fontSize: fontSize.md }}
-                  maxFontSizeMultiplier={1.4}
-                />
-
-                {isIncorrect && (
-                  <View className="flex mt-2 flex-row items-center space-x-2">
-                    <XCircleIcon
-                      size={14}
-                      color={ink.danger(true)}
-                    />
-                    <Text tone="danger" className="flex-shrink"
-                      fontSize="text-sm"
-                    >
-                      Wrong password. Try again
-                    </Text>
-                  </View>
-                )}
-              </>
+              "Enter your password to continue"
             )}
-          </View>
-        </ScrollContainer>
-
-        <View className="py-5">
-          <Button
-            variant="primary"
-            className="flex-row items-center justify-center"
-            onPress={handleSubmit}
-            disabled={
-              isCodeVerification
-                ? verificationCode.length !== 6
-                : !password
-            }
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              "Continue"
-            )}
-          </Button>
+          </Text>
         </View>
-      </View>
-    </StaticContainer>
+
+        {isCodeVerification ? (
+          <>
+            <View style={{ marginTop: 24, gap: 8 }}>
+              <Text role="fieldLabel">Verification code</Text>
+
+              {/* Six cells drawn from one value (21800): one invisible input lies over them, as in CodeInput, so
+                  digits that arrive together (pasted, or filled in from a message) are never dropped. */}
+              <View>
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  {cells.map((digit, index) => {
+                    const edge = isIncorrect ? color.dangerStrong : index === active ? color.brand : undefined;
+                    return (
+                      <View
+                        key={index}
+                        style={{
+                          flex: 1,
+                          maxWidth: 48,
+                          height: 52,
+                          borderRadius: radius.input,
+                          borderWidth: edge ? 1.5 : 1,
+                          borderColor: edge ?? color.line,
+                          backgroundColor: color.surface,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {digit ? (
+                          <Text fontSize="text-lg" fontWeight="font-semibold" lineHeight={28} maxFontSizeMultiplier={1.4}>
+                            {digit}
+                          </Text>
+                        ) : (
+                          <Text fontSize="text-md" lineHeight={24} tone="dim" maxFontSizeMultiplier={1.4}>
+                            *
+                          </Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+                <TextInput
+                  value={verificationCode}
+                  onChangeText={(text) => setVerificationCode(codeDigits(text))}
+                  autoFocus={!design}
+                  keyboardType="number-pad"
+                  inputMode="numeric"
+                  // Lets iOS surface the code from Messages above the keyboard; Android's matching hint.
+                  textContentType="oneTimeCode"
+                  autoComplete="sms-otp"
+                  autoCorrect={false}
+                  caretHidden
+                  selectionColor="transparent"
+                  accessibilityLabel={`Verification code, ${CODE_LENGTH} digits`}
+                  accessibilityValue={{ text: cells.filter(Boolean).join(" ") || "empty" }}
+                  style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0 }}
+                />
+              </View>
+
+              {isIncorrect && <MessageRow>Wrong OTP. Try again</MessageRow>}
+              {!!otpVerifyError && <MessageRow>{otpVerifyError}</MessageRow>}
+            </View>
+
+            <TouchableOpacity
+              onPress={handleResendOTP}
+              disabled={loading}
+              accessibilityRole="button"
+              hitSlop={12}
+              style={{ marginTop: 24, alignSelf: "flex-start" }}
+            >
+              <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} tone="brand">
+                Resend OTP
+              </Text>
+            </TouchableOpacity>
+
+            {!!otpResendError && (
+              <View style={{ marginTop: 8 }}>
+                <MessageRow>{otpResendError}</MessageRow>
+              </View>
+            )}
+          </>
+        ) : (
+          <View style={{ marginTop: 24 }}>
+            <TextField
+              label="Password"
+              placeholder="Enter password"
+              value={password}
+              onChangeText={setPassword}
+              error={isIncorrect ? "Wrong password. Try again" : undefined}
+              secureTextEntry
+              textContentType="password"
+              autoComplete="password"
+              autoCapitalize="none"
+              autoCorrect={false}
+              accessibilityLabel="Password"
+              maxFontSizeMultiplier={1.4}
+            />
+          </View>
+        )}
+      </ScrollContainer>
+
+      <BottomBar
+        primary={{
+          label: "Continue",
+          onPress: handleSubmit,
+          loading,
+          disabled: isCodeVerification ? verificationCode.length !== 6 : !password,
+        }}
+      />
+    </NonScrollableContainer>
   );
 }

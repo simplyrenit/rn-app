@@ -20,9 +20,11 @@ export interface StepProgressProps {
    * each sign-up screen still shows its own point on the bar. Without it, `step` whole segments fill.
    */
   fill?: number;
+  /** Space between segments. Default 4 (the kit Stepper); the auth header draws 6 (figma/02). */
+  gap?: number;
 }
 
-export function StepProgress({ step, total, label, showLabel = true, fill }: StepProgressProps) {
+export function StepProgress({ step, total, label, showLabel = true, fill, gap = 4 }: StepProgressProps) {
   const { color } = useTheme();
   const text = label ?? `Step ${step} of ${total}`;
   return (
@@ -33,7 +35,7 @@ export function StepProgress({ step, total, label, showLabel = true, fill }: Ste
       accessibilityValue={{ min: 1, max: total, now: step }}
       style={{ gap: 8 }}
     >
-      <View style={{ flexDirection: "row", gap: 4 }}>
+      <View style={{ flexDirection: "row", gap }}>
         {Array.from({ length: total }, (_, index) => (
           <View
             key={index}
@@ -50,6 +52,8 @@ export function StepProgress({ step, total, label, showLabel = true, fill }: Ste
                 style={{
                   width: `${Math.max(0, Math.min(1, fill - index)) * 100}%`,
                   height: 4,
+                  // figma/02 draws a part-filled segment as its own r2 rect, so its leading end is round too.
+                  borderRadius: 2,
                   backgroundColor: color.brand,
                 }}
               />
