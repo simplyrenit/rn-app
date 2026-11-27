@@ -37,6 +37,7 @@ import {
   XMarkIcon,
 } from "react-native-heroicons/outline";
 import { SCREEN_GUTTER, fontFamily, radius } from "@/lib/design-tokens";
+import { sheetScrimOpacity } from "@/components/core/custom-bottom-sheet-modal";
 import { useTheme } from "@/lib/theme";
 
 // Title suggestions used to fire one request per keystroke, which made the
@@ -69,8 +70,6 @@ const SHEET_PAD_TOP = 8;
 const SHEET_GAP = 8;
 const SHEET_ROW = 56;
 const SHEET_ICON = 24;
-// Every overlay frame in the 2.1 file draws its scrim at #00000066.
-const SHEET_SCRIM = 0.4;
 // The where-sheet's 50/75/90% stops, of the screen: gorhom's percentages are of its container, which starts under
 // the status bar, so 75% came out ~47pt short of the frame's 633 (2089:29793, 75% of 844).
 const WHERE_SNAPS = [0.5, 0.75, 0.9];
@@ -79,7 +78,7 @@ type SearchDesign = { resting: true };
 
 export default function SearchScreen() {
   const navigation = useTypedNavigation();
-  const { color } = useTheme();
+  const { color, isDark } = useTheme();
   const route = useRoute<RouteProps<"Search">>();
   const { what, where, coords } = route?.params ?? {};
   // Dev-only design seed (ENG-427 D7): only DevFixture passes it. What? stays unfocused, so a frame's resting state
@@ -345,7 +344,7 @@ export default function SearchScreen() {
     <BottomSheetBackdrop
       {...props}
       disappearsOnIndex={-1}
-      opacity={SHEET_SCRIM}
+      opacity={sheetScrimOpacity(isDark, true)}
     />
   );
 

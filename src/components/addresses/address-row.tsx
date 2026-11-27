@@ -197,22 +197,30 @@ export function AddressRow({
   );
 }
 
-/** The same row while the addresses load. */
-export function AddressRowSkeleton({ first }: { first: boolean }) {
+/** The same row while the addresses load; `picks` is the picker's radio row. */
+export function AddressRowSkeleton({ first, picks = false }: { first: boolean; picks?: boolean }) {
   const { color } = useTheme();
   return (
     <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: space.md,
-        minHeight: density.rowStacked,
-        paddingHorizontal: space.md,
-        borderTopWidth: first ? 0 : 1,
-        borderTopColor: color.line,
-      }}
+      style={
+        picks
+          ? { flexDirection: "row", alignItems: "center", gap: 12, minHeight: PICKER_ROW }
+          : {
+              flexDirection: "row",
+              alignItems: "center",
+              gap: space.md,
+              minHeight: density.rowStacked,
+              paddingHorizontal: space.md,
+              borderTopWidth: first ? 0 : 1,
+              borderTopColor: color.line,
+            }
+      }
     >
-      <Skeleton width={ICON_DISC} height={ICON_DISC} borderRadius={radius.full} />
+      <Skeleton
+        width={picks ? PICKER_ICON : ICON_DISC}
+        height={picks ? PICKER_ICON : ICON_DISC}
+        borderRadius={picks ? 4 : radius.full}
+      />
       <View style={{ flex: 1, gap: 8 }}>
         <Skeleton width="35%" height={14} borderRadius={4} />
         <Skeleton width="80%" height={12} borderRadius={4} />

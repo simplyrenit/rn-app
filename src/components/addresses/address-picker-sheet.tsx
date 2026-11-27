@@ -218,8 +218,8 @@ export const AddressPickerSheet = forwardRef<AddressPickerSheetHandle, Props>(
               accessibilityLabel="Loading your addresses"
               accessibilityState={{ busy: true }}
             >
-              <AddressRowSkeleton first />
-              <AddressRowSkeleton first={false} />
+              <AddressRowSkeleton first picks />
+              <AddressRowSkeleton first={false} picks />
             </View>
           ) : isError ? (
             <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, minHeight: ROW }}>
