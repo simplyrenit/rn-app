@@ -8,7 +8,8 @@ import type { DevFixture } from "./registry";
 // screens make (cart PUT/DELETE, favourites, address, book) is left unlisted, so the interceptor answers it 409. The one
 // write-method key listed is `POST …/bookings/quote/`, which prices and writes nothing (backend/bookings.ts).
 
-const photo = (asset: number) => Image.resolveAssetSource(asset).uri;
+// `?.`: jest maps images to a stub that resolveAssetSource cannot resolve.
+const photo = (asset: number) => Image.resolveAssetSource(asset)?.uri ?? "";
 const SPEAKER = photo(require("@/dev/assets/04-cart-dates/bluetooth-speaker.png"));
 const GLASSES = photo(require("@/dev/assets/04-cart-dates/meta-vr-glasses.png"));
 const PS5 = photo(require("@/dev/assets/04-cart-dates/ps5-fifa.png"));

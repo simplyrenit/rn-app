@@ -85,7 +85,7 @@ const reviewsRoute = (reviews: BackendReview[]) => ({
 // ---------------------------------------------------------------------------------------------------------------
 // Write a review (2089:25101 empty; 2089:25181 is the same fixture, then typed and tapped by hand, never Submit).
 
-const speakerUri = Image.resolveAssetSource(require("../assets/04-reviews-address/bluetooth-speaker.png")).uri;
+const speakerUri = Image.resolveAssetSource(require("../assets/04-reviews-address/bluetooth-speaker.png"))?.uri ?? "";
 const writeReview: DevFixture = {
   route: "WriteReviews",
   params: {
