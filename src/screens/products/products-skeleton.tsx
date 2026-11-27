@@ -3,6 +3,7 @@ import Skeleton from "@/components/core/skeleton";
 import { SCREEN_GUTTER, density, radius } from "@/lib/design-tokens";
 import { useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GALLERY_HEIGHT } from "@/components/product/product-hero";
 
 /**
  * The shape of a product page, not a generic pair of bars.
@@ -11,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
  * second `<StatusBar>` competing for the bar — plus a 52%-height block that
  * matched nothing on the screen it stood in for, so the swap to real content
  * moved everything. It is now a plain block inside the detail screen's own
- * scroll view, standing in for the same full-bleed hero and the same section
+ * scroll view, standing in for the same gallery and the same section
  * rhythm, so the cross-fade lands rather than jumps.
  */
 export function ProductsSkeleton() {
@@ -21,9 +22,9 @@ export function ProductsSkeleton() {
 
   return (
     <View style={{ width: "100%" }}>
-      {/* The hero's own geometry: a full-width square below the safe area. */}
+      {/* The hero's own geometry: the fixed 390 gallery below the safe area, on any width. */}
       <View style={{ paddingTop: insets.top }}>
-        <Skeleton width={width} height={width} borderRadius={0} />
+        <Skeleton width={width} height={GALLERY_HEIGHT} borderRadius={0} />
       </View>
 
       <View
