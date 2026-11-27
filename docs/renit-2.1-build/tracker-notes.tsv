@@ -229,3 +229,13 @@
 2089:31157	android	fail-heatmap	0.82%: as iOS.
 2089:31227	ios	fail-heatmap	F+type with the frame's PIN ("5600" + Save, line 1 cleared + Save; save() returns before any request) 0.39% (+0.53% below the bar): both errors hold. Left: "Change" kept (see 31157), the caret, and the typed PIN in text colour where the frame draws its sample in placeholder grey.
 2089:31227	android	fail-heatmap	F+type 1.31% (+0.54%): as iOS.
+2096:26578	ios	n/a	A fixture can't serve the 403 not_owner; checked by jest src/components/shop/__tests__/states.test.tsx (real AxiosError).
+2096:26578	android	n/a	A fixture can't serve the 403 not_owner; checked by jest src/components/shop/__tests__/states.test.tsx (real AxiosError).
+2097:29835	ios	n/a	A fixture can't serve the 409 shop_address_missing; checked by jest src/screens/profileScreens/__tests__/delivery-areas.test.tsx (real AxiosError).
+2097:29835	android	n/a	A fixture can't serve the 409 shop_address_missing; checked by jest src/screens/profileScreens/__tests__/delivery-areas.test.tsx (real AxiosError).
+2097:30474	ios	n/a	A fixture can't serve the 403 not_owner; checked by jest src/screens/profileScreens/__tests__/bank-account.test.tsx (real AxiosError).
+2097:30474	android	n/a	A fixture can't serve the 403 not_owner; checked by jest src/screens/profileScreens/__tests__/bank-account.test.tsx (real AxiosError).
+2097:30513	ios	n/a	Opening the sheet sends a Firebase SMS and the countdown is clock-bound; checked by jest src/components/bank/__tests__/unlock-sheet-centred.test.tsx (focused box edge 1, not 1.5: OTP library).
+2097:30513	android	n/a	Opening the sheet sends a Firebase SMS and the countdown is clock-bound; checked by jest src/components/bank/__tests__/unlock-sheet-centred.test.tsx (focused box edge 1, not 1.5: OTP library).
+2097:30585	ios	n/a	Needs a failed Firebase code check; checked by jest src/components/bank/__tests__/unlock-sheet-centred.test.tsx (error line is the verifyPhoneNumberChange failure copy).
+2097:30585	android	n/a	Needs a failed Firebase code check; checked by jest src/components/bank/__tests__/unlock-sheet-centred.test.tsx (error line is the verifyPhoneNumberChange failure copy).

@@ -345,8 +345,8 @@ function DeliveryEditor({ shop, design }: { shop: Shop; design?: DeliveryDesign 
   const farther = stepKm(km, 1);
   // Off first, in the order the screen had when it came into view (or back from All areas): a chip
   // tapped here stays under the finger instead of jumping to the front.
-  // Six chips, three rows, as every Delivery frame draws them; "See all" has the rest.
-  const preview = previewAreas(areas, orderOff, 6);
+  // Eight chips, as today (behaviour kept): the Delivery frames draw six, so the last row differs.
+  const preview = previewAreas(areas, orderOff);
   const offCount = offWithin(areas, form.excluded).length;
   const inside = areas.filter((a) => a.inside);
   const everyOff = inside.length > 0 && inside.every((a) => form.excluded.includes(a.pin));
