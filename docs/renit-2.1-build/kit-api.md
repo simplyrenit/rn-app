@@ -131,6 +131,10 @@ Props added; nothing renamed or removed.
 
 - **`RingSpinner`** (`core/ring-spinner.tsx`, import by path): `{ size = 40, spinning = true }`. A full `brandPanel` track plus a 270° `brand` arc (12 to 9 o'clock), stroke `size × 0.08`, native-driver rotation; `spinning={false}` draws the still pose for fixtures. From 02/2089:28209.
 
+## ENG-435 additions
+
+- **`Stepper`** (`core/stepper.tsx`, import by path) gains `compact?: boolean`: a 32 disc, white fill, 1pt `brandPanelLine` stroke, with `hitSlop` 6 so the touch target stays 44. The default (50, `inputLine`) is unchanged for `shop/quick-block.tsx` and `rental-delivery.tsx`. From 01/2083:14692 "Minimum rental" (One day less / One day more); used by `post/plan-pricing.tsx`.
+
 ## Group C (implemented)
 
 `StepProgress` and `MapPlaceholder` keep the props above unchanged. Added optional props, and changes to existing APIs:

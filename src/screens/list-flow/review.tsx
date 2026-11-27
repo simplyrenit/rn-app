@@ -632,11 +632,12 @@ export default function ListReviewScreen() {
           <StepProgress step={3} total={4} showLabel={false} />
         </View>
 
-        <View style={{ marginBottom: SECTION_GAP, gap: 8 }}>
+        {/* Gaps are margins, not `gap`: the live region below is empty most of the time and must add no space. */}
+        <View style={{ marginBottom: SECTION_GAP }}>
           <Text role="screenTitle" accessibilityRole="header">
             {"Two quick checks,\nthen submit."}
           </Text>
-          <Text tone="body" fontSize="text-sm" lineHeight={20}>
+          <Text tone="body" fontSize="text-sm" lineHeight={20} style={{ marginTop: 8 }}>
             We filled in what we were sure about and left the rest blank. Set a price and confirm
             the condition, and glance over anything marked AI.
           </Text>
@@ -645,9 +646,11 @@ export default function ListReviewScreen() {
               when one appears (plan §5a #3). */}
           <View accessibilityLiveRegion="polite">
             {note ? (
-              <Notice tone="warning">{note}</Notice>
+              <View style={{ marginTop: 8 }}>
+                <Notice tone="warning">{note}</Notice>
+              </View>
             ) : streaming ? (
-              <Text fontSize="text-sm" lineHeight={20} tone="brand">
+              <Text fontSize="text-sm" lineHeight={20} tone="brand" style={{ marginTop: 8 }}>
                 Still reading your photos
               </Text>
             ) : null}

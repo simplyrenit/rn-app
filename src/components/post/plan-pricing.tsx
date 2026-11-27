@@ -208,6 +208,7 @@ function PlanRows({
               Minimum rental
             </Text>
             <Stepper
+              compact
               label={`One ${plan.unit} less`}
               disabled={plan.min <= 1}
               onPress={() => onChange(plan.unit, { min: plan.min - 1 })}
@@ -224,6 +225,7 @@ function PlanRows({
               {pluralize(plan.min, plan.unit)}
             </Text>
             <Stepper
+              compact
               label={`One ${plan.unit} more`}
               disabled={plan.min >= MAX_MIN[plan.unit]}
               onPress={() => onChange(plan.unit, { min: plan.min + 1 })}
