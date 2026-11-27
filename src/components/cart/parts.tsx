@@ -199,7 +199,13 @@ export function RentStrip({ now: frozen }: { now?: Date } = {}) {
   return (
     <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: 12, gap: 12, backgroundColor: color.warningWash }}>
       <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
-        {left ? <Pill label={`${left} left`} tone="warning" /> : null}
+        {/* The frame's 75 pill slot ("04:12 left"), so the sentence keeps its 255 measure and its wrap while the
+            countdown's own text narrows ("4:12 left") and ticks. */}
+        {left ? (
+          <View style={{ minWidth: 75 }}>
+            <Pill label={`${left} left`} tone="warning" />
+          </View>
+        ) : null}
         <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
           {due
             ? `${shop} accepted. Pay by ${clock(due)} or the request ends.`

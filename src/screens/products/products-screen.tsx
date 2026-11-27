@@ -673,8 +673,9 @@ export default function DetailsScreen() {
         label: booking.button,
         onPress: handleBook,
         accessibilityLabel: booking.button,
-        // "Book for the morning" at half width is 14/20 in the 52 box (2089:23201).
-        labelSize: booking.kind === "morning" ? ("compact" as const) : undefined,
+        // "Book for the morning" at half width (the cart bar) is 14/20 in the 52 box (2089:23201); beside the
+        // summary it has the full 240 and stays 16/24 (2089:22295).
+        labelSize: booking.kind === "morning" && cartBar ? ("compact" as const) : undefined,
       }
     : undefined;
   /** The kit bar (REVIEW b3-01): Summary+CTA, Secondary+Primary or Full CTA, as the frames draw each state. */

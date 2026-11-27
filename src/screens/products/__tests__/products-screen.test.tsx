@@ -164,6 +164,14 @@ describe("ProductDetail bottom bar", () => {
     expect(props.primary.labelSize).toBeUndefined();
   });
 
+  it("closed now, no cart (22295): Book for the morning at the full 16/24 beside the summary", async () => {
+    mockProduct = { ...PRODUCT, live_booking: false, book_for_morning: true };
+    const props = bar(await render());
+    expect(props.layout).toBe("summary-cta");
+    expect(props.primary.label).toBe("Book for the morning");
+    expect(props.primary.labelSize).toBeUndefined();
+  });
+
   it("not taking bookings (22597): Summary with the note in the primary's place", async () => {
     mockProduct = { ...PRODUCT, live_booking: false };
     const props = bar(await render());
