@@ -3,12 +3,13 @@
  * each one picked a price and a minimum rental. Shared by the create flow's
  * Review screen and the edit-listing form, so a shop prices a listing the same
  * way in both. The value is typed text; `toPlans` turns it into what the API is
- * sent once every picked plan has a price.
+ * sent once every picked plan has a price. Drawn to the 2.1 Review frames
+ * (2083:14692, 2095:24558).
  */
-import { Text } from "@/components/core";
-import { FieldLabel, FieldShell } from "@/components/core/field";
+import { SectionHeader, Text } from "@/components/core";
+import { FieldShell } from "@/components/core/field";
 import { Stepper } from "@/components/core/stepper";
-import { MIN_TOUCH_TARGET, fontFamily, fontSize, radius, space } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, density, fontFamily, fontSize, radius, space } from "@/lib/design-tokens";
 import { selectionFeedback } from "@/lib/haptics";
 import {
   DraftPlan,
@@ -24,7 +25,16 @@ import { pluralize } from "@/lib/pluralize";
 import { useTheme } from "@/lib/theme";
 import React, { useState } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
-import { CheckIcon, MinusIcon, PlusIcon } from "react-native-heroicons/outline";
+import { MinusIcon, PlusIcon } from "react-native-heroicons/mini";
+
+// The Check 1 block (2095:24558, 2096:24835): the header, the chips and each plan 12 apart; a plan is padded 8
+// above and below, its head, price and minimum rental 12 apart.
+const BLOCK_GAP = 12;
+const PLAN_PAD = 8;
+/** The price box is 50 (12 / 24 / 12 inside its hairline), not the 48 field. */
+const PRICE_BOX = 50;
+/** The kit Chip is 40; the slop takes its target to 44. */
+const CHIP_SLOP = (MIN_TOUCH_TARGET - density.chip) / 2;
 
 interface Props {
   value: DraftPlan[];
@@ -35,7 +45,7 @@ interface Props {
   dailyHint?: string;
   /** Show "Add a weekly price, or unpick Weekly." under an empty price. */
   showErrors?: boolean;
-  /** Before each price: the edit form's currency icon, which follows the listing's country. "Rs" when not given. */
+  /** Before each price: the edit form's currency icon, which follows the listing's country. "₹" when not given. */
   currency?: React.ReactNode;
 }
 
@@ -63,9 +73,13 @@ export function PlanPricing({
     onChange(plans.map((p) => (p.unit === unit ? { ...p, ...changes } : p)));
 
   return (
-    <View>
-      <FieldLabel label={label} required hint="Pick every way you rent it out. Each one gets its own price." />
-      <View accessibilityRole="none" style={{ flexDirection: "row", flexWrap: "wrap", gap: space.sm, marginBottom: space.sm }}>
+    <View style={{ gap: BLOCK_GAP }}>
+      {/* The kit Section header with its hint 4 below. No required mark: no frame draws one on a check. */}
+      <View style={{ gap: 4 }}>
+        <SectionHeader title={label} gutter={false} flush />
+        <Text role="fieldHint">Pick every way you rent it out. Each one gets its own price.</Text>
+      </View>
+      <View accessibilityRole="none" style={{ flexDirection: "row", flexWrap: "wrap", gap: space.sm }}>
         {UNITS.map((unit) => (
           <Chip
             key={unit}
@@ -84,7 +98,7 @@ export function PlanPricing({
         onChange={change}
       />
       {plans.length > 1 ? (
-        <Text fontSize="text-xs" tone="body" style={{ marginTop: space.sm }}>
+        <Text fontSize="text-xs" tone="body">
           Renters pay the cheapest plan their dates qualify for.
         </Text>
       ) : null}
@@ -111,24 +125,30 @@ function Chip({
       accessibilityLabel={label}
       accessibilityHint={locked ? "At least one way to rent it stays picked" : undefined}
       activeOpacity={0.8}
+      hitSlop={{ top: CHIP_SLOP, bottom: CHIP_SLOP }}
       onPress={() => {
         selectionFeedback();
         onPress();
       }}
+      // The kit Chip's numbers (core/chip.tsx, 2073:14388): 40 high, r12, 16 padding inside a 1pt edge. Drawn here
+      // because the kit Chip cannot carry the checkbox role, state and hint yet (ENG-427 adds the passthroughs).
       style={{
-        minHeight: MIN_TOUCH_TARGET,
-        paddingHorizontal: space.md,
+        minHeight: density.chip,
+        paddingHorizontal: 16,
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
-        borderRadius: radius.full,
-        borderWidth: selected ? 1.5 : 1,
-        borderColor: selected ? color.brand : color.inputLine,
-        backgroundColor: selected ? color.brandWash : "transparent",
+        borderRadius: radius.button,
+        borderWidth: 1,
+        borderColor: selected ? color.brand : color.line,
+        backgroundColor: selected ? color.brandPanel : color.surface,
       }}
     >
-      {selected ? <CheckIcon size={16} color={color.brandText} /> : <PlusIcon size={16} color={color.textDim} />}
-      <Text fontSize="text-sm" fontWeight={selected ? "font-bold" : "font-normal"} tone={selected ? "brand" : "default"}>
+      <Text
+        fontSize="text-sm"
+        lineHeight={20}
+        fontWeight={selected ? "font-semibold" : "font-medium"}
+        style={selected ? { color: color.brandText } : undefined}
+      >
         {label}
       </Text>
     </TouchableOpacity>
@@ -150,22 +170,23 @@ function PlanRows({
 }) {
   const { color } = useTheme();
   return (
-    <View style={{ borderWidth: 1, borderColor: color.line, borderRadius: radius.group, overflow: "hidden" }}>
+    <View>
       {plans.map((plan, i) => (
         <View
           key={plan.unit}
           style={{
-            padding: space.md,
-            gap: space.sm,
+            paddingVertical: PLAN_PAD,
+            gap: BLOCK_GAP,
+            // No frame shows two plans; the hairline between them is the one they had.
             borderTopWidth: i === 0 ? 0 : 1,
             borderTopColor: color.line,
           }}
         >
           <View style={{ gap: 2 }}>
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text fontSize="text-md" lineHeight={24} fontWeight="font-semibold">
               {UNIT_WORDS[plan.unit]}
             </Text>
-            <Text fontSize="text-xs" tone="body">
+            <Text fontSize="text-xs" lineHeight={16} tone="body">
               {plan.unit === "day"
                 ? (dailyHint ?? "What a renter pays for one day.")
                 : (worksOutLine({ ...plan, price: plan.price || "0" }) ?? `What a renter pays for one ${plan.unit}.`)}
@@ -183,10 +204,11 @@ function PlanRows({
             </Text>
           ) : null}
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-            <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+            <Text fontSize="text-sm" lineHeight={20} tone="body" style={{ flex: 1 }}>
               Minimum rental
             </Text>
             <Stepper
+              compact
               label={`One ${plan.unit} less`}
               disabled={plan.min <= 1}
               onPress={() => onChange(plan.unit, { min: plan.min - 1 })}
@@ -195,13 +217,15 @@ function PlanRows({
             </Stepper>
             <Text
               fontSize="text-sm"
-              fontWeight="font-bold"
+              lineHeight={20}
+              fontWeight="font-semibold"
               accessibilityLabel={`Minimum rental ${pluralize(plan.min, plan.unit)}`}
               style={{ minWidth: 72, textAlign: "center" }}
             >
               {pluralize(plan.min, plan.unit)}
             </Text>
             <Stepper
+              compact
               label={`One ${plan.unit} more`}
               disabled={plan.min >= MAX_MIN[plan.unit]}
               onPress={() => onChange(plan.unit, { min: plan.min + 1 })}
@@ -229,25 +253,24 @@ function PriceBox({
   const { color } = useTheme();
   const [focused, setFocused] = useState(false);
   return (
-    <FieldShell focused={focused} error={wrong}>
+    <FieldShell focused={focused} error={wrong} style={{ minHeight: PRICE_BOX }}>
       {currency ?? (
-        <Text fontSize="text-md" fontWeight="font-bold" tone="body">
-          Rs
+        <Text fontSize="text-md" lineHeight={24} fontWeight="font-semibold" tone="body">
+          ₹
         </Text>
       )}
       <TextInput
         accessibilityLabel={`${UNIT_WORDS[plan.unit]} price`}
         keyboardType="number-pad"
         maxLength={8}
+        // No placeholder: an empty price box is drawn empty (2095:24558, 2095:24717).
         value={plan.price}
-        placeholder="0"
-        placeholderTextColor={color.placeholder}
         onChangeText={(v) => onChange(v.replace(/[^\d]/g, ""))}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         style={{ flex: 1, color: color.text, fontFamily: fontFamily.regular, fontSize: fontSize.md }}
       />
-      <Text fontSize="text-md" tone="body">{`/${plan.unit}`}</Text>
+      <Text fontSize="text-md" lineHeight={24} tone="body">{`/${plan.unit}`}</Text>
     </FieldShell>
   );
 }

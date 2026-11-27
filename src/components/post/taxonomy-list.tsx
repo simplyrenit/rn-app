@@ -34,8 +34,8 @@ import { BottomSheetFlatList, BottomSheetTextInput } from "@gorhom/bottom-sheet"
  * display name and one printed the raw API string, and only two of them drew a
  * chevron on a row that pushes a screen.
  *
- * Row geometry follows the Figma frame (56pt minimum, an 8pt icon gap) rather
- * than the spacing scale; every category picker renders from here — the
+ * Row geometry follows the 2.1 kit List row (56pt, a 24pt glyph, 12 to the
+ * label) rather than the spacing scale; every category picker renders from here — the
  * listing flow's sheet, the edit flow, the request form and the search filter
  * sheet — so it is one edit if the design changes.
  *
@@ -66,28 +66,29 @@ export function taxonomyPathKey(parentTitle: string, childTitle: string) {
 }
 
 /**
- * Row geometry, measured off the Figma frames `1:13231` (category) and
- * `1:13333` (sub-category): a 56pt row on the 24pt gutter, a 20pt glyph, 8pt
- * to a 16pt label, and a 20pt chevron right-aligned to the gutter. The glyph
- * was 22pt with 20pt of space after it, which put every label 12pt right of
- * the frame.
+ * Row geometry: the 2.1 kit List row numbers (2073:14364), as the category
+ * sheet draws them (2096:24835, 2096:25059): a 56pt row (16 above and below a
+ * 24pt line) on the 24pt gutter, a 24pt glyph, 12 to a 16/24 label, and a 24pt
+ * mini chevron right-aligned to the gutter. The row is not rebuilt on `ListRow`:
+ * it keeps a busy spinner, a disabled state, the API's own artwork and the
+ * search result's "child, in parent" label, which `ListRow` has no room for.
  */
-const ICON = 20;
+const ICON = 24;
 /** Space between the glyph and its label. */
-const ICON_GAP = 8;
-/** The branch row above the list: a 24pt back chevron, then a 14pt bold name. */
-const CONTEXT_ICON = 24;
+const ICON_GAP = 12;
+/** The search field's magnifier and clear glyphs (2096:24835: 20pt). */
+const FIELD_ICON = 20;
 /**
- * 4, not the 8 the list rows use: the branch chevron is a 24pt glyph where a
- * row's is 20, and the frame lines the branch name up with the row labels
- * below it rather than with the glyph's own trailing edge.
+ * The branch link above a child list (2096:25059 "Back to parents"): a 20pt
+ * back chevron, 8, then the parent's name in 14/20 SemiBold, 12 above and 4
+ * below, so the row is 36 high, then 8 to the list. No hairline.
  */
-const CONTEXT_GAP = 4;
-/**
- * The frames set every row in this list at 56pt — the list rows reach it as
- * `py-4` around a 24pt line, the branch row has to be told.
- */
-const ROW_HEIGHT = 56;
+const CONTEXT_ICON = 20;
+const CONTEXT_GAP = 8;
+const CONTEXT_PAD = { paddingTop: 12, paddingBottom: 4 } as const;
+const CONTEXT_TO_LIST = 8;
+/** Search field to the list under it (2096:24835: 12). */
+const SEARCH_TO_LIST = 12;
 
 interface RowProps<T extends TaxonomyItem> {
   item: T;
@@ -99,6 +100,8 @@ interface RowProps<T extends TaxonomyItem> {
   preferRemoteIcon: boolean;
   /** Set for a search result, which reads "Parent › Child" by the parent's glyph. */
   parent?: TaxonomyItem;
+  /** No leading glyph: the label starts on the gutter. */
+  hideIcon?: boolean;
 }
 
 function TaxonomyRow<T extends TaxonomyItem>({
@@ -108,6 +111,7 @@ function TaxonomyRow<T extends TaxonomyItem>({
   disabled,
   preferRemoteIcon,
   parent,
+  hideIcon = false,
 }: RowProps<T>) {
   const { color, isDark } = useTheme();
   const feedback = usePressFeedback({ disabled });
@@ -123,8 +127,16 @@ function TaxonomyRow<T extends TaxonomyItem>({
 
   return (
     <TouchableOpacity
-      className="flex-row justify-between items-center py-4"
-      style={[{ minHeight: density.row }, feedback.pressStyle]}
+      style={[
+        {
+          minHeight: density.row,
+          paddingVertical: 16,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: ICON_GAP,
+        },
+        feedback.pressStyle,
+      ]}
       onPressIn={feedback.onPressIn}
       onPressOut={feedback.onPressOut}
       // The dip comes from the shared press treatment; TouchableOpacity's own
@@ -137,12 +149,9 @@ function TaxonomyRow<T extends TaxonomyItem>({
       accessibilityState={{ disabled, busy }}
       onPress={() => onSelect(item)}
     >
-      <View
-        className="flex-row items-center"
-        style={{ flex: 1, gap: ICON_GAP }}
-      >
-        {/* A fixed box, so a wide glyph (the car) and a narrow one (the phone)
-            start their labels on the same pixel, as the frames do. */}
+      {hideIcon ? null : (
+        // A fixed box, so a wide glyph (the car) and a narrow one (the phone)
+        // start their labels on the same pixel, as the frames do.
         <View style={{ width: ICON, alignItems: "center" }}>
           {remoteIcon ? (
             isSvg ? (
@@ -158,22 +167,23 @@ function TaxonomyRow<T extends TaxonomyItem>({
               name={(parent ?? item).title}
               slug={(parent ?? item).slug}
               size={ICON}
-              color={color.textBody}
+              color={color.text}
             />
           )}
         </View>
-        {/* 16pt, not 18: the label measures 12pt cap on the frames, which is
-            where the 56pt row height comes from (py-4 around a 24pt line). */}
-        <Text fontSize="text-md" style={{ flex: 1 }}>
-          {parentName ? `${parentName} › ${name}` : name}
-        </Text>
-      </View>
-
-      {busy ? (
-        <ActivityIndicator size="small" color={color.brandText} />
-      ) : (
-        <ChevronRightIcon size={ICON} color={color.text} />
       )}
+      <Text fontSize="text-md" lineHeight={24} style={{ flex: 1 }}>
+        {parentName ? `${parentName} › ${name}` : name}
+      </Text>
+
+      {/* The spinner sits in the chevron's box, so the label does not move when it appears. */}
+      <View style={{ width: ICON, alignItems: "center" }}>
+        {busy ? (
+          <ActivityIndicator size="small" color={color.brandText} />
+        ) : (
+          <ChevronRightIcon size={ICON} color={color.text} />
+        )}
+      </View>
     </TouchableOpacity>
   );
 }
@@ -216,6 +226,8 @@ interface Props<T extends TaxonomyItem> {
    * saves, `busyTitle` is `taxonomyPathKey(parent.title, child.title)`.
    */
   onSearchSelect?: (parent: T, child: Subcategory) => void;
+  /** Draw the rows without their glyph: a child list, whose parent's glyph would only repeat (REVIEW b1-01). */
+  hideIcon?: boolean;
 }
 
 export function TaxonomyList<T extends TaxonomyItem>({
@@ -227,6 +239,7 @@ export function TaxonomyList<T extends TaxonomyItem>({
   preferRemoteIcon = true,
   inBottomSheet = false,
   onSearchSelect,
+  hideIcon = false,
 }: Props<T>) {
   const insets = useSafeAreaInsets();
   const { color } = useTheme();
@@ -263,25 +276,24 @@ export function TaxonomyList<T extends TaxonomyItem>({
         flexDirection: "row",
         alignItems: "center",
         gap: CONTEXT_GAP,
-        minHeight: ROW_HEIGHT,
+        ...CONTEXT_PAD,
+        marginBottom: CONTEXT_TO_LIST,
         paddingHorizontal: SCREEN_GUTTER,
-        borderBottomWidth: 1,
-        borderBottomColor: color.line,
       }}
     >
       {onContextPress ? (
-        <ChevronLeftIcon size={CONTEXT_ICON} color={color.text} />
+        <ChevronLeftIcon size={CONTEXT_ICON} color={color.text} strokeWidth={1.5} />
       ) : null}
-      <Text fontSize="text-sm" fontWeight="font-bold" numberOfLines={1}>
+      <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} numberOfLines={1}>
         {contextLabel}
       </Text>
     </View>
   ) : null;
 
   const searchField = onSearchSelect ? (
-    <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.sm }}>
+    <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: SEARCH_TO_LIST }}>
       <FieldShell focused={searchFocused}>
-        <MagnifyingGlassIcon size={ICON} color={color.textBody} />
+        <MagnifyingGlassIcon size={FIELD_ICON} color={color.textBody} strokeWidth={1.5} />
         <SearchInput
           value={query}
           onChangeText={setQuery}
@@ -303,9 +315,9 @@ export function TaxonomyList<T extends TaxonomyItem>({
             accessibilityRole="button"
             accessibilityLabel="Clear search"
             // A 20pt glyph; the slop brings the target to the 44pt minimum.
-            hitSlop={(MIN_TOUCH_TARGET - ICON) / 2}
+            hitSlop={(MIN_TOUCH_TARGET - FIELD_ICON) / 2}
           >
-            <XCircleIcon size={ICON} color={color.textBody} />
+            <XCircleIcon size={FIELD_ICON} color={color.textBody} />
           </TouchableOpacity>
         ) : null}
       </FieldShell>
@@ -378,6 +390,7 @@ export function TaxonomyList<T extends TaxonomyItem>({
             busy={busyTitle === item.title}
             disabled={busyTitle !== null}
             preferRemoteIcon={preferRemoteIcon}
+            hideIcon={hideIcon}
           />
         )}
         keyExtractor={(item) => item.title}

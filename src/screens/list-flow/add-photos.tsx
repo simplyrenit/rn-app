@@ -1,9 +1,9 @@
 import { acceptOwnerTerms, isTermsVersionOld, termsQueryKey, useTerms } from "@/backend/terms";
-import { Button, Text } from "@/components/core";
+import { BottomBar, Button, StepProgress, Text } from "@/components/core";
 import { OwnerTermsTick } from "@/components/terms/owner-terms-tick";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { RETAKE_WARNINGS, WARNING_TAG, warningHeadline } from "@/components/list-flow/copy";
-import { FlowHeader } from "@/components/list-flow/flow-header";
+import { FLOW_STEPS, FlowHeader } from "@/components/list-flow/flow-header";
 import { useAppear } from "@/components/list-flow/motion";
 import { pickPhotos } from "@/components/list-flow/pick-photos";
 import { AddPhotoTile, PhotoTile } from "@/components/list-flow/photo-tile";
@@ -11,7 +11,7 @@ import { AddPhotoSheet, ResumeDraftSheet } from "@/components/list-flow/sheets";
 import { useGlobalContext } from "@/context/global-context";
 import { termsGate, termsHold, termsHoldLine } from "@/lib/list-flow/terms-gate";
 import { useListDraft } from "@/context/list-draft-context";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import {
   MAX_PHOTOS,
   canRunAgain,
@@ -21,18 +21,22 @@ import {
   warningKey,
 } from "@/lib/list-flow/draft";
 import { ListingWarning, PhotoSource } from "@/lib/list-flow/types";
+import type { ListFlowDesign } from "@/dev/list-flow-seed";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Linking, ScrollView, useWindowDimensions, View } from "react-native";
 import { useQueryClient } from "react-query";
 import Animated from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// Dev builds only: the listing-flow design seed (ENG-435 plan §2a). Release bundles drop the require.
+const seed: typeof import("@/dev/list-flow-seed") | null = __DEV__ ? require("@/dev/list-flow-seed") : null;
 
 const COLUMNS = 3;
+// figma/10 2094:25067: three 107 tiles, 10 apart in both directions.
 const GRID_GAP = 10;
 
 /**
@@ -45,9 +49,13 @@ export default function ListAddPhotosScreen() {
   const navigation = useTypedNavigation();
   const route = useRoute<RouteProps<"ListAddPhotos">>();
   const { color } = useTheme();
-  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const flow = useListDraft();
+  const real = useListDraft();
+  // A design fixture's seed (dev only): the frame's draft, every action a no-op, and every handler below that
+  // would write, upload, open the camera or move into the flow returns early (plan §0.3).
+  const design = __DEV__ ? (route.params as { design?: ListFlowDesign } | undefined)?.design : undefined;
+  const seeded = useMemo(() => (design && seed ? seed.seededFlow(design) : null), [design]);
+  const flow = seeded ?? real;
   const tileMotion = useAppear();
   const { draft, hydrated, resumable, run } = flow;
 
@@ -92,13 +100,32 @@ export default function ListAddPhotosScreen() {
       resumeSheet.current?.present();
       return;
     }
+    // A seed never starts a draft: startFresh would clear the device's real one (plan §0.2).
+    if (design) return;
     decided.current = true;
     flow.startFresh();
     flow.track("listing_started", { resumed_draft: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, resumable]);
 
+  // A seed's sheet opens on mount, without a tap (2094:25168).
+  useEffect(() => {
+    if (design?.sheet === "add-photo") addSheet.current?.present();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // A seed's sheet is a root modal and stays over the next fixture's screen, which is pushed on top of this one.
+  useEffect(() => {
+    if (!design) return;
+    return navigation.addListener("blur", () => {
+      addSheet.current?.dismiss();
+      resumeSheet.current?.dismiss();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onResume = () => {
+    if (design) return;
     decided.current = true;
     resumeSheet.current?.dismiss();
     flow.resume();
@@ -111,6 +138,7 @@ export default function ListAddPhotosScreen() {
   };
 
   const onDiscard = () => {
+    if (design) return;
     decided.current = true;
     resumeSheet.current?.dismiss();
     flow.discard();
@@ -120,6 +148,7 @@ export default function ListAddPhotosScreen() {
 
   // Swiping the sheet away is not a choice to lose work: keep the draft.
   const onResumeDismiss = () => {
+    if (design) return;
     if (!decided.current) onResume();
   };
 
@@ -149,11 +178,13 @@ export default function ListAddPhotosScreen() {
   const doneCount = draft ? uploadedPhotos(draft).length : 0;
 
   const openAddSheet = (replace: number | null = null) => {
+    if (design) return;
     replaceIndex.current = replace;
     addSheet.current?.present();
   };
 
   const onPick = async (source: PhotoSource) => {
+    if (design) return;
     addSheet.current?.dismiss();
     const replace = replaceIndex.current;
     replaceIndex.current = null;
@@ -167,6 +198,7 @@ export default function ListAddPhotosScreen() {
   };
 
   const onTileLongPress = (id: string, index: number) => {
+    if (design) return;
     const isCover = draft?.coverIndex === index;
     Alert.alert(`Photo ${index + 1}`, undefined, [
       ...(isCover
@@ -226,6 +258,7 @@ export default function ListAddPhotosScreen() {
   };
 
   const openOwnerTerms = () => {
+    if (design) return;
     // The owner terms page and nothing else, as at sign-up: what is recorded with the
     // tick is an acceptance of this page, so the app's general Terms screen is no
     // stand-in for it. If the page cannot be opened, the owner is told so.
@@ -239,6 +272,7 @@ export default function ListAddPhotosScreen() {
   };
 
   const onContinue = async () => {
+    if (design) return;
     setContinuing(true);
     try {
       if (!(await recordOwnerTerms())) return;
@@ -250,6 +284,7 @@ export default function ListAddPhotosScreen() {
   };
 
   const onManual = async () => {
+    if (design) return;
     setContinuing(true);
     try {
       if (!(await recordOwnerTerms())) return;
@@ -261,18 +296,28 @@ export default function ListAddPhotosScreen() {
   };
 
   const onRetake = () => {
-    if (!focusWarning?.photo) return;
+    if (design || !focusWarning?.photo) return;
     flow.track("warning_action", { type: focusWarning.type, action: "retake" });
     openAddSheet(focusWarning.photo - 1);
   };
 
   const onKeep = () => {
-    if (!focusWarning) return;
+    if (design || !focusWarning) return;
     flow.track("warning_action", { type: focusWarning.type, action: "keep" });
     flow.dispatch({ type: "dismissWarning", warning: focusWarning });
     navigation.setParams({ focusPhoto: undefined });
     if (run.status === "running") navigation.navigate("ListReading");
     else navigation.navigate("ListReview");
+  };
+
+  const onTick = (ticked: boolean) => {
+    if (design) return;
+    setOwnerTermsTick(ticked);
+  };
+
+  const onRetry = (id: string) => {
+    if (design) return;
+    flow.retryPhoto(id);
   };
 
   const tagFor = (index: number) => {
@@ -285,35 +330,71 @@ export default function ListAddPhotosScreen() {
     return warning && index + 1 === focusPhoto ? WARNING_TAG[warning.type] ?? null : null;
   };
 
+  // What the owner terms need before Continue, above the bar ("Owner terms (above bar)", 2094:24997). Nothing in
+  // the L-12b state, as before.
+  const termsHoldText = termsHoldLine(gate, ownerTermsTick);
+  const termsBlock = focusWarning?.photo ? null : needsOwnerTerms ? (
+    <>
+      {/* The kit CheckBox is a 44 target round its box; the frame's tick row is 22 high, so the target spills
+          11 into the padding either side rather than pushing the block to 89. */}
+      <View style={{ marginVertical: -11 }}>
+        <OwnerTermsTick checked={ownerTermsTick} onChange={onTick} onOpenTerms={openOwnerTerms} />
+      </View>
+      {termsHoldText ? (
+        <Text tone="dim" fontSize="text-sm" lineHeight={20} accessibilityLiveRegion="polite">
+          {termsHoldText}
+        </Text>
+      ) : null}
+    </>
+  ) : termsFailed ? (
+    // The read failed: say so, with a way to try again, rather than showing
+    // nothing about terms at all.
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.sm }}>
+      <Text tone={termsRefused ? "danger" : "dim"} fontSize="text-sm" lineHeight={20} style={{ flex: 1 }}>
+        {termsRefused
+          ? "We couldn't load the owner terms, and they are needed to submit."
+          : "We couldn't check the owner terms."}
+      </Text>
+      <Button variant="outline" size="compact" loading={termsQuery.isFetching} onPress={() => void termsQuery.refetch()}>
+        Try again
+      </Button>
+    </View>
+  ) : gate === "checking" ? (
+    <Text tone="dim" fontSize="text-sm" lineHeight={20} accessibilityLiveRegion="polite">
+      Checking the owner terms…
+    </Text>
+  ) : null;
+
   return (
     <NonScrollableContainer>
-      <FlowHeader step={1} />
+      <FlowHeader />
 
+      {/* figma/10 2094:24997: the Stepper 8 down, then the intro, grid and panel 24 apart. */}
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.md,
-          paddingBottom: space.lg,
+          paddingTop: 8,
+          paddingBottom: 24,
+          gap: 24,
         }}
       >
-        <Text fontSize="text-xl" fontWeight="font-bold" accessibilityRole="header">
-          {"Snap it.\nWe'll write the listing."}
-        </Text>
-        <Text tone="body" fontSize="text-md" style={{ marginTop: space.sm }}>
-          Start with one photo — it becomes your cover. Add more if you like.
-        </Text>
-        <Text fontSize="text-xs" tone="dim" style={{ marginTop: space.xs }}>
-          Photos are read by AI to fill in your listing.
-        </Text>
+        <StepProgress step={1} total={FLOW_STEPS} showLabel={false} />
 
-        <View
-          style={{
-            marginTop: space.lg,
-            flexDirection: "row",
-            flexWrap: "wrap",
-            gap: GRID_GAP,
-          }}
-        >
+        <View style={{ gap: 8 }}>
+          {/* One Text per line: Android sets a hard "\n" line 3pt closer than its 28 line height (measured, 2094:24997). */}
+          <View accessible accessibilityRole="header" accessibilityLabel="Snap it. We'll write the listing.">
+            <Text role="screenTitle">Snap it.</Text>
+            <Text role="screenTitle">We'll write the listing.</Text>
+          </View>
+          <Text tone="body" fontSize="text-sm" lineHeight={20}>
+            Start with one photo — it becomes your cover. Add more if you like.
+          </Text>
+          <Text fontSize="text-xs" lineHeight={16} tone="dim">
+            Photos are read by AI to fill in your listing.
+          </Text>
+        </View>
+
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: GRID_GAP }}>
           {/* Tiles fade up as they arrive and fade out when removed, and the
               rest glide into place instead of snapping. */}
           {photos.map((photo, index) => (
@@ -330,7 +411,8 @@ export default function ListAddPhotosScreen() {
                 isCover={draft?.coverIndex === index}
                 warningTag={tagFor(index)}
                 onLongPress={() => onTileLongPress(photo.id, index)}
-                onRetry={() => flow.retryPhoto(photo.id)}
+                onRetry={() => onRetry(photo.id)}
+                still={Boolean(design)}
               />
             </Animated.View>
           ))}
@@ -345,100 +427,70 @@ export default function ListAddPhotosScreen() {
           ) : null}
         </View>
 
+        {/* The tip (surface/muted) or, in L-12b, the warning (brand tint with its line), 2094:25123. */}
         <View
           style={{
-            marginTop: space.lg,
-            padding: space.md,
-            borderRadius: radius.group,
-            backgroundColor: focusWarning ? color.brandPanel : color.surfaceRaised,
+            padding: 16,
+            borderRadius: 12,
+            backgroundColor: focusWarning ? color.brandPanel : color.surfaceMuted,
             borderWidth: focusWarning ? 1 : 0,
             borderColor: color.brandPanelLine,
+            gap: 4,
           }}
         >
           {focusWarning ? (
             <>
-              <Text fontSize="text-sm" fontWeight="font-bold">
+              <Text fontSize="text-sm" lineHeight={20} fontWeight="font-semibold">
                 {warningHeadline(focusWarning)}
               </Text>
               {focusWarning.reason ? (
-                <Text fontSize="text-xs" tone="body" style={{ marginTop: 2 }}>
+                <Text fontSize="text-xs" lineHeight={16} tone="body">
                   {focusWarning.reason}
                 </Text>
               ) : null}
             </>
           ) : (
-            <Text fontSize="text-sm" tone="body">
+            <Text fontSize="text-sm" lineHeight={20} tone="body">
               Tip: a clear shot of the label helps the AI get the exact model right.
             </Text>
           )}
         </View>
       </ScrollView>
 
-      <View
-        style={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          paddingBottom: insets.bottom + space.sm,
-          gap: space.xs,
-        }}
-      >
-        {focusWarning?.photo ? (
-          <>
-            <Button onPress={onRetake}>{`Retake photo ${focusWarning.photo}`}</Button>
-            <Button variant="ghost" onPress={onKeep}>
-              Keep it and continue
-            </Button>
-          </>
-        ) : (
-          <>
-            {needsOwnerTerms ? (
-              <>
-                <OwnerTermsTick
-                  checked={ownerTermsTick}
-                  onChange={setOwnerTermsTick}
-                  onOpenTerms={openOwnerTerms}
-                />
-                {termsHoldLine(gate, ownerTermsTick) ? (
-                  <Text tone="dim" fontSize="text-sm" accessibilityLiveRegion="polite">
-                    {termsHoldLine(gate, ownerTermsTick)}
-                  </Text>
-                ) : null}
-              </>
-            ) : termsFailed ? (
-              // The read failed: say so, with a way to try again, rather than showing
-              // nothing about terms at all.
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.sm }}>
-                <Text tone={termsRefused ? "danger" : "dim"} fontSize="text-sm" style={{ flex: 1 }}>
-                  {termsRefused
-                    ? "We couldn't load the owner terms, and they are needed to submit."
-                    : "We couldn't check the owner terms."}
-                </Text>
-                <Button variant="outline" size="compact" loading={termsQuery.isFetching} onPress={() => void termsQuery.refetch()}>
-                  Try again
-                </Button>
-              </View>
-            ) : gate === "checking" ? (
-              <Text tone="dim" fontSize="text-sm" accessibilityLiveRegion="polite">
-                Checking the owner terms…
-              </Text>
-            ) : null}
-            <Button
-              disabled={doneCount === 0 || termsHeld}
-              loading={continuing}
-              onPress={onContinue}
-            >
-              Continue
-            </Button>
-            <Button
-              variant="ghost"
-              disabled={continuing || termsHeld}
-              onPress={onManual}
-            >
-              I'll fill it in myself
-            </Button>
-          </>
-        )}
-      </View>
+      {termsBlock ? (
+        // One hairline over the terms and the bar together: the bar drops its own below.
+        <View
+          style={{
+            borderTopWidth: 1,
+            borderTopColor: color.line,
+            paddingTop: 12,
+            paddingHorizontal: SCREEN_GUTTER,
+            paddingBottom: 4,
+            gap: 8,
+          }}
+        >
+          {termsBlock}
+        </View>
+      ) : null}
+      {focusWarning?.photo ? (
+        <BottomBar
+          layout="cta-text"
+          primary={{ label: `Retake photo ${focusWarning.photo}`, onPress: onRetake }}
+          secondary={{ label: "Keep it and continue", onPress: onKeep }}
+        />
+      ) : (
+        <BottomBar
+          layout="cta-text"
+          style={termsBlock ? { borderTopWidth: 0 } : undefined}
+          primary={{
+            label: "Continue",
+            onPress: onContinue,
+            disabled: doneCount === 0 || termsHeld,
+            loading: continuing,
+          }}
+          secondary={{ label: "I'll fill it in myself", onPress: onManual, disabled: continuing || termsHeld }}
+        />
+      )}
 
       <AddPhotoSheet ref={addSheet} onPick={onPick} />
       <ResumeDraftSheet
