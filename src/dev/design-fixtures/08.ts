@@ -23,7 +23,15 @@ const SERVER_TIME = "2026-11-25T09:41:00+05:30";
 
 const at = (day: string, time: string) => `2026-11-${day}T${time}:00+05:30`;
 
-const sony = { name: "sony-a7-iv", title: "Sony A7 IV mirrorless camera", shop_code: "SNY-A7", cover_image: null, quantity: 1 };
+// The 08 booking frames' Summary card photo is a flat #F2F2F2 tile (2093:21585 "Thumb (product photo)"), so the
+// fixture's photo is that tile; with no photo the kit Thumb would draw its camera placeholder instead.
+const sony = {
+  name: "sony-a7-iv",
+  title: "Sony A7 IV mirrorless camera",
+  shop_code: "SNY-A7",
+  cover_image: Image.resolveAssetSource(require("../assets/shop-thumb-sony-a7-iv.png"))?.uri ?? null,
+  quantity: 1,
+};
 
 const aarav: BookingShop["customer"] = {
   first_name: "Aarav",
