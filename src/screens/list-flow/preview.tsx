@@ -296,21 +296,24 @@ export default function ListPreviewScreen() {
         </View>
 
         <Divider />
+        {/* The PDP sample's strip (2097:30938 "Spec strip (cloned from PDP sample)"): 131 high, ruled by the Dividers around it. */}
         <SpecStrip
+          variant="detail"
+          dividers={false}
           items={[
             {
-              icon: <CategoryIcon name={f.category.value?.parent ?? ""} size={22} color={color.text} />,
+              icon: <CategoryIcon name={f.category.value?.parent ?? ""} size={20} color={color.text} />,
               value: f.category.value ? categoryDisplayName(f.category.value.title) : null,
               label: "Category",
             },
             {
-              icon: <BanknotesIcon size={22} color={color.text} />,
+              icon: <BanknotesIcon size={20} color={color.text} />,
               value: deposit ? formatCurrency(deposit) : null,
               label: "Deposit",
             },
             {
               icon: f.condition.value ? (
-                <ConditionRenderer condition={f.condition.value} size={22} color={color.text} />
+                <ConditionRenderer condition={f.condition.value} size={20} color={color.text} />
               ) : null,
               value: f.condition.value ? CONDITION_LABEL[f.condition.value] : null,
               label: "Condition",
@@ -349,6 +352,8 @@ export default function ListPreviewScreen() {
                 longitude={location.long}
                 isDarkMode={isDark}
                 placeName={location.locality}
+                // A design seed draws the frame's neutral map, not live tiles (2096:29125 "NEW neutral map").
+                placeholder={Boolean(design)}
               />
               <Text fontSize="text-sm" lineHeight={20} tone="body">
                 Approximate area · the exact address is shared once a booking is confirmed

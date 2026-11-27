@@ -2,7 +2,7 @@ import type { ListFlowDesign } from "@/dev/list-flow-seed";
 import type { SavedAddress } from "@/lib/addresses";
 import { createDraft } from "@/lib/list-flow/draft";
 import type { ListingDraft, PhotoItem, Spec } from "@/lib/list-flow/types";
-import { COVER_1984, FICTION_ID, LIST_FLOW_READS, kapoorBooks } from "./10-common";
+import { COVER_1984, COVER_1984_SQUARE, FICTION_ID, LIST_FLOW_READS, kapoorBooks } from "./10-common";
 import type { DevFixture } from "./registry";
 
 /**
@@ -139,6 +139,7 @@ const preview1984 = (): ListingDraft => {
   const pick = (key: string) => items.find((s) => s.key === key) as Spec;
   return {
     ...base,
+    photos: base.photos.map((p) => ({ ...p, localUri: COVER_1984_SQUARE, remoteUrl: COVER_1984_SQUARE })),
     fields: {
       ...base.fields,
       condition: { value: "good", source: "user" },
@@ -181,7 +182,7 @@ export const fixtures: Record<string, DevFixture> = {
     run: { status: "done" },
     sheet: { spec: "language" },
   }),
-  // list-preview · idle (top) and full scroll: blocked on ENG-429 (image, strip, map) for a pass.
+  // list-preview · idle (top) and full scroll (F+scroll), on the square hero crop.
   "2097:30938": preview,
   "2096:29125": preview,
 };

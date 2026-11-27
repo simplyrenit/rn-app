@@ -50,6 +50,10 @@ export const merchantRejected: MyDetailsResponse = {
  * and the registry loads this module in tests, so a missing one reads as "".
  */
 export const COVER_1984: string = Image.resolveAssetSource(require("../assets/design-1984-cover.png"))?.uri ?? "";
+/** Preview's square hero (2097:30938 "Photo carousel (square)", 390×390 on #F3F3F6, cropped at 3x): the tile crop above
+ *  carries the tile's rounded white corners. */
+export const COVER_1984_SQUARE: string =
+  Image.resolveAssetSource(require("../assets/design-1984-preview.png"))?.uri ?? "";
 
 // The category sheet's parents (2096:24835), in its order, under the taxonomy v2 slugs, so `categoryDisplayName`
 // gives the frame's sentence-case names. Books' children are 2096:25059's.
