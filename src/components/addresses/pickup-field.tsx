@@ -1,5 +1,4 @@
-import { AddressRow } from "@/components/addresses/address-row";
-import { FieldLabel, FieldShell, Text, usePressFeedback } from "@/components/core";
+import { FieldShell, Text, usePressFeedback } from "@/components/core";
 import { CheckBox } from "@/components/core/checkbox";
 import {
   ADDRESS_TYPES,
@@ -22,6 +21,10 @@ import { MapPinIcon } from "react-native-heroicons/outline";
 // The checkbox draws its 22 pt box inside a 44 pt target pulled 12 pt left, so
 // the label beside it starts here. The chips line up under the label.
 const CHECK_LABEL_INSET = 32;
+/** The block's own rhythm (2083:14692 "Pickup"): label, picker and link 12 apart. */
+const BLOCK_GAP = 12;
+/** A picker is 50 (12 / 24 / 12 inside its hairline), its chevron 12 from the right edge. */
+const PICKER_HEIGHT = 50;
 
 interface Props {
   location: LocationValue | null;
@@ -47,7 +50,7 @@ function FlatInput({ value, onChangeText }: { value: string; onChangeText: (v: s
   const { color } = useTheme();
   const [focused, setFocused] = useState(false);
   return (
-    <FieldShell focused={focused} style={{ marginTop: space.sm }}>
+    <FieldShell focused={focused}>
       <TextInput
         // The core Text's cap, so the field's text cannot outgrow its shell at a large system font size.
         maxFontSizeMultiplier={1.4}
@@ -69,14 +72,54 @@ function Link({ label, onPress }: { label: string; onPress: () => void }) {
     <TouchableOpacity
       accessibilityRole="button"
       activeOpacity={0.6}
-      // A 21 pt line; this brings the target past 44.
+      // A 20 pt line; this brings the target past 44.
       hitSlop={{ top: 12, bottom: 12 }}
       onPress={onPress}
-      style={{ alignSelf: "flex-start", marginTop: space.sm }}
+      style={{ alignSelf: "flex-start" }}
     >
-      <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+      <Text fontSize="text-sm" lineHeight={20} fontWeight="font-semibold" tone="brand">
         {label}
       </Text>
+    </TouchableOpacity>
+  );
+}
+
+/**
+ * A tappable field that opens a chooser: the Review frame's Category and Pickup pickers (2083:14692): a 20pt glyph,
+ * the 16/24 value and a 20pt mini chevron in the 50pt field box.
+ */
+export function PickerField({
+  icon,
+  value,
+  placeholder,
+  onPress,
+  accessibilityLabel,
+}: {
+  icon: React.ReactNode;
+  value: string | null;
+  placeholder: string;
+  onPress: () => void;
+  accessibilityLabel: string;
+}) {
+  const { color } = useTheme();
+  const feedback = usePressFeedback();
+  return (
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={onPress}
+      onPressIn={feedback.onPressIn}
+      onPressOut={feedback.onPressOut}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      style={feedback.pressStyle}
+    >
+      <FieldShell style={{ minHeight: PICKER_HEIGHT, paddingRight: 12 }}>
+        {icon}
+        <Text fontSize="text-md" lineHeight={24} tone={value ? "default" : "dim"} numberOfLines={1} style={{ flex: 1 }}>
+          {value || placeholder}
+        </Text>
+        <ChevronRightIcon size={20} color={color.textDim} />
+      </FieldShell>
     </TouchableOpacity>
   );
 }
@@ -103,7 +146,6 @@ export function PickupField({
   onSaveAs,
 }: Props) {
   const { color } = useTheme();
-  const feedback = usePressFeedback();
   const saved = location ? addressAtPoint(addresses, location, location.fullAddress) : undefined;
   const savedFlat = saved ? flatAndLandmark(saved) : "";
   const area = location?.locality || saved?.locality || "";
@@ -117,62 +159,33 @@ export function PickupField({
   const offerSave = showsSaveOffer(location, addresses, addressesKnown);
 
   return (
-    <View style={{ marginBottom: density.fieldGap }}>
-      <FieldLabel label="Pickup" required hint="Renters see only your area until they book." />
+    // The trailing margin is the form's field gap, which the edit form (ENG-436) relies on.
+    <View style={{ marginBottom: density.fieldGap, gap: BLOCK_GAP }}>
+      <View style={{ gap: 4 }}>
+        <Text role="fieldLabel">Pickup</Text>
+        <Text role="fieldHint">Renters see only your area until they book.</Text>
+      </View>
 
-      {saved ? (
-        <View
-          style={{
-            borderWidth: 1,
-            borderColor: color.line,
-            borderRadius: radius.card,
-            backgroundColor: color.surface,
-            overflow: "hidden",
-          }}
-        >
-          <AddressRow
-            address={saved}
-            first
-            trailing="change"
-            onPress={() => {
-              // An edit that changed nothing closes; re-picking this address
-              // would otherwise leave the field open on identical text.
-              setEditingFlat(false);
-              onChange();
-            }}
-            // While the flat line is being changed below, it is not repeated
-            // here. The draft's locality, not the row's: a row from before
-            // the column existed has none, and the listing publishes this one.
-            line={editing ? area : [savedFlat, area].filter(Boolean).join(" · ")}
-          />
-        </View>
-      ) : (
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={onChange}
-          onPressIn={feedback.onPressIn}
-          onPressOut={feedback.onPressOut}
-          accessibilityRole="button"
-          accessibilityLabel={
-            location?.locality ? `Pickup location, ${location.locality}. Change` : "Set pickup location"
-          }
-          style={feedback.pressStyle}
-        >
-          <FieldShell>
-            <MapPinIcon size={20} color={location ? color.text : color.textDim} />
-            <Text fontSize="text-md" tone={location?.locality ? "default" : "dim"} numberOfLines={1} style={{ flex: 1 }}>
-              {location?.locality || "Set pickup location"}
-            </Text>
-            {location ? (
-              <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
-                Change
-              </Text>
-            ) : (
-              <ChevronRightIcon size={20} color={color.textDim} />
-            )}
-          </FieldShell>
-        </TouchableOpacity>
-      )}
+      {/* One picker for a saved address and any other spot (2083:14692): the area it is in. A saved address is
+          named in the label; its flat line is behind "Edit flat or landmark", as the frame draws it. */}
+      <PickerField
+        icon={<MapPinIcon size={20} color={location ? color.text : color.textDim} strokeWidth={1.5} />}
+        value={area || null}
+        placeholder="Set pickup location"
+        onPress={() => {
+          // An edit that changed nothing closes; re-picking this address
+          // would otherwise leave the field open on identical text.
+          setEditingFlat(false);
+          onChange();
+        }}
+        accessibilityLabel={
+          saved
+            ? `Pickup location, ${addressTitle(saved)}, ${[editing ? "" : savedFlat, area].filter(Boolean).join(", ")}. Change`
+            : location?.locality
+            ? `Pickup location, ${location.locality}. Change`
+            : "Set pickup location"
+        }
+      />
 
       {saved && !editing ? (
         <Link label="Edit flat or landmark for this listing" onPress={() => setEditingFlat(true)} />
@@ -192,7 +205,7 @@ export function PickupField({
 
       {saved && editing ? (
         <>
-          <Text fontSize="text-sm" tone="body" style={{ marginTop: space.sm }}>
+          <Text fontSize="text-sm" tone="body">
             {`Only for this listing. Your saved ${addressTitle(saved)} address stays the same.`}
           </Text>
           <Link
@@ -206,7 +219,7 @@ export function PickupField({
       ) : null}
 
       {offerSave ? (
-        <View style={{ marginTop: space.xs }}>
+        <View>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <CheckBox
               checked={Boolean(saveAs)}

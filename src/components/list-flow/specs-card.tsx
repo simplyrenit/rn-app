@@ -1,6 +1,14 @@
-import { Button, FieldLabel, FieldShell, Skeleton, Text, usePressFeedback } from "@/components/core";
+import {
+  FieldShell,
+  SheetFooter,
+  SheetHeader,
+  Skeleton,
+  StatusPill,
+  Text,
+  usePressFeedback,
+} from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, fontFamily, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, fontFamily, radius, space } from "@/lib/design-tokens";
 import { selectionFeedback } from "@/lib/haptics";
 import { specDisplayValue } from "@/lib/list-flow/specs";
 import { Spec, SpecValue } from "@/lib/list-flow/types";
@@ -8,10 +16,9 @@ import { foldForSearch } from "@/lib/taxonomy-search";
 import { useTheme } from "@/lib/theme";
 import { BottomSheetModal, BottomSheetScrollView, BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import React, { forwardRef, useEffect, useState } from "react";
-import { Keyboard, Platform, TextInput, TouchableOpacity, View } from "react-native";
-import { CheckIcon } from "react-native-heroicons/solid";
+import { Keyboard, Platform, StyleProp, TextInput, TouchableOpacity, View, ViewStyle } from "react-native";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
-import { MagnifyingGlassIcon } from "react-native-heroicons/outline";
+import { CheckIcon, MagnifyingGlassIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /**
@@ -20,34 +27,18 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
  * confidence — by the contract: a Check tag only asks the owner to look.
  */
 
-/** The row's label column, from the frame (104pt, then 8 to the value). */
-const LABEL_WIDTH = 104;
+/** The row's label column, from the frame (2083:14692: 96pt, then 8 to the value). */
+const LABEL_WIDTH = 96;
+/** A row is 48 inside its hairline (12 / 24 / 12), the label on 16 and the chevron 12 from the edge. */
 const ROW_PADDING = { paddingTop: 12, paddingBottom: 12, paddingLeft: 16, paddingRight: 12 };
-/** Option rows in the sheet, as the Radio row component draws them. */
-const OPTION_HEIGHT = 56;
+const ROW_MIN = 48;
+/** The label to its card (2083:14692 "Specs": 12, where a form label's own gap is 8). */
+const LABEL_GAP = 12;
+/** Option rows in the spec sheet (2096:25258): 52, the label on the gutter and a 22 control 8 after it. */
+const OPTION_HEIGHT = 52;
 const INDICATOR = 22;
-
-/**
- * "Field tag · Check". The frame's amber pair is not a token yet; the app's
- * warning pair stands in until the designer ships semantic colours.
- */
-export function CheckTag() {
-  const { color } = useTheme();
-  return (
-    <View
-      style={{
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: radius.full,
-        backgroundColor: color.warningWash,
-      }}
-    >
-      <Text fontSize="text-xs" fontWeight="font-bold" style={{ color: color.warning, lineHeight: 16 }}>
-        Check
-      </Text>
-    </View>
-  );
-}
+/** The spec sheet's height above the home indicator (2096:25258: 633 with its 21pt indicator strip). */
+const SHEET_HEIGHT = 612;
 
 function SpecRow({ spec, last, onPress }: { spec: Spec; last: boolean; onPress: () => void }) {
   const { color } = useTheme();
@@ -65,7 +56,7 @@ function SpecRow({ spec, last, onPress }: { spec: Spec; last: boolean; onPress: 
       style={[
         {
           ...ROW_PADDING,
-          minHeight: MIN_TOUCH_TARGET,
+          minHeight: ROW_MIN,
           flexDirection: "row",
           alignItems: "center",
           gap: space.sm,
@@ -75,13 +66,13 @@ function SpecRow({ spec, last, onPress }: { spec: Spec; last: boolean; onPress: 
         feedback.pressStyle,
       ]}
     >
-      <Text fontSize="text-sm" tone="body" style={{ width: LABEL_WIDTH }}>
+      <Text fontSize="text-sm" lineHeight={20} tone="body" style={{ width: LABEL_WIDTH }}>
         {spec.label}
       </Text>
-      <Text fontSize="text-md" tone={value ? "default" : "dim"} numberOfLines={2} style={{ flex: 1 }}>
+      <Text fontSize="text-md" lineHeight={24} tone={value ? "default" : "dim"} numberOfLines={2} style={{ flex: 1 }}>
         {value ?? "Add"}
       </Text>
-      {check ? <CheckTag /> : null}
+      {check ? <StatusPill tone="warning" label="Check" /> : null}
       <ChevronRightIcon size={20} color={color.textDim} />
     </TouchableOpacity>
   );
@@ -122,10 +113,13 @@ export function SpecsCard({
   specs,
   loading,
   onPressSpec,
+  style,
 }: {
   specs: Spec[];
   loading: boolean;
   onPressSpec: (spec: Spec) => void;
+  /** Placement only; a card that is not drawn takes none of it. */
+  style?: StyleProp<ViewStyle>;
 }) {
   const { color } = useTheme();
   const feedback = usePressFeedback();
@@ -140,8 +134,8 @@ export function SpecsCard({
   const showMore = !expanded && more.length > 0;
 
   return (
-    <View style={{ marginBottom: density.fieldGap }}>
-      <FieldLabel label="Specs" />
+    <View style={[{ gap: LABEL_GAP }, style]}>
+      <Text role="fieldLabel">Specs</Text>
       <View
         style={{
           borderRadius: radius.button,
@@ -161,7 +155,7 @@ export function SpecsCard({
                 key={i}
                 style={{
                   ...ROW_PADDING,
-                  minHeight: MIN_TOUCH_TARGET,
+                  minHeight: ROW_MIN,
                   flexDirection: "row",
                   alignItems: "center",
                   gap: space.sm,
@@ -190,17 +184,15 @@ export function SpecsCard({
             accessibilityRole="button"
             accessibilityHint={moreDetailHint(more)}
             style={[
-              { ...ROW_PADDING, minHeight: MIN_TOUCH_TARGET, flexDirection: "row", alignItems: "center", gap: space.sm },
+              { ...ROW_PADDING, minHeight: ROW_MIN, flexDirection: "row", alignItems: "center", gap: space.sm },
               feedback.pressStyle,
             ]}
           >
-            <View style={{ flex: 1 }}>
-              <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text fontSize="text-md" lineHeight={24} fontWeight="font-semibold">
                 Add more detail
               </Text>
-              <Text fontSize="text-sm" tone="body">
-                {moreDetailHint(more)}
-              </Text>
+              <Text role="fieldHint">{moreDetailHint(more)}</Text>
             </View>
             <ChevronRightIcon size={20} color={color.textDim} />
           </TouchableOpacity>
@@ -232,7 +224,6 @@ function OptionRow({
       accessibilityLabel={label}
       style={{
         minHeight: OPTION_HEIGHT,
-        paddingHorizontal: 16,
         flexDirection: "row",
         alignItems: "center",
         gap: space.sm,
@@ -240,16 +231,18 @@ function OptionRow({
         borderBottomColor: color.line,
       }}
     >
-      <Text fontSize="text-md" style={{ flex: 1 }}>
+      <Text fontSize="text-md" lineHeight={24} style={{ flex: 1 }}>
         {label}
       </Text>
+      {/* Drawn here rather than with the kit CheckBox: that is a touchable of its own, and inside this row it
+          would announce and fire twice. The 22pt r6 box is the frame's (2097:31093). */}
       <View
         style={{
           width: INDICATOR,
           height: INDICATOR,
           borderRadius: multi ? 6 : radius.full,
           borderWidth: 1.5,
-          borderColor: selected ? color.brand : color.inputLine,
+          borderColor: selected ? color.brand : color.textDim,
           backgroundColor: multi && selected ? color.brand : "transparent",
           alignItems: "center",
           justifyContent: "center",
@@ -257,7 +250,8 @@ function OptionRow({
       >
         {selected ? (
           multi ? (
-            <CheckIcon size={15} color={color.onBrand} />
+            // 1.5625pt at 15pt is 2.5 in the glyph's 24-unit box.
+            <CheckIcon size={15} color={color.onBrand} strokeWidth={2.5} />
           ) : (
             <View style={{ width: 12, height: 12, borderRadius: radius.full, backgroundColor: color.brand }} />
           )
@@ -283,7 +277,6 @@ function SheetBody({
   onCancel: () => void;
 }) {
   const { color } = useTheme();
-  const insets = useSafeAreaInsets();
   const multi = spec.type === "multi_enum";
   const [picked, setPicked] = useState<string[]>(() =>
     spec.value === null ? [] : Array.isArray(spec.value) ? spec.value : [spec.value]
@@ -312,34 +305,14 @@ function SheetBody({
 
   return (
     <View style={{ flex: 1 }}>
-      <View
-        style={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingBottom: space.md,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: space.md,
-        }}
-      >
-        <Text role="sectionTitle" accessibilityRole="header" numberOfLines={1} style={{ flex: 1 }}>
-          {spec.label}
-        </Text>
-        <TouchableOpacity
-          onPress={onCancel}
-          accessibilityRole="button"
-          style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center" }}
-        >
-          <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
-            Cancel
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* The frame's close X (2096:25258) is the sheet's Cancel: it leaves the spec as it was. */}
+      <SheetHeader title={spec.label} onClose={onCancel} grabber={false} />
 
+      {/* Above the scroll, so the search stays in reach down a long brand list. */}
       {searchable ? (
-        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.md }}>
+        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: 16 }}>
           <FieldShell focused={focused}>
-            <MagnifyingGlassIcon size={20} color={color.textBody} />
+            <MagnifyingGlassIcon size={20} color={color.textBody} strokeWidth={1.5} />
             <SearchInput
               value={query}
               onChangeText={setQuery}
@@ -361,9 +334,9 @@ function SheetBody({
 
       <BottomSheetScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.md }}
+        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: 16 }}
       >
-        <View style={{ borderRadius: radius.button, borderWidth: 1, borderColor: color.line, overflow: "hidden" }}>
+        <View>
           {options.map((option, i) => (
             <OptionRow
               key={option}
@@ -375,7 +348,7 @@ function SheetBody({
             />
           ))}
           {options.length === 0 ? (
-            <View style={{ minHeight: OPTION_HEIGHT, paddingHorizontal: 16, justifyContent: "center" }}>
+            <View style={{ minHeight: OPTION_HEIGHT, justifyContent: "center" }}>
               <Text fontSize="text-md" tone="dim">
                 No matches
               </Text>
@@ -384,14 +357,10 @@ function SheetBody({
         </View>
       </BottomSheetScrollView>
 
-      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.sm, paddingBottom: insets.bottom + space.sm, gap: space.xs }}>
-        <Button disabled={picked.length === 0} onPress={save}>
-          {saveLabel(spec, picked)}
-        </Button>
-        <Button variant="ghost" onPress={() => onSave(null)}>
-          Clear
-        </Button>
-      </View>
+      <SheetFooter
+        primary={{ label: saveLabel(spec, picked), onPress: save, disabled: picked.length === 0 }}
+        secondary={{ label: "Clear", onPress: () => onSave(null) }}
+      />
     </View>
   );
 }
@@ -399,15 +368,22 @@ function SheetBody({
 /**
  * Radios for an `enum`, checkboxes for a `multi_enum`. Saving — even the value
  * that was already there — is the owner's answer, which is what clears a
- * Check tag; Cancel and a swipe down leave the spec as it was.
+ * Check tag; the close X and a swipe down leave the spec as it was.
  */
 export const SpecSheet = forwardRef<
   BottomSheetModal,
   { spec: Spec | null; onSave: (value: SpecValue | null) => void; onCancel: () => void }
 >(({ spec, onSave, onCancel }, ref) => {
   const { isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
-    <CustomBottomSheetModal ref={ref} isDark={isDark} snapPoints={["75%"]} frame scrollView={false}>
+    <CustomBottomSheetModal
+      ref={ref}
+      isDark={isDark}
+      snapPoints={[SHEET_HEIGHT + insets.bottom]}
+      frame
+      scrollView={false}
+    >
       {/* The modal unmounts its content on dismiss, so each opening starts
           from the spec's saved value; the key keeps that true if the spec
           ever changes under an open sheet. */}

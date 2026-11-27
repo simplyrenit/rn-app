@@ -5,15 +5,17 @@ import {
   AddressPickerSheet,
   AddressPickerSheetHandle,
 } from "@/components/addresses/address-picker-sheet";
-import { PickupField } from "@/components/addresses/pickup-field";
+import { PickerField, PickupField } from "@/components/addresses/pickup-field";
+import { Notice } from "@/components/booking/parts";
 import {
+  BottomBar,
   Button,
-  FieldFrame,
   FieldLabel,
   FieldShell,
+  SectionHeader,
+  StepProgress,
   Text,
   TextField,
-  usePressFeedback,
 } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { SegmentedChoice } from "@/components/core/segmented-choice";
@@ -39,7 +41,7 @@ import {
   radius,
   space,
 } from "@/lib/design-tokens";
-import { formatNumber } from "@/lib/format";
+import { formatCurrency, formatNumber } from "@/lib/format";
 import { DEFAULT_DEPOSIT_RULE, computeDepositDefault } from "@/lib/list-flow/deposit";
 import { DraftPlan, defaultUnit, derivedRate, toPlans } from "@/lib/plans";
 import { PlanPricing } from "@/components/post/plan-pricing";
@@ -65,22 +67,35 @@ import {
 import { createLocationRequest } from "@/lib/location-request";
 import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
+import type { ListFlowDesign } from "@/dev/list-flow-seed";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRoute } from "@react-navigation/native";
 import { Image } from "expo-image";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 import { AppSwitch } from "@/components/core/switch";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import Animated from "react-native-reanimated";
-import { ChevronRightIcon } from "react-native-heroicons/mini";
-import { PlusIcon } from "react-native-heroicons/outline";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { PlusIcon } from "react-native-heroicons/mini";
+
+// Dev builds only: a design fixture's draft in place of the live one (ENG-435 plan §2a).
+const seed: typeof import("@/dev/list-flow-seed") | null = __DEV__ ? require("@/dev/list-flow-seed") : null;
 
 type TextFieldName = "title" | "brand_name" | "model_name" | "description" | "usage_description";
 type SectionKey = Requirement["key"];
 
-const THUMB = 56;
+/** The photo strip's thumbs (2083:14692: 72, r12). */
+const THUMB = 72;
+/**
+ * The Review frame's rhythm (2083:14692): 32 between sections, 24 between the detail fields, 12 from a label to its
+ * picker or card. The kit TextField and PickupField already end in the form's 18pt field gap, so the gaps after them
+ * are the difference.
+ */
+const SECTION_GAP = 32;
+const DETAIL_GAP = 24;
+const LABEL_GAP = 12;
+/** A form label to its input, and an input to its helper line (kit Form field). */
+const FIELD_GAP = 8;
 /**
  * How long the pickup prefill waits for the saved addresses. They need the
  * profile to have loaded first; if either never arrives, the older sources
@@ -89,8 +104,9 @@ const THUMB = 56;
 const ADDRESS_WAIT_MS = 4000;
 
 /**
- * A digits-only input on the shared field surface: an "Rs" amount by default,
- * or a bare count (`prefix={null}`).
+ * A digits-only input on the shared field surface: a ₹ amount by default,
+ * or a bare count (`prefix={null}`). The frame sets the ₹ against the figure
+ * ("₹350", 2083:14692), so the shell's 8pt gap is taken out.
  */
 function AmountInput({
   value,
@@ -98,7 +114,7 @@ function AmountInput({
   inputRef,
   accessibilityLabel,
   placeholder,
-  prefix = "Rs",
+  prefix = "₹",
   maxLength,
 }: {
   value: string;
@@ -112,9 +128,9 @@ function AmountInput({
   const { color } = useTheme();
   const [focused, setFocused] = useState(false);
   return (
-    <FieldShell focused={focused}>
+    <FieldShell focused={focused} style={{ gap: 0 }}>
       {prefix ? (
-        <Text fontSize="text-md" fontWeight="font-bold" tone="body">
+        <Text fontSize="text-md" lineHeight={24}>
           {prefix}
         </Text>
       ) : null}
@@ -129,7 +145,7 @@ function AmountInput({
         onChangeText={(v) => onChangeText(v.replace(/[^\d]/g, ""))}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        // The core Text's cap, so the Rs prefix and the figure scale together.
+        // The core Text's cap, so the ₹ prefix and the figure scale together.
         maxFontSizeMultiplier={1.4}
         style={{ flex: 1, color: color.text, fontFamily: fontFamily.regular, fontSize: fontSize.md }}
       />
@@ -137,62 +153,29 @@ function AmountInput({
   );
 }
 
-/** A tappable row on the field surface: the category. */
-function PickerRow({
-  icon,
-  value,
-  placeholder,
-  onPress,
-  accessibilityLabel,
-}: {
-  icon: React.ReactNode;
-  value: string | null;
-  placeholder: string;
-  onPress: () => void;
-  accessibilityLabel: string;
-}) {
-  const { color } = useTheme();
-  const feedback = usePressFeedback();
+/** "Also set for you": a 12/16 label over its 14/20 value (2083:14692). */
+function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <TouchableOpacity
-      activeOpacity={1}
-      onPress={onPress}
-      onPressIn={feedback.onPressIn}
-      onPressOut={feedback.onPressOut}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      style={feedback.pressStyle}
-    >
-      <FieldShell>
-        {icon}
-        <Text fontSize="text-md" tone={value ? "default" : "dim"} numberOfLines={1} style={{ flex: 1 }}>
-          {value ?? placeholder}
-        </Text>
-        <ChevronRightIcon size={20} color={color.textDim} />
-      </FieldShell>
-    </TouchableOpacity>
+    <View style={{ gap: 2 }}>
+      <Text role="fieldHint">{label}</Text>
+      <Text fontSize="text-sm" lineHeight={20}>
+        {value}
+      </Text>
+    </View>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  const { color } = useTheme();
+/** A labelled amount, with its helper under the input as the kit Form field draws it. */
+function AmountField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        gap: space.md,
-        paddingVertical: space.sm,
-        borderTopWidth: 1,
-        borderTopColor: color.line,
-      }}
-    >
-      <Text fontSize="text-sm" fontWeight="font-bold">
-        {label}
-      </Text>
-      <Text fontSize="text-sm" tone="body" style={{ flex: 1, textAlign: "right" }}>
-        {value}
-      </Text>
+    <View>
+      <FieldLabel label={label} />
+      {children}
+      {hint ? (
+        <Text role="fieldHint" style={{ marginTop: FIELD_GAP }}>
+          {hint}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -208,11 +191,15 @@ export default function ListReviewScreen() {
   const navigation = useTypedNavigation();
   const route = useRoute<RouteProps<"ListReview">>();
   const manual = Boolean(route.params?.manual);
+  // Only DevFixture passes `design`: the frame's draft, with every action a no-op, and every write, navigation into
+  // the flow and location prompt below returning early (plan §0).
+  const design = __DEV__ ? (route.params as { design?: ListFlowDesign } | undefined)?.design : undefined;
   const { color } = useTheme();
   const appear = useAppear();
-  const insets = useSafeAreaInsets();
   const { categories } = useGlobalContext();
-  const flow = useListDraft();
+  const real = useListDraft();
+  const seeded = useMemo(() => (design && seed ? seed.seededFlow(design) : null), [design]);
+  const flow = seeded ?? real;
   const { draft, run } = flow;
   const { data: rules } = useDepositRules();
 
@@ -221,6 +208,15 @@ export default function ListReviewScreen() {
   const categorySheet = useRef<BottomSheetModal>(null);
   const specSheet = useRef<BottomSheetModal>(null);
   const [openSpec, setOpenSpec] = useState<Spec | null>(null);
+  // Under a seed that names a parent, the category sheet opens on its child list.
+  const seedSheet = design?.sheet;
+  const initialParent = useMemo(
+    () =>
+      seedSheet && typeof seedSheet === "object" && "category" in seedSheet
+        ? categories.find((c) => c.title === seedSheet.category) ?? null
+        : null,
+    [seedSheet, categories]
+  );
   const addressSheet = useRef<AddressPickerSheetHandle>(null);
   const {
     addresses,
@@ -275,7 +271,8 @@ export default function ListReviewScreen() {
     []
   );
   useEffect(() => {
-    if (!addressesSettled) return;
+    // A seed never prefills: the default address, GPS and the reverse geocoder are all outside the fixture.
+    if (design || !addressesSettled) return;
     const pass = addressesLoading ? "early" : "loaded";
     if (prefillPass.current.loaded || prefillPass.current[pass]) return;
     const afterEarly = prefillPass.current.early;
@@ -338,6 +335,24 @@ export default function ListReviewScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parent, rules]);
 
+  // A seed's sheet opens on mount, so the fixture shows it with no tap. After a frame: the modal's ref is set by then.
+  const seedSpecKey = seedSheet && typeof seedSheet === "object" && "spec" in seedSheet ? seedSheet.spec : null;
+  useEffect(() => {
+    if (!seedSheet || !draft) return;
+    const timer = setTimeout(() => {
+      if (seedSpecKey) {
+        const spec = currentSpecs(draft).find((s) => s.key === seedSpecKey);
+        if (!spec) return;
+        setOpenSpec(spec);
+        specSheet.current?.present();
+      } else if (seedSheet === "category" || (typeof seedSheet === "object" && "category" in seedSheet)) {
+        categorySheet.current?.present();
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedSheet]);
+
   if (!draft) return <NonScrollableContainer>{null}</NonScrollableContainer>;
   const f = draft.fields;
 
@@ -370,7 +385,10 @@ export default function ListReviewScreen() {
 
   // No analytics event: the events endpoint takes the names it knows, and none of
   // them is about worth.
-  const onConfirmWorth = () => flow.dispatch({ type: "confirmWorth" });
+  const onConfirmWorth = () => {
+    if (design) return;
+    flow.dispatch({ type: "confirmWorth" });
+  };
 
   const onCondition = (value: Condition) => {
     flow.track("condition_confirmed", {
@@ -381,6 +399,7 @@ export default function ListReviewScreen() {
   };
 
   const onCategory = (value: CategoryValue) => {
+    if (design) return;
     categorySheet.current?.dismiss();
     // A different category clears the specs in the reducer (the sheet said
     // so); this asks for the new one's.
@@ -389,16 +408,19 @@ export default function ListReviewScreen() {
   };
 
   const onPressSpec = (spec: Spec) => {
+    if (design) return;
     setOpenSpec(spec);
     specSheet.current?.present();
   };
 
   const onSaveSpec = (value: SpecValue | null) => {
+    if (design) return;
     specSheet.current?.dismiss();
     if (openSpec) flow.dispatch({ type: "setSpec", key: openSpec.key, value });
   };
 
   const fillForCategory = () => {
+    if (design) return;
     const hint = draft.fields.category.value;
     if (!hint) return;
     // Titles only: the extraction service's hint shape predates category ids.
@@ -419,6 +441,8 @@ export default function ListReviewScreen() {
   };
 
   const openLocationPicker = () => {
+    // Under a seed neither the sheet nor the map (and its location prompt) opens.
+    if (design) return;
     // The map opens directly, as it always has, only for an owner known to
     // have nothing saved (D16) or whose list failed to load. While the list
     // is still loading the sheet opens and shows that; treating "not loaded
@@ -455,6 +479,7 @@ export default function ListReviewScreen() {
   const ready = missing.length === 0;
 
   const onBlockedPreview = () => {
+    if (design) return;
     setShowMissing(true);
     const first = missing[0];
     const y = first ? sectionY.current[first.key] : undefined;
@@ -498,19 +523,20 @@ export default function ListReviewScreen() {
     !streaming &&
     uploadedPhotos(draft).length > 0;
 
+  // No required mark on any field: the frames draw none (2083:14692); the Preview gate and "Still needed" say
+  // what is missing.
   const textField = (
     field: TextFieldName,
     label: string,
     noun: string,
     placeholder: string,
-    options: { multiline?: boolean; required?: boolean } = {}
+    options: { multiline?: boolean } = {}
   ) => {
     const state = f[field];
     return (
       <AiValueFade value={state.value} active={state.source === "ai"}>
         <TextField
           label={labelWithSource(label, state.source)}
-          required={options.required}
           hint={state.value ? undefined : evidenceHint(state.evidence, noun)}
           placeholder={placeholder}
           value={state.value ?? ""}
@@ -528,13 +554,13 @@ export default function ListReviewScreen() {
       <Animated.View
         layout={appear.layout}
         onLayout={onLayoutSection("category")}
-        style={{ marginBottom: density.fieldGap }}
+        style={{ marginBottom: SECTION_GAP, gap: LABEL_GAP }}
       >
-        <FieldLabel label={labelWithSource("Category", f.category.source)} required />
+        <Text role="fieldLabel">{labelWithSource("Category", f.category.source)}</Text>
         {/* The label, not the value: the app attaching the id to the model's
             category is not a new value, and must not wash the field again. */}
         <AiValueFade value={categoryLabel} active={f.category.source === "ai"}>
-          <PickerRow
+          <PickerField
             icon={
               <CategoryIcon
                 name={f.category.value?.parent ?? ""}
@@ -544,12 +570,15 @@ export default function ListReviewScreen() {
             }
             value={categoryLabel}
             placeholder="Choose a category"
-            onPress={() => categorySheet.current?.present()}
+            onPress={() => {
+              if (design) return;
+              categorySheet.current?.present();
+            }}
             accessibilityLabel={categoryLabel ? `Category, ${categoryLabel}` : "Choose a category"}
           />
         </AiValueFade>
         {showFillRest ? (
-          <Button variant="outline" size="compact" style={{ marginTop: space.sm }} onPress={fillForCategory}>
+          <Button variant="outline" size="compact" onPress={fillForCategory}>
             Fill the rest for this category
           </Button>
         ) : null}
@@ -561,161 +590,176 @@ export default function ListReviewScreen() {
           specs={specs}
           loading={specsLoading(draft)}
           onPressSpec={onPressSpec}
+          style={{ marginBottom: SECTION_GAP }}
         />
       </Animated.View>
     </>
   );
 
+  const depositText = draft.depositTouched
+    ? `Deposit ${formatCurrency(deposit)} · `
+    : depositFromWorth
+    ? `Deposit ${formatCurrency(deposit)} · ${formatNumber(rule.worth_share ?? 0)}% of what it's worth · `
+    : `Deposit ${formatCurrency(deposit)} · ${formatNumber(rule.multiplier)} × your price a day · `;
+
   return (
     <NonScrollableContainer>
-      <FlowHeader step={3} />
-      <FieldFrame>
-        <KeyboardAwareScrollView
-          ref={scrollRef}
-          keyboardShouldPersistTaps="handled"
-          enableOnAndroid
-          extraScrollHeight={space.md}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingHorizontal: SCREEN_GUTTER,
-            paddingTop: space.md,
-            paddingBottom: space.xl,
-          }}
-        >
-          <View style={{ marginBottom: density.section }}>
-            <Text fontSize="text-xl" fontWeight="font-bold" accessibilityRole="header">
-              {"Two quick checks,\nthen submit."}
-            </Text>
-            <Text tone="body" fontSize="text-md" style={{ marginTop: space.sm }}>
-              We filled in what we were sure about and left the rest blank. Set a price and confirm
-              the condition, and glance over anything marked AI.
-            </Text>
-            {/* One reserved line, so the form below does not jump when the
-                stream ends or a note appears. */}
-            <Text
-              fontSize="text-sm"
-              tone={note ? "warning" : "brand"}
-              accessibilityLiveRegion="polite"
-              style={{ marginTop: space.sm, minHeight: 21 }}
-            >
-              {streaming ? "Still reading your photos" : note ?? ""}
-            </Text>
-          </View>
+      <FlowHeader />
+      <KeyboardAwareScrollView
+        ref={scrollRef}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid
+        extraScrollHeight={space.md}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: SCREEN_GUTTER,
+          paddingTop: 8,
+          paddingBottom: SECTION_GAP,
+        }}
+      >
+        {/* The kit Stepper scrolls with the form (2083:14692), under the 56 top bar. */}
+        <View style={{ marginBottom: SECTION_GAP }}>
+          <StepProgress step={3} total={4} showLabel={false} />
+        </View>
 
-          {/* Photos strip */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: density.section }}>
-            <View style={{ flexDirection: "row", gap: space.sm }}>
-              {photos.map((photo) => (
-                <Image
-                  key={photo.id}
-                  source={{ uri: photo.remoteUrl ?? photo.localUri }}
-                  style={{ width: THUMB, height: THUMB, borderRadius: radius.input, backgroundColor: color.skeleton }}
-                  contentFit="cover"
-                />
-              ))}
-              <TouchableOpacity
-                onPress={() => navigation.navigate("ListAddPhotos")}
-                accessibilityRole="button"
-                accessibilityLabel="Add more photos"
-                style={{
-                  height: THUMB,
-                  paddingHorizontal: space.md,
-                  borderRadius: radius.input,
-                  borderWidth: 1,
-                  borderStyle: "dashed",
-                  borderColor: color.inputLine,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: space.xs,
-                }}
-              >
-                <PlusIcon size={18} color={color.textDim} />
-                <Text fontSize="text-sm" tone="dim">
-                  add more any time
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-
-          {categoryFirst ? categorySection : null}
-
-          {/* Check 1 · how it is rented, and the prices (ENG-281) */}
-          <View onLayout={onLayoutSection("rate")} style={{ marginBottom: density.fieldGap }}>
-            <PulseOnce>
-              <PlanPricing
-                label="Check 1 · how you rent it"
-                value={shownPlans}
-                onChange={onPlans}
-                dailyHint="Think about what you'd pay to borrow it for a day."
-                showErrors={showMissing}
-              />
-            </PulseOnce>
-            {rate !== null && deposit ? (
-              <Animated.View entering={appear.entering} exiting={appear.exiting}>
-                <Text fontSize="text-sm" tone="body" style={{ marginTop: 2 }}>
-                  {draft.depositTouched
-                    ? `Deposit Rs ${formatNumber(deposit)} · `
-                    : depositFromWorth
-                    ? `Deposit Rs ${formatNumber(deposit)} · ${formatNumber(rule.worth_share ?? 0)}% of what it's worth · `
-                    : `Deposit Rs ${formatNumber(deposit)} · ${formatNumber(rule.multiplier)} × your price a day · `}
-                  <Text
-                    fontSize="text-sm"
-                    fontWeight="font-bold"
-                    tone="brand"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      const y = sectionY.current.deposit;
-                      if (y !== undefined) scrollRef.current?.scrollToPosition(0, Math.max(0, y - space.md), true);
-                      depositRef.current?.focus();
-                    }}
-                  >
-                    change
-                  </Text>
-                </Text>
-              </Animated.View>
+        <View style={{ marginBottom: SECTION_GAP, gap: 8 }}>
+          <Text role="screenTitle" accessibilityRole="header">
+            {"Two quick checks,\nthen submit."}
+          </Text>
+          <Text tone="body" fontSize="text-sm" lineHeight={20}>
+            We filled in what we were sure about and left the rest blank. Set a price and confirm
+            the condition, and glance over anything marked AI.
+          </Text>
+          {/* A failed or rate-limited run says so in the kit Notice (2095:24558, 2095:24717). No frame draws the
+              streaming line, so it stays a plain line. Nothing is reserved for either, so the form below moves
+              when one appears (plan §5a #3). */}
+          <View accessibilityLiveRegion="polite">
+            {note ? (
+              <Notice tone="warning">{note}</Notice>
+            ) : streaming ? (
+              <Text fontSize="text-sm" lineHeight={20} tone="brand">
+                Still reading your photos
+              </Text>
             ) : null}
           </View>
+        </View>
 
-          {/* Check 2 · condition — glides down as the deposit line appears. */}
-          <Animated.View
-            layout={appear.layout}
-            onLayout={onLayoutSection("condition")}
-            style={{ marginBottom: density.fieldGap }}
-          >
-            <FieldLabel label="Check 2 · condition" required />
-            <PulseOnce>
-              <SegmentedChoice<Condition>
-                accessibilityLabel="Condition"
-                value={draft.conditionConfirmed ? f.condition.value : null}
-                suggested={draft.conditionProposal}
-                suggestedLabel="AI's guess"
-                onChange={onCondition}
-                options={CONDITIONS.map((c) => ({
-                  value: c,
-                  label: CONDITION_LABEL[c],
-                  hint: CONDITION_HINT[c],
-                }))}
+        {/* Photos strip */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: SECTION_GAP }}>
+          <View style={{ flexDirection: "row", gap: space.sm }}>
+            {photos.map((photo) => (
+              <Image
+                key={photo.id}
+                source={{ uri: photo.remoteUrl ?? photo.localUri }}
+                style={{ width: THUMB, height: THUMB, borderRadius: radius.button, backgroundColor: color.skeleton }}
+                contentFit="cover"
               />
-            </PulseOnce>
-            <Text fontSize="text-xs" tone="body" style={{ marginTop: space.xs }}>
-              Pick what's true — it protects you if there's ever a dispute.
-            </Text>
-          </Animated.View>
-
-          {categoryFirst ? null : categorySection}
-
-          <View onLayout={onLayoutSection("title")}>
-            {textField("title", "Title", "title", "e.g. Sony PS5 with 2 controllers", { required: true })}
+            ))}
+            <TouchableOpacity
+              onPress={() => {
+                if (design) return;
+                navigation.navigate("ListAddPhotos");
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Add more photos"
+              style={{
+                height: THUMB,
+                paddingHorizontal: 16,
+                borderRadius: radius.button,
+                borderWidth: 1,
+                borderStyle: "dashed",
+                borderColor: color.line,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <PlusIcon size={18} color={color.textDim} />
+              <Text fontSize="text-sm" lineHeight={20} tone="dim">
+                add more any time
+              </Text>
+            </TouchableOpacity>
           </View>
+        </ScrollView>
+
+        {categoryFirst ? categorySection : null}
+
+        {/* Check 1 · how it is rented, and the prices (ENG-281) */}
+        <View onLayout={onLayoutSection("rate")} style={{ marginBottom: SECTION_GAP, gap: LABEL_GAP }}>
+          <PulseOnce>
+            <PlanPricing
+              label="Check 1 · how you rent it"
+              value={shownPlans}
+              onChange={onPlans}
+              dailyHint="Think about what you'd pay to borrow it for a day."
+              showErrors={showMissing}
+            />
+          </PulseOnce>
+          {rate !== null && deposit ? (
+            <Animated.View entering={appear.entering} exiting={appear.exiting}>
+              <Text fontSize="text-sm" lineHeight={20} tone="body">
+                {depositText}
+                <Text
+                  fontSize="text-sm"
+                  lineHeight={20}
+                  fontWeight="font-semibold"
+                  tone="brand"
+                  accessibilityRole="button"
+                  onPress={() => {
+                    const y = sectionY.current.deposit;
+                    if (y !== undefined) scrollRef.current?.scrollToPosition(0, Math.max(0, y - space.md), true);
+                    depositRef.current?.focus();
+                  }}
+                >
+                  change
+                </Text>
+              </Text>
+            </Animated.View>
+          ) : null}
+        </View>
+
+        {/* Check 2 · condition — glides down as the deposit line appears. */}
+        <Animated.View
+          layout={appear.layout}
+          onLayout={onLayoutSection("condition")}
+          style={{ marginBottom: SECTION_GAP, gap: LABEL_GAP }}
+        >
+          <SectionHeader title="Check 2 · condition" gutter={false} flush />
+          <PulseOnce>
+            <SegmentedChoice<Condition>
+              accessibilityLabel="Condition"
+              value={draft.conditionConfirmed ? f.condition.value : null}
+              suggested={draft.conditionProposal}
+              suggestedLabel="AI's guess"
+              onChange={onCondition}
+              options={CONDITIONS.map((c) => ({
+                value: c,
+                label: CONDITION_LABEL[c],
+                hint: CONDITION_HINT[c],
+              }))}
+            />
+          </PulseOnce>
+          <Text role="fieldHint">Pick what's true — it protects you if there's ever a dispute.</Text>
+        </Animated.View>
+
+        {categoryFirst ? null : categorySection}
+
+        {/* The kit TextField ends in its 18pt field gap; each wrapper makes up the frame's 24 (32 after the last). */}
+        <View onLayout={onLayoutSection("title")} style={{ marginBottom: DETAIL_GAP - density.fieldGap }}>
+          {textField("title", "Title", "title", "e.g. Sony PS5 with 2 controllers")}
+        </View>
+        <View style={{ marginBottom: DETAIL_GAP - density.fieldGap }}>
           {textField("brand_name", "Brand", "brand", "e.g. Sony")}
+        </View>
+        <View style={{ marginBottom: DETAIL_GAP - density.fieldGap }}>
           {textField("model_name", "Model", "model", "e.g. CFI-1216A")}
-          <View onLayout={onLayoutSection("description")}>
-            {textField("description", "Description", "description", "What it is and what's included", {
-              multiline: true,
-              required: true,
-            })}
-          </View>
-
+        </View>
+        <View onLayout={onLayoutSection("description")} style={{ marginBottom: DETAIL_GAP - density.fieldGap }}>
+          {textField("description", "Description", "description", "What it is and what's included", {
+            multiline: true,
+          })}
+        </View>
+        <View style={{ marginBottom: SECTION_GAP - density.fieldGap }}>
           <TextField
             label="Usage tips · optional"
             placeholder="e.g. Update the console before the first game"
@@ -723,57 +767,55 @@ export default function ListReviewScreen() {
             onChangeText={(v) => edit("usage_description", v)}
             multiline
           />
+        </View>
 
-          {/* Pickup */}
-          <View onLayout={onLayoutSection("location")}>
-            <PickupField
-              location={f.location.value}
-              addresses={addresses}
-              addressesKnown={!addressesLoading && !addressesFailed}
-              addressesSettled={addressesSettled}
-              saveAs={draft.saveAddressAs ?? null}
-              onChange={openLocationPicker}
-              onChangeFlat={(v) =>
-                f.location.value && edit("location", { ...f.location.value, fullAddress: v })
-              }
-              onSaveAs={(value) => flow.dispatch({ type: "setSaveAddressAs", value })}
-            />
-          </View>
+        {/* Pickup (it ends in the form's field gap too) */}
+        <View onLayout={onLayoutSection("location")} style={{ marginBottom: SECTION_GAP - density.fieldGap }}>
+          <PickupField
+            location={f.location.value}
+            addresses={addresses}
+            addressesKnown={!addressesLoading && !addressesFailed}
+            addressesSettled={addressesSettled}
+            saveAs={draft.saveAddressAs ?? null}
+            onChange={openLocationPicker}
+            onChangeFlat={(v) =>
+              f.location.value && edit("location", { ...f.location.value, fullAddress: v })
+            }
+            onSaveAs={(value) => flow.dispatch({ type: "setSaveAddressAs", value })}
+          />
+        </View>
 
-          {/* Worth and stock (ENG-155). Worth is needed to publish: it decides whether
-              you must check the customer's ID at the handover. A figure suggested from the photos is already in
-              the box, and counts once it is confirmed or changed. Nothing here says
-              where the figure came from. */}
-          <View onLayout={onLayoutSection("worth")} style={{ marginBottom: density.fieldGap }}>
-            <FieldLabel
-              label="Worth"
-              required
-              hint={WORTH_HINT}
-            />
+        {/* Worth and stock (ENG-155). Worth is needed to publish: it decides whether
+            you must check the customer's ID at the handover. A figure suggested from the photos is already in
+            the box, and counts once it is confirmed or changed. Nothing here says
+            where the figure came from. */}
+        <View onLayout={onLayoutSection("worth")} style={{ marginBottom: SECTION_GAP, gap: LABEL_GAP }}>
+          <AmountField label="Worth" hint={WORTH_HINT}>
             <AmountInput
               accessibilityLabel="Worth"
               value={f.worth.value ?? ""}
               onChangeText={onWorth}
               placeholder="e.g. 45000"
             />
-            {f.worth.source === "ai" && f.worth.value ? (
-              <Animated.View
-                entering={appear.entering}
-                exiting={appear.exiting}
-                style={{ flexDirection: "row", alignItems: "center", gap: space.md, marginTop: space.sm }}
-              >
-                <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
-                  Is this about right? Change it, or confirm it.
-                </Text>
-                <Button variant="outline" size="compact" onPress={onConfirmWorth} accessibilityLabel="Confirm worth">
-                  Confirm
-                </Button>
-              </Animated.View>
-            ) : null}
-          </View>
+          </AmountField>
+          {f.worth.source === "ai" && f.worth.value ? (
+            <Animated.View
+              entering={appear.entering}
+              exiting={appear.exiting}
+              style={{ flexDirection: "row", alignItems: "center", gap: 16 }}
+            >
+              <Text fontSize="text-sm" lineHeight={20} tone="body" style={{ flex: 1 }}>
+                Is this about right? Change it, or confirm it.
+              </Text>
+              <Button variant="outline" size="compact" onPress={onConfirmWorth} accessibilityLabel="Confirm worth">
+                Confirm
+              </Button>
+            </Animated.View>
+          ) : null}
+        </View>
 
-          <View onLayout={onLayoutSection("quantity")} style={{ marginBottom: density.fieldGap }}>
-            <FieldLabel label="In stock" required hint="How many of this item you have to rent out" />
+        <View onLayout={onLayoutSection("quantity")} style={{ marginBottom: SECTION_GAP }}>
+          <AmountField label="In stock" hint="How many of this item you have to rent out">
             <AmountInput
               accessibilityLabel="In stock"
               prefix={null}
@@ -782,48 +824,37 @@ export default function ListReviewScreen() {
               onChangeText={(v) => edit("quantity", v)}
               placeholder="1"
             />
-          </View>
+          </AmountField>
+        </View>
 
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: space.md,
-              marginBottom: density.fieldGap,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text fontSize="text-md" fontWeight="font-bold">
-                This product is not delivered
-              </Text>
-              <Text fontSize="text-xs" tone="body">
-                Even if you deliver, this one is for pickup only.
-              </Text>
-            </View>
-            <AppSwitch
-              accessibilityLabel="This product is not delivered"
-              value={Boolean(draft.notDelivered)}
-              onValueChange={(value) => flow.dispatch({ type: "setNotDelivered", value })}
-              trackColor={{ true: color.brand, false: color.inputLine }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-
-          {/* Also set for you */}
-          <View
-            onLayout={onLayoutSection("deposit")}
-            style={{
-              marginBottom: density.section,
-              padding: space.md,
-              borderRadius: radius.group,
-              backgroundColor: color.surfaceRaised,
-            }}
-          >
-            <Text role="groupHeader" style={{ marginBottom: space.sm }}>
-              Also set for you
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            marginBottom: SECTION_GAP,
+          }}
+        >
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text fontSize="text-md" lineHeight={24} fontWeight="font-semibold">
+              This product is not delivered
             </Text>
-            <FieldLabel label="Deposit" />
+            <Text role="fieldHint">Even if you deliver, this one is for pickup only.</Text>
+          </View>
+          <AppSwitch
+            accessibilityLabel="This product is not delivered"
+            value={Boolean(draft.notDelivered)}
+            onValueChange={(value) => flow.dispatch({ type: "setNotDelivered", value })}
+            trackColor={{ true: color.brand, false: color.line }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
+
+        {/* Also set for you */}
+        <View onLayout={onLayoutSection("deposit")} style={{ gap: 16 }}>
+          <Text role="groupHeader">Also set for you</Text>
+          <AmountField label="Deposit">
             <AmountInput
               inputRef={depositRef}
               accessibilityLabel="Deposit"
@@ -831,36 +862,29 @@ export default function ListReviewScreen() {
               onChangeText={onDeposit}
               placeholder={String(rule.floor)}
             />
-            <View style={{ marginTop: space.md }}>
-              <InfoRow label="Availability" value="Available now · block dates after you submit" />
-              <InfoRow label="Contact" value="You · from your profile" />
-            </View>
-          </View>
-        </KeyboardAwareScrollView>
-      </FieldFrame>
+          </AmountField>
+          <InfoRow label="Availability" value="Available now · block dates after you submit" />
+          <InfoRow label="Contact" value="You · from your profile" />
+        </View>
+      </KeyboardAwareScrollView>
 
-      <View
-        style={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          paddingBottom: insets.bottom + space.sm,
-          borderTopWidth: 1,
-          borderTopColor: color.line,
-          backgroundColor: color.canvas,
-        }}
-      >
+      {/* The kit Bottom bar's children mode: its hairline and insets, with the "Still needed" line over the
+          button, and the button wrapped so a tap on it while it is disabled still goes somewhere. */}
+      <BottomBar>
         {!ready && showMissing ? (
-          <Text
-            fontSize="text-sm"
-            tone="dim"
-            accessibilityLiveRegion="polite"
-            style={{ textAlign: "center", marginBottom: space.sm }}
-          >
+          <Text fontSize="text-sm" tone="dim" accessibilityLiveRegion="polite" style={{ textAlign: "center" }}>
             {stillNeededLabel(missing)}
           </Text>
         ) : null}
         {ready ? (
-          <Button onPress={() => navigation.navigate("ListPreview")}>Preview listing</Button>
+          <Button
+            onPress={() => {
+              if (design) return;
+              navigation.navigate("ListPreview");
+            }}
+          >
+            Preview listing
+          </Button>
         ) : (
           // A disabled button swallows taps; this catches them so a tap on it
           // still takes the owner to the first thing it is waiting for.
@@ -876,19 +900,23 @@ export default function ListReviewScreen() {
             </View>
           </Pressable>
         )}
-      </View>
+      </BottomBar>
 
       <CategorySheet
         ref={categorySheet}
         categories={categories}
         onSelect={onCategory}
         note={specs.length > 0 ? "Changing the category clears the specs." : null}
+        initialParent={initialParent}
       />
       <SpecSheet
         ref={specSheet}
         spec={openSpec}
         onSave={onSaveSpec}
-        onCancel={() => specSheet.current?.dismiss()}
+        onCancel={() => {
+          if (design) return;
+          specSheet.current?.dismiss();
+        }}
       />
       <AddressPickerSheet
         ref={addressSheet}

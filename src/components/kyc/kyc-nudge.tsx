@@ -1,13 +1,13 @@
 import { useKycStatus } from "@/backend/kyc";
 import { Button, Text } from "@/components/core";
 import { useGlobalContext } from "@/context/global-context";
-import { radius, space } from "@/lib/design-tokens";
+import { radius } from "@/lib/design-tokens";
 import { track } from "@/lib/events";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { KycChip } from "./kyc-chip";
 
 /**
@@ -17,8 +17,14 @@ import { KycChip } from "./kyc-chip";
  *
  * The seen flag is set the first time the card renders, not when it is dismissed, so it shows
  * once per account per device. If the flag cannot be read the card may show again; that is all.
+ *
+ * `design` (dev-only, a design fixture's seed): show it whenever eligible, without the flag or any event, and make
+ * both actions inert.
+ *
+ * 2096:29335: 1px `line` r12, padding 16, gap 16; the 40 chip 16 from the 16/24 SemiBold title and 14/20 body; the
+ * tonal 44 "Verify my business" (the footer stays the one primary), then "Not now" 14/20 SemiBold in a 28 row.
  */
-export function KycNudge() {
+export function KycNudge({ design }: { design?: boolean } = {}) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const { userDetails } = useGlobalContext();
@@ -33,6 +39,10 @@ export function KycNudge() {
 
   useEffect(() => {
     if (!eligible || !username) return;
+    if (design) {
+      setVisible(true);
+      return;
+    }
     let cancelled = false;
     const key = `kyc_nudge_seen:${username}`;
     (async () => {
@@ -50,47 +60,49 @@ export function KycNudge() {
     return () => {
       cancelled = true;
     };
-  }, [eligible, username]);
+  }, [eligible, username, design]);
 
   if (!visible) return null;
 
   return (
-    <View
-      style={{
-        gap: space.md,
-        padding: space.md,
-        borderRadius: radius.group,
-        borderWidth: 1,
-        borderColor: color.line,
-        backgroundColor: color.surface,
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
+    <View style={{ gap: 16, padding: 16, borderRadius: radius.button, borderWidth: 1, borderColor: color.line }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
         <KycChip icon="shield" tone="brand" />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text fontWeight="font-bold">Get a Verified business badge</Text>
+          <Text fontSize="text-md" fontWeight="font-semibold">
+            Get a Verified business badge
+          </Text>
           <Text tone="body" fontSize="text-sm">
             Show renters your business is real. It takes a few minutes.
           </Text>
         </View>
       </View>
       <Button
+        variant="outline"
+        tone="tonal"
+        size="compact"
         onPress={() => {
+          if (design) return;
           track("kyc_nudge", { action: "opened" });
           navigation.navigate("KycIntro", { source: "post_listing" });
         }}
       >
         Verify my business
       </Button>
-      <Button
-        variant="ghost"
+      <Pressable
+        accessibilityRole="button"
         onPress={() => {
+          if (design) return;
           track("kyc_nudge", { action: "dismissed" });
           setVisible(false);
         }}
+        hitSlop={8}
+        style={{ alignItems: "center", paddingVertical: 4 }}
       >
-        Not now
-      </Button>
+        <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
+          Not now
+        </Text>
+      </Pressable>
     </View>
   );
 }
