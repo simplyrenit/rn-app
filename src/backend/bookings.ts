@@ -10,7 +10,7 @@ import {
   refundPending,
 } from "@/lib/booking";
 import type { EndEarlyQuote } from "@/lib/billing";
-import type { DeliveredBy } from "@/lib/delivery";
+import type { DeliveredBy, EarlyReturnRequest } from "@/lib/delivery";
 import { BOOKINGS_ENDPOINT, GET_PRODUCT_DETAILS } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { correctedNow } from "@/lib/server-clock";
@@ -276,10 +276,29 @@ export async function answerWindowChange(number: string, accept: boolean): Promi
  * B1: the slots Renit's courier partner can collect the return in (`courier_windows`). `day` is the day offered, `earliest`
  * the first day with no late fee (the last day, or the next open day when that has no slot).
  */
-export async function fetchReturnWindows(number: string): Promise<{ day: string; earliest: string; windows: TimeWindow[] }> {
-  return (
-    await axiosInstance.get<{ day: string; earliest: string; windows: TimeWindow[] }>(bookingUrl(number, "return-window/"))
-  ).data;
+export async function fetchReturnWindows(number: string): Promise<ReturnWindows> {
+  return (await axiosInstance.get<ReturnWindows>(bookingUrl(number, "return-window/"))).data;
+}
+
+export interface ReturnWindows {
+  day: string;
+  earliest: string;
+  windows: TimeWindow[];
+  /** ENG-442: before the last day, the earlier days' slots the shop must accept first. Absent from an older server. */
+  early_days?: { day: string; windows: TimeWindow[] }[];
+  /** ENG-442: Return now, while the shop is open; the slot is worked out again when the shop accepts. */
+  now?: TimeWindow | null;
+  reply_by?: string | null;
+  reply_minutes?: number;
+  request?: EarlyReturnRequest | null;
+}
+
+/**
+ * ENG-442: asks the shop for an early return, an earlier day's slot or Return now. Nothing is booked until the shop accepts.
+ * `409 request_open`, `early_closed`, `window_closed`.
+ */
+export async function askEarlyReturn(number: string, pick: { start: string } | { now: true }): Promise<BookingCustomer> {
+  return (await axiosInstance.post<{ booking: BookingCustomer }>(bookingUrl(number, "early-return/"), pick)).data.booking;
 }
 
 /** Picks one. `409 window_taken` when it has just filled, `window_closed` when it is no longer offered. */

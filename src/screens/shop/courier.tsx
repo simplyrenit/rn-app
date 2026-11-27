@@ -1,4 +1,5 @@
 import { useClaimKinds } from "@/backend/claims";
+import { answerEarlyReturn } from "@/backend/shop-bookings";
 import { handedToRider, markPacked } from "@/backend/shop-courier";
 import { shopBookingQueryKey } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
@@ -17,7 +18,9 @@ import { reportUntilLine } from "@/lib/claims";
 import { captured, dayBlock } from "@/lib/day-of";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { successFeedback } from "@/lib/haptics";
-import { BookingShop } from "@/lib/shop-booking";
+import { dayShort } from "@/lib/booking";
+import { BookingShop, shopActionErrorText } from "@/lib/shop-booking";
+import { toast } from "@/lib/toast";
 import {
   HANDOVER_NOTE,
   OwnerCourier,
@@ -26,6 +29,8 @@ import {
   bannerTone,
   canPack,
   courierCall,
+  courierOf,
+  earlyReturnCard,
   courierErrorText,
   courierPayoutLine,
   legSteps,
@@ -39,7 +44,7 @@ import { payoutPending, returnCopy } from "@/lib/shop-handover";
 import { customerName } from "@/lib/shop-ring";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { CheckCircleIcon } from "react-native-heroicons/outline";
 import { useQueryClient } from "react-query";
@@ -290,6 +295,63 @@ export function CourierPack({ booking, courier, receivedAt }: Props) {
 }
 
 /**
+ * ENG-442: the customer asked for an early courier return. Accept and Renit books the rider (Return now at once);
+ * decline, or let the time run out, and it comes back on the last day. Shown here and on the booking screen.
+ */
+export function EarlyReturnCard({ booking, now }: { booking: BookingShop; now: Date }) {
+  const queryClient = useQueryClient();
+  const [answering, setAnswering] = useState<"accept" | "decline" | null>(null);
+  const busy = useRef(false);
+  const courier = courierOf(booking);
+  const card = courier ? earlyReturnCard(courier, booking.can, booking.product.title, now) : null;
+  if (!courier || !card) return null;
+
+  const answer = async (accept: boolean) => {
+    if (busy.current) return;
+    busy.current = true;
+    setAnswering(accept ? "accept" : "decline");
+    try {
+      queryClient.setQueryData(shopBookingQueryKey(booking.number), await answerEarlyReturn(booking.number, accept));
+      refreshShop(queryClient);
+      if (accept) toast.success("Accepted", { message: "Renit books the rider." });
+      else toast.success("Declined", { message: `It comes back ${dayShort(courier.return.earliest)}.` });
+    } catch (error) {
+      const failure = apiError(error);
+      if (failure?.code === "window_gone") toast.error("That time has gone", { message: "The customer picks another." });
+      else toast.error("We couldn't send your answer", { message: shopActionErrorText(failure) });
+      // Ended meanwhile (the time ran out, the customer picked another): read it again.
+      if (failure && failure.status > 0) void queryClient.invalidateQueries(shopBookingQueryKey(booking.number));
+    } finally {
+      busy.current = false;
+      setAnswering(null);
+    }
+  };
+
+  return (
+    <Panel style={{ padding: space.md, gap: space.sm }}>
+      <Text fontSize="text-md" fontWeight="font-bold">
+        {card.title}
+      </Text>
+      <Text fontSize="text-sm" tone="body">
+        {card.body}
+      </Text>
+      <View style={{ flexDirection: "row", gap: space.sm }}>
+        <View style={{ flex: 1 }}>
+          <Button loading={answering === "accept"} disabled={answering !== null} onPress={() => void answer(true)}>
+            Accept
+          </Button>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button variant="outline" loading={answering === "decline"} disabled={answering !== null} onPress={() => void answer(false)}>
+            Decline
+          </Button>
+        </View>
+      </View>
+    </Panel>
+  );
+}
+
+/**
  * SH-10 for a booking Renit's courier carries: "Item arriving {window}" from the server, the return leg's steps, the
  * owner's own record of the item as it comes back (Borzo's return ends the rental by itself, ENG-416), both sets side by side, and
  * "Report a problem" once it is back. There is no code: the shop and the customer never meet.
@@ -330,6 +392,7 @@ export function CourierReturn({ booking, courier, receivedAt, watching }: Props)
 
       {booking.exit ? <Notice icon="info">This booking has ended. Open it to see what happened.</Notice> : null}
       <Banner courier={courier} />
+      <EarlyReturnCard booking={booking} now={now} />
 
       {arriving ? (
         <Notice tone="brand" icon="clock">
