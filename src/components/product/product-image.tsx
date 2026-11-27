@@ -4,12 +4,11 @@ import { IconButton } from "@/components/core/icon-button";
 import { Text } from "@/components/core/text";
 import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
-import { MaterialIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import Carousel from "pinar";
 import React, { useEffect, useState } from "react";
 import { Modal, Pressable, View, useWindowDimensions } from "react-native";
-import { PhotoIcon } from "react-native-heroicons/outline";
+import { PhotoIcon, XMarkIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Props {
@@ -42,6 +41,13 @@ interface Props {
   frameHeight?: number;
   /** Lets a contained caller draw its own indicator. */
   onGalleryStateChange?: (state: { index: number; count: number }) => void;
+  /**
+   * Opt-in: the 2.1 kit heart on its white disc (`FavouriteButton tile`, REVIEW
+   * b1-02) instead of the scrimmed photo heart. The product detail hero.
+   */
+  tileHeart?: boolean;
+  /** Dev seeds only: open the photo viewer on photo 1 at mount (04 2089:22279). */
+  initialViewerOpen?: boolean;
 }
 
 /**
@@ -84,6 +90,8 @@ export function ProductImage({
   frameWidth: frameWidthProp,
   frameHeight,
   onGalleryStateChange,
+  tileHeart = false,
+  initialViewerOpen = false,
 }: Props) {
   // Read per render, not once at module load: a module-scope width is frozen
   // at launch and goes stale with split-screen, foldables or a display-size
@@ -94,6 +102,7 @@ export function ProductImage({
   const safeAreaInsets = useSafeAreaInsets();
   const [failedImages, setFailedImages] = useState<string[]>([]);
   const [fullImage, setFullImage] = useState<string | null>(null);
+  const [viewerSeeded, setViewerSeeded] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
   /**
    * Each photo's intrinsic size, so the contained slide can be exactly the size
@@ -110,6 +119,12 @@ export function ProductImage({
   ).filter((image) => !failedImages.includes(image as string)) as string[];
 
   const count = galleryImages.length;
+  // The seed opens the viewer once, on the first photo, as a tap on it would.
+  useEffect(() => {
+    if (!initialViewerOpen || viewerSeeded || !galleryImages[0]) return;
+    setViewerSeeded(true);
+    setFullImage(galleryImages[0]);
+  }, [initialViewerOpen, viewerSeeded, galleryImages[0]]);
   // Only the primitives are watched: the callback is typically an inline
   // arrow, and depending on it would re-run this every time the parent
   // re-renders in response to it.
@@ -275,7 +290,7 @@ export function ProductImage({
           pointerEvents="box-none"
           style={{
             position: "absolute",
-            top: 8,
+            top: tileHeart ? 6 : 8, // tile: the 44 heart box at y 6 (04 2083:15678)
             // The page gutter, so the favourite lines up with the back control the
             // detail screen pins on the left.
             left: SCREEN_GUTTER,
@@ -294,13 +309,17 @@ export function ProductImage({
           )}
 
           {name ? (
-            <FavouriteButton
-              id={name}
-              isFavorite={Boolean(isFavorite)}
-              onPhoto
-              photoSize={40}
-              title={title}
-            />
+            tileHeart ? (
+              <FavouriteButton id={name} isFavorite={Boolean(isFavorite)} tile title={title} />
+            ) : (
+              <FavouriteButton
+                id={name}
+                isFavorite={Boolean(isFavorite)}
+                onPhoto
+                photoSize={40}
+                title={title}
+              />
+            )
           ) : null}
         </View>
       )}
@@ -364,13 +383,14 @@ export function ProductImage({
                 right: safeAreaInsets.right + 12,
               }}
             >
+              {/* 04 2089:22292: a 40 disc of white at 16% holding a 22 outline x-mark. */}
               <IconButton
                 size={40}
-                scrim
                 onPress={() => setFullImage(null)}
                 accessibilityLabel="Close image"
+                style={{ borderRadius: 20, backgroundColor: "rgba(255,255,255,0.16)" }}
               >
-                <MaterialIcons name="close" size={22} color={color.onPhoto} />
+                <XMarkIcon size={22} color={color.onPhoto} strokeWidth={1.5} />
               </IconButton>
             </View>
           </View>

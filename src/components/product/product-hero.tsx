@@ -11,6 +11,8 @@ interface Props {
   productId: string;
   title?: string;
   isFavorite?: boolean;
+  /** Dev seeds only: open the photo viewer at mount (04 2089:22279). */
+  initialViewerOpen?: boolean;
 }
 
 /**
@@ -31,6 +33,7 @@ export function ProductHero({
   productId,
   title,
   isFavorite,
+  initialViewerOpen,
 }: Props) {
   const { color } = useTheme();
   const { width } = useWindowDimensions();
@@ -55,6 +58,8 @@ export function ProductHero({
         title={title}
         isFavorite={isFavorite}
         showBack={false}
+        tileHeart
+        initialViewerOpen={initialViewerOpen}
       />
       </View>
     </View>

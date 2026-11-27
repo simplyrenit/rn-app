@@ -6,11 +6,11 @@ import { useCart } from "@/backend/cart";
 import { CartButton, RequestedLine } from "@/components/cart/parts";
 import {
   BackButton,
+  BottomBar,
   Button,
   Card,
   CrossFade,
   Text,
-  useButtonLabelColor,
 } from "@/components/core";
 import { BookingFacts } from "@/components/booking/booking-facts";
 import { DetailSection } from "@/components/product/detail-section";
@@ -44,7 +44,7 @@ import {
   useRoute,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { liveCopy, shopNameOf } from "@/lib/booking";
 import { apiError } from "@/lib/api-error";
 import { addFailure, cartLine, cartSize, rememberSearchDates } from "@/lib/cart";
@@ -80,7 +80,7 @@ import {
   LightBulbIcon,
   ShareIcon,
 } from "react-native-heroicons/outline";
-import { CheckIcon, ChevronRightIcon } from "react-native-heroicons/mini";
+import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ProductsSkeleton } from "./products-skeleton";
@@ -94,6 +94,7 @@ import { ProductsSkeleton } from "./products-skeleton";
  * a second size for the same component is how two surfaces drift apart.
  */
 const RAIL_GAP = 16;
+const SIMILAR_GAP = 18;
 const REVIEW_CARD_WIDTH = 285;
 
 /** The pinned band's own height, below the safe-area inset. */
@@ -106,45 +107,37 @@ const BAND_HEIGHT = 56;
  */
 const COLLAPSE_SPAN = 48;
 
-/**
- * The title block's inset. The design gives this block far more air than the
- * 26pt the rest of the page uses — it is the one place the page stops.
- */
-const TITLE_PAD_V = 32;
-/** Title to rating, and title column to share glyph. */
-const TITLE_GAP = 12;
+/** The title block's inset and the gap between its lines (04 2083:15682). */
+const TITLE_PAD = 24;
+const TITLE_GAP = 8;
+/** The share glyph's box (2083:15685). */
+const SHARE_SIZE = 24;
 
-/**
- * Every glyph below the hero is 20pt in the design: the share mark, each of
- * the five rating stars, and the three specification icons.
- */
+/** The three specification icons are 20pt in the design (2083:15706). */
 const GLYPH_SIZE = 20;
 
-const CTA_RADIUS = radius.button;
-
 /**
- * 44 tall at rest, so the bar measures the frame's 76. A floor, not a fixed
- * height, so the label can still grow the button at accessibility text sizes.
+ * "★★★★☆ 4.0 · 24 reviews" (04 2083:15688): five flush 16pt ink stars, 6 to the
+ * score and count at 70%. With no reviews, the words say so: five hollow stars
+ * read as zero-out-of-five, which damages exactly the new listings that need help.
  */
-const CTA_STYLE = {
-  minHeight: MIN_TOUCH_TARGET,
-  paddingVertical: 0,
-  borderRadius: CTA_RADIUS,
-} as const;
-
-/**
- * The bar's upward lift: black at 5%, offset 0/-2, blur 16 — a Figma blur is
- * twice a Core Animation radius, so 8. Light only; on dark the top hairline
- * carries the separation on its own, exactly as `shadow.dark` does for cards.
- * The colour is taken from `color.text`, which is black on the only theme that
- * draws this.
- */
-const BAR_LIFT = {
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: -2 },
-  elevation: 12,
-} as const;
+function RatingLine({ rating, count, isDark }: { rating?: number | null; count?: number | null; isDark: boolean }) {
+  if (!count) {
+    return (
+      <Text fontSize="text-sm" tone="dim">
+        Not yet rated
+      </Text>
+    );
+  }
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+      <Stars rating={rating ?? 0} isDark={isDark} size={16} tone="ink" gap={0} strokeWidth={1.5} />
+      <Text fontSize="text-sm" tone="body">
+        {`${(rating ?? 0).toFixed(1)} · ${count} ${count === 1 ? "review" : "reviews"}`}
+      </Text>
+    </View>
+  );
+}
 
 /**
  * The condition glyph — the design's lightbulb-with-a-bolt, which is what the
@@ -169,40 +162,8 @@ function ConditionIcon({
   );
 }
 
-/**
- * The bar's CTA label.
- *
- * The design sets it at 14 Bold; `Button` sets a plain string child at 16. A
- * node child keeps the design's size and still takes the colour the button has
- * already resolved for the state it is in, so the disabled treatment does not
- * have to be re-derived here.
- */
-function CtaLabel({ children }: { children: string }) {
-  const labelColor = useButtonLabelColor();
-  return (
-    // Shrinks and centres when it wraps: at a 1.3x font scale on a 360dp
-    // phone the half-width buttons ("In cart · View" beside its check, "Book
-    // for the morning") are narrower than the label.
-    <Text
-      fontSize="text-sm"
-      fontWeight="font-bold"
-      style={{ color: labelColor, flexShrink: 1, textAlign: "center" }}
-    >
-      {children}
-    </Text>
-  );
-}
-
-/** "✓ In cart · View": the bar's way into the cart once this item is in it (Figma CT-01). */
-function InCartLabel() {
-  const labelColor = useButtonLabelColor();
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-      <CheckIcon size={18} color={labelColor} />
-      <CtaLabel>In cart · View</CtaLabel>
-    </View>
-  );
-}
+/** The dev-only seed a design fixture passes (ENG-429). */
+type ProductDesign = { scrollY?: number; open?: "specs" | "photo" };
 
 export default function DetailsScreen() {
   const [loading, setLoading] = React.useState(true);
@@ -216,6 +177,11 @@ export default function DetailsScreen() {
   const [isModerated, setIsModerated] = useState(false);
   const [reviews, setReviews] = useState<BackendReview[]>([]);
   const { id, isFavorite, specFilters, dates, add: addAfterSignIn } = route.params;
+  // Dev only (ENG-429, the ENG-428 route-param seed): a design fixture's scroll offset and open sheet or viewer, and the
+  // neutral map. Release builds constant-fold `__DEV__`, so the seed is never read there.
+  const design = __DEV__ ? (route.params as { design?: ProductDesign } | undefined)?.design : undefined;
+  const scrollRef = React.useRef<ScrollView>(null);
+  const seededScroll = React.useRef(false);
   const allSpecsRef = React.useRef<BottomSheetModal>(null);
   // The root native stack, for its typed `push`; `useTypedNavigation` is the
   // generic navigation prop, which has no `push`.
@@ -232,7 +198,7 @@ export default function DetailsScreen() {
   // from the global context in some places and `useTheme()` in others.
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   // The hero is the safe-area inset plus a square as wide as the screen; the band
   // (inset + BAND_HEIGHT tall) is fully in once the photo's bottom edge reaches it.
   const collapseEnd = windowWidth - BAND_HEIGHT;
@@ -399,6 +365,14 @@ export default function DetailsScreen() {
     track("cart_opened", { from });
     navigation.navigate("Cart");
   };
+
+  // Dev seed: the specifications sheet open (04 2083:16201), once the page and its sheet are mounted.
+  useEffect(() => {
+    if (design?.open !== "specs" || !product?.specs?.length) return;
+    const timer = setTimeout(() => allSpecsRef.current?.present(), 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [design?.open, product?.name]);
 
   // Checkout starts on the dates of the search when nothing was booked yet (D5).
   useEffect(() => {
@@ -621,6 +595,108 @@ export default function DetailsScreen() {
     });
   };
 
+  /** The cart's price row and what booking it allows (04 2089:23515), above the kit bar. */
+  const priceRow = product ? (
+    <>
+      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+        <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+          <Text fontWeight="font-bold" fontSize="text-lg" lineHeight={28}>
+            {formatCurrency(barPlan?.price ?? product.rate)}
+          </Text>
+          <Text fontSize="text-sm" tone="body">
+            {`/${barPlan?.unit ?? "day"}`}
+          </Text>
+        </View>
+        {Number(product.security_deposit) > 0 ? (
+          <Text fontSize="text-sm" tone="body">
+            {`Deposit ${formatCurrency(product.security_deposit)}`}
+          </Text>
+        ) : null}
+      </View>
+      {booking?.kind === "morning" ? (
+        <Text fontSize="text-sm" tone="body">
+          {booking.body}
+        </Text>
+      ) : !booking ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <InformationCircleIcon size={16} color={color.textBody} strokeWidth={1.5} />
+          <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+            Not taking bookings right now
+          </Text>
+        </View>
+      ) : null}
+    </>
+  ) : null;
+
+  // D28: the customer already has a live booking of this item.
+  const requestedLine =
+    product?.requested && !isOwner ? (
+      <RequestedLine
+        requested={product.requested}
+        onView={() => navigation.navigate("Booking", { number: product.requested!.number })}
+      />
+    ) : null;
+  const topBlock =
+    requestedLine || cartBar ? (
+      <>
+        {requestedLine}
+        {cartBar ? priceRow : null}
+      </>
+    ) : null;
+
+  const bookAction = booking
+    ? {
+        label: booking.button,
+        onPress: handleBook,
+        accessibilityLabel: booking.button,
+        // "Book for the morning" at half width is 14/20 in the 52 box (2089:23201).
+        labelSize: booking.kind === "morning" ? ("compact" as const) : undefined,
+      }
+    : undefined;
+  /** The kit bar (REVIEW b3-01): Summary+CTA, Secondary+Primary or Full CTA, as the frames draw each state. */
+  const bar: React.ComponentProps<typeof BottomBar> = isOwner
+    ? {
+        layout: "summary-cta",
+        ...summary(),
+        primary: { label: "Edit product", onPress: handleEditClick, accessibilityLabel: "Edit product" },
+      }
+    : cartBar
+      ? inCart
+        ? {
+            layout: "secondary-primary",
+            secondary: {
+              label: "✓ In cart · View",
+              onPress: () => openCart("product"),
+              accessibilityLabel: "In your cart. View your cart",
+            },
+            primary: bookAction,
+          }
+        : booking
+          ? {
+              layout: "secondary-primary",
+              secondary: { label: "Add to cart", onPress: handleAdd, loading: adding, accessibilityLabel: "Add to cart" },
+              primary: bookAction,
+            }
+          : {
+              layout: "full-cta",
+              primary: { label: "Add to cart", onPress: handleAdd, loading: adding, accessibilityLabel: "Add to cart" },
+            }
+      : {
+          layout: "summary-cta",
+          ...summary(),
+          // Neither flag set: the contract says no Book now (2089:22597).
+          ...(bookAction ? { primary: bookAction } : { note: "Not taking bookings right now" }),
+        };
+
+  /** BK-01's summary: the smallest plan's price over the deposit (ENG-281). */
+  function summary() {
+    return {
+      value: formatCurrency(barPlan?.price ?? product?.rate),
+      unit: `/${barPlan?.unit ?? "day"}`,
+      subLine: Number(product?.security_deposit) > 0 ? `Deposit ${formatCurrency(product!.security_deposit)}` : undefined,
+    };
+  }
+
   // Only the very first load gets a skeleton. A refetch — pull-to-refresh, or
   // the refetch this screen runs every time it regains focus — used to swap the
   // whole screen for the skeleton, which unmounted the scroll view and left it
@@ -677,7 +753,7 @@ export default function DetailsScreen() {
           style={{
             ...StyleSheet.absoluteFillObject,
             backgroundColor: color.canvas,
-            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomWidth: 1,
             borderBottomColor: color.line,
             opacity: bandProgress,
           }}
@@ -689,10 +765,10 @@ export default function DetailsScreen() {
             height: BAND_HEIGHT,
             flexDirection: "row",
             alignItems: "center",
-            // The page gutter, so the back control does not slide sideways as
-            // the hero's — which sits on that gutter — fades out under it.
-            paddingHorizontal: SCREEN_GUTTER,
-            gap: 4,
+            // The kit Top bar · Back+Title (04 2089:23485): the back 16 from the
+            // edge, the title 12 after it (x72), the trailing bag on the 16.
+            paddingHorizontal: 16,
+            gap: 12,
           }}
         >
           {/* Always on screen: it floats over the photo with the scrim, and takes
@@ -705,27 +781,22 @@ export default function DetailsScreen() {
             pointerEvents="none"
             style={{ flex: 1, opacity: titleProgress }}
           >
-            <Text
-              role="sectionTitle"
-              numberOfLines={1}
-              style={{ textAlign: "center" }}
-            >
+            <Text role="sectionTitle" numberOfLines={1}>
               {product?.title ?? ""}
             </Text>
           </Animated.View>
 
           {/* The cart (D29): signed in, and only once there is a cart to see or
               this item can go in one, so a shop without the cart shows no empty
-              bag. Over the photo it sits left of the hero's heart; once the band
-              owns the top it takes the right edge. Without it, a spacer balances
-              the back control so the title is centred on the screen. */}
+              bag. Over the photo it sits left of the hero's heart (x274, 04
+              2089:22896); once the band owns the top it is the bar's trailing
+              control (x330, 2089:23201). The title is left-aligned, so nothing
+              balances it when there is no bag. */}
           {isAuthenticated && ((cart?.count ?? 0) > 0 || canAdd) ? (
-            <View style={{ marginRight: heroCovered ? 0 : 48 }}>
+            <View style={{ marginRight: heroCovered ? 0 : 56 }}>
               <CartButton from="product" onPhoto={!heroCovered} />
             </View>
-          ) : (
-            <View style={{ width: MIN_TOUCH_TARGET }} />
-          )}
+          ) : null}
         </View>
       </View>
 
@@ -733,7 +804,17 @@ export default function DetailsScreen() {
           has to be attached to an animated component or the plain one receives
           the event object where it expects a handler. */}
       <Animated.ScrollView
+        ref={scrollRef as never}
         className="flex-1"
+        onContentSizeChange={(_, height) => {
+          // The seed's offset, once the page is long enough to reach it; the band
+          // then follows the real scroll value.
+          const y = design?.scrollY;
+          if (!y || seededScroll.current || !product || height < y + windowHeight) return;
+          seededScroll.current = true;
+          requestAnimationFrame(() => scrollRef.current?.scrollTo({ y, animated: false }));
+          setHeroCovered(y > collapseEnd - 12);
+        }}
         contentContainerStyle={{ flexGrow: 1, backgroundColor: color.canvas }}
         scrollEventThrottle={16}
         onScroll={Animated.event(
@@ -769,133 +850,98 @@ export default function DetailsScreen() {
           productId={id}
           title={product.title}
           isFavorite={isFavorite}
+          initialViewerOpen={design?.open === "photo"}
         />
 
         {isOwner && isModerated && (
-          <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+          // 04 2089:24420 "Moderation banner wrap": 24 above and at the sides.
+          <View style={{ paddingTop: 24, paddingHorizontal: SCREEN_GUTTER }}>
             <ModerationBanner moderationLabels={product?.moderation_labels!} />
           </View>
         )}
 
-        {/* The title block. It carries the page's one heading, the rating and
-            the share affordance, and nothing else — which is why it is given
-            the deepest inset on the page. */}
-        <View
-          style={{
-            paddingTop: TITLE_PAD_V,
-            // The breadcrumb's 44pt target already runs ~23pt below its text,
-            // so the block gives up that much of its own inset (PDP-01 round 3).
-            paddingBottom: subCategory ? TITLE_GAP : TITLE_PAD_V,
-            paddingHorizontal: SCREEN_GUTTER,
-            flexDirection: "row",
-            gap: TITLE_GAP,
-          }}
-        >
-          <View style={{ flex: 1, gap: TITLE_GAP }}>
-            {/* H3, not the screen title role: the photograph above is what
-                announces the listing, so the name is set to sit under it. */}
+        {/* The title block (04 2083:15682): 24 all round, 8 between its lines.
+            It carries the page's one heading, the rating and the share
+            affordance, and, for the owner, the listing's status. */}
+        <View style={{ padding: TITLE_PAD, gap: TITLE_GAP }}>
+          <View style={{ flexDirection: "row", gap: 16 }}>
             <Text
               fontSize="text-lg"
               fontWeight="font-bold"
+              style={{ flex: 1 }}
               // No line cap: the frame's title box hugs its text, and a listing's
               // full name is not shown anywhere else on the page (the pinned band
               // truncates it), so cutting it here would lose it.
             >
               {product?.title}
             </Text>
-
-            {/* Only main specs the title does not already say, so the line is
-                never the title again; absent when there are none left. */}
-            {keySpecs ? (
-              <Text fontSize="text-md" tone="body">
-                {keySpecs}
-              </Text>
-            ) : null}
-
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            {/* A bare 24 glyph, top-aligned on the title; `IconButton` makes it
+                up to a 44pt target in hitSlop. */}
+            <IconButton
+              onPress={handleShare}
+              size={SHARE_SIZE}
+              style={{ alignSelf: "flex-start" }}
+              accessibilityLabel={`Share ${product?.title ?? "this listing"}`}
+              accessibilityHint="Opens the system share sheet"
             >
-              {product?.review_count ? (
-                <>
-                  <Stars
-                    rating={product?.average_rating!}
-                    isDark={isDark}
-                    size={GLYPH_SIZE}
-                    tone="ink"
-                    gap={0}
-                    strokeWidth={1.25}
-                  />
-                  <Text fontSize="text-sm" tone="dim">
-                    ({product?.review_count})
-                  </Text>
-                </>
-              ) : (
-                // Five hollow stars read as zero-out-of-five, which damages
-                // exactly the new listings that need the help.
-                <Text fontSize="text-sm" tone="dim">
-                  Not yet rated
-                </Text>
-              )}
-            </View>
-
-            {/* Your own listing said nothing about whether renters could see
-                it. "Live" is a fact the owner needs stated, not inferred. */}
-            {isOwner && ownerStatus ? (
-              <ListingStatusPill
-                status={ownerStatus.status}
-                reasons={ownerStatus.reasons}
-                waitsText={ownerStatus.waits}
-                withDetail
-              />
-            ) : null}
-            {isOwner && ownerStatus?.pending ? <HeldChange pending={ownerStatus.pending} /> : null}
-
-            {/* Shown with or without specs: "more like this" is useful either
-                way. The label sits at the top of its 44pt target (PDP-01). */}
-            {subCategory ? (
-              <TouchableOpacity
-                onPress={openSubCategory}
-                accessibilityRole="button"
-                accessibilityLabel={`${subCategory.parent}, ${subCategory.child}`}
-                accessibilityHint={`Shows more listings in ${subCategory.child}`}
-                style={{
-                  minHeight: MIN_TOUCH_TARGET,
-                  alignSelf: "flex-start",
-                  flexDirection: "row",
-                  alignItems: "flex-start",
-                  gap: 4,
-                }}
-              >
-                {/* Shrinks and wraps rather than pushing the chevron out of
-                    the row on a 360pt screen. */}
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-bold"
-                  tone="brand"
-                  numberOfLines={2}
-                  style={{ flexShrink: 1 }}
-                >
-                  {`${subCategory.parent} › ${subCategory.child}`}
-                </Text>
-                <ChevronRightIcon size={GLYPH_SIZE} color={color.brandText} />
-              </TouchableOpacity>
-            ) : null}
+              <ShareIcon color={color.text} size={SHARE_SIZE} strokeWidth={1.5} />
+            </IconButton>
           </View>
 
-          {/* A bare glyph, top-aligned on the title. The design drops the
-              outlined tile this used to sit in — and with it the iOS
-              share-up-box glyph, in favour of the three-node one the rest of
-              the design system uses. `IconButton` still makes the 20pt glyph
-              up to a 44pt target in hitSlop. */}
-          <IconButton
-            onPress={handleShare}
-            size={GLYPH_SIZE}
-            style={{ alignSelf: "flex-start" }}
-            accessibilityLabel={`Share ${product?.title ?? "this listing"}`}
-            accessibilityHint="Opens the system share sheet"
-          >
-            <ShareIcon color={color.text} size={GLYPH_SIZE} strokeWidth={1.5} />
-          </IconButton>
+          {/* Only main specs the title does not already say, so the line is
+              never the title again; absent when there are none left. */}
+          {keySpecs ? (
+            <Text fontSize="text-sm" tone="body">
+              {keySpecs}
+            </Text>
+          ) : null}
+
+          <RatingLine rating={product?.average_rating} count={product?.review_count} isDark={isDark} />
+
+          {/* Your own listing said nothing about whether renters could see
+              it. "Live" is a fact the owner needs stated, not inferred. */}
+          {isOwner && ownerStatus ? (
+            <ListingStatusPill
+              status={ownerStatus.status}
+              reasons={ownerStatus.reasons}
+              waitsText={ownerStatus.waits}
+              withDetail
+            />
+          ) : null}
+          {isOwner && ownerStatus?.pending ? <HeldChange pending={ownerStatus.pending} /> : null}
+
+          {/* Shown with or without specs: "more like this" is useful either
+              way. 24 high with 4 above the label (2083:15701); the hitSlop
+              makes the target up to 44. */}
+          {subCategory ? (
+            <TouchableOpacity
+              onPress={openSubCategory}
+              accessibilityRole="button"
+              accessibilityLabel={`${subCategory.parent}, ${subCategory.child}`}
+              accessibilityHint={`Shows more listings in ${subCategory.child}`}
+              hitSlop={{ top: 10, bottom: 10, left: 0, right: 12 }}
+              style={{
+                alignSelf: "flex-start",
+                flexDirection: "row",
+                alignItems: "center",
+                paddingTop: 4,
+                gap: 2,
+              }}
+            >
+              {/* Shrinks and wraps rather than pushing the chevron out of
+                  the row on a 360pt screen. */}
+              <Text
+                fontSize="text-sm"
+                fontWeight="font-semibold"
+                tone="brand"
+                numberOfLines={2}
+                style={{ flexShrink: 1 }}
+              >
+                {`${subCategory.parent} › ${subCategory.child}`}
+              </Text>
+              <ChevronRightIcon size={16} color={color.brandText} />
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {/* Specifications. The design's three-up strip; see spec-strip.tsx for
@@ -943,7 +989,8 @@ export default function DetailsScreen() {
 
         {/* BK-01: "Live booking", how the item changes hands and the handover
             hours, between the facts strip and the long sections (ENG-172). */}
-        <View style={{ paddingTop: 24 }}>
+        {/* Its own 24/32 padding; the hairline under it is the frame's Divider. */}
+        <View style={{ borderBottomWidth: 1, borderBottomColor: color.line }}>
           <BookingFacts
             copy={booking}
             shop={product.shop}
@@ -987,7 +1034,8 @@ export default function DetailsScreen() {
         {/* The frame's headings, which name the thing rather than the field:
             "About the product", not "Description". */}
         <DetailSection title="About the product">
-          <ExpandableText text={product?.description ?? ""} />
+          {/* 16/24 at 70%, three lines, then the brand "Show more" (2083:15794). */}
+          <ExpandableText text={product?.description ?? ""} tone="body" />
         </DetailSection>
 
         <DetailSection title="Product’s location">
@@ -1002,6 +1050,7 @@ export default function DetailsScreen() {
             isDarkMode={isDark}
             placeName={product?.location}
             distanceLabel={distanceLabel}
+            placeholder={Boolean(design)}
           />
           {/* Not in the frame, kept on purpose: the ring marker says "somewhere
               near here" but not that the address is withheld, and that promise
@@ -1012,40 +1061,17 @@ export default function DetailsScreen() {
           </Text>
         </DetailSection>
 
-        <DetailSection
-          title="Product reviews"
-          inset={false}
-          meta={
-            // The block already puts its heading stack on the gutter.
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
-            >
-              {product?.review_count ? (
-                <>
-                  {/* The score is set at heading size and weight, a step
-                      quieter than the heading itself — as are the stars. */}
-                  <Text fontWeight="font-bold" fontSize="text-lg" tone="body">
-                    {product?.average_rating?.toFixed(1)}
-                  </Text>
-                  <Stars
-                    rating={product?.average_rating!}
-                    isDark={isDark}
-                    size={GLYPH_SIZE}
-                    tone="secondary"
-                    gap={0}
-                  />
-                  <Text fontSize="text-sm" tone="dim">
-                    ({product?.review_count})
-                  </Text>
-                </>
-              ) : (
-                <Text fontSize="text-sm" tone="dim">
-                  No reviews yet — be the first to rent it.
-                </Text>
-              )}
-            </View>
-          }
-        >
+        <DetailSection title="Product reviews" inset={false}>
+          {/* The score sits under the heading at the block's own 12 (2083:15820). */}
+          <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+            {product?.review_count ? (
+              <RatingLine rating={product?.average_rating} count={product?.review_count} isDark={isDark} />
+            ) : (
+              <Text fontSize="text-sm" tone="dim">
+                No reviews yet — be the first to rent it.
+              </Text>
+            )}
+          </View>
           {lessReviews.length > 0 ? (
             <ScrollView
               horizontal
@@ -1077,6 +1103,8 @@ export default function DetailsScreen() {
               reached. It only exists when there is something to show. */}
           {reviews.length > 0 ? (
             <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+              {/* 2083:15854 draws ENG-427's neutral outline (white, #E6E6E6, black
+                  label); until that tone lands this is the kit outline. */}
               <Button onPress={openAllReviews} variant="outline" size="compact">
                 {`See all ${reviews.length} ${reviews.length === 1 ? "review" : "reviews"}`}
               </Button>
@@ -1147,15 +1175,17 @@ export default function DetailsScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{
                 paddingHorizontal: SCREEN_GUTTER,
-                gap: RAIL_GAP,
+                // The section ends 40 below the rail, 8 more than the block's 32 (2083:15882).
+                paddingBottom: 8,
+                gap: SIMILAR_GAP,
               }}
             >
               {similarProducts.map((item) => (
                 <View
                   key={item.name}
-                  // Home's rail formula (product-rail.tsx): 163 at 390, and the
-                  // same 8pt peek of the next card at 360 and 440.
-                  style={{ width: Math.floor((windowWidth - SCREEN_GUTTER - 2 * RAIL_GAP - 8) / 2) }}
+                  // The kit Listing card, 162 wide at 390 with 18 between
+                  // (2083:15886), and a 6pt peek of the third card at any width.
+                  style={{ width: Math.floor((windowWidth - SCREEN_GUTTER - 2 * SIMILAR_GAP - 6) / 2) }}
                 >
                   {/* The Home rails' tile, not a second one: same width, same
                       8pt photo radius, same bare corner heart. */}
@@ -1180,151 +1210,33 @@ export default function DetailsScreen() {
         </CrossFade>
       </Animated.ScrollView>
 
-      {/*
-        The bar was h-[10%] with price and CTA both flex-1, so "₹25 per day"
-        occupied half the width and left ~85pt of empty space beside it while
-        the primary action was confined to the other half. The price takes the
-        room it needs and the CTA takes the rest. The bottom inset is reserved
-        here rather than by a SafeAreaView that declared only its top edge,
-        which left the button 19pt off the screen edge. The inset replaces the
-        16pt floor rather than adding to it: 16 + 34 stood the buttons 50pt
-        off a notched iPhone's edge where CT-01 draws ~25, while an SE (inset
-        0) and an Android phone with the nav bar outside the window still get
-        the 16.
-      */}
+      {/* The bottom of the screen: one wrapper, so the cart's toasts are still
+          raised above whatever it holds (FIXES-r1 B1 row 22). Above the kit bar
+          sits the local block the kit has no slot for: the requested line (D28)
+          and, in the cart's bar, the price row (04 2089:23515). That block draws
+          the top hairline and the bar drops its own; the bar's 16 top padding
+          is the frame's gap under it. */}
       {product ? (
-      <View
-        onLayout={(event) => setBarHeight(event.nativeEvent.layout.height)}
-        style={{
-          gap: 12,
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: 16,
-          paddingBottom: Math.max(insets.bottom, 16),
-          borderTopWidth: 1,
-          borderTopColor: color.line,
-          backgroundColor: color.canvas,
-          shadowColor: color.text,
-          ...(isDark ? null : BAR_LIFT),
-        }}
-      >
-        {/* D28: the customer already has a live booking of this item. */}
-        {product.requested && !isOwner ? (
-          <RequestedLine
-            requested={product.requested}
-            onView={() => navigation.navigate("Booking", { number: product.requested!.number })}
-          />
-        ) : null}
-
-        {cartBar ? (
-          // Figma CT-01: the price row above, then Add to cart (outline) beside
-          // Book now (filled). With no Book now, Add is the one action and so
-          // the primary; once the item is in the cart it opens the cart.
-          <>
-            <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
-                <Text fontWeight="font-bold" fontSize="text-lg">
-                  {formatCurrency(barPlan?.price ?? product?.rate)}
-                </Text>
-                <Text fontSize="text-sm" tone="body">
-                  {`a ${barPlan?.unit ?? "day"}`}
-                </Text>
-              </View>
-              {Number(product?.security_deposit) > 0 ? (
-                <Text fontSize="text-sm" tone="body">
-                  {`Deposit ${formatCurrency(product.security_deposit)}`}
-                </Text>
-              ) : null}
+        <View onLayout={(event) => setBarHeight(event.nativeEvent.layout.height)}>
+          {topBlock ? (
+            <View
+              style={{
+                borderTopWidth: 1,
+                borderTopColor: color.line,
+                backgroundColor: color.canvas,
+                paddingTop: 16,
+                paddingHorizontal: SCREEN_GUTTER,
+                gap: 4,
+              }}
+            >
+              {topBlock}
             </View>
-            {booking?.kind === "morning" ? (
-              <Text fontSize="text-sm" tone="body">
-                {booking.body}
-              </Text>
-            ) : !booking ? (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <InformationCircleIcon size={16} color={color.textBody} />
-                <Text fontSize="text-sm" tone="body">
-                  Not taking bookings right now
-                </Text>
-              </View>
-            ) : null}
-            <View style={{ flexDirection: "row", gap: 12 }}>
-              {inCart ? (
-                <Button
-                  variant="outline"
-                  onPress={() => openCart("product")}
-                  style={[CTA_STYLE, { flex: 1 }]}
-                  accessibilityLabel="In your cart. View your cart"
-                >
-                  <InCartLabel />
-                </Button>
-              ) : (
-                <Button
-                  variant={booking ? "outline" : "primary"}
-                  onPress={handleAdd}
-                  loading={adding}
-                  style={[CTA_STYLE, { flex: 1 }]}
-                  accessibilityLabel="Add to cart"
-                >
-                  <CtaLabel>Add to cart</CtaLabel>
-                </Button>
-              )}
-              {booking ? (
-                <Button onPress={handleBook} style={[CTA_STYLE, { flex: 1 }]} accessibilityLabel={booking.button}>
-                  <CtaLabel>{booking.button}</CtaLabel>
-                </Button>
-              ) : null}
-            </View>
-          </>
-        ) : (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-        {/* BK-01's bar: the smallest plan's price over the deposit (ENG-281). */}
-        <View>
-          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
-            <Text fontWeight="font-bold" fontSize="text-lg">
-              {formatCurrency(barPlan?.price ?? product?.rate)}
-            </Text>
-            <Text fontSize="text-sm" tone="body">
-              {`a ${barPlan?.unit ?? "day"}`}
-            </Text>
-          </View>
-          {Number(product?.security_deposit) > 0 ? (
-            <Text fontSize="text-xs" tone="body">
-              {`Deposit ${formatCurrency(product.security_deposit)}`}
-            </Text>
           ) : null}
+          <BottomBar
+            {...bar}
+            style={topBlock ? { borderTopWidth: 0 } : undefined}
+          />
         </View>
-
-        <View style={{ flex: 1 }}>
-          {isOwner ? (
-            // The one action in the bar, so it is the primary one. It was an
-            // outlined secondary competing against nothing, in the same slot
-            // where a visitor gets a filled button.
-            <Button
-              onPress={handleEditClick}
-              style={CTA_STYLE}
-              accessibilityLabel="Edit product"
-            >
-              <CtaLabel>Edit product</CtaLabel>
-            </Button>
-          ) : booking ? (
-            // "Book now", or "Book for the morning" while the shop is closed.
-            <Button
-              onPress={handleBook}
-              style={CTA_STYLE}
-              accessibilityLabel={booking.button}
-            >
-              <CtaLabel>{booking.button}</CtaLabel>
-            </Button>
-          ) : (
-            // Neither flag set: the contract says no Book now.
-            <Text fontSize="text-sm" tone="dim" style={{ textAlign: "right" }}>
-              Not taking bookings right now
-            </Text>
-          )}
-        </View>
-        </View>
-        )}
-      </View>
       ) : null}
 
       {specs.length > 0 ? (

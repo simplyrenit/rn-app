@@ -26,7 +26,12 @@ const METRICS = {
     gap: 6,
     stackGap: 6,
     valueSize: "text-md",
+    valueWeight: "font-bold",
+    valueLeading: undefined,
+    labelSize: "text-sm",
+    labelLeading: undefined,
   },
+  // 2.1 (04 2083:16177 "Spec strip"): value SemiBold 14/21, label Regular 12/18 at 60%.
   detail: {
     blockPaddingVertical: 16,
     columnPaddingVertical: 16,
@@ -34,6 +39,10 @@ const METRICS = {
     gap: 8,
     stackGap: 0,
     valueSize: "text-sm",
+    valueWeight: "font-semibold",
+    valueLeading: 21,
+    labelSize: "text-xs",
+    labelLeading: 18,
   },
   profile: {
     blockPaddingVertical: 0,
@@ -42,6 +51,10 @@ const METRICS = {
     gap: 8,
     stackGap: 0,
     valueSize: "text-sm",
+    valueWeight: "font-bold",
+    valueLeading: undefined,
+    labelSize: "text-sm",
+    labelLeading: undefined,
   },
 } as const;
 
@@ -131,12 +144,13 @@ export function SpecStrip({
           >
             <Text
               fontSize={metrics.valueSize}
-              fontWeight="font-bold"
+              fontWeight={metrics.valueWeight}
+              lineHeight={metrics.valueLeading}
               numberOfLines={1}
             >
               {item.value}
             </Text>
-            <Text fontSize="text-sm" tone="dim" numberOfLines={1}>
+            <Text fontSize={metrics.labelSize} lineHeight={metrics.labelLeading} tone="dim" numberOfLines={1}>
               {item.label}
             </Text>
           </View>

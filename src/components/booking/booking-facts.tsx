@@ -1,8 +1,8 @@
-import { Notice, Panel } from "@/components/booking/parts";
+import { Notice } from "@/components/booking/parts";
 import { Text } from "@/components/core";
 import { LiveCopy, ProductShop, getItLine, handoverLine, priceBlock } from "@/lib/booking";
 import type { ListingDelivery } from "@/lib/delivery";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { Plan, UNIT_WORDS, minimumLine, noticeWords, perDay, plansOf, smallestPlan } from "@/lib/plans";
 import { formatCurrency } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
@@ -57,87 +57,78 @@ export function BookingFacts({
   ];
 
   return (
-    <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.lg, gap: space.md }}>
-      {copy?.kind === "live" ? (
-        <View
-          accessible
-          accessibilityLabel={`${copy.title}. ${copy.body}`}
-          style={{ padding: space.md, borderRadius: radius.button, backgroundColor: color.successWash, gap: 2 }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-            <View style={{ width: 8, height: 8, borderRadius: radius.full, backgroundColor: color.success }} />
-            <Text fontSize="text-md" fontWeight="font-bold" tone="success">
-              {copy.title}
-            </Text>
-          </View>
-          <Text fontSize="text-md">{copy.body}</Text>
-        </View>
-      ) : copy ? (
-        <Notice tone="warning" icon="clock">
-          <Text fontSize="text-sm" fontWeight="font-bold" tone="warning">
-            {copy.title}
-          </Text>
-          {`. ${copy.body}`}
+    // 04 2083:16177 "Booking facts": 24 above, 32 below, the gutter at the sides, 16 between the blocks.
+    <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 24, paddingBottom: 32, gap: 16 }}>
+      {copy ? (
+        // The kit Notice: "Live booking" Success, "Closed now" Warning (its triangle, not a clock).
+        <Notice tone={copy.kind === "live" ? "success" : "warning"} title={copy.title}>
+          {copy.body}
         </Notice>
       ) : (
         <Notice>This owner is not taking bookings right now.</Notice>
       )}
 
       {price ? (
-        <View style={{ gap: 2 }}>
-          <View style={{ flexDirection: "row", alignItems: "baseline", gap: space.xs }}>
-            <Text fontSize="text-xl" fontWeight="font-bold">
+        // "Price": the rate row, the plans, the minimum and the deposit, 8 apart.
+        <View style={{ gap: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+            <Text fontSize="text-lg" fontWeight="font-bold">
               {price.rate}
             </Text>
-            <Text fontSize="text-md" tone="body">
-              {`a ${first?.unit ?? "day"}`}
+            <Text fontSize="text-sm" tone="dim">
+              {`/${first?.unit ?? "day"}`}
             </Text>
           </View>
           {plans.length > 1 ? <PlansCard plans={plans} /> : null}
           {minimum ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: space.xs }}>
-              <ClockIcon size={18} color={color.text} />
-              <Text fontSize="text-md" fontWeight="font-bold">
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingTop: 4 }}>
+              <ClockIcon size={18} color={color.text} strokeWidth={1.5} />
+              <Text fontSize="text-sm" fontWeight="font-semibold">
                 {minimum}
               </Text>
             </View>
           ) : null}
           {notice ? (
-            <Text fontSize="text-md" tone="body">
+            <Text fontSize="text-sm" tone="body">
               {notice}
             </Text>
           ) : null}
           {price.deposit ? (
-            <Text fontSize="text-md" tone="body">
+            <Text fontSize="text-sm" tone="body">
               {price.deposit}
             </Text>
           ) : null}
         </View>
       ) : null}
 
-      <Panel>
+      {/* "How you get it": r12 hairline card, rows 12/16 with 12 to the text. */}
+      <View style={{ borderWidth: 1, borderColor: color.line, borderRadius: radius.button, overflow: "hidden" }}>
         {rows.map((row, index) => (
           <View
             key={row.text}
             style={{
               flexDirection: "row",
               alignItems: "center",
-              gap: space.md,
-              padding: space.md,
+              gap: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
               borderTopWidth: index === 0 ? 0 : 1,
               borderTopColor: color.line,
             }}
           >
-            <row.icon size={20} color={color.text} />
-            <Text fontSize="text-md" style={{ flex: 1 }}>
+            <row.icon size={20} color={color.text} strokeWidth={1.5} />
+            <Text fontSize="text-sm" style={{ flex: 1 }}>
               {row.text}
             </Text>
           </View>
         ))}
-      </Panel>
+      </View>
     </View>
   );
 }
+
+/** The plan cells' own heading (04 2083:16177): "Day", "Week", "Month". */
+const PLAN_CELL = { day: "Day", week: "Week", month: "Month" } as const;
 
 /** Each plan of a listing with two or three (ENG-281): its price, and what it works out to a day. */
 function PlansCard({ plans }: { plans: Plan[] }) {
@@ -146,10 +137,9 @@ function PlansCard({ plans }: { plans: Plan[] }) {
     <View
       style={{
         flexDirection: "row",
-        marginVertical: space.sm,
         borderWidth: 1,
         borderColor: color.line,
-        borderRadius: radius.group,
+        borderRadius: radius.button,
         overflow: "hidden",
       }}
     >
@@ -158,16 +148,17 @@ function PlansCard({ plans }: { plans: Plan[] }) {
           key={plan.unit}
           accessible
           accessibilityLabel={`${UNIT_WORDS[plan.unit]}, ${formatCurrency(plan.price)}, ${formatCurrency(perDay(plan))} a day`}
-          style={{ flex: 1, padding: space.md, borderLeftWidth: i === 0 ? 0 : 1, borderLeftColor: color.line }}
+          // 04 2083:16177 "Plan · Day": 12 padding, 2 between unit, price and the per-day line.
+          style={{ flex: 1, padding: 12, gap: 2, borderLeftWidth: i === 0 ? 0 : 1, borderLeftColor: color.line }}
         >
-          <Text fontSize="text-xs" tone="body">
-            {UNIT_WORDS[plan.unit]}
+          <Text fontSize="text-xs" tone="dim">
+            {PLAN_CELL[plan.unit]}
           </Text>
           <Text fontSize="text-md" fontWeight="font-bold">
             {formatCurrency(plan.price)}
           </Text>
-          <Text fontSize="text-xs" tone="body">
-            {plan.unit === "day" ? "a day" : `${formatCurrency(Math.round(perDay(plan)))} a day`}
+          <Text fontSize="text-xs" tone="dim">
+            {`${formatCurrency(Math.round(perDay(plan)))}/day`}
           </Text>
         </View>
       ))}

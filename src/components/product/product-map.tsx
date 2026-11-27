@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import { MAP_LOGO_LIFT, ProductMapClassic } from "./product-map-classic";
-import { Platform, StyleProp, View, ViewStyle } from "react-native";
+import React from "react";
+import { ProductMapClassic } from "./product-map-classic";
+import { Platform, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
 import { Text } from "@/components/core";
-import { darkColors, radius } from "@/lib/design-tokens";
+import { MapPlaceholder } from "@/components/core/map-placeholder";
+import { radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 
 export interface ProductMapProps {
@@ -22,10 +23,9 @@ export interface ProductMapProps {
 }
 
 /**
- * The map card: the frame draws a 200pt card on the page's own card radius
- * with a hairline around it, clipping the map inside.
+ * The map card's map: 180 high above the caption (04 2083:15806).
  */
-const MAP_HEIGHT = 200;
+const MAP_HEIGHT = 180;
 
 /**
  * The approximate-area marker, in points.
@@ -61,163 +61,141 @@ const MARKER_SHADOW = {
  */
 const NEIGHBOURHOOD_DELTA = 0.012;
 
-/** The gap Google keeps between its logo and the padded edge, plus the chip's own inset. */
-const MAP_LOGO_MARGIN = 16;
-
-const DetailProductMap: React.FC<ProductMapProps> = ({
+const DetailProductMap: React.FC<ProductMapProps & { placeholder?: boolean }> = ({
   latitude,
   longitude,
   isDarkMode,
   placeName,
   distanceLabel,
+  placeholder = false,
 }) => {
-  // The caption wraps to two lines on a long place name, and Google's logo has to
-  // stay above it whatever its height, so the map's bottom padding follows the
-  // measured chip instead of assuming one line.
-  const [chipHeight, setChipHeight] = useState(MAP_LOGO_LIFT - MAP_LOGO_MARGIN);
   const { color, isDark } = useTheme();
 
-  /** One ring of the marker: a soft disc of canvas inside a hairline. */
-  const ring = (size: number): StyleProp<ViewStyle> => [
-    {
-      width: size,
-      height: size,
-      borderRadius: radius.full,
-      borderWidth: 1,
-      borderColor: color.controlLine,
-      backgroundColor: color.canvasVeil,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    isDark ? null : { ...MARKER_SHADOW, shadowColor: color.text },
-  ];
-
-  // The place, then how far it is, then the caveat that ties them together.
-  const facts = [placeName, distanceLabel].filter(Boolean);
-  const caption = facts.length
-    ? `${facts.join(" · ")} · approximate area`
-    : "Approximate area";
-
-  const card = {
-    width: "100%",
-    height: MAP_HEIGHT,
-    overflow: "hidden",
-    borderRadius: radius.card,
+  /** One ring of the marker: a hairline circle (04 2083:15808/15809). */
+  const ring = (size: number): StyleProp<ViewStyle> => ({
+    width: size,
+    height: size,
+    borderRadius: radius.full,
     borderWidth: 1,
     borderColor: color.line,
-  } as const;
+    alignItems: "center",
+    justifyContent: "center",
+  });
 
-  if (
-    typeof latitude !== "number" ||
-    typeof longitude !== "number" ||
-    !Number.isFinite(latitude) ||
-    !Number.isFinite(longitude)
-  ) {
-    return (
-      <View style={[card, { justifyContent: "center", alignItems: "center" }]}>
-        <Text className={isDarkMode ? "text-subtle-dark" : "text-subtle-light"}>
-          Location unavailable
-        </Text>
+  const marker = (
+    <View style={ring(MARKER_OUTER)}>
+      <View style={ring(MARKER_INNER)}>
+        <View
+          style={[
+            {
+              width: MARKER_DISC,
+              height: MARKER_DISC,
+              borderRadius: radius.full,
+              backgroundColor: color.controlFill,
+              alignItems: "center",
+              justifyContent: "center",
+            },
+            isDark ? null : { ...MARKER_SHADOW, shadowColor: color.text },
+          ]}
+        >
+          <View
+            style={{
+              width: MARKER_DOT,
+              height: MARKER_DOT,
+              borderRadius: radius.full,
+              backgroundColor: color.brand,
+            }}
+          />
+        </View>
       </View>
-    );
-  }
+    </View>
+  );
+
+  const hasCoordinates =
+    typeof latitude === "number" &&
+    typeof longitude === "number" &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude);
 
   return (
-    <View style={card}>
-      <MapView
-        mapPadding={{ top: 0, left: 0, right: 0, bottom: chipHeight + MAP_LOGO_MARGIN }}
-        provider={PROVIDER_GOOGLE}
-        style={{ flex: 1 }}
-        initialRegion={{
-          latitude: latitude,
-          longitude: longitude,
-          latitudeDelta: NEIGHBOURHOOD_DELTA,
-          longitudeDelta: NEIGHBOURHOOD_DELTA,
-        }}
-        customMapStyle={isDarkMode ? darkModeMapStyle : []}
-        scrollEnabled={MAP_INTERACTIVE}
-        zoomEnabled={MAP_INTERACTIVE}
-        rotateEnabled={false}
-        pitchEnabled={false}
-        maxZoomLevel={16}
-      >
-        {/* The imprecision the coordinates actually carry, drawn — a bare dot
-            claimed a precision the data does not have. It is anchored to the
-            coordinate rather than to the middle of the card, so it still marks
-            the right place once the map has been panned. */}
-        <Marker
-          coordinate={{ latitude, longitude }}
-          anchor={{ x: 0.5, y: 0.5 }}
-          title={placeName ?? "Approximate pickup area"}
-        >
-          <View style={ring(MARKER_OUTER)}>
-            <View style={ring(MARKER_INNER)}>
-              <View
-                style={[
-                  {
-                    width: MARKER_DISC,
-                    height: MARKER_DISC,
-                    borderRadius: radius.full,
-                    backgroundColor: color.controlFill,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  },
-                  isDark ? null : { ...MARKER_SHADOW, shadowColor: color.text },
-                ]}
-              >
-                <View
-                  style={{
-                    width: MARKER_DOT,
-                    height: MARKER_DOT,
-                    borderRadius: radius.full,
-                    backgroundColor: color.brand,
-                  }}
-                />
-              </View>
+    // 04 2083:15805 "Map card": r12 hairline card, the 180 map, then the caption under it.
+    <View
+      style={{
+        width: "100%",
+        overflow: "hidden",
+        borderRadius: radius.button,
+        borderWidth: 1,
+        borderColor: color.line,
+      }}
+    >
+      <View style={{ height: MAP_HEIGHT, overflow: "hidden" }}>
+        {placeholder ? (
+          // NEW · neutral map: the kit tile at the frame's 687×864, its top-left corner showing.
+          <>
+            <MapPlaceholder style={{ position: "absolute", left: 0, top: 0, width: 687, height: 864 }} />
+            <View style={{ ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" }}>
+              {marker}
             </View>
-          </View>
-        </Marker>
-      </MapView>
-
-      {/* Naming the area on the map itself, so the card is readable on its
-          own — and so the marker is understood as an approximation rather than
-          as an address. It also carries the distance, which is the first thing
-          a renter wants to know and no longer has a line of its own. */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          left: 10,
-          bottom: 10,
-          right: 10,
-          flexDirection: "row",
-        }}
-      >
-        <View
-          onLayout={(e) => setChipHeight(Math.ceil(e.nativeEvent.layout.height))}
-          style={{
-            backgroundColor: color.photoScrim,
-            borderRadius: radius.full,
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            maxWidth: "100%",
-          }}
-        >
-          <Text
-            fontSize="text-xs"
-            fontWeight="font-medium"
-            numberOfLines={2}
-            style={{ color: darkColors.text }}
+          </>
+        ) : hasCoordinates ? (
+          <MapView
+            provider={PROVIDER_GOOGLE}
+            style={{ flex: 1 }}
+            initialRegion={{
+              latitude: latitude!,
+              longitude: longitude!,
+              latitudeDelta: NEIGHBOURHOOD_DELTA,
+              longitudeDelta: NEIGHBOURHOOD_DELTA,
+            }}
+            customMapStyle={isDarkMode ? darkModeMapStyle : []}
+            scrollEnabled={MAP_INTERACTIVE}
+            zoomEnabled={MAP_INTERACTIVE}
+            rotateEnabled={false}
+            pitchEnabled={false}
+            maxZoomLevel={16}
           >
-            {caption}
+            {/* The imprecision the coordinates actually carry, drawn — a bare dot
+                claimed a precision the data does not have. It is anchored to the
+                coordinate rather than to the middle of the card, so it still marks
+                the right place once the map has been panned. */}
+            <Marker
+              coordinate={{ latitude: latitude!, longitude: longitude! }}
+              anchor={{ x: 0.5, y: 0.5 }}
+              title={placeName ?? "Approximate pickup area"}
+            >
+              {marker}
+            </Marker>
+          </MapView>
+        ) : (
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <Text fontSize="text-sm" tone="dim">
+              Location unavailable
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* The place, then how far it is (2083:15811): 12/16 padding, 2 between. */}
+      <View style={{ paddingVertical: 12, paddingHorizontal: 16, gap: 2 }}>
+        <Text fontSize="text-sm" fontWeight="font-semibold">
+          {placeName || "Approximate area"}
+        </Text>
+        {distanceLabel ? (
+          <Text fontSize="text-xs" tone="dim">
+            {distanceLabel}
           </Text>
-        </View>
+        ) : null}
       </View>
     </View>
   );
 };
 
 interface Props extends ProductMapProps {
+  /**
+   * `detail` only, dev seeds: the kit neutral map (`MapPlaceholder`, the frame's
+   * NEW layer) instead of `MapView`, so a design fixture draws no live tiles.
+   */
+  placeholder?: boolean;
   /**
    * Opt-in. `detail` is the map as Figma 1:9120 draws it on Product Details: a
    * fixed ring marker and a caption chip. The default is the original 500m circle

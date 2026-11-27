@@ -90,6 +90,8 @@ Shared types:
 - `value?`, `unit?`, `subLine?`: strings, for `summary-cta`.
 - `children?: ReactNode`: legacy passthrough for `booking/parts` `BottomBar`. It renders in the content strip in place of a layout.
 - `style?`.
+- `note?: string` (ENG-429): `summary-cta` with no `primary` draws this 14/20 note at 60%, right-aligned in the primary's place ("Not taking bookings right now", 04 2089:22597).
+- `BarAction.labelSize?: "compact"` (ENG-429): the primary's 14/20 label in the bar's 52 box, for a half-width primary whose 16/24 label would wrap ("Book for the morning", 04 2089:23201; "Continue with self pickup", 2089:28473). Every other path is unchanged.
 
 `ListRow` props:
 - `label: string`.
