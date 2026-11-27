@@ -75,8 +75,9 @@ function PrimaryButton({ action, style }: { action: BarAction; style?: StyleProp
       loading={action.loading}
       accessibilityLabel={action.accessibilityLabel}
       size={action.labelSize === "compact" ? "compact" : undefined}
-      // `compact` is a 44 box; the kit keeps the bar's 52.
-      style={action.labelSize === "compact" ? [{ minHeight: 52 }, style] : style}
+      // `compact` is a 44 box; the kit keeps the bar's 52, and its centred label has no side padding (2089:23201's
+      // 142pt "Book for the morning" at x11 in a 164 button), so it stays on one line at half width.
+      style={action.labelSize === "compact" ? [{ minHeight: 52, paddingHorizontal: 0 }, style] : style}
     >
       {action.label}
     </Button>
@@ -137,7 +138,8 @@ export function BottomBar({
             {primary ? (
               <PrimaryButton action={primary} style={{ flex: 1 }} />
             ) : note ? (
-              <Text fontSize="text-sm" lineHeight={20} tone="dim" style={{ flex: 1, textAlign: "right" }}>
+              // 2089:22597 sets it 31 from the strip's top (2 below centre), not centred on the summary.
+              <Text fontSize="text-sm" lineHeight={20} tone="dim" style={{ flex: 1, textAlign: "right", marginTop: 4 }}>
                 {note}
               </Text>
             ) : null}
@@ -153,7 +155,10 @@ export function BottomBar({
                 disabled={secondary.disabled}
                 loading={secondary.loading}
                 accessibilityLabel={secondary.accessibilityLabel}
-                style={{ flex: 1 }}
+                // The kit's Secondary in the bar fills its half with no side padding (04 2089:23201 "Secondary
+                // button", p0): with the hugging button's 20, a label wider than 125pt ("✓ In cart · View") pushed
+                // the primary under its half.
+                style={{ flex: 1, paddingHorizontal: 0 }}
               >
                 {secondary.label}
               </Button>

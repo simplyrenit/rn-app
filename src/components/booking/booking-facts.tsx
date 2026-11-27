@@ -65,7 +65,7 @@ export function BookingFacts({
           {copy.body}
         </Notice>
       ) : (
-        <Notice>This owner is not taking bookings right now.</Notice>
+        <Notice tone="neutral">This owner is not taking bookings right now.</Notice>
       )}
 
       {price ? (

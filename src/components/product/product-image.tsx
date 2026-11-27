@@ -10,6 +10,7 @@ import React, { useEffect, useState } from "react";
 import { Modal, Pressable, View, useWindowDimensions } from "react-native";
 import { PhotoIcon, XMarkIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { NavigationContext } from "@react-navigation/native";
 
 interface Props {
   images?: string[];
@@ -103,6 +104,10 @@ export function ProductImage({
   const [failedImages, setFailedImages] = useState<string[]>([]);
   const [fullImage, setFullImage] = useState<string | null>(null);
   const [viewerSeeded, setViewerSeeded] = useState(false);
+  // The viewer is the screen's: a screen that loses focus (a deep link, a notification) leaves it closed, so a
+  // window-level Modal never stays over the next screen.
+  const navigation = React.useContext(NavigationContext);
+  useEffect(() => navigation?.addListener("blur", () => setFullImage(null)), [navigation]);
   const [photoIndex, setPhotoIndex] = useState(0);
   /**
    * Each photo's intrinsic size, so the contained slide can be exactly the size

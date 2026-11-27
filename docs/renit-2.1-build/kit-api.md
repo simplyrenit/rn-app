@@ -148,6 +148,7 @@ Props added; nothing renamed or removed.
   - Props are unchanged. `tone="brand"` draws as `info`.
   - With no `icon`, the glyph follows the tone: info ⓘ, warning and danger ⚠, success ✓.
   - The kit's Link node is hidden in every tone, so it is not built.
+  - `tone="neutral"` (ENG-429, 04 2089:22597 "Not taking bookings (neutral notice)"): `surfaceMuted` card, glyph at 70% (`textBody`), info glyph.
 - **`Pill`** (`booking/parts.tsx`) is now `<StatusPill>`, with `brand` falling back to `info`.
 - **`BottomBar`** (`booking/parts.tsx`) is now `<BottomBar>` from `core/bottom-bar` in children mode.
 - **`TextField`** (`core/field.tsx`)

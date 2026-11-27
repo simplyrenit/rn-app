@@ -279,7 +279,8 @@ function ShopCard({
                 </Text>
               ) : null}
             </View>
-            {footer.link}
+            {/* Centred on the count and its line (2089:26814 "Card footer"); the link itself sits flex-start in a line. */}
+            <View>{footer.link}</View>
           </View>
         </>
       ) : null}
@@ -431,10 +432,13 @@ export default function CartScreen() {
             onAction={() => navigation.navigate("MainTabs", { screen: "Home" })}
           />
         </View>
-        <LinkButton
-          label="See your Saved items"
-          onPress={() => navigation.navigate("MainTabs", { screen: "Saved" })}
-        />
+        {/* A wrapper, so the column centres it: the link itself sits flex-start in a line. */}
+        <View>
+          <LinkButton
+            label="See your Saved items"
+            onPress={() => navigation.navigate("MainTabs", { screen: "Saved" })}
+          />
+        </View>
       </View>
     );
   } else {

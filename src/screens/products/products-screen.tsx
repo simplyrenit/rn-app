@@ -296,6 +296,12 @@ export default function DetailsScreen() {
     }, [id])
   );
 
+  // The specs sheet is presented in a portal above the navigator: it closes with the screen's focus, so it never
+  // stays over the next screen (a deep link or a notification opened from it).
+  useFocusEffect(
+    useCallback(() => () => allSpecsRef.current?.dismiss(), [])
+  );
+
   async function fetchProductDetails() {
     setLoading(true);
     setLoadError(false);

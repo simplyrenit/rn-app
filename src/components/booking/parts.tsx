@@ -206,7 +206,7 @@ export function MoneyLine({
   );
 }
 
-type NoticeTone = "info" | "warning" | "brand" | "danger" | "success";
+type NoticeTone = "info" | "warning" | "brand" | "danger" | "success" | "neutral";
 
 /**
  * The kit Notice card (figma/00 2074:14388): a tinted note with an icon in the tone's colour — the deposit note, the
@@ -233,8 +233,11 @@ export function Notice({
     danger: { bg: color.dangerWash, fg: color.danger },
     // G10: money coming back (cart CT-29b, CT-47a).
     success: { bg: color.successWash, fg: color.success },
+    // ENG-429: a fact with no tone to it, "This owner is not taking bookings right now" (04 2089:22597): the
+    // surface-muted card with the glyph at 70%.
+    neutral: { bg: color.surfaceMuted, fg: color.textBody },
   }[kitTone];
-  const glyph = icon ?? { info: "info", warning: "warning", danger: "warning", success: "check" }[kitTone];
+  const glyph = icon ?? { info: "info", warning: "warning", danger: "warning", success: "check", neutral: "info" }[kitTone];
   const Icon =
     glyph === "clock"
       ? ClockIcon
