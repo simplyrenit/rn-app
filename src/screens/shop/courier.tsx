@@ -372,7 +372,9 @@ export function CourierReturn({ booking, courier, receivedAt, watching }: Props)
   const kinds = useClaimKinds(booking.claims);
   const copy = returnCopy(booking, now, kinds);
   const out = booking.stage === "out" && !booking.exit;
-  const arriving = out ? arrivingLine(courier) : null;
+  // While the shop is asked for an early return (ENG-442), its card says what happens: not "the customer picks".
+  const asked = earlyReturnCard(courier, booking.can, booking.product.title, now) !== null;
+  const arriving = out && !asked ? arrivingLine(courier) : null;
   // The rider is on the way or has come: the record is what the shop does next. Borzo's return may end
   // the rental before that record (ENG-416), so it is still asked for once returned.
   const back = out || (booking.stage === "returned" && !booking.exit);
