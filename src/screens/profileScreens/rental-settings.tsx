@@ -106,7 +106,8 @@ export default function RentalSettingsScreen() {
   useEffect(() => {
     if (!design?.sheet || !loaded) return;
     const sheet = design.sheet === "notice" ? noticeSheet : devicesSheet;
-    const timer = setTimeout(() => sheet.current?.present(), 300);
+    // Only while in front: React Query refetches for the next fixture re-run this effect on the covered screen too.
+    const timer = setTimeout(() => navigation.isFocused() && sheet.current?.present(), 300);
     return () => clearTimeout(timer);
   }, [design?.sheet, loaded]);
 

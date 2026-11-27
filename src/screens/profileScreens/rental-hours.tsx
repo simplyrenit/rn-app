@@ -91,7 +91,8 @@ function HoursForm({ initial, design }: { initial: Hours; design?: RentalHoursDe
   // next fixture is pushed over this screen.
   useEffect(() => {
     if (!design?.timeSheet) return;
-    const timer = setTimeout(() => timeSheet.current?.present(), 300);
+    // Only while in front: the form remounts on the covered screen when the next fixture refetches the shop.
+    const timer = setTimeout(() => navigation.isFocused() && timeSheet.current?.present(), 300);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

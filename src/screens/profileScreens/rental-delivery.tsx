@@ -265,7 +265,8 @@ function DeliveryEditor({ shop, design }: { shop: Shop; design?: DeliveryDesign 
   // fixture pushes over this screen and the unmount reset would never run.
   const showDiscard = Boolean(design?.discard);
   useEffect(() => {
-    if (showDiscard) discardSheet.current?.present();
+    // Only while in front: the editor remounts on the covered screen when the next fixture refetches the shop.
+    if (showDiscard && navigation.isFocused()) discardSheet.current?.present();
   }, [showDiscard]);
   useFocusEffect(
     useCallback(() => {
