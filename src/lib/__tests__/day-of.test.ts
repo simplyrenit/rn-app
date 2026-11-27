@@ -12,6 +12,8 @@ import {
   openByLine,
   returnWindowCopy,
   returnWindowErrorText,
+  earlyPickNote,
+  earlyRequestCopy,
   captured,
   codeErrorText,
   codeIsClosed,
@@ -860,6 +862,49 @@ describe("B1, the courier's refusals", () => {
     expect(dayErrorText(err("window_closed"), NOW)).toMatch(/^That window can't be picked any more/);
     expect(dayErrorText(err("capture_missing"), NOW)).toBe("Record the item on camera first.");
     expect(dayErrorText(err("other_side"), NOW)).toBe("The other side of the booking does this, not you.");
+  });
+});
+
+describe("ENG-442, an early courier return", () => {
+  // Sat 24 Oct 13:32 IST; the shop answers by 13:42; the return stays on Mon 26 Oct.
+  const now = new Date("2026-10-24T08:02:00Z");
+  const ask = { start: "2026-10-25T04:30:00Z", end: "2026-10-25T05:30:00Z", now: false, asked_at: "2026-10-24T08:02:00Z", reply_by: "2026-10-24T08:12:00Z" };
+
+  it("an open ask says when the shop must answer and what happens if it can't", () => {
+    expect(earlyRequestCopy({ ...ask, outcome: null }, "2026-10-26", now)).toEqual({
+      tone: "brand",
+      title: "Waiting for the shop",
+      body: "You asked for a rider Sun 25 Oct, 10:00 – 11:00 am. The shop has until 1:42 pm today to accept. If it can't, your return stays on Mon 26 Oct.",
+      open: true,
+    });
+    const soon = { ...ask, now: true, start: "2026-10-24T09:30:00Z", end: "2026-10-24T10:30:00Z", outcome: null };
+    expect(earlyRequestCopy(soon, "2026-10-26", now)?.body).toMatch(/^You asked for a rider today, about 3:00 – 4:00 pm\./);
+  });
+
+  it("how it ended, and an open ask past its time reads as no answer", () => {
+    const stays = "Your return stays on Mon 26 Oct. Pick a window for that day.";
+    expect(earlyRequestCopy({ ...ask, outcome: "declined" }, "2026-10-26", now)).toMatchObject({ title: "The shop can't take it back early", body: stays, open: false });
+    expect(earlyRequestCopy({ ...ask, outcome: "no_answer" }, "2026-10-26", now)?.title).toBe("The shop didn't answer in time");
+    expect(earlyRequestCopy({ ...ask, outcome: null }, "2026-10-26", new Date("2026-10-24T08:12:00Z"))?.title).toBe("The shop didn't answer in time");
+    expect(earlyRequestCopy({ ...ask, outcome: "gone" }, "2026-10-26", now)).toMatchObject({ title: "That time has gone", body: "Pick another time." });
+    expect(earlyRequestCopy(null, "2026-10-26", now)).toBeNull();
+    // Asked after a last-day window was picked: the return stays in it, nothing to pick again.
+    const window = { from: "2026-10-26T11:30:00Z", to: "2026-10-26T12:30:00Z" };
+    expect(earlyRequestCopy({ ...ask, outcome: "declined" }, "2026-10-26", now, window)?.body).toBe(
+      "Your return stays in your window, Mon 26 Oct, 5:00 – 6:00 pm."
+    );
+    expect(earlyRequestCopy({ ...ask, outcome: "gone" }, "2026-10-26", now, window)?.body).toBe(
+      "Your return stays in your window, Mon 26 Oct, 5:00 – 6:00 pm."
+    );
+    expect(earlyRequestCopy({ ...ask, outcome: null }, "2026-10-26", now, window)?.body).toMatch(/If it can't, your return stays in your window, Mon 26 Oct, 5:00 – 6:00 pm\.$/);
+  });
+
+  it("the picker's note and the refusals", () => {
+    expect(earlyPickNote(10)).toBe(
+      "Earlier than your last day, so the shop has 10 minutes to accept. Nothing is booked until it does. Returning early gives no refund."
+    );
+    expect(returnWindowErrorText(err("request_open"))).toBe("You've asked the shop already. Wait for its answer.");
+    expect(returnWindowErrorText(err("early_closed"))).toBe("An early return can't be asked for now. Pick a return window.");
   });
 });
 

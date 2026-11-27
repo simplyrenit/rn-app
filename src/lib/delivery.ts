@@ -88,6 +88,22 @@ export interface CourierReturn {
   /** The first day the rider can collect it with no late fee: the last day, or the next open day when that has no slot. */
   earliest: string;
   seal: string | null;
+  /** ENG-442: an early return asked of the shop, and how it ended. Absent from an older server. */
+  request?: EarlyReturnRequest | null;
+}
+
+/**
+ * ENG-442: the customer's ask for an early courier return ("Return now" or an earlier day), which the shop must accept.
+ * Nothing is booked until it does. `outcome` is null while the shop can still answer (until `reply_by`).
+ */
+export interface EarlyReturnRequest {
+  start: string;
+  end: string;
+  /** Return now: the rider's slot is worked out again when the shop accepts. */
+  now: boolean;
+  asked_at: string;
+  reply_by: string;
+  outcome: "declined" | "gone" | "no_answer" | null;
 }
 
 /** `delivery` on a search result or product with `?deliver_address=` (API-CONTRACT §5.5). */

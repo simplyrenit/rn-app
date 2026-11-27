@@ -22,6 +22,7 @@ import {
   codeErrorText,
   courierRows,
   codeIsClosed,
+  earlyRequestCopy,
   ownerAbsentAt,
   ownerAbsentKey,
   ownerAbsentNote,
@@ -69,6 +70,10 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
   // B1: Renit's courier partner collects it. The server's tracker is the steps; no code, and nobody meets the shop.
   const courier = byRenit(booking) ? booking.courier ?? null : null;
   const steps = byRenit(booking) ? courierRows(courier?.steps, "return", now) : returnSteps(booking, recorded);
+  // ENG-442: an early return asked of the shop, open or how it ended (only while the return can still be picked).
+  const asked = out && courier && can("pick_return_window") ? earlyRequestCopy(courier.return?.request, courier.return.earliest, now, courier.return.window) : null;
+  // How an ask ended matters only until a window is picked; while it is open it always shows.
+  const early = asked && (asked.open || !courier?.return?.window) ? asked : null;
 
   const finish = () =>
     run("return", async () => {
@@ -138,6 +143,12 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
         </Notice>
       ) : null}
 
+      {early ? (
+        <Notice tone={early.tone} icon={early.open ? "clock" : "warning"} title={early.title}>
+          {early.body}
+        </Notice>
+      ) : null}
+
       <ItemList booking={booking} title={`${byRenit(booking) ? COURIER : booking.shop.name} collects`} />
 
       {together ? (
@@ -188,10 +199,14 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
       <RecordCardBody record={record} />
       {can("pick_return_window") ? (
         <Button
-          variant={courier?.return?.window ? "outline" : "primary"}
+          variant={courier?.return?.window || early?.open ? "outline" : "primary"}
           onPress={() => navigation.navigate("BookingReturnWindow", { number })}
         >
-          {courier?.return?.window ? "Change the return window" : "Pick a return window"}
+          {courier?.return?.window
+            ? "Change the return window"
+            : early?.open
+              ? "Pick a last-day window instead"
+              : "Pick a return window"}
         </Button>
       ) : null}
       {out && record.state === "start" ? (
