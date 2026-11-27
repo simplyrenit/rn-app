@@ -93,6 +93,8 @@ export function ProductImage({
   ).filter((image) => !failedImages.includes(image as string)) as string[];
 
   const count = galleryImages.length;
+  // A photo that fails to load drops out of the gallery, so the carousel's index can outrun it.
+  const shownIndex = Math.min(photoIndex, Math.max(count - 1, 0));
   // The seed opens the viewer once, on the first photo, as a tap on it would.
   useEffect(() => {
     if (!initialViewerOpen || viewerSeeded || !galleryImages[0]) return;
@@ -173,7 +175,9 @@ export function ProductImage({
                     ? { width: PHOTO.width, height: PHOTO.height, marginTop: PHOTO.top }
                     : { width: "100%", height: "100%" }
                 }
-                contentFit="cover"
+                // Contained: the whole listing photo fits the frame's 177×300 box (a
+                // landscape shot is not cropped to a centre strip). Full-bleed fills.
+                contentFit={contained ? "contain" : "cover"}
                 transition={150}
                 onError={() =>
                   setFailedImages((current) =>
@@ -254,7 +258,7 @@ export function ProductImage({
                   width: DOT,
                   height: DOT,
                   borderRadius: radius.full,
-                  backgroundColor: index === photoIndex ? color.brand : color.line,
+                  backgroundColor: index === shownIndex ? color.brand : color.line,
                 }}
               />
             ))}
@@ -274,7 +278,7 @@ export function ProductImage({
             }}
           >
             <Text fontSize="text-xs" fontWeight="font-medium" lineHeight={16} style={{ color: color.textBody }}>
-              {photoIndex + 1}/{count}
+              {shownIndex + 1}/{count}
             </Text>
           </View>
         </>
@@ -296,7 +300,7 @@ export function ProductImage({
           }}
         >
           <Text fontSize="text-xs" fontWeight="font-medium" style={{ color: color.onPhoto }}>
-            {photoIndex + 1} / {galleryImages.length}
+            {shownIndex + 1} / {count}
           </Text>
         </View>
       ) : null}

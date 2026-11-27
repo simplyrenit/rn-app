@@ -51,7 +51,7 @@ it("draws the frame's gallery: 390 high, a 177×300 photo 36 down, the tile hear
   const photos = byTestId(root, "photo");
   expect(photos).toHaveLength(5);
   expect(photos[0].props.style).toEqual({ width: 177, height: 300, marginTop: 36 });
-  expect(photos[0].props.contentFit).toBe("cover");
+  expect(photos[0].props.contentFit).toBe("contain");
   expect(byTestId(root, "heart")[0].props.tile).toBe(true);
   expect(texts(root)).toContain("1/5");
   const dots = root.findAll((n: any) => typeof n.type === "string" && n.props.style?.width === 6 && n.props.style?.height === 6);
@@ -62,4 +62,12 @@ it("draws no dots or count for a single photo", () => {
   const root = render(["a"]);
   expect(texts(root)).not.toContain("1/1");
   expect(root.findAll((n: any) => typeof n.type === "string" && n.props.style?.width === 6)).toHaveLength(0);
+});
+
+it("keeps the 1/5 pill inside the gallery when an earlier photo fails to load", () => {
+  const root = render(["a", "b", "c", "d", "e"]);
+  const carousel = root.findAll((n: any) => typeof n.type === "function" && n.props.onIndexChanged)[0];
+  act(() => carousel.props.onIndexChanged({ index: 4 }));
+  act(() => byTestId(root, "photo")[0].props.onError());
+  expect(texts(root)).toContain("4/4");
 });
