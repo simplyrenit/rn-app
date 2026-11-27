@@ -3,7 +3,7 @@ import { duration, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { View } from "react-native";
 import Animated, {
   Easing,
@@ -17,8 +17,18 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { EASE_OUT, FLOW_SPRING, MOTION, SMOOTH_LAYOUT, exitFade } from "./motion";
+import { PHOTO_TAG_FILL, usePhotoFill } from "./photo-tile";
 
-const BAND_HEIGHT = 96;
+// figma/10 2095:24471 and 01 2082:14565: a 342-wide panel, 200 high beside a warning and 256 on its own. `band` is
+// where the frame draws the 88-high scan band, held there under a design fixture (`still`).
+export const SCAN_PANEL = {
+  compact: { height: 200, band: 56 },
+  tall: { height: 256, band: 96 },
+} as const;
+const BAND_HEIGHT = 88;
+const PANEL_SCRIM = "rgba(0,0,0,0.28)";
+const BAND_CLEAR = "rgba(99,91,232,0)";
+const BAND_PEAK = "rgba(99,91,232,0.45)";
 
 export interface FoundChip {
   key: string;
@@ -49,13 +59,12 @@ function Chip({ chip }: { chip: FoundChip }) {
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: radius.full,
-        backgroundColor: chip.dashed ? "transparent" : color.photoScrim,
-        borderWidth: 1.5,
-        borderStyle: chip.dashed ? "dashed" : "solid",
-        borderColor: chip.dashed ? color.onPhoto : "transparent",
+        backgroundColor: chip.dashed ? "transparent" : PHOTO_TAG_FILL,
+        // The frame's dashed chip is 1px (26 high); a solid chip has no border (24 high).
+        ...(chip.dashed ? { borderWidth: 1, borderStyle: "dashed" as const, borderColor: color.onPhoto } : null),
       }}
     >
-      <Text fontSize="text-xs" fontWeight="font-bold" tone="onPhoto" numberOfLines={1}>
+      <Text fontSize="text-xs" fontWeight="font-semibold" tone="onPhoto" numberOfLines={1}>
         {chip.label}
       </Text>
     </Animated.View>
@@ -75,20 +84,31 @@ export function ScanPanel({
   scanning,
   chips,
   status,
+  size = "tall",
+  still = false,
 }: {
   uri: string | null;
   scanning: boolean;
   chips: FoundChip[];
   status: string;
+  size?: keyof typeof SCAN_PANEL;
+  /** Dev design fixtures: hold the band where the frame draws it instead of sweeping. */
+  still?: boolean;
 }) {
   const { color } = useTheme();
+  const photoFill = usePhotoFill();
   const reduceMotion = useReduceMotion();
-  const [height, setHeight] = useState(0);
+  const { height, band } = SCAN_PANEL[size];
   const sweep = useSharedValue(0);
   const bandOpacity = useSharedValue(1);
 
   useEffect(() => {
-    if (!scanning || reduceMotion || !height) {
+    if (still) {
+      cancelAnimation(sweep);
+      bandOpacity.value = scanning ? 1 : 0;
+      return;
+    }
+    if (!scanning || reduceMotion) {
       // Let the beam dissolve where it is rather than blink out.
       cancelAnimation(sweep);
       bandOpacity.value = withTiming(0, { duration: 450, easing: EASE_OUT });
@@ -105,35 +125,34 @@ export function ScanPanel({
       false
     );
     return () => cancelAnimation(sweep);
-  }, [scanning, reduceMotion, height, sweep, bandOpacity]);
+  }, [scanning, reduceMotion, still, sweep, bandOpacity]);
 
   const bandStyle = useAnimatedStyle(() => ({
     opacity: bandOpacity.value,
-    transform: [{ translateY: -BAND_HEIGHT + sweep.value * (height + BAND_HEIGHT) }],
+    transform: [{ translateY: still ? band : -BAND_HEIGHT + sweep.value * (height + BAND_HEIGHT) }],
   }));
 
   return (
     <View
-      onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
       style={{
         width: "100%",
-        aspectRatio: 4 / 3,
-        borderRadius: radius.card,
+        height,
+        borderRadius: 12,
         overflow: "hidden",
-        backgroundColor: color.skeleton,
+        backgroundColor: photoFill,
       }}
     >
       {uri ? (
         <Image
           source={{ uri }}
           style={{ width: "100%", height: "100%" }}
-          contentFit="cover"
+          contentFit="contain"
           transition={reduceMotion ? 0 : { duration: MOTION.enter, effect: "cross-dissolve" }}
         />
       ) : null}
       <View
         pointerEvents="none"
-        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: color.photoScrimSoft }}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: PANEL_SCRIM }}
       />
 
       <Animated.View
@@ -141,7 +160,7 @@ export function ScanPanel({
         style={[{ position: "absolute", left: 0, right: 0, top: 0, height: BAND_HEIGHT }, bandStyle]}
       >
         <LinearGradient
-          colors={["transparent", color.brandVeil, "transparent"]}
+          colors={[BAND_CLEAR, BAND_PEAK, BAND_CLEAR]}
           style={{ flex: 1 }}
         />
       </Animated.View>
@@ -156,10 +175,10 @@ export function ScanPanel({
           paddingHorizontal: 10,
           paddingVertical: 4,
           borderRadius: radius.full,
-          backgroundColor: color.photoScrim,
+          backgroundColor: PHOTO_TAG_FILL,
         }}
       >
-        <Text fontSize="text-xs" fontWeight="font-bold" tone="onPhoto">
+        <Text fontSize="text-xs" fontWeight="font-semibold" tone="onPhoto">
           {status}
         </Text>
       </View>

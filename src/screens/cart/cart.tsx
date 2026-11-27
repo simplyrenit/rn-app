@@ -3,7 +3,8 @@ import { useCart } from "@/backend/cart";
 import useSaved from "@/backend/useSaved";
 import { BookingLoading, Notice, Thumb } from "@/components/booking/parts";
 import { CartChip, RentStrip } from "@/components/cart/parts";
-import { Avatar, Button, EmptyState, SubpageHeader, Text, VerifiedBusinessBadge } from "@/components/core";
+import { ShopHead } from "@/components/booking/card-lines";
+import { BottomBar, EmptyState, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { apiError } from "@/lib/api-error";
 import { BookingCustomer, clock } from "@/lib/booking";
@@ -21,31 +22,49 @@ import {
   lineNote,
   waitingForRent,
 } from "@/lib/cart";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER } from "@/lib/design-tokens";
 import { formatCurrency } from "@/lib/format";
 import { pluralize } from "@/lib/pluralize";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, TouchableOpacity, View } from "react-native";
-import { ExclamationTriangleIcon, MapPinIcon, ShoppingBagIcon, TruckIcon } from "react-native-heroicons/outline";
+import { ExclamationTriangleIcon, ShoppingBagIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-/** A quiet brand action written as a word: Remove, Move to Saved. */
-function LinkButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
+/**
+ * A text link (2.1 kit Button Type=Text, 20pt): Remove, Move to Saved, Book now, Check out. Plain SemiBold 14/20 with a
+ * 12pt slop for the 44pt target, as the kit's sheet-footer link; disabled stays in its colour at half opacity.
+ */
+function LinkButton({
+  label,
+  onPress,
+  disabled,
+  danger,
+  accessibilityLabel,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  /** Remove: `dangerStrong`. */
+  danger?: boolean;
+  accessibilityLabel?: string;
+}) {
+  const { color } = useTheme();
   return (
     <TouchableOpacity
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
       activeOpacity={0.6}
       disabled={disabled}
       onPress={onPress}
-      hitSlop={{ top: 8, bottom: 8 }}
-      style={{ minHeight: 32, justifyContent: "center", alignSelf: "flex-start", opacity: disabled ? 0.5 : 1 }}
+      hitSlop={12}
+      style={{ alignSelf: "flex-start", opacity: disabled ? 0.5 : 1 }}
     >
-      <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
+      <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand" style={danger ? { color: color.dangerStrong } : undefined}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -53,9 +72,8 @@ function LinkButton({ label, onPress, disabled }: { label: string; onPress: () =
 }
 
 /**
- * Figma CT-10: one row of a shop's card. The rate a day and the deposit, as
- * dates are picked at checkout (G21); at most one warning; Remove and Move to
- * Saved, which a line in checkout does not offer (G18).
+ * Figma 2089:26744 "Line": one row of a shop's card. The rate a day and the deposit, as dates are picked at checkout
+ * (G21); at most one warning; Remove and Move to Saved, which a line in checkout does not offer (G18).
  */
 function LineRow({
   line,
@@ -87,7 +105,7 @@ function LineRow({
   return (
     <View style={{ flexDirection: "row", gap: 12, paddingVertical: 12 }}>
       <View style={{ opacity: gone ? 0.5 : 1 }}>
-        <Thumb uri={product.cover_image} />
+        <Thumb uri={product.cover_image} size={64} />
       </View>
       <View style={{ flex: 1, gap: 4 }}>
         <Text fontSize="text-md" fontWeight="font-semibold" tone={gone ? "dim" : undefined} numberOfLines={2}>
@@ -96,7 +114,7 @@ function LineRow({
         <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "baseline", columnGap: 8 }}>
           {product.rate ? (
             <Text fontSize="text-md" fontWeight="font-bold" tone={gone ? "dim" : undefined} style={struck}>
-              {`${formatCurrency(product.rate)} a day`}
+              {`${formatCurrency(product.rate)}/day`}
             </Text>
           ) : null}
           {Number(product.deposit) > 0 ? (
@@ -114,25 +132,34 @@ function LineRow({
         ) : null}
         {!inCheckout && !gone ? <LinkButton label="Move to Saved" onPress={onMove} disabled={busy} /> : null}
         {bookAlone && !inCheckout && !gone ? (
-          <View style={{ alignSelf: "flex-start" }}>
-            <Button variant="outline" size="compact" onPress={onBook} accessibilityLabel={`Book ${product.title} on its own`}>
-              Book now
-            </Button>
-          </View>
+          <LinkButton label="Book now" onPress={onBook} accessibilityLabel={`Book ${product.title} on its own`} />
         ) : null}
       </View>
-      {!inCheckout ? (
-        <LinkButton label="Remove" onPress={onRemove} disabled={busy} />
-      ) : null}
+      {!inCheckout ? <LinkButton label="Remove" danger onPress={onRemove} disabled={busy} /> : null}
     </View>
   );
 }
 
-/** Figma CT-10 to CT-12: the shop, its warning, its lines and what Check out takes. */
+/** What Check out takes and the line under its count: in the card's footer, or the single shop's bar (2089:26744). */
+function checkoutSummary(card: CartCard) {
+  const going = checkoutLines(card);
+  const deposit = cardDeposit(card);
+  const caption =
+    card.warning?.code === "one_item_only"
+      ? "Each item is booked on its own for now"
+      : card.warning?.code === "shop_paused"
+        ? "Check out is off for now"
+        : deposit > 0
+          ? `Deposit ${formatCurrency(deposit)} (refundable)`
+          : null;
+  return { going, caption };
+}
+
+/** Figma 2089:26744 / 26814 "Shop card": the shop, its warning, its lines and what Check out takes. */
 function ShopCard({
   card,
   busy,
-  quiet,
+  barred,
   bookings,
   onRemove,
   onMove,
@@ -142,8 +169,8 @@ function ShopCard({
 }: {
   card: CartCard;
   busy: string | null;
-  /** Another booking waits for its rent: that payment is the loud action (G24), so Check out steps back. */
-  quiet: boolean;
+  /** The screen's bar carries this card's Check out (one shop, 2089:26744): no footer here. */
+  barred: boolean;
   bookings: BookingCustomer[];
   onRemove: (line: CartLine) => void;
   onMove: (line: CartLine) => void;
@@ -154,70 +181,41 @@ function ShopCard({
   const { color } = useTheme();
   const { shop } = card;
   const note = cardNote(card);
-  const going = checkoutLines(card);
-  const deposit = cardDeposit(card);
+  const { going, caption } = checkoutSummary(card);
   const checkingOut = card.lines.find((l) => l.warning?.code === "in_checkout");
   const checkoutNumber = checkingOut ? checkingOut.booking ?? (checkingOut.warning as { booking: string }).booking : null;
   const checkoutBooking = bookings.find((b) => b.number === checkoutNumber);
   const hairline = { height: 1, backgroundColor: color.line } as const;
 
-  let footer: React.ReactNode = null;
-  if (going.length > 0) {
-    const caption =
-      card.warning?.code === "one_item_only"
-        ? "Each item is booked on its own for now"
-        : card.warning?.code === "shop_paused"
-          ? "Check out is off for now"
-          : deposit > 0
-            ? `Deposit ${formatCurrency(deposit)} (refundable)`
-            : null;
-    footer = (
-      <>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text fontSize="text-md" fontWeight="font-bold">
-            {pluralize(going.length, "item")}
-          </Text>
-          {caption ? (
-            <Text fontSize="text-sm" tone="body">
-              {caption}
-            </Text>
-          ) : null}
-        </View>
-        <Button
-          variant={note?.off || quiet ? "outline" : "primary"}
+  // 2089:26814 "Card footer": the count and its line, and Check out as a text link (b2-04: no sticky bar for several shops).
+  let footer: { title: string; sub: string | null; link: React.ReactNode } | null = null;
+  if (barred) {
+    footer = null;
+  } else if (going.length > 0) {
+    footer = {
+      title: pluralize(going.length, "item"),
+      sub: caption,
+      link: (
+        <LinkButton
+          label="Check out"
           disabled={Boolean(note?.off)}
           onPress={onCheckOut}
           accessibilityLabel={`Check out ${pluralize(going.length, "item")} from ${shop.name}`}
-        >
-          Check out
-        </Button>
-      </>
-    );
+        />
+      ),
+    };
   } else if (checkoutNumber) {
     // Every line is in one checkout: the footer names its stage and opens it (FIXES-r1 B1 row 3).
-    const stage =
-      checkoutBooking?.stage === "ringing"
-        ? `Asking ${shop.name}`
-        : checkoutBooking?.stage === "accepted"
-          ? `Waiting for your payment${checkoutBooking.money.rent_due_at ? ` · by ${clock(checkoutBooking.money.rent_due_at)}` : ""}`
-          : null;
-    footer = (
-      <>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text fontSize="text-md" fontWeight="font-bold">
-            {`${pluralize(card.lines.filter((l) => l.warning?.code === "in_checkout").length, "item")} in checkout`}
-          </Text>
-          {stage ? (
-            <Text fontSize="text-sm" tone="body">
-              {stage}
-            </Text>
-          ) : null}
-        </View>
-        <Button variant="outline" onPress={() => onOpenBooking(checkoutNumber)}>
-          View booking
-        </Button>
-      </>
-    );
+    footer = {
+      title: `${pluralize(card.lines.filter((l) => l.warning?.code === "in_checkout").length, "item")} in checkout`,
+      sub:
+        checkoutBooking?.stage === "ringing"
+          ? `Asking ${shop.name}`
+          : checkoutBooking?.stage === "accepted"
+            ? `Waiting for your payment${checkoutBooking.money.rent_due_at ? ` · by ${clock(checkoutBooking.money.rent_due_at)}` : ""}`
+            : null,
+      link: <LinkButton label="View booking" onPress={() => onOpenBooking(checkoutNumber)} />,
+    };
   }
 
   return (
@@ -225,48 +223,32 @@ function ShopCard({
       style={{
         borderWidth: 1,
         borderColor: color.line,
-        borderRadius: radius.card,
+        borderRadius: 12,
         backgroundColor: color.surface,
         paddingHorizontal: 16,
         paddingTop: 16,
+        // The last line's own 12 makes the frame's 16 under it; a footer pads itself.
+        paddingBottom: footer ? 0 : 4,
       }}
     >
-      <View style={{ flexDirection: "row", gap: 12, paddingBottom: 12 }}>
-        <Avatar name={shop.name} size={40} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={1} style={{ flexShrink: 1 }}>
-              {shop.name}
-            </Text>
-            <VerifiedBusinessBadge verified={shop.verified} />
-          </View>
-          {shop.locality ? (
-            <Text fontSize="text-sm" tone="body">
-              {shop.locality}
-            </Text>
-          ) : null}
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            {shop.delivers ? (
-              <TruckIcon size={16} color={color.textBody} />
-            ) : (
-              <MapPinIcon size={16} color={color.textBody} />
-            )}
-            {/* The cart has no fee to show: it is worked out for the dates and address at checkout (FIXES-r1 B1 row 7). */}
-            {/* flexShrink: beside the icon, at 360dp or a large font the words wrap instead of running past the card. */}
-            <Text fontSize="text-sm" tone="body" style={{ flexShrink: 1 }}>
-              {shop.delivers ? "Delivers · fee at checkout" : "Self pickup only"}
-            </Text>
-          </View>
-        </View>
-      </View>
+      <ShopHead
+        name={shop.name}
+        verified={shop.verified}
+        sub={shop.locality || null}
+        delivers={shop.delivers}
+        // The cart has no fee to show: it is worked out for the dates and address at checkout (FIXES-r1 B1 row 7).
+        handover={shop.delivers ? "Delivers · fee at checkout" : "Self pickup only"}
+      />
 
-      {note ? (
-        <View style={{ paddingBottom: 12 }}>
-          <Notice tone={note.tone} icon={note.tone === "warning" ? "warning" : "info"} title={note.title}>
-            {note.body}
-          </Notice>
-        </View>
-      ) : null}
+      <View style={{ paddingTop: 12 }}>
+        {note ? (
+          <View style={{ paddingBottom: 12 }}>
+            <Notice tone={note.tone} icon={note.tone === "warning" ? "warning" : "info"} title={note.title}>
+              {note.body}
+            </Notice>
+          </View>
+        ) : null}
+      </View>
 
       <View style={hairline} />
       {card.lines.map((line) => (
@@ -286,7 +268,20 @@ function ShopCard({
       {footer ? (
         <>
           <View style={hairline} />
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 16 }}>{footer}</View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 16 }}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text fontSize="text-md" fontWeight="font-bold">
+                {footer.title}
+              </Text>
+              {footer.sub ? (
+                <Text fontSize="text-sm" tone="body">
+                  {footer.sub}
+                </Text>
+              ) : null}
+            </View>
+            {/* Centred on the count and its line (2089:26814 "Card footer"); the link itself sits flex-start in a line. */}
+            <View>{footer.link}</View>
+          </View>
         </>
       ) : null}
     </View>
@@ -303,6 +298,9 @@ export default function CartScreen() {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
+  // Dev only (design fixtures, 2089:26814): a fixed clock for the rent strip, so its countdown holds still.
+  const route = useRoute();
+  const design = __DEV__ ? (route.params as { design?: { now?: string } } | undefined)?.design : undefined;
   const { cart, query, signedIn, add, remove } = useCart();
   const { favorites, saveFavorite, deleteFavorite } = useSaved();
   const openBookings = useBookings(true, signedIn);
@@ -420,55 +418,85 @@ export default function CartScreen() {
       </View>
     );
   } else if (!cart || cart.count === 0) {
+    // 2089:26957: the state 180 under the bar, then "See your Saved items" as a 20pt link 8 below it (the kit's
+    // secondary action is a 44 ghost, which the frame doesn't draw).
     body = (
-      <View style={{ flex: 1, justifyContent: "center" }}>
-        <EmptyState
-          icon={<ShoppingBagIcon size={28} color={color.brandText} />}
-          title="Your cart is empty"
-          body="Add items from any shop. Each shop checks out on its own, on the dates you pick then."
-          actionLabel="Find something to rent"
-          onAction={() => navigation.navigate("MainTabs", { screen: "Home" })}
-          secondaryActionLabel="See your Saved items"
-          onSecondaryAction={() => navigation.navigate("MainTabs", { screen: "Saved" })}
-        />
+      <View style={{ paddingTop: 180, paddingBottom: 24, alignItems: "center", gap: 8 }}>
+        <View style={{ alignSelf: "stretch" }}>
+          <EmptyState
+            icon={<ShoppingBagIcon size={28} color={color.brandText} />}
+            title="Your cart is empty"
+            body="Add items from any shop. Each shop checks out on its own, on the dates you pick then."
+            actionLabel="Find something to rent"
+            actionTone="primary"
+            onAction={() => navigation.navigate("MainTabs", { screen: "Home" })}
+          />
+        </View>
+        {/* A wrapper, so the column centres it: the link itself sits flex-start in a line. */}
+        <View>
+          <LinkButton
+            label="See your Saved items"
+            onPress={() => navigation.navigate("MainTabs", { screen: "Saved" })}
+          />
+        </View>
       </View>
     );
   } else {
+    // One shop: its Check out is the screen's bar (2089:26744). Not while another booking's rent waits (G24: that
+    // payment is the loud action) or while the shop has Check out off, since the bar's primary is always filled.
+    const only = cart.cards.length === 1 ? cart.cards[0] : null;
+    const onlySummary = only ? checkoutSummary(only) : null;
+    const bar =
+      only && onlySummary && onlySummary.going.length > 0 && !rentDue && !cardNote(only)?.off ? { card: only, ...onlySummary } : null;
     body = (
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: insets.bottom + space.lg }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={color.textBody} colors={[color.brand]} />
-        }
-      >
-        <RentStrip />
-        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16, gap: 16 }}>
-          <View style={{ gap: 2 }}>
-            <Text fontSize="text-md" fontWeight="font-bold">
-              {cartSize(cart)}
-            </Text>
-            <Text fontSize="text-sm" tone="body">
-              Each shop is a separate booking: pick dates, pay ₹99 to ask, then pay that shop's rent. Totals show at
-              checkout.
-            </Text>
+      <>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: bar ? 24 : insets.bottom + 24 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={color.textBody} colors={[color.brand]} />
+          }
+        >
+          <RentStrip now={design?.now ? new Date(design.now) : undefined} />
+          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16, gap: 16 }}>
+            <View style={{ gap: 2 }}>
+              <Text fontSize="text-md" fontWeight="font-bold">
+                {cartSize(cart)}
+              </Text>
+              <Text fontSize="text-sm" tone="body">
+                Each shop is a separate booking: pick dates, pay ₹99 to ask, then pay that shop's rent. Totals show at
+                checkout.
+              </Text>
+            </View>
+            {cart.cards.map((card) => (
+              <ShopCard
+                key={card.shop.key}
+                card={card}
+                busy={busy}
+                barred={bar?.card === card}
+                bookings={bookings}
+                onRemove={(line) => void removeLine(card, line)}
+                onMove={(line) => void moveToSaved(card, line)}
+                onCheckOut={() => checkOut(card)}
+                onBook={(name) => navigation.navigate("BookingDates", { product: name, ...checkoutDates() })}
+                onOpenBooking={openBooking}
+              />
+            ))}
           </View>
-          {cart.cards.map((card) => (
-            <ShopCard
-              key={card.shop.key}
-              card={card}
-              busy={busy}
-              quiet={rentDue}
-              bookings={bookings}
-              onRemove={(line) => void removeLine(card, line)}
-              onMove={(line) => void moveToSaved(card, line)}
-              onCheckOut={() => checkOut(card)}
-              onBook={(name) => navigation.navigate("BookingDates", { product: name, ...checkoutDates() })}
-              onOpenBooking={openBooking}
-            />
-          ))}
-        </View>
-      </ScrollView>
+        </ScrollView>
+        {bar ? (
+          <BottomBar
+            layout="summary-cta"
+            value={pluralize(bar.going.length, "item")}
+            subLine={bar.caption ?? undefined}
+            primary={{
+              label: "Check out",
+              onPress: () => checkOut(bar.card),
+              accessibilityLabel: `Check out ${pluralize(bar.going.length, "item")} from ${bar.card.shop.name}`,
+            }}
+          />
+        ) : null}
+      </>
     );
   }
 

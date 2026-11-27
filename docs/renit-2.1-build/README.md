@@ -116,6 +116,7 @@ While a fixture with a session is on, the app is in a dev-only **design session*
 - Nothing is written: no tokens in AsyncStorage, no `Authorization` header, no Firebase sign-in, no token refresh. Only what the context reports changes. `renit-qa://dev/fixture/off` (or a fixture without a session) ends the session and brings back the device's own auth state exactly. A signed-out emulator goes back to the tabs, not to Welcome.
 - Every `axiosInstance` request is served or refused, and nothing reaches QA. The me-request returns `session.user` unless `responses` lists it. Any other read the fixture does not list gets a **404**. Writes get the usual 409, and the events batch gets a 204. So a screen's other reads (KYC status, cart, favorites, notifications) show their empty or error state unless the fixture lists them.
 - Keep `firebase_uid` empty so chat's Firestore listeners stay off: Firestore is not intercepted.
+- The session user is also the **viewer for distances** (ENG-429, `lib/distance.ts` `useViewerCoordinates`): with a usable `session.user.coordinates` (not 0/0) every "2.4 km away" line (the product page, choose dates, kit `Card`, `booking/outcome`) is measured from it, and the device is never asked for its location. Without a session, or with 0/0, the device's location is used as before. It is `__DEV__` only (the release bundle drops the require). Other stories reuse it for their distance lines (ENG-427): pick coordinates that print the frame's distance.
 - LogBox is silenced while any fixture is on, because the refused requests log errors and the toasts would cover the bottom bar. The errors still reach the Metro log.
 
 ### 2. Run frame_diff.py
@@ -205,7 +206,7 @@ Keep notes to one plain sentence and run `python3 tools/tracker.py` after editin
 
 ## Release safety (dev-only code)
 
-DevKit, the dev links and the fixtures live in `src/dev/` and `src/screens/dev/`. They are loaded only by `__DEV__ ? require(...) : null` (nav.tsx, global-context.tsx) and `if (__DEV__) require(...)` (networkUtils.ts); nothing imports them statically (global-context.tsx has a type-only import, which is erased). A production bundle constant-folds `__DEV__` to false and drops the requires. Each dev module exports a `RENIT_DEV_*_MARKER` string, so a bundle that contained it would show it:
+DevKit, the dev links and the fixtures live in `src/dev/` and `src/screens/dev/`. They are loaded only by `__DEV__ ? require(...) : null` (nav.tsx, global-context.tsx) and `if (__DEV__) require(...)` (networkUtils.ts), plus `__DEV__ ? require("@/dev/list-flow-seed")` in the list-flow screens add-photos, reading, review and preview (ENG-435); nothing imports them statically (global-context.tsx has a type-only import, which is erased). A production bundle constant-folds `__DEV__` to false and drops the requires. Each dev module exports a `RENIT_DEV_*_MARKER` string, so a bundle that contained it would show it:
 
 ```bash
 npx expo export --platform ios --no-bytecode --output-dir /tmp/harness-export

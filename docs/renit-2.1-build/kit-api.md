@@ -80,7 +80,7 @@ Two kit links are not the Text button, so build them as plain text, not with `Bu
 | `MapPlaceholder` | `core/map-placeholder.tsx` | C | 2100:29942 | `style?: StyleProp<ViewStyle>` (fills the box it is given) |
 
 Shared types:
-- `BarAction = { label: string; onPress: () => void; disabled?: boolean; loading?: boolean; accessibilityLabel?: string }`, exported from `bottom-bar.tsx`.
+- `BarAction = { label: string; onPress: () => void; disabled?: boolean; loading?: boolean; accessibilityLabel?: string; haptic?: boolean }` (`haptic` ENG-435, primary only), exported from `bottom-bar.tsx`.
 - `StatusTone = "neutral" | "success" | "warning" | "danger" | "info"`. There is no brand tone; the fix pass removed it.
 - `ListRowIcon`: a heroicons component type.
 
@@ -91,6 +91,9 @@ Shared types:
 - `value?`, `unit?`, `subLine?`: strings, for `summary-cta`.
 - `children?: ReactNode`: legacy passthrough for `booking/parts` `BottomBar`. It renders in the content strip in place of a layout.
 - `style?`.
+- `note?: string` (ENG-429): `summary-cta` with no `primary` draws this 14/20 note at 60%, right-aligned in the primary's place and 4 below the row's centre line ("Not taking bookings right now", 31pt from the strip's top in 04 2089:22597).
+- `BarAction.labelSize?: "compact"` (ENG-429): the primary's 14/20 label in the bar's 52 box with no side padding, for a half-width primary whose 16/24 label would wrap ("Book for the morning", 142pt at x11 in 164, 04 2089:23201; "Continue with self pickup", 2089:28473).
+- `secondary-primary` (ENG-429): both buttons are explicit equal halves (`flexGrow 1, flexShrink 1, flexBasis 0`) with no side padding, as the kit's Secondary+Primary draws them (2071:14449, both p0). Before, a label wider than its half ("✓ In cart · View", 2089:23201) took width from the other button. DevKit re-diffed: iOS 0.30%, emulator 0.49%.
 
 `ListRow` props:
 - `label: string`.
@@ -132,6 +135,11 @@ Props added; nothing renamed or removed.
 
 - **`RingSpinner`** (`core/ring-spinner.tsx`, import by path): `{ size = 40, spinning = true }`. A full `brandPanel` track plus a 270° `brand` arc (12 to 9 o'clock), stroke `size × 0.08`, native-driver rotation; `spinning={false}` draws the still pose for fixtures. From 02/2089:28209.
 
+## ENG-435 additions
+
+- **`Stepper`** (`core/stepper.tsx`, import by path) gains `compact?: boolean`: a 32 disc, white fill, 1pt `brandPanelLine` stroke, with `hitSlop` 6 so the touch target stays 44. The default (50, `inputLine`) is unchanged for `shop/quick-block.tsx` and `rental-delivery.tsx`. From 01/2083:14692 "Minimum rental" (One day less / One day more); used by `post/plan-pricing.tsx`. Proven by a box diff of that row: `diffs/ios/2083-14692.stepper` 0.51%, `diffs/android/2083-14692.stepper` 0.56%.
+- **`BarAction`** (`core/bottom-bar.tsx`) gains `haptic?: boolean`, passed to the primary `Button` (default on). Not visual, so no frame: list-flow `preview.tsx` sets `false` because its submit already gives the commit haptic, as the old `Button haptic={false}` did.
+
 ## Group C (implemented)
 
 `StepProgress` and `MapPlaceholder` keep the props above unchanged. Added optional props, and changes to existing APIs:
@@ -147,6 +155,7 @@ Props added; nothing renamed or removed.
   - Props are unchanged. `tone="brand"` draws as `info`.
   - With no `icon`, the glyph follows the tone: info ⓘ, warning and danger ⚠, success ✓.
   - The kit's Link node is hidden in every tone, so it is not built.
+  - `tone="neutral"` (ENG-429, 04 2089:22597 "Not taking bookings (neutral notice)"): `surfaceMuted` card, glyph at 70% (`textBody`), info glyph.
 - **`Pill`** (`booking/parts.tsx`) is now `<StatusPill>`, with `brand` falling back to `info`.
 - **`BottomBar`** (`booking/parts.tsx`) is now `<BottomBar>` from `core/bottom-bar` in children mode.
 - **`TextField`** (`core/field.tsx`)

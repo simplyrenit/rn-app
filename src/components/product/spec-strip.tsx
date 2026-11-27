@@ -10,8 +10,8 @@ const ICON_SIZE = 22;
  * The two sets of metrics this strip ships in.
  *
  * `default` is the rhythm the post wizard uses.
- * `detail` is measured off the product detail frame (Figma 1:9120): a 20pt
- * glyph, the value and label both at 14/21 and set solid against each other,
+ * `detail` is measured off the 2.1 product detail frame (04 2083:16177): a 20pt
+ * glyph, a SemiBold 14/21 value over a Regular 12/18 label at 60%,
  * and the block's own 16pt inset repeated inside every column — which is what
  * gives that screen its taller, calmer strip.
  * `profile` is the owner profile's facts strip (Figma 2089:36248), ruled by
@@ -26,8 +26,11 @@ const METRICS = {
     stackGap: 6,
     valueSize: "text-md",
     valueWeight: "font-bold",
+    valueLeading: undefined,
     labelSize: "text-sm",
+    labelLeading: undefined,
   },
+  // 2.1 (04 2083:16177 "Spec strip"): value SemiBold 14/21, label Regular 12/18 at 60%.
   detail: {
     blockPaddingVertical: 16,
     columnPaddingVertical: 16,
@@ -35,8 +38,10 @@ const METRICS = {
     gap: 8,
     stackGap: 0,
     valueSize: "text-sm",
-    valueWeight: "font-bold",
-    labelSize: "text-sm",
+    valueWeight: "font-semibold",
+    valueLeading: 21,
+    labelSize: "text-xs",
+    labelLeading: 18,
   },
   // The 2.1 owner profile's Facts strip (Figma 2089:36248): 96 high, 16 above
   // and below, each column a 20 glyph, a 14/20 SemiBold value and a 12/16
@@ -49,7 +54,9 @@ const METRICS = {
     stackGap: 4,
     valueSize: "text-sm",
     valueWeight: "font-semibold",
+    valueLeading: undefined,
     labelSize: "text-xs",
+    labelLeading: undefined,
   },
 } as const;
 
@@ -140,11 +147,12 @@ export function SpecStrip({
             <Text
               fontSize={metrics.valueSize}
               fontWeight={metrics.valueWeight}
+              lineHeight={metrics.valueLeading}
               numberOfLines={1}
             >
               {item.value}
             </Text>
-            <Text fontSize={metrics.labelSize} tone="dim" numberOfLines={1}>
+            <Text fontSize={metrics.labelSize} lineHeight={metrics.labelLeading} tone="dim" numberOfLines={1}>
               {item.label}
             </Text>
           </View>

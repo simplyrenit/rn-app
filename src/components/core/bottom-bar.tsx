@@ -14,6 +14,14 @@ export interface BarAction {
   disabled?: boolean;
   loading?: boolean;
   accessibilityLabel?: string;
+  /** `false` when `onPress` gives its own haptic (Button's tap buzz is on by default). */
+  haptic?: boolean;
+  /**
+   * The primary's 14/20 label in the default 52 box: the kit Primary at half
+   * width when its label would wrap at 16/24 ("Book for the morning", 04
+   * 2089:23201; "Continue with self pickup", 2089:28473).
+   */
+  labelSize?: "compact";
 }
 
 export type BottomBarLayout =
@@ -39,6 +47,11 @@ export interface BottomBarProps {
   /** `summary-cta`: "Deposit ₹2,000" (12 at 60%). Omit to hide the line. */
   subLine?: string;
   /**
+   * `summary-cta` with no `primary`: a 14/20 body note right-aligned in the
+   * primary's place ("Not taking bookings right now", 04 2089:22597).
+   */
+  note?: string;
+  /**
    * Legacy passthrough for `booking/parts` `BottomBar`: rendered in the bar's
    * content strip in place of a layout, keeping the hairline and insets.
    */
@@ -55,6 +68,9 @@ const LINK_PAD = 4;
 // The legacy column `booking/parts` drew (space.sm): kept for the passthrough so
 // its 23 bars do not reflow.
 const LEGACY_GAP = 8;
+// Secondary+Primary (2071:14449): two equal halves whatever their labels, so the basis is explicit (a content basis
+// let a long label take more than its half), and no side padding, as the kit's buttons in the bar have none.
+const HALF = { flexGrow: 1, flexShrink: 1, flexBasis: 0, paddingHorizontal: 0 } as const;
 
 function PrimaryButton({ action, style }: { action: BarAction; style?: StyleProp<ViewStyle> }) {
   return (
@@ -63,7 +79,11 @@ function PrimaryButton({ action, style }: { action: BarAction; style?: StyleProp
       disabled={action.disabled}
       loading={action.loading}
       accessibilityLabel={action.accessibilityLabel}
-      style={style}
+      haptic={action.haptic}
+      size={action.labelSize === "compact" ? "compact" : undefined}
+      // `compact` is a 44 box; the kit keeps the bar's 52, and its centred label has no side padding (2089:23201's
+      // 142pt "Book for the morning" at x11 in a 164 button), so it stays on one line at half width.
+      style={action.labelSize === "compact" ? [{ minHeight: 52, paddingHorizontal: 0 }, style] : style}
     >
       {action.label}
     </Button>
@@ -87,6 +107,7 @@ export function BottomBar({
   value,
   unit,
   subLine,
+  note,
   children,
   style,
 }: BottomBarProps) {
@@ -120,7 +141,14 @@ export function BottomBar({
                 </Text>
               ) : null}
             </View>
-            {primary ? <PrimaryButton action={primary} style={{ flex: 1 }} /> : null}
+            {primary ? (
+              <PrimaryButton action={primary} style={{ flex: 1 }} />
+            ) : note ? (
+              // 2089:22597 sets it 31 from the strip's top (2 below centre), not centred on the summary.
+              <Text fontSize="text-sm" lineHeight={20} tone="dim" style={{ flex: 1, textAlign: "right", marginTop: 4 }}>
+                {note}
+              </Text>
+            ) : null}
           </>
         );
       case "secondary-primary":
@@ -133,12 +161,12 @@ export function BottomBar({
                 disabled={secondary.disabled}
                 loading={secondary.loading}
                 accessibilityLabel={secondary.accessibilityLabel}
-                style={{ flex: 1 }}
+                style={HALF}
               >
                 {secondary.label}
               </Button>
             ) : null}
-            {primary ? <PrimaryButton action={primary} style={{ flex: 1 }} /> : null}
+            {primary ? <PrimaryButton action={primary} style={HALF} /> : null}
           </>
         );
       case "cta-text":
