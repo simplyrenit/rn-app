@@ -27,8 +27,9 @@ interface Props {
    */
   showBack?: boolean;
   /**
-   * Opt-in: the 2.1 product detail gallery (01 2083:15973): each photo in a
-   * 177×300 box on the canvas, 36 from the top and centred, with the page dots
+   * Opt-in: the 2.1 product detail gallery (01 2083:15973): each photo fitted in
+   * a 300-high box across the content width, 36 from the top and centred (the
+   * frame's portrait cover lands at its 177×300), with the page dots
    * and the "1/5" pill on the canvas below it instead of scrimmed over a
    * full-bleed crop.
    *

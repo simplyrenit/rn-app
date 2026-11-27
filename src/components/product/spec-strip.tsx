@@ -10,8 +10,8 @@ const ICON_SIZE = 22;
  * The two sets of metrics this strip ships in.
  *
  * `default` is the rhythm the post wizard uses.
- * `detail` is measured off the product detail frame (Figma 1:9120): a 20pt
- * glyph, the value and label both at 14/21 and set solid against each other,
+ * `detail` is measured off the 2.1 product detail frame (04 2083:16177): a 20pt
+ * glyph, a SemiBold 14/21 value over a Regular 12/18 label at 60%,
  * and the block's own 16pt inset repeated inside every column — which is what
  * gives that screen its taller, calmer strip.
  * `profile` is the owner profile's facts strip (Figma 2089:36248), ruled by

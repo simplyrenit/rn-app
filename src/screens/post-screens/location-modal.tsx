@@ -748,6 +748,9 @@ const LocationModal = ({}) => {
                   style={{ flex: 1 }}
                   initialRegion={mapRegion}
                   customMapStyle={isDarkMode ? darkModeMapStyle : []}
+                  // The panel covers the map below `mapVisible`, so centre the pin, the
+                  // "You are here" dot and the Google logo in the part that shows.
+                  mapPadding={{ top: 0, left: 0, right: 0, bottom: Math.max(0, MAP_HEIGHT - mapVisible) }}
                   onPress={handleMapPress}
                   // A tap on a labelled place arrives here, not in onPress.
                   onPoiClick={handleMapPress}

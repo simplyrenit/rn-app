@@ -1124,9 +1124,8 @@ export default function DetailsScreen() {
               reached. It only exists when there is something to show. */}
           {reviews.length > 0 ? (
             <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
-              {/* 2083:15854 draws ENG-427's neutral outline (white, #E6E6E6, black
-                  label); until that tone lands this is the kit outline. */}
-              <Button onPress={openAllReviews} variant="outline" size="compact">
+              {/* 2083:15854: ENG-427's neutral outline (white, #E6E6E6, black label). */}
+              <Button onPress={openAllReviews} variant="outline" tone="neutral" size="compact">
                 {`See all ${reviews.length} ${reviews.length === 1 ? "review" : "reviews"}`}
               </Button>
             </View>
