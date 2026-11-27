@@ -58,7 +58,7 @@ export function Thumb({
 }: {
   uri?: string | null;
   more?: string | null;
-  /** The cart's lines draw it at 64 (2089:26744, 28848); every other booking screen keeps 56. */
+  /** The cart's lines (2089:26744, 28848) and the Summary card (2089:26998, 2093:21585) draw it at 64; the other booking screens keep 56. */
   size?: number;
 }) {
   const { color } = useTheme();

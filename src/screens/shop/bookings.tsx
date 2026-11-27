@@ -178,28 +178,23 @@ export function ShopBookingsView({ bottomPad, design }: { bottomPad: number; des
             // The frames draw the count in the label, two spaces after it ("Ready  3").
             const label_ = count === undefined ? label : `${label}  ${count}`;
             return (
-              // The kit Chip forces the button role and has no onLayout (ENG-427 adds both): the wrapper carries the tab's
-              // role and state, and gives `revealChipAt` the chip's place in the row.
-              <View
+              <Chip
                 key={key}
-                accessible
+                label={label_}
+                selected={selected}
                 accessibilityRole="tab"
                 accessibilityLabel={count === undefined ? label : `${label}, ${count}`}
                 accessibilityState={{ selected }}
+                hitSlop={{ top: 2, bottom: 2 }}
                 onLayout={(event) => {
                   chipAt.current[key] = { x: event.nativeEvent.layout.x, width: event.nativeEvent.layout.width };
                   if (key === tab) revealTab(key);
                 }}
-              >
-                <Chip
-                  label={label_}
-                  selected={selected}
-                  onPress={() => {
-                    if (!selected) selectionFeedback();
-                    setPicked(key);
-                  }}
-                />
-              </View>
+                onPress={() => {
+                  if (!selected) selectionFeedback();
+                  setPicked(key);
+                }}
+              />
             );
           })}
         </ScrollView>
