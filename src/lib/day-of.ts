@@ -623,7 +623,7 @@ export function earlyRequestCopy(
     case "no_answer":
       return { tone: "warning", title: "The shop didn't answer in time", body: stays, open: false };
     default:
-      return { tone: "warning", title: "That time has gone", body: "Pick another time.", open: false };
+      return { tone: "warning", title: "That time has gone", body: kept ? stays : "Pick another time.", open: false };
   }
 }
 

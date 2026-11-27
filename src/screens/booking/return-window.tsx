@@ -79,7 +79,9 @@ export default function ReturnWindowScreen() {
   const early = picked === NOW || (choice !== null && day !== data.day);
   const lastDay = booking.courier?.return?.earliest ?? booking.last_day;
   const waiting = earlyRequestCopy(data.request ?? booking.courier?.return?.request, lastDay, now, booking.courier?.return?.window);
-  const dayLabel = (d: string) => (d === today ? "Today" : d === booking.last_day ? `${dayShort(d)} · last day` : dayShort(d));
+  // The no-fee day is marked, also when the last day had no slot and the server moved it (`earliest`).
+  const noFee = (d: string) => d === booking.last_day || d === data.earliest;
+  const dayLabel = (d: string) => (d === today ? "Today" : noFee(d) ? `${dayShort(d)} · last day` : dayShort(d));
 
   const save = async () => {
     if (!choice || busy.current) return;

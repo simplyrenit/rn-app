@@ -893,6 +893,9 @@ describe("ENG-442, an early courier return", () => {
     expect(earlyRequestCopy({ ...ask, outcome: "declined" }, "2026-10-26", now, window)?.body).toBe(
       "Your return stays in your window, Mon 26 Oct, 5:00 – 6:00 pm."
     );
+    expect(earlyRequestCopy({ ...ask, outcome: "gone" }, "2026-10-26", now, window)?.body).toBe(
+      "Your return stays in your window, Mon 26 Oct, 5:00 – 6:00 pm."
+    );
     expect(earlyRequestCopy({ ...ask, outcome: null }, "2026-10-26", now, window)?.body).toMatch(/If it can't, your return stays in your window, Mon 26 Oct, 5:00 – 6:00 pm\.$/);
   });
 
