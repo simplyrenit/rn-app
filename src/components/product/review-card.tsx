@@ -29,7 +29,7 @@ interface ReviewCardProps {
   onShowMore?: () => void;
   /** What VoiceOver says the control opens. Defaults to the listing's reviews. */
   showMoreHint?: string;
-  /** Opt-in, `detail` only, pt: overrides the `size` percentage (ENG-427's owner-profile rail card). */
+  /** Opt-in, pt: overrides the `size` percentage (ENG-427's owner-profile cards). */
   width?: number;
   /** Opt-in, `detail` only, pt: overrides the 182 minimum height. */
   height?: number;
@@ -41,6 +41,9 @@ const PREVIEW_CHARS = 140;
 const DETAIL_HEIGHT = 182;
 /** Three lines of 14/21 body, as a fixed box so short reviews still align. */
 const DETAIL_BODY_HEIGHT = 64;
+/** The owners-reviews card (Figma 2089:24740): 14/21 comment and name, 12/18 date. */
+const BODY_LEADING = 21;
+const DATE_LEADING = 18;
 
 export const ReviewCard: React.FC<ReviewCardProps> = (props) => {
   // `variant` is fixed per call site, so this never swaps hooks mid-life.
@@ -146,40 +149,40 @@ function ListCard({
   );
 }
 
+/** The owners-reviews card, 2089:24740 (ENG-427). */
 const DefaultCard: React.FC<ReviewCardProps> = ({
   reviewText,
   reviewerName,
   reviewDate,
   reviewerImage,
   size,
+  width,
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
-  const { color, shadow } = useTheme();
+  const { color } = useTheme();
 
   const body = reviewText ?? "";
   const isLong = body.length > PREVIEW_CHARS;
 
   return (
     <View
-      style={[
-        {
-          // `w-[${size}%]` was an interpolated arbitrary class, which NativeWind
-          // cannot resolve at build time, so the width was silently dropped.
-          width: size ? `${size}%` : "100%",
-          padding: 16,
-          borderRadius: radius.group,
-          borderWidth: 1,
-          borderColor: color.line,
-          backgroundColor: color.surface,
-          gap: 14,
-        },
-        shadow,
-      ]}
+      style={{
+        // `w-[${size}%]` was an interpolated arbitrary class, which NativeWind
+        // cannot resolve at build time, so the width was silently dropped.
+        width: width ?? (size ? `${size}%` : "100%"),
+        // The frame's 16 is to the card's outer edge (the stroke is outside the layout), so 15 + the 1 border.
+        padding: 15,
+        borderRadius: radius.card,
+        borderWidth: 1,
+        borderColor: color.line,
+        backgroundColor: color.surface,
+        gap: 24,
+      }}
     >
       {/* Height follows the content. A fixed h-52 left a void under short
           reviews and clipped long ones. */}
-      <View style={{ gap: 6 }}>
-        <Text fontSize="text-sm" tone="hi">
+      <View style={{ gap: 4 }}>
+        <Text fontSize="text-sm" lineHeight={BODY_LEADING} tone="body">
           {isExpanded ? body : truncateWords(body, PREVIEW_CHARS)}
         </Text>
         {isLong && (
@@ -188,20 +191,20 @@ const DefaultCard: React.FC<ReviewCardProps> = ({
             accessibilityRole="button"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
               {isExpanded ? "Show less" : "Show more"}
             </Text>
           </TouchableOpacity>
         )}
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <Avatar uri={reviewerImage} name={reviewerName} size={40} />
         <View style={{ flex: 1 }}>
-          <Text fontSize="text-sm" fontWeight="font-bold" numberOfLines={1}>
+          <Text fontSize="text-sm" lineHeight={BODY_LEADING} fontWeight="font-semibold" numberOfLines={1}>
             {reviewerName}
           </Text>
-          <Text fontSize="text-sm" tone="body">
+          <Text fontSize="text-xs" lineHeight={DATE_LEADING} tone="dim">
             {moment(reviewDate).fromNow()}
           </Text>
         </View>

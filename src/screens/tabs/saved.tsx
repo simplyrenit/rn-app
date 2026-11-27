@@ -4,6 +4,7 @@ import {
   EmptyState,
   NonScrollableContainer,
   ProductCardSkeleton,
+  SubpageHeader,
 } from "@/components/core";
 import ProfilePreAuth from "@/components/profile/pre-auth/profile-pre-auth";
 import { useGlobalContext } from "@/context/global-context";
@@ -13,16 +14,18 @@ import { BackendProduct, useTypedNavigation } from "@/lib/types";
 import React from "react";
 import { FlatList, RefreshControl, View, useWindowDimensions } from "react-native";
 import { HeartIcon } from "react-native-heroicons/outline";
-import { Text } from "@/components/core";
 
-// Measured off the Figma Saved frame: a two-column wrap of the same 163pt tile the
-// Home rails use, 16 between columns and 24 between rows, under a 61pt topbar
-// (16 padding, an H2 title). A column is half of what is left after the gutters
-// and the gap, which is exactly 163 on the 390pt frame and shrinks with a narrower
+// The 2.1 Saved frames (2089:27772, 2089:27893): the kit Top bar's tab title,
+// then 16 down to a two-column wrap of the 162 Listing card, 18 between columns
+// and 24 between rows. A column is half of what is left after the gutters and
+// the gap, which is exactly 162 on the 390pt frame and shrinks with a narrower
 // phone instead of overflowing it; being a width rather than a flex fraction, a
-// lone card in the last row stays one column wide.
-const COLUMN_GAP = 16;
-const TOPBAR_PADDING = 16;
+// lone card in the last row stays one column wide. The empty state sits 156
+// under the top bar, where the frame draws it.
+const COLUMN_GAP = 18;
+const ROW_GAP = 24;
+const GRID_TOP = 16;
+const EMPTY_TOP = 156;
 
 export default function Saved() {
   const { favorites, loading, refreshing, refetch } = useSaved();
@@ -49,25 +52,13 @@ export default function Saved() {
     </View>
   );
 
-  const heading = (
-    <Text
-      accessibilityRole="header"
-      role="screenTitle"
-      // The frame's topbar: H2 with 16 above and below it.
-      style={{ paddingVertical: TOPBAR_PADDING }}
-    >
-      Saved
-    </Text>
-  );
-
   return (
     <NonScrollableContainer>
+      <SubpageHeader variant="tab-title" title="Saved" />
       {authTokens && isAuthenticated ? (
         <View
           style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER }}
         >
-          {heading}
-
           {loading ? (
             <FlatList
               data={[0, 1, 2, 3, 4, 5]}
@@ -79,7 +70,7 @@ export default function Saved() {
               keyExtractor={(item) => item.toString()}
               numColumns={2}
               columnWrapperStyle={{ gap: COLUMN_GAP }}
-              contentContainerStyle={{ gap: 24 }}
+              contentContainerStyle={{ gap: ROW_GAP, paddingTop: GRID_TOP }}
               showsVerticalScrollIndicator={false}
             />
           ) : (
@@ -88,13 +79,17 @@ export default function Saved() {
               // — 1.82:1 on white, effectively invisible — with a fontWeight iOS
               // silently ignored, and no route out of the screen.
               ListEmptyComponent={
-                <EmptyState
-                  icon={<HeartIcon size={26} color={color.brandText} />}
-                  title="Nothing saved yet"
-                  body="Tap the heart on any listing and it will wait for you here."
-                  actionLabel="Browse listings"
-                  onAction={() => navigation.navigate("MainTabs")}
-                />
+                // EmptyState pads its own gutter, so it spans the screen, not the grid's inset: the frame's body is
+                // 342 wide (2089:27893).
+                <View style={{ marginHorizontal: -SCREEN_GUTTER }}>
+                  <EmptyState
+                    icon={<HeartIcon color={color.text} strokeWidth={1.5} />}
+                    title="Nothing saved yet"
+                    body="Tap the heart on any listing and it will wait for you here."
+                    actionLabel="Browse listings"
+                    onAction={() => navigation.navigate("MainTabs")}
+                  />
+                </View>
               }
               data={favorites}
               renderItem={renderItem}
@@ -115,17 +110,15 @@ export default function Saved() {
               // The tab bar is in the layout below this grid, so the scroll
               // already ends above it; bar-height padding doubled the gap.
               contentContainerStyle={{
-                gap: 24,
+                gap: ROW_GAP,
+                paddingTop: favorites.length ? GRID_TOP : EMPTY_TOP,
                 paddingBottom: 24,
-                flexGrow: favorites.length ? 0 : 1,
-                justifyContent: favorites.length ? "flex-start" : "center",
               }}
             />
           )}
         </View>
       ) : (
         <View style={{ flex: 1 }}>
-          <View style={{ paddingHorizontal: SCREEN_GUTTER }}>{heading}</View>
           <ProfilePreAuth isDarkMode={isDark} />
         </View>
       )}

@@ -43,7 +43,7 @@ Other tokens:
 
 ### `Button` (`core/button.tsx`)
 
-Props are unchanged, plus `tone?: "tonal" | "brand" | "muted"`. `resolveButtonStyle()` is exported for tests.
+Props are unchanged, plus `tone?: "tonal" | "brand" | "muted" | "neutral"`. `resolveButtonStyle()` is exported for tests.
 
 Every height below is a `minHeight` with no vertical padding: a one-line label at the default text size draws exactly that box, and a large accessibility text size or a two-line label grows it.
 
@@ -54,6 +54,7 @@ Every height below is a `minHeight` with no vertical padding: a one-line label a
 | Primary disabled | `disabled` | #CAC8F7 (dark #292929) | white (dark `textDim`, so it does not read as live) |
 | Secondary (Bottom bar Secondary+Primary) | `variant="outline"` | 52, r12, white, 1px #CAC8F7, ring | 14/21 SemiBold purple |
 | Secondary tonal (Empty state Action) | `variant="outline" tone="tonal" size="compact"` | 44, r12, #EDEDFC, ring, padding 20 | 14/20 SemiBold purple |
+| Secondary neutral (request card, sign-in, owner profile; ENG-427) | `variant="outline" tone="neutral"` | 52 (44 compact), r12, white, 1px #E6E6E6, ring | 14/20 SemiBold black |
 | Text link (Bottom bar CTA+Text "Not now") | `variant="ghost"` | 44 high whatever the `size`, no box, no padding | 14/21 **Bold** purple |
 | Cancel (Sheet · Confirm destructive) | `variant="ghost" tone="muted"` | as above | 14/21 Bold, 70% black |
 | Destructive | `variant="warning"` | 52 (44 compact), r12, white, 1px #E6E6E6, ring. `ConfirmSheet` passes `minHeight: 56` for Sheet · Confirm destructive (2110:30387); elsewhere it sits beside a 52 Secondary | 14/21 Bold #D92D20 |
@@ -128,7 +129,7 @@ Props added; nothing renamed or removed.
   - The Verified chip stays on the photo, bottom-left.
 - **`FavouriteButton`:**
   - `tile` now draws the kit heart: a 32 disc of #FFFFFFEB with a 0/1 blur-3 shadow of #0000002E (Android uses `elevation: 1`) in a 44 box, holding a black 24 outline heart at stroke 1.5. It looks the same in both themes.
-  - The saved heart keeps `darkColors.danger`.
+  - The saved heart keeps `darkColors.danger`. (Superseded for `tile` by ENG-427 D4: brand purple; see below.)
 
 ## ENG-428 additions
 
@@ -172,8 +173,33 @@ Props added; nothing renamed or removed.
 - **`BottomBar`**: API as above. Strip padding 16/24, `paddingBottom` 16 + `insets.bottom` (16 with the iOS keyboard up); `cta-text` 4 + inset with a 4 gap (drawn as `full-cta` when `secondary` is missing). `children` mode is a column with gap 8 and the same insets.
 - **`SheetHeader`**: API as above; `grabber` default stays true (it draws the 21pt grabber row and the sheet's top radius, for standalone/DevKit use). Inside `CustomBottomSheetModal`, pass `grabber={false}`: gorhom draws the handle. The title row is `minHeight` 44, so a long title wraps. Close X is heroicons outline `XMarkIcon` 24 at `textDim`, 10pt hitSlop.
 - **`SheetFooter`**: API as above. The secondary link is plain SemiBold 14/20 `brandText` text (12pt hitSlop), not `Button`. `paddingBottom` 16 + `insets.bottom`.
-- **`CustomBottomSheetModal`**: every sheet now gets the kit grabber (44×5 `line`, 8 above and below, r24 top). `frame` now only selects the 60% scrim. With the keyboard up (ENG-438), a numeric snap keeps its height and makes room for the keyboard (iOS: grows by keyboard − inset and pads its scroll content by the same; Android: capped to the room above the keyboard) instead of being scaled by 0.9; percentage snaps still go to 90%.
+- **`CustomBottomSheetModal`**: every sheet now gets the kit grabber (44×5 `line`, 8 above and below, r24 top). `frame` now only selects the 60% scrim (dark mode only since ENG-427 D1; light is 40% on every sheet, see below). With the keyboard up (ENG-438), a numeric snap keeps its height and makes room for the keyboard (iOS: grows by keyboard − inset and pads its scroll content by the same; Android: capped to the room above the keyboard) instead of being scaled by 0.9; percentage snaps still go to 90%.
 - **`ConfirmSheet`**: props as before, plus (ENG-438) `onDismiss`, `onReady(height)` and `error`. Draws 2110:30387: `SheetHeader` (no X), body 14/20 `textBody`, actions column (padding 16/24/4, gap 4) with `warning` (danger, `minHeight` 56 passed by the sheet) or `primary` (default) full width and `ghost tone="muted"` Cancel below. Snap height from the measured title and body lines (`confirmSheetHeight`; 285 + inset before they are measured), handed to `onReady(height)`; an error that appears keeps the last measured height until its lines are in.
+
+## ENG-427 (implemented)
+
+Props added; nothing renamed or removed.
+
+- **`Chip`**: optional passthroughs, no visual change:
+  - `onLayout?: (event: LayoutChangeEvent) => void` (the results rail scrolls the chosen chip into view);
+  - `accessibilityRole?` (default `"button"`), `accessibilityLabel?`, `accessibilityHint?`;
+  - `accessibilityState?`: replaces the default `{ selected }` (the rail's radios and the spec checkboxes pass `{ checked }`);
+  - `hitSlop?: Insets`: the chip is 40 high, so callers pass 2 top and bottom for a 44pt target.
+  - Chip has no haptic; a caller that wants one wraps `onPress` with `selectionFeedback()`.
+- **Look changes to kit components (frames proved them wrong; every story's call sites see them):**
+  - `Card`: the "Delivery" word's fee is green with the word (2089:31917), and the Verified chip sits 8/8 from the photo's corner (was 6/6).
+  - `VerifiedBusinessBadge`: `variant="chip"` is the 2.1 pill: the word alone, 12 SemiBold success green on `successWash`, 24 high, 10 each side, over an opaque `surface` so dark mode's 16% wash still reads on a photo (was a solid brand fill with the shield). New prop `size?: "sm" | "md"` (default `"sm"`, `mark` only): `"md"` is the owner profile's 14/20 SemiBold word, 4 from the shield (2089:36248).
+  - `SectionHeader`: the subtitle is `dim` (was `body`) and sits 4 under the title (was 2); only `owners-review.tsx` passes one (2089:24740).
+- **Pass 2 kit changes (main-thread decisions D1, D3, D4; D11 below; props unchanged, every story's call sites inherit them):**
+  - `CustomBottomSheetModal` scrim (D1): **light mode is 40% black on every sheet**, `frame` or not, as every flow frame's scrim layer draws it (`#00000066`). Dark is unchanged (60% with `frame`, else 50%). `frame` now only matters in dark mode. Exported `sheetScrimOpacity(dark, frame)` for tests. Sheet frames in every section (04, 05, 06, 09, 10, 13, …) lose their scrim note in light; re-diff them.
+  - `DateRangePicker` scrim (D1): `#00000066` in light, set in the picker only; dark keeps `ink.scrim(true)` (60%). The shared `ink.scrim` token is **unchanged** (45% light), so anything else drawing it still gets 45%.
+  - `Avatar` with no photo (D3): the frames' "Avatar (initials)": a `brandPanel` (#EDEDFC) disc, **no ring**, initials SemiBold, `allowFontScaling={false}`. Size-keyed: `size >= 72` is 20/28 `brandText` (03 2089:36248 / 36523); smaller is 14/20 `textBody` 70% (03 2089:24740, 01 chat at 48, 04 reviews/owner at 40/48). The per-person hued disc with white initials is gone. A photo still has the 1px `line` ring over `brandWash`. Frames that draw a **different** avatar, which this does not match (the owning story adds an optional prop or draws its own): 04 cart / booking-dates-card / 2089:24972 (40, brand 14/20; `cart/cart.tsx`, ENG-429), 05 review-and-book-card (40, brand Bold 16/24; `booking/card-lines.tsx`, ENG-430), 08 shop-booking (40, brand SemiBold 16/24; `card-lines.tsx`, ENG-433), 14 notifications (48, brand 16/24; `profileScreens/notification.tsx`, ENG-439). 12/13 draw the 48 brand 16/24 with a ring, which ENG-438's local `ProfileAvatar` (`profile/post-auth/profile-img.tsx`) already draws; left as is.
+  - `FavouriteButton` `tile` (D4): the **saved** heart is solid `#635BE8` (brand; the disc is white in both themes), as Saved 2089:27772 fills it (was `darkColors.danger`). The unsaved black outline is unchanged. The PDP's chip (`onPhoto`) and `ink` hearts keep red: no frame draws them saved.
+- **Pass 2 shared address-picker change (D11, 03 2089:32313; props unchanged):**
+  - `AddressRow` `trailing="radio"`: a 72pt row on the sheet's gutter with no rule between rows (no side inset), a bare outline `MapPinIcon` 24 `textDim` whatever the address type, title Medium 16/24 over the line 14/20 `dim` (two lines max), **no Default tag**, and a solid brand `CheckCircleIcon` 24 on the chosen row only. `AddressRowSkeleton` takes `picks` for the same 72pt shape while loading. The `chevron` (saved-addresses list, ENG-438) and `change` variants are unchanged.
+  - `AddressPickerSheet`: the old Cancel link is gone; the sheet opens with `SheetHeader` (title + close X, `grabber={false}`) and has one snap at its content height (73 header + 28 description + 72 per row incl. the action rows + 1 hairline + 19 + `insets.bottom`; loading counts two rows, error/empty one) instead of 65%.
+  - Inherited by every picker caller: ENG-429 `booking/choose-dates.tsx`, ENG-435 `list-flow/review.tsx`, ENG-436 `post/about-product-form.tsx` (and ENG-427's own `search-results.tsx`). Those stories re-diff their picker frames.
+- **Adoption correction:** `search-results.tsx` has no bottom bar in any frame. Its "Button over `insets.bottom`" was the filter sheet's footer, now `SheetFooter`; the `BottomBar` row below no longer lists it.
 
 ## Adoption
 
@@ -183,11 +209,11 @@ The `StatusPill`, `Chip`, `StepProgress` and `MapPlaceholder` rows were read. Th
 
 | Component | Replaces (hand-rolled today) | Moved by |
 |---|---|---|
-| `BottomBar` | Sticky CTA strips built from a `View`, `insets.bottom` and a `Button`. The booking screens already use it through `booking/parts` `BottomBar`. | ENG-427 `search-results.tsx`; ENG-429 `products-screen.tsx`, `cart/cart.tsx`, `addresses/address-details.tsx`; ENG-430 `kyc/intro`, `kyc/details`, `kyc/status`, `booking/outcome.tsx`; ENG-431 `booking/booking-details.tsx`, `booking/day-of.tsx`, `booking/courier-day-of.tsx`; ENG-432 `booking/return.tsx`, `booking/claim.tsx`; ENG-433 `shop/booking.tsx`, `shop/quick-block.tsx`; ENG-434 `shop/handover.tsx`, `shop/return.tsx`, `shop/courier.tsx`; ENG-435 `list-flow/*`, `shop/draft-photos.tsx`; ENG-437 `bank-account.tsx`, `rental-delivery.tsx`, `rental-hours.tsx`, `rental-gst.tsx`, `delivery-areas.tsx`, `shop-address.tsx`; ENG-438 `addresses/saved-addresses.tsx`; ENG-439 `unavailability_form*.tsx`, `report-a-problem.tsx`, `feedback-review.tsx` |
+| `BottomBar` | Sticky CTA strips built from a `View`, `insets.bottom` and a `Button`. The booking screens already use it through `booking/parts` `BottomBar`. | ENG-429 `products-screen.tsx`, `cart/cart.tsx`, `addresses/address-details.tsx`; ENG-430 `kyc/intro`, `kyc/details`, `kyc/status`, `booking/outcome.tsx`; ENG-431 `booking/booking-details.tsx`, `booking/day-of.tsx`, `booking/courier-day-of.tsx`; ENG-432 `booking/return.tsx`, `booking/claim.tsx`; ENG-433 `shop/booking.tsx`, `shop/quick-block.tsx`; ENG-434 `shop/handover.tsx`, `shop/return.tsx`, `shop/courier.tsx`; ENG-435 `list-flow/*`, `shop/draft-photos.tsx`; ENG-437 `bank-account.tsx`, `rental-delivery.tsx`, `rental-hours.tsx`, `rental-gst.tsx`, `delivery-areas.tsx`, `shop-address.tsx`; ENG-438 `addresses/saved-addresses.tsx`; ENG-439 `unavailability_form*.tsx`, `report-a-problem.tsx`, `feedback-review.tsx` |
 | `SheetHeader` | A sheet's own title row (and close X) inside `CustomBottomSheetModal`. `ConfirmSheet` already uses it. | ENG-427 `search-results.tsx`, `addresses/address-picker-sheet.tsx`; ENG-429 `products-screen.tsx`, `product/product-specs.tsx`; ENG-430 `booking/cancel-sheet.tsx`; ENG-431 `booking/day-of.tsx`, `booking/collect-items.tsx`, `booking/get-help.tsx`; ENG-432 `booking/end-early-sheet.tsx`, `booking/fault-report.tsx`, `booking/claim.tsx`; ENG-433 `shop/today.tsx`, `shop/ring.tsx`, `shop/quick-block.tsx`, `shop/*-sheet.tsx`, `shop/pick-sheets.tsx`; ENG-434 `shop/report-problem.tsx`; ENG-435 `list-flow/sheets.tsx`, `list-flow/category-sheet.tsx`, `list-flow/specs-card.tsx`, `list-flow/add-photos.tsx`, `list-flow/review.tsx`; ENG-436 `edit-product.tsx`, `post/product-image-grid.tsx`; ENG-437 `rental-settings.tsx`, `rental-delivery.tsx`, `rental-hours.tsx`, `bank/unlock-sheet.tsx`; ENG-438 `profile/post-auth/*`, `profile/pre-auth/profile-pre-auth.tsx`, `addresses/address-details.tsx` (its ConfirmSheet frame); ENG-439 `unavailability_form.tsx` |
 | `SheetFooter` | The `Button` column at the bottom of those sheets. | The same stories and files as `SheetHeader` |
 | `ListRow` | Rows built from a label and a `ChevronRightIcon`. `ProfileRow` already draws through it. | ENG-429 `products-screen.tsx`, `product/product-owner.tsx`, `cart/parts.tsx`; ENG-431 `booking/booking-details.tsx`; ENG-433 `shop/today.tsx`, `shop/booking.tsx`; ENG-434 `handover/parts.tsx`; ENG-435 `post/taxonomy-list.tsx`, `list-flow/review.tsx`; ENG-436 `post/unavailability-editor.tsx` (EditProductAvailability); ENG-437 `rental-settings.tsx`, `rental-delivery.tsx`, `bank-account.tsx`; ENG-438 `addresses/address-row.tsx`; ENG-439 `faqs.tsx`, `contactUs.tsx`, `who-we-are.tsx`, `report-a-problem.tsx` |
 | `StatusPill` | `bank-account.tsx` `StatusChip` (a tinted label with an icon). `booking/parts` `Pill` and `ListingStatusPill` already draw through it. `booking/card-lines.tsx` `Chip` is tinted too but carries a View action, which `StatusPill` has no slot for: ENG-431 decides. | ENG-437 `bank-account.tsx`; ENG-431 decides `card-lines.tsx` |
-| `Chip` | `search/results-rails.tsx` `Pill` (the search-results filter chips) and `post/plan-pricing.tsx` `Chip`. Not `list-flow/scan-panel.tsx` `Chip`: that is an animated, display-only detection chip, not a choice. | ENG-427 `results-rails.tsx`; ENG-435 `plan-pricing.tsx` |
+| `Chip` | The search-results category rail and the filter sheet's spec chips (done, ENG-427; the Filters bar's `Pill` stays its own: the frame's Filter pill has gap 8 and a 16 icon) and `post/plan-pricing.tsx` `Chip`. Not `list-flow/scan-panel.tsx` `Chip`: that is an animated, display-only detection chip, not a choice. | ENG-427 `results-rails.tsx`; ENG-435 `plan-pricing.tsx` |
 | `StepProgress` | `auth/headerIndicator.tsx` draws it directly over `SubpageHeader variant="back-only"` (ENG-428, with `fill` and `gap={6}`, no label); `PageIndicator` is deleted. | Done (ENG-428) |
 | `MapPlaceholder` | None found: no screen has a hand-rolled map stand-in. It stands in for `MapView` in state frames and design fixtures. | Where a fixture shows a map: ENG-428 `auth/location.tsx`; ENG-429 `product/product-map.tsx`, `addresses/address-details.tsx`, `post-screens/location-modal.tsx`; ENG-437 `rental-delivery.tsx` |

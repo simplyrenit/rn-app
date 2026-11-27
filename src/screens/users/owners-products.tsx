@@ -1,26 +1,35 @@
-import { BackButton, Card, Text } from "@/components/core";
+import { Card, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { IconButton } from "@/components/core/icon-button";
 import { RouteProps } from "@/lib/types";
 import { useRoute } from "@react-navigation/native";
 import React from "react";
 import { FlatList, Share, View, useWindowDimensions } from "react-native";
-import { IOSShareIcon } from "@/icons/share";
-import { SCREEN_GUTTER, density } from "@/lib/design-tokens";
+import { ShareIcon } from "react-native-heroicons/outline";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { withSource } from "@/lib/attribution";
 
-const GRID_GAP = 14;
+// Figma 2089:24680: the sub-line 8 under the top bar, the grid 16 below it,
+// 162 cards 18 apart in rows 24 apart, and 24 at the end.
+const GRID_GAP = 18;
+const ROW_GAP = 24;
+const CONTENT_PAD_TOP = 8;
+const HEADER_GAP = 16;
+const CONTENT_PAD_BOTTOM = 24;
 
 const OwnersProductsScreen: React.FC = () => {
   const { params } = useRoute<RouteProps<"OwnersProducts">>();
   const { products, name, shopUrl } = params;
   const { color } = useTheme();
+  // The container leaves the bottom edge to the screen: the last row clears the home indicator here.
+  const insets = useSafeAreaInsets();
   /**
    * An exact column width, not a percentage.
    *
-   * Two cards at "48.5%" plus a 14pt gap comes to more than the row, so the
+   * Two cards at "48.5%" plus the gap comes to more than the row, so the
    * second card overflowed and was clipped on the right edge. Computed per
    * render from the live window, not once at module load, so it follows
    * split-screen, foldables and Android display-size changes.
@@ -42,34 +51,24 @@ const OwnersProductsScreen: React.FC = () => {
   return (
     <NonScrollableContainer>
       {/* Bare-noun heading, the same rule as the profile this came from. */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          paddingHorizontal: 10,
-          paddingVertical: 6,
-        }}
-      >
-        <BackButton />
-        <View style={{ flex: 1, alignItems: "center" }}>
-          <Text role="screenTitle" numberOfLines={1}>
-            Listings
-          </Text>
-        </View>
-        <IconButton
-          onPress={handleShare}
-          accessibilityLabel={`Share ${name}'s listings`}
-          accessibilityHint="Opens the system share sheet"
-        >
-          <IOSShareIcon size={20} color={color.text} />
-        </IconButton>
-      </View>
+      <SubpageHeader
+        title="Listings"
+        trailing={
+          <IconButton
+            onPress={handleShare}
+            accessibilityLabel={`Share ${name}'s listings`}
+            accessibilityHint="Opens the system share sheet"
+          >
+            <ShareIcon size={24} color={color.text} strokeWidth={1.5} />
+          </IconButton>
+        }
+      />
 
       <FlatList
         style={{ width: "100%" }}
         data={products}
         ListHeaderComponent={
-          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 4 }}>
+          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: CONTENT_PAD_TOP, marginBottom: HEADER_GAP }}>
             <Text fontSize="text-sm" tone="body">
               {`${products.length} ${
                 products.length === 1 ? "item" : "items"
@@ -82,30 +81,24 @@ const OwnersProductsScreen: React.FC = () => {
         columnWrapperStyle={{
           justifyContent: "flex-start",
           paddingHorizontal: SCREEN_GUTTER,
-          marginTop: 16,
           gap: GRID_GAP,
         }}
-        contentContainerStyle={{ paddingBottom: density.listFooter }}
+        ItemSeparatorComponent={() => <View style={{ height: ROW_GAP }} />}
+        contentContainerStyle={{ paddingBottom: CONTENT_PAD_BOTTOM + insets.bottom }}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => {
-          // With a catalogue this small a trailing single-item row is the
-          // common case, not the edge case. Left at half width it stranded an
-          // empty column beside itself; it now takes the row it is in.
-          const isTrailingOdd =
-            products.length % 2 === 1 && index === products.length - 1;
-          return (
-            <Card
-              id={item.name}
-              image={item.cover_image}
-              title={item.title}
-              location={item.location}
-              price={item.rate}
-              plans={item.plans}
-              coordinates={item.coordinates}
-              width={isTrailingOdd ? COLUMN_WIDTH * 2 + GRID_GAP : COLUMN_WIDTH}
-            />
-          );
-        }}
+        // A lone last card keeps its column's width, as the frame draws it.
+        renderItem={({ item }) => (
+          <Card
+            id={item.name}
+            image={item.cover_image}
+            title={item.title}
+            location={item.location}
+            price={item.rate}
+            plans={item.plans}
+            coordinates={item.coordinates}
+            width={COLUMN_WIDTH}
+          />
+        )}
       />
     </NonScrollableContainer>
   );

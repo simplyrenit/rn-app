@@ -27,7 +27,7 @@ import {
   TvIcon,
   ShieldCheckIcon,
   SpeakerWaveIcon,
-  SparklesIcon,
+  ShoppingBagIcon,
   TrophyIcon,
   TruckIcon,
   WrenchScrewdriverIcon,
@@ -39,7 +39,9 @@ type IconComponent = typeof CubeIcon;
 /**
  * Two glyph families, split by tier.
  *
- * Parent categories keep the single-weight Heroicons outline set: the same
+ * Parent categories keep the single-weight Heroicons outline set, mapped as the
+ * 2.1 kit's Category icon map draws them (figma/00 2110:30283: Fashion is a
+ * shopping bag, Other / all the cube): the same
  * categories were being presented three different ways (photorealistic stock
  * shots on Home, twelve identical cube glyphs in the listing flow, no icons in
  * the request form), and one outline weight makes shape usable for scanning.
@@ -80,13 +82,13 @@ const ICONS: Record<string, IconComponent> = {
   treadmill: TrophyIcon,
   books: BookOpenIcon,
   cameralens: CameraIcon,
-  clothing: SparklesIcon,
+  clothing: ShoppingBagIcon,
   drone: PaperAirplaneIcon,
   electronicaccessories: CpuChipIcon,
   electronics: CpuChipIcon,
   emerging: RocketLaunchIcon,
-  fashion: SparklesIcon,
-  formalwear: SparklesIcon,
+  fashion: ShoppingBagIcon,
+  formalwear: ShoppingBagIcon,
   furniture: HomeModernIcon,
   gamingconsole: TvIcon,
   laptopdesktop: ComputerDesktopIcon,
@@ -112,7 +114,7 @@ const ICONS: Record<string, IconComponent> = {
   fitnesssports: TrophyIcon,
   gamingvremergingtech: RocketLaunchIcon,
   machinestoolsequipment: WrenchScrewdriverIcon,
-  fashionaccessories: SparklesIcon,
+  fashionaccessories: ShoppingBagIcon,
   artdecorhobby: PaintBrushIcon,
   eventscelebrations: CakeIcon,
   babykids: FaceSmileIcon,

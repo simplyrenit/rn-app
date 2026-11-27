@@ -48,7 +48,8 @@ export function SectionHeader({
         gap: 12,
       }}
     >
-      <View style={{ flex: 1, gap: 2 }}>
+      {/* The subtitle (only owners-review uses it, 2089:24740): 14/20 dim, 4 under the title. */}
+      <View style={{ flex: 1, gap: 4 }}>
         <Text
           accessibilityRole="header"
           role="sectionTitle"
@@ -60,7 +61,7 @@ export function SectionHeader({
           {title}
         </Text>
         {subtitle ? (
-          <Text fontSize="text-sm" tone="body">
+          <Text fontSize="text-sm" tone="dim">
             {subtitle}
           </Text>
         ) : null}

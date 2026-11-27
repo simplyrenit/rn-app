@@ -14,9 +14,8 @@ const ICON_SIZE = 22;
  * glyph, the value and label both at 14/21 and set solid against each other,
  * and the block's own 16pt inset repeated inside every column — which is what
  * gives that screen its taller, calmer strip.
- * `profile` is `detail`'s column inside the owner profile's facts row (Figma
- * 1:21984), where the surrounding block already sets the 16pt gap either side
- * of the strip — so the strip must not add a second one of its own.
+ * `profile` is the owner profile's facts strip (Figma 2089:36248), ruled by
+ * the page's own full-bleed hairlines: 16 above and below, tighter columns.
  */
 const METRICS = {
   default: {
@@ -44,16 +43,19 @@ const METRICS = {
     labelSize: "text-xs",
     labelLeading: 18,
   },
+  // The 2.1 owner profile's Facts strip (Figma 2089:36248): 96 high, 16 above
+  // and below, each column a 20 glyph, a 14/20 SemiBold value and a 12/16
+  // label, 4 apart.
   profile: {
-    blockPaddingVertical: 0,
-    columnPaddingVertical: 16,
+    blockPaddingVertical: 16,
+    columnPaddingVertical: 0,
     iconSlot: 20,
-    gap: 8,
-    stackGap: 0,
+    gap: 4,
+    stackGap: 4,
     valueSize: "text-sm",
-    valueWeight: "font-bold",
+    valueWeight: "font-semibold",
     valueLeading: undefined,
-    labelSize: "text-sm",
+    labelSize: "text-xs",
     labelLeading: undefined,
   },
 } as const;
