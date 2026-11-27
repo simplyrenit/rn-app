@@ -1,5 +1,5 @@
 import { useAreas, useShop } from "@/backend/shop";
-import { Button, Skeleton, SubpageHeader, Text, TextField } from "@/components/core";
+import { BottomBar, Button, Skeleton, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { ShopLoading } from "@/components/shop/states";
 import { apiError } from "@/lib/api-error";
@@ -9,12 +9,11 @@ import { Area, areaGroups, deliveryDraftFrom, kmText, offWithin, toggleExcluded 
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React, { useMemo, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
-import { CheckIcon } from "react-native-heroicons/solid";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import { CheckIcon, MagnifyingGlassIcon } from "react-native-heroicons/outline";
 
 /** One area: a checkbox that is ticked while the shop delivers there. The whole row is the target. */
-function AreaRow({ area, off, first, onPress }: { area: Area; off: boolean; first: boolean; onPress: () => void }) {
+function AreaRow({ area, off, onPress }: { area: Area; off: boolean; onPress: () => void }) {
   const { color } = useTheme();
   return (
     <TouchableOpacity
@@ -23,14 +22,15 @@ function AreaRow({ area, off, first, onPress }: { area: Area; off: boolean; firs
       accessibilityLabel={`${area.name}, ${area.pin}, ${kmText(area.km)}${area.inside ? "" : ", just outside"}`}
       activeOpacity={0.6}
       onPress={onPress}
+      // 2097:29740: 56 high (8 + 40 + 8), a hairline under every row, the list on the canvas.
       style={{
         flexDirection: "row",
         alignItems: "center",
-        gap: space.md,
-        minHeight: MIN_TOUCH_TARGET + 12,
+        gap: 16,
+        minHeight: 56,
         paddingVertical: space.sm,
-        borderTopWidth: first ? 0 : 1,
-        borderTopColor: color.line,
+        borderBottomWidth: 1,
+        borderBottomColor: color.line,
       }}
     >
       <View
@@ -42,32 +42,77 @@ function AreaRow({ area, off, first, onPress }: { area: Area; off: boolean; firs
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: off ? "transparent" : color.brand,
-          borderColor: off ? color.inputLine : color.brand,
+          borderColor: off ? color.line : color.brand,
         }}
       >
         {off ? null : <CheckIcon size={15} color={color.onBrand} />}
       </View>
       <View style={{ flex: 1 }}>
-        <Text fontSize="text-md" fontWeight="font-bold" tone={off ? "body" : "default"}>
+        <Text fontSize="text-md" fontWeight="font-semibold" tone={off ? "body" : "default"}>
           {area.name}
         </Text>
-        <Text fontSize="text-xs" tone="body">
+        <Text fontSize="text-xs" tone="dim">
           {/* An edge area (D13) is listed so a shop can turn off a PIN code that straddles the distance. */}
           {`${area.pin}${off ? " · Off" : ""}${area.inside ? "" : " · just outside"}`}
         </Text>
       </View>
-      <Text fontSize="text-sm" tone="body">
+      <Text fontSize="text-sm" tone="dim">
         {kmText(area.km)}
       </Text>
     </TouchableOpacity>
   );
 }
 
+/** A 32 row: 12 above the 12/16 label, 4 below. */
 function GroupLabel({ children }: { children: string }) {
   return (
-    <Text fontSize="text-xs" fontWeight="font-bold" tone="dim" accessibilityRole="header" style={{ marginTop: space.sm }}>
+    <Text
+      fontSize="text-xs"
+      fontWeight="font-semibold"
+      tone="dim"
+      accessibilityRole="header"
+      style={{ paddingTop: 12, paddingBottom: 4 }}
+    >
       {children}
     </Text>
+  );
+}
+
+/**
+ * The search box as 2097:29740 draws it: the kit field's 48/r12 edge with a leading glass, which `TextField` has no slot
+ * for (and the frame's box is not a Form field instance).
+ */
+function SearchField({ value, onChangeText }: { value: string; onChangeText: (text: string) => void }) {
+  const { color } = useTheme();
+  const [focused, setFocused] = useState(false);
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: space.sm,
+        height: 48,
+        paddingHorizontal: 16,
+        borderRadius: radius.input,
+        borderWidth: focused ? 1.5 : 1,
+        borderColor: focused ? color.brand : color.line,
+      }}
+    >
+      <MagnifyingGlassIcon size={20} color={color.textDim} />
+      <TextInput
+        accessibilityLabel="Search area or PIN code"
+        placeholder="Search area or PIN code"
+        placeholderTextColor={color.placeholder}
+        selectionColor={color.brand}
+        value={value}
+        onChangeText={onChangeText}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        autoCorrect={false}
+        returnKeyType="search"
+        style={{ flex: 1, height: "100%", color: color.text, fontFamily: "PlusJakartaSans-Regular", fontSize: 16 }}
+      />
+    </View>
   );
 }
 
@@ -77,8 +122,6 @@ function GroupLabel({ children }: { children: string }) {
  */
 export default function DeliveryAreasScreen() {
   const navigation = useTypedNavigation();
-  const { color } = useTheme();
-  const insets = useSafeAreaInsets();
   const shop = useShop().data;
   const saved = useMemo(() => (shop ? deliveryDraftFrom(shop) : null), [shop]);
   const form = useDeliveryDraft() ?? saved;
@@ -112,7 +155,7 @@ export default function DeliveryAreasScreen() {
       <ScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.md, paddingBottom: space.xl }}
+        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16, paddingBottom: 24 }}
       >
         {areasQuery.isLoading ? (
           <View
@@ -128,81 +171,61 @@ export default function DeliveryAreasScreen() {
             ))}
           </View>
         ) : !areasQuery.data ? (
-          <View style={{ gap: space.md }}>
+          <View style={{ gap: 12 }}>
             <Text fontSize="text-md" tone="body">
               {failure?.code === "shop_address_missing"
                 ? "Add your shop address first."
                 : "Couldn't load your areas. Check your connection."}
             </Text>
             {failure?.code === "shop_address_missing" ? (
-              <Button onPress={() => navigation.navigate("ShopAddress")}>Add shop address</Button>
+              <Button variant="outline" tone="tonal" size="compact" onPress={() => navigation.navigate("ShopAddress")}>
+                Add shop address
+              </Button>
             ) : (
-              <Button variant="outline" onPress={() => void areasQuery.refetch()}>
+              <Button variant="outline" size="compact" onPress={() => void areasQuery.refetch()}>
                 Try again
               </Button>
             )}
           </View>
         ) : (
-          <>
+          <View style={{ gap: 16 }}>
             <Text role="screenTitle" accessibilityRole="header">
               {`${areas.length} ${areas.length === 1 ? "area" : "areas"}, nearest first`}
             </Text>
-            <Text fontSize="text-md" tone="body" style={{ marginTop: space.sm, marginBottom: space.md }}>
+            <Text fontSize="text-sm" tone="body">
               Tap an area to turn it off. Customers there can still pick up from your shop.
             </Text>
-            <TextField
-              accessibilityLabel="Search area or PIN code"
-              placeholder="Search area or PIN code"
+            <SearchField
               value={search}
               onChangeText={(text) => {
                 setSearch(text);
                 setGroupedOff(form.excluded);
               }}
-              autoCorrect={false}
-              returnKeyType="search"
             />
-            <View
-              style={{
-                paddingHorizontal: space.md,
-                paddingBottom: space.sm,
-                borderWidth: 1,
-                borderColor: color.line,
-                borderRadius: radius.card,
-                backgroundColor: color.surface,
-              }}
-            >
+            <View>
               {matching.length === 0 ? (
                 <Text fontSize="text-md" tone="body" style={{ paddingVertical: space.md }}>
                   No area matches "{search.trim()}".
                 </Text>
               ) : null}
               {groups.off.length ? <GroupLabel>{`OFF · ${groups.off.length}`}</GroupLabel> : null}
-              {groups.off.map((area, i) => (
-                <AreaRow key={area.pin} area={area} off={isOff(area)} first={i === 0} onPress={() => toggle(area.pin)} />
+              {groups.off.map((area) => (
+                <AreaRow key={area.pin} area={area} off={isOff(area)} onPress={() => toggle(area.pin)} />
               ))}
               {groups.on.length ? <GroupLabel>{`ON · ${groups.on.length}, NEAREST FIRST`}</GroupLabel> : null}
-              {groups.on.map((area, i) => (
-                <AreaRow key={area.pin} area={area} off={isOff(area)} first={i === 0} onPress={() => toggle(area.pin)} />
+              {groups.on.map((area) => (
+                <AreaRow key={area.pin} area={area} off={isOff(area)} onPress={() => toggle(area.pin)} />
               ))}
             </View>
-          </>
+          </View>
         )}
       </ScrollView>
-      <View
-        style={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          // 14pt at least where there is no home indicator (iPhone SE, Android): 8 sat the button on the screen edge.
-          paddingBottom: Math.max(insets.bottom + space.sm, space.md),
-          borderTopWidth: 1,
-          borderTopColor: color.line,
-          backgroundColor: color.canvas,
+      <BottomBar
+        primary={{
+          label: offCount ? `Back to delivery · ${offCount} ${offCount === 1 ? "area" : "areas"} off` : "Back to delivery",
+          onPress: () => navigation.goBack(),
         }}
-      >
-        <Button onPress={() => navigation.goBack()}>
-          {offCount ? `Back to delivery · ${offCount} ${offCount === 1 ? "area" : "areas"} off` : "Back to delivery"}
-        </Button>
-      </View>
+      />
     </NonScrollableContainer>
   );
 }

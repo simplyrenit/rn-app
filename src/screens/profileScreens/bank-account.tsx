@@ -12,10 +12,11 @@ import { fetchUnlock } from "@/backend/unlock";
 import { UnlockSheet, UnlockSheetHandle } from "@/components/bank/unlock-sheet";
 import { RingPermissionCard } from "@/components/shop/ring-permission-card";
 import {
+  BottomBar,
   Button,
   EmptyState,
-  FieldFrame,
   Skeleton,
+  StatusPill,
   SubpageHeader,
   Text,
   TextField,
@@ -43,20 +44,20 @@ import {
   verifiedChip,
 } from "@/lib/bank";
 import { apiError, fieldErrors } from "@/lib/api-error";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, density, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { e164, isUnlocked } from "@/lib/unlock";
 import { uuidv4 } from "@/lib/uuid";
+import { useRoute } from "@react-navigation/native";
 import React, { useRef, useState } from "react";
 import { Alert, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import {
+  BanknotesIcon,
   BuildingLibraryIcon,
-  CheckIcon,
   ExclamationTriangleIcon,
-  XMarkIcon,
 } from "react-native-heroicons/outline";
 import { ChevronRightIcon } from "react-native-heroicons/mini";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -64,42 +65,14 @@ import { useQueryClient } from "react-query";
 
 const EMPTY_FORM: BankForm = { holderName: "", accountNumber: "", confirmNumber: "", ifsc: "" };
 
-/** A small status chip: "Verified 3 Oct", "Checking", "Check failed". */
-function StatusChip({
-  tone,
-  text,
-  icon,
-}: {
-  tone: "success" | "info" | "danger";
-  text: string;
-  icon?: React.ReactNode;
-}) {
-  const { color } = useTheme();
-  const tint = {
-    success: { fg: color.success, bg: color.successWash },
-    info: { fg: color.info, bg: color.infoWash },
-    danger: { fg: color.danger, bg: color.dangerWash },
-  }[tone];
-  return (
-    <View
-      style={{
-        alignSelf: "flex-start",
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        backgroundColor: tint.bg,
-        borderRadius: radius.full,
-        paddingHorizontal: 10,
-        paddingVertical: 3,
-      }}
-    >
-      {icon}
-      <Text fontSize="text-sm" fontWeight="font-bold" style={{ color: tint.fg }}>
-        {text}
-      </Text>
-    </View>
-  );
+/** Dev-only design seed (ENG-437 plan §2.7): the form open with fake values, one field focused. Never submits. */
+interface BankDesign {
+  form?: Partial<BankForm>;
+  focus?: keyof BankForm;
 }
+
+/** The Bottom bar's content strip (figma/00 2071:14467): 1 hairline + 16 + 52 + 16. */
+const BAR_STRIP = 85;
 
 /**
  * SH-14, Bank account: where Renit pays the owner.
@@ -111,6 +84,8 @@ function StatusChip({
  */
 export default function BankAccountScreen() {
   const navigation = useTypedNavigation();
+  const route = useRoute();
+  const design = __DEV__ ? (route.params as { design?: BankDesign } | undefined)?.design : undefined;
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -123,8 +98,8 @@ export default function BankAccountScreen() {
   const canTake = useShop().data?.can_take_bookings === true;
   const queryKey = bankQueryKey(userDetails?.username);
 
-  const [mode, setMode] = useState<"view" | "form">("view");
-  const [form, setForm] = useState<BankForm>(EMPTY_FORM);
+  const [mode, setMode] = useState<"view" | "form">(design?.form ? "form" : "view");
+  const [form, setForm] = useState<BankForm>({ ...EMPTY_FORM, ...design?.form });
   const [errors, setErrors] = useState<BankFormErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -141,10 +116,11 @@ export default function BankAccountScreen() {
   const askingForCode = useRef(false);
   const [checkingCode, setCheckingCode] = useState(false);
 
+  // The 2.1 cards (2097:30247, 30281): a 1px edge at r12, no fill of their own beyond the surface.
   const card = {
     borderWidth: 1,
     borderColor: color.line,
-    borderRadius: radius.card,
+    borderRadius: radius.input,
     backgroundColor: color.surface,
   } as const;
 
@@ -380,10 +356,12 @@ export default function BankAccountScreen() {
         <View style={{ flex: 1, justifyContent: "center" }}>
           {notOwner ? (
             <EmptyState
-              icon={<BuildingLibraryIcon size={28} color={color.brandText} />}
+              // 2097:30474 draws banknotes in brand here (the frame wins over REVIEW b1-01's building) and a Primary action.
+              icon={<BanknotesIcon size={32} color={color.brandText} />}
               title="A bank account is for owners"
               body="List your first item and you can add the account Renit pays you into."
               actionLabel="List an item"
+              actionTone="primary"
               onAction={() => navigation.navigate("ListAddPhotos")}
             />
           ) : (
@@ -414,44 +392,48 @@ export default function BankAccountScreen() {
 
   if (mode === "form") {
     const changing = account.status !== "none";
+    // The seed focuses one field and hides every caret: a blinking caret never gives frame_diff two equal shots.
+    const seeded = (field: keyof BankForm) =>
+      design ? { autoFocus: design.focus === field, caretHidden: true } : {};
+    // 2097:30421 spaces the fields 16 apart; TextField keeps the kit's own gap under itself.
+    const fieldGap = { marginBottom: 16 - density.fieldGap };
     return (
       <NonScrollableContainer>
         {header}
-        <FieldFrame>
-          <KeyboardAwareScrollView
-            keyboardShouldPersistTaps="handled"
-            enableOnAndroid
-            extraScrollHeight={space.md}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingHorizontal: SCREEN_GUTTER,
-              paddingTop: space.md,
-              paddingBottom: insets.bottom + space.xl,
-            }}
-          >
-            <Text role="screenTitle" accessibilityRole="header">
-              {changing ? "Change your account" : "Add a bank account"}
-            </Text>
-            <Text tone="body" fontSize="text-md" style={{ marginTop: space.sm, marginBottom: space.lg }}>
-              {changing
-                ? "Payouts pause until the new account is verified. We send ₹1 to check it, and it usually takes a few seconds."
-                : "We send ₹1 to check the account and read back the name the bank holds. It usually takes a few seconds."}
-            </Text>
+        {/* The bar is a sibling under the scroll, as in business-billing: NonScrollableContainer lifts both over the
+            iOS keyboard (adjustResize on Android), so the scroll has to keep the focused field above the bar too. */}
+        <KeyboardAwareScrollView
+          keyboardShouldPersistTaps="handled"
+          enableOnAndroid
+          extraScrollHeight={space.md + BAR_STRIP}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16, paddingBottom: 32 }}
+        >
+          <Text role="screenTitle" accessibilityRole="header">
+            {changing ? "Change your account" : "Add a bank account"}
+          </Text>
+          <Text tone="body" fontSize="text-sm" lineHeight={20} style={{ marginTop: 16, marginBottom: 16 }}>
+            {changing
+              ? "Payouts pause until the new account is verified. We send ₹1 to check it, and it usually takes a few seconds."
+              : "We send ₹1 to check the account and read back the name the bank holds. It usually takes a few seconds."}
+          </Text>
 
+          <View style={fieldGap}>
             <TextField
               label="Name on the account"
               hint="Exactly as the bank has it"
-              required
               value={form.holderName}
               onChangeText={(v) => setField("holderName", v)}
               error={errors.holderName}
               autoCapitalize="words"
               autoComplete="off"
               maxLength={100}
+              {...seeded("holderName")}
             />
+          </View>
+          <View style={fieldGap}>
             <TextField
               label="Account number"
-              required
               value={form.accountNumber}
               onChangeText={(v) => setField("accountNumber", cleanAccountNumber(v))}
               error={errors.accountNumber}
@@ -460,10 +442,12 @@ export default function BankAccountScreen() {
               autoCorrect={false}
               textContentType="none"
               maxLength={18}
+              {...seeded("accountNumber")}
             />
+          </View>
+          <View style={fieldGap}>
             <TextField
               label="Confirm account number"
-              required
               value={form.confirmNumber}
               onChangeText={(v) => setField("confirmNumber", cleanAccountNumber(v))}
               error={errors.confirmNumber}
@@ -472,36 +456,41 @@ export default function BankAccountScreen() {
               autoCorrect={false}
               textContentType="none"
               maxLength={18}
+              {...seeded("confirmNumber")}
             />
-            <TextField
-              label="IFSC code"
-              hint="11 characters, like HDFC0001234"
-              required
-              value={form.ifsc}
-              onChangeText={(v) => setField("ifsc", cleanIfsc(v))}
-              error={errors.ifsc}
-              autoCapitalize="characters"
-              autoComplete="off"
-              autoCorrect={false}
-              maxLength={11}
-            />
-
-            {formError ? (
-              <Text
-                tone="danger"
-                fontSize="text-sm"
-                accessibilityLiveRegion="polite"
-                style={{ marginBottom: space.md }}
-              >
-                {formError}
-              </Text>
-            ) : null}
-
-            <Button loading={submitting} onPress={submit}>
-              {changing ? "Verify new account" : "Verify account"}
-            </Button>
-          </KeyboardAwareScrollView>
-        </FieldFrame>
+          </View>
+          <TextField
+            label="IFSC code"
+            hint="11 characters, like HDFC0001234"
+            value={form.ifsc}
+            onChangeText={(v) => setField("ifsc", cleanIfsc(v))}
+            error={errors.ifsc}
+            autoCapitalize="characters"
+            autoComplete="off"
+            autoCorrect={false}
+            maxLength={11}
+            {...seeded("ifsc")}
+          />
+        </KeyboardAwareScrollView>
+        {/* Right above Verify, where it is in view after the press whatever the scroll (no frame draws it). */}
+        {formError ? (
+          <Text
+            tone="danger"
+            fontSize="text-sm"
+            lineHeight={20}
+            accessibilityLiveRegion="polite"
+            style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: 8 }}
+          >
+            {formError}
+          </Text>
+        ) : null}
+        <BottomBar
+          primary={{
+            label: changing ? "Verify new account" : "Verify account",
+            onPress: () => void submit(),
+            loading: submitting,
+          }}
+        />
         {codeSheet}
       </NonScrollableContainer>
     );
@@ -510,39 +499,32 @@ export default function BankAccountScreen() {
   // ---- The account ------------------------------------------------------------------
 
   let body: React.ReactNode;
+  let bar: React.ReactNode = null;
 
   if (account.status === "none") {
     body = (
-      <View style={[card, { padding: space.md, gap: space.md }]}>
-        <View style={{ gap: 2 }}>
-          <Text fontSize="text-md" fontWeight="font-bold">
-            Add a bank account
-          </Text>
-          <Text fontSize="text-sm" tone="body">
-            You need this before you can accept a booking
-          </Text>
-        </View>
-        <Button loading={checkingCode} onPress={() => void askForCode(() => openForm(account))}>
-          Add account
-        </Button>
+      <View style={[card, { padding: 16, gap: 2 }]}>
+        <Text fontSize="text-md" lineHeight={24} fontWeight="font-semibold">
+          Add a bank account
+        </Text>
+        <Text fontSize="text-sm" lineHeight={20} tone="body">
+          You need this before you can accept a booking
+        </Text>
       </View>
     );
+    bar = (
+      <BottomBar
+        primary={{ label: "Add account", loading: checkingCode, onPress: () => void askForCode(() => openForm(account)) }}
+      />
+    );
   } else {
-    const chip =
+    const pill =
       account.status === "verified" ? (
-        <StatusChip
-          tone="success"
-          text={verifiedChip(account)}
-          icon={<CheckIcon size={14} color={color.success} strokeWidth={2.5} />}
-        />
+        <StatusPill tone="success" label={verifiedChip(account)} style={{ alignSelf: "flex-start" }} />
       ) : account.status === "pending" ? (
-        <StatusChip tone="info" text="Checking" />
+        <StatusPill tone="info" label="Checking" style={{ alignSelf: "flex-start" }} />
       ) : (
-        <StatusChip
-          tone="danger"
-          text="Check failed"
-          icon={<XMarkIcon size={14} color={color.danger} strokeWidth={2.5} />}
-        />
+        <StatusPill tone="danger" label="Check failed" style={{ alignSelf: "flex-start" }} />
       );
 
     const line =
@@ -553,16 +535,20 @@ export default function BankAccountScreen() {
         : failureMessage(account);
 
     const again = canCheckAgain(account);
+    // 2097:30370: a failed account is not boxed. No edge, no side padding, a full-width rule.
+    const flat = account.status === "failed";
+    const side = flat ? 0 : 16;
 
+    // Gap, not margins: RingPermissionCard returns null when it has nothing to ask, and must not leave a gap then.
     body = (
-      <>
-        <View style={card}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md }}>
+      <View style={{ gap: 16 }}>
+        <View style={flat ? null : card}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 16, paddingHorizontal: side }}>
             <View
               style={{
                 width: 44,
                 height: 44,
-                borderRadius: radius.button,
+                borderRadius: radius.input,
                 alignItems: "center",
                 justifyContent: "center",
                 backgroundColor: color.brandPanel,
@@ -571,19 +557,24 @@ export default function BankAccountScreen() {
               <BuildingLibraryIcon size={24} color={color.brandText} />
             </View>
             <View style={{ flex: 1, gap: 6 }}>
-              <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={1}>
+              <Text fontSize="text-md" lineHeight={24} fontWeight="font-semibold" numberOfLines={1}>
                 {accountTitle(account)}
               </Text>
-              {chip}
+              {pill}
             </View>
           </View>
-          <View style={{ height: 1, marginHorizontal: space.md, backgroundColor: color.line }} />
-          <View style={{ padding: space.md, gap: space.sm }}>
-            <Text fontSize="text-md" tone={account.status === "failed" ? "danger" : "body"}>
+          <View style={{ height: 1, marginHorizontal: side, backgroundColor: color.line }} />
+          <View style={{ paddingVertical: 16, paddingHorizontal: side, gap: 8 }}>
+            <Text
+              fontSize="text-sm"
+              lineHeight={20}
+              tone={flat ? undefined : "body"}
+              style={flat ? { color: color.dangerStrong } : undefined}
+            >
               {line}
             </Text>
             {account.status !== "verified" && account.payouts_paused ? (
-              <Text fontSize="text-sm" tone="body">
+              <Text fontSize="text-sm" lineHeight={20} tone="dim">
                 Payouts are on hold until this account is verified.
               </Text>
             ) : null}
@@ -600,19 +591,10 @@ export default function BankAccountScreen() {
           </View>
         </View>
 
-        {account.status === "verified" ? (
-          <View style={{ marginTop: space.md }}>
-            <RingPermissionCard enabled={canTake} permission={ringPerm} />
-          </View>
-        ) : null}
+        {account.status === "verified" ? <RingPermissionCard enabled={canTake} permission={ringPerm} /> : null}
 
-        {account.status === "failed" ? (
-          <View style={{ marginTop: space.md }}>
-            <Button loading={checkingCode} onPress={() => void askForCode(() => openForm(account))}>
-              Try different details
-            </Button>
-          </View>
-        ) : (
+        {account.status === "failed" ? null : (
+          // The kit two-line row inside its own r12 card, padded 14/16 rather than the List row's 24 gutter.
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Change account. Payouts pause until the new account is verified."
@@ -621,29 +603,33 @@ export default function BankAccountScreen() {
             onPress={() => void askForCode(() => openForm(account))}
             style={[
               card,
-              {
-                marginTop: space.md,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: space.sm,
-                padding: space.md,
-                minHeight: 62,
-              },
+              { flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 14, paddingHorizontal: 16 },
             ]}
           >
-            <View style={{ flex: 1 }}>
-              <Text fontSize="text-md" fontWeight="font-bold">
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text fontSize="text-md" lineHeight={24} fontWeight="font-medium">
                 Change account
               </Text>
-              <Text fontSize="text-sm" tone="body">
+              <Text fontSize="text-sm" lineHeight={20} tone="dim">
                 Payouts pause until the new account is verified.
               </Text>
             </View>
-            <ChevronRightIcon size={20} color={color.text} />
+            <ChevronRightIcon size={20} color={color.textDim} />
           </TouchableOpacity>
         )}
-      </>
+      </View>
     );
+    if (account.status === "failed") {
+      bar = (
+        <BottomBar
+          primary={{
+            label: "Try different details",
+            loading: checkingCode,
+            onPress: () => void askForCode(() => openForm(account)),
+          }}
+        />
+      );
+    }
   }
 
   return (
@@ -653,15 +639,16 @@ export default function BankAccountScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.md,
-          paddingBottom: insets.bottom + space.xl,
+          paddingTop: 16,
+          paddingBottom: 32 + (bar ? 0 : insets.bottom),
         }}
       >
-        <Text role="screenTitle" accessibilityRole="header" style={{ marginBottom: space.md }}>
+        <Text role="screenTitle" accessibilityRole="header" style={{ marginBottom: 16 }}>
           Where we pay you
         </Text>
         {body}
       </KeyboardAwareScrollView>
+      {bar}
       {codeSheet}
     </NonScrollableContainer>
   );

@@ -197,6 +197,14 @@ Props added; nothing renamed or removed.
   - Inherited by every picker caller: ENG-429 `booking/choose-dates.tsx`, ENG-435 `list-flow/review.tsx`, ENG-436 `post/about-product-form.tsx` (and ENG-427's own `search-results.tsx`). Those stories re-diff their picker frames.
 - **Adoption correction:** `search-results.tsx` has no bottom bar in any frame. Its "Button over `insets.bottom`" was the filter sheet's footer, now `SheetFooter`; the `BottomBar` row below no longer lists it.
 
+## ENG-437 (implemented)
+
+Props added; nothing renamed or removed.
+
+- **`Chip`**: `width?: number` and `justifyContent: "center"` (proved by 12 2096:30129, the TimeSheet's half-hour grid of 79.5×40 chips, 8 apart).
+  - With `width`, the chip is that wide, its 16 side padding goes and the label is centred: the kit's fixed-width chip lets "10:30 pm" (about 62 wide) run over the padding, which RN would otherwise wrap inside 79.5 − 32. No line cap: at a large text size a long label wraps rather than truncating.
+  - Without `width` nothing moves: a hugging chip has no free space, so the centring is a no-op for every existing caller. Re-diff DevKit 2073:14384 and 2073:14386.
+
 ## Adoption
 
 Each new kit component replaces hand-rolled code that is still in the screens. The flow story that owns a screen moves its call sites; nothing here moves them early. A screen's story follows its frames' section in `figma/index.tsv` (02 auth → ENG-428, 03 home/discovery → ENG-427, 04 → ENG-429, 05 → ENG-430, 06 → ENG-431, 07 → ENG-432, 08 → ENG-433, 09 → ENG-434, 10 → ENG-435, 11 → ENG-436, 12 → ENG-437, 13 → ENG-438, 14 → ENG-439). Paths are under `src/`.

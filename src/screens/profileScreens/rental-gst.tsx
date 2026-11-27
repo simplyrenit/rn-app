@@ -1,20 +1,20 @@
 import { patchShop, shopQueryKey, useShop } from "@/backend/shop";
-import { Button, SubpageHeader, Text, TextField } from "@/components/core";
+import { BottomBar, SubpageHeader, Text, TextField } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { AppSwitch } from "@/components/core/switch";
 import { ShopLoadError, ShopLoading } from "@/components/shop/states";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError, fieldErrors } from "@/lib/api-error";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { GSTIN_PATTERN, cleanId } from "@/lib/kyc";
 import { Shop } from "@/lib/shop";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
+import { useRoute } from "@react-navigation/native";
 import React, { useState } from "react";
 import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
 
 const GSTIN_ERROR = "Enter a valid 15-character GSTIN, like 22ABCDE1234F1Z5.";
@@ -28,17 +28,19 @@ const ID_INPUT = {
   importantForAutofill: "no",
 } as const;
 
-function GstForm({ shop }: { shop: Shop }) {
+/** Dev-only design seed (ENG-437 plan §2.5): a typed GSTIN, and its error as blur would show it. Local state only. */
+type GstDesign = { gstin?: string; showError?: boolean };
+
+function GstForm({ shop, design }: { shop: Shop; design?: GstDesign }) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
-  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { userDetails } = useGlobalContext();
 
   const wasRegistered = Boolean(shop.gst_registered);
   const [registered, setRegistered] = useState(wasRegistered);
-  const [gstin, setGstin] = useState(shop.gstin ?? "");
-  const [gstinError, setGstinError] = useState<string | undefined>();
+  const [gstin, setGstin] = useState(design?.gstin ?? shop.gstin ?? "");
+  const [gstinError, setGstinError] = useState<string | undefined>(design?.showError ? GSTIN_ERROR : undefined);
   const [serverError, setServerError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -80,31 +82,19 @@ function GstForm({ shop }: { shop: Shop }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.md,
-          paddingBottom: space.lg,
-          gap: space.md,
+          paddingTop: 16,
+          paddingBottom: 32,
+          gap: 16,
         }}
       >
-        <Text role="screenTitle" accessibilityRole="header">
-          GST
-        </Text>
-        <Text tone="body" fontSize="text-md">
+        {/* 2097:30015: no H1 under the "GST" top bar; the intro opens the screen. */}
+        <Text tone="body" fontSize="text-sm">
           Your prices include GST. Bookings show the GST part, and you file it.
         </Text>
 
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: space.md,
-            padding: space.md,
-            borderRadius: radius.card,
-            borderWidth: 1,
-            borderColor: color.brandPanelLine,
-            backgroundColor: color.brandPanel,
-          }}
-        >
-          <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
+        {/* The row sits on the canvas (REVIEW b3-02: no lavender card): 12 above and below, 16 to the switch. */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 12 }}>
+          <Text fontSize="text-md" fontWeight="font-semibold" style={{ flex: 1 }}>
             GST registered
           </Text>
           <AppSwitch
@@ -125,7 +115,6 @@ function GstForm({ shop }: { shop: Shop }) {
           <TextField
             label="GSTIN"
             hint="15 characters, like 22ABCDE1234F1Z5"
-            required
             value={gstin}
             maxLength={15}
             error={gstinError}
@@ -143,31 +132,26 @@ function GstForm({ shop }: { shop: Shop }) {
         ) : null}
       </KeyboardAwareScrollView>
 
-      <View
-        style={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          // 14pt at least where there is no home indicator (iPhone SE, Android): 8 sat the button on the screen edge.
-          paddingBottom: Math.max(insets.bottom + space.sm, space.md),
-          gap: space.sm,
-        }}
-      >
-        {serverError ? (
-          <Text tone="danger" fontSize="text-sm" style={{ textAlign: "center" }} accessibilityLiveRegion="polite">
-            {serverError}
-          </Text>
-        ) : null}
-        {/* A partly typed GSTIN still taps through: `save` says what is wrong with it. */}
-        <Button disabled={!changed} loading={saving} onPress={() => void save()}>
-          Save GST
-        </Button>
-      </View>
+      {serverError ? (
+        <Text
+          tone="danger"
+          fontSize="text-sm"
+          style={{ textAlign: "center", paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.sm }}
+          accessibilityLiveRegion="polite"
+        >
+          {serverError}
+        </Text>
+      ) : null}
+      {/* A partly typed GSTIN still taps through: `save` says what is wrong with it. */}
+      <BottomBar primary={{ label: "Save GST", disabled: !changed, loading: saving, onPress: () => void save() }} />
     </>
   );
 }
 
 /** The GST editor SH-13's "GST" row opens (ENG-343): registered or not, and the GSTIN. */
 export default function RentalGstScreen() {
+  const route = useRoute();
+  const design = __DEV__ ? (route.params as { design?: GstDesign } | undefined)?.design : undefined;
   const { userDetailsFailed, fetchUserDetails } = useGlobalContext();
   const query = useShop();
   const profileFailed = query.isIdle && userDetailsFailed;
@@ -178,7 +162,7 @@ export default function RentalGstScreen() {
       {(query.isLoading || query.isIdle) && !profileFailed ? (
         <ShopLoading label="Loading your GST" />
       ) : query.data ? (
-        <GstForm shop={query.data} />
+        <GstForm shop={query.data} design={design} />
       ) : (
         <ShopLoadError
           error={query.error}

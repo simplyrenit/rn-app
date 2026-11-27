@@ -1,11 +1,11 @@
 import { patchShop, shopQueryKey, useShop } from "@/backend/shop";
-import { Button, SubpageHeader, Text } from "@/components/core";
+import { BottomBar, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { TimeSheet } from "@/components/shop/pick-sheets";
 import { ShopLoadError, ShopLoading } from "@/components/shop/states";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError, fieldErrors } from "@/lib/api-error";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import {
   DAY_KEYS,
   DAY_LONG,
@@ -21,16 +21,32 @@ import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import React, { useRef, useState } from "react";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { AppSwitch } from "@/components/core/switch";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
 
 type Editing = { day: DayKey; which: "open" | "close" };
 
-/** One of the two times on a day: a bordered chip that opens the time list. */
-function TimeChip({ label, value, onPress }: { label: string; value: string; onPress: () => void }) {
+/**
+ * Dev builds only (design fixtures, section 12): the time sheet open on a day (2096:30129), or the list scrolled to
+ * its end (2096:29799, 2096:30017). Initial local state only; nothing is saved.
+ */
+type RentalHoursDesign = { timeSheet?: { day: DayKey; edge: Editing["which"] }; scrollToEnd?: boolean };
+
+/** One of the two times on a day: a 96×44 hairline chip that opens the time list (2096:29799 "Time chip"). */
+function TimeChip({
+  label,
+  value,
+  invalid,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  invalid: boolean;
+  onPress: () => void;
+}) {
   const { color } = useTheme();
   return (
     <TouchableOpacity
@@ -39,34 +55,52 @@ function TimeChip({ label, value, onPress }: { label: string; value: string; onP
       activeOpacity={0.7}
       onPress={onPress}
       style={{
-        minHeight: MIN_TOUCH_TARGET,
-        minWidth: 84,
-        paddingHorizontal: space.md,
+        minHeight: 44,
+        minWidth: 96,
+        paddingHorizontal: 16,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: radius.button,
+        borderRadius: 12,
         borderWidth: 1,
-        borderColor: color.inputLine,
+        borderColor: invalid ? color.dangerStrong : color.line,
         backgroundColor: color.surface,
       }}
     >
-      <Text fontSize="text-md" fontWeight="font-bold">
+      <Text fontSize="text-md" fontWeight="font-semibold">
         {time12(value)}
       </Text>
     </TouchableOpacity>
   );
 }
 
-function HoursForm({ initial }: { initial: Hours }) {
+function HoursForm({ initial, design }: { initial: Hours; design?: RentalHoursDesign }) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
-  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { userDetails } = useGlobalContext();
   const timeSheet = useRef<BottomSheetModal>(null);
+  const scroll = useRef<ScrollView>(null);
+  const scrolled = useRef(false);
 
   const [hours, setHours] = useState<Hours>(initial);
-  const [editing, setEditing] = useState<Editing | null>(null);
+  const [editing, setEditing] = useState<Editing | null>(
+    design?.timeSheet ? { day: design.timeSheet.day, which: design.timeSheet.edge } : null
+  );
+
+  // A seeded time sheet opens once its modal has mounted (gorhom ignores an earlier present()), and closes when the
+  // next fixture is pushed over this screen.
+  useEffect(() => {
+    if (!design?.timeSheet) return;
+    const timer = setTimeout(() => timeSheet.current?.present(), 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      if (!design) return undefined;
+      return () => timeSheet.current?.dismiss();
+    }, [design])
+  );
   const [saving, setSaving] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -114,40 +148,39 @@ function HoursForm({ initial }: { initial: Hours }) {
 
   return (
     <>
+      {/* 2096:29799: Content p16/24/24/24, the intro 14/20 then 16, then a block per day under a hairline. */}
       <ScrollView
+        ref={scroll}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.md,
-          paddingBottom: space.lg,
+        onContentSizeChange={() => {
+          if (!design?.scrollToEnd || scrolled.current) return;
+          scrolled.current = true;
+          scroll.current?.scrollToEnd({ animated: false });
         }}
+        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16, paddingBottom: 24 }}
       >
-        <Text role="screenTitle" accessibilityRole="header">
-          Handover hours
-        </Text>
-        <Text tone="body" fontSize="text-md" style={{ marginTop: space.sm, marginBottom: space.md }}>
+        <Text tone="body" fontSize="text-sm" style={{ marginBottom: 16 }}>
           The hours you can hand an item over. Your Open switch follows them by itself.
         </Text>
 
         {DAY_KEYS.map((day) => {
           const value = hours[day];
+          const problem = check.days[day];
           return (
             <View
               key={day}
-              style={{
-                paddingVertical: space.sm,
-                borderTopWidth: 1,
-                borderTopColor: color.line,
-                gap: space.sm,
-              }}
+              style={{ paddingVertical: 12, borderTopWidth: 1, borderTopColor: color.line, gap: 8 }}
             >
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              {/* 31 high, the frame's switch, whatever height the platform's switch draws. */}
+              <View
+                style={{ minHeight: 31, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
+              >
                 <View>
-                  <Text fontSize="text-md" fontWeight="font-bold">
+                  <Text fontSize="text-md" fontWeight="font-semibold">
                     {DAY_LONG[day]}
                   </Text>
                   {value ? null : (
-                    <Text fontSize="text-sm" tone="body">
+                    <Text fontSize="text-sm" tone="dim">
                       Closed
                     </Text>
                   )}
@@ -156,22 +189,39 @@ function HoursForm({ initial }: { initial: Hours }) {
                   accessibilityLabel={`${DAY_LONG[day]} open`}
                   value={Boolean(value)}
                   onValueChange={(on) => setDay(day, on ? dayToOpen(hours) : null)}
-                  trackColor={{ true: color.brand, false: color.inputLine }}
+                  // The frame's off track is the light grey of a hairline; iOS fills it from ios_backgroundColor.
+                  trackColor={{ true: color.brand, false: color.line }}
+                  ios_backgroundColor={color.line}
                   thumbColor="#FFFFFF"
                 />
               </View>
               {value ? (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-                  <TimeChip label={`${DAY_LONG[day]} opens`} value={value.open} onPress={() => editTime(day, "open")} />
-                  <Text fontSize="text-md" tone="body">
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <TimeChip
+                    label={`${DAY_LONG[day]} opens`}
+                    value={value.open}
+                    invalid={Boolean(problem)}
+                    onPress={() => editTime(day, "open")}
+                  />
+                  <Text fontSize="text-sm" tone="body">
                     to
                   </Text>
-                  <TimeChip label={`${DAY_LONG[day]} closes`} value={value.close} onPress={() => editTime(day, "close")} />
+                  <TimeChip
+                    label={`${DAY_LONG[day]} closes`}
+                    value={value.close}
+                    invalid={Boolean(problem)}
+                    onPress={() => editTime(day, "close")}
+                  />
                 </View>
               ) : null}
-              {check.days[day] ? (
-                <Text tone="danger" fontSize="text-sm" accessibilityLiveRegion="polite">
-                  {check.days[day]}
+              {problem ? (
+                <Text
+                  fontSize="text-xs"
+                  fontWeight="font-medium"
+                  style={{ color: color.dangerStrong }}
+                  accessibilityLiveRegion="polite"
+                >
+                  {problem}
                 </Text>
               ) : null}
             </View>
@@ -179,24 +229,25 @@ function HoursForm({ initial }: { initial: Hours }) {
         })}
       </ScrollView>
 
-      <View
-        style={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          // 14pt at least where there is no home indicator (iPhone SE, Android): 8 sat the button on the screen edge.
-          paddingBottom: Math.max(insets.bottom + space.sm, space.md),
-          gap: space.sm,
+      {/* What the old strip also said (no frame draws it): the week's problem dim, a refused save in red. */}
+      {check.week || serverError ? (
+        <Text
+          tone={serverError ? "danger" : "dim"}
+          fontSize="text-sm"
+          style={{ textAlign: "center", paddingHorizontal: SCREEN_GUTTER, paddingTop: 8 }}
+          accessibilityLiveRegion="polite"
+        >
+          {serverError ?? check.week}
+        </Text>
+      ) : null}
+      <BottomBar
+        primary={{
+          label: "Save hours",
+          onPress: () => void save(),
+          disabled: !check.ok || !hoursChanged(initial, hours),
+          loading: saving,
         }}
-      >
-        {check.week || serverError ? (
-          <Text tone={serverError ? "danger" : "dim"} fontSize="text-sm" style={{ textAlign: "center" }} accessibilityLiveRegion="polite">
-            {serverError ?? check.week}
-          </Text>
-        ) : null}
-        <Button disabled={!check.ok || !hoursChanged(initial, hours)} loading={saving} onPress={save}>
-          Save hours
-        </Button>
-      </View>
+      />
 
       <TimeSheet
         ref={timeSheet}
@@ -212,8 +263,10 @@ function HoursForm({ initial }: { initial: Hours }) {
   );
 }
 
-/** The hours editor SH-13's "Edit" opens: a switch and two times for each day. */
+/** The hours editor SH-13's "Edit" opens: a switch and two times for each day. The top bar is its only title. */
 export default function RentalHoursScreen() {
+  const route = useRoute();
+  const design = __DEV__ ? (route.params as { design?: RentalHoursDesign } | undefined)?.design : undefined;
   const { userDetailsFailed, fetchUserDetails } = useGlobalContext();
   const query = useShop();
   const header = <SubpageHeader title="Handover hours" />;
@@ -225,7 +278,7 @@ export default function RentalHoursScreen() {
       {(query.isLoading || query.isIdle) && !profileFailed ? (
         <ShopLoading label="Loading your hours" />
       ) : query.data ? (
-        <HoursForm initial={query.data.hours} />
+        <HoursForm initial={query.data.hours} design={design} />
       ) : (
         <ShopLoadError
           error={query.error}
