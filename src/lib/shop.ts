@@ -117,24 +117,29 @@ export function tomorrowIst(now: Date = new Date()): string {
   return istDay(new Date(now.getTime() + DAY_MS));
 }
 
-/**
- * When an instant is, for someone in India: "today 10 am", "tomorrow 10 am",
- * "Tue 10 am", and past a week "13 Oct 10 am".
- */
-export function istWhen(iso: string, now: Date = new Date()): string {
+/** The day part of istWhen: "today", "tomorrow", "Fri" (within a week) or "14 Nov". "" when iso is not a date. */
+export function istWhenDay(iso: string, now: Date = new Date()): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return "";
   const ist = new Date(at.getTime() + IST_OFFSET_MS);
   const istNow = new Date(now.getTime() + IST_OFFSET_MS);
   const midnight = (d: Date) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
   const ahead = Math.round((midnight(ist) - midnight(istNow)) / DAY_MS);
-  const time = time12(`${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`);
-  if (ahead === 0) return `today ${time}`;
-  if (ahead === 1) return `tomorrow ${time}`;
-  if (ahead > 1 && ahead < 7) {
-    return `${DAY_SHORT[DAY_KEYS[(ist.getUTCDay() + 6) % 7]]} ${time}`;
-  }
-  return `${ist.getUTCDate()} ${MONTHS[ist.getUTCMonth()]} ${time}`;
+  if (ahead === 0) return "today";
+  if (ahead === 1) return "tomorrow";
+  if (ahead > 1 && ahead < 7) return DAY_SHORT[DAY_KEYS[(ist.getUTCDay() + 6) % 7]];
+  return `${ist.getUTCDate()} ${MONTHS[ist.getUTCMonth()]}`;
+}
+
+/**
+ * When an instant is, for someone in India: "today 10 am", "tomorrow 10 am",
+ * "Tue 10 am", and past a week "13 Oct 10 am".
+ */
+export function istWhen(iso: string, now: Date = new Date()): string {
+  const day = istWhenDay(iso, now);
+  if (!day) return "";
+  const ist = new Date(new Date(iso).getTime() + IST_OFFSET_MS);
+  return `${day} ${time12(`${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`)}`;
 }
 
 // ---- Handover hours ---------------------------------------------------------------
