@@ -381,9 +381,11 @@ export default function ListAddPhotosScreen() {
         <StepProgress step={1} total={FLOW_STEPS} showLabel={false} />
 
         <View style={{ gap: 8 }}>
-          <Text role="screenTitle" accessibilityRole="header">
-            {"Snap it.\nWe'll write the listing."}
-          </Text>
+          {/* One Text per line: Android sets a hard "\n" line 3pt closer than its 28 line height (measured, 2094:24997). */}
+          <View accessible accessibilityRole="header" accessibilityLabel="Snap it. We'll write the listing.">
+            <Text role="screenTitle">Snap it.</Text>
+            <Text role="screenTitle">We'll write the listing.</Text>
+          </View>
           <Text tone="body" fontSize="text-sm" lineHeight={20}>
             Start with one photo — it becomes your cover. Add more if you like.
           </Text>

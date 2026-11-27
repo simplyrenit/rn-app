@@ -108,9 +108,14 @@ export default function ListSubmittedScreen() {
         </Animated.View>
 
         <View style={{ gap: 8 }}>
-          <Text role="screenTitle" accessibilityRole="header">
-            {copy.title}
-          </Text>
+          {/* One Text per line: Android sets a hard "\n" line 3pt closer than its 28 line height (measured, 2096:29335). */}
+          <View accessible accessibilityRole="header" accessibilityLabel={copy.title.replace(/\n/g, " ")}>
+            {copy.title.split("\n").map((line) => (
+              <Text key={line} role="screenTitle">
+                {line}
+              </Text>
+            ))}
+          </View>
           <Text tone="body" fontSize="text-sm">
             {copy.body}
           </Text>
