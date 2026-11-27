@@ -265,10 +265,16 @@ export const QuickBlockSheet = forwardRef<BottomSheetModal, { onBlocked?: (block
                 {BLOCK_REASONS.map(({ key, label }) => {
                   const selected = form.reason === key;
                   return (
-                    // The kit Chip forces the button role; the wrapper carries the radio's (ENG-427 adds the props).
-                    <View key={key} accessible accessibilityRole="radio" accessibilityLabel={label} accessibilityState={{ selected }}>
-                      <Chip label={label} selected={selected} onPress={() => setForm((f) => ({ ...f, reason: key }))} />
-                    </View>
+                    <Chip
+                      key={key}
+                      label={label}
+                      selected={selected}
+                      onPress={() => setForm((f) => ({ ...f, reason: key }))}
+                      accessibilityRole="radio"
+                      accessibilityLabel={label}
+                      accessibilityState={{ selected }}
+                      hitSlop={{ top: 2, bottom: 2 }}
+                    />
                   );
                 })}
               </View>

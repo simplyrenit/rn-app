@@ -232,7 +232,14 @@ export const ShopCancelSheet = forwardRef<
           />
         ) : failed ? (
           <SheetFooter primary={{ label: "Try again", onPress: () => void load() }} secondary={{ label: "Keep it", onPress: dismiss }} />
-        ) : null}
+        ) : (
+          // While the warning loads: "Keep it" is always there, as before 2.1.
+          <SheetFooter
+            tone="danger"
+            primary={{ label: "Cancel the whole booking", onPress: () => {}, loading: true, disabled: true }}
+            secondary={{ label: "Keep it", onPress: dismiss }}
+          />
+        )}
       </CustomBottomSheetModal>
     );
   }

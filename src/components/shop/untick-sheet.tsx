@@ -46,12 +46,18 @@ export const UntickSheet = forwardRef<UntickSheetHandle, { range: string; onUnti
               {`${line.ref} · ${range}`}
             </Text>
           ) : null}
-          {/* Kit Chips; the role and state sit on a wrapper, as the kit Chip forces role "button" (plan: chip wrapper). */}
           <View accessibilityRole="radiogroup" style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {UNTICK_REASONS.map((r) => (
-              <View key={r} accessible accessibilityRole="radio" accessibilityLabel={r} accessibilityState={{ selected: r === reason }}>
-                <Chip label={r} selected={r === reason} onPress={() => setReason(r)} />
-              </View>
+              <Chip
+                key={r}
+                label={r}
+                selected={r === reason}
+                onPress={() => setReason(r)}
+                accessibilityRole="radio"
+                accessibilityLabel={r}
+                accessibilityState={{ selected: r === reason }}
+                hitSlop={{ top: 2, bottom: 2 }}
+              />
             ))}
           </View>
           {copy ? (
