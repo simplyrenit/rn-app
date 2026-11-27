@@ -71,7 +71,7 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
   const courier = byRenit(booking) ? booking.courier ?? null : null;
   const steps = byRenit(booking) ? courierRows(courier?.steps, "return", now) : returnSteps(booking, recorded);
   // ENG-442: an early return asked of the shop, open or how it ended (only while the return can still be picked).
-  const early = out && courier && can("pick_return_window") ? earlyRequestCopy(courier.return?.request, courier.return.earliest, now) : null;
+  const early = out && courier && can("pick_return_window") ? earlyRequestCopy(courier.return?.request, courier.return.earliest, now, courier.return.window) : null;
 
   const finish = () =>
     run("return", async () => {
@@ -200,10 +200,10 @@ function Return({ booking, receivedAt, watching }: { booking: BookingCustomer; r
           variant={courier?.return?.window || early?.open ? "outline" : "primary"}
           onPress={() => navigation.navigate("BookingReturnWindow", { number })}
         >
-          {early?.open
-            ? "Pick a last-day window instead"
-            : courier?.return?.window
-              ? "Change the return window"
+          {courier?.return?.window
+            ? "Change the return window"
+            : early?.open
+              ? "Pick a last-day window instead"
               : "Pick a return window"}
         </Button>
       ) : null}

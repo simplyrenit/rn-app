@@ -595,22 +595,27 @@ export function earlyPickNote(replyMinutes: number | undefined): string {
 
 /**
  * The customer's early ask on the Return screen, open or how it ended. `lastDay` is the day the return stays on (the
- * courier's `earliest`). An open ask past `reply_by` reads as no answer: the phone may hold an answer older than the time.
+ * courier's `earliest`); `window` the last-day window already picked, if any: the ask may come after it, and then the
+ * return stays in it. An open ask past `reply_by` reads as no answer: the phone may hold an answer older than the time.
  */
 export function earlyRequestCopy(
   r: EarlyReturnRequest | null | undefined,
   lastDay: string,
-  now: Date
+  now: Date,
+  window?: { from: string; to: string } | null
 ): { tone: "brand" | "warning"; title: string; body: string; open: boolean } | null {
   if (!r) return null;
   const outcome = r.outcome ?? (now.getTime() >= new Date(r.reply_by).getTime() ? "no_answer" : null);
-  const stays = `Your return stays on ${dayShort(lastDay)}. Pick a window for that day.`;
+  const kept = window ? `your window, ${windowSummary({ start: window.from, end: window.to })}` : null;
+  const stays = kept
+    ? `Your return stays in ${kept}.`
+    : `Your return stays on ${dayShort(lastDay)}. Pick a window for that day.`;
   switch (outcome) {
     case null:
       return {
         tone: "brand",
         title: "Waiting for the shop",
-        body: `You asked for a rider ${earlyWhen(r)}. The shop has until ${replyByText(r.reply_by, now)} to accept. If it can't, your return stays on ${dayShort(lastDay)}.`,
+        body: `You asked for a rider ${earlyWhen(r)}. The shop has until ${replyByText(r.reply_by, now)} to accept. If it can't, your return stays ${kept ? `in ${kept}` : `on ${dayShort(lastDay)}`}.`,
         open: true,
       };
     case "declined":

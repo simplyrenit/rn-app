@@ -888,6 +888,12 @@ describe("ENG-442, an early courier return", () => {
     expect(earlyRequestCopy({ ...ask, outcome: null }, "2026-10-26", new Date("2026-10-24T08:12:00Z"))?.title).toBe("The shop didn't answer in time");
     expect(earlyRequestCopy({ ...ask, outcome: "gone" }, "2026-10-26", now)).toMatchObject({ title: "That time has gone", body: "Pick another time." });
     expect(earlyRequestCopy(null, "2026-10-26", now)).toBeNull();
+    // Asked after a last-day window was picked: the return stays in it, nothing to pick again.
+    const window = { from: "2026-10-26T11:30:00Z", to: "2026-10-26T12:30:00Z" };
+    expect(earlyRequestCopy({ ...ask, outcome: "declined" }, "2026-10-26", now, window)?.body).toBe(
+      "Your return stays in your window, Mon 26 Oct, 5:00 – 6:00 pm."
+    );
+    expect(earlyRequestCopy({ ...ask, outcome: null }, "2026-10-26", now, window)?.body).toMatch(/If it can't, your return stays in your window, Mon 26 Oct, 5:00 – 6:00 pm\.$/);
   });
 
   it("the picker's note and the refusals", () => {

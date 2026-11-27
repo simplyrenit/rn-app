@@ -298,8 +298,10 @@ export function CourierPack({ booking, courier, receivedAt }: Props) {
  * ENG-442: the customer asked for an early courier return. Accept and Renit books the rider (Return now at once);
  * decline, or let the time run out, and it comes back on the last day. Shown here and on the booking screen.
  */
-export function EarlyReturnCard({ booking, now }: { booking: BookingShop; now: Date }) {
+export function EarlyReturnCard({ booking, receivedAt }: { booking: BookingShop; receivedAt: number }) {
   const queryClient = useQueryClient();
+  // Ticks, so the buttons go when the shop's time runs out with the screen open.
+  const now = useServerNow(booking.server_time, receivedAt, 30_000);
   const [answering, setAnswering] = useState<"accept" | "decline" | null>(null);
   const busy = useRef(false);
   const courier = courierOf(booking);
@@ -392,7 +394,7 @@ export function CourierReturn({ booking, courier, receivedAt, watching }: Props)
 
       {booking.exit ? <Notice icon="info">This booking has ended. Open it to see what happened.</Notice> : null}
       <Banner courier={courier} />
-      <EarlyReturnCard booking={booking} now={now} />
+      <EarlyReturnCard booking={booking} receivedAt={receivedAt} />
 
       {arriving ? (
         <Notice tone="brand" icon="clock">

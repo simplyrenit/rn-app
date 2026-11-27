@@ -348,7 +348,7 @@ function BookingPage({
           </Panel>
         ) : null}
         {mine ? <Notice icon="clock">{mine}</Notice> : null}
-        <EarlyReturnCard booking={booking} now={now} />
+        <EarlyReturnCard booking={booking} receivedAt={receivedAt} />
 
         <Panel style={{ padding: space.md, gap: space.md }}>
           <Text role="sectionTitle" accessibilityRole="header">

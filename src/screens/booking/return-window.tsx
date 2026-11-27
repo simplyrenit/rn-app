@@ -78,7 +78,7 @@ export default function ReturnWindowScreen() {
   // Anything before the day offered is an ask of the shop's, never a pick.
   const early = picked === NOW || (choice !== null && day !== data.day);
   const lastDay = booking.courier?.return?.earliest ?? booking.last_day;
-  const waiting = earlyRequestCopy(data.request ?? booking.courier?.return?.request, lastDay, now);
+  const waiting = earlyRequestCopy(data.request ?? booking.courier?.return?.request, lastDay, now, booking.courier?.return?.window);
   const dayLabel = (d: string) => (d === today ? "Today" : d === booking.last_day ? `${dayShort(d)} · last day` : dayShort(d));
 
   const save = async () => {
