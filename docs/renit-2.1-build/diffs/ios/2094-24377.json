@@ -1,8 +1,8 @@
 {
  "ref": "../figma/08/2094-24377.png",
- "app": "ios-2094-24377-tap.png",
+ "app": "../diffs/ios/ios-2094-24377-tap.png",
  "platform": "ios",
- "mismatch_pct": 0.573,
+ "mismatch_pct": 0.257,
  "threshold_pct": 2.0,
  "pass": true,
  "compared_px": [

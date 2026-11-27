@@ -1,16 +1,16 @@
 {
  "ref": "../figma/08/2094-24240.png",
- "app": "ios-2094-24240-tap.png",
+ "app": "../diffs/ios/ios-2094-24240-tap.png",
  "platform": "ios",
- "mismatch_pct": 0.9,
+ "mismatch_pct": 0.771,
  "threshold_pct": 2.0,
  "pass": true,
  "compared_px": [
   1170,
-  1485
+  1482
  ],
  "app_scaled_height": 2289,
  "uncovered_rows": 0,
- "split_bottom_pt": 494.0,
+ "split_bottom_pt": 493.0,
  "seam_hidden_rows": 0
 }
