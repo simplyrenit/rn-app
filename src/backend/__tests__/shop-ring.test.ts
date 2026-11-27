@@ -77,7 +77,9 @@ describe("the shared accept (ring screen and Today's inline Accept)", () => {
     server_time: "2026-11-22T10:40:00+05:30",
   };
 
-  beforeEach(() => api.post.mockResolvedValue({ data: { booking } }));
+  beforeEach(() => {
+    api.post.mockResolvedValue({ data: { booking } });
+  });
 
   it("sends {} for one item, caches the booking and writes the accepted ending", async () => {
     const qc = client();
