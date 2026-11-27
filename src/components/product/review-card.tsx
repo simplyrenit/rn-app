@@ -15,12 +15,13 @@ interface ReviewCardProps {
   /** Width as a percentage of the parent, when the caller needs to set one. */
   size?: number;
   /**
-   * Opt-in. `detail` is the card the product page's review rail is drawn with
-   * in Figma 1:9120: a fixed 185pt so a row of them lines up, the body clamped
-   * to three lines in a fixed box, and the control set as a link rather than
-   * as brand-coloured text. Every other screen keeps `default`.
+   * Opt-in. `detail` is the rail card (Figma 2083:16177): 182pt so a row of
+   * them lines up, the body clamped to three lines in a fixed box, then the
+   * author. `list` is the All reviews card (2089:24972): no box, the author
+   * first, two lines of body and the control. Every other screen keeps
+   * `default`.
    */
-  variant?: "default" | "detail";
+  variant?: "default" | "detail" | "list";
   /**
    * `detail` only. The card cannot grow inside a fixed-height rail, so its
    * control opens the full list instead of expanding in place.
@@ -28,128 +29,185 @@ interface ReviewCardProps {
   onShowMore?: () => void;
   /** What VoiceOver says the control opens. Defaults to the listing's reviews. */
   showMoreHint?: string;
-  /** Opt-in, pt: overrides the `size` percentage (the owner profile's 285 rail card). */
+  /** Opt-in, pt: overrides the `size` percentage (ENG-427's owner-profile cards). */
   width?: number;
-  /** Opt-in, `detail` only, pt: overrides the 185 card height (the owner profile's 182). */
+  /** Opt-in, `detail` only, pt: overrides the 182 minimum height. */
   height?: number;
 }
 
 const PREVIEW_CHARS = 140;
 
-/** The frame's card: 16 + 64 + 4 + 21 + 24 + 40 + 16. */
-const DETAIL_HEIGHT = 185;
+/** The rail card (2083:16177): 16 + 64 + 4 + 18 + 24 + 40 + 16. */
+const DETAIL_HEIGHT = 182;
 /** Three lines of 14/21 body, as a fixed box so short reviews still align. */
 const DETAIL_BODY_HEIGHT = 64;
 /** The owners-reviews card (Figma 2089:24740): 14/21 comment and name, 12/18 date. */
 const BODY_LEADING = 21;
 const DATE_LEADING = 18;
 
-export const ReviewCard: React.FC<ReviewCardProps> = ({
+export const ReviewCard: React.FC<ReviewCardProps> = (props) => {
+  // `variant` is fixed per call site, so this never swaps hooks mid-life.
+  if (props.variant === "detail") return <DetailCard {...props} />;
+  if (props.variant === "list") return <ListCard {...props} />;
+  return <DefaultCard {...props} />;
+};
+
+/** The product page's (and owner page's) rail card, 2083:16177. */
+function DetailCard({
   reviewText,
   reviewerName,
   reviewDate,
   reviewerImage,
   size,
-  variant = "default",
   onShowMore,
   showMoreHint = "Opens every review for this listing",
   width,
   height,
+}: ReviewCardProps) {
+  const { color } = useTheme();
+  return (
+    <View
+      style={{
+        width: width ?? (size ? `${size}%` : "100%"),
+        minHeight: height ?? DETAIL_HEIGHT,
+        // 15 inside the 1pt border: Figma strokes inside the 16 padding, an RN border adds to it.
+        padding: 15,
+        borderRadius: radius.card,
+        borderWidth: 1,
+        borderColor: color.line,
+        backgroundColor: color.surface,
+        gap: 24,
+        // Holds the author row on the bottom edge, so a rail mixing reviews
+        // that are cut off with ones that are not still lines its avatars up.
+        justifyContent: "space-between",
+      }}
+    >
+      <ExpandableText
+        text={reviewText ?? ""}
+        fontSize="text-sm"
+        tone="body"
+        lines={3}
+        lineHeight={21}
+        collapsedHeight={DETAIL_BODY_HEIGHT}
+        controlGap={4}
+        control="link"
+        controlLineHeight={18}
+        onPress={onShowMore}
+        accessibilityHint={onShowMore ? showMoreHint : undefined}
+      />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Avatar uri={reviewerImage} name={reviewerName} size={40} />
+        <View style={{ flex: 1 }}>
+          <Text
+            fontSize="text-sm"
+            lineHeight={21}
+            fontWeight="font-semibold"
+            numberOfLines={1}
+          >
+            {reviewerName}
+          </Text>
+          <Text fontSize="text-xs" lineHeight={18} tone="dim">
+            {moment(reviewDate).fromNow()}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** The All reviews card, 2089:24972: author, two lines of body, control. */
+function ListCard({
+  reviewText,
+  reviewerName,
+  reviewDate,
+  reviewerImage,
+}: ReviewCardProps) {
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <Avatar uri={reviewerImage} name={reviewerName} size={40} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text fontSize="text-sm" fontWeight="font-semibold" numberOfLines={1}>
+            {reviewerName}
+          </Text>
+          {/* The frame prints "12 Oct 2026"; the relative date is kept. */}
+          <Text fontSize="text-xs" tone="dim">
+            {moment(reviewDate).fromNow()}
+          </Text>
+        </View>
+      </View>
+      <ExpandableText
+        text={reviewText ?? ""}
+        fontSize="text-sm"
+        tone="body"
+        lines={2}
+        controlGap={8}
+        control="link"
+        controlLineHeight={20}
+      />
+    </View>
+  );
+}
+
+/** The owners-reviews card, 2089:24740 (ENG-427). */
+const DefaultCard: React.FC<ReviewCardProps> = ({
+  reviewText,
+  reviewerName,
+  reviewDate,
+  reviewerImage,
+  size,
+  width,
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const { color } = useTheme();
-  const detail = variant === "detail";
 
   const body = reviewText ?? "";
   const isLong = body.length > PREVIEW_CHARS;
 
   return (
     <View
-      style={[
-        {
-          // `w-[${size}%]` was an interpolated arbitrary class, which NativeWind
-          // cannot resolve at build time, so the width was silently dropped.
-          width: width ?? (size ? `${size}%` : "100%"),
-          // `default`: the frame's 16 is to the card's outer edge (the stroke is outside the layout), so 15 + the
-          // 1 border (2089:24740). `detail` (ENG-429) keeps its 16.
-          padding: detail ? 16 : 15,
-          borderRadius: radius.card,
-          borderWidth: 1,
-          borderColor: color.line,
-          backgroundColor: color.surface,
-          gap: 24,
-        },
-        // Both cards sit on pages that rule their own blocks with hairlines; a
-        // shadow under them would be a second elevation language.
-        // `space-between` holds the author row on the bottom edge, so a rail
-        // mixing reviews that are cut off with reviews that are not still
-        // lines its avatars up.
-        detail
-          ? { minHeight: height ?? DETAIL_HEIGHT, justifyContent: "space-between" }
-          : null,
-      ]}
+      style={{
+        // `w-[${size}%]` was an interpolated arbitrary class, which NativeWind
+        // cannot resolve at build time, so the width was silently dropped.
+        width: width ?? (size ? `${size}%` : "100%"),
+        // The frame's 16 is to the card's outer edge (the stroke is outside the layout), so 15 + the 1 border.
+        padding: 15,
+        borderRadius: radius.card,
+        borderWidth: 1,
+        borderColor: color.line,
+        backgroundColor: color.surface,
+        gap: 24,
+      }}
     >
-      {detail ? (
-        <ExpandableText
-          text={body}
-          fontSize="text-sm"
-          lines={3}
-          collapsedHeight={DETAIL_BODY_HEIGHT}
-          controlGap={4}
-          control="underline"
-          onPress={onShowMore}
-          accessibilityHint={
-            onShowMore ? showMoreHint : undefined
-          }
-        />
-      ) : (
-        // Height follows the content. A fixed h-52 left a void under short
-        // reviews and clipped long ones.
-        <View style={{ gap: 4 }}>
-          <Text fontSize="text-sm" lineHeight={BODY_LEADING} tone="body">
-            {isExpanded ? body : truncateWords(body, PREVIEW_CHARS)}
-          </Text>
-          {isLong && (
-            <TouchableOpacity
-              onPress={() => setIsExpanded((open) => !open)}
-              accessibilityRole="button"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
-                {isExpanded ? "Show less" : "Show more"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
-        <Avatar uri={reviewerImage} name={reviewerName} size={40} />
-        {detail ? (
-          <View style={{ flex: 1 }}>
-            <Text fontSize="text-sm" fontWeight="font-bold" numberOfLines={1}>
-              {reviewerName}
+      {/* Height follows the content. A fixed h-52 left a void under short
+          reviews and clipped long ones. */}
+      <View style={{ gap: 4 }}>
+        <Text fontSize="text-sm" lineHeight={BODY_LEADING} tone="body">
+          {isExpanded ? body : truncateWords(body, PREVIEW_CHARS)}
+        </Text>
+        {isLong && (
+          <TouchableOpacity
+            onPress={() => setIsExpanded((open) => !open)}
+            accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
+              {isExpanded ? "Show less" : "Show more"}
             </Text>
-            <Text fontSize="text-xs" tone="body">
-              {moment(reviewDate).fromNow()}
-            </Text>
-          </View>
-        ) : (
-          <View style={{ flex: 1 }}>
-            <Text fontSize="text-sm" lineHeight={BODY_LEADING} fontWeight="font-semibold" numberOfLines={1}>
-              {reviewerName}
-            </Text>
-            <Text fontSize="text-xs" lineHeight={DATE_LEADING} tone="dim">
-              {moment(reviewDate).fromNow()}
-            </Text>
-          </View>
+          </TouchableOpacity>
         )}
+      </View>
+
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Avatar uri={reviewerImage} name={reviewerName} size={40} />
+        <View style={{ flex: 1 }}>
+          <Text fontSize="text-sm" lineHeight={BODY_LEADING} fontWeight="font-semibold" numberOfLines={1}>
+            {reviewerName}
+          </Text>
+          <Text fontSize="text-xs" lineHeight={DATE_LEADING} tone="dim">
+            {moment(reviewDate).fromNow()}
+          </Text>
+        </View>
       </View>
     </View>
   );

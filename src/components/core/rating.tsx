@@ -23,12 +23,13 @@ interface Props {
    */
   showUnratedCopy?: boolean;
   /**
-   * Opt-in: draws the filled stars in ink instead of gold. Only the filled star
-   * changes (the outline stays the dim tone), unlike `Stars`, whose ink tone
-   * colours both. Used by the Write a review rating control; the default stays
-   * gold for the search filter, which has no frame to say otherwise.
+   * Opt-in: draws the stars in ink instead of gold, the outline too (Write a
+   * review, Figma 2089:25101/25181: black 1.5 outline, black fill). The
+   * default stays gold with a dim outline.
    */
   tone?: "gold" | "ink";
+  /** Space between stars. The Write a review frame sets 28pt stars 8 apart. */
+  gap?: number;
 }
 
 /**
@@ -47,6 +48,7 @@ export default function Rating({
   count,
   showUnratedCopy = false,
   tone = "gold",
+  gap = 2,
 }: Props) {
   const { color } = useTheme();
   const interactive = Boolean(onChange) && !readOnly;
@@ -68,18 +70,21 @@ export default function Rating({
       accessible={!interactive}
       accessibilityRole={interactive ? undefined : "text"}
       accessibilityLabel={interactive ? undefined : label}
-      style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+      style={{ flexDirection: "row", alignItems: "center", gap }}
     >
       {[0, 1, 2, 3, 4].map((index) => {
         const filled = value >= index + 1;
         // Half values are drawn as a filled star clipped to half its width —
         // an actual half star, not a full star at 50% opacity.
         const half = !filled && value >= index + 0.5;
-        const Star = filled ? StarSolid : StarOutline;
 
         const glyph = (
           <View style={{ width: size, height: size }}>
-            <StarOutline size={size} color={color.textDim} strokeWidth={1.5} />
+            <StarOutline
+              size={size}
+              color={tone === "ink" ? color.text : color.textDim}
+              strokeWidth={1.5}
+            />
             {(filled || half) && (
               <View
                 style={{
@@ -115,11 +120,12 @@ export default function Rating({
             hitSlop={{
               top: (MIN_TOUCH_TARGET - size) / 2,
               bottom: (MIN_TOUCH_TARGET - size) / 2,
-              // Wide enough to reach the 44pt floor without overlapping the
-              // neighbouring star's target (the stars sit 2 apart), so a
-              // near-miss cannot silently pick the wrong rating.
-              left: Math.max(4, (MIN_TOUCH_TARGET - size - 2) / 2),
-              right: Math.max(4, (MIN_TOUCH_TARGET - size - 2) / 2),
+              // Each target is max(size + gap, 44 - gap) wide: half the gap
+              // each side, so neighbours meet, or more for a small star. It
+              // reaches 44pt only when size + gap >= 44 (write-review's
+              // 28 / 8 gives 36).
+              left: Math.max(gap / 2, (MIN_TOUCH_TARGET - size - gap) / 2),
+              right: Math.max(gap / 2, (MIN_TOUCH_TARGET - size - gap) / 2),
             }}
           >
             {glyph}

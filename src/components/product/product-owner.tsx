@@ -95,7 +95,12 @@ export function AboutOwner({
         <Avatar uri={profilePic} name={name} size={detail ? DETAIL_AVATAR : 52} />
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={1} style={{ flexShrink: 1 }}>
+            <Text
+              fontSize="text-md"
+              fontWeight={detail ? "font-semibold" : "font-bold"}
+              numberOfLines={1}
+              style={{ flexShrink: 1 }}
+            >
               {name}
             </Text>
             <VerifiedBusinessBadge verified={businessVerified} />
@@ -103,42 +108,48 @@ export function AboutOwner({
           {/* A filled star beside the number 0 read as "rated zero out of five"
               — the worst possible host — for every seller who simply had not
               been rated yet. No score, no star. */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 4,
-              marginTop: 2,
-            }}
-          >
-            {ratingDisplay.rated ? (
-              detail ? (
-                <StarMini color={color.textDim} size={20} />
+          {detail ? (
+            // 04 2083:15870: star and score 2 apart, then the dot and the count, 4 apart; 14/21 at 70%, marks at 50%.
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              {ratingDisplay.rated ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+                  <StarMini color={color.text} size={20} style={{ opacity: 0.5 }} />
+                  <Text fontSize="text-sm" lineHeight={21} tone="body">
+                    {ratingDisplay.label}
+                  </Text>
+                </View>
               ) : (
-                <StarIcon color={color.warning} size={16} />
-              )
-            ) : null}
-            <Text fontSize="text-sm" tone={detail ? "dim" : "body"}>
-              {ratingDisplay.label}
-            </Text>
-            {detail ? (
+                <Text fontSize="text-sm" lineHeight={21} tone="body">
+                  {ratingDisplay.label}
+                </Text>
+              )}
               <View
                 style={{
                   width: DETAIL_DOT,
                   height: DETAIL_DOT,
                   borderRadius: radius.full,
-                  backgroundColor: color.textDim,
+                  backgroundColor: color.text,
+                  opacity: 0.5,
                 }}
               />
-            ) : (
+              <Text fontSize="text-sm" lineHeight={21} tone="body">
+                {products} {countWord}
+              </Text>
+            </View>
+          ) : (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}>
+              {ratingDisplay.rated ? <StarIcon color={color.warning} size={16} /> : null}
+              <Text fontSize="text-sm" tone="body">
+                {ratingDisplay.label}
+              </Text>
               <Text fontSize="text-sm" tone="dim">
                 •
               </Text>
-            )}
-            <Text fontSize="text-sm" tone={detail ? "dim" : "body"}>
-              {products} {countWord}
-            </Text>
-          </View>
+              <Text fontSize="text-sm" tone="body">
+                {products} {countWord}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
       {detail ? (

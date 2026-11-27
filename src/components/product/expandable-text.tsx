@@ -21,10 +21,19 @@ interface Props {
   /** Space between the body and its control. */
   controlGap?: number;
   /**
-   * `chevron` is the page's own body copy; `underline` is the treatment inside
-   * a review card, where the frame sets the control as a link.
+   * `chevron` is the page's own body copy: brand "Show more" with a chevron
+   * flush after it (04 2083:16177). `link` is the 2.1 review cards' brand
+   * "Show more" alone. `underline` is the older review-card treatment.
    */
-  control?: "chevron" | "underline";
+  control?: "chevron" | "underline" | "link";
+  /**
+   * The control's line height. The frames set the same SemiBold 14 label at a
+   * different leading per surface: 21 on the product page, 18 on the rail
+   * card, 20 on the reviews list card. Defaults to 21.
+   */
+  controlLineHeight?: number;
+  /** The body's line height, where the frame sets it off the type scale (14/21 on the rail card, 2083:15836). */
+  lineHeight?: number;
   /**
    * When given, the control does this instead of expanding in place — for a
    * card whose height is fixed by the rail it sits in.
@@ -51,6 +60,8 @@ export function ExpandableText({
   collapsedHeight,
   controlGap = 8,
   control = "chevron",
+  controlLineHeight = 21,
+  lineHeight,
   onPress,
   accessibilityHint,
 }: Props) {
@@ -87,6 +98,7 @@ export function ExpandableText({
         <Text
           fontSize={fontSize}
           tone={tone}
+          lineHeight={lineHeight}
           numberOfLines={expanded ? undefined : lines}
         >
           {body}
@@ -99,6 +111,7 @@ export function ExpandableText({
           <Text
             fontSize={fontSize}
             tone={tone}
+            lineHeight={lineHeight}
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
             style={{ position: "absolute", left: 0, right: 0, top: 0, opacity: 0 }}
@@ -129,26 +142,28 @@ export function ExpandableText({
               alignSelf: "flex-start",
             }}
           >
-            <Text
-              fontSize="text-sm"
-              fontWeight="font-bold"
-              style={
-                control === "underline"
-                  ? // The frame sets this in Satoshi, which the app does not
-                    // ship; Plus Jakarta Sans Bold plus the rule is the same
-                    // affordance in the family we have.
-                    { textDecorationLine: "underline" }
-                  : undefined
-              }
-            >
-              {label}
-            </Text>
+            {control === "underline" ? (
+              <Text
+                fontSize="text-sm"
+                fontWeight="font-bold"
+                // The frame sets this in Satoshi, which the app does not
+                // ship; Plus Jakarta Sans Bold plus the rule is the same
+                // affordance in the family we have.
+                style={{ textDecorationLine: "underline" }}
+              >
+                {label}
+              </Text>
+            ) : (
+              <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand" lineHeight={controlLineHeight}>
+                {label}
+              </Text>
+            )}
             {control === "chevron" ? (
               // Flush against the label: the frame leaves no gap between them.
               expanded ? (
-                <ChevronUpIcon size={CHEVRON_SIZE} color={color.text} />
+                <ChevronUpIcon size={CHEVRON_SIZE} color={color.brandText} />
               ) : (
-                <ChevronDownIcon size={CHEVRON_SIZE} color={color.text} />
+                <ChevronDownIcon size={CHEVRON_SIZE} color={color.brandText} />
               )
             ) : null}
           </View>

@@ -91,6 +91,9 @@ Shared types:
 - `value?`, `unit?`, `subLine?`: strings, for `summary-cta`.
 - `children?: ReactNode`: legacy passthrough for `booking/parts` `BottomBar`. It renders in the content strip in place of a layout.
 - `style?`.
+- `note?: string` (ENG-429): `summary-cta` with no `primary` draws this 14/20 note at 60%, right-aligned in the primary's place and 4 below the row's centre line ("Not taking bookings right now", 31pt from the strip's top in 04 2089:22597).
+- `BarAction.labelSize?: "compact"` (ENG-429): the primary's 14/20 label in the bar's 52 box with no side padding, for a half-width primary whose 16/24 label would wrap ("Book for the morning", 142pt at x11 in 164, 04 2089:23201; "Continue with self pickup", 2089:28473).
+- `secondary-primary` (ENG-429): both buttons are explicit equal halves (`flexGrow 1, flexShrink 1, flexBasis 0`) with no side padding, as the kit's Secondary+Primary draws them (2071:14449, both p0). Before, a label wider than its half ("✓ In cart · View", 2089:23201) took width from the other button. DevKit re-diffed: iOS 0.30%, emulator 0.49%.
 
 `ListRow` props:
 - `label: string`.
@@ -147,6 +150,7 @@ Props added; nothing renamed or removed.
   - Props are unchanged. `tone="brand"` draws as `info`.
   - With no `icon`, the glyph follows the tone: info ⓘ, warning and danger ⚠, success ✓.
   - The kit's Link node is hidden in every tone, so it is not built.
+  - `tone="neutral"` (ENG-429, 04 2089:22597 "Not taking bookings (neutral notice)"): `surfaceMuted` card, glyph at 70% (`textBody`), info glyph.
 - **`Pill`** (`booking/parts.tsx`) is now `<StatusPill>`, with `brand` falling back to `info`.
 - **`BottomBar`** (`booking/parts.tsx`) is now `<BottomBar>` from `core/bottom-bar` in children mode.
 - **`TextField`** (`core/field.tsx`)

@@ -4,6 +4,7 @@ import { LineRow, ShopHead } from "@/components/booking/card-lines";
 import { RentStrip } from "@/components/cart/parts";
 import { BookingLoadError, BookingLoading, BottomBar, Notice, Panel, TextButton } from "@/components/booking/parts";
 import { Button, Skeleton, SubpageHeader, Text } from "@/components/core";
+import { BarAction, BottomBar as KitBottomBar } from "@/components/core/bottom-bar";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { useGlobalContext } from "@/context/global-context";
 import { SavedAddress, addressTitle, flatAndLandmark } from "@/lib/addresses";
@@ -11,6 +12,8 @@ import { deliveryAddressKey, useDeliveryAddress } from "@/context/delivery-addre
 import { addressMayHelp, areaLabel, areaOf, offersDelivery } from "@/lib/delivery";
 import { createLocationRequest } from "@/lib/location-request";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
+import { ChevronLeftIcon } from "react-native-heroicons/solid";
+import { ChevronRightIcon as ChevronRightMiniIcon } from "react-native-heroicons/mini";
 import { apiError } from "@/lib/api-error";
 import { track, trackLeftOut } from "@/lib/events";
 import { uuidv4 } from "@/lib/uuid";
@@ -58,7 +61,7 @@ import {
   startLeftOut,
 } from "@/lib/card-checkout";
 import { pluralize } from "@/lib/pluralize";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, fontFamily, radius, space } from "@/lib/design-tokens";
 import { useDistanceTo } from "@/lib/distance";
 import { kmText } from "@/lib/shop";
 import { minDays as minDaysOf, minimumWords, plansOf } from "@/lib/plans";
@@ -70,11 +73,15 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ScrollView, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 
-/** A day cell: 40 tall, as the frame draws it. The row pitch leaves room for a 44pt target. */
+/** A day's disc: 40, in a 44 week row (2089:28290); the row is the 44pt target. */
 const DAY = 40;
+const ROW = 44;
 const DAY_HIT_SLOP = { top: 2, bottom: 2, left: 2, right: 2 };
 
-/** One way to get the item: a radio card, tinted when it is the one chosen. */
+/**
+ * One way to get the item (2089:28290 "Choice"): a radio card, r12, `brandPanel` with a 2pt brand edge when chosen. One
+ * that can't be chosen keeps the white card and dims its words and radio, with the reason under them.
+ */
 function ChoiceCard({
   title,
   sub,
@@ -110,15 +117,12 @@ function ChoiceCard({
       style={{
         flexDirection: "row",
         alignItems: "center",
-        gap: space.md,
-        padding: space.md,
-        borderRadius: radius.card,
+        gap: 12,
+        padding: 16,
+        borderRadius: 12,
         borderWidth: selected ? 2 : 1,
-        // The 1pt it gains when chosen is taken back from the padding, so the card does not jump.
-        margin: selected ? -1 : 0,
-        borderColor: selected ? color.brand : color.inputLine,
+        borderColor: selected ? color.brand : color.line,
         backgroundColor: selected ? color.brandPanel : color.surface,
-        opacity: disabled ? 0.6 : 1,
       }}
     >
       <View
@@ -127,9 +131,10 @@ function ChoiceCard({
           height: 22,
           borderRadius: radius.full,
           borderWidth: 2,
-          borderColor: selected ? color.brand : color.inputLine,
+          borderColor: selected ? color.brand : color.line,
           alignItems: "center",
           justifyContent: "center",
+          opacity: disabled ? 0.6 : 1,
         }}
       >
         {selected ? (
@@ -137,17 +142,17 @@ function ChoiceCard({
         ) : null}
       </View>
       <View style={{ flex: 1, gap: 2 }}>
-        <Text fontSize="text-md" fontWeight="font-bold">
+        <Text fontSize="text-md" fontWeight="font-bold" tone={disabled ? "dim" : "default"}>
           {title}
         </Text>
         {sub ? (
-          <Text fontSize="text-sm" tone="body">
+          <Text fontSize="text-sm" tone={disabled ? "dim" : "body"}>
             {sub}
           </Text>
         ) : null}
         {reason || note ? (
-          <View style={{ flexDirection: "row", gap: space.xs, marginTop: 2 }}>
-            <InformationCircleIcon size={16} color={color.textBody} style={{ marginTop: 2 }} />
+          <View style={{ flexDirection: "row", gap: 4 }}>
+            <InformationCircleIcon size={16} color={color.textBody} style={{ opacity: 0.6 }} />
             <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
               {reason ?? note}
             </Text>
@@ -155,22 +160,18 @@ function ChoiceCard({
         ) : null}
       </View>
       {action ? (
-        <Text
-          fontSize="text-sm"
-          fontWeight="font-bold"
-          tone="brand"
-          accessibilityRole="button"
-          onPress={action.onPress}
-          // The label is small; the padding makes a 44pt target of it.
-          style={{ paddingVertical: space.md, paddingLeft: space.sm }}
-        >
-          {action.label}
-        </Text>
+        // The 20pt label; the slop makes a 44pt target of it.
+        <TouchableOpacity accessibilityRole="button" activeOpacity={0.6} hitSlop={12} onPress={action.onPress}>
+          <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
+            {action.label}
+          </Text>
+        </TouchableOpacity>
       ) : null}
     </TouchableOpacity>
   );
 }
 
+/** A legend key (2089:28290 "Legend"): a 12 dot, 6, then 12/16 at 70%. */
 function LegendDot({ label, fill, ring }: { label: string; fill?: string; ring?: string }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
@@ -207,8 +208,16 @@ function LegendDot({ label, fill, ring }: { label: string; fill?: string; ring?:
  * Now on a server whose `book_flow` is `card` asks the same quote for its one
  * item and looks as it always has (D41).
  */
+/**
+ * Dev only (design fixtures, ENG-429): `today` stands in for `todayIst()` so the calendar draws the frame's month;
+ * `mode` selects Delivery once its quote is in, as the customer's pick would (2089:28290); `left` starts those items
+ * left in the cart (2089:28848). Read only under `__DEV__`, so a release build never sees it.
+ */
+type DatesDesign = { today?: string; mode?: DeliveryMode; left?: string[] };
+
 export default function BookingDatesScreen() {
   const { params } = useRoute<RouteProps<"BookingDates">>();
+  const design = __DEV__ ? (params as { design?: DatesDesign } | undefined)?.design : undefined;
   const navigation = useTypedNavigation();
   const { color } = useTheme();
   const { authTokens, isAuthenticated } = useGlobalContext();
@@ -254,8 +263,10 @@ export default function BookingDatesScreen() {
       // The cart's warning for it (§3.2): already requested, so it starts left in the cart.
       ...booked.map((name) => [name, "you_booked_it"]),
     ]);
+    const seededLeft = (design?.left ?? []).filter((name) => names.includes(name));
+    for (const name of seededLeft) why.current[name] = "customer";
     // A new array every time: the render it causes is the one whose quote is asked.
-    setLeft([...new Set([...capped, ...booked])]);
+    setLeft([...new Set([...capped, ...booked, ...seededLeft])]);
     // `byName` is read once the listings are in.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card, loaded, seedKey]);
@@ -284,7 +295,7 @@ export default function BookingDatesScreen() {
   const addressSheet = useRef<AddressPickerSheetHandle>(null);
   const distanceLabel = useDistanceTo(product?.coordinates);
 
-  const today = todayIst();
+  const today = design?.today ?? todayIst();
   // One listing: its booked days. A card: the days no included item is free, and those only some are (D40).
   const daysKey = includedProducts.map((p) => `${p.name}:${JSON.stringify(p.booked ?? [])}`).join("|");
   const { none: taken, some } = useMemo(
@@ -414,6 +425,14 @@ export default function BookingDatesScreen() {
     else if (deliveryQuote.isFetching) wantDeliveryFor.current = key;
   };
 
+  // Dev seed: Delivery once its quote says it works, as `wantDelivery` does for a picked address.
+  const seededMode = useRef(design?.mode);
+  useEffect(() => {
+    if (seededMode.current !== "owner_delivery" || !deliveryQuote.data || deliveryQuote.isFetching || !delivery?.ok) return;
+    seededMode.current = undefined;
+    setMode("owner_delivery");
+  }, [deliveryQuote.data, deliveryQuote.isFetching, delivery?.ok]);
+
   // A delivery that turns out too far (a new address, new dates) falls back to pickup.
   useEffect(() => {
     if (mode === "owner_delivery" && (!delivery || !delivery.ok)) setMode("pickup");
@@ -502,6 +521,8 @@ export default function BookingDatesScreen() {
     }
   };
 
+  // 2089:28290 "Calendar panel": a 44 row per week, the band on the row, a 40 disc for each end; today ringed; an
+  // unavailable day struck on `surfaceMuted`; the "Some items free" dot under the number.
   const renderDay = ({ date, state, marking }: any) => {
     const day: string = date?.dateString;
     const isTaken = Boolean(marking?.taken);
@@ -509,6 +530,7 @@ export default function BookingDatesScreen() {
     const isEnd = Boolean(marking?.start || marking?.end);
     const inRange = Boolean(marking?.inRange);
     const isToday = day === today;
+    const dot = Boolean(marking?.some && !isOff && !isEnd);
     return (
       <TouchableOpacity
         accessibilityRole="button"
@@ -521,14 +543,14 @@ export default function BookingDatesScreen() {
         style={{
           // Stretched across the column so a run of days reads as one band.
           alignSelf: "stretch",
-          height: DAY,
+          height: ROW,
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: inRange ? color.brandPanel : "transparent",
-          borderTopLeftRadius: marking?.start ? DAY / 2 : 0,
-          borderBottomLeftRadius: marking?.start ? DAY / 2 : 0,
-          borderTopRightRadius: marking?.end ? DAY / 2 : 0,
-          borderBottomRightRadius: marking?.end ? DAY / 2 : 0,
+          borderTopLeftRadius: marking?.start ? ROW / 2 : 0,
+          borderBottomLeftRadius: marking?.start ? ROW / 2 : 0,
+          borderTopRightRadius: marking?.end ? ROW / 2 : 0,
+          borderBottomRightRadius: marking?.end ? ROW / 2 : 0,
         }}
       >
         <View
@@ -538,13 +560,14 @@ export default function BookingDatesScreen() {
             borderRadius: DAY / 2,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: isEnd ? color.brand : isTaken ? color.surfaceRaised : "transparent",
+            gap: 1,
+            backgroundColor: isEnd ? color.brand : isTaken ? color.surfaceMuted : "transparent",
             borderWidth: isToday && !isEnd ? 2 : 0,
             borderColor: color.brand,
           }}
         >
           <Text
-            fontSize="text-md"
+            fontSize="text-sm"
             fontWeight={isEnd || isToday || inRange ? "font-bold" : "font-normal"}
             style={{
               // A picked day past the start limit stays in the band's colour (ENG-281: a year-long booking ends there).
@@ -554,14 +577,45 @@ export default function BookingDatesScreen() {
           >
             {date?.day}
           </Text>
-          {marking?.some && !isOff && !isEnd ? (
-            <View
-              style={{ position: "absolute", bottom: 3, width: 5, height: 5, borderRadius: radius.full, backgroundColor: color.warning }}
-            />
-          ) : null}
+          {dot ? <View style={{ width: 4, height: 4, borderRadius: radius.full, backgroundColor: color.warning }} /> : null}
         </View>
       </TouchableOpacity>
     );
+  };
+
+  // 2089:28290: the month row 36 (4 above, 8 below and at the sides), the weekday row 16 at 12/16, the weeks 44 apart
+  // by 4. The library's own paddings and margins are replaced whole, so nothing of its spacing is left.
+  const calendarTheme = {
+    backgroundColor: color.surface,
+    calendarBackground: color.surface,
+    textSectionTitleColor: color.textBody,
+    monthTextColor: color.text,
+    arrowColor: color.text,
+    "stylesheet.calendar.header": {
+      header: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingTop: 4,
+        paddingBottom: 8,
+        paddingHorizontal: 8,
+      },
+      monthText: { fontFamily: fontFamily.bold, fontSize: 16, lineHeight: 24, color: color.text, margin: 0 },
+      arrow: { padding: 0 },
+      week: { marginTop: 4, flexDirection: "row", justifyContent: "space-around" },
+      dayHeader: {
+        flex: 1,
+        textAlign: "center",
+        fontFamily: fontFamily.regular,
+        fontSize: 12,
+        lineHeight: 16,
+        color: color.textBody,
+      },
+    },
+    "stylesheet.calendar.main": {
+      container: { backgroundColor: color.surface },
+      week: { marginTop: 4, flexDirection: "row", justifyContent: "space-around" },
+    },
   };
 
   const header = <SubpageHeader title="Choose dates" />;
@@ -687,6 +741,52 @@ export default function BookingDatesScreen() {
           ? { label: fixLabel(culprits.length, false), onPress: () => leave(culprits, "no_unit_free") }
           : null;
 
+  // What is in the way, or why an item went: above the card's total (end of the scroll, 2089:28848), or stacked over
+  // the summary in the bar (Book Now).
+  const daysError = active.isError && first ? daysRefusal(apiError(active.error)) : null;
+  const note: React.ReactNode =
+    card && cardNote ? (
+      <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
+        {cardNote}
+      </Text>
+    ) : !card && blocker ? (
+      <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
+        {blocker}
+      </Text>
+    ) : daysError ? (
+      // The server refused the days themselves: its own sentence, and trying again would not change it.
+      <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
+        {daysError}
+      </Text>
+    ) : active.isError && first ? (
+      <Text fontSize="text-sm" tone="body">
+        {"We couldn't work out the price. "}
+        <Text
+          fontSize="text-sm"
+          fontWeight="font-bold"
+          tone="brand"
+          accessibilityRole="button"
+          onPress={() => void active.refetch()}
+        >
+          Try again
+        </Text>
+      </Text>
+    ) : card && (leftNote || (!range && monthFull.none)) ? (
+      <Text fontSize="text-sm" tone={leftNote ? "body" : "warning"}>
+        {leftNote ?? "No day this month has every item free."}
+      </Text>
+    ) : null;
+  const priced = Boolean(first && last && quote && !settling);
+  const selfPickupOnly = mode === "pickup" && delivery && !delivery.ok && !requoting;
+  const continueAction: BarAction = {
+    label: selfPickupOnly ? "Continue with self pickup" : "Continue",
+    // 2089:28473: the longer label is 14/20 in the 52 Primary at half width.
+    labelSize: selfPickupOnly ? "compact" : undefined,
+    onPress: () => goOn(),
+    disabled: !first || !quote || settling || Boolean(blocker) || (card && included.length === 0),
+    loading: Boolean(first) && active.isFetching,
+  };
+
   return (
     <NonScrollableContainer>
       {header}
@@ -694,7 +794,7 @@ export default function BookingDatesScreen() {
       {card && params.from_cart ? <RentStrip /> : null}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md, gap: space.lg }}
+        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16, paddingBottom: 24, gap: 24 }}
       >
         {card ? (
           <>
@@ -703,7 +803,8 @@ export default function BookingDatesScreen() {
                 {noDayNotice(included.length, culprits.map(titleOf)).text}
               </Notice>
             ) : null}
-            <Panel style={{ padding: space.md, gap: space.xs }}>
+            {/* 2089:28848 "Shop panel": 16/16/4, 4 between the head, the hairline and the lines. */}
+            <Panel style={{ borderRadius: 12, paddingTop: 16, paddingHorizontal: 16, paddingBottom: 4, gap: 4 }}>
               <ShopHead
                 name={shopName}
                 verified={product.owner?.business_verified}
@@ -711,7 +812,7 @@ export default function BookingDatesScreen() {
                 delivers={canDeliver}
                 handover={canDeliver ? "Delivers" : "Self pickup only"}
               />
-              <View style={{ height: 1, backgroundColor: color.line, marginVertical: space.xs }} />
+              <View style={{ height: 1, backgroundColor: color.line }} />
               {listed.map((name) => {
                 const p = byName.get(name) as BackendProduct;
                 const own = alone[name];
@@ -746,7 +847,8 @@ export default function BookingDatesScreen() {
                     key={name}
                     title={p.title}
                     image={p.cover_image}
-                    meta={days ? `${rate} a day · ${daysLabel(days)}` : `${rate} a day`}
+                    meta={days ? `${rate}/day · ${daysLabel(days)}` : `${rate}/day`}
+                    thumbSize={64}
                     amount={line ? money(line.rent) : null}
                     deposit={Number(deposit) > 0 ? `Deposit ${money(deposit)}` : null}
                     left={isLeft}
@@ -785,26 +887,28 @@ export default function BookingDatesScreen() {
                 );
               })}
             </Panel>
-            {[
-              included.length > 1 ? "Leave an item in your cart to book the rest." : null,
-              left.length > 0 && included.length >= CHECKOUT_CAP
-                ? `Up to ${CHECKOUT_CAP} items go in one booking. Leave one in your cart to add another.`
-                : null,
-              gone.length
-                ? `${gone.length === 1 ? "An item" : `${gone.length} items`} from this shop ${gone.length === 1 ? "is" : "are"} no longer listed.`
-                : null,
-              othersLine(params.others),
-            ]
-              .filter(Boolean)
-              .map((text) => (
-                <Text key={text} fontSize="text-sm" tone="body">
-                  {text}
-                </Text>
-              ))}
+            <View style={{ gap: 8 }}>
+              {[
+                included.length > 1 ? "Leave an item in your cart to book the rest." : null,
+                left.length > 0 && included.length >= CHECKOUT_CAP
+                  ? `Up to ${CHECKOUT_CAP} items go in one booking. Leave one in your cart to add another.`
+                  : null,
+                gone.length
+                  ? `${gone.length === 1 ? "An item" : `${gone.length} items`} from this shop ${gone.length === 1 ? "is" : "are"} no longer listed.`
+                  : null,
+                othersLine(params.others),
+              ]
+                .filter(Boolean)
+                .map((text) => (
+                  <Text key={text} fontSize="text-sm" tone="body">
+                    {text}
+                  </Text>
+                ))}
+            </View>
           </>
         ) : null}
 
-        <Panel style={{ padding: space.sm }}>
+        <Panel style={{ borderRadius: 12, padding: 8 }}>
           <Calendar
             current={first ?? today}
             onMonthChange={(shown: { dateString: string }) => setMonth(shown.dateString.slice(0, 7))}
@@ -816,32 +920,32 @@ export default function BookingDatesScreen() {
             hideExtraDays
             markedDates={markedDates}
             dayComponent={renderDay}
-            theme={{
-              backgroundColor: color.surface,
-              calendarBackground: color.surface,
-              textSectionTitleColor: color.textBody,
-              monthTextColor: color.text,
-              arrowColor: color.text,
-              textMonthFontWeight: "700",
-            }}
+            renderArrow={(direction: "left" | "right") =>
+              direction === "left" ? (
+                <ChevronLeftIcon size={20} color={color.text} />
+              ) : (
+                <ChevronRightMiniIcon size={20} color={color.text} />
+              )
+            }
+            theme={calendarTheme}
           />
           <View
             style={{
               flexDirection: "row",
-              // Wraps, as CT-20 draws it on two rows: four labels in one line ran past the panel at 360dp.
+              // Wraps, as 2089:28848 draws it on two rows: four labels in one line ran past the panel at 360dp.
               flexWrap: "wrap",
-              columnGap: space.md,
-              rowGap: space.xs,
-              paddingTop: space.sm,
-              paddingHorizontal: space.sm,
-              paddingBottom: space.xs,
+              columnGap: 16,
+              rowGap: 4,
+              marginTop: 4,
+              paddingTop: 8,
+              paddingHorizontal: 8,
               borderTopWidth: 1,
               borderTopColor: color.line,
             }}
           >
             <LegendDot label="Your dates" fill={color.brand} />
             {some.size ? <LegendDot label="Some items free" fill={color.warning} /> : null}
-            <LegendDot label="Unavailable" fill={color.surfaceRaised} />
+            <LegendDot label="Unavailable" fill={color.surfaceMuted} />
             <LegendDot label="Today" ring={color.brand} />
           </View>
         </Panel>
@@ -921,86 +1025,61 @@ export default function BookingDatesScreen() {
           {canDeliver && signedIn && address && delivery && !delivery.ok && !requoting ? (
             <View style={{ gap: space.sm }}>
               {offArea ? (
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={editAddress}
-                  style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center" }}
-                >
-                  <Text fontSize="text-sm" tone="brand" fontWeight="font-bold">
+                <TouchableOpacity accessibilityRole="button" onPress={editAddress} hitSlop={12} style={{ alignSelf: "flex-start" }}>
+                  <Text fontSize="text-sm" tone="brand" fontWeight="font-semibold">
                     {`Not in ${offArea}? Edit this address`}
                   </Text>
                 </TouchableOpacity>
               ) : null}
               {/* B1: the courier refused the item itself, so no other address would change the answer. */}
               {!quoted || addressMayHelp(quoted.delivery) ? (
-                <Button variant="outline" onPress={() => addressSheet.current?.present()}>
+                <Button variant="outline" size="compact" onPress={() => addressSheet.current?.present()}>
                   Use another address
                 </Button>
               ) : null}
             </View>
           ) : null}
         </View>
+
+        {card ? (
+          // 2089:28848 "Note and total": what is in the way, then the card's total and when it is paid, so it doesn't
+          // read as due now (FIXES B2 row 16).
+          <View style={{ gap: 12 }}>
+            {note}
+            <View style={{ gap: 2 }}>
+              <Text fontSize="text-base" fontWeight="font-bold">
+                {included.length === 0
+                  ? "No items"
+                  : first && last
+                    ? priced && quote
+                      ? money(quote.total)
+                      : daysLabel(dayCount(first, last))
+                    : "Pick your dates"}
+              </Text>
+              {included.length > 0 && priced ? (
+                <Text fontSize="text-sm" tone="body">
+                  {barLine(quote, shopName)}
+                </Text>
+              ) : first && last ? (
+                <Text fontSize="text-sm" tone="body">
+                  {rangeLabel(first, last)}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
       </ScrollView>
 
-      <BottomBar>
-        {card && cardNote ? (
-          <Text fontSize="text-sm" tone="warning" accessibilityRole="alert" style={{ textAlign: "center" }}>
-            {cardNote}
-          </Text>
-        ) : !card && blocker ? (
-          <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
-            {blocker}
-          </Text>
-        ) : active.isError && first && daysRefusal(apiError(active.error)) ? (
-          // The server refused the days themselves: its own sentence, and trying again would not change it.
-          <Text fontSize="text-sm" tone="warning" accessibilityRole="alert">
-            {daysRefusal(apiError(active.error))}
-          </Text>
-        ) : active.isError && first ? (
-          <Text fontSize="text-sm" tone="body">
-            {"We couldn't work out the price. "}
-            <Text
-              fontSize="text-sm"
-              fontWeight="font-bold"
-              tone="brand"
-              accessibilityRole="button"
-              onPress={() => void active.refetch()}
-            >
-              Try again
-            </Text>
-          </Text>
-        ) : card && (leftNote || (!range && monthFull.none)) ? (
-          <Text fontSize="text-sm" tone={leftNote ? "body" : "warning"} style={{ textAlign: "center" }}>
-            {leftNote ?? "No day this month has every item free."}
-          </Text>
-        ) : null}
-        {card ? (
-          // CT-20: the card's total, and when it is paid, so it doesn't read as due now (FIXES B2 row 16).
-          <View style={{ gap: 2 }}>
-            <Text fontSize="text-lg" fontWeight="font-bold">
-              {included.length === 0
-                ? "No items"
-                : first && last
-                  ? quote && !settling
-                    ? money(quote.total)
-                    : daysLabel(dayCount(first, last))
-                  : "Pick your dates"}
-            </Text>
-            {included.length > 0 && quote && !settling ? (
-              <Text fontSize="text-sm" tone="body">
-                {barLine(quote, shopName)}
-              </Text>
-            ) : first && last ? (
-              <Text fontSize="text-sm" tone="body">
-                {rangeLabel(first, last)}
-              </Text>
-            ) : null}
-          </View>
-        ) : (
+      {card ? (
+        <KitBottomBar primary={cardFix ? { label: cardFix.label, onPress: cardFix.onPress } : continueAction} />
+      ) : note ? (
+        // A note stacks over the summary: the kit bar's children mode, as before.
+        <BottomBar>
+          {note}
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
             <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
               {first && last
-                ? quote && !settling
+                ? priced && quote
                   ? `${daysLabel(quote.days)} · ${money(quote.total)}`
                   : daysLabel(dayCount(first, last))
                 : "Pick your dates"}
@@ -1011,19 +1090,20 @@ export default function BookingDatesScreen() {
               </Text>
             ) : null}
           </View>
-        )}
-        {cardFix ? (
-          <Button onPress={cardFix.onPress}>{cardFix.label}</Button>
-        ) : (
-          <Button
-            onPress={() => goOn()}
-            disabled={!first || !quote || settling || Boolean(blocker) || (card && included.length === 0)}
-            loading={Boolean(first) && active.isFetching}
-          >
-            {mode === "pickup" && delivery && !delivery.ok && !requoting ? "Continue with self pickup" : "Continue"}
+          <Button onPress={continueAction.onPress} disabled={continueAction.disabled} loading={continueAction.loading}>
+            {continueAction.label}
           </Button>
-        )}
-      </BottomBar>
+        </BottomBar>
+      ) : (
+        // 2089:28290 Summary+CTA: "₹1,820 · 3 days" over "Sat 24 – Mon 26 Oct"; "Pick your dates" before any.
+        <KitBottomBar
+          layout="summary-cta"
+          value={first && last ? (priced && quote ? money(quote.total) : daysLabel(dayCount(first, last))) : "Pick your dates"}
+          unit={priced && quote ? `· ${daysLabel(quote.days)}` : undefined}
+          subLine={first && last ? rangeLabel(first, last) : undefined}
+          primary={continueAction}
+        />
+      )}
 
       <AddressPickerSheet
         ref={addressSheet}
