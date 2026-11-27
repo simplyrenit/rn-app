@@ -353,6 +353,16 @@ export default function ListReviewScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedSheet]);
 
+  // A seed's sheet is a root modal and stays over the next fixture's screen, which is pushed on top of this one.
+  useEffect(() => {
+    if (!seedSheet) return;
+    return navigation.addListener("blur", () => {
+      categorySheet.current?.dismiss();
+      specSheet.current?.dismiss();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedSheet]);
+
   if (!draft) return <NonScrollableContainer>{null}</NonScrollableContainer>;
   const f = draft.fields;
 

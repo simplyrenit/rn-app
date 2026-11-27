@@ -114,6 +114,16 @@ export default function ListAddPhotosScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // A seed's sheet is a root modal and stays over the next fixture's screen, which is pushed on top of this one.
+  useEffect(() => {
+    if (!design) return;
+    return navigation.addListener("blur", () => {
+      addSheet.current?.dismiss();
+      resumeSheet.current?.dismiss();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onResume = () => {
     if (design) return;
     decided.current = true;
