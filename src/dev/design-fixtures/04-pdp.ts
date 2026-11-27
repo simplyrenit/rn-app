@@ -10,12 +10,15 @@ import type { DevFixture } from "./registry";
 
 // `?.`: jest maps images to a stub that resolveAssetSource cannot resolve.
 const photo = (asset: number) => Image.resolveAssetSource(asset)?.uri ?? "";
+// The gallery's photo exactly as 2083:15974 crops it (177×300 at 3x, cut from the frame render); the viewer (22279)
+// fits the whole image fill, so it gets the uncropped one.
+const HERO = photo(require("@/dev/assets/04-pdp/nineteen-eighty-four-orwell-hero.png"));
 const COVER = photo(require("@/dev/assets/04-pdp/nineteen-eighty-four-orwell.png"));
 const ANIMAL_FARM = photo(require("@/dev/assets/04-pdp/animal-farm-orwell.png"));
 const FOUNTAINHEAD = photo(require("@/dev/assets/04-pdp/fountainhead-rand.png"));
 const FINAL_INVENTION = photo(require("@/dev/assets/04-pdp/our-final-invention-barrat.png"));
-// "1/5": `ProductImage` dedupes URIs, so the other four photos are the cover under four distinct query strings.
-const PHOTOS = [2, 3, 4, 5].map((n) => `${COVER}${COVER.includes("?") ? "&" : "?"}photo=${n}`);
+// "1/5": `ProductImage` dedupes URIs, so the other four photos are the first under four distinct query strings.
+const gallery = (uri: string) => [uri, ...[2, 3, 4, 5].map((n) => `${uri}${uri.includes("?") ? "&" : "?"}photo=${n}`)];
 
 const SLUG = "nineteen-eighty-four-orwell";
 
@@ -119,9 +122,9 @@ const PRODUCT: BackendProduct = {
   coordinates: PLACE,
   average_rating: 4,
   review_count: 24,
-  images: [COVER, ...PHOTOS],
+  images: gallery(HERO),
   location: "Goregaon, Mumbai",
-  cover_image: COVER,
+  cover_image: HERO,
   brand_name: "",
   model_name: "",
   usage_description: "",
@@ -247,7 +250,9 @@ export const fixtures: Record<string, DevFixture> = {
   "2083:16177.s1884": CROP(1884),
   "2083:16177.s2247": CROP(2247),
   "2083:16201": pdp({}, { design: { open: "specs" } }),
-  "2089:22279": pdp({}, { design: { open: "photo" } }),
+  "2089:22279": pdp({ images: gallery(COVER), cover_image: COVER }, { design: { open: "photo" } }),
+  // scrollY = the frame's offset: its gallery top sits at −276 (−186 for 24130) under the 54 status bar, so 330 (240).
+  // The app's gallery is the frame's fixed 390, so the same offset holds on any inset.
   "2089:22295": pdp(MORNING, { design: { scrollY: 330 } }),
   "2089:22597": pdp(NO_BOOKING, { design: { scrollY: 330 } }),
   "2089:22896": pdp({ can_add_to_cart: true }),

@@ -27,21 +27,18 @@ interface Props {
    */
   showBack?: boolean;
   /**
-   * Opt-in: the product detail frame's contained photo — the whole picture
-   * fitted inside a box on the canvas with a drop shadow under it, rather than
-   * a full-bleed crop. It also hands the floating controls and the page
-   * indicator back to the caller, because in that layout they are part of the
-   * screen's own hero block and not of the photograph.
+   * Opt-in: the 2.1 product detail gallery (01 2083:15973): each photo in a
+   * 177×300 box on the canvas, 36 from the top and centred, with the page dots
+   * and the "1/5" pill on the canvas below it instead of scrimmed over a
+   * full-bleed crop.
    *
-   * Requires `frameWidth`/`frameHeight`: the carousel has to know its page size
-   * up front or the first frame lays its slides out at window width and then
-   * snaps.
+   * Requires `frameWidth`/`frameHeight` (the gallery's page): the carousel has
+   * to know its page size up front or the first frame lays its slides out at
+   * window width and then snaps.
    */
   contained?: boolean;
   frameWidth?: number;
   frameHeight?: number;
-  /** Lets a contained caller draw its own indicator. */
-  onGalleryStateChange?: (state: { index: number; count: number }) => void;
   /**
    * Opt-in: the 2.1 kit heart on its white disc (`FavouriteButton tile`, REVIEW
    * b1-02) instead of the scrimmed photo heart. The product detail hero.
@@ -52,32 +49,14 @@ interface Props {
 }
 
 /**
- * The drop shadow the design puts under the contained photo: black at 31%,
- * offset 8/6, blur 20 — and a Figma blur is twice a Core Animation radius, so
- * 10. Light only; the dark frame floats the photo with no shadow at all.
+ * The contained gallery's geometry (01 2083:15973, 390 high): the photo box
+ * (2083:15974, an image fill cropped to it, no shadow), the 6pt page dots 6
+ * apart (2083:15975) and the count pill (2083:15981, 24 from the right edge).
  */
-const CONTAINED_SHADOW = {
-  shadowOpacity: 0.31,
-  shadowRadius: 10,
-  shadowOffset: { width: 8, height: 6 },
-  elevation: 8,
-} as const;
-
-/** The largest box of `natural`'s shape that fits inside the frame. */
-function fitInside(
-  natural: { width: number; height: number },
-  frameWidth: number,
-  frameHeight: number
-) {
-  if (!natural.width || !natural.height) {
-    return { width: frameWidth, height: frameHeight };
-  }
-  const scale = Math.min(
-    frameWidth / natural.width,
-    frameHeight / natural.height
-  );
-  return { width: natural.width * scale, height: natural.height * scale };
-}
+const PHOTO = { width: 177, height: 300, top: 36 } as const;
+const DOT = 6;
+const DOTS_TOP = 358;
+const COUNT_TOP = 352;
 
 export function ProductImage({
   images,
@@ -90,7 +69,6 @@ export function ProductImage({
   contained = false,
   frameWidth: frameWidthProp,
   frameHeight,
-  onGalleryStateChange,
   tileHeart = false,
   initialViewerOpen = false,
 }: Props) {
@@ -99,7 +77,7 @@ export function ProductImage({
   // change on Android.
   const { width: windowWidth } = useWindowDimensions();
   const frameWidth = frameWidthProp ?? windowWidth;
-  const { color, isDark } = useTheme();
+  const { color } = useTheme();
   const safeAreaInsets = useSafeAreaInsets();
   const [failedImages, setFailedImages] = useState<string[]>([]);
   const [fullImage, setFullImage] = useState<string | null>(null);
@@ -109,15 +87,6 @@ export function ProductImage({
   const navigation = React.useContext(NavigationContext);
   useEffect(() => navigation?.addListener("blur", () => setFullImage(null)), [navigation]);
   const [photoIndex, setPhotoIndex] = useState(0);
-  /**
-   * Each photo's intrinsic size, so the contained slide can be exactly the size
-   * of the picture inside it. A box that is merely `contain`-fitted still casts
-   * its shadow from the box, which would hang the shadow in the empty space
-   * beside a portrait shot.
-   */
-  const [naturalSizes, setNaturalSizes] = useState<
-    Record<string, { width: number; height: number }>
-  >({});
 
   const galleryImages = Array.from(
     new Set([coverImage, ...(images ?? [])].filter(Boolean))
@@ -130,12 +99,6 @@ export function ProductImage({
     setViewerSeeded(true);
     setFullImage(galleryImages[0]);
   }, [initialViewerOpen, viewerSeeded, galleryImages[0]]);
-  // Only the primitives are watched: the callback is typically an inline
-  // arrow, and depending on it would re-run this every time the parent
-  // re-renders in response to it.
-  useEffect(() => {
-    onGalleryStateChange?.({ index: photoIndex, count });
-  }, [photoIndex, count]);
 
   // Square unless the caller says otherwise, so a contained caller that gives
   // only a width still gets a defined box rather than a zero-height carousel.
@@ -163,7 +126,7 @@ export function ProductImage({
           // A page indicator that draws one dot for one photo is noise, not an
           // affordance — and on a light photograph the single 6pt white dot was
           // invisible anyway. With one image there is nothing to indicate.
-          // Contained, the caller draws the design's segmented track instead.
+          // Contained, the gallery draws the design's own dots below the photo.
           showsDots={!contained && galleryImages.length > 1}
           // Both dots used to sit unscrimmed — inactive at bg-gray-100/20,
           // active plain white — so on a light product photo neither was
@@ -195,82 +158,31 @@ export function ProductImage({
             />
           )}
         >
-          {galleryImages.map((image, index) => {
-            // Until the picture reports its own size there is nothing to hang a
-            // shadow on: a full-frame white box with a shadow under it would
-            // flash in the empty space before the photo arrived.
-            const measured = contained ? naturalSizes[image] : undefined;
-            const fitted = measured
-              ? fitInside(measured, frameWidth, boxHeight)
-              : null;
-
-            const photo = (
+          {galleryImages.map((image, index) => (
+            <Pressable
+              key={image}
+              style={contained ? { flex: 1, alignItems: "center" } : { flex: 1 }}
+              accessibilityRole="imagebutton"
+              accessibilityLabel={`Photo ${index + 1} of ${count}. Tap to view full screen.`}
+              onPress={() => setFullImage(image)}
+            >
               <Image
                 source={{ uri: image }}
-                style={{ width: "100%", height: "100%" }}
-                contentFit={contained ? "contain" : "cover"}
-                transition={150}
-                onLoad={
+                style={
                   contained
-                    ? ({ source }) =>
-                        setNaturalSizes((current) =>
-                          current[image]
-                            ? current
-                            : {
-                                ...current,
-                                [image]: {
-                                  width: source.width,
-                                  height: source.height,
-                                },
-                              }
-                        )
-                    : undefined
+                    ? { width: PHOTO.width, height: PHOTO.height, marginTop: PHOTO.top }
+                    : { width: "100%", height: "100%" }
                 }
+                contentFit="cover"
+                transition={150}
                 onError={() =>
                   setFailedImages((current) =>
                     current.includes(image) ? current : [...current, image]
                   )
                 }
               />
-            );
-
-            return (
-              <Pressable
-                key={image}
-                style={
-                  contained
-                    ? { flex: 1, alignItems: "center", justifyContent: "center" }
-                    : { flex: 1 }
-                }
-                accessibilityRole="imagebutton"
-                accessibilityLabel={`Photo ${index + 1} of ${galleryImages.length}. Tap to view full screen.`}
-                onPress={() => setFullImage(image)}
-              >
-                {fitted ? (
-                  // The shadow is cast by this wrapper, which is exactly the
-                  // size of the picture. It carries the canvas as a fill
-                  // because iOS derives a shadow from the layer, and a view
-                  // with no background of its own casts nothing.
-                  <View
-                    style={[
-                      {
-                        width: fitted.width,
-                        height: fitted.height,
-                        backgroundColor: color.canvas,
-                      },
-                      isDark
-                        ? null
-                        : { ...CONTAINED_SHADOW, shadowColor: color.text },
-                    ]}
-                  >
-                    {photo}
-                  </View>
-                ) : (
-                  photo
-                )}
-              </Pressable>
-            );
-          })}
+            </Pressable>
+          ))}
         </Carousel>
       ) : (
         <View
@@ -286,11 +198,9 @@ export function ProductImage({
         </View>
       )}
 
-      {mode !== "post" && !contained && (
+      {mode !== "post" && (
         // Floats over the photo, 8 below its top edge (the hero starts below the
-        // status bar, so the inset is not this component's to add). Contained,
-        // the photo no longer runs under the status bar and the controls are
-        // the screen's own — see the detail screen's hero block.
+        // status bar, so the inset is not this component's to add).
         <View
           pointerEvents="box-none"
           style={{
@@ -329,10 +239,49 @@ export function ProductImage({
         </View>
       )}
 
+      {/* Contained: the page dots and the "1/5" pill sit on the canvas below the
+          photo, so they need no scrim. One photo has nothing to indicate. */}
+      {contained && count > 1 ? (
+        <>
+          <View
+            pointerEvents="none"
+            style={{ position: "absolute", top: DOTS_TOP, left: 0, right: 0, flexDirection: "row", justifyContent: "center", gap: DOT }}
+          >
+            {galleryImages.map((image, index) => (
+              <View
+                key={image}
+                style={{
+                  width: DOT,
+                  height: DOT,
+                  borderRadius: radius.full,
+                  backgroundColor: index === photoIndex ? color.brand : color.line,
+                }}
+              />
+            ))}
+          </View>
+          <View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              top: COUNT_TOP,
+              right: SCREEN_GUTTER,
+              paddingHorizontal: 8,
+              paddingVertical: 2,
+              borderRadius: radius.full,
+              borderWidth: 1,
+              borderColor: color.line,
+              backgroundColor: color.canvas,
+            }}
+          >
+            <Text fontSize="text-xs" fontWeight="font-medium" lineHeight={16} style={{ color: color.textBody }}>
+              {photoIndex + 1}/{count}
+            </Text>
+          </View>
+        </>
+      ) : null}
+
       {/* How many photos there are, which the customer previously had no way
-          to know. Scrimmed, so it holds over any photograph. Contained, the
-          caller's segmented indicator says the same thing in the design's
-          own terms, so this would be a second answer to one question. */}
+          to know. Scrimmed, so it holds over any photograph. */}
       {mode !== "post" && !contained && galleryImages.length > 1 ? (
         <View
           pointerEvents="none"

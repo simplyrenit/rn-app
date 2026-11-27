@@ -86,7 +86,7 @@ jest.mock("@/components/product/moderation-banner", () => ({ ModerationBanner: (
 jest.mock("@/components/product/listing-status", () => ({ ListingStatusPill: () => null, HeldChange: () => null }));
 jest.mock("@/components/product/product-hero", () => {
   const { View } = require("react-native");
-  return { ProductHero: (props: any) => <View testID="hero" {...props} /> };
+  return { GALLERY_HEIGHT: 390, ProductHero: (props: any) => <View testID="hero" {...props} /> };
 });
 jest.mock("@/components/product/spec-strip", () => ({ SpecStrip: () => null }));
 jest.mock("@/components/product/product-map", () => {

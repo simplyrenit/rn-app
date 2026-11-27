@@ -174,7 +174,7 @@ export const fixtures: Record<string, DevFixture> = {
     responses: { "GET /my/addresses/": [] },
     session,
   },
-  // Editing Work with Home saved, so Home is taken ("Already saved"). Then by hand: PIN → "40005", Save; clear
+  // Editing Work with Home saved, so Home is taken ("Already saved"). Then by hand: PIN → "5600" (the frame's), Save; clear
   // line 1, Save. `save()` returns at a check both times, before any request.
   "2089:31227": {
     route: "AddressDetails",

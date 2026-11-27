@@ -177,7 +177,9 @@ const quote = (over: { total: string; delivery: object; lines?: object[] }) => (
   blockers: [],
   ...over,
 });
-const DELIVERY_OK = { status: "ok", fee: "170.00", distance_km: "8", offer_pickup: true };
+// 2.5 km: the frames' pickup line and shop head. `distance_km` is the one distance choose-dates reads (pickup :652,
+// shop head :811, delivery title lib/booking.ts:813), so the Delivery title reads "· 2.5 km" where the frames draw "8 km".
+const DELIVERY_OK = { status: "ok", fee: "170.00", distance_km: "2.5", offer_pickup: true };
 
 const dates = (params: object, responses: Record<string, unknown>): DevFixture => ({
   route: "BookingDates",
@@ -210,8 +212,8 @@ export const fixtures: Record<string, DevFixture> = {
   // cart · empty.
   "2089:26957": cartFixture(cart()),
 
-  // booking-dates · dates picked, delivery: Home quoted at ₹170 / 8 km, Delivery selected (`design.mode`). The pickup
-  // line reads the delivery quote's 8 km, not the frame's 2.5 km (choose-dates reads one distance).
+  // booking-dates · dates picked, delivery: Home quoted at ₹170, Delivery selected (`design.mode`). Pickup reads the
+  // quote's 2.5 km, as the frame does (see DELIVERY_OK for the Delivery title).
   "2089:28290": dates(
     { product: speaker.name, ...DATES, design: { today: TODAY, mode: "owner_delivery" } },
     {
@@ -258,7 +260,7 @@ export const fixtures: Record<string, DevFixture> = {
   ),
   // booking-dates-card · cart checkout, one item blocked: the VR Glasses are booked 24–30 (and the speaker the 30th), so
   // 27–29 have "Some items free" and the 30th is struck; the quote's line says the glasses aren't free; the Boxing Bag
-  // starts left in the cart (`design.left`). The shop head reads the delivery quote's 8 km, not "2.5 km".
+  // starts left in the cart (`design.left`). The shop head reads the delivery quote's 2.5 km (see DELIVERY_OK).
   "2089:28848": dates(
     {
       products: ["bluetooth-speaker-skyhire", "meta-vr-glasses-skyhire", "boxing-bag-skyhire"],

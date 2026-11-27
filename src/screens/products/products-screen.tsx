@@ -18,7 +18,7 @@ import { ExpandableText } from "@/components/product/expandable-text";
 import { ModerationBanner } from "@/components/product/moderation-banner";
 import { HeldChange, ListingStatusPill } from "@/components/product/listing-status";
 import { PendingEdit, readPendingEdit } from "@/lib/listing-edit";
-import { ProductHero } from "@/components/product/product-hero";
+import { GALLERY_HEIGHT, ProductHero } from "@/components/product/product-hero";
 import { SpecStrip } from "@/components/product/spec-strip";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
 import { ProductMap } from "@/components/product/product-map";
@@ -101,9 +101,9 @@ const REVIEW_CARD_WIDTH = 285;
 const BAND_HEIGHT = 56;
 
 /**
- * The distance over which the header band takes over from the photo. The photo is
- * a full-width square below the safe area, so the band fills in only as the
- * photo's bottom edge reaches it (see `collapseEnd` in the screen).
+ * The distance over which the header band takes over from the hero. The gallery
+ * is a fixed 390 below the safe area, so the band fills in only as the gallery's
+ * bottom edge reaches it (see `collapseEnd` in the screen).
  */
 const COLLAPSE_SPAN = 48;
 
@@ -201,9 +201,9 @@ export default function DetailsScreen() {
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
-  // The hero is the safe-area inset plus a square as wide as the screen; the band
-  // (inset + BAND_HEIGHT tall) is fully in once the photo's bottom edge reaches it.
-  const collapseEnd = windowWidth - BAND_HEIGHT;
+  // The hero is the safe-area inset plus the 390 gallery; the band (inset +
+  // BAND_HEIGHT tall) is fully in once the gallery's bottom edge reaches it.
+  const collapseEnd = GALLERY_HEIGHT - BAND_HEIGHT;
   const scrollY = React.useRef(new Animated.Value(0)).current;
   // True once the pinned band, not the hero, owns the top of the screen. It is
   // what decides which of the two back controls takes a tap.
@@ -261,7 +261,7 @@ export default function DetailsScreen() {
   });
 
   // The title comes in only once the band is nearly filled in behind it (test run D-15): at half way it was half-visible
-  // over the photo and its "1/2" badge. The band and the back control still fade as before.
+  // over the gallery. The band still fades as before.
   const titleProgress = bandProgress.interpolate({
     inputRange: [0, 0.7, 1],
     outputRange: [0, 0, 1],
@@ -795,11 +795,10 @@ export default function DetailsScreen() {
             gap: 12,
           }}
         >
-          {/* Always on screen: it floats over the photo with the scrim, and takes
-              the page's own treatment once the band has filled in behind it. The
-              photo draws no back control of its own, so there is never an offset
-              with no way back. */}
-          <BackButton onPhoto={!heroCovered} />
+          {/* Always on screen, plain as the frames draw it (the gallery is on the
+              canvas, so it never sits on a photograph). The gallery draws no back
+              control of its own, so there is never an offset with no way back. */}
+          <BackButton />
 
           <Animated.View
             pointerEvents="none"
@@ -812,13 +811,13 @@ export default function DetailsScreen() {
 
           {/* The cart (D29): signed in, and only once there is a cart to see or
               this item can go in one, so a shop without the cart shows no empty
-              bag. Over the photo it sits left of the hero's heart (x274, 04
+              bag. Over the gallery it sits left of the hero's heart (x274, 04
               2089:22896); once the band owns the top it is the bar's trailing
               control (x330, 2089:23201). The title is left-aligned, so nothing
               balances it when there is no bag. */}
           {isAuthenticated && ((cart?.count ?? 0) > 0 || canAdd) ? (
             <View style={{ marginRight: heroCovered ? 0 : 56 }}>
-              <CartButton from="product" onPhoto={!heroCovered} />
+              <CartButton from="product" />
             </View>
           ) : null}
         </View>
