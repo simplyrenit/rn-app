@@ -7,8 +7,6 @@ import { View } from "react-native";
 export const FLOW_STEPS = 4;
 
 interface Props {
-  /** Unused since 2.1: each screen draws `<StepProgress step total={FLOW_STEPS} showLabel={false} />` first in its scroll content. Kept so call sites compile. */
-  step?: number;
   title?: string;
   onBack?: () => void;
   showBack?: boolean;

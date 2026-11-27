@@ -131,9 +131,11 @@ export function PickerField({
  * and a picked saved address showed as a bare locality with its flat line in
  * an editable box.
  *
- * A saved address is a card naming it. Its flat line can be changed for this
- * listing only; the saved address is never written from here. Any other spot
- * is the locality row, the flat line under it, and the offer to save it.
+ * 2.1 (2083:14692): every spot, saved or not, shows as one picker row with
+ * its area; a saved address's name and flat line are in the row's
+ * accessibility label only. Its flat line can be changed for this listing
+ * only ("Edit flat or landmark"); the saved address is never written from
+ * here. Any other spot adds the flat line under it and the offer to save it.
  */
 export function PickupField({
   location,
