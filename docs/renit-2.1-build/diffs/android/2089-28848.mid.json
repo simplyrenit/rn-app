@@ -1,0 +1,14 @@
+{
+ "ref": "../figma/04/2089-28848.png",
+ "app": "amid.png",
+ "platform": "android",
+ "mismatch_pct": 1.141,
+ "threshold_pct": 2.0,
+ "pass": true,
+ "compared_px": [
+  1170,
+  885
+ ],
+ "app_scaled_height": 885,
+ "uncovered_rows": 0
+}

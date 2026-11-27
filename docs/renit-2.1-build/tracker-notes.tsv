@@ -88,3 +88,51 @@
 2097:29097	android	pass	1.31% typed and blurred, Check GSTIN not tapped; the required label line was 24 on Android until RequiredMark took the label role (kit field.tsx).
 2097:29139	ios	fail-heatmap	0.59%; the iOS 26 63pt switch wraps the header text one word early (as 2097:29036).
 2097:29139	android	pass	0.40%.
+2083:15971	ios	fail	Edge-to-edge hero kept (plan decision, product-hero.tsx): rows 0–390 differ by design. Below the hero 1.08% (box 0,444 vs 0,437); left: key-spec line and strip category are computed (spec order; category.title is the breadcrumb child).
+2083:15971	android	fail	As iOS: hero kept; below the hero 1.22%.
+2083:16177	ios	fail	First screen = 15971 (hero kept). Crops by seed (.s628 0.48%, .s1256 0.31%, .s1884 2.24%, .s2247 1.78%): left are the kit Avatar initials style (ENG-426), "See all 24 reviews" neutral tone (waits for ENG-427) and fromNow() "21 days ago"; handover reads "10 am – 8 pm" (time12, computed).
+2083:16177	android	fail	As iOS: hero kept; crops .s628 1.56%, .s1256 1.83%, .s1884 3.73%, .s2247 (end) 2.77%, same avatar/See all/date notes plus Android text metrics.
+2083:16201	ios	pass	Sheet strip diffed in screen coordinates (box 0,211,390,599; the 75% sheet sits on the window, not under the 54pt bar): 0.27%, clean.
+2083:16201	android	pass	Sheet strip box 0,211 vs 0,210: 0.83%, clean.
+2089:22279	ios	pass	Viewer is centred on the screen, so diffed in screen coordinates (box 0,54,390,756): 0.51%; the close sits 7pt higher (47pt inset vs 54) and the page shows faintly under the 92% scrim (frame draws white).
+2089:22279	android	pass	Screen-coordinate box diff 0.79%.
+2089:22295	ios	fail-heatmap	1.19%: pinned band 0.92 / title 0.72 at the frame's scroll (collapse constants are behaviour); key-spec line and strip category computed (see 15971).
+2089:22295	android	fail-heatmap	1.59%: as iOS.
+2089:22597	ios	fail-heatmap	0.96%: band 0.92 at the seed offset; key-spec line and strip category computed (see 15971).
+2089:22597	android	fail-heatmap	1.40%: as iOS.
+2089:22896	ios	fail	Hand run (--split-bottom 129): 22.6% from the kept edge-to-edge hero; below the hero 1.19%.
+2089:22896	android	fail	Hand run: hero kept; below the hero 1.28%.
+2089:23201	ios	fail-heatmap	Hand run (--split-bottom 173) 1.08%: band 0.92 at the seed offset, the hero's 1/5 pill shows through it; key-spec line and category computed.
+2089:23201	android	fail-heatmap	Hand run 1.30%: as iOS.
+2089:23523	ios	fail-heatmap	Hand run (--split-bottom 153) 1.02%: band 0.92 at the seed offset; key-spec line and category computed.
+2089:23523	android	fail-heatmap	Hand run 1.15%: as iOS.
+2089:23841	ios	fail	Hero kept (plan decision); below the hero 1.22%.
+2089:23841	android	fail	Hero kept; below the hero 1.29%.
+2089:24130	ios	fail	Band is at 0 at scrollY 240 (frame draws it opaque; constants are behaviour) and the hero is kept; the banner appends ": Photo check." (computed, it shows only with a label), one line longer.
+2089:24130	android	fail	As iOS (band unreachable at 240, hero kept, banner label suffix).
+2089:24972	ios	fail-heatmap	1.58%: dates print fromNow() ("a month ago" for 12 Oct 2026, kept) and the kit Avatar draws coloured initials (ENG-426); first screen only (24 items).
+2089:24972	android	fail	2.24%: as iOS, and Android ellipsises the clamped line before the second paragraph ("door.…").
+2089:25101	ios	pass	0.60%. "Rate the owner" sits under the bar in the frame (frame ends 862), so the end has nothing more to compare.
+2089:25101	android	pass	0.61%; as iOS.
+2089:25181	ios	fail-heatmap	F+type (typed, Excellent, 5 and 4 stars, never submitted) 0.94%: iOS multiline TextInput lays the 16/24 text at 22pt lines (measured), the caret shows.
+2089:25181	android	pass	F+type 0.93%, clean.
+2089:26744	ios	fail-heatmap	0.45%: the price chip reads "Now ₹900 a day (was ₹1,000)" (lib/cart.ts copy) where the frame has "/day".
+2089:26744	android	fail-heatmap	1.50%: as iOS plus Android text metrics.
+2089:26814	ios	fail-heatmap	0.76% + end crop 0.37%: rent pill "4:12 left" (timeLeft format kept) vs "04:12".
+2089:26814	android	fail	3.86% + end 1.66%: as iOS, and Android fits "pm or" on the rent strip's first line (narrower text, measured), shifting the page 1–2pt.
+2089:26957	ios	pass	0.19%, clean.
+2089:26957	android	pass	0.47%, clean.
+2089:28290	ios	fail-heatmap	1.37%: pickup line reads "8 km away" (both distances come from the delivery quote) vs the frame's "2.5 km away"; content under the bar is not drawn in the frame.
+2089:28290	android	fail-heatmap	1.48%: as iOS.
+2089:28473	ios	pass	0.72% + end (844–957) 0.20%, clean.
+2089:28473	android	pass	0.83% + end 0.55%, clean.
+2089:28666	ios	pass	0.66%, clean.
+2089:28666	android	pass	0.80%, clean.
+2089:28848	ios	fail-heatmap	0.50% + middle 1.03% + end 4.11%: shop head and pickup read "8 km" from the quote (frame "2.5 km"), which also unwraps the pickup card and shifts the end crop.
+2089:28848	android	fail-heatmap	1.86% + middle 1.14% + end 5.15%: as iOS.
+2089:31103	ios	pass	0.33%, clean.
+2089:31103	android	pass	0.90%, clean.
+2089:31157	ios	fail-heatmap	0.32%: "Change" kept from the hidden Map preview layer: only control for re-picking the pin. Content past 844 is under the bar in the frame.
+2089:31157	android	fail-heatmap	0.82%: as iOS.
+2089:31227	ios	fail-heatmap	F+type (PIN 40005 + Save, line 1 cleared + Save; save() returns before any request) 0.45% (+0.68% below the bar): both errors hold; the frame's PIN sample is "5600".
+2089:31227	android	fail-heatmap	F+type 1.14% (+0.54%): as iOS.
