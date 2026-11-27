@@ -88,3 +88,61 @@
 2097:29097	android	pass	1.31% typed and blurred, Check GSTIN not tapped; the required label line was 24 on Android until RequiredMark took the label role (kit field.tsx).
 2097:29139	ios	fail-heatmap	0.59%; the iOS 26 63pt switch wraps the header text one word early (as 2097:29036).
 2097:29139	android	pass	0.40%.
+2083:16603	ios	fail-heatmap	The 01 frame predates the 08 pass: the 08 frames (b3-07) draw "Rented at the counter" outline, no card on Blocked now / Needs you and Take off / Start as 44 Secondary buttons, which is what is built; the header and rows otherwise line up.
+2083:16603	android	fail-heatmap	As iOS (01 frame predates the 08 pass); also Android's native Material switch in place of the frame's 51x31 switch.
+2083:16747	ios	fail-heatmap	The frame draws each chip's count in textDim ("Ready  3"); the kit Chip takes one plain string label, so the count is the label colour (core/chip.tsx, ENG-427 / ENG-426).
+2083:16747	android	fail-heatmap	As iOS: chip count colour is kit-owned (core/chip.tsx).
+2091:20870	ios	pass	Only the iOS 26 native switch differs (wider than the frame's 51x31; platform control).
+2091:20870	android	pass	Only Android's native Material switch differs from the frame's 51x31 switch (platform control).
+2091:20977	ios	pass	Inline Accept is the NEW layer; its wiring is checked by jest (today.test.tsx); only the iOS 26 native switch differs; ringing sound and vibration come from the push channel and are not diffable.
+2091:20977	android	pass	Only Android's native Material switch and its font rasterising differ.
+2091:21106	ios	pass	Only the iOS 26 native switch differs (platform control).
+2091:21106	android	pass	Only Android's native Material switch differs (platform control).
+2091:21216	ios	pass	Only the iOS 26 native switch differs (platform control).
+2091:21216	android	pass	Only Android's native Material switch differs (platform control).
+2091:21309	ios	n/a	A not_owner error code cannot come from a fixture; checked by jest in src/screens/shop/__tests__/today.test.tsx.
+2091:21309	android	n/a	As iOS: checked by jest (today.test.tsx).
+2091:21515	ios	fail-heatmap	Chip count drawn in textDim in the frame; kit Chip label is one colour (core/chip.tsx, kit-owned); cards and pills match.
+2091:21515	android	fail-heatmap	As iOS: chip count colour is kit-owned (core/chip.tsx).
+2091:21610	ios	fail-heatmap	Chip count drawn in textDim in the frame; kit Chip label is one colour (core/chip.tsx, kit-owned); empty state matches.
+2091:21610	android	fail-heatmap	As iOS: chip count colour is kit-owned (core/chip.tsx).
+2092:21288	ios	pass	Tapped: Manfrotto unticked via its untick sheet (local only); first screen 0.45%, below-the-fold totals 0.34% (diffs/ios/2092-21288-scroll); the unticked line sits under the frame's sticky footer in the PNG, and its "blocked Tue 24 – Thu 26 Nov" copy keeps "Nov" (lib/shop-lines.ts, not owned).
+2092:21288	android	pass	Tapped as iOS, first screen 1.51%; multi-line text sits up to 1pt tighter (Android line metrics); scroll part checked on iOS.
+2092:21395	ios	text-width	iOS fits "…the rent by 11:10" on line 1 (333pt in a 342 box) where Figma wraps before "11:10"; everything else matches.
+2092:21395	android	text-width	As iOS: the body wraps one word later than Figma.
+2093:21585	ios	fail-heatmap	SummaryCard (booking/parts, ENG-429) draws a 56 camera thumb and a 4pt shorter card than the frame's 64 plain tile; Customer and Money cards are drawn while ringing, as the code does (behaviour kept).
+2093:21585	android	fail-heatmap	As iOS (SummaryCard ENG-429; Customer and Money kept).
+2093:21659	ios	fail	SummaryCard (booking/parts, ENG-429) is 4pt shorter, which shifts everything under it; the body below the card matches at 0.30% (diffs/ios/2093-21659-below-card).
+2093:21659	android	fail	As iOS: SummaryCard ENG-429 shifts the body 4pt.
+2093:21769	ios	fail	SummaryCard (ENG-429) shifts the body 4pt (below-card 0.24%); scroll parts 0.59% and 1.70%; Get help row is booking/get-help (ENG-431, Bold, inset 14); Money keeps "Held by Renit" (behaviour).
+2093:21769	android	fail	As iOS: SummaryCard ENG-429 shift; scroll parts checked on iOS.
+2093:21944	ios	fail	SummaryCard (ENG-429) shifts the body 4pt; Customer and Money cards are drawn after an exit, as the code does (behaviour kept); timeline matches (below-card 0.81%).
+2093:21944	android	fail	As iOS (SummaryCard ENG-429; Customer and Money kept).
+2095:26567	ios	fail	SummaryCard (ENG-429) shifts the body 4pt (below-card 0.26%); below the fold 0.43% (diffs/ios/2095-26567-scroll); Money keeps "Held by Renit"; Get help is ENG-431.
+2095:26567	android	fail	As iOS: SummaryCard ENG-429 shift; scroll parts checked on iOS.
+2094:21684	ios	pass	Sheet strip, bottom-aligned; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2094:21684	android	pass	Sheet strip; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2094:21828	ios	fail-heatmap	Stepper at 2 of 2 free: the code enables − and disables + (kit Stepper, behaviour); the frame draws them as at 1; the rest of the filled sheet matches; scrim kit-owned.
+2094:21828	android	fail-heatmap	As iOS: stepper enabled states follow the code.
+2094:21970	ios	fail-heatmap	Order: the frame is not alphabetical, filterPicker sorts by title (behaviour kept); rows, header and field match.
+2094:21970	android	fail-heatmap	As iOS: item order is behaviour; search field fixed to 48 high on Android.
+2094:22017	ios	pass	Only the text caret differs.
+2094:22017	android	pass	Only the text caret differs.
+2094:22055	ios	pass	ConfirmSheet strip; scrim 40% in frame vs kit 0.5/0.6, kit-owned (ENG-426).
+2094:22055	android	text-width	Android wraps "is" of line 2 onto line 3 of the ConfirmSheet body (kit Text measuring); layout otherwise matches.
+2094:22168	ios	fail-heatmap	Modal box only: the calendar's today marker follows the device date (27 Nov, react-native-calendars); Cancel is the kit outline (brand stroke and label) where the frame draws a neutral Secondary #E6E6E6 with a black label, kit-owned (ENG-426).
+2094:22168	android	fail-heatmap	As iOS: device-date today marker and kit outline Cancel.
+2094:24052	ios	pass	Sheet strip; the frame's sheet ends 1pt above the frame bottom (y 843), cropped there; scrim kit-owned (ENG-426).
+2094:24052	android	pass	Sheet strip as iOS; scrim kit-owned.
+2094:24156	ios	pass	Sheet strip; scrim kit-owned (ENG-426).
+2094:24156	android	pass	Sheet strip; scrim kit-owned.
+2094:24240	ios	pass	Sheet strip (frame sheet ends at y 843); chips differ only by text width; scrim kit-owned.
+2094:24240	android	text-width	Kit Notice body lines sit 0.5pt tighter on Android and the footer 1pt higher (Android line metrics); layout matches.
+2094:24377	ios	pass	Tapped the 12:00 – 1:00 pm radio (local); sheet strip; scrim kit-owned.
+2094:24377	android	pass	As iOS.
+2094:24457	ios	pass	Sheet strip; scrim kit-owned.
+2094:24457	android	pass	Sheet strip; scrim kit-owned.
+2094:24524	ios	pass	Sheet strip; scrim kit-owned.
+2094:24524	android	text-width	Android puts the warning's first line 1.3pt lower and pitches the lines at 19.4 not 20 (one Text with a 20 lineHeight); measured, Android line metrics.
+2094:24597	ios	pass	Tapped the Manfrotto choice (local); sheet strip; scrim kit-owned.
+2094:24597	android	text-width	Android wraps "booking" of the first line one word earlier; layout matches.
