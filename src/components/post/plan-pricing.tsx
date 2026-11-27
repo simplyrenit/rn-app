@@ -263,9 +263,8 @@ function PriceBox({
         accessibilityLabel={`${UNIT_WORDS[plan.unit]} price`}
         keyboardType="number-pad"
         maxLength={8}
+        // No placeholder: an empty price box is drawn empty (2095:24558, 2095:24717).
         value={plan.price}
-        placeholder="0"
-        placeholderTextColor={color.placeholder}
         onChangeText={(v) => onChange(v.replace(/[^\d]/g, ""))}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}

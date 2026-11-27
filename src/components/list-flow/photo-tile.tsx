@@ -182,7 +182,8 @@ export function PhotoTile({ photo, index, size, isCover, warningTag, onLongPress
         <Animated.View
           entering={FadeIn.duration(220)}
           exiting={FadeOut.duration(150)}
-          style={{ position: "absolute", top: 6, left: 6, right: 6, alignItems: "flex-start" }}
+          // No right inset: the frame's "Stock photo?" pill (2094:25123) is 99 wide in a 107 tile, past a 6 inset.
+          style={{ position: "absolute", top: 6, left: 6 }}
         >
           <StatusPill tone="warning" label={warningTag} />
         </Animated.View>
