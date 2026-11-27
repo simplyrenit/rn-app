@@ -2,7 +2,7 @@
  "ref": "../figma/04/2089-26814.png",
  "app": "android-emu-2089-26814.png",
  "platform": "android",
- "mismatch_pct": 3.863,
+ "mismatch_pct": 3.62,
  "threshold_pct": 2.0,
  "pass": false,
  "compared_px": [
