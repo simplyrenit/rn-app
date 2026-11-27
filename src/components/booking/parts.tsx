@@ -117,11 +117,12 @@ export function SummaryCard({
   const { color } = useTheme();
   return (
     <Panel>
-      <View style={{ flexDirection: "row", gap: space.md, padding: space.md }}>
-        <Thumb uri={image} more={more} />
+      {/* Every 2.1 Summary card (05, 06, 08): padding 16, a 64 thumb, 12 to the text, SemiBold 16/24 title. */}
+      <View style={{ flexDirection: "row", gap: 12, padding: 16 }}>
+        <Thumb uri={image} more={more} size={64} />
         <View style={{ flex: 1, gap: 2 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-            <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={2} style={{ flex: 1 }}>
+            <Text fontSize="text-md" fontWeight="font-semibold" numberOfLines={2} style={{ flex: 1 }}>
               {title}
             </Text>
             {right}

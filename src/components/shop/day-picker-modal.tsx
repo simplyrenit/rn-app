@@ -180,13 +180,13 @@ export function DayPickerModal({
             />
           </View>
           <TouchableOpacity activeOpacity={1} style={[styles.footer, { borderTopColor: color.line }]}>
-            {/* Kit Secondary: the frame's stroke is the neutral #E6E6E6, the kit's is brandPanelLine (ENG-426). */}
+            {/* 2094:22168 draws Cancel as the neutral Secondary (#E6E6E6 stroke, black label). No frame draws Clear date. */}
             {onClear ? (
               <Button variant="outline" style={styles.button} onPress={onClear}>
                 Clear date
               </Button>
             ) : (
-              <Button variant="outline" style={styles.button} onPress={onCancel}>
+              <Button variant="outline" tone="neutral" style={styles.button} onPress={onCancel}>
                 Cancel
               </Button>
             )}
