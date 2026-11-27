@@ -1,8 +1,8 @@
 {
  "ref": "../figma/08/2094-24240.png",
- "app": "android-2094-24240-tap.png",
+ "app": "../diffs/android/android-2094-24240-tap.png",
  "platform": "android",
- "mismatch_pct": 2.585,
+ "mismatch_pct": 2.294,
  "threshold_pct": 2.0,
  "pass": false,
  "compared_px": [

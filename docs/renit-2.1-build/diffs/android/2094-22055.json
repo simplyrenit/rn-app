@@ -1,13 +1,13 @@
 {
  "ref": "../figma/08/2094-22055.png",
- "app": "android-2094-22055-tap.png",
+ "app": "../diffs/android/android-2094-22055-tap.png",
  "platform": "android",
- "mismatch_pct": 2.796,
+ "mismatch_pct": 2.616,
  "threshold_pct": 2.0,
  "pass": false,
  "compared_px": [
   1170,
-  918
+  2307
  ],
  "app_scaled_height": 2460,
  "uncovered_rows": 0,
