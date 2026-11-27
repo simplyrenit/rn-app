@@ -80,7 +80,7 @@ Two kit links are not the Text button, so build them as plain text, not with `Bu
 | `MapPlaceholder` | `core/map-placeholder.tsx` | C | 2100:29942 | `style?: StyleProp<ViewStyle>` (fills the box it is given) |
 
 Shared types:
-- `BarAction = { label: string; onPress: () => void; disabled?: boolean; loading?: boolean; accessibilityLabel?: string }`, exported from `bottom-bar.tsx`.
+- `BarAction = { label: string; onPress: () => void; disabled?: boolean; loading?: boolean; accessibilityLabel?: string; haptic?: boolean }` (`haptic` ENG-435, primary only), exported from `bottom-bar.tsx`.
 - `StatusTone = "neutral" | "success" | "warning" | "danger" | "info"`. There is no brand tone; the fix pass removed it.
 - `ListRowIcon`: a heroicons component type.
 
@@ -134,6 +134,11 @@ Props added; nothing renamed or removed.
 ## ENG-428 additions
 
 - **`RingSpinner`** (`core/ring-spinner.tsx`, import by path): `{ size = 40, spinning = true }`. A full `brandPanel` track plus a 270° `brand` arc (12 to 9 o'clock), stroke `size × 0.08`, native-driver rotation; `spinning={false}` draws the still pose for fixtures. From 02/2089:28209.
+
+## ENG-435 additions
+
+- **`Stepper`** (`core/stepper.tsx`, import by path) gains `compact?: boolean`: a 32 disc, white fill, 1pt `brandPanelLine` stroke, with `hitSlop` 6 so the touch target stays 44. The default (50, `inputLine`) is unchanged for `shop/quick-block.tsx` and `rental-delivery.tsx`. From 01/2083:14692 "Minimum rental" (One day less / One day more); used by `post/plan-pricing.tsx`. Proven by a box diff of that row: `diffs/ios/2083-14692.stepper` 0.51%, `diffs/android/2083-14692.stepper` 0.56%.
+- **`BarAction`** (`core/bottom-bar.tsx`) gains `haptic?: boolean`, passed to the primary `Button` (default on). Not visual, so no frame: list-flow `preview.tsx` sets `false` because its submit already gives the commit haptic, as the old `Button haptic={false}` did.
 
 ## Group C (implemented)
 

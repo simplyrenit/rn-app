@@ -47,10 +47,10 @@ frameId	section	frameName	inventoryId	route	state	check
 2071:14392	00	Tab bar · Active=Profile	kit-tab-bar	MainTabs (Profile tab root)	Active=Profile	live
 2110:30274	00	icon/solid/plus-square	kit-icon-solid-plus-square	MainTabs (Post tab root)	-	live
 2110:30278	00	icon/solid/clipboard-document	kit-icon-solid-clipboard-document	MainTabs (Rentals tab root)	-	live
-2082:14565	01	list-reading · running	list-reading	ListReading	running	live
+2082:14565	01	list-reading · running	list-reading	ListReading	running	fixture
 2083:14468	01	booking-rental-active · on time	booking-rental-active	Booking (view active, stage out)	on time	live
 2083:14562	01	booking-details-view · rental active	booking-details-view	Booking (view details) — also rendered by BookingDetails	rental active	live
-2083:14692	01	list-review · checks pending	list-review	ListReview	checks pending	live
+2083:14692	01	list-review · checks pending	list-review	ListReview	checks pending	fixture
 2083:15971	01	pdp · top (live booking)	pdp	ProductDetail	top (live booking)	live
 2083:16177	01	pdp · full scroll	pdp	ProductDetail	full scroll	live
 2083:16201	01	pdp-all-specs · default	pdp-all-specs	ProductDetail (AllSpecsSheet)	default	live
@@ -310,34 +310,34 @@ frameId	section	frameName	inventoryId	route	state	check
 2095:24328	11	edit-images · cover set	edit-images	EditProductImages → EditCoverImage	cover set	live
 2096:25867	11	edit-about-product · change waiting, prompts	edit-about-product	EditAboutProduct	change waiting, prompts	live
 2096:26057	11	edit-about-product · full scroll (someone else contact)	edit-about-product	EditAboutProduct	full scroll (someone else contact)	live
-2094:22625	10	post-tab-gate · signed out	post-tab-gate	MainTabs > Post	signed out	live
-2094:22718	10	post-tab-gate · merchant pending	post-tab-gate	MainTabs > Post	merchant pending	live
-2094:22770	10	post-tab-gate · merchant rejected	post-tab-gate	MainTabs > Post	merchant rejected	live
-2094:22828	10	post-tab-gate · approved (fallback, normally skipped)	post-tab-gate	MainTabs > Post	approved (fallback, normally skipped)	live
-2094:22877	10	draft-photos · walking (full scroll)	draft-photos	DraftPhotos	walking (full scroll)	live
-2094:22940	10	draft-photos · skipped left	draft-photos	DraftPhotos	skipped left	live
-2094:22989	10	draft-photos · all done	draft-photos	DraftPhotos	all done	live
+2094:22625	10	post-tab-gate · signed out	post-tab-gate	MainTabs > Post	signed out	fixture
+2094:22718	10	post-tab-gate · merchant pending	post-tab-gate	MainTabs > Post	merchant pending	fixture
+2094:22770	10	post-tab-gate · merchant rejected	post-tab-gate	MainTabs > Post	merchant rejected	fixture+jest
+2094:22828	10	post-tab-gate · approved (fallback, normally skipped)	post-tab-gate	MainTabs > Post	approved (fallback, normally skipped)	fixture
+2094:22877	10	draft-photos · walking (full scroll)	draft-photos	DraftPhotos	walking (full scroll)	fixture
+2094:22940	10	draft-photos · skipped left	draft-photos	DraftPhotos	skipped left	fixture
+2094:22989	10	draft-photos · all done	draft-photos	DraftPhotos	all done	fixture
 2094:23035	10	draft-photos · error	draft-photos	DraftPhotos	error	fixture
-2094:24997	10	list-add-photos · fresh (owner terms to tick)	list-add-photos	ListAddPhotos	fresh (owner terms to tick)	live
+2094:24997	10	list-add-photos · fresh (owner terms to tick)	list-add-photos	ListAddPhotos	fresh (owner terms to tick)	fixture
 2094:25067	10	list-add-photos · photos uploading	list-add-photos	ListAddPhotos	photos uploading	fixture
-2094:25123	10	list-add-photos · L-12b retake warning	list-add-photos	ListAddPhotos	L-12b retake warning	live
-2094:25168	10	add-photo-sheet · on list-add-photos	add-photo-sheet	(sheet)	on list-add-photos	live
-2094:25236	10	resume-draft-sheet · on list-add-photos	resume-draft-sheet	(sheet)	on list-add-photos	live
+2094:25123	10	list-add-photos · L-12b retake warning	list-add-photos	ListAddPhotos	L-12b retake warning	fixture
+2094:25168	10	add-photo-sheet · on list-add-photos	add-photo-sheet	(sheet)	on list-add-photos	fixture
+2094:25236	10	resume-draft-sheet · on list-add-photos	resume-draft-sheet	(sheet)	on list-add-photos	fixture
 2095:24375	10	list-reading · unreadable (L-13b)	list-reading	ListReading	unreadable (L-13b)	fixture
-2095:24471	10	list-reading · retake warning	list-reading	ListReading	retake warning	live
+2095:24471	10	list-reading · retake warning	list-reading	ListReading	retake warning	fixture
 2095:24558	10	list-reading · failed → lands on Review with a note	list-reading	ListReading	failed → lands on Review with a note	fixture
 2095:24717	10	list-reading · quota (rate limited) → lands on Review with a note	list-reading	ListReading	quota (rate limited) → lands on Review with a note	fixture
-2096:24835	10	category-sheet · parents	category-sheet	(sheet)	parents	live
-2096:25059	10	category-sheet · subcategories (Books)	category-sheet	(sheet)	subcategories (Books)	live
-2096:25258	10	spec-sheet · one choice (radios)	spec-sheet	(sheet)	one choice (radios)	live
-2096:25440	10	spec-sheet · brand (searchable list)	spec-sheet	(sheet)	brand (searchable list)	live
-2096:29125	10	list-preview · full scroll	list-preview	ListPreview	full scroll	live
+2096:24835	10	category-sheet · parents	category-sheet	(sheet)	parents	fixture
+2096:25059	10	category-sheet · subcategories (Books)	category-sheet	(sheet)	subcategories (Books)	fixture
+2096:25258	10	spec-sheet · one choice (radios)	spec-sheet	(sheet)	one choice (radios)	fixture
+2096:25440	10	spec-sheet · brand (searchable list)	spec-sheet	(sheet)	brand (searchable list)	fixture
+2096:29125	10	list-preview · full scroll	list-preview	ListPreview	full scroll	fixture
 2096:29335	10	list-submitted · checking + KYC nudge	list-submitted	ListSubmitted	checking + KYC nudge	fixture
-2096:29395	10	list-submitted · live	list-submitted	ListSubmitted	live	live
-2096:29435	10	list-submitted · flagged	list-submitted	ListSubmitted	flagged	live
-2097:30938	10	list-preview · idle (top)	list-preview	ListPreview	idle (top)	live
-2097:31046	10	list-submitted · live + ring permission card	list-submitted	ListSubmitted	live + ring permission card	live
-2097:31093	10	spec-sheet · several choices (checkboxes)	spec-sheet	(sheet)	several choices (checkboxes)	live
+2096:29395	10	list-submitted · live	list-submitted	ListSubmitted	live	fixture
+2096:29435	10	list-submitted · flagged	list-submitted	ListSubmitted	flagged	fixture
+2097:30938	10	list-preview · idle (top)	list-preview	ListPreview	idle (top)	fixture
+2097:31046	10	list-submitted · live + ring permission card	list-submitted	ListSubmitted	live + ring permission card	fixture
+2097:31093	10	spec-sheet · several choices (checkboxes)	spec-sheet	(sheet)	several choices (checkboxes)	fixture
 2094:23133	09	shop-handover · pickup, code entry (full scroll)	shop-handover	ShopHandover	pickup, code entry (full scroll)	live
 2094:23337	09	shop-handover · owner delivery, before the window (full scroll)	shop-handover	ShopHandover	owner delivery, before the window (full scroll)	live
 2094:23454	09	shop-handover · rental started, payout waits for the record (full scroll)	shop-handover	ShopHandover	rental started, payout waits for the record (full scroll)	live

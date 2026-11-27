@@ -1,0 +1,14 @@
+{
+ "ref": "../figma/10/2096-29125.png",
+ "app": "../../../../../../../../private/tmp/claude-501/-Users-zineone-git-renit/ffb602ef-ee83-46d3-8bac-8d2aa137479e/scratchpad/ios-29125-end.png",
+ "platform": "ios",
+ "mismatch_pct": 0.29,
+ "threshold_pct": 2.0,
+ "pass": true,
+ "compared_px": [
+  1170,
+  1866
+ ],
+ "app_scaled_height": 1866,
+ "uncovered_rows": 0
+}

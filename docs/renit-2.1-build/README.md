@@ -206,7 +206,7 @@ Keep notes to one plain sentence and run `python3 tools/tracker.py` after editin
 
 ## Release safety (dev-only code)
 
-DevKit, the dev links and the fixtures live in `src/dev/` and `src/screens/dev/`. They are loaded only by `__DEV__ ? require(...) : null` (nav.tsx, global-context.tsx) and `if (__DEV__) require(...)` (networkUtils.ts); nothing imports them statically (global-context.tsx has a type-only import, which is erased). A production bundle constant-folds `__DEV__` to false and drops the requires. Each dev module exports a `RENIT_DEV_*_MARKER` string, so a bundle that contained it would show it:
+DevKit, the dev links and the fixtures live in `src/dev/` and `src/screens/dev/`. They are loaded only by `__DEV__ ? require(...) : null` (nav.tsx, global-context.tsx) and `if (__DEV__) require(...)` (networkUtils.ts), plus `__DEV__ ? require("@/dev/list-flow-seed")` in the list-flow screens add-photos, reading, review and preview (ENG-435); nothing imports them statically (global-context.tsx has a type-only import, which is erased). A production bundle constant-folds `__DEV__` to false and drops the requires. Each dev module exports a `RENIT_DEV_*_MARKER` string, so a bundle that contained it would show it:
 
 ```bash
 npx expo export --platform ios --no-bytecode --output-dir /tmp/harness-export

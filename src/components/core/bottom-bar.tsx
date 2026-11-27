@@ -14,6 +14,8 @@ export interface BarAction {
   disabled?: boolean;
   loading?: boolean;
   accessibilityLabel?: string;
+  /** `false` when `onPress` gives its own haptic (Button's tap buzz is on by default). */
+  haptic?: boolean;
   /**
    * The primary's 14/20 label in the default 52 box: the kit Primary at half
    * width when its label would wrap at 16/24 ("Book for the morning", 04
@@ -77,6 +79,7 @@ function PrimaryButton({ action, style }: { action: BarAction; style?: StyleProp
       disabled={action.disabled}
       loading={action.loading}
       accessibilityLabel={action.accessibilityLabel}
+      haptic={action.haptic}
       size={action.labelSize === "compact" ? "compact" : undefined}
       // `compact` is a 44 box; the kit keeps the bar's 52, and its centred label has no side padding (2089:23201's
       // 142pt "Book for the morning" at x11 in a 164 button), so it stays on one line at half width.

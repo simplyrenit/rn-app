@@ -2,7 +2,7 @@ import { buildCreatePayload, submitListing } from "@/backend/list-flow/submit";
 import { saveOfferedAddress } from "@/backend/addresses-api";
 import { placeFor } from "@/backend/list-flow/pickup-location";
 import { termsQueryKey } from "@/backend/terms";
-import { Button, Text, useButtonLabelColor, useReduceMotion } from "@/components/core";
+import { BottomBar, SectionHeader, StepProgress, Text } from "@/components/core";
 import { ConditionRenderer } from "@/components/core/condition-renderer";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { CONDITION_LABEL } from "@/components/list-flow/copy";
@@ -15,8 +15,8 @@ import { useListDraft } from "@/context/list-draft-context";
 import { inlineOfferPayload } from "@/lib/addresses";
 import { apiError } from "@/lib/api-error";
 import { CategoryIcon, categoryDisplayName } from "@/lib/category-icons";
-import { SCREEN_GUTTER, duration, radius, space } from "@/lib/design-tokens";
-import { formatNumber } from "@/lib/format";
+import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import { formatCurrency } from "@/lib/format";
 import { smallestPlan, toPlans } from "@/lib/plans";
 import { commitFeedback, successFeedback } from "@/lib/haptics";
 import { uploadedPhotos } from "@/lib/list-flow/draft";
@@ -24,56 +24,73 @@ import { lockedItems, needsOwnerTerms, publishLockedMessage } from "@/lib/list-f
 import { currentSpecs, specDisplayValue } from "@/lib/list-flow/specs";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
-import { useTypedNavigation } from "@/lib/types";
+import { RouteProps, useTypedNavigation } from "@/lib/types";
+import type { ListFlowDesign } from "@/dev/list-flow-seed";
+import { useRoute } from "@react-navigation/native";
 import axios from "axios";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { readReasons } from "@/lib/listing-edit";
 import { waitsText } from "@/lib/listing-status";
-import { ActivityIndicator, Alert, ScrollView, View } from "react-native";
+import { Alert, ScrollView, View } from "react-native";
 import { useQueryClient } from "react-query";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
-import { BanknotesIcon, CheckIcon } from "react-native-heroicons/outline";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BanknotesIcon } from "react-native-heroicons/outline";
+
+// Dev builds only: a design fixture's draft in place of the live one (ENG-435 plan §2a).
+const seed: typeof import("@/dev/list-flow-seed") | null = __DEV__ ? require("@/dev/list-flow-seed") : null;
 
 type SubmitState = "idle" | "submitting" | "done";
 
-/** §8.7: the submit button's label → spinner → check, cross-faded. */
-function SubmitLabel({ state }: { state: SubmitState }) {
-  const labelColor = useButtonLabelColor();
-  const reduceMotion = useReduceMotion();
-  const fade = reduceMotion ? duration.fast : duration.base;
-  return (
-    <Animated.View key={state} entering={FadeIn.duration(fade)} exiting={FadeOut.duration(fade)}>
-      {state === "idle" ? (
-        <Text fontWeight="font-bold" fontSize="text-md" style={{ color: labelColor }}>
-          Submit for review
-        </Text>
-      ) : state === "submitting" ? (
-        <ActivityIndicator color={labelColor} />
-      ) : (
-        <CheckIcon size={22} color={labelColor} />
-      )}
-    </Animated.View>
-  );
+/** The renter-facing sections below the strip (2096:29125): 32 above and below, on the gutter, 12 under a header. */
+const SECTION_PAD = 32;
+const HEADER_GAP = 12;
+
+/** A 1pt full-width rule between the listing's parts. */
+function Divider() {
+  const { color } = useTheme();
+  return <View style={{ height: 1, backgroundColor: color.line }} />;
 }
 
+/** One owner-only row (2096:29125): 8 above and below, a SemiBold label, the value right-aligned, a hairline above. */
 function DefaultRow({ label, value }: { label: string; value: string }) {
   const { color } = useTheme();
   return (
     <View
       style={{
         flexDirection: "row",
-        justifyContent: "space-between",
-        gap: space.md,
-        paddingVertical: space.sm,
+        gap: 16,
+        paddingVertical: 8,
         borderTopWidth: 1,
         borderTopColor: color.brandPanelLine,
       }}
     >
-      <Text fontSize="text-sm" fontWeight="font-bold">
+      <Text fontSize="text-sm" lineHeight={20} fontWeight="font-semibold">
         {label}
       </Text>
-      <Text fontSize="text-sm" tone="body" style={{ flex: 1, textAlign: "right" }}>
+      <Text fontSize="text-sm" lineHeight={20} tone="body" style={{ flex: 1, textAlign: "right" }}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+/** A renter-facing spec row: the 112 label column 16 from the value (2096:29125). */
+function SpecRow({ label, value, first }: { label: string; value: string; first: boolean }) {
+  const { color } = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        gap: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderTopWidth: first ? 0 : 1,
+        borderTopColor: color.line,
+      }}
+    >
+      <Text fontSize="text-sm" lineHeight={20} tone="dim" style={{ width: 112 }}>
+        {label}
+      </Text>
+      <Text fontSize="text-sm" lineHeight={20} fontWeight="font-semibold" style={{ flex: 1 }}>
         {value}
       </Text>
     </View>
@@ -86,10 +103,14 @@ function DefaultRow({ label, value }: { label: string; value: string }) {
  */
 export default function ListPreviewScreen() {
   const navigation = useTypedNavigation();
+  const route = useRoute<RouteProps<"ListPreview">>();
+  // Only DevFixture passes `design`: the frame's draft, and Submit does nothing (plan §0.3).
+  const design = __DEV__ ? (route.params as { design?: ListFlowDesign } | undefined)?.design : undefined;
   const { color, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
   const { userDetails } = useGlobalContext();
-  const flow = useListDraft();
+  const real = useListDraft();
+  const seeded = useMemo(() => (design && seed ? seed.seededFlow(design) : null), [design]);
+  const flow = seeded ?? real;
   const { draft } = flow;
   const queryClient = useQueryClient();
   const [state, setState] = useState<SubmitState>("idle");
@@ -140,7 +161,7 @@ export default function ListPreviewScreen() {
   });
 
   const onSubmit = async () => {
-    if (state !== "idle" || submitting.current) return;
+    if (design || state !== "idle" || submitting.current) return;
     submitting.current = true;
     commitFeedback();
     setState("submitting");
@@ -258,150 +279,136 @@ export default function ListPreviewScreen() {
 
   return (
     <NonScrollableContainer>
-      <FlowHeader step={4} showBack={state === "idle"} />
+      <FlowHeader showBack={state === "idle"} />
 
-      <ScrollView contentContainerStyle={{ paddingBottom: space.xl }}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* The kit Stepper in its own 28pt strip over the photo (2097:30938). */}
+        <View style={{ paddingTop: 8, paddingBottom: 16, paddingHorizontal: SCREEN_GUTTER }}>
+          <StepProgress step={4} total={4} showLabel={false} />
+        </View>
+
         <View style={{ width: "100%", aspectRatio: 1 }}>
           <ProductImage images={images} coverImage={cover} mode="post" showBack={false} />
         </View>
 
-        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: space.md }}>
-          <Text fontSize="text-xl" fontWeight="font-bold">
-            {f.title.value}
-          </Text>
+        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: 16 }}>
+          <Text role="screenTitle">{f.title.value}</Text>
         </View>
 
+        <Divider />
+        {/* The PDP sample's strip (2097:30938 "Spec strip (cloned from PDP sample)"): 131 high, ruled by the Dividers around it. */}
         <SpecStrip
+          variant="detail"
+          dividers={false}
           items={[
             {
-              icon: <CategoryIcon name={f.category.value?.parent ?? ""} size={22} color={color.text} />,
+              icon: <CategoryIcon name={f.category.value?.parent ?? ""} size={20} color={color.text} />,
               value: f.category.value ? categoryDisplayName(f.category.value.title) : null,
               label: "Category",
             },
             {
-              icon: <BanknotesIcon size={22} color={color.text} />,
-              value: deposit ? `Rs ${formatNumber(deposit)}` : null,
+              icon: <BanknotesIcon size={20} color={color.text} />,
+              value: deposit ? formatCurrency(deposit) : null,
               label: "Deposit",
             },
             {
               icon: f.condition.value ? (
-                <ConditionRenderer condition={f.condition.value} size={22} color={color.text} />
+                <ConditionRenderer condition={f.condition.value} size={20} color={color.text} />
               ) : null,
               value: f.condition.value ? CONDITION_LABEL[f.condition.value] : null,
               label: "Condition",
             },
           ]}
         />
+        <Divider />
 
         {f.description.value ? (
-          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.lg }}>
-            <Text tone="body" fontSize="text-md">
+          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 24 }}>
+            <Text tone="body" fontSize="text-sm" lineHeight={20}>
               {f.description.value}
             </Text>
           </View>
         ) : null}
 
         {specs.length > 0 ? (
-          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.lg }}>
-            <Text role="sectionTitle" style={{ marginBottom: space.xs }}>
-              Specs
-            </Text>
-            {specs.map((spec) => (
-              <View
-                key={spec.key}
-                style={{ flexDirection: "row", gap: space.md, paddingVertical: space.xs }}
-              >
-                <Text fontSize="text-sm" tone="body" style={{ width: 120 }}>
-                  {spec.label}
-                </Text>
-                <Text fontSize="text-sm" style={{ flex: 1 }}>
-                  {spec.value}
-                </Text>
-              </View>
-            ))}
+          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: SECTION_PAD, gap: HEADER_GAP }}>
+            <SectionHeader title="Specs" gutter={false} flush />
+            <View style={{ borderWidth: 1, borderColor: color.line, borderRadius: radius.button, overflow: "hidden" }}>
+              {specs.map((spec, i) => (
+                <SpecRow key={spec.key} label={spec.label} value={spec.value} first={i === 0} />
+              ))}
+            </View>
           </View>
         ) : null}
 
         {location ? (
-          <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.lg, gap: space.sm }}>
-            <Text role="sectionTitle">{`Pickup · ${location.locality}`}</Text>
-            <ProductMap
-              variant="detail"
-              latitude={location.lat}
-              longitude={location.long}
-              isDarkMode={isDark}
-              placeName={location.locality}
-            />
-            <Text fontSize="text-xs" tone="dim">
-              Approximate area · the exact address is shared once a booking is confirmed
-            </Text>
-          </View>
+          <>
+            <Divider />
+            <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingVertical: SECTION_PAD, gap: HEADER_GAP }}>
+              <SectionHeader title={`Pickup · ${location.locality}`} gutter={false} flush />
+              <ProductMap
+                variant="detail"
+                latitude={location.lat}
+                longitude={location.long}
+                isDarkMode={isDark}
+                placeName={location.locality}
+                // A design seed draws the frame's neutral map, not live tiles (2096:29125 "NEW neutral map").
+                placeholder={Boolean(design)}
+              />
+              <Text fontSize="text-sm" lineHeight={20} tone="body">
+                Approximate area · the exact address is shared once a booking is confirmed
+              </Text>
+            </View>
+          </>
         ) : null}
 
-        <View
-          style={{
-            marginHorizontal: SCREEN_GUTTER,
-            marginTop: space.xl,
-            padding: space.md,
-            borderRadius: radius.group,
-            backgroundColor: color.brandPanel,
-            borderWidth: 1,
-            borderColor: color.brandPanelLine,
-          }}
-        >
-          <Text role="groupHeader" tone="brand">
-            Only you see this part
-          </Text>
-          {/* Worth, stock and delivery are the owner's own figures: typed, or confirmed
-              before Preview unlocked. They are not under the AI heading, which would
-              say where a confirmed figure came from. */}
-          <Text fontSize="text-md" fontWeight="font-bold" style={{ marginTop: space.xs, marginBottom: space.sm }}>
-            Confirmed by you
-          </Text>
-          <DefaultRow label="Worth" value={f.worth.value ? `Rs ${formatNumber(f.worth.value)}` : "—"} />
-          <DefaultRow label="In stock" value={f.quantity.value ?? "1"} />
-          {draft.notDelivered ? <DefaultRow label="Delivery" value="Not delivered · pickup only" /> : null}
-          <Text fontSize="text-md" fontWeight="font-bold" style={{ marginTop: space.md, marginBottom: space.sm }}>
-            Filled by AI · checked by you
-          </Text>
-          <DefaultRow label="Deposit" value={deposit ? `Rs ${formatNumber(deposit)}` : "—"} />
-          <DefaultRow label="Availability" value="Available now · block dates after you submit" />
-          <DefaultRow label="Contact" value="You · from your profile" />
+        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: SECTION_PAD, paddingBottom: 24 }}>
+          <View
+            style={{
+              padding: 16,
+              borderRadius: radius.button,
+              backgroundColor: color.brandPanel,
+              borderWidth: 1,
+              borderColor: color.brandPanelLine,
+            }}
+          >
+            <Text fontSize="text-sm" lineHeight={20} fontWeight="font-semibold" tone="brand">
+              Only you see this part
+            </Text>
+            {/* Worth, stock and delivery are the owner's own figures: typed, or confirmed
+                before Preview unlocked. They are not under the AI heading, which would
+                say where a confirmed figure came from. */}
+            <Text fontSize="text-md" lineHeight={24} fontWeight="font-bold" style={{ marginTop: 4, marginBottom: 8 }}>
+              Confirmed by you
+            </Text>
+            <DefaultRow label="Worth" value={f.worth.value ? formatCurrency(f.worth.value) : "—"} />
+            <DefaultRow label="In stock" value={f.quantity.value ?? "1"} />
+            {draft.notDelivered ? <DefaultRow label="Delivery" value="Not delivered · pickup only" /> : null}
+            <Text fontSize="text-md" lineHeight={24} fontWeight="font-bold" style={{ marginTop: 12, marginBottom: 8 }}>
+              Filled by AI · checked by you
+            </Text>
+            <DefaultRow label="Deposit" value={deposit ? formatCurrency(deposit) : "—"} />
+            <DefaultRow label="Availability" value="Available now · block dates after you submit" />
+            <DefaultRow label="Contact" value="You · from your profile" />
+          </View>
         </View>
       </ScrollView>
 
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: space.md,
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          paddingBottom: insets.bottom + space.sm,
-          borderTopWidth: 1,
-          borderTopColor: color.line,
-          backgroundColor: color.canvas,
+      {/* The kit Bottom bar, Summary + CTA (2096:29125). The button spins while the call is out; the old
+          check-mark beat before leaving has no place in the kit button (plan §5a #4). */}
+      <BottomBar
+        layout="summary-cta"
+        value={formatCurrency(firstPlan?.price ?? 0)}
+        unit={`/${firstPlan?.unit ?? "day"} to you`}
+        primary={{
+          label: "Submit for review",
+          onPress: () => void onSubmit(),
+          loading: state !== "idle",
+          accessibilityLabel: "Submit for review",
+          // onSubmit gives the heavy commit buzz; no light tap before it.
+          haptic: false,
         }}
-      >
-        <View style={{ flex: 1 }}>
-          <Text fontSize="text-lg" fontWeight="font-bold">
-            {`Rs ${formatNumber(firstPlan?.price ?? 0)}`}
-            <Text fontSize="text-sm" tone="body">
-              {` /${firstPlan?.unit ?? "day"} to you`}
-            </Text>
-          </Text>
-        </View>
-        <Button
-          style={{ flex: 1 }}
-          // `onSubmit` fires the heavier commit haptic itself.
-          haptic={false}
-          onPress={onSubmit}
-          accessibilityLabel="Submit for review"
-          accessibilityState={{ busy: state === "submitting", disabled: state !== "idle" }}
-        >
-          <SubmitLabel state={state} />
-        </Button>
-      </View>
+      />
     </NonScrollableContainer>
   );
 }
