@@ -1,0 +1,14 @@
+{
+ "ref": "../figma/04/2089-24130.png",
+ "app": "ios-2089-24130.after-banner.png",
+ "platform": "ios",
+ "mismatch_pct": 1.212,
+ "threshold_pct": 2.0,
+ "pass": true,
+ "compared_px": [
+  1170,
+  1080
+ ],
+ "app_scaled_height": 1080,
+ "uncovered_rows": 0
+}

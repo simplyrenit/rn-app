@@ -2,11 +2,12 @@ import useSaved from "@/backend/useSaved";
 import { pluralize } from "@/lib/pluralize";
 import {
   BackButton,
-  Button,
   Card,
   CrossFade,
   EmptyState,
   ProductCardSkeleton,
+  SheetFooter,
+  SheetHeader,
   Text,
 } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
@@ -43,7 +44,6 @@ import {
   useRoute,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Image } from "expo-image";
 import { styled } from "nativewind";
 import React, { useCallback, useRef, useState, useEffect } from "react";
 import {
@@ -63,7 +63,7 @@ import {
   useSearch,
 } from "@/backend/search";
 import { Disclaimer } from "@/components/home/disclaimer";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, colors, density, ink, radius } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { useAddAddress } from "@/backend/useAddresses";
 import { AddressPickerSheet, AddressPickerSheetHandle } from "@/components/addresses/address-picker-sheet";
@@ -71,38 +71,35 @@ import { deliveryAddressKey, useDeliveryAddress } from "@/context/delivery-addre
 import { SavedAddress, flatAndLandmark } from "@/lib/addresses";
 import { addressRowCopy, areaOf, deliverCountLine, nobodyDeliversCopy, splitByDelivery } from "@/lib/delivery";
 import { rememberReturnTo } from "@/lib/return-to";
-import { MapPinIcon, TruckIcon } from "react-native-heroicons/outline";
+import {
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+  MapPinIcon,
+  TruckIcon,
+} from "react-native-heroicons/outline";
 
 
 const StyledBottomView = styled(BottomSheetView);
 
 /**
- * How tall the filter sheet needs to be for the tab on screen. It used to be a
- * flat 75% for every tab: the Price tab showed two 44pt fields above roughly
- * 1,180pt of empty white, and Sort showed four rows above 1,080pt.
+ * How tall the filter sheet is for the tab on screen: each 2.1 frame's sheet
+ * height (2089:34679 … 35398), which counts the frame's own 21pt home-indicator
+ * strip; the screen adds the real inset instead. The parent category list is
+ * not drawn in any frame and keeps its share of the screen.
  */
-function sheetHeightForTab(tab: string, showSubCategory: boolean) {
-  switch (tab) {
-    case "Price":
-      return "38%";
-    case "Ratings":
-      return "48%";
-    case "Condition":
-      return "44%";
-    case "Sort":
-      return "52%";
-    case "Category":
-      return showSubCategory ? "70%" : "62%";
-    case "Specs":
-      return "75%";
-    case "Seller":
-      return "40%";
-    default:
-      return "60%";
-  }
-}
+const SHEET_FRAME_HEIGHT: Record<string, number> = {
+  Specs: 671,
+  Sort: 491,
+  Category: 655,
+  Price: 360,
+  Ratings: 411,
+  Condition: 415,
+  Seller: 345,
+};
+const FRAME_INDICATOR = 21;
+const CATEGORY_LIST_SHARE = 0.62;
 
-/** The frame height the percentages above were tuned on (390x844). */
+/** The frame height the share above was tuned on (390x844). */
 const FRAME_HEIGHT = 844;
 
 /** Marks a tab whose filter is currently set, so active filters are findable. */
@@ -161,15 +158,37 @@ const formatDate = (date: string | undefined) => {
 /** How long a filter edit has to settle before the count is re-counted. */
 const COUNT_DEBOUNCE_MS = 350;
 
-// Measured off the Figma results frame: a 64pt search bar with 16 above and below it,
-// the category rail and Filters bar (ENG-78), a 21pt count 12 below them (the v3 frame
-// drops the count; it stays, as it carries Clear Filters), then a two-column grid of the Home tile with 16
-// between columns and 24 between rows. A column is half of what the gutters and the
-// gap leave, so it is 163 on the 390pt frame and shrinks on a narrower phone.
+// The 2.1 results frame (2089:31917): a 64pt summary bar 8 under the status bar
+// and 12 above the content, then the rail, the Filters bar, the address row, the
+// count and the grid, each 16 apart. The grid is two columns 18 apart with 24
+// between rows: 162 on the 390pt frame, narrower on a smaller phone.
 const SUMMARY_HEIGHT = 64;
-const SUMMARY_INSET = 16;
+const SUMMARY_TOP = 8;
+const SUMMARY_BOTTOM = 12;
+const BLOCK_GAP = 16;
 const RESULTS_GAP = 24;
-const COLUMN_GAP = 16;
+const COLUMN_GAP = 18;
+/**
+ * The empty states sit 24 under the count, full width: the kit EmptyState pads
+ * itself by the gutter, so the wrap bleeds out of the screen's own one and the
+ * words get the frame's 342.
+ */
+const EMPTY_WRAP = { marginHorizontal: -SCREEN_GUTTER, paddingTop: 24 } as const;
+/**
+ * A 20pt text link grown to a 44pt target by padding that the margin takes back,
+ * so the line stays where drawn. Android hit-tests a child only inside its
+ * parent's bounds (hitSlop too), so the links' parents get the same, to hold the
+ * whole target.
+ */
+const LINK_TARGET = { paddingVertical: 12, marginVertical: -12 } as const;
+/** The summary bar's card shadow, #0000000F 0/4 blur 16; dark keeps the hairline alone. */
+const SUMMARY_SHADOW = {
+  shadowColor: "#000000",
+  shadowOpacity: 0.06,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 2,
+} as const;
 
 /** Two rows of the same grid the results use, while the first search runs. */
 function ResultsSkeleton({ width }: { width: number }) {
@@ -199,21 +218,17 @@ export default function SearchResults() {
 
   const { theme, categories } = useGlobalContext();
   const isDark = theme === "dark";
-  const { color, shadow } = useTheme();
+  const { color } = useTheme();
   const { favorites } = useSaved();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  // The tab heights are content heights measured on the 844pt frame. As a share
-  // of a 667pt SE or a 640dp Android they came out ~80pt short and cut the Sort
-  // rows and the Show results footer, so they never shrink below the frame's
-  // size (the sheet caps itself at the screen). The home-indicator inset is
-  // added on top, since the footer now clears it.
+  // Fixed heights, so a 667pt SE or a 640dp Android does not cut the rows and
+  // the footer (the sheet caps itself at the screen). The home-indicator inset
+  // is added on top, since the footer clears it.
   const filterSheetHeight = (tab: string) =>
-    Math.round(
-      (parseFloat(sheetHeightForTab(tab, showSubCategory)) / 100) *
-        Math.max(screenHeight, FRAME_HEIGHT) +
-        insets.bottom
-    );
+    tab === "Category" && !showSubCategory
+      ? Math.round(CATEGORY_LIST_SHARE * Math.max(screenHeight, FRAME_HEIGHT) + insets.bottom)
+      : (SHEET_FRAME_HEIGHT[tab] ?? SHEET_FRAME_HEIGHT.Sort) - FRAME_INDICATOR + insets.bottom;
   const cardWidth = Math.floor(
     (screenWidth - 2 * SCREEN_GUTTER - COLUMN_GAP) / 2
   );
@@ -802,7 +817,7 @@ export default function SearchResults() {
   return (
     <NonScrollableContainer>
       <View style={{ flex: 1, paddingHorizontal: SCREEN_GUTTER }}>
-        {/* Header */}
+        {/* Header: the frame's "Summary bar · Edit this search". */}
         <Pressable
           onPress={editSearch}
           accessibilityRole="button"
@@ -810,127 +825,85 @@ export default function SearchResults() {
           accessibilityHint="Reopens the search screen with these criteria"
           style={[
             {
-              // The frame's search bar: 64pt, radius 16, 4pt in on the left where
-              // the 44pt back target sits and 12pt on the right.
               minHeight: SUMMARY_HEIGHT,
               backgroundColor: color.surface,
               borderColor: color.line,
               borderWidth: 1,
               borderRadius: radius.card,
+              // The 44pt back target sits 4 in (5 with the stroke), the text 4 after it.
               paddingLeft: 4,
-              paddingRight: 12,
-              marginVertical: SUMMARY_INSET,
+              paddingRight: 16,
+              gap: 4,
+              marginTop: SUMMARY_TOP,
+              marginBottom: SUMMARY_BOTTOM,
             },
-            // Theme elevation, not a hand-rolled 0.25 shadow.
-            shadow,
+            isDark ? null : SUMMARY_SHADOW,
           ]}
           className="flex flex-row items-center w-full"
         >
-          {/* 44pt target inside the same 64pt row: the arrow used to be a bare
-              24pt glyph with no hit slop. */}
           <BackButton onPress={() => navigation.goBack()} />
 
           <View style={{ flex: 1 }}>
-            <Text
-              fontSize="text-sm"
-              fontWeight="font-bold"
-              style={{ width: '100%' }}
-              numberOfLines={1}
-            >
+            <Text fontSize="text-md" fontWeight="font-semibold" numberOfLines={1}>
               {headerLabel}
             </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, width: "100%" }}>
-              {!!range.startDate || !!range.endDate ? <Text
-                fontSize="text-sm"
-                style={{
-                  color: ink.dim(isDark),
-                }}
-              >
-                {formatDate(range.startDate)} - {formatDate(range.endDate)}
-              </Text>
-                : <Text
-                  fontSize="text-sm"
-                  style={{
-                    color: ink.dim(isDark),
-                  }}
-                >
-                  Any dates
-                </Text>}
-              {/* A 4pt round dot, not a bullet glyph, as the frame draws it. */}
-              <View
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: radius.full,
-                  backgroundColor: color.inputLine,
-                }}
-              />
-              <Text
-                fontSize="text-sm"
-                style={{
-                  color: ink.dim(isDark),
-                  flex: 1,
-                }}
-                numberOfLines={1}
-              >
-                {address || "Anywhere"}
-              </Text>
-            </View>
+            <Text fontSize="text-xs" tone="dim" numberOfLines={1}>
+              {`${hasDates ? `${formatDate(range.startDate)} - ${formatDate(range.endDate)}` : "Any dates"}  ·  ${
+                address || "Anywhere"
+              }`}
+            </Text>
           </View>
         </Pressable>
 
         {/* C-12 v3 moved the filter control out of the search pill into the
-            Filters / Sort / Dates bar, under the category rail (ENG-78). The
-            rail is 24 below the bar, the bar 12 below the rail. */}
+            Filters / Sort / Dates bar, under the category rail (ENG-78). Every
+            block from here to the grid is 16 apart. */}
+        <View style={{ gap: BLOCK_GAP, marginBottom: BLOCK_GAP }}>
         {railParent && (
-          <View style={{ marginTop: 8 }}>
-            <CategoryRail
-              // The API's own titles, as the landing's header and tiles use
-              // and the frame draws ("Appliances ›", "Air cooler").
-              parentLabel={railParent.title}
-              onOpenParent={
-                railParent.slug
-                  ? () => openLanding(railParent.slug!, railParent.title)
-                  : undefined
-              }
-              items={railParent.subcategories.map((sub) => ({
-                key: sub.title,
-                label: sub.title,
-              }))}
-              selectedKey={filters.subCategory ?? ""}
-              onSelect={selectRailSubCategory}
-            />
-          </View>
-        )}
-        <View style={{ marginTop: railParent ? 12 : 0 }}>
-          <FilterBar
-            filtersActive={refined}
-            sortActive={!!filters.sort}
-            datesLabel={
-              hasDates
-                ? `${formatDate(range.startDate)} - ${formatDate(range.endDate)}`
-                : "Dates"
-            }
-            datesActive={hasDates}
-            onFilters={() => openSheetOn(specs.length > 0 ? "Specs" : "Category")}
-            onSort={() => openSheetOn("Sort")}
-            onDates={() => setDatesOpen(true)}
-            deliver={
-              deliveryAddress.state === "ready" || deliveryAddress.state === "none"
-                ? { on: filterOn, onPress: onDeliversToMe }
+          <CategoryRail
+            // The API's own titles, as the landing's header and tiles use
+            // and the frame draws ("Fitness & Sports ›", "Tennis").
+            parentLabel={railParent.title}
+            onOpenParent={
+              railParent.slug
+                ? () => openLanding(railParent.slug!, railParent.title)
                 : undefined
             }
-            chipSpecLabel={chipSpec?.label}
-            chips={quickChips}
-            onChip={(value) =>
-              chipSpec &&
-              applyNow({
-                ...filters,
-                specs: toggleSpecOption(filters.specs, chipSpec.key, value),
-              })
-            }
+            items={railParent.subcategories.map((sub) => ({
+              key: sub.title,
+              label: sub.title,
+            }))}
+            selectedKey={filters.subCategory ?? ""}
+            onSelect={selectRailSubCategory}
           />
-        </View>
+        )}
+        <FilterBar
+          filtersActive={refined}
+          sortActive={!!filters.sort}
+          datesLabel={
+            hasDates
+              ? `${formatDate(range.startDate)} - ${formatDate(range.endDate)}`
+              : "Dates"
+          }
+          datesActive={hasDates}
+          onFilters={() => openSheetOn(specs.length > 0 ? "Specs" : "Category")}
+          onSort={() => openSheetOn("Sort")}
+          onDates={() => setDatesOpen(true)}
+          deliver={
+            deliveryAddress.state === "ready" || deliveryAddress.state === "none"
+              ? { on: filterOn, onPress: onDeliversToMe }
+              : undefined
+          }
+          chipSpecLabel={chipSpec?.label}
+          chips={quickChips}
+          onChip={(value) =>
+            chipSpec &&
+            applyNow({
+              ...filters,
+              specs: toggleSpecOption(filters.specs, chipSpec.key, value),
+            })
+          }
+        />
 
         {/* ENG-284 D12: whose address the cards answer for, and the way to change it. */}
         {addressRow ? (
@@ -944,16 +917,22 @@ export default function SearchResults() {
               alignItems: "center",
               gap: 8,
               minHeight: MIN_TOUCH_TARGET,
-              marginTop: 4,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              borderRadius: radius.input,
+              backgroundColor: color.surfaceMuted,
             }}
           >
-            <MapPinIcon size={18} color={color.textBody} />
+            <MapPinIcon size={20} strokeWidth={1.5} color={color.textDim} />
             <Text fontSize="text-sm" tone="body" numberOfLines={1} style={{ flex: 1 }}>
               {addressRow.text}
             </Text>
-            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
-              {`${addressRow.action} ›`}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+              <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
+                {addressRow.action}
+              </Text>
+              <ChevronRightIcon size={16} strokeWidth={1.5} color={color.brandText} />
+            </View>
           </TouchableOpacity>
         ) : null}
         {addressSearchFailed ? (
@@ -977,29 +956,30 @@ export default function SearchResults() {
 
         {/* Results */}
         <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginTop: addressRow ? 4 : 12,
-            marginBottom: RESULTS_GAP,
-          }}
+          style={[
+            {
+              flexDirection: "row",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 8,
+            },
+            LINK_TARGET,
+          ]}
         >
           {filterOn && !(isLoading && products.length === 0) ? (
-            // "N more for self pickup" is its own button beside the heading, as Retry above.
-            <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", flexShrink: 1 }}>
-              <Text accessibilityRole="header" fontSize="text-sm" fontWeight="font-bold">
+            // Two lines, as drawn: the count, then "N more for self pickup" as its own button.
+            <View style={[{ flexShrink: 1 }, LINK_TARGET]}>
+              <Text accessibilityRole="header" fontSize="text-sm" fontWeight="font-semibold">
                 {deliverCountLine(split.deliver.length, split.pickup.length).shown}
-                {split.pickup.length > 0 ? " · " : ""}
               </Text>
               {split.pickup.length > 0 ? (
                 <TouchableOpacity
                   accessibilityRole="button"
                   accessibilityHint="Shows self pickup too"
                   onPress={() => setDeliversToMe(false)}
-                  style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center" }}
+                  style={[{ alignSelf: "flex-start" }, LINK_TARGET]}
                 >
-                  <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+                  <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
                     {deliverCountLine(split.deliver.length, split.pickup.length).more}
                   </Text>
                 </TouchableOpacity>
@@ -1009,7 +989,7 @@ export default function SearchResults() {
             <Text
               accessibilityRole="header"
               fontSize="text-sm"
-              fontWeight="font-bold"
+              fontWeight="font-semibold"
             >
               {isLoading && products.length === 0
                 ? "Searching…"
@@ -1017,21 +997,14 @@ export default function SearchResults() {
             </Text>
           )}
 
-          <View className="flex flex-row items-center space-x-3">
-            {isFilterActive() && (
-              <TouchableOpacity onPress={clearFiltersAndSearch}>
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-bold"
-                  className={`underline ${isDark ? "text-muted-dark" : "text-muted-light"
-                    }`}
-                >
-                  Clear Filters
-                </Text>
-              </TouchableOpacity>
-            )}
-
-          </View>
+          {isFilterActive() && (
+            <TouchableOpacity accessibilityRole="button" onPress={clearFiltersAndSearch} style={LINK_TARGET}>
+              <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
+                Clear filters
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
         </View>
 
         {/* Products Grid */}
@@ -1088,23 +1061,23 @@ export default function SearchResults() {
           ListEmptyComponent={
             <CrossFade loading={isLoading} placeholder={<ResultsSkeleton width={cardWidth} />}>
               {filterOn && products.length > 0 && deliverTo ? (
-                // Filter on and nobody delivers: say so, and offer the two ways out.
-                <View>
+                // Filter on and nobody delivers: say so, and show self pickup.
+                // "Try another address" went in 2.1 (REVIEW, beyond the current
+                // app): the address row's Change above does that.
+                <View style={EMPTY_WRAP}>
                   <EmptyState
-                    compact
-                    icon={<TruckIcon size={28} color={color.brandText} />}
+                    icon={<TruckIcon size={32} color={color.text} />}
                     title={nobodyDelivers(deliverTo).title}
                     body={nobodyDelivers(deliverTo).body ?? undefined}
                     actionLabel="Show self pickup too"
                     onAction={() => setDeliversToMe(false)}
-                    secondaryActionLabel="Try another address"
-                    onSecondaryAction={() => addressSheet.current?.present()}
                   />
                 </View>
               ) : (
               <View>
+                <View style={[EMPTY_WRAP, { marginBottom: BLOCK_GAP }]}>
                 <EmptyState
-                  compact
+                  icon={<MagnifyingGlassIcon size={32} color={color.text} />}
                   title="No matches"
                   body={
                     isFilterActive()
@@ -1114,6 +1087,7 @@ export default function SearchResults() {
                   actionLabel={isFilterActive() ? "Clear filters" : undefined}
                   onAction={isFilterActive() ? clearFiltersAndSearch : undefined}
                 />
+                </View>
                 <Disclaimer mb={24} />
               </View>
               )}
@@ -1132,79 +1106,42 @@ export default function SearchResults() {
         isDark={isDark}
         scrollView={false}
       >
-        <StyledBottomView className="w-full py-2 flex flex-col justify-between flex-1 ">
+        <StyledBottomView className="w-full flex flex-col justify-between flex-1 ">
           <View className="flex-1 w-full ">
-            <View className="flex w-full " style={{ marginBottom: activeTab === 'Category' && !showSubCategory ? 0 : 12 }}>
-              <Text
-                accessibilityRole="header"
-                role="sectionTitle"
-                className="text-center"
-              >
-                Filters
-              </Text>
-
+            <SheetHeader title="Filters" grabber={false} onClose={() => bottomSheetRef.current?.dismiss()} />
+            {/* 2089:34679: a 38pt strip of tabs 20 apart from the gutter, the
+                chosen one brand SemiBold over a 2pt underline, and a hairline. */}
+            <View style={{ borderBottomWidth: 1, borderBottomColor: color.line }}>
               <ScrollView
                 showsHorizontalScrollIndicator={false}
                 horizontal={true}
-                className="mt-3 "
+                contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, gap: 20 }}
               >
-                <View
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    height: 2,
-                    backgroundColor: ink.line(isDark),
-                    width: "100%",
-                    zIndex: -1,
-                    left: 0,
-                    right: 0,
-                  }}
-                />
-                {tabs.map(
-                  (tab) => (
+                {tabs.map((tab) => {
+                  const active = activeTab === tab;
+                  return (
                     <TouchableOpacity
                       key={tab}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: active }}
                       onPress={() => setSelectedTab(tab)}
-                      style={{
-                        paddingHorizontal: 10,
-                        paddingVertical: 5,
-                        marginHorizontal: 5,
-                      }}
+                      style={{ paddingTop: 8, gap: 8 }}
                     >
-                      <View
-                        style={{
-                          position: "relative",
-                          paddingBottom: activeTab === tab ? 2 : 0,
-                        }}
+                      <Text
+                        fontSize="text-sm"
+                        fontWeight={active ? "font-semibold" : "font-medium"}
+                        style={{ color: active ? color.brandText : color.textBody }}
                       >
-                        <Text
-                          fontSize="text-sm"
-                          fontWeight={activeTab === tab ? "font-semibold" : "font-medium"}
-                          tone={activeTab === tab ? "default" : "body"}
-                        >
-                          {tab}
-                          {tabHasValue(tab, filters) ? " •" : ""}
-                        </Text>
-                        {/* Border for the selected tab */}
-                        {activeTab === tab && (
-                          <View
-                            style={{
-                              position: "absolute",
-                              bottom: -4,
-                              left: 0,
-                              right: 0,
-                              height: 2,
-                              backgroundColor: colors.dark.brand,
-                            }}
-                          />
-                        )}
-                      </View>
+                        {tab}
+                        {tabHasValue(tab, filters) ? " •" : ""}
+                      </Text>
+                      <View style={{ height: 2, backgroundColor: active ? color.brand : "transparent" }} />
                     </TouchableOpacity>
-                  )
-                )}
+                  );
+                })}
               </ScrollView>
             </View>
-            <View className="flex-1 px-1">
+            <View className="flex-1">
               {activeTab === "Sort" && (
                 <SortFilter
                   selectedFilter={filters.sort}
@@ -1289,45 +1226,24 @@ export default function SearchResults() {
             </View>
           </View>
 
-          {/* One persistent footer. Each tab used to render its own "Show
-              products" button, and only once something had been selected — so
-              a sheet you had just opened had no action at all, and there was
-              never a way to clear a filter you had set. */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 12,
-              paddingHorizontal: SCREEN_GUTTER,
-              paddingTop: 12,
-              // The sheet runs to the bottom of the screen, so without this the
-              // home indicator sat across the Show results button.
-              paddingBottom: insets.bottom,
-              borderTopWidth: 1,
-              borderTopColor: ink.line(isDark),
+          {/* One persistent footer (the kit Sheet footer): "Show N results" with
+              Reset under it. Each tab used to render its own "Show products"
+              button, and only once something had been selected, so a sheet you
+              had just opened had no action and a filter could not be cleared. */}
+          <SheetFooter
+            primary={{
+              label: isLoading
+                ? "Loading"
+                : pendingCount == null
+                ? // Counting. A number we know is out of date is worse than
+                  // no number at all.
+                  "Show results"
+                : `Show ${pluralize(pendingCount, "result")}`,
+              loading: isLoading,
+              onPress: closeSheet,
             }}
-          >
-            <View style={{ flex: 1 }}>
-              <Button
-                variant="ghost"
-                disabled={!isFilterActive()}
-                onPress={clearFiltersAndSearch}
-              >
-                Reset
-              </Button>
-            </View>
-            <View style={{ flex: 1.4 }}>
-              <Button loading={isLoading} onPress={closeSheet}>
-                {isLoading
-                  ? "Loading"
-                  : pendingCount == null
-                  ? // Counting. A number we know is out of date is worse than
-                    // no number at all.
-                    "Show results"
-                  : `Show ${pluralize(pendingCount, "result")}`}
-              </Button>
-            </View>
-          </View>
+            secondary={{ label: "Reset", disabled: !isFilterActive(), onPress: clearFiltersAndSearch }}
+          />
         </StyledBottomView>
       </CustomBottomSheetModal>
 
@@ -1335,7 +1251,7 @@ export default function SearchResults() {
         ref={addressSheet}
         savedOnly
         title="Where should we deliver?"
-        description="We'll show who delivers there and what it costs."
+        description="We’ll show who delivers there and what it costs."
         selected={
           deliverTo
             ? {

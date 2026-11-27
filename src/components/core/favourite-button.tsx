@@ -1,6 +1,6 @@
 import useSaved from "@/backend/useSaved";
 import { useGlobalContext } from "@/context/global-context";
-import { MIN_TOUCH_TARGET, darkColors } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, darkColors, lightColors } from "@/lib/design-tokens";
 import { tapFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -24,6 +24,8 @@ const INK_STROKE = 1.5;
 const TILE_DISC_SIZE = 32;
 const TILE_DISC_FILL = "rgba(255,255,255,0.92)";
 const TILE_HEART_INK = "#000000";
+/** The saved heart on the card's disc: brand purple, as Saved (2089:27772) fills it. The disc is white in both themes. */
+const TILE_HEART_SAVED = lightColors.brand;
 const TILE_DISC_SHADOW = Platform.select({
   // Figma's blur 3 is about an iOS shadowRadius of 1.5, as in `fieldShadow`.
   ios: { shadowColor: "#000000", shadowOpacity: 0.18, shadowRadius: 1.5, shadowOffset: { width: 0, height: 1 } },
@@ -138,9 +140,10 @@ export function FavouriteButton({
 
   // Over a photo the heart takes the dark-theme values in both app themes, as
   // the PDP's dark chip needs; off a photo it follows the theme. The card's
-  // white disc keeps that saved red on purpose (review #32 changed only the
-  // unsaved look), and its unsaved outline is black.
-  const activeColor = onPhoto ? darkColors.danger : color.danger;
+  // white disc fills the saved heart brand purple and outlines the unsaved one
+  // black (ENG-427 D4: Saved 2089:27772 draws #635BE8; it was the danger red).
+  // The PDP's chip and ink hearts keep red: no frame draws them saved.
+  const activeColor = tile ? TILE_HEART_SAVED : onPhoto ? darkColors.danger : color.danger;
   const inactiveColor = tile ? TILE_HEART_INK : onPhoto ? color.onPhoto : ink ? color.text : color.textBody;
 
   const glyph = (

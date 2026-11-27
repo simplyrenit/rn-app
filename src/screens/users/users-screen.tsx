@@ -8,13 +8,12 @@ import {
   Button,
   Card,
   CrossFade,
+  SectionHeader,
+  SubpageHeader,
   Text,
-  useButtonLabelColor,
   VerifiedBusinessBadge,
 } from "@/components/core";
-import { IconButton } from "@/components/core/icon-button";
 import Skeleton from "@/components/core/skeleton";
-import { DetailSection } from "@/components/product/detail-section";
 import { ReviewCard } from "@/components/product/review-card";
 import { SpecStrip } from "@/components/product/spec-strip";
 import { useGlobalContext } from "@/context/global-context";
@@ -28,31 +27,22 @@ import {
 import { useRoute } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
-import { Animated, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import {
-  ArrowLeftIcon as ArrowLeftMini,
-  CalendarIcon as CalendarMini,
-  CheckIcon as CheckMini,
-  ChevronRightIcon as ChevronRightMini,
-} from "react-native-heroicons/mini";
-import {
+  CalendarIcon,
+  CheckIcon,
   CubeIcon,
   MapPinIcon,
   ShieldExclamationIcon,
   StarIcon,
 } from "react-native-heroicons/outline";
 import {
-  CheckBadgeIcon as CheckBadgeSolid,
   ShieldCheckIcon,
+  StarIcon as StarSolid,
 } from "react-native-heroicons/solid";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import {
-  MIN_TOUCH_TARGET,
-  SCREEN_GUTTER,
-  density,
-  radius,
-} from "@/lib/design-tokens";
+import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { imageUrlOf } from "@/lib/image-url";
 import { pluralize } from "@/lib/pluralize";
 import { describeRating } from "@/lib/rating";
@@ -60,45 +50,24 @@ import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 
 /**
- * "About the owner" — Figma 1:21984.
+ * "About the owner" — Figma 2089:36248 (verified business), 2089:36415 (the
+ * same, scrolled) and 2089:36523 (a new host).
  *
- * The page is a stack of ruled blocks, the same construction the product detail
- * page uses, so the blocks below the profile are `DetailSection` at its
- * `profile` rhythm rather than a second set of section primitives.
+ * A fixed kit Top bar over the scroll, then the identity, the facts strip
+ * between two full-bleed hairlines, the trust block (the "Verified business"
+ * panel and the email / phone / area card), and the products and reviews
+ * sections, each a rail with its "View all" button under it.
  *
- * Not in the frame, but drawn on the owner's ruling: the verification card
- * (email/phone verified, "Lists in <area>"), the business name with its
- * "Verified" mark, and the "Verified business" panel (ENG-73). They sit inside
- * the profile block, between the facts strip and the chat button, so the frame's
- * 16pt rhythm is untouched. The business name and verification come from
- * `owner-details/`, so an owner with no listings still shows them; email and
- * phone come from the listing payload. A signal the payload does not carry is
- * simply not drawn.
+ * The business name and verification come from `owner-details/`, so an owner
+ * with no listings still shows them; email and phone come from the listing
+ * payload. A signal the payload does not carry is simply not drawn.
  */
 
-/** The frame's header row and, with it, the back control's target. */
-const HEADER_HEIGHT = MIN_TOUCH_TARGET;
-/** The back control sits on the screen edge's 16, not on the page's 24 gutter. */
-const HEADER_INSET = 16;
-
-/**
- * Where the scrolled header hands over to the pinned one.
- *
- * The frame has no pinned bar: the title and the back arrow are content and
- * scroll away with it. A page with no way back at most of its offsets is not
- * shippable, so a copy of the header sits over the scroll and fades in exactly
- * as the real one leaves — same glyph, same 16pt inset, same 44pt target, so
- * the arrow simply appears to stop moving. This is the treatment Product
- * Details already ships for the same problem.
- */
-const BAND_FADE_END = 24;
-/** The pinned copy takes the taps a little before it is fully opaque. */
-const BAND_TAKEOVER = 16;
-
-/** Every glyph on this page is the frame's 20pt. */
+/** Every glyph in the facts strip and the trust card is the frame's 20pt. */
 const GLYPH_SIZE = 20;
-/** The chevron in a block's button is drawn in a 24pt box. */
-const CHEVRON_SIZE = 24;
+/** The check rows inside the Verified business panel. */
+const CHECK_SIZE = 16;
+const PANEL_SHIELD = 28;
 /**
  * Fields the owner object embedded in a listing carries. Email and phone are
  * read only from there; `account_type` and `business_name` are the fallback for
@@ -118,7 +87,7 @@ interface OwnerTrustFields {
 const VERIFIED_CHECKS = [
   "Business PAN",
   "GST registration (if registered)",
-  "Owner's identity through DigiLocker",
+  "Owner’s identity through DigiLocker",
 ];
 
 /** ENG-348: the registration a reviewer accepted, listed after the checks every business went through. */
@@ -127,161 +96,68 @@ const REGISTRATION_CHECK: Record<string, string> = {
   shop_licence: "Shops & Establishments licence",
 };
 
-/** Label to chevron. */
-const CHEVRON_GAP = 4;
-
+/** The content's own 8 under the top bar, and 40 after the last section. */
+const CONTENT_PAD_TOP = 8;
+const CONTENT_PAD_BOTTOM = 40;
 const AVATAR_SIZE = 72;
-/** Avatar to name. */
-const NAME_GAP = 8;
-/** Avatar group to facts strip. */
-const FACTS_GAP = 8;
-/** Header to profile block, and before the chat button. */
-const PROFILE_GAP = 16;
-/** Below the chat button, before the first hairline. The blocks' own inset. */
-const PROFILE_PAD_BOTTOM = 24;
+/**
+ * The identity block: 8 above, 24 below. Its rows sit 8 apart with a business
+ * line under the name and 12 apart without one (2089:36523).
+ */
+const IDENTITY_PAD_TOP = 8;
+const IDENTITY_PAD_BOTTOM = 24;
+const IDENTITY_GAP = 8;
+const IDENTITY_GAP_SOLO = 12;
+/** The trust block: 24 under the facts hairline, 16 between its cards. */
+const TRUST_PAD_TOP = 24;
+const TRUST_GAP = 16;
+/** A section: 32 above its heading, 12 between heading, rail and button. */
+const SECTION_PAD_TOP = 32;
+const SECTION_GAP = 12;
 
-/** Rails: the Home tile at the Home tile's width, and the detail review card. */
-const CARD_WIDTH = 163;
+/** Rails: the kit Listing card, and the detail review card at the frame's 285x182. */
+const CARD_WIDTH = 162;
 const REVIEW_CARD_WIDTH = 285;
+const REVIEW_CARD_HEIGHT = 182;
 const RAIL_GAP = 16;
+/** The section button: the kit's neutral Secondary, 44 high. */
+const BUTTON_HEIGHT = 44;
 
-/**
- * The frame's block action. 56 tall as a floor rather than a height, so the
- * label can still grow it at accessibility text sizes; it takes the button radius.
- */
-const BUTTON_HEIGHT = 56;
-const BUTTON_RADIUS = radius.button;
-
-/**
- * The header, drawn twice: once in the scroll as the frame has it, once pinned
- * over it. The title is centred on the screen rather than on the space beside
- * the arrow, which is why the back control is laid over the row instead of
- * sitting in it.
- */
-function OwnerHeader({ interactive }: { interactive: boolean }) {
-  const { color } = useTheme();
-  const navigation = useTypedNavigation();
-
+/** One block below the trust cards: the kit Section header, then its rail and button. */
+function OwnerSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    // box-none, and the title none: the pinned copy of this header sits over the
-    // scrolled copy's arrow at rest, and a plain View here swallowed the tap
-    // (iOS hit-tests ignore opacity), so back was dead until the page was scrolled.
-    <View
-      pointerEvents="box-none"
-      style={{ height: HEADER_HEIGHT, justifyContent: "center" }}
-    >
-      <Text
-        accessibilityRole="header"
-        fontSize="text-lg"
-        fontWeight="font-bold"
-        numberOfLines={1}
-        style={{
-          textAlign: "center",
-          pointerEvents: "none",
-          // Reserve the arrow's box on both sides so a long title never runs
-          // under it.
-          paddingHorizontal: HEADER_INSET + MIN_TOUCH_TARGET,
-        }}
-      >
-        About the owner
-      </Text>
-
-      <View
-        pointerEvents={interactive ? "auto" : "none"}
-        style={{ position: "absolute", left: HEADER_INSET }}
-      >
-        {/* The frame draws heroicons' *mini* arrow — a filled 20pt glyph, not
-            the outline `BackButton` uses on pushed screens — so this composes
-            `IconButton` directly, exactly as the product hero does. It keeps
-            the two things `BackButton` exists to guarantee: a 44pt target and
-            a required label. */}
-        <IconButton
-          onPress={() => navigation.goBack()}
-          accessibilityLabel="Go back"
-          accessibilityHint="Returns to the previous screen"
-        >
-          <ArrowLeftMini size={GLYPH_SIZE} color={color.text} />
-        </IconButton>
-      </View>
+    <View style={{ paddingTop: SECTION_PAD_TOP, gap: SECTION_GAP }}>
+      <SectionHeader title={title} flush />
+      {children}
     </View>
   );
 }
 
-/**
- * A block's label, inside a live `Button`.
- *
- * The frame sets it at 14 Bold where `Button` sets a plain string child at 16,
- * and puts a chevron after it. A node child keeps the frame's size and still
- * takes the colour the button has already resolved for the state it is in, so
- * the disabled treatment is not re-derived here.
- */
-function BlockButtonLabel({
-  children,
-  chevron,
-}: {
-  children: string;
-  chevron?: boolean;
-}) {
-  const labelColor = useButtonLabelColor();
-  return (
-    <View
-      style={{ flexDirection: "row", alignItems: "center", gap: CHEVRON_GAP }}
-    >
-      <Text
-        fontSize="text-sm"
-        fontWeight="font-bold"
-        style={{ color: labelColor }}
-      >
-        {children}
-      </Text>
-      {chevron ? (
-        <ChevronRightMini size={CHEVRON_SIZE} color={labelColor} />
-      ) : null}
-    </View>
-  );
-}
-
-/**
- * The one control this page uses: full width, 56 tall, a 1pt edge and the
- * light theme's faint lift.
- *
- * The frame draws that edge at `color.line`. It ships at `color.inputLine` —
- * which is what `Button`'s outline variant already uses — because a hairline
- * fails WCAG 1.4.11 (3:1) as the edge of an interactive control, and
- * design-tokens.ts states that rule explicitly. One step darker on light is
- * the whole difference.
- */
-function BlockButton({
+function SectionButton({
   label,
   onPress,
-  chevron,
   loading,
   accessibilityHint,
 }: {
   label: string;
   onPress: () => void;
-  chevron?: boolean;
   loading?: boolean;
   accessibilityHint?: string;
 }) {
-  const { shadow } = useTheme();
   return (
-    <Button
-      variant="outline"
-      onPress={onPress}
-      loading={loading}
-      disabled={loading}
-      // A node child carries no label of its own.
-      accessibilityLabel={label}
-      accessibilityHint={accessibilityHint}
-      style={[
-        { minHeight: BUTTON_HEIGHT, paddingVertical: 0, borderRadius: BUTTON_RADIUS },
-        // Black at ~5%, light only; `shadow.dark` is transparent by design.
-        shadow,
-      ]}
-    >
-      <BlockButtonLabel chevron={chevron}>{label}</BlockButtonLabel>
-    </Button>
+    <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+      <Button
+        variant="outline"
+        tone="neutral"
+        size="compact"
+        onPress={onPress}
+        loading={loading}
+        disabled={loading}
+        accessibilityHint={accessibilityHint}
+      >
+        {label}
+      </Button>
+    </View>
   );
 }
 
@@ -301,11 +177,6 @@ export default function UsersDetails() {
 
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const scrollY = React.useRef(new Animated.Value(0)).current;
-  // True once the pinned copy of the header, rather than the scrolled one,
-  // owns the top of the screen. It is what decides which of the two back
-  // controls takes a tap — and which one VoiceOver is allowed to reach.
-  const [headerCovered, setHeaderCovered] = useState(false);
   // The rail draws the Home tile, whose heart has to start in the right state.
   // One shared, cached query — the same one every `FavouriteButton` already
   // subscribes to.
@@ -446,9 +317,9 @@ export default function UsersDetails() {
           {
             key,
             icon: verified ? (
-              <CheckBadgeSolid size={18} color={color.success} />
+              <CheckIcon size={GLYPH_SIZE} color={color.success} strokeWidth={1.5} />
             ) : (
-              <ShieldExclamationIcon size={18} color={color.textDim} />
+              <ShieldExclamationIcon size={GLYPH_SIZE} color={color.textDim} strokeWidth={1.5} />
             ),
             label: verified ? `${noun} verified` : `${noun} not verified`,
             met: verified,
@@ -467,7 +338,7 @@ export default function UsersDetails() {
       ? [
           {
             key: "area",
-            icon: <MapPinIcon size={18} color={color.textBody} />,
+            icon: <MapPinIcon size={GLYPH_SIZE} color={color.textDim} strokeWidth={1.5} />,
             label: `Lists in ${primaryArea}`,
             met: true,
           },
@@ -478,14 +349,12 @@ export default function UsersDetails() {
   const stats = [
     {
       key: "rating",
-      icon: (
-        <StarIcon
-          // Primary, as every other glyph on the page — except with no score,
-          // where the column is dimmed rather than left looking rated.
-          color={ratingDisplay.rated ? color.text : color.textDim}
-          size={GLYPH_SIZE}
-          strokeWidth={1.5}
-        />
+      // A filled star for a score; with none, the outline star dimmed, so the
+      // column is not left looking rated.
+      icon: ratingDisplay.rated ? (
+        <StarSolid color={color.text} size={GLYPH_SIZE} />
+      ) : (
+        <StarIcon color={color.textDim} size={GLYPH_SIZE} strokeWidth={1.5} />
       ),
       value: ratingDisplay.label,
       // "0.0" under the word "Rating" told every unrated host they were scored
@@ -500,7 +369,7 @@ export default function UsersDetails() {
     },
     {
       key: "joined",
-      icon: <CalendarMini color={color.text} size={GLYPH_SIZE} />,
+      icon: <CalendarIcon color={color.text} size={GLYPH_SIZE} strokeWidth={1.5} />,
       value: joinedDateLabel,
       caption: "User since",
     },
@@ -527,252 +396,178 @@ export default function UsersDetails() {
     });
   };
 
-  const bandProgress = scrollY.interpolate({
-    inputRange: [0, BAND_FADE_END],
-    outputRange: [0, 1],
-    extrapolate: "clamp",
-  });
+  const hairline = <View style={{ height: 1, backgroundColor: color.line }} />;
+  const showChat = !isOwner && CHAT_ENABLED;
 
   return (
-    <View style={{ flex: 1, backgroundColor: color.canvas }}>
-      {/* `StaticContainer` used to carry this; the page now lays itself out
-          from the safe area so its content can scroll under the top inset. */}
+    <View style={{ flex: 1, backgroundColor: color.canvas, paddingTop: insets.top }}>
       <StatusBar style={isDark ? "light" : "dark"} />
+      {/* A fixed kit Top bar: both frames, the scrolled one too, keep it on
+          screen, so the way back is there at every offset and while loading. */}
+      <SubpageHeader title="About the owner" />
 
-      {/* The pinned copy of the header. Invisible at rest — the scrolled
-          header is the one on screen — and solid from 24pt of scroll on. */}
-      <View
-        pointerEvents="box-none"
-        style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 4 }}
-      >
-        <Animated.View
-          pointerEvents="none"
-          style={{
-            ...StyleSheet.absoluteFillObject,
-            backgroundColor: color.canvas,
-            borderBottomWidth: StyleSheet.hairlineWidth,
-            borderBottomColor: color.line,
-            opacity: bandProgress,
-          }}
-        />
-        <Animated.View
-          pointerEvents="box-none"
-          // Both copies are mounted at all times, so exactly one of them is
-          // offered to VoiceOver — otherwise the screen announces its title
-          // and its back button twice.
-          accessibilityElementsHidden={!headerCovered}
-          importantForAccessibility={
-            headerCovered ? "auto" : "no-hide-descendants"
-          }
-          style={{ marginTop: insets.top, opacity: bandProgress }}
-        >
-          <OwnerHeader interactive={headerCovered} />
-        </Animated.View>
-      </View>
-
-      {/* Animated.ScrollView, not ScrollView: a native-driven Animated.event
-          has to be attached to an animated component or the plain one receives
-          the event object where it expects a handler. */}
-      <Animated.ScrollView
+      <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingTop: insets.top,
-          paddingBottom: density.section * 3 + insets.bottom,
+          paddingTop: CONTENT_PAD_TOP,
+          paddingBottom: CONTENT_PAD_BOTTOM + insets.bottom,
         }}
-        scrollEventThrottle={16}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          {
-            useNativeDriver: true,
-            listener: (event: any) => {
-              const covered =
-                event.nativeEvent.contentOffset.y > BAND_TAKEOVER;
-              setHeaderCovered((current) =>
-                current === covered ? current : covered
-              );
-            },
-          }
-        )}
       >
-        {/* Outside the cross-fade: the way back has to be there while the
-            profile is still loading. */}
-        <View
-          accessibilityElementsHidden={headerCovered}
-          importantForAccessibility={
-            headerCovered ? "no-hide-descendants" : "auto"
-          }
-        >
-          <OwnerHeader interactive={!headerCovered} />
-        </View>
-
         <CrossFade loading={loading} placeholder={<OwnerSkeleton />}>
           <View>
             <View
               style={{
-                paddingTop: PROFILE_GAP,
-                paddingBottom: PROFILE_PAD_BOTTOM,
-                gap: PROFILE_GAP,
-                borderBottomWidth: 1,
-                borderBottomColor: color.line,
+                alignItems: "center",
+                gap: businessName ? IDENTITY_GAP : IDENTITY_GAP_SOLO,
+                paddingTop: IDENTITY_PAD_TOP,
+                paddingBottom: IDENTITY_PAD_BOTTOM,
+                paddingHorizontal: SCREEN_GUTTER,
               }}
             >
-              {/* The frame keeps the avatar group and the facts strip 8pt apart
-                  and puts the 16pt gap only before the chat button. */}
-              <View style={{ gap: FACTS_GAP }}>
-              <View
-                style={{
-                  alignItems: "center",
-                  gap: NAME_GAP,
-                  paddingHorizontal: SCREEN_GUTTER,
-                }}
-              >
-                <Avatar
-                  uri={owner?.image?.image_url}
-                  name={`${owner?.first_name ?? ""} ${owner?.last_name ?? ""}`.trim()}
-                  size={AVATAR_SIZE}
-                />
-                {/* The frame sets the name at body-small bold, not at heading
-                    size: the page is already titled, and the photograph above
-                    is what announces the person. */}
-                <Text fontSize="text-sm" fontWeight="font-bold">
-                  {owner?.first_name} {owner?.last_name}
-                </Text>
-                {/* A brand pill with a check used to sit on every business
-                    name, checked or not (D-26). Now only a business Renit
-                    verified gets the mark; any other name is plain text. */}
-                {businessName ? (
-                  businessVerified ? (
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                      {/* Shrinks so a long name wraps and the mark stays on screen. */}
-                      <Text
-                        fontSize="text-sm"
-                        fontWeight="font-semibold"
-                        tone="hi"
-                        style={{ flexShrink: 1, textAlign: "center" }}
-                      >
-                        {businessName}
-                      </Text>
-                      <VerifiedBusinessBadge verified iconSize={18} />
-                    </View>
-                  ) : (
-                    <Text fontSize="text-xs" tone="dim">
+              <Avatar
+                uri={owner?.image?.image_url}
+                name={`${owner?.first_name ?? ""} ${owner?.last_name ?? ""}`.trim()}
+                size={AVATAR_SIZE}
+              />
+              <Text role="screenTitle" style={{ textAlign: "center" }}>
+                {owner?.first_name} {owner?.last_name}
+              </Text>
+              {/* A brand pill with a check used to sit on every business
+                  name, checked or not (D-26). Now only a business Renit
+                  verified gets the mark; any other name is plain text. */}
+              {businessName ? (
+                businessVerified ? (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    {/* Shrinks so a long name wraps and the mark stays on screen. */}
+                    <Text
+                      fontSize="text-sm"
+                      fontWeight="font-semibold"
+                      tone="body"
+                      style={{ flexShrink: 1, textAlign: "center" }}
+                    >
                       {businessName}
                     </Text>
-                  )
-                ) : null}
-              </View>
-
-              {/* The same three-up strip the product detail and the post
-                  wizard's review step use, at this page's own metrics. */}
-              <SpecStrip
-                variant="profile"
-                dividers={false}
-                items={stats.map((stat) => ({
-                  icon: stat.icon,
-                  value: stat.value,
-                  label: stat.caption,
-                }))}
-              />
-              </View>
-
-              {businessVerified ? (
-                <View
-                  accessible
-                  accessibilityLabel={`Verified business. Checked by Renit${
-                    verifiedOn ? ` on ${verifiedOn}` : ""
-                  }: ${verifiedChecks.join(", ")}.`}
-                  style={{
-                    marginHorizontal: SCREEN_GUTTER,
-                    padding: density.block,
-                    gap: 10,
-                    borderRadius: radius.group,
-                    borderWidth: 1,
-                    // The dark panel line (#292929) is lost on the wash; the veil holds.
-                    borderColor: isDark ? color.brandVeil : color.brandPanelLine,
-                    backgroundColor: color.brandPanel,
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                    <ShieldCheckIcon size={28} color={color.brandText} />
-                    <View style={{ flex: 1 }}>
-                      <Text fontSize="text-md" fontWeight="font-bold">
-                        Verified business
-                      </Text>
-                      <Text fontSize="text-xs" tone="body">
-                        {verifiedOn ? `Checked by Renit on ${verifiedOn}` : "Checked by Renit"}
-                      </Text>
-                    </View>
+                    <VerifiedBusinessBadge verified iconSize={16} size="md" />
                   </View>
-                  <View style={{ gap: 6 }}>
+                ) : (
+                  <Text fontSize="text-xs" tone="dim">
+                    {businessName}
+                  </Text>
+                )
+              ) : null}
+            </View>
+
+            {hairline}
+            <SpecStrip
+              variant="profile"
+              dividers={false}
+              items={stats.map((stat) => ({
+                icon: stat.icon,
+                value: stat.value,
+                label: stat.caption,
+              }))}
+            />
+            {hairline}
+
+            {businessVerified || trustRows.length || showChat ? (
+              <View
+                style={{
+                  paddingTop: TRUST_PAD_TOP,
+                  paddingHorizontal: SCREEN_GUTTER,
+                  gap: TRUST_GAP,
+                }}
+              >
+                {businessVerified ? (
+                  <View
+                    accessible
+                    accessibilityLabel={`Verified business. Checked by Renit${
+                      verifiedOn ? ` on ${verifiedOn}` : ""
+                    }: ${verifiedChecks.join(", ")}.`}
+                    style={{
+                      padding: 16,
+                      gap: 12,
+                      borderRadius: radius.card,
+                      backgroundColor: color.brandPanel,
+                    }}
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                      <ShieldCheckIcon size={PANEL_SHIELD} color={color.brandText} />
+                      <View style={{ flex: 1 }}>
+                        <Text fontSize="text-md" fontWeight="font-semibold">
+                          Verified business
+                        </Text>
+                        <Text fontSize="text-xs" tone="dim">
+                          {verifiedOn ? `Checked by Renit on ${verifiedOn}` : "Checked by Renit"}
+                        </Text>
+                      </View>
+                    </View>
                     {verifiedChecks.map((check) => (
                       <View
                         key={check}
                         style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
                       >
-                        <CheckMini size={16} color={color.brandText} />
+                        <CheckIcon size={CHECK_SIZE} color={color.brandText} strokeWidth={1.5} />
                         <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
                           {check}
                         </Text>
                       </View>
                     ))}
                   </View>
-                </View>
-              ) : null}
+                ) : null}
 
-              {trustRows.length ? (
-                <View
-                  style={{
-                    marginHorizontal: SCREEN_GUTTER,
-                    padding: density.block,
-                    gap: 10,
-                    borderRadius: radius.group,
-                    borderWidth: StyleSheet.hairlineWidth,
-                    borderColor: color.line,
-                    backgroundColor: color.surface,
-                  }}
-                >
-                  {trustRows.map((row) => (
-                    <View
-                      key={row.key}
-                      style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                    >
-                      {row.icon}
-                      <Text
-                        fontSize="text-sm"
-                        tone={row.met ? "hi" : "dim"}
-                        numberOfLines={2}
-                        style={{ flex: 1 }}
+                {trustRows.length ? (
+                  <View
+                    style={{
+                      padding: 16,
+                      gap: 12,
+                      borderRadius: radius.input,
+                      borderWidth: 1,
+                      borderColor: color.line,
+                      backgroundColor: color.surface,
+                    }}
+                  >
+                    {trustRows.map((row) => (
+                      <View
+                        key={row.key}
+                        style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
                       >
-                        {row.label}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
+                        {row.icon}
+                        <Text
+                          fontSize="text-sm"
+                          tone={row.met ? "body" : "dim"}
+                          numberOfLines={2}
+                          style={{ flex: 1 }}
+                        >
+                          {row.label}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
 
-              {/* Chat is off at launch (ENG-177); the button and `handleStartChat`
-                  stay for the day it is switched back on. */}
-              {!isOwner && CHAT_ENABLED && (
-                <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
-                  <BlockButton
-                    label={`Chat with ${owner?.first_name ?? "the owner"}`}
+                {/* Chat is off at launch (ENG-177); the button and `handleStartChat`
+                    stay for the day it is switched back on. No frame draws it. */}
+                {showChat ? (
+                  <Button
+                    variant="outline"
+                    tone="neutral"
+                    size="compact"
                     onPress={handleStartChat}
                     loading={messaging}
-                  />
-                </View>
-              )}
-            </View>
+                    disabled={messaging}
+                  >
+                    {`Chat with ${owner?.first_name ?? "the owner"}`}
+                  </Button>
+                ) : null}
+              </View>
+            ) : null}
 
-            <DetailSection
-              variant="profile"
-              title={pluralize(products.length, "product")}
-              // The rail starts on the gutter and runs to the screen edge, so
-              // the next card is always visibly cut off — which is what makes
-              // a rail read as scrollable without a control saying so.
-              inset={false}
-            >
+            <OwnerSection title={pluralize(products.length, "product")}>
               {products.length ? (
+                // The rail starts on the gutter and runs to the screen edge, so
+                // the next card is always visibly cut off — which is what makes
+                // a rail read as scrollable without a control saying so.
                 <ScrollView
                   horizontal
                   nestedScrollEnabled
@@ -813,24 +608,15 @@ export default function UsersDetails() {
               {/* Only when the rail is holding something back: with two
                   listings there is nothing behind this control. */}
               {products.length > 2 ? (
-                <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
-                  <BlockButton
-                    label="View all products"
-                    chevron
-                    onPress={openAllProducts}
-                    accessibilityHint="Opens every listing from this owner"
-                  />
-                </View>
+                <SectionButton
+                  label="View all products"
+                  onPress={openAllProducts}
+                  accessibilityHint="Opens every listing from this owner"
+                />
               ) : null}
-            </DetailSection>
+            </OwnerSection>
 
-            {/* The last block on the page rules no line under itself. */}
-            <DetailSection
-              variant="profile"
-              title={`${ownerFirstName || "This owner"}’s reviews`}
-              inset={false}
-              divider={false}
-            >
+            <OwnerSection title={`${ownerFirstName || "This owner"}’s reviews`}>
               {ownerReviews.length ? (
                 <ScrollView
                   horizontal
@@ -842,17 +628,18 @@ export default function UsersDetails() {
                   }}
                 >
                   {ownerReviews.map((item) => (
-                    <View key={item.id} style={{ width: REVIEW_CARD_WIDTH }}>
-                      <ReviewCard
-                        variant="detail"
-                        reviewText={item.comment}
-                        reviewerName={`${item.reviewer.first_name} ${item.reviewer.last_name}`}
-                        reviewDate={item.created_at}
-                        reviewerImage={imageUrlOf(item.reviewer.image)}
-                        onShowMore={openAllReviews}
+                    <ReviewCard
+                      key={item.id}
+                      variant="detail"
+                      width={REVIEW_CARD_WIDTH}
+                      height={REVIEW_CARD_HEIGHT}
+                      reviewText={item.comment}
+                      reviewerName={`${item.reviewer.first_name} ${item.reviewer.last_name}`}
+                      reviewDate={item.created_at}
+                      reviewerImage={imageUrlOf(item.reviewer.image)}
+                      onShowMore={openAllReviews}
                       showMoreHint="Opens every review for this owner"
-                      />
-                    </View>
+                    />
                   ))}
                 </ScrollView>
               ) : (
@@ -866,19 +653,16 @@ export default function UsersDetails() {
               )}
 
               {ownerReviews.length > 1 ? (
-                <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
-                  <BlockButton
-                    label="View all reviews"
-                    chevron
-                    onPress={openAllReviews}
-                    accessibilityHint="Opens every review of this owner"
-                  />
-                </View>
+                <SectionButton
+                  label="View all reviews"
+                  onPress={openAllReviews}
+                  accessibilityHint="Opens every review of this owner"
+                />
               ) : null}
-            </DetailSection>
+            </OwnerSection>
           </View>
         </CrossFade>
-      </Animated.ScrollView>
+      </ScrollView>
     </View>
   );
 }
@@ -886,36 +670,33 @@ export default function UsersDetails() {
 /** Mirrors the profile's own rhythm so the cross-fade does not move anything. */
 function OwnerSkeleton() {
   return (
-    <View style={{ paddingTop: PROFILE_GAP, gap: PROFILE_GAP }}>
-      <View style={{ gap: FACTS_GAP }}>
-        <View style={{ alignItems: "center", gap: NAME_GAP }}>
-          <Skeleton
-            width={AVATAR_SIZE}
-            height={AVATAR_SIZE}
-            borderRadius={radius.full}
-          />
-          <Skeleton width={140} height={21} borderRadius={radius.button} />
-        </View>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            gap: 24,
-            // The facts row's own 16 top and bottom.
-            paddingVertical: 16,
-          }}
-        >
-          {[0, 1, 2].map((index) => (
-            <Skeleton key={index} width={72} height={69} borderRadius={radius.card} />
-          ))}
-        </View>
+    <View>
+      <View
+        style={{
+          alignItems: "center",
+          gap: IDENTITY_GAP_SOLO,
+          paddingTop: IDENTITY_PAD_TOP,
+          paddingBottom: IDENTITY_PAD_BOTTOM,
+        }}
+      >
+        <Skeleton width={AVATAR_SIZE} height={AVATAR_SIZE} borderRadius={radius.full} />
+        <Skeleton width={140} height={28} borderRadius={radius.button} />
       </View>
-      <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
-        <Skeleton
-          width="100%"
-          height={BUTTON_HEIGHT}
-          borderRadius={BUTTON_RADIUS}
-        />
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "center",
+          gap: 24,
+          // The facts strip's own 16 above and below its 64pt columns.
+          paddingVertical: 16,
+        }}
+      >
+        {[0, 1, 2].map((index) => (
+          <Skeleton key={index} width={72} height={64} borderRadius={radius.card} />
+        ))}
+      </View>
+      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: TRUST_PAD_TOP }}>
+        <Skeleton width="100%" height={BUTTON_HEIGHT} borderRadius={radius.button} />
       </View>
     </View>
   );

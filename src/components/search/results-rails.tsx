@@ -1,5 +1,5 @@
-import { Text } from "@/components/core";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius } from "@/lib/design-tokens";
+import { Chip, Text } from "@/components/core";
+import { SCREEN_GUTTER, density, radius } from "@/lib/design-tokens";
 import { selectionFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 import React, { forwardRef, useEffect, useRef } from "react";
@@ -19,43 +19,46 @@ import { AdjustmentsHorizontalIcon } from "react-native-heroicons/outline";
  * it) rather than squeezed or wrapped at 360dp.
  */
 
-// Off the 390pt frame: 44pt pills 8 apart, 16 of padding either side of a label.
+// The 2.1 results frames (2089:31917): 40pt rows, 8 apart.
 const GAP = 8;
+// 40pt pills and chips keep the 44pt target with 2 above and below.
+const SLOP = { top: 2, bottom: 2, left: 0, right: 0 };
 
 interface PillProps {
   label: string;
   selected?: boolean;
-  /** A quick chip: the frame outlines it a step darker than the bar's pills. */
-  strong?: boolean;
   icon?: React.ReactNode;
   role?: "button" | "radio" | "checkbox";
   accessibilityLabel?: string;
   accessibilityHint?: string;
   onPress: () => void;
-  onLayout?: (layout: LayoutRectangle) => void;
 }
 
-/** The sheet's spec chip (spec-filter.tsx), at the row's 44pt height. */
-function Pill({ label, selected = false, strong = false, icon, role = "button", accessibilityLabel, accessibilityHint, onPress, onLayout }: PillProps) {
+/**
+ * The frame's "Filter pill": the kit Chip's box (40, r12, 1px line, Chip
+ * Selected colours when on) but with a 16 icon 8 from the label, where Chip
+ * has gap 6, so it is not a Chip.
+ */
+function Pill({ label, selected = false, icon, role = "button", accessibilityLabel, accessibilityHint, onPress }: PillProps) {
   const { color } = useTheme();
   return (
     <TouchableOpacity
-      onLayout={onLayout && ((event) => onLayout(event.nativeEvent.layout))}
       accessibilityRole={role}
       accessibilityState={role === "button" ? { selected } : { checked: selected }}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
+      hitSlop={SLOP}
       onPress={() => {
         selectionFeedback();
         onPress();
       }}
       style={{
-        height: MIN_TOUCH_TARGET,
+        height: density.chip,
         paddingHorizontal: 16,
-        borderRadius: radius.full,
+        borderRadius: radius.button,
         borderWidth: 1,
-        borderColor: selected ? color.brand : strong ? color.textDim : color.inputLine,
-        backgroundColor: selected ? color.brandWash : "transparent",
+        borderColor: selected ? color.brand : color.line,
+        backgroundColor: selected ? color.brandPanel : color.surface,
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
@@ -63,14 +66,22 @@ function Pill({ label, selected = false, strong = false, icon, role = "button", 
     >
       {icon}
       <Text
-        fontSize="text-md"
-        fontWeight={selected ? "font-semibold" : "font-normal"}
+        fontSize="text-sm"
+        fontWeight={selected ? "font-semibold" : "font-medium"}
         style={{ color: selected ? color.brandText : color.text }}
         numberOfLines={1}
       >
         {label}
       </Text>
     </TouchableOpacity>
+  );
+}
+
+/** The unticked box on "Delivers to me": 16, r4, a 1.5 stroke at 60%. */
+function Checkbox() {
+  const { color } = useTheme();
+  return (
+    <View style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 1.5, borderColor: color.textDim }} />
   );
 }
 
@@ -121,7 +132,7 @@ export function CategoryRail({ parentLabel, onOpenParent, items, selectedKey, on
   };
   useEffect(() => reveal(selectedKey), [selectedKey]);
   const crumb = (
-    <Text fontSize="text-md" style={{ color: color.textDim }} numberOfLines={1}>
+    <Text fontSize="text-sm" fontWeight="font-medium" style={{ color: color.textDim }} numberOfLines={1}>
       {parentLabel} ›
     </Text>
   );
@@ -142,7 +153,8 @@ export function CategoryRail({ parentLabel, onOpenParent, items, selectedKey, on
           accessibilityRole="link"
           accessibilityLabel={`All of ${parentLabel}`}
           onPress={onOpenParent}
-          style={{ height: MIN_TOUCH_TARGET, justifyContent: "center" }}
+          hitSlop={SLOP}
+          style={{ height: density.chip, justifyContent: "center" }}
         >
           {crumb}
         </TouchableOpacity>
@@ -150,15 +162,20 @@ export function CategoryRail({ parentLabel, onOpenParent, items, selectedKey, on
         crumb
       )}
       {[{ key: "", label: "All" }, ...items].map((item) => (
-        <Pill
+        <Chip
           key={item.key || "all"}
           label={item.label}
-          role="radio"
+          accessibilityRole="radio"
+          accessibilityState={{ checked: item.key === selectedKey }}
+          hitSlop={SLOP}
           selected={item.key === selectedKey}
           // A second tap on the chosen chip would re-run the same search.
-          onPress={() => item.key !== selectedKey && onSelect(item.key)}
-          onLayout={(layout) => {
-            layouts.current[item.key] = layout;
+          onPress={() => {
+            selectionFeedback();
+            if (item.key !== selectedKey) onSelect(item.key);
+          }}
+          onLayout={(event) => {
+            layouts.current[item.key] = event.nativeEvent.layout;
             if (item.key === selectedKey) reveal(item.key);
           }}
         />
@@ -193,12 +210,15 @@ export function FilterBar(props: FilterBarProps) {
   return (
     <Row>
       <Pill
-        label="Filters"
+        // The " •" marks a set filter, as the sheet's tabs do (2089:32165).
+        label={props.filtersActive ? "Filters •" : "Filters"}
+        accessibilityLabel="Filters"
         accessibilityHint={props.hint}
         selected={props.filtersActive}
         icon={
           <AdjustmentsHorizontalIcon
-            size={20}
+            size={16}
+            strokeWidth={1.5}
             color={props.filtersActive ? color.brandText : color.text}
           />
         }
@@ -217,6 +237,8 @@ export function FilterBar(props: FilterBarProps) {
           label={props.deliver.on ? "Delivers to me ✕" : "Delivers to me"}
           role="checkbox"
           selected={props.deliver.on}
+          // Ticked, the pill drops the box for the ✕ (2089:32001).
+          icon={props.deliver.on ? undefined : <Checkbox />}
           accessibilityLabel="Delivers to me"
           onPress={props.deliver.onPress}
         />
@@ -228,7 +250,6 @@ export function FilterBar(props: FilterBarProps) {
         <Pill
           key={chip.value}
           label={chip.value}
-          strong
           role="checkbox"
           selected={chip.on}
           accessibilityLabel={props.chipSpecLabel ? `${props.chipSpecLabel}: ${chip.value}` : chip.value}

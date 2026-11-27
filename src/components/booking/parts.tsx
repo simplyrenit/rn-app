@@ -51,9 +51,18 @@ const THUMB = 56;
  * The product's photo, or the frames' grey tile with a camera when there is none. `more`: a booking's other items, "+2",
  * in the corner (cart plan §3.7, CT-30a).
  */
-export function Thumb({ uri, more }: { uri?: string | null; more?: string | null }) {
+export function Thumb({
+  uri,
+  more,
+  size = THUMB,
+}: {
+  uri?: string | null;
+  more?: string | null;
+  /** The cart's lines draw it at 64 (2089:26744, 28848); every other booking screen keeps 56. */
+  size?: number;
+}) {
   const { color } = useTheme();
-  const box = { width: THUMB, height: THUMB, borderRadius: 8 } as const;
+  const box = { width: size, height: size, borderRadius: 8 } as const;
   const photo = uri ? (
     <Image source={{ uri }} style={box} contentFit="cover" transition={150} accessible={false} />
   ) : (
@@ -197,7 +206,7 @@ export function MoneyLine({
   );
 }
 
-type NoticeTone = "info" | "warning" | "brand" | "danger" | "success";
+type NoticeTone = "info" | "warning" | "brand" | "danger" | "success" | "neutral";
 
 /**
  * The kit Notice card (figma/00 2074:14388): a tinted note with an icon in the tone's colour — the deposit note, the
@@ -224,8 +233,11 @@ export function Notice({
     danger: { bg: color.dangerWash, fg: color.danger },
     // G10: money coming back (cart CT-29b, CT-47a).
     success: { bg: color.successWash, fg: color.success },
+    // ENG-429: a fact with no tone to it, "This owner is not taking bookings right now" (04 2089:22597): the
+    // surface-muted card with the glyph at 70%.
+    neutral: { bg: color.surfaceMuted, fg: color.textBody },
   }[kitTone];
-  const glyph = icon ?? { info: "info", warning: "warning", danger: "warning", success: "check" }[kitTone];
+  const glyph = icon ?? { info: "info", warning: "warning", danger: "warning", success: "check", neutral: "info" }[kitTone];
   const Icon =
     glyph === "clock"
       ? ClockIcon

@@ -59,9 +59,16 @@ const isUsable = (c?: { lat?: number; long?: number } | null) =>
  * rather than a wrong number.
  */
 export function useViewerCoordinates(): DiscoveryCoordinates | null {
-  const [coords, setCoords] = useState<DiscoveryCoordinates | null>(null);
+  // Dev only: a design fixture's session user is the viewer (ENG-429), as `attribution.ts` reads the session, so a
+  // fixture prints a fixed distance and never asks for location. Without a usable seed (no fixture, or 0/0) this is
+  // the device's own location as before; `__DEV__` is false in release, so the require is dropped there.
+  const seeded = __DEV__
+    ? (require("@/dev/design-fixtures/session").designSession()?.user.coordinates as DiscoveryCoordinates | undefined)
+    : undefined;
+  const [coords, setCoords] = useState<DiscoveryCoordinates | null>(isUsable(seeded) ? seeded! : null);
 
   useEffect(() => {
+    if (isUsable(seeded)) return;
     let cancelled = false;
     void getDiscoveryCoordinates().then((value) => {
       if (!cancelled && isUsable(value)) setCoords(value as DiscoveryCoordinates);

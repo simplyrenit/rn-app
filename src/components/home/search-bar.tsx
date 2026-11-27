@@ -4,7 +4,7 @@ import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
-import { MagnifyingGlassIcon } from "react-native-heroicons/outline";
+import { MagnifyingGlassIcon } from "react-native-heroicons/mini";
 import { Text } from "../core";
 
 // Measured off the Figma topbar: a 48pt box (12 + 24 + 12) with a 12pt radius.
@@ -96,7 +96,8 @@ export function SearchBar() {
           justifyContent: "center",
         }}
       >
-        <MagnifyingGlassIcon size={24} color={color.textBody} strokeWidth={2} />
+        {/* The 2.1 frame draws the solid mini glyph scaled to 24, at 70% black. */}
+        <MagnifyingGlassIcon size={24} color={color.textBody} />
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>

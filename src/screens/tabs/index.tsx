@@ -15,6 +15,12 @@ import { useTheme } from "@/lib/theme";
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 
+// The 2.1 Home frames (2083:15120 / 2083:15579): the cart sits 14 from the
+// right edge, and the request block is 32 above the card and 24 below it.
+const CART_END_INSET = 14;
+const REQUEST_TOP = 32;
+const REQUEST_BOTTOM = 24;
+
 export default function Home() {
   const { isAuthenticated, fetchCategories } = useGlobalContext();
   const { getNotifications } = useNotifications();
@@ -68,10 +74,12 @@ export default function Home() {
             control beside the search. */}
         {(cart?.count ?? 0) > 0 ? (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <View style={{ flex: 1, marginRight: -12 }}>
+            {/* 2083:15579: the field narrows to 308 and ends where the 44pt
+                cart starts (x 332), 14 from the edge. */}
+            <View style={{ flex: 1, marginRight: -SCREEN_GUTTER }}>
               <SearchBar />
             </View>
-            <CartButton from="home" style={{ marginRight: SCREEN_GUTTER - 10 }} />
+            <CartButton from="home" style={{ marginRight: CART_END_INSET }} />
           </View>
         ) : (
           <SearchBar />
@@ -80,10 +88,9 @@ export default function Home() {
       <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
-        // The tab bar is part of the layout, not floating over the screen, so the
-        // scroll already ends above it; padding by its height again left a
-        // tab-bar-sized blank (105pt here) after the last item on every phone.
-        contentContainerStyle={{ paddingBottom: 24 }}
+        // No bottom padding: the tab bar is part of the layout, so the scroll
+        // already ends above it (padding by its height left a 105pt blank), and
+        // the request block carries the frame's 24 below the card itself.
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -101,9 +108,13 @@ export default function Home() {
             <Popular />
           </RailDedupeProvider>
         </View>
-        {/* The rails already carry 16 below them, and the design puts another 16
-            above the request card. */}
-        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16 }}>
+        <View
+          style={{
+            paddingHorizontal: SCREEN_GUTTER,
+            paddingTop: REQUEST_TOP,
+            paddingBottom: REQUEST_BOTTOM,
+          }}
+        >
           <Disclaimer card mt={0} mb={0} />
         </View>
       </ScrollView>
