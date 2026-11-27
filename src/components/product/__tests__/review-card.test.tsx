@@ -71,6 +71,19 @@ describe("ReviewCard", () => {
     expect(outer).toEqual(expect.objectContaining({ minHeight: 182, padding: 15, borderWidth: 1, gap: 24 }));
   });
 
+  it("detail takes ENG-427's owner-profile width/height in pt", () => {
+    let r: any;
+    act(() => {
+      r = TestRenderer.create(
+        <ReviewCard variant="detail" width={285} height={190} reviewText="x" reviewerName="A" reviewDate="2026-10-12" reviewerImage="" />
+      );
+    });
+    mounted.push(r);
+    expect(StyleSheet.flatten(r.root.findAllByType(View)[0].props.style)).toEqual(
+      expect.objectContaining({ width: 285, minHeight: 190 })
+    );
+  });
+
   it("default is unchanged: its own body and author, no ExpandableText", () => {
     const r = render();
     expect(r.root.findAllByType(ExpandableText)).toHaveLength(0);

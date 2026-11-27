@@ -64,6 +64,17 @@ const SEARCH_INNER = SEARCH_HEIGHT - 2;
 // column with 16 between rows.
 const MAP_HEIGHT = 300;
 const MAP_VISIBLE = 230;
+/**
+ * The panel does not scroll (it holds the Places and nearby-places lists), so a
+ * short screen shows less map: the window minus what must fit around it, never
+ * more than the frame's 230 (a 390x844 phone keeps the frame). 520 = status bar
+ * 24 + header 56 + CTA+Text bar 120 + a 48 nav inset, and the panel down to one
+ * nearby row (24 + search 48 + address 48 + current 48 + a 44 row, 16 gaps).
+ * The location-off banner takes 108 more. 80 keeps a strip of map to tap.
+ */
+const MAP_ROOM_AROUND = 520;
+const BANNER_ROOM = 108;
+const MAP_MIN_VISIBLE = 80;
 const PANEL_RADIUS = 24;
 const PANEL_RULE = 2;
 const PANEL_GAP = 16;
@@ -680,6 +691,13 @@ const LocationModal = ({}) => {
   }, [location, mapRegion, selectedLocation]);
 
   const confirmBusy = signUpLoading || isFetchingLocation;
+  const mapVisible = Math.max(
+    MAP_MIN_VISIBLE,
+    Math.min(
+      MAP_VISIBLE,
+      winH - MAP_ROOM_AROUND - (hasPermission === false ? BANNER_ROOM : 0)
+    )
+  );
 
   return (
     <SafeAreaView
@@ -768,7 +786,7 @@ const LocationModal = ({}) => {
             <View
               style={{
                 flex: 1,
-                marginTop: keyboardVisible ? 0 : MAP_VISIBLE,
+                marginTop: keyboardVisible ? 0 : mapVisible,
                 backgroundColor: color.canvas,
                 borderTopWidth: PANEL_RULE,
                 borderColor: color.line,

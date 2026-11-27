@@ -120,9 +120,10 @@ export default function Rating({
             hitSlop={{
               top: (MIN_TOUCH_TARGET - size) / 2,
               bottom: (MIN_TOUCH_TARGET - size) / 2,
-              // Wide enough to reach the 44pt floor without overlapping the
-              // neighbouring star's target (the stars sit `gap` apart), so a
-              // near-miss cannot silently pick the wrong rating.
+              // Each target is max(size + gap, 44 - gap) wide: half the gap
+              // each side, so neighbours meet, or more for a small star. It
+              // reaches 44pt only when size + gap >= 44 (write-review's
+              // 28 / 8 gives 36).
               left: Math.max(gap / 2, (MIN_TOUCH_TARGET - size - gap) / 2),
               right: Math.max(gap / 2, (MIN_TOUCH_TARGET - size - gap) / 2),
             }}

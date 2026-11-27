@@ -29,6 +29,10 @@ interface ReviewCardProps {
   onShowMore?: () => void;
   /** What VoiceOver says the control opens. Defaults to the listing's reviews. */
   showMoreHint?: string;
+  /** Opt-in, `detail` only, pt: overrides the `size` percentage (ENG-427's owner-profile rail card). */
+  width?: number;
+  /** Opt-in, `detail` only, pt: overrides the 182 minimum height. */
+  height?: number;
 }
 
 const PREVIEW_CHARS = 140;
@@ -54,13 +58,15 @@ function DetailCard({
   size,
   onShowMore,
   showMoreHint = "Opens every review for this listing",
+  width,
+  height,
 }: ReviewCardProps) {
   const { color } = useTheme();
   return (
     <View
       style={{
-        width: size ? `${size}%` : "100%",
-        minHeight: DETAIL_HEIGHT,
+        width: width ?? (size ? `${size}%` : "100%"),
+        minHeight: height ?? DETAIL_HEIGHT,
         // 15 inside the 1pt border: Figma strokes inside the 16 padding, an RN border adds to it.
         padding: 15,
         borderRadius: radius.card,
@@ -146,13 +152,9 @@ const DefaultCard: React.FC<ReviewCardProps> = ({
   reviewDate,
   reviewerImage,
   size,
-  variant = "default",
-  onShowMore,
-  showMoreHint = "Opens every review for this listing",
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const { color, shadow } = useTheme();
-  const detail = variant === "detail";
 
   const body = reviewText ?? "";
   const isLong = body.length > PREVIEW_CHARS;
@@ -165,69 +167,41 @@ const DefaultCard: React.FC<ReviewCardProps> = ({
           // cannot resolve at build time, so the width was silently dropped.
           width: size ? `${size}%` : "100%",
           padding: 16,
-          borderRadius: detail ? radius.card : radius.group,
+          borderRadius: radius.group,
           borderWidth: 1,
           borderColor: color.line,
           backgroundColor: color.surface,
-          gap: detail ? 24 : 14,
+          gap: 14,
         },
-        // The detail card sits on a page that rules its own blocks with
-        // hairlines; a shadow under it would be a second elevation language.
-        // `space-between` holds the author row on the bottom edge, so a rail
-        // mixing reviews that are cut off with reviews that are not still
-        // lines its avatars up.
-        detail
-          ? { minHeight: DETAIL_HEIGHT, justifyContent: "space-between" }
-          : shadow,
+        shadow,
       ]}
     >
-      {detail ? (
-        <ExpandableText
-          text={body}
-          fontSize="text-sm"
-          lines={3}
-          collapsedHeight={DETAIL_BODY_HEIGHT}
-          controlGap={4}
-          control="underline"
-          onPress={onShowMore}
-          accessibilityHint={
-            onShowMore ? showMoreHint : undefined
-          }
-        />
-      ) : (
-        // Height follows the content. A fixed h-52 left a void under short
-        // reviews and clipped long ones.
-        <View style={{ gap: 6 }}>
-          <Text fontSize="text-sm" tone="hi">
-            {isExpanded ? body : truncateWords(body, PREVIEW_CHARS)}
-          </Text>
-          {isLong && (
-            <TouchableOpacity
-              onPress={() => setIsExpanded((open) => !open)}
-              accessibilityRole="button"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
-                {isExpanded ? "Show less" : "Show more"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
+      {/* Height follows the content. A fixed h-52 left a void under short
+          reviews and clipped long ones. */}
+      <View style={{ gap: 6 }}>
+        <Text fontSize="text-sm" tone="hi">
+          {isExpanded ? body : truncateWords(body, PREVIEW_CHARS)}
+        </Text>
+        {isLong && (
+          <TouchableOpacity
+            onPress={() => setIsExpanded((open) => !open)}
+            accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+              {isExpanded ? "Show less" : "Show more"}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: detail ? 8 : 10,
-        }}
-      >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <Avatar uri={reviewerImage} name={reviewerName} size={40} />
         <View style={{ flex: 1 }}>
           <Text fontSize="text-sm" fontWeight="font-bold" numberOfLines={1}>
             {reviewerName}
           </Text>
-          <Text fontSize={detail ? "text-xs" : "text-sm"} tone="body">
+          <Text fontSize="text-sm" tone="body">
             {moment(reviewDate).fromNow()}
           </Text>
         </View>

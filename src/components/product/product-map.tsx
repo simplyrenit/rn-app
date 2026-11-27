@@ -197,9 +197,10 @@ interface Props extends ProductMapProps {
    */
   placeholder?: boolean;
   /**
-   * Opt-in. `detail` is the map as Figma 1:9120 draws it on Product Details: a
-   * fixed ring marker and a caption chip. The default is the original 500m circle
-   * and pin, which the post wizard's review step still shows.
+   * Opt-in. `detail` is the 2.1 map card (04 2083:15805): an r12 hairline card,
+   * the 180 map with a fixed ring marker, then the place and distance caption
+   * under it. The product page and the post wizard's preview (list-flow,
+   * ENG-435) use it. The default is the original 500m circle and pin.
    */
   variant?: "default" | "detail";
 }

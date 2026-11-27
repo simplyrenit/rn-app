@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import React from "react";
-import { Text } from "react-native";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
 // No type package for it is installed (it comes with jest-expo); the tests only need create and act.
 // @ts-ignore
 import TestRenderer, { act } from "react-test-renderer";
@@ -191,6 +191,25 @@ describe("LocationModal (2089:31103)", () => {
     expect(texts(r)).toEqual(
       expect.arrayContaining(["Location is off", "No location chosen yet", "Search or tap the map to choose a spot."])
     );
+  });
+
+  it("the panel's map offset: the frame's 230 on a tall window, less on a short one, least with the banner", async () => {
+    const panelTop = (r: any) =>
+      StyleSheet.flatten(r.root.findAll((n: any) => n.type === View && StyleSheet.flatten(n.props.style)?.borderTopLeftRadius === 24)[0].props.style)
+        .marginTop;
+    const size = (height: number) =>
+      act(() => Dimensions.set({ window: { width: 360, height, scale: 3, fontScale: 1 }, screen: { width: 360, height, scale: 3, fontScale: 1 } }));
+    const tall = Dimensions.get("window");
+    try {
+      size(844);
+      expect(panelTop(await render({ requestId: "r5", design }))).toBe(230);
+      size(667);
+      expect(panelTop(await render({ requestId: "r6", design }))).toBe(147);
+      mockLocation.getForegroundPermissionsAsync.mockImplementationOnce(async () => ({ status: "denied", canAskAgain: false, granted: false }));
+      expect(panelTop(await render({ requestId: "r7" }))).toBe(80);
+    } finally {
+      act(() => Dimensions.set({ window: tall, screen: tall }));
+    }
   });
 
   it("location services off: the message, and Confirm stays off with nothing chosen", async () => {

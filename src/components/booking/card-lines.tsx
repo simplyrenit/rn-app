@@ -63,7 +63,10 @@ export function ShopHead({
               {name}
             </Text>
             {verified ? (
-              <CheckCircleIcon size={16} color={color.brandText} accessibilityLabel="Verified business" />
+              // An SVG is not focusable, so the View carries what VoiceOver/TalkBack say.
+              <View accessible accessibilityRole="image" accessibilityLabel="Verified business">
+                <CheckCircleIcon size={16} color={color.brandText} />
+              </View>
             ) : null}
           </View>
           {sub ? (

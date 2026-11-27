@@ -402,6 +402,14 @@ export default function WriteReviewScreen() {
           onPress: handleSubmit,
           disabled: !reviewValid,
           loading: isLoading,
+          // The bar has no hint slot, so a disabled Submit says why in its label.
+          accessibilityLabel: reviewValid
+            ? undefined
+            : `Submit feedback. ${
+                isOwner
+                  ? "You can’t review your own listing"
+                  : "Write both reviews and set both ratings to submit"
+              }`,
         }}
       />
     </NonScrollableContainer>
