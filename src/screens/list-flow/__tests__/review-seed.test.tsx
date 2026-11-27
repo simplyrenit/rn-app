@@ -34,7 +34,7 @@ jest.mock("@/lib/theme", () => {
   return { useTheme: () => ({ color: lightColors, isDark: false }) };
 });
 jest.mock("@react-navigation/native", () => ({ useRoute: () => ({ params: mockParams }) }));
-jest.mock("@/lib/types", () => ({ useTypedNavigation: () => ({ navigate: mockNavigate }) }));
+jest.mock("@/lib/types", () => ({ useTypedNavigation: () => ({ navigate: mockNavigate, addListener: () => () => {} }) }));
 jest.mock("@/lib/category-icons", () => ({ CategoryIcon: () => null, categoryDisplayName: (t: string) => t }));
 jest.mock("expo-image", () => ({ Image: () => null }));
 jest.mock("react-native-heroicons/mini", () => ({ PlusIcon: () => null }));

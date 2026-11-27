@@ -15,7 +15,7 @@ let mockOwnerAccepted = false;
 const mockPresent = jest.fn();
 const mockPickPhotos = jest.fn(async () => [] as unknown[]);
 const mockAcceptOwnerTerms = jest.fn(async () => ({ owner: { version: "v1", url: "https://x", accepted: true } }));
-const mockNavigation = { navigate: jest.fn(), setParams: jest.fn(), dispatch: jest.fn() };
+const mockNavigation = { navigate: jest.fn(), setParams: jest.fn(), dispatch: jest.fn(), addListener: () => () => {} };
 const mockReal: any = {};
 
 const photo = (n: number) => ({ id: `p${n}`, localUri: "file://p", source: "camera" as const, status: "done" as const });
