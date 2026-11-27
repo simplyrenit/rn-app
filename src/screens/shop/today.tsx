@@ -540,9 +540,16 @@ export function ShopTodayView({ bottomPad, design }: { bottomPad: number; design
             <Text role="screenTitle" accessibilityRole="header" numberOfLines={2} style={{ flex: 1 }}>
               {shop?.name ? softBreaks(shop.name) : "Your shop"}
             </Text>
-            {/* 2091:20977 "Open row": the label's line sits at the switch's top, not centred on it. */}
-            <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
-              <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} tone={open.is_open ? "success" : "body"}>
+            {/* 2091:20977 "Open row": 31 high, the frame's switch, on both platforms (Android's switch is shorter); the
+                label's line sits at the row's top, not centred on it. */}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 31 }}>
+              <Text
+                fontSize="text-sm"
+                fontWeight="font-semibold"
+                lineHeight={20}
+                tone={open.is_open ? "success" : "body"}
+                style={{ alignSelf: "flex-start" }}
+              >
                 {open.is_open ? "Open" : "Closed"}
               </Text>
               <AppSwitch

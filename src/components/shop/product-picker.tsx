@@ -46,7 +46,9 @@ export function ProductPicker({
               flexDirection: "row",
               alignItems: "center",
               gap: 8,
-              minHeight: 48,
+              // 48 on both platforms (2094:21970 field 290×48): Android's input adds its own font padding to any
+              // vertical padding, so the field fills the box instead of padding out from its line.
+              height: 48,
               paddingHorizontal: 16,
               borderRadius: 12,
               borderWidth: 1,
@@ -64,9 +66,11 @@ export function ProductPicker({
               placeholderTextColor={color.placeholder}
               accessibilityLabel="Search your items"
               returnKeyType="search"
+              // The frame's caret is the brand; Android's default is the system accent.
+              cursorColor={color.brand}
               // The core Text's cap, and the family by name: Android picks no face from a weight.
               maxFontSizeMultiplier={1.4}
-              style={{ flex: 1, color: color.text, fontFamily: fontFamily.regular, fontSize: 16, paddingVertical: 12 }}
+              style={{ flex: 1, alignSelf: "stretch", color: color.text, fontFamily: fontFamily.regular, fontSize: 16, paddingVertical: 0 }}
             />
           </View>
           <TouchableOpacity
