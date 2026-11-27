@@ -26,11 +26,13 @@ import { usePressFeedback } from "./use-press-feedback";
 export type ButtonVariant = "primary" | "outline" | "warning" | "ghost";
 export type ButtonSize = "default" | "compact";
 /**
- * `tonal` applies to `outline` only: the kit's #EDEDFC Secondary with no edge.
- * `brand` (default) and `muted` apply to `ghost` only: a purple link, or the
- * 70% black of the Confirm sheet's Cancel. Any other pairing is ignored.
+ * `tonal` and `neutral` apply to `outline` only: the kit's #EDEDFC Secondary
+ * with no edge, or the white Secondary with a #E6E6E6 edge and a black 14/20
+ * label (the Home request card, 2083:15120; the sign-in and owner-profile
+ * buttons). `brand` (default) and `muted` apply to `ghost` only: a purple link,
+ * or the 70% black of the Confirm sheet's Cancel. Any other pairing is ignored.
  */
-export type ButtonTone = "tonal" | "brand" | "muted";
+export type ButtonTone = "tonal" | "neutral" | "brand" | "muted";
 
 interface ButtonLabelStyle {
   color: string;
@@ -53,8 +55,9 @@ interface ButtonLabelStyle {
  *    destructive (2110:30387) is ConfirmSheet's own, passed through `style`.
  *  - Primary is r11 and the other boxes r12, as the kit draws them side by side.
  *  - Labels: Primary 16/24 SemiBold (14/20 compact); Secondary and Destructive
- *    14/21 (the library's 150%); tonal 14/20 (Empty state, 2074:14392); Text and
- *    Destructive Bold, the rest SemiBold.
+ *    14/21 (the library's 150%); tonal 14/20 (Empty state, 2074:14392) and
+ *    neutral 14/20 black (Home request card, 2083:15120); Text and Destructive
+ *    Bold, the rest SemiBold.
  *  - Disabled: only Primary changes fill — to #CAC8F7 with its white label, as
  *    SPEC asks. In dark that fill is #292929, where a full-white label reads as
  *    live, so the dark label drops to `textDim`. The others keep their box and
@@ -90,6 +93,21 @@ export function resolveButtonStyle(
 
   switch (variant) {
     case "outline":
+      if (tone === "neutral")
+        return {
+          container: {
+            ...base,
+            ...ring,
+            backgroundColor: color.surface,
+            borderWidth: 1,
+            borderColor: color.line,
+          },
+          label: {
+            ...secondaryLabel,
+            color: blocked ? color.textDim : color.text,
+            lineHeight: 20,
+          },
+        };
       return tone === "tonal"
         ? {
             container: { ...base, ...ring, backgroundColor: color.brandPanel },
@@ -172,7 +190,7 @@ interface Props extends React.ComponentProps<typeof TouchableOpacity> {
   children: React.ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
-  /** See `ButtonTone`: `tonal` for `outline`, `brand` | `muted` for `ghost`. */
+  /** See `ButtonTone`: `tonal` | `neutral` for `outline`, `brand` | `muted` for `ghost`. */
   tone?: ButtonTone;
   /**
    * Shows a spinner beside the label and blocks further presses. Use this for

@@ -45,7 +45,7 @@ describe("design fixtures", () => {
 
   it("serves the active fixture, passes other reads and refuses other writes", async () => {
     const instance = net();
-    expect(activateFixture("2089:24546")).toBe(true);
+    expect(activateFixture("2089:27951")).toBe(true);
     // The app's real endpoint, so the fixture key is tested against the URL the context requests.
     const { data } = await instance.get(GET_CATEGORIES);
     expect(data).toHaveLength(15);
@@ -81,7 +81,7 @@ describe("design fixtures", () => {
     await expect(instance.post("https://qa.example/api/cart/", {})).rejects.toMatchObject({ response: { status: 409 } });
 
     // A sessionless fixture ends the session and lets reads through again.
-    activateFixture("2089:24546");
+    activateFixture("2089:27951");
     expect(designSession()).toBeNull();
     expect((await instance.get("https://qa.example/api/home/")).data).toBe("net");
 

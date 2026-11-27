@@ -9,7 +9,7 @@ import { resolveButtonStyle } from "../core/button";
 
 const resolve = (
   variant: "primary" | "outline" | "warning" | "ghost",
-  extra: { size?: "default" | "compact"; tone?: "tonal" | "brand" | "muted"; blocked?: boolean } = {}
+  extra: { size?: "default" | "compact"; tone?: "tonal" | "neutral" | "brand" | "muted"; blocked?: boolean } = {}
 ) =>
   resolveButtonStyle(
     { variant, size: extra.size ?? "default", tone: extra.tone, blocked: extra.blocked ?? false },
@@ -56,6 +56,23 @@ describe("Button on the 2.1 kit (ENG-426)", () => {
     expect(container).toMatchObject({ minHeight: 44, backgroundColor: "#EDEDFC", paddingHorizontal: 20 });
     expect(container.borderWidth).toBeUndefined();
     expect(label).toMatchObject({ color: "#635BE8", lineHeight: 20 });
+  });
+
+  it("draws tone=neutral as the white Secondary with a #E6E6E6 edge, the ring and a black 14/20 SemiBold label; 52 or 44 by size", () => {
+    const { container, label } = resolve("outline", { tone: "neutral" });
+    expect(container).toMatchObject({
+      minHeight: 52,
+      borderRadius: 12,
+      backgroundColor: "#FFFFFF",
+      borderWidth: 1,
+      borderColor: "#E6E6E6",
+      shadowOpacity: 0.04,
+    });
+    expect(label).toEqual({ color: "#000000", fontSize: "text-sm", fontWeight: "font-semibold", lineHeight: 20 });
+    expect(resolve("outline", { tone: "neutral", size: "compact" }).container.minHeight).toBe(44);
+    const dead = resolve("outline", { tone: "neutral", blocked: true });
+    expect(dead.container).toEqual(container);
+    expect(dead.label.color).toBe("rgba(0,0,0,0.60)");
   });
 
   it("draws ghost as the 44-high Text button, Bold 14/21, purple or 70% black", () => {

@@ -1,14 +1,15 @@
 import {
-  BackButton,
-  Button,
+  BottomBar,
   FieldShell,
-  StaticContainer,
+  SheetHeader,
+  SubpageHeader,
   Text,
   useFieldSurfaceStyle,
 } from "@/components/core";
+import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import DateRangePicker from "@/components/core/date-range-picker";
+import { NearbyPlaceRow } from "@/components/search/nearby-place-row";
 import { BOOKING_DAYS_AHEAD } from "@/lib/booking";
-import { useGlobalContext } from "@/context/global-context";
 import { ALL_PRODUCTS, GOOGLE_MAP_API_KEY } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { NearbyPlace, RouteProps, useTypedNavigation } from "@/lib/types";
@@ -19,36 +20,25 @@ import BottomSheet, {
 import { useRoute } from "@react-navigation/native";
 import axios from "axios";
 import * as Location from "expo-location";
-import { styled } from "nativewind";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { BackHandler, Platform, TouchableOpacity, View } from "react-native";
+import { BackHandler, Dimensions, Platform, TouchableOpacity, View } from "react-native";
 import { AutocompleteDropdown } from "react-native-autocomplete-dropdown";
 import {
   GestureHandlerRootView,
   ScrollView,
-  TextInput,
 } from "react-native-gesture-handler";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import {
+  CalendarIcon,
   MagnifyingGlassIcon,
   MapPinIcon,
   PencilSquareIcon,
   ViewfinderCircleIcon,
   XMarkIcon,
 } from "react-native-heroicons/outline";
-import { CalendarIcon } from "react-native-heroicons/solid";
-import {
-  MIN_TOUCH_TARGET,
-  SCREEN_GUTTER,
-  fontFamily,
-  radius,
-  ink,
-  colors,
-  space,
-} from "@/lib/design-tokens";
+import { SCREEN_GUTTER, fontFamily, radius } from "@/lib/design-tokens";
+import { sheetScrimOpacity } from "@/components/core/custom-bottom-sheet-modal";
 import { useTheme } from "@/lib/theme";
-
-const StyledBottomView = styled(BottomSheetView);
 
 // Title suggestions used to fire one request per keystroke, which made the
 // search field feel laggy on a real connection.
@@ -59,32 +49,41 @@ interface Coordinates {
   lng: number | undefined;
 }
 
-// Measured off the Figma "Search anything" frame. Each question is a 136pt block
-// (24 padding, a 24pt label, a 16pt gap, a 48pt control) and the blocks are
-// divided by a hairline. All three are open at once: the design has no collapsed
-// state, so the step-by-step disclosure this screen used to have is gone.
+/** Google's nearbysearch result carries `vicinity` too; `NearbyPlace` (shared) only types what the app read before. */
+type NearbyPlaceResult = NearbyPlace & { vicinity?: string };
+
+// Figma 2089:29597. Each question is a 136pt block (24 padding, a 16/24
+// SemiBold label, a 16pt gap, a 48pt field) and the blocks are divided by a
+// hairline. All three are open at once.
 const SECTION_PADDING = 24;
 const SECTION_GAP = 16;
-const HEADER_HEIGHT = 44;
 const FIELD_HEIGHT = 48;
-// The same 12 as `radius.input` today, but kept as its own number: it is the
-// search frame's radius (as the Home search field's is), not the form-input token.
-const FIELD_RADIUS = 12;
-const FIELD_PADDING = 16;
-const ICON_SIZE = 24;
-// Where the keyword text starts inside the field: 16 padding, the 24pt glyph and an
-// 8pt gap, less the ~13pt the dropdown library already insets its input by.
-const KEYWORD_TEXT_INSET = 34;
-const BAR_PADDING_V = 16;
-const BAR_ICON_SIZE = 20;
+// The frame's field: 12 inside the 1pt edge, a 20pt glyph, 8 to the text.
+const FIELD_PADDING = 12;
+const ICON_SIZE = 20;
+const ICON_GAP = 8;
+// The X sits 13 from the field's right edge, as the glyph does on the left;
+// the library's clear button is 26 wide around the 20pt glyph and pushed 8 in.
+const CLEAR_OFFSET = -3;
+// The where-sheet's own content: 8 under the title, 24 at the sides, 8 between rows.
+const SHEET_PAD_TOP = 8;
+const SHEET_GAP = 8;
+const SHEET_ROW = 56;
+const SHEET_ICON = 24;
+// The where-sheet's 50/75/90% stops, of the screen: gorhom's percentages are of its container, which starts under
+// the status bar, so 75% came out ~47pt short of the frame's 633 (2089:29793, 75% of 844).
+const WHERE_SNAPS = [0.5, 0.75, 0.9];
+
+type SearchDesign = { resting: true };
 
 export default function SearchScreen() {
   const navigation = useTypedNavigation();
-  const { theme } = useGlobalContext();
-  const isDark = theme === "dark";
-  const { color, shadow, fieldShadow } = useTheme();
+  const { color, isDark } = useTheme();
   const route = useRoute<RouteProps<"Search">>();
   const { what, where, coords } = route?.params ?? {};
+  // Dev-only design seed (ENG-427 D7): only DevFixture passes it. What? stays unfocused, so a frame's resting state
+  // (2089:29597, 29654) is on screen without the focus ring and the keyboard.
+  const design = __DEV__ ? (route?.params as { design?: SearchDesign } | undefined)?.design : undefined;
 
   const [selectedItem, setSelectedItem] = useState<string | null>(what ?? null);
   const [selectedLocationName, setSelectedLocationName] = useState<string | null>(
@@ -95,7 +94,7 @@ export default function SearchScreen() {
     longitude: 0,
   });
 
-  const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
+  const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlaceResult[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [selectedLocation, setSelectedLocation] = useState<Coordinates | null>(
@@ -345,7 +344,7 @@ export default function SearchScreen() {
     <BottomSheetBackdrop
       {...props}
       disappearsOnIndex={-1}
-      opacity={0.8}
+      opacity={sheetScrimOpacity(isDark, true)}
     />
   );
 
@@ -401,29 +400,28 @@ export default function SearchScreen() {
     []
   );
 
-  // One focus treatment for the whole app: the border changes colour and
-  // nothing else. The purple glow ring this field used to grow is a web
-  // pattern; iOS has never shipped one.
+  // One focus treatment for the whole app: the kit field's edge goes 1.5pt
+  // brand and nothing else moves (the surface hook takes the extra half point
+  // back out of the padding).
   const keywordSurface = useFieldSurfaceStyle({ focused: isFocus });
 
   const fieldBox = {
     minHeight: FIELD_HEIGHT,
-    // The design's 16 is measured from the outer edge, so the 1pt border is part of it.
-    paddingHorizontal: FIELD_PADDING - 1,
-    paddingVertical: 8,
-    borderRadius: FIELD_RADIUS,
-    // The design draws every control here in the hairline tone, in both themes.
-    borderColor: color.line,
+    paddingHorizontal: FIELD_PADDING,
+    paddingVertical: 0,
+    gap: ICON_GAP,
   };
 
   const divider = <View style={{ height: 1, backgroundColor: color.line }} />;
 
   // A Where / When row: leading glyph, the answer, and a pencil that says it can
-  // be changed. The design shows the pencil whether or not the row is filled.
+  // be changed. The design shows the pencil whether or not the row is filled;
+  // an unanswered row reads in the placeholder tone.
   const renderSelectRow = (
     label: string,
     value: string,
-    icon: React.ReactNode,
+    filled: boolean,
+    Icon: typeof MapPinIcon,
     onRowPress: () => void,
     hint: string
   ) => (
@@ -434,35 +432,30 @@ export default function SearchScreen() {
       onPress={onRowPress}
     >
       <FieldShell style={fieldBox}>
-        {icon}
-        <Text fontSize="text-md" numberOfLines={1} style={{ flex: 1 }}>
+        <Icon color={color.textDim} size={ICON_SIZE} strokeWidth={1.5} />
+        <Text fontSize="text-md" tone={filled ? "default" : "dim"} numberOfLines={1} style={{ flex: 1 }}>
           {value}
         </Text>
-        <PencilSquareIcon color={color.textBody} size={ICON_SIZE} />
+        <PencilSquareIcon color={color.textDim} size={ICON_SIZE} strokeWidth={1.5} />
       </FieldShell>
     </TouchableOpacity>
   );
 
+  const block = (label: string, control: React.ReactNode, raised = false) => (
+    <View style={{ padding: SECTION_PADDING, gap: SECTION_GAP, zIndex: raised ? 20 : undefined }}>
+      <Text fontSize="text-md" fontWeight="font-semibold">
+        {label}
+      </Text>
+      {control}
+    </View>
+  );
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <StaticContainer width={100}>
-        <View className="flex-1 w-full pt-3">
-          {/* Header: a centred title with the back arrow floated in its own 44pt box. */}
-          <View
-            style={{
-              height: HEADER_HEIGHT,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingHorizontal: SCREEN_GUTTER,
-            }}
-          >
-            <Text fontSize="text-base" fontWeight="font-bold">
-              Search anything
-            </Text>
-            <View style={{ position: "absolute", left: SCREEN_GUTTER, top: 0 }}>
-              <BackButton />
-            </View>
-          </View>
+      {/* No bottom edge: the Bottom bar carries the home-indicator inset itself. */}
+      <NonScrollableContainer>
+        <View style={{ flex: 1 }}>
+          <SubpageHeader title="Search anything" />
           {divider}
 
           <ScrollView
@@ -477,33 +470,9 @@ export default function SearchScreen() {
           >
             {/* What — the keyword. Above its siblings so the suggestions popover
                 is not clipped by the rows underneath it. */}
-            <View style={{ padding: SECTION_PADDING, gap: SECTION_GAP, zIndex: 20 }}>
-              <Text fontSize="text-md" fontWeight="font-bold">
-                What?
-              </Text>
-              <View
-                style={[
-                  keywordSurface,
-                  fieldBox,
-                  {
-                    // Pinned: the dropdown library adds its own vertical and
-                    // leading padding inside, which grew the field to ~61pt. The
-                    // glyph is laid over the left edge, and the input's own
-                    // leading inset is what places the text after it.
-                    height: FIELD_HEIGHT,
-                    paddingVertical: 0,
-                    paddingHorizontal: 0,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    borderColor: isFocus ? color.focus : color.line,
-                  },
-                ]}
-              >
-                <MagnifyingGlassIcon
-                  color={color.text}
-                  size={ICON_SIZE}
-                  style={{ position: "absolute", zIndex: 12, left: FIELD_PADDING - 1 }}
-                />
+            {block(
+              "What?",
+              <View style={[keywordSurface, { height: FIELD_HEIGHT, paddingHorizontal: 0, paddingVertical: 0 }]}>
                 <AutocompleteDropdown
                   ref={autocompleteDropdownRef}
                   dataSet={suggestionsList}
@@ -511,14 +480,22 @@ export default function SearchScreen() {
                     getSuggestions(text);
                     setSelectedItem(text); // Set selectedItem to the input text
                   }}
-                  // Transparent: the box above already paints the field's
-                  // surface, and a second one inside it drew a box in a box.
+                  // The bordered View above is the field; this inner row is what the
+                  // library measures to place its popover, so it sits inside the edge
+                  // and the popover lands the frame's 4pt under the field.
+                  inputHeight={FIELD_HEIGHT - 2 * Number(keywordSurface.borderWidth ?? 1)}
                   inputContainerStyle={{
                     backgroundColor: "transparent",
-                    borderRadius: FIELD_RADIUS,
-                    width: "100%",
-                    paddingLeft: KEYWORD_TEXT_INSET,
+                    alignItems: "center",
+                    paddingHorizontal: FIELD_PADDING,
                   }}
+                  LeftComponent={
+                    <MagnifyingGlassIcon color={color.textDim} size={ICON_SIZE} strokeWidth={1.5} />
+                  }
+                  rightButtonsContainerStyle={{ right: CLEAR_OFFSET }}
+                  // The library keys its X on the text typed into it, so a search reopened with its words (Edit
+                  // this search) had no X; the field's own value decides, as 2089:29654 draws it.
+                  showClear={Boolean(selectedItem)}
                   useFilter={false}
                   onFocus={() => {
                     setTimeout(() => setIsFocus(true), 100);
@@ -529,10 +506,10 @@ export default function SearchScreen() {
                   closeOnSubmit
                   onSubmit={() => setIsFocus(false)}
                   textInputProps={{
-                    placeholder: '"Washing machine"',
+                    placeholder: "“Washing machine”",
                     // The screen exists for exactly one purpose, so the field it
                     // exists for takes focus on open rather than costing a tap.
-                    autoFocus: true,
+                    autoFocus: !design?.resting,
                     autoCapitalize: "none",
                     autoComplete: "off",
                     autoCorrect: false,
@@ -541,26 +518,34 @@ export default function SearchScreen() {
                     maxFontSizeMultiplier: 1.4,
                     value: what && what === selectedItem ? what : selectedItem ?? undefined,
                     placeholderTextColor: color.placeholder,
+                    selectionColor: color.brand,
                     style: {
                       color: color.text,
                       fontFamily: fontFamily.regular,
                       fontSize: 16,
-                      width: "95%",
+                      paddingHorizontal: 0,
+                      marginLeft: ICON_GAP,
                     },
                   }}
                   suggestionsListContainerStyle={{
+                    // The measured row sits inside the 1pt edge; the panel is the
+                    // field's full 342.
+                    marginHorizontal: -1,
+                    width: undefined,
+                    alignSelf: "stretch",
                     backgroundColor: color.surface,
                     borderWidth: 1,
-                    // A hairline is not enough to separate a floating panel from
-                    // the surface behind it; the popover read as part of the page
-                    // and covered the first letter of the "Where?" heading.
-                    borderColor: color.inputLine,
+                    borderColor: color.line,
                     borderRadius: radius.input,
-                    width: "100%",
-                    // Elevation from the theme, not a hand-rolled shadow: light
-                    // lifts with a shadow, dark with the hairline above.
-                    ...shadow,
+                    paddingVertical: 4,
+                    // The frame's popover shadow: #00000014 at 0/8, blur 24.
+                    shadowColor: "#000000",
+                    shadowOpacity: 0.08,
+                    shadowRadius: 12,
+                    shadowOffset: { width: 0, height: 8 },
+                    elevation: 8,
                   }}
+                  ItemSeparatorComponent={<View />}
                   // The library's default "Nothing found" rendered dark grey on
                   // dark grey and floated over the "Where?" heading beneath it.
                   EmptyResultComponent={
@@ -586,152 +571,98 @@ export default function SearchScreen() {
                     getSuggestions("");
                   }}
                   suggestionsListMaxHeight={250}
-                  containerStyle={{
-                    flexGrow: 1,
-                  }}
+                  containerStyle={{ flex: 1, marginVertical: 0 }}
                   showChevron={false}
                   renderItem={(item) => (
-                    <Text fontSize="text-md" style={{ padding: 14 }}>
+                    <Text
+                      fontSize="text-md"
+                      numberOfLines={1}
+                      style={{ paddingVertical: 14, paddingHorizontal: 16 }}
+                    >
                       {item.title}
                     </Text>
                   )}
                   closeOnBlur={true}
                   ClearIconComponent={
-                    <XMarkIcon color={color.textBody} size={20} />
+                    <XMarkIcon color={color.textDim} size={ICON_SIZE} strokeWidth={1.5} />
                   }
                 />
-              </View>
-            </View>
+              </View>,
+              true
+            )}
             {divider}
 
             {/* Where — the place. */}
-            <View style={{ padding: SECTION_PADDING, gap: SECTION_GAP }}>
-              <Text fontSize="text-md" fontWeight="font-bold">
-                Where?
-              </Text>
-              {renderSelectRow(
-                "Where",
-                whereSummary,
-                <MapPinIcon color={color.text} size={ICON_SIZE} />,
-                handleOpenBottomSheet,
-                "Opens place search"
-              )}
-            </View>
+            {block(
+              "Where?",
+              renderSelectRow("Where", whereSummary, hasLocation, MapPinIcon, handleOpenBottomSheet, "Opens place search")
+            )}
             {divider}
 
             {/* When — the dates. */}
-            <View style={{ padding: SECTION_PADDING, gap: SECTION_GAP }}>
-              <Text fontSize="text-md" fontWeight="font-bold">
-                When?
-              </Text>
-              {renderSelectRow(
-                "When",
-                whenSummary,
-                <CalendarIcon color={color.text} size={ICON_SIZE} />,
-                handleOpenDatePicker,
-                "Opens the date picker"
-              )}
-            </View>
+            {block(
+              "When?",
+              renderSelectRow("When", whenSummary, hasDates, CalendarIcon, handleOpenDatePicker, "Opens the date picker")
+            )}
+            {divider}
           </ScrollView>
 
-          {/* Footer */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 16,
-              // Opaque: the scrolling content must not draw through it.
-              backgroundColor: color.canvas,
-              paddingHorizontal: SECTION_PADDING,
-              paddingVertical: BAR_PADDING_V,
-              borderTopWidth: 1,
-              borderTopColor: color.line,
-              // The design lifts the bar with a faint upward shadow in light only.
-              ...(isDark
-                ? {}
-                : {
-                    ...fieldShadow,
-                    shadowOpacity: 0.05,
-                    shadowRadius: 8,
-                    shadowOffset: { width: 0, height: -2 },
-                    elevation: 0,
-                  }),
-            }}
-          >
-            {/* Offering to clear filters when none are set is noise. */}
-            {hasAnyCriteria ? (
-              <TouchableOpacity
-                onPress={cleanUp}
-                accessibilityRole="button"
-                accessibilityLabel="Clear all filters"
-                style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center" }}
-              >
-                <Text
-                  fontSize="text-sm"
-                  fontWeight="font-bold"
-                  tone="brand"
-                  style={{ textDecorationLine: "underline" }}
-                >
-                  Clear all
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <View />
-            )}
-
-            <Button onPress={onPress}>
-              <MagnifyingGlassIcon color={color.onBrand} size={BAR_ICON_SIZE} />
-              <Text
-                fontSize="text-sm"
-                fontWeight="font-bold"
-                style={{ color: color.onBrand, marginLeft: 4 }}
-              >
-                {hasAnyCriteria ? "Search" : "Browse all"}
-              </Text>
-            </Button>
-          </View>
+          {/* Offering to clear filters when none are set is noise, so the bar is
+              a lone Browse all until something is chosen. */}
+          <BottomBar
+            layout={hasAnyCriteria ? "secondary-primary" : "full-cta"}
+            primary={{ label: hasAnyCriteria ? "Search" : "Browse all", onPress }}
+            secondary={
+              hasAnyCriteria
+                ? { label: "Clear all", onPress: cleanUp, accessibilityLabel: "Clear all filters" }
+                : undefined
+            }
+          />
 
           {/* Bottom Sheet */}
           {isBottomSheetVisible && (
             <BottomSheet
-        // The window already shrinks for the keyboard (adjustResize); gorhom's
-        // default adjustPan lifted the sheet by the keyboard height again.
-        android_keyboardInputMode="adjustResize"
+              // The window already shrinks for the keyboard (adjustResize); gorhom's
+              // default adjustPan lifted the sheet by the keyboard height again.
+              android_keyboardInputMode="adjustResize"
               ref={bottomSheetRef}
               backdropComponent={renderBackdrop}
               index={1}
-              snapPoints={["50%", "75%", "90%"]}
+              snapPoints={WHERE_SNAPS.map((share) => Math.round(share * Dimensions.get("screen").height))}
               enablePanDownToClose={true}
-              backgroundStyle={{ backgroundColor: ink.canvas(isDark) }}
+              // The kit Sheet header draws the grabber and the sheet's 24 top
+              // corners, so gorhom's own handle is off.
+              handleComponent={null}
+              backgroundStyle={{
+                backgroundColor: color.surface,
+                borderTopLeftRadius: radius.sheet,
+                borderTopRightRadius: radius.sheet,
+              }}
               onClose={() => setBottomSheetVisible(false)}
-              handleIndicatorStyle={{
-                backgroundColor: ink.line(isDark),
-              }}
-              handleStyle={{
-                borderTopWidth: 2,
-                borderLeftWidth: 2,
-                borderRightWidth: 2,
-                borderTopColor: ink.line(isDark),
-                borderLeftColor: ink.line(isDark),
-                borderRightColor: ink.line(isDark),
-                borderTopRightRadius: 50,
-                borderTopLeftRadius: 50,
-              }}
             >
-              <StyledBottomView className="w-full px-gutter py-2 flex flex-col justify-start flex-1">
-                <View className="h-full">
-                  <View
-                    className={`flex-row pl-3 min-h-11 rounded-card border ${isDark
-                      ? "border-input-line-dark bg-surface-dark"
-                      : "border-input-line-light bg-surface-light"
-                      }`}
-                    style={{ alignItems: 'flex-start' }}
+              <BottomSheetView style={{ flex: 1 }}>
+                <SheetHeader title="Where?" />
+                <View
+                  style={{
+                    flex: 1,
+                    paddingTop: SHEET_PAD_TOP,
+                    paddingHorizontal: SCREEN_GUTTER,
+                    gap: SHEET_GAP,
+                  }}
+                >
+                  <FieldShell
+                    style={{
+                      minHeight: FIELD_HEIGHT,
+                      paddingHorizontal: FIELD_PADDING,
+                      paddingVertical: 0,
+                      alignItems: "flex-start",
+                    }}
                   >
                     <MagnifyingGlassIcon
-                      color={ink.body(isDark)}
-                      size={24}
-                      style={{ marginTop: space.sm }}
+                      color={color.textDim}
+                      size={ICON_SIZE}
+                      strokeWidth={1.5}
+                      style={{ marginTop: (FIELD_HEIGHT - 2 - ICON_SIZE) / 2 }}
                     />
                     {hasGooglePlacesApiKey ? (
                       <GooglePlacesAutocomplete
@@ -758,85 +689,76 @@ export default function SearchScreen() {
                         onNotFound={() => setLocationError("No places found.")}
                         enablePoweredByContainer={false}
                         styles={{
+                          textInputContainer: { backgroundColor: "transparent" },
                           textInput: {
-                            height: '100%',
-                            backgroundColor: ink.surface(isDark),
-                            borderRadius: radius.card,
-                            paddingHorizontal: 8,
-                            zIndex: 10,
-                            color: ink.text(isDark),
+                            height: FIELD_HEIGHT - 2,
+                            marginBottom: 0,
+                            paddingVertical: 0,
+                            paddingHorizontal: 0,
+                            backgroundColor: "transparent",
+                            color: color.text,
+                            fontFamily: fontFamily.regular,
                             fontSize: 16,
                           },
                           row: {
-                            backgroundColor: ink.surface(isDark),
+                            backgroundColor: color.surface,
                           },
                           description: {
-                            color: ink.text(isDark),
+                            color: color.text,
                           },
-                          separator: { backgroundColor: ink.line(true) },
+                          separator: { backgroundColor: color.line },
                         }}
                         textInputProps={{
-                          placeholderTextColor: ink.body(isDark),
+                          placeholderTextColor: color.placeholder,
+                          selectionColor: color.brand,
                         }}
                       />
                     ) : (
-                      <Text tone="body" className="flex-1 self-center px-2 text-sm">
+                      <Text tone="body" fontSize="text-sm" style={{ flex: 1, alignSelf: "center" }}>
                         Place search is unavailable in this QA build.
                       </Text>
                     )}
-                  </View>
+                  </FieldShell>
 
                   {locationError && (
-                    <Text tone="body" className="mt-3 text-sm">
+                    <Text tone="body" fontSize="text-sm">
                       {locationError}
                     </Text>
                   )}
 
                   <TouchableOpacity
-                    className={`h-[48px] rounded-card w-full border-b ${isDark ? "border-input-line-dark" : "border-input-line-light"
-                      } px-2 mt-4`}
+                    accessibilityRole="button"
                     onPress={handleCurrentLocation}
+                    style={{ minHeight: SHEET_ROW, flexDirection: "row", alignItems: "center", gap: 12 }}
                   >
-                    <View className="flex flex-row h-full w-full items-center justify-between">
-                      <View className="flex flex-row items-center space-x-4">
-                        <ViewfinderCircleIcon
-                          color={colors.dark.brand}
-                          size={24}
-                        />
-                        <Text
-                          fontWeight="font-bold"
-                          className="text-brand"
-                        >
-                          Use current location
-                        </Text>
-                      </View>
-                    </View>
+                    <ViewfinderCircleIcon color={color.brandText} size={SHEET_ICON} strokeWidth={1.5} />
+                    <Text fontSize="text-md" fontWeight="font-semibold" tone="brand">
+                      Use current location
+                    </Text>
                   </TouchableOpacity>
+                  {divider}
 
-                  <View className="">
-                    {loading ? (
-                      <Text className="mt-3">Loading nearby places...</Text>
-                    ) : (
-                      <ScrollView keyboardShouldPersistTaps="handled">
-                        {nearbyPlaces.map((item) => (
-                          <TouchableOpacity
-                            key={item.place_id}
-                            onPress={() => handleSelectNearbyPlace(item)}
-                            className={`pl-3 py-5 flex-row items-center space-x-3 border-b ${isDark ? "border-input-line-dark" : "border-input-line-light"
-                              }`}
-                          >
-                            <MapPinIcon
-                              color={ink.text(isDark)}
-                              size={20}
-                            />
-                            <Text fontSize="text-sm" className="flex-shrink">{item.name}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    )}
-                  </View>
+                  {loading ? (
+                    <Text fontSize="text-sm" tone="body">
+                      Loading nearby places...
+                    </Text>
+                  ) : (
+                    <ScrollView
+                      keyboardShouldPersistTaps="handled"
+                      contentContainerStyle={{ gap: SHEET_GAP }}
+                    >
+                      {nearbyPlaces.map((item) => (
+                        <NearbyPlaceRow
+                          key={item.place_id}
+                          name={item.name}
+                          vicinity={item.vicinity}
+                          onPress={() => handleSelectNearbyPlace(item)}
+                        />
+                      ))}
+                    </ScrollView>
+                  )}
                 </View>
-              </StyledBottomView>
+              </BottomSheetView>
             </BottomSheet>
           )}
         </View>
@@ -853,7 +775,7 @@ export default function SearchScreen() {
             maxDaysAhead={BOOKING_DAYS_AHEAD}
           />
         )}
-      </StaticContainer>
+      </NonScrollableContainer>
     </GestureHandlerRootView>
   );
 }

@@ -1,10 +1,11 @@
 import { placeFor } from "@/backend/list-flow/pickup-location";
 import useAddresses from "@/backend/useAddresses";
 import {
-  Button,
+  BottomBar,
+  Chip,
   FieldError,
-  FieldFrame,
   FieldLabel,
+  MapPlaceholder,
   Skeleton,
   SubpageHeader,
   Text,
@@ -13,9 +14,8 @@ import {
 import { CheckBox } from "@/components/core/checkbox";
 import { ConfirmSheet } from "@/components/core/confirm-sheet";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { SegmentedChoice } from "@/components/core/segmented-choice";
 import { AddressPayload, AddressType, addressTitle, takenTypes, validPin } from "@/lib/addresses";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, density, radius, space } from "@/lib/design-tokens";
 import {
   cancelLocationRequest,
   createLocationRequest,
@@ -36,9 +36,30 @@ import { Keyboard, TouchableOpacity, View } from "react-native";
 import { TrashIcon } from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// Figma 2089:31157 / 2089:31227: a 24pt column, 16 under the top bar, 24
+// between blocks. A TextField brings its own 18 below it, so it takes 6 more.
+const CONTENT_TOP = 16;
+const BLOCK_GAP = 24;
+const FIELD_EXTRA = BLOCK_GAP - density.fieldGap;
+/** The location card: r12, the 120 map, then 12/16/16 around the place name. */
 const MAP_HEIGHT = 120;
+/** "Change", kept from the hidden old map layer: 78×32 at 12 from the top and right. */
+const CHANGE_INSET = 12;
+/** "Save as": chips 8 apart, a taken chip's hint 8 under its row. */
+const CHIP_GAP = 8;
+const HINT_HEIGHT = 16;
+/** The checkbox's 44 target is 10 taller than the 24 row it sits in. */
+const CHECK_OVERHANG = 10;
+
+/**
+ * Dev-only design seed (ENG-429): names the pin without the geocoder (bare
+ * Google axios and `expo-location`), and draws the kit map tile for the map.
+ * Only DevFixture passes it.
+ */
+export type AddressDetailsDesign = {
+  place: { locality: string; postalCode?: string };
+};
 /** A few streets around the pin: enough to recognise the spot, not the city. */
 const PREVIEW_DELTA = 0.005;
 const NAME_MAX = 30;
@@ -64,8 +85,10 @@ export default function AddressDetailsScreen() {
   const navigation = useTypedNavigation();
   const route = useRoute<RouteProps<"AddressDetails">>();
   const { address: editing, requestId } = route.params;
+  const design = __DEV__
+    ? (route.params as { design?: AddressDetailsDesign }).design
+    : undefined;
   const { color, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
   const { addresses, loading, isError, create, update, remove } = useAddresses();
 
   // One of the two always arrives: the list passes `address`, the add flow `pin`.
@@ -99,12 +122,16 @@ export default function AddressDetailsScreen() {
     // the latest answer counts.
     const run = ++namingRun.current;
     setNaming(true);
-    const named = await placeFor(lat, long);
+    const named = design
+      ? { locality: design.place.locality, postalCode: design.place.postalCode ?? null }
+      : await placeFor(lat, long);
     if (run !== namingRun.current) return;
     setLocality(named.locality);
     // A blank PIN when the geocoder has none: the old one described the old spot.
     if (fillPin && !pinTyped.current) setPinCode(named.postalCode ?? "");
     setNaming(false);
+    // The seed is fixed for the screen's life.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     // A saved address keeps its own PIN; a fresh pin takes the geocoder's.
@@ -185,6 +212,8 @@ export default function AddressDetailsScreen() {
   useEffect(() => () => cancelLocationRequest(requestId), [requestId]);
 
   const changeLocation = () => {
+    // A design seed never opens the live picker (location permission).
+    if (design) return;
     navigation.navigate("LocationModal", {
       initial: { latitude: pin.lat, longitude: pin.long },
       requestId: createLocationRequest((coords, address) => {
@@ -305,37 +334,49 @@ export default function AddressDetailsScreen() {
 
   const busy = saving || deleting;
 
+  const typeOptions: { value: AddressType; label: string }[] = [
+    { value: "home", label: "Home" },
+    { value: "work", label: "Work" },
+    { value: "other", label: "Other" },
+  ];
+  const isTakenType = (value: AddressType) => value !== "other" && taken.has(value);
+  const anyTaken = typeOptions.some((option) => isTakenType(option.value));
+
   return (
+    // The container pads by the iOS keyboard (Android resizes), so the kit bar
+    // below the scroll view rides on the keys.
     <NonScrollableContainer>
       <SubpageHeader title={editing ? "Edit address" : "Address details"} />
-      <FieldFrame>
-        <KeyboardAwareScrollView
-          ref={scrollRef}
-          keyboardShouldPersistTaps="handled"
-          enableOnAndroid
-          extraScrollHeight={space.md}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingHorizontal: SCREEN_GUTTER,
-            paddingTop: space.md,
-            paddingBottom: space.xl,
-          }}
-        >
-          {/* While a save or delete is in flight the form is held as it was sent. */}
-          <View pointerEvents={busy ? "none" : "auto"} style={{ opacity: busy ? 0.5 : 1 }}>
-            <View
-              style={{
-                marginBottom: density.fieldGap,
-                borderWidth: 1,
-                borderColor: color.line,
-                borderRadius: radius.card,
-                backgroundColor: color.surface,
-                overflow: "hidden",
-              }}
-            >
-              <View style={{ height: MAP_HEIGHT }}>
-                {/* A picture of the pin, not a map to use: "Change" opens the real one. */}
-                <View pointerEvents="none" style={{ flex: 1 }}>
+      <KeyboardAwareScrollView
+        ref={scrollRef}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid
+        extraScrollHeight={space.md}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: SCREEN_GUTTER,
+          paddingTop: CONTENT_TOP,
+          paddingBottom: BLOCK_GAP,
+        }}
+      >
+        {/* While a save or delete is in flight the form is held as it was sent. */}
+        <View pointerEvents={busy ? "none" : "auto"} style={{ opacity: busy ? 0.5 : 1 }}>
+          <View
+            style={{
+              marginBottom: BLOCK_GAP,
+              borderWidth: 1,
+              borderColor: color.line,
+              borderRadius: radius.input,
+              backgroundColor: color.surface,
+              overflow: "hidden",
+            }}
+          >
+            <View style={{ height: MAP_HEIGHT }}>
+              {/* A picture of the pin, not a map to use: "Change" opens the real one. */}
+              <View pointerEvents="none" style={{ flex: 1 }}>
+                {design ? (
+                  <MapPlaceholder style={{ flex: 1 }} />
+                ) : (
                   <MapView
                     provider={PROVIDER_GOOGLE}
                     style={{ flex: 1 }}
@@ -357,79 +398,91 @@ export default function AddressDetailsScreen() {
                       pinColor={color.brand}
                     />
                   </MapView>
-                </View>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityLabel="Change location"
-                  activeOpacity={0.6}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  onPress={changeLocation}
-                  style={{
-                    position: "absolute",
-                    right: space.sm,
-                    bottom: space.sm,
-                    minHeight: 36,
-                    paddingHorizontal: space.md,
-                    justifyContent: "center",
-                    borderRadius: radius.full,
-                    borderWidth: 1,
-                    borderColor: color.line,
-                    backgroundColor: color.surface,
-                  }}
-                >
-                  <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
-                    Change
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={{ padding: space.md, gap: 2 }}>
-                {naming ? (
-                  <Skeleton width="55%" height={18} borderRadius={4} style={{ marginVertical: 3 }} />
-                ) : locality ? (
-                  <Text fontSize="text-md" fontWeight="font-bold">
-                    {locality}
-                  </Text>
-                ) : (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-                    <Text fontSize="text-md" tone="body" style={{ flexShrink: 1 }}>
-                      We couldn't name this spot.
-                    </Text>
-                    <TouchableOpacity
-                      accessibilityRole="button"
-                      hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                      onPress={() => void nameSpot(pin.lat, pin.long, !pinCode)}
-                    >
-                      <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
-                        Try again
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
                 )}
-                {mapAddress && mapAddress !== locality ? (
-                  <Text fontSize="text-sm" tone="body">
-                    {mapAddress}
-                  </Text>
-                ) : null}
               </View>
-            </View>
-
-            <View onLayout={(e) => (fieldY.current.line1 = e.nativeEvent.layout.y)}>
-              <TextField
-                label="Flat, house no. or building"
-                placeholder="e.g. Flat 1203, Tower B"
-                value={line1}
-                onChangeText={(text) => {
-                  setLine1(text);
-                  setLine1Error(null);
+              {/* The frames hid the old map layer and "Change" with it, but it is
+                  the only way to re-pick the pin, so it stays where that layer
+                  drew it. */}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Change location"
+                activeOpacity={0.6}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                onPress={changeLocation}
+                style={{
+                  position: "absolute",
+                  top: CHANGE_INSET,
+                  right: CHANGE_INSET,
+                  paddingVertical: 6,
+                  paddingHorizontal: 12,
+                  borderRadius: radius.full,
+                  backgroundColor: color.surface,
                 }}
-                error={line1Error ?? undefined}
-                maxLength={255}
-                autoCapitalize="words"
-                textContentType="streetAddressLine1"
-              />
+              >
+                <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
+                  Change
+                </Text>
+              </TouchableOpacity>
             </View>
 
+            <View
+              style={{
+                paddingTop: 12,
+                paddingHorizontal: 16,
+                paddingBottom: 16,
+                gap: 2,
+              }}
+            >
+              {naming ? (
+                <Skeleton width="55%" height={18} borderRadius={4} style={{ marginVertical: 3 }} />
+              ) : locality ? (
+                <Text fontSize="text-md" fontWeight="font-bold">
+                  {locality}
+                </Text>
+              ) : (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+                  <Text fontSize="text-md" tone="body" style={{ flexShrink: 1 }}>
+                    We couldn't name this spot.
+                  </Text>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                    onPress={() => void nameSpot(pin.lat, pin.long, !pinCode)}
+                  >
+                    <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
+                      Try again
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              {mapAddress && mapAddress !== locality ? (
+                <Text fontSize="text-sm" tone="body">
+                  {mapAddress}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+
+          <View
+            onLayout={(e) => (fieldY.current.line1 = e.nativeEvent.layout.y)}
+            style={{ marginBottom: FIELD_EXTRA }}
+          >
+            <TextField
+              label="Flat, house no. or building"
+              placeholder="e.g. Flat 1203, Tower B"
+              value={line1}
+              onChangeText={(text) => {
+                setLine1(text);
+                setLine1Error(null);
+              }}
+              error={line1Error ?? undefined}
+              maxLength={255}
+              autoCapitalize="words"
+              textContentType="streetAddressLine1"
+            />
+          </View>
+
+          <View style={{ marginBottom: FIELD_EXTRA }}>
             <TextField
               label="Landmark"
               hint="Optional"
@@ -438,7 +491,9 @@ export default function AddressDetailsScreen() {
               onChangeText={setLine2}
               maxLength={255}
             />
+          </View>
 
+          <View style={{ marginBottom: FIELD_EXTRA }}>
             <TextField
               label="PIN code"
               hint="Shops use it to see if they deliver here"
@@ -455,39 +510,68 @@ export default function AddressDetailsScreen() {
               textContentType="postalCode"
               autoComplete="postal-code"
             />
+          </View>
 
+          <View
+            onLayout={(e) => (fieldY.current.type = e.nativeEvent.layout.y)}
+            style={{ marginBottom: BLOCK_GAP }}
+          >
+            <FieldLabel label="Save as" />
             <View
-              onLayout={(e) => (fieldY.current.type = e.nativeEvent.layout.y)}
-              style={{ marginBottom: density.fieldGap }}
+              accessibilityRole="radiogroup"
+              accessibilityLabel="Save as"
+              style={{
+                flexDirection: "row",
+                gap: CHIP_GAP,
+                // Room for a taken chip's "Already saved" under the row.
+                paddingBottom: anyTaken ? CHIP_GAP + HINT_HEIGHT : 0,
+              }}
             >
-              <FieldLabel label="Save as" />
-              <SegmentedChoice<AddressType>
-                accessibilityLabel="Save as"
-                value={type}
-                onChange={(next) => {
-                  setType(next);
-                  setTypeError(null);
-                }}
-                options={[
-                  {
-                    value: "home",
-                    label: "Home",
-                    disabled: taken.has("home"),
-                    hint: taken.has("home") ? TAKEN_HINT : undefined,
-                  },
-                  {
-                    value: "work",
-                    label: "Work",
-                    disabled: taken.has("work"),
-                    hint: taken.has("work") ? TAKEN_HINT : undefined,
-                  },
-                  { value: "other", label: "Other" },
-                ]}
-              />
-              <FieldError>{typeError}</FieldError>
+              {typeOptions.map((option) => {
+                const isTaken = isTakenType(option.value);
+                return (
+                  <View key={option.value}>
+                    {/* The kit Chip has no disabled state: a taken type is drawn
+                        as Default, can't be pressed, and says why under it. */}
+                    <View
+                      pointerEvents={isTaken ? "none" : "auto"}
+                      accessible={isTaken}
+                      accessibilityState={isTaken ? { disabled: true } : undefined}
+                      accessibilityLabel={isTaken ? `${option.label}, ${TAKEN_HINT}` : undefined}
+                    >
+                      <Chip
+                        label={option.label}
+                        selected={type === option.value}
+                        onPress={() => {
+                          setType(option.value);
+                          setTypeError(null);
+                        }}
+                      />
+                    </View>
+                    {isTaken ? (
+                      <Text
+                        fontSize="text-xs"
+                        tone="body"
+                        numberOfLines={1}
+                        style={{
+                          position: "absolute",
+                          top: 40 + CHIP_GAP,
+                          left: 0,
+                          width: 120,
+                        }}
+                      >
+                        {TAKEN_HINT}
+                      </Text>
+                    ) : null}
+                  </View>
+                );
+              })}
             </View>
+            <FieldError>{typeError}</FieldError>
+          </View>
 
-            {type === "other" ? (
+          {type === "other" ? (
+            <View style={{ marginBottom: FIELD_EXTRA }}>
               <TextField
                 label="Name this address"
                 hint="Optional"
@@ -497,93 +581,90 @@ export default function AddressDetailsScreen() {
                 maxLength={NAME_MAX}
                 autoCapitalize="words"
               />
-            ) : null}
+            </View>
+          ) : null}
 
-            <View
-              // A forced default is shown ticked and cannot be unticked: the
-              // first address is the default, and the current default only
-              // stops being one when another address takes over.
-              pointerEvents={forcedDefault ? "none" : "auto"}
-              // Forced, the row is one element that says why it will not
-              // toggle; otherwise the checkbox inside speaks for itself.
-              accessible={forcedDefault}
-              accessibilityRole={forcedDefault ? "checkbox" : undefined}
-              accessibilityState={forcedDefault ? { disabled: true, checked: true } : undefined}
-              accessibilityLabel={
-                forcedDefault
-                  ? `Make this my default address. ${
-                      isFirst
-                        ? "Your first address is your default."
-                        : "To change your default, make another address the default."
-                    }`
-                  : undefined
-              }
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                minHeight: MIN_TOUCH_TARGET,
-                opacity: forcedDefault ? 0.6 : 1,
-              }}
-            >
+          <View
+            // A forced default is shown ticked and cannot be unticked: the
+            // first address is the default, and the current default only
+            // stops being one when another address takes over.
+            pointerEvents={forcedDefault ? "none" : "auto"}
+            // Forced, the row is one element that says why it will not
+            // toggle; otherwise the checkbox inside speaks for itself.
+            accessible={forcedDefault}
+            accessibilityRole={forcedDefault ? "checkbox" : undefined}
+            accessibilityState={forcedDefault ? { disabled: true, checked: true } : undefined}
+            accessibilityLabel={
+              forcedDefault
+                ? `Make this my default address. ${
+                    isFirst
+                      ? "Your first address is your default."
+                      : "To change your default, make another address the default."
+                  }`
+                : undefined
+            }
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: editing ? BLOCK_GAP : 0,
+              // Forced, the frame draws the box and both lines at 60%.
+              opacity: forcedDefault ? 0.6 : 1,
+            }}
+          >
+            <View style={{ marginVertical: -CHECK_OVERHANG }}>
               <CheckBox
                 checked={isDefault}
                 onPress={() => setMakeDefault((on) => !on)}
                 accessibilityLabel="Make this my default address"
               />
-              <View style={{ flex: 1 }}>
-                <Text fontSize="text-md">Make this my default address</Text>
-                {forcedDefault ? (
-                  <Text fontSize="text-xs" tone="body">
-                    {isFirst
-                      ? "Your first address is your default."
-                      : "To change your default, make another address the default."}
-                  </Text>
-                ) : null}
-              </View>
             </View>
-
-            {editing ? (
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityLabel="Delete address"
-                activeOpacity={0.6}
-                onPress={() => deleteSheet.current?.present()}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  alignSelf: "flex-start",
-                  gap: space.sm,
-                  minHeight: MIN_TOUCH_TARGET,
-                  marginTop: space.sm,
-                }}
-              >
-                <TrashIcon size={20} color={color.danger} strokeWidth={1.5} />
-                <Text fontSize="text-md" fontWeight="font-bold" tone="danger">
-                  Delete address
+            <View style={{ flex: 1, gap: 2, marginLeft: 2 }}>
+              <Text fontSize="text-md">Make this my default address</Text>
+              {forcedDefault ? (
+                <Text fontSize="text-xs">
+                  {isFirst
+                    ? "Your first address is your default."
+                    : "To change your default, make another address the default."}
                 </Text>
-              </TouchableOpacity>
-            ) : null}
+              ) : null}
+            </View>
           </View>
-        </KeyboardAwareScrollView>
-      </FieldFrame>
 
-      <View
-        style={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          // 14pt at least where there is no home indicator (iPhone SE, Android): 8 sat the button on the screen edge.
-          paddingBottom: Math.max(insets.bottom + space.sm, space.md),
-          borderTopWidth: 1,
-          borderTopColor: color.line,
-          backgroundColor: color.canvas,
+          {editing ? (
+            // The fix pass's destructive link: dangerStrong text and trash,
+            // never a filled button (b2-13).
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Delete address"
+              activeOpacity={0.6}
+              hitSlop={{ top: 10, bottom: 10, left: 0, right: 0 }}
+              onPress={() => deleteSheet.current?.present()}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                alignSelf: "flex-start",
+                gap: space.sm,
+              }}
+            >
+              <TrashIcon size={20} color={color.dangerStrong} strokeWidth={1.5} />
+              <Text fontSize="text-md" fontWeight="font-bold" style={{ color: color.dangerStrong }}>
+                Delete address
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </KeyboardAwareScrollView>
+
+      {/* No locality, no save: the API requires one, and a listing made from
+          this address would publish it as its public location. */}
+      <BottomBar
+        primary={{
+          label: editing ? "Save changes" : "Save address",
+          onPress: save,
+          loading: saving,
+          disabled: naming || !locality || deleting,
         }}
-      >
-        {/* No locality, no save: the API requires one, and a listing made from
-            this address would publish it as its public location. */}
-        <Button loading={saving} disabled={naming || !locality || deleting} onPress={save}>
-          {editing ? "Save changes" : "Save address"}
-        </Button>
-      </View>
+      />
 
       {editing ? (
         <ConfirmSheet

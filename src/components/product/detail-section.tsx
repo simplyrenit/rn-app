@@ -8,12 +8,13 @@ import { View } from "react-native";
  * One block of the product detail page, below the facts row.
  *
  * The frame (Figma 1:9120) sets every one of them identically: 32 above and
- * below, the page gutter at the sides, 16 between the heading and what it
+ * below, the page gutter at the sides, 12 between the heading and what it
  * introduces, and a hairline underneath. That rhythm used to be 26/8 and was
  * spelled out at each call site, so a new section was free to invent its own.
  */
 const SECTION_PAD_V = 32;
-const SECTION_GAP = 16;
+/** 2.1 (04 2083:16177, every "Section · …"): 12 from the heading to what it introduces. */
+const SECTION_GAP = 12;
 /**
  * The owner profile (Figma 1:21984) rules its page with the same blocks at a
  * different rhythm: 24 above and below rather than 32, and 24 under the heading

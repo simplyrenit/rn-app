@@ -1,7 +1,13 @@
 import { density, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import React from "react";
-import { TouchableOpacity } from "react-native";
+import {
+  AccessibilityRole,
+  AccessibilityState,
+  Insets,
+  LayoutChangeEvent,
+  TouchableOpacity,
+} from "react-native";
 import { Text } from "./text";
 
 // The kit Chip (figma/00 2073:14388): Default / Selected, 40 high, r12.
@@ -12,14 +18,40 @@ export interface ChipProps {
   onPress?: () => void;
   /** Optional glyph before the label (gap 6). */
   leading?: React.ReactNode;
+  // Optional passthroughs (ENG-427), no visual change: the results rail measures
+  // its chips to scroll the chosen one into view, and the rail's radios and the
+  // spec checkboxes say `checked` rather than `selected`.
+  onLayout?: (event: LayoutChangeEvent) => void;
+  accessibilityRole?: AccessibilityRole;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  /** Replaces the default `{ selected }`. */
+  accessibilityState?: AccessibilityState;
+  /** The chip is 40 high; callers pass 2 top and bottom for the 44pt target. */
+  hitSlop?: Insets;
 }
 
-export function Chip({ label, selected = false, onPress, leading }: ChipProps) {
+export function Chip({
+  label,
+  selected = false,
+  onPress,
+  leading,
+  onLayout,
+  accessibilityRole = "button",
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityState,
+  hitSlop,
+}: ChipProps) {
   const { color } = useTheme();
   return (
     <TouchableOpacity
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
+      onLayout={onLayout}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={accessibilityState ?? { selected }}
+      hitSlop={hitSlop}
       activeOpacity={0.6}
       disabled={!onPress}
       onPress={onPress}

@@ -1,9 +1,10 @@
-import { useGlobalContext } from "@/context/global-context";
 import { LONGEST_BOOKING_DAYS, addDays } from "@/lib/booking";
-import { SCREEN_GUTTER, colors, ink, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, ink, radius } from "@/lib/design-tokens";
+import { useTheme } from "@/lib/theme";
 import React, { useCallback, useMemo, useState } from "react";
 import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
+import { ChevronLeftIcon, ChevronRightIcon } from "react-native-heroicons/outline";
 import { Button } from "./button";
 import { Text } from "./text";
 
@@ -22,11 +23,23 @@ interface DateRangePickerProps {
   maxDaysAhead?: number;
 }
 
-/** Height of a day cell. The row pitch is 50pt, so the hit slop below can make
- *  up Apple's 44pt floor without two rows fighting over the same finger. */
-const DAY_HEIGHT = 36;
-const DAY_CAP = DAY_HEIGHT / 2;
-const DAY_HIT_SLOP = { top: 4, bottom: 4, left: 4, right: 4 };
+// Figma 2089:29905. A 342 card padded 24 around a 294 calendar: 40pt month
+// and weekday rows, then 42x40 day cells, every row 4 apart. A picked end is a
+// 36 brand disc on a brandPanel band that runs through the range and is capped
+// (20) on its outer side.
+const CARD_PADDING = 24;
+const CARD_GAP = 16;
+const ROW_HEIGHT = 40;
+const ROW_GAP = 4;
+const DISC = 36;
+const BAND_CAP = 20;
+const CHEVRON = 20;
+const FOOTER_HEIGHT = 52;
+const FOOTER_GAP = 12;
+/** A day cell is 40 high in a 44 row pitch; the slop makes up Apple's 44pt floor. */
+const DAY_HIT_SLOP = { top: 2, bottom: 2, left: 0, right: 0 };
+/** The frame's single-letter weekdays. Local, not `LocaleConfig`, which is global to every calendar in the app. */
+const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
 const dayLabel = (date?: Date) =>
   date
@@ -65,23 +78,55 @@ const generateRange = (start: string, end: string): string[] => {
 };
 
 /**
+ * The month row and the weekday row, drawn as the frame has them: brand
+ * chevrons either side of the month, then single-letter weekdays. A custom
+ * header so the letters stay local to this picker.
+ */
+function PickerHeader({ month, addMonth }: { month?: { toString(format: string): string }; addMonth?: (count: number) => void }) {
+  const { color } = useTheme();
+  const arrow = (count: number, label: string, Icon: typeof ChevronLeftIcon) => (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={() => addMonth?.(count)}
+      hitSlop={12}
+    >
+      <Icon color={color.brandText} size={CHEVRON} strokeWidth={1.5} />
+    </TouchableOpacity>
+  );
+  return (
+    <View>
+      <View style={{ height: ROW_HEIGHT, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        {arrow(-1, "Previous month", ChevronLeftIcon)}
+        <Text fontSize="text-md" fontWeight="font-semibold" accessibilityRole="header">
+          {month?.toString("MMMM yyyy")}
+        </Text>
+        {arrow(1, "Next month", ChevronRightIcon)}
+      </View>
+      <View style={{ height: ROW_HEIGHT, marginTop: ROW_GAP, flexDirection: "row" }}>
+        {WEEKDAYS.map((day, index) => (
+          <View key={index} style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <Text fontSize="text-xs" fontWeight="font-medium" tone="dim" allowFontScaling={false}>
+              {day}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/**
  * The range picker.
  *
- * Two things were badly wrong here. The card declared
- * `backgroundColor: "transparent"` in both themes, so it had no surface of its
- * own — only the embedded calendar painted a ground, and the footer did not.
- * The Confirm button underneath it starts disabled, and the old disabled style
- * was the brand at 40% opacity, so the screen behind the modal showed straight
- * through the button: "Popular categories" from the page beneath ran across the
- * word "Confirm". There was also no Cancel, and nothing said whether you were
- * picking the start of the range or its end.
+ * The card is a real surface, so nothing behind the modal shows through the
+ * Confirm button (the old disabled style let the page bleed through it), and it
+ * has a Cancel and a line that says which end of the range the next tap sets.
  *
- * The days themselves drew each selected date as its own rounded pill, so three
- * contiguous nights read as three separate choices with gaps between them, and
- * "today" was purple text sitting beside purple-filled endpoints — one colour
- * carrying two meanings. Days now render through `dayComponent`: one continuous
- * track capped at the ends, today as a neutral ring, and a hit area that clears
- * 44pt on a cell that is tapped over and over during date entry.
+ * Days render through `dayComponent`: one continuous band capped at the ends,
+ * so three contiguous nights read as one choice, and a hit area that clears
+ * 44pt on a cell that is tapped over and over during date entry. Today is the
+ * brand numeral (Figma 2089:29905), never a fill: a purple fill means "range end".
  */
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
   startDate,
@@ -94,8 +139,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     startDate
   );
   const [tempEndDate, setTempEndDate] = useState<Date | undefined>(endDate);
-  const { theme } = useGlobalContext();
-  const isDark = theme === "dark";
+  const { color, isDark } = useTheme();
 
   const onDayPress = (day: { dateString: string }) => {
     const picked = new Date(day.dateString);
@@ -136,12 +180,12 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       const isToday = state === "today";
 
       const textColor = isEndpoint
-        ? ink.onBrand()
+        ? color.onBrand
         : isDisabled
-        ? ink.dim(isDark)
-        : inRange
-        ? ink.brandText(isDark)
-        : ink.text(isDark);
+        ? color.textDim
+        : isToday
+        ? color.brandText
+        : color.text;
 
       return (
         <TouchableOpacity
@@ -152,41 +196,35 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             selected: inRange,
           }}
           disabled={isDisabled}
-          // 36pt cells, tapped repeatedly through a whole date entry.
           hitSlop={DAY_HIT_SLOP}
           activeOpacity={0.8}
           onPress={() => onPress?.(date)}
           style={{
-            // Stretched to the full column so adjacent days touch: the track is
+            // Stretched to the full column so adjacent days touch: the band is
             // one bar, capped only where the range actually starts and ends.
             alignSelf: "stretch",
-            height: DAY_HEIGHT,
+            height: ROW_HEIGHT,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: inRange ? ink.brandWash(isDark) : "transparent",
-            borderTopLeftRadius: marking?.rangeStart ? DAY_CAP : 0,
-            borderBottomLeftRadius: marking?.rangeStart ? DAY_CAP : 0,
-            borderTopRightRadius: marking?.rangeEnd ? DAY_CAP : 0,
-            borderBottomRightRadius: marking?.rangeEnd ? DAY_CAP : 0,
+            backgroundColor: inRange ? color.brandPanel : "transparent",
+            borderTopLeftRadius: marking?.rangeStart ? BAND_CAP : 0,
+            borderBottomLeftRadius: marking?.rangeStart ? BAND_CAP : 0,
+            borderTopRightRadius: marking?.rangeEnd ? BAND_CAP : 0,
+            borderBottomRightRadius: marking?.rangeEnd ? BAND_CAP : 0,
           }}
         >
           <View
             style={{
-              width: DAY_HEIGHT,
-              height: DAY_HEIGHT,
-              borderRadius: DAY_CAP,
+              width: DISC,
+              height: DISC,
+              borderRadius: DISC / 2,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: isEndpoint ? colors.dark.brand : "transparent",
-              // Today is a ring and never a fill. A purple fill already means
-              // "range endpoint" on this same row, and one colour cannot carry
-              // two meanings.
-              borderWidth: isToday && !isEndpoint ? 1.5 : 0,
-              borderColor: ink.inputLine(isDark),
+              backgroundColor: isEndpoint ? color.brand : "transparent",
             }}
           >
             <Text
-              fontSize="text-md"
+              fontSize="text-sm"
               fontWeight={isToday || isEndpoint ? "font-semibold" : "font-normal"}
               style={{ color: textColor }}
             >
@@ -196,7 +234,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         </TouchableOpacity>
       );
     },
-    [isDark]
+    [color]
   );
 
   const handleConfirm = () => {
@@ -224,7 +262,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       onRequestClose={onCancel}
     >
       <TouchableOpacity
-        style={[styles.modalBackground, { backgroundColor: ink.scrim(isDark) }]}
+        // Light: the 2.1 frames' 40% (#00000066, ENG-427 D1), here only; the shared `ink.scrim` token stays 45% for
+        // its other users. Dark keeps the token's 60%.
+        style={[styles.modalBackground, { backgroundColor: isDark ? ink.scrim(true) : "#00000066" }]}
         activeOpacity={1}
         accessibilityLabel="Dismiss date picker"
         onPress={onCancel}
@@ -233,20 +273,15 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           activeOpacity={1}
           // A real surface. Everything inside now composites against this and
           // not against the page behind the modal.
-          style={[
-            styles.container,
-            { backgroundColor: ink.surface(isDark), borderColor: ink.line(isDark) },
-          ]}
+          style={[styles.container, { backgroundColor: color.surface }]}
           onPress={() => {}}
         >
-          <View style={styles.header}>
-            <Text fontSize="text-md" fontWeight="font-semibold">
-              When do you need it?
-            </Text>
+          <View style={{ gap: ROW_GAP }}>
+            <Text role="sectionTitle">When do you need it?</Text>
             <Text
               fontSize="text-sm"
+              fontWeight="font-semibold"
               tone={tempStartDate && tempEndDate ? "brand" : "body"}
-              style={{ marginTop: 2 }}
             >
               {prompt}
             </Text>
@@ -255,6 +290,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           <Calendar
             markedDates={markedDates}
             dayComponent={renderDay}
+            customHeader={PickerHeader}
+            // The frame leaves the cells outside the month empty.
+            hideExtraDays
             onDayPress={onDayPress}
             minDate={localToday()}
             // A day past the limit is greyed and cannot be tapped (the server would refuse it): a start within
@@ -266,24 +304,36 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                   : addDays(localToday(), maxDaysAhead)
                 : undefined
             }
-            theme={{
-              backgroundColor: ink.surface(isDark),
-              calendarBackground: ink.surface(isDark),
-              textSectionTitleColor: ink.body(isDark),
-              monthTextColor: ink.text(isDark),
-              arrowColor: ink.brandText(isDark),
-              // Day colours — including today's and the range's — belong to
-              // `dayComponent` above; nothing here can reach them.
-            }}
+            theme={
+              {
+                calendarBackground: color.surface,
+                // The library pads its month 5pt a side and its weeks 7pt apart;
+                // the frame's calendar is flush and 4 apart.
+                "stylesheet.calendar.main": {
+                  container: { paddingLeft: 0, paddingRight: 0 },
+                  week: { marginTop: ROW_GAP, marginBottom: 0, flexDirection: "row", justifyContent: "space-around" },
+                },
+              } as any
+            }
           />
 
-          <View style={[styles.footer, { borderTopColor: ink.line(isDark) }]}>
-            <Button variant="ghost" style={styles.footerButton} onPress={onCancel}>
-              Cancel
-            </Button>
+          <View style={styles.footer}>
+            {/* The kit's Sheet footer link (SemiBold 14/20), not the Bold ghost
+                Button; 52 high so its target matches the Confirm beside it. */}
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={onCancel}
+              style={[styles.footerButton, { alignItems: "center", justifyContent: "center" }]}
+            >
+              <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
+                Cancel
+              </Text>
+            </TouchableOpacity>
             <Button
               disabled={!tempStartDate || !tempEndDate}
-              style={styles.footerButton}
+              // No side padding: Yoga counts it into the flex basis, which made Confirm 160 to Cancel's 121; the
+              // frame splits the footer 141 / 141 (2089:29905).
+              style={[styles.footerButton, { paddingHorizontal: 0 }]}
               onPress={handleConfirm}
             >
               Confirm
@@ -304,23 +354,16 @@ const styles = StyleSheet.create({
   },
   container: {
     width: "100%",
-    borderRadius: radius.group,
-    borderWidth: 1,
+    borderRadius: radius.card,
+    padding: CARD_PADDING,
+    gap: CARD_GAP,
     overflow: "hidden",
-  },
-  header: {
-    paddingHorizontal: SCREEN_GUTTER,
-    paddingTop: space.md,
-    paddingBottom: space.sm,
   },
   footer: {
     flexDirection: "row",
-    gap: space.sm,
-    paddingHorizontal: SCREEN_GUTTER,
-    paddingVertical: space.md,
-    borderTopWidth: 1,
+    gap: FOOTER_GAP,
   },
-  footerButton: { flex: 1 },
+  footerButton: { flex: 1, minHeight: FOOTER_HEIGHT },
 });
 
 export default DateRangePicker;
