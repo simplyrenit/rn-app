@@ -1,0 +1,16 @@
+{
+ "ref": "../../../../../../../../private/tmp/claude-501/-Users-zineone-git-renit/40ee769d-a6d6-4852-bbfe-b809dd24e0bd/scratchpad/2083-15347-1170.png",
+ "app": "../../../../../../../../private/tmp/claude-501/-Users-zineone-git-renit/40ee769d-a6d6-4852-bbfe-b809dd24e0bd/scratchpad/a_15347_s1.png",
+ "platform": "android",
+ "mismatch_pct": 0.642,
+ "threshold_pct": 2.0,
+ "pass": true,
+ "compared_px": [
+  1170,
+  2307
+ ],
+ "app_scaled_height": 2460,
+ "uncovered_rows": 0,
+ "split_bottom_pt": 81.0,
+ "seam_hidden_rows": 0
+}

@@ -1,5 +1,5 @@
 import useSaved from "@/backend/useSaved";
-import { Card, ProductCardSkeleton, Text } from "@/components/core";
+import { Card, ProductCardSkeleton, SectionHeader } from "@/components/core";
 import { EmptyState } from "@/components/core/empty-state";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useRailClaim } from "./rail-dedupe";
@@ -7,20 +7,19 @@ import React from "react";
 import { ScrollView, View, useWindowDimensions } from "react-native";
 import type { Plan } from "@/lib/plans";
 
-// Measured off the Figma Home frame: 163pt cards (the photo is 176 tall, so the
-// tile's 163:176 ratio holds) with a 16pt gap, under a heading that sits 24pt
-// above them. Each section carries 16pt above and below, which is what makes
-// 16pt after the category grid and 32pt between two rails.
+// The 2.1 Home frame (2083:15120 "Rail · …"): each rail is 32 above its
+// heading, 12 from the heading to the cards, and the 248-high kit Listing cards
+// 162 wide and 16 apart, with nothing below (the next rail's 32 is the gap).
 //
 // The rail starts at the left gutter and runs off the right edge: on the 390pt
-// frame that is gutter + card + gap + card + gap, with an 8pt sliver of the
-// third card showing. A fixed 163 cut the second card off at 360dp and showed
+// frame that is gutter + card + gap + card + gap, with a 10pt sliver of the
+// third card showing. A fixed 162 cut the second card off at 360dp and showed
 // a third of the next card at 440pt, so the width is derived from the window
-// the same way: 163 at 390, 148 at 360, 188 at 440.
+// the same way: 162 at 390, 147 at 360, 187 at 440.
 const GAP = 16;
-const PEEK = 8;
-const SECTION_PADDING = 16;
-const HEADING_GAP = 24;
+const PEEK = 10;
+const SECTION_TOP = 32;
+const HEADING_GAP = 12;
 
 export interface RailProduct {
   name: string;
@@ -84,16 +83,9 @@ export function ProductRail({
   }
 
   return (
-    <View style={{ paddingVertical: SECTION_PADDING }}>
-      <View
-        style={{
-          paddingHorizontal: SCREEN_GUTTER,
-          marginBottom: HEADING_GAP,
-        }}
-      >
-        <Text accessibilityRole="header" fontSize="text-base" fontWeight="font-bold">
-          {title}
-        </Text>
+    <View style={{ paddingTop: SECTION_TOP }}>
+      <View style={{ marginBottom: HEADING_GAP }}>
+        <SectionHeader title={title} flush />
       </View>
 
       {loading ? (

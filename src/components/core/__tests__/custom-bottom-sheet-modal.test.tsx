@@ -25,7 +25,7 @@ jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
   default: () => ({ width: 390, height: 844 }),
 }));
 
-import CustomBottomSheetModal from "../custom-bottom-sheet-modal";
+import CustomBottomSheetModal, { sheetScrimOpacity } from "../custom-bottom-sheet-modal";
 
 const os = Platform.OS;
 afterEach(() => {
@@ -106,5 +106,15 @@ describe("CustomBottomSheetModal with the keyboard up", () => {
     expect(sheet().snapPoints).toEqual([557 * 0.9]);
     keyboard(0);
     expect(sheet().snapPoints).toEqual([557]);
+  });
+});
+
+// ENG-427 D1: every 2.1 flow frame draws its sheet scrim #00000066; dark mode is unchanged.
+describe("CustomBottomSheetModal scrim", () => {
+  it("is 40% in light with or without frame, 60% / 50% in dark", () => {
+    expect(sheetScrimOpacity(false, false)).toBe(0.4);
+    expect(sheetScrimOpacity(false, true)).toBe(0.4);
+    expect(sheetScrimOpacity(true, true)).toBe(0.6);
+    expect(sheetScrimOpacity(true, false)).toBe(0.5);
   });
 });
