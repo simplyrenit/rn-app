@@ -14,6 +14,8 @@ export interface BarAction {
   disabled?: boolean;
   loading?: boolean;
   accessibilityLabel?: string;
+  /** `false` when `onPress` gives its own haptic (Button's tap buzz is on by default). */
+  haptic?: boolean;
 }
 
 export type BottomBarLayout =
@@ -63,6 +65,7 @@ function PrimaryButton({ action, style }: { action: BarAction; style?: StyleProp
       disabled={action.disabled}
       loading={action.loading}
       accessibilityLabel={action.accessibilityLabel}
+      haptic={action.haptic}
       style={style}
     >
       {action.label}

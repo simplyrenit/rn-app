@@ -46,7 +46,7 @@ jest.mock("@/components/core", () => {
     SectionHeader: () => null,
     StepProgress: () => null,
     BottomBar: ({ primary }: any) => (
-      <Pressable accessibilityLabel={primary.accessibilityLabel} onPress={primary.onPress}>
+      <Pressable accessibilityLabel={primary.accessibilityLabel} onPress={primary.onPress} haptic={primary.haptic}>
         <T>{primary.label}</T>
       </Pressable>
     ),
@@ -91,6 +91,12 @@ describe("Preview seed guards", () => {
     const r = render(undefined);
     submit(r);
     expect(mockSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it("Submit turns the button's tap haptic off: onSubmit gives the commit haptic", () => {
+    const r = render(undefined);
+    const button = r.root.find((n: any) => n.props.accessibilityLabel === "Submit for review" && n.props.onPress);
+    expect(button.props.haptic).toBe(false);
   });
 
   it("seeded: Submit for review sends nothing and tracks nothing on the live draft", () => {

@@ -400,6 +400,8 @@ export default function ListPreviewScreen() {
           onPress: () => void onSubmit(),
           loading: state !== "idle",
           accessibilityLabel: "Submit for review",
+          // onSubmit gives the heavy commit buzz; no light tap before it.
+          haptic: false,
         }}
       />
     </NonScrollableContainer>
