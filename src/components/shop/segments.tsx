@@ -1,11 +1,14 @@
 import { Text } from "@/components/core";
-import { MIN_TOUCH_TARGET, radius, space } from "@/lib/design-tokens";
+import { radius } from "@/lib/design-tokens";
 import { selectionFeedback } from "@/lib/haptics";
 import { useTheme } from "@/lib/theme";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 
-/** A row of segments, as the Rentals tab draws its two lists. */
+/**
+ * A row of segments, as the Rentals tab draws its lists (2091:20977 `Segments`): a 44 `surfaceMuted` track, r12,
+ * padded 4 with 4 between, and the chosen one a 36 canvas pill, r9, with a hairline. SemiBold when chosen, else Medium.
+ */
 export function Segments<T extends string>({
   options,
   value,
@@ -21,10 +24,10 @@ export function Segments<T extends string>({
       accessibilityRole="tablist"
       style={{
         flexDirection: "row",
-        padding: 3,
+        padding: 4,
+        gap: 4,
         borderRadius: radius.button,
-        backgroundColor: color.surfaceRaised,
-        marginBottom: space.md,
+        backgroundColor: color.surfaceMuted,
       }}
     >
       {options.map(({ key, label }) => {
@@ -35,25 +38,28 @@ export function Segments<T extends string>({
             accessibilityRole="tab"
             accessibilityState={{ selected }}
             activeOpacity={0.8}
+            // The 36 pill plus the track's 4 above and below: a 44 target.
+            hitSlop={{ top: 4, bottom: 4 }}
             onPress={() => {
               if (!selected) selectionFeedback();
               onChange(key);
             }}
             style={{
               flex: 1,
-              minHeight: MIN_TOUCH_TARGET - 6,
+              minHeight: 36,
               alignItems: "center",
               justifyContent: "center",
-              borderRadius: radius.button - 3,
+              borderRadius: 9,
               backgroundColor: selected ? color.canvas : "transparent",
-              borderWidth: selected ? 1 : 0,
-              borderColor: color.line,
+              // The hairline is drawn on every segment so the label does not move a point when it is chosen.
+              borderWidth: 1,
+              borderColor: selected ? color.line : "transparent",
             }}
           >
             <Text
-              fontSize="text-md"
-              fontWeight={selected ? "font-bold" : "font-normal"}
-              tone={selected ? "default" : "body"}
+              fontSize="text-sm"
+              fontWeight={selected ? "font-semibold" : "font-medium"}
+              lineHeight={20}
               numberOfLines={1}
             >
               {label}

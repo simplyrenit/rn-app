@@ -37,6 +37,7 @@ import {
   hoursRows,
   istDay,
   istWhen,
+  istWhenDay,
   kmText,
   noticeLabel,
   noticeOptions,
@@ -91,6 +92,10 @@ describe("times and days", () => {
     expect(istWhen("2026-10-15T04:30:00Z", NOW)).toBe("Thu 10 am");
     expect(istWhen("2026-10-24T04:30:00Z", NOW)).toBe("24 Oct 10 am");
     expect(istWhen("nope", NOW)).toBe("");
+    expect(istWhenDay("2026-10-12T10:00:00Z", NOW)).toBe("today");
+    expect(istWhenDay("2026-10-15T04:30:00Z", NOW)).toBe("Thu");
+    expect(istWhenDay("2026-10-24T04:30:00Z", NOW)).toBe("24 Oct");
+    expect(istWhenDay("nope", NOW)).toBe("");
   });
 });
 

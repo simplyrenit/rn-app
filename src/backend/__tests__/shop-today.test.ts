@@ -11,6 +11,8 @@ import {
 import { blockReturned, extendBlock, fetchFree, fetchPickerProducts, fetchToday, makeBlock } from "../shop-today";
 
 jest.mock("@/context/global-context", () => ({ useGlobalContext: jest.fn() }));
+// shop-bookings reaches the shared accept in shop-ring, which dismisses ring notifications (native modules).
+jest.mock("@/backend/notifications", () => ({ dismissRingNotifications: jest.fn(async () => undefined) }));
 jest.mock("@/lib/config", () => ({
   SHOP_LIVE_ENDPOINT: "https://api.test/shop/live/",
   SHOP_BOOKINGS_ENDPOINT: "https://api.test/shop/bookings/",

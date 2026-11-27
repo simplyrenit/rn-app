@@ -58,7 +58,7 @@ export function Thumb({
 }: {
   uri?: string | null;
   more?: string | null;
-  /** The cart's lines draw it at 64 (2089:26744, 28848); every other booking screen keeps 56. */
+  /** The cart's lines (2089:26744, 28848) and the Summary card (2089:26998, 2093:21585) draw it at 64; the other booking screens keep 56. */
   size?: number;
 }) {
   const { color } = useTheme();
@@ -117,11 +117,12 @@ export function SummaryCard({
   const { color } = useTheme();
   return (
     <Panel>
-      <View style={{ flexDirection: "row", gap: space.md, padding: space.md }}>
-        <Thumb uri={image} more={more} />
+      {/* Every 2.1 Summary card (05, 06, 08): padding 16, a 64 thumb, 12 to the text, SemiBold 16/24 title. */}
+      <View style={{ flexDirection: "row", gap: 12, padding: 16 }}>
+        <Thumb uri={image} more={more} size={64} />
         <View style={{ flex: 1, gap: 2 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-            <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={2} style={{ flex: 1 }}>
+            <Text fontSize="text-md" fontWeight="font-semibold" numberOfLines={2} style={{ flex: 1 }}>
               {title}
             </Text>
             {right}

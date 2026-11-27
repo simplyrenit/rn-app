@@ -150,12 +150,12 @@ describe("a shop booking reads as today", () => {
       expect(customerBlock(b, NOW).note).toMatch(/You can call each other/);
       expect(moneyView(b).delivery).toBe("₹170");
       expect(shopTimeline(b, NOW).map((row) => row.label)).toContain("Delivery");
-      expect(summaryOfBooking(b).how).toBe("Delivery · Aarav M.");
+      expect(summaryOfBooking(b).how).toBe("Aarav M. · Delivery");
       expect(dayButton(b)).toBe("Open the handover");
 
       const r = { ...ring, ...(by ? { delivered_by: by } : {}) };
       expect(ringWhere(r)).toBe("Delivery · Andheri East · 3.2 km");
-      expect(summaryOfRing(r).how).toBe("Delivery · Aarav M.");
+      expect(summaryOfRing(r).how).toBe("Aarav M. · Delivery");
       expect(ringCourierLine(r)).toBeNull();
 
       const out: GoingOut = {
@@ -198,7 +198,7 @@ describe("the ring of a courier booking", () => {
   it("names the courier, the area only, and when it is collected", () => {
     expect(ringWhere(r)).toBe("Renit courier · Andheri East");
     expect(ringCourierLine(r)).toBe("Courier collects Sat 24 Oct in your open hours. Exact pack-by time once the customer picks.");
-    expect(summaryOfRing(r)).toMatchObject({ how: "Renit courier · Aarav M.", earn: "₹1,830" });
+    expect(summaryOfRing(r)).toMatchObject({ how: "Aarav M. · Renit courier", earn: "₹1,830" });
   });
 
   it("keeps delivered_by from the push's ring", () => {
@@ -241,7 +241,7 @@ describe("Today and the booking page of a courier booking", () => {
     expect(customerBlock(leaky, NOW).address).toBeNull();
     expect(customerBlock(b, NOW)).toMatchObject({ place: "Andheri East", note: expect.stringMatching(/don't meet the customer/) });
     expect(shopTimeline(b, NOW).map((row) => row.label)).toContain("Courier collects");
-    expect(summaryOfBooking(b).how).toBe("Renit courier · Aarav M.");
+    expect(summaryOfBooking(b).how).toBe("Aarav M. · Renit courier");
   });
 
   it("the card note: pack by until the seal, then the courier's window", () => {

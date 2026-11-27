@@ -1,0 +1,14 @@
+{
+ "ref": "../figma/08/2094-21970.png",
+ "app": "../../../../../../../../private/tmp/claude-501/-Users-zineone-git-renit/ffb602ef-ee83-46d3-8bac-8d2aa137479e/scratchpad/cur.png",
+ "platform": "android",
+ "mismatch_pct": 1.781,
+ "threshold_pct": 2.0,
+ "pass": true,
+ "compared_px": [
+  1170,
+  2268
+ ],
+ "app_scaled_height": 2460,
+ "uncovered_rows": 0
+}

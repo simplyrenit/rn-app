@@ -10,7 +10,7 @@ import {
   todayIst,
   windowLabel,
 } from "@/lib/booking";
-import { OpenState, dayLabel, istWhen } from "@/lib/shop";
+import { OpenState, dayLabel, istWhen, istWhenDay } from "@/lib/shop";
 import type { Ring } from "@/lib/shop-ring";
 import { byRenit, type DeliveredBy } from "@/lib/delivery";
 import { packByText } from "@/lib/shop-courier";
@@ -268,10 +268,10 @@ export function comingBackRow(item: ComingBack, now: Date = new Date()): TodayRo
   };
 }
 
-/** "Ringing tomorrow 10 am: 3 bookings": bookings made while the shop was closed. */
+/** "Ringing tomorrow 9:00 am: 2 bookings" (2091:20977): bookings made while the shop was closed. */
 export function waitingLine(group: Pick<WaitingToRing, "ring_at" | "count">, now: Date = new Date()): string {
   const n = group.count;
-  return `Ringing ${istWhen(group.ring_at, now)}: ${n} ${n === 1 ? "booking" : "bookings"}`;
+  return `Ringing ${istWhenDay(group.ring_at, now)} ${clock(group.ring_at)}: ${n} ${n === 1 ? "booking" : "bookings"}`;
 }
 
 /** A ringing booking, as a card on Today: what it is, and what it earns. */

@@ -139,6 +139,56 @@
 2097:29097	android	pass	1.31% typed and blurred, Check GSTIN not tapped; the required label line was 24 on Android until RequiredMark took the label role (kit field.tsx).
 2097:29139	ios	fail-heatmap	0.59%; the iOS 26 63pt switch wraps the header text one word early (as 2097:29036).
 2097:29139	android	pass	0.40%.
+2083:16603	ios	fail-heatmap	The 01 frame predates the 08 pass: the 08 frames (b3-07) draw "Rented at the counter" outline, no card on Blocked now / Needs you and Take off / Start as 44 Secondary buttons, which is what is built; the header and rows otherwise line up.
+2083:16603	android	fail-heatmap	As iOS (01 frame predates the 08 pass); also Android's native Material switch in place of the frame's 51x31 switch.
+2083:16747	ios	fail-heatmap	The frame draws each chip's count in textDim ("Ready  3"); the kit Chip takes one plain string label, so the count is the label colour (core/chip.tsx, ENG-427 / ENG-426); still one colour after the ENG-427 merge (Chip gained only onLayout/hitSlop passthroughs).
+2083:16747	android	fail-heatmap	As iOS: chip count colour is kit-owned (core/chip.tsx).
+2091:20870	ios	pass	Only the iOS 26 native switch differs (wider than the frame's 51x31; platform control).
+2091:20870	android	pass	Only Android's native Material switch differs from the frame's 51x31 switch (platform control).
+2091:20977	ios	pass	Inline Accept is the NEW layer; its wiring is checked by jest (today.test.tsx); only the iOS 26 native switch differs; ringing sound and vibration come from the push channel and are not diffable.
+2091:20977	android	pass	Only Android's native Material switch and its font rasterising differ.
+2091:21106	ios	pass	Only the iOS 26 native switch differs (platform control).
+2091:21106	android	pass	Only Android's native Material switch differs (platform control).
+2091:21216	ios	pass	Only the iOS 26 native switch differs (platform control).
+2091:21216	android	pass	Only Android's native Material switch differs (platform control).
+2091:21309	ios	n/a	A not_owner error code cannot come from a fixture; checked by jest in src/screens/shop/__tests__/today.test.tsx.
+2091:21309	android	n/a	As iOS: checked by jest (today.test.tsx).
+2091:21515	ios	fail-heatmap	Chip count drawn in textDim in the frame; kit Chip label is one colour (core/chip.tsx, kit-owned); cards and pills match; still one colour after the ENG-427 merge (Chip gained only onLayout/hitSlop passthroughs).
+2091:21515	android	fail-heatmap	As iOS: chip count colour is kit-owned (core/chip.tsx).
+2091:21610	ios	fail-heatmap	Chip count drawn in textDim in the frame; kit Chip label is one colour (core/chip.tsx, kit-owned); empty state matches; still one colour after the ENG-427 merge (Chip gained only onLayout/hitSlop passthroughs).
+2091:21610	android	fail-heatmap	As iOS: chip count colour is kit-owned (core/chip.tsx).
+2092:21288	ios	pass	Tapped: Manfrotto unticked via its untick sheet (local only); first screen 0.45%, below-the-fold totals 0.34% (diffs/ios/2092-21288-scroll); the unticked line sits under the frame's sticky footer in the PNG, and its "blocked Tue 24 – Thu 26 Nov" copy keeps "Nov" (lib/shop-lines.ts, not owned).
+2092:21288	android	pass	Tapped as iOS, first screen 1.51%; below-the-fold totals 0.57% (diffs/android/2092-21288-scroll); multi-line text sits up to 1pt tighter (Android line metrics).
+2092:21395	ios	text-width	iOS fits "…the rent by 11:10" on line 1 (333pt in a 342 box) where Figma wraps before "11:10"; everything else matches.
+2092:21395	android	text-width	As iOS: the body wraps one word later than Figma.
+2093:21585	ios	pass	First screen 0.62% with the 64 Summary card; the Customer and Money cards below it are drawn while ringing, as the code does (behaviour kept).
+2093:21585	android	pass	First screen 0.74%; Customer and Money kept below the card (behaviour).
+2093:21769	ios	pass	First screen 0.30%; scroll parts 0.59% and 1.70% (body below the card, unchanged by the card fix); Get help row is booking/get-help (ENG-431, Bold, inset 14); Money keeps "Held by Renit" (behaviour).
+2093:21769	android	pass	First screen 0.58%; scroll parts 0.50% and 1.80% (diffs/android/2093-21769-scroll1/-scroll2; Get help ENG-431).
+2093:21944	ios	pass	First screen 0.66%; Customer and Money cards are drawn after an exit, as the code does (behaviour kept).
+2093:21944	android	pass	First screen 0.79%; Customer and Money kept after an exit (behaviour).
+2095:26567	ios	pass	First screen 0.30%; below the fold 0.43% (diffs/ios/2095-26567-scroll); Money keeps "Held by Renit"; Get help is ENG-431.
+2095:26567	android	pass	First screen 0.61%; below the fold 0.46% (diffs/android/2095-26567-scroll).
+2094:21828	ios	fail-heatmap	Full frame 0.86%; stepper at 2 of 2 free: the code enables - and disables + (kit Stepper, behaviour) where the frame draws them as at 1.
+2094:21828	android	fail-heatmap	Full frame 0.86%; stepper enabled states follow the code, as iOS.
+2094:21970	ios	fail-heatmap	Order: the frame is not alphabetical, filterPicker sorts by title (behaviour kept); rows, header and field match.
+2094:21970	android	fail-heatmap	As iOS: item order is behaviour; search field fixed to 48 high on Android.
+2094:22017	ios	pass	Only the text caret differs.
+2094:22017	android	pass	Only the text caret differs.
+2094:22055	android	text-width	Full frame 2.62%: Android wraps "is" of line 2 onto line 3 of the ConfirmSheet body (kit Text measuring); layout otherwise matches.
+2094:22168	ios	fail-heatmap	Modal box 0.39%: only the calendar today marker differs, which follows the device date (27 Nov, react-native-calendars); Cancel is now the kit neutral Secondary as drawn.
+2094:22168	android	fail-heatmap	Modal box 0.48%: device-date today marker only, as iOS.
+2094:24052	ios	pass	Full frame 0.23% (the frame sheet ends at y 843, cropped there).
+2094:24052	android	pass	Full frame 0.42% (frame sheet ends at y 843).
+2094:24240	ios	pass	Sheet strip 0.77% (frame sheet ends at y 843); the bar behind the sheet is 21288's, which differs from this frame's by design, so only the strip is diffed.
+2094:24240	android	text-width	Sheet strip 2.29%: kit Notice body lines sit 0.5pt tighter on Android and the footer 1pt higher (Android line metrics); layout matches.
+2094:24377	ios	pass	Tapped the 12:00 - 1:00 pm radio (local); sheet strip 0.26%: the frame draws the booking top behind the sheet, the app is scrolled to the row that opens it.
+2094:24377	android	pass	As iOS; sheet strip 0.28%.
+2094:24457	ios	pass	Sheet strip 0.24% (booking scrolled to the row behind the sheet).
+2094:24457	android	pass	Sheet strip 0.28%.
+2094:24524	ios	pass	Sheet strip 0.38% (booking scrolled to the Cancel link behind the sheet).
+2094:24524	android	text-width	Sheet strip 2.71%: Android puts the warning's first line 1.3pt lower and pitches the lines at 19.4 not 20 (one Text with a 20 lineHeight); measured, Android line metrics.
+2094:24597	android	text-width	Full frame 1.41% passes; Android wraps "booking" of the first line one word earlier (text measuring); layout matches.
 2083:14692	ios	fail-heatmap	1.65%, but the plan block sits 4pt low and the deposit line 12pt low: this frame pads Plan · Daily 4/0, the 9 other frames that draw it (Review sheets, 2095:24558/24717, ENG-436 11/2096:25867, 26057) pad 8/8, which shared PlanPricing keeps. Minimum rental row box diff .stepper 0.51%. Scroll: end .scroll3 0.74% (native iOS switch track), mid .scroll1 0.89%; .scroll2 3.52%: kit multiline TextField (min 76, padding 10) draws the 3-line description about 14pt shorter than the frame's 98, and Usage tips is multiline so its placeholder wraps where the frame draws a 48 one-line field (kit field, ENG-440). Re-diffed after the ENG-427/429 merge: first screen unchanged; scroll segments not re-run, as no merged component changes below the first screen (SectionHeader changed only its subtitle, unused here; category-icons only Fashion). Pickup (as drawn): the picker shows only the area; a saved address's name (Home/Work) and flat/landmark line are in the accessibility label and behind "Edit flat or landmark", not on screen — the edit form (ENG-436, about-product-form) shares pickup-field and gets the same; designer to confirm.
 2083:14692	android	fail-heatmap	2.41%: as iOS (plan block 8/8 vs 4/0) plus rows under the intro about 1pt high (Android text metrics). Scroll: end .scroll4 0.72%; .scroll2/.scroll3 2.8%/2.5% for the multiline description and Usage tips fields as iOS; .scroll1 7.8% compares the frame's pinned bottom bar (drawn at y738) and the kit segmented condition choice. Re-diffed after the ENG-427/429 merge: first screen unchanged; scroll segments not re-run, as no merged component changes below the first screen (SectionHeader changed only its subtitle, unused here; category-icons only Fashion). Pickup (as drawn): the picker shows only the area; a saved address's name (Home/Work) and flat/landmark line are in the accessibility label and behind "Edit flat or landmark", not on screen — the edit form (ENG-436, about-product-form) shares pickup-field and gets the same; designer to confirm.
 2094:22625	ios	pass	Top-aligned 2.74% shows the bottom-anchored sign-in panel 7pt high (iOS content area 6pt shorter); split-bottom run (B=407) 1.02%: diffs/ios/2094-22625-split, heading 2/3pt high from iOS glyphs as 2089:15649.
