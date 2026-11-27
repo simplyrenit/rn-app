@@ -5,6 +5,7 @@ import { useTheme } from "@/lib/theme";
 import React, { useState } from "react";
 import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Calendar } from "react-native-calendars";
+import CalendarHeader from "react-native-calendars/src/calendar/header";
 import { ChevronLeftIcon, ChevronRightIcon } from "react-native-heroicons/mini";
 
 interface Props {
@@ -22,6 +23,30 @@ interface Props {
   title?: string;
   /** The line under it, from the day now picked. */
   line?: (picked: string | null) => string;
+}
+
+// 2094:22168 names the weekdays with one letter. The library takes its names from the app-wide locale, which the other
+// calendars share, so this header draws its own row under the library's month row.
+const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
+
+function MonthHeader(props: React.ComponentProps<typeof CalendarHeader>) {
+  const { color } = useTheme();
+  return (
+    <View>
+      <CalendarHeader {...props} hideDayNames />
+      <View style={styles.weekdays} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        {WEEKDAYS.map((day, index) => (
+          <Text
+            key={index}
+            allowFontScaling={false}
+            style={{ width: CELL, textAlign: "center", fontSize: 12, lineHeight: 16, fontFamily: fontFamily.medium, color: color.textDim }}
+          >
+            {day}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
 }
 
 const closedUntilLine = (picked: string | null) =>
@@ -86,6 +111,9 @@ export function DayPickerModal({
         color: color.textDim,
       },
     },
+    // The library draws an invisible 4+1 marking dot under every day; it lifts the number 2.5 off the cell's centre.
+    // This picker marks nothing, so the dot takes no room.
+    "stylesheet.dot": { dot: { width: 0, height: 0, marginTop: 0, marginHorizontal: 0 } },
     "stylesheet.day.basic": {
       base: { width: CELL, height: CELL, alignItems: "center", justifyContent: "center" },
       text: { marginTop: 0, fontSize: 14, lineHeight: 20, fontFamily: fontFamily.medium, color: color.text },
@@ -126,6 +154,7 @@ export function DayPickerModal({
               minDate={minDate}
               maxDate={maxDate}
               hideExtraDays
+              customHeader={MonthHeader}
               markedDates={picked ? { [picked]: { selected: true } } : {}}
               onDayPress={(day: { dateString: string }) => setPicked(day.dateString)}
               renderArrow={(direction: "left" | "right") =>
@@ -172,6 +201,8 @@ export function DayPickerModal({
 }
 
 const styles = StyleSheet.create({
+  // The frame's Weekdays row: 40 high, 4 under the month row, seven 40 cells with the space between them.
+  weekdays: { marginTop: 4, height: CELL, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   backdrop: {
     flex: 1,
     justifyContent: "center",

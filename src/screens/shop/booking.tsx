@@ -356,7 +356,10 @@ function BookingPage({
         {/* The actions, as plain rows with no card around them (b3-02). */}
         <View>
           {can("request_window_change") ? (
-            <ListRow label="Ask to change the time" leadingIcon={ClockIcon} onPress={() => changeSheet.current?.present()} />
+            // The kit row brings its own 24 gutter; the body already has one (2093:21769: the row's icon at x24).
+            <View style={{ marginHorizontal: -SCREEN_GUTTER }}>
+              <ListRow label="Ask to change the time" leadingIcon={ClockIcon} onPress={() => changeSheet.current?.present()} />
+            </View>
           ) : null}
 
           {can("cancel") ? (
