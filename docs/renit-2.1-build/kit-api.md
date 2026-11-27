@@ -133,7 +133,7 @@ Props added; nothing renamed or removed.
 
 ## ENG-435 additions
 
-- **`Stepper`** (`core/stepper.tsx`, import by path) gains `compact?: boolean`: a 32 disc, white fill, 1pt `brandPanelLine` stroke, with `hitSlop` 6 so the touch target stays 44. The default (50, `inputLine`) is unchanged for `shop/quick-block.tsx` and `rental-delivery.tsx`. From 01/2083:14692 "Minimum rental" (One day less / One day more); used by `post/plan-pricing.tsx`.
+- **`Stepper`** (`core/stepper.tsx`, import by path) gains `compact?: boolean`: a 32 disc, white fill, 1pt `brandPanelLine` stroke, with `hitSlop` 6 so the touch target stays 44. The default (50, `inputLine`) is unchanged for `shop/quick-block.tsx` and `rental-delivery.tsx`. From 01/2083:14692 "Minimum rental" (One day less / One day more); used by `post/plan-pricing.tsx`. Proven by a box diff of that row: `diffs/ios/2083-14692.stepper` 0.51%, `diffs/android/2083-14692.stepper` 0.56%.
 
 ## Group C (implemented)
 

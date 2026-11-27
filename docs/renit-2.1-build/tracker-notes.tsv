@@ -88,16 +88,16 @@
 2097:29097	android	pass	1.31% typed and blurred, Check GSTIN not tapped; the required label line was 24 on Android until RequiredMark took the label role (kit field.tsx).
 2097:29139	ios	fail-heatmap	0.59%; the iOS 26 63pt switch wraps the header text one word early (as 2097:29036).
 2097:29139	android	pass	0.40%.
-2083:14692	ios	fail-heatmap	1.65%, but the plan block sits 4pt low and the deposit line 12pt low: this frame pads Plan · Daily 4/0 while the 9 other frames that draw it (10 Review sheets, 2095:24558/24717, ENG-436 11/2096:25867, 26057) pad 8/8, which the shared PlanPricing keeps. The PNG is black below 844, so the scroll part cannot be diffed.
-2083:14692	android	fail-heatmap	2.41%: as iOS (plan block 8/8 vs this frame's 4/0), plus rows under the 3-line intro about 1pt high from Android multi-line text metrics (as 2089:28140).
+2083:14692	ios	fail-heatmap	1.65%, but the plan block sits 4pt low and the deposit line 12pt low: this frame pads Plan · Daily 4/0, the 9 other frames that draw it (Review sheets, 2095:24558/24717, ENG-436 11/2096:25867, 26057) pad 8/8, which shared PlanPricing keeps. Minimum rental row box diff .stepper 0.51%. Scroll: end .scroll3 0.74% (native iOS switch track), mid .scroll1 0.89%; .scroll2 3.52%: kit multiline TextField (min 76, padding 10) draws the 3-line description about 14pt shorter than the frame's 98, and Usage tips is multiline so its placeholder wraps where the frame draws a 48 one-line field (kit field, ENG-440).
+2083:14692	android	fail-heatmap	2.41%: as iOS (plan block 8/8 vs 4/0) plus rows under the intro about 1pt high (Android text metrics). Scroll: end .scroll4 0.72%; .scroll2/.scroll3 2.8%/2.5% for the multiline description and Usage tips fields as iOS; .scroll1 7.8% compares the frame's pinned bottom bar (drawn at y738) and the kit segmented condition choice.
 2094:22625	ios	pass	Top-aligned 2.74% shows the bottom-anchored sign-in panel 7pt high (iOS content area 6pt shorter); split-bottom run (B=407) 1.02%: diffs/ios/2094-22625-split, heading 2/3pt high from iOS glyphs as 2089:15649.
 2094:22625	android	fail-heatmap	No Apple sign-in on Android (iOS-only provider), so the bottom-anchored panel has 2 providers vs 3; split-bottom run (B=407) 2.67%: diffs/android/2094-22625-split, as 2089:15649.
 2094:22718	android	text-width	0.52%: Android measures the 14pt Notice body wider and wraps "You" onto line 2; card, button row and tab bar line up.
 2094:22770	android	text-width	2.47%: as 22718, "You" wraps onto line 2 of the rejected Notice body (platform text width); the tab title, card box and tab bar line up.
 2094:22828	ios	pass	0.97%: the button is centred in the content area, which is 6pt shorter on iOS (682 vs 688), so it sits 3.3pt high (measured 10px); no code difference.
 2094:22828	android	pass	5.78% is the crop: the button is centred in the content area, which the emulator makes 51dp taller (24dp status bar, no bottom inset), so it sits 25pt lower (measured 75px); iOS diff 0.97%.
-2094:22877	ios	pass	First screen 0.43%. The frame PNG is black below 844, so the scroll end cannot be diffed; app scroll end diffs/ios/2094-22877.scroll.png has the Up next cards 108 wide and 9 apart as the JSON (108.67, 8).
-2094:22877	android	pass	First screen 0.53%; scroll end not diffable (frame PNG black below 844), as iOS.
+2094:22877	ios	pass	First screen 0.43%; scroll end diffs/ios/2094-22877.scroll 0.46% (ref rows 306-1012), clean apart from the RN dash pattern of the viewfinder guide.
+2094:22877	android	pass	First screen 0.53%; scroll end diffs/android/2094-22877.scroll 0.62% (ref rows 249-1012).
 2094:24997	ios	fail-heatmap	Kit checkbox (D5): 22 r12 circle vs the frame's 22 r6 box, tick text x64 vs 56; disabled "I'll fill it in myself" is textDim vs #CAC8F7 (kit link, ENG-440). Split run (B=187, terms block is bottom-anchored) 0.55%: diffs/ios/2094-24997-split.
 2094:24997	android	fail-heatmap	As iOS (D5 checkbox, tick text x64 vs 56, disabled link colour); split run (B=187) 0.98%: diffs/android/2094-24997-split.
 2094:25168	ios	blocked	Sheet strip (B=233) 1.21%, clean: diffs/ios/2094-25168.sheet. Full frame fails on the scrim: frame 40%, kit 0.5/0.6, blocked on ENG-427 (light sheetScrimOpacity 0.4), re-diff in ENG-440; backdrop tick as 24997 (D5).
@@ -116,15 +116,15 @@
 2096:25440	android	blocked	Sheet strip (B=612) 0.45%: diffs/android/2096-25440.sheet; scrim: frame 40%, kit 0.5/0.6, blocked on ENG-427 (light sheetScrimOpacity 0.4), re-diff in ENG-440.
 2097:31093	ios	blocked	Sheet strip (B=612) 0.44%, clean: diffs/ios/2097-31093.sheet. Full frame fails on the scrim: frame 40%, kit 0.5/0.6, blocked on ENG-427 (light sheetScrimOpacity 0.4), re-diff in ENG-440.
 2097:31093	android	blocked	Sheet strip (B=612) 0.35%: diffs/android/2097-31093.sheet; scrim: frame 40%, kit 0.5/0.6, blocked on ENG-427 (light sheetScrimOpacity 0.4), re-diff in ENG-440.
-2096:29125	ios	blocked	1.56%, but the hero photo, spec strip and map wait on ENG-429 (product-image placeholder, spec-strip, product-map); the PNG is black below 844, so the scroll part cannot be diffed. Re-diff in ENG-440.
-2096:29125	android	blocked	1.52%; as iOS, blocked on ENG-429.
-2097:30938	ios	blocked	1.56%, but the hero photo and spec strip wait on ENG-429 (product-image, spec-strip); re-diff in ENG-440.
-2097:30938	android	blocked	1.52%; as iOS, blocked on ENG-429.
-2096:29335	ios	blocked	0.38%; the bar's 166/164 halves wait on ENG-429's BottomBar HALF split (text sits about 1pt off), re-diff in ENG-440.
-2096:29335	android	blocked	1.70%; bar halves wait on ENG-429 HALF, as iOS.
-2096:29395	ios	blocked	0.17%; bar halves wait on ENG-429 HALF, as 29335.
-2096:29395	android	blocked	0.43%; bar halves wait on ENG-429 HALF.
-2096:29435	ios	blocked	0.23%; bar halves wait on ENG-429 HALF, as 29335.
-2096:29435	android	blocked	0.72%; bar halves wait on ENG-429 HALF.
-2097:31046	ios	blocked	1.76%; the ring permission card waits on ENG-433's stacked ring-permission-card, and the bar halves on ENG-429 HALF; re-diff in ENG-440.
-2097:31046	android	blocked	2.07%; ring card (ENG-433) and bar halves (ENG-429), as iOS.
+2096:29125	ios	fail-heatmap	1.56% first screen; blocked on ENG-429: hero photo, spec strip and map (product-image placeholder, spec-strip, product-map). Scroll end diffs/ios/2096-29125.scroll 4.56%: only the live map differs, the owner panel matches. Re-diff in ENG-440.
+2096:29125	android	fail-heatmap	1.52% first screen; scroll end diffs/android/2096-29125.scroll 5.95% (live map); blocked on ENG-429 as iOS.
+2097:30938	ios	fail-heatmap	1.56%; blocked on ENG-429: hero photo and spec strip (product-image, spec-strip); re-diff in ENG-440.
+2097:30938	android	fail-heatmap	1.52%; blocked on ENG-429 as iOS.
+2096:29335	ios	fail-heatmap	0.38%; the bar's 166/164 halves wait on ENG-429's BottomBar HALF split (button text about 1pt off); re-diff in ENG-440.
+2096:29335	android	fail-heatmap	1.70%; bar halves wait on ENG-429 HALF, as iOS.
+2096:29395	ios	fail-heatmap	0.17%; bar halves wait on ENG-429 HALF, as 29335.
+2096:29395	android	fail-heatmap	0.43%; bar halves wait on ENG-429 HALF.
+2096:29435	ios	fail-heatmap	0.23%; bar halves wait on ENG-429 HALF, as 29335.
+2096:29435	android	fail-heatmap	0.72%; bar halves wait on ENG-429 HALF.
+2097:31046	ios	fail-heatmap	1.76%; the ring permission card waits on ENG-433's stacked ring-permission-card and the bar halves on ENG-429 HALF; re-diff in ENG-440.
+2097:31046	android	fail-heatmap	2.07%; ring card (ENG-433) and bar halves (ENG-429), as iOS.
