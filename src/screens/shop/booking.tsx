@@ -336,7 +336,10 @@ function BookingPage({
         {mine ? <Notice icon="clock">{mine}</Notice> : null}
 
         <Section title="Timeline">
-          <Timeline rows={shopTimeline(booking, now)} />
+          {/* One child: Timeline returns its steps as a fragment, and the section's 12 gap would open between them. */}
+          <View>
+            <Timeline rows={shopTimeline(booking, now)} />
+          </View>
         </Section>
 
         <Section title="Customer">

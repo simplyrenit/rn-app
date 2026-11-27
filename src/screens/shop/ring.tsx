@@ -137,7 +137,8 @@ function RingBell() {
       {/* #F7F7F8 has no token; dark mode takes the raised surface. */}
       <View style={[circle(112), { backgroundColor: isDark ? color.surfaceRaised : "#F7F7F8" }]}>
         <View style={[circle(84), { backgroundColor: color.surfaceMuted }]}>
-          <BellIcon size={36} color={color.textBody} strokeWidth={1.5} />
+          {/* 1.5 drawn at 36, as the frame does: 1.5 × 24 / 36. */}
+          <BellIcon size={36} color={color.textBody} strokeWidth={1} />
         </View>
       </View>
     </View>
@@ -560,7 +561,8 @@ function EndedView({
             backgroundColor: accepted ? color.successWash : color.surfaceMuted,
           }}
         >
-          <Icon size={44} color={accepted ? color.success : color.textDim} strokeWidth={1.5} />
+          {/* The frames draw a 1.5 stroke at the icon's 44 size, not scaled from 24: 1.5 × 24 / 44. */}
+          <Icon size={44} color={accepted ? color.success : color.textDim} strokeWidth={(1.5 * 24) / 44} />
         </View>
         {/* The frames' 4pt spacer: 28 from the circle to the title. */}
         <View style={{ height: 4 }} />
