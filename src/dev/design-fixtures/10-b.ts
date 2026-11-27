@@ -4,6 +4,7 @@ import { createDraft } from "@/lib/list-flow/draft";
 import type { ListingDraft, PhotoItem, PhotoStatus } from "@/lib/list-flow/types";
 import { COVER_1984, FICTION_ID, LIST_FLOW_READS, kapoorBooks, terms } from "./10-common";
 import type { DevFixture } from "./registry";
+import { Image } from "react-native";
 
 /**
  * Section-10 fixtures of ENG-435 group B (add photos, reading, their sheets), merged into the registry through 10.ts.
@@ -11,10 +12,13 @@ import type { DevFixture } from "./registry";
  * uploaded or extracted.
  */
 
-const photo = (n: number, status: PhotoStatus = "done"): PhotoItem => ({
+/** The whole 1984 photo as the scan panel draws it (FIT): the tile crop padded to the frame's margins. */
+const PHOTO_1984: string = Image.resolveAssetSource(require("../assets/design-1984-photo.png"))?.uri ?? "";
+
+const photo = (n: number, status: PhotoStatus = "done", uri = COVER_1984): PhotoItem => ({
   id: `design-photo-${n}`,
-  localUri: COVER_1984,
-  remoteUrl: COVER_1984,
+  localUri: uri,
+  remoteUrl: uri,
   source: "camera",
   status,
 });
@@ -26,7 +30,7 @@ const draft = (over: Partial<ListingDraft> = {}): ListingDraft => ({
 
 /** The 1984 book as the reading frames have read it: AI category, title, brand, a condition guess; no model. */
 const read1984 = (over: Partial<ListingDraft>): ListingDraft => {
-  const base = draft({ photos: [photo(1), photo(2)], extractionRuns: 1 });
+  const base = draft({ photos: [photo(1, "done", PHOTO_1984), photo(2, "done", PHOTO_1984)], extractionRuns: 1 });
   return {
     ...base,
     fields: {
