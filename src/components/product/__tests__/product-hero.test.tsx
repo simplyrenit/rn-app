@@ -50,7 +50,8 @@ it("draws the frame's gallery: 390 high, a 177×300 photo 36 down, the tile hear
   expect(GALLERY_HEIGHT).toBe(390);
   const photos = byTestId(root, "photo");
   expect(photos).toHaveLength(5);
-  expect(photos[0].props.style).toEqual({ width: 177, height: 300, marginTop: 36 });
+  // 300 high across the content width; `contain` puts the frame's 177×300 cover at exactly 177×300.
+  expect(photos[0].props.style).toMatchObject({ height: 300, marginTop: 36 });
   expect(photos[0].props.contentFit).toBe("contain");
   expect(byTestId(root, "heart")[0].props.tile).toBe(true);
   expect(texts(root)).toContain("1/5");

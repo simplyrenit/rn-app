@@ -172,11 +172,13 @@ export function ProductImage({
                 source={{ uri: image }}
                 style={
                   contained
-                    ? { width: PHOTO.width, height: PHOTO.height, marginTop: PHOTO.top }
+                    ? { width: windowWidth - 48, height: PHOTO.height, marginTop: PHOTO.top }
                     : { width: "100%", height: "100%" }
                 }
-                // Contained: the whole listing photo fits the frame's 177×300 box (a
-                // landscape shot is not cropped to a centre strip). Full-bleed fills.
+                // Contained: the whole listing photo fits a 300-high box across the content
+                // width, centred. The frame's portrait cover lands at exactly its 177×300;
+                // a landscape shot shows whole at full width instead of a 177-wide strip.
+                // Full-bleed fills.
                 contentFit={contained ? "contain" : "cover"}
                 transition={150}
                 onError={() =>
