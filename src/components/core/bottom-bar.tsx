@@ -66,6 +66,9 @@ const LINK_PAD = 4;
 // The legacy column `booking/parts` drew (space.sm): kept for the passthrough so
 // its 23 bars do not reflow.
 const LEGACY_GAP = 8;
+// Secondary+Primary (2071:14449): two equal halves whatever their labels, so the basis is explicit (a content basis
+// let a long label take more than its half), and no side padding, as the kit's buttons in the bar have none.
+const HALF = { flexGrow: 1, flexShrink: 1, flexBasis: 0, paddingHorizontal: 0 } as const;
 
 function PrimaryButton({ action, style }: { action: BarAction; style?: StyleProp<ViewStyle> }) {
   return (
@@ -155,15 +158,12 @@ export function BottomBar({
                 disabled={secondary.disabled}
                 loading={secondary.loading}
                 accessibilityLabel={secondary.accessibilityLabel}
-                // The kit's Secondary in the bar fills its half with no side padding (04 2089:23201 "Secondary
-                // button", p0): with the hugging button's 20, a label wider than 125pt ("✓ In cart · View") pushed
-                // the primary under its half.
-                style={{ flex: 1, paddingHorizontal: 0 }}
+                style={HALF}
               >
                 {secondary.label}
               </Button>
             ) : null}
-            {primary ? <PrimaryButton action={primary} style={{ flex: 1 }} /> : null}
+            {primary ? <PrimaryButton action={primary} style={HALF} /> : null}
           </>
         );
       case "cta-text":

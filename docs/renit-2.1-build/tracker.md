@@ -12,7 +12,7 @@ Pass = mismatch ≤ 2% **and** a clean heat map (see README). Check: `live` on d
 | 00 | `2071:14413` | Top bar · Type=Back only | ENG-426 | devkit | pass 0.10% | pass 0.00% |  |
 | 00 | `2071:14422` | Bottom bar · Layout=Summary+CTA | ENG-426 | devkit | pass 0.72% | pass 0.84% |  |
 | 00 | `2071:14439` | Bottom bar · Layout=Full CTA | ENG-426 | devkit | pass 0.22% | pass 0.14% |  |
-| 00 | `2071:14449` | Bottom bar · Layout=Secondary+Primary | ENG-426 | devkit | pass 0.30% | pass 0.70% |  |
+| 00 | `2071:14449` | Bottom bar · Layout=Secondary+Primary | ENG-426 | devkit | pass 0.30% | pass 0.48% |  |
 | 00 | `2109:30149` | Bottom bar · Layout=CTA+Text | ENG-426 | devkit | pass 0.18% | pass 0.32% |  |
 | 00 | `2071:14471` | Sheet header | ENG-426 | devkit | pass 0.29% | pass 0.28% |  |
 | 00 | `2071:14481` | Sheet footer | ENG-426 | devkit | pass 0.43% | pass 0.09% |  |
@@ -135,7 +135,7 @@ Pass = mismatch ≤ 2% **and** a clean heat map (see README). Check: `live` on d
 | 04 | `2089:22279` | pdp-photo-viewer · open | ENG-429 | live | pass 0.51% | pass 0.79% | Viewer is centred on the screen, so diffed in screen coordinates (box 0,54,390,756): 0.51%; the close sits 7pt higher (47pt inset vs 54) and the page shows faintly under the 92% scrim (frame draws white).; Screen-coordinate box diff 0.79%. |
 | 04 | `2089:22295` | pdp · closed now (book for the morning) | ENG-429 | live | fail 1.19% | fail 1.59% | 1.19%: pinned band 0.92 / title 0.72 at the frame's scroll (collapse constants are behaviour); key-spec line and strip category computed (see 15971).; 1.59%: as iOS. |
 | 04 | `2089:22597` | pdp · not taking bookings | ENG-429 | live | fail 0.96% | fail 1.40% | 0.96%: band 0.92 at the seed offset; key-spec line and strip category computed (see 15971).; 1.40%: as iOS. |
-| 04 | `2089:22896` | pdp · cart bar (add to cart + book now) | ENG-429 | live | fail 22.62% | fail 22.39% | Hand run (--split-bottom 129): 22.6% from the kept edge-to-edge hero; below the hero 1.19%.; Hand run: hero kept; below the hero 1.28%. |
+| 04 | `2089:22896` | pdp · cart bar (add to cart + book now) | ENG-429 | live | fail 22.10% | fail 21.89% | Hand run (--split-bottom 129): 22.6% from the kept edge-to-edge hero; below the hero 1.19%.; Hand run: hero kept; below the hero 1.28%. |
 | 04 | `2089:23201` | pdp · cart bar · in cart, closed now | ENG-429 | live | fail 1.08% | fail 1.30% | Hand run (--split-bottom 173) 1.08%: band 0.92 at the seed offset, the hero's 1/5 pill shows through it; key-spec line and category computed.; Hand run 1.30%: as iOS. |
 | 04 | `2089:23523` | pdp · cart bar · not taking bookings | ENG-429 | live | fail 1.02% | fail 1.15% | Hand run (--split-bottom 153) 1.02%: band 0.92 at the seed offset; key-spec line and category computed.; Hand run 1.15%: as iOS. |
 | 04 | `2089:23841` | pdp-owner · live | ENG-429 | live | fail 21.98% | fail 21.81% | Hero kept (plan decision); below the hero 1.22%.; Hero kept; below the hero 1.29%. |

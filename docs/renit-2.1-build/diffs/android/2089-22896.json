@@ -2,7 +2,7 @@
  "ref": "../figma/04/2089-22896.png",
  "app": "android-2089-22896.png",
  "platform": "android",
- "mismatch_pct": 22.392,
+ "mismatch_pct": 21.893,
  "threshold_pct": 2.0,
  "pass": false,
  "compared_px": [

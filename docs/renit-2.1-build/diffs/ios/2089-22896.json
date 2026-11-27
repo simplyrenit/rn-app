@@ -2,7 +2,7 @@
  "ref": "../figma/04/2089-22896.png",
  "app": "ios-2089-22896.png",
  "platform": "ios",
- "mismatch_pct": 22.618,
+ "mismatch_pct": 22.099,
  "threshold_pct": 2.0,
  "pass": false,
  "compared_px": [
