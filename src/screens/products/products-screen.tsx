@@ -182,6 +182,8 @@ export default function DetailsScreen() {
   const design = __DEV__ ? (route.params as { design?: ProductDesign } | undefined)?.design : undefined;
   const scrollRef = React.useRef<ScrollView>(null);
   const seededScroll = React.useRef(false);
+  const viewportHeight = React.useRef(0);
+  const contentHeight = React.useRef(0);
   const allSpecsRef = React.useRef<BottomSheetModal>(null);
   // The root native stack, for its typed `push`; `useTypedNavigation` is the
   // generic navigation prop, which has no `push`.
@@ -198,7 +200,7 @@ export default function DetailsScreen() {
   // from the global context in some places and `useTheme()` in others.
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
   // The hero is the safe-area inset plus a square as wide as the screen; the band
   // (inset + BAND_HEIGHT tall) is fully in once the photo's bottom edge reaches it.
   const collapseEnd = windowWidth - BAND_HEIGHT;
@@ -371,6 +373,22 @@ export default function DetailsScreen() {
     track("cart_opened", { from });
     navigation.navigate("Cart");
   };
+
+  // Dev seed: the scroll offset, once everything has loaded and laid out, so the band follows the real scroll value. A
+  // seed past the end (a crop of the page's end on a taller screen) stops at the end, as a hard swipe would.
+  useEffect(() => {
+    const y = design?.scrollY;
+    if (!y || seededScroll.current || loading || !product) return;
+    const timer = setTimeout(() => {
+      const end = Math.max(0, contentHeight.current - viewportHeight.current);
+      const to = Math.min(y, end);
+      seededScroll.current = true;
+      scrollRef.current?.scrollTo({ y: to, animated: false });
+      setHeroCovered(to > collapseEnd - 12);
+    }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [design?.scrollY, loading, product?.name]);
 
   // Dev seed: the specifications sheet open (04 2083:16201), once the page and its sheet are mounted.
   useEffect(() => {
@@ -812,14 +830,11 @@ export default function DetailsScreen() {
       <Animated.ScrollView
         ref={scrollRef as never}
         className="flex-1"
+        onLayout={(event) => {
+          viewportHeight.current = event.nativeEvent.layout.height;
+        }}
         onContentSizeChange={(_, height) => {
-          // The seed's offset, once the page is long enough to reach it; the band
-          // then follows the real scroll value.
-          const y = design?.scrollY;
-          if (!y || seededScroll.current || !product || height < y + windowHeight) return;
-          seededScroll.current = true;
-          requestAnimationFrame(() => scrollRef.current?.scrollTo({ y, animated: false }));
-          setHeroCovered(y > collapseEnd - 12);
+          contentHeight.current = height;
         }}
         contentContainerStyle={{ flexGrow: 1, backgroundColor: color.canvas }}
         scrollEventThrottle={16}

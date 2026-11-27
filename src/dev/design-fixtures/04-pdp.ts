@@ -139,7 +139,8 @@ const PRODUCT: BackendProduct = {
   },
 };
 
-// The rail's first two are the frame's; "See all 24 reviews" counts the list, so it has 24 with unique usernames
+// The rail's first two are the frame's, each with a second paragraph so the card offers "Show more" under the frame's
+// three lines without an ellipsis on the third. "See all 24 reviews" counts the list, so it has 24 with unique usernames
 // (the rail's React key). `fromNow()` prints 21 days as "21 days ago" (the frame's "3 weeks ago" is a text heat note).
 const THREE_WEEKS_AGO = new Date(Date.now() - 21 * 24 * 3600 * 1000).toISOString();
 const review = (username: string, first_name: string, last_name: string, comment: string): BackendReview => ({
@@ -156,9 +157,9 @@ const OTHERS = [
 ];
 const REVIEWS: BackendReview[] = [
   review("ananya_iyer", "Ananya", "Iyer",
-    "Beautiful edition and in perfect condition. Pickup took two minutes and the owner was right on time. Would happily rent from Rohan again."),
+    "Beautiful edition and in perfect condition. Pickup took two minutes and the owner was right on time.\nWould happily rent from Rohan again."),
   review("tejas_hinduja", "Tejas", "Hinduja",
-    "Well looked after, exactly as described. I would rent from this owner again. The ribbon bookmark is a lovely touch."),
+    "Well looked after, exactly as described. I would rent from this owner again.\nThe ribbon bookmark is a lovely touch."),
   ...OTHERS.map((name) => {
     const [first, last] = name.split(" ");
     return review(`${first}_${last}`.toLowerCase(), first, last, "Good copy, easy handover.");

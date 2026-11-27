@@ -61,7 +61,8 @@ function DetailCard({
       style={{
         width: size ? `${size}%` : "100%",
         minHeight: DETAIL_HEIGHT,
-        padding: 16,
+        // 15 inside the 1pt border: Figma strokes inside the 16 padding, an RN border adds to it.
+        padding: 15,
         borderRadius: radius.card,
         borderWidth: 1,
         borderColor: color.line,
@@ -77,6 +78,7 @@ function DetailCard({
         fontSize="text-sm"
         tone="body"
         lines={3}
+        lineHeight={21}
         collapsedHeight={DETAIL_BODY_HEIGHT}
         controlGap={4}
         control="link"

@@ -68,7 +68,7 @@ describe("ReviewCard", () => {
       expect.objectContaining({ lines: 3, collapsedHeight: 64, control: "link", controlLineHeight: 18, controlGap: 4 })
     );
     const outer = StyleSheet.flatten(r.root.findAllByType(View)[0].props.style);
-    expect(outer).toEqual(expect.objectContaining({ minHeight: 182, padding: 16, borderWidth: 1, gap: 24 }));
+    expect(outer).toEqual(expect.objectContaining({ minHeight: 182, padding: 15, borderWidth: 1, gap: 24 }));
   });
 
   it("default is unchanged: its own body and author, no ExpandableText", () => {

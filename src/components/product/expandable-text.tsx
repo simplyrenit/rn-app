@@ -32,6 +32,8 @@ interface Props {
    * card, 20 on the reviews list card. Defaults to 21.
    */
   controlLineHeight?: number;
+  /** The body's line height, where the frame sets it off the type scale (14/21 on the rail card, 2083:15836). */
+  lineHeight?: number;
   /**
    * When given, the control does this instead of expanding in place — for a
    * card whose height is fixed by the rail it sits in.
@@ -59,6 +61,7 @@ export function ExpandableText({
   controlGap = 8,
   control = "chevron",
   controlLineHeight = 21,
+  lineHeight,
   onPress,
   accessibilityHint,
 }: Props) {
@@ -95,6 +98,7 @@ export function ExpandableText({
         <Text
           fontSize={fontSize}
           tone={tone}
+          lineHeight={lineHeight}
           numberOfLines={expanded ? undefined : lines}
         >
           {body}
@@ -107,6 +111,7 @@ export function ExpandableText({
           <Text
             fontSize={fontSize}
             tone={tone}
+            lineHeight={lineHeight}
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
             style={{ position: "absolute", left: 0, right: 0, top: 0, opacity: 0 }}
