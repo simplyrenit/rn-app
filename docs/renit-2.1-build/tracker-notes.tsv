@@ -12,50 +12,50 @@
 2110:30278	android	fluid	Covered by the Android Active=Rentals tab bar comparison (fluid width, visual match).
 2110:30274	ios	n/a	Drawn only on Active=Post (signed out or merchant awaiting approval); checked in ENG-435.
 2110:30274	android	n/a	Drawn only on Active=Post; checked in ENG-435.
-2083:15579	ios	fail-heatmap	Cart badge sits 0/2 from the corner where the frame has 2/4; CartButton is ENG-429's (components/cart/parts.tsx).
+2083:15579	ios	fail-heatmap	Cart badge sits 0/2 from the corner where the frame has 2/4; CartButton (components/cart/parts.tsx) is ENG-429's (D5); rest clean.
 2083:15347	ios	fail-heatmap	Segment 1 0.65% as 2083:15120 (search-bar logo by decision); s2 4.46% only where the frame draws its own tab bar over content at y 742-844, the app content there matches; s3 0.67% and s4 (end) 0.48% clean; the search bar stays pinned on scroll (behaviour), so segments are diffed below it.
-2089:24680	ios	fail-heatmap	Sub-line prints "3 items from Rohan" where the frame has "Rohan Mehta" (Decision 9, first_name kept).
-2089:24740	ios	fail-heatmap	Review dates print "21 days ago"/"a month ago" (Decision 8) and the kit Avatar draws a hue monogram where every frame draws a #EDEDFC disc.
-2089:27555	ios	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
-2089:27772	ios	fail-heatmap	Saved hearts are the kit FavouriteButton red where the frame draws them brand purple.
+2089:24680	ios	fail-heatmap	Sub-line prints "3 items from Rohan" where the frame has "Rohan Mehta": first_name kept, passing the full name is a behaviour change (D12).
+2089:24740	ios	fail-heatmap	Avatars now match (D3 #EDEDFC disc). Only review dates differ: moment fromNow prints "21 days ago"/"a month ago" vs "3 weeks ago"/"1 month ago" (D12).
+2089:27555	ios	fail-heatmap	Distance line pending ENG-429 location seam, re-diff in ENG-440 (D2); rest clean.
+2089:27772	ios	note	Saved hearts now brand #635BE8 (D4); clean.
 2089:27951	ios	fail-heatmap	Title matches (ink top 21.0pt, as 27772; D10's 2pt not reproduced, saved.tsx unchanged). The rest is profile-pre-auth.tsx's panel (not ENG-427): body wrap and button style differ.
-2089:29905	ios	fail-heatmap	Card matches; today marker is the clock (Nov 23 vs the frame's Nov 22), and the centred card sits 2pt below the frame's y 178.
+2089:29905	ios	fail-heatmap	Card matches, diffed aligned on it (--app-top 168 --split-bottom 85 --ref-bottom 21) 0.94%. Only the today marker differs (clock: Nov 27 vs the frame's Nov 22, so 22-26 are greyed); the range marking and header are pinned by date-range-picker.test.tsx. The frame's card sits at y 178, 2pt above centre.
 2089:29793	ios	fail-heatmap	Shell matches: sheet 633pt from screen-height snaps (D8), keyboard checked. Nearby rows pending ENG-429 location seam, re-diff in ENG-440 (D2). Hand diff --split-bottom 599 --ref-bottom 34.
-2089:32064	ios	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
+2089:32064	ios	fail-heatmap	Distance line pending ENG-429 location seam, re-diff in ENG-440 (D2); rest clean.
 2089:32313	ios	fail-heatmap	Header, rows (D11 radio restyle), add row and the 443pt snap match. Home's line is addressLine's locality-first 'Andheri West, Mumbai · Flat 302, …' where the frame prints flat first (copy kept; its locality also names the results row's area). Hand diff --split-bottom 409 --ref-bottom 21.
-2089:34679	ios	fail-heatmap	Sheet content matches (split 650); behind the scrim the app draws the category rail and the live-applied filters the frame omits; scrim is Decision 4.
-2089:34809	ios	fail-heatmap	Sheet content matches (split 470); background behind the scrim differs as on 2089:34679 (category rail, live filters); scrim is Decision 4.
-2089:34929	ios	fail-heatmap	Sheet content matches (split 634); the back row prints the app's sentence case "Fitness & sports" (categoryDisplayName, behaviour) where the frame has "Fitness & Sports"; background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
-2089:35060	ios	fail-heatmap	Sheet content matches (split 339); background behind the scrim differs as on 2089:34679; scrim is Decision 4.
-2089:35166	ios	fail-heatmap	Sheet content matches (split 390); the value prints "4" as before where the frame has "4.0" (copy kept); background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
-2089:35291	ios	fail-heatmap	Sheet content matches (split 394); the tab strip scrolls a few pt differently and shows "Ratings •" from the run; background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
-2089:35398	ios	fail-heatmap	Sheet content matches (split 324) except the off switch, the iOS system track, darker than the frame's; background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
-2089:36248	ios	fail-heatmap	Kit Avatar draws a hue monogram with a ring where the frame draws a #EDEDFC disc with brand initials; rest clean.
-2089:36415	ios	fail-heatmap	Segment 1 1.50% as 2089:36248 (kit Avatar); s2 (end) 2.68%: the frame draws its home indicator over the product rail, distance lines need the location grant (Decision 7), review dates (Decision 8), kit Avatar, and no "Show more" because the fixture review is under the 140-character cut (behaviour).
-2089:36523	ios	fail-heatmap	Kit Avatar draws a hue monogram with a ring where the frame draws a #EDEDFC disc with brand initials; rest clean.
-2083:15579	android	fail-heatmap	Cart badge sits 0/2 from the corner where the frame has 2/4; CartButton is ENG-429's (components/cart/parts.tsx).
+2089:34679	ios	fail-heatmap	Sheet content matches (split 650); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:34809	ios	fail-heatmap	Sheet content matches (split 470); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:34929	ios	fail-heatmap	Sheet content matches (split 634) except the back row's sentence case "Fitness & sports" (categoryDisplayName, behaviour); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:35060	ios	fail-heatmap	Sheet content matches (split 339); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:35166	ios	fail-heatmap	Sheet content matches (split 390) except the value "4" where the frame has "4.0" (copy kept); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:35291	ios	fail-heatmap	Sheet content matches (split 394); the tab strip sits scrolled a few pt from the frame's (scroll state); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:35398	ios	fail-heatmap	Sheet content matches (split 324) except the off switch, the iOS system track; background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:36248	ios	fail-heatmap	Avatar now matches (D3). Only the trust row prints "Lists in Goregaon, Mumbai" where the frame has "Goregaon" (the row repeats the products' location, behaviour).
+2089:36415	ios	fail-heatmap	Segment 1 0.33% as 2089:36248. s2 (end, split at reviews, --ref-top 753 --ref-height 1460 --ref-bottom 0 --app-top 309 --split-bottom 342) 1.97%: distance lines pending ENG-429 (D2), review dates (D12), no "Show more" because the fixture review is under the 140-character cut (behaviour); avatars match.
+2089:36523	ios	note	Avatar now the #EDEDFC disc with brand 20/28 initials (D3); clean.
+2083:15579	android	fail-heatmap	Cart badge sits 0/2 from the corner where the frame has 2/4; CartButton (components/cart/parts.tsx) is ENG-429's (D5); rest clean.
 2083:15347	android	fail-heatmap	Segment 1 0.64% as 2083:15120 (logo by decision); s2 3.95% only where the frame draws its own tab bar over content at y 742-844; s3 (end) 1.35% text metrics only; search bar pinned on scroll (behaviour).
-2089:24680	android	fail-heatmap	Sub-line prints "3 items from Rohan" where the frame has "Rohan Mehta" (Decision 9, first_name kept).
-2089:24740	android	fail-heatmap	Review dates print "21 days ago"/"a month ago" (Decision 8) and the kit Avatar draws a hue monogram where every frame draws a #EDEDFC disc.
-2089:27555	android	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
-2089:27772	android	fail-heatmap	Saved hearts are the kit FavouriteButton red where the frame draws them brand purple.
+2089:24680	android	fail-heatmap	Sub-line prints "3 items from Rohan" where the frame has "Rohan Mehta": first_name kept, passing the full name is a behaviour change (D12).
+2089:24740	android	fail-heatmap	Avatars now match (D3 #EDEDFC disc). Only review dates differ: moment fromNow prints "21 days ago"/"a month ago" vs "3 weeks ago"/"1 month ago" (D12).
+2089:27555	android	fail-heatmap	Distance line pending ENG-429 location seam, re-diff in ENG-440 (D2); rest clean.
+2089:27772	android	note	Saved hearts now brand #635BE8 (D4); clean.
 2089:27951	android	fail-heatmap	Title matches (ink top 21.0dp). The rest is profile-pre-auth.tsx's panel (not ENG-427): no Apple button on Android, so the panel sits lower than the frame's.
 2089:29793	android	fail-heatmap	Shell matches: sheet 633dp (D8), keyboard checked. Nearby rows pending ENG-429 location seam, re-diff in ENG-440 (D2). Hand diff --app-top 72 --app-bottom 0 --split-bottom 633 --ref-bottom 0.
-2089:29905	android	fail-heatmap	Card matches when diffed aligned on it (--app-top 168, 0.98%); today marker is the clock (Nov 23 vs the frame's Nov 22).
-2089:32064	android	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
+2089:29905	android	fail-heatmap	As iOS (--app-top 168 --app-bottom 0) 0.81%: card matches; today marker is the clock (Nov 27 vs Nov 22), checked by jest.
+2089:32064	android	fail-heatmap	Distance line pending ENG-429 location seam, re-diff in ENG-440 (D2); rest clean.
 2089:32313	android	fail-heatmap	As iOS (snap 409dp, no inset): only Home's locality-first line differs (copy kept). Hand diff --app-top 72 --app-bottom 0 --split-bottom 409 --ref-bottom 21.
-2089:34679	android	fail-heatmap	Sheet content matches (split 650); background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
-2089:34809	android	fail-heatmap	Sheet content matches (split 470); background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
-2089:34929	android	fail-heatmap	Sheet content matches (split 634); "Fitness & sports" sentence case as on iOS (behaviour); background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
-2089:35060	android	fail-heatmap	Sheet content matches (split 339); background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
-2089:35166	android	fail-heatmap	Sheet content matches (split 390); prints "4" where the frame has "4.0" (copy kept); background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
-2089:35291	android	fail-heatmap	Sheet content matches (split 394); "Ratings •" from the run; background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
-2089:35398	android	fail-heatmap	Sheet content matches (split 324) except the switch, Android's Material switch where the frame draws the iOS one; background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
-2089:36248	android	fail-heatmap	Kit Avatar draws a hue monogram with a ring where the frame draws a #EDEDFC disc with brand initials; rest clean.
-2089:36415	android	fail-heatmap	Segment 1 1.53% as 2089:36248 (kit Avatar); s2 (end) 2.75%: as iOS, plus "Lists in Goregaon, Mumbai" (the row repeats the products' location, behaviour) where the frame has "Goregaon".
-2089:36523	android	fail-heatmap	Kit Avatar draws a hue monogram with a ring where the frame draws a #EDEDFC disc with brand initials; rest clean.
-2083:15120	ios	fail-heatmap	Search-bar mark: the app draws the Renit logo by an earlier decision (home/search-bar.tsx calls the frame's ring a broken placeholder); rest clean.
-2083:15120	android	fail-heatmap	Search-bar mark as on iOS (logo by decision); rest clean after a rerun (first open drew QA's category order, a first-open race).
+2089:34679	android	fail-heatmap	Sheet content matches (split 650); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:34809	android	fail-heatmap	Sheet content matches (split 470); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:34929	android	fail-heatmap	Sheet content matches (split 634) except the back row's sentence case "Fitness & sports" (categoryDisplayName, behaviour); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:35060	android	fail-heatmap	Sheet content matches (split 339); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:35166	android	fail-heatmap	Sheet content matches (split 390) except the value "4" where the frame has "4.0" (copy kept); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:35291	android	fail-heatmap	Sheet content matches (split 394); the tab strip sits scrolled a few pt from the frame's (scroll state); background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:35398	android	fail-heatmap	Sheet content matches (split 324) except the switch, Android's Material switch; background behind the scrim is not an app state (D9): the rail, Filters dot, Sort pill and Clear filters read the same filters as the tab dots, so they always show behind the sheet; scrim now 40% as drawn (D1).
+2089:36248	android	fail-heatmap	Avatar now matches (D3). Only the trust row prints "Lists in Goregaon, Mumbai" where the frame has "Goregaon" (the row repeats the products' location, behaviour).
+2089:36415	android	fail-heatmap	Segment 1 0.37%. s2 (end, --ref-top 696 --app-top 240 --app-bottom 0 --split-bottom 342) 2.11%: as iOS, plus "Lists in Goregaon, Mumbai" (behaviour).
+2089:36523	android	note	Avatar now the #EDEDFC disc with brand 20/28 initials (D3); clean.
+2083:15120	ios	fail-heatmap	Search-bar mark: the app keeps the Renit logo by the earlier decision in home/search-bar.tsx, which calls the frame ring a broken placeholder (D6); rest clean.
+2083:15120	android	fail-heatmap	Search-bar mark: the app keeps the Renit logo by the earlier decision in home/search-bar.tsx, which calls the frame ring a broken placeholder (D6); rest clean.
 2089:29597	ios	note	D7: design.resting keeps What? unfocused under the fixture (real use still autofocuses); clean.
 2089:29597	android	note	D7: design.resting keeps What? unfocused under the fixture (real use still autofocuses); clean.
 2089:29654	ios	note	D7 resting seed; the clear X shows at rest as drawn. Dates by tap (When → 28 → 30 → Confirm), which works only until 2026-11-28. Hand diff --split-bottom 85 --ref-bottom 21.

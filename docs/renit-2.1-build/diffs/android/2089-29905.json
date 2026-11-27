@@ -1,8 +1,8 @@
 {
  "ref": "../figma/03/2089-29905.png",
- "app": "../../../../../../../../private/tmp/claude-501/-Users-zineone--claude-spares-spare-52eBRw/40ee769d-a6d6-4852-bbfe-b809dd24e0bd/scratchpad/i427/sa29905.png",
+ "app": "../../../../../../../../private/tmp/claude-501/-Users-zineone-git-renit/ffb602ef-ee83-46d3-8bac-8d2aa137479e/scratchpad/shots/android-2089-29905.png",
  "platform": "android",
- "mismatch_pct": 0.979,
+ "mismatch_pct": 0.808,
  "threshold_pct": 2.0,
  "pass": true,
  "compared_px": [
