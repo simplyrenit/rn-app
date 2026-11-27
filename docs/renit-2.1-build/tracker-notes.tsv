@@ -18,11 +18,11 @@
 2089:24740	ios	fail-heatmap	Review dates print "21 days ago"/"a month ago" (Decision 8) and the kit Avatar draws a hue monogram where every frame draws a #EDEDFC disc.
 2089:27555	ios	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
 2089:27772	ios	fail-heatmap	Saved hearts are the kit FavouriteButton red where the frame draws them brand purple.
-2089:27951	ios	blocked	Sign-in panel is profile-pre-auth.tsx (ENG-428 / ENG-438, Decision 10); Home rail reads now listed so nothing reaches QA.
+2089:27951	ios	fail-heatmap	Title matches (ink top 21.0pt, as 27772; D10's 2pt not reproduced, saved.tsx unchanged). The rest is profile-pre-auth.tsx's panel (not ENG-427): body wrap and button style differ.
 2089:29905	ios	fail-heatmap	Card matches; today marker is the clock (Nov 23 vs the frame's Nov 22), and the centred card sits 2pt below the frame's y 178.
-2089:29793	ios	fail-heatmap	Shell diffed (split 612): the sheet is 75% of the safe-area container, ~47pt short of the frame's 633 (screen-based snaps are a main-thread decision); no nearby rows, they are live Google data and need the location grant (jest covers the row).
+2089:29793	ios	fail-heatmap	Shell matches: sheet 633pt from screen-height snaps (D8), keyboard checked. Nearby rows pending ENG-429 location seam, re-diff in ENG-440 (D2). Hand diff --split-bottom 599 --ref-bottom 34.
 2089:32064	ios	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
-2089:32313	ios	blocked	Saved rows wait on the address-row radio restyle (ENG-438 owns the file, Decision 11).
+2089:32313	ios	fail-heatmap	Header, rows (D11 radio restyle), add row and the 443pt snap match. Home's line is addressLine's locality-first 'Andheri West, Mumbai · Flat 302, …' where the frame prints flat first (copy kept; its locality also names the results row's area). Hand diff --split-bottom 409 --ref-bottom 21.
 2089:34679	ios	fail-heatmap	Sheet content matches (split 650); behind the scrim the app draws the category rail and the live-applied filters the frame omits; scrim is Decision 4.
 2089:34809	ios	fail-heatmap	Sheet content matches (split 470); background behind the scrim differs as on 2089:34679 (category rail, live filters); scrim is Decision 4.
 2089:34929	ios	fail-heatmap	Sheet content matches (split 634); the back row prints the app's sentence case "Fitness & sports" (categoryDisplayName, behaviour) where the frame has "Fitness & Sports"; background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
@@ -39,11 +39,11 @@
 2089:24740	android	fail-heatmap	Review dates print "21 days ago"/"a month ago" (Decision 8) and the kit Avatar draws a hue monogram where every frame draws a #EDEDFC disc.
 2089:27555	android	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
 2089:27772	android	fail-heatmap	Saved hearts are the kit FavouriteButton red where the frame draws them brand purple.
-2089:27951	android	blocked	Sign-in panel is profile-pre-auth.tsx (ENG-428 / ENG-438, Decision 10).
-2089:29793	android	fail-heatmap	Shell diffed (split 612): sheet content sits 3pt above the frame's; no nearby rows, they are live Google data and need the location grant (jest covers the row).
+2089:27951	android	fail-heatmap	Title matches (ink top 21.0dp). The rest is profile-pre-auth.tsx's panel (not ENG-427): no Apple button on Android, so the panel sits lower than the frame's.
+2089:29793	android	fail-heatmap	Shell matches: sheet 633dp (D8), keyboard checked. Nearby rows pending ENG-429 location seam, re-diff in ENG-440 (D2). Hand diff --app-top 72 --app-bottom 0 --split-bottom 633 --ref-bottom 0.
 2089:29905	android	fail-heatmap	Card matches when diffed aligned on it (--app-top 168, 0.98%); today marker is the clock (Nov 23 vs the frame's Nov 22).
 2089:32064	android	fail-heatmap	Distance lines need the location grant (Decision 7, not approved).
-2089:32313	android	blocked	Saved rows wait on the address-row radio restyle (ENG-438 owns the file, Decision 11).
+2089:32313	android	fail-heatmap	As iOS (snap 409dp, no inset): only Home's locality-first line differs (copy kept). Hand diff --app-top 72 --app-bottom 0 --split-bottom 409 --ref-bottom 21.
 2089:34679	android	fail-heatmap	Sheet content matches (split 650); background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
 2089:34809	android	fail-heatmap	Sheet content matches (split 470); background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
 2089:34929	android	fail-heatmap	Sheet content matches (split 634); "Fitness & sports" sentence case as on iOS (behaviour); background behind the scrim as on 2089:34679 (category rail, live filters; scrim is Decision 4).
@@ -56,10 +56,10 @@
 2089:36523	android	fail-heatmap	Kit Avatar draws a hue monogram with a ring where the frame draws a #EDEDFC disc with brand initials; rest clean.
 2083:15120	ios	fail-heatmap	Search-bar mark: the app draws the Renit logo by an earlier decision (home/search-bar.tsx calls the frame's ring a broken placeholder); rest clean.
 2083:15120	android	fail-heatmap	Search-bar mark as on iOS (logo by decision); rest clean after a rerun (first open drew QA's category order, a first-open race).
-2089:29597	ios	fail-heatmap	What? autofocuses (behaviour), so the field shows the focus ring the unfocused frame does not; rest clean.
-2089:29597	android	fail-heatmap	As iOS: autofocus ring (keyboard closed with Back before the shot); rest clean.
-2089:29654	ios	fail-heatmap	Autofocus ring and no clear X (the library shows X only unfocused); dates and bar match.
-2089:29654	android	fail-heatmap	As iOS: autofocus ring and no clear X; dates and bar match.
+2089:29597	ios	note	D7: design.resting keeps What? unfocused under the fixture (real use still autofocuses); clean.
+2089:29597	android	note	D7: design.resting keeps What? unfocused under the fixture (real use still autofocuses); clean.
+2089:29654	ios	note	D7 resting seed; the clear X shows at rest as drawn. Dates by tap (When → 28 → 30 → Confirm), which works only until 2026-11-28. Hand diff --split-bottom 85 --ref-bottom 21.
+2089:29654	android	note	As iOS: D7 resting seed, X at rest; date taps work only until 2026-11-28. Hand diff --app-top 72 --app-bottom 0 --split-bottom 85 --ref-bottom 21.
 2089:32240	android	text-width	Body copy sits a pixel off from Android text metrics; layout and icon match (iOS 0.40% clean).
 2089:27893	android	text-width	Body wraps "here." to a second line: Android's Plus Jakarta Sans measures wider at 342; iOS fits it on one line.
 2089:31917	android	text-width	The card title ellipsis falls one glyph earlier on Android; rest clean.

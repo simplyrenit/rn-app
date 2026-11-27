@@ -44,6 +44,10 @@ const customer: MyDetailsResponse = {
 };
 
 // 2089:32313: Home (the default, so the row reads "Delivering to Home · Andheri West"), Work and Parents.
+// `addressLine()` prints "locality · flat, landmark"; the picker frame prints flat first. As ENG-438's 13.ts does, Work
+// and Parents carry the frame's whole line in `locality` with empty lines, so they draw it exactly. Home cannot: its
+// locality also names the area on the results row (`areaOf`, "Andheri West"), so it keeps real fields and its picker
+// line reads "Andheri West, Mumbai · Flat 302, Sea Breeze CHS, Lokhandwala" (copy kept, ENG-427 D11).
 const addresses: SavedAddress[] = [
   {
     id: 4271,
@@ -60,9 +64,9 @@ const addresses: SavedAddress[] = [
   {
     id: 4272,
     address: "WeWork Vijay Diamond, Andheri East, Mumbai",
-    address_line_1: "WeWork Vijay Diamond",
+    address_line_1: "",
     address_line_2: "",
-    locality: "Andheri East, Mumbai",
+    locality: "WeWork Vijay Diamond, Andheri East",
     address_type: "work",
     label: "",
     coordinates: { lat: 19.1197, long: 72.8697 },
@@ -72,9 +76,9 @@ const addresses: SavedAddress[] = [
   {
     id: 4273,
     address: "Hill Road, Bandra West, Mumbai",
-    address_line_1: "Hill Road",
+    address_line_1: "",
     address_line_2: "",
-    locality: "Bandra West, Mumbai",
+    locality: "Hill Road, Bandra West",
     address_type: "other",
     label: "Parents",
     coordinates: { lat: 19.0544, long: 72.8296 },
@@ -221,6 +225,10 @@ const signedIn = (responses: Record<string, unknown>, params: object = base): De
 const resultsFixture = signedIn({ "GET /search/": results });
 // The sheet frames: browsing Tennis under Fitness & Sports by its title (`selectedCategoryData` matches titles), so the
 // Category tab opens on the sub-category list and the Specs tab has Tennis's panel.
+// ENG-427 D9: the frames' background (no category rail, plain Filters and Sort pills, no "Clear filters") is not an app
+// state while the sheet shows "Sort •", "Category •" and "Specs •". The screen draws the rail (`railParent`), the
+// Filters dot (`refined`), the Sort pill (`sortActive`) and "Clear filters" (`isFilterActive`) from the same `filters`
+// the tab dots read, so a set sort, category and spec always show behind the scrim. The sheets diff split at the sheet.
 const sheetFixture = signedIn({ "GET /search/": results }, { ...base, category: "Fitness & Sports", subCategory: "Tennis" });
 
 export const fixtures: Record<string, DevFixture> = {

@@ -1,16 +1,16 @@
 {
  "ref": "../figma/03/2089-29793.png",
- "app": "../../../../../../../../private/tmp/claude-501/-Users-zineone-git-renit/40ee769d-a6d6-4852-bbfe-b809dd24e0bd/scratchpad/a_29793.png",
+ "app": "../../../../../../../../private/tmp/claude-501/-Users-zineone-git-renit/ffb602ef-ee83-46d3-8bac-8d2aa137479e/scratchpad/a29793.png",
  "platform": "android",
- "mismatch_pct": 2.614,
+ "mismatch_pct": 2.158,
  "threshold_pct": 2.0,
  "pass": false,
  "compared_px": [
   1170,
-  2307
+  2370
  ],
  "app_scaled_height": 2460,
  "uncovered_rows": 0,
- "split_bottom_pt": 612.0,
+ "split_bottom_pt": 633.0,
  "seam_hidden_rows": 0
 }

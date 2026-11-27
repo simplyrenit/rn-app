@@ -1251,7 +1251,7 @@ export default function SearchResults() {
         ref={addressSheet}
         savedOnly
         title="Where should we deliver?"
-        description="We'll show who delivers there and what it costs."
+        description="We’ll show who delivers there and what it costs."
         selected={
           deliverTo
             ? {

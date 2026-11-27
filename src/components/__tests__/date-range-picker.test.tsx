@@ -15,8 +15,6 @@ jest.mock("../core/use-press-feedback", () => ({
 }));
 
 // eslint-disable-next-line import/first
-import DateRangePicker from "../core/date-range-picker";
-// eslint-disable-next-line import/first
 import { lightColors } from "@/lib/design-tokens";
 
 /**
@@ -25,8 +23,11 @@ import { lightColors } from "@/lib/design-tokens";
  * the 28th and the header copy is read in en-US (skipped on another locale; run with LANG=en_US.UTF-8).
  */
 describe("DateRangePicker on the 2.1 frame (ENG-427)", () => {
+  // XDate (react-native-calendars' "today") keeps the Date it saw at load, so the picker is required after the clock is pinned.
+  let DateRangePicker: typeof import("../core/date-range-picker").default;
   beforeAll(() => {
     jest.useFakeTimers({ now: new Date(2026, 10, 23, 10, 0, 0) });
+    DateRangePicker = require("../core/date-range-picker").default;
   });
   afterAll(() => {
     jest.useRealTimers();
