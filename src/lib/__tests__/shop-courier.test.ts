@@ -12,6 +12,7 @@ import {
   courierErrorText,
   courierOf,
   courierPayoutLine,
+  earlyReturnCard,
   legSteps,
   packByText,
   packNotice,
@@ -150,12 +151,12 @@ describe("a shop booking reads as today", () => {
       expect(customerBlock(b, NOW).note).toMatch(/You can call each other/);
       expect(moneyView(b).delivery).toBe("₹170");
       expect(shopTimeline(b, NOW).map((row) => row.label)).toContain("Delivery");
-      expect(summaryOfBooking(b).how).toBe("Delivery · Aarav M.");
+      expect(summaryOfBooking(b).how).toBe("Aarav M. · Delivery");
       expect(dayButton(b)).toBe("Open the handover");
 
       const r = { ...ring, ...(by ? { delivered_by: by } : {}) };
       expect(ringWhere(r)).toBe("Delivery · Andheri East · 3.2 km");
-      expect(summaryOfRing(r).how).toBe("Delivery · Aarav M.");
+      expect(summaryOfRing(r).how).toBe("Aarav M. · Delivery");
       expect(ringCourierLine(r)).toBeNull();
 
       const out: GoingOut = {
@@ -198,7 +199,7 @@ describe("the ring of a courier booking", () => {
   it("names the courier, the area only, and when it is collected", () => {
     expect(ringWhere(r)).toBe("Renit courier · Andheri East");
     expect(ringCourierLine(r)).toBe("Courier collects Sat 24 Oct in your open hours. Exact pack-by time once the customer picks.");
-    expect(summaryOfRing(r)).toMatchObject({ how: "Renit courier · Aarav M.", earn: "₹1,830" });
+    expect(summaryOfRing(r)).toMatchObject({ how: "Aarav M. · Renit courier", earn: "₹1,830" });
   });
 
   it("keeps delivered_by from the push's ring", () => {
@@ -241,7 +242,7 @@ describe("Today and the booking page of a courier booking", () => {
     expect(customerBlock(leaky, NOW).address).toBeNull();
     expect(customerBlock(b, NOW)).toMatchObject({ place: "Andheri East", note: expect.stringMatching(/don't meet the customer/) });
     expect(shopTimeline(b, NOW).map((row) => row.label)).toContain("Courier collects");
-    expect(summaryOfBooking(b).how).toBe("Renit courier · Aarav M.");
+    expect(summaryOfBooking(b).how).toBe("Aarav M. · Renit courier");
   });
 
   it("the card note: pack by until the seal, then the courier's window", () => {
@@ -396,5 +397,39 @@ describe("courier pushes", () => {
   it("a desk alarm shows as a notification and a tap opens nothing", () => {
     expect(pushRoute({ type: "desk_alert", booking: "RN-1", role: "customer", alarm: "packed" })).toBeNull();
     expect(pushRoute({ type: "desk_alert", booking: "RN-1", role: "owner", alarm: "packed" })).toBeNull();
+  });
+});
+
+describe("ENG-442, the customer's early return", () => {
+  const now = new Date("2026-10-24T08:02:00Z"); // Sat 13:32 IST
+  const ask = { start: "2026-10-25T04:30:00Z", end: "2026-10-25T05:30:00Z", now: false, asked_at: "2026-10-24T08:02:00Z", reply_by: "2026-10-24T08:12:00Z", outcome: null };
+  const asking = (request: Record<string, unknown>) =>
+    courier({ return: { state: "not_set", window: null, earliest: "2026-10-26", seal: null, request: { ...ask, ...request } as never } });
+  const can = ["answer_early_return"];
+
+  it("an earlier day: when, how early, by when, and what happens with no answer", () => {
+    expect(earlyReturnCard(asking({}), can, "Canon EOS R6", now)).toEqual({
+      title: "The customer wants to return it early",
+      body: "A rider would bring Canon EOS R6 back Sun 25 Oct, 10:00 – 11:00 am (1 day early). Accept by 1:42 pm today. If you don't answer, it comes back Mon 26 Oct.",
+    });
+  });
+
+  it("Return now: booked as soon as the shop accepts", () => {
+    const card = earlyReturnCard(asking({ now: true, start: "2026-10-24T09:30:00Z", end: "2026-10-24T10:30:00Z" }), can, "Canon EOS R6", now);
+    expect(card?.title).toBe("The customer wants to return it now");
+    expect(card?.body).toMatch(/^A rider would bring Canon EOS R6 back today, about 3:00 – 4:00 pm\. Renit books the rider as soon as you accept\./);
+  });
+
+  it("nothing to answer once it ended, past its time, or not the shop's to answer", () => {
+    expect(earlyReturnCard(asking({ outcome: "declined" }), can, "X", now)).toBeNull();
+    expect(earlyReturnCard(asking({}), can, "X", new Date("2026-10-24T08:12:00Z"))).toBeNull();
+    expect(earlyReturnCard(asking({}), [], "X", now)).toBeNull();
+    expect(earlyReturnCard(courier(), can, "X", now)).toBeNull();
+  });
+
+  it("the shop's push opens the return", () => {
+    expect(pushRoute({ type: "window", booking: "RN-1", role: "owner", what: "courier", courier: "return_early_asked" })).toEqual(
+      pushRoute({ type: "window", booking: "RN-1", role: "owner", what: "courier", courier: "return_window" })
+    );
   });
 });

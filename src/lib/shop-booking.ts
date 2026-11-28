@@ -3,6 +3,7 @@ import type { BookingDay, BookingExit, BookingStage, DeliveryMode, MonthlyMoney,
 import type { CaptureFlags } from "@/lib/capture";
 import type { PlanUnit } from "@/lib/plans";
 import type { ApiError } from "@/lib/api-error";
+import type { StatusTone } from "@/components/core/status-pill";
 import {
   TimelineRow,
   WINDOW_REQUEST_ENDED,
@@ -221,10 +222,14 @@ export function revealChipAt(chip: { x: number; width: number }, viewport: numbe
 
 export interface ShopPill {
   label: string;
-  tone: "brand" | "success" | "warning" | "danger" | "neutral";
+  tone: StatusTone;
 }
 
-/** The stage in a word, or how it ended. */
+/**
+ * The stage in a word, or how it ended. Tones are the 08 frames' `Status pill · …` fills (fix pass b3-09): Ringing
+ * warning; Accepted, Confirmed and Out info; Ready and Returned success; the exits neutral. "You did not come" stays
+ * danger: no frame shows it, and it is the one exit that is the shop's own failing.
+ */
 export function shopPill(b: Pick<BookingShop, "stage" | "exit" | "exit_reason">): ShopPill {
   switch (b.exit) {
     case "refused":
@@ -234,7 +239,7 @@ export function shopPill(b: Pick<BookingShop, "stage" | "exit" | "exit_reason">)
     case "cancelled_by_customer":
       return { label: "Cancelled", tone: "neutral" };
     case "cancelled_by_owner":
-      return { label: "Cancelled by you", tone: "warning" };
+      return { label: "Cancelled by you", tone: "neutral" };
     case "lapsed_unpaid":
       return { label: "Lapsed", tone: "neutral" };
     case "no_show":
@@ -244,17 +249,17 @@ export function shopPill(b: Pick<BookingShop, "stage" | "exit" | "exit_reason">)
   }
   switch (b.stage) {
     case "ringing":
-      return { label: "Ringing", tone: "brand" };
+      return { label: "Ringing", tone: "warning" };
     case "accepted":
-      return { label: "Accepted", tone: "brand" };
+      return { label: "Accepted", tone: "info" };
     case "confirmed":
-      return { label: "Confirmed", tone: "success" };
+      return { label: "Confirmed", tone: "info" };
     case "ready":
-      return { label: "Ready", tone: "brand" };
+      return { label: "Ready", tone: "success" };
     case "out":
-      return { label: "Out", tone: "warning" };
+      return { label: "Out", tone: "info" };
     case "returned":
-      return { label: "Returned", tone: "neutral" };
+      return { label: "Returned", tone: "success" };
     default:
       return { label: "Closed", tone: "neutral" };
   }
@@ -539,6 +544,24 @@ export function moneyView(b: BookingShop): MoneyView {
         ? { amount: money(m.deposit), sub: settledSub ?? DEPOSIT_SUB[m.deposit_state] ?? "" }
         : null,
   };
+}
+
+// 2094:24377 / 2094:24457, without the 21pt home-indicator strip (the device's inset is added instead): gorhom's grabber
+// 21, the Sheet header 52, the content padded 8 above and 24 below with the day line (20) 16 above the list, and the
+// kit Sheet footer 113.
+const WINDOW_SHEET_CHROME = 21 + 52 + 8 + 20 + 16 + 24 + 113;
+export const WINDOW_ROW = 54;
+export const WINDOW_ROW_GAP = 8;
+
+/**
+ * The window-change sheet's height for what it shows: a window row is 54 and the picked one 56 (its 2pt edge), so the list keeps
+ * room for a pick and does not jump; no window is the one 24pt line. Loading draws two rows, a failed read its note.
+ * 517 and 299 in the frames.
+ */
+export function windowSheetHeight(state: number | "loading" | "failed"): number {
+  const rows = state === "loading" ? 2 : state === "failed" ? 0 : state;
+  const body = state === "failed" ? 40 : rows === 0 ? 24 : rows * WINDOW_ROW + (rows - 1) * WINDOW_ROW_GAP + 2;
+  return WINDOW_SHEET_CHROME + body;
 }
 
 /** The customer's open request to move the arrival time, for the shop to answer. */

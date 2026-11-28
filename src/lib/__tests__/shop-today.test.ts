@@ -163,8 +163,8 @@ describe("Today's lists", () => {
   });
 
   it("bookings waiting for the shop to open are one line each", () => {
-    expect(waitingLine({ ring_at: "2026-10-14T04:30:00Z", count: 3 }, NOW)).toBe("Ringing tomorrow 10 am: 3 bookings");
-    expect(waitingLine({ ring_at: "2026-10-13T11:30:00Z", count: 1 }, NOW)).toBe("Ringing today 5 pm: 1 booking");
+    expect(waitingLine({ ring_at: "2026-10-14T04:30:00Z", count: 3 }, NOW)).toBe("Ringing tomorrow 10:00 am: 3 bookings");
+    expect(waitingLine({ ring_at: "2026-10-13T11:30:00Z", count: 1 }, NOW)).toBe("Ringing today 5:00 pm: 1 booking");
   });
 
   it("a ringing card says what it is and what it earns", () => {
@@ -357,7 +357,7 @@ describe("feedNow: the day words come from the server's date (P3-17)", () => {
       deposit_state: "paid",
     };
     expect(comingBackRow(back, now).sub).toBe("Was due yesterday, 8:00 pm");
-    expect(waitingLine({ ring_at: "2026-10-14T04:30:00Z", count: 2 }, now)).toBe("Ringing tomorrow 10 am: 2 bookings");
+    expect(waitingLine({ ring_at: "2026-10-14T04:30:00Z", count: 2 }, now)).toBe("Ringing tomorrow 10:00 am: 2 bookings");
   });
 
   it("falls back to the phone's clock without a date", () => {

@@ -2,7 +2,7 @@ import { useKycBadgeSync, useKycStatus } from "@/backend/kyc";
 import { Button, Skeleton, Text } from "@/components/core";
 import { useGlobalContext } from "@/context/global-context";
 import { MIN_TOUCH_TARGET } from "@/lib/design-tokens";
-import { hasVerificationData, kycStateCopy } from "@/lib/kyc";
+import { hasVerificationData, kycChecks, kycStateCopy, kycValidity } from "@/lib/kyc";
 import { useTheme } from "@/lib/theme";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
@@ -16,13 +16,14 @@ const CARD_RADIUS = 12;
 const SKELETON_HEIGHT = 76;
 
 /**
- * The Profile entry point to business verification. For anyone else, the ID check (ENG-351), and only
- * once they have one on file: it is taken from a booking, and its consent text promises that it can be
- * removed from Profile.
+ * Profile's KYC section, for every account (ENG-446): a business's verification, or anyone else's
+ * ID check. It shows where the check stands, "Verified on" and "Valid until", and from 30 days
+ * before expiry a warning with Re-verify. Re-verifying keeps the current check valid until the new
+ * one is decided, so it never blocks a booking.
  *
  * It reads the live status, because the profile payload carries only the badge. It never
- * shows an error: if the status cannot be read (an API from before verification, or an
- * account the server does not treat as a business) the card is simply absent.
+ * shows an error: if the status cannot be read (an API from before verification) the card is
+ * simply absent.
  *
  * `style` places the card (margins); it is applied only when the card draws, so an absent card leaves no gap.
  */
@@ -34,7 +35,6 @@ export function KycCard({ isDark, style }: { isDark: boolean; style?: StyleProp<
   useKycBadgeSync(data);
 
   const person = userDetails?.account_type !== "merchant";
-  if (person && !(data && hasVerificationData(data))) return null;
   if (!data) {
     // Absent once a read has failed (and it stays absent while that read is retried); a card
     // that has shown a status keeps showing it through a failed refresh.
@@ -46,19 +46,40 @@ export function KycCard({ isDark, style }: { isDark: boolean; style?: StyleProp<
     );
   }
 
-  const copy = kycStateCopy(data.kyc_status, data.reason_code, person);
-  // A merchant with nothing on file starts at the explanation. Anyone else sees where it stands,
-  // which is also where a timed-out verification's data can be removed.
+  const copy = kycStateCopy(data.kyc_status, data.reason_code, person, data.valid_months);
+  const validity = kycValidity(data);
+  const reverify = Boolean(data.can_reverify);
+  const cta = reverify ? "Re-verify" : copy.cta && copy.ctaKind !== "profile" ? copy.cta : null;
+  // Nothing on file starts at the explanation, and so does Re-verify. Anyone else sees where it
+  // stands, which is also where a timed-out verification's data can be removed.
+  // An expired check also starts again at the intro: its old case is still on file, so it would
+  // otherwise open the status screen first.
   const open = () =>
-    hasVerificationData(data)
-      ? navigation.navigate("KycStatus")
-      : navigation.navigate("KycIntro", { source: "profile" });
+    reverify || data.reason_code === "kyc_expired"
+      ? navigation.navigate("KycIntro", { source: "reverify" })
+      : !hasVerificationData(data)
+      ? navigation.navigate("KycIntro", { source: "profile" })
+      : navigation.navigate("KycStatus");
+  const dates = validity
+    ? [validity.verifiedOn && `Verified on ${validity.verifiedOn}`, `Valid until ${validity.validUntil}`]
+        .filter(Boolean)
+        .join(" · ")
+    : null;
+  // A re-verification already open (can_reverify false) is told where it stands by the copy, not
+  // asked to re-verify again.
+  const checks = validity ? kycChecks(data, person) : [];
+  const warning =
+    validity?.soon && reverify
+      ? `Expires in ${validity.daysLeft} ${validity.daysLeft === 1 ? "day" : "days"}. Re-verify now; your current check stays valid until the new one is decided.`
+      : null;
 
   return (
     <TouchableOpacity
       onPress={open}
       accessibilityRole="button"
-      accessibilityLabel={`${copy.cardTitle}. ${copy.cardBody}`}
+      accessibilityLabel={[copy.cardTitle, copy.cardBody, dates, ...checks.map((c) => `${c} checked`), warning]
+        .filter(Boolean)
+        .join(". ")}
       activeOpacity={0.7}
       style={[
         {
@@ -74,7 +95,7 @@ export function KycCard({ isDark, style }: { isDark: boolean; style?: StyleProp<
         style,
       ]}
     >
-      <KycChip icon={copy.icon} tone={copy.tone} />
+      <KycChip icon={warning ? "exclamation" : copy.icon} tone={warning ? "warning" : copy.tone} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text fontSize="text-md" fontWeight="font-semibold">
           {copy.cardTitle}
@@ -82,7 +103,23 @@ export function KycCard({ isDark, style }: { isDark: boolean; style?: StyleProp<
         <Text tone="body" fontSize="text-sm">
           {copy.cardBody}
         </Text>
-        {copy.cta && copy.ctaKind !== "profile" ? (
+        {/* ENG-446: validity dates, what was checked, and the expiry warning (2.1 look pending the KYC frames). */}
+        {dates ? (
+          <Text tone="dim" fontSize="text-sm">
+            {dates}
+          </Text>
+        ) : null}
+        {checks.map((check) => (
+          <Text key={check} tone="dim" fontSize="text-sm">
+            ✓ {check}
+          </Text>
+        ))}
+        {warning ? (
+          <Text tone="warning" fontSize="text-sm">
+            {warning}
+          </Text>
+        ) : null}
+        {cta ? (
           // The whole card is the control; this repeats it for the eye only.
           <View
             accessible={false}
@@ -90,7 +127,7 @@ export function KycCard({ isDark, style }: { isDark: boolean; style?: StyleProp<
             style={{ paddingTop: 8, alignSelf: "flex-start" }}
           >
             <Button variant="outline" tone="tonal" size="compact" onPress={open} accessible={false}>
-              {copy.cta}
+              {cta}
             </Button>
           </View>
         ) : null}

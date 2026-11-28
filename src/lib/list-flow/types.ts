@@ -6,6 +6,7 @@
  */
 
 import type { AddressType } from "@/lib/addresses";
+import type { ListingItems } from "@/lib/included-items";
 import type { DraftPlan } from "@/lib/plans";
 
 export type FieldName =
@@ -211,6 +212,12 @@ export interface ListingDraft {
    * reads as false.
    */
   notDelivered?: boolean;
+  /**
+   * ENG-454: what comes with it, as the listing's own lists. Absent or null while the owner has left the category's
+   * list as it is: then nothing is sent, and the listing follows its category's list. Dropped when the sub-category
+   * changes, so Review shows the new one's defaults.
+   */
+  items?: ListingItems | null;
 }
 
 // ---- Wire shapes (IMPLEMENTATION.md §4.6) ----------------------------------

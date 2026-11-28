@@ -10,6 +10,7 @@ import type { Moment, Side } from "@/lib/capture";
 import type { Plan } from "@/lib/plans";
 import type { ListingDelivery } from "@/lib/delivery";
 import type { ReportKind } from "@/lib/day-of";
+import type { ListingItems } from "@/lib/included-items";
 import type { PendingEdit } from "@/lib/listing-edit";
 import type { FlagReason, ListingStatus } from "@/lib/listing-status";
 import type { Ring } from "@/lib/shop-ring";
@@ -315,15 +316,19 @@ export type RootStackParamList = {
   UnavailabilitySubCat: { category: string; subcategories?: Subcategory[] };
   EditProductAvailability: { dates_blocked: BlockedDates[]; name: string };
   /** `categoryId`: the sub-category the listing has now, so choosing it again can say nothing was changed. */
-  EditCategory: { name: string; categoryId?: number | null; pending?: PendingEdit | null };
+  EditCategory: { name: string; categoryId?: number | null; pending?: PendingEdit | null; liveItems?: ListingItems | null };
   EditSubCategories: {
     category: string;
     subcategories?: Subcategory[];
     name: string;
     categoryId?: number | null;
     pending?: PendingEdit | null;
+    /** ENG-454: the listing's own lists as they are live, sent back when a waiting move is undone. */
+    liveItems?: ListingItems | null;
   };
   EditAboutProduct: { data: BackendProduct };
+  /** ENG-454: what comes with the listing; the listing as the server has it (the screen lays a waiting change over it). */
+  EditIncludedItems: { data: BackendProduct };
   EditProductImages: { images: string[]; name: string, coverImage: string; };
   EditCoverImage: { images: string[]; name: string, coverImage: string, };
   OwnersReviewScreen: {
@@ -361,7 +366,8 @@ export type RootStackParamList = {
   ListSubmitted: { productName: string; coverUrl?: string | null; status?: string | null; reasons?: FlagReason[]; waitsText?: string | null };
   // Merchant verification (ENG-12). Params are flags only: a PAN or GSTIN never goes in one.
   // `source: "booking"`: the customer's ID check, opened from the price screen (ENG-351); the way out is back to it.
-  KycIntro: { source?: "profile" | "post_listing" | "push" | "booking"; supersede?: boolean } | undefined;
+  // `source: "reverify"`: renewing a check about to expire (ENG-446).
+  KycIntro: { source?: "profile" | "post_listing" | "push" | "booking" | "reverify"; supersede?: boolean } | undefined;
   KycDetails: { supersede?: boolean; source?: "booking" } | undefined;
   KycStatus: { justReturned?: boolean; source?: "booking" } | undefined;
   OwnersProducts: { products: BackendProduct[]; name: string; shopUrl?: string | null };
@@ -759,6 +765,12 @@ export interface BackendProduct {
   quantity?: number;
   worth?: string | null;
   shop_code?: string;
+  /**
+   * ENG-454 (API ENG-451), owner endpoint: what comes with the listing, and the items used up during the rental. An empty
+   * or absent `included_items` follows the sub-category's list.
+   */
+  included_items?: string[];
+  handover_only_items?: string[];
   not_delivered?: boolean;
   rate_unit?: "day";
   /**
@@ -893,7 +905,9 @@ export type KycReasonCode =
   | "other"
   // set by the system, and kept when the status falls back to `none`
   // (`gstin_inactive` too, when the monthly GSTIN re-check removes the badge: ENG-348)
-  | "case_expired";
+  | "case_expired"
+  // ENG-446: the check was valid for its period and has run out; shown with `none`
+  | "kyc_expired";
 
 export type KycNextAction =
   // only `start/` and `resume/` answer with a link; it is never stored
@@ -916,6 +930,15 @@ export interface KycStatusResponse {
   stale?: boolean;
   /** ENG-348: absent on an older API. */
   business_registration_kind?: BusinessRegistrationKind | null;
+  /** ENG-446, absent on an older API: the dates of the check in force (null when none is). */
+  verified_at?: string | null;
+  valid_until?: string | null;
+  /** When an expired check ran out (`reason_code` is `kyc_expired`). */
+  expired_at?: string | null;
+  /** How long a new check lasts, for the copy. */
+  valid_months?: number;
+  /** Within 30 days of expiry, with no re-verification open: offer Re-verify. */
+  can_reverify?: boolean;
 }
 
 /** Optional evidence a merchant can add when they verify (ENG-348). */

@@ -130,6 +130,7 @@ import EditSubCategories from "@/screens/profileScreens/edit/edit-sub-categories
 import EditProductAvailability from "@/screens/profileScreens/edit/edit-product-availability";
 import EditCategory from "@/screens/profileScreens/edit/edit-category";
 import EditAboutProduct from "@/screens/profileScreens/edit/edit-about-product";
+import EditIncludedItems from "@/screens/profileScreens/edit/edit-included-items";
 import EditCoverImage from "@/screens/profileScreens/edit/edit-cover-image";
 import ReportAProblemScreen from "@/screens/profileScreens/report-a-problem";
 import NetworkDiagnosticsScreen from "@/screens/profileScreens/network-diagnostics";
@@ -236,6 +237,10 @@ function ProfileStackScreen() {
       <PostStack.Screen
         name="EditAboutProduct"
         component={EditAboutProduct}
+      />
+      <PostStack.Screen
+        name="EditIncludedItems"
+        component={EditIncludedItems}
       />
       <PostStack.Screen
         name="EditProductImages"
@@ -1140,6 +1145,10 @@ export default function Navigation() {
         <Stack.Screen
           name="EditAboutProduct"
           component={EditAboutProduct}
+        />
+        <Stack.Screen
+          name="EditIncludedItems"
+          component={EditIncludedItems}
         />
         <Stack.Screen
           name="EditProductImages"

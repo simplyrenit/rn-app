@@ -158,7 +158,7 @@ describe("the request in words", () => {
       image: "https://cdn.example/ps5.jpg",
       range: "Sat 24 – Mon 26 Oct",
       dates: "Sat 24 – Mon 26 Oct · 3 days",
-      how: "Self pickup · Aarav M.",
+      how: "Aarav M. · Self pickup",
       firstName: "Aarav",
       earn: "₹1,830",
     });
@@ -171,7 +171,7 @@ describe("the request in words", () => {
       delivery_mode: "owner_delivery",
       money: { you_earn: "1830.00" },
     } as unknown as BookingShop;
-    expect(summaryOfBooking(booking).how).toBe("Delivery · Aarav M.");
+    expect(summaryOfBooking(booking).how).toBe("Aarav M. · Delivery");
     expect(summaryOfBooking(booking).earn).toBe("₹1,830");
   });
 });

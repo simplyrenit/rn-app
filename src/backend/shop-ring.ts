@@ -1,10 +1,13 @@
+import { dismissRingNotifications } from "@/backend/notifications";
+import { refreshShop } from "@/backend/shop-today";
 import { useGlobalContext } from "@/context/global-context";
 import { SHOP_BOOKINGS_ENDPOINT, SHOP_LIVE_ENDPOINT } from "@/lib/config";
 import axiosInstance from "@/lib/networkUtils";
 import { RING_POLL_MS, SLOW_POLL_MS } from "@/lib/booking";
 import { BookingShop } from "@/lib/shop-booking";
-import { LiveAnswer, RefuseReason, liveStillMatters, refuseBody } from "@/lib/shop-ring";
-import { useQuery } from "react-query";
+import { acceptBody } from "@/lib/shop-lines";
+import { LiveAnswer, RefuseReason, Ring, hereEnding, liveStillMatters, refuseBody, rentByLabel } from "@/lib/shop-ring";
+import { QueryClient, useQuery } from "react-query";
 
 /** Every shop booking path ends in "/" (API-CONTRACT OE-F). */
 export const shopBookingUrl = (number: string, action = "") =>
@@ -40,6 +43,31 @@ export async function fetchShopBooking(number: string): Promise<BookingShop> {
  */
 export async function acceptBooking(number: string, body: { lines?: number[] } = {}): Promise<BookingShop> {
   return (await axiosInstance.post<{ booking: BookingShop }>(shopBookingUrl(number, "accept/"), body)).data.booking;
+}
+
+/**
+ * Accept as the ring screen sends it (`acceptBody`: a basket's ticked lines, else nothing), with the answer kept as the
+ * booking. The accepted ending is written under `ringEndedQueryKey` too, so a ring screen opened after this one (Today's
+ * inline Accept) starts on "You accepted this booking", never on a cached ringing view. On the ring screen its own
+ * `here` still wins, so that flow is unchanged. Throws as `acceptBooking` does: the caller reads the failure.
+ */
+export async function acceptRing(
+  queryClient: QueryClient,
+  number: string,
+  ring: Ring | null,
+  ticked: readonly number[] = []
+): Promise<BookingShop> {
+  const booking = await acceptBooking(number, ring ? acceptBody(ring, ticked) : {});
+  queryClient.setQueryData(shopBookingQueryKey(number), booking);
+  // The server's clock as it answered: the pay-by time is its, not the phone's.
+  queryClient.setQueryData(ringEndedQueryKey(number), hereEnding("accepted", booking.answered?.at ?? null, null, rentByLabel(booking)));
+  return booking;
+}
+
+/** After any answer: the ring's notifications go, and Today, the lists, the counts and the live answer are read again. */
+export function settleRing(queryClient: QueryClient, number: string): void {
+  void dismissRingNotifications(number);
+  refreshShop(queryClient);
 }
 
 export interface RefuseAnswer {

@@ -1,9 +1,10 @@
 import { answerCustomerWindowChange } from "@/backend/shop-bookings";
+import { EarlyReturnCard } from "@/screens/shop/courier";
 import { shopBookingQueryKey, useShopBooking } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
 import { GetHelp } from "@/components/booking/get-help";
 import { ClaimRows } from "@/components/claims/claim-rows";
-import { BookingLoadError, BookingLoading, MoneyLine, Notice, Panel, Pill, SummaryCard } from "@/components/booking/parts";
+import { BookingLoadError, BookingLoading, MoneyLine, Notice, Panel, SummaryCard } from "@/components/booking/parts";
 import { PaymentSchedule } from "@/components/booking/payment-schedule";
 import { Records } from "@/components/capture/record-card";
 import { useCaptureDraft } from "@/backend/capture-jobs";
@@ -13,13 +14,14 @@ import { recordWanted } from "@/lib/capture";
 import { basketItems, isBasket, lineRows, liveLines } from "@/lib/shop-lines";
 import { Timeline } from "@/components/booking/timeline";
 import { useAppActive } from "@/components/booking/use-app-active";
-import { Button, SubpageHeader, Text } from "@/components/core";
+import { BottomBar, Button, ListRow, SectionHeader, StatusPill, SubpageHeader, Text } from "@/components/core";
+import { BrandNote } from "@/components/shop/brand-note";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { ShopCancelSheet, ShopCancelSheetHandle } from "@/components/shop/shop-cancel-sheet";
 import { WindowChangeSheet, WindowChangeSheetHandle } from "@/components/shop/window-change-sheet";
 import { apiError } from "@/lib/api-error";
 import { isMonthly, overduePeriod, shopOverdueAlert } from "@/lib/billing";
-import { datesLine, money, todayIst } from "@/lib/booking";
+import { daysLabel, money, rangeLabel, todayIst } from "@/lib/booking";
 import { byRenit } from "@/lib/delivery";
 import { correctedNow } from "@/lib/server-clock";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
@@ -42,40 +44,50 @@ import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { useIsFocused, useRoute } from "@react-navigation/native";
 import React, { useEffect, useRef, useState } from "react";
 import { RefreshControl, ScrollView, TouchableOpacity, View } from "react-native";
-import { ChevronRightIcon } from "react-native-heroicons/mini";
-import { CheckCircleIcon, ClockIcon, InformationCircleIcon, MapPinIcon } from "react-native-heroicons/outline";
+import { CheckCircleIcon } from "react-native-heroicons/mini";
+import { ClockIcon, InformationCircleIcon, MapPinIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
+
+// The 08 sections (2093:21769): a Section header 8 below the block above it and 12 over its content.
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={{ paddingTop: 8, gap: 12 }}>
+      <SectionHeader title={title} gutter={false} flush />
+      {children}
+    </View>
+  );
+}
+
+// The 08 cards are r12 with 16 inside, 12 between lines (2093:21769 Customer card, Money card); `Panel` brings the edge.
+const CARD = { borderRadius: 12, padding: 16, gap: 12 } as const;
 
 /** The Customer card: first name, ID and rentals, the area, never a number or an address before `ready`. */
 function CustomerCard({ booking, now }: { booking: BookingShop; now: Date }) {
   const { color } = useTheme();
   const c = customerBlock(booking, now);
   return (
-    <Panel style={{ padding: space.md, gap: space.md }}>
-      <Text role="sectionTitle" accessibilityRole="header">
-        Customer
-      </Text>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
+    <Panel style={CARD}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
         <View
           style={{
-            width: 44,
-            height: 44,
+            width: 40,
+            height: 40,
             borderRadius: radius.full,
             backgroundColor: color.brandPanel,
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
+          <Text fontSize="text-md" fontWeight="font-semibold" tone="brand">
             {c.initial}
           </Text>
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text fontSize="text-md" fontWeight="font-bold">
+          <Text fontSize="text-md" fontWeight="font-semibold">
             {c.name}
           </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             {booking.customer.id_checked === true ? <CheckCircleIcon size={16} color={color.success} /> : null}
             <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
               {c.line}
@@ -84,9 +96,9 @@ function CustomerCard({ booking, now }: { booking: BookingShop; now: Date }) {
         </View>
       </View>
       {c.place ? (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-          <MapPinIcon size={18} color={color.text} />
-          <Text fontSize="text-md" style={{ flex: 1 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <MapPinIcon size={20} color={color.textBody} />
+          <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
             {c.place}
           </Text>
         </View>
@@ -124,7 +136,7 @@ function Items({ booking }: { booking: BookingShop }) {
   const list = useShotList(booking.number, !booking.exit && booking.stage !== "ringing").data;
   const capture = useCaptures(booking.number, false, reads).data?.[moment]?.owner;
   const draft = useCaptureDraft(booking.number, moment, "owner");
-  const records = Object.fromEntries(basketItems(list, draft, capture).map((item) => [item.id, RECORD_TAGS[item.word]]));
+  const records = Object.fromEntries(basketItems(list, draft, capture, moment).map((item) => [item.id, RECORD_TAGS[item.word]]));
   const all = booking.lines?.length ?? 0;
   const live = liveLines(booking).length;
   // B1: Renit's courier fee is Renit's, not the shop's (as `moneyView`).
@@ -140,69 +152,36 @@ function Items({ booking }: { booking: BookingShop }) {
   );
 }
 
+/** A small print line of the Money card: 12/16 at 60%, as "Paid to your bank on the day of handover". */
+function Small({ children }: { children: string }) {
+  return (
+    <Text fontSize="text-xs" tone="dim">
+      {children}
+    </Text>
+  );
+}
+
 function MoneyCard({ booking }: { booking: BookingShop }) {
   const { color } = useTheme();
   const m = moneyView(booking);
   return (
-    <Panel style={{ padding: space.md, gap: space.sm }}>
-      <Text role="sectionTitle" accessibilityRole="header">
-        Money
-      </Text>
+    <Panel style={CARD}>
       <MoneyLine label={m.rentLabel} amount={m.rent} note={m.rentNote} />
       {m.delivery ? <MoneyLine label="Delivery fee" amount={m.delivery} /> : null}
       <MoneyLine label="Renit's fee" amount={m.fee.charged} struck={m.fee.struck ?? undefined} note={m.fee.note} />
-      <View style={{ height: 1, backgroundColor: color.line }} />
-      <MoneyLine label={m.earnLabel} amount={m.earn} bold />
+      <MoneyLine label={m.earnLabel} amount={m.earn} total />
       {m.notes.map((note) => (
-        <Text key={note} fontSize="text-sm" tone="body">
-          {note}
-        </Text>
+        <Small key={note}>{note}</Small>
       ))}
-      {m.payout ? (
-        <Text fontSize="text-sm" tone="body">
-          {m.payout}
-        </Text>
-      ) : null}
+      {m.payout ? <Small>{m.payout}</Small> : null}
       {m.deposit ? (
         <>
           <View style={{ height: 1, backgroundColor: color.line }} />
           <MoneyLine label="Deposit" amount={m.deposit.amount} />
-          {m.deposit.sub ? (
-            <Text fontSize="text-sm" tone="body">
-              {m.deposit.sub}
-            </Text>
-          ) : null}
+          {m.deposit.sub ? <Small>{m.deposit.sub}</Small> : null}
         </>
       ) : null}
     </Panel>
-  );
-}
-
-/** A row of the actions card: a words-and-chevron line the shop taps. */
-function ActionRow({ label, onPress, first }: { label: string; onPress: () => void; first?: boolean }) {
-  const { color } = useTheme();
-  return (
-    <TouchableOpacity
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      activeOpacity={0.7}
-      onPress={onPress}
-      style={{
-        minHeight: 56,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: space.md,
-        paddingHorizontal: space.md,
-        borderTopWidth: first ? 0 : 1,
-        borderTopColor: color.line,
-      }}
-    >
-      <ClockIcon size={22} color={color.text} />
-      <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
-        {label}
-      </Text>
-      <ChevronRightIcon size={20} color={color.textBody} />
-    </TouchableOpacity>
   );
 }
 
@@ -258,41 +237,39 @@ function BookingPage({
     }
   };
 
+  // b3-01: the page's one next step sits in the kit Bottom bar: answering a ringing request, or the day's own screen
+  // (the handover while the booking is ready, the return once it is out, ENG-223).
+  const next = ringing
+    ? { label: "Answer this request", onPress: () => navigation.navigate("ShopRing", { number: booking.number }) }
+    : day && dayLabel
+      ? { label: dayLabel, onPress: () => navigation.navigate(day, { number: booking.number }) }
+      : null;
+
   return (
     <>
       <ScrollView
+        style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={color.textBody} colors={[color.brand]} />
         }
         contentContainerStyle={{
           paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          paddingBottom: insets.bottom + space.lg,
-          gap: space.lg,
+          paddingTop: 8,
+          // The frames' 40 under the last block; with no bar below, the home indicator's inset too.
+          paddingBottom: 40 + (next ? 0 : insets.bottom),
+          gap: 24,
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.md }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           {/* Shrinks before the pill does: at 360dp and a large font the number pushed it off the edge. */}
           <Text role="screenTitle" accessibilityRole="header" style={{ flexShrink: 1 }}>
             {booking.number}
           </Text>
-          <Pill label={pill.label} tone={pill.tone} />
+          <StatusPill label={pill.label} tone={pill.tone} />
         </View>
 
-        {ringing ? (
-          <View style={{ gap: space.sm }}>
-            <Notice tone="brand" icon="clock">
-              This request is waiting for your answer.
-            </Notice>
-            <Button onPress={() => navigation.navigate("ShopRing", { number: booking.number })}>Answer this request</Button>
-          </View>
-        ) : null}
-
-        {/* The day's own screen: the handover while the booking is ready, the return once it is out (ENG-223). */}
-        {day && dayLabel ? (
-          <Button onPress={() => navigation.navigate(day, { number: booking.number })}>{dayLabel}</Button>
-        ) : null}
+        {ringing ? <BrandNote icon="clock">This request is waiting for your answer.</BrandNote> : null}
 
         {/* A record that is not finished is never out of sight: it can be made or carried on
             from the booking for as long as the server takes it, and the card says when the
@@ -311,7 +288,8 @@ function BookingPage({
         <SummaryCard
           title={booking.product.title}
           image={booking.product.cover_image}
-          lines={[datesLine(booking), howLine(booking)]}
+          // Without the year, as the 08 frames and the Bookings cards write it: "Tue 24 – Thu 26 Nov · 3 days".
+          lines={[`${rangeLabel(booking.first_day, booking.last_day)} · ${daysLabel(booking.days)}`, howLine(booking)]}
         />
 
         {isBasket(booking) ? <Items booking={booking} /> : null}
@@ -322,101 +300,109 @@ function BookingPage({
           </Notice>
         ) : null}
 
+        {/* 2093:21659: the customer's request, no card around it, Decline left of Accept. */}
         {request ? (
-          <Panel style={{ padding: space.md, gap: space.sm }}>
-            <Text fontSize="text-md" fontWeight="font-bold">
+          <View style={{ gap: 8 }}>
+            <Text fontSize="text-md" fontWeight="font-semibold">
               {request.title}
             </Text>
             <Text fontSize="text-sm" tone="body">
               {request.body}
             </Text>
             {request.ended ? null : (
-              <View style={{ flexDirection: "row", gap: space.sm }}>
-                <View style={{ flex: 1 }}>
-                  <Button loading={answering === "accept"} disabled={answering !== null} onPress={() => void answer(true)}>
-                    Accept
-                  </Button>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Button variant="outline" loading={answering === "decline"} disabled={answering !== null} onPress={() => void answer(false)}>
-                    Decline
-                  </Button>
-                </View>
+              <View style={{ flexDirection: "row", gap: 8, paddingTop: 8 }}>
+                <Button
+                  size="compact"
+                  variant="outline"
+                  loading={answering === "decline"}
+                  disabled={answering !== null}
+                  onPress={() => void answer(false)}
+                  style={{ flex: 1 }}
+                >
+                  Decline
+                </Button>
+                <Button
+                  size="compact"
+                  loading={answering === "accept"}
+                  disabled={answering !== null}
+                  onPress={() => void answer(true)}
+                  style={{ flex: 1 }}
+                >
+                  Accept
+                </Button>
               </View>
             )}
-          </Panel>
+          </View>
         ) : null}
         {mine ? <Notice icon="clock">{mine}</Notice> : null}
+        <EarlyReturnCard booking={booking} receivedAt={receivedAt} />
 
-        <Panel style={{ padding: space.md, gap: space.md }}>
-          <Text role="sectionTitle" accessibilityRole="header">
-            Timeline
-          </Text>
+        <Section title="Timeline">
+          {/* One child: Timeline returns its steps as a fragment, and the section's 12 gap would open between them. */}
           <View>
             <Timeline rows={shopTimeline(booking, now)} />
           </View>
-        </Panel>
+        </Section>
 
-        <CustomerCard booking={booking} now={now} />
-        <MoneyCard booking={booking} />
+        <Section title="Customer">
+          <CustomerCard booking={booking} now={now} />
+        </Section>
+        <Section title="Money">
+          <MoneyCard booking={booking} />
+        </Section>
         {monthly ? <PaymentSchedule money={booking.money} side="owner" today={todayIst(now)} /> : null}
 
         {/* A damage claim the shop made, a fault report or a "not as described" report against it. */}
         <ClaimRows ids={booking.claims} role="owner" />
 
-        {can("request_window_change") ? (
-          <Panel>
-            <ActionRow first label="Ask to change the time" onPress={() => changeSheet.current?.present()} />
-          </Panel>
-        ) : null}
-
-        {can("cancel") ? (
-          <View style={{ gap: space.sm }}>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Cancel booking"
-              accessibilityHint={CANCEL_HINT}
-              activeOpacity={0.7}
-              onPress={() => cancelSheet.current?.present()}
-              style={{
-                minHeight: 56,
-                justifyContent: "center",
-                paddingHorizontal: space.md,
-                borderRadius: radius.card,
-                borderWidth: 1,
-                borderColor: color.line,
-                backgroundColor: color.surface,
-              }}
-            >
-              <Text fontSize="text-md" fontWeight="font-bold" tone="danger">
-                Cancel booking
-              </Text>
-            </TouchableOpacity>
-            <View style={{ flexDirection: "row", gap: space.sm, paddingHorizontal: space.xs }}>
-              <InformationCircleIcon size={16} color={color.textDim} />
-              <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
-                {CANCEL_HINT}
-              </Text>
+        {/* The actions, as plain rows with no card around them (b3-02). */}
+        <View>
+          {can("request_window_change") ? (
+            // The kit row brings its own 24 gutter; the body already has one (2093:21769: the row's icon at x24).
+            <View style={{ marginHorizontal: -SCREEN_GUTTER }}>
+              <ListRow label="Ask to change the time" leadingIcon={ClockIcon} onPress={() => changeSheet.current?.present()} />
             </View>
-          </View>
-        ) : null}
+          ) : null}
 
-        <Panel>
+          {can("cancel") ? (
+            <View style={{ paddingVertical: 16, gap: 4 }}>
+              {/* Words, not a button box (2093:21920): SemiBold 16/24 in the strong red, with a 44pt touch. */}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Cancel booking"
+                accessibilityHint={CANCEL_HINT}
+                activeOpacity={0.7}
+                hitSlop={{ top: 10, bottom: 10 }}
+                onPress={() => cancelSheet.current?.present()}
+                style={{ alignSelf: "flex-start" }}
+              >
+                <Text fontSize="text-md" fontWeight="font-semibold" style={{ color: color.dangerStrong }}>
+                  Cancel booking
+                </Text>
+              </TouchableOpacity>
+              <View style={{ flexDirection: "row", gap: 6 }}>
+                <InformationCircleIcon size={16} color={color.textDim} />
+                <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+                  {CANCEL_HINT}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
           <GetHelp booking={booking} />
-        </Panel>
+        </View>
 
         {/* Figma's shop "End the rental early" (D16): the shop has no way to end a rental, so it reaches the desk. */}
         {monthly && booking.stage === "out" && !booking.exit && can("get_help") ? (
           <View style={{ gap: space.sm }}>
-            <Panel>
-              <GetHelp booking={booking} title="End the rental early" danger />
-            </Panel>
-            <Text fontSize="text-sm" tone="body" style={{ paddingHorizontal: space.xs }}>
+            <GetHelp booking={booking} title="End the rental early" danger />
+            <Text fontSize="text-sm" tone="body">
               Talk to Renit's desk first. Ending early follows the rental terms.
             </Text>
           </View>
         ) : null}
       </ScrollView>
+      {next ? <BottomBar primary={next} /> : null}
       <ShopCancelSheet
         ref={cancelSheet}
         number={booking.number}

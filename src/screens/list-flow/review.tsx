@@ -27,6 +27,7 @@ import {
   labelWithSource,
 } from "@/components/list-flow/copy";
 import { FlowHeader } from "@/components/list-flow/flow-header";
+import { IncludedItemsSection } from "@/components/list-flow/included-items";
 import { SpecSheet, SpecsCard } from "@/components/list-flow/specs-card";
 import { AiValueFade, PulseOnce, useAppear } from "@/components/list-flow/motion";
 import { useGlobalContext } from "@/context/global-context";
@@ -53,7 +54,8 @@ import {
   stillNeededLabel,
   uploadedPhotos,
 } from "@/lib/list-flow/draft";
-import { currentSpecs, specsLoading } from "@/lib/list-flow/specs";
+import { currentSpecs, resolveCategoryId, specsLoading } from "@/lib/list-flow/specs";
+import type { ListingItems } from "@/lib/included-items";
 import { MAX_QUANTITY_DIGITS, WORTH_HINT, parseWorth } from "@/lib/list-flow/stock";
 import {
   CONDITIONS,
@@ -415,6 +417,14 @@ export default function ListReviewScreen() {
     // so); this asks for the new one's.
     edit("category", value);
     flow.ensureSpecs();
+  };
+
+  // The section hands back the lists as the listing would carry them: both empty is the category's list left as it is,
+  // which is kept as null so nothing is sent and the listing follows its category (a new one's too).
+  const onItems = (next: ListingItems) => {
+    if (design) return;
+    const shaped = next.included_items.length > 0 || next.handover_only_items.length > 0;
+    flow.dispatch({ type: "setItems", value: shaped ? next : null });
   };
 
   const onPressSpec = (spec: Spec) => {
@@ -783,6 +793,17 @@ export default function ListReviewScreen() {
             multiline
           />
         </View>
+
+        {/* ENG-454: what comes with it, once the category is known. Left out under a design seed: the fixture does not
+            serve the checklist, and no Review frame draws the step. */}
+        {design ? null : (
+          <IncludedItemsSection
+            categoryId={resolveCategoryId(categories, f.category.value)}
+            items={draft.items}
+            onChange={onItems}
+            style={{ marginBottom: SECTION_GAP }}
+          />
+        )}
 
         {/* Pickup (it ends in the form's field gap too) */}
         <View onLayout={onLayoutSection("location")} style={{ marginBottom: SECTION_GAP - density.fieldGap }}>

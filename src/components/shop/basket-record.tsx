@@ -15,6 +15,8 @@ import {
   setReceived,
   startDraft,
   tick,
+  USED_UP_HEADING,
+  videoRequired,
   waiveReceived,
   withReceived,
 } from "@/lib/capture";
@@ -147,18 +149,30 @@ function ItemCard({
           <Text fontSize="text-sm" fontWeight="font-bold">
             {`Parts · ${ticked} of ${item.parts.length}`}
           </Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: space.md }}>
-            {item.parts.map((part) => (
-              <View key={part.item} style={{ flexDirection: "row", alignItems: "center", minHeight: MIN_TOUCH_TARGET }}>
-                <CheckBox
-                  checked={part.ticked}
-                  onPress={() => (locked ? undefined : onPart(part.item))}
-                  accessibilityLabel={`${item.title}: ${part.label}`}
-                />
-                <Text fontSize="text-md">{part.label}</Text>
-              </View>
-            ))}
-          </View>
+          {/* ENG-451: the used-up parts (handover only) follow under their own sub-heading, as on the capture's checklist. */}
+          {[item.parts.filter((p) => !p.usedUp), item.parts.filter((p) => p.usedUp)].map((group, g) =>
+            group.length === 0 ? null : (
+              <React.Fragment key={g}>
+                {g === 1 ? (
+                  <Text fontSize="text-sm" fontWeight="font-bold" accessibilityRole="header" style={{ marginTop: space.xs }}>
+                    {USED_UP_HEADING}
+                  </Text>
+                ) : null}
+                <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: space.md }}>
+                  {group.map((part) => (
+                    <View key={part.item} style={{ flexDirection: "row", alignItems: "center", minHeight: MIN_TOUCH_TARGET }}>
+                      <CheckBox
+                        checked={part.ticked}
+                        onPress={() => (locked ? undefined : onPart(part.item))}
+                        accessibilityLabel={`${item.title}: ${part.label}`}
+                      />
+                      <Text fontSize="text-md">{part.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              </React.Fragment>
+            )
+          )}
         </View>
       ) : null}
     </Panel>
@@ -170,7 +184,8 @@ function ItemCard({
  * (T11), both of the shop's phones' shots as the server has them, the one video, the ID tick once for the visit, and
  * at the return a Received tick per item (D51). What the code still waits for is listed with its own way on: send
  * again, take the shot, tick. The photos are sent as they go up (`partialDue`), so the code opens once every item's
- * shots are in, while the video may still be uploading (D19). With no list on the phone and no connection a basket
+ * shots are in, while the video may still be uploading (D19). A basket that needs no video sends its record once, when
+ * it is finished, so a second phone sees nothing of it until then. With no list on the phone and no connection a basket
  * can't be started: its keys name each item, so Renit's general list won't do ("Connect to start").
  */
 export function BasketRecord({
@@ -204,7 +219,7 @@ export function BasketRecord({
   const locked = complete || !recordWanted(moment, booking);
   const list = draft?.list ?? query.data ?? kept;
   const capture = useCaptures(number, watching && !complete).data?.[moment]?.owner;
-  const items = basketItems(list, draft, capture);
+  const items = basketItems(list, draft, capture, moment);
   const onServerReceived = capture?.received;
 
   // Another phone's Received ticks count here too, so this phone can finish the record; they are never sent as its own.
@@ -250,6 +265,8 @@ export function BasketRecord({
   // This phone's own word, once it ticked or unticked; else either phone's tick as the server has it.
   const idTicked = draft?.idTouched ? draft.idMatch : Boolean(draft?.idMatch || capture?.id_match_ticked);
   const video = videoWord(draft, capture);
+  // ENG-451: no item needs a video, so none is asked for; one already taken still shows how it stands.
+  const showVideo = videoRequired(list) || video !== "not_started";
   const left = locked ? [] : thingsLeft(items, { idTick: idTick && !idTicked, firstName: first, received: moment === "return" && !waived });
   const done = items.filter((i) => (moment === "return" ? i.received && i.word === "recorded" : i.word === "recorded")).length;
   const refusal = draft?.error && !draft.error.retry ? draft.error : null;
@@ -292,54 +309,58 @@ export function BasketRecord({
         </View>
       ) : null}
 
-      <View style={{ gap: space.sm }}>
-        <Text role="sectionTitle" accessibilityRole="header">
-          Once for the visit
-        </Text>
-        <Panel>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md }}>
-            <VideoCameraIcon size={22} color={color.text} />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text fontSize="text-md" fontWeight="font-bold">
-                {`One video of all ${pluralize(items.length, "item")}`}
-              </Text>
-              <Text fontSize="text-sm" tone="body">
-                {video === "uploading"
-                  ? moment === "handover"
-                    ? "Keep Renit open until the video is in. Your payout waits for it."
-                    : "Keep Renit open until the video is in."
-                  : "Together, after the items' shots."}
-              </Text>
-            </View>
-            {video === "failed" ? (
-              <TextButton label="Retry" onPress={retry} />
-            ) : (
-              <LineChip
-                label={{ not_started: "Not started", uploading: "Uploading", failed: "Not sent", in: "In" }[video]}
-                tone={video === "in" ? "success" : video === "uploading" ? "info" : "neutral"}
-              />
-            )}
-          </View>
-          {idTick ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, padding: space.md, borderTopWidth: 1, borderTopColor: color.line }}>
-              <CheckBox
-                checked={idTicked}
-                onPress={() => (locked ? undefined : change((d) => setIdMatch(d, !idTicked)))}
-                accessibilityLabel={`I checked ${first}'s ID`}
-              />
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text fontSize="text-md" fontWeight="font-bold">
-                  {`I checked ${first}'s ID`}
-                </Text>
-                <Text fontSize="text-sm" tone="body">
-                  One tick for this visit, not per item. At the handover, with the ID in front of you.
-                </Text>
+      {showVideo || idTick ? (
+        <View style={{ gap: space.sm }}>
+          <Text role="sectionTitle" accessibilityRole="header">
+            Once for the visit
+          </Text>
+          <Panel>
+            {showVideo ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md }}>
+                <VideoCameraIcon size={22} color={color.text} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text fontSize="text-md" fontWeight="font-bold">
+                    {`One video of all ${pluralize(items.length, "item")}`}
+                  </Text>
+                  <Text fontSize="text-sm" tone="body">
+                    {video === "uploading"
+                      ? moment === "handover"
+                        ? "Keep Renit open until the video is in. Your payout waits for it."
+                        : "Keep Renit open until the video is in."
+                      : "Together, after the items' shots."}
+                  </Text>
+                </View>
+                {video === "failed" ? (
+                  <TextButton label="Retry" onPress={retry} />
+                ) : (
+                  <LineChip
+                    label={{ not_started: "Not started", uploading: "Uploading", failed: "Not sent", in: "In" }[video]}
+                    tone={video === "in" ? "success" : video === "uploading" ? "info" : "neutral"}
+                  />
+                )}
               </View>
-              <UserIcon size={20} color={color.textDim} />
-            </View>
-          ) : null}
-        </Panel>
-      </View>
+            ) : null}
+            {idTick ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, padding: space.md, borderTopWidth: showVideo ? 1 : 0, borderTopColor: color.line }}>
+                <CheckBox
+                  checked={idTicked}
+                  onPress={() => (locked ? undefined : change((d) => setIdMatch(d, !idTicked)))}
+                  accessibilityLabel={`I checked ${first}'s ID`}
+                />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text fontSize="text-md" fontWeight="font-bold">
+                    {`I checked ${first}'s ID`}
+                  </Text>
+                  <Text fontSize="text-sm" tone="body">
+                    One tick for this visit, not per item. At the handover, with the ID in front of you.
+                  </Text>
+                </View>
+                <UserIcon size={20} color={color.textDim} />
+              </View>
+            ) : null}
+          </Panel>
+        </View>
+      ) : null}
 
       {refusal ? (
         // The server's own words and its status (D19: any 400 is shown); a problem on this phone in its own words.

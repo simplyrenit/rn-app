@@ -71,8 +71,8 @@ const STATES: [string, string, any, string, string, string | null, string, strin
   ["Rejected", "merchant", { kyc_status: "rejected", reason_code: "gstin_name_mismatch" }, "We couldn't verify your business", "The name on your GSTIN didn't match the name on your PAN.", "Try again", "exclamation", "warning"],
   ["Timed out", "merchant", { reason_code: "case_expired" }, "Your verification timed out", "The DigiLocker step wasn't finished in time, so we closed it. Start again whenever you're ready.", "Start again", "exclamation", "warning"],
   ["Badge removed", "merchant", { reason_code: "gstin_inactive" }, "Your Verified badge was removed", "The GST records no longer show your GSTIN as active, so we've taken the badge off your shop.", "Verify again", "exclamation", "warning"],
-  ["Person · none", "user", {}, "Check your ID", "Needed once, before you rent some higher-value items.", "Start ID check", "shield", "brand"],
-  ["Person · verified", "user", { kyc_status: "verified", business_verified: true }, "ID check passed", "You can book items that need an ID check.", null, "shield-solid", "brand"],
+  ["Person · none", "user", {}, "KYC not done yet", "Verify once. It stays valid for 12 months.", "Start ID check", "shield", "brand"],
+  ["Person · verified", "user", { kyc_status: "verified", business_verified: true }, "KYC verified", "You can book items that need an ID check.", null, "shield-solid", "brand"],
   ["Person · rejected", "user", { kyc_status: "rejected", reason_code: "pan_invalid" }, "We couldn't verify your ID", "We couldn't verify the PAN you entered.", "Try again", "exclamation", "warning"],
 ];
 
@@ -105,13 +105,11 @@ describe("KycCard (2095:26508)", () => {
     });
   });
 
-  it("is absent for a person with nothing on file", () => {
+  // ENG-446: the KYC section is shown for every account, a person with nothing on file included.
+  it("shows for a person with nothing on file", () => {
     mockAccountType = "user";
     mockData = status({ case_ref: null });
-    let renderer: any;
-    act(() => {
-      renderer = TestRenderer.create(<KycCard isDark={false} />);
-    });
-    expect(renderer.toJSON()).toBeNull();
+    const { texts } = render();
+    expect(texts).toEqual(["KYC not done yet", "Verify once. It stays valid for 12 months."]);
   });
 });

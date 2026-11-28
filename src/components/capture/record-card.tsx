@@ -102,7 +102,7 @@ export function useRecord({ moment, role, forOther = false, booking, receivedAt,
   const state = recordState({ moment, booking, onServer, draft, stake, forOther, begunOnly });
 
   // Read, and so kept on the phone, while the booking can still take a record.
-  useShotList(number, recordWanted(moment, booking));
+  const list = useShotList(number, recordWanted(moment, booking)).data;
 
   const release = draft ? shouldRelease(draft, booking, onServer) : false;
   const draftId = draft?.id;
@@ -133,7 +133,7 @@ export function useRecord({ moment, role, forOther = false, booking, receivedAt,
   return {
     number,
     state,
-    view: recordCard({ state, moment, role, forOther, otherName: other, stage: booking.stage, draft, stake }),
+    view: recordCard({ state, moment, role, forOther, otherName: other, stage: booking.stage, draft, stake, list }),
     draft,
     open: () => open(),
     openAt: (shot) => open(shot),

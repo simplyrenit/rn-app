@@ -16,6 +16,7 @@ import {
   ownRequest,
   shopActionErrorText,
   shopPill,
+  windowSheetHeight,
   shopTimeline,
 } from "../shop-booking";
 
@@ -109,10 +110,27 @@ describe("the Bookings tabs", () => {
 
 describe("a booking's stage in a word", () => {
   it("names each stage", () => {
-    expect(shopPill(booking({ stage: "ready" }))).toEqual({ label: "Ready", tone: "brand" });
+    expect(shopPill(booking({ stage: "ready" }))).toEqual({ label: "Ready", tone: "success" });
     expect(shopPill(booking({ stage: "confirmed" })).label).toBe("Confirmed");
     expect(shopPill(booking({ stage: "out" })).label).toBe("Out");
     expect(shopPill(booking({ stage: "closed" })).label).toBe("Closed");
+  });
+
+  it("takes each tone from the 08 frames' pills (b3-09)", () => {
+    const tone = (over: Partial<BookingShop>) => shopPill(booking(over)).tone;
+    expect(tone({ stage: "ringing" })).toBe("warning");
+    expect(tone({ stage: "accepted" })).toBe("info");
+    expect(tone({ stage: "confirmed" })).toBe("info");
+    expect(tone({ stage: "ready" })).toBe("success");
+    expect(tone({ stage: "out" })).toBe("info");
+    expect(tone({ stage: "returned" })).toBe("success");
+    expect(tone({ exit: "refused" })).toBe("neutral");
+    expect(tone({ exit: "no_answer" })).toBe("neutral");
+    expect(tone({ exit: "cancelled_by_owner", exit_reason: "owner" })).toBe("neutral");
+    expect(tone({ exit: "cancelled_by_customer" })).toBe("neutral");
+    expect(tone({ exit: "lapsed_unpaid" })).toBe("neutral");
+    // No frame shows it; it keeps its danger tone.
+    expect(tone({ exit: "no_show", exit_reason: "owner" })).toBe("danger");
   });
 
   it("an ending wins over the stage it kept", () => {
@@ -504,5 +522,12 @@ describe("keeping the chosen chip in view (test run: the default chip sat half o
 
   it("does nothing before the row has a width", () => {
     expect(revealChipAt(third, 0, 20, 24)).toBe(20);
+  });
+});
+
+describe("the window-change sheet's height", () => {
+  it("is the frames' 517 and 299 without the 21pt home-indicator strip", () => {
+    expect(windowSheetHeight(4)).toBe(517 - 21);
+    expect(windowSheetHeight(0)).toBe(299 - 21);
   });
 });

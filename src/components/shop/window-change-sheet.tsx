@@ -2,17 +2,18 @@ import { fetchWindows } from "@/backend/bookings";
 import { askWindowChange } from "@/backend/shop-bookings";
 import { refreshShop } from "@/backend/shop-today";
 import { shopBookingQueryKey } from "@/backend/shop-ring";
-import { Button, Skeleton, Text } from "@/components/core";
+import { SheetFooter, SheetHeader, Skeleton, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { apiError } from "@/lib/api-error";
 import { TimeWindow, dayLong, windowLabel } from "@/lib/booking";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
-import { shopActionErrorText } from "@/lib/shop-booking";
+import { RadioCard } from "@/components/shop/shop-cancel-sheet";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import { WINDOW_ROW, WINDOW_ROW_GAP, shopActionErrorText, windowSheetHeight } from "@/lib/shop-booking";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
 
@@ -89,62 +90,40 @@ export const WindowChangeSheet = forwardRef<WindowChangeSheetHandle, { number: s
       }
     };
 
+    const ask = { label: `Ask ${firstName}`, onPress: () => void send(), disabled: !picked || sending, loading: sending };
     return (
-      <CustomBottomSheetModal ref={sheet} isDark={isDark} snapPoints={[520 + insets.bottom]} frame>
-        <View
-          style={{
-            paddingHorizontal: SCREEN_GUTTER,
-            paddingTop: space.sm,
-            paddingBottom: insets.bottom + space.sm,
-            gap: space.md,
-          }}
+      <CustomBottomSheetModal
+        ref={sheet}
+        isDark={isDark}
+        snapPoints={[windowSheetHeight(failed ? "failed" : windows ? windows.length : "loading") + insets.bottom]}
+        frame
+        scrollView={false}
+      >
+        <SheetHeader title="Ask to change the time" grabber={false} />
+        {/* The footer stays pinned; a long list or a note under it scrolls here. */}
+        <BottomSheetScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: 24, gap: 16 }}
         >
-          <View style={{ gap: space.xs }}>
-            <Text role="sectionTitle" accessibilityRole="header">
-              Ask to change the time
-            </Text>
-            <Text fontSize="text-sm" tone="body">
-              {day ? `${dayLong(day)} · ${firstName} answers it` : `${firstName} answers it`}
-            </Text>
-          </View>
+          <Text fontSize="text-sm" tone="body">
+            {day ? `${dayLong(day)} · ${firstName} answers it` : `${firstName} answers it`}
+          </Text>
           {windows ? (
             windows.length === 0 ? (
               <Text fontSize="text-md" tone="body">
                 No other time is left on that day.
               </Text>
             ) : (
-              <View accessibilityRole="radiogroup" style={{ gap: space.sm }}>
-                {windows.map((w) => {
-                  const selected = picked === w.start;
-                  return (
-                    <TouchableOpacity
-                      key={w.start}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected }}
-                      activeOpacity={0.8}
-                      onPress={() => setPicked(w.start)}
-                      style={{
-                        minHeight: MIN_TOUCH_TARGET + 6,
-                        justifyContent: "center",
-                        paddingHorizontal: space.md,
-                        borderRadius: radius.input,
-                        borderWidth: selected ? 2 : 1,
-                        borderColor: selected ? color.brand : color.line,
-                        backgroundColor: selected ? color.brandWash : color.surface,
-                      }}
-                    >
-                      <Text fontSize="text-md" fontWeight="font-bold">
-                        {windowLabel(w)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+              <View accessibilityRole="radiogroup" style={{ gap: WINDOW_ROW_GAP }}>
+                {windows.map((w) => (
+                  <RadioCard key={w.start} title={windowLabel(w)} selected={picked === w.start} onPress={() => setPicked(w.start)} />
+                ))}
               </View>
             )
           ) : failed ? null : (
-            <View accessible accessibilityRole="progressbar" accessibilityLabel="Loading the times" style={{ gap: space.sm }}>
-              <Skeleton width="100%" height={56} />
-              <Skeleton width="100%" height={56} />
+            <View accessible accessibilityRole="progressbar" accessibilityLabel="Loading the times" style={{ gap: WINDOW_ROW_GAP }}>
+              <Skeleton width="100%" height={WINDOW_ROW} />
+              <Skeleton width="100%" height={WINDOW_ROW} />
             </View>
           )}
           {note ? (
@@ -152,21 +131,11 @@ export const WindowChangeSheet = forwardRef<WindowChangeSheetHandle, { number: s
               {note}
             </Text>
           ) : null}
-          <View style={{ gap: space.sm }}>
-            {failed ? (
-              <Button variant="outline" onPress={() => void load()}>
-                Try again
-              </Button>
-            ) : (
-              <Button loading={sending} disabled={!picked || sending} onPress={() => void send()}>
-                {`Ask ${firstName}`}
-              </Button>
-            )}
-            <Button variant="ghost" disabled={sending} onPress={() => sheet.current?.dismiss()}>
-              Not now
-            </Button>
-          </View>
-        </View>
+        </BottomSheetScrollView>
+        <SheetFooter
+          primary={failed ? { label: "Try again", onPress: () => void load() } : ask}
+          secondary={{ label: "Not now", onPress: () => sheet.current?.dismiss(), disabled: sending }}
+        />
       </CustomBottomSheetModal>
     );
   }

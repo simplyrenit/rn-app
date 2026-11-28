@@ -88,6 +88,16 @@ export async function askWindowChange(number: string, start: string): Promise<Bo
   ).data.booking;
 }
 
+/** ENG-442: accepts (Renit books the rider) or declines the customer's early courier return. `409 window_gone`, `request_over`. */
+export async function answerEarlyReturn(number: string, accept: boolean): Promise<BookingShop> {
+  return (
+    await axiosInstance.post<{ booking: BookingShop }>(
+      `${BOOKINGS_ENDPOINT}${encodeURIComponent(number)}/early-return/answer/`,
+      { accept }
+    )
+  ).data.booking;
+}
+
 /** Answers the customer's request to move the window. */
 export async function answerCustomerWindowChange(number: string, accept: boolean): Promise<BookingShop> {
   return (

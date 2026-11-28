@@ -1,15 +1,15 @@
 import { cancelShopBooking, fetchShopCancelWarning } from "@/backend/shop-bookings";
 import { refreshShop } from "@/backend/shop-today";
 import { shopBookingQueryKey } from "@/backend/shop-ring";
-import { Button, Skeleton, Text } from "@/components/core";
+import { Button, SheetFooter, SheetHeader, Skeleton, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { apiError } from "@/lib/api-error";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { ShopCancelWarning, cancelWarningCopy, shopActionErrorText } from "@/lib/shop-booking";
 import { ShopLine, cancelAfter, isBasket, liveLines } from "@/lib/shop-lines";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,27 +19,40 @@ export interface ShopCancelSheetHandle {
   present: () => void;
 }
 
-/** One choice of "Which item can't you give?". */
-function Choice({ title, sub, selected, onPress }: { title: string; sub: string; selected: boolean; onPress: () => void }) {
+/**
+ * A radio card of the 08 sheets (2094:24377 windows, 2094:24597 "Which item can't you give?"): padded 14/16 inside a
+ * 1pt `line` edge, r12, a 22 ring at 60% beside SemiBold 16/24, and `sub` under it at 14/20. Picked, the edge is 2pt
+ * brand over `brandPanel` and the ring holds a 10 dot, so the card grows by the 2pt as the frames draw it (54 → 56).
+ */
+export function RadioCard({
+  title,
+  sub,
+  selected,
+  onPress,
+}: {
+  title: string;
+  sub?: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
   const { color } = useTheme();
   return (
     <TouchableOpacity
       accessibilityRole="radio"
       accessibilityState={{ selected }}
-      accessibilityLabel={`${title}. ${sub}`}
+      accessibilityLabel={sub ? `${title}. ${sub}` : title}
       activeOpacity={0.8}
       onPress={onPress}
       style={{
-        minHeight: MIN_TOUCH_TARGET + 12,
         flexDirection: "row",
         alignItems: "center",
-        gap: space.md,
-        paddingHorizontal: space.md,
-        paddingVertical: space.sm,
+        gap: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
         borderRadius: radius.input,
-        borderWidth: selected ? 1.5 : 1,
+        borderWidth: selected ? 2 : 1,
         borderColor: selected ? color.brand : color.line,
-        backgroundColor: selected ? color.brandWash : color.surface,
+        backgroundColor: selected ? color.brandPanel : color.surface,
       }}
     >
       <View
@@ -48,7 +61,7 @@ function Choice({ title, sub, selected, onPress }: { title: string; sub: string;
           height: 22,
           borderRadius: radius.full,
           borderWidth: 2,
-          borderColor: selected ? color.brand : color.inputLine,
+          borderColor: selected ? color.brand : color.textDim,
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -56,16 +69,26 @@ function Choice({ title, sub, selected, onPress }: { title: string; sub: string;
         {selected ? <View style={{ width: 10, height: 10, borderRadius: radius.full, backgroundColor: color.brand }} /> : null}
       </View>
       <View style={{ flex: 1, gap: 2 }}>
-        <Text fontSize="text-md" fontWeight="font-bold">
+        <Text fontSize="text-md" fontWeight="font-semibold">
           {title}
         </Text>
-        <Text fontSize="text-sm" tone="body">
-          {sub}
-        </Text>
+        {sub ? (
+          <Text fontSize="text-sm" tone="body">
+            {sub}
+          </Text>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
 }
+
+// 2094:24597 without its 21pt home-indicator strip; the content scrolls between the header and the pinned footer.
+const BASKET_HEIGHT = 780 - 21;
+// 2094:24524 around the measured body: gorhom's grabber 21, the Sheet header 52, the actions column 124 (16, the 56
+// Destructive button, 4, the 44 "Keep it", 4). The body is the warning lines (and a note) with 8 below them.
+const ONE_ITEM_CHROME = 21 + 52 + 124;
+// Before the warning is in (and when reading it failed): the height the sheet always had.
+const ONE_ITEM_START = 400;
 
 /**
  * The shop cancels after accepting (API-CONTRACT OE-F). The sheet first asks the
@@ -94,9 +117,11 @@ export const ShopCancelSheet = forwardRef<
   const basket = isBasket({ lines });
   const live = liveLines({ lines });
   const [line, setLine] = useState<number | null | undefined>(undefined);
+  const [bodyHeight, setBodyHeight] = useState<number | null>(null);
 
   const load = async () => {
     setWarning(null);
+    setBodyHeight(null);
     setNote(null);
     setFailed(false);
     try {
@@ -140,82 +165,124 @@ export const ShopCancelSheet = forwardRef<
   const copy = warning ? cancelWarningCopy(warning) : null;
   const after = basket ? cancelAfter(firstName, { lines }, line ?? null) : null;
 
-  return (
-    <CustomBottomSheetModal ref={sheet} isDark={isDark} snapPoints={basket ? ["90%"] : [400 + insets.bottom]} frame>
-      <View
-        style={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          paddingBottom: insets.bottom + space.sm,
-          gap: space.md,
-        }}
-      >
-        <Text role="sectionTitle" accessibilityRole="header">
-          {copy?.title ?? "Cancel this booking?"}
-        </Text>
-        {basket ? (
-          <>
-            <Text fontSize="text-md" tone="body">
-              You can't cancel one item. The whole booking is cancelled.
-            </Text>
-            <Text fontSize="text-md" fontWeight="font-bold">
-              Which item can't you give?
-            </Text>
-            <View accessibilityRole="radiogroup" style={{ gap: space.sm }}>
-              {live.map((l) => (
-                <Choice key={l.id} title={l.product.title} sub={l.ref} selected={line === l.id} onPress={() => setLine(l.id)} />
-              ))}
-              <Choice title="It's not one item" sub="Something else stops the booking" selected={line === null} onPress={() => setLine(null)} />
-            </View>
-          </>
-        ) : null}
-        {copy ? (
-          <View style={{ gap: space.xs }}>
-            {copy.lines.map((line) => (
-              <Text key={line} fontSize="text-md" tone="body">
-                {line}
-              </Text>
+  const dismiss = () => sheet.current?.dismiss();
+  const noteView = note ? (
+    <Text fontSize="text-sm" accessibilityRole="alert" style={{ color: color.danger }}>
+      {note}
+    </Text>
+  ) : null;
+  const loading = copy ? null : failed ? null : (
+    <View accessible accessibilityRole="progressbar" accessibilityLabel="Working out what cancelling does">
+      <Skeleton width="100%" height={72} />
+    </View>
+  );
+
+  if (basket) {
+    // 2094:24597: the kit Sheet footer, red, once the warning is in (or "Try again" when it could not be read).
+    return (
+      <CustomBottomSheetModal ref={sheet} isDark={isDark} snapPoints={[BASKET_HEIGHT + insets.bottom]} frame scrollView={false}>
+        <SheetHeader title={copy?.title ?? "Cancel this booking?"} grabber={false} />
+        <BottomSheetScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 8, paddingBottom: 24, gap: 12 }}
+        >
+          <Text fontSize="text-md" tone="body">
+            You can't cancel one item. The whole booking is cancelled.
+          </Text>
+          <Text fontSize="text-md" fontWeight="font-semibold">
+            Which item can't you give?
+          </Text>
+          <View accessibilityRole="radiogroup" style={{ gap: 8 }}>
+            {live.map((l) => (
+              <RadioCard key={l.id} title={l.product.title} sub={l.ref} selected={line === l.id} onPress={() => setLine(l.id)} />
             ))}
+            <RadioCard title="It's not one item" sub="Something else stops the booking" selected={line === null} onPress={() => setLine(null)} />
           </View>
-        ) : failed ? null : (
-          <View accessible accessibilityRole="progressbar" accessibilityLabel="Working out what cancelling does">
-            <Skeleton width="100%" height={72} />
-          </View>
-        )}
-        {basket ? (
-          <Text fontSize="text-md" fontWeight="font-bold">
+          {copy ? (
+            <View style={{ gap: 8 }}>
+              {copy.lines.map((text) => (
+                <Text key={text} fontSize="text-sm" tone="body">
+                  {text}
+                </Text>
+              ))}
+            </View>
+          ) : (
+            loading
+          )}
+          <Text fontSize="text-md" fontWeight="font-semibold">
             You earn ₹0 from this booking.
           </Text>
-        ) : null}
-        {after ? (
-          <Text fontSize="text-sm" tone="body">
-            {after}
-          </Text>
-        ) : null}
-        {note ? (
-          <Text fontSize="text-sm" accessibilityRole="alert" style={{ color: color.danger }}>
-            {note}
-          </Text>
-        ) : null}
-        <View style={{ gap: space.sm }}>
-          {copy ? (
-            <Button
-              variant="warning"
-              loading={cancelling}
-              disabled={cancelling || (basket && line === undefined)}
-              onPress={() => void confirm()}
-            >
-              {basket ? "Cancel the whole booking" : copy.confirm}
-            </Button>
-          ) : failed ? (
-            <Button variant="outline" onPress={() => void load()}>
-              Try again
-            </Button>
+          {after ? (
+            <Text fontSize="text-sm" tone="body">
+              {after}
+            </Text>
           ) : null}
-          <Button variant="ghost" disabled={cancelling} onPress={() => sheet.current?.dismiss()}>
-            Keep it
+          {noteView}
+        </BottomSheetScrollView>
+        {copy ? (
+          <SheetFooter
+            tone="danger"
+            primary={{
+              label: "Cancel the whole booking",
+              onPress: () => void confirm(),
+              loading: cancelling,
+              disabled: cancelling || line === undefined,
+            }}
+            secondary={{ label: "Keep it", onPress: dismiss, disabled: cancelling }}
+          />
+        ) : failed ? (
+          <SheetFooter primary={{ label: "Try again", onPress: () => void load() }} secondary={{ label: "Keep it", onPress: dismiss }} />
+        ) : (
+          // While the warning loads: "Keep it" is always there, as before 2.1.
+          <SheetFooter
+            tone="danger"
+            primary={{ label: "Cancel the whole booking", onPress: () => {}, loading: true, disabled: true }}
+            secondary={{ label: "Keep it", onPress: dismiss }}
+          />
+        )}
+      </CustomBottomSheetModal>
+    );
+  }
+
+  // 2094:24524: the Sheet · Confirm destructive layout, kept in this sheet so the warning is read after it opens, as
+  // before. The height follows the measured warning once it is in.
+  const height = copy && bodyHeight !== null ? ONE_ITEM_CHROME + bodyHeight : ONE_ITEM_START;
+  return (
+    <CustomBottomSheetModal ref={sheet} isDark={isDark} snapPoints={[height + insets.bottom]} frame>
+      <SheetHeader title={copy?.title ?? "Cancel this booking?"} grabber={false} />
+      <View
+        onLayout={copy ? (event) => setBodyHeight(event.nativeEvent.layout.height) : undefined}
+        style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: 8 }}
+      >
+        {copy ? (
+          // One text, as the frame sets the server's lines.
+          <Text fontSize="text-sm" tone="body">
+            {copy.lines.join("\n")}
+          </Text>
+        ) : (
+          loading
+        )}
+        {noteView}
+      </View>
+      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16, paddingBottom: 4 + insets.bottom, alignItems: "center", gap: 4 }}>
+        {copy ? (
+          <Button
+            variant="warning"
+            loading={cancelling}
+            disabled={cancelling}
+            onPress={() => void confirm()}
+            style={{ alignSelf: "stretch", minHeight: 56 }}
+          >
+            {copy.confirm}
           </Button>
-        </View>
+        ) : failed ? (
+          <Button onPress={() => void load()} style={{ alignSelf: "stretch" }}>
+            Try again
+          </Button>
+        ) : null}
+        <Button variant="ghost" tone="muted" disabled={cancelling} onPress={dismiss}>
+          Keep it
+        </Button>
       </View>
     </CustomBottomSheetModal>
   );

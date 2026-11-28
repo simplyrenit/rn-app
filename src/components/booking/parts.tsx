@@ -4,6 +4,7 @@ import { EmptyState, Skeleton, Text } from "@/components/core";
 import { BottomBar as KitBottomBar } from "@/components/core/bottom-bar";
 import { StatusPill } from "@/components/core/status-pill";
 import { apiError } from "@/lib/api-error";
+import { tapFeedback } from "@/lib/haptics";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { Image } from "expo-image";
@@ -16,6 +17,7 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
 } from "react-native-heroicons/outline";
+import { CheckIcon } from "react-native-heroicons/solid";
 
 /**
  * The small pieces every booking screen is built from (BK-01 to BK-12): the
@@ -45,6 +47,77 @@ export function Panel({ children, style }: { children: React.ReactNode; style?: 
   );
 }
 
+/**
+ * A row that is ticked by tapping anywhere on it, in a Panel: the capture's "What's included" and the listing's "What
+ * comes with it" (ENG-454). `trailing` sits at the row's end (a custom item's remove mark).
+ */
+export function TickRow({
+  label,
+  sub,
+  ticked,
+  first,
+  onPress,
+  trailing,
+  accessibilityHint,
+}: {
+  label: string;
+  sub?: string;
+  ticked: boolean;
+  first: boolean;
+  onPress: () => void;
+  trailing?: React.ReactNode;
+  accessibilityHint?: string;
+}) {
+  const { color } = useTheme();
+  return (
+    <TouchableOpacity
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: ticked }}
+      accessibilityLabel={sub ? `${label}. ${sub}` : label}
+      accessibilityHint={accessibilityHint}
+      activeOpacity={0.7}
+      onPress={() => {
+        tapFeedback();
+        onPress();
+      }}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: space.md,
+        minHeight: MIN_TOUCH_TARGET + 8,
+        paddingHorizontal: space.md,
+        paddingVertical: space.sm,
+        borderTopWidth: first ? 0 : 1,
+        borderTopColor: color.line,
+      }}
+    >
+      <View
+        style={{
+          width: 24,
+          height: 24,
+          borderRadius: radius.full,
+          borderWidth: ticked ? 0 : 1.5,
+          borderColor: color.inputLine,
+          backgroundColor: ticked ? color.brand : "transparent",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {ticked ? <CheckIcon size={14} color={color.onBrand} /> : null}
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text fontSize="text-md">{label}</Text>
+        {sub ? (
+          <Text fontSize="text-sm" tone="body">
+            {sub}
+          </Text>
+        ) : null}
+      </View>
+      {trailing}
+    </TouchableOpacity>
+  );
+}
+
 const THUMB = 56;
 
 /**
@@ -58,7 +131,7 @@ export function Thumb({
 }: {
   uri?: string | null;
   more?: string | null;
-  /** The cart's lines draw it at 64 (2089:26744, 28848); every other booking screen keeps 56. */
+  /** The cart's lines (2089:26744, 28848) and the Summary card (2089:26998, 2093:21585) draw it at 64; the other booking screens keep 56. */
   size?: number;
 }) {
   const { color } = useTheme();
@@ -117,11 +190,12 @@ export function SummaryCard({
   const { color } = useTheme();
   return (
     <Panel>
-      <View style={{ flexDirection: "row", gap: space.md, padding: space.md }}>
-        <Thumb uri={image} more={more} />
+      {/* Every 2.1 Summary card (05, 06, 08): padding 16, a 64 thumb, 12 to the text, SemiBold 16/24 title. */}
+      <View style={{ flexDirection: "row", gap: 12, padding: 16 }}>
+        <Thumb uri={image} more={more} size={64} />
         <View style={{ flex: 1, gap: 2 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-            <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={2} style={{ flex: 1 }}>
+            <Text fontSize="text-md" fontWeight="font-semibold" numberOfLines={2} style={{ flex: 1 }}>
               {title}
             </Text>
             {right}

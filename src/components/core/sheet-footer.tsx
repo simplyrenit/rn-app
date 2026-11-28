@@ -12,6 +12,11 @@ export interface SheetFooterProps {
   primary: BarAction;
   /** Optional text link below the primary: "Cancel", "Reset". */
   secondary?: BarAction;
+  /**
+   * `danger`: the primary is the kit's Destructive button (red label on a neutral box) and the link is 70% black, as
+   * 2094:24597 draws "Cancel the whole booking" over "Keep it". Default: the purple Primary and purple link.
+   */
+  tone?: "default" | "danger";
 }
 
 // The link hugs its 20pt line in the kit; the slop takes it to the 44pt floor
@@ -26,7 +31,7 @@ const LINK_SLOP = 12;
  * The link is plain SemiBold 14/20 text, not the library Text button (Bold,
  * 44 tall), because that is how the kit draws this one.
  */
-export function SheetFooter({ primary, secondary }: SheetFooterProps) {
+export function SheetFooter({ primary, secondary, tone = "default" }: SheetFooterProps) {
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
   return (
@@ -43,6 +48,7 @@ export function SheetFooter({ primary, secondary }: SheetFooterProps) {
       }}
     >
       <Button
+        variant={tone === "danger" ? "warning" : "primary"}
         onPress={primary.onPress}
         disabled={primary.disabled}
         loading={primary.loading}
@@ -64,7 +70,7 @@ export function SheetFooter({ primary, secondary }: SheetFooterProps) {
             fontSize="text-sm"
             fontWeight="font-semibold"
             lineHeight={20}
-            style={{ color: secondary.disabled ? color.textDim : color.brandText }}
+            style={{ color: secondary.disabled ? color.textDim : tone === "danger" ? color.textBody : color.brandText }}
           >
             {secondary.label}
           </Text>

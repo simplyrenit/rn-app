@@ -1,21 +1,17 @@
-import { acceptBooking, refuseBooking, ringEndedQueryKey, shopBookingQueryKey, useLive, useShopBooking } from "@/backend/shop-ring";
-import { refreshShop } from "@/backend/shop-today";
-import { dismissRingNotifications } from "@/backend/notifications";
-import { BottomBar, MoneyLine, Notice, Panel, TextButton, Thumb } from "@/components/booking/parts";
+import { acceptRing, refuseBooking, ringEndedQueryKey, settleRing, useLive, useShopBooking } from "@/backend/shop-ring";
+import { MoneyLine, Notice, Panel } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
-import { Button, EmptyState, Skeleton, Text } from "@/components/core";
-import { CheckBox } from "@/components/core/checkbox";
+import { BottomBar, Button, EmptyState, Skeleton, StatusPill, Text } from "@/components/core";
 import { LineChip, LineMoney } from "@/components/shop/lines";
 import { RefuseSheet } from "@/components/shop/refuse-sheet";
 import { UntickSheet, UntickSheetHandle } from "@/components/shop/untick-sheet";
 import { apiError } from "@/lib/api-error";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
-import { errorFeedback, successFeedback } from "@/lib/haptics";
+import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
+import { errorFeedback, successFeedback, tapFeedback } from "@/lib/haptics";
 import { clock, money, rangeLabel } from "@/lib/booking";
 import { ringCourierLine } from "@/lib/shop-courier";
 import {
   ShopLine,
-  acceptBody,
   acceptLabel,
   acceptNote,
   answeredLines,
@@ -62,57 +58,169 @@ import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { StackActions, useIsFocused, useRoute } from "@react-navigation/native";
+import { Image } from "expo-image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import { BellIcon, CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, MapPinIcon } from "react-native-heroicons/outline";
-import { CheckCircleIcon as CheckCircleMini } from "react-native-heroicons/mini";
-import { BellIcon as BellSolid } from "react-native-heroicons/solid";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  BellIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  MapPinIcon,
+} from "react-native-heroicons/outline";
+import { CheckCircleIcon as CheckCircleMini, ChevronRightIcon } from "react-native-heroicons/mini";
+import { CheckIcon } from "react-native-heroicons/solid";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "react-query";
 
-/** The bell inside two rings, as SH-01 draws it. */
-function RingBell() {
+// The 08 frames (2092:21207 …) draw every card r12 with a hairline; `Panel` is the hairline card, at the frames' radius.
+const CARD = { borderRadius: 12 } as const;
+// The scrolling content of the ringing views: 12 above, 24 below and at the sides, 16 between blocks.
+const CONTENT = { paddingTop: 12, paddingHorizontal: SCREEN_GUTTER, paddingBottom: 24, gap: 16 } as const;
+
+/**
+ * The product's photo at the frames' size (48 on a basket line, 64 on the answered card), or the frames' plain
+ * #F2F2F2 tile. `booking/parts` `Thumb` is fixed at 56 with a camera glyph (ENG-429 owns it).
+ */
+function ItemPhoto({ uri, size }: { uri: string | null; size: number }) {
   const { color } = useTheme();
-  const circle = (size: number, extra: object) => ({
+  const box = { width: size, height: size, borderRadius: 8, backgroundColor: color.surfaceMuted } as const;
+  return uri ? <Image source={{ uri }} style={box} contentFit="cover" transition={150} accessible={false} /> : <View style={box} />;
+}
+
+/** "1 more request is waiting · See next" (2092:21207 `More requests banner`). */
+function MoreBanner({ more, onNext }: { more: number; onNext: () => void }) {
+  const { color } = useTheme();
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={`${moreText(more)}. See the next one.`}
+      activeOpacity={0.7}
+      onPress={onNext}
+      style={{
+        alignSelf: "stretch",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 12,
+        backgroundColor: color.brandPanel,
+      }}
+    >
+      <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} tone="brand">
+        {moreText(more)}
+      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+        <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} tone="brand">
+          See next
+        </Text>
+        <ChevronRightIcon size={20} color={color.brandText} />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+/** The bell inside two rings (2092:21207 `Bell (ringing)`): neutral since the fix pass (b3-07), not brand-filled. */
+function RingBell() {
+  const { color, isDark } = useTheme();
+  const circle = (size: number) => ({
     width: size,
     height: size,
-    borderRadius: radius.full,
+    borderRadius: size / 2,
     alignItems: "center" as const,
     justifyContent: "center" as const,
-    ...extra,
   });
   return (
-    <View
-      accessible
-      accessibilityLabel="New booking request"
-      style={circle(148, { borderWidth: 1.5, borderColor: color.brandPanelLine })}
-    >
-      <View style={circle(112, { backgroundColor: color.brandPanelLine })}>
-        <View style={circle(84, { backgroundColor: color.brand })}>
-          <BellSolid size={36} color={color.onBrand} />
+    <View accessible accessibilityLabel="New booking request" style={[circle(148), { borderWidth: 1.5, borderColor: color.line }]}>
+      {/* #F7F7F8 has no token; dark mode takes the raised surface. */}
+      <View style={[circle(112), { backgroundColor: isDark ? color.surfaceRaised : "#F7F7F8" }]}>
+        <View style={[circle(84), { backgroundColor: color.surfaceMuted }]}>
+          {/* 1.5 drawn at 36, as the frame does: 1.5 × 24 / 36. */}
+          <BellIcon size={36} color={color.textBody} strokeWidth={1} />
         </View>
       </View>
     </View>
   );
 }
 
-/** One dot a unit: filled for those in use. */
+/** One 10pt dot a unit, 4 apart: brand for those in use, the hairline grey for those free. */
 function UnitDots({ dots }: { dots: boolean[] }) {
   const { color } = useTheme();
   return (
-    <View accessible={false} style={{ flexDirection: "row", gap: 4 }}>
+    <View accessible={false} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
       {dots.map((used, i) => (
-        <View
-          key={i}
-          style={{ width: 16, height: 6, borderRadius: radius.full, backgroundColor: used ? color.brand : color.inputLine }}
-        />
+        <View key={i} style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: used ? color.brand : color.line }} />
       ))}
     </View>
   );
 }
 
-/** SH-01: the request, who asks, how many units are in use, and what the shop earns. */
+/** Who asks: the initial, the name and the ID line (2092:21207 `Customer`, 78 high). */
+function CustomerRow({ customer }: { customer: Ring["customer"] }) {
+  const { color } = useTheme();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 16, padding: 16 }}>
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: color.brandPanel,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24} tone="brand">
+          {customer.first_name.charAt(0).toUpperCase()}
+        </Text>
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24}>
+          {customerName(customer)}
+        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+          {customer.id_checked === true ? <CheckCircleMini size={16} color={color.success} /> : null}
+          <Text fontSize="text-sm" lineHeight={20} tone="body" style={{ flex: 1 }}>
+            {customerLine(customer)}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** A basket line's tick (2092:21288 `Checkbox`): 24, r6, in a 44 touch area that does not move the row. */
+function LineTick({ checked, label, onPress }: { checked: boolean; label: string; onPress: () => void }) {
+  const { color } = useTheme();
+  return (
+    <TouchableOpacity
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      accessibilityLabel={label}
+      hitSlop={10}
+      onPress={() => {
+        tapFeedback();
+        onPress();
+      }}
+      style={{
+        width: 24,
+        height: 24,
+        borderRadius: 6,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: checked ? color.brand : color.surface,
+        borderWidth: checked ? 0 : 1.5,
+        borderColor: color.textDim,
+      }}
+    >
+      {checked ? <CheckIcon size={16} color={color.onBrand} /> : null}
+    </TouchableOpacity>
+  );
+}
+
+/** SH-01 (2092:21207): the request, who asks, how many units are in use, and what the shop earns. */
 function RingingView({
   ring,
   working,
@@ -132,137 +240,78 @@ function RingingView({
   onNext: () => void;
 }) {
   const { color } = useTheme();
-  const insets = useSafeAreaInsets();
   const dots = unitDots(ring.units);
   const fee = feeText(ring);
+  const courier = ringCourierLine(ring);
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          alignItems: "center",
-          paddingTop: space.lg,
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingBottom: space.lg,
-          gap: space.md,
-        }}
-      >
-        {more > 0 ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={`${moreText(more)}. See the next one.`}
-            activeOpacity={0.7}
-            onPress={onNext}
-            style={{
-              alignSelf: "stretch",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              paddingHorizontal: space.md,
-              paddingVertical: space.sm,
-              borderRadius: radius.button,
-              backgroundColor: color.brandWash,
-            }}
-          >
-            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
-              {moreText(more)}
-            </Text>
-            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
-              See next
-            </Text>
-          </TouchableOpacity>
-        ) : null}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[CONTENT, { alignItems: "center" }]}>
+        {more > 0 ? <MoreBanner more={more} onNext={onNext} /> : null}
         <RingBell />
-        <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
+        <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20}>
           New booking
         </Text>
-        <Text fontSize="text-2xl" fontWeight="font-bold" accessibilityRole="header" style={{ textAlign: "center" }}>
+        <Text role="screenTitle" accessibilityRole="header" style={{ textAlign: "center", alignSelf: "stretch" }}>
           {ring.product.title}
         </Text>
-        <Text fontSize="text-base" fontWeight="font-bold" style={{ textAlign: "center" }}>
+        <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24} style={{ textAlign: "center" }}>
           {ringDates(ring)}
         </Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}>
-          <MapPinIcon size={16} color={color.textDim} />
-          <Text fontSize="text-sm" tone="body">
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+          <MapPinIcon size={16} color={color.textDim} strokeWidth={1.5} />
+          <Text fontSize="text-sm" lineHeight={20} tone="body">
             {ringWhere(ring)}
           </Text>
         </View>
-        {ringCourierLine(ring) ? (
-          <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
-            {ringCourierLine(ring)}
+        {courier ? (
+          <Text fontSize="text-sm" lineHeight={20} tone="body" style={{ textAlign: "center" }}>
+            {courier}
           </Text>
         ) : null}
 
-        <Panel style={{ alignSelf: "stretch", marginTop: space.sm }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md }}>
-            <View
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: radius.full,
-                backgroundColor: color.brandPanel,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
-                {ring.customer.first_name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text fontSize="text-md" fontWeight="font-bold">
-                {customerName(ring.customer)}
-              </Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}>
-                {ring.customer.id_checked === true ? <CheckCircleMini size={16} color={color.success} /> : null}
-                <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
-                  {customerLine(ring.customer)}
-                </Text>
-              </View>
-            </View>
-          </View>
+        <Panel style={[CARD, { alignSelf: "stretch" }]}>
+          <CustomerRow customer={ring.customer} />
           <View
             accessible
             accessibilityLabel={unitsLine(ring.units)}
             style={{
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "space-between",
-              gap: space.sm,
-              padding: space.md,
+              gap: 12,
+              paddingVertical: 14,
+              paddingHorizontal: 16,
               borderTopWidth: 1,
               borderTopColor: color.line,
             }}
           >
-            <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
+            <Text fontSize="text-sm" lineHeight={20} tone="body" style={{ flex: 1 }}>
               {unitsLine(ring.units)}
             </Text>
             {dots ? <UnitDots dots={dots} /> : null}
           </View>
         </Panel>
 
-        <Panel style={{ alignSelf: "stretch" }}>
-          <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", padding: space.md }}>
-            <View>
-              <Text fontSize="text-sm" tone="body">
+        <Panel style={[CARD, { alignSelf: "stretch" }]}>
+          <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", padding: 16 }}>
+            <View style={{ gap: 2 }}>
+              <Text fontSize="text-sm" lineHeight={20} tone="body">
                 You earn
               </Text>
-              <Text fontSize="text-2xl" fontWeight="font-bold">
+              <Text fontSize="text-lg" fontWeight="font-bold" lineHeight={28}>
                 {summaryOfRing(ring).earn}
               </Text>
             </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text fontSize="text-xs" tone="body">
+            <View style={{ alignItems: "flex-end", gap: 2 }}>
+              <Text fontSize="text-xs" lineHeight={16} tone="dim">
                 Renit's fee
               </Text>
-              <View style={{ flexDirection: "row", gap: space.sm }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 {fee.struck ? (
-                  <Text fontSize="text-md" tone="dim" style={{ textDecorationLine: "line-through" }}>
+                  <Text fontSize="text-sm" lineHeight={20} tone="dim" style={{ textDecorationLine: "line-through" }}>
                     {fee.struck}
                   </Text>
                 ) : null}
-                <Text fontSize="text-md" fontWeight="font-bold" tone="success">
+                <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} tone="success">
                   {fee.charged}
                 </Text>
               </View>
@@ -276,23 +325,20 @@ function RingingView({
         ) : null}
       </ScrollView>
 
-      <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: Math.max(insets.bottom, space.md), gap: space.sm }}>
-        <Button loading={working === "accept"} disabled={working !== null} onPress={onAccept}>
-          Accept
-        </Button>
-        <Button variant="outline" disabled={working !== null} onPress={onCantDoIt}>
-          Can't do it
-        </Button>
-      </View>
+      <BottomBar
+        layout="secondary-primary"
+        secondary={{ label: "Can't do it", disabled: working !== null, onPress: onCantDoIt }}
+        primary={{ label: "Accept", loading: working === "accept", disabled: working !== null, onPress: onAccept }}
+      />
     </View>
   );
 }
 
 /**
- * MR-01 to MR-03, a request for several items: a row a line with its tick (ticked by default), the units free, what it
- * earns and its deposit; "You earn" as the ticks stand; Accept all, or Accept K of N; Can't do any. An unticked item
- * names why and that it is blocked; an item lost to another booking (an Accept race, or taken while it rang) can't be
- * ticked. An extension takes every item, so it has no ticks (D24).
+ * MR-01 to MR-03 (2092:21288), a request for several items: a row a line with its tick (ticked by default), the units
+ * free, what it earns and its deposit; "You earn" as the ticks stand; Accept all, or Accept K of N; Can't do any. An
+ * unticked item names why and that it is blocked; an item lost to another booking (an Accept race, or taken while it
+ * rang) can't be ticked. An extension takes every item, so it has no ticks (D24).
  */
 function BasketRingingView({
   ring,
@@ -322,89 +368,40 @@ function BasketRingingView({
   onNext: () => void;
 }) {
   const { color } = useTheme();
-  const insets = useSafeAreaInsets();
   const lines = ring.lines ?? [];
   const extension = Boolean(ring.extends);
   const ticked = tickedIds(lines, extension ? new Set() : new Set(unticked.keys()), lost);
   const sums = ringMoney(ring, ticked);
   const range = rangeLabel(ring.first_day, ring.last_day);
   const deadline = clock(ring.ring_ends_at);
+  const divider = { borderTopWidth: 1, borderTopColor: color.line } as const;
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: space.md, paddingHorizontal: SCREEN_GUTTER, paddingBottom: space.lg, gap: space.md }}
-      >
-        {more > 0 ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={`${moreText(more)}. See the next one.`}
-            activeOpacity={0.7}
-            onPress={onNext}
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              paddingHorizontal: space.md,
-              paddingVertical: space.sm,
-              borderRadius: radius.button,
-              backgroundColor: color.brandWash,
-            }}
-          >
-            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
-              {moreText(more)}
-            </Text>
-            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
-              See next
-            </Text>
-          </TouchableOpacity>
-        ) : null}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={CONTENT}>
+        {more > 0 ? <MoreBanner more={more} onNext={onNext} /> : null}
         {/* The header stays short, so the items start above the fold (Figma ruling G13). */}
         <View style={{ gap: 2 }}>
-          <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+          <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20}>
             {ringEyebrow(ring)}
           </Text>
-          <Text fontSize="text-xl" fontWeight="font-bold" accessibilityRole="header">
+          <Text role="screenTitle" accessibilityRole="header">
             {ring.product.title}
           </Text>
-          <Text fontSize="text-sm" tone="body">
+          <Text fontSize="text-sm" lineHeight={20} tone="body">
             {ringDates(ring)}
           </Text>
-          <Text fontSize="text-sm" tone="body">
+          <Text fontSize="text-sm" lineHeight={20} tone="body">
             {[ringWhere(ring), ringCourierLine(ring)].filter(Boolean).join(" · ")}
           </Text>
           {deadline ? (
-            <View style={{ marginTop: space.xs }}>
-              <LineChip label={`Answer by ${deadline}`} tone="neutral" />
+            <View style={{ paddingTop: 4 }}>
+              <StatusPill label={`Answer by ${deadline}`} tone="neutral" style={{ alignSelf: "flex-start" }} />
             </View>
           ) : null}
         </View>
 
-        <Panel style={{ flexDirection: "row", alignItems: "center", gap: space.md, padding: space.md }}>
-          <View
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: radius.full,
-              backgroundColor: color.brandPanel,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text fontSize="text-md" fontWeight="font-bold" tone="brand">
-              {ring.customer.first_name.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text fontSize="text-md" fontWeight="font-bold">
-              {customerName(ring.customer)}
-            </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}>
-              {ring.customer.id_checked === true ? <CheckCircleMini size={16} color={color.success} /> : null}
-              <Text fontSize="text-sm" tone="body" style={{ flex: 1 }}>
-                {customerLine(ring.customer)}
-              </Text>
-            </View>
-          </View>
+        <Panel style={CARD}>
+          <CustomerRow customer={ring.customer} />
         </Panel>
 
         {race ? (
@@ -413,19 +410,19 @@ function BasketRingingView({
           </Notice>
         ) : null}
 
-        <Panel>
-          <View style={{ padding: space.md, gap: 2 }}>
-            <View style={{ flexDirection: "row", gap: space.sm }}>
-              <Text fontSize="text-md" fontWeight="font-bold" style={{ flex: 1 }}>
+        <Panel style={CARD}>
+          <View style={{ paddingTop: 16, paddingHorizontal: 16, paddingBottom: 12, gap: 2 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24} style={{ flex: 1 }}>
                 {extension ? "Every item of the booking" : "Tick what you can give"}
               </Text>
               {extension ? null : (
-                <Text fontSize="text-sm" tone="body">
+                <Text fontSize="text-sm" lineHeight={20} tone="body">
                   {`${ticked.length} of ${lines.length} ticked`}
                 </Text>
               )}
             </View>
-            <Text fontSize="text-sm" tone="body">
+            <Text fontSize="text-sm" lineHeight={20} tone="body">
               {extension
                 ? "An extension takes every item, or none."
                 : "Untick what you can't give. We'll block it for these dates."}
@@ -437,35 +434,36 @@ function BasketRingingView({
             const off = gone || (!extension && reason !== undefined);
             const free = unitsFree(line.units);
             return (
-              <View
-                key={line.id}
-                style={{ flexDirection: "row", gap: space.md, padding: space.md, borderTopWidth: 1, borderTopColor: color.line }}
-              >
-                <Thumb uri={line.product.cover_image} />
+              <View key={line.id} style={[{ flexDirection: "row", gap: 12, paddingVertical: 14, paddingHorizontal: 16 }, divider]}>
+                <ItemPhoto uri={line.product.cover_image} size={48} />
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text fontSize="text-md" fontWeight="font-bold" tone={off ? "dim" : "default"}>
+                  <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24} tone={off ? "dim" : "default"}>
                     {line.product.title}
                   </Text>
-                  <Text fontSize="text-sm" tone="body">
+                  <Text fontSize="text-sm" lineHeight={20} tone="body">
                     {[line.ref, gone ? `0 of ${line.units?.quantity ?? 0} free` : free].filter(Boolean).join(" · ")}
                   </Text>
                   {!gone && reason !== undefined && !extension ? (
-                    <Text fontSize="text-sm" tone="body">
+                    <Text fontSize="text-sm" lineHeight={20} tone="body">
                       {untickedMeta(reason, range)}
                     </Text>
                   ) : null}
                   <LineMoney earn={money(line.owner_earns ?? line.rent)} deposit={`Deposit ${money(line.deposit)}`} off={off} />
                   {gone ? (
-                    <LineChip label="No longer free" tone="danger" />
+                    <View style={{ paddingTop: 4 }}>
+                      <LineChip label="No longer free" tone="danger" />
+                    </View>
                   ) : off ? (
-                    <LineChip label="Not available · dates blocked" tone="neutral" />
+                    <View style={{ paddingTop: 4 }}>
+                      <LineChip label="Not available · dates blocked" tone="neutral" />
+                    </View>
                   ) : null}
                 </View>
                 {extension ? null : (
-                  <CheckBox
+                  <LineTick
                     checked={!off}
                     onPress={() => (gone ? undefined : onTick(line))}
-                    accessibilityLabel={gone ? `${line.product.title}: no longer free` : `Give ${line.product.title}`}
+                    label={gone ? `${line.product.title}: no longer free` : `Give ${line.product.title}`}
                   />
                 )}
               </View>
@@ -473,12 +471,11 @@ function BasketRingingView({
           })}
         </Panel>
 
-        <Panel style={{ padding: space.md, gap: space.sm }}>
+        <Panel style={[CARD, { padding: 16, gap: 12 }]}>
           <MoneyLine label={sums.rentLabel} amount={sums.rent} />
           {sums.delivery ? <MoneyLine label="Delivery" amount={sums.delivery} /> : null}
-          <View style={{ height: 1, backgroundColor: color.line }} />
-          <MoneyLine label="You earn" amount={sums.earn} bold />
-          <Text fontSize="text-xs" tone="body">
+          <MoneyLine label="You earn" amount={sums.earn} total />
+          <Text fontSize="text-xs" lineHeight={16} tone="dim">
             Amounts as Renit sends them for each item. They change as you tick.
           </Text>
         </Panel>
@@ -489,36 +486,40 @@ function BasketRingingView({
         ) : null}
       </ScrollView>
 
-      <View
-        style={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          paddingBottom: Math.max(insets.bottom, space.md),
-          gap: space.xs,
-          borderTopWidth: 1,
-          borderTopColor: color.line,
-          backgroundColor: color.canvas,
-        }}
-      >
-        <Text fontSize="text-md" accessibilityLiveRegion="polite">
-          <Text fontSize="text-md" fontWeight="font-bold">
-            {sums.earn}
+      {/* 2092:21288 `Sticky footer`: the summary (76) over the kit Bottom bar CTA+Text, one hairline above both. */}
+      <View style={[divider, { backgroundColor: color.canvas }]}>
+        <View style={{ paddingTop: 12, paddingHorizontal: SCREEN_GUTTER, gap: 4 }}>
+          <View accessible accessibilityLiveRegion="polite" style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+            <Text fontSize="text-lg" fontWeight="font-bold" lineHeight={28}>
+              {sums.earn}
+            </Text>
+            <Text fontSize="text-sm" lineHeight={20} tone="body">
+              · You earn
+            </Text>
+          </View>
+          <Text fontSize="text-xs" lineHeight={16} tone="dim">
+            {ticked.length === 0
+              ? "Tick an item to accept, or say you can't do any."
+              : acceptNote(ring.customer.first_name, ticked.length, lines.length)}
           </Text>
-          {" · You earn"}
-        </Text>
-        <Text fontSize="text-sm" tone="body">
-          {ticked.length === 0 ? "Tick an item to accept, or say you can't do any." : acceptNote(ring.customer.first_name, ticked.length, lines.length)}
-        </Text>
-        <Button loading={working === "accept"} disabled={working !== null || ticked.length === 0} onPress={() => onAccept(ticked)}>
-          {acceptLabel(ticked.length, lines.length)}
-        </Button>
-        <TextButton label="Can't do any" disabled={working !== null} onPress={onCantDoIt} />
+        </View>
+        <BottomBar
+          layout="cta-text"
+          style={{ borderTopWidth: 0 }}
+          primary={{
+            label: acceptLabel(ticked.length, lines.length),
+            loading: working === "accept",
+            disabled: working !== null || ticked.length === 0,
+            onPress: () => onAccept(ticked),
+          }}
+          secondary={{ label: "Can't do any", disabled: working !== null, onPress: onCantDoIt }}
+        />
       </View>
     </View>
   );
 }
 
-/** SH-03: a request that is over. Another device's answer, this phone's own, or nobody's. */
+/** SH-03 (2092:21395, 2092:21444): a request that is over. Another device's answer, this phone's own, or nobody's. */
 function EndedView({
   ending,
   summary,
@@ -543,48 +544,51 @@ function EndedView({
   const copy = endingCopy(ending, summary?.firstName ?? null);
   const accepted = ending.outcome === "accepted" && !ending.system;
   const Icon = accepted ? CheckCircleIcon : InformationCircleIcon;
-  const tone = accepted ? color.success : color.textBody;
+  const seeBooking = accepted && onSee ? onSee : undefined;
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space["2xl"], gap: space.md, alignItems: "center" }}
+        contentContainerStyle={{ paddingTop: 64, paddingHorizontal: SCREEN_GUTTER, paddingBottom: 24, gap: 12, alignItems: "center" }}
       >
         <View
           style={{
-            width: 96,
-            height: 96,
-            borderRadius: radius.full,
+            width: 88,
+            height: 88,
+            borderRadius: 44,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: accepted ? color.successWash : color.surfaceRaised,
+            backgroundColor: accepted ? color.successWash : color.surfaceMuted,
           }}
         >
-          <Icon size={44} color={tone} />
+          {/* The frames draw a 1.5 stroke at the icon's 44 size, not scaled from 24: 1.5 × 24 / 44. */}
+          <Icon size={44} color={accepted ? color.success : color.textDim} strokeWidth={(1.5 * 24) / 44} />
         </View>
-        <Text fontSize="text-xl" fontWeight="font-bold" accessibilityRole="header" style={{ textAlign: "center" }}>
+        {/* The frames' 4pt spacer: 28 from the circle to the title. */}
+        <View style={{ height: 4 }} />
+        <Text role="screenTitle" accessibilityRole="header" style={{ textAlign: "center", alignSelf: "stretch" }}>
           {copy.title}
         </Text>
-        <Text fontSize="text-md" tone="body" style={{ textAlign: "center" }}>
+        <Text fontSize="text-md" lineHeight={24} tone="body" style={{ textAlign: "center", alignSelf: "stretch" }}>
           {copy.sub}
         </Text>
         {detail ? (
-          <Text fontSize="text-md" tone="body" style={{ textAlign: "center" }}>
+          <Text fontSize="text-md" lineHeight={24} tone="body" style={{ textAlign: "center", alignSelf: "stretch" }}>
             {detail}
           </Text>
         ) : null}
         {summary ? (
-          <Panel style={{ alignSelf: "stretch", marginTop: space.md }}>
-            <View style={{ flexDirection: "row", gap: space.md, padding: space.md }}>
-              <Thumb uri={summary.image} />
+          <Panel style={[CARD, { alignSelf: "stretch" }]}>
+            <View style={{ flexDirection: "row", gap: 12, padding: 16 }}>
+              <ItemPhoto uri={summary.image} size={64} />
               <View style={{ flex: 1, gap: 2 }}>
-                <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={2}>
+                <Text fontSize="text-md" fontWeight="font-semibold" lineHeight={24} numberOfLines={2}>
                   {summary.title}
                 </Text>
-                <Text fontSize="text-sm" tone="body">
+                <Text fontSize="text-sm" lineHeight={20} tone="body">
                   {summary.dates}
                 </Text>
-                <Text fontSize="text-sm" tone="body">
+                <Text fontSize="text-sm" lineHeight={20} tone="body">
                   {summary.how}
                 </Text>
               </View>
@@ -593,38 +597,44 @@ function EndedView({
               style={{
                 flexDirection: "row",
                 justifyContent: "space-between",
-                padding: space.md,
+                paddingVertical: 14,
+                paddingHorizontal: 16,
                 borderTopWidth: 1,
                 borderTopColor: color.line,
               }}
             >
-              <Text fontSize="text-md" tone="body">
+              <Text fontSize="text-sm" lineHeight={20} tone="body">
                 You earn
               </Text>
-              <Text fontSize="text-md" fontWeight="font-bold">
+              <Text fontSize="text-md" fontWeight="font-bold" lineHeight={24}>
                 {summary.earn}
               </Text>
             </View>
           </Panel>
         ) : null}
       </ScrollView>
-      <BottomBar>
-        {more > 0 && onNext ? <Button onPress={onNext}>{`Next request (${more} waiting)`}</Button> : null}
-        {accepted && onSee ? (
-          <>
-            <Button variant={more > 0 ? "outline" : "primary"} onPress={onSee}>
+      {more > 0 && onNext ? (
+        // Three ways on: no kit layout holds them, so the bar's passthrough carries three kit Buttons (no frame draws it).
+        <BottomBar>
+          <Button onPress={onNext}>{`Next request (${more} waiting)`}</Button>
+          {seeBooking ? (
+            <Button variant="outline" onPress={seeBooking}>
               See booking
             </Button>
-            <Button variant="ghost" onPress={onDone}>
-              Done
-            </Button>
-          </>
-        ) : (
-          <Button variant={more > 0 ? "ghost" : "primary"} onPress={onDone}>
+          ) : null}
+          <Button variant="ghost" onPress={onDone}>
             Done
           </Button>
-        )}
-      </BottomBar>
+        </BottomBar>
+      ) : seeBooking ? (
+        <BottomBar
+          layout="cta-text"
+          primary={{ label: "See booking", onPress: seeBooking }}
+          secondary={{ label: "Done", onPress: onDone }}
+        />
+      ) : (
+        <BottomBar layout="full-cta" primary={{ label: "Done", onPress: onDone }} />
+      )}
     </View>
   );
 }
@@ -781,11 +791,8 @@ export default function ShopRingScreen() {
   const close = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"));
   // The booking takes this screen's place, so "back" from it is not a ring that is over.
   const see = () => navigation.dispatch(StackActions.replace("ShopBooking", { number: params.number }));
-  const settle = () => {
-    void dismissRingNotifications(params.number);
-    // Today, the bookings lists and their counts, and the live answer all moved with this answer.
-    refreshShop(queryClient);
-  };
+  // Today, the bookings lists and their counts, and the live answer all moved with this answer.
+  const settle = () => settleRing(queryClient, params.number);
 
   /** One answer at a time. A failed tap shows what the server said, or reads the server when it cannot say. */
   const answer = async (kind: "accept" | "refuse", send: () => Promise<RingEnding>) => {
@@ -831,9 +838,9 @@ export default function ShopRingScreen() {
 
   const accept = (ticked: number[] = []) =>
     answer("accept", async () => {
-      const booking = await acceptBooking(params.number, view.kind === "ringing" ? acceptBody(view.ring, ticked) : {});
-      // Kept for the answered view: a basket's says what was accepted and what was left out.
-      queryClient.setQueryData(shopBookingQueryKey(params.number), booking);
+      // The shared accept (Today's inline Accept sends the same): the booking is kept for the answered view, where a
+      // basket's says what was accepted and what was left out.
+      const booking = await acceptRing(queryClient, params.number, view.kind === "ringing" ? view.ring : null, ticked);
       // The server's clock as it answered: the pay-by time is its, not the phone's.
       return hereEnding("accepted", booking.answered?.at ?? null, null, rentByLabel(booking));
     });
@@ -944,9 +951,6 @@ export default function ShopRingScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: color.canvas, paddingTop: insets.top }}>
       <StatusBar style={isDark ? "light" : "dark"} />
-      {view.kind === "ringing" ? (
-        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: color.brandPanel }]} />
-      ) : null}
       {body}
       <RefuseSheet
         ref={sheet}

@@ -18,12 +18,14 @@ import {
   addDays,
   windowErrorText,
   windowLabel,
+  windowSummary,
+  timeAndDay,
   arrivalWhen,
   earlyNote,
 } from "@/lib/booking";
 import { itemsText, liveLines, madeOf, manyItems } from "@/lib/booking-lines";
 import type { CaptureFlags, Moment, Side } from "@/lib/capture";
-import { COURIER, CourierBanner, CourierStep, byRenit } from "@/lib/delivery";
+import { COURIER, CourierBanner, CourierStep, EarlyReturnRequest, byRenit } from "@/lib/delivery";
 
 /**
  * The day of the handover and the return, for both sides (API-CONTRACT OE-I;
@@ -565,7 +567,64 @@ export function returnWindowCopy(
 /** What a refused return-window pick says. The desk may already be booking the rider (`stage_not_allowed`). */
 export function returnWindowErrorText(error: ApiError | null): string {
   if (error?.code === "stage_not_allowed") return "The return window can't be changed now. Call via Renit to move it.";
+  // ENG-442's early ask: the server's words say why (asked already, not open now, the time went).
+  if (error?.code === "request_open") return "You've asked the shop already. Wait for its answer.";
+  if (error?.code === "early_closed") return "An early return can't be asked for now. Pick a return window.";
   return windowErrorText(error);
+}
+
+// ---- ENG-442, an early courier return ------------------------------------------------------------------------------
+
+/** "today, about 2:00 – 3:00 pm" for Return now, "Sun 8 Nov, 10:00 – 11:00 am" for an earlier day. */
+export function earlyWhen(r: { start: string; end: string; now: boolean }): string {
+  const slot = { start: r.start, end: r.end };
+  return r.now ? `today, about ${windowLabel(slot)}` : windowSummary(slot);
+}
+
+/** "1:42 pm today", "10:10 am tomorrow": when the shop's answer is due. */
+export function replyByText(replyBy: string, now: Date): string {
+  const at = timeAndDay(replyBy, now);
+  return at ? `${at.time} ${at.day}` : "";
+}
+
+/** C6's note under an early slot: the shop answers first, and an early return gives nothing back. */
+export function earlyPickNote(replyMinutes: number | undefined): string {
+  const minutes = replyMinutes ? `${replyMinutes} minutes` : "a few minutes";
+  return `Earlier than your last day, so the shop has ${minutes} to accept. Nothing is booked until it does. Returning early gives no refund.`;
+}
+
+/**
+ * The customer's early ask on the Return screen, open or how it ended. `lastDay` is the day the return stays on (the
+ * courier's `earliest`); `window` the last-day window already picked, if any: the ask may come after it, and then the
+ * return stays in it. An open ask past `reply_by` reads as no answer: the phone may hold an answer older than the time.
+ */
+export function earlyRequestCopy(
+  r: EarlyReturnRequest | null | undefined,
+  lastDay: string,
+  now: Date,
+  window?: { from: string; to: string } | null
+): { tone: "brand" | "warning"; title: string; body: string; open: boolean } | null {
+  if (!r) return null;
+  const outcome = r.outcome ?? (now.getTime() >= new Date(r.reply_by).getTime() ? "no_answer" : null);
+  const kept = window ? `your window, ${windowSummary({ start: window.from, end: window.to })}` : null;
+  const stays = kept
+    ? `Your return stays in ${kept}.`
+    : `Your return stays on ${dayShort(lastDay)}. Pick a window for that day.`;
+  switch (outcome) {
+    case null:
+      return {
+        tone: "brand",
+        title: "Waiting for the shop",
+        body: `You asked for a rider ${earlyWhen(r)}. The shop has until ${replyByText(r.reply_by, now)} to accept. If it can't, your return stays ${kept ? `in ${kept}` : `on ${dayShort(lastDay)}`}.`,
+        open: true,
+      };
+    case "declined":
+      return { tone: "warning", title: "The shop can't take it back early", body: stays, open: false };
+    case "no_answer":
+      return { tone: "warning", title: "The shop didn't answer in time", body: stays, open: false };
+    default:
+      return { tone: "warning", title: "That time has gone", body: kept ? stays : "Pick another time.", open: false };
+  }
 }
 
 // ---- BK-19, not as described ---------------------------------------------------------------------------------------
@@ -708,8 +767,8 @@ export function returnSteps(booking: Pick<BookingCustomer, "captures" | "stage">
       sub: mine
         ? "Done"
         : returned
-          ? "Not recorded. You have no photos or video of how you returned it."
-          : "The same photos and video as at the handover",
+          ? "Not recorded. You have no record of how you returned it."
+          : "The same record as at the handover",
     },
     {
       label: "The shop checks it against the handover",
