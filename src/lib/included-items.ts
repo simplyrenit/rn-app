@@ -114,9 +114,10 @@ export function itemsPayload(
  * Why a change was refused:
  *  - `full`: the list already has 20 items;
  *  - `last`: it would leave nothing included, and an empty list falls back to the category's (the server reads it so);
- *  - `empty` / `long`: the typed item is blank, or over 60 characters.
+ *  - `empty` / `long`: the typed item is blank, or over 60 characters;
+ *  - `both`: the item would be both one that comes back and one that is used up.
  */
-export type Refusal = "full" | "last" | "empty" | "long";
+export type Refusal = "full" | "last" | "empty" | "long" | "both";
 export type Change = { ok: true; picks: ItemPicks } | { ok: false; why: Refusal };
 
 const without = (list: readonly string[], item: string) => list.filter((o) => fold(o) !== fold(item));
@@ -135,9 +136,10 @@ export function toggleIncluded(options: ChecklistOptions, picks: ItemPicks, item
   return { ok: true, picks: { ...picks, ticked: [...picks.ticked, findIn(offered(options), item) ?? item] } };
 }
 
-/** Tick or untick a used-up item. */
-export function toggleUsedUp(picks: ItemPicks, item: string): Change {
+/** Tick or untick a used-up item. One the listing comes with can't be used up too: the return would ask for it back. */
+export function toggleUsedUp(options: ChecklistOptions, picks: ItemPicks, item: string): Change {
   if (has(picks.usedUp, item)) return { ok: true, picks: { ...picks, usedUp: without(picks.usedUp, item) } };
+  if (has(includedOf(options, picks), item)) return { ok: false, why: "both" };
   if (picks.usedUp.length >= MAX_ITEMS) return { ok: false, why: "full" };
   return { ok: true, picks: { ...picks, usedUp: [...picks.usedUp, item] } };
 }
@@ -151,6 +153,8 @@ export function addItem(options: ChecklistOptions, picks: ItemPicks, text: strin
   if (!item) return { ok: false, why: "empty" };
   if (item.length > MAX_ITEM_LENGTH) return { ok: false, why: "long" };
   if (has(picks.custom, item) || has(picks.ticked, item)) return { ok: true, picks };
+  // A used-up item (offered or ticked) is not also one that comes back.
+  if (has(picks.usedUp, item) || has(options.handover_only_items, item)) return { ok: false, why: "both" };
   if (includedOf(options, picks).length >= MAX_ITEMS) return { ok: false, why: "full" };
   const option = findIn(offered(options), item);
   return option
@@ -170,4 +174,5 @@ export const REFUSAL_TEXT: Record<Refusal, string> = {
   last: "Keep at least one item ticked.",
   empty: "Type an item first.",
   long: `Keep it under ${MAX_ITEM_LENGTH} characters.`,
+  both: "An item can't both come back and be used up.",
 };

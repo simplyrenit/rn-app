@@ -34,6 +34,8 @@ export function useSaveSubcategory(name: string, currentCategoryId?: number | nu
           parent: category,
           title: subcategory.title,
         }),
+        // Another sub-category: what came with the old one goes, and the new one's list applies (ENG-454).
+        ...(subcategory.id !== currentCategoryId ? { included_items: [], handover_only_items: [] } : {}),
       };
       const answer = await updateMyProductDetails(name, body);
 

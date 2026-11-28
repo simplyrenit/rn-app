@@ -62,7 +62,7 @@ describe("included items", () => {
   });
 
   it("sends used-up items on their own list, and the included list keeps following the category", () => {
-    const picks = ok(toggleUsedUp(picksFrom(ps5, null), "Batteries"));
+    const picks = ok(toggleUsedUp(ps5, picksFrom(ps5, null), "Batteries"));
     expect(itemsPayload(ps5, null, itemsOf(ps5, picks))).toEqual({
       included_items: [],
       handover_only_items: ["Batteries"],
@@ -90,7 +90,7 @@ describe("included items", () => {
     // Opened and saved untouched: nothing is sent.
     expect(itemsPayload(ps5, listing, items)).toEqual({});
     // Changed: both lists go.
-    const fewer = ok(toggleUsedUp(picks, "Cleaning wipes"));
+    const fewer = ok(toggleUsedUp(ps5, picks, "Cleaning wipes"));
     expect(itemsPayload(ps5, listing, itemsOf(ps5, fewer))).toEqual({
       included_items: ["Console", "Game disc", "Carry case"],
       handover_only_items: ["Batteries"],
@@ -108,6 +108,17 @@ describe("included items", () => {
     let picks = picksFrom(ps5, { included_items: ["Console", "Carry case"] });
     picks = ok(toggleIncluded(ps5, picks, "Console"));
     expect(removeItem(ps5, picks, "Carry case")).toEqual({ ok: false, why: "last" });
+  });
+
+  it("an item is never both one that comes back and one that is used up", () => {
+    const picks = picksFrom(ps5, null);
+    // Typing a used-up option, or one already ticked as used up, is refused rather than added.
+    expect(addItem(ps5, picks, "batteries ")).toEqual({ ok: false, why: "both" });
+    const usedUp = ok(toggleUsedUp(ps5, picks, "Batteries"));
+    expect(addItem(ps5, usedUp, "Batteries")).toEqual({ ok: false, why: "both" });
+    // An included item can't be ticked as used up.
+    const glue = ok(addItem(ps5, picks, "Glue"));
+    expect(toggleUsedUp(ps5, glue, "glue")).toEqual({ ok: false, why: "both" });
   });
 
   it("keeps to 20 items of up to 60 characters", () => {

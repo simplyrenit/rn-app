@@ -169,7 +169,7 @@ export function IncludedItemsSection({
               first={index === 0}
               label={item}
               ticked={isTicked(picks.usedUp, item)}
-              onPress={() => apply(toggleUsedUp(picks, item))}
+              onPress={() => apply(toggleUsedUp(options, picks, item))}
             />
           ))}
         </Group>
