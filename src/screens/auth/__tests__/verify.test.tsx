@@ -39,6 +39,7 @@ jest.mock("@/lib/theme", () => {
 });
 jest.mock("@react-navigation/native", () => ({
   useRoute: () => ({ params: { email: "asha.k@example.com", verificationType: "otp" } }),
+  StackActions: { replace: jest.fn() },
 }));
 jest.mock("@/lib/types", () => ({ useTypedNavigation: () => ({ navigate: jest.fn(), goBack: jest.fn() }) }));
 jest.mock("react-native-country-picker-modal", () => ({ __esModule: true, default: () => null, DARK_THEME: {} }));

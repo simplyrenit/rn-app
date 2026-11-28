@@ -808,7 +808,6 @@ export default function Navigation() {
         <Stack.Screen
           name="YourName"
           component={YourNameScreen}
-          options={{ gestureEnabled: false }}
         />
         <Stack.Screen
           name="Privacy"

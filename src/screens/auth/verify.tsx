@@ -1,5 +1,5 @@
 import { SignUpError, useAuth } from "@/backend/auth";
-import { formatPhone } from "@/components/auth/phone-field";
+import { formatPhone } from "@/lib/phone-number";
 import { activeCell, codeCells, codeDigits, CODE_LENGTH } from "@/components/capture/code";
 import { BottomBar, NonScrollableContainer, ScrollContainer, SubpageHeader, Text } from "@/components/core";
 import { useAuthContext } from "@/context/auth-context";
@@ -9,7 +9,7 @@ import { emailProof, phoneProof } from "@/lib/sign-in-proof";
 import { useTheme } from "@/lib/theme";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
 import { goAfterSignIn } from "@/lib/return-to";
-import { useRoute } from "@react-navigation/native";
+import { StackActions, useRoute } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import { TextInput, TouchableOpacity, View } from "react-native";
 import { InformationCircleIcon } from "react-native-heroicons/outline";
@@ -84,7 +84,8 @@ export default function VerifyCode() {
             // The proof that this number was just confirmed: sign-up sends it (T-19).
             proof_token: phoneProof(data) ?? "",
           });
-          router.navigate("YourName");
+          // Replace, not push: Back from the name step must not land on this code, which is used now.
+          router.dispatch(StackActions.replace("YourName"));
           return;
         }
         setIsIncorrect(true);
@@ -108,7 +109,8 @@ export default function VerifyCode() {
           phone: "",
           phone_verified: false,
         });
-        router.navigate("YourName");
+        // Replace, not push: Back from the name step must not land on this code, which is used now.
+          router.dispatch(StackActions.replace("YourName"));
       } else {
         setIsIncorrect(true);
       }

@@ -4,31 +4,7 @@ import React, { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
 import { ChevronDownIcon } from "react-native-heroicons/outline";
 import CountryPicker, { DARK_THEME } from "react-native-country-picker-modal";
-
-export type PhoneCountry = { cca2: string; callingCode: string };
-
-export const INDIA: PhoneCountry = { cca2: "IN", callingCode: "91" };
-
-/** The flag emoji of a two-letter country code (the picker's own flag needs its image set loaded). */
-export const flagOf = (cca2: string) =>
-  String.fromCodePoint(...cca2.toUpperCase().split("").map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
-
-/**
- * The number as Firebase phone auth wants it (E.164), or null when it cannot be one. Spaces, dashes and a
- * leading 0 (how many people write an Indian mobile) are dropped; an Indian number must have its 10 digits.
- */
-export function toE164(country: PhoneCountry, typed: string): string | null {
-  const digits = typed.replace(/\D/g, "").replace(/^0+/, "");
-  if (country.cca2 === "IN" && digits.length !== 10) return null;
-  const e164 = `+${country.callingCode}${digits}`;
-  return /^\+[1-9]\d{7,14}$/.test(e164) ? e164 : null;
-}
-
-/** "+91 98123 45678" for an Indian mobile, the E.164 string as it is for any other. */
-export function formatPhone(e164: string): string {
-  const india = /^\+91(\d{5})(\d{5})$/.exec(e164);
-  return india ? `+91 ${india[1]} ${india[2]}` : e164;
-}
+import { flagOf, PhoneCountry } from "@/lib/phone-number";
 
 interface Props {
   country: PhoneCountry;

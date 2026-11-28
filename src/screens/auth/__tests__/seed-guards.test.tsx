@@ -18,6 +18,8 @@ const mockAuth = {
 };
 const mockProfile = { updateMyDetails: jest.fn(async () => ({})), loading: false };
 const mockNavigate = jest.fn();
+const mockDispatch = jest.fn();
+const mockReset = jest.fn();
 const mockSaveUser = jest.fn();
 let mockParams: any;
 
@@ -39,8 +41,13 @@ jest.mock("@/lib/theme", () => {
   const { lightColors } = require("@/lib/design-tokens");
   return { useTheme: () => ({ color: lightColors, isDark: false }) };
 });
-jest.mock("@react-navigation/native", () => ({ useRoute: () => ({ params: mockParams }) }));
-jest.mock("@/lib/types", () => ({ useTypedNavigation: () => ({ navigate: mockNavigate, goBack: jest.fn() }) }));
+jest.mock("@react-navigation/native", () => ({
+  useRoute: () => ({ params: mockParams }),
+  StackActions: { replace: (name: string, params?: object) => ({ type: "REPLACE", payload: { name, params } }) },
+}));
+jest.mock("@/lib/types", () => ({
+  useTypedNavigation: () => ({ navigate: mockNavigate, goBack: jest.fn(), dispatch: mockDispatch, reset: mockReset }),
+}));
 jest.mock("react-native-heroicons/outline", () => {
   const icon = () => null;
   return { InformationCircleIcon: icon, ChevronDownIcon: icon };
@@ -184,5 +191,61 @@ describe("design seeds never send (plan §1)", () => {
     type(live, "Last name", "Kapoor");
     await press(live, "Continue");
     expect(mockAuth.signUpUser).toHaveBeenCalledWith({ first_name: "Asha", last_name: "Kapoor" });
+  });
+});
+
+describe("sign-in transitions (ENG-463)", () => {
+  const { emailProof, phoneProof } = require("@/lib/sign-in-proof");
+  const { goAfterSignIn } = require("@/lib/return-to");
+  const { TextInput } = require("react-native");
+  const replacedWithName = { type: "REPLACE", payload: { name: "YourName", params: undefined } };
+
+  it("Verify, email code for a new address: keeps the proof, clears any number, replaces itself with YourName", async () => {
+    mockAuth.verifyOTP.mockResolvedValueOnce({ is_verified: true, access: null, refresh: null, proof_token: "tok" } as any);
+    emailProof.mockReturnValueOnce({ kind: "proof", token: "tok" });
+    const live = render(VerifyCode, { email: asha, verificationType: "otp" });
+    act(() => live.root.findByType(TextInput).props.onChangeText("482193"));
+    await press(live, "Continue");
+    expect(mockSaveUser).toHaveBeenCalledWith({ email_verified: true, proof_token: "tok", phone: "", phone_verified: false });
+    expect(mockDispatch).toHaveBeenCalledWith(replacedWithName);
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("Verify, SMS code for a new number: keeps the number and its proof, clears any email, replaces itself with YourName", async () => {
+    mockAuth.verifyPhoneOTP.mockResolvedValueOnce({ onboarding_required: true, phone: "+919812345678", proof_token: "pp" } as any);
+    phoneProof.mockReturnValueOnce("pp");
+    const live = render(VerifyCode, { phone: "+919812345678", verificationType: "phone" });
+    act(() => live.root.findByType(TextInput).props.onChangeText("482193"));
+    await press(live, "Continue");
+    expect(mockSaveUser).toHaveBeenCalledWith({ email: "", phone: "+919812345678", phone_verified: true, proof_token: "pp" });
+    expect(mockDispatch).toHaveBeenCalledWith(replacedWithName);
+  });
+
+  it("Verify, an existing account: signs in and goes back where the customer was", async () => {
+    const live = render(VerifyCode, { email: asha, verificationType: "otp" });
+    act(() => live.root.findByType(TextInput).props.onChangeText("482193"));
+    await press(live, "Continue");
+    expect(goAfterSignIn).toHaveBeenCalled();
+    expect(mockSaveUser).not.toHaveBeenCalled();
+  });
+
+  it("YourName after Google/Apple (username given): saves the name to the account, never signs up", async () => {
+    const live = render(YourName, { username: "asha_k", firstName: "Asha" });
+    type(live, "Last name", "Kapoor");
+    await press(live, "Continue");
+    expect(mockProfile.updateMyDetails).toHaveBeenCalledWith("asha_k", { first_name: "Asha", last_name: "Kapoor" });
+    expect(mockAuth.signUpUser).not.toHaveBeenCalled();
+    expect(goAfterSignIn).toHaveBeenCalled();
+  });
+
+  it("YourName, sign-up refused (409): says why and offers Start again, which resets to the sign-in screen", async () => {
+    mockAuth.signUpUser.mockRejectedValueOnce({ status: 409, message: "Account already exists. Please login." } as never);
+    const live = render(YourName, undefined);
+    type(live, "First name", "Asha");
+    type(live, "Last name", "Kapoor");
+    await press(live, "Continue");
+    expect(goAfterSignIn).not.toHaveBeenCalled();
+    await press(live, "Start again");
+    expect(mockReset).toHaveBeenCalledWith({ index: 1, routes: [{ name: "MainTabs" }, { name: "Welcome" }] });
   });
 });

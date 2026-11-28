@@ -10,6 +10,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { AuthTokens, useTypedNavigation } from "@/lib/types";
 import { requestErrorFrom } from "@/lib/sign-in-proof";
 import { toast } from "@/lib/toast";
+import { GivenName, nameAfterProvider } from "@/lib/provider-name";
 import { goAfterSignIn } from "@/lib/return-to";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useProfile } from "@/backend/profile";
@@ -17,9 +18,6 @@ import axiosInstance from "@/lib/networkUtils";
 
 /** Which provider is mid-sign-in, or null. */
 export type OAuthProvider = "google" | "apple";
-
-/** A name a provider handed over at sign-in (Apple only does so the first time the person allows the app). */
-type GivenName = { first?: string | null; last?: string | null };
 
 const PROVIDER_NAME: Record<OAuthProvider, string> = { google: "Google", apple: "Apple" };
 
@@ -43,45 +41,39 @@ export function useOAuth() {
   };
 
   /**
-   * The tokens are in: the account needs a name before the customer goes on. A name the provider gave is saved
+   * The tokens are in: the account needs a name before the customer goes on. A whole name the provider gave is saved
    * straight away, because Apple gives it only once and a customer who leaves the name step would lose it for good.
-   * The name step comes only when there is still none; it sits on the tabs, so Back from it is a signed-in Home.
+   * The name step comes only when there is still no whole name; it sits on the tabs, so Back from it is a signed-in
+   * Home (and the step comes back at the next Google or Apple sign-in).
    */
-  const finish = async (tokens: AuthTokens, given: GivenName = {}) => {
+  const finish = async (tokens: AuthTokens | undefined, given: GivenName = {}) => {
+    if (!tokens?.access_token || !tokens?.refresh_token) throw new Error("Renit didn't start a session. Try again.");
     axiosInstance.defaults.headers.Authorization = `Bearer ${tokens.access_token}`;
     setAuthTokens(tokens);
     let me: Awaited<ReturnType<typeof getMyDetails>>;
     try {
       me = await getMyDetails(tokens.access_token);
     } catch {
-      // Signed in all the same: the profile is read again on the tabs, and a missing name is asked for at booking.
+      // Signed in all the same: the profile is read again on the tabs, and the name is checked at the next sign-in.
       goAfterSignIn(router);
       return;
     }
-    let first = me.first_name?.trim() ?? "";
-    let last = me.last_name?.trim() ?? "";
-    const givenFirst = given.first?.trim() ?? "";
-    const givenLast = given.last?.trim() ?? "";
-    if ((!first || !last) && (givenFirst || givenLast)) {
-      const name = { first_name: first || givenFirst, last_name: last || givenLast };
+    let { save, ask } = nameAfterProvider(me, given);
+    if (save) {
       try {
-        await updateMyDetails(me.username, name);
-        first = name.first_name;
-        last = name.last_name;
+        await updateMyDetails(me.username, save);
       } catch (saveError) {
         console.warn("Saving the provider's name failed; the name step asks for it", saveError);
+        ask = { firstName: save.first_name, lastName: save.last_name };
       }
     }
-    if (first && last) {
+    if (!ask) {
       goAfterSignIn(router);
       return;
     }
     router.reset({
       index: 1,
-      routes: [
-        { name: "MainTabs" },
-        { name: "YourName", params: { username: me.username, firstName: first || givenFirst, lastName: last || givenLast } },
-      ],
+      routes: [{ name: "MainTabs" }, { name: "YourName", params: { username: me.username, ...ask } }],
     });
   };
 

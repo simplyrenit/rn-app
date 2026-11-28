@@ -1,6 +1,7 @@
 import { SignUpError, useAuth } from "@/backend/auth";
 import { LoginOptions, TermsAndPolicy } from "@/components/auth";
-import { INDIA, PhoneCountry, PhoneField, toE164 } from "@/components/auth/phone-field";
+import { PhoneField } from "@/components/auth/phone-field";
+import { INDIA, PhoneCountry, toE164 } from "@/lib/phone-number";
 import { Button, NonScrollableContainer, Text } from "@/components/core";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";

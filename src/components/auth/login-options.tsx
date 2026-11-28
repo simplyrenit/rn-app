@@ -11,8 +11,11 @@ export function LoginOptions(): JSX.Element {
 
   const onSkip = () => {
     setHasSeenWelcome(true);
+    // Opened over the tabs (a listing, search, or the tab panel's mobile number): go back to them rather than
+    // stacking a second MainTabs. Opened as the first screen: there is nothing behind, so the tabs replace it.
+    if (router.canGoBack()) router.goBack();
     // @ts-ignore
-    router.replace("MainTabs");
+    else router.replace("MainTabs");
   };
 
   return (
