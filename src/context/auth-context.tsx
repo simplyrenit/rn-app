@@ -6,7 +6,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 interface AuthContextType {
   /** The sign-up in progress, held in memory only. */
   user: AuthUser | null;
-  /** Adds what the sign-up has learned so far (the email, the name, the password, the proof token). */
+  /** Adds what the sign-up has learned so far (the email or number, the proof token, the name). */
   saveUser: (user: Partial<AuthUser>) => void;
   /** Forgets the sign-up: it finished, was abandoned, or the person signed in or out. */
   clearUser: () => void;

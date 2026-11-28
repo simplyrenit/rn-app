@@ -5,7 +5,7 @@ import { getAuthTokens } from "@/lib/auth-fns";
 import { readIdToken } from "@/lib/unlock";
 import { sendPhoneCodeWith } from "@/lib/phone-change";
 import { acceptOwnerTerms } from "@/backend/terms";
-import { emailLogin, otpCheck, phoneLogin, signUp } from "@/backend/sign-in-calls";
+import { otpCheck, phoneLogin, signUp } from "@/backend/sign-in-calls";
 import { signInIntent } from "@/lib/return-to";
 import { requestErrorFrom, signUpBody } from "@/lib/sign-in-proof";
 import {
@@ -233,10 +233,11 @@ export function useAuth() {
 
       const response: { data: AuthTokens } = await signUp(payload);
       setAuthTokens(response.data);
-      // The sign-up is over: its details, the password and the proof token with them, are forgotten (T-19).
+      // The sign-up is over: its details and the proof token with them are forgotten (T-19).
       clearUser();
 
-      // The merchant ticked the owner terms on the About step (ENG-122), against
+      // Unreachable since ENG-463 removed the About step (and with it merchant sign-up); kept for ENG-464, which
+      // brings merchant accounts back. The merchant ticked the owner terms on the About step (ENG-122), against
       // the page and the version that screen read before there was an account.
       // That kept version is what is recorded now that the tokens exist. Nothing
       // is recorded without a tick. If it does not land (the version moved on in
@@ -264,25 +265,6 @@ export function useAuth() {
     }
   }
 
-  async function loginUser(
-    email: string,
-    password: string
-  ): Promise<AuthTokens | null> {
-    setLoading(true);
-    try {
-      const response: { data: AuthTokens } = await emailLogin(email, password);
-      setAuthTokens(response.data);
-      return response?.data;
-    } catch (error: any) {
-      if (!error.response || error.response.status >= 500) {
-        console.error("LOGIN ERROR", error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-    return null;
-  }
-
   // export async function signInWithGoogle(idToken: string) {
   //   try {
   //     const response = await axios.post(
@@ -297,7 +279,6 @@ export function useAuth() {
     signUpUser,
     loading,
     sendOTP,
-    loginUser,
     verifyOTP,
     sendPhoneOTP,
     verifyPhoneOTP,

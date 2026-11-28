@@ -81,7 +81,7 @@ const ProfilePreAuth: React.FC<ProfilePreAuthProps> = ({ isDarkMode }) => {
           </Text>
         </View>
 
-        <SignInOptions />
+        <SignInOptions phone />
       </View>
 
       {onProfile && (

@@ -5,7 +5,7 @@ import { useTheme } from "@/lib/theme";
 import { Image } from "expo-image";
 import React from "react";
 import { Platform, View } from "react-native";
-import { EnvelopeIcon } from "react-native-heroicons/outline";
+import { DevicePhoneMobileIcon, EnvelopeIcon } from "react-native-heroicons/outline";
 
 // The 2.1 "Provider" button (02 Welcome 2089:15349, the sign-in panel 2089:15649, 10/2094:22625):
 // the kit Secondary box (52 high, r12, white, the #0000000A ring) with a `line` edge instead of
@@ -15,12 +15,16 @@ const ICON_GAP = 4;
 const BUTTON_GAP = 10;
 
 /**
- * The three sign-in providers, as one component so all three stay identical.
+ * The sign-in providers, as one component so they all stay identical.
  *
  * Each provider owns its own pending state (a single shared flag put a spinner on both
  * buttons at once), and the label stays visible while a provider is working.
+ *
+ * `phone` adds "Continue with mobile number" on top, for the signed-out tab panel (2089:15649, 2095:25130, 2094:22625): the
+ * sign-in screen has the number field itself, and the email screen no longer links to a phone screen, so without
+ * it a phone customer who skipped the sign-in screen had no way in.
  */
-export function SignInOptions() {
+export function SignInOptions({ phone = false }: { phone?: boolean } = {}) {
   const router = useTypedNavigation();
   const { googleSignIn, appleSignIn, pendingProvider } = useOAuth();
   const { color, isDark } = useTheme();
@@ -42,6 +46,19 @@ export function SignInOptions() {
 
   return (
     <View style={{ gap: BUTTON_GAP }}>
+      {phone && (
+        <Button
+          variant="outline"
+          style={provider}
+          onPress={() => router.navigate("Welcome", { focusPhone: true })}
+          disabled={busy}
+          accessibilityLabel="Continue with mobile number"
+        >
+          <DevicePhoneMobileIcon size={ICON} color={labelColor} />
+          <Label>Continue with mobile number</Label>
+        </Button>
+      )}
+
       <Button
         variant="outline"
         style={provider}

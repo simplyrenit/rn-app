@@ -39,15 +39,20 @@ jest.mock("@/lib/theme", () => {
 });
 jest.mock("@react-navigation/native", () => ({
   useRoute: () => ({ params: { email: "asha.k@example.com", verificationType: "otp" } }),
+  StackActions: { replace: jest.fn() },
 }));
-jest.mock("@/lib/types", () => ({ useTypedNavigation: () => ({ navigate: jest.fn() }) }));
-jest.mock("@/components/auth/headerIndicator", () => ({ HeaderIndicator: () => null }));
-jest.mock("react-native-heroicons/outline", () => ({ InformationCircleIcon: () => null }));
+jest.mock("@/lib/types", () => ({ useTypedNavigation: () => ({ navigate: jest.fn(), goBack: jest.fn() }) }));
+jest.mock("react-native-country-picker-modal", () => ({ __esModule: true, default: () => null, DARK_THEME: {} }));
+jest.mock("react-native-heroicons/outline", () => ({ InformationCircleIcon: () => null, ChevronDownIcon: () => null }));
 jest.mock("@/components/core", () => {
   const { Pressable, Text: T, View: V } = require("react-native");
   return {
     Text: ({ children, style }: any) => <T style={style}>{children}</T>,
     TextField: () => null,
+    FieldLabel: () => null,
+    FieldError: () => null,
+    useFieldSurfaceStyle: () => ({}),
+    SubpageHeader: () => null,
     NonScrollableContainer: ({ children }: any) => <V>{children}</V>,
     ScrollContainer: ({ children }: any) => <V>{children}</V>,
     BottomBar: ({ primary }: any) => (
@@ -59,16 +64,16 @@ jest.mock("@/components/core", () => {
 });
 
 // eslint-disable-next-line import/first
-import VerifyEmail from "../verify";
+import VerifyCode from "../verify";
 
 const texts = (renderer: any): string[] =>
   renderer.root.findAllByType(Text).map((t: any) => [].concat(t.props.children).join(""));
 
-describe("Verify, wrong code (2089:21903)", () => {
+describe("Verify, wrong code (2089:21903, copy from 02b)", () => {
   it("a 401 from the code check draws all six cells in dangerStrong and the message row", async () => {
     let renderer: any;
     act(() => {
-      renderer = TestRenderer.create(<VerifyEmail />);
+      renderer = TestRenderer.create(<VerifyCode />);
     });
     act(() => renderer.root.findByType(TextInput).props.onChangeText("482139"));
     const cta = renderer.root.findByProps({ testID: "cta" });
@@ -78,7 +83,7 @@ describe("Verify, wrong code (2089:21903)", () => {
     });
 
     expect(mockOtpCheck).toHaveBeenCalledWith("asha.k@example.com", "482139");
-    expect(texts(renderer)).toContain("Wrong OTP. Try again");
+    expect(texts(renderer)).toContain("That code didn't work. Check it and try again.");
     const red = renderer.root
       .findAllByType(View)
       .map((v: any) => StyleSheet.flatten(v.props.style) ?? {})

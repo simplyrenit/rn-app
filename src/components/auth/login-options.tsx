@@ -5,22 +5,21 @@ import { useTypedNavigation } from "@/lib/types";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 
-interface LoginOptionsProps {
-  isDarkMode: boolean;
-}
-
-export function LoginOptions({ isDarkMode }: LoginOptionsProps): JSX.Element {
+export function LoginOptions(): JSX.Element {
   const router = useTypedNavigation();
   const { setHasSeenWelcome } = useGlobalContext();
 
   const onSkip = () => {
     setHasSeenWelcome(true);
+    // Opened over the tabs (a listing, search, or the tab panel's mobile number): go back to them rather than
+    // stacking a second MainTabs. Opened as the first screen: there is nothing behind, so the tabs replace it.
+    if (router.canGoBack()) router.goBack();
     // @ts-ignore
-    router.replace("MainTabs");
+    else router.replace("MainTabs");
   };
 
   return (
-    // 02 Welcome (2089:15349): the providers, then the link 16 below them.
+    // 02b sign-in (2179:31785): the providers, then the link 16 below them.
     <View style={{ gap: 16 }}>
       {/* Full-width labelled buttons, not three unlabelled 25%-wide icon tiles.
           A provider choice is the one place a customer must be certain what

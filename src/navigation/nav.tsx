@@ -8,13 +8,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 
 import OnboardingScreen from "@/screens/welcome";
-import AboutScreen from "../screens/auth/about";
-import ConfirmPasswordScreen from "../screens/auth/confirm-password";
 import EmailScreen from "../screens/auth/email";
-import LocationScreen from "../screens/auth/location";
-import PasswordScreen from "../screens/auth/password";
-import PhoneScreen from "../screens/auth/phone";
 import VerifyScreen from "../screens/auth/verify";
+import YourNameScreen from "../screens/auth/your-name";
 
 import { useGlobalContext } from "@/context/global-context";
 import ChatDetailsScreen from "@/screens/chat/chat-details";
@@ -806,28 +802,12 @@ export default function Navigation() {
           component={EmailScreen}
         />
         <Stack.Screen
-          name="Phone"
-          component={PhoneScreen}
-        />
-        <Stack.Screen
           name="Verify"
           component={VerifyScreen}
         />
         <Stack.Screen
-          name="About"
-          component={AboutScreen}
-        />
-        <Stack.Screen
-          name="Password"
-          component={PasswordScreen}
-        />
-        <Stack.Screen
-          name="ConfirmPassword"
-          component={ConfirmPasswordScreen}
-        />
-        <Stack.Screen
-          name="Location"
-          component={LocationScreen}
+          name="YourName"
+          component={YourNameScreen}
         />
         <Stack.Screen
           name="Privacy"

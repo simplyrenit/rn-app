@@ -34,5 +34,6 @@ export function shouldGoToWelcome(
   return !route || !SIGNED_OUT_SCREENS.has(route);
 }
 
+// YourName is not here: signed out it never sees a sign-out, and signed in (Google/Apple) it must leave with the session.
 // DevFixture (dev builds) ends a design fixture's signed-in session on a signed-out device and resets the stack itself.
-const SIGNED_OUT_SCREENS = new Set(["Welcome", "Email", "Phone", "Verify", "About", "Password", "ConfirmPassword", "Location", "DevFixture"]);
+const SIGNED_OUT_SCREENS = new Set(["Welcome", "Email", "Verify", "DevFixture"]);

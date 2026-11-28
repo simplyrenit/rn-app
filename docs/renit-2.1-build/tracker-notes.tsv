@@ -63,35 +63,9 @@
 2089:32240	android	text-width	Body copy sits a pixel off from Android text metrics; layout and icon match (iOS 0.40% clean).
 2089:27893	android	text-width	Body wraps "here." to a second line: Android's Plus Jakarta Sans measures wider at 342; iOS fits it on one line.
 2089:31917	android	text-width	The card title ellipsis falls one glyph earlier on Android; rest clean.
-2089:15349	ios	pass	Top-aligned 1.94% shows the bottom-anchored dots and sign-in block 7pt lower (taller iOS content area); split-bottom run (B=322) passes at 0.31% with a clean heat map: diffs/ios/2089-15349-split.
-2089:15444	ios	pass	As 15349: split-bottom run (B=322) 0.31%, clean: diffs/ios/2089-15444-split.
-2089:15529	ios	pass	As 15349: split-bottom run (B=322) 0.30%, clean: diffs/ios/2089-15529-split.
-2089:15349	android	fail-heatmap	Android has no Apple button (iOS-only), so 2 providers where the frame has 3; otherwise the split-bottom run (B=322, app-bottom 102) is clean at 0.82%: diffs/android/2089-15349-split.
-2089:15444	android	fail-heatmap	As 15349 Android: no Apple button; split-bottom run 0.85%.
-2089:15529	android	fail-heatmap	As 15349 Android: no Apple button; split-bottom run 0.82%.
-2089:15649	ios	fail-heatmap	Panel matches: split run B=407 (diffs/ios/2089-15649-split) 1.14%; the default run is 6pt off at the seam. Left: the Saved title sits 2pt low (saved.tsx 16/16 padding), fixed by the ENG-427 SubpageHeader, not merged here yet.
-2089:15649	android	fail-heatmap	Android has no Apple sign-in button (iOS-only provider), so the bottom-anchored panel shows 2 providers vs 3 and its heading sits 62dp lower (split run 2.77%); plus the ENG-427 Saved title as iOS.
-2089:15719	ios	fail-heatmap	Panel matches; the list under it is the older layout (My Profile title, rule under the panel, no row icons, 48pt headers, 8pt spacers, 32pt foot), superseded by section 13 (2095:25130 0.53%, 2095:24982 1.06%), which the code follows; scroll end diffs/ios/2089-15719.scroll 3.09% for the same reason.
-2089:15719	android	fail-heatmap	As iOS (older list layout, superseded by 2095:25130/24982), plus no Apple button on Android (iOS-only), so the list sits 62dp higher; scroll end diffs/android/2089-15719.scroll 3.05%.
-2089:21763	ios	fail-heatmap	Value text only: the screen strips spaces, so "98123 45678" can never show (plan D4); seeded 9812345678.
-2089:21763	android	fail-heatmap	As iOS: value text only (D4).
-2089:25271	ios	fail-heatmap	Kit checkbox (D5, ENG-426): 22 box r12 vs the frame's 20 r6, and the tick text sits at x64 vs 52 (44pt target with -12 margin + 8). Split-bottom run (B=141) 0.69%: diffs/ios/2089-25271-split.
-2089:25343	ios	fail-heatmap	As 25271 (D5 checkbox and tick text x64 vs 52). Split-bottom run (B=141) 0.70%.
-2089:25419	ios	fail-heatmap	As 25271 (D5 checkbox and tick text x64 vs 52, both ticks; owner-terms underline kept). Split-bottom run (B=177) 0.81%.
-2089:25271	android	fail-heatmap	As iOS (D5 checkbox, tick text x64 vs 52); split-bottom run (B=141, app-bottom 0) 1.13%.
-2089:25343	android	fail-heatmap	As iOS (D5); split-bottom run 1.10%.
-2089:25419	android	fail-heatmap	As iOS (D5); split-bottom run 1.45%.
-2089:25483	ios	text-width	Only the masked value differs: iOS draws its own secure-entry bullets (wider pitch) and the seed has no caret.
-2089:25541	ios	text-width	As 25483: iOS secure-entry bullets, no caret.
-2089:25599	ios	text-width	Secure-entry bullets only.
-2089:25642	ios	text-width	Secure-entry bullets only.
-2089:25483	android	text-width	The two-line Bold 20/28 title is 1pt shorter on Android (RN line-height span on a multi-line Bold Text, measured 3px at 3x), so the form sits 1pt high; plus secure-entry bullets.
-2089:25541	android	text-width	As 25483 Android: two-line Bold title 1pt shorter, bullets.
-2089:28140	android	text-width	Each multi-line Regular Text is 2px (2/3pt) shorter on Android (measured line runs), so sheet rows below the two addresses sit up to 1pt high; sheet top, bar and rows otherwise align.
 2089:28232	android	text-width	Text only: after greedy breaks (textBreakStrategy simple) the wraps match, but each multi-line paragraph is 2px (2/3pt) shorter on Android and the drift accumulates down the page (measured line runs: 0, -2, -4, -6 px by paragraph).
 2089:28263	ios	fail-heatmap	The frame cuts the intro and section 1 short; the app shows the full content.ts text (content not changed). Down to y515 it passes at 1.11%: diffs/ios/2089-28263-to515.
 2089:28263	android	fail-heatmap	As iOS (frame truncates the content), plus the Android multi-line drift of 28232.
-2089:21637	android	text-width	TextField value glyphs sit 1pt left and 2/3pt low on Android (kit TextField, measured); layout matches.
 2095:26235	ios	n/a	State board: the 4 states checked by jest src/components/profile/post-auth/__tests__/merchant-status-card.test.tsx; pending and rejected also pixel-checked through 2095:25822 and 2095:26102.
 2095:26235	android	n/a	State board: the 4 states checked by jest src/components/profile/post-auth/__tests__/merchant-status-card.test.tsx; pending and rejected also pixel-checked through 2095:25822 and 2095:26102.
 2095:26508	ios	n/a	State board: all 11 states checked by jest src/components/kyc/__tests__/kyc-card.test.tsx; merchant none and rejected also pixel-checked through 2095:25822 and 2095:26102.
@@ -108,9 +82,6 @@
 2096:30504	android	n/a	Opening it sends a Firebase SMS and the timer runs on the clock; checked by jest src/components/bank/__tests__/unlock-sheet.test.tsx.
 2096:31168	ios	n/a	Needs a 409 open_bookings body no fixture can produce (plan rule 4); checked by jest src/components/profile/post-auth/sheets/__tests__/delete-account-modal.test.tsx.
 2096:31168	android	n/a	Needs a 409 open_bookings body no fixture can produce (plan rule 4); checked by jest src/components/profile/post-auth/sheets/__tests__/delete-account-modal.test.tsx.
-2095:25130	android	fail-heatmap	Android has no Apple sign-in button (iOS-only provider): the panel shows 2 providers vs the frame's 3, so everything below it sits 62dp higher; the iOS run passes at 0.53%.
-2095:24982	ios	pass	First screen 1.06%; scroll end diffs/ios/2095-24982.scroll 0.45% (list foot now 24 as drawn).
-2095:24982	android	fail-heatmap	First screen as 2095:25130 (no Apple button on Android, 2 providers vs 3, list 62dp higher); scroll end diffs/android/2095-24982.scroll 1.23% passes.
 2095:25349	ios	pass	First screen 0.97%; scroll end diffs/ios/2095-25349.scroll 0.38% (Logout visible after the scroll view was bounded under the header).
 2095:25349	android	pass	First screen 1.31%; scroll end diffs/android/2095-25349.scroll 0.69%.
 2097:30662	ios	pass	First screen 1.42% (the 1173px-wide scroll PNG is scaled to 1170, so rows drift about 1pt by y600; 2095:25822 shows the same content at 0.68%); scroll end diffs/ios/2097-30662.scroll 0.34%.
@@ -191,8 +162,6 @@
 2094:24597	android	text-width	Full frame 1.41% passes; Android wraps "booking" of the first line one word earlier (text measuring); layout matches.
 2083:14692	ios	fail-heatmap	1.65%, but the plan block sits 4pt low and the deposit line 12pt low: this frame pads Plan · Daily 4/0, the 9 other frames that draw it (Review sheets, 2095:24558/24717, ENG-436 11/2096:25867, 26057) pad 8/8, which shared PlanPricing keeps. Minimum rental row box diff .stepper 0.51%. Scroll: end .scroll3 0.74% (native iOS switch track), mid .scroll1 0.89%; .scroll2 3.52%: kit multiline TextField (min 76, padding 10) draws the 3-line description about 14pt shorter than the frame's 98, and Usage tips is multiline so its placeholder wraps where the frame draws a 48 one-line field (kit field, ENG-440). Re-diffed after the ENG-427/429 merge: first screen unchanged; scroll segments not re-run, as no merged component changes below the first screen (SectionHeader changed only its subtitle, unused here; category-icons only Fashion). Pickup (as drawn): the picker shows only the area; a saved address's name (Home/Work) and flat/landmark line are in the accessibility label and behind "Edit flat or landmark", not on screen — the edit form (ENG-436, about-product-form) shares pickup-field and gets the same; designer to confirm.
 2083:14692	android	fail-heatmap	2.41%: as iOS (plan block 8/8 vs 4/0) plus rows under the intro about 1pt high (Android text metrics). Scroll: end .scroll4 0.72%; .scroll2/.scroll3 2.8%/2.5% for the multiline description and Usage tips fields as iOS; .scroll1 7.8% compares the frame's pinned bottom bar (drawn at y738) and the kit segmented condition choice. Re-diffed after the ENG-427/429 merge: first screen unchanged; scroll segments not re-run, as no merged component changes below the first screen (SectionHeader changed only its subtitle, unused here; category-icons only Fashion). Pickup (as drawn): the picker shows only the area; a saved address's name (Home/Work) and flat/landmark line are in the accessibility label and behind "Edit flat or landmark", not on screen — the edit form (ENG-436, about-product-form) shares pickup-field and gets the same; designer to confirm.
-2094:22625	ios	pass	Top-aligned 2.74% shows the bottom-anchored sign-in panel 7pt high (iOS content area 6pt shorter); split-bottom run (B=407) 1.02%: diffs/ios/2094-22625-split, heading 2/3pt high from iOS glyphs as 2089:15649.
-2094:22625	android	fail-heatmap	No Apple sign-in on Android (iOS-only provider), so the bottom-anchored panel has 2 providers vs 3; split-bottom run (B=407) 2.67%: diffs/android/2094-22625-split, as 2089:15649.
 2094:22718	android	text-width	0.52%: Android measures the 14pt Notice body wider and wraps "You" onto line 2; card, button row and tab bar line up.
 2094:22770	android	text-width	2.47%: as 22718, "You" wraps onto line 2 of the rejected Notice body (platform text width); the tab title, card box and tab bar line up.
 2094:22828	ios	pass	0.97%: the button is centred in the content area, which is 6pt shorter on iOS (682 vs 688), so it sits 3.3pt high (measured 10px); no code difference.
@@ -279,3 +248,65 @@
 2089:31157	android	fail-heatmap	0.82%: as iOS.
 2089:31227	ios	fail-heatmap	F+type with the frame's PIN ("5600" + Save, line 1 cleared + Save; save() returns before any request) 0.39% (+0.53% below the bar): both errors hold. Left: "Change" kept (see 31157), the caret, and the typed PIN in text colour where the frame draws its sample in placeholder grey.
 2089:31227	android	fail-heatmap	F+type 1.31% (+0.54%): as iOS.
+2089:15349	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:15349	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:15444	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:15444	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:15529	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:15529	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21637	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21637	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21681	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21681	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21726	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21726	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21763	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21763	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21800	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21800	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21853	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21853	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21903	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21903	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21957	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:21957	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25271	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25271	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25343	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25343	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25419	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25419	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25483	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25483	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25541	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25541	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25599	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25599	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25642	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:25642	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:28033	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:28033	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:28076	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:28076	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:28104	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:28104	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:28140	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2089:28140	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
+2179:31785	ios	pending	ENG-463: 3x reference exported. iOS is checked by hand on Yash's iPhone (2026-11-29: no simulator for this story).
+2179:31785	android	pending	ENG-463: Realme (360dp) matches the layout by eye; a 360dp screen scales about 8% against the 390pt frame, so the % diff needs the 390dp AVD.
+2179:31895	ios	pending	ENG-463: 3x reference exported. iOS is checked by hand on Yash's iPhone (2026-11-29: no simulator for this story).
+2179:31895	android	pending	ENG-463: Realme (360dp) matches the layout by eye; a 360dp screen scales about 8% against the 390pt frame, so the % diff needs the 390dp AVD.
+2179:31931	ios	pending	ENG-463: 3x reference exported. iOS is checked by hand on Yash's iPhone (2026-11-29: no simulator for this story).
+2179:31931	android	pending	ENG-463: Realme (360dp) matches the layout by eye; a 360dp screen scales about 8% against the 390pt frame, so the % diff needs the 390dp AVD.
+2179:31979	ios	pending	ENG-463: 3x reference exported. iOS is checked by hand on Yash's iPhone (2026-11-29: no simulator for this story).
+2179:31979	android	pending	ENG-463: Realme (360dp) matches the layout by eye; a 360dp screen scales about 8% against the 390pt frame, so the % diff needs the 390dp AVD.
+2089:15649	ios	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2089:15649	android	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2089:15719	ios	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2089:15719	android	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2095:24982	ios	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2095:24982	android	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2095:25130	ios	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2095:25130	android	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2094:22625	ios	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2094:22625	android	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.

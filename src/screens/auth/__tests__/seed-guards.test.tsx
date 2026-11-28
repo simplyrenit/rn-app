@@ -13,16 +13,27 @@ const mockAuth = {
   sendPhoneOTP: jest.fn(async () => undefined),
   verifyOTP: jest.fn(async () => ({ access: "a", refresh: "r" })),
   verifyPhoneOTP: jest.fn(async () => ({ access_token: "a", refresh_token: "r" })),
-  loginUser: jest.fn(async () => null),
+  signUpUser: jest.fn(async () => ({ access_token: "a", refresh_token: "r" })),
   loading: false,
 };
+const mockProfile = { updateMyDetails: jest.fn(async () => ({})), loading: false };
 const mockNavigate = jest.fn();
+const mockDispatch = jest.fn();
+const mockReset = jest.fn();
 const mockSaveUser = jest.fn();
 let mockParams: any;
 
 jest.mock("@/backend/auth", () => ({ useAuth: () => mockAuth }));
 jest.mock("@/context/auth-context", () => ({ useAuthContext: () => ({ saveUser: mockSaveUser }) }));
-jest.mock("@/context/global-context", () => ({ useGlobalContext: () => ({ setAuthTokens: jest.fn() }) }));
+jest.mock("@/context/global-context", () => ({
+  useGlobalContext: () => ({ setAuthTokens: jest.fn(), isAuthenticated: false, userDetails: null, fetchUserDetails: jest.fn() }),
+}));
+jest.mock("@/backend/profile", () => ({ useProfile: () => mockProfile }));
+// The sign-in screen's providers and terms are their own components; this test is about its number field.
+jest.mock("@/components/auth", () => ({ LoginOptions: () => null, TermsAndPolicy: () => null }));
+jest.mock("react-native-country-picker-modal", () => ({ __esModule: true, default: () => null, DARK_THEME: {} }));
+jest.mock("expo-image", () => ({ Image: () => null }));
+jest.mock("expo-linear-gradient", () => ({ LinearGradient: () => null }));
 jest.mock("@/lib/networkUtils", () => ({ __esModule: true, default: { defaults: { headers: {} } } }));
 jest.mock("@/lib/return-to", () => ({ goAfterSignIn: jest.fn() }));
 jest.mock("@/lib/sign-in-proof", () => ({ emailProof: jest.fn(), phoneProof: jest.fn() }));
@@ -30,19 +41,31 @@ jest.mock("@/lib/theme", () => {
   const { lightColors } = require("@/lib/design-tokens");
   return { useTheme: () => ({ color: lightColors, isDark: false }) };
 });
-jest.mock("@react-navigation/native", () => ({ useRoute: () => ({ params: mockParams }) }));
-jest.mock("@/lib/types", () => ({ useTypedNavigation: () => ({ navigate: mockNavigate }) }));
-jest.mock("@/components/auth/headerIndicator", () => ({ HeaderIndicator: () => null }));
+jest.mock("@react-navigation/native", () => ({
+  useRoute: () => ({ params: mockParams }),
+  StackActions: { replace: (name: string, params?: object) => ({ type: "REPLACE", payload: { name, params } }) },
+}));
+jest.mock("@/lib/types", () => ({
+  useTypedNavigation: () => ({ navigate: mockNavigate, goBack: jest.fn(), dispatch: mockDispatch, reset: mockReset }),
+}));
 jest.mock("react-native-heroicons/outline", () => {
   const icon = () => null;
-  return { InformationCircleIcon: icon, CheckCircleIcon: icon, EyeIcon: icon, EyeSlashIcon: icon };
+  return { InformationCircleIcon: icon, ChevronDownIcon: icon };
 });
 jest.mock("@/components/core", () => {
-  const { Pressable, Text: T, View: V } = require("react-native");
+  const { Pressable, Text: T, TextInput: TI, View: V } = require("react-native");
   return {
     Text: ({ children }: any) => <T>{children}</T>,
-    TextField: () => null,
+    // A plain input, so an unseeded control can type into it (found by its label).
+    TextField: (props: any) => <TI {...props} />,
     FieldLabel: () => null,
+    FieldError: ({ children }: any) => <T>{children}</T>,
+    SubpageHeader: () => null,
+    Button: ({ children, onPress, disabled }: any) => (
+      <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress}>
+        <T>{children}</T>
+      </Pressable>
+    ),
     useFieldSurfaceStyle: () => ({}),
     NonScrollableContainer: ({ children }: any) => <V>{children}</V>,
     ScrollContainer: ({ children }: any) => <V>{children}</V>,
@@ -55,15 +78,13 @@ jest.mock("@/components/core", () => {
 });
 
 // eslint-disable-next-line import/first
-import ConfirmPassword from "../confirm-password";
+import SignInScreen from "../../welcome";
 // eslint-disable-next-line import/first
 import LoginWithEmail from "../email";
 // eslint-disable-next-line import/first
-import SetPassword from "../password";
+import VerifyCode from "../verify";
 // eslint-disable-next-line import/first
-import LoginWithPhone from "../phone";
-// eslint-disable-next-line import/first
-import VerifyEmail from "../verify";
+import YourName from "../your-name";
 
 const mounted: any[] = [];
 const render = (Screen: React.ComponentType, params: any) => {
@@ -91,6 +112,13 @@ const press = async (renderer: any, label: string) => {
   });
 };
 
+const type = (renderer: any, label: string, value: string) =>
+  act(() =>
+    renderer.root
+      .findAll((n: any) => (n.props.accessibilityLabel === label || n.props.label === label) && typeof n.props.onChangeText === "function")[0]
+      .props.onChangeText(value)
+  );
+
 const asha = "asha.k@example.com";
 
 beforeEach(() => {
@@ -98,59 +126,126 @@ beforeEach(() => {
 });
 
 describe("design seeds never send (plan §1)", () => {
-  it("Email: 'Email me a code' and 'Use my password'", async () => {
-    const seeded = render(LoginWithEmail, { design: { email: asha } });
-    await press(seeded, "Email me a code");
-    await press(seeded, "Use my password");
+  it("Sign in: Continue with a number", async () => {
+    await press(render(SignInScreen, { design: { phone: "98123 45678" } }), "Continue");
+    expect(mockAuth.sendPhoneOTP).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    // Control: unseeded, the typed 10 digits go out as +91 E.164 and the code screen opens.
+    const live = render(SignInScreen, undefined);
+    type(live, "Mobile number", "98123 45678");
+    await press(live, "Continue");
+    expect(mockAuth.sendPhoneOTP).toHaveBeenCalledWith("+919812345678");
+    expect(mockNavigate).toHaveBeenCalledWith("Verify", { phone: "+919812345678", verificationType: "phone" });
+  });
+
+  it("Email: Send code", async () => {
+    await press(render(LoginWithEmail, { design: { email: asha } }), "Send code");
     expect(mockAuth.sendOTP).not.toHaveBeenCalled();
     expect(mockSaveUser).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
 
-    // Control: unseeded, the same press sends. The address arrives by typing; the seed is gone.
     const live = render(LoginWithEmail, undefined);
-    act(() => live.root.find((n: any) => n.props.label === "Enter your email").props.onChangeText(asha));
-    await press(live, "Email me a code");
+    type(live, "Email", asha);
+    await press(live, "Send code");
     expect(mockAuth.sendOTP).toHaveBeenCalledWith(asha);
+    expect(mockNavigate).toHaveBeenCalledWith("Verify", { email: asha, verificationType: "otp" });
   });
 
-  it("Phone: Continue", async () => {
-    await press(render(LoginWithPhone, { design: { phone: "+919812345678" } }), "Continue with Mobile OTP");
-    expect(mockAuth.sendPhoneOTP).not.toHaveBeenCalled();
-
-    const live = render(LoginWithPhone, undefined);
-    act(() => live.root.find((n: any) => n.props.label === "Mobile number").props.onChangeText("+919812345678"));
-    await press(live, "Continue with Mobile OTP");
-    expect(mockAuth.sendPhoneOTP).toHaveBeenCalledWith("+919812345678");
-  });
-
-  it("Verify: Continue and Resend OTP, by email and by phone", async () => {
-    const email = render(VerifyEmail, { email: asha, verificationType: "otp", design: { code: "482193" } });
+  it("Verify: Continue and Resend code, by email and by phone", async () => {
+    const email = render(VerifyCode, { email: asha, verificationType: "otp", design: { code: "482193", resendIn: 0 } });
     await press(email, "Continue");
-    await press(email, "Resend OTP");
-    const phone = render(VerifyEmail, { phone: "+919812345678", verificationType: "phone", design: { code: "482193" } });
+    await press(email, "Resend code");
+    const phone = render(VerifyCode, { phone: "+919812345678", verificationType: "phone", design: { code: "482193", resendIn: 0 } });
     await press(phone, "Continue");
-    await press(phone, "Resend OTP");
-    const pwd = render(VerifyEmail, { email: asha, verificationType: "password", design: { password: "renit@2026" } });
-    await press(pwd, "Continue");
+    await press(phone, "Resend code");
     expect(mockAuth.verifyOTP).not.toHaveBeenCalled();
     expect(mockAuth.verifyPhoneOTP).not.toHaveBeenCalled();
     expect(mockAuth.sendOTP).not.toHaveBeenCalled();
     expect(mockAuth.sendPhoneOTP).not.toHaveBeenCalled();
-    expect(mockAuth.loginUser).not.toHaveBeenCalled();
 
-    const live = render(VerifyEmail, { email: asha, verificationType: "otp" });
-    const { TextInput } = require("react-native");
-    act(() => live.root.findByType(TextInput).props.onChangeText("482193"));
-    await press(live, "Continue");
-    await press(live, "Resend OTP");
-    expect(mockAuth.verifyOTP).toHaveBeenCalledWith(asha, "482193");
-    expect(mockAuth.sendOTP).toHaveBeenCalledWith(asha);
+    // Control: unseeded, Continue checks the code, and Resend opens once the 30 s are up.
+    jest.useFakeTimers();
+    try {
+      const live = render(VerifyCode, { email: asha, verificationType: "otp" });
+      const { TextInput } = require("react-native");
+      act(() => live.root.findByType(TextInput).props.onChangeText("482193"));
+      await press(live, "Continue");
+      expect(mockAuth.verifyOTP).toHaveBeenCalledWith(asha, "482193");
+      for (let i = 0; i < 30; i++) act(() => jest.advanceTimersByTime(1000));
+      await press(live, "Resend code");
+      expect(mockAuth.sendOTP).toHaveBeenCalledWith(asha);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
-  it("Password and Confirm password: Continue", async () => {
-    await press(render(SetPassword, { design: { password: "renit@2026" } }), "Continue");
-    await press(render(ConfirmPassword, { enteredPassword: "renit@2026", design: { password: "renit@2026" } }), "Continue");
+  it("Your name: Continue", async () => {
+    await press(render(YourName, { design: { firstName: "Asha", lastName: "Kapoor" } }), "Continue");
+    expect(mockAuth.signUpUser).not.toHaveBeenCalled();
+    expect(mockProfile.updateMyDetails).not.toHaveBeenCalled();
+
+    // Control: signed out after a code, Continue makes the account with the name.
+    const live = render(YourName, undefined);
+    type(live, "First name", "Asha");
+    type(live, "Last name", "Kapoor");
+    await press(live, "Continue");
+    expect(mockAuth.signUpUser).toHaveBeenCalledWith({ first_name: "Asha", last_name: "Kapoor" });
+  });
+});
+
+describe("sign-in transitions (ENG-463)", () => {
+  const { emailProof, phoneProof } = require("@/lib/sign-in-proof");
+  const { goAfterSignIn } = require("@/lib/return-to");
+  const { TextInput } = require("react-native");
+  const replacedWithName = { type: "REPLACE", payload: { name: "YourName", params: undefined } };
+
+  it("Verify, email code for a new address: keeps the proof, clears any number, replaces itself with YourName", async () => {
+    mockAuth.verifyOTP.mockResolvedValueOnce({ is_verified: true, access: null, refresh: null, proof_token: "tok" } as any);
+    emailProof.mockReturnValueOnce({ kind: "proof", token: "tok" });
+    const live = render(VerifyCode, { email: asha, verificationType: "otp" });
+    act(() => live.root.findByType(TextInput).props.onChangeText("482193"));
+    await press(live, "Continue");
+    expect(mockSaveUser).toHaveBeenCalledWith({ email_verified: true, proof_token: "tok", phone: "", phone_verified: false });
+    expect(mockDispatch).toHaveBeenCalledWith(replacedWithName);
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("Verify, SMS code for a new number: keeps the number and its proof, clears any email, replaces itself with YourName", async () => {
+    mockAuth.verifyPhoneOTP.mockResolvedValueOnce({ onboarding_required: true, phone: "+919812345678", proof_token: "pp" } as any);
+    phoneProof.mockReturnValueOnce("pp");
+    const live = render(VerifyCode, { phone: "+919812345678", verificationType: "phone" });
+    act(() => live.root.findByType(TextInput).props.onChangeText("482193"));
+    await press(live, "Continue");
+    expect(mockSaveUser).toHaveBeenCalledWith({ email: "", phone: "+919812345678", phone_verified: true, proof_token: "pp" });
+    expect(mockDispatch).toHaveBeenCalledWith(replacedWithName);
+  });
+
+  it("Verify, an existing account: signs in and goes back where the customer was", async () => {
+    const live = render(VerifyCode, { email: asha, verificationType: "otp" });
+    act(() => live.root.findByType(TextInput).props.onChangeText("482193"));
+    await press(live, "Continue");
+    expect(goAfterSignIn).toHaveBeenCalled();
     expect(mockSaveUser).not.toHaveBeenCalled();
+  });
+
+  it("YourName after Google/Apple (username given): saves the name to the account, never signs up", async () => {
+    const live = render(YourName, { username: "asha_k", firstName: "Asha" });
+    type(live, "Last name", "Kapoor");
+    await press(live, "Continue");
+    expect(mockProfile.updateMyDetails).toHaveBeenCalledWith("asha_k", { first_name: "Asha", last_name: "Kapoor" });
+    expect(mockAuth.signUpUser).not.toHaveBeenCalled();
+    expect(goAfterSignIn).toHaveBeenCalled();
+  });
+
+  it("YourName, sign-up refused (409): says why and offers Start again, which resets to the sign-in screen", async () => {
+    mockAuth.signUpUser.mockRejectedValueOnce({ status: 409, message: "Account already exists. Please login." } as never);
+    const live = render(YourName, undefined);
+    type(live, "First name", "Asha");
+    type(live, "Last name", "Kapoor");
+    await press(live, "Continue");
+    expect(goAfterSignIn).not.toHaveBeenCalled();
+    await press(live, "Start again");
+    expect(mockReset).toHaveBeenCalledWith({ index: 1, routes: [{ name: "MainTabs" }, { name: "Welcome" }] });
   });
 });

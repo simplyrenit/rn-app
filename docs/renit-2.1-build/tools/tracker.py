@@ -3,14 +3,14 @@
 and the manual notes in ../tracker-notes.tsv (frameId, platform, status, note).
 
 Status per platform: pass / fail (from the latest diff), or a manual status from tracker-notes.tsv
-(pending, blocked, n/a ...), else "todo". Run after every diff: python3 tools/tracker.py
+(pending, blocked, n/a ...), else "todo". A note of n/a or pending wins over an older diff. Run after every diff: python3 tools/tracker.py
 """
 import csv, json, os, collections
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STORY = {'00': 'ENG-426', '01': 'ENG-427', '02': 'ENG-428', '03': 'ENG-427', '04': 'ENG-429', '05': 'ENG-430', '06': 'ENG-431',
          '07': 'ENG-432', '08': 'ENG-433', '09': 'ENG-434', '10': 'ENG-435', '11': 'ENG-436', '12': 'ENG-437',
-         '13': 'ENG-438', '14': 'ENG-439'}
+         '13': 'ENG-438', '14': 'ENG-439', '02b': 'ENG-463'}
 # Section 01 frames belong to the story that owns their screen.
 STORY_01 = {'home': 'ENG-427', 'pdp': 'ENG-429', 'pdp-all-specs': 'ENG-429', 'list-reading': 'ENG-435',
             'list-review': 'ENG-435', 'booking-rental-active': 'ENG-431', 'booking-details-view': 'ENG-431',
@@ -32,6 +32,9 @@ def main():
                 notes[r[0]][r[1]] = (r[2], r[3] if len(r) > 3 else '')
 
     def cell(fid, plat):
+        # A retired frame (n/a) or one whose reference changed since its last diff (pending) is not judged by that diff.
+        if notes.get(fid, {}).get(plat, ('',))[0] in ('n/a', 'pending'):
+            return notes[fid][plat][0], ''
         p = os.path.join(ROOT, 'diffs', plat, fid.replace(':', '-') + '.json')
         if os.path.exists(p):
             d = json.load(open(p))
