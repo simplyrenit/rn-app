@@ -1,4 +1,5 @@
 import { ADDRESS_TYPES } from "@/lib/addresses";
+import type { ListingItems } from "@/lib/included-items";
 import { derivedRate, toPlans } from "@/lib/plans";
 import { computeDepositDefault } from "./deposit";
 import { parseQuantity, parseWorth, suggestedWorth } from "./stock";
@@ -180,7 +181,9 @@ export type DraftAction =
   | { type: "specsUnavailable"; requestId: string }
   | { type: "setSpec"; key: string; value: SpecValue | null }
   /** `null` clears it: the "Save this address" checkbox unticked. */
-  | { type: "setSaveAddressAs"; value: NonNullable<ListingDraft["saveAddressAs"]> | null };
+  | { type: "setSaveAddressAs"; value: NonNullable<ListingDraft["saveAddressAs"]> | null }
+  /** ENG-454: the listing's own lists, or null to follow the category's. */
+  | { type: "setItems"; value: ListingItems | null };
 
 /** Recompute the deposit default while the owner has not overridden it. */
 function withDerivedDeposit(draft: ListingDraft): ListingDraft {
@@ -607,6 +610,9 @@ function reduce(draft: ListingDraft | null, action: DraftAction): ListingDraft |
       return (draft.saveAddressAs ?? null) === action.value
         ? draft
         : { ...draft, saveAddressAs: action.value ?? undefined };
+
+    case "setItems":
+      return { ...draft, items: action.value };
 
     default:
       return draft;

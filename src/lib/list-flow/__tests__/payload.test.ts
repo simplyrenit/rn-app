@@ -146,4 +146,17 @@ describe("category payload", () => {
   it("leaves the key out rather than sending an undefined id", () => {
     expect(categoryPayload({ id: undefined, parent: "Books", title: "Novels" })).not.toHaveProperty("id");
   });
+
+  it("sends what comes with it only once the owner shaped it (ENG-454)", () => {
+    const untouched = buildCreatePayload(build(), contact);
+    expect(untouched).not.toHaveProperty("included_items");
+    expect(untouched).not.toHaveProperty("handover_only_items");
+    const shaped = buildCreatePayload(
+      build({ type: "setItems", value: { included_items: ["Console", "2 controllers"], handover_only_items: ["Batteries"] } }),
+      contact
+    );
+    expect(shaped.included_items).toEqual(["Console", "2 controllers"]);
+    expect(shaped.handover_only_items).toEqual(["Batteries"]);
+    expect(buildCreatePayload(build({ type: "setItems", value: null }), contact)).not.toHaveProperty("included_items");
+  });
 });
