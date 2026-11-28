@@ -124,8 +124,11 @@ export default function RentalSettingsScreen() {
         noticeSheet.current?.dismiss();
         devicesSheet.current?.dismiss();
         setPickingDay(false);
+        // Put the retries back: the next fixture may sign in as the same user (ENG-433's section 08 does).
+        queryClient.setQueryDefaults(shopQueryKey(userDetails?.username), {});
+        queryClient.setQueryDefaults(devicesQueryKey(userDetails?.username), {});
       };
-    }, [design])
+    }, [design, queryClient, userDetails?.username])
   );
 
   const putShop = (next: Shop) => queryClient.setQueryData(shopKey, next);
