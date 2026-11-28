@@ -4,6 +4,7 @@ import { EditStepHeader } from "@/components/post/edit-step-header";
 import { TaxonomyList } from "@/components/post/taxonomy-list";
 import { categoryDisplayName } from "@/lib/category-icons";
 import { categoryPayload } from "@/lib/list-flow/payload";
+import { ListingItems, itemsWithCategory } from "@/lib/included-items";
 import { ListingAnswer, PendingEdit, saveOutcome } from "@/lib/listing-edit";
 import { toastSave } from "@/lib/save-toast";
 import { toast } from "@/lib/toast";
@@ -16,7 +17,12 @@ import { View } from "react-native";
  * The PATCH that re-files a product, shared with the category screen's search
  * so a search result saves exactly as picking the row here does.
  */
-export function useSaveSubcategory(name: string, currentCategoryId?: number | null, pending?: PendingEdit | null) {
+export function useSaveSubcategory(
+  name: string,
+  currentCategoryId?: number | null,
+  pending?: PendingEdit | null,
+  liveItems?: ListingItems | null
+) {
   const navigation = useTypedNavigation();
   const { updateMyProductDetails } = useProfile();
   // Which row is saving. `useProfile`'s own `loading` is shared by every call
@@ -34,6 +40,7 @@ export function useSaveSubcategory(name: string, currentCategoryId?: number | nu
           parent: category,
           title: subcategory.title,
         }),
+        ...itemsWithCategory(subcategory.id, currentCategoryId ?? null, pending, liveItems),
       };
       const answer = await updateMyProductDetails(name, body);
 
@@ -62,8 +69,8 @@ export function useSaveSubcategory(name: string, currentCategoryId?: number | nu
 export default function EditSubCategories() {
   const route = useRoute<RouteProps<"EditSubCategories">>();
   const navigation = useTypedNavigation();
-  const { name, category, subcategories, categoryId, pending } = route.params;
-  const { save, saving } = useSaveSubcategory(name, categoryId, pending);
+  const { name, category, subcategories, categoryId, pending, liveItems } = route.params;
+  const { save, saving } = useSaveSubcategory(name, categoryId, pending, liveItems);
 
   return (
     <NonScrollableContainer>

@@ -52,6 +52,8 @@ jest.mock("@/components/list-flow/motion", () => ({
   useAppear: () => ({}),
 }));
 jest.mock("@/components/list-flow/flow-header", () => ({ FlowHeader: () => null }));
+// ENG-454: it reads the checklist through react-query; this test has no client, and the section is left out under a seed.
+jest.mock("@/components/list-flow/included-items", () => ({ IncludedItemsSection: () => null }));
 jest.mock("@/components/post/plan-pricing", () => ({ PlanPricing: () => null }));
 jest.mock("@/components/core/segmented-choice", () => ({ SegmentedChoice: () => null }));
 jest.mock("@/components/core/switch", () => ({ AppSwitch: () => null }));

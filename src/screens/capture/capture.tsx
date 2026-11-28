@@ -1,7 +1,7 @@
 import { captureQueue, useCaptureDraft } from "@/backend/capture-jobs";
 import { capturesQueryKey, confirmPhoneFallback, readKeptShotList, startPhoneFallback, useShotList } from "@/backend/captures";
 import { GetHelp } from "@/components/booking/get-help";
-import { BookingLoading, BottomBar, Notice, Panel, TextButton } from "@/components/booking/parts";
+import { BookingLoading, BottomBar, Notice, Panel, TextButton, TickRow } from "@/components/booking/parts";
 import { placeNow, recordVideo, recoverLostShot, takePhoto } from "@/components/capture/camera";
 import { CameraOffNotice } from "@/components/capture/camera-off";
 import { CODE_LENGTH, CodeInput } from "@/components/capture/code";
@@ -64,7 +64,7 @@ import {
   withShooting,
 } from "@/lib/capture";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, darkColors, radius, space } from "@/lib/design-tokens";
-import { commitFeedback, tapFeedback } from "@/lib/haptics";
+import { commitFeedback } from "@/lib/haptics";
 import { pluralize } from "@/lib/pluralize";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -314,56 +314,6 @@ function Shutter({ kind, disabled, onPress, label }: { kind: "photo" | "video"; 
             : { width: 28, height: 28, borderRadius: 8, backgroundColor: color.danger }
         }
       />
-    </TouchableOpacity>
-  );
-}
-
-/** A row that is ticked by tapping anywhere on it. */
-function TickRow({ label, sub, ticked, first, onPress }: { label: string; sub?: string; ticked: boolean; first: boolean; onPress: () => void }) {
-  const { color } = useTheme();
-  return (
-    <TouchableOpacity
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked: ticked }}
-      accessibilityLabel={sub ? `${label}. ${sub}` : label}
-      activeOpacity={0.7}
-      onPress={() => {
-        tapFeedback();
-        onPress();
-      }}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: space.md,
-        minHeight: MIN_TOUCH_TARGET + 8,
-        paddingHorizontal: space.md,
-        paddingVertical: space.sm,
-        borderTopWidth: first ? 0 : 1,
-        borderTopColor: color.line,
-      }}
-    >
-      <View
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: radius.full,
-          borderWidth: ticked ? 0 : 1.5,
-          borderColor: color.inputLine,
-          backgroundColor: ticked ? color.brand : "transparent",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {ticked ? <CheckIcon size={14} color={color.onBrand} /> : null}
-      </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text fontSize="text-md">{label}</Text>
-        {sub ? (
-          <Text fontSize="text-sm" tone="body">
-            {sub}
-          </Text>
-        ) : null}
-      </View>
     </TouchableOpacity>
   );
 }

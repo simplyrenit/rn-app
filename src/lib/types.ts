@@ -10,6 +10,7 @@ import type { Moment, Side } from "@/lib/capture";
 import type { Plan } from "@/lib/plans";
 import type { ListingDelivery } from "@/lib/delivery";
 import type { ReportKind } from "@/lib/day-of";
+import type { ListingItems } from "@/lib/included-items";
 import type { PendingEdit } from "@/lib/listing-edit";
 import type { FlagReason, ListingStatus } from "@/lib/listing-status";
 import type { Ring } from "@/lib/shop-ring";
@@ -315,15 +316,19 @@ export type RootStackParamList = {
   UnavailabilitySubCat: { category: string; subcategories?: Subcategory[] };
   EditProductAvailability: { dates_blocked: BlockedDates[]; name: string };
   /** `categoryId`: the sub-category the listing has now, so choosing it again can say nothing was changed. */
-  EditCategory: { name: string; categoryId?: number | null; pending?: PendingEdit | null };
+  EditCategory: { name: string; categoryId?: number | null; pending?: PendingEdit | null; liveItems?: ListingItems | null };
   EditSubCategories: {
     category: string;
     subcategories?: Subcategory[];
     name: string;
     categoryId?: number | null;
     pending?: PendingEdit | null;
+    /** ENG-454: the listing's own lists as they are live, sent back when a waiting move is undone. */
+    liveItems?: ListingItems | null;
   };
   EditAboutProduct: { data: BackendProduct };
+  /** ENG-454: what comes with the listing; the listing as the server has it (the screen lays a waiting change over it). */
+  EditIncludedItems: { data: BackendProduct };
   EditProductImages: { images: string[]; name: string, coverImage: string; };
   EditCoverImage: { images: string[]; name: string, coverImage: string, };
   OwnersReviewScreen: {
@@ -759,6 +764,12 @@ export interface BackendProduct {
   quantity?: number;
   worth?: string | null;
   shop_code?: string;
+  /**
+   * ENG-454 (API ENG-451), owner endpoint: what comes with the listing, and the items used up during the rental. An empty
+   * or absent `included_items` follows the sub-category's list.
+   */
+  included_items?: string[];
+  handover_only_items?: string[];
   not_delivered?: boolean;
   rate_unit?: "day";
   /**

@@ -78,6 +78,8 @@ export function buildCreatePayload(draft: ListingDraft, contact: ContactDetails)
     // and never overwrites these. Left out entirely when there are none, so a
     // listing without specs sends exactly what it did before.
     ...(Object.keys(attributes).length > 0 ? { attributes } : {}),
+    // ENG-454: only when the owner shaped what comes with it; otherwise the listing follows its category's list.
+    ...(draft.items ? { included_items: draft.items.included_items, handover_only_items: draft.items.handover_only_items } : {}),
   };
 }
 
