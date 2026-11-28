@@ -1,13 +1,16 @@
+import { useKycStatus } from "@/backend/kyc";
 import { useRefreshDetailsOnFocus } from "@/backend/use-refresh-details";
 import { useGlobalContext } from "@/context/global-context";
 import { Avatar, Text } from "@/components/core";
 import { IconButton } from "@/components/core/icon-button";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import { kycVerified } from "@/lib/kyc";
 import { useTheme } from "@/lib/theme";
 import Skeleton from "@/components/core/skeleton";
 import React from "react";
 import { View } from "react-native";
 import { PencilSquareIcon } from "react-native-heroicons/outline";
+import { ShieldCheckIcon } from "react-native-heroicons/solid";
 
 /** Measured off the signed-in Profile frame. */
 const AVATAR_SIZE = 48;
@@ -26,6 +29,8 @@ const ProfileImgContainer: React.FC<ProfileImgContainerProps> = ({
   const { userDetails } = useGlobalContext();
   const { color } = useTheme();
   const loading = !userDetails;
+  // ENG-446: the person's own "KYC verified" badge, while their check is in force.
+  const verified = kycVerified(useKycStatus().data);
 
   // The status card and the Post gate read the context's copy, so Profile refreshes that one.
   useRefreshDetailsOnFocus();
@@ -69,6 +74,25 @@ const ProfileImgContainer: React.FC<ProfileImgContainerProps> = ({
             {userDetails?.email}
           </Text>
         )}
+        {verified ? (
+          <View
+            style={{
+              alignSelf: "flex-start",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+              paddingHorizontal: 8,
+              paddingVertical: 2,
+              borderRadius: 999,
+              backgroundColor: color.brandWash,
+            }}
+          >
+            <ShieldCheckIcon size={14} color={color.brandText} />
+            <Text fontSize="text-xs" fontWeight="font-semibold" tone="brand">
+              KYC verified
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       {!loading && (

@@ -886,7 +886,9 @@ export type KycReasonCode =
   | "other"
   // set by the system, and kept when the status falls back to `none`
   // (`gstin_inactive` too, when the monthly GSTIN re-check removes the badge: ENG-348)
-  | "case_expired";
+  | "case_expired"
+  // ENG-446: the check was valid for its period and has run out; shown with `none`
+  | "kyc_expired";
 
 export type KycNextAction =
   // only `start/` and `resume/` answer with a link; it is never stored
@@ -909,6 +911,15 @@ export interface KycStatusResponse {
   stale?: boolean;
   /** ENG-348: absent on an older API. */
   business_registration_kind?: BusinessRegistrationKind | null;
+  /** ENG-446, absent on an older API: the dates of the check in force (null when none is). */
+  verified_at?: string | null;
+  valid_until?: string | null;
+  /** When an expired check ran out (`reason_code` is `kyc_expired`). */
+  expired_at?: string | null;
+  /** How long a new check lasts, for the copy. */
+  valid_months?: number;
+  /** Within 30 days of expiry, with no re-verification open: offer Re-verify. */
+  can_reverify?: boolean;
 }
 
 /** Optional evidence a merchant can add when they verify (ENG-348). */

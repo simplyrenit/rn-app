@@ -134,7 +134,7 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
           </View>
         )}
 
-        {/* Business verification, or anyone else's ID check once they have one on file (ENG-351). It hides itself otherwise. */}
+        {/* The KYC section, for every account (ENG-446): business verification, or anyone else's ID check. */}
         <KycCard isDark={isDark} />
 
         <ProfileBlockRule />

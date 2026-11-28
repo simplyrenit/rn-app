@@ -6,8 +6,11 @@ import {
   gstinMatchesPan,
   hasVerificationData,
   isBusinessPan,
+  kycChecks,
   kycError,
   kycStateCopy,
+  kycValidity,
+  kycVerified,
   PAN_PATTERN,
   parseKycReturn,
   retryLimitBody,
@@ -235,5 +238,56 @@ describe("consent text", () => {
     expect(text).toContain("While you're verified we keep your GSTIN encrypted");
     expect(text).toContain("Your Udyam registration or shop licence number, if you choose to add one.");
     expect(text).not.toContain("We don't store your full PAN or GSTIN");
+  });
+});
+
+
+describe("KYC validity (ENG-446)", () => {
+  const now = new Date("2027-10-01T00:00:00Z");
+
+  it("reads the dates of the check in force, day first, and warns from 30 days before expiry", () => {
+    const far = status({ kyc_status: "verified", verified_at: "2026-10-21T11:30:00Z", valid_until: "2027-11-21T11:30:00Z" });
+    expect(kycValidity(far, now)).toEqual({ verifiedOn: "21 Oct 2026", validUntil: "21 Nov 2027", daysLeft: 52, soon: false });
+    const near = status({ valid_until: "2027-10-31T00:00:00Z" });
+    expect(kycValidity(near, now)).toMatchObject({ daysLeft: 30, soon: true, verifiedOn: null });
+    expect(kycValidity(status({ valid_until: "2027-10-01T00:00:01Z" }), now)?.daysLeft).toBe(1);
+    // Nothing in force: nothing yet, expired (the server sends null), or an older API (absent).
+    expect(kycValidity(status({ valid_until: null }), now)).toBeNull();
+    expect(kycValidity(status(), now)).toBeNull();
+  });
+
+  it("shows the badge while a check is in force, and trusts an older API's verified", () => {
+    expect(kycVerified(status({ kyc_status: "verified", valid_until: "2027-11-21T11:30:00Z" }))).toBe(true);
+    // A re-verification in progress keeps the old check, and the badge.
+    expect(kycVerified(status({ kyc_status: "in_review", valid_until: "2027-11-21T11:30:00Z" }))).toBe(true);
+    expect(kycVerified(status({ kyc_status: "none", reason_code: "kyc_expired", valid_until: null }))).toBe(false);
+    expect(kycVerified(status({ kyc_status: "verified" }))).toBe(true); // no dates: an API from before
+    expect(kycVerified(undefined)).toBe(false);
+  });
+
+  it("lists what was checked, never a number", () => {
+    expect(kycChecks(status(), true)).toEqual(["PAN", "Aadhaar, through DigiLocker"]);
+    expect(kycChecks(status({ business_registration_kind: "udyam" }), false)).toEqual([
+      "PAN",
+      "Aadhaar, through DigiLocker",
+      "Business name",
+      "Udyam registration",
+    ]);
+  });
+
+  it("words an expired check with Re-verify, and the period everywhere it was 'done once'", () => {
+    expect(kycStateCopy("none", "kyc_expired", true)).toMatchObject({
+      cardTitle: "Your KYC has expired",
+      cta: "Re-verify",
+      ctaKind: "start",
+      tone: "warning",
+    });
+    expect(kycStateCopy("none", "kyc_expired", false)).toMatchObject({
+      title: "Your verification has expired",
+      cta: "Verify again",
+      ctaKind: "start",
+    });
+    expect(kycStateCopy("none", null, true, 6).body).toContain("valid for 6 months");
+    expect(kycStateCopy("verified", null, true).cardTitle).toBe("KYC verified");
   });
 });

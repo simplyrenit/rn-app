@@ -6,7 +6,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { track } from "@/lib/events";
 import { successFeedback } from "@/lib/haptics";
-import { hasVerificationData, kycError, kycStateCopy } from "@/lib/kyc";
+import { hasVerificationData, kycChecks, kycError, kycStateCopy, kycValidity } from "@/lib/kyc";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -274,7 +274,9 @@ export default function KycStatusScreen() {
     );
   }
 
-  const copy = kycStateCopy(data.kyc_status, reason, person);
+  const copy = kycStateCopy(data.kyc_status, reason, person, data.valid_months);
+  // ENG-446: the check in force, what it covered, and Re-verify from 30 days before expiry.
+  const validity = kycValidity(data);
   const primary =
     copy.ctaKind === "resume"
       ? onResume
@@ -328,6 +330,26 @@ export default function KycStatusScreen() {
             </Text>
           ) : null}
         </View>
+
+        {validity ? (
+          <View style={{ gap: space.xs }}>
+            {validity.verifiedOn ? <Text>Verified on {validity.verifiedOn}</Text> : null}
+            <Text>Valid until {validity.validUntil}</Text>
+            {kycChecks(data, person).map((check) => (
+              <Text key={check} tone="dim" accessibilityLabel={`${check} checked`}>
+                ✓ {check}
+              </Text>
+            ))}
+            {validity.soon ? (
+              <Text tone="warning">
+                Expires in {validity.daysLeft} {validity.daysLeft === 1 ? "day" : "days"}.
+                {data.can_reverify ? " Re-verify now; your current check stays valid until the new one is decided." : ""}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+
+        {data.can_reverify ? <Button onPress={() => openIntro()}>Re-verify</Button> : null}
 
         {step !== null ? (
           <View style={{ gap: space.sm }}>

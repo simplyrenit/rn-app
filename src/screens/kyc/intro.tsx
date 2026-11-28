@@ -1,3 +1,4 @@
+import { useKycStatus } from "@/backend/kyc";
 import { Button, SubpageHeader, Text } from "@/components/core";
 import { CheckBox } from "@/components/core/checkbox";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
@@ -34,7 +35,9 @@ const STEPS = ["Enter your details", "Confirm with DigiLocker", "Our team review
 const PERSON = {
   header: "Check your ID",
   title: "Check your ID once",
-  body: "Renit checks your ID before you rent some higher-value items. It's done once, and then covers every booking.",
+  // ENG-446: a check lasts KYC_VALID_MONTHS (12); `valid_months` from the status words it when known.
+  body: (months: number) =>
+    `Renit checks your ID before you rent some higher-value items. A check stays valid for ${months} months.`,
   needs: [
     { Icon: IdentificationIcon, text: "Your own PAN" },
     { Icon: DevicePhoneMobileIcon, text: "Your Aadhaar linked to DigiLocker. You'll confirm with an OTP." },
@@ -46,7 +49,8 @@ const PERSON = {
 const BUSINESS = {
   header: "Verify your business",
   title: "Get a Verified business badge",
-  body: "Renters see the badge on your profile and your listings, and can filter search to verified businesses.",
+  body: (months: number) =>
+    `Renters see the badge on your profile and your listings, and can filter search to verified businesses. It stays valid for ${months} months.`,
   needs: NEEDS,
   optional: "Verification is optional. You can keep listing without it. It will be needed for payouts when they launch.",
   consent: CONSENT_LABEL,
@@ -69,6 +73,7 @@ export default function KycIntroScreen() {
   const { userDetails } = useGlobalContext();
   const person = userDetails?.account_type !== "merchant";
   const words = person ? PERSON : BUSINESS;
+  const months = useKycStatus().data?.valid_months ?? 12;
   const version = person ? KYC_INDIVIDUAL_CONSENT_VERSION : KYC_CONSENT_VERSION;
 
   useEffect(() => {
@@ -114,7 +119,7 @@ export default function KycIntroScreen() {
           <Text fontSize="text-xl" fontWeight="font-bold" accessibilityRole="header">
             {words.title}
           </Text>
-          <Text tone="body">{words.body}</Text>
+          <Text tone="body">{words.body(months)}</Text>
         </View>
 
         <View style={{ gap: space.sm }}>
