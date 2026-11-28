@@ -1,9 +1,9 @@
 import { postUnlock } from "@/backend/unlock";
 import { useAuth } from "@/backend/auth";
-import { Button, SheetFooter, SheetHeader, Text } from "@/components/core";
+import { BottomBar, SheetFooter, SheetHeader, Text } from "@/components/core";
 import CustomBottomSheetModal from "@/components/core/custom-bottom-sheet-modal";
 import { apiError } from "@/lib/api-error";
-import { SCREEN_GUTTER, colors, fontFamily, ink, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, fontFamily, radius } from "@/lib/design-tokens";
 import { Theme, useTheme } from "@/lib/theme";
 import { NO_TOKEN_MESSAGE, RESEND_SECONDS, e164, isCode, resendLabel, unlockErrorMessage } from "@/lib/unlock";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -46,6 +46,12 @@ interface Props {
  * shop login is used on several phones, and a helper's phone must not be able to
  * point payouts at another account.
  */
+// The centred sheet's frame metrics (2097:30513): gorhom's 21pt handle row above the body, and the Bottom bar's
+// content strip (1 hairline + 16 + 52 + 16) under it; the home inset is added at the snap. Not the bar's measured
+// height: with the iOS keyboard up the bar drops the inset, which the sheet's keyboard lift already takes off.
+const UNLOCK_HANDLE = 21;
+const UNLOCK_BAR = 85;
+
 export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
   ({ phoneMasked, minutes, phone, onUnlocked, onPhoneRequired, layout = "centred" }, ref) => {
     const { color, isDark } = useTheme();
@@ -65,6 +71,10 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
     // invalid or for another number, drops it.
     const idToken = useRef("");
     const sendingNow = useRef(false);
+    const insets = useSafeAreaInsets();
+    // The centred body's measured height (12 + content + 24): the snap follows it, so an error line (one to three
+    // lines) grows the sheet. 336 is 2097:30513's before the first layout.
+    const [bodyHeight, setBodyHeight] = useState(336);
 
     useEffect(() => {
       if (secondsLeft <= 0) return;
@@ -154,25 +164,20 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
       }
     };
 
-    // The library types the cell as a view style but draws a text input in it, so
-    // `color` is part of it; kept out of the literal so the type does not object.
-    const otpCell = {
-      backgroundColor: ink.surface(isDark),
-      borderRadius: radius.input,
-      borderWidth: 1,
-      borderBottomWidth: 1,
-      color: ink.text(isDark),
-      // Six 46pt cells and the library's 5pt margins come to 336pt, more than a 360dp phone has inside
-      // the gutters, so the row ran into them. Narrower there; 46 wherever it fits, 390 included.
-      width: Math.min(46, Math.floor((windowWidth - SCREEN_GUTTER * 2 + 10) / 6) - 10),
-      height: 52,
-    };
-
     if (layout === "sheet") return <UnlockSheetBody modal={modal} isDark={isDark} minutes={minutes} phoneMasked={phoneMasked} round={round} code={code} setCode={setCode} error={error} setError={setError} secondsLeft={secondsLeft} sending={sending} busy={busy} sendCode={sendCode} unlock={unlock} />;
 
+    // 2097:30513 / 30585. ENG-438's box, capped at the frame's 48: six 48s and five 8s are 328, wider than a 360dp
+    // phone has inside the gutters, where otpBox's own clamp gives 45. The library only recolours the focused box,
+    // so its 1.5 focus edge stays 1.
+    const box = otpBox(windowWidth, color);
+    const boxEdge = error ? color.dangerStrong : color.line;
+
     return (
-      <CustomBottomSheetModal ref={modal} isDark={isDark} snapPoints={["70%"]} frame>
-        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: space.sm, paddingBottom: space.xl, alignItems: "center" }}>
+      <CustomBottomSheetModal ref={modal} isDark={isDark} snapPoints={[UNLOCK_HANDLE + bodyHeight + UNLOCK_BAR + insets.bottom]} frame>
+        <View
+          onLayout={(event) => setBodyHeight(Math.ceil(event.nativeEvent.layout.height))}
+          style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 12, paddingBottom: 24, alignItems: "center" }}
+        >
           <View
             style={{
               width: 56,
@@ -181,30 +186,29 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
               alignItems: "center",
               justifyContent: "center",
               backgroundColor: color.brandPanel,
-              marginBottom: space.md,
             }}
           >
             <LockClosedIcon size={26} color={color.brandText} />
           </View>
-          <Text role="screenTitle" accessibilityRole="header" style={{ textAlign: "center" }}>
+          <Text role="sectionTitle" accessibilityRole="header" style={{ textAlign: "center", marginTop: 16 }}>
             {"Enter the code we sent to\nthe owner's phone"}
           </Text>
-          <Text fontSize="text-md" tone="body" style={{ textAlign: "center", marginTop: space.sm }}>
+          <Text fontSize="text-sm" lineHeight={20} tone="body" style={{ textAlign: "center", marginTop: 8 }}>
             {`Changing where you're paid needs a fresh code. It unlocks this phone for ${minutes} minutes.`}
           </Text>
-          <Text fontSize="text-sm" tone="dim" style={{ textAlign: "center", marginTop: space.xs }}>
+          <Text fontSize="text-sm" lineHeight={20} tone="dim" style={{ textAlign: "center", marginTop: 4 }}>
             {`Sent to ${phoneMasked}`}
           </Text>
 
-          <View style={{ width: "100%", marginTop: space.md, alignItems: "center" }}>
+          <View style={{ marginTop: 20 }}>
             <OTPTextView
               key={round}
-              containerStyle={{ marginHorizontal: -5 }}
-              textInputStyle={otpCell}
+              containerStyle={{ justifyContent: "center", gap: 8 }}
+              textInputStyle={{ ...box, width: Math.min(48, box.width) }}
               inputCount={6}
               inputCellLength={1}
-              tintColor={colors.dark.brand}
-              offTintColor={ink.line(isDark)}
+              tintColor={error ? color.dangerStrong : color.brand}
+              offTintColor={boxEdge}
               keyboardType="number-pad"
               autoFocus
               handleTextChange={(value: string) => {
@@ -215,34 +219,42 @@ export const UnlockSheet = forwardRef<UnlockSheetHandle, Props>(
           </View>
 
           {error ? (
-            <Text tone="danger" fontSize="text-sm" accessibilityLiveRegion="polite" style={{ textAlign: "center", marginTop: space.sm }}>
+            <Text
+              fontSize="text-sm"
+              lineHeight={20}
+              fontWeight="font-medium"
+              accessibilityRole="alert"
+              accessibilityLiveRegion="polite"
+              style={{ textAlign: "center", marginTop: 12, color: color.dangerStrong }}
+            >
               {error}
             </Text>
           ) : null}
 
           {secondsLeft > 0 ? (
-            <Text fontSize="text-sm" tone="dim" style={{ marginTop: space.md }} accessibilityLiveRegion="polite">
+            <Text fontSize="text-sm" lineHeight={20} tone="dim" style={{ marginTop: 12 }} accessibilityLiveRegion="polite">
               {resendLabel(secondsLeft)}
             </Text>
           ) : (
-            <Button variant="ghost" size="compact" loading={sending} disabled={busy} onPress={sendCode} style={{ marginTop: space.sm }}>
-              Send again
-            </Button>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityState={{ disabled: busy || sending, busy: sending }}
+              disabled={busy || sending}
+              onPress={sendCode}
+              hitSlop={12}
+              style={{ marginTop: 12 }}
+            >
+              <Text fontSize="text-sm" fontWeight="font-semibold" lineHeight={20} style={{ color: busy || sending ? color.textDim : color.brandText }}>
+                Send again
+              </Text>
+            </TouchableOpacity>
           )}
-
-          <View style={{ flexDirection: "row", gap: space.sm, width: "100%", marginTop: space.md }}>
-            <View style={{ flex: 1 }}>
-              <Button variant="outline" disabled={busy} onPress={() => modal.current?.dismiss()}>
-                Cancel
-              </Button>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Button loading={busy} disabled={!isCode(code)} onPress={unlock}>
-                Unlock
-              </Button>
-            </View>
-          </View>
         </View>
+        <BottomBar
+          layout="secondary-primary"
+          secondary={{ label: "Cancel", onPress: () => modal.current?.dismiss(), disabled: busy }}
+          primary={{ label: "Unlock", onPress: unlock, loading: busy, disabled: !isCode(code) }}
+        />
       </CustomBottomSheetModal>
     );
   }

@@ -363,7 +363,7 @@ frameId	section	frameName	inventoryId	route	state	check
 2096:26342	12	rental-settings · open, merchant	rental-settings	RentalSettings	open, merchant	live
 2096:26392	12	rental-settings · closed, no hours yet (individual owner)	rental-settings	RentalSettings	closed, no hours yet (individual owner)	live
 2096:26472	12	rental-settings · closed by hand, phone cannot ring	rental-settings	RentalSettings	closed by hand, phone cannot ring	live
-2096:26578	12	rental-settings · not an owner	rental-settings	RentalSettings	not an owner	live
+2096:26578	12	rental-settings · not an owner	rental-settings	RentalSettings	not an owner	jest
 2096:26620	12	rental-settings · could not load	rental-settings	RentalSettings	could not load	fixture
 2096:26658	12	rental-settings · closed-until day picker	rental-settings	RentalSettings	closed-until day picker	live
 2096:29485	12	notice-sheet · 3 hours selected	notice-sheet	(sheet)	3 hours selected	live
@@ -381,7 +381,7 @@ frameId	section	frameName	inventoryId	route	state	check
 2097:29504	12	rental-delivery · every area off	rental-delivery	RentalDelivery	every area off	live
 2097:29629	12	rental-delivery · discard changes sheet	rental-delivery	RentalDelivery	discard changes sheet	live
 2097:29740	12	delivery-areas · list	delivery-areas	DeliveryAreas	list	live
-2097:29835	12	delivery-areas · no shop address	delivery-areas	DeliveryAreas	no shop address	live
+2097:29835	12	delivery-areas · no shop address	delivery-areas	DeliveryAreas	no shop address	jest
 2097:29872	12	delivery-areas · could not load	delivery-areas	DeliveryAreas	could not load	fixture
 2097:30015	12	rental-gst · registered	rental-gst	RentalGst	registered	live
 2097:30055	12	rental-gst · not registered	rental-gst	RentalGst	not registered	live
@@ -394,9 +394,9 @@ frameId	section	frameName	inventoryId	route	state	check
 2097:30326	12	bank-account · verified	bank-account	BankAccount	verified	live
 2097:30370	12	bank-account · check failed	bank-account	BankAccount	check failed	fixture
 2097:30421	12	bank-account · add account form	bank-account	BankAccount	add account form	live
-2097:30474	12	bank-account · not an owner	bank-account	BankAccount	not an owner	live
-2097:30513	12	bank-unlock-sheet · waiting for code	bank-account*	BankAccount	waiting for code	live
-2097:30585	12	bank-unlock-sheet · wrong or expired code	bank-account*	BankAccount	wrong or expired code	fixture
+2097:30474	12	bank-account · not an owner	bank-account	BankAccount	not an owner	jest
+2097:30513	12	bank-unlock-sheet · waiting for code	bank-account*	BankAccount	waiting for code	jest
+2097:30585	12	bank-unlock-sheet · wrong or expired code	bank-account*	BankAccount	wrong or expired code	jest
 2097:31454	14	notifications · list	notifications	notification	list	live
 2097:31514	14	notifications · empty	notifications	notification	empty	live
 2097:31549	14	faq · first answer open (full scroll)	faq	faq	first answer open (full scroll)	live

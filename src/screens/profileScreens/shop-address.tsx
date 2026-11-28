@@ -1,18 +1,19 @@
 import { localityFor } from "@/backend/list-flow/pickup-location";
 import { confirmShopAddress, shopQueryKey, useShop } from "@/backend/shop";
 import { todayQueryKey } from "@/backend/shop-today";
-import { Button, SubpageHeader, Text } from "@/components/core";
+import { BottomBar, Button, StatusPill, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { ShopLoadError, ShopLoading } from "@/components/shop/states";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError, fieldErrors } from "@/lib/api-error";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { createLocationRequest } from "@/lib/location-request";
 import { shopAddressBody } from "@/lib/shop";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { ADDRESS_NOT_FOUND, ADDRESS_UNAVAILABLE } from "@/screens/post-screens/location-modal";
+import { useRoute } from "@react-navigation/native";
 import React, { useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -35,6 +36,7 @@ interface Picked {
  */
 export default function ShopAddressScreen() {
   const navigation = useTypedNavigation();
+  const route = useRoute();
   const { color } = useTheme();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -42,7 +44,9 @@ export default function ShopAddressScreen() {
   const query = useShop();
   const shop = query.data;
 
-  const [picked, setPicked] = useState<Picked | null>(null);
+  // Dev-only design seed (ENG-437 plan §2.6): a picked place without the map, the location request or the geocoder.
+  const design = __DEV__ ? (route.params as { design?: { picked?: Picked } } | undefined)?.design : undefined;
+  const [picked, setPicked] = useState<Picked | null>(design?.picked ?? null);
   const [naming, setNaming] = useState(false);
   const [saving, setSaving] = useState(false);
   const namingRun = useRef(0);
@@ -105,14 +109,33 @@ export default function ShopAddressScreen() {
     }
   };
 
+  // The address cards (2097:30162, 30195): a 1px edge, r12, 16 inside it (Figma counts the stroke, so x17).
   const card = {
     borderWidth: 1,
     borderColor: color.line,
-    borderRadius: radius.card,
+    borderRadius: radius.input,
     backgroundColor: color.surface,
-    padding: space.md,
-    gap: space.xs,
+    padding: 16,
+    gap: 4,
   } as const;
+
+  // Not set: one bar button. Picked: Choose another place beside Save. Confirmed with nothing picked: no bar, the
+  // change button sits under the card (2097:30130, 30195, 30162).
+  const bar = picked ? (
+    <BottomBar
+      layout="secondary-primary"
+      secondary={{ label: "Choose another place", onPress: choose, disabled: saving }}
+      primary={{
+        label: "Save shop address",
+        accessibilityLabel: "Save shop address",
+        onPress: () => void save(),
+        loading: saving,
+        disabled: saving || naming || !picked.locality,
+      }}
+    />
+  ) : !shop.address_confirmed ? (
+    <BottomBar primary={{ label: "Choose on the map", onPress: choose, disabled: saving }} />
+  ) : null;
 
   return (
     <NonScrollableContainer>
@@ -121,9 +144,9 @@ export default function ShopAddressScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.md,
-          paddingBottom: insets.bottom + space.xl,
-          gap: space.md,
+          paddingTop: 16,
+          paddingBottom: 32 + (bar ? 0 : insets.bottom),
+          gap: 16,
         }}
       >
         <Text role="screenTitle" accessibilityRole="header">
@@ -132,54 +155,46 @@ export default function ShopAddressScreen() {
 
         {shop.address_confirmed ? (
           <View style={card}>
-            <Text fontSize="text-sm" tone="body">
-              Confirmed
-            </Text>
-            <Text fontSize="text-md" fontWeight="font-bold">
+            {/* 4 + the frame's 4pt spacer + 4 puts the locality 12 under the pill. */}
+            <StatusPill label="Confirmed" tone="success" style={{ alignSelf: "flex-start", marginBottom: 8 }} />
+            <Text fontSize="text-md" lineHeight={24} fontWeight="font-semibold">
               {shop.locality || shop.address}
             </Text>
             {shop.address && shop.address !== shop.locality ? (
-              <Text fontSize="text-sm" tone="body">
+              <Text fontSize="text-sm" lineHeight={20} tone="body">
                 {shop.address}
               </Text>
             ) : null}
           </View>
         ) : (
-          <Text fontSize="text-md" tone="body">
+          <Text fontSize="text-sm" lineHeight={20} tone="body">
             Set where your shop is. Customers see only the area. Until you do, you can't publish.
           </Text>
         )}
 
         {picked ? (
           <View style={card}>
-            <Text fontSize="text-sm" tone="body">
+            <Text fontSize="text-sm" lineHeight={20} tone="dim" style={{ marginBottom: 8 }}>
               New address
             </Text>
-            <Text fontSize="text-md" fontWeight="font-bold">
+            <Text fontSize="text-md" lineHeight={24} fontWeight="font-semibold">
               {naming ? "Finding the area..." : picked.locality ?? "We couldn't name this spot. Choose another place on the map."}
             </Text>
             {picked.address && picked.address !== picked.locality ? (
-              <Text fontSize="text-sm" tone="body">
+              <Text fontSize="text-sm" lineHeight={20} tone="body">
                 {picked.address}
               </Text>
             ) : null}
           </View>
         ) : null}
 
-        {picked ? (
-          <Button
-            accessibilityLabel="Save shop address"
-            loading={saving}
-            disabled={saving || naming || !picked.locality}
-            onPress={() => void save()}
-          >
-            Save shop address
+        {!picked && shop.address_confirmed ? (
+          <Button variant="outline" size="compact" disabled={saving} onPress={choose}>
+            Change on the map
           </Button>
         ) : null}
-        <Button variant="outline" disabled={saving} onPress={choose}>
-          {picked ? "Choose another place" : shop.address_confirmed ? "Change on the map" : "Choose on the map"}
-        </Button>
       </ScrollView>
+      {bar}
     </NonScrollableContainer>
   );
 }

@@ -29,6 +29,12 @@ export interface ChipProps {
   accessibilityState?: AccessibilityState;
   /** The chip is 40 high; callers pass 2 top and bottom for the 44pt target. */
   hitSlop?: Insets;
+  /**
+   * A fixed width (ENG-437, the TimeSheet grid 2096:30129: 79.5 at 390). The kit then centres the label and lets it
+   * run over the 16 side padding ("10:30 pm" is wider than 79.5 − 32, which RN would wrap), so the padding goes.
+   * Omit it and the chip hugs its label as before.
+   */
+  width?: number;
 }
 
 export function Chip({
@@ -42,6 +48,7 @@ export function Chip({
   accessibilityHint,
   accessibilityState,
   hitSlop,
+  width,
 }: ChipProps) {
   const { color } = useTheme();
   return (
@@ -59,10 +66,12 @@ export function Chip({
         minHeight: density.chip,
         // The kit counts its 1pt inside stroke into the layout, so the label
         // sits at 17: RN's border plus 16 of padding is the same box.
-        paddingHorizontal: 16,
+        paddingHorizontal: width === undefined ? 16 : 0,
+        width,
         gap: 6,
         flexDirection: "row",
         alignItems: "center",
+        justifyContent: "center",
         borderRadius: radius.button,
         borderWidth: 1,
         borderColor: selected ? color.brand : color.line,

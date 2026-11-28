@@ -9,9 +9,9 @@ import {
   useDevices,
   useShop,
 } from "@/backend/shop";
-import { SubpageHeader, Text } from "@/components/core";
+import { ListRow, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
-import { useRingPermission } from "@/backend/ring-permission";
+import { RingPermissionControl, useRingPermission } from "@/backend/ring-permission";
 import { DayPickerModal } from "@/components/shop/day-picker-modal";
 import { RingPermissionCard } from "@/components/shop/ring-permission-card";
 import { DevicesSheet } from "@/components/shop/devices-sheet";
@@ -19,7 +19,8 @@ import { NoticeSheet } from "@/components/shop/pick-sheets";
 import { ShopLoadError, ShopLoading } from "@/components/shop/states";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError, fieldErrors } from "@/lib/api-error";
-import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { SCREEN_GUTTER } from "@/lib/design-tokens";
+import type { RingPermission } from "@/lib/ring-permission";
 import {
   cannotOpenMessage,
   dayLabel,
@@ -38,70 +39,27 @@ import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import React, { useRef, useState } from "react";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, ScrollView, TouchableOpacity, View } from "react-native";
 import { AppSwitch } from "@/components/core/switch";
-import { CalendarIcon, ComputerDesktopIcon } from "react-native-heroicons/outline";
-import { ChevronRightIcon } from "react-native-heroicons/mini";
+import { ComputerDesktopIcon } from "react-native-heroicons/outline";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "react-query";
 
-/** One line of the settings card: a label (and a second line), then what goes on the right. */
-function SettingsRow({
-  label,
-  sub,
-  right,
-  onPress,
-  first,
-  accessibilityLabel,
-}: {
-  label: string;
-  sub?: string;
-  right?: React.ReactNode;
-  onPress?: () => void;
-  first?: boolean;
-  accessibilityLabel?: string;
-}) {
-  const { color } = useTheme();
-  const content = (
-    <>
-      <View style={{ flex: 1 }}>
-        <Text fontSize="text-md" fontWeight="font-bold">
-          {label}
-        </Text>
-        {sub ? (
-          <Text fontSize="text-sm" tone="body">
-            {sub}
-          </Text>
-        ) : null}
-      </View>
-      {right}
-    </>
-  );
-  const style = {
-    minHeight: 62,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.sm,
-    borderTopWidth: first ? 0 : 1,
-    borderTopColor: color.line,
-  } as const;
-  return onPress ? (
-    <TouchableOpacity
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? (sub ? `${label}. ${sub}` : label)}
-      activeOpacity={0.7}
-      onPress={onPress}
-      style={style}
-    >
-      {content}
-    </TouchableOpacity>
-  ) : (
-    <View style={style}>{content}</View>
-  );
-}
+/**
+ * Dev builds only (design fixtures, section 12): the state a frame shows that no API answer sets. Only initial local
+ * state: an open sheet, the day picker, this phone's ring permission, the scroll at its end. Nothing here saves anything.
+ */
+type RentalSettingsDesign = {
+  sheet?: "notice" | "devices";
+  dayPicker?: boolean;
+  ringPermission?: RingPermission;
+  /** The full-scroll frame (2096:26244): the rows below the fold. */
+  scrollToEnd?: boolean;
+};
+
+const noop = async () => undefined;
 
 /**
  * SH-13, the owner's rental settings: the Open switch, handover hours, Closed
@@ -117,17 +75,61 @@ export default function RentalSettingsScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { userDetails, userDetailsFailed, fetchUserDetails } = useGlobalContext();
+  const route = useRoute();
+  const design = __DEV__ ? (route.params as { design?: RentalSettingsDesign } | undefined)?.design : undefined;
+  if (design) {
+    // Dev builds only: a fixture's 404 shows the frame's error state (2096:26620, 2096:29658) at once, not after
+    // React Query's three retries. The keys carry the fixture user's name, so the device's own account keeps them.
+    queryClient.setQueryDefaults(shopQueryKey(userDetails?.username), { retry: false });
+    queryClient.setQueryDefaults(devicesQueryKey(userDetails?.username), { retry: false });
+  }
   const query = useShop();
   const devices = useDevices();
-  const ringPerm = useRingPermission();
+  // Under a design fixture the ring permission is the fixture's and nothing asks the system: the whole control is
+  // replaced (ENG-433's today.tsx seed), so the card's ask-once effect cannot raise the OS prompt over a screenshot.
+  const realPerm = useRingPermission();
+  const designPerm = design?.ringPermission ?? "unavailable";
+  const seededPerm = useMemo<RingPermissionControl>(
+    () => ({ ...realPerm, state: designPerm, ask: noop, askOnce: noop, openSettings: () => undefined }),
+    // `realPerm` is spread for its shape only; the seeded control must stay the same object for `askOnce`'s effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [designPerm]
+  );
+  const ringPerm = design ? seededPerm : realPerm;
   const shop = query.data;
   const shopKey = shopQueryKey(userDetails?.username);
 
   const noticeSheet = useRef<BottomSheetModal>(null);
   const devicesSheet = useRef<BottomSheetModal>(null);
-  const [pickingDay, setPickingDay] = useState(false);
+  const scroll = useRef<ScrollView>(null);
+  const [pickingDay, setPickingDay] = useState(design?.dayPicker === true);
   const [openBusy, setOpenBusy] = useState(false);
   const [signingOut, setSigningOut] = useState<number | null>(null);
+
+  // A seeded sheet opens once the page is there (gorhom ignores a present() before its modal has mounted).
+  const loaded = Boolean(shop);
+  useEffect(() => {
+    if (!design?.sheet || !loaded) return;
+    const sheet = design.sheet === "notice" ? noticeSheet : devicesSheet;
+    // Only while in front: React Query refetches for the next fixture re-run this effect on the covered screen too.
+    const timer = setTimeout(() => navigation.isFocused() && sheet.current?.present(), 300);
+    return () => clearTimeout(timer);
+  }, [design?.sheet, loaded]);
+
+  // The next fixture is pushed over this screen, so what a seed opened closes when it loses focus.
+  useFocusEffect(
+    useCallback(() => {
+      if (!design) return undefined;
+      return () => {
+        noticeSheet.current?.dismiss();
+        devicesSheet.current?.dismiss();
+        setPickingDay(false);
+        // Put the retries back: the next fixture may sign in as the same user (ENG-433's section 08 does).
+        queryClient.setQueryDefaults(shopQueryKey(userDetails?.username), {});
+        queryClient.setQueryDefaults(devicesQueryKey(userDetails?.username), {});
+      };
+    }, [design, queryClient, userDetails?.username])
+  );
 
   const putShop = (next: Shop) => queryClient.setQueryData(shopKey, next);
 
@@ -219,205 +221,163 @@ export default function RentalSettingsScreen() {
     );
   }
 
-  const card = {
-    borderWidth: 1,
-    borderColor: color.line,
-    borderRadius: radius.card,
-    backgroundColor: color.surface,
-  } as const;
-
   const copy = openCopy(shop.open, shop.closed_until);
   const rows = hoursRows(shop.hours);
   const hoursSet = hasHours(shop.hours);
   const closedUntil = dayLabel(shop.closed_until);
   const deviceCount = devices.data?.length;
+  const delivery = deliverySummary(shop);
+  const gst = gstSummary(shop);
+  const shopAddress = shop.address_confirmed ? shop.locality || shop.address : "Not set yet";
 
   return (
     <NonScrollableContainer>
       {header}
+      {/* 2096:26244: Content p16/0/32/0, gap 16. Each block pads itself 24; the settings rows run edge to edge. */}
       <ScrollView
+        ref={scroll}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.md,
-          paddingBottom: insets.bottom + space.xl,
-          gap: space.md,
-        }}
+        // On every content or viewport size change, not only the first: a later row (an error line) or a shorter
+        // viewport would otherwise leave the seeded scroll short of the end.
+        onContentSizeChange={() => design?.scrollToEnd && scroll.current?.scrollToEnd({ animated: false })}
+        onLayout={() => design?.scrollToEnd && scroll.current?.scrollToEnd({ animated: false })}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 32, gap: 16 }}
       >
-        <Text role="screenTitle" accessibilityRole="header">
+        <Text role="screenTitle" accessibilityRole="header" style={{ marginHorizontal: SCREEN_GUTTER }}>
           Your rental settings
         </Text>
 
-        {/* The Open switch. The brand tint and a brand switch, not green, so the
-            switch stays legible in dark (the frame's own note). */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: space.md,
-            padding: space.md,
-            borderRadius: radius.card,
-            borderWidth: 1,
-            borderColor: color.brandPanelLine,
-            backgroundColor: color.brandPanel,
-          }}
-        >
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text fontSize="text-md" fontWeight="font-bold">
-              {copy.title}
-            </Text>
-            {copy.subtitle ? (
-              <Text fontSize="text-sm" tone="body">
-                {copy.subtitle}
+        {/* The Open switch: no card of its own (REVIEW b3-02), 12 above and below, 16 to the switch. The ring card
+            sits 16 under it in the same block, and draws nothing once this phone can ring. */}
+        <View style={{ paddingHorizontal: SCREEN_GUTTER, gap: 16 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 12 }}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text fontSize="text-md" fontWeight="font-semibold">
+                {copy.title}
               </Text>
-            ) : null}
-            {shop.open.reason === "manual" ? (
-              <Text
-                fontSize="text-sm"
-                fontWeight="font-bold"
-                tone="brand"
-                accessibilityRole="button"
-                onPress={() => void changeOpen("auto")}
-                style={{ marginTop: 2 }}
-              >
-                Follow my hours again
-              </Text>
-            ) : null}
-          </View>
-          <AppSwitch
-            accessibilityLabel="Open"
-            value={shop.open.is_open}
-            disabled={openBusy}
-            onValueChange={(next) => void changeOpen(next ? "open" : "closed")}
-            trackColor={{ true: color.brand, false: color.inputLine }}
-            thumbColor="#FFFFFF"
-          />
-        </View>
-
-        {/* The Open switch above only means something if this phone can ring. */}
-        <RingPermissionCard enabled={shop.can_take_bookings === true} permission={ringPerm} />
-
-        <View style={[card, { padding: space.md, gap: space.sm }]}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text fontSize="text-md" fontWeight="font-bold">
-              Handover hours
-            </Text>
-            <Text
-              fontSize="text-sm"
-              fontWeight="font-bold"
-              tone="brand"
-              accessibilityRole="button"
-              accessibilityLabel={hoursSet ? "Edit handover hours" : "Set handover hours"}
-              onPress={() => navigation.navigate("RentalHours")}
-              // The label is small; the padding makes a 44pt target of it.
-              style={{ paddingVertical: space.sm, paddingLeft: space.md }}
-            >
-              {hoursSet ? "Edit" : "Set hours"}
-            </Text>
-          </View>
-          {hoursSet ? (
-            rows.map((row) => (
-              <View key={row.label} style={{ flexDirection: "row", justifyContent: "space-between" }}>
+              {copy.subtitle ? (
                 <Text fontSize="text-sm" tone="body">
-                  {row.label}
+                  {copy.subtitle}
                 </Text>
+              ) : null}
+              {shop.open.reason === "manual" ? (
                 <Text
                   fontSize="text-sm"
-                  fontWeight={row.value === "Closed" ? "font-normal" : "font-bold"}
-                  tone={row.value === "Closed" ? "body" : "default"}
+                  fontWeight="font-semibold"
+                  tone="brand"
+                  accessibilityRole="button"
+                  onPress={() => void changeOpen("auto")}
                 >
-                  {row.value}
+                  Follow my hours again
                 </Text>
-              </View>
-            ))
-          ) : (
-            <Text fontSize="text-sm" tone="body">
-              No hours yet. Until you set them, customers can't book your items.
-            </Text>
-          )}
+              ) : null}
+            </View>
+            <AppSwitch
+              accessibilityLabel="Open"
+              value={shop.open.is_open}
+              disabled={openBusy}
+              onValueChange={(next) => void changeOpen(next ? "open" : "closed")}
+              // The frame's off track is the light grey of a hairline; iOS fills it from ios_backgroundColor.
+              trackColor={{ true: color.brand, false: color.line }}
+              ios_backgroundColor={color.line}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          {/* The Open switch above only means something if this phone can ring. 2096:26472 draws the inline card. */}
+          <RingPermissionCard enabled={shop.can_take_bookings === true} permission={ringPerm} layout="inline" />
         </View>
 
-        <View style={card}>
-          <SettingsRow
-            first
+        {/* Handover hours: a 1pt hairline card, r12, 16 inside, 8 between its lines. */}
+        <View style={{ paddingHorizontal: SCREEN_GUTTER }}>
+          <View style={{ borderWidth: 1, borderColor: color.line, borderRadius: 12, padding: 16, gap: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Text fontSize="text-md" fontWeight="font-semibold">
+                Handover hours
+              </Text>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={hoursSet ? "Edit handover hours" : "Set handover hours"}
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate("RentalHours")}
+                // The label is 20 high; the slop makes a 44pt target of it without growing the row.
+                hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}
+              >
+                <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand">
+                  {hoursSet ? "Edit" : "Set hours"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {hoursSet ? (
+              rows.map((row) => (
+                <View key={row.label} style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                  <Text fontSize="text-sm" tone="body">
+                    {row.label}
+                  </Text>
+                  <Text
+                    fontSize="text-sm"
+                    fontWeight={row.value === "Closed" ? "font-normal" : "font-semibold"}
+                    tone={row.value === "Closed" ? "dim" : "default"}
+                  >
+                    {row.value}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text fontSize="text-sm" tone="body">
+                No hours yet. Until you set them, customers can't book your items.
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* Kit List rows, full width with no leading icon, under one hairline and none between them. */}
+        <View style={{ borderTopWidth: 1, borderTopColor: color.line }}>
+          <ListRow
             label="Closed until"
-            sub="For holidays"
+            subLabel="For holidays"
+            value={closedUntil ?? "Pick a date"}
             accessibilityLabel={
               closedUntil ? `Closed until ${closedUntil}. Change the date.` : "Closed until. Pick a date."
             }
             onPress={() => setPickingDay(true)}
-            right={
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: space.sm,
-                  minHeight: 44,
-                  paddingHorizontal: space.md,
-                  borderRadius: radius.button,
-                  borderWidth: 1,
-                  borderColor: color.inputLine,
-                }}
-              >
-                <CalendarIcon size={20} color={color.text} />
-                <Text fontSize="text-md" tone={closedUntil ? "default" : "body"}>
-                  {closedUntil ?? "Pick a date"}
-                </Text>
-              </View>
-            }
           />
-          <SettingsRow
+          <ListRow
             label="Shortest notice"
+            value={noticeLabel(shop.min_notice_hours)}
             onPress={() => noticeSheet.current?.present()}
-            right={
-              <View style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}>
-                <Text fontSize="text-md" tone="body">
-                  {noticeLabel(shop.min_notice_hours)}
-                </Text>
-                <ChevronRightIcon size={20} color={color.text} />
-              </View>
-            }
           />
-          <SettingsRow
+          <ListRow
             label="Delivery"
-            sub={deliverySummary(shop)}
+            subLabel={delivery}
+            accessibilityLabel={`Delivery. ${delivery}`}
             onPress={() => navigation.navigate("RentalDelivery")}
-            right={<ChevronRightIcon size={20} color={color.text} />}
           />
-          <SettingsRow
+          <ListRow
             label="GST"
-            sub={gstSummary(shop)}
+            subLabel={gst}
+            accessibilityLabel={`GST. ${gst}`}
             onPress={() => navigation.navigate("RentalGst")}
-            right={<ChevronRightIcon size={20} color={color.text} />}
           />
           {shop.is_merchant ? (
-            <SettingsRow
+            <ListRow
               label="Shop address"
-              sub={shop.address_confirmed ? shop.locality || shop.address : "Not set yet"}
+              subLabel={shopAddress}
+              accessibilityLabel={`Shop address. ${shopAddress}`}
               onPress={() => navigation.navigate("ShopAddress")}
-              right={<ChevronRightIcon size={20} color={color.text} />}
             />
           ) : null}
-          <SettingsRow
+          <ListRow
             label="Signed-in devices"
+            value={deviceCount ? String(deviceCount) : undefined}
             onPress={() => devicesSheet.current?.present()}
-            right={
-              <View style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}>
-                {deviceCount ? (
-                  <Text fontSize="text-md" tone="body">
-                    {deviceCount}
-                  </Text>
-                ) : null}
-                <ChevronRightIcon size={20} color={color.text} />
-              </View>
-            }
           />
         </View>
 
-        {/* Only a merchant has the dashboard; an individual owner has this page alone. */}
+        {/* Only a merchant has the dashboard; an individual owner has this page alone. Icon 18 at x24, text at x50. */}
         {shop.is_merchant ? (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, paddingHorizontal: space.sm }}>
-            <ComputerDesktopIcon size={18} color={color.textDim} />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: SCREEN_GUTTER }}>
+            <ComputerDesktopIcon size={18} color={color.textDim} strokeWidth={1.5} />
             <Text fontSize="text-sm" tone="dim" style={{ flex: 1 }}>
               More settings are on the dashboard on your computer.
             </Text>

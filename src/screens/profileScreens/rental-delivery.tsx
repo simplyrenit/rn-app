@@ -1,14 +1,15 @@
 import { fetchDeliveryExample, patchShop, shopQueryKey, useAreas, useShop } from "@/backend/shop";
-import { Button, FieldFrame, Skeleton, SubpageHeader, Text, TextField } from "@/components/core";
+import { BottomBar, Button, FieldFrame, Skeleton, SubpageHeader, Text, TextField } from "@/components/core";
 import { ConfirmSheet } from "@/components/core/confirm-sheet";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
+import { Notice } from "@/components/booking/parts";
 import { Stepper } from "@/components/core/stepper";
 import { AppSwitch } from "@/components/core/switch";
 import { ShopLoadError, ShopLoading } from "@/components/shop/states";
 import { useGlobalContext } from "@/context/global-context";
 import { apiError, fieldErrors } from "@/lib/api-error";
 import { deliveryDraft, useDeliveryDraft } from "@/lib/delivery-draft";
-import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
+import { MIN_TOUCH_TARGET, SCREEN_GUTTER, density, radius, space } from "@/lib/design-tokens";
 import {
   AREAS_KM_MAX,
   Area,
@@ -33,15 +34,21 @@ import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
 import { useTypedNavigation } from "@/lib/types";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
 import darkModeMapStyle from "assets/mapJSON/darkModeMapStyle.json";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
-import { ChevronRightIcon } from "react-native-heroicons/mini";
-import { CheckIcon, ComputerDesktopIcon, MinusIcon, PlusIcon, XMarkIcon } from "react-native-heroicons/outline";
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  ComputerDesktopIcon,
+  MapPinIcon,
+  MinusIcon,
+  PlusIcon,
+  XMarkIcon,
+} from "react-native-heroicons/outline";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import MapView, { Circle, Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "react-query";
 
 /**
@@ -57,6 +64,17 @@ function useSettled<T extends string | number>(value: T, ms: number): T {
   return settled;
 }
 
+/**
+ * Dev-only design seed (ENG-437 plan §2.4): a draft laid over the saved shop before the editor mounts, the Discard sheet
+ * open, a scroll offset, and the flat map stand-in. Read only under `__DEV__`.
+ */
+type DeliveryDesign = {
+  draft?: Partial<DeliveryDraft>;
+  discard?: boolean;
+  scrollY?: number;
+  map?: "placeholder";
+};
+
 const MAP_HEIGHT = 180;
 /** Degrees of latitude in a km, near enough for framing a circle. */
 const KM_PER_DEGREE = 111;
@@ -70,7 +88,7 @@ function DistanceMap({ coordinates, km }: { coordinates: { lat: number; long: nu
   const center = { latitude: coordinates.lat, longitude: coordinates.long };
   return (
     <View
-      style={{ height: MAP_HEIGHT, overflow: "hidden", borderRadius: radius.group }}
+      style={{ height: MAP_HEIGHT, overflow: "hidden", borderRadius: 12 }}
       accessible
       accessibilityLabel={`Map: your shop, and a circle ${kmText(shown)} around it`}
     >
@@ -98,6 +116,34 @@ function DistanceMap({ coordinates, km }: { coordinates: { lat: number; long: nu
   );
 }
 
+/**
+ * The map as the state frames draw it (2097:29301 "Map (placeholder)"): a flat `surfaceMuted` tile with the delivery circle
+ * and the pin, for fixtures where Google tiles would never settle. Not the kit `MapPlaceholder`: the frame has no streets.
+ */
+function DistanceMapPlaceholder() {
+  const { color } = useTheme();
+  return (
+    <View style={{ height: MAP_HEIGHT, overflow: "hidden", borderRadius: 12, backgroundColor: color.surfaceMuted }}>
+      <View
+        style={{
+          position: "absolute",
+          left: 79,
+          top: 15,
+          width: 150,
+          height: 150,
+          borderRadius: 75,
+          borderWidth: 1.5,
+          borderColor: color.brand,
+          backgroundColor: color.brandPanel,
+        }}
+      />
+      <View style={{ position: "absolute", left: 142, top: 74 }}>
+        <MapPinIcon size={24} color={color.brand} />
+      </View>
+    </View>
+  );
+}
+
 /** One area on the Delivery screen: name and PIN, ✓ while delivered to, ✕ once turned off. */
 function AreaChip({ area, off, onPress }: { area: Area; off: boolean; onPress: () => void }) {
   const { color } = useTheme();
@@ -108,25 +154,25 @@ function AreaChip({ area, off, onPress }: { area: Area; off: boolean; onPress: (
       accessibilityHint={off ? "Turns delivery to this area back on" : "Turns delivery to this area off"}
       activeOpacity={0.7}
       onPress={onPress}
+      // 2097:29301 "Area · …": 50 high (1 + 6 + 36 + 6 + 1), r12, 12 at the sides, 6 to the text.
       style={{
         flexDirection: "row",
         alignItems: "center",
-        gap: space.xs,
-        minHeight: MIN_TOUCH_TARGET,
-        paddingHorizontal: space.sm,
-        paddingVertical: space.xs,
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: radius.button,
         borderWidth: 1,
-        borderColor: off ? color.inputLine : color.brandPanelLine,
+        borderColor: off ? color.line : color.brandPanelLine,
         backgroundColor: off ? color.surface : color.brandPanel,
       }}
     >
       {off ? <XMarkIcon size={16} color={color.textBody} /> : <CheckIcon size={16} color={color.brandText} />}
       <View>
-        <Text fontSize="text-sm" fontWeight="font-bold" tone={off ? "body" : "default"}>
+        <Text fontSize="text-sm" fontWeight="font-semibold" tone={off ? "body" : "default"}>
           {area.name}
         </Text>
-        <Text fontSize="text-xs" tone="body">
+        <Text fontSize="text-xs" tone="dim">
           {off ? `${area.pin} · Off` : area.pin}
         </Text>
       </View>
@@ -134,10 +180,9 @@ function AreaChip({ area, off, onPress }: { area: Area; off: boolean; onPress: (
   );
 }
 
-function DeliveryEditor({ shop }: { shop: Shop }) {
+function DeliveryEditor({ shop, design }: { shop: Shop; design?: DeliveryDesign }) {
   const navigation = useTypedNavigation();
   const { color } = useTheme();
-  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { userDetails } = useGlobalContext();
 
@@ -198,21 +243,43 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
   const pendingAction = useRef<any>(null);
-  useEffect(
-    () =>
-      navigation.addListener("beforeRemove", (event) => {
-        if (!dirtyRef.current) return;
-        event.preventDefault();
-        pendingAction.current = event.data.action;
-        discardSheet.current?.present();
-      }),
-    [navigation]
-  );
+  // Under a design seed neither guard is added: the next fixture link and `fixture/off` must always get through (plan §0.4).
+  const seeded = Boolean(design);
+  useEffect(() => {
+    if (seeded) return;
+    return navigation.addListener("beforeRemove", (event) => {
+      if (!dirtyRef.current) return;
+      event.preventDefault();
+      pendingAction.current = event.data.action;
+      discardSheet.current?.present();
+    });
+  }, [navigation, seeded]);
   // The iOS edge swipe is not interceptable by `beforeRemove` on the native stack, so it is off while there is something
   // to lose.
   useEffect(() => {
+    if (seeded) return;
     navigation.setOptions({ gestureEnabled: !dirty });
-  }, [navigation, dirty]);
+  }, [navigation, dirty, seeded]);
+
+  // Design seed: the Discard sheet open on arrival; on blur the sheet goes and the seeded draft with it, because the next
+  // fixture pushes over this screen and the unmount reset would never run.
+  const showDiscard = Boolean(design?.discard);
+  useEffect(() => {
+    // Only while in front: the editor remounts on the covered screen when the next fixture refetches the shop.
+    if (showDiscard && navigation.isFocused()) discardSheet.current?.present();
+  }, [showDiscard]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!seeded) return;
+      return () => {
+        discardSheet.current?.dismiss();
+        deliveryDraft.reset();
+      };
+    }, [seeded])
+  );
+  const scrollRef = useRef<KeyboardAwareScrollView>(null);
+  const scrolledTo = useRef(false);
+  const viewportHeight = useRef(0);
 
   const discard = () => {
     deliveryDraft.reset();
@@ -272,19 +339,14 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
   const shown = (field: "base" | "perKm" | "maxKm", server: string) =>
     (showErrors ? errors[field] : undefined) ?? serverErrors[server];
 
-  const card = {
-    borderWidth: 1,
-    borderColor: color.line,
-    borderRadius: radius.card,
-    backgroundColor: color.surface,
-    padding: space.md,
-    gap: space.sm,
-  } as const;
+  // 2097:29301: the sections sit on the canvas (REVIEW b3-02, no cards): 8 above the head, 12 between their parts.
+  const section = { paddingTop: space.sm, gap: 12 } as const;
 
   const closer = stepKm(km, -1);
   const farther = stepKm(km, 1);
   // Off first, in the order the screen had when it came into view (or back from All areas): a chip
   // tapped here stays under the finger instead of jumping to the front.
+  // Eight chips, as today (behaviour kept): the Delivery frames draw six, so the last row differs.
   const preview = previewAreas(areas, orderOff);
   const offCount = offWithin(areas, form.excluded).length;
   const inside = areas.filter((a) => a.inside);
@@ -300,35 +362,36 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
     <>
       <FieldFrame>
         <KeyboardAwareScrollView
+          ref={scrollRef}
           keyboardShouldPersistTaps="handled"
           enableOnAndroid
           extraScrollHeight={space.md}
           showsVerticalScrollIndicator={false}
+          onLayout={(event) => {
+            viewportHeight.current = event.nativeEvent.layout.height;
+          }}
+          onContentSizeChange={(_, height) => {
+            // Design seed: scroll once the content is tall enough to reach the offset (the areas arrive after mount).
+            const y = design?.scrollY;
+            if (!y || scrolledTo.current || !viewportHeight.current || height - viewportHeight.current < y) return;
+            scrolledTo.current = true;
+            scrollRef.current?.scrollToPosition(0, y, false);
+          }}
           contentContainerStyle={{
             paddingHorizontal: SCREEN_GUTTER,
-            paddingTop: space.md,
-            paddingBottom: space.xl,
-            gap: space.md,
+            paddingTop: 16,
+            paddingBottom: 24,
+            gap: 16,
           }}
         >
           <Text role="screenTitle" accessibilityRole="header">
             Where you deliver
           </Text>
 
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: space.md,
-              padding: space.md,
-              borderRadius: radius.card,
-              borderWidth: 1,
-              borderColor: color.brandPanelLine,
-              backgroundColor: color.brandPanel,
-            }}
-          >
+          {/* On the canvas, no lavender card (REVIEW b3-02): 12 above and below, 16 to the switch. */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 12 }}>
             <View style={{ flex: 1, gap: 2 }}>
-              <Text fontSize="text-md" fontWeight="font-bold">
+              <Text fontSize="text-md" fontWeight="font-semibold">
                 We deliver
               </Text>
               <Text fontSize="text-sm" tone="body">
@@ -348,8 +411,8 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
 
           {form.delivers ? (
             <>
-              <View style={card}>
-                <Text fontSize="text-md" fontWeight="font-bold" accessibilityRole="header">
+              <View style={section}>
+                <Text fontSize="text-md" fontWeight="font-semibold" accessibilityRole="header">
                   Delivery fee
                 </Text>
                 {suggested ? (
@@ -357,30 +420,35 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
                     Suggested. Change if you like.
                   </Text>
                 ) : null}
-                <TextField
-                  label="Starting fee (₹)"
-                  hint="Charged on every delivery"
-                  required
-                  keyboardType="decimal-pad"
-                  value={form.base}
-                  onChangeText={(v) => setFee("base", v)}
-                  error={shown("base", "delivery_base_fee")}
-                  placeholder="e.g. 50"
-                />
-                <TextField
-                  label="Each kilometre (₹)"
-                  hint="Added for every kilometre away"
-                  required
-                  keyboardType="decimal-pad"
-                  value={form.perKm}
-                  onChangeText={(v) => setFee("perKm", v)}
-                  error={shown("perKm", "delivery_per_km")}
-                  placeholder="e.g. 15"
-                />
+                {/* The kit field's own 18 under it is taken back, so the section's 12 is the gap the frame draws. */}
+                <View style={{ marginBottom: -density.fieldGap }}>
+                  <TextField
+                    label="Starting fee (₹)"
+                    accessibilityLabel="Starting fee (₹), required"
+                    hint="Charged on every delivery"
+                    keyboardType="decimal-pad"
+                    value={form.base}
+                    onChangeText={(v) => setFee("base", v)}
+                    error={shown("base", "delivery_base_fee")}
+                    placeholder="e.g. 50"
+                  />
+                </View>
+                <View style={{ marginBottom: -density.fieldGap }}>
+                  <TextField
+                    label="Each kilometre (₹)"
+                    accessibilityLabel="Each kilometre (₹), required"
+                    hint="Added for every kilometre away"
+                    keyboardType="decimal-pad"
+                    value={form.perKm}
+                    onChangeText={(v) => setFee("perKm", v)}
+                    error={shown("perKm", "delivery_per_km")}
+                    placeholder="e.g. 15"
+                  />
+                </View>
               </View>
-              <View style={card}>
+              <View style={section}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-                  <Text fontSize="text-md" fontWeight="font-bold" accessibilityRole="header" style={{ flex: 1 }}>
+                  <Text fontSize="text-md" fontWeight="font-semibold" accessibilityRole="header" style={{ flex: 1 }}>
                     How far you go
                   </Text>
                   <Stepper
@@ -392,9 +460,9 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
                   </Stepper>
                   <Text
                     fontSize="text-md"
-                    fontWeight="font-bold"
+                    fontWeight="font-semibold"
                     accessibilityLiveRegion="polite"
-                    style={{ minWidth: 56, textAlign: "center" }}
+                    style={{ width: 56, textAlign: "center" }}
                   >
                     {km > 0 ? kmText(form.maxKm) : "—"}
                   </Text>
@@ -419,7 +487,11 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
 
                 {shop.coordinates ? (
                   <>
-                    <DistanceMap coordinates={shop.coordinates} km={km} />
+                    {design?.map === "placeholder" ? (
+                      <DistanceMapPlaceholder />
+                    ) : (
+                      <DistanceMap coordinates={shop.coordinates} km={km} />
+                    )}
                     <Text fontSize="text-xs" tone="dim">
                       Purple: where you deliver.
                     </Text>
@@ -440,24 +512,32 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
               </View>
 
               {noAddress ? (
-                <View style={card}>
-                  <Text fontSize="text-md" fontWeight="font-bold" accessibilityRole="header">
+                // 2097:29434 "No shop address": the one boxed block, r12, 16 inside the 1pt edge.
+                <View style={{ borderWidth: 1, borderColor: color.line, borderRadius: 12, padding: 16, gap: space.sm }}>
+                  <Text fontSize="text-md" fontWeight="font-semibold" accessibilityRole="header">
                     Add your shop address first
                   </Text>
                   <Text fontSize="text-sm" tone="body">
                     Delivery distance is measured from your shop.
                   </Text>
-                  <Button onPress={() => navigation.navigate("ShopAddress")}>Add shop address</Button>
+                  <Button
+                    variant="outline"
+                    tone="tonal"
+                    size="compact"
+                    onPress={() => navigation.navigate("ShopAddress")}
+                  >
+                    Add shop address
+                  </Button>
                 </View>
               ) : noAreas ? null : (
-                <View style={card}>
+                <View style={section}>
                   <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                     {/* Shrinks, so "N off" stays on screen at a large font size on a 360dp phone. */}
-                    <Text fontSize="text-md" fontWeight="font-bold" accessibilityRole="header" style={{ flexShrink: 1 }}>
+                    <Text fontSize="text-md" fontWeight="font-semibold" accessibilityRole="header" style={{ flexShrink: 1 }}>
                       Areas you deliver to
                     </Text>
                     {offCount > 0 ? (
-                      <Text fontSize="text-sm" fontWeight="font-bold" tone="danger">
+                      <Text fontSize="text-sm" fontWeight="font-semibold" style={{ color: color.dangerStrong }}>
                         {offCount} off
                       </Text>
                     ) : null}
@@ -475,7 +555,7 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
                       accessibilityState={{ busy: true }}
                     >
                       {[110, 120, 96, 130, 104, 116].map((width, i) => (
-                        <Skeleton key={i} width={width} height={MIN_TOUCH_TARGET} borderRadius={radius.button} />
+                        <Skeleton key={i} width={width} height={50} borderRadius={radius.button} />
                       ))}
                     </View>
                   ) : areasQuery.isError && !areasQuery.data ? (
@@ -506,47 +586,37 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
                           onPress={() => navigation.navigate("DeliveryAreas")}
                           style={{ flexDirection: "row", alignItems: "center", minHeight: MIN_TOUCH_TARGET }}
                         >
-                          <Text fontSize="text-sm" fontWeight="font-bold" tone="brand" style={{ flex: 1 }}>
+                          <Text fontSize="text-sm" fontWeight="font-semibold" tone="brand" style={{ flex: 1 }}>
                             See all {areas.length} areas, nearest first
                           </Text>
                           <ChevronRightIcon size={20} color={color.brandText} />
                         </TouchableOpacity>
                       ) : null}
                       {everyOff ? (
-                        <View
-                          accessibilityLiveRegion="polite"
-                          style={{
-                            gap: space.xs,
-                            padding: space.md,
-                            borderRadius: radius.group,
-                            backgroundColor: color.warningWash,
-                          }}
-                        >
-                          <Text fontSize="text-md" fontWeight="font-bold" tone="warning">
-                            Every area is off
-                          </Text>
-                          <Text fontSize="text-sm">Nobody can get delivery. Customers can still pick up.</Text>
-                          <TouchableOpacity
-                            accessibilityRole="button"
-                            activeOpacity={0.6}
-                            onPress={() => setDelivers(false)}
-                            style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center" }}
-                          >
-                            <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
+                        <View accessibilityLiveRegion="polite">
+                          <Notice tone="warning" title="Every area is off">
+                            Nobody can get delivery. Customers can still pick up.{"\n"}
+                            <Text
+                              fontSize="text-sm"
+                              fontWeight="font-semibold"
+                              tone="brand"
+                              accessibilityRole="link"
+                              onPress={() => setDelivers(false)}
+                            >
                               Turn delivery off instead
                             </Text>
-                          </TouchableOpacity>
+                          </Notice>
                         </View>
                       ) : null}
                     </>
                   )}
                 </View>
               )}
-
             </>
           ) : null}
 
           {shop.is_merchant ? (
+            // 2097:29301 "Dashboard note": 8 in from the gutter, an 18 glyph, 8 to the text.
             <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, paddingHorizontal: space.sm }}>
               <ComputerDesktopIcon size={18} color={color.textDim} />
               <Text fontSize="text-sm" tone="dim" style={{ flex: 1 }}>
@@ -557,70 +627,64 @@ function DeliveryEditor({ shop }: { shop: Shop }) {
         </KeyboardAwareScrollView>
       </FieldFrame>
 
-      {/* Pinned: what isn't saved, a way to drop it, and Save (D6). Save keeps the owner here. */}
-      <View
-        style={{
-          paddingHorizontal: SCREEN_GUTTER,
-          paddingTop: space.sm,
-          // 14pt at least where there is no home indicator (iPhone SE, Android): 8 sat the button on the screen edge.
-          paddingBottom: Math.max(insets.bottom + space.sm, space.md),
-          gap: space.sm,
-          borderTopWidth: 1,
-          borderTopColor: color.line,
-          backgroundColor: color.canvas,
-        }}
-      >
-        {formError ? (
-          <View
-            accessibilityLiveRegion="polite"
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: space.sm,
-              paddingLeft: space.md,
-              borderRadius: radius.group,
-              backgroundColor: color.dangerWash,
-            }}
-          >
-            <Text tone="danger" fontSize="text-sm" style={{ flex: 1, paddingVertical: space.sm }}>
-              {formError}
-            </Text>
-            <TouchableOpacity
-              accessibilityRole="button"
-              activeOpacity={0.6}
-              disabled={saving}
-              onPress={() => void save()}
-              style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center", paddingHorizontal: space.md }}
+      {/* Pinned: what isn't saved over the kit bar (D6), whose Discard link drops it. Save keeps the owner here. The strip
+          carries the hairline, so the bar under it draws none. */}
+      {formError || summary ? (
+        <View
+          style={{
+            paddingHorizontal: SCREEN_GUTTER,
+            paddingTop: 12,
+            gap: space.sm,
+            borderTopWidth: 1,
+            borderTopColor: color.line,
+            backgroundColor: color.canvas,
+          }}
+        >
+          {formError ? (
+            <View
+              accessibilityLiveRegion="polite"
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: space.sm,
+                paddingLeft: space.md,
+                borderRadius: radius.group,
+                backgroundColor: color.dangerWash,
+              }}
             >
-              <Text tone="danger" fontSize="text-sm" fontWeight="font-bold">
-                Try again
+              <Text tone="danger" fontSize="text-sm" style={{ flex: 1, paddingVertical: space.sm }}>
+                {formError}
               </Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
-        {summary ? (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-            <Text fontSize="text-sm" tone="body" accessibilityLiveRegion="polite" style={{ flex: 1 }}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                activeOpacity={0.6}
+                disabled={saving}
+                onPress={() => void save()}
+                style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center", paddingHorizontal: space.md }}
+              >
+                <Text tone="danger" fontSize="text-sm" fontWeight="font-bold">
+                  Try again
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+          {summary ? (
+            <Text fontSize="text-sm" tone="body" accessibilityLiveRegion="polite">
               Unsaved: {summary}
             </Text>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Discard changes"
-              activeOpacity={0.6}
-              disabled={saving}
-              onPress={discard}
-              style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: "center", paddingHorizontal: space.xs }}
-            >
-              <Text fontSize="text-sm" fontWeight="font-bold" tone="brand">
-                Discard
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
-        <Button disabled={!dirty} loading={saving} onPress={() => void save()}>
-          Save changes
-        </Button>
-      </View>
+          ) : null}
+        </View>
+      ) : null}
+      <BottomBar
+        layout={summary ? "cta-text" : "full-cta"}
+        primary={{ label: "Save changes", disabled: !dirty, loading: saving, onPress: () => void save() }}
+        secondary={
+          summary
+            ? { label: "Discard", accessibilityLabel: "Discard changes", disabled: saving, onPress: discard }
+            : undefined
+        }
+        style={formError || summary ? { borderTopWidth: 0 } : undefined}
+      />
 
       <ConfirmSheet
         ref={discardSheet}
@@ -639,17 +703,30 @@ export default function RentalDeliveryScreen() {
   const { userDetailsFailed, fetchUserDetails } = useGlobalContext();
   const query = useShop();
   const profileFailed = query.isIdle && userDetailsFailed;
+  const route = useRoute();
+  const design = __DEV__ ? (route.params as { design?: DeliveryDesign } | undefined)?.design : undefined;
 
   // The draft lives while this screen does: All areas, pushed on top, edits it too.
   useEffect(() => () => deliveryDraft.reset(), []);
 
+  // Design seed: the draft goes in before the editor mounts (its `orderOff` is read once, so Juhu sorts first), and under
+  // a seed it always goes in, so a draft an earlier fixture left behind is replaced or cleared. A layout effect, not the
+  // render: an earlier fixture's editor may still be mounted underneath and subscribed to the store.
+  const [draftSeeded, setDraftSeeded] = useState(!design);
+  const shop = query.data;
+  useLayoutEffect(() => {
+    if (draftSeeded || !design || !shop) return;
+    deliveryDraft.set(design.draft ? { ...deliveryDraftFrom(shop), ...design.draft } : null);
+    setDraftSeeded(true);
+  }, [draftSeeded, design, shop]);
+
   return (
     <NonScrollableContainer>
       <SubpageHeader title="Delivery" />
-      {(query.isLoading || query.isIdle) && !profileFailed ? (
+      {((query.isLoading || query.isIdle) && !profileFailed) || (query.data && !draftSeeded) ? (
         <ShopLoading label="Loading your delivery settings" />
       ) : query.data ? (
-        <DeliveryEditor shop={query.data} />
+        <DeliveryEditor shop={query.data} design={design} />
       ) : (
         <ShopLoadError
           error={query.error}
