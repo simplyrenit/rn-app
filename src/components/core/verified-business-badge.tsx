@@ -14,6 +14,8 @@ interface Props {
   variant?: "mark" | "chip";
   /** The shield, for `mark`. 18 on the profile, 16 in the product owner row. */
   iconSize?: number;
+  /** ENG-449: an individual owner whose ID check (KYC) is valid: "Verified owner", not a business. */
+  owner?: boolean;
 }
 
 /**
@@ -22,7 +24,7 @@ interface Props {
  * confirmed"; and always with the word, so it is not colour alone. One
  * component, so the mark is the same wherever it shows.
  */
-export function VerifiedBusinessBadge({ verified, variant = "mark", iconSize = 16 }: Props) {
+export function VerifiedBusinessBadge({ verified, variant = "mark", iconSize = 16, owner = false }: Props) {
   const { color } = useTheme();
   if (verified !== true) return null;
   const chip = variant === "chip";
@@ -30,7 +32,7 @@ export function VerifiedBusinessBadge({ verified, variant = "mark", iconSize = 1
     <View
       accessible
       accessibilityRole="image"
-      accessibilityLabel="Verified business"
+      accessibilityLabel={owner ? "Verified owner" : "Verified business"}
       style={[
         { flexDirection: "row", alignItems: "center", gap: 3, flexShrink: 0 },
         chip && {
@@ -45,7 +47,7 @@ export function VerifiedBusinessBadge({ verified, variant = "mark", iconSize = 1
     >
       <ShieldCheckIcon size={chip ? 12 : iconSize} color={chip ? color.onBrand : color.brandText} />
       <Text fontSize="text-xs" fontWeight="font-bold" tone={chip ? "onBrand" : "brand"}>
-        Verified
+        {owner ? "Verified owner" : "Verified"}
       </Text>
     </View>
   );

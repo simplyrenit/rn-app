@@ -59,3 +59,13 @@ describe("startIdCheck keeps the price screen (ENG-447)", () => {
     expect(AsyncStorage.setItem).not.toHaveBeenCalled();
   });
 });
+
+describe("startIdCheck from a listing (ENG-449)", () => {
+  it("opens where the check stands, over the listing", () => {
+    for (const [status, screen] of [["none", "KycIntro"], ["in_review", "KycStatus"]] as const) {
+      const navigation = { dispatch: jest.fn(), getState: () => ({ routes: [{ name: "ListPreview" }] }) };
+      startIdCheck(navigation as never, status, undefined, "listing");
+      expect(navigation.dispatch).toHaveBeenCalledWith(StackActions.push(screen, { source: "listing" }));
+    }
+  });
+});

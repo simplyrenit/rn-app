@@ -362,9 +362,10 @@ export type RootStackParamList = {
   // Merchant verification (ENG-12). Params are flags only: a PAN or GSTIN never goes in one.
   // `source: "booking"`: the customer's ID check, opened from the price screen (ENG-351); the way out is back to it.
   // `source: "reverify"`: renewing a check about to expire (ENG-446).
-  KycIntro: { source?: "profile" | "post_listing" | "push" | "booking" | "reverify"; supersede?: boolean } | undefined;
-  KycDetails: { supersede?: boolean; source?: "booking" } | undefined;
-  KycStatus: { justReturned?: boolean; source?: "booking" } | undefined;
+  /** `booking` and `listing` (ENG-449, a publish locked on the ID check): the check is pushed over that screen and returns to it. */
+  KycIntro: { source?: "profile" | "post_listing" | "push" | "booking" | "listing" | "reverify"; supersede?: boolean } | undefined;
+  KycDetails: { supersede?: boolean; source?: "booking" | "listing" } | undefined;
+  KycStatus: { justReturned?: boolean; source?: "booking" | "listing" } | undefined;
   OwnersProducts: { products: BackendProduct[]; name: string; shopUrl?: string | null };
   /** The owner's bank account: add, verify, change (ENG-135). */
   BankAccount: undefined;
@@ -596,6 +597,8 @@ export interface PublicOwner {
   business_verified?: boolean;
   /** When the business was verified (ENG-73), RFC 3339; null when it is not. */
   business_verified_at?: string | null;
+  /** ENG-449: "Verified owner", an individual with a valid ID check. Absent on an older API. */
+  owner_verified?: boolean;
   /** ENG-73: so an owner with no listings still shows the business name. */
   business_name?: string | null;
   account_type?: string;
@@ -845,6 +848,8 @@ export interface BackendProduct {
     number_of_products?: number;
     /** The "Verified business" badge (D-26). Search results carry only this and `username`. */
     business_verified?: boolean;
+    /** ENG-449: "Verified owner", an individual with a valid ID check (not on search results). */
+    owner_verified?: boolean;
   };
 }
 

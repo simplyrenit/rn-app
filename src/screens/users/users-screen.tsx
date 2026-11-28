@@ -638,6 +638,8 @@ export default function UsersDetails() {
                 <Text fontSize="text-sm" fontWeight="font-bold">
                   {owner?.first_name} {owner?.last_name}
                 </Text>
+                {/* ENG-449: an individual owner with a valid ID check; a business has its own mark below. */}
+                <VerifiedBusinessBadge verified={owner?.owner_verified === true && !businessVerified} owner />
                 {/* A brand pill with a check used to sit on every business
                     name, checked or not (D-26). Now only a business Renit
                     verified gets the mark; any other name is plain text. */}

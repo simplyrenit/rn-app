@@ -84,9 +84,10 @@ export default function KycIntroScreen() {
 
   const next = () => {
     track("kyc_consent_accepted", { version });
-    const params = { ...(supersede ? { supersede: true as const } : {}), ...(source === "booking" ? { source } : {}) };
-    // From a price screen, pushed: `navigate` would jump back to an older form under it and drop the price screen.
-    if (source === "booking") navigation.dispatch(StackActions.push("KycDetails", params));
+    const stacked = source === "booking" || source === "listing";
+    const params = { ...(supersede ? { supersede: true as const } : {}), ...(stacked ? { source } : {}) };
+    // From a price screen or a listing, pushed: `navigate` would jump back to an older form under it and drop that screen.
+    if (stacked) navigation.dispatch(StackActions.push("KycDetails", params));
     else navigation.navigate("KycDetails", params);
   };
 

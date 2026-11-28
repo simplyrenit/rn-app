@@ -1117,6 +1117,7 @@ export default function DetailsScreen() {
             products={product?.products_listed ?? 0}
             isDark={isDark}
             businessVerified={product?.owner?.business_verified}
+            ownerVerified={product?.owner?.owner_verified}
           />
           {/* ENG-352: told only to a business customer (null for anyone else). */}
           {product?.gst_invoice ? (

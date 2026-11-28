@@ -1,4 +1,6 @@
 import { buildCreatePayload, submitListing } from "@/backend/list-flow/submit";
+import { useKycStatus } from "@/backend/kyc";
+import { startIdCheck } from "@/lib/id-check";
 import { saveOfferedAddress } from "@/backend/addresses-api";
 import { placeFor } from "@/backend/list-flow/pickup-location";
 import { termsQueryKey } from "@/backend/terms";
@@ -89,6 +91,7 @@ export default function ListPreviewScreen() {
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { userDetails } = useGlobalContext();
+  const { data: kyc } = useKycStatus(); // ENG-449: where "Verify my ID" opens the check
   const flow = useListDraft();
   const { draft } = flow;
   const queryClient = useQueryClient();
@@ -223,7 +226,7 @@ export default function ListPreviewScreen() {
       if (mounted.current) setState("idle");
       // The owner terms moved on, or were never accepted (ENG-122). An individual
       // is told `owner_terms_required`; a merchant `publish_locked`, which lists
-      // everything in the way. Either way the tick is on the first step of the
+      // everything in the way (an individual's only other lock is the ID check, ENG-449). Either way the tick is on the first step of the
       // flow and the draft stays as it is.
       const failure = apiError(error);
       const locked = failure?.code === "publish_locked" ? lockedItems(failure.details) : [];
@@ -235,10 +238,22 @@ export default function ListPreviewScreen() {
         navigation.navigate("ListAddPhotos", { termsNeeded: true });
         return;
       }
-      // A merchant who may not publish yet for another reason: say which.
+      // An owner who may not publish yet for another reason: say which.
       if (failure?.code === "publish_locked") {
-        // The address is the one thing the owner fixes on its own screen: a toast
-        // is gone in seconds and has no button.
+        // ENG-449: an individual's one lock is the ID check, done in the app: offer it, pushed over this screen so
+        // the check comes back here (`source: "listing"`). A merchant's locks keep their own message below.
+        if (locked.length === 1 && locked[0] === "id_check" && userDetails?.account_type !== "merchant") {
+          Alert.alert("Verify your ID to publish", "Your listing is saved. Publish it once your ID check has passed.", [
+            { text: "Not now", style: "cancel" },
+            {
+              text: "Verify my ID",
+              // Where the check stands: a check already in review opens its status, not a new form.
+              onPress: () => startIdCheck(navigation, kyc?.kyc_status, undefined, "listing"),
+            },
+          ]);
+          return;
+        }
+        // The address is the one thing the owner fixes on its own screen: a toast is gone in seconds and has no button.
         if (locked.includes("shop_address")) {
           Alert.alert("You can't publish yet", publishLockedMessage(locked), [
             { text: "Not now", style: "cancel" },

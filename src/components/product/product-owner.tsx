@@ -18,6 +18,8 @@ interface Props {
   isDark: boolean;
   /** The owner's `business_verified` (D-26): the mark after the name. */
   businessVerified?: boolean;
+  /** ENG-449: an individual owner with a valid ID check. */
+  ownerVerified?: boolean;
   /**
    * Opt-in. `detail` is the row as Figma 1:9120 draws it in "About the owner":
    * a 48pt avatar, the meta line set entirely in tertiary, and a mini chevron
@@ -39,6 +41,7 @@ export function AboutOwner({
   profilePic,
   rating,
   businessVerified,
+  ownerVerified,
   variant = "default",
 }: Props) {
   const navigation = useTypedNavigation();
@@ -63,7 +66,7 @@ export function AboutOwner({
       onPress={() => navigation.navigate("UserDetail", { id })}
       accessibilityRole="button"
       accessibilityLabel={`${name}, ${ratingDisplay.longLabel}, ${products} ${countWord}${
-        businessVerified ? ", Verified business" : ""
+        businessVerified ? ", Verified business" : ownerVerified ? ", Verified owner" : ""
       }`}
       accessibilityHint="Opens this owner's profile"
       activeOpacity={1}
@@ -98,7 +101,11 @@ export function AboutOwner({
             <Text fontSize="text-md" fontWeight="font-bold" numberOfLines={1} style={{ flexShrink: 1 }}>
               {name}
             </Text>
-            <VerifiedBusinessBadge verified={businessVerified} />
+            {businessVerified ? (
+              <VerifiedBusinessBadge verified />
+            ) : (
+              <VerifiedBusinessBadge verified={ownerVerified} owner />
+            )}
           </View>
           {/* A filled star beside the number 0 read as "rated zero out of five"
               — the worst possible host — for every seller who simply had not
