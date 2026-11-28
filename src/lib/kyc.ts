@@ -78,8 +78,8 @@ const PERSON_REJECTED: Record<string, string> = {
 };
 
 /** `kycStateCopy` for a person's ID check: the same states, buttons and tones, with no business in the words. */
-function personCopy(status: KycStatus, reason: KycReasonCode | string | null | undefined): KycStateCopy {
-  const business = kycStateCopy(status, reason);
+function personCopy(status: KycStatus, reason: KycReasonCode | string | null | undefined, months: number): KycStateCopy {
+  const business = kycStateCopy(status, reason, false, months);
   switch (status) {
     case "pending":
     case "in_review":
@@ -92,7 +92,7 @@ function personCopy(status: KycStatus, reason: KycReasonCode | string | null | u
     case "verified":
       return {
         ...business,
-        cardTitle: "ID check passed",
+        cardTitle: "KYC verified",
         cardBody: "You can book items that need an ID check.",
         title: "Your ID check passed",
         body: 'You can now book items that need an ID check. Need to change your PAN? Use "Remove my verification data" below, then check again.',
@@ -112,12 +112,16 @@ function personCopy(status: KycStatus, reason: KycReasonCode | string | null | u
     }
     default:
       if (reason === "case_expired") return business;
+      if (reason === "kyc_expired") {
+        const body = `Your ID check was valid for ${months} months and has now expired. Re-verify to book items that need it again.`;
+        return { ...business, cardTitle: "Your KYC has expired", cardBody: firstSentence(body), title: "Your KYC has expired", body, cta: "Re-verify" };
+      }
       return {
         ...business,
-        cardTitle: "Check your ID",
-        cardBody: "Needed once, before you rent some higher-value items.",
+        cardTitle: "KYC not done yet",
+        cardBody: `Verify once. It stays valid for ${months} months.`,
         title: "Check your ID",
-        body: "Renit checks your ID once, before you rent some higher-value items.",
+        body: `Renit asks for an ID check when you book items that need one. It stays valid for ${months} months.`,
         cta: "Start ID check",
       };
   }
@@ -132,9 +136,11 @@ function personCopy(status: KycStatus, reason: KycReasonCode | string | null | u
 export function kycStateCopy(
   status: KycStatus,
   reason: KycReasonCode | string | null | undefined,
-  person = false
+  person = false,
+  /** How long a check lasts (`valid_months`, ENG-446). */
+  months = 12
 ): KycStateCopy {
-  if (person) return personCopy(status, reason);
+  if (person) return personCopy(status, reason, months);
   switch (status) {
     case "pending":
       return {
@@ -217,6 +223,21 @@ export function kycStateCopy(
           tone: "warning",
         };
       }
+      if (reason === "kyc_expired") {
+        // ENG-446: a check lasts `months`; the badge is off until a new one is approved.
+        const body = `Business verification lasts ${months} months, and yours has expired. Your Verified business badge is off until you verify again.`;
+        return {
+          cardTitle: "Your verification has expired",
+          cardBody: "Your Verified business badge is off until you verify again.",
+          title: "Your verification has expired",
+          body,
+          cta: "Verify again",
+          ctaKind: "start",
+          secondary: null,
+          icon: "exclamation",
+          tone: "warning",
+        };
+      }
       if (reason === "gstin_inactive") {
         // The monthly GSTIN re-check took the badge off (ENG-348).
         const body =
@@ -245,6 +266,46 @@ export function kycStateCopy(
         tone: "brand",
       };
   }
+}
+
+const DAY_MS = 86_400_000;
+/** "21 Oct 2027": day first, as dates are written in India, whatever the phone's language. */
+export const kycDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+export interface KycValidity {
+  verifiedOn: string | null;
+  validUntil: string;
+  /** Whole days left, rounded up: 1 on the last day. */
+  daysLeft: number;
+  /** 30 days or fewer left: the Profile banner and Re-verify. */
+  soon: boolean;
+}
+
+/** The dates of the check in force (ENG-446), or null when none is (nothing yet, expired, or an older API). */
+export function kycValidity(status: KycStatusResponse, now = new Date()): KycValidity | null {
+  if (!status.valid_until) return null;
+  const daysLeft = Math.max(1, Math.ceil((new Date(status.valid_until).getTime() - now.getTime()) / DAY_MS));
+  return {
+    verifiedOn: status.verified_at ? kycDate(status.verified_at) : null,
+    validUntil: kycDate(status.valid_until),
+    daysLeft,
+    soon: daysLeft <= 30,
+  };
+}
+
+/** The "KYC verified" badge on the person's own Profile: a check in force. An older API sends no dates, so its word stands. */
+export const kycVerified = (status: KycStatusResponse | undefined) =>
+  !!status && (status.valid_until !== undefined ? status.valid_until !== null : status.kyc_status === "verified");
+
+/** What was checked, as ticks (never a digit). The GSTIN is not listed: rn-api is not told whether one was given. */
+export function kycChecks(status: KycStatusResponse, person: boolean): string[] {
+  const checks = ["PAN", "Aadhaar, through DigiLocker"];
+  if (person) return checks;
+  checks.push("Business name");
+  if (status.business_registration_kind === "udyam") checks.push("Udyam registration");
+  if (status.business_registration_kind === "shop_licence") checks.push("Shop licence");
+  return checks;
 }
 
 /** Anything on file that "Remove my verification data" would remove. */
