@@ -59,6 +59,7 @@ const FIELD_WORDS: Record<string, string> = {
   contact_name: "contact name",
   contact_number: "contact number",
   included_items: "what is included",
+  handover_only_items: "what is used up",
   rate: "price",
   plans: "prices",
   security_deposit: "deposit",
@@ -79,8 +80,8 @@ export function fieldsLine(fields: readonly string[]): string {
 
 /**
  * The fields of the listing the owner's own screens show and send, as plain values: what a waiting change names for them
- * can be laid over the listing. The category (an object on the listing, an id in a change), the details and the included
- * items are shaped differently and are not laid over.
+ * can be laid over the listing. The category (an object on the listing, an id in a change) and the details are shaped
+ * differently and are not laid over.
  */
 const OWNER_FIELDS = [
   "title",
@@ -103,6 +104,9 @@ const OWNER_FIELDS = [
   "full_address",
   "images",
   "cover_image",
+  // ENG-454: what comes with it, so the step starts from a change of it that waits rather than putting it back.
+  "included_items",
+  "handover_only_items",
 ];
 
 /**

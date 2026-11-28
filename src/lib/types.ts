@@ -324,6 +324,8 @@ export type RootStackParamList = {
     pending?: PendingEdit | null;
   };
   EditAboutProduct: { data: BackendProduct };
+  /** ENG-454: what comes with the listing; the listing as the server has it (the screen lays a waiting change over it). */
+  EditIncludedItems: { data: BackendProduct };
   EditProductImages: { images: string[]; name: string, coverImage: string; };
   EditCoverImage: { images: string[]; name: string, coverImage: string, };
   OwnersReviewScreen: {
@@ -759,6 +761,12 @@ export interface BackendProduct {
   quantity?: number;
   worth?: string | null;
   shop_code?: string;
+  /**
+   * ENG-454 (API ENG-451), owner endpoint: what comes with the listing, and the items used up during the rental. An empty
+   * or absent `included_items` follows the sub-category's list.
+   */
+  included_items?: string[];
+  handover_only_items?: string[];
   not_delivered?: boolean;
   rate_unit?: "day";
   /**

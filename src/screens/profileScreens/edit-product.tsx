@@ -206,6 +206,15 @@ const EditProductScreen: React.FC = () => {
                   text="Product Details"
                   isDarkMode={isDarkMode}
                 />
+                {/* ENG-454: what comes with it is offered by the sub-category, so a listing without one has nothing to shape. */}
+                {product.category?.id != null ? (
+                  <IconButton
+                    onPress={() => navigation.navigate("EditIncludedItems", { data: product })}
+                    leftIcon="CubeIcon"
+                    text="What comes with it"
+                    isDarkMode={isDarkMode}
+                  />
+                ) : null}
                 <IconButton
                   onPress={() => {
                     // The photos as their owner sees them: waiting ones, if a change of photos waits.
