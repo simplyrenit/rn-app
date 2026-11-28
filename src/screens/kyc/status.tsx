@@ -213,7 +213,7 @@ export default function KycStatusScreen() {
     Alert.alert(
       "Remove your verification data?",
       person
-        ? "We'll delete the details we hold for your ID check, including your Aadhaar record. Bookings that need an ID check can't be made until you check again."
+        ? "We'll delete the details we hold for your ID check, including your Aadhaar record. You can't book until you check again."
         : // A badge the re-check already took off (ENG-348) is not "removed" again.
           `We'll delete the details we hold for your verification, including your Aadhaar record.${
             hadBadge ? " Your Verified business badge will be removed." : ""

@@ -13,7 +13,7 @@ import { ApiError, fieldErrors } from "@/lib/api-error";
 import type { BillTo } from "@/lib/business";
 import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
-import { kycStateCopy } from "@/lib/kyc";
+import { kycStateCopy, withdrawn } from "@/lib/kyc";
 import type { PlanUnit } from "@/lib/plans";
 import type { KycStatus } from "@/lib/types";
 import { ALL_DAY, DayHours, Hours, coversWholeDay, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
@@ -1270,6 +1270,9 @@ export function idCheckCopy(
       default:
         if (reason === "kyc_expired") {
           return needed("Your KYC has expired", "Re-verify to book. It takes a few minutes.", "Re-verify");
+        }
+        if (withdrawn(reason)) {
+          return needed("Your KYC was withdrawn", "Verify again to book, or contact support.", "Verify again");
         }
         return needed("Verify your ID to book", "It takes a few minutes, and stays valid for a year.", "Start ID check");
     }

@@ -146,7 +146,7 @@ const REVOKE_REASONS = [
   "business_name_unverifiable",
   "other",
 ];
-function withdrawn(reason: string | null | undefined): boolean {
+export function withdrawn(reason: string | null | undefined): boolean {
   return !!reason && REVOKE_REASONS.includes(reason);
 }
 

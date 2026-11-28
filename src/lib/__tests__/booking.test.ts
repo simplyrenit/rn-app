@@ -890,6 +890,10 @@ describe("the ID check", () => {
     for (const status of ["in_review", "rejected"] as const) {
       expect(idCheckCopy(needed, null, status)?.body).not.toMatch(/Items that need no ID check/);
     }
+    expect(idCheckCopy(everyBooking, null, "none", "duplicate_identity")).toMatchObject({
+      title: "Your KYC was withdrawn",
+      action: "Verify again",
+    });
     expect(idCheckCopy(everyBooking, null, "none", "kyc_expired")).toMatchObject({
       title: "Your KYC has expired",
       action: "Re-verify",
