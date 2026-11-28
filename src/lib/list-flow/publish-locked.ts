@@ -1,5 +1,5 @@
 /**
- * `403 publish_locked` (API-CONTRACT, `POST /api/my/products/`): a merchant who may
+ * `403 publish_locked` (API-CONTRACT, `POST /api/my/products/`): an owner who may
  * not publish yet. `details.missing` names what is in the way, any of
  * `owner_terms`, `shop_approval`, `shop_address`, `id_check`, `bank_account`.
  */

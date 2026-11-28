@@ -235,10 +235,18 @@ export default function ListPreviewScreen() {
         navigation.navigate("ListAddPhotos", { termsNeeded: true });
         return;
       }
-      // A merchant who may not publish yet for another reason: say which.
+      // An owner who may not publish yet for another reason: say which.
       if (failure?.code === "publish_locked") {
         // The address is the one thing the owner fixes on its own screen: a toast
         // is gone in seconds and has no button.
+        // ENG-449: the ID check is done in the app, so offer it; Back returns to this listing.
+        if (locked.includes("id_check") && !locked.includes("shop_address")) {
+          Alert.alert("Verify your ID to publish", "Your listing is saved. Publish it once your ID check has passed.", [
+            { text: "Not now", style: "cancel" },
+            { text: "Verify my ID", onPress: () => navigation.navigate("KycIntro", { source: "profile" }) },
+          ]);
+          return;
+        }
         if (locked.includes("shop_address")) {
           Alert.alert("You can't publish yet", publishLockedMessage(locked), [
             { text: "Not now", style: "cancel" },

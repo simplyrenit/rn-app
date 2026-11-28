@@ -596,6 +596,8 @@ export interface PublicOwner {
   business_verified?: boolean;
   /** When the business was verified (ENG-73), RFC 3339; null when it is not. */
   business_verified_at?: string | null;
+  /** ENG-449: "Verified owner", an individual with a valid ID check. Absent on an older API. */
+  owner_verified?: boolean;
   /** ENG-73: so an owner with no listings still shows the business name. */
   business_name?: string | null;
   account_type?: string;
@@ -845,6 +847,8 @@ export interface BackendProduct {
     number_of_products?: number;
     /** The "Verified business" badge (D-26). Search results carry only this and `username`. */
     business_verified?: boolean;
+    /** ENG-449: "Verified owner", an individual with a valid ID check (not on search results). */
+    owner_verified?: boolean;
   };
 }
 
