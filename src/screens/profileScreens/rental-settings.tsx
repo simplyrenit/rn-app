@@ -75,10 +75,16 @@ export default function RentalSettingsScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { userDetails, userDetailsFailed, fetchUserDetails } = useGlobalContext();
-  const query = useShop();
-  const devices = useDevices();
   const route = useRoute();
   const design = __DEV__ ? (route.params as { design?: RentalSettingsDesign } | undefined)?.design : undefined;
+  if (design) {
+    // Dev builds only: a fixture's 404 shows the frame's error state (2096:26620, 2096:29658) at once, not after
+    // React Query's three retries. The keys carry the fixture user's name, so the device's own account keeps them.
+    queryClient.setQueryDefaults(shopQueryKey(userDetails?.username), { retry: false });
+    queryClient.setQueryDefaults(devicesQueryKey(userDetails?.username), { retry: false });
+  }
+  const query = useShop();
+  const devices = useDevices();
   // Under a design fixture the ring permission is the fixture's and nothing asks the system: the whole control is
   // replaced (ENG-433's today.tsx seed), so the card's ask-once effect cannot raise the OS prompt over a screenshot.
   const realPerm = useRingPermission();
@@ -96,7 +102,6 @@ export default function RentalSettingsScreen() {
   const noticeSheet = useRef<BottomSheetModal>(null);
   const devicesSheet = useRef<BottomSheetModal>(null);
   const scroll = useRef<ScrollView>(null);
-  const scrolled = useRef(false);
   const [pickingDay, setPickingDay] = useState(design?.dayPicker === true);
   const [openBusy, setOpenBusy] = useState(false);
   const [signingOut, setSigningOut] = useState<number | null>(null);
@@ -229,11 +234,10 @@ export default function RentalSettingsScreen() {
       <ScrollView
         ref={scroll}
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => {
-          if (!design?.scrollToEnd || scrolled.current) return;
-          scrolled.current = true;
-          scroll.current?.scrollToEnd({ animated: false });
-        }}
+        // On every content or viewport size change, not only the first: a later row (an error line) or a shorter
+        // viewport would otherwise leave the seeded scroll short of the end.
+        onContentSizeChange={() => design?.scrollToEnd && scroll.current?.scrollToEnd({ animated: false })}
+        onLayout={() => design?.scrollToEnd && scroll.current?.scrollToEnd({ animated: false })}
         contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 32, gap: 16 }}
       >
         <Text role="screenTitle" accessibilityRole="header" style={{ marginHorizontal: SCREEN_GUTTER }}>
@@ -277,8 +281,8 @@ export default function RentalSettingsScreen() {
             />
           </View>
 
-          {/* The Open switch above only means something if this phone can ring. */}
-          <RingPermissionCard enabled={shop.can_take_bookings === true} permission={ringPerm} />
+          {/* The Open switch above only means something if this phone can ring. 2096:26472 draws the inline card. */}
+          <RingPermissionCard enabled={shop.can_take_bookings === true} permission={ringPerm} layout="inline" />
         </View>
 
         {/* Handover hours: a 1pt hairline card, r12, 16 inside, 8 between its lines. */}

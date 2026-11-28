@@ -22,13 +22,14 @@ function AreaRow({ area, off, onPress }: { area: Area; off: boolean; onPress: ()
       accessibilityLabel={`${area.name}, ${area.pin}, ${kmText(area.km)}${area.inside ? "" : ", just outside"}`}
       activeOpacity={0.6}
       onPress={onPress}
-      // 2097:29740: 56 high (8 + 40 + 8), a hairline under every row, the list on the canvas.
+      // 2097:29740: 56 high (8 + 40 + 8) with the hairline inside it (Figma strokes inside), the list on the canvas.
       style={{
         flexDirection: "row",
         alignItems: "center",
         gap: 16,
         minHeight: 56,
-        paddingVertical: space.sm,
+        paddingTop: space.sm,
+        paddingBottom: space.sm - 1,
         borderBottomWidth: 1,
         borderBottomColor: color.line,
       }}

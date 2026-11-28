@@ -80,7 +80,6 @@ function HoursForm({ initial, design }: { initial: Hours; design?: RentalHoursDe
   const { userDetails } = useGlobalContext();
   const timeSheet = useRef<BottomSheetModal>(null);
   const scroll = useRef<ScrollView>(null);
-  const scrolled = useRef(false);
 
   const [hours, setHours] = useState<Hours>(initial);
   const [editing, setEditing] = useState<Editing | null>(
@@ -153,11 +152,10 @@ function HoursForm({ initial, design }: { initial: Hours; design?: RentalHoursDe
       <ScrollView
         ref={scroll}
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => {
-          if (!design?.scrollToEnd || scrolled.current) return;
-          scrolled.current = true;
-          scroll.current?.scrollToEnd({ animated: false });
-        }}
+        // On every content or viewport size change, not only the first: a later row (an error line) or a shorter
+        // viewport would otherwise leave the seeded scroll short of the end.
+        onContentSizeChange={() => design?.scrollToEnd && scroll.current?.scrollToEnd({ animated: false })}
+        onLayout={() => design?.scrollToEnd && scroll.current?.scrollToEnd({ animated: false })}
         contentContainerStyle={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: 16, paddingBottom: 24 }}
       >
         <Text tone="body" fontSize="text-sm" style={{ marginBottom: 16 }}>

@@ -182,7 +182,7 @@ export const fixtures: Record<string, DevFixture> = {
     {},
     priyaNair
   ),
-  // Blocked until ENG-433 is in the parent: the ring card's `layout="inline"` (Notice Tone=Warning look).
+  // The ring card's `layout="inline"` (ENG-433, Notice Tone=Warning look).
   "2096:26472": settings(
     {
       "GET /shop/": { ...SHOP, open: { is_open: false, reason: "manual", opens_at: null, closes_at: null } },
