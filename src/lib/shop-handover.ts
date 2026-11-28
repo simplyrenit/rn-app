@@ -153,7 +153,7 @@ export function payoutPending(b: BookingShop): boolean {
 
 /** Why the payout waits, when it does, said on the "Rental started" card. */
 export function payoutWaits(b: BookingShop): string | null {
-  return payoutPending(b) ? "You are paid once your photos and video of the handover have uploaded." : null;
+  return payoutPending(b) ? "You are paid once your handover record has uploaded." : null;
 }
 
 // ---- SH-10, the return -----------------------------------------------------------------------------

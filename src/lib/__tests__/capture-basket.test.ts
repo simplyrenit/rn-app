@@ -8,6 +8,7 @@ import {
   applyPartial,
   canSeal,
   captureBody,
+  includedRows,
   nextWork,
   partialBody,
   partialDue,
@@ -23,6 +24,7 @@ import {
   withReceived,
 } from "../capture";
 import { CaptureQueueDeps, createCaptureQueue } from "../capture-queue";
+import { basketItems } from "../shop-lines";
 
 // A basket's merged list (T11): two items, keys led by `l{n}_`, labels and checklist by the item's name.
 const list: ShotList = {
@@ -191,5 +193,56 @@ describe("a basket's return is finished only with every item Received (D51)", ()
     // Ticking it again clears the words, and so does the desk taking the return by hand.
     expect(setReceived(draft, 12, true).error).toBeNull();
     expect(waiveReceived(draft).error).toBeNull();
+  });
+});
+
+describe("a basket with used-up items on one line (ENG-453)", () => {
+  // The camera comes with a spare battery that is used up; the tripod has none. The merged list carries the line's labels.
+  const withSpare: ShotList = {
+    ...list,
+    handover_only_items: ["Camera: Battery pack"],
+    lines: [{ ...list.lines![0], handover_only_items: ["Camera: Battery pack"] }, list.lines![1]],
+  };
+  const start = (moment: "handover" | "return") => startDraft({ number: "RN-21345", moment, side: "owner", list: withSpare });
+
+  it("ticks the used-up part at the handover, on its own item, and sends it in the same checklist", () => {
+    const draft = tick(start("handover"), "Camera: Battery pack");
+    expect(draft.checklist.map((c) => c.item)).toEqual(["Camera: Battery", "Tripod: Bag", "Camera: Battery pack"]);
+    expect(captureBody(draft).checklist).toEqual([{ item: "Camera: Battery pack", ticked: true }]);
+    const [camera, tripod] = basketItems(withSpare, draft, null, "handover");
+    expect(camera.parts).toEqual([
+      { item: "Camera: Battery", label: "Battery", ticked: false },
+      { item: "Camera: Battery pack", label: "Battery pack", ticked: true, usedUp: true },
+    ]);
+    expect(tripod.parts).toEqual([{ item: "Tripod: Bag", label: "Bag", ticked: false }]);
+  });
+
+  it("never asks for it back at the return: not in the draft, not a part, never 'Not ticked'", () => {
+    const draft = start("return");
+    expect(draft.checklist.map((c) => c.item)).toEqual(["Camera: Battery", "Tripod: Bag"]);
+    expect(basketItems(withSpare, draft, null, "return")[0].parts.map((p) => p.item)).toEqual(["Camera: Battery"]);
+    const theirs = [{ item: "Camera: Battery pack", ticked: false }];
+    expect(includedRows(null, theirs, "Aarav", withSpare.included_items, "return", withSpare.handover_only_items)).toEqual([
+      { item: "Camera: Battery", ticked: false, note: null },
+      { item: "Tripod: Bag", ticked: false, note: null },
+    ]);
+  });
+
+  it("finishes without the one video when no item needs one, and sends no video", () => {
+    let draft = startDraft({ number: "RN-21345", moment: "handover", side: "owner", list: { ...withSpare, video_required: false } });
+    draft = setIdMatch(up(up(addShot(addShot(draft, "l1_front", photo("a")), "l2_front", photo("b")), "l1_front"), "l2_front"), true);
+    expect(canSeal(draft)).toBe(true);
+    const sealed = seal(draft);
+    expect(nextWork([sealed])).toMatchObject({ kind: "send" });
+    expect(captureBody(sealed).video).toBeUndefined();
+  });
+
+  it("sends no partial record when no item needs a video: it would complete, and lock, before the ticks (review r1)", () => {
+    let draft = startDraft({ number: "RN-21345", moment: "handover", side: "owner", list: { ...withSpare, video_required: false } });
+    draft = setIdMatch(up(up(addShot(addShot(draft, "l1_front", photo("a")), "l2_front", photo("b")), "l1_front"), "l2_front"), true);
+    expect(partialDue(draft)).toBe(false);
+    expect(nextWork([draft])).toBeNull();
+    // The same basket with the video asked for still goes ahead as its photos go up (D19).
+    expect(partialDue({ ...draft, list: withSpare })).toBe(true);
   });
 });

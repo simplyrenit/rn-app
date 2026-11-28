@@ -568,7 +568,7 @@ describe("BK-21, the return", () => {
     // Returned with nothing recorded on either side: the code is done, the records are not, and nobody checked anything.
     const bare = returnSteps(booking({ stage: "returned" }), false);
     expect(bare.map((s) => s.state)).toEqual(["todo", "todo", "done"]);
-    expect(bare[0].sub).toBe("Not recorded. You have no photos or video of how you returned it.");
+    expect(bare[0].sub).toBe("Not recorded. You have no record of how you returned it.");
     expect(bare[1].sub).toBe("The shop has not recorded it. It has 24 hours to report a problem.");
     expect(bare[2].sub).toBe("Done");
     expect(bare.some((s) => s.state === "next")).toBe(false);

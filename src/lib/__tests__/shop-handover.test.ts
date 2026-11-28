@@ -211,7 +211,7 @@ describe("SH-09, after the code", () => {
   it("the payout waits for the owner's own record", () => {
     expect(payoutWaits(out())).toBeNull();
     expect(payoutWaits(out({ captures: flags(false, true) }))).toBe(
-      "You are paid once your photos and video of the handover have uploaded."
+      "You are paid once your handover record has uploaded."
     );
     // Before the code there is no payout to wait for.
     expect(payoutWaits(booking())).toBeNull();

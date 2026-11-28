@@ -1,4 +1,5 @@
 import { useBooking } from "@/backend/bookings";
+import { useShotList } from "@/backend/captures";
 import { BookingLoadError, BookingLoading, BottomBar, Notice, TextButton } from "@/components/booking/parts";
 import { useAppActive } from "@/components/booking/use-app-active";
 import { CodeBoxes } from "@/components/capture/code";
@@ -8,7 +9,7 @@ import { Button, SubpageHeader, Text } from "@/components/core";
 import { NonScrollableContainer } from "@/components/core/non-scrollable-container";
 import { Block } from "@/components/handover/parts";
 import { BookingCustomer } from "@/lib/booking";
-import { otherSetOffered, recordOpens } from "@/lib/capture";
+import { otherSetOffered, recordOpens, videoRequired } from "@/lib/capture";
 import { captured, dayBlock } from "@/lib/day-of";
 import { byRenit } from "@/lib/delivery";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
@@ -29,6 +30,8 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
   const record = useRecord({ moment: "handover", role: "customer", booking, receivedAt, ...names });
   const theirRecord = useRecord({ moment: "handover", role: "customer", forOther: true, booking, receivedAt, ...names });
   const recorded = !recordOpens(record.state);
+  // ENG-453: a list that needs no video is not waited on for one (`useRecord` already reads it; this is the cached copy).
+  const withVideo = videoRequired(useShotList(number, false).data);
   // B1: on a courier booking nobody types a code; the customer's record starts the rental (ENG-415).
   const courier = byRenit(booking);
   const both = flags.mine && flags.theirs;
@@ -50,7 +53,7 @@ function Check({ booking, receivedAt, watching }: { booking: BookingCustomer; re
               : flags.theirs
                 ? "The shop's set is in. Yours is still on its way."
                 : recorded
-                  ? "Waiting for the shop's photos and video. They show here as soon as they are in."
+                  ? `Waiting for the shop's photos${withVideo ? " and video" : ""}. They show here as soon as they are in.`
                   : "Record the item's condition first. The shop records it too."}
           </Text>
         </View>
