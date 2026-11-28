@@ -1232,3 +1232,113 @@ describe("B1, a video that names where it was taken", () => {
     expect(Array.from(base64Bytes("AAAAGGZ0eXA="))).toEqual([0, 0, 0, 24, ...ascii("ftyp")]);
   });
 });
+
+describe("capture lists 3: no video when none is needed, and used-up items at the handover only (ENG-453)", () => {
+  const noVideo = (over: Partial<ShotList> = {}) => list({ video_required: false, ...over });
+  const card = (over: Partial<Parameters<typeof recordCard>[0]>) =>
+    recordCard({ state: "start", moment: "handover", role: "owner", otherName: "Aarav", stage: "out", draft: null, ...over });
+  const capture = (): Capture => ({
+    moment: "handover",
+    side: "owner",
+    recorded_by_other_side: false,
+    shots: [],
+    video: null,
+    checklist: [],
+    id_match_ticked: null,
+    missing: [],
+    complete: true,
+    completed_at: null,
+  });
+  const shotsOnly = (draft: CaptureDraft) => {
+    let d = draft;
+    for (const shot of d.list.shots) d = addShot(d, shot.key, file(`${shot.key}.jpg`));
+    return d;
+  };
+
+  it("a record whose list needs no video is done without one, and its upload does not wait for one", () => {
+    const d = shotsOnly(start({ list: noVideo() }));
+    expect(nextStep(d)).toEqual({ kind: "checklist" });
+    expect(canSeal(d)).toBe(true);
+    const sealed = seal(d);
+    expect(nextStep(sealed)).toEqual({ kind: "upload" });
+    expect(uploadProgress(sealed)).toMatchObject({ uploaded: 0, total: 3, text: "0 of 3 uploaded" });
+    const up = uploaded(sealed);
+    expect(uploadProgress(up)).toMatchObject({ uploaded: 3, total: 3, fraction: 1 });
+    expect(readyToSend(up)).toBe(true);
+    expect(nextWork([up])).toMatchObject({ kind: "send" });
+    expect(captureBody(up).video).toBeUndefined();
+    expect(applyAnswer(up, { complete: true, missing: [] }).done).toBe(true);
+    // A video taken anyway (the list changed under the walk) is still counted and sent.
+    const withClip = setVideo(sealed, { uri: "file:///captures/video.mp4", taken_at: "2026-10-24T04:43:00Z" });
+    expect(uploadProgress(withClip).total).toBe(4);
+    expect(card({ state: "continue", draft: d })?.text).toBe("Started, not finished: 3 of 3 taken.");
+  });
+
+  it("says no video in the notice, and shows no empty video tile, when none is needed", () => {
+    expect(noticeRows(noVideo(), "customer")[0].body).toBe("Three photos of the item");
+    expect(setView(null, null, noVideo()).video).toBeNull();
+    expect(setView(null, start({ list: noVideo() }), null).video).toBeNull();
+    expect(setView(capture(), null, noVideo()).video).toBeNull();
+  });
+
+  it("an older server's list, with neither new field, behaves as before", () => {
+    const old = list();
+    expect(old.video_required).toBeUndefined();
+    const d = shotsOnly(start({ list: old }));
+    expect(nextStep(d)).toEqual({ kind: "video" });
+    expect(canSeal(d)).toBe(false);
+    expect(uploadProgress(seal(taken())).total).toBe(4);
+    expect(start({ list: old }).checklist.map((c) => c.item)).toEqual(["Power cable", "HDMI cable"]);
+    expect(start({ list: old, moment: "return" }).checklist.map((c) => c.item)).toEqual(["Power cable", "HDMI cable"]);
+    expect(noticeRows(old, "customer")[0].body).toBe("Three photos and a 15-second video of the item");
+    expect(setView(null, null, old).video).toEqual({ taken: false, url: null, label: "Video" });
+  });
+
+  it("ticks the used-up items at the handover, in the same checklist, and never asks for them at the return", () => {
+    const withRefill = list({ handover_only_items: ["Ink refill"] });
+    const handover = tick(start({ list: withRefill }), "Ink refill");
+    expect(handover.checklist).toEqual([
+      { item: "Power cable", ticked: false },
+      { item: "HDMI cable", ticked: false },
+      { item: "Ink refill", ticked: true },
+    ]);
+    expect(captureBody(handover).checklist.map((c) => c.item)).toEqual(["Power cable", "HDMI cable", "Ink refill"]);
+    const ret = start({ list: withRefill, moment: "return" });
+    expect(ret.checklist.map((c) => c.item)).toEqual(["Power cable", "HDMI cable"]);
+    expect(captureBody(ret).checklist.map((c) => c.item)).not.toContain("Ink refill");
+    // A list that gains used-up items mid-walk adds them at the handover only, keeping the ticks made.
+    const ticked = tick(start(), "Power cable");
+    expect(withList(ticked, withRefill).checklist).toEqual([
+      { item: "Power cable", ticked: true },
+      { item: "HDMI cable", ticked: false },
+      { item: "Ink refill", ticked: false },
+    ]);
+    expect(withList(start({ moment: "return" }), withRefill).checklist.map((c) => c.item)).toEqual(["Power cable", "HDMI cable"]);
+    // And a list that stops asking for the video lets a record waiting on it finish.
+    expect(nextStep(withList(shotsOnly(start()), noVideo()))).toEqual({ kind: "checklist" });
+  });
+
+  it("at the return, a used-up item is never 'Not ticked' or missing; at the handover it is marked", () => {
+    const usedUp = ["Ink refill"];
+    const theirs = [
+      { item: "Power cable", ticked: true },
+      { item: "Ink refill", ticked: false },
+    ];
+    expect(includedRows(null, theirs, "the shop", ["Power cable"], "return", usedUp)).toEqual([
+      { item: "Power cable", ticked: true, note: null },
+    ]);
+    // A record from an older app that still carries the item: left out at the return all the same.
+    expect(includedRows(null, theirs, "the shop", [], "return", usedUp).map((r) => r.item)).toEqual(["Power cable"]);
+    expect(includedRows(null, theirs, "the shop", ["Power cable", "Ink refill"], "handover", usedUp)).toEqual([
+      { item: "Power cable", ticked: true, note: null },
+      { item: "Ink refill", ticked: false, note: "Not ticked by the shop", usedUp: true },
+    ]);
+  });
+
+  it("Renit's general list keeps its shot keys, asks for the video, and lists three things", () => {
+    const general = genericShotList(false);
+    expect(general.shots.map((s) => s.key)).toEqual(["front", "back", "left_side", "right_side", "marks", "label"]);
+    expect(general.included_items).toEqual(["The item itself", "Accessories it came with", "Case, bag or box"]);
+    expect(general.video_required).toBe(true);
+  });
+});
